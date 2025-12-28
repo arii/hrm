@@ -230,7 +230,7 @@ const ConnectView: React.FC<ConnectViewProps> = ({
       </Container>
       <BottomNavBar />
     </>
-  );
-};
+  )
+}
 
-export default ConnectView;
+export default ConnectView

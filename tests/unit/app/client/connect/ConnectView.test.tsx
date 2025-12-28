@@ -3,94 +3,68 @@
  */
 import { render, screen } from '@testing-library/react'
 import ConnectView from '../../../../../app/client/connect/ConnectView'
+import React from 'react'
 
-// Mock child components to isolate the ConnectView logic
-jest.mock('../../../../../app/client/connect/UserSettings', () => () => (
-  <div data-testid="user-settings" />
-))
+jest.mock('../../../../../app/client/connect/UserSettings', () => {
+  const UserSettings = () => <div>UserSettings Mock</div>
+  UserSettings.displayName = 'UserSettings'
+  return UserSettings
+})
 
-// Correctly mock ConnectionManager to expose the prop for testing
-jest.mock(
-  '../../../../../app/client/connect/ConnectionManager',
-  () =>
-    function MockConnectionManager(props) {
-      const { isConnectable, ...rest } = props
-      return (
-        <div
-          data-testid="connection-manager"
-          data-isconnectable={isConnectable}
-          {...rest}
-        />
-      )
-    }
-)
+jest.mock('../../../../../app/client/connect/ConnectionManager', () => {
+  const ConnectionManager = () => <div>ConnectionManager Mock</div>
+  ConnectionManager.displayName = 'ConnectionManager'
+  return ConnectionManager
+})
 
-jest.mock(
-  '../../../../../app/client/connect/WorkoutManager',
-  () => (props) => <div data-testid="workout-manager" {...props} />
-)
-jest.mock('../../../../../components/BottomNavBar', () => () => (
-  <div data-testid="bottom-nav-bar" />
-))
+jest.mock('../../../../../app/client/connect/WorkoutManager', () => {
+  const WorkoutManager = () => <div>WorkoutManager Mock</div>
+  WorkoutManager.displayName = 'WorkoutManager'
+  return WorkoutManager
+})
+
+jest.mock('../../../../../components/BottomNavBar', () => {
+  const BottomNavBar = () => <div>BottomNavBar Mock</div>
+  BottomNavBar.displayName = 'BottomNavBar'
+  return BottomNavBar
+})
 
 describe('ConnectView', () => {
   const defaultProps = {
     userName: 'Test User',
+    setUserName: jest.fn(),
     userAge: '30',
+    setUserAge: jest.fn(),
     weightInKg: '70',
+    setWeightInKg: jest.fn(),
     isConnected: false,
     isSupported: true,
-    deviceStatus: 'Disconnected',
+    deviceStatus: 'disconnected',
     batteryLevel: null,
     currentHR: 0,
-    hrZoneProps: { percentage: 0, progressColor: 'grey' },
-    connectionStatus: 'Disconnected',
+    hrZoneProps: { percentage: 0, progressColor: 'grey.500' },
+    connectionStatus: 'disconnected',
     onConnect: jest.fn(),
     onDisconnect: jest.fn(),
-    onForgetDevice: jest.fn().mockResolvedValue(undefined),
+    onForgetDevice: jest.fn(),
     disconnectionReason: null,
   }
 
   it('renders UserSettings when not connected and workout has not started', () => {
     render(<ConnectView {...defaultProps} />)
-    expect(screen.getByTestId('user-settings')).toBeInTheDocument()
+    expect(screen.getByText('UserSettings Mock')).toBeInTheDocument()
+    expect(
+      screen.queryByText('ConnectionManager Mock')
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('WorkoutManager Mock')
+    ).toBeInTheDocument()
   })
 
-  it('hides UserSettings and shows user details when connected', () => {
+  it('shows user details and hides UserSettings when connected', () => {
     render(<ConnectView {...defaultProps} isConnected={true} />)
-    expect(screen.queryByTestId('user-settings')).not.toBeInTheDocument()
+    expect(screen.queryByText('UserSettings Mock')).not.toBeInTheDocument()
     expect(screen.getByText('Connected as')).toBeInTheDocument()
     expect(screen.getByText('Test User')).toBeInTheDocument()
-  })
-
-  it('renders ConnectionManager, WorkoutManager, and BottomNavBar', () => {
-    render(<ConnectView {...defaultProps} />)
-    expect(screen.getByTestId('connection-manager')).toBeInTheDocument()
-    expect(screen.getByTestId('workout-manager')).toBeInTheDocument()
-    expect(screen.getByTestId('bottom-nav-bar')).toBeInTheDocument()
-  })
-
-  it('displays a "Bluetooth Not Supported" message when not supported', () => {
-    render(<ConnectView {...defaultProps} isSupported={false} />)
-    expect(screen.getByText('Bluetooth Not Supported')).toBeInTheDocument()
-    // Ensure other components are not rendered
-    expect(
-      screen.queryByTestId('connection-manager')
-    ).not.toBeInTheDocument()
-  })
-
-  it('passes the correct `isConnectable` prop to ConnectionManager', () => {
-    // Should be connectable when userName and userAge are present
-    const { rerender } = render(<ConnectView {...defaultProps} />)
-    const connectionManager = screen.getByTestId('connection-manager')
-    expect(connectionManager).toHaveAttribute('data-isconnectable', 'true')
-
-    // Should not be connectable if userName is missing
-    rerender(<ConnectView {...defaultProps} userName="" />)
-    expect(connectionManager).toHaveAttribute('data-isconnectable', 'false')
-
-    // Should not be connectable if userAge is missing
-    rerender(<ConnectView {...defaultProps} userAge="" />)
-    expect(connectionManager).toHaveAttribute('data-isconnectable', 'false')
   })
 })

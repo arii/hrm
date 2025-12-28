@@ -1,7 +1,6 @@
 // app/client/connect/page.tsx
 'use client'
 
-import React from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
