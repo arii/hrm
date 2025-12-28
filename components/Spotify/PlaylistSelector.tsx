@@ -1,8 +1,6 @@
 // components/Spotify/PlaylistSelector.tsx
-import ClearIcon from '@mui/icons-material/Clear'
 import MusicNote from '@mui/icons-material/MusicNote'
 import PlayArrow from '@mui/icons-material/PlayArrow'
-import Search from '@mui/icons-material/Search'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
@@ -45,8 +43,8 @@ const PlaylistItemContent: React.FC<PlaylistItemProps> = ({
         playlist.trackCount !== undefined
           ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
           : playlist.owner
-          ? playlist.owner
-          : undefined
+            ? playlist.owner
+            : undefined
       }
     />
     {playlist.isPreset && (
@@ -276,14 +274,12 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             }}
           />
         )}
-        renderOption={(props, option) => {
-          const { key, ...optionProps } = props
-          return (
-            <ListItem {...optionProps} key={key} divider>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
+        renderOption={(props, option) => (
+          <ListItem {...props} divider>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
                 width: '100%',
               }}
             >

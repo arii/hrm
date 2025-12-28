@@ -8,6 +8,7 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
+import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
@@ -112,4 +113,10 @@ const SpotifySelectionPage = () => {
   )
 }
 
-export default SpotifySelectionPage
+const SpotifySelectionPageWithSuspense = () => (
+  <Suspense fallback={<Skeleton variant="rectangular" height={600} />}>
+    <SpotifySelectionPage />
+  </Suspense>
+)
+
+export default SpotifySelectionPageWithSuspense

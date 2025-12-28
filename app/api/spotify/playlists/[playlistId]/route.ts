@@ -40,6 +40,8 @@ async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
         duration: item.track.duration_ms,
       }
     })
+    // The map operation above can return null for non-track items,
+    // so we filter them out here.
     .filter(Boolean)
 
   return NextResponse.json({
@@ -47,7 +49,7 @@ async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
     description: playlist.description,
     imageUrl:
       playlist.images && playlist.images.length > 0
-        ? playlist.images[0]?.url ?? ''
+        ? (playlist.images[0]?.url ?? '')
         : '',
     tracks,
   })

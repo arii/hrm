@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography'
 import Skeleton from '@mui/material/Skeleton'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
+import { formatDuration } from '@/utils/formatters'
 
 interface Track {
   uri: string
@@ -154,21 +155,27 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
         </Box>
       </Box>
       <List>
-        {details.tracks.map((track, index) => (
-          <ListItem key={`${track.uri}-${index}`} divider>
-            <ListItemText
-              primary={`${index + 1}. ${track.name}`}
-              secondary={`${track.artist} • ${formatDuration(track.duration)}`}
-            />
-            <IconButton
-              edge="end"
-              aria-label={`Play ${track.name}`}
-              onClick={() => handlePlayTrack(track.uri)}
-            >
-              <PlayArrow />
-            </IconButton>
+        {details.tracks && details.tracks.length > 0 ? (
+          details.tracks.map((track, index) => (
+            <ListItem key={`${track.uri}-${index}`} divider>
+              <ListItemText
+                primary={`${index + 1}. ${track.name}`}
+                secondary={`${track.artist} • ${formatDuration(track.duration)}`}
+              />
+              <IconButton
+                edge="end"
+                aria-label={`Play ${track.name}`}
+                onClick={() => handlePlayTrack(track.uri)}
+              >
+                <PlayArrow />
+              </IconButton>
+            </ListItem>
+          ))
+        ) : (
+          <ListItem>
+            <ListItemText primary="This playlist is empty." />
           </ListItem>
-        ))}
+        )}
       </List>
     </Box>
   )
