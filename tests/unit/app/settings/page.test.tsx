@@ -9,7 +9,7 @@ import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import '@testing-library/jest-dom'
 
 describe('SettingsPage', () => {
-  it('renders the settings page and updates the weight', () => {
+  it('renders the settings page and updates the weight on blur', () => {
     render(
       <UserSettingsProvider>
         <SettingsPage />
@@ -19,18 +19,30 @@ describe('SettingsPage', () => {
     const weightInput = screen.getByLabelText(/Weight \(kg\)/i)
     expect(weightInput).toBeInTheDocument()
 
+    // Test valid input
     fireEvent.change(weightInput, { target: { value: '80' } })
+    fireEvent.blur(weightInput)
     expect(weightInput).toHaveValue(80)
 
+    // Test invalid input
     fireEvent.change(weightInput, { target: { value: '10' } })
+    fireEvent.blur(weightInput)
     expect(
-      screen.getByText('Please enter a weight between 20 and 300 kg.')
+      screen.getByText('Invalid weight. Must be between 20 and 300.')
     ).toBeInTheDocument()
 
+    // Test non-numeric input
     fireEvent.change(weightInput, { target: { value: 'abc' } })
-    expect(screen.getByText('Please enter a valid number.')).toBeInTheDocument()
+    fireEvent.blur(weightInput)
+    expect(
+      screen.getByText('Invalid weight. Must be between 20 and 300.')
+    ).toBeInTheDocument()
 
+    // Test empty input
     fireEvent.change(weightInput, { target: { value: '' } })
-    expect(screen.getByText('Weight cannot be empty.')).toBeInTheDocument()
+    fireEvent.blur(weightInput)
+    expect(
+      screen.getByText('Invalid weight. Must be between 20 and 300.')
+    ).toBeInTheDocument()
   })
 })
