@@ -46,13 +46,13 @@ const HrmConnectionPanel = () => {
   useEffect(() => {
     if (
       connectionStatus === 'Connected' &&
-      !isConnected &&
+      deviceStatus === 'Disconnected' &&
       !autoConnectAttempted.current
     ) {
       autoConnectAttempted.current = true
       handleConnect()
     }
-  }, [connectionStatus, isConnected, handleConnect])
+  }, [connectionStatus, deviceStatus, handleConnect])
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity

@@ -21,7 +21,7 @@ export const useUserPreferences = () => {
     favoritePlaylist: null,
     userName: null,
     userAge: null,
-    userWeight: 70,
+    userWeight: null,
   })
 
   return [prefs, setPrefs] as const
