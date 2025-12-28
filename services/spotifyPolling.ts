@@ -20,7 +20,8 @@ import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
 import { env } from '../lib/env.js'
 
-const SPOTIFY_SYNTAX_ERROR_MESSAGE = 'Unexpected end of JSON input'
+const SPOTIFY_EMPTY_RESPONSE_SYNTAX_ERROR_MESSAGE =
+  'Unexpected end of JSON input'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
@@ -476,7 +477,7 @@ export class SpotifyPolling implements SpotifyService {
   private isEmptyResponseError(error: unknown): boolean {
     return (
       error instanceof SyntaxError &&
-      error.message.includes(SPOTIFY_SYNTAX_ERROR_MESSAGE)
+      error.message.includes(SPOTIFY_EMPTY_RESPONSE_SYNTAX_ERROR_MESSAGE)
     )
   }
 }
