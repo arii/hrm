@@ -1,85 +1,85 @@
-/** @jest-environment jsdom */
-import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+/**
+ * @jest-environment jsdom
+ */
+import { render, screen } from '@testing-library/react'
 import ConnectView from '../../../../../app/client/connect/ConnectView'
-import { Gender, MeasurementSystem } from '../../../../../types'
+import { MeasurementSystem, Gender } from '../../../../../types'
+
+// Mock child components to isolate the ConnectView logic
+jest.mock('../../../../../app/client/connect/UserSettings', () => (props) => (
+  <div data-testid="user-settings" {...props} />
+))
+jest.mock(
+  '../../../../../app/client/connect/ConnectionManager',
+  () => (props) => <div data-testid="connection-manager" {...props} />
+)
+jest.mock(
+  '../../../../../app/client/connect/WorkoutManager',
+  () => (props) => <div data-testid="workout-manager" {...props} />
+)
+jest.mock('../../../../../components/BottomNavBar', () => () => (
+  <div data-testid="bottom-nav-bar" />
+))
 
 describe('ConnectView', () => {
-  const mockProps = {
-    duration: '00:00',
-    caloriesBurned: 0,
+  const defaultProps = {
     userName: 'Test User',
     setUserName: jest.fn(),
     userAge: '30',
     setUserAge: jest.fn(),
-    userHeight: 175,
-    setUserHeight: jest.fn(),
-    userWeight: '70',
-    setUserWeight: jest.fn(),
+    weightInKg: '70',
+    setWeightInKg: jest.fn(),
+    heightInCm: '175',
+    setHeightInCm: jest.fn(),
     gender: 'MALE' as Gender,
     setGender: jest.fn(),
-    unitSystem: 'METRIC' as MeasurementSystem,
-    onUnitChange: jest.fn(),
+    unitSystem: 'IMPERIAL' as MeasurementSystem,
+    setUnitSystem: jest.fn(),
     isConnected: false,
-    deviceStatus: '',
+    isSupported: true,
+    deviceStatus: 'Disconnected',
     batteryLevel: null,
+    currentHR: 0,
+    hrZoneProps: { percentage: 0, progressColor: 'grey' },
+    connectionStatus: 'Disconnected',
     onConnect: jest.fn(),
     onDisconnect: jest.fn(),
     onForgetDevice: jest.fn().mockResolvedValue(undefined),
-    isSupported: true,
-    currentHR: 0,
-    hrZoneProps: { percentage: 0, progressColor: '' },
-    connectionStatus: 'Connected',
-    bluetoothConnected: false,
+    disconnectionReason: null,
+    workoutDuration: 0,
+    calories: 0,
     hasStarted: false,
-    onReset: jest.fn(),
-    workoutStatus: 'idle' as const,
-    onStartWorkout: jest.fn(),
-    onEndWorkout: jest.fn(),
+    workoutStatus: 'idle' as 'idle' | 'running' | 'paused',
+    startWorkout: jest.fn(),
+    endWorkout: jest.fn(),
+    resetWorkout: jest.fn(),
   }
 
-  it('renders the component and allows input', () => {
-    render(<ConnectView {...mockProps} />)
-    expect(screen.getByText('Connect Heart Rate Monitor')).toBeInTheDocument()
-    const nameInput = screen.getByLabelText('Your Name')
-    fireEvent.change(nameInput, { target: { value: 'New Name' } })
-    expect(mockProps.setUserName).toHaveBeenCalledWith('New Name')
+  it('renders UserSettings when not connected and workout has not started', () => {
+    render(<ConnectView {...defaultProps} />)
+    expect(screen.getByTestId('user-settings')).toBeInTheDocument()
   })
 
-  it('validates age on blur', async () => {
-    render(<ConnectView {...mockProps} userAge="" />)
-    const ageInput = screen.getByLabelText('Your Age')
-    fireEvent.blur(ageInput)
-    await waitFor(() => {
-      expect(
-        screen.getByText('Please enter a valid age')
-      ).toBeInTheDocument()
-    })
+  it('hides UserSettings and shows user details when connected', () => {
+    render(<ConnectView {...defaultProps} isConnected={true} />)
+    expect(screen.queryByTestId('user-settings')).not.toBeInTheDocument()
+    expect(screen.getByText('Connected as')).toBeInTheDocument()
+    expect(screen.getByText('Test User')).toBeInTheDocument()
   })
 
-  it('switches between metric and imperial units', () => {
-    const { rerender } = render(<ConnectView {...mockProps} />)
-    expect(screen.getByLabelText('Your Height (cm)')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByLabelText('imperial'))
-    expect(mockProps.onUnitChange).toHaveBeenCalledWith('IMPERIAL')
-
-    rerender(<ConnectView {...mockProps} unitSystem="IMPERIAL" />)
-    expect(screen.getByLabelText('Feet')).toBeInTheDocument()
-    expect(screen.getByLabelText('Inches')).toBeInTheDocument()
+  it('renders ConnectionManager, WorkoutManager, and BottomNavBar', () => {
+    render(<ConnectView {...defaultProps} />)
+    expect(screen.getByTestId('connection-manager')).toBeInTheDocument()
+    expect(screen.getByTestId('workout-manager')).toBeInTheDocument()
+    expect(screen.getByTestId('bottom-nav-bar')).toBeInTheDocument()
   })
 
-  it('converts and validates imperial height on change and blur', () => {
-    render(<ConnectView {...mockProps} unitSystem="IMPERIAL" />)
-    const feetInput = screen.getByLabelText('Feet')
-    const inchesInput = screen.getByLabelText('Inches')
-
-    fireEvent.change(feetInput, { target: { value: '6' } })
-    fireEvent.change(inchesInput, { target: { value: '0' } })
-
-    expect(mockProps.setUserHeight).toHaveBeenCalledWith(182.88)
-
-    fireEvent.blur(feetInput)
-    expect(screen.queryByText('Please enter a valid height')).toBeNull()
+  it('displays a "Bluetooth Not Supported" message when not supported', () => {
+    render(<ConnectView {...defaultProps} isSupported={false} />)
+    expect(screen.getByText('Bluetooth Not Supported')).toBeInTheDocument()
+    // Ensure other components are not rendered
+    expect(
+      screen.queryByTestId('connection-manager')
+    ).not.toBeInTheDocument()
   })
 })

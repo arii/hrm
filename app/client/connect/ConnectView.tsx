@@ -1,185 +1,103 @@
-import Alert from '@mui/material/Alert'
+// app/client/connect/ConnectView.tsx
+'use client'
+
+import React from 'react'
+import Container from '@mui/material/Container'
+import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
-import Container from '@mui/material/Container'
-import Stack from '@mui/material/Stack'
-import Typography from '@mui/material/Typography'
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
-import BatteryFullIcon from '@mui/icons-material/BatteryFull'
-import BatteryStdIcon from '@mui/icons-material/BatteryStd'
-import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
+import Alert from '@mui/material/Alert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
-import HrTile from '../../../components/HrTile'
+import UserSettings from './UserSettings'
+import ConnectionManager from './ConnectionManager'
+import WorkoutManager from './WorkoutManager'
 import BottomNavBar from '../../../components/BottomNavBar'
-import WorkoutSummary from './WorkoutSummary'
-import React, { useReducer, useEffect } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
-import {
-  ToggleButtonGroup,
-  ToggleButton,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-} from '@mui/material'
-import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
-import { reducer, initialState } from './reducer'
-
-const WEIGHT_VALIDATION = {
-  IMPERIAL: { min: 66, max: 440 }, // lbs
-  METRIC: { min: 30, max: 200 }, // kg
-}
-
-const validate = (value: string, min: number, max: number, name: string) => {
-  if (!value || value.trim() === '') {
-    return `Please enter a valid ${name}`
-  }
-  const num = Number(value)
-  if (isNaN(num) || num < min || num > max) {
-    return `Please enter a valid ${name} (${min}-${max})`
-  }
-  return null
-}
 
 interface ConnectViewProps {
-  duration: string
-  caloriesBurned: number
-  userName: string
-  setUserName: (name: string) => void
-  userAge: string
-  setUserAge: (age: string) => void
-  userHeight: number
-  setUserHeight: (height: number) => void
-  userWeight: string
-  setUserWeight: (weight: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
-  userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (
-    height: Partial<{ cm: string; feet: string; inches: string }>
-  ) => void
-  onHeightBlur: () => void
-  heightError: string | null
-  userWeight: string
-  setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
-  weightError: string | null
-  gender: Gender
-  setGender: React.Dispatch<React.SetStateAction<Gender>>
-  unitSystem: MeasurementSystem
-  onUnitChange: (unit: MeasurementSystem) => void
-  isConnected: boolean
-  deviceStatus: string
-  batteryLevel: number | null
-  onConnect: () => void
-  onDisconnect: () => void
-  onForgetDevice: () => Promise<void>
-  isSupported: boolean
-  currentHR: number
-  hrZoneProps: { percentage: number; progressColor: string }
-  connectionStatus: string
-  bluetoothConnected: boolean
-  hasStarted: boolean
-  onReset: () => void
-  workoutStatus: 'idle' | 'running' | 'paused'
-  onStartWorkout: () => void
-  onEndWorkout: () => void
+  userName: string;
+  setUserName: (name: string) => void;
+  userAge: string;
+  setUserAge: (age: string) => void;
+  weightInKg: string;
+  setWeightInKg: (weight: string) => void;
+  heightInCm: string;
+  setHeightInCm: (height: string) => void;
+  gender: Gender;
+  setGender: (gender: Gender) => void;
+  unitSystem: MeasurementSystem;
+  setUnitSystem: (system: MeasurementSystem) => void;
+  isConnected: boolean;
+  isSupported: boolean;
+  deviceStatus: string;
+  batteryLevel: number | null;
+  currentHR: number;
+  hrZoneProps: { percentage: number; progressColor: string };
+  connectionStatus: string;
+  onConnect: () => void;
+  onDisconnect: () => void;
+  onForgetDevice: () => Promise<void>;
+  disconnectionReason: string | null;
+  workoutDuration: number;
+  calories: number;
+  hasStarted: boolean;
+  workoutStatus: 'idle' | 'running' | 'paused';
+  startWorkout: () => void;
+  endWorkout: () => void;
+  resetWorkout: () => void;
 }
 
-export default function ConnectView({
-  duration,
-  caloriesBurned,
+const ConnectView: React.FC<ConnectViewProps> = ({
   userName,
   setUserName,
   userAge,
   setUserAge,
-  onAgeBlur,
-  ageError,
-  userHeight,
-  setUserHeight,
-  userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
+  weightInKg,
+  setWeightInKg,
+  heightInCm,
+  setHeightInCm,
   gender,
   setGender,
   unitSystem,
-  onUnitChange,
+  setUnitSystem,
   isConnected,
+  isSupported,
   deviceStatus,
   batteryLevel,
-  onConnect,
-  onDisconnect,
-  onForgetDevice,
-  isSupported,
   currentHR,
   hrZoneProps,
   connectionStatus,
-  bluetoothConnected,
+  onConnect,
+  onDisconnect,
+  onForgetDevice,
+  disconnectionReason,
+  workoutDuration,
+  calories,
   hasStarted,
-  onReset,
   workoutStatus,
-  onStartWorkout,
-  onEndWorkout,
-}: ConnectViewProps) {
-  const [state, dispatch] = useReducer(reducer, initialState)
-  const {
-    isResetting,
-    ageError,
-    weightError,
-    heightError,
-    feet,
-    inches,
-  } = state
-
-  const weightValidationRange = WEIGHT_VALIDATION[unitSystem]
-  const [isResetting, setIsResetting] = useState(false)
-
-  useEffect(() => {
-    if (unitSystem === 'IMPERIAL' && userHeight > 0) {
-      const { feet: newFeet, inches: newInches } = cmToFeetAndInches(userHeight)
-      if (String(newFeet) !== feet || String(newInches) !== inches) {
-        dispatch({ type: 'SET_FEET', payload: String(newFeet) })
-        dispatch({ type: 'SET_INCHES', payload: String(newInches) })
-      }
-    }
-  }, [unitSystem, userHeight, feet, inches])
-
-  useEffect(() => {
-    if (unitSystem === 'IMPERIAL') {
-      const feetNum = Number(feet)
-      const inchesNum = Number(inches)
-      if (
-        !isNaN(feetNum) &&
-        !isNaN(inchesNum) &&
-        feetNum >= 0 &&
-        inchesNum >= 0
-      ) {
-        const cm = feetAndInchesToCm(feetNum, inchesNum)
-        setUserHeight(cm)
-      }
-    }
-  }, [feet, inches, unitSystem, setUserHeight])
-
-  const getBatteryIcon = (level: number) => {
-    if (level > 90) return <BatteryFullIcon color="success" />
-    if (level > 50) return <BatteryChargingFullIcon color="action" />
-    if (level > 20) return <BatteryStdIcon color="warning" />
-    return <BatteryAlertIcon color="error" />
-  }
+  startWorkout,
+  endWorkout,
+  resetWorkout,
+}) => {
+  const [isResetting, setIsResetting] = React.useState(false);
 
   const handleFullReset = async () => {
-    dispatch({ type: 'SET_IS_RESETTING', payload: true })
+    setIsResetting(true)
     try {
       await onForgetDevice()
-      onReset()
+      resetWorkout()
     } catch (error) {
       console.error('Reset failed:', error)
     } finally {
-      dispatch({ type: 'SET_IS_RESETTING', payload: false })
+      setIsResetting(false)
     }
+  }
+
+  let deviceStatusMessage = deviceStatus;
+  if (disconnectionReason === 'timeout') {
+    deviceStatusMessage = 'Connection unstable. Trying to reconnect...';
+  } else if (disconnectionReason === 'signal_loss') {
+    deviceStatusMessage = 'Signal lost. Trying to reconnect...';
   }
 
   if (!isSupported) {
@@ -197,10 +115,11 @@ export default function ConnectView({
         </Alert>
         <BottomNavBar />
       </Container>
-    )
+    );
   }
 
-  const showUserDetails = hasStarted || isConnected
+  const showUserDetails = hasStarted || isConnected;
+  const isConnectable = !!userName.trim() && !!userAge.trim();
 
   return (
     <>
@@ -210,207 +129,20 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <Stack spacing={2} sx={{ mb: 3 }}>
-            <TextField
-              fullWidth
-              label="Your Name"
-              placeholder="e.g., Jane Doe"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-            />
-            <TextField
-              fullWidth
-              label="Your Age"
-              placeholder="e.g., 30"
-              type="number"
-              value={userAge}
-              onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setUserAge(e.target.value)
-                }
-              }}
-              onBlur={(e) => {
-                dispatch({
-                  type: 'SET_AGE_ERROR',
-                  payload: validate(e.target.value, 1, 120, 'age'),
-                })
-              }}
-              error={!!ageError}
-              helperText={ageError}
-              inputProps={{ min: 1, max: 120, 'aria-invalid': !!ageError }}
-            />
-            <ToggleButtonGroup
-              value={unitSystem}
-              exclusive
-              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
-              aria-label="measurement system"
-              fullWidth
-            >
-              <ToggleButton value="IMPERIAL" aria-label="imperial">
-                Imperial (lbs, ft, in)
-              </ToggleButton>
-              <ToggleButton value="METRIC" aria-label="metric">
-                Metric (kg, cm)
-              </ToggleButton>
-            </ToggleButtonGroup>
-            {unitSystem === 'METRIC' ? (
-              <TextField
-                fullWidth
-                label="Your Height (cm)"
-                placeholder="e.g., 175"
-                type="number"
-                value={userHeight}
-                onChange={(e) => {
-                  if (/^\d*\.?\d*$/.test(e.target.value)) {
-                    setUserHeight(e.target.valueAsNumber)
-                  }
-                }}
-                onBlur={(e) =>
-                  dispatch({
-                    type: 'SET_HEIGHT_ERROR',
-                    payload: validate(e.target.value, 90, 240, 'height'),
-                  })
-                }
-                error={!!heightError}
-                helperText={heightError}
-              />
-            ) : (
-              <Stack direction="row" spacing={2}>
-                <TextField
-                  fullWidth
-                  label="Feet"
-                  placeholder="e.g., 5"
-                  type="number"
-                  value={feet}
-                  onChange={(e) => {
-                    if (/^\d*$/.test(e.target.value)) {
-                      dispatch({ type: 'SET_FEET', payload: e.target.value })
-                    }
-                  }}
-                  onBlur={() => {
-                    const feetNum = Number(feet)
-                    const inchesNum = Number(inches)
-                    if (!isNaN(feetNum) && !isNaN(inchesNum)) {
-                      dispatch({
-                        type: 'SET_HEIGHT_ERROR',
-                        payload: validate(
-                          String(feetAndInchesToCm(feetNum, inchesNum)),
-                          90,
-                          240,
-                          'height'
-                        ),
-                      })
-                    }
-                  }}
-                />
-                <TextField
-                  fullWidth
-                  label="Inches"
-                  placeholder="e.g., 9"
-                  type="number"
-                  value={inches}
-                  onChange={(e) => {
-                    if (/^\d*$/.test(e.target.value)) {
-                      dispatch({ type: 'SET_INCHES', payload: e.target.value })
-                    }
-                  }}
-                  onBlur={() => {
-                    const feetNum = Number(feet)
-                    const inchesNum = Number(inches)
-                    if (!isNaN(feetNum) && !isNaN(inchesNum)) {
-                      dispatch({
-                        type: 'SET_HEIGHT_ERROR',
-                        payload: validate(
-                          String(feetAndInchesToCm(feetNum, inchesNum)),
-                          90,
-                          240,
-                          'height'
-                        ),
-                      })
-                    }
-                  }}
-                />
-              </Stack>
-            )}
-            <TextField
-              fullWidth
-              label={`Your Weight (${
-                unitSystem === 'IMPERIAL' ? 'lbs' : 'kg'
-              })`}
-              placeholder={
-                unitSystem === 'IMPERIAL' ? 'e.g., 150' : 'e.g., 70'
-              }
-              type="number"
-              value={userWeight}
-              onChange={(e) => {
-                setUserWeight(e.target.value)
-              }}
-              onBlur={(e) => {
-                dispatch({
-                  type: 'SET_WEIGHT_ERROR',
-                  payload: validate(
-                    e.target.value,
-                    weightValidationRange.min,
-                    weightValidationRange.max,
-                    'weight'
-                  ),
-                })
-              }}
-              error={!!weightError}
-              helperText={weightError}
-              inputProps={{
-                min: weightValidationRange.min,
-                max: weightValidationRange.max,
-                'aria-invalid': !!weightError,
-              }}
-                Imperial (lbs)
-              </ToggleButton>
-              <ToggleButton value="METRIC" aria-label="metric">
-                Metric (kg)
-              </ToggleButton>
-            </ToggleButtonGroup>
-
-            <UserSettings
-              userName={userName}
-              setUserName={setUserName}
-              userAge={userAge}
-              setUserAge={setUserAge}
-              onAgeBlur={onAgeBlur}
-              ageError={ageError}
-              userHeight={userHeight}
-              setUserHeight={setUserHeight}
-              onHeightBlur={onHeightBlur}
-              heightError={heightError}
-              userWeight={userWeight}
-              setUserWeight={setUserWeight}
-              onWeightBlur={onWeightBlur}
-              weightError={weightError}
-              unit={unitSystem}
-              setUnit={onUnitChange}
-            />
-
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Gender</FormLabel>
-              <RadioGroup
-                row
-                aria-label="gender"
-                name="gender"
-                value={gender}
-                onChange={(e) => setGender(e.target.value as Gender)}
-              >
-                <FormControlLabel
-                  value="MALE"
-                  control={<Radio />}
-                  label="Male"
-                />
-                <FormControlLabel
-                  value="FEMALE"
-                  control={<Radio />}
-                  label="Female"
-                />
-              </RadioGroup>
-            </FormControl>
-          </Stack>
+          <UserSettings
+            userName={userName}
+            setUserName={setUserName}
+            userAge={userAge}
+            setUserAge={setUserAge}
+            weightInKg={weightInKg}
+            setWeightInKg={setWeightInKg}
+            heightInCm={heightInCm}
+            setHeightInCm={setHeightInCm}
+            gender={gender}
+            setGender={setGender}
+            unitSystem={unitSystem}
+            setUnitSystem={setUnitSystem}
+          />
         ) : (
           <Box
             sx={{
@@ -434,80 +166,16 @@ export default function ConnectView({
           </Box>
         )}
 
-        {deviceStatus &&
-          !isConnected &&
-          !deviceStatus.includes('Disconnected') && (
-            <Alert
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
-              sx={{ mb: 2 }}
-            >
-              {deviceStatus}
-            </Alert>
-          )}
+        <ConnectionManager
+          onConnect={onConnect}
+          onDisconnect={onDisconnect}
+          isConnected={isConnected}
+          deviceStatus={deviceStatusMessage}
+          batteryLevel={batteryLevel}
+          isConnectable={isConnectable}
+        />
 
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          {!isConnected ? (
-            <Button
-              variant="contained"
-              size="large"
-              onClick={onConnect}
-              disabled={
-                !userName.trim() ||
-                !userAge.trim() ||
-                deviceStatus.includes('Connecting')
-              }
-            >
-              {deviceStatus.includes('Connecting') ? (
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <CircularProgress size={20} color="inherit" />
-                  <span>Connecting...</span>
-                </Stack>
-              ) : (
-                'Connect Bluetooth HRM'
-              )}
-            </Button>
-          ) : (
-            <Stack spacing={2}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                {batteryLevel !== null && (
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={0.5}
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    {getBatteryIcon(batteryLevel)}
-                    <Typography variant="body2">
-                      {batteryLevel}% Battery
-                    </Typography>
-                  </Stack>
-                )}
-              </Box>
-              <Button
-                variant="outlined"
-                size="large"
-                onClick={onDisconnect}
-                color="error"
-              >
-                Disconnect
-              </Button>
-              {deviceStatus !== 'Connected' && (
-                <Typography variant="caption" color="text.secondary">
-                  Status: {deviceStatus}
-                </Typography>
-              )}
-            </Stack>
-          )}
-        </Box>
-
-        {isConnected && bluetoothConnected && (
+        {isConnected && (
           <Alert severity="success" sx={{ mb: 2 }}>
             Connected! Heart rate data is being streamed.
           </Alert>
@@ -519,76 +187,18 @@ export default function ConnectView({
           </Alert>
         )}
 
-        {isConnected && currentHR > 0 && (
-          <Box sx={{ mt: 2 }}>
-            <HrTile
-              name={userName}
-              bpm={currentHR}
-              percentMax={hrZoneProps.percentage}
-              isAlerting={false}
-            />
-          </Box>
-        )}
-
-        <Stack
-          spacing={2}
-          sx={{
-            mt: 3,
-            mb: 3,
-            alignItems: 'center',
-            minHeight: '48px', // Ensure consistent height for layout stability
-          }}
-        >
-          {workoutStatus === 'idle' && isConnected && (
-            <Button
-              variant="contained"
-              onClick={onStartWorkout}
-              size="large"
-              sx={{ minWidth: '200px' }}
-              aria-label="Start workout session"
-            >
-              Start Workout
-            </Button>
-          )}
-          {workoutStatus === 'paused' && (
-            <>
-              <Button
-                variant="contained"
-                onClick={onStartWorkout}
-                size="large"
-                sx={{ minWidth: '200px' }}
-                disabled={!isConnected}
-                aria-label="Resume workout session"
-              >
-                Resume Workout
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={onEndWorkout}
-                size="large"
-                sx={{ minWidth: '200px' }}
-                aria-label="End workout session"
-              >
-                End Workout
-              </Button>
-            </>
-          )}
-          {workoutStatus === 'running' && (
-            <Button
-              variant="outlined"
-              onClick={onEndWorkout}
-              size="large"
-              sx={{ minWidth: '200px' }}
-              aria-label="End workout session"
-            >
-              End Workout
-            </Button>
-          )}
-        </Stack>
-
-        {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
-        )}
+        <WorkoutManager
+          workoutStatus={workoutStatus}
+          onStartWorkout={startWorkout}
+          onEndWorkout={endWorkout}
+          isConnected={isConnected}
+          hasStarted={hasStarted}
+          duration={workoutDuration}
+          caloriesBurned={calories}
+          userName={userName}
+          currentHR={currentHR}
+          hrZoneProps={hrZoneProps}
+        />
 
         <Typography
           variant="body2"
@@ -626,5 +236,7 @@ export default function ConnectView({
       </Container>
       <BottomNavBar />
     </>
-  )
-}
+  );
+};
+
+export default ConnectView;
