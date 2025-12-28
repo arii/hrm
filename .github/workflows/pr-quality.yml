@@ -123,7 +123,7 @@ jobs:
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'pnpm'
@@ -179,7 +179,7 @@ jobs:
       # We still set up pnpm/node just to ensure the binaries are in PATH
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with: { node-version: '20.x' }
 
       - name: Sanitize SESSION_ID
@@ -306,7 +306,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with: { node-version: '20.x' }
 
       - name: Configure Session-specific Cache
@@ -422,7 +422,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with: { node-version: '20.x' }
 
       - name: Configure Session-specific Cache
