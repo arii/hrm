@@ -9,7 +9,11 @@ on:
     branches:
       - leader
 
-# These permissions are required by `release-please-action` to create releases and link issues.
+# Permissions required by the release-please-action to manage the release process.
+# - contents: write      | to create release tags and commit version updates/changelogs.
+# - pull-requests: write | to create and manage the release PR.
+# - issues: write        | to link issues in release notes.
+# - releases: write      | to create the final GitHub release.
 # See: https://github.com/marketplace/actions/release-please-action#workflow-permissions
 permissions:
   contents: write
