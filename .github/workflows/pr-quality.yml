@@ -50,12 +50,14 @@ jobs:
     steps:
       - id: sanitize
         shell: bash
+        env:
+          RAW_REF: ${{ github.head_ref || github.ref_name }}
         run: |
-          RAW_ID="${{ github.head_ref || github.ref_name }}"
-          CLEAN_ID=$(echo "$RAW_ID" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
+          # Replace any character that is not a letter, number, hyphen, or underscore with a hyphen.
+          CLEAN_ID=$(echo "$RAW_REF" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
 
           if [ -z "$CLEAN_ID" ]; then
-            echo "::error::Sanitized SESSION_ID is empty. Original value: $RAW_ID. Please consider renaming the branch."
+            echo "::error::Sanitized SESSION_ID is empty. Original value: $RAW_REF. Please consider renaming the branch."
             exit 1
           fi
 
@@ -65,26 +67,23 @@ jobs:
       - name: Unit Test Sanitization
         shell: bash
         run: |
-          # Test Cases
-          TEST_CASES=(
-            "feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization=feature-long-branch-name-with-slashes-and-more-slashes-to-test"
-            "short/branch=short-branch"
-            "test/special!@#$%^&*()[]{}chars=test-special--------------chars"
-          )
-
-          for TEST_CASE in "${TEST_CASES[@]}"; do
-            INPUT=$(echo "$TEST_CASE" | cut -d'=' -f1)
-            EXPECTED=$(echo "$TEST_CASE" | cut -d'=' -f2)
-            ACTUAL=$(echo "$INPUT" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
-
-            if [ "$ACTUAL" != "$EXPECTED" ]; then
+          assert_sanitize() {
+            local input="$1"
+            local expected="$2"
+            local actual
+            actual=$(echo "$input" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
+            if [ "$actual" != "$expected" ]; then
               echo "::error::Sanitization test failed!"
-              echo "Input: '$INPUT'"
-              echo "Expected: '$EXPECTED'"
-              echo "Actual: '$ACTUAL'"
+              echo "Input:    '$input'"
+              echo "Expected: '$expected'"
+              echo "Actual:   '$actual'"
               exit 1
             fi
-          done
+          }
+
+          assert_sanitize 'feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization' 'feature-long-branch-name-with-slashes-and-more-slashes-to-test'
+          assert_sanitize 'short/branch' 'short-branch'
+          assert_sanitize 'test/special!@#$%^&*()[]{}chars' 'test-special--------------chars'
 
           echo "✅ Sanitization unit tests passed."
   # ===========================================================================
