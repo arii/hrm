@@ -3,19 +3,17 @@ import { useState, useCallback, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { generateCsrfToken, CSRF_COOKIE_NAME } from '@/lib/csrf'
 
-const getCookie = (name: string): string | undefined => {
+export const getCookie = (name: string): string | undefined => {
   if (typeof document === 'undefined') return undefined
   const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-  return match && match[2] ? decodeURIComponent(match[2]) : undefined
+  return match && match[2] ? match[2] : undefined
 }
 
-const setCookie = (name: string, value: string, days = 365) => {
+export const setCookie = (name: string, value: string, days = 365) => {
   if (typeof document !== 'undefined') {
     const expires = new Date(Date.now() + days * 864e5).toUTCString()
     const secure = process.env.NODE_ENV === 'production' ? '; Secure' : ''
-    document.cookie = `${name}=${encodeURIComponent(
-      value
-    )}; expires=${expires}; path=/; SameSite=Lax${secure}`
+    document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax${secure}`
   }
 }
 
@@ -23,7 +21,7 @@ function useCookie<T>(key: string, initialValue: T) {
   const [storedValue, setStoredValue] = useState<T>(() => {
     const item = getCookie(key)
     try {
-      return item ? JSON.parse(item) : initialValue
+      return item ? JSON.parse(decodeURIComponent(item)) : initialValue
     } catch (error) {
       logger.error({ error }, 'Failed to parse cookie')
       return initialValue
@@ -43,7 +41,7 @@ function useCookie<T>(key: string, initialValue: T) {
         const valueToStore =
           value instanceof Function ? value(storedValue) : value
         setStoredValue(valueToStore)
-        setCookie(key, JSON.stringify(valueToStore))
+        setCookie(key, encodeURIComponent(JSON.stringify(valueToStore)))
       } catch (error) {
         logger.error({ error }, 'Failed to set cookie')
       }

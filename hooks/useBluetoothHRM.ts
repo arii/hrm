@@ -132,13 +132,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     ((device: BluetoothDevice) => Promise<boolean>) | null
   >(null)
 
-  const setActiveConfig = (name: string, age?: number) => {
-    activeConfigRef.current = {
-      name,
-      age,
-    }
-  }
-
   useEffect(() => {
     statusRef.current = deviceStatus
   }, [deviceStatus])
@@ -384,10 +377,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
           if (knownDevice) {
             setDeviceStatus(`Found known device: ${knownDevice.name}`)
-            setActiveConfig(
-              name || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`,
-              age
-            )
+            activeConfigRef.current = {
+              name: name || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`,
+              age,
+            }
             await connectToGatt(knownDevice)
           } else {
             setDeviceStatus(
@@ -396,12 +389,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           }
         }
       } catch (err) {
+        const deviceName =
+          devices.find((d) => d.id === deviceId)?.name || 'Unknown Device'
         const errorMessage =
           err instanceof Error
             ? err.message
             : 'An unknown error occurred. Please try again.'
         logger.error({ error: err }, 'Auto-reconnect failed')
-        setDeviceStatus(`Auto-reconnect failed: ${errorMessage}`)
+        setDeviceStatus(
+          `Auto-reconnect failed for ${deviceName}: ${errorMessage}`
+        )
       }
     },
     [connectToGatt, deviceId]
@@ -457,10 +454,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         })
 
         if (deviceToConnect) {
-          setActiveConfig(
-            name || `Bluetooth HRM (${deviceToConnect.name || 'Unknown'})`,
-            age
-          )
+          activeConfigRef.current = {
+            name: name || `Bluetooth HRM (${deviceToConnect.name || 'Unknown'})`,
+            age,
+          }
           await connectToGatt(deviceToConnect)
         }
       } catch (error) {
