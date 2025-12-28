@@ -204,8 +204,8 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
 }
 
 function getReviewContextFromEnv(): ReviewContext {
+  const failedChecks = parseFailedChecks(process.env.FAILED_CHECKS_JSON)
   return {
-    failedChecks: parseFailedChecks(process.env.FAILED_CHECKS_JSON),
     prNumber: process.env.PR_NUMBER || '',
     prTitle: process.env.PR_TITLE || '',
     prAuthor: process.env.PR_AUTHOR || '',
