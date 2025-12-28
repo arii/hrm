@@ -48,12 +48,11 @@ async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
 
     if (offset === 0) break // Should not happen if next is set
 
-    // @ts-expect-error - The Spotify SDK has a bug where the limit parameter is not correctly typed.
     const nextPage = await spotify.playlists.getPlaylistItems(
       playlistId,
       undefined,
       undefined,
-      limit,
+      limit as any,
       offset
     )
     allItems = [...allItems, ...nextPage.items]
