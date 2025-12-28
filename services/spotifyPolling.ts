@@ -440,7 +440,7 @@ export class SpotifyPolling implements SpotifyService {
    * Executes a Spotify SDK command and suppresses syntax errors caused by 204 No Content responses.
    * @param commandName The name of the command being executed (for logging).
    * @param sdkCall The SDK function to execute.
-   * @param logContext Additional context for logging (not passed to the SDK), e.g., { deviceId, contextUri }.
+   * @param logContext Additional context for logging. This is for internal logging only and is not passed to the Spotify SDK.
    */
   private async executeSdkCommand(
     commandName: string,
