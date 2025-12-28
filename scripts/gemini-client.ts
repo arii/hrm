@@ -50,6 +50,7 @@ interface ReviewContext {
   hasTestChanges: boolean
   missingTests: boolean
   testFiles?: string | undefined
+  failedChecks: { name: string; conclusion: string; detailsUrl: string }[]
 }
 
 async function main() {
@@ -169,7 +170,41 @@ ${task}
   }
 }
 
+interface FailedCheck {
+  name: string
+  conclusion: string
+  detailsUrl: string
+}
+
+function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
+  if (!jsonStr) return []
+  try {
+    const parsed = JSON.parse(jsonStr)
+    if (!Array.isArray(parsed)) {
+      console.warn('Warning: FAILED_CHECKS_JSON is not an array.')
+      return []
+    }
+    // Use a type guard to filter and validate the shape of each object
+    return parsed.filter((item): item is FailedCheck => {
+      const isValid =
+        typeof item.name === 'string' &&
+        typeof item.conclusion === 'string' &&
+        typeof item.detailsUrl === 'string'
+      if (!isValid) {
+        console.warn('Warning: Invalid item in FAILED_CHECKS_JSON:', item)
+      }
+      return isValid
+    })
+  } catch (e) {
+    console.warn(
+      `Warning: Failed to parse FAILED_CHECKS_JSON: ${(e as Error).message}`
+    )
+    return []
+  }
+}
+
 function getReviewContextFromEnv(): ReviewContext {
+  const failedChecks = parseFailedChecks(process.env.FAILED_CHECKS_JSON)
   return {
     prNumber: process.env.PR_NUMBER || '',
     prTitle: process.env.PR_TITLE || '',
@@ -191,7 +226,20 @@ function getReviewContextFromEnv(): ReviewContext {
     hasTestChanges: process.env.HAS_TEST_CHANGES === 'true',
     missingTests: process.env.MISSING_TESTS === 'true',
     testFiles: process.env.TEST_FILES,
+    failedChecks,
   }
+}
+
+const CHECK_FIX_GUIDANCE: Record<string, string> = {
+  lint: 'Usually caused by code not following project style rules. Run `pnpm run lint -- --fix` locally to auto-fix many issues. Check the log for specific rule violations.',
+  build:
+    'Often due to TypeScript errors (e.g., type mismatches, invalid syntax) or missing dependencies. Check the build log for the exact error message.',
+  unit_tests:
+    'A test case failed. Run `pnpm run test:unit` locally to replicate. The log will show which test and assertion failed.',
+  visual_tests:
+    'The UI has changed unexpectedly. If the change is intentional, update the snapshots. Otherwise, fix the UI component. See the log for a link to the visual diff.',
+  infra_tests:
+    'The application failed to start or respond correctly. This can be due to environment configuration issues or fatal errors in the server code. Check the server startup logs.',
 }
 
 function buildReviewPrompt(
@@ -204,9 +252,49 @@ function buildReviewPrompt(
     ? `Re-Review #${context.reviewCount + 1}`
     : 'Initial Review'
 
-  let prompt = `# Code Review Task: ${reviewIteration}
+  let prompt = `# Code Review Task: ${reviewIteration}\n`
 
-## Review Context
+  if (context.failedChecks && context.failedChecks.length > 0) {
+    const checksTable = `| Check Name | Status | Log URL |\n|------------|--------|---------|\n${context.failedChecks
+      .map(
+        (check) =>
+          `| ${check.name} | ${check.conclusion} | [View Log](${check.detailsUrl}) |`
+      )
+      .join('\n')}`
+
+    const guidance = context.failedChecks
+      .map((check) => {
+        const key = Object.keys(CHECK_FIX_GUIDANCE).find((key) =>
+          check.name.toLowerCase().includes(key)
+        )
+        return key
+          ? `- **${check.name}**: ${CHECK_FIX_GUIDANCE[key]}`
+          : `- **${check.name}**: Check the logs linked above for details.`
+      })
+      .join('\n')
+
+    prompt += `
+
+## 🚨 CI Failure Analysis
+
+The following CI checks failed. Your primary task is to identify the cause of these failures in the code and provide specific guidance on how to fix them.
+
+${checksTable}
+
+### How to Fix Common Failures:
+${guidance}
+
+**Your Task:**
+1.  **Analyze the diff** to find the code that likely caused these failures.
+2.  **Provide a clear explanation** of why each check failed.
+3.  **Offer specific, actionable code changes** to fix the failures.
+
+---
+
+`
+  }
+
+  prompt += `## Review Context
 - **PR #${context.prNumber}**: ${context.prTitle}
 - **Author**: ${context.prAuthor}
 - **Files Changed**: ${context.filesChanged}
@@ -586,4 +674,8 @@ function handleError(error: any) {
   process.exit(1)
 }
 
-main()
+// Only run main() when the script is executed directly, not when imported.
+// Jest sets NODE_ENV to 'test' by default.
+if (process.env.NODE_ENV !== 'test') {
+  main()
+}
