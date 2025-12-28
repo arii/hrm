@@ -9,7 +9,7 @@ on:
     branches:
       - leader
 
-# Permissions required by the release-please-action to manage the release process.
+# Permissions granted to the GITHUB_TOKEN for the release-please-action to manage the release process.
 # - contents: write      | to create release tags and commit version updates/changelogs.
 # - pull-requests: write | to create and manage the release PR.
 # - issues: write        | to link issues in release notes.
