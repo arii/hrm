@@ -2,12 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react'
 import {
   WebSocketContext,
   WebSocketContextType,
-  HrmData, // Import the client-side HrmData type from the context
 } from '@/context/WebSocketContext'
+import { HrmData } from '@/types/core'
 import {
   ServerMessage,
   ClientCommandMessage,
-  HrmData as ServerHrmData,
   ActiveAlert,
   TimerData,
   SpotifyData,
@@ -93,33 +92,19 @@ export const MockWebSocketProvider = ({
       if (message) {
         setState((prev) => {
           switch (message.type) {
-            case 'HRM_UPDATE': {
-              const payloadWithConnection = (
-                message.payload as ServerHrmData[]
-              ).map((d) => ({
-                ...d,
-                isConnected: true,
-              }))
-              return { ...prev, hrmData: payloadWithConnection }
-            }
+            case 'HRM_UPDATE':
+              return { ...prev, hrmData: message.payload }
             case 'TIMER_UPDATE':
               return { ...prev, timerData: message.payload }
             case 'SPOTIFY_UPDATE':
               return { ...prev, spotifyData: message.payload }
             case 'ACTIVE_ALERTS_UPDATE':
               return { ...prev, activeAlerts: message.payload }
-            case 'INITIAL_STATE': {
-              const hrmDataWithConnection =
-                message.payload.hrmData?.map((d: ServerHrmData) => ({
-                  ...d,
-                  isConnected: true,
-                })) || []
+            case 'INITIAL_STATE':
               return {
                 ...prev,
                 ...message.payload,
-                hrmData: hrmDataWithConnection,
               }
-            }
             default:
               return prev
           }

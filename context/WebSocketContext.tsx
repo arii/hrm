@@ -17,13 +17,8 @@ import {
   ServerMessage,
   ActiveAlert,
 } from '../types/websocket'
-import { HrmStreamData as ServerHrmData } from '../types/core'
+import { HrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
-
-// Client-side extension of HrmData to include connection status
-export interface HrmData extends ServerHrmData {
-  isConnected: boolean
-}
 
 interface WebSocketState {
   hrmData: HrmData[]
@@ -99,19 +94,13 @@ export const WebSocketProvider = ({
     switch (message.type) {
       case 'RESET_STATE':
         return INITIAL_STATE
-      case 'INITIAL_STATE': {
-        // When the initial state is loaded, ensure all HRM data is marked as connected.
-        const hrmDataWithConnection =
-          message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ||
-          []
+      case 'INITIAL_STATE':
         return {
           ...state,
           ...message.payload,
-          hrmData: hrmDataWithConnection,
         }
-      }
       case 'HRM_UPDATE': {
-        const payload = message.payload as ServerHrmData[]
+        const payload = message.payload as HrmData[]
         // Create a map of incoming clientIds for efficient lookup
         const incomingClients = new Set(payload.map((user) => user.clientId))
 
@@ -125,13 +114,7 @@ export const WebSocketProvider = ({
             // By spreading existingUser first, then updatedUser, we ensure
             // that any fields NOT present in the (potentially partial) `updatedUser`
             // payload are preserved from the existing state.
-            return updatedUser
-              ? {
-                  ...existingUser,
-                  ...updatedUser,
-                  isConnected: true,
-                }
-              : { ...existingUser, isConnected: true }
+            return updatedUser ? { ...existingUser, ...updatedUser } : existingUser
           }
           return { ...existingUser, isConnected: false }
         })
@@ -143,7 +126,7 @@ export const WebSocketProvider = ({
               (existingUser) => existingUser.clientId === newUser.clientId
             )
           ) {
-            mergedHrmData.push({ ...newUser, isConnected: true })
+            mergedHrmData.push(newUser)
           }
         })
 

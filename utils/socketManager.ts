@@ -13,8 +13,8 @@ import {
   ServerMessage,
   StateSnapshot,
   ExtWebSocket,
+  HrmData,
 } from '../types/websocket.js'
-import { HrmStreamData } from '../types/core.js'
 import {
   broadcast,
   sendWebSocketMessage,
@@ -71,17 +71,20 @@ const initSocketManager = (
     logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
     // Initialize new client
-    const newClient: HrmStreamData = {
+    const newClient: HrmData = {
       clientId: extWs.clientId,
+      name: '',
       value: 0,
       maxHr: CLIENT_DEFAULTS.maxHr,
       age: CLIENT_DEFAULTS.age,
       totalCalories: 0,
+      isConnected: true,
     }
     hrmDataRepository.save(newClient)
     getClientSessionState().set(extWs.clientId, {
       lastUpdate: Date.now(),
       hrSamples: [],
+      consecutiveFailures: 0,
     })
 
     extWs.on('message', (message) => {
@@ -164,7 +167,7 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
-          const updateData: Partial<HrmStreamData> = Object.fromEntries(
+          const updateData: Partial<HrmData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
           hrmDataRepository.save({ ...existingData, ...updateData })

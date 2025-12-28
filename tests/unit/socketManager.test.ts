@@ -29,6 +29,7 @@ import {
   ConnectionMonitor,
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
+import { resetCalorieService } from '../../services/calorieService'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -201,6 +202,10 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Calorie Calculation', () => {
+    afterEach(() => {
+      resetCalorieService()
+    })
+
     it('should accumulate calories correctly with small frequent updates', () => {
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
