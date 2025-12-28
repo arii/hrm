@@ -33,8 +33,6 @@ jobs:
     uses: ./.github/workflows/reusable-gemini-rereview.yml
     secrets: inherit
 
-
-
   gemini-dispatch:
     if: github.event_name == 'workflow_dispatch'
     runs-on: self-hosted

@@ -1,6 +1,8 @@
 // hooks/useUserPreferences.ts
 import useLocalStorage from './useLocalStorage'
 
+import { Gender } from '../types'
+
 export interface UserPreferences {
   theme: 'dark' | 'light'
   volumeLevel: number
@@ -10,6 +12,7 @@ export interface UserPreferences {
   userName: string | null
   userAge: number | null
   userWeight: number | null
+  gender: Gender | null
 }
 
 export const useUserPreferences = () => {
@@ -22,6 +25,7 @@ export const useUserPreferences = () => {
     userName: null,
     userAge: null,
     userWeight: 70,
+    gender: 'MALE',
   })
 
   return [prefs, setPrefs] as const
