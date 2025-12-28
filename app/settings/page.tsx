@@ -12,6 +12,12 @@ const SettingsPage = () => {
   const [error, setError] = useState('')
 
   const handleBlur = () => {
+    if (localWeight.trim() === '') {
+      setUserSettings({ ...userSettings, userWeight: null })
+      setError('Weight is required.')
+      return
+    }
+
     const weight = parseFloat(localWeight)
     if (!isNaN(weight) && weight >= 20 && weight <= 300) {
       setUserSettings({ ...userSettings, userWeight: weight })

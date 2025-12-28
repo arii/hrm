@@ -41,8 +41,6 @@ describe('SettingsPage', () => {
     // Test empty input
     fireEvent.change(weightInput, { target: { value: '' } })
     fireEvent.blur(weightInput)
-    expect(
-      screen.getByText('Invalid weight. Must be between 20 and 300.')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Weight is required.')).toBeInTheDocument()
   })
 })
