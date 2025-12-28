@@ -4,7 +4,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import UserSettings from '../../../../../app/client/connect/UserSettings'
 import React from 'react'
-import { Gender, MeasurementSystem } from '../../../../../types'
 
 describe('UserSettings', () => {
   const defaultProps = {
@@ -44,7 +43,9 @@ describe('UserSettings', () => {
   })
 
   it('validates age on blur and clears error for valid age', async () => {
-    const { rerender } = render(<UserSettings {...defaultProps} userAge="150" />)
+    const { rerender } = render(
+      <UserSettings {...defaultProps} userAge="150" />
+    )
     const ageInput = screen.getByLabelText(/Age/i)
 
     // Initially, the error should be shown on blur
