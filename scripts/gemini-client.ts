@@ -24,6 +24,7 @@ const preset = getArg('--preset')
 // Prioritizing newer models as requested to fix 404 errors with older/deprecated ones.
 const MODEL_FALLBACKS = [
   'gemini-2.0-flash-exp',
+  'gemini-2.5-flash-image',
   'gemini-1.5-pro',
   'gemini-1.5-flash',
   'gemini-1.5-flash-8b',
@@ -129,10 +130,16 @@ async function generateContentWithFallback(
       const isNotFound = error.message?.includes('404') || error.status === 404
       const isBadRequest =
         error.message?.includes('400') || error.status === 400 // Sometimes invalid model is 400
+      const isRateLimited =
+        error.message?.includes('429') || error.status === 429
 
-      if (isNotFound || isBadRequest) {
+      if (isNotFound || isBadRequest || isRateLimited) {
+        let reason = 'Not Found/Invalid'
+        if (isRateLimited) {
+          reason = 'Rate Limited'
+        }
         console.warn(
-          `Model ${modelName} failed (Not Found/Invalid). Trying next model...`
+          `Model ${modelName} failed (${reason}). Trying next model...`
         )
         continue
       }
