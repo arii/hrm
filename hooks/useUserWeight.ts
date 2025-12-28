@@ -1,8 +1,8 @@
 // hooks/useUserWeight.ts
-import useLocalStorage from './useLocalStorage'
+import useCookie from './useCookie'
 
 /**
- * A hook to manage the user's weight preference, persisted in local storage.
+ * A hook to manage the user's weight preference, persisted in cookies.
  * The weight is always stored in Kilograms (kg).
  *
  * @returns A tuple containing:
@@ -10,11 +10,15 @@ import useLocalStorage from './useLocalStorage'
  *  - `setWeight`: A function to update the user's weight in kg.
  */
 export const useUserWeight = (): [number, (value: number) => void] => {
-  const [weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
+  const [weightInKg, setWeightInKg] = useCookie('hrm-user-weight', 70) // Always KG
 
   const setWeight = (value: number) => {
-    setWeightInKg(value.toString())
+    setWeightInKg(value)
   }
 
-  return [parseFloat(weightInKg), setWeight]
+  // Ensure the stored value is a number before returning.
+  const numericWeight =
+    typeof weightInKg === 'number' ? weightInKg : parseFloat(String(weightInKg))
+
+  return [numericWeight, setWeight]
 }

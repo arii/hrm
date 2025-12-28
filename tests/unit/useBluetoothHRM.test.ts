@@ -5,10 +5,17 @@ import { jest } from '@jest/globals'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import useCookie from '@/hooks/useCookie'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
+}))
+
+// Mock the useCookie hook
+jest.mock('@/hooks/useCookie', () => ({
+  __esModule: true,
+  default: jest.fn(),
 }))
 
 // Mock navigator.bluetooth
@@ -46,6 +53,7 @@ describe('useBluetoothHRM', () => {
   }
   let consoleWarnSpy: jest.SpyInstance
   let consoleInfoSpy: jest.SpyInstance
+  let mockSetDeviceId: jest.Mock
 
   beforeAll(() => {
     // Suppress console.warn and console.info for all tests in this suite
@@ -66,6 +74,9 @@ describe('useBluetoothHRM', () => {
       sendData: mockSendData,
       connectionStatus: 'Connected',
     })
+
+    mockSetDeviceId = jest.fn()
+    ;(useCookie as jest.Mock).mockReturnValue(['test-device-id', mockSetDeviceId])
 
     mockCharacteristic = {
       startNotifications: jest.fn().mockResolvedValue(undefined),
@@ -96,7 +107,7 @@ describe('useBluetoothHRM', () => {
     }
 
     mockBluetooth.requestDevice.mockResolvedValue(mockDevice)
-    mockBluetooth.getDevices.mockResolvedValue([])
+    mockBluetooth.getDevices.mockResolvedValue([mockDevice])
   })
 
   afterEach(() => {
@@ -136,6 +147,12 @@ describe('useBluetoothHRM', () => {
       })
     }
   }
+
+  it('should attempt to reconnect on mount if a device ID is saved', async () => {
+    renderHook(() => useBluetoothHRM({ userName: 'Test User', userAge: 30 }))
+    await waitFor(() => expect(mockBluetooth.getDevices).toHaveBeenCalled())
+    await waitFor(() => expect(mockDevice.gatt.connect).toHaveBeenCalled())
+  })
 
   it('should send a "death packet" when the connection becomes stale', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
