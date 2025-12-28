@@ -46,10 +46,15 @@ export const estimateCaloriesPerMinute = (
    * https://www.tandfonline.com/doi/abs/10.1080/02640410400023363
    */
   const CALORIE_ESTIMATION_CONSTANTS = {
+    // The intercept is a baseline adjustment for the model.
     INTERCEPT: -55.0969,
+    // The HR_FACTOR determines how much heart rate influences the calorie burn.
     HR_FACTOR: 0.6309,
+    // The WEIGHT_FACTOR determines how much weight influences the calorie burn.
     WEIGHT_FACTOR: 0.1988,
+    // The AGE_FACTOR determines how much age influences the calorie burn.
     AGE_FACTOR: 0.2017,
+    // The KJ_TO_KCAL constant is used to convert the result from kilojoules to kilocalories.
     KJ_TO_KCAL: 4.184,
   }
   const heartRateTerm = CALORIE_ESTIMATION_CONSTANTS.HR_FACTOR * heartRate

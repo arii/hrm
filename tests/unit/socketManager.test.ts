@@ -223,21 +223,25 @@ describe('WebSocket Manager', () => {
       // Initial input
       sendHrmInput(150)
 
-      // Send 200 updates, each 100ms apart
-      // Should accumulate significant calories even if each step < 0.1 kcal
-      for (let i = 0; i < 200; i++) {
+      // Send 100 updates, each 100ms apart
+      for (let i = 0; i < 100; i++) {
         jest.advanceTimersByTime(100) // 100ms
         sendHrmInput(150)
       }
 
-      // Check the repository directly
-      const clientData = hrmDataRepository.findById(clientId)
+      // Check the repository directly after 10 seconds
+      const clientDataAfter10s = hrmDataRepository.findById(clientId)
+      expect(clientDataAfter10s!.calories).toBeGreaterThan(1)
 
-      expect(clientData!.calories).toBeGreaterThan(0.1)
-      // A more precise check based on the known formula for short duration.
-      // 200 updates * 100ms = 20 seconds = 0.3333 minutes.
-      // With HR=150, Age=30, Weight=75, the calories should be roughly > 2.
-      expect(clientData!.calories).toBeGreaterThan(2)
+      // Send another 100 updates
+      for (let i = 0; i < 100; i++) {
+        jest.advanceTimersByTime(100) // 100ms
+        sendHrmInput(150)
+      }
+
+      // Check the repository directly after 20 seconds
+      const clientDataAfter20s = hrmDataRepository.findById(clientId)
+      expect(clientDataAfter20s!.calories).toBeGreaterThan(2)
     })
   })
 
