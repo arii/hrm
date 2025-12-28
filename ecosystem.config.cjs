@@ -14,10 +14,14 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: process.env.PORT,
+        SPOTIFY_CLIENT_ID: 'test_client_id',
+        SPOTIFY_CLIENT_SECRET: 'test_client_secret',
       },
       env_production: {
         NODE_ENV: 'production',
         PORT: process.env.PORT,
+        SPOTIFY_CLIENT_ID: 'test_client_id',
+        SPOTIFY_CLIENT_SECRET: 'test_client_secret',
       },
     },
   ],

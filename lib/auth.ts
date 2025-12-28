@@ -250,7 +250,7 @@ export const authOptions: AuthOptions = {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'x-internal-token-secret': env.INTERNAL_TOKEN_DELIVERY_SECRET,
+                'x-internal-token-secret': env.NEXTAUTH_SECRET,
               },
               body: JSON.stringify(tokenPayload),
             })

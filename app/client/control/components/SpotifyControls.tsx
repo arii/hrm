@@ -21,8 +21,8 @@ import VolumeSlider from '@/components/Spotify/VolumeSlider'
 
 const SpotifyControls = () => {
   const router = useRouter()
-  // 1. Destructure devices directly from spotifyData
-  const { spotifyData, connectionStatus, sendData } = useWebSocket()
+  const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
+    useWebSocket()
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
@@ -51,13 +51,13 @@ const SpotifyControls = () => {
 
   // 3. Request devices on mount or connection
   useEffect(() => {
-    if (connectionStatus === 'Connected') {
+    if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
       sendData({
         type: 'SPOTIFY_COMMAND',
         command: 'GET_DEVICES',
       })
     }
-  }, [connectionStatus, sendData])
+  }, [connectionStatus, sendData, spotifyServiceInitialized])
 
   // 4. Update selection logic and volume sync
   useEffect(() => {

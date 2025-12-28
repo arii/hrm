@@ -39,6 +39,7 @@ describe('components/SpotifyControls', () => {
         ],
       },
       sendData: mockSendData,
+      spotifyServiceInitialized: true,
     })
     ;(useVolumePreference as jest.Mock).mockReturnValue({
       volume: 50,

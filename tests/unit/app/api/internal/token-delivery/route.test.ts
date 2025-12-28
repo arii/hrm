@@ -32,14 +32,14 @@ jest.mock('@/lib/serviceContainer', () => ({
 }))
 
 describe('POST /api/internal/token-delivery', () => {
-  const originalSecret = process.env.INTERNAL_TOKEN_DELIVERY_SECRET
+  const originalNextAuthSecret = process.env.NEXTAUTH_SECRET
 
   beforeAll(() => {
-    process.env.INTERNAL_TOKEN_DELIVERY_SECRET = 'test-secret'
+    process.env.NEXTAUTH_SECRET = 'test-secret'
   })
 
   afterAll(() => {
-    process.env.INTERNAL_TOKEN_DELIVERY_SECRET = originalSecret
+    process.env.NEXTAUTH_SECRET = originalNextAuthSecret
   })
 
   it('should return 401 if secret header is missing or invalid', async () => {

@@ -44,7 +44,7 @@ export const INITIAL_STATE: WebSocketState = {
     isMuted: false,
   },
   activeAlerts: [],
-  spotifyServiceInitialized: true,
+  spotifyServiceInitialized: false,
 }
 
 export const reducer = (
