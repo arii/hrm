@@ -130,7 +130,7 @@ jobs:
           else
             NEW_BODY="$CURRENT_BODY
 
-          $METADATA"
+$METADATA"
           fi
           
           # Update PR using gh pr edit with proper escaping
