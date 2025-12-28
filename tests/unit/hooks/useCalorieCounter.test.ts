@@ -12,9 +12,8 @@ jest.mock('../../../lib/calorie-estimation', () => ({
 
 describe('useCalorieCounter', () => {
   beforeEach(() => {
-    // Enable fake timers and ensure Date is also mocked
+    // Enable fake timers
     jest.useFakeTimers()
-    jest.setSystemTime(new Date('2023-01-01T00:00:00Z'))
     ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockClear()
   })
 

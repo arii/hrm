@@ -24,8 +24,9 @@ export const useCalorieCounter = (
   const [calories, setCalories] = useState(0)
   const lastTickRef = useRef<number | null>(null)
 
-  // Refs to hold the latest values of frequently-changing props
-  // This prevents the interval from resetting every time they change.
+  // Use `useRef` to hold the latest values of frequently-changing props.
+  // This prevents the interval from resetting every time they change, as
+  // updating a ref does not trigger a re-render.
   const heartRateRef = useRef(heartRate)
   const ageRef = useRef(age)
   const weightRef = useRef(weight)
