@@ -8,8 +8,9 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { SpotifyCommandMessage } from '@/types/websocket'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -19,33 +20,39 @@ const PlaylistSelector = dynamic(
   }
 )
 
+const PlaylistDetails = dynamic(
+  () => import('../../../components/Spotify/PlaylistDetails'),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" height={400} />,
+  }
+)
+
 const SpotifySelectionPage = () => {
   const { spotifyData, sendData } = useWebSocket()
-  const router = useRouter()
+  const [selectedPlaylistUri, setSelectedPlaylistUri] = useState<string | null>(
+    null
+  )
 
   const handlePlaylistSelected = (uri: string) => {
-    const playlistId = uri.split(':').pop()
-    if (playlistId) {
-      router.push(`/spotify/playlist/${playlistId}`)
-    }
+    setSelectedPlaylistUri(uri)
   }
 
-  const handlePlaylistPlay = (uri: string) => {
+  const handlePlaylistPlay = (uri: string, trackUri?: string) => {
     const activeDevice = spotifyData.devices?.find((device) => device.is_active)
-    if (activeDevice) {
-      sendData({
-        type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
-        playlistUri: uri,
-        deviceId: activeDevice.id,
-      })
-    } else {
-      sendData({
-        type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
-        playlistUri: uri,
-      })
+    const command: SpotifyCommandMessage = {
+      type: 'SPOTIFY_COMMAND',
+      command: 'PLAY',
     }
+    if (trackUri) {
+      command.uri = trackUri
+    } else {
+      command.contextUri = uri
+    }
+    if (activeDevice) {
+      command.deviceId = activeDevice.id
+    }
+    sendData(command)
   }
 
   return (
@@ -75,13 +82,24 @@ const SpotifySelectionPage = () => {
 
       <Card sx={{ mt: 2 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Select a Playlist to view its tracks
-          </Typography>
-          <PlaylistSelector
-            onPlaylistSelected={handlePlaylistSelected}
-            onPlaylistPlay={handlePlaylistPlay}
-          />
+          {selectedPlaylistUri ? (
+            <PlaylistDetails
+              key={selectedPlaylistUri}
+              playlistUri={selectedPlaylistUri}
+              onBack={() => setSelectedPlaylistUri(null)}
+              onPlaylistPlay={handlePlaylistPlay}
+            />
+          ) : (
+            <>
+              <Typography variant="h6" gutterBottom>
+                Select a Playlist to view its tracks
+              </Typography>
+              <PlaylistSelector
+                onPlaylistSelected={handlePlaylistSelected}
+                onPlaylistPlay={handlePlaylistPlay}
+              />
+            </>
+          )}
         </CardContent>
       </Card>
     </Container>
