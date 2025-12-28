@@ -81,8 +81,7 @@ export const reducer = (
     case 'INITIAL_STATE': {
       // When the initial state is loaded, ensure all HRM data is marked as connected.
       const hrmDataWithConnection =
-        message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ||
-        []
+        message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) || []
       return {
         ...state,
         ...message.payload,
@@ -148,7 +147,6 @@ export const reducer = (
       return state
   }
 }
-
 
 export const WebSocketProvider = ({
   children,
