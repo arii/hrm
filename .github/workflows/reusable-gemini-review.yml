@@ -188,13 +188,13 @@ jobs:
           set -e
 
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "::warning::Failed to fetch PR checks. The 'gh' command or 'jq' processing failed with exit code $EXIT_CODE. Proceeding without CI failure analysis."
+            echo "::warning::Get PR Checks: Failed to fetch PR checks (exit code $EXIT_CODE). Proceeding without CI analysis."
             CHECKS_JSON="[]"
           fi
 
           # Validate that the result is valid JSON before proceeding
           if ! echo "$CHECKS_JSON" | jq -e . > /dev/null; then
-            echo "::warning::Generated CHECKS_JSON is not valid JSON. Defaulting to empty array. Content was: $CHECKS_JSON"
+            echo "::warning::Get PR Checks: Generated CHECKS_JSON is not valid JSON. Defaulting to empty array. Content was: $CHECKS_JSON"
             CHECKS_JSON="[]"
           fi
 
