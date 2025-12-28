@@ -12,9 +12,9 @@ jest.mock('../../../lib/calorie-estimation', () => ({
 
 describe('useCalorieCounter', () => {
   beforeEach(() => {
-    // Enable fake timers and ensure Date is also mocked
+    // Enable fake timers
     jest.useFakeTimers()
-    jest.setSystemTime(new Date('2023-01-01T00:00:00Z'))
+    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockClear()
   })
 
   afterEach(() => {
@@ -33,6 +33,7 @@ describe('useCalorieCounter', () => {
 
     // After 1 second, we should have 1 calorie (1 call to estimate * 1 returned)
     expect(result.current.calories).toBe(1)
+    expect(calorieEstimation.estimateCaloriesBurned).toHaveBeenCalledTimes(1)
 
     act(() => {
       jest.advanceTimersByTime(2000)
@@ -40,6 +41,7 @@ describe('useCalorieCounter', () => {
 
     // After 2 more seconds, total 3 calories
     expect(result.current.calories).toBe(3)
+    expect(calorieEstimation.estimateCaloriesBurned).toHaveBeenCalledTimes(3)
   })
 
   it('should not calculate calories when isActive is false', () => {
@@ -53,6 +55,7 @@ describe('useCalorieCounter', () => {
     })
 
     expect(result.current.calories).toBe(0)
+    expect(calorieEstimation.estimateCaloriesBurned).not.toHaveBeenCalled()
   })
 
   it('should reset calories when resetCalories is called', () => {
