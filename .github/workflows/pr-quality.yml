@@ -175,6 +175,7 @@ jobs:
           # --- Live Sanitization ---
           echo "Original SESSION_ID: ${{ env.SESSION_ID }}"
           # Replace any character that is not a letter, number, hyphen, or underscore with a hyphen.
+          # These characters are generally safe for filenames and env vars.
           SAFE_SESSION_ID=$(echo "${{ env.SESSION_ID }}" | sed 's/[^a-zA-Z0-9_-]/-/g')
           TRUNCATED_SESSION_ID=$(echo "$SAFE_SESSION_ID" | cut -c1-64)
           echo "Sanitized SESSION_ID: $TRUNCATED_SESSION_ID"
