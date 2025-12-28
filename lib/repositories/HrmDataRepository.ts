@@ -7,6 +7,7 @@ import { HrmStreamData } from '../../types/core'
  */
 export class HrmDataRepository {
   private clientData = new Map<string, HrmStreamData>()
+  private deviceIdIndex = new Map<string, string>() // deviceId -> clientId
 
   /**
    * Finds a client's data by their ID.
@@ -23,12 +24,8 @@ export class HrmDataRepository {
    * @returns The client's data or undefined if not found.
    */
   findByDeviceId(deviceId: string): HrmStreamData | undefined {
-    for (const client of this.clientData.values()) {
-      if (client.deviceId === deviceId) {
-        return client
-      }
-    }
-    return undefined
+    const clientId = this.deviceIdIndex.get(deviceId)
+    return clientId ? this.clientData.get(clientId) : undefined
   }
 
   /**
@@ -42,9 +39,20 @@ export class HrmDataRepository {
   /**
    * Saves or updates a client's data.
    * @param data The client data to save.
+   * @returns The saved data.
    */
-  save(data: HrmStreamData): void {
+  save(data: HrmStreamData): HrmStreamData {
+    // If the old data had a deviceId, we should remove it from the index
+    const oldData = this.clientData.get(data.clientId)
+    if (oldData?.deviceId) {
+      this.deviceIdIndex.delete(oldData.deviceId)
+    }
+
     this.clientData.set(data.clientId, data)
+    if (data.deviceId) {
+      this.deviceIdIndex.set(data.deviceId, data.clientId)
+    }
+    return data
   }
 
   /**
@@ -52,6 +60,10 @@ export class HrmDataRepository {
    * @param id The client's unique identifier.
    */
   deleteById(id: string): void {
+    const data = this.clientData.get(id)
+    if (data?.deviceId) {
+      this.deviceIdIndex.delete(data.deviceId)
+    }
     this.clientData.delete(id)
   }
 
@@ -60,5 +72,6 @@ export class HrmDataRepository {
    */
   clear(): void {
     this.clientData.clear()
+    this.deviceIdIndex.clear()
   }
 }

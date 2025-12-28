@@ -1,5 +1,6 @@
 // server.ts (Refactored)
 import express from 'express'
+import rateLimit from 'express-rate-limit'
 import { createServer } from 'http'
 import next from 'next'
 import { env } from './lib/env.js' // New import
@@ -20,8 +21,23 @@ const expressApp = express()
 app.prepare().then(async () => {
   const server = createServer(expressApp)
 
-  // Global body parsing is intentionally omitted.
-  // ... (rate limiting and static asset serving setup remains the same)
+  // In production, Next.js serves assets from .next/static.
+  // We can add this to Express to avoid 404s if a path is somehow missed by Next.js.
+  // It also helps in preventing directory traversal attacks.
+  if (env.NODE_ENV === 'production') {
+    expressApp.use('/_next/static', express.static('.next/static'))
+  }
+
+  // Rate limiting to prevent abuse
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // max 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Skip rate limiting for test environment
+    skip: () => process.env.TESTING === 'true',
+  })
+  expressApp.use(limiter)
 
   // 1. Setup WebSocket Infrastructure
   const wsManager = new WebSocketManager()
