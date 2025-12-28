@@ -310,7 +310,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
               />
             </div>
           </ListItem>
-        )}
+          )
+        }}
         noOptionsText={
           debouncedSearch ? (
             <>No playlists found matching &quot;{debouncedSearch}&quot;</>
