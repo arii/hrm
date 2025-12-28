@@ -269,7 +269,9 @@ const handleIncomingMessage = (
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
           const currentWeight =
-            existingData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG
+            (message.data as any).weight ??
+            existingData.weightKg ??
+            CALORIE_DEFAULTS.WEIGHT_KG
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             const caloriesPerMinute = estimateCaloriesPerMinute({
