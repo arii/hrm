@@ -466,7 +466,7 @@ export class SpotifyPolling implements SpotifyService {
    * The SDK throws this error on 204 No Content because it attempts to parse an
    * empty response body. This is expected for successful playback control commands
    * (like `PLAY`, `PAUSE`, `NEXT`, etc.) that do not return any data.
-   * @param error The error to check.
+   * @param error The error to check. We use `unknown` because catch clause variables are of type `unknown` in TypeScript.
    * @returns True if the error is an empty response error, false otherwise.
    */
   private isEmptyResponseError(error: unknown): boolean {
