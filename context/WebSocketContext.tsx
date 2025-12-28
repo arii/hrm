@@ -42,8 +42,7 @@ export const WebSocketProvider = ({
     }
     let id = localStorage.getItem('clientId')
     if (!id) {
-      // Simple and effective client-side ID generation
-      id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+      id = window.crypto.randomUUID()
       localStorage.setItem('clientId', id)
     }
     return id
