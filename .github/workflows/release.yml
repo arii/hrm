@@ -10,6 +10,7 @@ on:
       - leader
 
 # Permissions granted to the GITHUB_TOKEN for the release-please-action to manage the release process.
+# These permissions are scoped as narrowly as possible to follow the principle of least privilege.
 # - contents: write      | to create release tags and commit version updates/changelogs.
 # - pull-requests: write | to create and manage the release PR.
 # - issues: write        | to link issues in release notes.
