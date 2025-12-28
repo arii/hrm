@@ -38,7 +38,8 @@ concurrency:
 
 env:
   FORCE_COLOR: 1
-  # Browsers are installed INSIDE the workspace so they persist with clean: false
+  # Caches Playwright browser binaries in a directory that persists between workflow runs.
+  # This avoids re-downloading them on every run, significantly speeding up the CI process.
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
 
 jobs:
@@ -84,7 +85,9 @@ jobs:
             fi
           }
 
-          # To add a new test, simply add a new `assert_sanitize 'input' 'expected'` line.
+          # To add a new test, add a new `assert_sanitize 'input' 'expected'` line.
+          # New tests might be needed if the sanitization logic changes or if new edge
+          # cases for branch names are discovered.
           assert_sanitize 'feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization' 'feature-long-branch-name-with-slashes-and-more-slashes-to-test' # Test truncation and sanitization.
           assert_sanitize 'short/branch' 'short-branch' # Test a simple case with a slash.
           assert_sanitize 'test/special!@#$%^&*()[]{}chars' 'test-special--------------chars' # Test various special characters.
