@@ -13,13 +13,12 @@ import Typography from '@mui/material/Typography'
 import Skeleton from '@mui/material/Skeleton'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import { useDebounce } from '../../hooks/useDebounce'
 
 interface Track {
   uri: string
   name: string
   artist: string
-  duration: string
+  duration: number
 }
 
 interface PlaylistDetailsData {
@@ -44,16 +43,15 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [imageLoading, setImageLoading] = useState(true)
-  const debouncedPlaylistUri = useDebounce(playlistUri, 300)
 
   useEffect(() => {
-    if (!debouncedPlaylistUri) return
+    if (!playlistUri) return
 
     const fetchDetails = async () => {
       setLoading(true)
       setError(null)
       try {
-        const playlistId = debouncedPlaylistUri.split(':').pop()
+        const playlistId = playlistUri.split(':').pop()
         const response = await fetch(`/api/spotify/playlists/${playlistId}`)
         if (!response.ok) {
           if (response.status === 404) {
@@ -79,10 +77,10 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
     }
 
     fetchDetails()
-  }, [debouncedPlaylistUri])
+  }, [playlistUri])
 
   const handlePlayTrack = (trackUri: string) => {
-    onPlaylistPlay(debouncedPlaylistUri, trackUri)
+    onPlaylistPlay(playlistUri, trackUri)
   }
 
   if (loading) {
@@ -157,10 +155,10 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
       </Box>
       <List>
         {details.tracks.map((track, index) => (
-          <ListItem key={track.uri} divider>
+          <ListItem key={`${track.uri}-${index}`} divider>
             <ListItemText
               primary={`${index + 1}. ${track.name}`}
-              secondary={`${track.artist} • ${track.duration}`}
+              secondary={`${track.artist} • ${formatDuration(track.duration)}`}
             />
             <IconButton
               edge="end"
@@ -174,6 +172,13 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
       </List>
     </Box>
   )
+}
+
+const formatDuration = (ms: number) => {
+  const totalSeconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
 export default PlaylistDetails
