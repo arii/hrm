@@ -96,10 +96,10 @@ class DeviceManagerService extends EventTarget {
    * @public
    * @type {(BluetoothDevice | null)}
    */
-  private async getPreviouslyConnectedDevice(
+  public async getPreviouslyConnectedDevice(
     deviceId: string
   ): Promise<BluetoothDevice | null> {
-    if (!navigator.bluetooth.getDevices) return null
+    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return null
     try {
       const permittedDevices = await navigator.bluetooth.getDevices()
       return permittedDevices.find((d) => d.id === deviceId) || null
