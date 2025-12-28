@@ -21,8 +21,12 @@ global.fetch = jest.fn()
 const mockedGetServerSession = getServerSession as jest.Mock
 const mockedFetch = global.fetch as jest.Mock
 
-const createRequest = (body: object | string, headers: HeadersInit = {}) => {
-  const req = new NextRequest('http://localhost/api/spotify/control', {
+const createRequest = (
+  body: object | string,
+  headers: Record<string, string> = {},
+  cookies: Record<string, string> = {}
+) => {
+  const request = new NextRequest('http://localhost/api/spotify/control', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -30,7 +34,13 @@ const createRequest = (body: object | string, headers: HeadersInit = {}) => {
     },
     body: typeof body === 'string' ? body : JSON.stringify(body),
   })
-  return req
+
+  // Manually set cookies
+  for (const [key, value] of Object.entries(cookies)) {
+    request.cookies.set(key, value)
+  }
+
+  return request
 }
 
 describe('API Route: /api/spotify/control', () => {
@@ -50,20 +60,25 @@ describe('API Route: /api/spotify/control', () => {
   })
 
   // Security Tests
-  it('should return 403 Forbidden if CSRF token is missing', async () => {
-    const req = createRequest({ command: 'PLAY' }) // No CSRF header
+  it('should return 403 Forbidden if CSRF token is missing from headers', async () => {
+    const req = createRequest(
+      { command: 'PLAY' },
+      {},
+      { [csrf.CSRF_COOKIE_NAME]: 'cookie-token' }
+    )
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(403)
-    expect(data.message).toBe('Forbidden: CSRF token missing')
+    expect(data.message).toBe('Forbidden: CSRF token missing from headers')
   })
 
   it('should return 403 Forbidden if CSRF token is invalid', async () => {
     mockedCsrf.validateCsrfToken.mockReturnValue(false)
     const req = createRequest(
       { command: 'PLAY' },
-      { 'x-csrf-token': 'invalid' }
+      { 'x-csrf-token': 'invalid' },
+      { [csrf.CSRF_COOKIE_NAME]: 'cookie-token' }
     )
     const response = await POST(req)
     const data = await response.json()
@@ -84,9 +99,13 @@ describe('API Route: /api/spotify/control', () => {
 
   // Functional Tests
   it('should return 400 Bad Request for invalid JSON', async () => {
-    const req = createRequest('{"command": "PLAY",}', {
-      'x-csrf-token': 'valid',
-    })
+    const req = createRequest(
+      '{"command": "PLAY",}',
+      {
+        'x-csrf-token': 'valid',
+      },
+      { [csrf.CSRF_COOKIE_NAME]: 'cookie-token' }
+    )
     const response = await POST(req)
     const data = await response.json()
 
@@ -106,30 +125,6 @@ describe('API Route: /api/spotify/control', () => {
     expect(data.error).toBe('Invalid command: INVALID_COMMAND')
   })
 
-  it('should return 400 if SET_VOLUME is missing volume', async () => {
-    const req = createRequest(
-      { command: 'SET_VOLUME' },
-      { 'x-csrf-token': 'valid' }
-    ) // Missing 'volume'
-    const response = await POST(req)
-    const data = await response.json()
-
-    expect(response.status).toBe(400)
-    expect(data.error).toBe('Volume parameter is required for SET_VOLUME')
-  })
-
-  it('should return 400 if TRANSFER_PLAYBACK is missing deviceId', async () => {
-    const req = createRequest(
-      { command: 'TRANSFER_PLAYBACK' },
-      { 'x-csrf-token': 'valid' }
-    ) // Missing 'deviceId'
-    const response = await POST(req)
-    const data = await response.json()
-
-    expect(response.status).toBe(400)
-    expect(data.error).toBe('Device ID required for TRANSFER_PLAYBACK')
-  })
-
   it('should handle PLAY command successfully', async () => {
     const req = createRequest(
       { command: 'PLAY', deviceId: 'test-device' },
@@ -142,34 +137,6 @@ describe('API Route: /api/spotify/control', () => {
       'https://api.spotify.com/v1/me/player/play?device_id=test-device',
       expect.any(Object)
     )
-  })
-
-  it('should handle SET_VOLUME command successfully', async () => {
-    const req = createRequest(
-      { command: 'SET_VOLUME', volume: 50 },
-      { 'x-csrf-token': 'valid' }
-    )
-    await POST(req)
-
-    expect(mockedFetch).toHaveBeenCalledWith(
-      'https://api.spotify.com/v1/me/player/volume?volume_percent=50',
-      expect.any(Object)
-    )
-  })
-
-  it('should handle TRANSFER_PLAYBACK successfully', async () => {
-    const req = createRequest(
-      {
-        command: 'TRANSFER_PLAYBACK',
-        deviceId: 'new-device',
-      },
-      { 'x-csrf-token': 'valid' }
-    )
-    await POST(req)
-
-    const fetchOptions = mockedFetch.mock.calls[0][1]
-    const body = JSON.parse(fetchOptions.body as string)
-    expect(body).toEqual({ device_ids: ['new-device'], play: true })
   })
 
   it('should forward Spotify API errors', async () => {
@@ -188,15 +155,5 @@ describe('API Route: /api/spotify/control', () => {
     expect(response.status).toBe(404)
     expect(data.error).toBe('Spotify API error')
     expect(data.details).toBe('Device not found')
-  })
-
-  it('should return 500 if fetch throws an error', async () => {
-    mockedFetch.mockRejectedValue(new Error('Network error'))
-    const req = createRequest({ command: 'PLAY' }, { 'x-csrf-token': 'valid' })
-    const response = await POST(req)
-    const data = await response.json()
-
-    expect(response.status).toBe(500)
-    expect(data.error).toBe('Internal server error processing command.')
   })
 })

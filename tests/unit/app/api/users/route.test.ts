@@ -35,7 +35,7 @@ describe('API Route: /api/users', () => {
 
       // Assert
       expect(response.status).toBe(403)
-      expect(data.message).toBe('Forbidden: CSRF token missing')
+      expect(data.message).toBe('Forbidden: CSRF token missing from headers')
     })
 
     it('should return 403 if CSRF token is invalid', async () => {
@@ -48,6 +48,9 @@ describe('API Route: /api/users', () => {
           'Content-Type': 'application/json',
           'x-csrf-token': 'invalid-token',
         },
+        cookies: {
+          [csrf.CSRF_COOKIE_NAME]: 'cookie-token',
+        },
       })
 
       // Act
@@ -58,8 +61,8 @@ describe('API Route: /api/users', () => {
       expect(response.status).toBe(403)
       expect(data.message).toBe('Forbidden: Invalid CSRF token')
       expect(mockedCsrf.validateCsrfToken).toHaveBeenCalledWith(
-        'invalid-token',
-        expect.any(Object)
+        'cookie-token',
+        'invalid-token'
       )
     })
 

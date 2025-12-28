@@ -1,11 +1,12 @@
 // lib/middleware/csrf.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { validateCsrfToken } from '@/lib/csrf'
+import { validateCsrfToken, CSRF_COOKIE_NAME } from '@/lib/csrf'
 
-// Define a generic handler type for App Router routes
+// Define a more specific type for App Router handlers
 type AppRouterHandler = (
   req: NextRequest,
-  ...args: any[]
+  // Using a flexible yet typed approach for handler arguments
+  ...args: { params?: Record<string, string | string[]> }[]
 ) => Promise<NextResponse | Response>
 
 /**
@@ -17,7 +18,7 @@ type AppRouterHandler = (
 export const withCsrf = (handler: AppRouterHandler) => {
   return async (
     req: NextRequest,
-    ...args: any[]
+    ...args: { params?: Record<string, string | string[]> }[]
   ): Promise<NextResponse | Response> => {
     // Only validate for state-changing methods
     if (
@@ -25,21 +26,23 @@ export const withCsrf = (handler: AppRouterHandler) => {
       req.method !== 'HEAD' &&
       req.method !== 'OPTIONS'
     ) {
-      const csrfToken = req.headers.get('x-csrf-token')
-      if (!csrfToken) {
+      const headerToken = req.headers.get('x-csrf-token')
+      const cookieToken = req.cookies.get(CSRF_COOKIE_NAME)?.value
+
+      if (!headerToken) {
         return NextResponse.json(
-          { message: 'Forbidden: CSRF token missing' },
+          { message: 'Forbidden: CSRF token missing from headers' },
+          { status: 403 }
+        )
+      }
+      if (!cookieToken) {
+        return NextResponse.json(
+          { message: 'Forbidden: CSRF token missing from cookies' },
           { status: 403 }
         )
       }
 
-      // Convert ReadonlyRequestCookies to a plain object for the validation function
-      const requestCookies: Record<string, string> = {}
-      for (const cookie of req.cookies.getAll()) {
-        requestCookies[cookie.name] = cookie.value
-      }
-
-      if (!validateCsrfToken(csrfToken, requestCookies)) {
+      if (!validateCsrfToken(cookieToken, headerToken)) {
         return NextResponse.json(
           { message: 'Forbidden: Invalid CSRF token' },
           { status: 403 }

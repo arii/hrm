@@ -51,9 +51,7 @@ describe('useCookie Hook', () => {
   })
 
   it('should handle object values correctly', () => {
-    const { result } = renderHook(() =>
-      useCookie('test-key', { a: 1 })
-    )
+    const { result } = renderHook(() => useCookie('test-key', { a: 1 }))
 
     act(() => {
       result.current[1]({ a: 2, b: 'test' })

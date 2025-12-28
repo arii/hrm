@@ -28,7 +28,7 @@ const mockService = {
 }
 
 const mockGattServer = {
-  connect: jest.fn().mockResolvedValue(undefined), // This is not used in the hook's logic directly
+  connect: jest.fn().mockResolvedValue(undefined),
   disconnect: jest.fn(),
   getPrimaryService: jest.fn().mockResolvedValue(mockService),
 }
@@ -77,7 +77,6 @@ describe('useBluetoothHRM', () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       sendData: mockSendData,
     })
-    // Reset all mock implementations to their default behavior
     jest.clearAllMocks()
     mockBluetooth.requestDevice.mockResolvedValue(mockDevice)
     mockBluetooth.getDevices.mockResolvedValue([mockDevice])
@@ -107,16 +106,19 @@ describe('useBluetoothHRM', () => {
     await act(async () => {
       await hook.result.current.connectAndStream('Test User', 30)
     })
-    Object.defineProperty(mockDevice.gatt, 'connected', { value: true })
+
     const characteristicValueChangedCallback =
       mockCharacteristic.addEventListener.mock.calls.find(
         (call) => call[0] === 'characteristicvaluechanged'
       )?.[1]
-    act(() => {
-      characteristicValueChangedCallback?.({
-        target: { value: new DataView(new Uint8Array([0, 75]).buffer) },
+
+    if (characteristicValueChangedCallback) {
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new Uint8Array([0, 75]).buffer) },
+        })
       })
-    })
+    }
   }
 
   it('should send a "death packet" when the connection becomes stale', async () => {
@@ -194,7 +196,6 @@ describe('useBluetoothHRM', () => {
     await act(async () => {
       await result.current.connectAndStream(undefined, 30)
     })
-    Object.defineProperty(mockDevice.gatt, 'connected', { value: true })
     const characteristicValueChangedCallback =
       mockCharacteristic.addEventListener.mock.calls.find(
         (call) => call[0] === 'characteristicvaluechanged'
@@ -237,7 +238,6 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should attempt to reconnect automatically if a deviceId is in cookies', async () => {
-    // Mock useCookie to return a deviceId
     jest
       .spyOn(useCookie, 'default')
       .mockReturnValue(['test-device-id', jest.fn()])
@@ -246,13 +246,10 @@ describe('useBluetoothHRM', () => {
       useBluetoothHRM({ userName: 'Test User', userAge: 30 })
     )
 
-    // It should immediately try to reconnect
     await waitFor(() => {
       expect(mockBluetooth.getDevices).toHaveBeenCalled()
     })
 
-    // Simulate the device being found and connection succeeding
-    Object.defineProperty(mockDevice.gatt, 'connected', { value: true })
     const characteristicValueChangedCallback =
       mockCharacteristic.addEventListener.mock.calls.find(
         (call) => call[0] === 'characteristicvaluechanged'

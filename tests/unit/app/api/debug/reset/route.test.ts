@@ -38,6 +38,9 @@ describe('API Route: /api/debug/reset', () => {
     const request = new NextRequest('http://localhost/api/debug/reset', {
       method: 'POST',
       headers: { 'x-csrf-token': 'invalid-token' },
+      cookies: {
+        [csrf.CSRF_COOKIE_NAME]: 'cookie-token',
+      },
     })
 
     // Act
@@ -52,7 +55,7 @@ describe('API Route: /api/debug/reset', () => {
   it('should return 403 if not in development mode', async () => {
     // Arrange
     process.env.NODE_ENV = 'production'
-    const request = new NextRequest('http://localhost/api/debug/reset', {
+    const request = new NextRequest('http://localhost/api/debug/,reset', {
       method: 'POST',
       headers: { 'x-csrf-token': 'valid-token' },
     })

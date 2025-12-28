@@ -24,13 +24,13 @@ describe('API Route: /api/internal/clear-token', () => {
   it('should return 403 if CSRF token is invalid', async () => {
     // Arrange
     mockedCsrf.validateCsrfToken.mockReturnValue(false)
-    const request = new NextRequest(
-      'http://localhost/api/internal/clear-token',
-      {
-        method: 'POST',
-        headers: { 'x-csrf-token': 'invalid-token' },
-      }
-    )
+    const request = new NextRequest('http://localhost/api/internal/clear-token', {
+      method: 'POST',
+      headers: { 'x-csrf-token': 'invalid-token' },
+      cookies: {
+        [csrf.CSRF_COOKIE_NAME]: 'cookie-token',
+      },
+    })
 
     // Act
     const response = await POST(request)
@@ -43,13 +43,10 @@ describe('API Route: /api/internal/clear-token', () => {
 
   it('should delete the token file and return 200 if it exists', async () => {
     // Arrange
-    const request = new NextRequest(
-      'http://localhost/api/internal/clear-token',
-      {
-        method: 'POST',
-        headers: { 'x-csrf-token': 'valid-token' },
-      }
-    )
+    const request = new NextRequest('http://localhost/api/internal/clear-token', {
+      method: 'POST',
+      headers: { 'x-csrf-token': 'valid-token' },
+    })
 
     // Act
     const response = await POST(request)
@@ -66,13 +63,10 @@ describe('API Route: /api/internal/clear-token', () => {
   it('should return 200 without deleting if the token file does not exist', async () => {
     // Arrange
     mockedFs.existsSync.mockReturnValue(false)
-    const request = new NextRequest(
-      'http://localhost/api/internal/clear-token',
-      {
-        method: 'POST',
-        headers: { 'x-csrf-token': 'valid-token' },
-      }
-    )
+    const request = new NextRequest('http://localhost/api/internal/clear-token', {
+      method: 'POST',
+      headers: { 'x-csrf-token': 'valid-token' },
+    })
 
     // Act
     const response = await POST(request)
@@ -89,13 +83,10 @@ describe('API Route: /api/internal/clear-token', () => {
     mockedFs.unlinkSync.mockImplementation(() => {
       throw new Error('Test FS error')
     })
-    const request = new NextRequest(
-      'http://localhost/api/internal/clear-token',
-      {
-        method: 'POST',
-        headers: { 'x-csrf-token': 'valid-token' },
-      }
-    )
+    const request = new NextRequest('http://localhost/api/internal/clear-token', {
+      method: 'POST',
+      headers: { 'x-csrf-token': 'valid-token' },
+    })
 
     // Act
     const response = await POST(request)

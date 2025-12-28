@@ -366,39 +366,48 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const attemptReconnection = useCallback(
     async (name?: string, age?: number) => {
-      if (!navigator.bluetooth?.getDevices) return
+      if (!navigator.bluetooth?.getDevices) {
+        setDeviceStatus(
+          'Web Bluetooth not supported. Please use a compatible browser.'
+        )
+        return
+      }
 
-      let devices: BluetoothDevice[] = []
       try {
         setDeviceStatus('Searching for known devices...')
-        devices = await navigator.bluetooth.getDevices()
+        const devices = await navigator.bluetooth.getDevices()
 
-        if (deviceId && devices.length > 0) {
-          const knownDevice = devices.find((d) => d.id === deviceId)
+        if (devices.length === 0) {
+          setDeviceStatus('No previously paired devices found.')
+          return
+        }
 
-          if (knownDevice) {
-            setDeviceStatus(`Found known device: ${knownDevice.name}`)
-            activeConfigRef.current = {
-              name: name || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`,
-              age,
-            }
-            await connectToGatt(knownDevice)
-          } else {
-            setDeviceStatus(
-              'Previously paired device not found. Ensure it is nearby, turned on, and Bluetooth is enabled.'
-            )
+        const knownDevice = devices.find((d) => d.id === deviceId)
+
+        if (knownDevice) {
+          setDeviceStatus(`Found known device: ${knownDevice.name}`)
+          activeConfigRef.current = {
+            name: name || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`,
+            age,
           }
+          await connectToGatt(knownDevice)
+        } else {
+          setDeviceStatus(
+            'Paired device not found. Check if it is on and nearby.'
+          )
         }
       } catch (err) {
         const deviceName =
-          devices.find((d) => d.id === deviceId)?.name || 'Unknown Device'
+          (await navigator.bluetooth.getDevices()).find(
+            (d) => d.id === deviceId
+          )?.name || 'device'
         const errorMessage =
           err instanceof Error
             ? err.message
             : 'An unknown error occurred. Please try again.'
         logger.error({ error: err }, 'Auto-reconnect failed')
         setDeviceStatus(
-          `Auto-reconnect failed for ${deviceName}: ${errorMessage}`
+          `Auto-reconnect failed for ${deviceName}: ${errorMessage}. Please try connecting manually.`
         )
       }
     },
@@ -436,9 +445,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    */
   const connectAndStream = useCallback(
     async (name?: string, age?: number): Promise<void> => {
-      if (deviceStatus.startsWith('Connected') && !isStale) return
-      if (!deviceRef.current?.gatt?.connected) {
-        setDeviceStatus('Waiting for Bluetooth connection...')
+      if (deviceStatus.startsWith('Connected') && !isStale) {
         return
       }
 
@@ -466,7 +473,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         handleConnectionError(error)
       }
     },
-    [deviceStatus, connectToGatt, handleConnectionError, isStale]
+    [deviceStatus, isStale, connectToGatt, handleConnectionError]
   )
 
   return {
