@@ -35,9 +35,6 @@ let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
-// Explicitly define the default weight for clarity within this module.
-const DEFAULT_WEIGHT_KG = CALORIE_DEFAULTS.WEIGHT_KG
-
 // State Management
 export const hrmDataRepository = new HrmDataRepository()
 const MAX_CLIENTS = env.MAX_WS_CLIENTS // Prevent memory exhaustion
@@ -126,7 +123,7 @@ const initSocketManager = (
         maxHr: 185,
         age: 30,
         calories: 0,
-        weightKg: DEFAULT_WEIGHT_KG,
+        weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
       }
       hrmDataRepository.save(newClient)
       clientSessionState.set(clientId, {
@@ -242,9 +239,11 @@ const handleIncomingMessage = (
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
-          const incomingWeight = message.data.weight
+          // Prioritize incoming weight, but fall back to stored or default weight.
           const calculatedWeight =
-            incomingWeight ?? existingData.weightKg ?? DEFAULT_WEIGHT_KG
+            message.data.weight ??
+            existingData.weightKg ??
+            CALORIE_DEFAULTS.WEIGHT_KG
 
           if (currentHr > MIN_HR_FOR_CALORIES && dtMinutes > 0 && dtMinutes < 5) {
             const caloriesPerMinute = estimateCaloriesPerMinute({

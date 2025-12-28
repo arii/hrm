@@ -58,6 +58,7 @@ export const useCalorieCounter = (
             age: ageRef.current,
             weightKg: weightRef.current,
           })
+          // Convert calories per minute to calories per deltaSeconds
           const caloriesBurned = (caloriesPerMinute / 60) * deltaSeconds
           setCalories((prev) => prev + caloriesBurned)
         }

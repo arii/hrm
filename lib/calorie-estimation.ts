@@ -12,7 +12,7 @@
  * age, weight, heart rate, and duration.
  */
 
-import { CALORIE_DEFAULTS } from '../utils/constants'
+import { CALORIE_DEFAULTS } from '../utils/constants.js'
 
 export interface CalorieEstimationParams {
   heartRate: number
