@@ -12,6 +12,7 @@ import {
 import {
   initSocketManager,
   resetSocketManager,
+  getRequestParams,
 } from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
@@ -427,6 +428,53 @@ describe('WebSocket Manager', () => {
         expect.any(Object),
         'Unknown message type received'
       )
+    })
+  })
+  describe('getRequestParams', () => {
+    beforeEach(() => {
+      ;(logger.error as jest.Mock).mockClear()
+    })
+
+    it('should correctly parse clientId from a standard URL', () => {
+      const req = {
+        url: '/?clientId=abcdef-123456',
+        headers: { host: 'localhost:3000' },
+      }
+      const params = getRequestParams(req as any)
+      expect(params.get('clientId')).toBe('abcdef-123456')
+    })
+
+    it('should return empty params and log an error when URL is malformed', () => {
+      const req = {
+        url: 'a',
+        headers: { host: 'a:b:c' },
+      };
+      const params = getRequestParams(req as any);
+      expect(params.toString()).toBe('');
+      expect(logger.error).toHaveBeenCalled();
+    })
+
+    it('should handle missing host header by falling back to localhost', () => {
+      const req = { url: '/?foo=bar', headers: {} }
+      const params = getRequestParams(req as any)
+      expect(params.get('foo')).toBe('bar')
+    })
+
+    it('should handle missing URL by defaulting to "/"', () => {
+      const req = { headers: { host: 'testhost' } }
+      const params = getRequestParams(req as any)
+      expect(params.toString()).toBe('')
+    })
+
+    it('should handle multiple query parameters', () => {
+      const req = {
+        url: '/?clientId=123&user=test&mode=active',
+        headers: { host: 'localhost' },
+      }
+      const params = getRequestParams(req as any)
+      expect(params.get('clientId')).toBe('123')
+      expect(params.get('user')).toBe('test')
+      expect(params.get('mode')).toBe('active')
     })
   })
 })
