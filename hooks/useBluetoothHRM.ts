@@ -134,7 +134,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const { staleThresholdMs = 4000, checkIntervalMs = 1000 } = props
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
-  const [isStale, setIsStale] = useState(true)
   const [disconnectionReason, setDisconnectionReason] =
     useState<DisconnectionReason>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
@@ -168,39 +167,35 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   // Watchdog: Monitors Liveness
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      // Only check if we think we are connected/active
-      if (!activeConfigRef.current || isStale) return
+    const isLive = deviceStatus.startsWith('Connected to:')
+    if (!activeConfigRef.current || !isLive) return
 
+    const intervalId = setInterval(() => {
       const timeSinceLastUpdate = Date.now() - lastUpdateRef.current
 
       if (timeSinceLastUpdate > staleThresholdMs) {
         logger.warn(
           '[Bluetooth HRM] Stale connection detected. Sending death packet.'
         )
-        setIsStale(true)
         setDeviceStatus('Connected (No Data)') // Visual feedback for local user
 
-        // This "death packet" is a crucial piece of synchronization.
-        // By sending a value of 0, we explicitly tell the server that this
-        // user's heart rate is no longer available. The backend uses this
-        // signal to remove the user from any active displays, preventing
-        // a "frozen" state where the last known heart rate is shown indefinitely.
         const config = activeConfigRef.current
-        sendData({
-          type: 'HRM_INPUT',
-          data: {
-            value: 0, // 0 tells HrmTiles to remove this user
-            maxHr: config.age ? 220 - config.age : MAX_HR_DEFAULT,
-            name: config.name,
-            age: config.age,
-          },
-        })
+        if (config) {
+          sendData({
+            type: 'HRM_INPUT',
+            data: {
+              value: 0, // 0 tells HrmTiles to remove this user
+              maxHr: config.age ? 220 - config.age : MAX_HR_DEFAULT,
+              name: config.name,
+              age: config.age,
+            },
+          })
+        }
       }
     }, checkIntervalMs)
 
     return () => clearInterval(intervalId)
-  }, [sendData, staleThresholdMs, checkIntervalMs, isStale])
+  }, [deviceStatus, sendData, staleThresholdMs, checkIntervalMs])
 
   /**
    * @function disconnect
@@ -341,10 +336,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             lastUpdateRef.current = Date.now()
 
             // Update Watchdog Timers
-            lastUpdateRef.current = Date.now()
-            if (isStale) {
+            if (statusRef.current !== `Connected to: ${device.name}`) {
               setDeviceStatus(`Connected to: ${device.name}`)
-              setIsStale(false)
             }
 
             // Stream Data
@@ -378,7 +371,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw error
       }
     },
-    [onDisconnected, sendData, isStale]
+    [onDisconnected, sendData]
   )
 
   useEffect(() => {
@@ -400,7 +393,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    */
   const connectAndStream = useCallback(
     async (userName?: string, userAge?: number): Promise<void> => {
-      if (deviceStatus.startsWith('Connected') && !isStale) return
+      if (deviceStatus.startsWith('Connected to:')) return
       if (connectionStatus !== 'Connected') {
         setDeviceStatus('Waiting for WebSocket connection...')
         return
@@ -410,9 +403,37 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current.abort()
       }
 
+      // Attempt to reconnect to a known device first
+      if (navigator.bluetooth?.getDevices) {
+        setDeviceStatus('Searching for known devices...')
+        try {
+          const devices = await navigator.bluetooth.getDevices()
+          const savedDeviceId = getCookie('hrm_device_id')
+          if (savedDeviceId) {
+            const knownDevice = devices.find((d) => d.id === savedDeviceId)
+            if (knownDevice) {
+              setDeviceStatus(`Found known device: ${knownDevice.name}`)
+              const finalName =
+                userName || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`
+              activeConfigRef.current = {
+                name: finalName,
+                age: userAge ? userAge : undefined,
+              }
+              await connectToGatt(knownDevice)
+              return // Exit if successful
+            }
+          }
+        } catch (err) {
+          logger.warn(
+            { error: err },
+            'Error during auto-reconnect attempt. Will proceed to scan.'
+          )
+        }
+      }
+
+      // If no known device, or reconnect fails, prompt user with scanner
       try {
         setDeviceStatus('Scanning for devices...')
-        // This function must be triggered by a user gesture.
         const deviceToConnect = await navigator.bluetooth.requestDevice({
           filters: [{ services: [HR_SERVICE_UUID] }],
           optionalServices: [BATTERY_SERVICE_UUID],
@@ -431,62 +452,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         handleConnectionError(error)
       }
     },
-    [
-      deviceStatus,
-      connectionStatus,
-      connectToGatt,
-      handleConnectionError,
-      isStale,
-    ]
-  )
-
-  const attemptReconnection = useCallback(
-    async (userName?: string, userAge?: number) => {
-      // Feature check: Browser must support getting previously-permitted devices.
-      // The `getDevices` method returns a list of all Bluetooth devices that the user has
-      // previously granted permission to access, allowing for gesture-less reconnection.
-      if (!navigator.bluetooth?.getDevices) return
-
-      try {
-        setDeviceStatus('Searching for known devices...')
-        const devices = await navigator.bluetooth.getDevices()
-        const savedDeviceId = getCookie('hrm_device_id')
-
-        // FIX: Only auto-connect if we can match a specifically saved device ID
-        if (savedDeviceId && devices.length > 0) {
-          const knownDevice = devices.find((d) => d.id === savedDeviceId)
-
-          if (knownDevice) {
-            setDeviceStatus(`Found known device: ${knownDevice.name}`)
-            const finalName =
-              userName || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`
-            activeConfigRef.current = {
-              name: finalName,
-              age: userAge ? userAge : undefined,
-            }
-            await connectToGatt(knownDevice)
-          } else {
-            setDeviceStatus(
-              'Previously paired device not found. Ensure it is nearby, turned on, and Bluetooth is enabled.'
-            )
-          }
-        }
-      } catch (err) {
-        logger.error({ error: err }, 'Auto-reconnect failed')
-        setDeviceStatus('Auto-reconnect failed.')
-      }
-    },
-    [connectToGatt]
+    [deviceStatus, connectionStatus, connectToGatt, handleConnectionError]
   )
 
   return {
     connectAndStream,
-    attemptReconnection,
     disconnect,
     forgetDevice,
     deviceStatus,
     batteryLevel,
-    isConnected: deviceStatus.startsWith('Connected') && !isStale, // Expose strict liveness
+    isConnected: deviceStatus.startsWith('Connected to:'),
     isSupported,
     disconnectionReason,
   }
