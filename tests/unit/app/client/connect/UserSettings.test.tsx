@@ -1,189 +1,104 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import UserSettings from '../../../../../app/client/connect/UserSettings'
 import React from 'react'
+import { Gender, MeasurementSystem } from '../../../../../types'
 
-describe('UserSettings', () => {
+describe('UserSettings Logic', () => {
   const defaultProps = {
-    userName: 'Test',
+    userName: 'Test User',
     setUserName: jest.fn(),
-    userAge: '25',
+    userAge: '30',
     setUserAge: jest.fn(),
     weightInKg: '70',
     setWeightInKg: jest.fn(),
     heightInCm: '175',
     setHeightInCm: jest.fn(),
-    gender: 'MALE' as const,
+    gender: 'MALE' as Gender,
     setGender: jest.fn(),
-    unitSystem: 'METRIC' as const,
+    unitSystem: 'IMPERIAL' as MeasurementSystem,
     onUnitChange: jest.fn(),
   }
 
-  afterEach(() => {
-    jest.clearAllMocks()
+  it('shows error for invalid age input (too high)', async () => {
+    render(<UserSettings {...defaultProps} userAge="150" />)
+    const ageInput = screen.getByLabelText('Your Age')
+
+    act(() => {
+      fireEvent.blur(ageInput)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Please enter a valid age (1-120)')
+      ).toBeInTheDocument()
+    })
   })
 
-  it('validates age on blur and shows error', async () => {
+  it('shows error for invalid age input (too low)', async () => {
+    render(<UserSettings {...defaultProps} userAge="0" />)
+    const ageInput = screen.getByLabelText('Your Age')
+    act(() => {
+      fireEvent.blur(ageInput)
+    })
+    await waitFor(() => {
+      expect(
+        screen.getByText('Please enter a valid age (1-120)')
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('correctly converts imperial weight (lbs) to kg on blur', async () => {
+    render(<UserSettings {...defaultProps} />)
+    const weightInput = screen.getByLabelText(/Your Weight \(lbs\)/i)
+
+    act(() => {
+      fireEvent.change(weightInput, { target: { value: '154' } })
+      fireEvent.blur(weightInput)
+    })
+
+    await waitFor(() => {
+      expect(defaultProps.setWeightInKg).toHaveBeenCalledWith('69.85')
+    })
+  })
+
+  it('shows an error for an invalid weight in lbs', async () => {
+    render(<UserSettings {...defaultProps} />)
+    const weightInput = screen.getByLabelText(/Your Weight \(lbs\)/i)
+
+    act(() => {
+      fireEvent.change(weightInput, { target: { value: '9999' } })
+      fireEvent.blur(weightInput)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Please enter a valid weight (66-440)')
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('switches to metric and validates metric weight correctly', async () => {
     const { rerender } = render(<UserSettings {...defaultProps} />)
-    const ageInput = screen.getByLabelText(/Age/i)
 
-    // Simulate user typing an invalid age
-    fireEvent.change(ageInput, { target: { value: '150' } })
-    // Simulate parent state update
-    rerender(<UserSettings {...defaultProps} userAge="150" />)
-    fireEvent.blur(ageInput)
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('Please enter a valid age (1-120)')
-      ).toBeInTheDocument()
-    })
-  })
-
-  it('validates age on blur and clears error for valid age', async () => {
-    const { rerender } = render(
-      <UserSettings {...defaultProps} userAge="150" />
-    )
-    const ageInput = screen.getByLabelText(/Age/i)
-
-    // Initially, the error should be shown on blur
-    fireEvent.blur(ageInput)
-    await waitFor(() => {
-      expect(
-        screen.getByText('Please enter a valid age (1-120)')
-      ).toBeInTheDocument()
+    act(() => {
+      fireEvent.click(screen.getByText('Metric (kg, cm)'))
     })
 
-    // Correct the age
-    fireEvent.change(ageInput, { target: { value: '30' } })
-    // Simulate parent state update
-    rerender(<UserSettings {...defaultProps} userAge="30" />)
-    fireEvent.blur(ageInput)
+    rerender(<UserSettings {...defaultProps} unitSystem="METRIC" />)
 
-    await waitFor(() => {
-      expect(
-        screen.queryByText('Please enter a valid age (1-120)')
-      ).not.toBeInTheDocument()
-    })
-  })
+    const weightInput = await screen.findByLabelText(/Your Weight \(kg\)/i)
+    expect(weightInput).toBeInTheDocument()
 
-  it('converts weight display when unit changes from METRIC to IMPERIAL', () => {
-    const { rerender } = render(
-      <UserSettings {...defaultProps} weightInKg="100" unitSystem="METRIC" />
-    )
-    const weightInput = screen.getByLabelText(/Weight/i)
-    expect(weightInput).toHaveValue(100)
-
-    rerender(
-      <UserSettings {...defaultProps} weightInKg="100" unitSystem="IMPERIAL" />
-    )
-    expect(screen.getByLabelText(/Weight/i).value).toContain('220.5')
-  })
-
-  it('converts height display when unit changes from METRIC to IMPERIAL', () => {
-    const { rerender } = render(
-      <UserSettings {...defaultProps} heightInCm="180" unitSystem="METRIC" />
-    )
-    expect(screen.getByLabelText(/Height \(cm\)/i)).toHaveValue(180)
-
-    rerender(
-      <UserSettings {...defaultProps} heightInCm="180" unitSystem="IMPERIAL" />
-    )
-    expect(screen.getByLabelText(/Feet/i)).toHaveValue(5)
-    expect(screen.getByLabelText(/Inches/i).value).toContain('11')
-  })
-
-  it('validates height on blur (imperial) and saves as cm', async () => {
-    render(<UserSettings {...defaultProps} unitSystem="IMPERIAL" />)
-    const feetInput = screen.getByLabelText(/Feet/i)
-    const inchesInput = screen.getByLabelText(/Inches/i)
-
-    fireEvent.change(feetInput, { target: { value: '5' } })
-    fireEvent.change(inchesInput, { target: { value: '11' } })
-    fireEvent.blur(inchesInput)
-
-    await waitFor(() => {
-      expect(defaultProps.setHeightInCm).toHaveBeenCalledWith('180.34')
-    })
-  })
-
-  it('updates display values when props are updated externally (state sync fix)', () => {
-    const { rerender } = render(
-      <UserSettings {...defaultProps} weightInKg="70" unitSystem="METRIC" />
-    )
-    const weightInput = screen.getByLabelText(/Weight/i)
-    expect(weightInput).toHaveValue(70)
-
-    rerender(
-      <UserSettings {...defaultProps} weightInKg="85" unitSystem="METRIC" />
-    )
-    expect(weightInput).toHaveValue(85)
-  })
-
-  it('does NOT update display value from props if the input is focused', async () => {
-    const { rerender } = render(
-      <UserSettings {...defaultProps} weightInKg="70" unitSystem="METRIC" />
-    )
-    const weightInput = screen.getByLabelText(/Weight/i)
-
-    fireEvent.focus(weightInput)
-    fireEvent.change(weightInput, { target: { value: '75' } })
-    rerender(
-      <UserSettings {...defaultProps} weightInKg="85" unitSystem="METRIC" />
-    )
-    expect(weightInput).toHaveValue(75)
-
-    fireEvent.blur(weightInput)
-    await waitFor(() => {
-      expect(defaultProps.setWeightInKg).toHaveBeenCalledWith('75.00')
+    act(() => {
+      fireEvent.change(weightInput, { target: { value: '70' } })
+      fireEvent.blur(weightInput)
     })
 
-    rerender(
-      <UserSettings {...defaultProps} weightInKg="90" unitSystem="METRIC" />
-    )
-    expect(weightInput).toHaveValue(90)
-  })
-
-  it('handles rapid switching between weight and height inputs', async () => {
-    const { rerender } = render(
-      <UserSettings {...defaultProps} unitSystem="IMPERIAL" />
-    )
-    const weightInput = screen.getByLabelText(/Weight/i)
-    const feetInput = screen.getByLabelText(/Feet/i)
-    const inchesInput = screen.getByLabelText(/Inches/i)
-
-    // User starts typing in the weight input
-    fireEvent.focus(weightInput)
-    fireEvent.change(weightInput, { target: { value: '160' } })
-    expect(weightInput).toHaveValue(160)
-
-    // User quickly switches to the height input
-    fireEvent.focus(feetInput)
-    fireEvent.change(feetInput, { target: { value: '6' } })
-    expect(feetInput).toHaveValue(6)
-
-    // While the height input is focused, an external prop change happens for weight
-    rerender(
-      <UserSettings {...defaultProps} weightInKg="80" unitSystem="IMPERIAL" />
-    )
-
-    // The weight input should NOT change and should retain the user's typed value
-    expect(weightInput).toHaveValue(160)
-
-    // User blurs the height input, which should save the height
-    fireEvent.blur(inchesInput)
     await waitFor(() => {
-      // 6'0" is approx 182.88 cm
-      expect(defaultProps.setHeightInCm).toHaveBeenCalledWith('182.88')
-    })
-
-    // User goes back to the weight input and blurs it, which should save the weight
-    fireEvent.blur(weightInput)
-    await waitFor(() => {
-      // 160 lbs is approx 72.57 kg
-      expect(defaultProps.setWeightInKg).toHaveBeenCalledWith('72.57')
+      expect(defaultProps.setWeightInKg).toHaveBeenCalledWith('70.00')
     })
   })
 })

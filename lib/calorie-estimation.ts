@@ -40,22 +40,19 @@ export const estimateCaloriesBurned = (
 ): number => {
   const { heartRate, age, weightKg, durationMinutes, gender } = params
 
-  // Fallback to MALE if gender is missing to prevent total calculation failure.
-  const safeGender = gender || 'MALE'
-
-  if (heartRate <= 30 || durationMinutes <= 0) {
+  if (heartRate <= 30 || durationMinutes <= 0 || !gender) {
     return 0
   }
 
   let caloriesPerMinute = 0
   const KJ_TO_KCAL = 4.184
 
-  if (safeGender === 'MALE') {
+  if (gender === 'MALE') {
     // Men: Calories/min = (-55.0969 + 0.6309 * HR + 0.1988 * W + 0.2017 * A) / 4.184
     caloriesPerMinute =
       (-55.0969 + 0.6309 * heartRate + 0.1988 * weightKg + 0.2017 * age) /
       KJ_TO_KCAL
-  } else if (safeGender === 'FEMALE') {
+  } else if (gender === 'FEMALE') {
     // Women: Calories/min = (-20.4022 + 0.4472 * HR + 0.1263 * W + 0.074 * A) / 4.184
     caloriesPerMinute =
       (-20.4022 + 0.4472 * heartRate + 0.1263 * weightKg + 0.074 * age) /

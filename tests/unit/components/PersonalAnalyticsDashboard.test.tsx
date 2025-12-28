@@ -6,7 +6,6 @@ import React from 'react'
 import { render } from '@testing-library/react'
 import { PersonalAnalyticsDashboard } from '../../../components/PersonalAnalyticsDashboard'
 import * as useCalorieCounter from '../../../hooks/useCalorieCounter'
-import { UserSettingsProvider } from '../../../context/UserSettingsContext'
 
 jest.mock('../../../hooks/useCalorieCounter', () => ({
   useCalorieCounter: jest.fn(),
@@ -19,9 +18,7 @@ describe('PersonalAnalyticsDashboard', () => {
       resetCalories: jest.fn(),
     })
     const { getByText } = render(
-      <UserSettingsProvider>
-        <PersonalAnalyticsDashboard heartRate={120} age={30} weight={70} />
-      </UserSettingsProvider>
+      <PersonalAnalyticsDashboard heartRate={120} age={30} weight={70} />
     )
 
     expect(getByText('Calories Burned: 100.00')).toBeInTheDocument()

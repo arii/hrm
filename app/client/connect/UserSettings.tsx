@@ -12,7 +12,6 @@ import {
 import {
   toKg,
   toDisplay,
-  cmToFeetAndInches,
   feetAndInchesToCm,
   updateDisplayHeight,
 } from '../../../utils/units'
@@ -66,12 +65,8 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   const [weightError, setWeightError] = useState<string | null>(null)
   const [heightError, setHeightError] = useState<string | null>(null)
 
-  // or when the unit system is toggled.
+  // This effect synchronizes the local display state with parent props for weight.
   useEffect(() => {
-    // This effect synchronizes the local display state with parent props.
-    // It's a valid pattern for controlled components with transient local state.
-    // See: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!isWeightFocused.current) {
       const currentWeightInKg = parseFloat(weightInKg)
       if (!isNaN(currentWeightInKg)) {
@@ -80,18 +75,18 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
     }
   }, [weightInKg, unitSystem])
 
+  // This effect synchronizes the local display state with parent props for height.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!isHeightFocused.current) {
       const currentHeightInCm = parseFloat(heightInCm)
       if (!isNaN(currentHeightInCm)) {
-        updateDisplayHeight(
-          currentHeightInCm,
-          unitSystem,
-          setDisplayHeightCm,
-          setDisplayHeightFeet,
-          setDisplayHeightInches
-        )
+        const displayValues = updateDisplayHeight(currentHeightInCm, unitSystem)
+        if (displayValues.displayHeightCm) {
+          setDisplayHeightCm(displayValues.displayHeightCm)
+        } else {
+          setDisplayHeightFeet(displayValues.displayHeightFeet || '')
+          setDisplayHeightInches(displayValues.displayHeightInches || '')
+        }
       }
     }
   }, [heightInCm, unitSystem])

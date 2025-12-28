@@ -1,7 +1,5 @@
 // File: components/PersonalAnalyticsDashboard.tsx
-'use client'
 import { useCalorieCounter } from '../hooks/useCalorieCounter'
-import { useUserSettings } from '@/context/UserSettingsContext'
 
 /**
  * A component to display the user's personal analytics.
@@ -20,14 +18,7 @@ export const PersonalAnalyticsDashboard = ({
   age: number
   weight: number
 }) => {
-  const [userSettings] = useUserSettings()
-  const { calories } = useCalorieCounter(
-    heartRate,
-    age,
-    weight,
-    userSettings.gender,
-    true
-  )
+  const { calories } = useCalorieCounter(heartRate, age, weight, true)
 
   return (
     <div>

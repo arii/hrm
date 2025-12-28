@@ -67,22 +67,23 @@ export const cmToFeetAndInches = (
  * Updates the display height based on the measurement system.
  * @param cm The height in centimeters.
  * @param unitSystem The target measurement system.
- * @param setDisplayHeightCm A function to set the height in centimeters.
- * @param setDisplayHeightFeet A function to set the height in feet.
- * @param setDisplayHeightInches A function to set the height in inches.
+ * @returns An object with the display height values.
  */
 export const updateDisplayHeight = (
   cm: number,
-  unitSystem: MeasurementSystem,
-  setDisplayHeightCm: (value: string) => void,
-  setDisplayHeightFeet: (value: string) => void,
-  setDisplayHeightInches: (value: string) => void
-) => {
+  unitSystem: MeasurementSystem
+): {
+  displayHeightCm?: string
+  displayHeightFeet?: string
+  displayHeightInches?: string
+} => {
   if (unitSystem === 'METRIC') {
-    setDisplayHeightCm(cm.toString())
+    return { displayHeightCm: cm.toString() }
   } else {
     const { feet, inches } = cmToFeetAndInches(cm)
-    setDisplayHeightFeet(feet.toString())
-    setDisplayHeightInches(inches.toString())
+    return {
+      displayHeightFeet: feet.toString(),
+      displayHeightInches: inches.toString(),
+    }
   }
 }
