@@ -42,6 +42,7 @@ let services: AppServices
 // - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
 const hrmDataRepository = new HrmDataRepository()
+const MAX_CLIENTS = 1000 // Prevent memory exhaustion
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
@@ -51,6 +52,26 @@ const clientSessionState = new Map<
   string,
   { lastUpdate: number; accumulatedCalories: number }
 >()
+
+/**
+ * Safely parses the WebSocket request URL to extract search parameters.
+ * Handles cases where headers or URL might be malformed.
+ * @param req - The incoming HTTP request from the WebSocket upgrade.
+ * @returns URLSearchParams object, which will be empty if parsing fails.
+ */
+const getRequestParams = (req: IncomingMessage): URLSearchParams => {
+  try {
+    // Fallback to localhost if host header is missing, which can happen in some proxy/test setups
+    const host = req.headers.host || 'localhost'
+    const protocol = 'http' // WebSocket upgrades start as HTTP
+    const url = new URL(req.url || '/', `${protocol}://${host}`)
+    return url.searchParams
+  } catch (error) {
+    logger.error({ error }, 'Failed to parse WebSocket connection URL')
+    // Return empty params to prevent a crash on invalid URL
+    return new URLSearchParams()
+  }
+}
 
 /**
  * Initializes the WebSocket Server manager and registers the core services.
@@ -67,6 +88,12 @@ const initSocketManager = (
   connectionMonitor.start()
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+    // Check limits before processing
+    if (clientSockets.size >= MAX_CLIENTS) {
+      logger.warn('Max connections reached. Rejecting client.')
+      ws.close(1013, 'Try again later')
+      return
+    }
     const extWs = ws as ExtWebSocket
     extWs.isAlive = true
     extWs.on('pong', () => {
@@ -74,11 +101,8 @@ const initSocketManager = (
     })
 
     // 1. EXTRACT OR GENERATE STABLE ID
-    const url = new URL(
-      req.url || '',
-      `http://${req.headers.host || 'localhost'}`
-    )
-    const requestedId = url.searchParams.get('clientId')
+    const searchParams = getRequestParams(req)
+    const requestedId = searchParams.get('clientId')
 
     // Validate requestedId to prevent injection/garbage
     const isValidId = requestedId && /^[0-9a-f-]{36}$/i.test(requestedId)
@@ -343,4 +367,4 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+export { initSocketManager, getRequestParams }
