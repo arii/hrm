@@ -6,9 +6,6 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useSession } from 'next-auth/react'
 import { useUserSettings } from '@/context/UserSettingsContext'
-import Link from 'next/link'
-import IconButton from '@mui/material/IconButton'
-import SettingsIcon from '@mui/icons-material/Settings'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
@@ -130,11 +127,6 @@ const HrmConnectionPanel = () => {
               }}
             >
               <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
-              <Link href="/settings" passHref>
-                <IconButton aria-label="settings">
-                  <SettingsIcon />
-                </IconButton>
-              </Link>
             </Box>
             <HRMonitorStatusIndicator
               deviceStatus={deviceStatus}
