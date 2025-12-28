@@ -43,7 +43,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
 
   if (loading) {
     return (
-      <Box>
+      <Box aria-live="polite">
         <Button startIcon={<BackIcon />} onClick={onBack} sx={{ mb: 2 }}>
           Back to Playlists
         </Button>
@@ -78,7 +78,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
 
   if (error) {
     return (
-      <Box>
+      <Box aria-live="polite">
         <Button startIcon={<BackIcon />} onClick={onBack} sx={{ mb: 2 }}>
           Back to Playlists
         </Button>

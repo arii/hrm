@@ -39,6 +39,7 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
             },
           },
         ],
+        next: null,
       },
     }
     const mockGetPlaylist = jest.fn().mockResolvedValue(mockPlaylist)
@@ -47,10 +48,10 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
     })
 
     const req = new Request('http://localhost/api/spotify/playlists/123')
-    const params = { params: { playlistId: '123' } }
+    const context = { params: { playlistId: '123' } }
 
     // Act
-    const response = await GET(req, params)
+    const response = await GET(req, context)
     const data = await response.json()
 
     // Assert
@@ -64,13 +65,13 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
           uri: 'spotify:track:1',
           name: 'Track 1',
           artist: 'Artist 1',
-          duration: 180000,
+          duration: '3:00',
         },
         {
           uri: 'spotify:track:2',
           name: 'Track 2',
           artist: 'Artist 2',
-          duration: 240000,
+          duration: '4:00',
         },
       ],
     })
