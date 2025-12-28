@@ -97,6 +97,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchLoading, setSearchLoading] = useState(false)
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
     null
   )
@@ -144,6 +145,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     }
 
     const fetchSearchResults = async () => {
+      setSearchLoading(true)
       try {
         const response = await fetch(
           `/api/spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`
@@ -156,6 +158,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
       } catch (error) {
         console.error('Error searching playlists:', error)
         setSearchResults([])
+      } finally {
+        setSearchLoading(false)
       }
     }
 
@@ -231,6 +235,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
       <Autocomplete
         options={filteredPlaylists}
         getOptionLabel={(option) => option.name}
+        filterOptions={(x) => x}
+        loading={loading || searchLoading}
         groupBy={(option) =>
           option.isPreset
             ? 'Preset Playlists'
@@ -244,9 +250,19 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         onInputChange={(_, newInputValue) => setSearchQuery(newInputValue)}
         renderInput={(params) => (
           <TextField
-            inputProps={params.inputProps}
-            InputProps={params.InputProps}
+            {...params}
             placeholder="Search or browse playlists..."
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {loading || searchLoading ? (
+                    <CircularProgress color="inherit" size={20} />
+                  ) : null}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
+            }}
             sx={{
               '& .MuiOutlinedInput-root': {
                 '&:hover .MuiOutlinedInput-notchedOutline': {
@@ -260,12 +276,14 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             }}
           />
         )}
-        renderOption={(props, option) => (
-          <ListItem {...props} key={option.uri} divider>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
+        renderOption={(props, option) => {
+          const { key, ...optionProps } = props
+          return (
+            <ListItem {...optionProps} key={key} divider>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
                 width: '100%',
               }}
             >
@@ -296,7 +314,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
               />
             </div>
           </ListItem>
-        )}
+          )
+        }}
         noOptionsText={
           debouncedSearch ? (
             <>No playlists found matching &quot;{debouncedSearch}&quot;</>
