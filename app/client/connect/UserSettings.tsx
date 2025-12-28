@@ -84,12 +84,18 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
         if (unitSystem === 'METRIC') {
           // eslint-disable-next-line react-hooks/set-state-in-effect
           setDisplayHeightCm(currentHeightInCm.toString())
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setDisplayHeightFeet('')
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setDisplayHeightInches('')
         } else {
           const { feet, inches } = cmToFeetAndInches(currentHeightInCm)
           // eslint-disable-next-line react-hooks/set-state-in-effect
           setDisplayHeightFeet(feet.toString())
           // eslint-disable-next-line react-hooks/set-state-in-effect
           setDisplayHeightInches(inches.toString())
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setDisplayHeightCm('')
         }
       }
     }
