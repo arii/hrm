@@ -137,6 +137,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isStale, setIsStale] = useState(true)
   const [disconnectionReason, setDisconnectionReason] =
     useState<DisconnectionReason>(null)
+  const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
@@ -218,6 +219,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
     setDeviceStatus('Disconnected')
+    setSavedDevice(null)
     setBatteryLevel(null)
     deviceRef.current = null
   }, [])
@@ -369,6 +371,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         device.addEventListener('gattserverdisconnected', onDisconnected)
 
         setDeviceStatus(`Connected to: ${device.name}`)
+        setSavedDevice(device)
         setCookie('hrm_device_id', device.id)
         isManualDisconnect.current = false
         setDisconnectionReason(null)
@@ -411,12 +414,32 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
 
       try {
-        setDeviceStatus('Scanning for devices...')
-        // This function must be triggered by a user gesture.
-        const deviceToConnect = await navigator.bluetooth.requestDevice({
-          filters: [{ services: [HR_SERVICE_UUID] }],
-          optionalServices: [BATTERY_SERVICE_UUID],
-        })
+        setDeviceStatus('Connecting...')
+        let deviceToConnect = savedDevice
+
+        if (!deviceToConnect) {
+          const savedDeviceId = getCookie('hrm_device_id')
+          if (savedDeviceId && navigator.bluetooth?.getDevices) {
+            const devices = await navigator.bluetooth.getDevices()
+            const foundDevice = devices.find((d) => d.id === savedDeviceId)
+
+            if (foundDevice) {
+              deviceToConnect = foundDevice
+            } else {
+              logger.info('Saved device not found, requesting new device.')
+            }
+          }
+        }
+
+        if (!deviceToConnect) {
+          setDeviceStatus('Scanning for devices...')
+          // Note: acceptAllDevices is an alternative if filters fail,
+          // but strict filtering is better for UX to avoid showing non-HRM devices.
+          deviceToConnect = await navigator.bluetooth.requestDevice({
+            filters: [{ services: [HR_SERVICE_UUID] }],
+            optionalServices: [BATTERY_SERVICE_UUID],
+          })
+        }
 
         if (deviceToConnect) {
           const finalName =
@@ -434,54 +457,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     [
       deviceStatus,
       connectionStatus,
+      savedDevice,
       connectToGatt,
       handleConnectionError,
       isStale,
     ]
   )
 
-  const attemptReconnection = useCallback(
-    async (userName?: string, userAge?: number) => {
-      // Feature check: Browser must support getting previously-permitted devices.
-      // The `getDevices` method returns a list of all Bluetooth devices that the user has
-      // previously granted permission to access, allowing for gesture-less reconnection.
-      if (!navigator.bluetooth?.getDevices) return
-
-      try {
-        setDeviceStatus('Searching for known devices...')
-        const devices = await navigator.bluetooth.getDevices()
-        const savedDeviceId = getCookie('hrm_device_id')
-
-        // FIX: Only auto-connect if we can match a specifically saved device ID
-        if (savedDeviceId && devices.length > 0) {
-          const knownDevice = devices.find((d) => d.id === savedDeviceId)
-
-          if (knownDevice) {
-            setDeviceStatus(`Found known device: ${knownDevice.name}`)
-            const finalName =
-              userName || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`
-            activeConfigRef.current = {
-              name: finalName,
-              age: userAge ? userAge : undefined,
-            }
-            await connectToGatt(knownDevice)
-          } else {
-            setDeviceStatus(
-              'Previously paired device not found. Ensure it is nearby, turned on, and Bluetooth is enabled.'
-            )
-          }
-        }
-      } catch (err) {
-        logger.error({ error: err }, 'Auto-reconnect failed')
-        setDeviceStatus('Auto-reconnect failed.')
-      }
-    },
-    [connectToGatt]
-  )
-
   return {
     connectAndStream,
-    attemptReconnection,
     disconnect,
     forgetDevice,
     deviceStatus,
