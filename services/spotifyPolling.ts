@@ -20,6 +20,8 @@ import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
 import { env } from '../lib/env.js'
 
+// This constant is defined at the top of the file to ensure it's easily accessible
+// and to avoid magic strings in the code.
 const SPOTIFY_EMPTY_RESPONSE_SYNTAX_ERROR_MESSAGE =
   'Unexpected end of JSON input'
 
