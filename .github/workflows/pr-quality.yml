@@ -55,6 +55,8 @@ jobs:
       - id: sanitize
         shell: bash
         env:
+          # This safely gets the branch name for both pull requests (`head_ref`) and
+          # direct pushes (`ref_name`), preventing workflow errors on different trigger types.
           RAW_REF: ${{ github.head_ref || github.ref_name }}
         run: |
           # Replace any character that is not a letter, number, hyphen, or underscore with a hyphen.
