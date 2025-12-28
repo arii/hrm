@@ -66,7 +66,10 @@ export const useCalorieCounter = (
 
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
-  }, [isActive]) // Dependency array now only contains `isActive`
+    // The interval should only be reset when the `isActive` flag changes.
+    // Other dependencies like `heartRate`, `age`, and `weight` are managed
+    // via refs to avoid resetting the interval on every change.
+  }, [isActive])
 
   const resetCalories = useCallback(() => {
     setCalories(0)
