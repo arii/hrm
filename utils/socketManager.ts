@@ -35,6 +35,11 @@ let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
+// Explicitly define the default weight for clarity within this module.
+const DEFAULT_WEIGHT_KG = CALORIE_DEFAULTS.WEIGHT_KG
+const MINUTES_TO_MILLISECONDS = 60 * 1000
+const MAX_DELTA_MINUTES = 5
+
 // State Management
 export const hrmDataRepository = new HrmDataRepository()
 const MAX_CLIENTS = env.MAX_WS_CLIENTS // Prevent memory exhaustion
@@ -236,19 +241,22 @@ const handleIncomingMessage = (
 
         if (existingData && sessionState) {
           const now = Date.now()
-          const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
+          const dtMinutes = (now - sessionState.lastUpdate) / MINUTES_TO_MILLISECONDS
           sessionState.lastUpdate = now
 
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
           // Prioritize incoming weight, but fall back to stored or default weight.
-          // This is a fallback used when client-specific weight data is unavailable.
           const calculatedWeight =
             message.data.weight ??
             existingData.weightKg ??
             CALORIE_DEFAULTS.WEIGHT_KG
 
-          if (currentHr > MIN_HR_FOR_CALORIES && dtMinutes > 0 && dtMinutes < 5) {
+          if (
+            currentHr > MIN_HR_FOR_CALORIES &&
+            dtMinutes > 0 &&
+            dtMinutes < MAX_DELTA_MINUTES
+          ) {
             const caloriesPerMinute = estimateCaloriesPerMinute({
               heartRate: currentHr,
               age: currentAge,
