@@ -1,31 +1,25 @@
 // app/settings/page.tsx
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Container, Typography, TextField, Box } from '@mui/material'
 import { useUserSettings } from '@/context/UserSettingsContext'
 
 const SettingsPage = () => {
   const [userSettings, setUserSettings] = useUserSettings()
-  const [weightInput, setWeightInput] = useState(
-    userSettings.userWeight ? String(userSettings.userWeight) : ''
-  )
   const [weightError, setWeightError] = useState('')
-
-  useEffect(() => {
-    setWeightInput(userSettings.userWeight ? String(userSettings.userWeight) : '')
-  }, [userSettings.userWeight])
 
   const handleWeightChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
-    setWeightInput(value)
 
     if (value.trim() === '') {
+      setUserSettings({ ...userSettings, userWeight: null })
       setWeightError('Weight cannot be empty.')
       return
     }
 
     const weight = Number(value)
     if (isNaN(weight)) {
+      setUserSettings({ ...userSettings, userWeight: null })
       setWeightError('Please enter a valid number.')
       return
     }
@@ -34,6 +28,7 @@ const SettingsPage = () => {
       setUserSettings({ ...userSettings, userWeight: weight })
       setWeightError('')
     } else {
+      setUserSettings({ ...userSettings, userWeight: null })
       setWeightError('Please enter a weight between 20 and 300 kg.')
     }
   }
@@ -46,9 +41,9 @@ const SettingsPage = () => {
         </Typography>
         <TextField
           label="Weight (kg)"
-          type="text"
+          type="number"
           fullWidth
-          value={weightInput}
+          value={userSettings.userWeight || ''}
           onChange={handleWeightChange}
           error={!!weightError}
           helperText={weightError}

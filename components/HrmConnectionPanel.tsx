@@ -46,15 +46,27 @@ const HrmConnectionPanel = () => {
   useEffect(() => {
     // Auto-connect logic: Try to connect to a saved device on initial load
     // once the WebSocket is connected. This should only run once.
-    if (
-      connectionStatus === 'Connected' && // WebSocket must be ready
-      deviceStatus === 'Disconnected' && // Avoid connecting if already connected/connecting
-      !autoConnectAttempted.current // Only try once per component mount
-    ) {
-      autoConnectAttempted.current = true
-      handleConnect()
+    const autoConnect = async () => {
+      if (
+        connectionStatus === 'Connected' && // WebSocket must be ready
+        deviceStatus === 'Disconnected' && // Avoid connecting if already connected/connecting
+        !autoConnectAttempted.current // Only try once per component mount
+      ) {
+        autoConnectAttempted.current = true
+        try {
+          await handleConnect()
+        } catch (error) {
+          // It's common for the requestDevice promise to be cancelled by the user.
+          // We catch it here to prevent an unhandled rejection error in the console.
+          if (error.name !== 'NotFoundError') {
+            console.error('Failed to auto-connect to HRM device:', error)
+          }
+        }
+      }
     }
-  }, [connectionStatus, deviceStatus])
+
+    autoConnect()
+  }, [connectionStatus, deviceStatus, handleConnect])
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity
@@ -109,7 +121,13 @@ const HrmConnectionPanel = () => {
               justifyContent: 'center',
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
               <Link href="/settings" passHref>
                 <IconButton aria-label="settings">

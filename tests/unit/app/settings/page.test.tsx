@@ -20,10 +20,12 @@ describe('SettingsPage', () => {
     expect(weightInput).toBeInTheDocument()
 
     fireEvent.change(weightInput, { target: { value: '80' } })
-    expect(weightInput).toHaveValue('80')
+    expect(weightInput).toHaveValue(80)
 
     fireEvent.change(weightInput, { target: { value: '10' } })
-    expect(screen.getByText('Please enter a weight between 20 and 300 kg.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Please enter a weight between 20 and 300 kg.')
+    ).toBeInTheDocument()
 
     fireEvent.change(weightInput, { target: { value: 'abc' } })
     expect(screen.getByText('Please enter a valid number.')).toBeInTheDocument()

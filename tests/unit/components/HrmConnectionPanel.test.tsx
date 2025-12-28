@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
@@ -23,7 +23,10 @@ describe('HrmConnectionPanel', () => {
       hrmData: [],
       activeAlerts: [],
     })
-    ;(useBluetoothHRM as jest.Mock).mockReturnValue({ connectAndStream, deviceStatus: 'Disconnected' })
+    ;(useBluetoothHRM as jest.Mock).mockReturnValue({
+      connectAndStream,
+      deviceStatus: 'Disconnected',
+    })
     ;(useSession as jest.Mock).mockReturnValue({
       data: { user: { name: 'Test User' } },
     })
