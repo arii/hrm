@@ -377,53 +377,54 @@ export class SpotifyPolling implements SpotifyService {
   ) {
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
-    const execute = async (cmd: () => Promise<unknown>) => {
-      try {
-        await cmd()
-      } catch (error) {
-        // The SDK throws a SyntaxError on 204 No Content, which is expected.
-        // We can safely ignore it.
-        if (
-          error instanceof SyntaxError &&
-          error.message.includes('Unexpected end of JSON input')
-        ) {
-          logger.debug({ command }, 'Spotify command successful (204 No Content)')
-          return
-        }
-        // For other errors, re-throw to be caught by the handler.
-        throw error
-      }
-    }
-
     switch (command) {
       case 'PLAY':
-        await execute(() =>
-          contextUri
-            ? this.sdk!.player.startResumePlayback(deviceId, contextUri)
-            : this.sdk!.player.startResumePlayback(deviceId)
+        await this.executeSdkCommand(
+          command,
+          () =>
+            contextUri
+              ? this.sdk!.player.startResumePlayback(deviceId, contextUri)
+              : this.sdk!.player.startResumePlayback(deviceId),
+          { deviceId, contextUri }
         )
         break
       case 'PAUSE':
-        await execute(() => this.sdk!.player.pausePlayback(deviceId))
+        await this.executeSdkCommand(
+          command,
+          () => this.sdk!.player.pausePlayback(deviceId),
+          { deviceId }
+        )
         break
       case 'NEXT':
-        await execute(() => this.sdk!.player.skipToNext(deviceId))
+        await this.executeSdkCommand(
+          command,
+          () => this.sdk!.player.skipToNext(deviceId),
+          { deviceId }
+        )
         break
       case 'PREVIOUS':
-        await execute(() => this.sdk!.player.skipToPrevious(deviceId))
+        await this.executeSdkCommand(
+          command,
+          () => this.sdk!.player.skipToPrevious(deviceId),
+          { deviceId }
+        )
         break
       case 'TRANSFER_PLAYBACK':
         if (deviceId) {
-          await execute(() =>
-            this.sdk!.player.transferPlayback([deviceId], true)
+          await this.executeSdkCommand(
+            command,
+            () => this.sdk!.player.transferPlayback([deviceId], true),
+            { deviceId }
           )
         }
         break
       case 'SET_VOLUME':
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
-          await execute(() =>
-            this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId)
+          await this.executeSdkCommand(
+            command,
+            () => this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId),
+            { deviceId, volume: clampedVolume }
           )
         }
         break
@@ -433,5 +434,44 @@ export class SpotifyPolling implements SpotifyService {
       default:
         logger.warn({ command }, 'Unknown Spotify command')
     }
+  }
+
+  /**
+   * Executes a Spotify SDK command and suppresses syntax errors caused by 204 No Content responses.
+   * @param commandName The name of the command being executed (for logging).
+   * @param action The SDK function to execute.
+   * @param logContext Additional context to include in the debug log.
+   */
+  private async executeSdkCommand(
+    commandName: string,
+    action: () => Promise<unknown>,
+    logContext: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      await action()
+    } catch (error) {
+      if (this.isEmptyResponseError(error)) {
+        logger.debug(
+          { command: commandName, ...logContext },
+          'Spotify command successful (204 No Content)'
+        )
+        return
+      }
+      throw error
+    }
+  }
+
+  /**
+   * Checks if an error is a SyntaxError caused by an empty JSON response.
+   * The SDK throws this error on 204 No Content because it attempts to parse an
+   * empty response body, which is expected for some successful commands.
+   * @param error The error to check.
+   * @returns True if the error is an empty response error, false otherwise.
+   */
+  private isEmptyResponseError(error: unknown): boolean {
+    return (
+      error instanceof SyntaxError &&
+      error.message.includes('Unexpected end of JSON input')
+    )
   }
 }
