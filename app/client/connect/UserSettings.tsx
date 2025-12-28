@@ -66,10 +66,13 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   // Sync display values when props change (e.g., loaded from localStorage)
   // or when the unit system is toggled.
   useEffect(() => {
+    // This effect synchronizes the local display state with parent props.
+    // It's a valid pattern for controlled components with transient local state.
+    // See: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!isWeightFocused.current) {
       const currentWeightInKg = parseFloat(weightInKg)
       if (!isNaN(currentWeightInKg)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDisplayWeight(toDisplay(currentWeightInKg, unitSystem).toString())
       }
     }
@@ -77,16 +80,20 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
     if (!isHeightFocused.current) {
       const currentHeightInCm = parseFloat(heightInCm)
       if (!isNaN(currentHeightInCm)) {
-        if (unitSystem === 'METRIC') {
-          setDisplayHeightCm(currentHeightInCm.toString())
-        } else {
-          const { feet, inches } = cmToFeetAndInches(currentHeightInCm)
-          setDisplayHeightFeet(feet.toString())
-          setDisplayHeightInches(inches.toString())
-        }
+        updateDisplayHeight(currentHeightInCm)
       }
     }
   }, [weightInKg, heightInCm, unitSystem])
+
+  const updateDisplayHeight = (cm: number) => {
+    if (unitSystem === 'METRIC') {
+      setDisplayHeightCm(cm.toString())
+    } else {
+      const { feet, inches } = cmToFeetAndInches(cm)
+      setDisplayHeightFeet(feet.toString())
+      setDisplayHeightInches(inches.toString())
+    }
+  }
 
   const handleAgeBlur = () => {
     setAgeError(validateAgeValue(userAge))
