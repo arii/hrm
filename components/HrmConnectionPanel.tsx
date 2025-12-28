@@ -150,10 +150,7 @@ const HrmConnectionPanel = () => {
         <HrTileWithCalories
           user={
             tileData || {
-              name:
-                session?.user?.name ||
-                userSettings.userName ||
-                'Unknown User',
+              name: session?.user?.name || userSettings.userName || 'Unknown User',
               value: 0,
               calories: 0,
               maxHr: 220 - (userSettings.userAge || 30),
