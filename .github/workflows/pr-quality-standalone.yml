@@ -24,14 +24,27 @@ permissions:
 
 env:
   FORCE_COLOR: 1
-  # Unique session identifier for concurrent runs
-  SESSION_ID: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
   # Maximum bytes to include from each log file in failure comments
   LOG_TRUNCATE_BYTES: 20000
 
 jobs:
+  setup-env:
+    name: 🛡️ Sanitize Environment
+    runs-on: ubuntu-latest
+    outputs:
+      session_id: ${{ steps.sanitize.outputs.session_id }}
+    steps:
+      - id: sanitize
+        shell: bash
+        run: |
+          RAW_ID="${{ github.head_ref || github.ref_name }}"
+          CLEAN_ID=$(echo "$RAW_ID" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
+          echo "Sanitized SESSION_ID: $CLEAN_ID"
+          echo "session_id=$CLEAN_ID" >> $GITHUB_OUTPUT
+
   dependency-check:
     name: 📦 Dependency Check
+    needs: setup-env
     runs-on: self-hosted
     if: "contains(github.event.pull_request.labels.*.name, 'dependencies')"
     steps:
@@ -55,8 +68,11 @@ jobs:
   # ===========================================================================
   test:
     name: 🧪 Setup & All Tests
+    needs: setup-env
     runs-on: self-hosted
     timeout-minutes: 25
+    env:
+      SESSION_ID: ${{ needs.setup-env.outputs.session_id }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -88,13 +104,6 @@ jobs:
         shell: bash
         # This expands $HOME (e.g., /home/ari) and saves it to the workflow env
         run: echo "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright" >> $GITHUB_ENV
-
-      - name: Sanitize SESSION_ID
-        shell: bash
-        run: |
-          # Replace / with - in SESSION_ID to prevent invalid artifact names
-          SAFE_SESSION_ID=$(echo "${{ env.SESSION_ID }}" | tr '/' '-')
-          echo "SESSION_ID=$SAFE_SESSION_ID" >> $GITHUB_ENV
 
       # --- GLOBAL PERSISTENCE CONFIG ---
       - name: Install pnpm
