@@ -46,9 +46,7 @@ describe('useCalorieCounter', () => {
 
   it('should not calculate calories when isActive is false', () => {
     ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() =>
-      useCalorieCounter(120, 30, 70, false)
-    )
+    const { result } = renderHook(() => useCalorieCounter(120, 30, 70, false))
 
     expect(result.current.calories).toBe(0)
 
