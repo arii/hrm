@@ -73,15 +73,20 @@ export const updateDisplayHeight = (
   cm: number,
   unitSystem: MeasurementSystem
 ): {
-  displayHeightCm?: string
-  displayHeightFeet?: string
-  displayHeightInches?: string
+  displayHeightCm: string
+  displayHeightFeet: string
+  displayHeightInches: string
 } => {
   if (unitSystem === 'METRIC') {
-    return { displayHeightCm: cm.toString() }
+    return {
+      displayHeightCm: cm.toString(),
+      displayHeightFeet: '',
+      displayHeightInches: '',
+    }
   } else {
     const { feet, inches } = cmToFeetAndInches(cm)
     return {
+      displayHeightCm: '',
       displayHeightFeet: feet.toString(),
       displayHeightInches: inches.toString(),
     }

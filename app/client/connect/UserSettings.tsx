@@ -81,12 +81,9 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
       const currentHeightInCm = parseFloat(heightInCm)
       if (!isNaN(currentHeightInCm)) {
         const displayValues = updateDisplayHeight(currentHeightInCm, unitSystem)
-        if (displayValues.displayHeightCm) {
-          setDisplayHeightCm(displayValues.displayHeightCm)
-        } else {
-          setDisplayHeightFeet(displayValues.displayHeightFeet || '')
-          setDisplayHeightInches(displayValues.displayHeightInches || '')
-        }
+        setDisplayHeightCm(displayValues.displayHeightCm || '')
+        setDisplayHeightFeet(displayValues.displayHeightFeet || '')
+        setDisplayHeightInches(displayValues.displayHeightInches || '')
       }
     }
   }, [heightInCm, unitSystem])
