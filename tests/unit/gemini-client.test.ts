@@ -29,7 +29,11 @@ describe('getModelFallbacks', () => {
     process.env.GEMINI_MODEL_FALLBACKS =
       'gemini-pro, gemini-pro-vision, gemini-ultra'
     const fallbacks = getModelFallbacks()
-    expect(fallbacks).toEqual(['gemini-pro', 'gemini-pro-vision', 'gemini-ultra'])
+    expect(fallbacks).toEqual([
+      'gemini-pro',
+      'gemini-pro-vision',
+      'gemini-ultra',
+    ])
   })
 
   it('should filter out invalid model names and log a warning', () => {

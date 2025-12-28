@@ -79,6 +79,8 @@ interface UseBluetoothHRMProps {
    * A value of 0 disables this feature.
    */
   dataLivenessTimeoutMs?: number
+  userName?: string | null
+  userAge?: number | null
 }
 
 /**
@@ -130,7 +132,7 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  * ```
  */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
-  const { dataLivenessTimeoutMs = 10000 } = props
+  const { dataLivenessTimeoutMs = 10000, userName, userAge } = props
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
@@ -145,12 +147,24 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
+  const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
   >(null)
+
+  useEffect(() => {
+    userDetailsRef.current = { name: userName || '', age: userAge || 0 }
+  }, [userName, userAge])
+
+  useEffect(() => {
+    // Keep the ref updated if props change
+    userDetailsRef.current = {
+      name: userName || '',
+      age: userAge || 0,
+    }
+  }, [userName, userAge])
 
   useEffect(() => {
     statusRef.current = deviceStatus
@@ -390,15 +404,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    * @sideeffect Updates component state throughout the connection process.
    */
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<void> => {
+    async (
+      userNameFromArgs?: string,
+      userAgeFromArgs?: number
+    ): Promise<void> => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
 
+      // Prioritize args, but fall back to props.
       userDetailsRef.current = {
-        name: userName || '',
-        age: userAge || 0,
+        name: userNameFromArgs || userName || '',
+        age: userAgeFromArgs || userAge || 0,
       }
+
       if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {
         const err = new Error('WebSocket not connected')
@@ -446,7 +465,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw error
       }
     },
-    [connectionStatus, savedDevice, connectToGatt, handleConnectionError]
+    [
+      connectionStatus,
+      savedDevice,
+      connectToGatt,
+      handleConnectionError,
+      userName,
+      userAge,
+    ]
   )
 
   return {

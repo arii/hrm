@@ -319,7 +319,7 @@ export default function ConnectView({
           </Alert>
         )}
 
-        {isConnected && currentHR > 0 && (
+        {isConnected && (
           <Box sx={{ mt: 2 }}>
             <HrTile
               name={userName}
