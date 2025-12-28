@@ -6,30 +6,18 @@ import { useUserSettings } from '@/context/UserSettingsContext'
 
 const SettingsPage = () => {
   const [userSettings, setUserSettings] = useUserSettings()
-  const [weightError, setWeightError] = useState('')
+  const [localWeight, setLocalWeight] = useState(
+    userSettings.userWeight?.toString() || ''
+  )
+  const [error, setError] = useState('')
 
-  const handleWeightChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value
-
-    if (value.trim() === '') {
-      setUserSettings({ ...userSettings, userWeight: null })
-      setWeightError('Weight cannot be empty.')
-      return
-    }
-
-    const weight = Number(value)
-    if (isNaN(weight)) {
-      setUserSettings({ ...userSettings, userWeight: null })
-      setWeightError('Please enter a valid number.')
-      return
-    }
-
-    if (weight >= 20 && weight <= 300) {
+  const handleBlur = () => {
+    const weight = parseFloat(localWeight)
+    if (!isNaN(weight) && weight >= 20 && weight <= 300) {
       setUserSettings({ ...userSettings, userWeight: weight })
-      setWeightError('')
+      setError('')
     } else {
-      setUserSettings({ ...userSettings, userWeight: null })
-      setWeightError('Please enter a weight between 20 and 300 kg.')
+      setError('Invalid weight. Must be between 20 and 300.')
     }
   }
 
@@ -43,10 +31,11 @@ const SettingsPage = () => {
           label="Weight (kg)"
           type="number"
           fullWidth
-          value={userSettings.userWeight || ''}
-          onChange={handleWeightChange}
-          error={!!weightError}
-          helperText={weightError}
+          value={localWeight}
+          onChange={(e) => setLocalWeight(e.target.value)}
+          onBlur={handleBlur}
+          error={!!error}
+          helperText={error}
           sx={{ mb: 2 }}
         />
       </Box>
