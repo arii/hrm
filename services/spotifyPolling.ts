@@ -379,6 +379,7 @@ export class SpotifyPolling implements SpotifyService {
     // This triggers the action on the currently active device.
     switch (command) {
       case 'PLAY':
+        // deviceId is optional
         await this.executeSdkCommand(
           command,
           () =>
@@ -389,6 +390,7 @@ export class SpotifyPolling implements SpotifyService {
         )
         break
       case 'PAUSE':
+        // deviceId is optional
         await this.executeSdkCommand(
           command,
           () => this.sdk!.player.pausePlayback(deviceId),
@@ -396,6 +398,7 @@ export class SpotifyPolling implements SpotifyService {
         )
         break
       case 'NEXT':
+        // deviceId is optional
         await this.executeSdkCommand(
           command,
           () => this.sdk!.player.skipToNext(deviceId),
@@ -403,6 +406,7 @@ export class SpotifyPolling implements SpotifyService {
         )
         break
       case 'PREVIOUS':
+        // deviceId is optional
         await this.executeSdkCommand(
           command,
           () => this.sdk!.player.skipToPrevious(deviceId),
@@ -439,16 +443,16 @@ export class SpotifyPolling implements SpotifyService {
   /**
    * Executes a Spotify SDK command and suppresses syntax errors caused by 204 No Content responses.
    * @param commandName The name of the command being executed (for logging).
-   * @param sdkCall The SDK function to execute.
+   * @param apiCall The SDK function to execute.
    * @param logContext Additional context for logging. This is for internal logging only and is not passed to the Spotify SDK.
    */
   private async executeSdkCommand(
     commandName: string,
-    sdkCall: () => Promise<unknown>,
+    apiCall: () => Promise<unknown>,
     logContext: Record<string, string | number | undefined> = {}
   ): Promise<void> {
     try {
-      await sdkCall()
+      await apiCall()
     } catch (error) {
       if (this.isEmptyResponseError(error)) {
         logger.debug(
