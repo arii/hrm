@@ -334,7 +334,7 @@ export class SpotifyPolling implements SpotifyService {
    * @param params.playlistUri The URI of a playlist to play (legacy).
    * @param params.contextUri The URI of a context to play (playlist, album, artist). Takes precedence over playlistUri.
    */
-  public handleCommand(
+  public async handleCommand(
     command: SpotifyCommand,
     params: {
       deviceId?: string
@@ -342,31 +342,29 @@ export class SpotifyPolling implements SpotifyService {
       playlistUri?: string
       contextUri?: string
     }
-  ) {
+  ): Promise<void> {
     const { deviceId, volume, playlistUri, contextUri } = params
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
-      return Promise.resolve()
-    }
-
-    if (command === 'GET_DEVICES') {
-      this.refreshDevices()
       return
     }
 
-    return (async () => {
-      try {
-        await this.executeSpotifyCommand(
-          command,
-          deviceId,
-          volume,
-          contextUri || playlistUri
-        )
-        setTimeout(() => this.getCurrentlyPlaying(), 500)
-      } catch (error) {
-        await logSpotifyCommandError(command, error)
-      }
-    })()
+    if (command === 'GET_DEVICES') {
+      await this.refreshDevices()
+      return
+    }
+
+    try {
+      await this.executeSpotifyCommand(
+        command,
+        deviceId,
+        volume,
+        contextUri || playlistUri
+      )
+      setTimeout(() => this.getCurrentlyPlaying(), 500)
+    } catch (error) {
+      await logSpotifyCommandError(command, error)
+    }
   }
 
   private async executeSpotifyCommand(
@@ -444,7 +442,7 @@ export class SpotifyPolling implements SpotifyService {
    * Executes a Spotify SDK command and suppresses syntax errors caused by 204 No Content responses.
    * @param commandName The name of the command being executed (for logging).
    * @param apiCall The SDK function to execute.
-   * @param logContext Additional context for logging. This is for internal logging only and is not passed to the Spotify SDK.
+   * @param logContext Additional context for logging. This is for internal logging only and is not passed to the Spotify SDK. e.g., `{ deviceId, contextUri }`
    */
   private async executeSdkCommand(
     commandName: string,
