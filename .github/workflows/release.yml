@@ -14,10 +14,10 @@ on:
 # Permissions granted to the GITHUB_TOKEN for the release-please-action.
 # Scoped as narrowly as possible for security (principle of least privilege).
 #
-# - contents: write: to create release tags, commit version bumps, and update CHANGELOG.
-# - pull-requests: write: to create the release PR.
-# - issues: write: to link issues in the release notes.
-# - releases: write: to create the GitHub release.
+# * `contents: write`: To create release tags, commit version bumps, and update the CHANGELOG.
+# * `pull-requests: write`: To create and manage the release PR.
+# * `issues: write`: To link issues in the release notes.
+# * `releases: write`: To create the final GitHub release.
 #
 # See: https://github.com/marketplace/actions/release-please-action#workflow-permissions
 permissions:
