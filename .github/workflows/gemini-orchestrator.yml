@@ -41,7 +41,8 @@ jobs:
   pr-quality:
     if: github.event.action == 'synchronize' || github.event.action == 'opened'
     uses: ./.github/workflows/pr-quality.yml
-    secrets: inherit
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   gemini-invoke:
     if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@gemini-bot')
