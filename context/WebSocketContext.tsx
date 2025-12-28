@@ -58,7 +58,7 @@ export const WebSocketProvider = ({
       const urlObject = new URL(url)
       urlObject.searchParams.set('clientId', clientId)
       return urlObject.toString()
-    } catch (error) {
+    } catch (_error) {
       console.error('Invalid WebSocket URL:', url)
       return url // Fallback to the original URL on error
     }
