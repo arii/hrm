@@ -2,7 +2,6 @@
 'use client'
 import { useMemo, useEffect, useCallback, useRef } from 'react'
 import Box from '@mui/material/Box'
-import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useSession } from 'next-auth/react'
 import { useUserSettings } from '@/context/UserSettingsContext'
@@ -75,7 +74,7 @@ const HrmConnectionPanel = () => {
       .filter((user) => {
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
-        return !(isPlaceholderName || hasNoIdentity)
+        return !(isPlaceholderName || hasNoIdentity) && user.isConnected
       })
       .map((user) => {
         const matchingAlert = activeAlerts.find(
@@ -92,12 +91,9 @@ const HrmConnectionPanel = () => {
       })
   }, [hrmData, activeAlerts])
 
-  const isLoading =
-    connectionStatus === 'Connecting...' ||
-    connectionStatus === 'Reconnecting...'
-
   return (
     <Box
+      data-testid="hrm-connection-panel"
       sx={{
         flexGrow: 1,
         width: { xs: '100%', lg: 'calc(50% - 16px)' },
@@ -145,61 +141,26 @@ const HrmConnectionPanel = () => {
           isSupported={isSupported}
         />
       </Box>
-      {isLoading ? (
-        <Box
-          data-testid="hr-tile-grid-item"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            width: { sm: 'calc(50% - 12px)' },
+      <Box
+        data-testid="hr-tile-grid-item"
+        sx={{
+          width: {
+            xs: '100%',
+            sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
+          },
+        }}
+      >
+        <HrTileWithCalories
+          user={tileData[0] || {
+            name: session?.user?.name || userSettings.userName || 'Unknown User',
+            value: null,
+            calories: 0,
+            percentMax: 0,
+            clientId: 'placeholder-tile',
           }}
-        >
-          <Skeleton
-            variant="rectangular"
-            height={220}
-            sx={{ borderRadius: 3 }}
-          />
-        </Box>
-      ) : tileData.length > 0 ? (
-        tileData.map((user) => (
-          <Box
-            key={user.clientId}
-            data-testid="hr-tile-grid-item"
-            sx={{
-              width: {
-                xs: '100%',
-                sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-              },
-            }}
-          >
-            <HrTileWithCalories
-              user={user}
-              isAlerting={user.isAlerting}
-              {...(user.alertMessage && { alertMessage: user.alertMessage })}
-            />
-          </Box>
-        ))
-      ) : (
-        <Box
-          data-testid="hr-tile-grid-item"
-          sx={{
-            width: {
-              xs: '100%',
-              sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-            },
-          }}
-        >
-          <HrTileWithCalories
-            user={{
-              name: session?.user?.name || userSettings.userName || 'Unknown User',
-              value: null,
-              calories: 0,
-              percentMax: 0,
-              clientId: 'placeholder-tile',
-            }}
-            isAlerting={false}
-          />
-        </Box>
-      )}
+          isAlerting={false}
+        />
+      </Box>
     </Box>
   )
 }
