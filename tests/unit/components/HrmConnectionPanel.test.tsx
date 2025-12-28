@@ -22,6 +22,7 @@ describe('HrmConnectionPanel', () => {
       connectionStatus: 'Connected',
       hrmData: [],
       activeAlerts: [],
+      timerData: { isRunning: false },
     })
     ;(useBluetoothHRM as jest.Mock).mockReturnValue({
       connectAndStream: jest.fn(),

@@ -319,16 +319,14 @@ export default function ConnectView({
           </Alert>
         )}
 
-        {isConnected && currentHR > 0 && (
-          <Box sx={{ mt: 2 }}>
-            <HrTile
-              name={userName}
-              bpm={currentHR}
-              percentMax={hrZoneProps.percentage}
-              isAlerting={false}
-            />
-          </Box>
-        )}
+        <Box sx={{ mt: 2 }}>
+          <HrTile
+            name={userName}
+            bpm={currentHR}
+            percentMax={hrZoneProps.percentage}
+            isAlerting={false}
+          />
+        </Box>
 
         <Stack
           spacing={2}

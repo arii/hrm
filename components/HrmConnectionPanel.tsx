@@ -106,62 +106,60 @@ const HrmConnectionPanel = () => {
         gap: 2,
       }}
     >
-      {isLoading || tileData.length === 0 ? (
-        <>
-          <Box
-            sx={{
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              p: 2,
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 2,
-              height: '100%',
-              justifyContent: 'center',
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
-              <Link href="/settings" passHref>
-                <IconButton aria-label="settings">
-                  <SettingsIcon />
-                </IconButton>
-              </Link>
-            </Box>
-            <HRMonitorStatusIndicator
-              deviceStatus={deviceStatus}
-              batteryLevel={batteryLevel}
-            />
-            <ConnectHRMonitorButton
-              connect={handleConnect}
-              disconnect={disconnect}
-              isConnected={isConnected}
-              isSupported={isSupported}
-            />
-          </Box>
-          <Box
-            data-testid="hr-tile-grid-item"
-            sx={{
-              display: { xs: 'none', md: 'block' },
-              width: { sm: 'calc(50% - 12px)' },
-            }}
-          >
-            <Skeleton
-              variant="rectangular"
-              height={220}
-              sx={{ borderRadius: 3 }}
-            />
-          </Box>
-        </>
-      ) : (
+      <Box
+        sx={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          p: 2,
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 2,
+          height: '100%',
+          justifyContent: 'center',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
+          <Link href="/client/connect" passHref>
+            <IconButton aria-label="settings">
+              <SettingsIcon />
+            </IconButton>
+          </Link>
+        </Box>
+        <HRMonitorStatusIndicator
+          deviceStatus={deviceStatus}
+          batteryLevel={batteryLevel}
+        />
+        <ConnectHRMonitorButton
+          connect={handleConnect}
+          disconnect={disconnect}
+          isConnected={isConnected}
+          isSupported={isSupported}
+        />
+      </Box>
+      {isLoading ? (
+        <Box
+          data-testid="hr-tile-grid-item"
+          sx={{
+            display: { xs: 'none', md: 'block' },
+            width: { sm: 'calc(50% - 12px)' },
+          }}
+        >
+          <Skeleton
+            variant="rectangular"
+            height={220}
+            sx={{ borderRadius: 3 }}
+          />
+        </Box>
+      ) : tileData.length > 0 ? (
         tileData.map((user) => (
           <Box
             key={user.clientId}
@@ -180,6 +178,27 @@ const HrmConnectionPanel = () => {
             />
           </Box>
         ))
+      ) : (
+        <Box
+          data-testid="hr-tile-grid-item"
+          sx={{
+            width: {
+              xs: '100%',
+              sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
+            },
+          }}
+        >
+          <HrTileWithCalories
+            user={{
+              name: session?.user?.name || userSettings.userName || 'Unknown User',
+              value: null,
+              calories: 0,
+              percentMax: 0,
+              clientId: 'placeholder-tile',
+            }}
+            isAlerting={false}
+          />
+        </Box>
       )}
     </Box>
   )
