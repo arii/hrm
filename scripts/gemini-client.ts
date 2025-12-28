@@ -21,14 +21,12 @@ const outputFile = getArg('--output')
 const preset = getArg('--preset')
 
 // List of models to try in order.
-// `gemini-2.5-flash-image` is prioritized as a fallback due to its higher quota limits,
-// which helps mitigate rate-limiting issues with the primary `gemini-2.0-flash-exp` model.
+// `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
+// It is used as the primary fallback to mitigate rate-limiting issues with the experimental `gemini-2.0-flash-exp` model.
 const MODEL_FALLBACKS = [
   'gemini-2.0-flash-exp',
-  'gemini-2.5-flash-image',
-  'gemini-1.5-pro',
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-8b',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-pro-latest',
 ]
 
 interface ReviewContext {
