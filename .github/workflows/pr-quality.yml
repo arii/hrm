@@ -50,82 +50,55 @@ jobs:
   test-actions:
     name: ⚙️ Test Composite Actions
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: "Special Chars and Truncation"
+            value: 'feature/test-branch/with_special-chars!@#$%^&*()'
+            max-length: '30'
+            expected: 'feature-test-branch-with_speci'
+          - name: "Empty String"
+            value: ''
+            max-length: '64'
+            expected: ''
+          - name: "Already Sanitized"
+            value: 'clean-string-123'
+            max-length: '64'
+            expected: 'clean-string-123'
+          - name: "Shorter than Max Length with special chars"
+            value: 'short/string'
+            max-length: '64'
+            expected: 'short-string'
+          - name: "Duplicate Hyphens"
+            value: 'feature//branch'
+            max-length: '64'
+            expected: 'feature-branch'
+          - name: "Trailing Hyphen"
+            value: 'feature/branch-'
+            max-length: '64'
+            expected: 'feature-branch'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Test Case 1: Special Chars and Truncation
-        id: test_1
+      - name: Sanitize String (Test Case - ${{ matrix.name }})
+        id: sanitize
         uses: ./.github/actions/sanitize-string
         with:
-          value: 'feature/test-branch/with_special-chars!@#$%^&*()'
-          max-length: '30'
+          value: ${{ matrix.value }}
+          max-length: ${{ matrix.max-length }}
 
-      - name: Verify Test Case 1
+      - name: Verify (Test Case - ${{ matrix.name }})
         run: |
-          expected="feature-test-branch-with_speci"
-          actual="${{ steps.test_1.outputs.sanitized-value }}"
+          actual="${{ steps.sanitize.outputs.sanitized-value }}"
+          expected="${{ matrix.expected }}"
           if [ "$actual" != "$expected" ]; then
-            echo "Test Case 1 Failed!"
-            echo "Expected: $expected"
-            echo "Actual:   $actual"
-            exit 1
-          fi
-
-      - name: Test Case 2: Empty String
-        id: test_2
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: ''
-
-      - name: Verify Test Case 2
-        run: |
-          expected=""
-          actual="${{ steps.test_2.outputs.sanitized-value }}"
-          if [ "$actual" != "$expected" ]; then
-            echo "Test Case 2 Failed!"
+            echo "Test Case Failed: ${{ matrix.name }}"
             echo "Expected: '$expected'"
             echo "Actual:   '$actual'"
             exit 1
           fi
-
-      - name: Test Case 3: Already Sanitized
-        id: test_3
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'clean-string-123'
-
-      - name: Verify Test Case 3
-        run: |
-          expected="clean-string-123"
-          actual="${{ steps.test_3.outputs.sanitized-value }}"
-          if [ "$actual" != "$expected" ]; then
-            echo "Test Case 3 Failed!"
-            echo "Expected: $expected"
-            echo "Actual:   $actual"
-            exit 1
-          fi
-
-      - name: Test Case 4: Shorter than Max Length
-        id: test_4
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'short/string'
-          max-length: '64'
-
-      - name: Verify Test Case 4
-        run: |
-          expected="short-string"
-          actual="${{ steps.test_4.outputs.sanitized-value }}"
-          if [ "$actual" != "$expected" ]; then
-            echo "Test Case 4 Failed!"
-            echo "Expected: $expected"
-            echo "Actual:   $actual"
-            exit 1
-          fi
-
-      - name: Final Verification
-        run: echo "✅ All sanitization logic test cases passed."
+          echo "✅ Test Case Passed: ${{ matrix.name }}"
 
   # ===========================================================================
   # JOB 2: INFRASTRUCTURE SETUP (The "Clean Slate")
@@ -201,7 +174,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch || github.ref }}
-          clean: false # ⚡ KEEP WORKSPACE (Preserves node_modules & browsers)
+          clean: false
 
       # We still set up pnpm/node just to ensure the binaries are in PATH
       - uses: pnpm/action-setup@v4
@@ -329,7 +302,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch || github.ref }}
-          clean: false # ⚡ KEEP WORKSPACE
+          clean: false
 
       - uses: pnpm/action-setup@v4
         with: { run_install: false }

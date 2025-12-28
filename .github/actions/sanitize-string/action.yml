@@ -29,10 +29,12 @@ runs:
         RAW: ${{ inputs.value }}
         LEN: ${{ inputs.max-length }}
       run: |
-        # Sanitize: Replace any character that is not alphanumeric, hyphen, or underscore with a hyphen.
-        # Truncate: Limit the string to the specified max-length. While GitHub Actions does not
-        # explicitly document a maximum length for cache keys or artifact names, various underlying
-        # systems and APIs may have their own limits. 64 characters is a conservative and widely
-        # compatible length for such identifiers.
-        CLEAN=$(echo "$RAW" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-$LEN)
-        echo "result=$CLEAN" >> $GITHUB_OUTPUT
+        # 1. Strip newlines (tr -d '\n') to protect GITHUB_OUTPUT
+        # 2. Replace invalid chars with hyphen
+        # 3. Squeeze repeating hyphens (tr -s '-')
+        # 4. Truncate
+        CLEAN=$(echo "$RAW" | tr -d '\n' | sed 's/[^a-zA-Z0-9_-]/-/g' | tr -s '-' | cut -c1-"$LEN")
+
+        # Remove trailing hyphens if any (optional but clean)
+        CLEAN=${CLEAN%-}
+        echo "result=$CLEAN" >> "$GITHUB_OUTPUT"
