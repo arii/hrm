@@ -21,7 +21,6 @@ import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import {
-  HrmData,
   StateSnapshot,
   ClientCommandMessageSchema,
   ExtWebSocket,
@@ -204,7 +203,7 @@ describe('WebSocket Manager', () => {
 
   describe('Calorie Calculation', () => {
     it('should accumulate calories correctly with small frequent updates', () => {
-      const clientId = '11111111-1111-1111-1111-111111111111';
+      const clientId = '11111111-1111-1111-1111-111111111111'
       mockWs = new MockWebSocket()
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
       const mockReq = {

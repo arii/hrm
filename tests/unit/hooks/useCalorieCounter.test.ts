@@ -23,7 +23,9 @@ describe('useCalorieCounter', () => {
 
   it('should calculate calories correctly over time', () => {
     // Mocking a return of 60 calories per minute for simplicity (1 calorie per second)
-    ;(calorieEstimation.estimateCaloriesPerMinute as jest.Mock).mockReturnValue(60)
+    ;(calorieEstimation.estimateCaloriesPerMinute as jest.Mock).mockReturnValue(
+      60
+    )
     const { result } = renderHook(() => useCalorieCounter(120, 30, 70, true))
 
     expect(result.current.calories).toBe(0)
@@ -44,7 +46,9 @@ describe('useCalorieCounter', () => {
   })
 
   it('should not calculate calories when isActive is false', () => {
-    ;(calorieEstimation.estimateCaloriesPerMinute as jest.Mock).mockReturnValue(1)
+    ;(calorieEstimation.estimateCaloriesPerMinute as jest.Mock).mockReturnValue(
+      1
+    )
     const { result } = renderHook(() => useCalorieCounter(120, 30, 70, false))
 
     expect(result.current.calories).toBe(0)
@@ -58,7 +62,9 @@ describe('useCalorieCounter', () => {
   })
 
   it('should reset calories when resetCalories is called', () => {
-    ;(calorieEstimation.estimateCaloriesPerMinute as jest.Mock).mockReturnValue(60)
+    ;(calorieEstimation.estimateCaloriesPerMinute as jest.Mock).mockReturnValue(
+      60
+    )
     const { result } = renderHook(() => useCalorieCounter(120, 30, 70, true))
 
     act(() => {
