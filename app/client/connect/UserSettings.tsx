@@ -4,8 +4,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import {
   validateAgeValue,
   validateWeightValue,
@@ -18,6 +16,10 @@ import {
   feetAndInchesToCm,
 } from '../../../utils/units'
 import { Gender, MeasurementSystem } from '../../../types'
+import UserNameInput from './components/UserNameInput'
+import UserAgeInput from './components/UserAgeInput'
+import GenderSelection from './components/GenderSelection'
+import UnitSystemSelection from './components/UnitSystemSelection'
 
 interface UserSettingsProps {
   userName: string
@@ -63,7 +65,6 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   const [weightError, setWeightError] = useState<string | null>(null)
   const [heightError, setHeightError] = useState<string | null>(null)
 
-  // Sync display values when props change (e.g., loaded from localStorage)
   // or when the unit system is toggled.
   useEffect(() => {
     // This effect synchronizes the local display state with parent props.
@@ -76,14 +77,17 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
         setDisplayWeight(toDisplay(currentWeightInKg, unitSystem).toString())
       }
     }
+  }, [weightInKg, unitSystem])
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!isHeightFocused.current) {
       const currentHeightInCm = parseFloat(heightInCm)
       if (!isNaN(currentHeightInCm)) {
         updateDisplayHeight(currentHeightInCm)
       }
     }
-  }, [weightInKg, heightInCm, unitSystem])
+  }, [heightInCm, unitSystem])
 
   const updateDisplayHeight = (cm: number) => {
     if (unitSystem === 'METRIC') {
@@ -151,57 +155,21 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
 
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
-      <TextField
-        fullWidth
-        label="Your Name"
-        placeholder="e.g., Jane Doe"
-        value={userName}
-        onChange={(e) => setUserName(e.target.value)}
+      <UserNameInput userName={userName} setUserName={setUserName} />
+      <UserAgeInput
+        userAge={userAge}
+        setUserAge={setUserAge}
+        handleAgeBlur={handleAgeBlur}
+        ageError={ageError}
       />
-      <TextField
-        fullWidth
-        label="Your Age"
-        placeholder="e.g., 30"
-        type="number"
-        value={userAge}
-        onChange={(e) => {
-          if (/^\d*$/.test(e.target.value)) {
-            setUserAge(e.target.value)
-          }
-        }}
-        onBlur={handleAgeBlur}
-        error={!!ageError}
-        helperText={ageError}
-        inputProps={{ min: 1, max: 120 }}
+      <GenderSelection
+        gender={gender}
+        handleGenderChange={handleGenderChange}
       />
-      <ToggleButtonGroup
-        value={gender}
-        exclusive
-        onChange={handleGenderChange}
-        aria-label="Gender"
-        fullWidth
-      >
-        <ToggleButton value="MALE" aria-label="male">
-          Male
-        </ToggleButton>
-        <ToggleButton value="FEMALE" aria-label="female">
-          Female
-        </ToggleButton>
-      </ToggleButtonGroup>
-      <ToggleButtonGroup
-        value={unitSystem}
-        exclusive
-        onChange={handleUnitChange}
-        aria-label="Unit system"
-        fullWidth
-      >
-        <ToggleButton value="IMPERIAL" aria-label="imperial units">
-          Imperial (lbs, ft, in)
-        </ToggleButton>
-        <ToggleButton value="METRIC" aria-label="metric units">
-          Metric (kg, cm)
-        </ToggleButton>
-      </ToggleButtonGroup>
+      <UnitSystemSelection
+        unitSystem={unitSystem}
+        handleUnitChange={handleUnitChange}
+      />
       {unitSystem === 'METRIC' ? (
         <TextField
           fullWidth
