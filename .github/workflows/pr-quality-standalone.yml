@@ -23,6 +23,8 @@ permissions:
   issues: write # Required for posting comments
 
 env:
+  # Ensures that output from scripts and tools (like tests) includes ANSI color codes,
+  # which makes logs more readable in the GitHub Actions UI.
   FORCE_COLOR: 1
   # Maximum bytes to include from each log file in failure comments
   LOG_TRUNCATE_BYTES: 20000
@@ -38,7 +40,13 @@ jobs:
         shell: bash
         run: |
           RAW_ID="${{ github.head_ref || github.ref_name }}"
-          CLEAN_ID=$(echo "$RAW_ID" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
+          CLEAN_ID=$(echo "$RAW_ID" | sed 's/[^a-zA-Z0--9_-]/-/g' | cut -c1-64)
+
+          if [ -z "$CLEAN_ID" ]; then
+            echo "::error::Sanitized SESSION_ID is empty. Original value: $RAW_ID"
+            exit 1
+          fi
+
           echo "Sanitized SESSION_ID: $CLEAN_ID"
           echo "session_id=$CLEAN_ID" >> $GITHUB_OUTPUT
 
