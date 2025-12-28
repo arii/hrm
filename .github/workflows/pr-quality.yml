@@ -45,11 +45,94 @@ env:
 
 jobs:
   # ===========================================================================
-  # JOB 1: INFRASTRUCTURE SETUP (The "Clean Slate")
-  # Wipes workspace, installs deps, and prepares the environment for all jobs.
+  # JOB 1: TEST COMPOSITE ACTIONS
+  # ===========================================================================
+  test-actions:
+    name: ⚙️ Test Composite Actions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Test Case 1: Special Chars and Truncation
+        id: test_1
+        uses: ./.github/actions/sanitize-string
+        with:
+          value: 'feature/test-branch/with_special-chars!@#$%^&*()'
+          max-length: '30'
+
+      - name: Verify Test Case 1
+        run: |
+          expected="feature-test-branch-with_speci"
+          actual="${{ steps.test_1.outputs.sanitized-value }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "Test Case 1 Failed!"
+            echo "Expected: $expected"
+            echo "Actual:   $actual"
+            exit 1
+          fi
+
+      - name: Test Case 2: Empty String
+        id: test_2
+        uses: ./.github/actions/sanitize-string
+        with:
+          value: ''
+
+      - name: Verify Test Case 2
+        run: |
+          expected=""
+          actual="${{ steps.test_2.outputs.sanitized-value }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "Test Case 2 Failed!"
+            echo "Expected: '$expected'"
+            echo "Actual:   '$actual'"
+            exit 1
+          fi
+
+      - name: Test Case 3: Already Sanitized
+        id: test_3
+        uses: ./.github/actions/sanitize-string
+        with:
+          value: 'clean-string-123'
+
+      - name: Verify Test Case 3
+        run: |
+          expected="clean-string-123"
+          actual="${{ steps.test_3.outputs.sanitized-value }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "Test Case 3 Failed!"
+            echo "Expected: $expected"
+            echo "Actual:   $actual"
+            exit 1
+          fi
+
+      - name: Test Case 4: Shorter than Max Length
+        id: test_4
+        uses: ./.github/actions/sanitize-string
+        with:
+          value: 'short/string'
+          max-length: '64'
+
+      - name: Verify Test Case 4
+        run: |
+          expected="short-string"
+          actual="${{ steps.test_4.outputs.sanitized-value }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "Test Case 4 Failed!"
+            echo "Expected: $expected"
+            echo "Actual:   $actual"
+            exit 1
+          fi
+
+      - name: Final Verification
+        run: echo "✅ All sanitization logic test cases passed."
+
+  # ===========================================================================
+  # JOB 2: INFRASTRUCTURE SETUP (The "Clean Slate")
   # ===========================================================================
   infra-setup:
     name: 🏗️ Infra Setup
+    needs: test-actions
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -107,12 +190,11 @@ jobs:
         # Installs into ./.cache/ms-playwright (inside workspace)
 
   # ===========================================================================
-  # JOB 2: QUALITY CHECKS
-  # Reuses the workspace from Job 1 (No re-install needed)
+  # JOB 3: QUALITY CHECKS
   # ===========================================================================
   quality-check:
     name: 🛡️ Quality Check
-    needs: infra-setup
+    needs: [infra-setup, test-actions]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -126,6 +208,28 @@ jobs:
         with: { run_install: false }
       - uses: actions/setup-node@v6
         with: { node-version: '20.x' }
+
+      - name: Sanitize SESSION_ID
+        id: sanitize_id
+        uses: ./.github/actions/sanitize-string
+        with:
+          value: ${{ env.SESSION_ID }}
+
+      - name: Update Environment for Sanitized ID
+        run: echo "SESSION_ID=${{ steps.sanitize_id.outputs.sanitized-value }}" >> $GITHUB_ENV
+
+      - name: Verify Sanitized ID in Context
+        shell: bash
+        run: |
+          # This step ensures that the sanitized SESSION_ID is correctly propagated
+          # as an environment variable for subsequent steps in this job.
+          if [[ "${{ steps.sanitize_id.outputs.sanitized-value }}" != "$SESSION_ID" ]]; then
+            echo "::error::Failed to correctly apply the sanitized SESSION_ID to the job environment."
+            echo "Expected: ${{ steps.sanitize_id.outputs.sanitized-value }}"
+            echo "Actual:   $SESSION_ID"
+            exit 1
+          fi
+          echo "✅ Sanitized SESSION_ID correctly applied to environment."
 
       - name: Configure Session-specific Cache
         run: |

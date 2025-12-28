@@ -1,0 +1,38 @@
+name: 'Sanitize String'
+description: 'Sanitizes a string for safe use in file paths, environment variables, and keys.'
+inputs:
+  value:
+    description: 'The raw string to sanitize.'
+    required: true
+  max-length:
+    description: 'The maximum allowed length for the string.'
+    required: false
+    default: '64'
+outputs:
+  sanitized-value:
+    description: 'The sanitized and truncated string.'
+    value: ${{ steps.sanitize.outputs.result }}
+runs:
+  using: "composite"
+  steps:
+    - id: validate-input
+      shell: bash
+      run: |
+        if ! [[ "${{ inputs.max-length }}" =~ ^[0-9]+$ ]] || [ "${{ inputs.max-length }}" -le 0 ]; then
+          echo "::error::Input 'max-length' must be a positive integer."
+          exit 1
+        fi
+
+    - id: sanitize
+      shell: bash
+      env:
+        RAW: ${{ inputs.value }}
+        LEN: ${{ inputs.max-length }}
+      run: |
+        # Sanitize: Replace any character that is not alphanumeric, hyphen, or underscore with a hyphen.
+        # Truncate: Limit the string to the specified max-length. While GitHub Actions does not
+        # explicitly document a maximum length for cache keys or artifact names, various underlying
+        # systems and APIs may have their own limits. 64 characters is a conservative and widely
+        # compatible length for such identifiers.
+        CLEAN=$(echo "$RAW" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-$LEN)
+        echo "result=$CLEAN" >> $GITHUB_OUTPUT
