@@ -84,9 +84,9 @@ jobs:
             fi
           }
 
-          assert_sanitize 'feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization' 'feature-long-branch-name-with-slashes-and-more-slashes-to-test'
-          assert_sanitize 'short/branch' 'short-branch'
-          assert_sanitize 'test/special!@#$%^&*()[]{}chars' 'test-special--------------chars'
+          assert_sanitize 'feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization' 'feature-long-branch-name-with-slashes-and-more-slashes-to-test' # Test truncation and sanitization.
+          assert_sanitize 'short/branch' 'short-branch' # Test a simple case with a slash.
+          assert_sanitize 'test/special!@#$%^&*()[]{}chars' 'test-special--------------chars' # Test various special characters.
 
           echo "✅ Sanitization unit tests passed."
   # ===========================================================================
