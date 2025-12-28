@@ -12,21 +12,25 @@
  * age, weight, heart rate, and duration.
  */
 
+import { Gender } from '../types'
+
 export interface CalorieEstimationParams {
   heartRate: number
   age: number
   weightKg: number
   durationMinutes: number
+  gender: Gender
 }
 
 /**
- * Estimates calories burned using a gender-neutral formula.
+ * Estimates calories burned using gender-specific formulas.
  *
- * This function implements a widely recognized formula for calorie expenditure
- * that relies on heart rate, age, and weight. It abstracts away the need for
- * a `gender` parameter by using a universal set of coefficients.
+ * This function implements the Keytel et al. (2005) formula for calorie expenditure,
+ * which provides different coefficients for males and females to improve accuracy.
+ * It relies on heart rate, age, weight, and gender.
  *
- * This is the recommended function for all new calorie estimations.
+ * Journal of Sports Sciences:
+ * https://www.tandfonline.com/doi/abs/10.1080/02640410400023363
  *
  * @param params - The physiological data for the calculation.
  * @returns The estimated number of calories burned.
@@ -34,34 +38,32 @@ export interface CalorieEstimationParams {
 export const estimateCaloriesBurned = (
   params: CalorieEstimationParams
 ): number => {
-  const { heartRate, age, weightKg, durationMinutes } = params
+  const { heartRate, age, weightKg, durationMinutes, gender } = params
 
-  if (heartRate <= 30 || durationMinutes <= 0) {
+  if (heartRate <= 30 || durationMinutes <= 0 || !gender) {
     return 0
   }
 
-  // A simplified, gender-neutral version of the Harris-Benedict equation, adapted for activity.
-  /**
-   * Constants used in the calorie estimation formula.
-   * These values are derived from the Journal of Sports Sciences:
-   * https://www.tandfonline.com/doi/abs/10.1080/02640410400023363
-   */
-  const CALORIE_ESTIMATION_CONSTANTS = {
-    INTERCEPT: -55.0969,
-    HR_FACTOR: 0.6309,
-    WEIGHT_FACTOR: 0.1988,
-    AGE_FACTOR: 0.2017,
-    KJ_TO_KCAL: 4.184,
+  let caloriesPerMinute = 0
+  const KJ_TO_KCAL = 4.184
+
+  if (gender === 'MALE') {
+    // Men: Calories/min = (-55.0969 + 0.6309 * HR + 0.1988 * W + 0.2017 * A) / 4.184
+    caloriesPerMinute =
+      (-55.0969 +
+        0.6309 * heartRate +
+        0.1988 * weightKg +
+        0.2017 * age) /
+      KJ_TO_KCAL
+  } else if (gender === 'FEMALE') {
+    // Women: Calories/min = (-20.4022 + 0.4472 * HR + 0.1263 * W + 0.074 * A) / 4.184
+    caloriesPerMinute =
+      (-20.4022 +
+        0.4472 * heartRate +
+        0.1263 * weightKg +
+        0.074 * age) /
+      KJ_TO_KCAL
   }
-  const heartRateTerm = CALORIE_ESTIMATION_CONSTANTS.HR_FACTOR * heartRate
-  const weightTerm = CALORIE_ESTIMATION_CONSTANTS.WEIGHT_FACTOR * weightKg
-  const ageTerm = CALORIE_ESTIMATION_CONSTANTS.AGE_FACTOR * age
-  const caloriesPerMinute =
-    (CALORIE_ESTIMATION_CONSTANTS.INTERCEPT +
-      heartRateTerm +
-      weightTerm +
-      ageTerm) /
-    CALORIE_ESTIMATION_CONSTANTS.KJ_TO_KCAL
 
   const totalCalories = caloriesPerMinute * durationMinutes
   return Math.max(0, totalCalories) // Ensure result is non-negative

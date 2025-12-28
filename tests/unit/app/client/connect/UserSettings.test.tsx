@@ -45,6 +45,12 @@ describe('UserSettings Logic', () => {
     setUserAge: jest.fn(),
     weightInKg: '70',
     setWeightInKg: jest.fn(),
+    heightInCm: '175',
+    setHeightInCm: jest.fn(),
+    gender: 'MALE' as const,
+    setGender: jest.fn(),
+    unitSystem: 'IMPERIAL' as const,
+    onUnitChange: jest.fn(),
   }
 
   beforeEach(() => {
@@ -117,20 +123,23 @@ describe('UserSettings Logic', () => {
   })
 
   it('switches to metric and validates metric weight correctly', async () => {
-    render(<UserSettings {...defaultProps} />)
+    const { rerender } = render(<UserSettings {...defaultProps} />)
 
     act(() => {
       fireEvent.click(screen.getByText('Metric (kg, cm)'))
     })
 
-    await waitFor(async () => {
-      const weightInput = await screen.findByLabelText(/Your Weight \(kg\)/i)
-      expect(weightInput).toBeInTheDocument()
+    // Re-render with the updated unitSystem prop
+    rerender(
+      <UserSettings {...defaultProps} unitSystem="METRIC" onUnitChange={jest.fn()} />
+    )
 
-      act(() => {
-        fireEvent.change(weightInput, { target: { value: '70' } })
-        fireEvent.blur(weightInput)
-      })
+    const weightInput = await screen.findByLabelText(/Your Weight \(kg\)/i)
+    expect(weightInput).toBeInTheDocument()
+
+    act(() => {
+      fireEvent.change(weightInput, { target: { value: '70' } })
+      fireEvent.blur(weightInput)
     })
 
     await waitFor(() => {

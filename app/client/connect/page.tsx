@@ -11,6 +11,12 @@ export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
   const [weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
+  const [heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', '175') // Always CM
+  const [gender, setGender] = useLocalStorage<Gender>('hrm-user-gender', 'male')
+  const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
+    'hrm-user-units',
+    'IMPERIAL'
+  )
 
   const {
     connectAndStream,
@@ -43,6 +49,12 @@ export default function ConnectPage() {
       setUserAge={setUserAge}
       weightInKg={weightInKg}
       setWeightInKg={setWeightInKg}
+      heightInCm={heightInCm}
+      setHeightInCm={setHeightInCm}
+      gender={gender}
+      setGender={setGender}
+      unitSystem={unitSystem}
+      onUnitChange={setUnitSystem}
       isConnected={isConnected}
       isSupported={isSupported}
       deviceStatus={deviceStatus}

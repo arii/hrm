@@ -20,6 +20,10 @@ import {
   feetAndInchesToCm,
 } from '../../../utils/units'
 
+import {
+  Gender,
+  MeasurementSystem
+} from '../../../types'
 interface UserSettingsProps {
   userName: string
   setUserName: (value: string) => void
@@ -27,6 +31,12 @@ interface UserSettingsProps {
   setUserAge: (value: string) => void
   weightInKg: string
   setWeightInKg: (value: string) => void
+  heightInCm: string
+  setHeightInCm: (value: string) => void
+  gender: Gender
+  setGender: (value: Gender) => void
+  unitSystem: MeasurementSystem
+  onUnitChange: (value: MeasurementSystem) => void
 }
 
 const UserSettingsComponent: React.FC<UserSettingsProps> = ({
@@ -36,12 +46,13 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   setUserAge,
   weightInKg,
   setWeightInKg,
+  heightInCm,
+  setHeightInCm,
+  gender,
+  setGender,
+  unitSystem,
+  onUnitChange,
 }) => {
-  const [heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', '175') // Always CM
-  const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
-    'hrm-user-units',
-    'IMPERIAL'
-  )
 
   // Transient state for inputs
   const [displayWeight, setDisplayWeight] = useState('')
@@ -114,9 +125,18 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
     newUnit: MeasurementSystem | null
   ) => {
     if (newUnit && newUnit !== unitSystem) {
-      setUnitSystem(newUnit)
+      onUnitChange(newUnit)
       setWeightError(null)
       setHeightError(null)
+    }
+  }
+
+  const handleGenderChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newGender: Gender | null
+  ) => {
+    if (newGender) {
+      setGender(newGender)
     }
   }
 
@@ -146,6 +166,20 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
         inputProps={{ min: 1, max: 120 }}
       />
       <ToggleButtonGroup
+        value={gender}
+        exclusive
+        onChange={handleGenderChange}
+        aria-label="Gender"
+        fullWidth
+      >
+        <ToggleButton value="male" aria-label="male">
+          Male
+        </ToggleButton>
+        <ToggleButton value="female" aria-label="female">
+          Female
+        </ToggleButton>
+      </ToggleButtonGroup>
+      <ToggleButtonGroup
         value={unitSystem}
         exclusive
         onChange={handleUnitChange}
@@ -166,7 +200,10 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
           placeholder="e.g., 175"
           type="number"
           value={displayHeightCm}
-          onChange={(e) => setDisplayHeightCm(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.valueAsNumber
+            setDisplayHeightCm(isNaN(val) ? '' : val.toString())
+          }}
           onBlur={handleHeightBlur}
           error={!!heightError}
           helperText={heightError}
@@ -179,7 +216,10 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
             placeholder="e.g., 5"
             type="number"
             value={displayHeightFeet}
-            onChange={(e) => setDisplayHeightFeet(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.valueAsNumber
+              setDisplayHeightFeet(isNaN(val) ? '' : val.toString())
+            }}
             onBlur={handleHeightBlur}
           />
           <TextField
@@ -188,7 +228,10 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
             placeholder="e.g., 9"
             type="number"
             value={displayHeightInches}
-            onChange={(e) => setDisplayHeightInches(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.valueAsNumber
+              setDisplayHeightInches(isNaN(val) ? '' : val.toString())
+            }}
             onBlur={handleHeightBlur}
           />
         </Stack>
@@ -199,7 +242,10 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
         placeholder={unitSystem === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
         type="number"
         value={displayWeight}
-        onChange={(e) => setDisplayWeight(e.target.value)}
+        onChange={(e) => {
+          const val = e.target.valueAsNumber
+          setDisplayWeight(isNaN(val) ? '' : val.toString())
+        }}
         onBlur={handleWeightBlur}
         error={!!weightError}
         helperText={weightError}

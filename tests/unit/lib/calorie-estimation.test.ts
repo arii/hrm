@@ -10,37 +10,79 @@ describe('Calorie Estimation', () => {
   const testCases: Array<[string, CalorieEstimationParams, number]> = [
     [
       'realistic data',
-      { heartRate: 150, age: 30, weightKg: 70, durationMinutes: 30 },
+      {
+        heartRate: 150,
+        age: 30,
+        weightKg: 70,
+        durationMinutes: 30,
+        gender: 'MALE',
+      },
       426.7,
     ],
     [
       'zero duration',
-      { heartRate: 150, age: 30, weightKg: 70, durationMinutes: 0 },
+      {
+        heartRate: 150,
+        age: 30,
+        weightKg: 70,
+        durationMinutes: 0,
+        gender: 'MALE',
+      },
       0,
     ],
     [
       'very low heart rate',
-      { heartRate: 29, age: 30, weightKg: 70, durationMinutes: 30 },
+      {
+        heartRate: 29,
+        age: 30,
+        weightKg: 70,
+        durationMinutes: 30,
+        gender: 'MALE',
+      },
       0,
     ],
     [
       'older, lighter person',
-      { heartRate: 140, age: 65, weightKg: 55, durationMinutes: 60 },
+      {
+        heartRate: 140,
+        age: 65,
+        weightKg: 55,
+        durationMinutes: 60,
+        gender: 'MALE',
+      },
       821.3,
     ],
     [
       'younger, heavier person',
-      { heartRate: 160, age: 22, weightKg: 90, durationMinutes: 45 },
+      {
+        heartRate: 160,
+        age: 22,
+        weightKg: 90,
+        durationMinutes: 45,
+        gender: 'MALE',
+      },
       733.3,
     ],
     [
       'high but valid values',
-      { heartRate: 195, age: 25, weightKg: 100, durationMinutes: 120 },
+      {
+        heartRate: 195,
+        age: 25,
+        weightKg: 100,
+        durationMinutes: 120,
+        gender: 'MALE',
+      },
       2663.0,
     ],
     [
       'low but valid values',
-      { heartRate: 90, age: 40, weightKg: 60, durationMinutes: 15 },
+      {
+        heartRate: 90,
+        age: 40,
+        weightKg: 60,
+        durationMinutes: 15,
+        gender: 'MALE',
+      },
       77.7,
     ],
   ]

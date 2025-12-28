@@ -15,6 +15,7 @@ import BottomNavBar from '../../../components/BottomNavBar'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { formatDuration } from '@/lib/utils'
+import { Gender, MeasurementSystem } from 'types'
 
 interface ConnectViewProps {
   userName: string
@@ -23,6 +24,12 @@ interface ConnectViewProps {
   setUserAge: (value: string) => void
   weightInKg: string
   setWeightInKg: (value: string) => void
+  heightInCm: string
+  setHeightInCm: (value: string) => void
+  gender: Gender
+  setGender: (value: Gender) => void
+  unitSystem: MeasurementSystem
+  onUnitChange: (value: MeasurementSystem) => void
   isConnected: boolean
   isSupported: boolean
   deviceStatus: string
@@ -43,6 +50,12 @@ const ConnectView: React.FC<ConnectViewProps> = ({
   setUserAge,
   weightInKg,
   setWeightInKg,
+  heightInCm,
+  setHeightInCm,
+  gender,
+  setGender,
+  unitSystem,
+  onUnitChange,
   isConnected,
   isSupported,
   deviceStatus,
@@ -73,6 +86,7 @@ const ConnectView: React.FC<ConnectViewProps> = ({
     currentHR,
     parseFloat(userAge) || 30,
     parseFloat(weightInKg) || 70,
+    gender,
     workoutStatus === 'running'
   )
 
@@ -119,7 +133,11 @@ const ConnectView: React.FC<ConnectViewProps> = ({
   }
 
   const showUserDetails = hasStarted || isConnected
-  const isConnectable = !!userName.trim() && !!userAge.trim()
+  const isConnectable =
+    !!userName.trim() &&
+    !!userAge.trim() &&
+    !isNaN(parseFloat(weightInKg)) &&
+    parseFloat(weightInKg) > 0
 
   return (
     <>
@@ -136,6 +154,12 @@ const ConnectView: React.FC<ConnectViewProps> = ({
             setUserAge={setUserAge}
             weightInKg={weightInKg}
             setWeightInKg={setWeightInKg}
+            heightInCm={heightInCm}
+            setHeightInCm={setHeightInCm}
+            gender={gender}
+            setGender={setGender}
+            unitSystem={unitSystem}
+            onUnitChange={onUnitChange}
           />
         ) : (
           <Box
