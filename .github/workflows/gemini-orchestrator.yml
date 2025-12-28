@@ -46,6 +46,13 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  pr-quality:
+    if: github.event.action == 'synchronize' || github.event.action == 'opened'
+    uses: ./.github/workflows/pr-quality.yml
+    secrets:
+      GH_TOKEN: ${{ secrets.ARI_PAT }}
+
   gemini-invoke:
     if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@gemini-bot')
     runs-on: self-hosted
