@@ -5,7 +5,7 @@
  */
 import { WebSocket } from 'ws'
 import type {
-  HrmStreamData as HrmData,
+  HrmData,
   TimerData,
   SpotifyPlaybackState as SpotifyData,
   TimerMode,

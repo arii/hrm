@@ -70,7 +70,11 @@ const updateCaloriesForClient = (
   const lastUpdate = session.lastUpdate
   session.lastUpdate = Date.now()
 
-  const caloriesBurned = calculateIntervalCalories(avgHr, lastUpdate, clientData)
+  const caloriesBurned = calculateIntervalCalories(
+    avgHr,
+    lastUpdate,
+    clientData
+  )
 
   if (caloriesBurned > 0) {
     try {

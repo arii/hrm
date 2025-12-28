@@ -72,11 +72,11 @@ export interface HeartRateDataPoint {
 /**
  * Represents a single, real-time heart rate data stream from a client.
  */
-export interface HrmStreamData {
+export interface HrmData {
   clientId: string
+  name: string
   value: number
   maxHr: number
-  name?: string
   age?: number
   totalCalories?: number
   weightKg?: number
