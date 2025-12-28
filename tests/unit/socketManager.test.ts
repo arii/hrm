@@ -314,7 +314,8 @@ describe('WebSocket Manager', () => {
 
     it('should not delete client data if they reconnect within the grace period', () => {
       // 1. A client is connected
-      const clientId = '22222222-2222-2222-2222-222222222222'
+      // This UUID is a valid v4 UUID, ensuring it passes the stricter regex validation.
+      const clientId = '10e30384-2358-4848-9399-550a112a9d8c'
       const mockReq = {
         url: `/?clientId=${clientId}`,
         headers: { host: 'localhost' },
@@ -414,6 +415,45 @@ describe('WebSocket Manager', () => {
           contextUri: 'spotify:album:456',
         }
       )
+    })
+
+    describe('Client ID Validation', () => {
+      it('should accept a valid v4 UUID', () => {
+        const clientId = '10e30384-2358-4848-9399-550a112a9d8c'
+        const mockReq = {
+          url: `/?clientId=${clientId}`,
+          headers: { host: 'localhost' },
+        }
+        const ws = new MockWebSocket() as ExtWebSocket
+        mockWss.emit('connection', ws, mockReq)
+        expect(ws.clientId).toBe(clientId)
+      })
+
+      it('should reject an invalid UUID and generate a new one', () => {
+        const invalidClientId = 'not-a-valid-uuid'
+        const mockReq = {
+          url: `/?clientId=${invalidClientId}`,
+          headers: { host: 'localhost' },
+        }
+        const ws = new MockWebSocket() as ExtWebSocket
+        mockWss.emit('connection', ws, mockReq)
+        expect(ws.clientId).not.toBe(invalidClientId)
+        expect(logger.warn).toHaveBeenCalledWith(
+          { requestedId: invalidClientId },
+          'Invalid clientId received. Generating new one.'
+        )
+      })
+
+      it('should reject a UUID with incorrect structure', () => {
+        const malformedClientId = '10e30384-2358-4848-9399-550a112a9d8c-extra'
+        const mockReq = {
+          url: `/?clientId=${malformedClientId}`,
+          headers: { host: 'localhost' },
+        }
+        const ws = new MockWebSocket() as ExtWebSocket
+        mockWss.emit('connection', ws, mockReq)
+        expect(ws.clientId).not.toBe(malformedClientId)
+      })
     })
 
     it('should handle unknown message types', () => {

@@ -44,8 +44,14 @@ let services: AppServices
 const hrmDataRepository = new HrmDataRepository()
 const MAX_CLIENTS = 1000 // Prevent memory exhaustion
 
+// Define a clear type for your socket map to avoid 'any' casting later
+interface TrackedSocket extends WebSocket {
+  clientId: string
+  isAlive: boolean
+}
+
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
-const clientSockets = new Map<string, WebSocket>()
+const clientSockets = new Map<string, TrackedSocket>()
 
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
@@ -105,7 +111,10 @@ const initSocketManager = (
     const requestedId = searchParams.get('clientId')
 
     // Validate requestedId to prevent injection/garbage
-    const isValidId = requestedId && /^[0-9a-f-]{36}$/i.test(requestedId)
+    // Use a strict UUID v4 regex to prevent garbage data injection
+    const UUID_REGEX =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    const isValidId = requestedId && UUID_REGEX.test(requestedId)
     if (requestedId && !isValidId) {
       logger.warn(
         { requestedId },
@@ -128,7 +137,7 @@ const initSocketManager = (
         oldWs.terminate()
       }
     }
-    clientSockets.set(clientId, ws)
+    clientSockets.set(clientId, extWs as TrackedSocket)
 
     // 3. INITIALIZE OR RECOVER DATA
     if (!hrmDataRepository.findById(clientId)) {
