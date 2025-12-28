@@ -8,7 +8,7 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const PlaylistSelector = dynamic(
@@ -18,16 +18,22 @@ const PlaylistSelector = dynamic(
     loading: () => <Skeleton variant="rectangular" height={200} />,
   }
 )
+const PlaylistDetails = dynamic(
+  () => import('../../../components/Spotify/PlaylistDetails'),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" height={300} />,
+  }
+)
 
 const SpotifySelectionPage = () => {
   const { spotifyData, sendData } = useWebSocket()
-  const router = useRouter()
+  const [selectedPlaylistUri, setSelectedPlaylistUri] = useState<string | null>(
+    null
+  )
 
   const handlePlaylistSelected = (uri: string) => {
-    const playlistId = uri.split(':').pop()
-    if (playlistId) {
-      router.push(`/spotify/playlist/${playlistId}`)
-    }
+    setSelectedPlaylistUri(uri)
   }
 
   const handlePlaylistPlay = (uri: string) => {
@@ -48,8 +54,26 @@ const SpotifySelectionPage = () => {
     }
   }
 
+  const handleTrackPlay = (uri: string) => {
+    const activeDevice = spotifyData.devices?.find((device) => device.is_active)
+    if (activeDevice) {
+      sendData({
+        type: 'SPOTIFY_COMMAND',
+        command: 'PLAY',
+        trackUri: uri,
+        deviceId: activeDevice.id,
+      })
+    } else {
+      sendData({
+        type: 'SPOTIFY_COMMAND',
+        command: 'PLAY',
+        trackUri: uri,
+      })
+    }
+  }
+
   return (
-    <Container maxWidth="sm" sx={{ py: 3 }}>
+    <Container maxWidth="md" sx={{ py: 3 }}>
       <Typography variant="h4" component="h1" gutterBottom align="center">
         Spotify Playlist Selector
       </Typography>
@@ -84,6 +108,17 @@ const SpotifySelectionPage = () => {
           />
         </CardContent>
       </Card>
+
+      {selectedPlaylistUri && (
+        <Card sx={{ mt: 2 }}>
+          <CardContent>
+            <PlaylistDetails
+              playlistUri={selectedPlaylistUri}
+              onTrackPlay={handleTrackPlay}
+            />
+          </CardContent>
+        </Card>
+      )}
     </Container>
   )
 }
