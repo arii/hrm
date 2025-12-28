@@ -1,10 +1,6 @@
 name: PR Quality Gate
 
 on:
-  # pull_request:
-  #   branches: [ "leader" ]
-  # NOTE: PR quality checks are now handled by gemini-orchestrator.yml
-  # which calls pr-quality-standalone.yml as a reusable workflow
   workflow_dispatch:
     inputs:
       branch:
@@ -38,345 +34,249 @@ concurrency:
 
 env:
   FORCE_COLOR: 1
-  # Browsers are installed INSIDE the workspace so they persist with clean: false
-  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
-  # Unique session identifier for concurrent runs
-  SESSION_ID: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
 
 jobs:
-  # ===========================================================================
-  # JOB 1: INFRASTRUCTURE SETUP (The "Clean Slate")
-  # Wipes workspace, installs deps, and prepares the environment for all jobs.
-  # ===========================================================================
-  infra-setup:
-    name: 🏗️ Infra Setup
+  prepare-env:
+    name: 📝 Prepare Environment
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    outputs:
+      session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.branch || github.ref }}
-          fetch-depth: 0
-          clean: true # 🧹 Wipes previous run artifacts to ensure a fresh start
 
-      # --- GLOBAL PERSISTENCE CONFIG ---
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - name: Sanitize SESSION_ID
+        id: sanitize_id
+        uses: ./.github/actions/sanitize-string
         with:
-          run_install: false
+          value: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+  test-actions:
+    name: ⚙️ Test Composite Actions
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: "Special Chars and Truncation"
+            value: 'feature/test-branch/with_special-chars!@#$%^&*()'
+            max-length: '30'
+            expected: 'feature-test-branch-with_speci'
+          - name: "Empty String"
+            value: ''
+            max-length: '64'
+            expected: ''
+          - name: "Already Sanitized"
+            value: 'clean-string-123'
+            max-length: '64'
+            expected: 'clean-string-123'
+          - name: "Shorter than Max Length with special chars"
+            value: 'short/string'
+            max-length: '64'
+            expected: 'short-string'
+          - name: "Duplicate Hyphens"
+            value: 'feature//branch'
+            max-length: '64'
+            expected: 'feature-branch'
+          - name: "Trailing Hyphen"
+            value: 'feature/branch-'
+            max-length: '64'
+            expected: 'feature-branch'
+          - name: "At Max Length"
+            value: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
+            max-length: '64'
+            expected: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
+          - name: "Only Invalid Chars"
+            value: '!@#$%^&*()'
+            max-length: '64'
+            expected: ''
+          - name: "Leading and Trailing Invalid Chars"
+            value: '!!test-branch!!'
+            max-length: '64'
+            expected: 'test-branch'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Sanitize String (Test Case - ${{ matrix.name }})
+        id: sanitize_step
+        uses: ./.github/actions/sanitize-string
         with:
-          node-version: '20.x'
-          cache: 'pnpm'
+          value: ${{ matrix.value }}
+          max-length: ${{ matrix.max-length }}
 
-      - name: Cache Playwright
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json', 'pnpm-lock.yaml') }}
-          restore-keys: |
-            playwright-${{ runner.os }}-
-
-      - name: Configure Persistent Store
-        shell: bash
+      - name: Verify (Test Case - ${{ matrix.name }})
         run: |
-          mkdir -p ~/.local/share/pnpm/store
-          # Use session-specific cache directories to prevent conflicts
-          mkdir -p ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set store-dir ~/.local/share/pnpm/store
-          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set side-effects-cache true
+          actual="${{ steps.sanitize_step.outputs.sanitized-value }}"
+          expected="${{ matrix.expected }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "Test Case Failed: ${{ matrix.name }}"
+            echo "Expected: '$expected'"
+            echo "Actual:   '$actual'"
+            exit 1
+          fi
+          echo "✅ Test Case Passed: ${{ matrix.name }}"
 
-      - name: Create Runtime Envs
-        run: |
-          mkdir -p logs
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
-      - name: Run Setup Script
-        run: |
-          chmod +x ./scripts/setup.sh
-          ./scripts/setup.sh
-        # This installs dependencies into ./node_modules
-
-      - name: Install Playwright (Binary Only)
-        run: pnpm exec playwright install chromium
-        # Installs into ./.cache/ms-playwright (inside workspace)
-
-  # ===========================================================================
-  # JOB 2: QUALITY CHECKS
-  # Reuses the workspace from Job 1 (No re-install needed)
-  # ===========================================================================
   quality-check:
     name: 🛡️ Quality Check
-    needs: infra-setup
+    needs: [prepare-env, test-actions]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch || github.ref }}
-          clean: false # ⚡ KEEP WORKSPACE (Preserves node_modules & browsers)
+          fetch-depth: 1
 
-      # We still set up pnpm/node just to ensure the binaries are in PATH
-      - uses: pnpm/action-setup@v4
-        with: { run_install: false }
-      - uses: actions/setup-node@v6
-        with: { node-version: '20.x' }
-
-      - name: Configure Session-specific Cache
-        run: |
-          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set side-effects-cache true
-
-      - name: Verify Dependencies
-        run: |
-          # Ensure dependencies are installed if node_modules is missing
-          if [ ! -d "node_modules" ]; then
-            echo "node_modules missing, reinstalling dependencies..."
-            pnpm install --frozen-lockfile
-          fi
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
 
       - name: Run Knip
         id: knip
+        shell: bash
         run: |
+          set -o pipefail
           pnpm run knip 2>&1 | tee knip-output.txt
         continue-on-error: true
 
       - name: Upload Knip Report
         if: always() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
-        id: upload-knip
         uses: actions/upload-artifact@v4
         with:
           name: knip-report
           path: knip-output.txt
-          retention-days: 30
-
-      - name: Handle Knip Upload Failure
-        if: failure() && steps.upload-knip.conclusion == 'failure'
-        run: |
-          echo "::error::Failed to upload knip report artifact"
-          echo "::notice::Knip output may be available in logs above"
-          exit 1
+          retention-days: 3
 
       - name: Lint Code
         id: lint
-        run: pnpm run lint 2>&1 | tee lint-output.log
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm run lint 2>&1 | tee lint-output.log
         continue-on-error: true
 
       - name: Upload Lint Report
-        if: always() && steps.lint.outcome == 'failure' && hashFiles('lint-output.log') != ''
-        id: upload-lint
+        if: steps.lint.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: lint-report
           path: lint-output.log
-          retention-days: 30
-
-      - name: Handle Lint Upload Failure
-        if: failure() && steps.upload-lint.conclusion == 'failure'
-        run: |
-          echo "::error::Failed to upload lint report artifact"
-          echo "::notice::Lint output may be available in logs above"
-          exit 1
+          retention-days: 3
 
       - name: Fail on Lint Errors
         if: steps.lint.outcome == 'failure'
         run: exit 1
 
       - name: Verify Build
+        id: build
         env:
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-        run: pnpm run build
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm run build 2>&1 | tee build-output.log
+
+      - name: Upload Build Report
+        if: failure() && steps.build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-report
+          path: build-output.log
+          retention-days: 3
 
       - name: Upload Build Artifacts
         if: success()
-        id: upload-build
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts-${{ env.SESSION_ID }}
-          include-hidden-files: true  # Required to upload the .next directory
+          name: build-artifacts
+          include-hidden-files: true
           path: |
-            dist/**
-            .next/**
+            dist/
+            .next/
           retention-days: 1
-      
-      - name: Handle Build Artifact Upload Failure
-        if: failure() && steps.upload-build.conclusion == 'failure'
-        run: |
-          echo "::error::Failed to upload build artifacts"
-          echo "::notice::Build output may be available in logs above"
-          exit 1
 
-  # ===========================================================================
-  # JOB 3: CORE LOGIC TESTS
-  # Downloads build artifacts and runs functional tests.
-  # ===========================================================================
   core-tests:
     name: 🧪 Core Logic
-    needs: [infra-setup, quality-check]
+    needs: [prepare-env, quality-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch || github.ref }}
-          clean: false # ⚡ KEEP WORKSPACE
+          fetch-depth: 1
 
-      - uses: pnpm/action-setup@v4
-        with: { run_install: false }
-      - uses: actions/setup-node@v6
-        with: { node-version: '20.x' }
-
-      - name: Configure Session-specific Cache
-        run: |
-          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set side-effects-cache true
-
-      - name: Configure Envs
-        run: |
-          # Re-write envs just in case, but folder is persisted
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
-      - name: Verify Dependencies
-        run: |
-          # Ensure dependencies are installed if node_modules is missing
-          if [ ! -d "node_modules" ]; then
-            echo "node_modules missing, reinstalling dependencies..."
-            pnpm install --frozen-lockfile
-            pnpm exec playwright install chromium
-          fi
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts-${{ env.SESSION_ID }}
+          name: build-artifacts
           path: .
           merge-multiple: true
-
-      - name: Verify Build Presence (Debug)
-        run: |
-          echo "Checking for build artifacts..."
-          ls -la | head -20
-          if [ -d ".next" ]; then
-            echo "✅ .next directory found"
-          else
-            echo "⚠️ .next directory MISSING"
-          fi
-          if [ -d "dist" ]; then
-            echo "✅ dist directory found"
-          else
-            echo "⚠️ dist directory MISSING"
-          fi
-
-      - name: Verify Server Build
-        run: |
-          if [ ! -f "dist/server.js" ]; then
-            echo "::error::Server build failed - dist/server.js not found"
-            echo "Contents of dist directory:"
-            ls -la dist/ 2>/dev/null || echo "dist directory does not exist"
-            echo "Contents of current directory:"
-            ls -la | grep -E "^d" | head -20
-            exit 1
-          fi
-          echo "✅ Server successfully built at dist/server.js"
-
-      - name: Check dist Before Infra Tests
-        run: |
-          echo "Checking dist before infra tests..."
-          if [ -f "dist/server.js" ]; then
-            echo "✅ dist/server.js exists"
-            ls -lh dist/server.js
-          else
-            echo "❌ dist/server.js NOT FOUND"
-            ls -la dist/ 2>/dev/null || echo "dist directory does not exist"
-          fi
 
       - name: Run Infra Tests
         id: infra-tests
         env:
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-        run: pnpm run test:infra 2>&1 | tee infra-tests.log
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm run test:infra 2>&1 | tee infra-tests.log
         continue-on-error: true
 
       - name: Run Unit Tests
         id: unit-tests
-        run: pnpm run test:unit 2>&1 | tee unit-tests.log
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm run test:unit 2>&1 | tee unit-tests.log
         continue-on-error: true
 
       - name: Upload Test Reports
         if: always() && (steps.infra-tests.outcome == 'failure' || steps.unit-tests.outcome == 'failure')
-        id: upload-tests
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
           path: |
             infra-tests.log
             unit-tests.log
-          retention-days: 30
+          retention-days: 3
 
-      - name: Handle Test Report Upload Failure
-        if: failure() && steps.upload-tests.conclusion == 'failure'
-        run: |
-          echo "::error::Failed to upload test report artifacts"
-          echo "::notice::Test logs are available in the workflow logs above"
-          exit 1
-
-  # ===========================================================================
-  # JOB 4: VISUAL REGRESSION TESTS
-  # Reuses workspace. Runs visual tests.
-  # ===========================================================================
   visual-tests:
     name: 🎨 Visual Regression
-    needs: [infra-setup, quality-check]
+    needs: [prepare-env, quality-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch || github.ref }}
-          clean: false # ⚡ KEEP WORKSPACE
+          fetch-depth: 1
 
-      - uses: pnpm/action-setup@v4
-        with: { run_install: false }
-      - uses: actions/setup-node@v6
-        with: { node-version: '20.x' }
-
-      - name: Configure Session-specific Cache
-        run: |
-          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set side-effects-cache true
-
-      - name: Configure Envs
-        run: |
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
-      - name: Verify Dependencies
-        run: |
-          # Ensure dependencies are installed if node_modules is missing
-          if [ ! -d "node_modules" ]; then
-            echo "node_modules missing, reinstalling dependencies..."
-            pnpm install --frozen-lockfile
-            pnpm exec playwright install chromium
-          fi
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts-${{ env.SESSION_ID }}
+          name: build-artifacts
           path: .
           merge-multiple: true
 
       - name: Run Visual Tests
         id: visual-tests
+        shell: bash
         run: |
+          set -o pipefail
           pnpm run test:json 2>&1 | tee visual-tests.log
           python3 scripts/analyze-playwright-report.py playwright-report.json
         continue-on-error: true
@@ -387,11 +287,11 @@ jobs:
         with:
           name: visual-test-logs
           path: visual-tests.log
-          retention-days: 30
+          retention-days: 3
 
       - name: Upload Report on Failure
-        if: always() && steps.visual-tests.outcome == 'failure'
-        uses: actions/upload-artifact@v5
+        if: failure()
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report-visual-${{ env.SESSION_ID }}
           path: playwright-report/
@@ -406,31 +306,28 @@ jobs:
             CACHE_SIZE=$(du -sh "$CACHE_DIR" | cut -f1)
             CACHE_SIZE_BYTES=$(du -sb "$CACHE_DIR" | cut -f1)
             SEVEN_GB=$((7 * 1024 * 1024 * 1024))
-            
+
             echo "📊 Playwright cache size: $CACHE_SIZE"
-            
+
             if [ "$CACHE_SIZE_BYTES" -gt "$SEVEN_GB" ]; then
               echo "⚠️ Cache exceeds 7GB threshold ($((CACHE_SIZE_BYTES / 1024 / 1024 / 1024))GB), pruning..."
-              
-              # List cache structure before cleanup
+
               echo "Cache structure before cleanup:"
               du -sh "$CACHE_DIR"/* 2>/dev/null | sort -rh | head -10
-              
-              # Remove oldest chromium versions, keeping only latest
+
               echo "Removing older browser versions..."
               find "$CACHE_DIR" -type d -name "chromium-*" | sort -V | head -n -1 | while read dir; do
                 DIR_SIZE=$(du -sh "$dir" | cut -f1)
                 echo "  Removing $dir (${DIR_SIZE})"
                 rm -rf "$dir"
               done
-              
-              # If still over threshold, remove entire cache
+
               CACHE_SIZE_BYTES=$(du -sb "$CACHE_DIR" | cut -f1)
               if [ "$CACHE_SIZE_BYTES" -gt "$SEVEN_GB" ]; then
                 echo "Still over 7GB after version cleanup, removing entire cache..."
                 rm -rf "$CACHE_DIR"
               fi
-              
+
               FINAL_SIZE=$(du -sh "$CACHE_DIR" 2>/dev/null | cut -f1)
               echo "✅ Cache pruned. Final size: ${FINAL_SIZE:-0MB} (under 7GB limit)"
             else
@@ -438,49 +335,13 @@ jobs:
             fi
           fi
 
-  # ===========================================================================
-  # JOB 5: QUALITY REPORT & FAILURE NOTIFICATION
-  # Aggregates results and notifies Jules of any failures
-  # ===========================================================================
   quality-report:
     name: 📊 Quality Report
     if: always()
-    needs: [quality-check, core-tests, visual-tests]
+    needs: [prepare-env, quality-check, core-tests, visual-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Collect Failure Information
-        id: failures
-        env:
-          CODE_QUALITY_RESULT: ${{ needs.quality-check.result }}
-          CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
-          VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
-        run: |
-          set +e
-          
-          FAILED_JOBS=""
-          FAILURE_COUNT=0
-          
-          if [ "$CODE_QUALITY_RESULT" != "success" ] && [ "$CODE_QUALITY_RESULT" != "skipped" ]; then
-            FAILED_JOBS="$FAILED_JOBS- Code Quality ($CODE_QUALITY_RESULT)"$'\n'
-            FAILURE_COUNT=$((FAILURE_COUNT + 1))
-          fi
-          
-          if [ "$CORE_TESTS_RESULT" != "success" ] && [ "$CORE_TESTS_RESULT" != "skipped" ]; then
-            FAILED_JOBS="$FAILED_JOBS- Core Tests ($CORE_TESTS_RESULT)"$'\n'
-            FAILURE_COUNT=$((FAILURE_COUNT + 1))
-          fi
-          
-          if [ "$VISUAL_TESTS_RESULT" != "success" ] && [ "$VISUAL_TESTS_RESULT" != "skipped" ]; then
-            FAILED_JOBS="$FAILED_JOBS- Visual Regression Tests ($VISUAL_TESTS_RESULT)"$'\n'
-            FAILURE_COUNT=$((FAILURE_COUNT + 1))
-          fi
-          
-          echo "FAILED_JOBS<<EOF" >> $GITHUB_ENV
-          echo "$FAILED_JOBS" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          echo "FAILURE_COUNT=$FAILURE_COUNT" >> $GITHUB_ENV
 
       - name: Download All Test Logs
         uses: actions/download-artifact@v4
@@ -494,9 +355,37 @@ jobs:
         with:
           name: lint-report
           path: logs
+        continue-on-error: true
+
+      - name: Download Knip Report
+        uses: actions/download-artifact@v4
+        with:
+          name: knip-report
+          path: logs
+        continue-on-error: true
+
+      - name: Download Build Report
+        uses: actions/download-artifact@v4
+        with:
+          name: build-report
+          path: logs
+        continue-on-error: true
+
+      - name: Download Setup Report
+        uses: actions/download-artifact@v4
+        with:
+          name: setup-report
+          path: logs
+        continue-on-error: true
+
+      - name: Download Core Test Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports
+          path: logs
+        continue-on-error: true
 
       - name: Post Comprehensive Quality Report
-        if: always()
         env:
           QUALITY_RESULT: ${{ needs.quality-check.result }}
           CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
@@ -506,25 +395,25 @@ jobs:
         run: |
           set +e
           
-          
-          # Find PR number
-          # Move lint output to code-quality for consistent naming
+          if [ -z "$LOG_TRUNCATE_BYTES" ] || ! [[ "$LOG_TRUNCATE_BYTES" =~ ^[0-9]+$ ]]; then
+             LOG_TRUNCATE_BYTES=15000
+          fi
+          if [ "$LOG_TRUNCATE_BYTES" -gt 50000 ]; then
+             LOG_TRUNCATE_BYTES=50000
+          fi
+
           if [ -f "logs/lint-output.log" ]; then
             mv "logs/lint-output.log" "logs/code-quality.log"
           fi
 
-          # Handle inputs from both workflow_dispatch and workflow_call
           PR_NUMBER="${{ github.event.pull_request.number }}"
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
-            # Try workflow_dispatch input
             PR_NUMBER="${{ github.event.inputs.pr_number }}"
           fi
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
-            # Try workflow_call input
             PR_NUMBER="${{ inputs.pr_number }}"
           fi
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
-            # Fall back to searching for PR on current branch
             PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number' 2>/dev/null)
           fi
           
@@ -535,8 +424,7 @@ jobs:
           
           mkdir -p test-results
           COMMENT_FILE="test-results/pr-comment.md"
-          
-          # Build the comment with embedded logs
+
           {
             echo "## 📋 Quality Gate Results"
             echo ""
@@ -546,24 +434,51 @@ jobs:
             echo "| Core Tests | $([ "$CORE_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$CORE_TESTS_RESULT) |"
             echo "| Visual Tests | $([ "$VISUAL_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_RESULT) |"
             echo ""
-            
-            # Add failed logs
+
             FAILED_ANY=0
+
             if [ "$QUALITY_RESULT" != "success" ] && [ "$QUALITY_RESULT" != "skipped" ]; then
               FAILED_ANY=1
               echo "<details><summary><strong>❌ Code Quality Failures</strong></summary>"
               echo ""
               echo '```'
+              FOUND_LOG=0
               if [ -f "logs/code-quality.log" ]; then
+                echo "--- LINT FAILURES ---"
                 tail -c $LOG_TRUNCATE_BYTES "logs/code-quality.log" | sed -r 's/\x1b\[[0-9;]*m//g'
-              else
-                echo "Log file not found"
+                echo ""
+                FOUND_LOG=1
+              fi
+
+              if [ -f "logs/knip-output.txt" ]; then
+                echo "--- KNIP FAILURES ---"
+                tail -c $LOG_TRUNCATE_BYTES "logs/knip-output.txt" | sed -r 's/\x1b\[[0-9;]*m//g'
+                echo ""
+                FOUND_LOG=1
+              fi
+
+              if [ -f "logs/build-output.log" ]; then
+                echo "--- BUILD FAILURES ---"
+                tail -c $LOG_TRUNCATE_BYTES "logs/build-output.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+                echo ""
+                FOUND_LOG=1
+              fi
+
+              if [ -f "logs/setup-output.log" ]; then
+                echo "--- SETUP FAILURES ---"
+                tail -c $LOG_TRUNCATE_BYTES "logs/setup-output.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+                echo ""
+                FOUND_LOG=1
+              fi
+
+              if [ $FOUND_LOG -eq 0 ]; then
+                echo "Log file not found. Check workflow run for details."
               fi
               echo '```'
               echo ""
               echo "</details>"
             fi
-            
+
             if [ "$CORE_TESTS_RESULT" != "success" ] && [ "$CORE_TESTS_RESULT" != "skipped" ]; then
               FAILED_ANY=1
                echo "<details><summary><strong>❌ Core Tests Failures</strong></summary>"
@@ -579,7 +494,8 @@ jobs:
                echo '```'
                echo ""
                echo "</details>"
-            
+            fi
+
             if [ "$VISUAL_TESTS_RESULT" != "success" ] && [ "$VISUAL_TESTS_RESULT" != "skipped" ]; then
               FAILED_ANY=1
               echo "<details><summary><strong>❌ Visual Tests Failures</strong></summary>"
@@ -594,7 +510,7 @@ jobs:
               echo ""
               echo "</details>"
             fi
-            
+
             if [ $FAILED_ANY -eq 0 ]; then
               echo "✅ All quality checks passed!"
             else
@@ -604,7 +520,6 @@ jobs:
             fi
           } > "$COMMENT_FILE"
           
-          # Post the comment
           gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE" || {
             echo "::error::Failed to post comment to PR #$PR_NUMBER"
             exit 1

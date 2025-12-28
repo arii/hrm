@@ -4,20 +4,50 @@ name: Gemini Orchestrator
 on:
   pull_request:
     types: [opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      command:
+        description: 'Command to run'
+        required: true
+        default: 'review'
   issue_comment:
     types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+  actions: read
 
 jobs:
   # 1. Run CI checks on every push to a PR
   pr-quality:
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+      checks: write
+      issues: write
     uses: ./.github/workflows/pr-quality-standalone.yml
     secrets: inherit
+  # Incoming change to use pr-quality after confirming no regressions
+  # in commeting on PRs with ARI_PAT
+  #  uses: ./.github/workflows/pr-quality.yml
+  #  secrets:
+  #    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 2. Trigger review AFTER CI checks are done for a PR event
   review-on-pr-update:
     if: github.event_name == 'pull_request'
     needs: [pr-quality]
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read # <--- Required by the reusable workflow
+      checks: write # <--- Required for reporting quality metrics
+      issues: write
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       # Pass the result of the CI checks. It's crucial for the reusable workflow
@@ -32,6 +62,12 @@ jobs:
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       (startsWith(github.event.comment.body, '@gemini-bot') || startsWith(github.event.comment.body, '@jules fix'))
+    permissions:
+      contents: read
+      issues: write
+      checks: write
+      pull-requests: write
+      actions: read
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       # CI checks do not run on a comment event, so we pass a neutral status.
@@ -40,3 +76,29 @@ jobs:
       trigger_event: 'comment'
       comment_body: ${{ github.event.comment.body }}
     secrets: inherit
+
+  gemini-dispatch:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+      - name: Run Gemini Client
+        run: pnpm tsx scripts/gemini-client.ts --preset "${{ github.event.inputs.command }}"
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  gemini-invoke:
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@gemini-bot')
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+      - name: Run Gemini Client
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: pnpm tsx scripts/gemini-client.ts --comment-body "$COMMENT_BODY"
