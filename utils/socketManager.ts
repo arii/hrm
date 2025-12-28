@@ -1,13 +1,6 @@
 // utils/SocketManager.ts
+import { randomUUID } from 'crypto'
 import { WebSocketServer, WebSocket } from 'ws'
-// A simple UUID generator to avoid the ESM issues with the uuid package
-const uuidv4 = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0,
-      v = c == 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
-}
 import { HrmDataRepository } from '@/lib/repositories/HrmDataRepository'
 import { HrmStreamData } from '@/types'
 import { IncomingMessage } from 'http'
@@ -68,7 +61,7 @@ export class SocketManager {
 
   private handleConnection(ws: ExtWebSocket, req: IncomingMessage) {
     const queryParams = this.getQueryParams(req.url)
-    const clientId = (queryParams.clientId as string) || `user-${uuidv4()}`
+    const clientId = (queryParams.clientId as string) || `user-${randomUUID()}`
     ws.clientId = clientId
 
     ws.isAlive = true
@@ -201,6 +194,9 @@ export class SocketManager {
           },
           'Reclaiming disconnected session.'
         )
+        // MIGRATION: Copy important state from the old session
+        existingData.calories = oldClientData.calories
+
         const oldTimer = this.disconnectionTimers.get(oldClientData.clientId)
         if (oldTimer) {
           logger.debug(
@@ -258,6 +254,7 @@ export class SocketManager {
     )
     newData.age = zombieData.age ?? 30
     newData.maxHr = zombieData.maxHr ?? 185
+    newData.calories = zombieData.calories
 
     // Delete the old record
     this.hrmDataRepository.deleteById(zombieData.clientId)
