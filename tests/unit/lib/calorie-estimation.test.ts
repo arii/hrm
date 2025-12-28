@@ -45,15 +45,14 @@ describe('Calorie Estimation', () => {
     ],
   ]
 
-  test.each(testCases)(
-    '%s',
-    (description, params, expected) => {
-      const calories = estimateCaloriesPerMinute(params as CalorieEstimationParams)
-      if (expected === 0) {
-        expect(calories).toBe(0)
-      } else {
-        expect(calories).toBeCloseTo(expected, 1)
-      }
+  test.each(testCases)('%s', (description, params, expected) => {
+    const calories = estimateCaloriesPerMinute(
+      params as CalorieEstimationParams
+    )
+    if (expected === 0) {
+      expect(calories).toBe(0)
+    } else {
+      expect(calories).toBeCloseTo(expected, 1)
     }
-  )
+  })
 })

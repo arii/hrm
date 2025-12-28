@@ -243,10 +243,15 @@ const handleIncomingMessage = (
           const currentAge = existingData.age ?? 30
           // Prioritize incoming weight, but fall back to stored or default weight.
           // This is a fallback used when client-specific weight data is unavailable.
-          const calculatedWeight =
-            message.data.weight ??
-            existingData.weightKg ??
-            CALORIE_DEFAULTS.WEIGHT_KG
+          let calculatedWeight =
+            existingData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG
+          if (
+            message.data.weight &&
+            typeof message.data.weight === 'number' &&
+            message.data.weight > 0
+          ) {
+            calculatedWeight = message.data.weight
+          }
 
           if (
             currentHr > MIN_HR_FOR_CALORIES &&

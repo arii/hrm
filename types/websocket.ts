@@ -92,6 +92,10 @@ export type HrmInputData = {
   maxHr?: number
   name?: string
   age?: number
+  /**
+   * Optional client weight in kg. If not provided, the server will use the last known
+   * value or a default.
+   */
   weight?: number
 }
 
@@ -174,6 +178,10 @@ import { z } from 'zod'
 
 export const HrmInputDataSchema = z.object({
   value: z.number().nullable(),
+  /**
+   * Optional client weight in kg. If not provided, the server will use the last known
+   * value or a default.
+   */
   weight: z.number().optional(),
 })
 

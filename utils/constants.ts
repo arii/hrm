@@ -66,7 +66,7 @@ export const CALORIE_DEFAULTS = {
   AGE_FACTOR: 0.2017,
   // The KJ_TO_KCAL constant is used to convert the result from kilojoules to kilocalories.
   KJ_TO_KCAL: 4.184,
-}
+} as const
 
 // Server Constants
 export const DEFAULT_PORT = 3000
