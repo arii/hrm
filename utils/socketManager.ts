@@ -17,7 +17,7 @@ import {
   ExtWebSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js'
+import { CALORIE_DEFAULTS, MIN_HR_FOR_CALORIES } from './constants.js'
 import {
   broadcast,
   sendWebSocketMessage,
@@ -242,14 +242,15 @@ const handleIncomingMessage = (
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
-          const currentWeight =
-            message.data.weight ?? existingData.weightKg ?? DEFAULT_WEIGHT_KG
+          const incomingWeight = message.data.weight
+          const calculatedWeight =
+            incomingWeight ?? existingData.weightKg ?? DEFAULT_WEIGHT_KG
 
-          if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
+          if (currentHr > MIN_HR_FOR_CALORIES && dtMinutes > 0 && dtMinutes < 5) {
             const caloriesPerMinute = estimateCaloriesPerMinute({
               heartRate: currentHr,
               age: currentAge,
-              weightKg: currentWeight,
+              weightKg: calculatedWeight,
             })
             currentAccumulated += caloriesPerMinute * dtMinutes
           }
@@ -259,7 +260,7 @@ const handleIncomingMessage = (
             ...existingData,
             value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
-            weightKg: currentWeight,
+            weightKg: calculatedWeight,
           })
         }
         broadcastState()

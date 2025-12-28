@@ -53,6 +53,7 @@ export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
 
 // --- Calorie Calculation Constants ---
 // Based on standard metabolic formulas (e.g., Keytel)
+export const MIN_HR_FOR_CALORIES = 30
 export const CALORIE_DEFAULTS = {
   WEIGHT_KG: 75, // Default weight if not provided
   // The intercept is a baseline adjustment for the model.

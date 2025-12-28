@@ -27,8 +27,6 @@ export interface CalorieEstimationParams {
  * that relies on heart rate, age, and weight. It abstracts away the need for
  * a `gender` parameter by using a universal set of coefficients.
  *
- * This is the recommended function for all new calorie estimations.
- *
  * Note: This formula provides an estimate and may not be accurate for all individuals
  * or activity types. Individual metabolic rates can vary.
  *
