@@ -23,33 +23,43 @@ const preset = getArg('--preset')
 // List of models to try in order.
 // `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
 // It is used as the primary fallback to mitigate rate-limiting issues with the experimental `gemini-2.0-flash-exp` model.
-const defaultFallbacks = [
-  'gemini-2.0-flash-exp',
-  'gemini-1.5-flash-latest',
-  'gemini-1.5-pro-latest',
-]
+function getModelFallbacks(): string[] {
+  const defaultFallbacks = [
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-pro-latest',
+  ]
 
-const MODEL_FALLBACKS = process.env.GEMINI_MODEL_FALLBACKS
-  ? process.env.GEMINI_MODEL_FALLBACKS.split(',')
-      .map((m) => m.trim())
-      .filter((m) => {
-        if (!m) return false
-        if (!m.startsWith('gemini-')) {
-          console.warn(
-            `Warning: Invalid model name "${m}" in GEMINI_MODEL_FALLBACKS. It will be ignored.`
-          )
-          return false
-        }
-        return true
-      })
-  : defaultFallbacks
+  const envFallbacks = process.env.GEMINI_MODEL_FALLBACKS
+  if (!envFallbacks) {
+    return defaultFallbacks
+  }
 
-if (MODEL_FALLBACKS.length === 0) {
-  console.warn(
-    'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
-  )
-  MODEL_FALLBACKS.push(...defaultFallbacks)
+  const userFallbacks = envFallbacks
+    .split(',')
+    .map((m) => m.trim())
+    .filter((m) => {
+      if (!m) return false
+      if (!m.startsWith('gemini-')) {
+        console.warn(
+          `Warning: Invalid model name "${m}" in GEMINI_MODEL_FALLBACKS. It will be ignored.`
+        )
+        return false
+      }
+      return true
+    })
+
+  if (userFallbacks.length === 0) {
+    console.warn(
+      'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
+    )
+    return defaultFallbacks
+  }
+
+  return userFallbacks
 }
+
+const MODEL_FALLBACKS = getModelFallbacks()
 
 interface ReviewContext {
   prNumber: string
