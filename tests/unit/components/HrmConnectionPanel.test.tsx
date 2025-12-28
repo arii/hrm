@@ -16,7 +16,7 @@ jest.mock('next-auth/react')
 jest.mock('@/context/UserSettingsContext')
 
 describe('HrmConnectionPanel', () => {
-  it('calls connectAndStream when the WebSocket is connected', () => {
+  it('calls connectAndStream with user data when the WebSocket is connected', () => {
     const connectAndStream = jest.fn().mockResolvedValue(undefined)
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
@@ -24,11 +24,15 @@ describe('HrmConnectionPanel', () => {
       activeAlerts: [],
     })
     ;(useBluetoothHRM as jest.Mock).mockReturnValue({ connectAndStream, deviceStatus: 'Disconnected' })
-    ;(useSession as jest.Mock).mockReturnValue({ data: null })
-    ;(useUserSettings as jest.Mock).mockReturnValue([{}])
+    ;(useSession as jest.Mock).mockReturnValue({
+      data: { user: { name: 'Test User' } },
+    })
+    ;(useUserSettings as jest.Mock).mockReturnValue([
+      { userName: 'Test User', userAge: 30 },
+    ])
 
     render(<HrmConnectionPanel />)
 
-    expect(connectAndStream).toHaveBeenCalled()
+    expect(connectAndStream).toHaveBeenCalledWith('Test User', 30)
   })
 })

@@ -1,23 +1,40 @@
 // app/settings/page.tsx
 'use client'
-import React, { useState } from 'react'
-import { Container, Typography, TextField, Button, Box } from '@mui/material'
+import React, { useState, useEffect } from 'react'
+import { Container, Typography, TextField, Box } from '@mui/material'
 import { useUserSettings } from '@/context/UserSettingsContext'
 
 const SettingsPage = () => {
   const [userSettings, setUserSettings] = useUserSettings()
-  const [weightError, setWeightError] = useState(false)
+  const [weightInput, setWeightInput] = useState(
+    userSettings.userWeight ? String(userSettings.userWeight) : ''
+  )
+  const [weightError, setWeightError] = useState('')
+
+  useEffect(() => {
+    setWeightInput(userSettings.userWeight ? String(userSettings.userWeight) : '')
+  }, [userSettings.userWeight])
 
   const handleWeightChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const weight = Number(event.target.value)
+    const value = event.target.value
+    setWeightInput(value)
+
+    if (value.trim() === '') {
+      setWeightError('Weight cannot be empty.')
+      return
+    }
+
+    const weight = Number(value)
+    if (isNaN(weight)) {
+      setWeightError('Please enter a valid number.')
+      return
+    }
+
     if (weight >= 20 && weight <= 300) {
-      setUserSettings({
-        ...userSettings,
-        userWeight: weight,
-      })
-      setWeightError(false)
+      setUserSettings({ ...userSettings, userWeight: weight })
+      setWeightError('')
     } else {
-      setWeightError(true)
+      setWeightError('Please enter a weight between 20 and 300 kg.')
     }
   }
 
@@ -29,12 +46,12 @@ const SettingsPage = () => {
         </Typography>
         <TextField
           label="Weight (kg)"
-          type="number"
+          type="text"
           fullWidth
-          value={userSettings.userWeight || ''}
+          value={weightInput}
           onChange={handleWeightChange}
-          error={weightError}
-          helperText={weightError ? 'Please enter a weight between 20 and 300 kg.' : ''}
+          error={!!weightError}
+          helperText={weightError}
           sx={{ mb: 2 }}
         />
       </Box>

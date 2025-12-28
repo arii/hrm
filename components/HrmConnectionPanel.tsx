@@ -44,15 +44,17 @@ const HrmConnectionPanel = () => {
   }, [session, userSettings, connectAndStream])
 
   useEffect(() => {
+    // Auto-connect logic: Try to connect to a saved device on initial load
+    // once the WebSocket is connected. This should only run once.
     if (
-      connectionStatus === 'Connected' &&
-      deviceStatus === 'Disconnected' &&
-      !autoConnectAttempted.current
+      connectionStatus === 'Connected' && // WebSocket must be ready
+      deviceStatus === 'Disconnected' && // Avoid connecting if already connected/connecting
+      !autoConnectAttempted.current // Only try once per component mount
     ) {
       autoConnectAttempted.current = true
       handleConnect()
     }
-  }, [connectionStatus, deviceStatus, handleConnect])
+  }, [connectionStatus, deviceStatus])
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity
