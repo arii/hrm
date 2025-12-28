@@ -8,109 +8,14 @@ import Autocomplete from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
-import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
-import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
-import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
-import Paper from '@mui/material/Paper'
-import Link from 'next/link'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
-
-interface PlaylistItemProps {
-  playlist: Playlist
-  selected: boolean
-  onClick: () => void
-  onPlay: (event: React.MouseEvent<HTMLElement>) => void
-}
-
-const PlaylistItem: React.FC<PlaylistItemProps> = ({
-  playlist,
-  selected,
-  onClick,
-  onPlay,
-}) => (
-  <ListItem
-    key={playlist.uri}
-    divider
-    sx={{ display: 'flex', justifyContent: 'space-between' }}
-  >
-    <Link href={`/spotify/playlist/${playlist.id}`} passHref legacyBehavior>
-      <ListItemButton
-        selected={selected}
-        onClick={onClick}
-        sx={{
-          flexGrow: 1,
-          '&:hover': {
-            backgroundColor: 'action.hover',
-          },
-        }}
-      >
-        {playlist.imageUrl ? (
-          <Box
-            component="img"
-            src={playlist.imageUrl}
-            alt={playlist.name}
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: 1,
-              mr: 1.5,
-              objectFit: 'cover',
-            }}
-          />
-        ) : (
-          <MusicNote sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }} />
-        )}
-        <ListItemText
-          primary={playlist.name}
-          secondary={
-            playlist.trackCount !== undefined
-              ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
-              : playlist.owner
-                ? playlist.owner
-                : undefined
-          }
-        />
-        {playlist.isPreset && (
-          <Chip
-            label="Preset"
-            size="small"
-            sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-          />
-        )}
-        {playlist.isSearchResult && !playlist.isPreset && (
-          <Chip
-            label="Spotify"
-            size="small"
-            color="success"
-            sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-          />
-        )}
-      </ListItemButton>
-    </Link>
-    <Box sx={{ pl: 1 }}>
-      <IconButton
-        edge="end"
-        aria-label="play"
-        onClick={onPlay}
-        sx={{
-          '&:hover': {
-            backgroundColor: 'action.hover',
-            transform: 'scale(1.1)',
-          },
-        }}
-      >
-        <PlayArrow />
-      </IconButton>
-    </Box>
-  </ListItem>
-)
 
 interface Playlist {
   name: string
@@ -123,6 +28,59 @@ interface Playlist {
   trackCount?: number
   owner?: string
 }
+
+interface PlaylistItemProps {
+  playlist: Playlist
+  onPlay: (event: React.MouseEvent<HTMLElement>) => void
+}
+
+const PlaylistItemContent: React.FC<PlaylistItemProps> = ({
+  playlist,
+  onPlay,
+}) => (
+  <>
+    <ListItemText
+      primary={playlist.name}
+      secondary={
+        playlist.trackCount !== undefined
+          ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
+          : playlist.owner
+          ? playlist.owner
+          : undefined
+      }
+    />
+    {playlist.isPreset && (
+      <Chip
+        label="Preset"
+        size="small"
+        sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
+      />
+    )}
+    {playlist.isSearchResult && !playlist.isPreset && (
+      <Chip
+        label="Spotify"
+        size="small"
+        color="success"
+        sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
+      />
+    )}
+    <Box sx={{ pl: 1 }}>
+      <IconButton
+        edge="end"
+        aria-label={`Play ${playlist.name}`}
+        onClick={onPlay}
+        sx={{
+          '&:hover': {
+            backgroundColor: 'action.hover',
+            transform: 'scale(1.1)',
+          },
+        }}
+      >
+        <PlayArrow />
+      </IconButton>
+    </Box>
+  </>
+)
 
 interface PlaylistSelectorProps {
   onPlaylistSelected: (uri: string) => void
@@ -137,7 +95,6 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([])
   const [searchResults, setSearchResults] = useState<Playlist[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchLoading, setSearchLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
@@ -187,7 +144,6 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     }
 
     const fetchSearchResults = async () => {
-      setSearchLoading(true)
       try {
         const response = await fetch(
           `/api/spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`
@@ -200,8 +156,6 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
       } catch (error) {
         console.error('Error searching playlists:', error)
         setSearchResults([])
-      } finally {
-        setSearchLoading(false)
       }
     }
 
@@ -269,19 +223,29 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
 
   return (
     <Box>
+      {/*
+        This Autocomplete component is used to display the playlist selector.
+        It was chosen to fix a "squished UI" issue that occurred with a
+        previous implementation that used a separate input and list.
+      */}
       <Autocomplete
         options={filteredPlaylists}
         getOptionLabel={(option) => option.name}
+        groupBy={(option) =>
+          option.isPreset
+            ? 'Preset Playlists'
+            : option.isSearchResult
+              ? 'Spotify Search Results'
+              : 'Your Playlists'
+        }
         value={selectedPlaylist}
         onChange={(_, newValue) => handlePlaylistSelect(newValue)}
         inputValue={searchQuery}
         onInputChange={(_, newInputValue) => setSearchQuery(newInputValue)}
         renderInput={(params) => (
           <TextField
-            id={params.id}
-            disabled={params.disabled}
-            fullWidth={params.fullWidth}
             inputProps={params.inputProps}
+            InputProps={params.InputProps}
             placeholder="Search or browse playlists..."
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -294,157 +258,59 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                 },
               },
             }}
-            InputProps={{
-              ref: params.InputProps.ref,
-              className: params.InputProps.className,
-              startAdornment: (
-                <Search sx={{ color: 'text.secondary', mr: 1 }} />
-              ),
-              endAdornment: (
-                <>
-                  {searchLoading ? (
-                    <CircularProgress size={20} sx={{ mr: 1 }} />
-                  ) : searchQuery ? (
-                    <IconButton
-                      size="small"
-                      onClick={() => setSearchQuery('')}
-                      aria-label="Clear search"
-                      sx={{ mr: 1 }}
-                    >
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  ) : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
           />
         )}
-        renderOption={(_props, option) => (
-          <PlaylistItem
-            key={option.uri}
-            playlist={option}
-            selected={selectedPlaylist?.uri === option.uri}
-            onClick={() => handlePlaylistSelect(option)}
-            onPlay={(e) => {
-              e.stopPropagation()
-              onPlaylistPlay(option.uri)
-            }}
-          />
+        renderOption={(props, option) => (
+          <ListItem {...props} key={option.uri} divider>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              {option.imageUrl ? (
+                <Box
+                  component="img"
+                  src={option.imageUrl}
+                  alt={option.name}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 1,
+                    mr: 1.5,
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <MusicNote
+                  sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
+                />
+              )}
+              <PlaylistItemContent
+                playlist={option}
+                onPlay={(e) => {
+                  e.stopPropagation()
+                  onPlaylistPlay(option.uri)
+                }}
+              />
+            </div>
+          </ListItem>
         )}
         noOptionsText={
           debouncedSearch ? (
-            // eslint-disable-next-line react/no-unescaped-entities
-            <>No playlists found matching "{debouncedSearch}"</>
+            <>No playlists found matching &quot;{debouncedSearch}&quot;</>
           ) : (
             'No playlists available'
           )
         }
         sx={{ mb: 2 }}
+        ListboxProps={{
+          style: {
+            maxHeight: '40vh',
+          },
+        }}
       />
-
-      {!searchQuery && (
-        <Paper variant="outlined" sx={{ maxHeight: 300, overflow: 'auto' }}>
-          <List dense>
-            {presetPlaylists.length > 0 && (
-              <>
-                <ListItem>
-                  <ListItemText
-                    primary={
-                      <Typography variant="overline" color="text.secondary">
-                        Preset Playlists
-                      </Typography>
-                    }
-                  />
-                </ListItem>
-                {presetPlaylists.map((playlist) => (
-                  <PlaylistItem
-                    key={playlist.uri}
-                    playlist={playlist}
-                    selected={selectedPlaylist?.uri === playlist.uri}
-                    onClick={() => handlePlaylistSelect(playlist)}
-                    onPlay={(e) => {
-                      e.stopPropagation()
-                      onPlaylistPlay(playlist.uri)
-                    }}
-                  />
-                ))}
-                {userPlaylists.length > 0 && <Divider sx={{ my: 1 }} />}
-              </>
-            )}
-            {userPlaylists.length > 0 && (
-              <>
-                <ListItem>
-                  <ListItemText
-                    primary={
-                      <Typography variant="overline" color="text.secondary">
-                        Your Playlists ({userPlaylists.length})
-                      </Typography>
-                    }
-                  />
-                </ListItem>
-                {userPlaylists.map((playlist) => (
-                  <PlaylistItem
-                    key={playlist.uri}
-                    playlist={playlist}
-                    selected={selectedPlaylist?.uri === playlist.uri}
-                    onClick={() => handlePlaylistSelect(playlist)}
-                    onPlay={(e) => {
-                      e.stopPropagation()
-                      onPlaylistPlay(playlist.uri)
-                    }}
-                  />
-                ))}
-              </>
-            )}
-          </List>
-        </Paper>
-      )}
-
-      {searchQuery && (
-        <Paper
-          variant="outlined"
-          sx={{ maxHeight: 300, overflow: 'auto', mt: 1 }}
-        >
-          {searchLoading ? (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                py: 3,
-              }}
-            >
-              <CircularProgress size={24} />
-              <Typography sx={{ ml: 2 }} variant="body2" color="text.secondary">
-                Searching Spotify...
-              </Typography>
-            </Box>
-          ) : filteredPlaylists.length > 0 ? (
-            <List dense>
-              {filteredPlaylists.map((playlist) => (
-                <PlaylistItem
-                  key={playlist.uri}
-                  playlist={playlist}
-                  selected={selectedPlaylist?.uri === playlist.uri}
-                  onClick={() => handlePlaylistSelect(playlist)}
-                  onPlay={(e) => {
-                    e.stopPropagation()
-                    onPlaylistPlay(playlist.uri)
-                  }}
-                />
-              ))}
-            </List>
-          ) : (
-            <Box sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                {/* eslint-disable-next-line react/no-unescaped-entities */}
-                No playlists found matching "{searchQuery}"
-              </Typography>
-            </Box>
-          )}
-        </Paper>
-      )}
     </Box>
   )
 }
