@@ -1,0 +1,56 @@
+name: 'Sanitize String'
+description: 'Sanitizes a string for safe use in file paths, environment variables, and keys.'
+inputs:
+  value:
+    description: 'The raw string to sanitize.'
+    required: true
+  max-length:
+    description: 'The maximum allowed length for the string.'
+    required: false
+    default: '64'
+outputs:
+  sanitized-value:
+    description: 'The sanitized and truncated string.'
+    value: ${{ steps.sanitize.outputs.result }}
+runs:
+  using: "composite"
+  steps:
+    - id: validate-input
+      shell: bash
+      run: |
+        if ! [[ "${{ inputs.max-length }}" =~ ^[0-9]+$ ]] || [ "${{ inputs.max-length }}" -le 0 ]; then
+          echo "::error::Input 'max-length' must be a positive integer."
+          exit 1
+        fi
+
+    - id: sanitize
+      shell: bash
+      env:
+        RAW: ${{ inputs.value }}
+        LEN: ${{ inputs.max-length }}
+      run: |
+        # Detailed Sanitization Steps:
+        # 1. `tr -d '\n'`: Removes any newline characters. This is a critical safety measure to
+        #    prevent multi-line inputs from breaking the key=value format of GITHUB_OUTPUT.
+        # 2. `sed 's/[^a-zA-Z0-9_-]/-/g'`: Replaces any character that is NOT an alphanumeric,
+        #    underscore, or hyphen with a hyphen. This is the core sanitization step.
+        # 3. `tr -s '-'`: Squeezes (compresses) any sequence of one or more hyphens into a single
+        #    hyphen. This prevents inputs like `feature//branch` from becoming `feature--branch`.
+        # 4. `cut -c1-"$LEN"`: Truncates the string to the maximum allowed length specified by the
+        #    `max-length` input.
+        CLEAN=$(printf "%s" "$RAW" | tr -d '\n' | sed 's/[^a-zA-Z0-9_-]/-/g' | tr -s '-' | cut -c1-"$LEN")
+
+        # 5. Remove Leading AND Trailing hyphens for safety and cleanliness.
+        #    `${CLEAN#-}` removes a leading hyphen.
+        #    `${CLEAN%-}` removes a trailing hyphen.
+        CLEAN=${CLEAN#-}
+        CLEAN=${CLEAN%-}
+
+        # 6. Fallback Check: If the sanitization results in an empty string
+        #    (e.g., input was only invalid characters), output a warning.
+        #    The calling workflow can then decide how to handle it.
+        if [[ -z "$CLEAN" ]]; then
+          echo "::warning::Input resulted in an empty string after sanitization."
+        fi
+
+        echo "result=$CLEAN" >> "$GITHUB_OUTPUT"
