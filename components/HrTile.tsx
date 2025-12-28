@@ -36,6 +36,9 @@ const HrTile = ({
   isConnected = true, // Default to connected
   isAlerting = false,
   alertMessage = 'Checking signal...',
+  // Default the data-testid to a generic value, but allow it to be overridden.
+  // This is useful for testing, where we might want to distinguish between
+  // real and placeholder tiles.
   'data-testid': dataTestId = 'hr-tile-card',
 }: HrTileProps & { 'data-testid'?: string }) => {
   const theme = useTheme()

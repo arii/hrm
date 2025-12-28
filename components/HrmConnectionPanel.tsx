@@ -90,7 +90,7 @@ const HrmConnectionPanel = () => {
 
   const tileData = useMemo(
     () => getDisplayTileData(hrmData, activeAlerts),
-    [hrmA, activeAlerts]
+    [hrmData, activeAlerts]
   )
 
   return (
@@ -150,7 +150,10 @@ const HrmConnectionPanel = () => {
         <HrTileWithCalories
           user={
             tileData || {
-              name: session?.user?.name || userSettings.userName || 'Unknown User',
+              name:
+                session?.user?.name ||
+                userSettings.userName ||
+                'Unknown User',
               value: 0,
               calories: 0,
               maxHr: 220 - (userSettings.userAge || 30),
