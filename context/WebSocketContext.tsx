@@ -117,22 +117,23 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
-  const [clientId] = useState(() => {
-    if (typeof window === 'undefined') {
-      return null
-    }
-    try {
-      let id = localStorage.getItem('clientId')
-      if (!id) {
-        id = window.crypto.randomUUID()
-        localStorage.setItem('clientId', id)
+  const [clientId, setClientId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        let id = localStorage.getItem('clientId')
+        if (!id) {
+          id = window.crypto.randomUUID()
+          localStorage.setItem('clientId', id)
+        }
+        setClientId(id)
+      } catch (error) {
+        console.error('Failed to access localStorage:', error)
+        setClientId(window.crypto.randomUUID()) // Fallback to in-memory UUID
       }
-      return id
-    } catch (error) {
-      console.error('Failed to access localStorage:', error)
-      return window.crypto.randomUUID() // Fallback to in-memory UUID
     }
-  })
+  }, [])
 
   // Memoize the WebSocket URL to prevent re-computation on every render
   const wsUrl = useMemo(() => {
