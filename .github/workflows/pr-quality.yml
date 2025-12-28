@@ -132,6 +132,7 @@ jobs:
         run: |
           # Replace / with - in SESSION_ID to prevent invalid artifact names
           SAFE_SESSION_ID=$(echo "${{ env.SESSION_ID }}" | tr '/' '-')
+          # Overwrite the environment variable for subsequent steps in this job
           echo "SESSION_ID=$SAFE_SESSION_ID" >> $GITHUB_ENV
 
       - name: Configure Session-specific Cache
