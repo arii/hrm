@@ -28,6 +28,7 @@ const HrmConnectionPanel = () => {
     batteryLevel,
     isConnected,
     isSupported,
+    attemptReconnection,
   } = useBluetoothHRM()
 
   const handleConnect = useCallback(() => {
@@ -44,29 +45,29 @@ const HrmConnectionPanel = () => {
   }, [session, userSettings, connectAndStream])
 
   useEffect(() => {
-    // Auto-connect logic: Try to connect to a saved device on initial load
-    // once the WebSocket is connected. This should only run once.
+    // Auto-connect logic: Use `getDevices()` for gesture-less reconnection.
     const autoConnect = async () => {
       if (
-        connectionStatus === 'Connected' && // WebSocket must be ready
-        deviceStatus === 'Disconnected' && // Avoid connecting if already connected/connecting
-        !autoConnectAttempted.current // Only try once per component mount
+        connectionStatus === 'Connected' &&
+        deviceStatus === 'Disconnected' &&
+        !autoConnectAttempted.current
       ) {
         autoConnectAttempted.current = true
-        try {
-          await handleConnect()
-        } catch (error) {
-          // It's common for the requestDevice promise to be cancelled by the user.
-          // We catch it here to prevent an unhandled rejection error in the console.
-          if (error.name !== 'NotFoundError') {
-            console.error('Failed to auto-connect to HRM device:', error)
-          }
-        }
+        const userName =
+          session?.user?.name || userSettings.userName || 'Unknown User'
+        const userAge = userSettings.userAge || 30
+        await attemptReconnection(userName, userAge)
       }
     }
 
     autoConnect()
-  }, [connectionStatus, deviceStatus, handleConnect])
+  }, [
+    connectionStatus,
+    deviceStatus,
+    attemptReconnection,
+    session,
+    userSettings,
+  ])
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity
