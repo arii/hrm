@@ -9,9 +9,16 @@ import logger from '../utils/logger.js'
 
 let calorieUpdateInterval: NodeJS.Timeout | undefined
 
+/**
+ * In-memory store for client-specific session data required for interval-based
+ * calorie calculations.
+ * - `lastUpdate`: The timestamp of the last time calories were calculated for the client.
+ * - `hrSamples`: A collection of heart rate samples gathered since the last update.
+ * - `consecutiveFailures`: Counter for tracking failed repository saves.
+ */
 const clientSessionState = new Map<
   string,
-  { lastUpdate: number; hrSamples: number[] }
+  { lastUpdate: number; hrSamples: number[]; consecutiveFailures: number }
 >()
 
 /**
@@ -22,7 +29,7 @@ const clientSessionState = new Map<
  * @param clientData - The HRM data for the client.
  * @returns The estimated calories burned, or 0 if conditions are not met.
  */
-const calculateIntervalCalories = (
+export const calculateIntervalCalories = (
   avgHr: number,
   lastUpdate: number,
   clientData: HrmData
@@ -72,12 +79,31 @@ const updateCaloriesForClient = (
         ...clientData,
         totalCalories: Math.round((currentTotal + caloriesBurned) * 10) / 10,
       })
+      session.consecutiveFailures = 0 // Reset on success
       return true // Calories were updated
     } catch (error) {
-      logger.error({ clientId, error }, 'Failed to save updated calorie data')
+      session.consecutiveFailures++
+      logger.error(
+        {
+          clientId,
+          error,
+          consecutiveFailures: session.consecutiveFailures,
+        },
+        'Failed to save updated calorie data'
+      )
       // Restore session state if save fails to allow for retry on next tick
       session.lastUpdate = lastUpdate
+
+      if (session.consecutiveFailures > 3) {
+        logger.warn(
+          { clientId, consecutiveFailures: session.consecutiveFailures },
+          'High number of consecutive calorie save failures detected.'
+        )
+      }
     }
+  } else {
+    // If no calories were burned, it's not a failure, so reset the counter.
+    session.consecutiveFailures = 0
   }
 
   return false // No calories updated
