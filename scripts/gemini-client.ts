@@ -170,7 +170,7 @@ ${task}
   }
 }
 
-export function getReviewContextFromEnv(): ReviewContext {
+function getReviewContextFromEnv(): ReviewContext {
   const failedChecksRaw = process.env.FAILED_CHECKS_JSON
   return {
     prNumber: process.env.PR_NUMBER || '',
