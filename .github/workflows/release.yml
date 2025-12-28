@@ -10,6 +10,7 @@ on:
       - leader
 
 # These permissions are required by `release-please-action` to create releases and link issues.
+# See: https://github.com/marketplace/actions/release-please-action#workflow-permissions
 permissions:
   contents: write
   pull-requests: write
