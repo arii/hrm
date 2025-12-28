@@ -14,6 +14,7 @@ import {
   toDisplay,
   cmToFeetAndInches,
   feetAndInchesToCm,
+  updateDisplayHeight,
 } from '../../../utils/units'
 import { Gender, MeasurementSystem } from '../../../types'
 import UserNameInput from './components/UserNameInput'
@@ -84,20 +85,16 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
     if (!isHeightFocused.current) {
       const currentHeightInCm = parseFloat(heightInCm)
       if (!isNaN(currentHeightInCm)) {
-        updateDisplayHeight(currentHeightInCm)
+        updateDisplayHeight(
+          currentHeightInCm,
+          unitSystem,
+          setDisplayHeightCm,
+          setDisplayHeightFeet,
+          setDisplayHeightInches
+        )
       }
     }
   }, [heightInCm, unitSystem])
-
-  const updateDisplayHeight = (cm: number) => {
-    if (unitSystem === 'METRIC') {
-      setDisplayHeightCm(cm.toString())
-    } else {
-      const { feet, inches } = cmToFeetAndInches(cm)
-      setDisplayHeightFeet(feet.toString())
-      setDisplayHeightInches(inches.toString())
-    }
-  }
 
   const handleAgeBlur = () => {
     setAgeError(validateAgeValue(userAge))
