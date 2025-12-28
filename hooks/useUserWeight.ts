@@ -19,9 +19,7 @@ export const useUserWeight = (): [number, (value: number) => void] => {
 
   // Ensure the stored value is a number before returning.
   const numericWeight =
-    typeof weightInKg === 'number'
-      ? weightInKg
-      : parseFloat(String(weightInKg))
+    typeof weightInKg === 'number' ? weightInKg : parseFloat(String(weightInKg))
 
   const finalWeight = isNaN(numericWeight) ? 70 : numericWeight
 

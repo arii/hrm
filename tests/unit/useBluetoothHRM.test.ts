@@ -5,6 +5,7 @@ import { jest } from '@jest/globals'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import * as useCookie from '@/hooks/useCookie'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
@@ -233,5 +234,37 @@ describe('useBluetoothHRM', () => {
     })
 
     expect(result.current.deviceStatus).toContain('Signal Lost. Retrying...')
+  })
+
+  it('should attempt to reconnect automatically if a deviceId is in cookies', async () => {
+    // Mock useCookie to return a deviceId
+    jest
+      .spyOn(useCookie, 'default')
+      .mockReturnValue(['test-device-id', jest.fn()])
+
+    const { result } = renderHook(() =>
+      useBluetoothHRM({ userName: 'Test User', userAge: 30 })
+    )
+
+    // It should immediately try to reconnect
+    await waitFor(() => {
+      expect(mockBluetooth.getDevices).toHaveBeenCalled()
+    })
+
+    // Simulate the device being found and connection succeeding
+    Object.defineProperty(mockDevice.gatt, 'connected', { value: true })
+    const characteristicValueChangedCallback =
+      mockCharacteristic.addEventListener.mock.calls.find(
+        (call) => call[0] === 'characteristicvaluechanged'
+      )?.[1]
+
+    act(() => {
+      characteristicValueChangedCallback?.({
+        target: { value: new DataView(new Uint8Array([0, 75]).buffer) },
+      })
+    })
+
+    await waitFor(() => expect(result.current.isConnected).toBe(true))
+    expect(result.current.deviceStatus).toContain('Connected to: Test HRM')
   })
 })

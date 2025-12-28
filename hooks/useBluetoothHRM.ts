@@ -456,7 +456,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (deviceToConnect) {
           activeConfigRef.current = {
-            name: name || `Bluetooth HRM (${deviceToConnect.name || 'Unknown'})`,
+            name:
+              name || `Bluetooth HRM (${deviceToConnect.name || 'Unknown'})`,
             age,
           }
           await connectToGatt(deviceToConnect)

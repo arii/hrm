@@ -63,7 +63,9 @@ describe('API Route: /api/debug/reset', () => {
 
     // Assert
     expect(response.status).toBe(403)
-    expect(data.message).toBe('This feature is only available in development mode.')
+    expect(data.message).toBe(
+      'This feature is only available in development mode.'
+    )
   })
 
   it('should delete the token file and return 200 if it exists', async () => {
@@ -80,7 +82,9 @@ describe('API Route: /api/debug/reset', () => {
     // Assert
     expect(response.status).toBe(200)
     expect(data.message).toBe('Server reset successful')
-    expect(mockedFs.unlinkSync).toHaveBeenCalledWith(expect.stringContaining('spotify_tokens.json'))
+    expect(mockedFs.unlinkSync).toHaveBeenCalledWith(
+      expect.stringContaining('spotify_tokens.json')
+    )
   })
 
   it('should return 200 without deleting if the token file does not exist', async () => {

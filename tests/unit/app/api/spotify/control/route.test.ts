@@ -61,7 +61,10 @@ describe('API Route: /api/spotify/control', () => {
 
   it('should return 403 Forbidden if CSRF token is invalid', async () => {
     mockedCsrf.validateCsrfToken.mockReturnValue(false)
-    const req = createRequest({ command: 'PLAY' }, { 'x-csrf-token': 'invalid' })
+    const req = createRequest(
+      { command: 'PLAY' },
+      { 'x-csrf-token': 'invalid' }
+    )
     const response = await POST(req)
     const data = await response.json()
 

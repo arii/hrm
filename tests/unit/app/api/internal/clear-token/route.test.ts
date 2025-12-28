@@ -24,10 +24,13 @@ describe('API Route: /api/internal/clear-token', () => {
   it('should return 403 if CSRF token is invalid', async () => {
     // Arrange
     mockedCsrf.validateCsrfToken.mockReturnValue(false)
-    const request = new NextRequest('http://localhost/api/internal/clear-token', {
-      method: 'POST',
-      headers: { 'x-csrf-token': 'invalid-token' },
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/clear-token',
+      {
+        method: 'POST',
+        headers: { 'x-csrf-token': 'invalid-token' },
+      }
+    )
 
     // Act
     const response = await POST(request)
@@ -40,10 +43,13 @@ describe('API Route: /api/internal/clear-token', () => {
 
   it('should delete the token file and return 200 if it exists', async () => {
     // Arrange
-    const request = new NextRequest('http://localhost/api/internal/clear-token', {
-      method: 'POST',
-      headers: { 'x-csrf-token': 'valid-token' },
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/clear-token',
+      {
+        method: 'POST',
+        headers: { 'x-csrf-token': 'valid-token' },
+      }
+    )
 
     // Act
     const response = await POST(request)
@@ -52,16 +58,21 @@ describe('API Route: /api/internal/clear-token', () => {
     // Assert
     expect(response.status).toBe(200)
     expect(data.message).toBe('Token file cleared')
-    expect(mockedFs.unlinkSync).toHaveBeenCalledWith(expect.stringContaining('spotify_tokens.json'))
+    expect(mockedFs.unlinkSync).toHaveBeenCalledWith(
+      expect.stringContaining('spotify_tokens.json')
+    )
   })
 
   it('should return 200 without deleting if the token file does not exist', async () => {
     // Arrange
     mockedFs.existsSync.mockReturnValue(false)
-    const request = new NextRequest('http://localhost/api/internal/clear-token', {
-      method: 'POST',
-      headers: { 'x-csrf-token': 'valid-token' },
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/clear-token',
+      {
+        method: 'POST',
+        headers: { 'x-csrf-token': 'valid-token' },
+      }
+    )
 
     // Act
     const response = await POST(request)
@@ -78,10 +89,13 @@ describe('API Route: /api/internal/clear-token', () => {
     mockedFs.unlinkSync.mockImplementation(() => {
       throw new Error('Test FS error')
     })
-    const request = new NextRequest('http://localhost/api/internal/clear-token', {
-      method: 'POST',
-      headers: { 'x-csrf-token': 'valid-token' },
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/clear-token',
+      {
+        method: 'POST',
+        headers: { 'x-csrf-token': 'valid-token' },
+      }
+    )
 
     // Act
     const response = await POST(request)

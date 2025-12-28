@@ -13,7 +13,7 @@ export const setCookie = (
   name: string,
   value: string,
   days = 365,
-  secure = window.location.protocol === 'https:'
+  secure = process.env.NODE_ENV === 'production' // Stricter secure flag
 ) => {
   if (typeof document !== 'undefined') {
     const expires = new Date(Date.now() + days * 864e5).toUTCString()
@@ -24,11 +24,20 @@ export const setCookie = (
 
 function useCookie<T>(key: string, initialValue: T) {
   const [storedValue, setStoredValue] = useState<T>(() => {
-    const item = getCookie(key)
     try {
-      return item ? JSON.parse(decodeURIComponent(item)) : initialValue
+      const item = getCookie(key)
+      if (!item) return initialValue
+
+      return JSON.parse(decodeURIComponent(item))
     } catch (error) {
-      logger.error({ error }, 'Failed to parse cookie')
+      logger.warn(
+        { key, error },
+        'Failed to parse cookie value. Using initial value.'
+      )
+      // If parsing fails, remove the malformed cookie
+      if (typeof document !== 'undefined') {
+        document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+      }
       return initialValue
     }
   })
@@ -46,9 +55,17 @@ function useCookie<T>(key: string, initialValue: T) {
         const valueToStore =
           value instanceof Function ? value(storedValue) : value
         setStoredValue(valueToStore)
-        setCookie(key, encodeURIComponent(JSON.stringify(valueToStore)))
+
+        if (valueToStore === null || valueToStore === undefined) {
+          // Remove the cookie if the value is null or undefined
+          if (typeof document !== 'undefined') {
+            document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+          }
+        } else {
+          setCookie(key, encodeURIComponent(JSON.stringify(valueToStore)))
+        }
       } catch (error) {
-        logger.error({ error }, 'Failed to set cookie')
+        logger.error({ key, error }, 'Failed to set cookie.')
       }
     },
     [key, storedValue]
