@@ -7,20 +7,37 @@ import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import useLocalStorage from '@/hooks/useLocalStorage'
-import { MeasurementSystem, Gender } from '../../../types'
+import { MeasurementSystem } from '../../../types'
 import {
   validateAgeValue,
   validateWeightValue,
   validateHeightValue,
 } from './validation'
-import { toKg, toDisplay, cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
+import {
+  toKg,
+  toDisplay,
+  cmToFeetAndInches,
+  feetAndInchesToCm,
+} from '../../../utils/units'
 
-const UserSettings = () => {
-  const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
-  const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  const [weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
+interface UserSettingsProps {
+  userName: string
+  setUserName: (value: string) => void
+  userAge: string
+  setUserAge: (value: string) => void
+  weightInKg: string
+  setWeightInKg: (value: string) => void
+}
+
+const UserSettingsComponent: React.FC<UserSettingsProps> = ({
+  userName,
+  setUserName,
+  userAge,
+  setUserAge,
+  weightInKg,
+  setWeightInKg,
+}) => {
   const [heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', '175') // Always CM
-  const [gender, setGender] = useLocalStorage<Gender>('hrm-user-gender', 'MALE')
   const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
     'hrm-user-units',
     'IMPERIAL'
@@ -37,15 +54,13 @@ const UserSettings = () => {
   const [weightError, setWeightError] = useState<string | null>(null)
   const [heightError, setHeightError] = useState<string | null>(null)
 
-  // Sync transient state with stored values
+  // Initialize display values on mount and sync when unit system changes.
   useEffect(() => {
     const currentWeightInKg = parseFloat(weightInKg)
     if (!isNaN(currentWeightInKg)) {
       setDisplayWeight(toDisplay(currentWeightInKg, unitSystem).toString())
     }
-  }, [weightInKg, unitSystem])
 
-  useEffect(() => {
     const currentHeightInCm = parseFloat(heightInCm)
     if (!isNaN(currentHeightInCm)) {
       if (unitSystem === 'METRIC') {
@@ -56,7 +71,11 @@ const UserSettings = () => {
         setDisplayHeightInches(inches.toString())
       }
     }
-  }, [heightInCm, unitSystem])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unitSystem])
+  // This effect should only re-run when the unit system changes, not when the underlying weight/height
+  // values change. Including them would create a feedback loop where saving a value would immediately
+  // overwrite the user's input with a re-calculated (and possibly rounded) version.
 
   const handleAgeBlur = () => {
     setAgeError(validateAgeValue(userAge))
@@ -95,12 +114,11 @@ const UserSettings = () => {
     newUnit: MeasurementSystem | null
   ) => {
     if (newUnit && newUnit !== unitSystem) {
-      setUnitSystem(newUnit);
-      // Reset errors when unit system changes
-      setWeightError(null);
-      setHeightError(null);
+      setUnitSystem(newUnit)
+      setWeightError(null)
+      setHeightError(null)
     }
-  };
+  }
 
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
@@ -189,5 +207,7 @@ const UserSettings = () => {
     </Stack>
   )
 }
+
+const UserSettings = React.memo(UserSettingsComponent)
 
 export default UserSettings

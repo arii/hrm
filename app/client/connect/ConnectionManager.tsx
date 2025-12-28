@@ -39,14 +39,16 @@ const ConnectionManager: React.FC<ConnectionManagerProps> = ({
 }) => {
   return (
     <Box sx={{ textAlign: 'center', mb: 3 }}>
-      {deviceStatus && !isConnected && !deviceStatus.includes('Disconnected') && (
-        <Alert
-          severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
-          sx={{ mb: 2 }}
-        >
-          {deviceStatus}
-        </Alert>
-      )}
+      {deviceStatus &&
+        !isConnected &&
+        !deviceStatus.includes('Disconnected') && (
+          <Alert
+            severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
+            sx={{ mb: 2 }}
+          >
+            {deviceStatus}
+          </Alert>
+        )}
 
       {!isConnected ? (
         <Button
@@ -60,8 +62,10 @@ const ConnectionManager: React.FC<ConnectionManagerProps> = ({
               <CircularProgress size={20} color="inherit" />
               <span>Connecting...</span>
             </Stack>
-          ) : (
+          ) : isConnectable ? (
             'Connect Bluetooth HRM'
+          ) : (
+            'Enter Details to Connect'
           )}
         </Button>
       ) : (
