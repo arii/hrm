@@ -185,6 +185,7 @@ const handleIncomingMessage = (
               age: currentAge,
               weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
               durationMinutes: dtMinutes,
+              gender: 'MALE', // TODO: Get gender from user profile
             })
             currentAccumulated += caloriesBurned
           }

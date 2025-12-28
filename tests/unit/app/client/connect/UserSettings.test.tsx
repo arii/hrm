@@ -4,11 +4,9 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import UserSettings from '../../../../../app/client/connect/UserSettings'
 import React, { Dispatch, SetStateAction } from 'react'
+import { Gender, MeasurementSystem } from '../../../../../types'
 
 const mockLocalStorageStore: { [key: string]: string } = {}
-const mockLocalStorageSetters: {
-  [key: string]: Dispatch<SetStateAction<string>>[]
-} = {}
 
 jest.mock('@/hooks/useLocalStorage', () => ({
   __esModule: true,
@@ -20,16 +18,9 @@ jest.mock('@/hooks/useLocalStorage', () => ({
           : initialValue
       )
 
-      if (!mockLocalStorageSetters[key]) {
-        mockLocalStorageSetters[key] = []
-      }
-      if (!mockLocalStorageSetters[key].includes(setValue)) {
-        mockLocalStorageSetters[key].push(setValue)
-      }
-
       const set = (newValue: string) => {
         mockLocalStorageStore[key] = newValue
-        mockLocalStorageSetters[key].forEach((setter) => setter(newValue))
+        setValue(newValue)
       }
 
       return [value, set]
@@ -47,9 +38,9 @@ describe('UserSettings Logic', () => {
     setWeightInKg: jest.fn(),
     heightInCm: '175',
     setHeightInCm: jest.fn(),
-    gender: 'MALE' as const,
+    gender: 'MALE' as Gender,
     setGender: jest.fn(),
-    unitSystem: 'IMPERIAL' as const,
+    unitSystem: 'IMPERIAL' as MeasurementSystem,
     onUnitChange: jest.fn(),
   }
 
@@ -58,9 +49,6 @@ describe('UserSettings Logic', () => {
     jest.clearAllMocks()
     for (const key in mockLocalStorageStore) {
       delete mockLocalStorageStore[key]
-    }
-    for (const key in mockLocalStorageSetters) {
-      delete mockLocalStorageSetters[key]
     }
   })
 
@@ -129,10 +117,7 @@ describe('UserSettings Logic', () => {
       fireEvent.click(screen.getByText('Metric (kg, cm)'))
     })
 
-    // Re-render with the updated unitSystem prop
-    rerender(
-      <UserSettings {...defaultProps} unitSystem="METRIC" onUnitChange={jest.fn()} />
-    )
+    rerender(<UserSettings {...defaultProps} unitSystem="METRIC" />)
 
     const weightInput = await screen.findByLabelText(/Your Weight \(kg\)/i)
     expect(weightInput).toBeInTheDocument()

@@ -5,6 +5,7 @@ import {
   estimateCaloriesBurned,
   CalorieEstimationParams,
 } from '@/lib/calorie-estimation'
+import { Gender } from '@/types'
 
 describe('Calorie Estimation', () => {
   const testCases: Array<[string, CalorieEstimationParams, number]> = [

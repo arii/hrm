@@ -6,8 +6,6 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import useLocalStorage from '@/hooks/useLocalStorage'
-import { MeasurementSystem } from '../../../types'
 import {
   validateAgeValue,
   validateWeightValue,
@@ -19,11 +17,8 @@ import {
   cmToFeetAndInches,
   feetAndInchesToCm,
 } from '../../../utils/units'
+import { Gender, MeasurementSystem } from '../../../types'
 
-import {
-  Gender,
-  MeasurementSystem
-} from '../../../types'
 interface UserSettingsProps {
   userName: string
   setUserName: (value: string) => void
@@ -53,7 +48,6 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   unitSystem,
   onUnitChange,
 }) => {
-
   // Transient state for inputs
   const [displayWeight, setDisplayWeight] = useState('')
   const [displayHeightCm, setDisplayHeightCm] = useState('')
@@ -135,7 +129,7 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
     _event: React.MouseEvent<HTMLElement>,
     newGender: Gender | null
   ) => {
-    if (newGender) {
+    if (newGender !== null) {
       setGender(newGender)
     }
   }
@@ -172,10 +166,10 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
         aria-label="Gender"
         fullWidth
       >
-        <ToggleButton value="male" aria-label="male">
+        <ToggleButton value="MALE" aria-label="male">
           Male
         </ToggleButton>
-        <ToggleButton value="female" aria-label="female">
+        <ToggleButton value="FEMALE" aria-label="female">
           Female
         </ToggleButton>
       </ToggleButtonGroup>

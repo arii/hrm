@@ -24,7 +24,9 @@ describe('ConnectionManager', () => {
 
   it('renders disconnect button when connected', () => {
     render(<ConnectionManager {...defaultProps} isConnected={true} />)
-    expect(screen.getByRole('button', { name: 'Disconnect' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Disconnect' })
+    ).toBeInTheDocument()
   })
 
   it('disables the connect button when not connectable', () => {

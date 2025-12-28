@@ -5,6 +5,7 @@
 import { renderHook, act } from '@testing-library/react'
 import { useCalorieCounter } from '../../../hooks/useCalorieCounter'
 import * as calorieEstimation from '../../../lib/calorie-estimation'
+import { Gender } from '../../../types'
 
 jest.mock('../../../lib/calorie-estimation', () => ({
   estimateCaloriesBurned: jest.fn(),

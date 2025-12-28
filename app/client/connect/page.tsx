@@ -6,13 +6,14 @@ import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useHrZone } from '@/hooks/useHrZone'
 import ConnectView from './ConnectView'
+import { Gender, MeasurementSystem } from 'types'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
   const [weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
   const [heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', '175') // Always CM
-  const [gender, setGender] = useLocalStorage<Gender>('hrm-user-gender', 'male')
+  const [gender, setGender] = useLocalStorage<Gender>('hrm-user-gender', 'MALE')
   const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
     'hrm-user-units',
     'IMPERIAL'
