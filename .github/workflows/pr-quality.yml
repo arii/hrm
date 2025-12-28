@@ -77,6 +77,18 @@ jobs:
             value: 'feature/branch-'
             max-length: '64'
             expected: 'feature-branch'
+          - name: "At Max Length"
+            value: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
+            max-length: '64'
+            expected: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
+          - name: "Only Invalid Chars"
+            value: '!@#$%^&*()'
+            max-length: '64'
+            expected: '-'
+          - name: "Leading and Trailing Invalid Chars"
+            value: '!!test-branch!!'
+            max-length: '64'
+            expected: '-test-branch-'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
