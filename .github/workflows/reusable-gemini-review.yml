@@ -187,7 +187,15 @@ jobs:
           set -e
 
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "::warning::Get PR Checks: Failed to fetch PR checks (exit code $EXIT_CODE). Error: $CHECKS_OUTPUT. Proceeding without CI analysis."
+            ERROR_MESSAGE="Get PR Checks: Failed to fetch PR checks (exit code $EXIT_CODE)."
+            if [[ "$CHECKS_OUTPUT" == *"Could not resolve to a PullRequest"* ]]; then
+              FRIENDLY_ERROR="Could not find the pull request. This might be a permissions issue or an invalid PR number."
+            elif [[ "$CHECKS_OUTPUT" == *"HTTP 401"* ]] || [[ "$CHECKS_OUTPUT" == *"Bad credentials"* ]]; then
+              FRIENDLY_ERROR="Authentication failed. The GitHub token is likely invalid or has insufficient permissions."
+            else
+              FRIENDLY_ERROR="An unexpected error occurred."
+            fi
+            echo "::warning::${ERROR_MESSAGE} ${FRIENDLY_ERROR} Raw output: ${CHECKS_OUTPUT}"
             CHECKS_JSON="[]"
           else
             CHECKS_JSON=$(echo "$CHECKS_OUTPUT" | jq -c 'map(select(.name != "gemini-review" and .name != "gemini-rereview" and (.conclusion == "failure" or .conclusion == "cancelled"))) | .[0:10]')
