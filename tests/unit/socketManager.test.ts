@@ -29,7 +29,7 @@ import {
   broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
-} from '../../utils/websocketUtils.js'
+} from '../../utils/websocketUtils'
 import logger from '@/utils/logger'
 
 // Mock dependencies
@@ -42,7 +42,7 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 }))
 
 // Mock ConnectionMonitor and other utils
-jest.mock('../../utils/websocketUtils.js', () => ({
+jest.mock('../../utils/websocketUtils', () => ({
   sendWebSocketMessage: jest.fn(),
   broadcast: jest.fn(),
   ConnectionMonitor: jest.fn().mockImplementation(() => ({
@@ -292,22 +292,6 @@ describe('WebSocket Manager', () => {
       expect(logger.error).toHaveBeenCalledWith(
         expect.any(Object),
         'WebSocket message validation failed'
-      )
-    })
-
-    it('should broadcast state on client disconnect', () => {
-      mockWs.emit('close')
-
-      // Fast-forward timers to trigger the setTimeout in the close handler
-      jest.runOnlyPendingTimers()
-
-      expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [],
-        },
-        'socketManager.broadcastState'
       )
     })
 

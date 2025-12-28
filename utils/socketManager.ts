@@ -132,6 +132,12 @@ const initSocketManager = (
       })
     } else {
       logger.info({ clientId }, 'Restored existing client session')
+      // Restore accumulated calories from repository
+      const existingData = hrmDataRepository.findById(clientId)
+      clientSessionState.set(clientId, {
+        lastUpdate: Date.now(),
+        accumulatedCalories: existingData?.calories ?? 0,
+      })
     }
 
     extWs.on('message', (message) => {
@@ -140,20 +146,17 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId }, 'WebSocket client disconnected')
-      setTimeout(() => {
-        if (clientSockets.get(clientId) === ws) {
-          logger.info({ clientId }, 'Session expired. Deleting data.')
-          try {
-            hrmDataRepository.deleteById(clientId)
-            clientSessionState.delete(clientId)
-            broadcastState()
-          } catch (err) {
-            logger.error({ clientId, err }, 'Error during session cleanup')
-          } finally {
-            clientSockets.delete(clientId)
-          }
+      // No timeout needed, data is persisted
+      const existingData = hrmDataRepository.findById(clientId)
+      if (existingData) {
+        const sessionState = clientSessionState.get(clientId)
+        if (sessionState) {
+          hrmDataRepository.save({
+            ...existingData,
+            calories: sessionState.accumulatedCalories,
+          })
         }
-      }, env.WEBSOCKET_GRACE_PERIOD_MS)
+      }
     })
   })
 
