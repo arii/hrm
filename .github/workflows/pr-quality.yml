@@ -134,13 +134,15 @@ jobs:
           # This step sanitizes it for use in artifact names.
           # --- Inline Test ---
           # 1. Define test cases
-          INPUT_1="feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization"
-          EXPECTED_1="feature-long-branch-name-with-slashes-and-more-slashes-to-test"
-          INPUT_2="short/branch"
-          EXPECTED_2="short-branch"
+          INPUT_1='feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization'
+          EXPECTED_1='feature-long-branch-name-with-slashes-and-more-slashes-to-test'
+          INPUT_2='short/branch'
+          EXPECTED_2='short-branch'
+          INPUT_3='test/special!@#$%^&*()[]{}chars'
+          EXPECTED_3='test-special--------------chars'
 
           # 2. Run test 1 (Sanitization and Truncation)
-          ACTUAL_1=$(echo "$INPUT_1" | tr '/' '-' | cut -c1-64)
+          ACTUAL_1=$(echo "$INPUT_1" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
           if [ "$ACTUAL_1" != "$EXPECTED_1" ]; then
             echo "::error::SESSION_ID sanitization test 1 failed!"
             echo "Input: $INPUT_1"
@@ -150,7 +152,7 @@ jobs:
           fi
 
           # 3. Run test 2 (Sanitization only)
-          ACTUAL_2=$(echo "$INPUT_2" | tr '/' '-' | cut -c1-64)
+          ACTUAL_2=$(echo "$INPUT_2" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
           if [ "$ACTUAL_2" != "$EXPECTED_2" ]; then
             echo "::error::SESSION_ID sanitization test 2 failed!"
             echo "Input: $INPUT_2"
@@ -158,11 +160,22 @@ jobs:
             echo "Actual: $ACTUAL_2"
             exit 1
           fi
+
+          # 4. Run test 3 (Special Characters)
+          ACTUAL_3=$(echo "$INPUT_3" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
+          if [ "$ACTUAL_3" != "$EXPECTED_3" ]; then
+            echo "::error::SESSION_ID sanitization test 3 failed!"
+            echo "Input: $INPUT_3"
+            echo "Expected: $EXPECTED_3"
+            echo "Actual: $ACTUAL_3"
+            exit 1
+          fi
           echo "✅ SESSION_ID sanitization logic passed inline tests."
 
           # --- Live Sanitization ---
           echo "Original SESSION_ID: ${{ env.SESSION_ID }}"
-          SAFE_SESSION_ID=$(echo "${{ env.SESSION_ID }}" | tr '/' '-')
+          # Replace any character that is not a letter, number, hyphen, or underscore with a hyphen.
+          SAFE_SESSION_ID=$(echo "${{ env.SESSION_ID }}" | sed 's/[^a-zA-Z0-9_-]/-/g')
           TRUNCATED_SESSION_ID=$(echo "$SAFE_SESSION_ID" | cut -c1-64)
           echo "Sanitized SESSION_ID: $TRUNCATED_SESSION_ID"
           echo "SESSION_ID=$TRUNCATED_SESSION_ID" >> $GITHUB_ENV
