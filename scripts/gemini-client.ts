@@ -38,19 +38,29 @@ function getModelFallbacks(): string[] {
     return defaultFallbacks
   }
 
-  const userFallbacks = envFallbacks
-    .split(',')
-    .map((m) => m.trim())
-    .filter((m) => {
-      if (!m) return false
-      if (!m.startsWith('gemini-')) {
-        console.warn(
-          `Warning: Invalid model name "${m}" in GEMINI_MODEL_FALLBACKS. It will be ignored.`
-        )
-        return false
-      }
-      return true
-    })
+  let userFallbacks: string[] = []
+  try {
+    userFallbacks = envFallbacks
+      .split(',')
+      .map((m) => m.trim())
+      .filter((m) => {
+        if (!m) return false
+        if (!m.startsWith('gemini-')) {
+          console.warn(
+            `Warning: Invalid model name "${m}" in GEMINI_MODEL_FALLBACKS. It will be ignored.`
+          )
+          return false
+        }
+        return true
+      })
+  } catch (error) {
+    console.warn(
+      `Warning: Could not parse GEMINI_MODEL_FALLBACKS: ${
+        (error as Error).message
+      }. Using default fallbacks.`
+    )
+    return defaultFallbacks
+  }
 
   if (userFallbacks.length === 0) {
     console.warn(
