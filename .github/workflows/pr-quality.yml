@@ -42,6 +42,9 @@ env:
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
 
 jobs:
+  # This job sanitizes the branch name to create a safe SESSION_ID for artifact names.
+  # Artifact names in GitHub Actions have strict limitations and do not allow characters
+  # like '/' which are common in branch names (e.g., 'feature/my-branch').
   setup-env:
     name: 🛡️ Sanitize Environment
     runs-on: ubuntu-latest
