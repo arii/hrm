@@ -84,11 +84,35 @@ jobs:
             fi
           }
 
+          # To add a new test, simply add a new `assert_sanitize 'input' 'expected'` line.
           assert_sanitize 'feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization' 'feature-long-branch-name-with-slashes-and-more-slashes-to-test' # Test truncation and sanitization.
           assert_sanitize 'short/branch' 'short-branch' # Test a simple case with a slash.
           assert_sanitize 'test/special!@#$%^&*()[]{}chars' 'test-special--------------chars' # Test various special characters.
 
           echo "✅ Sanitization unit tests passed."
+
+  dependency-check:
+    name: 📦 Dependency Check
+    needs: setup-env
+    runs-on: self-hosted
+    if: "contains(github.event.pull_request.labels.*.name, 'dependencies')"
+    env:
+      SESSION_ID: ${{ needs.setup-env.outputs.session_id }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Check for lockfile changes
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...${{ github.event.pull_request.head.ref }})
+          if echo "$CHANGED_FILES" | grep -q "package.json" && ! echo "$CHANGED_FILES" | grep -q "pnpm-lock.yaml"; then
+            echo "Error: package.json was changed but pnpm-lock.yaml was not."
+            exit 1
+          fi
   # ===========================================================================
   # JOB 1: INFRASTRUCTURE SETUP (The "Clean Slate")
   # Wipes workspace, installs deps, and prepares the environment for all jobs.
