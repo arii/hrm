@@ -440,15 +440,12 @@ export class SpotifyPolling implements SpotifyService {
    * Executes a Spotify SDK command and suppresses syntax errors caused by 204 No Content responses.
    * @param commandName The name of the command being executed (for logging).
    * @param action The SDK function to execute.
-   * @param logContext Additional context to include in the debug log.
+   * @param logContext Additional context for logging, e.g., { deviceId, contextUri }.
    */
   private async executeSdkCommand(
     commandName: string,
     action: () => Promise<unknown>,
-    logContext: Record<
-      string,
-      string | number | undefined | boolean | null | object
-    > = {}
+    logContext: Record<string, string | number | undefined> = {}
   ): Promise<void> {
     try {
       await action()

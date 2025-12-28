@@ -534,5 +534,20 @@ describe('SpotifyPolling Service', () => {
       expect(logger.error).not.toHaveBeenCalled()
       expect(logger.warn).not.toHaveBeenCalled()
     })
+
+    it('should re-throw other errors from executeSdkCommand', async () => {
+      const otherError = new Error('Some other error')
+      mockPlayer.startResumePlayback.mockRejectedValue(otherError)
+
+      await spotifyService.handleCommand('PLAY', { deviceId: 'test_device_id' })
+
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'PLAY',
+          err: otherError,
+        }),
+        'Error executing Spotify command'
+      )
+    })
   })
 })
