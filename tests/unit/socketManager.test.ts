@@ -9,6 +9,7 @@ import {
   it,
   jest,
 } from '@jest/globals'
+import { IncomingMessage } from 'http'
 import {
   initSocketManager,
   resetSocketManager,
@@ -440,7 +441,7 @@ describe('WebSocket Manager', () => {
         url: '/?clientId=abcdef-123456',
         headers: { host: 'localhost:3000' },
       }
-      const params = getRequestParams(req as any)
+      const params = getRequestParams(req as IncomingMessage)
       expect(params.get('clientId')).toBe('abcdef-123456')
     })
 
@@ -448,21 +449,21 @@ describe('WebSocket Manager', () => {
       const req = {
         url: 'a',
         headers: { host: 'a:b:c' },
-      };
-      const params = getRequestParams(req as any);
-      expect(params.toString()).toBe('');
-      expect(logger.error).toHaveBeenCalled();
+      }
+      const params = getRequestParams(req as IncomingMessage)
+      expect(params.toString()).toBe('')
+      expect(logger.error).toHaveBeenCalled()
     })
 
     it('should handle missing host header by falling back to localhost', () => {
       const req = { url: '/?foo=bar', headers: {} }
-      const params = getRequestParams(req as any)
+      const params = getRequestParams(req as IncomingMessage)
       expect(params.get('foo')).toBe('bar')
     })
 
     it('should handle missing URL by defaulting to "/"', () => {
       const req = { headers: { host: 'testhost' } }
-      const params = getRequestParams(req as any)
+      const params = getRequestParams(req as IncomingMessage)
       expect(params.toString()).toBe('')
     })
 
@@ -471,7 +472,7 @@ describe('WebSocket Manager', () => {
         url: '/?clientId=123&user=test&mode=active',
         headers: { host: 'localhost' },
       }
-      const params = getRequestParams(req as any)
+      const params = getRequestParams(req as IncomingMessage)
       expect(params.get('clientId')).toBe('123')
       expect(params.get('user')).toBe('test')
       expect(params.get('mode')).toBe('active')

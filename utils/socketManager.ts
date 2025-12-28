@@ -42,7 +42,7 @@ let services: AppServices
 // - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
 const hrmDataRepository = new HrmDataRepository()
-const MAX_CLIENTS = 1000 // Prevent memory exhaustion
+const MAX_CLIENTS = env.MAX_WS_CLIENTS // Prevent memory exhaustion
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
@@ -166,10 +166,16 @@ const initSocketManager = (
         // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
         if (clientSockets.get(clientId) === ws) {
           logger.info({ clientId }, 'Session expired. Deleting data.')
-          hrmDataRepository.deleteById(clientId)
-          clientSessionState.delete(clientId)
-          clientSockets.delete(clientId)
-          broadcastState()
+          try {
+            hrmDataRepository.deleteById(clientId)
+            clientSessionState.delete(clientId)
+            broadcastState()
+          } catch (err) {
+            logger.error({ clientId, err }, 'Error during session cleanup')
+          } finally {
+            // Always remove the socket reference to prevent leaks
+            clientSockets.delete(clientId)
+          }
         }
       }, env.WEBSOCKET_GRACE_PERIOD_MS)
     })

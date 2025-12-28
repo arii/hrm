@@ -70,19 +70,14 @@ export interface WebSocketContextType extends WebSocketState {
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
-// Helper for stable ID
-const DEFAULT_UUID_FALLBACK = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-
-export const generateUUID = () => {
-  const isSecureContext =
-    typeof window !== 'undefined' && window.location.protocol === 'https:'
-  // Use native crypto.randomUUID only in secure contexts (HTTPS)
-  if (isSecureContext && typeof crypto !== 'undefined' && crypto.randomUUID) {
+export const generateUUID = (): string => {
+  // Modern secure generation
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID()
   }
 
-  // Fallback for insecure contexts or older browsers
-  return DEFAULT_UUID_FALLBACK.replace(/[xy]/g, (c) => {
+  // Robust fallback
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0
     const v = c === 'x' ? r : (r & 0x3) | 0x8
     return v.toString(16)
