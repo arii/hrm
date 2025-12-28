@@ -24,7 +24,7 @@ import {
   ConnectionMonitor,
 } from './websocketUtils.js'
 import logger from './logger.js'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
+import { estimateCaloriesPerMinute } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
@@ -41,7 +41,7 @@ let services: AppServices
 // - hrmDataRepository: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
 // - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
-const hrmDataRepository = new HrmDataRepository()
+export const hrmDataRepository = new HrmDataRepository()
 const MAX_CLIENTS = env.MAX_WS_CLIENTS // Prevent memory exhaustion
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
@@ -268,15 +268,15 @@ const handleIncomingMessage = (
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
+          const currentWeight = message.data.weight ?? CALORIE_DEFAULTS.WEIGHT_KG
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            const caloriesBurned = estimateCaloriesBurned({
+            const caloriesPerMinute = estimateCaloriesPerMinute({
               heartRate: currentHr,
               age: currentAge,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
-              durationMinutes: dtMinutes,
+              weightKg: currentWeight,
             })
-            currentAccumulated += caloriesBurned
+            currentAccumulated += caloriesPerMinute * dtMinutes
           }
 
           // Update the internal state with high precision value

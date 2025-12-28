@@ -16,11 +16,10 @@ export interface CalorieEstimationParams {
   heartRate: number
   age: number
   weightKg: number
-  durationMinutes: number
 }
 
 /**
- * Estimates calories burned using a gender-neutral formula.
+ * Estimates calories burned per minute using a gender-neutral formula.
  *
  * This function implements a widely recognized formula for calorie expenditure
  * that relies on heart rate, age, and weight. It abstracts away the need for
@@ -29,14 +28,14 @@ export interface CalorieEstimationParams {
  * This is the recommended function for all new calorie estimations.
  *
  * @param params - The physiological data for the calculation.
- * @returns The estimated number of calories burned.
+ * @returns The estimated number of calories burned per minute.
  */
-export const estimateCaloriesBurned = (
+export const estimateCaloriesPerMinute = (
   params: CalorieEstimationParams
 ): number => {
-  const { heartRate, age, weightKg, durationMinutes } = params
+  const { heartRate, age, weightKg } = params
 
-  if (heartRate <= 30 || durationMinutes <= 0) {
+  if (heartRate <= 30) {
     return 0
   }
 
@@ -63,6 +62,5 @@ export const estimateCaloriesBurned = (
       ageTerm) /
     CALORIE_ESTIMATION_CONSTANTS.KJ_TO_KCAL
 
-  const totalCalories = caloriesPerMinute * durationMinutes
-  return Math.max(0, totalCalories) // Ensure result is non-negative
+  return Math.max(0, caloriesPerMinute) // Ensure result is non-negative
 }

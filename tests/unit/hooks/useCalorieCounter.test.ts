@@ -7,14 +7,14 @@ import { useCalorieCounter } from '../../../hooks/useCalorieCounter'
 import * as calorieEstimation from '../../../lib/calorie-estimation'
 
 jest.mock('../../../lib/calorie-estimation', () => ({
-  estimateCaloriesBurned: jest.fn(),
+  estimateCaloriesPerMinute: jest.fn(),
 }))
 
 describe('useCalorieCounter', () => {
   beforeEach(() => {
     // Enable fake timers
     jest.useFakeTimers()
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockClear()
+    ;(calorieEstimation.estimateCaloriesPerMinute as jest.Mock).mockClear()
   })
 
   afterEach(() => {
@@ -22,7 +22,8 @@ describe('useCalorieCounter', () => {
   })
 
   it('should calculate calories correctly over time', () => {
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
+    // Mocking a return of 60 calories per minute for simplicity (1 calorie per second)
+    ;(calorieEstimation.estimateCaloriesPerMinute as jest.Mock).mockReturnValue(60)
     const { result } = renderHook(() => useCalorieCounter(120, 30, 70, true))
 
     expect(result.current.calories).toBe(0)
@@ -31,21 +32,19 @@ describe('useCalorieCounter', () => {
       jest.advanceTimersByTime(1000)
     })
 
-    // After 1 second, we should have 1 calorie (1 call to estimate * 1 returned)
-    expect(result.current.calories).toBe(1)
-    expect(calorieEstimation.estimateCaloriesBurned).toHaveBeenCalledTimes(1)
+    expect(result.current.calories).toBeCloseTo(1)
+    expect(calorieEstimation.estimateCaloriesPerMinute).toHaveBeenCalledTimes(1)
 
     act(() => {
       jest.advanceTimersByTime(2000)
     })
 
-    // After 2 more seconds, total 3 calories
-    expect(result.current.calories).toBe(3)
-    expect(calorieEstimation.estimateCaloriesBurned).toHaveBeenCalledTimes(3)
+    expect(result.current.calories).toBeCloseTo(3)
+    expect(calorieEstimation.estimateCaloriesPerMinute).toHaveBeenCalledTimes(3)
   })
 
   it('should not calculate calories when isActive is false', () => {
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
+    ;(calorieEstimation.estimateCaloriesPerMinute as jest.Mock).mockReturnValue(1)
     const { result } = renderHook(() => useCalorieCounter(120, 30, 70, false))
 
     expect(result.current.calories).toBe(0)
@@ -55,18 +54,18 @@ describe('useCalorieCounter', () => {
     })
 
     expect(result.current.calories).toBe(0)
-    expect(calorieEstimation.estimateCaloriesBurned).not.toHaveBeenCalled()
+    expect(calorieEstimation.estimateCaloriesPerMinute).not.toHaveBeenCalled()
   })
 
   it('should reset calories when resetCalories is called', () => {
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
+    ;(calorieEstimation.estimateCaloriesPerMinute as jest.Mock).mockReturnValue(60)
     const { result } = renderHook(() => useCalorieCounter(120, 30, 70, true))
 
     act(() => {
       jest.advanceTimersByTime(2000)
     })
 
-    expect(result.current.calories).toBe(2)
+    expect(result.current.calories).toBeCloseTo(2)
 
     act(() => {
       result.current.resetCalories()

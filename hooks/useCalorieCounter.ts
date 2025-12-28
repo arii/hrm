@@ -1,6 +1,6 @@
 // File: hooks/useCalorieCounter.ts
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation'
+import { estimateCaloriesPerMinute } from '../lib/calorie-estimation'
 
 /**
  * A hook to calculate and manage calories burned during a workout.
@@ -53,12 +53,12 @@ export const useCalorieCounter = (
         const deltaSeconds = (now - lastTickRef.current) / 1000
         // Use the ref's current value for calculation
         if (heartRateRef.current > 0) {
-          const caloriesBurned = estimateCaloriesBurned({
+          const caloriesPerMinute = estimateCaloriesPerMinute({
             heartRate: heartRateRef.current,
             age: ageRef.current,
             weightKg: weightRef.current,
-            durationMinutes: deltaSeconds / 60,
           })
+          const caloriesBurned = (caloriesPerMinute / 60) * deltaSeconds
           setCalories((prev) => prev + caloriesBurned)
         }
       }
