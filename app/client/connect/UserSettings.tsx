@@ -70,6 +70,7 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
     if (!isWeightFocused.current) {
       const currentWeightInKg = parseFloat(weightInKg)
       if (!isNaN(currentWeightInKg)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDisplayWeight(toDisplay(currentWeightInKg, unitSystem).toString())
       }
     }
@@ -81,8 +82,11 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
       const currentHeightInCm = parseFloat(heightInCm)
       if (!isNaN(currentHeightInCm)) {
         const displayValues = updateDisplayHeight(currentHeightInCm, unitSystem)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDisplayHeightCm(displayValues.displayHeightCm)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDisplayHeightFeet(displayValues.displayHeightFeet)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDisplayHeightInches(displayValues.displayHeightInches)
       }
     }
