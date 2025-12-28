@@ -29,7 +29,9 @@ describe('PlaylistDetails', () => {
         name: 'Test Playlist',
         description: 'Test Description',
         imageUrl: 'http://example.com/image.jpg',
-        tracks: [{ name: 'Test Track', artist: 'Test Artist', duration: 60000 }],
+        tracks: [
+          { name: 'Test Track', artist: 'Test Artist', duration: 60000 },
+        ],
       },
       loading: false,
       error: null,

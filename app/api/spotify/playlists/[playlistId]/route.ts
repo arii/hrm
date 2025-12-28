@@ -6,7 +6,6 @@ import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
-import { Track } from '@/types/spotify'
 
 interface MappedTrack {
   uri: string
@@ -30,7 +29,7 @@ async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
   }
 
   const spotify = await getAuthenticatedSpotifyApi()
-  let playlist = await spotify.playlists.getPlaylist(playlistId)
+  const playlist = await spotify.playlists.getPlaylist(playlistId)
 
   if (!playlist) {
     throw new ApiError(404, 'Playlist not found.')
@@ -38,20 +37,23 @@ async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
 
   // Spotify's API paginates playlist tracks. We need to fetch all pages.
   let allItems = playlist.tracks.items
-  while (playlist.tracks.next && allItems.length < 500) {
-    // To fetch the next page, we need to parse the URL and get the offset and limit
-    const nextUrl = new URL(playlist.tracks.next)
+  let next = playlist.tracks.next
+  while (next && allItems.length < 500) {
+    const nextUrl = new URL(next)
     const offset = parseInt(nextUrl.searchParams.get('offset') || '0', 10)
     const limit = parseInt(nextUrl.searchParams.get('limit') || '100', 10)
 
-    if (offset === 0) break // Should not happen if playlist.tracks.next is set
+    if (offset === 0) break // Should not happen if next is set
 
-    const nextPage = await spotify.playlists.getPlaylist(playlistId, undefined, undefined, {
-      offset,
-      limit,
-    })
-    allItems = [...allItems, ...nextPage.tracks.items]
-    playlist.tracks.next = nextPage.tracks.next // Update the next URL
+    const nextPage = await spotify.playlists.getPlaylistItems(
+      playlistId,
+      undefined,
+      undefined,
+      limit as any,
+      offset
+    )
+    allItems = [...allItems, ...nextPage.items]
+    next = nextPage.next
   }
 
   const tracks = allItems
@@ -80,7 +82,7 @@ async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
     name: playlist.name,
     description: playlist.description,
     imageUrl:
-      playlist.images && playlist.images.length > 0
+      playlist.images && playlist.images.length > 0 && playlist.images[0]
         ? playlist.images[0].url
         : null,
     tracks,

@@ -57,11 +57,11 @@ export const usePlaylistDetails = (playlistUri: string | null) => {
           if (!signal.aborted) {
             setData(result)
           }
-        } catch (err) {
+        } catch (_err) {
           throw new Error('Failed to parse playlist data.')
         }
       } catch (err) {
-        if (err.name === 'AbortError') {
+        if (err instanceof Error && err.name === 'AbortError') {
           // Fetch was aborted, do nothing.
           return
         }

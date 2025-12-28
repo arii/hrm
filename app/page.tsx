@@ -10,7 +10,6 @@ import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
-import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
@@ -81,7 +80,7 @@ const Dashboard = () => {
           <TimerDisplay />
         </Box>
 
-        <ErrorBoundary fallback={<ErrorFallback />}>
+        <ErrorBoundary>
           <HrmConnectionPanel />
         </ErrorBoundary>
 
@@ -100,7 +99,7 @@ const Dashboard = () => {
         </Box>
       </Box>
 
-      <ErrorBoundary fallback={<ErrorFallback />}>
+      <ErrorBoundary>
         <SpotifyDisplay />
       </ErrorBoundary>
     </Container>

@@ -4,7 +4,6 @@ import PlayArrow from '@mui/icons-material/PlayArrow'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
@@ -12,7 +11,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Typography from '@mui/material/Typography'
 import Skeleton from '@mui/material/Skeleton'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { usePlaylistDetails } from '@/hooks/usePlaylistDetails'
 import { Track } from '@/types/spotify'
 
@@ -29,13 +28,6 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
 }) => {
   const { data: details, loading, error } = usePlaylistDetails(playlistUri)
   const [imageLoading, setImageLoading] = useState(true)
-  const [showContent, setShowContent] = useState(false)
-
-  useEffect(() => {
-    if (!loading && details) {
-      setShowContent(true)
-    }
-  }, [loading, details])
 
   const handlePlayTrack = (trackUri: string) => {
     onPlaylistPlay(playlistUri, trackUri)
@@ -101,7 +93,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
   return (
     <Box
       sx={{
-        opacity: showContent ? 1 : 0,
+        opacity: !loading ? 1 : 0,
         transition: 'opacity 0.5s ease-in-out',
       }}
     >

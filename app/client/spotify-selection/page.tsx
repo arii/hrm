@@ -95,9 +95,10 @@ const SpotifySelectionPage = () => {
               <PlaylistDetails
                 key={selectedPlaylistUri}
                 playlistUri={selectedPlaylistUri}
-              onBack={handleBack}
-              onPlaylistPlay={handlePlaylistPlay}
-            />
+                onBack={handleBack}
+                onPlaylistPlay={handlePlaylistPlay}
+              />
+            </ErrorBoundary>
           ) : (
             <>
               <Typography variant="h6" gutterBottom>

@@ -1,3 +1,4 @@
+/* global jest */
 // tests/unit/mocks/msw.js
 module.exports = {
   rest: {
