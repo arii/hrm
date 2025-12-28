@@ -14,18 +14,7 @@ import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
-
-interface Playlist {
-  name: string
-  uri: string
-  id?: string
-  isPreset?: boolean
-  isSearchResult?: boolean
-  imageUrl?: string | null
-  description?: string | null
-  trackCount?: number
-  owner?: string
-}
+import { Playlist } from '@/types/spotify'
 
 interface PlaylistItemProps {
   playlist: Playlist
@@ -274,42 +263,46 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             }}
           />
         )}
-        renderOption={(props, option) => (
-          <ListItem {...props} divider>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                width: '100%',
-              }}
-            >
-              {option.imageUrl ? (
-                <Box
-                  component="img"
-                  src={option.imageUrl}
-                  alt={option.name}
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 1,
-                    mr: 1.5,
-                    objectFit: 'cover',
+        renderOption={(props, option) => {
+          // The key is separated from the props to avoid a React warning.
+          // MUI includes the key in the props object for the Autocomplete options.
+          const { key, ...listItemProps } = props
+          return (
+            <ListItem {...listItemProps} key={key} divider>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
+                {option.imageUrl ? (
+                  <Box
+                    component="img"
+                    src={option.imageUrl}
+                    alt={option.name}
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1,
+                      mr: 1.5,
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <MusicNote
+                    sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
+                  />
+                )}
+                <PlaylistItemContent
+                  playlist={option}
+                  onPlay={(e) => {
+                    e.stopPropagation()
+                    onPlaylistPlay(option.uri)
                   }}
                 />
-              ) : (
-                <MusicNote
-                  sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
-                />
-              )}
-              <PlaylistItemContent
-                playlist={option}
-                onPlay={(e) => {
-                  e.stopPropagation()
-                  onPlaylistPlay(option.uri)
-                }}
-              />
-            </div>
-          </ListItem>
+              </div>
+            </ListItem>
           )
         }}
         noOptionsText={

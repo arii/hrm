@@ -49,8 +49,8 @@ async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
     description: playlist.description,
     imageUrl:
       playlist.images && playlist.images.length > 0
-        ? (playlist.images[0]?.url ?? '')
-        : '',
+        ? playlist.images[0].url
+        : null,
     tracks,
   })
 }

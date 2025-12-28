@@ -12,22 +12,9 @@ import ListItemText from '@mui/material/ListItemText'
 import Typography from '@mui/material/Typography'
 import Skeleton from '@mui/material/Skeleton'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { formatDuration } from '@/utils/formatters'
-
-interface Track {
-  uri: string
-  name: string
-  artist: string
-  duration: number
-}
-
-interface PlaylistDetailsData {
-  name: string
-  description: string
-  imageUrl: string
-  tracks: Track[]
-}
+import { usePlaylistDetails } from '@/hooks/usePlaylistDetails'
 
 interface PlaylistDetailsProps {
   playlistUri: string
@@ -40,45 +27,8 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
   onBack,
   onPlaylistPlay,
 }) => {
-  const [details, setDetails] = useState<PlaylistDetailsData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: details, loading, error } = usePlaylistDetails(playlistUri)
   const [imageLoading, setImageLoading] = useState(true)
-
-  useEffect(() => {
-    if (!playlistUri) return
-
-    const fetchDetails = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const playlistId = playlistUri.split(':').pop()
-        const response = await fetch(`/api/spotify/playlists/${playlistId}`)
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error(
-              'Playlist not found. It might be private or deleted.'
-            )
-          } else {
-            throw new Error(
-              `Failed to fetch playlist details, status: ${response.status}`
-            )
-          }
-        }
-        const data = await response.json()
-        setDetails(data)
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'An unknown error occurred'
-        setError(message)
-        console.error('Error fetching playlist details:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchDetails()
-  }, [playlistUri])
 
   const handlePlayTrack = (trackUri: string) => {
     onPlaylistPlay(playlistUri, trackUri)
@@ -179,13 +129,6 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
       </List>
     </Box>
   )
-}
-
-const formatDuration = (ms: number) => {
-  const totalSeconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
 export default PlaylistDetails
