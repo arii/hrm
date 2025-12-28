@@ -15,12 +15,14 @@ interface HrTileWithCaloriesProps {
   user: HrmData
   isAlerting: boolean
   alertMessage?: string
+  'data-testid'?: string
 }
 
 const HrTileWithCalories = ({
   user,
   isAlerting,
   alertMessage,
+  'data-testid': dataTestId,
 }: HrTileWithCaloriesProps) => {
   const [userSettings] = useUserSettings()
   const { timerData } = useWebSocket()
@@ -58,7 +60,7 @@ const HrTileWithCalories = ({
     ...(alertMessage && { alertMessage }),
   }
 
-  return <HrTile {...hrTileProps} />
+  return <HrTile {...hrTileProps} data-testid={dataTestId} />
 }
 
 export default HrTileWithCalories

@@ -36,7 +36,8 @@ const HrTile = ({
   isConnected = true, // Default to connected
   isAlerting = false,
   alertMessage = 'Checking signal...',
-}: HrTileProps) => {
+  'data-testid': dataTestId = 'hr-tile-card',
+}: HrTileProps & { 'data-testid'?: string }) => {
   const theme = useTheme()
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
 
@@ -49,7 +50,7 @@ const HrTile = ({
   return (
     <Tooltip title={tooltipTitle} arrow>
       <StyledCard
-        data-testid="hr-tile-card"
+        data-testid={dataTestId}
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
           isConnected ? `${bpm} beats per minute` : 'Disconnected'

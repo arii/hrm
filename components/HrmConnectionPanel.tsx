@@ -90,7 +90,7 @@ const HrmConnectionPanel = () => {
 
   const tileData = useMemo(
     () => getDisplayTileData(hrmData, activeAlerts),
-    [hrmData, activeAlerts]
+    [hrmA, activeAlerts]
   )
 
   return (
@@ -158,6 +158,7 @@ const HrmConnectionPanel = () => {
             }
           }
           isAlerting={false}
+          data-testid={tileData ? 'hr-tile' : 'placeholder-hr-tile'}
         />
       </Box>
     </Box>
