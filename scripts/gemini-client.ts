@@ -33,7 +33,7 @@ const defaultFallbacks = [
   'gemini-1.5-pro-latest',
 ]
 
-function getModelFallbacks(): string[] {
+export function getModelFallbacks(): string[] {
   const envFallbacks = process.env.GEMINI_MODEL_FALLBACKS
   if (!envFallbacks) {
     return defaultFallbacks
