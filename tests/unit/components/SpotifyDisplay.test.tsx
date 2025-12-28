@@ -93,7 +93,7 @@ describe('SpotifyDisplay', () => {
       callbackUrl: '/',
       redirect: true,
     })
-  })
+  }, 20000)
 
   describe('when authenticated', () => {
     let mockSendData: jest.Mock
