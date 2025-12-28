@@ -1,14 +1,16 @@
-'use client'
-
-import { Component, ErrorInfo, ReactNode } from 'react'
+// components/ErrorBoundary.tsx
+import React, { Component, ErrorInfo, ReactNode } from 'react'
+import Alert from '@mui/material/Alert'
+import AlertTitle from '@mui/material/AlertTitle'
+import Box from '@mui/material/Box'
 
 interface Props {
   children: ReactNode
-  fallback: ReactNode
 }
 
 interface State {
   hasError: boolean
+  error?: Error
 }
 
 class ErrorBoundary extends Component<Props, State> {
@@ -16,8 +18,8 @@ class ErrorBoundary extends Component<Props, State> {
     hasError: false,
   }
 
-  public static getDerivedStateFromError(_: Error): State {
-    return { hasError: true }
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error }
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -26,7 +28,14 @@ class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
-      return this.props.fallback
+      return (
+        <Box sx={{ p: 2 }}>
+          <Alert severity="error">
+            <AlertTitle>Something went wrong</AlertTitle>
+            {this.state.error?.message || 'An unexpected error occurred.'}
+          </Alert>
+        </Box>
+      )
     }
 
     return this.props.children
