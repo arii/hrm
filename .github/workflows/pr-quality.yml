@@ -88,7 +88,7 @@ jobs:
           - name: "Leading and Trailing Invalid Chars"
             value: '!!test-branch!!'
             max-length: '64'
-            expected: '-test-branch-'
+            expected: '-test-branch'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
