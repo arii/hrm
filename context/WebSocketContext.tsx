@@ -112,9 +112,6 @@ export const WebSocketProvider = ({
       }
       case 'HRM_UPDATE': {
         const payload = message.payload as ServerHrmData[]
-        // Create a map of incoming clientIds for efficient lookup
-        const incomingClients = new Set(payload.map((user) => user.clientId))
-
         // Create a new state array by merging existing and new data
         const mergedHrmData = state.hrmData.map((existingUser) => {
           const updatedUser = payload.find(
