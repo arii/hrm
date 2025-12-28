@@ -465,7 +465,7 @@ export class SpotifyPolling implements SpotifyService {
    * Checks if an error is a SyntaxError caused by an empty JSON response.
    * The SDK throws this error on 204 No Content because it attempts to parse an
    * empty response body. This is expected for successful playback control commands
-   * (like play, pause, etc.) that do not return any data.
+   * (like `PLAY`, `PAUSE`, `NEXT`, etc.) that do not return any data.
    * @param error The error to check.
    * @returns True if the error is an empty response error, false otherwise.
    */
