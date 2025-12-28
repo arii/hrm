@@ -68,7 +68,8 @@ export const useCalorieCounter = (
     return () => clearInterval(interval)
     // The interval should only be reset when the `isActive` flag changes.
     // Other dependencies like `heartRate`, `age`, and `weight` are managed
-    // via refs to avoid resetting the interval on every change.
+    // via refs to avoid resetting the interval on every change, which would
+    // otherwise cause performance issues and prevent calorie accumulation.
   }, [isActive])
 
   const resetCalories = useCallback(() => {
