@@ -24,6 +24,19 @@ export const useCalorieCounter = (
   const [calories, setCalories] = useState(0)
   const lastTickRef = useRef<number | null>(null)
 
+  // Refs to hold the latest values of frequently-changing props
+  // This prevents the interval from resetting every time they change.
+  const heartRateRef = useRef(heartRate)
+  const ageRef = useRef(age)
+  const weightRef = useRef(weight)
+
+  // Effect to keep the refs updated with the latest prop values
+  useEffect(() => {
+    heartRateRef.current = heartRate
+    ageRef.current = age
+    weightRef.current = weight
+  }, [heartRate, age, weight])
+
   useEffect(() => {
     if (!isActive) {
       lastTickRef.current = null
@@ -37,11 +50,12 @@ export const useCalorieCounter = (
       const now = Date.now()
       if (lastTickRef.current) {
         const deltaSeconds = (now - lastTickRef.current) / 1000
-        if (heartRate > 0) {
+        // Use the ref's current value for calculation
+        if (heartRateRef.current > 0) {
           const caloriesBurned = estimateCaloriesBurned({
-            heartRate,
-            age,
-            weightKg: weight,
+            heartRate: heartRateRef.current,
+            age: ageRef.current,
+            weightKg: weightRef.current,
             durationMinutes: deltaSeconds / 60,
           })
           setCalories((prev) => prev + caloriesBurned)
@@ -52,7 +66,7 @@ export const useCalorieCounter = (
 
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
-  }, [isActive, heartRate, age, weight])
+  }, [isActive]) // Dependency array now only contains `isActive`
 
   const resetCalories = useCallback(() => {
     setCalories(0)
