@@ -33,7 +33,9 @@ const HrTile = ({
   bpm,
   percentMax,
   calories = 0, // Default to 0 to prevent NaN
-  isConnected = true, // Default to connected
+  // Default to connected for optimistic UI rendering and to avoid a flash of
+  // the disconnected state before the first data packet arrives.
+  isConnected = true,
   isAlerting = false,
   alertMessage = 'Checking signal...',
   // Default the data-testid to a generic value, but allow it to be overridden.
