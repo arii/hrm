@@ -170,7 +170,8 @@ ${task}
   }
 }
 
-function getReviewContextFromEnv(): ReviewContext {
+export function getReviewContextFromEnv(): ReviewContext {
+  const failedChecksRaw = process.env.FAILED_CHECKS_JSON
   return {
     prNumber: process.env.PR_NUMBER || '',
     prTitle: process.env.PR_TITLE || '',
@@ -192,7 +193,7 @@ function getReviewContextFromEnv(): ReviewContext {
     hasTestChanges: process.env.HAS_TEST_CHANGES === 'true',
     missingTests: process.env.MISSING_TESTS === 'true',
     testFiles: process.env.TEST_FILES,
-    failedChecks: JSON.parse(process.env.FAILED_CHECKS_JSON || '[]'),
+    failedChecks: failedChecksRaw ? JSON.parse(failedChecksRaw) : [],
   }
 }
 
@@ -621,4 +622,8 @@ function handleError(error: any) {
   process.exit(1)
 }
 
-main()
+// Only run main() when the script is executed directly, not when imported.
+// Jest sets NODE_ENV to 'test' by default.
+if (process.env.NODE_ENV !== 'test') {
+  main()
+}

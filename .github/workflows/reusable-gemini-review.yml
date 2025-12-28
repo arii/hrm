@@ -198,6 +198,7 @@ jobs:
             echo "::warning::${ERROR_MESSAGE} ${FRIENDLY_ERROR} Raw output: ${CHECKS_OUTPUT}"
             CHECKS_JSON="[]"
           else
+            # Slice the results to get the first 10 failed checks to prevent an overly long prompt.
             CHECKS_JSON=$(echo "$CHECKS_OUTPUT" | jq -c 'map(select(.name != "gemini-review" and .name != "gemini-rereview" and (.conclusion == "failure" or .conclusion == "cancelled"))) | .[0:10]')
 
             # Validate that the result is valid JSON before proceeding
