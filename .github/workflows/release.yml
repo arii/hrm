@@ -9,6 +9,7 @@ on:
     branches:
       - leader
 
+# These permissions are required by `release-please-action` to create releases and link issues.
 permissions:
   contents: write
   pull-requests: write
