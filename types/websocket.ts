@@ -24,6 +24,16 @@ export interface ExtWebSocket extends WebSocket {
   clientType?: 'dashboard' | 'controller'
 }
 
+/**
+ * A stricter type for WebSocket connections that are actively tracked in the
+ * `clientSockets` map. This ensures that any socket being managed has a
+d * `clientId` and `isAlive` property.
+ */
+export interface TrackedSocket extends WebSocket {
+  clientId: string
+  isAlive: boolean
+}
+
 // --- Server Broadcast State Interfaces ---
 
 export type { HrmData, TimerData, SpotifyData, TimerMode }

@@ -15,6 +15,7 @@ import {
   ServerMessage,
   StateSnapshot,
   ExtWebSocket,
+  TrackedSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
@@ -43,12 +44,6 @@ let services: AppServices
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
 const hrmDataRepository = new HrmDataRepository()
 const MAX_CLIENTS = 1000 // Prevent memory exhaustion
-
-// Define a clear type for your socket map to avoid 'any' casting later
-interface TrackedSocket extends WebSocket {
-  clientId: string
-  isAlive: boolean
-}
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, TrackedSocket>()
