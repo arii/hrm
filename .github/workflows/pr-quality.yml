@@ -130,6 +130,8 @@ jobs:
       - name: Sanitize and Test SESSION_ID
         shell: bash
         run: |
+          # The SESSION_ID is defined in the top-level 'env' block of this workflow.
+          # This step sanitizes it for use in artifact names.
           # --- Inline Test ---
           # 1. Define test cases
           INPUT_1="feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization"
