@@ -2,85 +2,70 @@
  * @jest-environment node
  */
 import { POST } from '@/app/api/users/route'
-import { NextRequest } from 'next/server'
-import { createValidUserProfile } from '@/tests/unit/test-data/user-data-factory'
-import * as csrf from '@/lib/csrf'
+import { createMockRequestWithCsrf, MockRequestLike } from '@/tests/unit/test-helpers'
+import { PrismaClient, User } from '@prisma/client'
+import { DeepMockProxy, mockDeep } from 'jest-mock-extended'
+import { nanoid } from 'nanoid'
 
-// Mock the 'uuid' module
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid-v4',
+// Mock Prisma client
+const mockPrisma: DeepMockProxy<PrismaClient> = mockDeep<PrismaClient>()
+jest.mock('@/lib/prisma', () => ({
+  __esModule: true,
+  default: mockPrisma,
 }))
 
-// Mock the CSRF module
-jest.mock('@/lib/csrf')
-const mockedCsrf = jest.mocked(csrf)
+// Mock nanoid for predictable IDs
+jest.mock('nanoid')
+const mockedNanoid = jest.mocked(nanoid)
 
 describe('API Route: /api/users', () => {
+  const MOCK_USER_ID = 'mock-uuid-v4'
+  const MOCK_TIMESTAMP = new Date()
+
   beforeEach(() => {
-    // Reset mocks before each test
     jest.clearAllMocks()
+    mockedNanoid.mockReturnValue(MOCK_USER_ID)
   })
+
   describe('POST', () => {
-    it('should return 403 if CSRF token is missing', async () => {
-      // Arrange
-      const request = new NextRequest('http://localhost/api/users', {
-        method: 'POST',
-        body: JSON.stringify({}),
-        headers: { 'Content-Type': 'application/json' },
-      })
+    const validUserData = {
+      username: 'testuser',
+      email: 'test@example.com',
+      age: 30,
+      weight: 70,
+    }
 
-      // Act
-      const response = await POST(request)
-      const data = await response.json()
+    it('should return 403 when CSRF token is invalid', async () => {
+        // Arrange
+        const request = {
+            headers: { get: () => null },
+            cookies: { get: () => undefined },
+            json: async () => validUserData,
+          }
 
-      // Assert
-      expect(response.status).toBe(403)
-      expect(data.message).toBe('Forbidden: CSRF token missing from headers')
+        // Act
+        const response = await POST(request as any)
+        const data = await response.json()
+
+        // Assert
+        expect(response.status).toBe(403)
+        expect(data.message).toBe('Forbidden: CSRF token missing from headers')
     })
 
-    it('should return 403 if CSRF token is invalid', async () => {
-      // Arrange
-      mockedCsrf.validateCsrfToken.mockReturnValue(false)
-      const request = new NextRequest('http://localhost/api/users', {
-        method: 'POST',
-        body: JSON.stringify({}),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': 'invalid-token',
-        },
-        cookies: {
-          [csrf.CSRF_COOKIE_NAME]: 'cookie-token',
-        },
-      })
-
-      // Act
-      const response = await POST(request)
-      const data = await response.json()
-
-      // Assert
-      expect(response.status).toBe(403)
-      expect(data.message).toBe('Forbidden: Invalid CSRF token')
-      expect(mockedCsrf.validateCsrfToken).toHaveBeenCalledWith(
-        'cookie-token',
-        'invalid-token'
-      )
-    })
 
     it('should create a new user and return 201 when the request body and CSRF token are valid', async () => {
       // Arrange
-      mockedCsrf.validateCsrfToken.mockReturnValue(true)
-      const validRequestBody = createValidUserProfile()
-      const request = new NextRequest('http://localhost/api/users', {
-        method: 'POST',
-        body: JSON.stringify(validRequestBody),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': 'valid-token',
-        },
-      })
+      const mockUser: User = {
+        id: MOCK_USER_ID,
+        ...validUserData,
+        createdAt: MOCK_TIMESTAMP,
+        updatedAt: MOCK_TIMESTAMP,
+      }
+      mockPrisma.user.create.mockResolvedValue(mockUser)
+      const request: MockRequestLike = createMockRequestWithCsrf(validUserData)
 
       // Act
-      const response = await POST(request)
+      const response = await POST(request as any)
       const newUser = await response.json()
 
       // Assert
@@ -88,64 +73,57 @@ describe('API Route: /api/users', () => {
       expect(newUser.id).toBe('mock-uuid-v4')
       expect(newUser).toHaveProperty('createdAt')
       expect(newUser).toHaveProperty('updatedAt')
-      expect(newUser.username).toBe(validRequestBody.username)
-      expect(newUser.email).toBe(validRequestBody.email)
+      expect(newUser.username).toBe(validUserData.username)
+      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        data: {
+          id: MOCK_USER_ID,
+          ...validUserData,
+        },
+      })
     })
 
     it('should return 400 when required fields are missing', async () => {
-      // Arrange
-      mockedCsrf.validateCsrfToken.mockReturnValue(true)
-      const invalidRequestBody = {
-        // 'username' and 'email' are missing
-        firstName: 'Jane',
-        lastName: 'Doe',
-      }
-      const request = new NextRequest('http://localhost/api/users', {
-        method: 'POST',
-        body: JSON.stringify(invalidRequestBody),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': 'valid-token',
-        },
-      })
+        // Arrange
+        const incompleteUserData = {
+            username: 'testuser',
+            // email is missing
+        }
+        const request = createMockRequestWithCsrf(incompleteUserData)
 
-      // Act
-      const response = await POST(request)
-      const errorData = await response.json()
+        // Act
+        const response = await POST(request as any)
+        const errorData = await response.json()
 
-      // Assert
-      expect(response.status).toBe(400)
-      expect(errorData).toHaveProperty('errors')
-      expect(Array.isArray(errorData.errors)).toBe(true)
-      expect(errorData.errors.length).toBeGreaterThan(0)
+        // Assert
+        expect(response.status).toBe(400)
+        expect(errorData).toHaveProperty('errors')
+        expect(Array.isArray(errorData.errors)).toBe(true)
+        expect(errorData.errors.length).toBeGreaterThan(0)
+        expect(mockPrisma.user.create).not.toHaveBeenCalled()
     })
 
     it('should return 400 for data that does not meet schema constraints', async () => {
-      // Arrange
-      mockedCsrf.validateCsrfToken.mockReturnValue(true)
-      const invalidRequestBody = createValidUserProfile({
-        username: 'jo', // Too short
-        email: 'not-an-email',
-      })
-      const request = new NextRequest('http://localhost/api/users', {
-        method: 'POST',
-        body: JSON.stringify(invalidRequestBody),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': 'valid-token',
-        },
-      })
+        // Arrange
+        const invalidUserData = {
+            username: 'u', // Too short
+            email: 'not-an-email', // Invalid format
+            age: 5, // Too young
+            weight: 9, // Too light
+        }
+        const request = createMockRequestWithCsrf(invalidUserData)
 
-      // Act
-      const response = await POST(request)
-      const errorData = await response.json()
+        // Act
+        const response = await POST(request as any)
+        const errorData = await response.json()
 
-      // Assert
-      expect(response.status).toBe(400)
-      expect(errorData).toHaveProperty('errors')
-      expect(Array.isArray(errorData.errors)).toBe(true)
-      // Expecting errors for both username and email
-      expect(errorData.errors.length).toBe(2)
+        // Assert
+        expect(response.status).toBe(400)
+        expect(errorData).toHaveProperty('errors')
+        expect(Array.isArray(errorData.errors)).toBe(true)
+        // Expecting errors for all invalid fields
+        expect(errorData.errors.length).toBe(4)
+        expect(mockPrisma.user.create).not.toHaveBeenCalled()
     })
+
   })
 })

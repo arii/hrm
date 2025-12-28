@@ -2,7 +2,8 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react'
-import useCookie, { getCookie, setCookie } from '@/hooks/useCookie'
+import useCookie from '@/hooks/useCookie'
+import { getCookie, setCookie } from '@/utils/cookie'
 import * as csrf from '@/lib/csrf'
 
 // Mock the CSRF module as the hook depends on it for side effects

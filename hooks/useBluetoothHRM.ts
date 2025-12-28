@@ -446,10 +446,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const connectAndStream = useCallback(
     async (name?: string, age?: number): Promise<void> => {
       if (deviceStatus.startsWith('Connected') && !isStale) {
+        logger.info('Already connected and streaming. Skipping connection.')
         return
       }
 
       if (abortControllerRef.current) {
+        logger.info('Aborting previous connection attempt.')
         abortControllerRef.current.abort()
       }
 

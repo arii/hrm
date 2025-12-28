@@ -1,6 +1,7 @@
 // hooks/useUserWeight.ts
 import { useEffect } from 'react'
 import useCookie from './useCookie'
+import logger from '@/utils/logger'
 
 /**
  * A hook to manage the user's weight preference, persisted in cookies.
@@ -26,9 +27,13 @@ export const useUserWeight = (): [number, (value: number) => void] => {
   // Effect to reset the cookie if it's invalid
   useEffect(() => {
     if (isNaN(numericWeight)) {
+      logger.warn(
+        { originalValue: weightInKg },
+        'Non-numeric weight value found in cookie. Resetting to default.'
+      )
       setWeightInKg(70)
     }
-  }, [numericWeight, setWeightInKg])
+  }, [numericWeight, setWeightInKg, weightInKg])
 
   return [finalWeight, setWeight]
 }

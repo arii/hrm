@@ -1,26 +1,9 @@
 // hooks/useCookie.ts
+'use client'
 import { useState, useCallback, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { generateCsrfToken, CSRF_COOKIE_NAME } from '@/lib/csrf'
-
-export const getCookie = (name: string): string | undefined => {
-  if (typeof document === 'undefined') return undefined
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-  return match && match[2] ? match[2] : undefined
-}
-
-export const setCookie = (
-  name: string,
-  value: string,
-  days = 365,
-  secure = process.env.NODE_ENV === 'production' // Stricter secure flag
-) => {
-  if (typeof document !== 'undefined') {
-    const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    const secureFlag = secure ? '; Secure' : ''
-    document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax${secureFlag}`
-  }
-}
+import { getCookie, setCookie } from '@/utils/cookie'
 
 function useCookie<T>(key: string, initialValue: T) {
   const [storedValue, setStoredValue] = useState<T>(() => {
@@ -31,8 +14,8 @@ function useCookie<T>(key: string, initialValue: T) {
       return JSON.parse(decodeURIComponent(item))
     } catch (error) {
       logger.warn(
-        { key, error },
-        'Failed to parse cookie value. Using initial value.'
+        { key, error, value: getCookie(key) },
+        `Failed to parse cookie "${key}". Using initial value.`
       )
       // If parsing fails, remove the malformed cookie
       if (typeof document !== 'undefined') {
@@ -65,7 +48,7 @@ function useCookie<T>(key: string, initialValue: T) {
           setCookie(key, encodeURIComponent(JSON.stringify(valueToStore)))
         }
       } catch (error) {
-        logger.error({ key, error }, 'Failed to set cookie.')
+        logger.error({ key, error }, `Failed to set cookie "${key}".`)
       }
     },
     [key, storedValue]
@@ -73,7 +56,5 @@ function useCookie<T>(key: string, initialValue: T) {
 
   return [storedValue, setValue] as const
 }
-
-export const getCsrfToken = () => getCookie(CSRF_COOKIE_NAME)
 
 export default useCookie
