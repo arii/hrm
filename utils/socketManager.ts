@@ -241,6 +241,8 @@ const handleIncomingMessage = (
 
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
+          // Prioritize incoming weight, but fall back to stored or default weight.
+          // This is a fallback used when client-specific weight data is unavailable.
           const calculatedWeight =
             message.data.weight ??
             existingData.weightKg ??
