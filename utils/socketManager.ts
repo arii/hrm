@@ -163,7 +163,7 @@ const initSocketManager = (
       // A more robust solution might involve a separate cleanup process
       // or a maximum number of inactive sessions.
       setTimeout(() => {
-        // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
+        // Only proceed if the socket hasn't been replaced by a reconnection
         if (clientSockets.get(clientId) === ws) {
           logger.info({ clientId }, 'Session expired. Deleting data.')
           try {
@@ -173,8 +173,10 @@ const initSocketManager = (
           } catch (err) {
             logger.error({ clientId, err }, 'Error during session cleanup')
           } finally {
-            // Always remove the socket reference to prevent leaks
-            clientSockets.delete(clientId)
+            // CRITICAL: Ensure we don't accidentally delete a NEW socket if a race condition occurred
+            if (clientSockets.get(clientId) === ws) {
+              clientSockets.delete(clientId)
+            }
           }
         }
       }, env.WEBSOCKET_GRACE_PERIOD_MS)

@@ -71,12 +71,10 @@ export interface WebSocketContextType extends WebSocketState {
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
 export const generateUUID = (): string => {
-  // Modern secure generation
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID()
   }
-
-  // Robust fallback
+  // Safer fallback for older environments
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0
     const v = c === 'x' ? r : (r & 0x3) | 0x8
@@ -252,12 +250,20 @@ export const WebSocketProvider = ({
     }, 30000)
   }, [stopHeartbeat])
 
-  // Append clientId to query string
   const getUrlWithId = useCallback(() => {
     const base = serverUrl || getWebSocketURL()
-    const url = new URL(base)
-    url.searchParams.append('clientId', getClientId())
-    return url.toString()
+    try {
+      // Provide a base URL (window.location) to handle relative paths like '/ws'
+      const urlObj = new URL(
+        base,
+        typeof window !== 'undefined' ? window.location.href : 'http://localhost'
+      )
+      urlObj.searchParams.append('clientId', getClientId())
+      return urlObj.toString()
+    } catch (e) {
+      console.error('Invalid WebSocket URL', e)
+      return base // Fallback to avoid complete crash
+    }
   }, [serverUrl])
 
   const connect = useCallback(() => {

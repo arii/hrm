@@ -28,7 +28,7 @@ const ConnectPage = () => {
     })
   }
 
-  const validateField = (name: string, value: any) => {
+  const validateField = (name: string, value: string | number | null) => {
     let error = ''
     if (name === 'userName') {
       if (!value) {
@@ -55,7 +55,8 @@ const ConnectPage = () => {
   const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = event.target
     const isNumberField = name === 'userAge' || name === 'userWeight'
-    const fieldValue = value === '' ? null : isNumberField ? Number(value) : value
+    const fieldValue =
+      value === '' ? null : isNumberField ? Number(value) : value
     const error = validateField(name, fieldValue)
     setErrors((prevErrors) => ({
       ...prevErrors,
@@ -116,7 +117,7 @@ const ConnectPage = () => {
 
         <HrmConnectionPanel />
         <Box sx={{ mt: 4 }}>
-            <HrmTiles />
+          <HrmTiles />
         </Box>
       </Box>
     </Container>
