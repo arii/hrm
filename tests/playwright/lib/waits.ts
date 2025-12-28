@@ -47,9 +47,6 @@ export async function waitForPageReady(
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.TEST_READY } = options
 
-  // Wait for network idle to ensure all async operations complete
-  await page.waitForLoadState('networkidle')
-
   try {
     // Wait for custom test readiness signal from the application
     await page.waitForFunction(

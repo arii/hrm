@@ -248,7 +248,10 @@ export const authOptions: AuthOptions = {
 
             const response = await fetch(getAPIURL('internal/token-delivery'), {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                'x-internal-token-secret': env.NEXTAUTH_SECRET,
+              },
               body: JSON.stringify(tokenPayload),
             })
             const responseBody = await response.text()

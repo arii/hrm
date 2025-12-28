@@ -28,8 +28,10 @@ const HrmConnectionPanel = () => {
     batteryLevel,
     isConnected,
     isSupported,
-    attemptReconnection,
-  } = useBluetoothHRM()
+  } = useBluetoothHRM({
+    userName: userSettings.userName,
+    userAge: userSettings.userAge || 30,
+  })
 
   const handleConnect = useCallback(() => {
     const userName =
@@ -56,18 +58,12 @@ const HrmConnectionPanel = () => {
         const userName =
           session?.user?.name || userSettings.userName || 'Unknown User'
         const userAge = userSettings.userAge || 30
-        await attemptReconnection(userName, userAge)
+        await connectAndStream(userName, userAge)
       }
     }
 
     autoConnect()
-  }, [
-    connectionStatus,
-    deviceStatus,
-    attemptReconnection,
-    session,
-    userSettings,
-  ])
+  }, [connectionStatus, deviceStatus, connectAndStream, session, userSettings])
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity

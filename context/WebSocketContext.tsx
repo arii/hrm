@@ -9,56 +9,16 @@ import {
   useRef,
   useState,
   useReducer,
+  useMemo,
 } from 'react'
-import {
-  ClientCommandMessage,
-  SpotifyData,
-  TimerData,
-  ServerMessage,
-  ActiveAlert,
-} from '../types/websocket'
+import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
+import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
 
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
-}
-
-export interface WebSocketState {
-  hrmData: HrmData[]
-  timerData: TimerData
-  spotifyData: SpotifyData
-  activeAlerts: ActiveAlert[]
-  spotifyServiceInitialized?: boolean
-}
-
-export const INITIAL_STATE: WebSocketState = {
-  hrmData: [],
-  timerData: {
-    isRunning: false,
-    currentPhase: 'IDLE',
-    timeRemaining: 0,
-    timeElapsed: 0,
-    caloriesBurned: 0,
-    mode: 'TABATA',
-    workDuration: 30,
-    restDuration: 10,
-    soundEventId: 0,
-  },
-  spotifyData: {
-    trackId: null,
-    trackName: 'Awaiting Login...',
-    artist: '',
-    albumName: '',
-    albumArtUrl: '',
-    isPlaying: false,
-    devices: [],
-    volume: 70,
-    isMuted: false,
-  },
-  activeAlerts: [],
-  spotifyServiceInitialized: true,
 }
 
 export interface WebSocketContextType extends WebSocketState {
@@ -70,33 +30,6 @@ export interface WebSocketContextType extends WebSocketState {
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
-export const generateUUID = (): string => {
-  // Modern secure generation
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID()
-  }
-
-  // Robust fallback
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
-}
-
-const getClientId = () => {
-  // IMPORTANT: This client-side ID is for session persistence and UX ONLY.
-  // It is NOT a security feature. It is vulnerable to tampering and should not
-  // be used for authentication or authorization. For any sensitive operations,
-  // a proper server-side session with secure authentication (e.g., cookies, JWTs) is required.
-  if (typeof window === 'undefined') return ''
-  let id = localStorage.getItem('hrm_client_uuid')
-  if (!id) {
-    id = generateUUID()
-    localStorage.setItem('hrm_client_uuid', id)
-  }
-  return id
-}
 // Unified State Object managed by a reducer
 export const reducer = (
   state: WebSocketState,
@@ -184,6 +117,38 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
+  const [clientId] = useState(() => {
+    if (typeof window === 'undefined') {
+      return null
+    }
+    try {
+      let id = localStorage.getItem('clientId')
+      if (!id) {
+        id = window.crypto.randomUUID()
+        localStorage.setItem('clientId', id)
+      }
+      return id
+    } catch (error) {
+      console.error('Failed to access localStorage:', error)
+      return window.crypto.randomUUID() // Fallback to in-memory UUID
+    }
+  })
+
+  // Memoize the WebSocket URL to prevent re-computation on every render
+  const wsUrl = useMemo(() => {
+    const url = serverUrl || getWebSocketURL()
+    if (!clientId) return url // Return base URL if clientId isn't generated yet (SSR)
+
+    try {
+      const urlObject = new URL(url)
+      urlObject.searchParams.set('clientId', clientId)
+      return urlObject.toString()
+    } catch (_error) {
+      console.error('Invalid WebSocket URL:', url)
+      return url // Fallback to the original URL on error
+    }
+  }, [serverUrl, clientId])
+
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
@@ -194,7 +159,9 @@ export const WebSocketProvider = ({
 
   // Configuration for exponential backoff
   const MAX_RECONNECT_ATTEMPTS = 10
+  // The initial delay for the first reconnection attempt.
   const INITIAL_RECONNECT_DELAY = 1000 // 1 second
+  // The factor by which the reconnection delay is randomized to prevent clients from reconnecting simultaneously.
   const JITTER_FACTOR = 0.2 // 20% jitter
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
@@ -252,24 +219,17 @@ export const WebSocketProvider = ({
     }, 30000)
   }, [stopHeartbeat])
 
-  // Append clientId to query string
-  const getUrlWithId = useCallback(() => {
-    const base = serverUrl || getWebSocketURL()
-    const url = new URL(base)
-    url.searchParams.append('clientId', getClientId())
-    return url.toString()
-  }, [serverUrl])
-
   const connect = useCallback(() => {
     if (
       typeof window === 'undefined' ||
-      wsRef.current?.readyState === WebSocket.OPEN
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      !wsUrl // Do not connect if the URL is not ready
     ) {
       return
     }
 
     shouldReconnect.current = true
-    const ws = new WebSocket(getUrlWithId())
+    const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 
     ws.onopen = () => {
@@ -393,7 +353,7 @@ export const WebSocketProvider = ({
         console.error('Failed to parse WebSocket message:', e)
       }
     }
-  }, [getUrlWithId, throttledDispatch, startHeartbeat, stopHeartbeat])
+  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false

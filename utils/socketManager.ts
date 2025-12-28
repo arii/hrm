@@ -5,7 +5,6 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { IncomingMessage } from 'http'
-import { randomUUID } from 'crypto'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -42,7 +41,6 @@ let services: AppServices
 // - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
 const hrmDataRepository = new HrmDataRepository()
-const MAX_CLIENTS = env.MAX_WS_CLIENTS // Prevent memory exhaustion
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
@@ -88,73 +86,56 @@ const initSocketManager = (
   connectionMonitor.start()
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-    // Check limits before processing
-    if (clientSockets.size >= MAX_CLIENTS) {
-      logger.warn('Max connections reached. Rejecting client.')
-      ws.close(1013, 'Try again later')
-      return
-    }
     const extWs = ws as ExtWebSocket
+
+    const params = getRequestParams(req)
+    const clientId =
+      params.get('clientId') ||
+      `user-${Math.random().toString(36).substring(2, 9)}`
+    extWs.clientId = clientId
+
+    // it's a stale or "zombie" connection. Overwrite it with the new socket.
+
+    if (clientSockets.has(clientId)) {
+      logger.warn(
+        { clientId },
+        'Existing socket found. Overwriting with new connection.'
+      )
+    }
+
+    clientSockets.set(clientId, extWs)
+
     extWs.isAlive = true
     extWs.on('pong', () => {
       extWs.isAlive = true
     })
 
-    // 1. EXTRACT OR GENERATE STABLE ID
-    const searchParams = getRequestParams(req)
-    const requestedId = searchParams.get('clientId')
+    logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
-    // Validate requestedId to prevent injection/garbage
-    const isValidId = requestedId && /^[0-9a-f-]{36}$/i.test(requestedId)
-    if (requestedId && !isValidId) {
-      logger.warn(
-        { requestedId },
-        'Invalid clientId received. Generating new one.'
-      )
-    }
-    const clientId = isValidId ? requestedId : randomUUID()
-    extWs.clientId = clientId // Keep it on the socket for logging/context
-
-    logger.info(
-      { clientId, isReconnection: !!isValidId },
-      'WebSocket client connected'
-    )
-
-    // 2. HANDLE CONFLICTS / ZOMBIES
-    if (clientSockets.has(clientId)) {
-      const oldWs = clientSockets.get(clientId)
-      if (oldWs && oldWs !== ws && oldWs.readyState === WebSocket.OPEN) {
-        logger.warn({ clientId }, 'Terminating zombie connection')
-        oldWs.terminate()
-      }
-    }
-    clientSockets.set(clientId, ws)
-
-    // 3. INITIALIZE OR RECOVER DATA
     if (!hrmDataRepository.findById(clientId)) {
-      logger.info({ clientId }, 'Initializing new client session')
+      // Initialize new client
       const newClient: HrmStreamData = {
-        clientId: clientId,
+        clientId: extWs.clientId,
         value: 0,
         maxHr: 185,
         age: 30,
-        calories: 0,
+        calories: 0, // Initialize to 0
       }
       hrmDataRepository.save(newClient)
-      clientSessionState.set(clientId, {
+      clientSessionState.set(extWs.clientId, {
         lastUpdate: Date.now(),
         accumulatedCalories: 0,
       })
     } else {
-      logger.info({ clientId }, 'Restored existing client session')
+      logger.info({ clientId }, 'Reconnected with existing session.')
     }
 
     extWs.on('message', (message) => {
-      handleIncomingMessage(extWs, message.toString(), clientId)
+      handleIncomingMessage(extWs, message.toString(), extWs.clientId)
     })
 
     extWs.on('close', () => {
-      logger.info({ clientId }, 'WebSocket client disconnected')
+      logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
 
       // CRITICAL: Do NOT immediately delete clientData.
       // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
@@ -164,17 +145,23 @@ const initSocketManager = (
       // or a maximum number of inactive sessions.
       setTimeout(() => {
         // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
-        if (clientSockets.get(clientId) === ws) {
-          logger.info({ clientId }, 'Session expired. Deleting data.')
+        if (clientSockets.get(clientId) === extWs) {
+          logger.info(
+            { clientId: extWs.clientId },
+            'Session expired. Deleting data.'
+          )
           try {
-            hrmDataRepository.deleteById(clientId)
-            clientSessionState.delete(clientId)
+            hrmDataRepository.deleteById(extWs.clientId)
+            clientSessionState.delete(extWs.clientId)
             broadcastState()
           } catch (err) {
-            logger.error({ clientId, err }, 'Error during session cleanup')
+            logger.error(
+              { clientId: extWs.clientId, error: err },
+              'Error during session cleanup'
+            )
           } finally {
             // Always remove the socket reference to prevent leaks
-            clientSockets.delete(clientId)
+            clientSockets.delete(extWs.clientId)
           }
         }
       }, env.WEBSOCKET_GRACE_PERIOD_MS)
@@ -251,6 +238,19 @@ const handleIncomingMessage = (
           const updateData: Partial<HrmStreamData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
+
+          // Prevent overwriting a real name with a default "Unknown" name
+          if (
+            existingData.name &&
+            !/^(user|new user|unknown|bluetooth hrm)/i.test(
+              existingData.name
+            ) &&
+            updateData.name &&
+            /^(user|new user|unknown|bluetooth hrm)/i.test(updateData.name)
+          ) {
+            delete updateData.name
+          }
+
           hrmDataRepository.save({ ...existingData, ...updateData })
         }
         broadcastState()

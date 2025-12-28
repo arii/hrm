@@ -28,7 +28,13 @@ export default function ConnectPage() {
     'IMPERIAL'
   )
 
-  const [displayWeight, setDisplayWeight] = useState('')
+  const [displayWeight, setDisplayWeight] = useState(() => {
+    const kg = parseFloat(_weightInKg)
+    if (isNaN(kg)) {
+      return ''
+    }
+    return toDisplay(kg, unitSystem).toString()
+  })
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
 
@@ -69,7 +75,10 @@ export default function ConnectPage() {
     isConnected,
     isSupported,
     disconnectionReason,
-  } = useBluetoothHRM()
+  } = useBluetoothHRM({
+    userName,
+    userAge: userAge ? parseFloat(userAge) : 0,
+  })
 
   const { connectionStatus, hrmData } = useWebSocket()
 

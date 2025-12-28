@@ -57,11 +57,11 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
         const data = await response.json()
         setTracks(data.tracks)
         setTotal(data.total)
+        setLoading(false)
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'An unknown error occurred'
         )
-      } finally {
         setLoading(false)
       }
     },

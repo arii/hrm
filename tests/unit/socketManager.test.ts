@@ -9,11 +9,9 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import { IncomingMessage } from 'http'
 import {
   initSocketManager,
   resetSocketManager,
-  getRequestParams,
 } from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
@@ -88,7 +86,6 @@ class MockWebSocket extends EventEmitter {
   terminate = jest.fn()
   ping = jest.fn()
   send = jest.fn()
-  clientId?: string
 
   constructor() {
     super()
@@ -160,6 +157,10 @@ describe('WebSocket Manager', () => {
     })
 
     initSocketManager(mockWss, getSnapshot, mockServices)
+
+    mockWs = new MockWebSocket()
+    ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
+    mockWss.emit('connection', mockWs)
   })
 
   afterEach(() => {
@@ -179,15 +180,13 @@ describe('WebSocket Manager', () => {
 
     it('should set isAlive to true on new connection', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
-      const mockReq = { url: '/', headers: { host: 'localhost' } }
-      mockWss.emit('connection', newWs, mockReq)
+      mockWss.emit('connection', newWs)
       expect(newWs.isAlive).toBe(true)
     })
 
     it('should set isAlive to true on pong', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
-      const mockReq = { url: '/', headers: { host: 'localhost' } }
-      mockWss.emit('connection', newWs, mockReq)
+      mockWss.emit('connection', newWs)
       newWs.isAlive = false // Manually set to false
       newWs.emit('pong')
       expect(newWs.isAlive).toBe(true)
@@ -203,14 +202,6 @@ describe('WebSocket Manager', () => {
 
   describe('Calorie Calculation', () => {
     it('should accumulate calories correctly with small frequent updates', () => {
-      mockWs = new MockWebSocket()
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
-      const mockReq = {
-        url: '/?clientId=11111111-1111-1111-1111-111111111111',
-        headers: { host: 'localhost' },
-      }
-      mockWss.emit('connection', mockWs, mockReq)
-
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
@@ -248,16 +239,6 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Message Handling', () => {
-    beforeEach(() => {
-      mockWs = new MockWebSocket()
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
-      const mockReq = {
-        url: '/?clientId=11111111-1111-1111-1111-111111111111',
-        headers: { host: 'localhost' },
-      }
-      mockWss.emit('connection', mockWs, mockReq)
-    })
-
     it('should handle REGISTER_CLIENT message', () => {
       const message = JSON.stringify({
         type: 'REGISTER_CLIENT',
@@ -299,10 +280,7 @@ describe('WebSocket Manager', () => {
 
     it('should broadcast state on client disconnect', () => {
       mockWs.emit('close')
-
-      // Fast-forward timers to trigger the setTimeout in the close handler
-      jest.runOnlyPendingTimers()
-
+      jest.runAllTimers()
       expect(broadcast).toHaveBeenCalledWith(
         mockWss,
         {
@@ -310,57 +288,6 @@ describe('WebSocket Manager', () => {
           payload: [],
         },
         'socketManager.broadcastState'
-      )
-    })
-
-    it('should not delete client data if they reconnect within the grace period', () => {
-      // 1. A client is connected
-      const clientId = '22222222-2222-2222-2222-222222222222'
-      const mockReq = {
-        url: `/?clientId=${clientId}`,
-        headers: { host: 'localhost' },
-      }
-      const firstWs = new MockWebSocket()
-      mockWss.emit('connection', firstWs, mockReq)
-
-      // Verify the user was added
-      let message = JSON.stringify({ type: 'GET_STATE' })
-      firstWs.emit('message', message)
-      const sentData = (sendWebSocketMessage as jest.Mock).mock.calls[0][1]
-      expect(sentData.payload.hrmData).toEqual(
-        expect.arrayContaining([expect.objectContaining({ clientId })])
-      )
-
-      // 2. The client disconnects
-      firstWs.emit('close')
-
-      // 3. Time advances, but less than the grace period
-      jest.advanceTimersByTime(3000) // 3 seconds
-
-      // 4. The client reconnects with the same ID
-      const secondWs = new MockWebSocket()
-      mockWss.emit('connection', secondWs, mockReq)
-
-      // 5. The original timer now fires
-      jest.runOnlyPendingTimers()
-
-      // 6. Verify the broadcast to delete the user was NOT called
-      //    (because a new socket for that client exists)
-      expect(broadcast).not.toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [], // This would be the payload on final deletion
-        },
-        'socketManager.broadcastState'
-      )
-
-      // 7. Verify the user's data still exists
-      message = JSON.stringify({ type: 'GET_STATE' })
-      secondWs.emit('message', message)
-      const finalSentData = (sendWebSocketMessage as jest.Mock).mock.calls[1][1]
-      expect(finalSentData.payload.hrmData).toEqual(
-        expect.arrayContaining([expect.objectContaining({ clientId })])
       )
     })
 
@@ -390,7 +317,6 @@ describe('WebSocket Manager', () => {
           deviceId: undefined,
           volume: undefined,
           playlistUri: undefined,
-          contextUri: undefined,
         }
       )
     })
@@ -429,53 +355,6 @@ describe('WebSocket Manager', () => {
         expect.any(Object),
         'Unknown message type received'
       )
-    })
-  })
-  describe('getRequestParams', () => {
-    beforeEach(() => {
-      ;(logger.error as jest.Mock).mockClear()
-    })
-
-    it('should correctly parse clientId from a standard URL', () => {
-      const req = {
-        url: '/?clientId=abcdef-123456',
-        headers: { host: 'localhost:3000' },
-      }
-      const params = getRequestParams(req as IncomingMessage)
-      expect(params.get('clientId')).toBe('abcdef-123456')
-    })
-
-    it('should return empty params and log an error when URL is malformed', () => {
-      const req = {
-        url: 'a',
-        headers: { host: 'a:b:c' },
-      }
-      const params = getRequestParams(req as IncomingMessage)
-      expect(params.toString()).toBe('')
-      expect(logger.error).toHaveBeenCalled()
-    })
-
-    it('should handle missing host header by falling back to localhost', () => {
-      const req = { url: '/?foo=bar', headers: {} }
-      const params = getRequestParams(req as IncomingMessage)
-      expect(params.get('foo')).toBe('bar')
-    })
-
-    it('should handle missing URL by defaulting to "/"', () => {
-      const req = { headers: { host: 'testhost' } }
-      const params = getRequestParams(req as IncomingMessage)
-      expect(params.toString()).toBe('')
-    })
-
-    it('should handle multiple query parameters', () => {
-      const req = {
-        url: '/?clientId=123&user=test&mode=active',
-        headers: { host: 'localhost' },
-      }
-      const params = getRequestParams(req as IncomingMessage)
-      expect(params.get('clientId')).toBe('123')
-      expect(params.get('user')).toBe('test')
-      expect(params.get('mode')).toBe('active')
     })
   })
 })

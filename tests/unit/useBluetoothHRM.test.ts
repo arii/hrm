@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { jest } from '@jest/globals'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 
@@ -118,111 +118,56 @@ describe('useBluetoothHRM', () => {
       value: true,
       writable: true,
     })
-
-    // Manually trigger the first characteristic value change to signal that the
-    // connection is live and not stale. This is what sets isConnected to true.
-    const characteristicValueChangedCallback =
-      mockCharacteristic.addEventListener.mock.calls.find(
-        (call) => call[0] === 'characteristicvaluechanged'
-      )?.[1]
-
-    if (characteristicValueChangedCallback) {
-      act(() => {
-        characteristicValueChangedCallback({
-          target: {
-            value: new DataView(new Uint8Array([0, 75]).buffer),
-          },
-        })
-      })
-    }
   }
 
-  it('should send a "death packet" when the connection becomes stale', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
-    await simulateConnection({ result })
-    await waitFor(() => expect(result.current.isConnected).toBe(true))
-
-    // Advance time by 5 seconds (more than the 4-second threshold)
+  /**
+   * Advances Jest's fake timers just enough to trigger the data liveness watchdog.
+   * The watchdog checks for new data every 2 seconds. This function calculates
+   * the smallest time advancement needed to ensure a watchdog check occurs
+   * *after* the specified timeout has elapsed.
+   * @param {number} timeoutMs - The data liveness timeout period in milliseconds.
+   */
+  const triggerTimeout = (timeoutMs: number) => {
+    const watchdogInterval = 2000 // The interval at which the watchdog checks for data
+    // Calculate the time of the first watchdog check that will occur *after* the timeout has passed.
+    const timeToAdvance =
+      Math.floor(timeoutMs / watchdogInterval) * watchdogInterval +
+      watchdogInterval
     act(() => {
-      jest.advanceTimersByTime(5000)
+      jest.advanceTimersByTime(timeToAdvance)
+    })
+  }
+
+  /**
+   * Simulates a full device disconnection and successful reconnection cycle.
+   * This helper function orchestrates the sequence of events that the
+   * `useBluetoothHRM` hook expects during a signal loss and recovery scenario.
+   */
+  const simulateReconnection = async () => {
+    // 1. Simulate gatt disconnected state
+    Object.defineProperty(mockDevice.gatt, 'connected', {
+      value: false,
+      writable: true,
     })
 
-    expect(mockSendData).toHaveBeenCalledWith({
-      type: 'HRM_INPUT',
-      data: {
-        value: 0,
-        maxHr: 190, // 220 - 30
-        name: 'Test User',
-        age: 30,
-      },
-    })
-    await waitFor(() => expect(result.current.isConnected).toBe(false))
-    expect(result.current.deviceStatus).toBe('Connected (No Data)')
-  })
-
-  it('should recover from a stale connection when new data arrives', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
-    await simulateConnection({ result })
-    await waitFor(() => expect(result.current.isConnected).toBe(true))
-
-    // Advance time to trigger staleness
-    act(() => {
-      jest.advanceTimersByTime(5000)
-    })
-
-    await waitFor(() => expect(result.current.isConnected).toBe(false))
-
-    // Simulate a new heart rate value arriving
-    const characteristicValueChangedCallback =
-      mockCharacteristic.addEventListener.mock.calls.find(
-        (call) => call[0] === 'characteristicvaluechanged'
-      )?.[1]
-
-    act(() => {
-      characteristicValueChangedCallback({
-        target: {
-          value: new DataView(new Uint8Array([0, 75]).buffer),
-        },
+    // 2. Simulate the 'gattserverdisconnected' event
+    const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
+      (call) => call[0] === 'gattserverdisconnected'
+    )?.[1]
+    if (onDisconnectedCallback) {
+      act(() => {
+        onDisconnectedCallback()
       })
-    })
+    }
 
-    await waitFor(() => expect(result.current.isConnected).toBe(true))
-    expect(result.current.deviceStatus).toContain('Connected to: Test HRM')
-  })
-
-  it('should report isConnected as false initially and true after connection', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
-    expect(result.current.isConnected).toBe(false)
-
-    await simulateConnection({ result })
-
-    await waitFor(() => expect(result.current.isConnected).toBe(true))
-  })
-
-  it('should not send a "death packet" if the connection is not stale', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
-    await simulateConnection({ result })
-    await waitFor(() => expect(result.current.isConnected).toBe(true))
-
-    // Advance time by 2 seconds (less than the 4-second threshold)
+    // 3. Advance timers to allow the reconnect logic (with its delay) to run
     act(() => {
-      jest.advanceTimersByTime(2000)
+      jest.advanceTimersByTime(2000) // Default reconnect delay
     })
 
-    expect(mockSendData).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ value: 0 }),
-      })
-    )
-    expect(result.current.isConnected).toBe(true)
-  })
-
-  it('should use the device name as a fallback when no user name is provided', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
-
-    // Simulate connection without providing a user name
+    // 4. Simulate a successful reconnection by resolving the connect promise
     await act(async () => {
-      result.current.connectAndStream(undefined, 30)
+      // The hook's reconnect logic should have been called. Let's resolve the promise.
       await Promise.resolve()
     })
     Object.defineProperty(mockDevice.gatt, 'connected', {
@@ -230,52 +175,91 @@ describe('useBluetoothHRM', () => {
       writable: true,
     })
 
-    const characteristicValueChangedCallback =
-      mockCharacteristic.addEventListener.mock.calls.find(
-        (call) => call[0] === 'characteristicvaluechanged'
-      )?.[1]
-
-    act(() => {
-      characteristicValueChangedCallback({
-        target: {
-          value: new DataView(new Uint8Array([0, 80]).buffer),
-        },
-      })
+    // 5. Allow any final state updates to process after reconnection
+    await act(async () => {
+      await Promise.resolve()
     })
+  }
 
-    await waitFor(() => expect(result.current.isConnected).toBe(true))
+  it('should use default timeout of 10 seconds and trigger reconnect', async () => {
+    const { result } = renderHook(() => useBluetoothHRM())
 
-    expect(mockSendData).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          name: 'Bluetooth HRM (Test HRM)',
-        }),
-      })
-    )
+    await simulateConnection({ result })
+    expect(result.current.isConnected).toBe(true)
+
+    triggerTimeout(10000)
+
+    expect(result.current.deviceStatus).toContain('Connection unstable')
+    expect(result.current.disconnectionReason).toBe('timeout')
+    expect(mockDevice.gatt.disconnect).toHaveBeenCalled()
   })
 
-  it('should handle device disconnection while in a stale state', async () => {
+  it('should use custom timeout from props', async () => {
+    const { result } = renderHook(() =>
+      useBluetoothHRM({ dataLivenessTimeoutMs: 5000 })
+    )
+    await simulateConnection({ result })
+    expect(result.current.isConnected).toBe(true)
+
+    // Advance time by 4 seconds (less than timeout)
+    act(() => {
+      jest.advanceTimersByTime(4000)
+    })
+    expect(result.current.deviceStatus).not.toContain('Connection unstable')
+
+    // Advance time by another 2 seconds (total 6s, more than timeout)
+    act(() => {
+      jest.advanceTimersByTime(2000)
+    })
+
+    expect(result.current.deviceStatus).toContain('Connection unstable')
+    expect(result.current.disconnectionReason).toBe('timeout')
+  })
+
+  it('should disable watchdog if timeout is 0', async () => {
+    const { result } = renderHook(() =>
+      useBluetoothHRM({ dataLivenessTimeoutMs: 0 })
+    )
+    await simulateConnection({ result })
+    expect(result.current.isConnected).toBe(true)
+
+    // Advance time by a large amount
+    act(() => {
+      jest.advanceTimersByTime(20000)
+    })
+
+    expect(result.current.deviceStatus).not.toContain('Connection unstable')
+    expect(result.current.disconnectionReason).toBe(null)
+  })
+
+  it('should set disconnectionReason to "manual" on disconnect', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
     await simulateConnection({ result })
-    await waitFor(() => expect(result.current.isConnected).toBe(true))
-
-    // Advance time to trigger staleness
-    act(() => {
-      jest.advanceTimersByTime(5000)
-    })
-
-    await waitFor(() => expect(result.current.isConnected).toBe(false))
-    expect(result.current.deviceStatus).toBe('Connected (No Data)')
-
-    // Simulate the device disconnecting
-    const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
-      (call) => call[0] === 'gattserverdisconnected'
-    )?.[1]
+    expect(result.current.isConnected).toBe(true)
 
     act(() => {
-      onDisconnectedCallback()
+      result.current.disconnect()
     })
 
-    expect(result.current.deviceStatus).toContain('Signal Lost. Retrying...')
+    expect(result.current.isConnected).toBe(false)
+    expect(result.current.disconnectionReason).toBe('manual')
+  })
+
+  it('should reset disconnectionReason on successful reconnect', async () => {
+    const { result } = renderHook(() =>
+      useBluetoothHRM({ dataLivenessTimeoutMs: 2000 })
+    )
+    await simulateConnection({ result })
+
+    // Trigger a timeout to initiate the disconnection/reconnection cycle
+    triggerTimeout(2000)
+    expect(result.current.disconnectionReason).toBe('timeout')
+
+    // Simulate the device disconnecting and the hook successfully reconnecting
+    await simulateReconnection()
+
+    // After reconnecting, the state should be clean
+    expect(result.current.isConnected).toBe(true)
+    expect(result.current.disconnectionReason).toBe(null)
   })
 })
