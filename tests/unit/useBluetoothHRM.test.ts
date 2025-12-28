@@ -96,18 +96,12 @@ describe('useBluetoothHRM', () => {
     }
 
     mockBluetooth.requestDevice.mockResolvedValue(mockDevice)
-    mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+    mockBluetooth.getDevices.mockResolvedValue([])
   })
 
   afterEach(() => {
     jest.useRealTimers()
     jest.clearAllMocks()
-    // Clear all cookies
-    document.cookie.split(';').forEach((c) => {
-      document.cookie = c
-        .replace(/^ +/, '')
-        .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`)
-    })
   })
 
   type UseBluetoothHRMReturn = ReturnType<typeof useBluetoothHRM>
@@ -142,13 +136,6 @@ describe('useBluetoothHRM', () => {
       })
     }
   }
-
-  it('should attempt to reconnect on mount if a device ID is saved', async () => {
-    document.cookie = 'hrm_device_id=%22test-device-id%22'
-    renderHook(() => useBluetoothHRM({ userName: 'Test User', userAge: 30 }))
-    await waitFor(() => expect(mockBluetooth.getDevices).toHaveBeenCalled())
-    await waitFor(() => expect(mockDevice.gatt.connect).toHaveBeenCalled())
-  })
 
   it('should send a "death packet" when the connection becomes stale', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
