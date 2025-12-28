@@ -377,34 +377,54 @@ export class SpotifyPolling implements SpotifyService {
   ) {
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
+    const execute = async (cmd: () => Promise<unknown>) => {
+      try {
+        await cmd()
+      } catch (error) {
+        // The SDK throws a SyntaxError on 204 No Content, which is expected.
+        // We can safely ignore it.
+        if (
+          error instanceof SyntaxError &&
+          error.message.includes('Unexpected end of JSON input')
+        ) {
+          logger.debug({ command }, 'Spotify command successful (204 No Content)')
+          return
+        }
+        // For other errors, re-throw to be caught by the handler.
+        throw error
+      }
+    }
 
     switch (command) {
       case 'PLAY':
-        if (contextUri) {
-          // The safe API wrapper handles the undefined deviceId correctly.
-          await this.sdk!.player.startResumePlayback(deviceId, contextUri)
-        } else {
-          await this.sdk!.player.startResumePlayback(deviceId)
-        }
+        await execute(() =>
+          contextUri
+            ? this.sdk!.player.startResumePlayback(deviceId, contextUri)
+            : this.sdk!.player.startResumePlayback(deviceId)
+        )
         break
       case 'PAUSE':
-        await this.sdk!.player.pausePlayback(deviceId)
+        await execute(() => this.sdk!.player.pausePlayback(deviceId))
         break
       case 'NEXT':
-        await this.sdk!.player.skipToNext(deviceId)
+        await execute(() => this.sdk!.player.skipToNext(deviceId))
         break
       case 'PREVIOUS':
-        await this.sdk!.player.skipToPrevious(deviceId)
+        await execute(() => this.sdk!.player.skipToPrevious(deviceId))
         break
       case 'TRANSFER_PLAYBACK':
         if (deviceId) {
-          await this.sdk!.player.transferPlayback([deviceId], true)
+          await execute(() =>
+            this.sdk!.player.transferPlayback([deviceId], true)
+          )
         }
         break
       case 'SET_VOLUME':
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
-          await this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId)
+          await execute(() =>
+            this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId)
+          )
         }
         break
       case 'LOGIN':

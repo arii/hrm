@@ -518,5 +518,21 @@ describe('SpotifyPolling Service', () => {
       )
       expect(logger.error).not.toHaveBeenCalled()
     })
+
+    it('should suppress SyntaxError on 204 No Content from PLAY', async () => {
+      // Simulate the SDK throwing a SyntaxError for a 204 response
+      mockPlayer.startResumePlayback.mockRejectedValue(
+        new SyntaxError('Unexpected end of JSON input')
+      )
+
+      // This should not throw an unhandled promise rejection
+      await expect(
+        spotifyService.handleCommand('PLAY', { deviceId: 'test_device_id' })
+      ).resolves.not.toThrow()
+
+      // It should not log a scary error, but a debug message is fine
+      expect(logger.error).not.toHaveBeenCalled()
+      expect(logger.warn).not.toHaveBeenCalled()
+    })
   })
 })
