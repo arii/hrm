@@ -16,6 +16,9 @@ interface MappedTrack {
 
 // Limit the number of tracks fetched from a playlist to avoid performance issues.
 const MAX_TRACKS_LIMIT = 500
+const SPOTIFY_API_DEFAULT_LIMIT = 50
+const OFFSET_PARAM = 'offset'
+const LIMIT_PARAM = 'limit'
 
 /**
  * GET handler for fetching single playlist details.
@@ -45,20 +48,25 @@ async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
   while (next && allItems.length < MAX_TRACKS_LIMIT) {
     pageCount++
     console.log(
-      `Fetching page ${pageCount} of playlist ${playlistId}, current track count: ${allItems.length}`
+      `[${new Date().toISOString()}] Fetching page ${pageCount} of playlist ${playlistId}, current track count: ${
+        allItems.length
+      }, next URL: ${next}`
     )
     const nextUrl = new URL(next)
-    const offset = parseInt(nextUrl.searchParams.get('offset') || '0', 10)
-    const limit = parseInt(nextUrl.searchParams.get('limit') || '100', 10)
+    const offset = parseInt(nextUrl.searchParams.get(OFFSET_PARAM) || '0', 10)
+    const limit = parseInt(
+      nextUrl.searchParams.get(LIMIT_PARAM) ||
+        SPOTIFY_API_DEFAULT_LIMIT.toString(),
+      10
+    )
 
     if (offset === 0) break // Should not happen if next is set
 
-    // @ts-expect-error - The Spotify SDK has a bug where the limit parameter is not correctly typed.
     const nextPage = await spotify.playlists.getPlaylistItems(
       playlistId,
       undefined,
       undefined,
-      limit,
+      limit as any,
       offset
     )
     allItems = [...allItems, ...nextPage.items]
