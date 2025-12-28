@@ -1,11 +1,9 @@
 // app/client/connect/UserSettings.tsx
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import {
   validateAgeValue,
   validateWeightValue,
@@ -14,10 +12,14 @@ import {
 import {
   toKg,
   toDisplay,
-  cmToFeetAndInches,
   feetAndInchesToCm,
+  cmToFeetAndInches,
 } from '../../../utils/units'
 import { Gender, MeasurementSystem } from '../../../types'
+import UserNameInput from './components/UserNameInput'
+import UserAgeInput from './components/UserAgeInput'
+import GenderSelection from './components/GenderSelection'
+import UnitSystemSelection from './components/UnitSystemSelection'
 
 interface UserSettingsProps {
   userName: string
@@ -54,13 +56,14 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   const [displayHeightFeet, setDisplayHeightFeet] = useState('')
   const [displayHeightInches, setDisplayHeightInches] = useState('')
 
+  // Refs to track focus state and prevent overwriting user input
+  const isWeightFocused = useRef(false)
+  const isHeightFocused = useRef(false)
+
   // Validation state
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
   const [heightError, setHeightError] = useState<string | null>(null)
-
-  const isWeightFocused = React.useRef(false)
-  const isHeightFocused = React.useRef(false)
 
   // Syncs display weight with parent props, avoiding overwrite on focus.
   useEffect(() => {
@@ -92,11 +95,12 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
     }
   }, [heightInCm, unitSystem])
 
-  const handleAgeBlur = () => {
+  const handleAgeBlur = useCallback(() => {
     setAgeError(validateAgeValue(userAge))
-  }
+  }, [userAge])
 
-  const handleWeightBlur = () => {
+  const handleWeightBlur = useCallback(() => {
+    isWeightFocused.current = false
     const error = validateWeightValue(displayWeight, unitSystem)
     setWeightError(error)
     if (!error) {
@@ -105,9 +109,10 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
         setWeightInKg(toKg(numericValue, unitSystem).toFixed(2))
       }
     }
-  }
+  }, [displayWeight, unitSystem, setWeightInKg])
 
-  const handleHeightBlur = () => {
+  const handleHeightBlur = useCallback(() => {
+    isHeightFocused.current = false
     let cm = 0
     if (unitSystem === 'METRIC') {
       cm = parseFloat(displayHeightCm)
@@ -122,81 +127,54 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
     if (!error) {
       setHeightInCm(cm.toFixed(2))
     }
-  }
+  }, [
+    displayHeightCm,
+    displayHeightFeet,
+    displayHeightInches,
+    unitSystem,
+    setHeightInCm,
+  ])
 
-  const handleUnitChange = (
-    _event: React.MouseEvent<HTMLElement>,
-    newUnit: MeasurementSystem | null
-  ) => {
-    if (newUnit && newUnit !== unitSystem) {
-      onUnitChange(newUnit)
-      setWeightError(null)
-      setHeightError(null)
-    }
-  }
+  const handleUnitChange = useCallback(
+    (
+      _event: React.MouseEvent<HTMLElement>,
+      newUnit: MeasurementSystem | null
+    ) => {
+      if (newUnit && newUnit !== unitSystem) {
+        onUnitChange(newUnit)
+        setWeightError(null)
+        setHeightError(null)
+      }
+    },
+    [unitSystem, onUnitChange]
+  )
 
-  const handleGenderChange = (
-    _event: React.MouseEvent<HTMLElement>,
-    newGender: Gender | null
-  ) => {
-    if (newGender) {
-      setGender(newGender)
-    }
-  }
+  const handleGenderChange = useCallback(
+    (_event: React.MouseEvent<HTMLElement>, newGender: Gender | null) => {
+      if (newGender) {
+        setGender(newGender)
+      }
+    },
+    [setGender]
+  )
 
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
-      <TextField
-        fullWidth
-        label="Your Name"
-        placeholder="e.g., Jane Doe"
-        value={userName}
-        onChange={(e) => setUserName(e.target.value)}
+      <UserNameInput userName={userName} setUserName={setUserName} />
+      <UserAgeInput
+        userAge={userAge}
+        setUserAge={setUserAge}
+        handleAgeBlur={handleAgeBlur}
+        ageError={ageError}
       />
-      <TextField
-        fullWidth
-        label="Your Age"
-        placeholder="e.g., 30"
-        type="number"
-        value={userAge}
-        onChange={(e) => {
-          if (/^\d*$/.test(e.target.value)) {
-            setUserAge(e.target.value)
-          }
-        }}
-        onBlur={handleAgeBlur}
-        error={!!ageError}
-        helperText={ageError}
-        inputProps={{ min: 1, max: 120 }}
+      <GenderSelection
+        gender={gender}
+        handleGenderChange={handleGenderChange}
       />
-      <ToggleButtonGroup
-        value={gender}
-        exclusive
-        onChange={handleGenderChange}
-        aria-label="Gender"
-        fullWidth
-      >
-        <ToggleButton value="MALE" aria-label="male">
-          Male
-        </ToggleButton>
-        <ToggleButton value="FEMALE" aria-label="female">
-          Female
-        </ToggleButton>
-      </ToggleButtonGroup>
-      <ToggleButtonGroup
-        value={unitSystem}
-        exclusive
-        onChange={handleUnitChange}
-        aria-label="Unit system"
-        fullWidth
-      >
-        <ToggleButton value="IMPERIAL" aria-label="imperial units">
-          Imperial (lbs, ft, in)
-        </ToggleButton>
-        <ToggleButton value="METRIC" aria-label="metric units">
-          Metric (kg, cm)
-        </ToggleButton>
-      </ToggleButtonGroup>
+      <UnitSystemSelection
+        unitSystem={unitSystem}
+        handleUnitChange={handleUnitChange}
+      />
       {unitSystem === 'METRIC' ? (
         <TextField
           fullWidth
