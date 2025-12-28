@@ -1,5 +1,8 @@
 // File: services/calorieService.ts
-import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
+import {
+  HrmDataRepository,
+  HrmData,
+} from '../lib/repositories/HrmDataRepository.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { USER_AGE_DEFAULT, USER_WEIGHT_DEFAULT_KG } from '../utils/constants.js'
 import logger from '../utils/logger.js'
@@ -10,6 +13,35 @@ const clientSessionState = new Map<
   string,
   { lastUpdate: number; hrSamples: number[] }
 >()
+
+/**
+ * Calculates the calories burned during a single time interval based on average
+ * heart rate and client data.
+ * @param avgHr - The average heart rate over the interval.
+ * @param lastUpdate - The timestamp of the last update.
+ * @param clientData - The HRM data for the client.
+ * @returns The estimated calories burned, or 0 if conditions are not met.
+ */
+const calculateIntervalCalories = (
+  avgHr: number,
+  lastUpdate: number,
+  clientData: HrmData
+): number => {
+  const now = Date.now()
+  const durationMinutes = (now - lastUpdate) / 1000 / 60
+
+  // Guard against invalid inputs or large time gaps (e.g., system sleep)
+  if (avgHr <= 30 || durationMinutes <= 0 || durationMinutes >= 5) {
+    return 0
+  }
+
+  return estimateCaloriesBurned({
+    heartRate: avgHr,
+    age: clientData.age ?? USER_AGE_DEFAULT,
+    weightKg: clientData.weightKg ?? USER_WEIGHT_DEFAULT_KG,
+    durationMinutes,
+  })
+}
 
 const updateCaloriesForClient = (
   clientId: string,
@@ -22,44 +54,33 @@ const updateCaloriesForClient = (
     return false
   }
 
-  const now = Date.now()
   const avgHr =
     session.hrSamples.reduce((sum, val) => sum + val, 0) /
     session.hrSamples.length
 
-  let caloriesUpdated = false
-  if (avgHr > 30) {
-    try {
-      const durationMinutes = (now - session.lastUpdate) / 1000 / 60
-      // Prevent calculating for excessively long durations if the system clock changes.
-      if (durationMinutes > 0 && durationMinutes < 5) {
-        const caloriesBurned = estimateCaloriesBurned({
-          heartRate: avgHr,
-          age: clientData.age ?? USER_AGE_DEFAULT,
-          weightKg: clientData.weightKg ?? USER_WEIGHT_DEFAULT_KG,
-          durationMinutes: durationMinutes,
-        })
+  // Reset samples and update timestamp for the next interval
+  session.hrSamples = []
+  const lastUpdate = session.lastUpdate
+  session.lastUpdate = Date.now()
 
-        if (caloriesBurned > 0) {
-          const currentTotal = clientData.totalCalories ?? 0
-          hrmDataRepository.save({
-            ...clientData,
-            totalCalories:
-              Math.round((currentTotal + caloriesBurned) * 10) / 10,
-          })
-          caloriesUpdated = true
-        }
-      }
+  const caloriesBurned = calculateIntervalCalories(avgHr, lastUpdate, clientData)
+
+  if (caloriesBurned > 0) {
+    try {
+      const currentTotal = clientData.totalCalories ?? 0
+      hrmDataRepository.save({
+        ...clientData,
+        totalCalories: Math.round((currentTotal + caloriesBurned) * 10) / 10,
+      })
+      return true // Calories were updated
     } catch (error) {
-      logger.error({ clientId, error }, 'Failed to estimate calories burned')
+      logger.error({ clientId, error }, 'Failed to save updated calorie data')
+      // Restore session state if save fails to allow for retry on next tick
+      session.lastUpdate = lastUpdate
     }
   }
 
-  // Clear hrSamples for next interval
-  session.hrSamples = []
-  session.lastUpdate = now
-
-  return caloriesUpdated
+  return false // No calories updated
 }
 
 export const updateCaloriesForAllClients = (
