@@ -6,6 +6,7 @@ import Box from '@mui/material/Box'
 
 interface Props {
   children: ReactNode
+  fallback?: ReactNode
 }
 
 interface State {
@@ -28,6 +29,9 @@ class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback
+      }
       return (
         <Box sx={{ p: 2 }}>
           <Alert severity="error">

@@ -133,4 +133,108 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
     expect(response.status).toBe(200)
     expect(data.tracks.length).toBe(150)
   })
+
+  it('should handle pagination with exactly 100 tracks', async () => {
+    // Arrange
+    const mockSession = { accessToken: 'test-token' }
+    ;(getServerSession as jest.Mock).mockResolvedValue(mockSession)
+
+    const mockPlaylist = {
+      id: '123',
+      name: 'Test Playlist',
+      description: 'A test playlist',
+      images: [{ url: 'http://example.com/image.jpg' }],
+      owner: { display_name: 'Test User' },
+      tracks: {
+        items: new Array(100).fill(null).map((_, i) => ({
+          track: {
+            type: 'track',
+            uri: `spotify:track:${i}`,
+            name: `Track ${i}`,
+            artists: [{ name: `Artist ${i}` }],
+            duration_ms: 180000,
+          },
+        })),
+        next: null,
+      },
+    }
+    const mockGetPlaylist = jest.fn().mockResolvedValue(mockPlaylist)
+    ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue({
+      playlists: { getPlaylist: mockGetPlaylist },
+    })
+
+    const req = new Request('http://localhost/api/spotify/playlists/123')
+    const context = { params: { playlistId: '123' } }
+
+    // Act
+    const response = await GET(req, context)
+    const data = await response.json()
+
+    // Assert
+    expect(response.status).toBe(200)
+    expect(data.tracks.length).toBe(100)
+  })
+
+  it('should handle pagination with exactly 500 tracks', async () => {
+    // Arrange
+    const mockSession = { accessToken: 'test-token' }
+    ;(getServerSession as jest.Mock).mockResolvedValue(mockSession)
+
+    const mockPlaylistPage1 = {
+      id: '123',
+      name: 'Test Playlist',
+      description: 'A test playlist',
+      images: [{ url: 'http://example.com/image.jpg' }],
+      owner: { display_name: 'Test User' },
+      tracks: {
+        items: new Array(100).fill(null).map((_, i) => ({
+          track: {
+            type: 'track',
+            uri: `spotify:track:${i}`,
+            name: `Track ${i}`,
+            artists: [{ name: `Artist ${i}` }],
+            duration_ms: 180000,
+          },
+        })),
+        next: 'http://localhost/api/spotify/playlists/123?offset=100&limit=100',
+      },
+    }
+    const mockGetPlaylist = jest.fn().mockResolvedValue(mockPlaylistPage1)
+    const mockGetPlaylistItems = jest.fn().mockImplementation((_, __, ___, ____, offset) => {
+      const page = Math.floor(offset / 100)
+      if (page < 5) {
+        return Promise.resolve({
+          items: new Array(100).fill(null).map((_, i) => ({
+            track: {
+              type: 'track',
+              uri: `spotify:track:${offset + i}`,
+              name: `Track ${offset + i}`,
+              artists: [{ name: `Artist ${offset + i}` }],
+              duration_ms: 180000,
+            },
+          })),
+          next: `http://localhost/api/spotify/playlists/123?offset=${offset + 100}&limit=100`,
+        })
+      } else {
+        return Promise.resolve({ items: [], next: null })
+      }
+    })
+    ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue({
+      playlists: {
+        getPlaylist: mockGetPlaylist,
+        getPlaylistItems: mockGetPlaylistItems,
+      },
+    })
+
+    const req = new Request('http://localhost/api/spotify/playlists/123')
+    const context = { params: { playlistId: '123' } }
+
+    // Act
+    const response = await GET(req, context)
+    const data = await response.json()
+
+    // Assert
+    expect(response.status).toBe(200)
+    expect(data.tracks.length).toBe(500)
+  })
 })
