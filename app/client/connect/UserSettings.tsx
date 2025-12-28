@@ -7,13 +7,18 @@ import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import useLocalStorage from '@/hooks/useLocalStorage'
-import { MeasurementSystem, Gender } from '../../../types'
+import { MeasurementSystem } from '../../../types'
 import {
   validateAgeValue,
   validateWeightValue,
   validateHeightValue,
 } from './validation'
-import { toKg, toDisplay, cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
+import {
+  toKg,
+  toDisplay,
+  cmToFeetAndInches,
+  feetAndInchesToCm,
+} from '../../../utils/units'
 
 interface UserSettingsProps {
   userName: string
@@ -32,8 +37,10 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   weightInKg,
   setWeightInKg,
 }) => {
-  const [heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', '175') // Always CM
-  const [gender, setGender] = useLocalStorage<Gender>('hrm-user-gender', 'MALE')
+  const [heightInCm, setHeightInCm] = useLocalStorage(
+    'hrm-user-height',
+    '175'
+  ) // Always CM
   const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
     'hrm-user-units',
     'IMPERIAL'
@@ -70,7 +77,10 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unitSystem]) // Dependencies intentionally limited to unitSystem
+  }, [unitSystem])
+  // This effect should only re-run when the unit system changes, not when the underlying weight/height
+  // values change. Including them would create a feedback loop where saving a value would immediately
+  // overwrite the user's input with a re-calculated (and possibly rounded) version.
 
   const handleAgeBlur = () => {
     setAgeError(validateAgeValue(userAge))
@@ -109,12 +119,12 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
     newUnit: MeasurementSystem | null
   ) => {
     if (newUnit && newUnit !== unitSystem) {
-      setUnitSystem(newUnit);
+      setUnitSystem(newUnit)
       // Reset errors when unit system changes
-      setWeightError(null);
-      setHeightError(null);
+      setWeightError(null)
+      setHeightError(null)
     }
-  };
+  }
 
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>

@@ -17,23 +17,23 @@ import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { formatDuration } from '@/lib/utils'
 
 interface ConnectViewProps {
-  userName: string;
-  setUserName: (value: string) => void;
-  userAge: string;
-  setUserAge: (value: string) => void;
-  weightInKg: string;
-  setWeightInKg: (value: string) => void;
-  isConnected: boolean;
-  isSupported: boolean;
-  deviceStatus: string;
-  batteryLevel: number | null;
-  currentHR: number;
-  hrZoneProps: { percentage: number; progressColor: string };
-  connectionStatus: string;
-  onConnect: () => void;
-  onDisconnect: () => void;
-  onForgetDevice: () => Promise<void>;
-  disconnectionReason: string | null;
+  userName: string
+  setUserName: (value: string) => void
+  userAge: string
+  setUserAge: (value: string) => void
+  weightInKg: string
+  setWeightInKg: (value: string) => void
+  isConnected: boolean
+  isSupported: boolean
+  deviceStatus: string
+  batteryLevel: number | null
+  currentHR: number
+  hrZoneProps: { percentage: number; progressColor: string }
+  connectionStatus: string
+  onConnect: () => void
+  onDisconnect: () => void
+  onForgetDevice: () => Promise<void>
+  disconnectionReason: string | null
 }
 
 const ConnectView: React.FC<ConnectViewProps> = ({
@@ -55,7 +55,7 @@ const ConnectView: React.FC<ConnectViewProps> = ({
   onForgetDevice,
   disconnectionReason,
 }) => {
-  const [isResetting, setIsResetting] = React.useState(false);
+  const [isResetting, setIsResetting] = React.useState(false)
 
   const {
     workoutDuration,
@@ -67,19 +67,19 @@ const ConnectView: React.FC<ConnectViewProps> = ({
   } = useWorkoutSession({
     isConnected,
     totalCalories: 0, // This will be updated via a different mechanism
-  });
+  })
 
   const { calories, resetCalories } = useCalorieCounter(
     currentHR,
     parseFloat(userAge) || 30,
     parseFloat(weightInKg) || 70,
     workoutStatus === 'running'
-  );
+  )
 
   const resetWorkout = () => {
-    resetWorkoutSession();
-    resetCalories();
-  };
+    resetWorkoutSession()
+    resetCalories()
+  }
 
   const handleFullReset = async () => {
     setIsResetting(true)
@@ -93,11 +93,11 @@ const ConnectView: React.FC<ConnectViewProps> = ({
     }
   }
 
-  let deviceStatusMessage = deviceStatus;
+  let deviceStatusMessage = deviceStatus
   if (disconnectionReason === 'timeout') {
-    deviceStatusMessage = 'Connection unstable. Trying to reconnect...';
+    deviceStatusMessage = 'Connection unstable. Trying to reconnect...'
   } else if (disconnectionReason === 'signal_loss') {
-    deviceStatusMessage = 'Signal lost. Trying to reconnect...';
+    deviceStatusMessage = 'Signal lost. Trying to reconnect...'
   }
 
   if (!isSupported) {
@@ -115,11 +115,11 @@ const ConnectView: React.FC<ConnectViewProps> = ({
         </Alert>
         <BottomNavBar />
       </Container>
-    );
+    )
   }
 
-  const showUserDetails = hasStarted || isConnected;
-  const isConnectable = !!userName.trim() && !!userAge.trim();
+  const showUserDetails = hasStarted || isConnected
+  const isConnectable = !!userName.trim() && !!userAge.trim()
 
   return (
     <>
@@ -230,7 +230,7 @@ const ConnectView: React.FC<ConnectViewProps> = ({
       </Container>
       <BottomNavBar />
     </>
-  );
-};
+  )
+}
 
-export default ConnectView;
+export default ConnectView

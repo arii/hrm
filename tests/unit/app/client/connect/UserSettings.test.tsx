@@ -9,34 +9,38 @@ import {
   act,
 } from '@testing-library/react'
 import UserSettings from '../../../../../app/client/connect/UserSettings'
-import React from 'react'
+import React, { Dispatch, SetStateAction } from 'react'
 
-const mockLocalStorageStore: { [key: string]: any } = {}
-const mockLocalStorageSetters: { [key: string]: Function[] } = {}
+const mockLocalStorageStore: { [key: string]: string } = {}
+const mockLocalStorageSetters: {
+  [key: string]: Dispatch<SetStateAction<string>>[]
+} = {}
 
 jest.mock('@/hooks/useLocalStorage', () => ({
   __esModule: true,
-  default: jest.fn((key, initialValue) => {
-    const [value, setValue] = React.useState(() =>
-      mockLocalStorageStore[key] !== undefined
-        ? mockLocalStorageStore[key]
-        : initialValue
-    )
+  default: jest.fn(
+    (key: string, initialValue: string): [string, (value: string) => void] => {
+      const [value, setValue] = React.useState(() =>
+        mockLocalStorageStore[key] !== undefined
+          ? mockLocalStorageStore[key]
+          : initialValue
+      )
 
-    if (!mockLocalStorageSetters[key]) {
-      mockLocalStorageSetters[key] = []
-    }
-    if (!mockLocalStorageSetters[key].includes(setValue)) {
-      mockLocalStorageSetters[key].push(setValue)
-    }
+      if (!mockLocalStorageSetters[key]) {
+        mockLocalStorageSetters[key] = []
+      }
+      if (!mockLocalStorageSetters[key].includes(setValue)) {
+        mockLocalStorageSetters[key].push(setValue)
+      }
 
-    const set = (newValue: any) => {
-      mockLocalStorageStore[key] = newValue
-      mockLocalStorageSetters[key].forEach((setter) => setter(newValue))
-    }
+      const set = (newValue: string) => {
+        mockLocalStorageStore[key] = newValue
+        mockLocalStorageSetters[key].forEach((setter) => setter(newValue))
+      }
 
-    return [value, set]
-  }),
+      return [value, set]
+    }
+  ),
 }))
 
 describe('UserSettings Logic', () => {
