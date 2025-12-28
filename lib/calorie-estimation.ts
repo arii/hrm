@@ -29,6 +29,9 @@ export interface CalorieEstimationParams {
  *
  * This is the recommended function for all new calorie estimations.
  *
+ * Note: This formula provides an estimate and may not be accurate for all individuals
+ * or activity types. Individual metabolic rates can vary.
+ *
  * @param params - The physiological data for the calculation.
  * @returns The estimated number of calories burned per minute.
  */
