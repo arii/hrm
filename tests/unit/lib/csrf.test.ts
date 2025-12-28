@@ -63,15 +63,13 @@ describe('CSRF Protection', () => {
 
   it('should use __Host- prefix in production', () => {
     process.env.NODE_ENV = 'production'
-    const { CSRF_COOKIE_NAME: PROD_CSRF_COOKIE_NAME } =
-      require('@/lib/csrf')
+    const { CSRF_COOKIE_NAME: PROD_CSRF_COOKIE_NAME } = require('@/lib/csrf')
     expect(PROD_CSRF_COOKIE_NAME).toBe('__Host-csrf-token')
   })
 
   it('should not use __Host- prefix in development', () => {
     process.env.NODE_ENV = 'development'
-    const { CSRF_COOKIE_NAME: DEV_CSRF_COOKIE_NAME } =
-      require('@/lib/csrf')
+    const { CSRF_COOKIE_NAME: DEV_CSRF_COOKIE_NAME } = require('@/lib/csrf')
     expect(DEV_CSRF_COOKIE_NAME).toBe('csrf-token')
   })
 })

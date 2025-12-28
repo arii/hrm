@@ -227,23 +227,30 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [disconnect, setDeviceId])
 
   const handleConnectionError = useCallback((error: unknown) => {
-    let msg = 'An unknown error occurred.'
+    let msg = 'An unknown error occurred. (E01)'
     if (error instanceof DOMException) {
-      if (error.name === 'NotFoundError') {
-        msg = 'Connection cancelled. No device selected.'
-      } else if (error.name === 'SecurityError') {
-        msg = 'Security error. Use HTTPS or localhost.'
-      } else if (error.name === 'NetworkError') {
-        msg = 'Connection failed. Device might be too far or low battery.'
-      } else {
-        msg = `Bluetooth error: ${error.name}`
+      switch (error.name) {
+        case 'NotFoundError':
+          msg = 'Connection cancelled: No device was selected. (E02)'
+          break
+        case 'SecurityError':
+          msg = 'Security error: Must use HTTPS or localhost. (E03)'
+          break
+        case 'NetworkError':
+          msg = 'Connection failed: Device is likely too far away or has a low battery. (E04)'
+          break
+        case 'AbortError':
+          msg = 'Connection cancelled by user. (E05)'
+          break
+        default:
+          msg = `Bluetooth error: ${error.name}. (E06)`
+          break
       }
     } else if (error instanceof Error) {
-      // Handle our custom timeout error
       if (error.message.includes('timeout')) {
-        msg = 'Connection timed out. Wake up device and try again.'
+        msg = 'Connection timed out: Please wake up the device and try again. (E07)'
       } else {
-        msg = `Error: ${error.message}`
+        msg = `Error: ${error.message}. (E08)`
       }
     }
     setDeviceStatus(`Failed: ${msg}`)
@@ -266,6 +273,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     } else {
       logger.info('Device disconnected manually.')
       setDeviceStatus('Disconnected')
+    }
+  }, [])
+
+  const setActiveConfig = useCallback((device: BluetoothDevice, name?: string, age?: number) => {
+    activeConfigRef.current = {
+      name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
+      age,
     }
   }, [])
 
@@ -386,10 +400,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (knownDevice) {
           setDeviceStatus(`Found known device: ${knownDevice.name}`)
-          activeConfigRef.current = {
-            name: name || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`,
-            age,
-          }
+          setActiveConfig(knownDevice, name, age)
           await connectToGatt(knownDevice)
         } else {
           setDeviceStatus(
@@ -411,7 +422,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
       }
     },
-    [connectToGatt, deviceId]
+    [connectToGatt, deviceId, setActiveConfig]
   )
 
   useEffect(() => {
@@ -464,18 +475,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         })
 
         if (deviceToConnect) {
-          activeConfigRef.current = {
-            name:
-              name || `Bluetooth HRM (${deviceToConnect.name || 'Unknown'})`,
-            age,
-          }
+          setActiveConfig(deviceToConnect, name, age)
           await connectToGatt(deviceToConnect)
         }
       } catch (error) {
         handleConnectionError(error)
       }
     },
-    [deviceStatus, isStale, connectToGatt, handleConnectionError]
+    [deviceStatus, isStale, connectToGatt, handleConnectionError, setActiveConfig]
   )
 
   return {

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import logger from '@/utils/logger'
-import { withCsrf } from '@/lib/middleware/csrf'
+import { withCsrfProtection } from '@/lib/middleware/csrf'
 
 async function handler() {
   if (process.env.NODE_ENV !== 'development') {
@@ -31,4 +31,4 @@ async function handler() {
   }
 }
 
-export const POST = withCsrf(handler)
+export const POST = withCsrfProtection(handler)

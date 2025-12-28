@@ -1,54 +1,57 @@
-import { withCsrf } from '@/lib/middleware/csrf'
-import { ApiError } from '@/lib/errors'
-import * as fs from 'fs'
 import { NextResponse } from 'next/server'
-import * as path from 'path'
+import fs from 'fs'
+import path from 'path'
 import logger from '@/utils/logger'
+import { withCsrfProtection } from '@/lib/middleware/csrf'
 
 /**
- * API route to clear the persisted Spotify token file.
- * This is called during logout to ensure a fresh authentication flow.
+ * @swagger
+ * /api/internal/clear-token:
+ *   post:
+ *     summary: Clears the Spotify token file
+ *     description: Deletes the spotify_tokens.json file from the server. This is an internal endpoint.
+ *     tags:
+ *       - Internal
+ *     responses:
+ *       200:
+ *         description: Token file cleared successfully or was already cleared.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Failed to clear the token file.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
-async function handler(_req: Request) {
-  try {
-    const tokenFilePath = path.join(
-      process.cwd(),
-      'logs',
-      'spotify_tokens.json'
-    )
+async function handler() {
+  const tokenFile = path.join(process.cwd(), 'logs', 'spotify_tokens.json')
+  logger.info(`Attempting to clear token file at: ${tokenFile}`)
 
-    // Check if file exists before attempting to delete
-    if (fs.existsSync(tokenFilePath)) {
-      fs.unlinkSync(tokenFilePath)
-      logger.info('[API /clear-token] Deleted spotify_tokens.json')
-      return NextResponse.json({
-        success: true,
-        message: 'Token file cleared',
-      })
+  try {
+    if (fs.existsSync(tokenFile)) {
+      fs.unlinkSync(tokenFile)
+      logger.info('Token file successfully deleted.')
+      return NextResponse.json({ message: 'Token file cleared' })
     } else {
-      logger.info('[API /clear-token] Token file does not exist')
-      return NextResponse.json({
-        success: true,
-        message: 'Token file already cleared',
-      })
+      logger.info('Token file not found, already cleared.')
+      return NextResponse.json({ message: 'Token file already cleared' })
     }
   } catch (error) {
-    if (error instanceof ApiError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.statusCode }
-      )
-    }
-    logger.error('[API /clear-token] Error clearing token file:', error)
+    logger.error('Failed to clear token file:', error)
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to clear token file',
-        details: error instanceof Error ? error.message : String(error),
-      },
+      { error: 'Failed to clear token file' },
       { status: 500 }
     )
   }
 }
 
-export const POST = withCsrf(handler)
+export const POST = withCsrfProtection(handler)

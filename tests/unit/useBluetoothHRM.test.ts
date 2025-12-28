@@ -181,6 +181,19 @@ describe('useBluetoothHRM', () => {
     await waitFor(() => expect(result.current.isConnected).toBe(true))
   })
 
+  it('should handle user cancelling the device picker', async () => {
+    const notFoundError = new DOMException('The user cancelled the request.', 'NotFoundError');
+    mockBluetooth.requestDevice.mockRejectedValue(notFoundError);
+
+    const { result } = renderHook(() => useBluetoothHRM())
+
+    await act(async () => {
+      await result.current.connectAndStream('Test User', 30)
+    })
+
+    expect(result.current.deviceStatus).toContain('Connection cancelled: No device was selected.')
+  });
+
   it('should not send a "death packet" if the connection is not stale', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
     await simulateConnection({ result })

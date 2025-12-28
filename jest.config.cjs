@@ -42,7 +42,7 @@ const config = {
     ],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
+    '/node_modules/(?!nanoid|uuid|@asteasolutions/zod-to-openapi)',
   ],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
