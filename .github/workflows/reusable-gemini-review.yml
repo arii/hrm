@@ -172,6 +172,33 @@ jobs:
           # Exit with error if we have critical errors
           [ ${#ERRORS[@]} -eq 0 ]
 
+      - name: Get PR Checks
+        id: checks
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+        run: |
+          echo "🔎 Fetching CI check statuses for PR #${{ github.event.pull_request.number }}..."
+          # Fetch checks, filter out the current review workflow, and format as compact JSON
+          # We only care about failed or cancelled checks to provide fix guidance.
+          CHECKS_JSON=$(gh pr checks ${{ github.event.pull_request.number }} \
+            --json name,conclusion,detailsUrl \
+            | jq -c 'map(select(.name != "gemini-review" and .name != "gemini-rereview" and (.conclusion == "failure" or .conclusion == "cancelled")))')
+
+          if [ -z "$CHECKS_JSON" ] || [ "$CHECKS_JSON" == "[]" ]; then
+            echo "✅ No failed or cancelled CI checks found."
+            echo "FAILED_CHECKS_JSON=[]" >> $GITHUB_ENV
+          else
+            echo "⚠️ Found failed or cancelled checks:"
+            echo "$CHECKS_JSON" | jq '.'
+            # Use a delimiter for multiline JSON in env var
+            DELIMITER="CHECKS_EOF_$(date +%s%N | sha256sum | head -c 32)"
+            {
+              echo "FAILED_CHECKS_JSON<<$DELIMITER"
+              echo "$CHECKS_JSON"
+              echo "$DELIMITER"
+            } >> $GITHUB_ENV
+          fi
+
       - name: Run Gemini Review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -189,6 +216,7 @@ jobs:
           REVIEW_COUNT: ${{ env.REVIEW_COUNT }}
           RESOLVED_COUNT: ${{ env.RESOLVED_COUNT }}
           CHANGES_REQUESTED: ${{ env.CHANGES_REQUESTED }}
+          FAILED_CHECKS_JSON: ${{ env.FAILED_CHECKS_JSON }}
         run: |
           pnpm tsx scripts/gemini-client.ts --preset "review" --output "review_result.json"
 

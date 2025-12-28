@@ -50,6 +50,7 @@ interface ReviewContext {
   hasTestChanges: boolean
   missingTests: boolean
   testFiles?: string | undefined
+  failedChecks: { name: string; conclusion: string; detailsUrl: string }[]
 }
 
 async function main() {
@@ -191,6 +192,7 @@ function getReviewContextFromEnv(): ReviewContext {
     hasTestChanges: process.env.HAS_TEST_CHANGES === 'true',
     missingTests: process.env.MISSING_TESTS === 'true',
     testFiles: process.env.TEST_FILES,
+    failedChecks: JSON.parse(process.env.FAILED_CHECKS_JSON || '[]'),
   }
 }
 
@@ -204,9 +206,38 @@ function buildReviewPrompt(
     ? `Re-Review #${context.reviewCount + 1}`
     : 'Initial Review'
 
-  let prompt = `# Code Review Task: ${reviewIteration}
+  let prompt = `# Code Review Task: ${reviewIteration}\n`
 
-## Review Context
+  if (context.failedChecks && context.failedChecks.length > 0) {
+    prompt += `
+## 🚨 CI Failure Analysis
+The following CI checks failed. Your primary task is to identify the cause of these failures in the code and provide specific guidance on how to fix them.
+
+| Check Name | Status | Log URL |
+|------------|--------|---------|
+${context.failedChecks
+  .map(
+    (check) =>
+      `| ${check.name} | ${check.conclusion} | [View Log](${check.detailsUrl}) |`
+  )
+  .join('\n')}
+
+### How to Fix Common Failures:
+- **Linting (\`lint\`):** Usually caused by code not following project style rules. Run \`pnpm run lint -- --fix\` locally to auto-fix many issues. Check the log for specific rule violations.
+- **Build (\`build\`):** Often due to TypeScript errors (e.g., type mismatches, invalid syntax) or missing dependencies. Check the build log for the exact error message.
+- **Unit Tests (\`unit_tests\`):** A test case failed. Run \`pnpm run test:unit\` locally to replicate. The log will show which test and assertion failed.
+- **Visual Tests (\`visual_tests\`):** The UI has changed unexpectedly. If the change is intentional, update the snapshots. Otherwise, fix the UI component. See the log for a link to the visual diff.
+- **Infrastructure (\`infra_tests\`):** The application failed to start or respond correctly. This can be due to environment configuration issues or fatal errors in the server code. Check the server startup logs.
+
+**Your Task:**
+1.  **Analyze the diff** to find the code that likely caused these failures.
+2.  **Provide a clear explanation** of why each check failed.
+3.  **Offer specific, actionable code changes** to fix the failures.
+---
+`
+  }
+
+  prompt += `## Review Context
 - **PR #${context.prNumber}**: ${context.prTitle}
 - **Author**: ${context.prAuthor}
 - **Files Changed**: ${context.filesChanged}
