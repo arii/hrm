@@ -440,17 +440,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const attemptReconnection = useCallback(
     async (userName?: string, userAge?: number) => {
       // Feature check: Browser must support getting previously-permitted devices.
-      if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return
+      if (!navigator.bluetooth?.getDevices) return
 
       try {
         setDeviceStatus('Searching for known devices...')
         const devices = await navigator.bluetooth.getDevices()
         const savedDeviceId = getCookie('hrm_device_id')
 
-        if (devices.length > 0) {
-          const knownDevice = savedDeviceId
-            ? devices.find((d) => d.id === savedDeviceId)
-            : devices[0]
+        // FIX: Only auto-connect if we can match a specifically saved device ID
+        if (savedDeviceId && devices.length > 0) {
+          const knownDevice = devices.find((d) => d.id === savedDeviceId)
 
           if (knownDevice) {
             setDeviceStatus(`Found known device: ${knownDevice.name}`)
@@ -462,7 +461,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             }
             await connectToGatt(knownDevice)
           } else {
-            setDeviceStatus('No matching known devices found.')
+            setDeviceStatus('Previously paired device not found within range.')
           }
         }
       } catch (err) {

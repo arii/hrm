@@ -1,15 +1,19 @@
 // app/settings/page.tsx
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Container, Typography, TextField, Box } from '@mui/material'
 import { useUserSettings } from '@/context/UserSettingsContext'
 
 const SettingsPage = () => {
   const [userSettings, setUserSettings] = useUserSettings()
-  const [localWeight, setLocalWeight] = useState(
-    userSettings.userWeight?.toString() || ''
-  )
+  const [localWeight, setLocalWeight] = useState('')
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (userSettings.userWeight) {
+      setLocalWeight(userSettings.userWeight.toString())
+    }
+  }, [userSettings.userWeight])
 
   const handleBlur = () => {
     if (localWeight.trim() === '') {
@@ -42,6 +46,7 @@ const SettingsPage = () => {
           onBlur={handleBlur}
           error={!!error}
           helperText={error}
+          inputProps={{ min: 20, max: 300 }}
           sx={{ mb: 2 }}
         />
       </Box>
