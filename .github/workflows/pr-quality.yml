@@ -40,18 +40,64 @@ env:
   FORCE_COLOR: 1
   # Browsers are installed INSIDE the workspace so they persist with clean: false
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
-  # Unique session identifier for concurrent runs
-  SESSION_ID: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
 
 jobs:
+  setup-env:
+    name: 🛡️ Sanitize Environment
+    runs-on: ubuntu-latest
+    outputs:
+      session_id: ${{ steps.sanitize.outputs.session_id }}
+    steps:
+      - id: sanitize
+        shell: bash
+        run: |
+          RAW_ID="${{ github.head_ref || github.ref_name }}"
+          CLEAN_ID=$(echo "$RAW_ID" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
+
+          if [ -z "$CLEAN_ID" ]; then
+            echo "::error::Sanitized SESSION_ID is empty. Original value: $RAW_ID. Please consider renaming the branch."
+            exit 1
+          fi
+
+          echo "Sanitized SESSION_ID: $CLEAN_ID"
+          echo "session_id=$CLEAN_ID" >> $GITHUB_OUTPUT
+
+      - name: Unit Test Sanitization
+        shell: bash
+        run: |
+          # Test Cases
+          TEST_CASES=(
+            "feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization=feature-long-branch-name-with-slashes-and-more-slashes-to-test"
+            "short/branch=short-branch"
+            "test/special!@#$%^&*()[]{}chars=test-special--------------chars"
+          )
+
+          for TEST_CASE in "${TEST_CASES[@]}"; do
+            INPUT=$(echo "$TEST_CASE" | cut -d'=' -f1)
+            EXPECTED=$(echo "$TEST_CASE" | cut -d'=' -f2)
+            ACTUAL=$(echo "$INPUT" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
+
+            if [ "$ACTUAL" != "$EXPECTED" ]; then
+              echo "::error::Sanitization test failed!"
+              echo "Input: '$INPUT'"
+              echo "Expected: '$EXPECTED'"
+              echo "Actual: '$ACTUAL'"
+              exit 1
+            fi
+          done
+
+          echo "✅ Sanitization unit tests passed."
   # ===========================================================================
   # JOB 1: INFRASTRUCTURE SETUP (The "Clean Slate")
   # Wipes workspace, installs deps, and prepares the environment for all jobs.
   # ===========================================================================
   infra-setup:
     name: 🏗️ Infra Setup
+    needs: setup-env
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      SESSION_ID: ${{ needs.setup-env.outputs.session_id }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -112,9 +158,11 @@ jobs:
   # ===========================================================================
   quality-check:
     name: 🛡️ Quality Check
-    needs: infra-setup
+    needs: [setup-env, infra-setup]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      SESSION_ID: ${{ needs.setup-env.outputs.session_id }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -272,9 +320,11 @@ jobs:
   # ===========================================================================
   core-tests:
     name: 🧪 Core Logic
-    needs: [infra-setup, quality-check]
+    needs: [setup-env, infra-setup, quality-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SESSION_ID: ${{ needs.setup-env.outputs.session_id }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -388,9 +438,11 @@ jobs:
   # ===========================================================================
   visual-tests:
     name: 🎨 Visual Regression
-    needs: [infra-setup, quality-check]
+    needs: [setup-env, infra-setup, quality-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SESSION_ID: ${{ needs.setup-env.outputs.session_id }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -499,8 +551,10 @@ jobs:
   quality-report:
     name: 📊 Quality Report
     if: always()
-    needs: [quality-check, core-tests, visual-tests]
+    needs: [setup-env, quality-check, core-tests, visual-tests]
     runs-on: ubuntu-latest
+    env:
+      SESSION_ID: ${{ needs.setup-env.outputs.session_id }}
     steps:
       - uses: actions/checkout@v4
 
