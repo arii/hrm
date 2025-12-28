@@ -31,7 +31,7 @@ export interface CalorieEstimationParams {
  * or activity types. Individual metabolic rates can vary.
  *
  * @param params - The physiological data for the calculation.
- * @returns The estimated number of calories burned per minute.
+ * @returns {number} The estimated number of calories burned per minute.
  */
 export const estimateCaloriesPerMinute = (
   params: CalorieEstimationParams
