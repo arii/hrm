@@ -20,7 +20,9 @@ jobs:
     secrets: inherit
 
   gemini-review:
-    if: github.event.action == 'opened'
+    if: |
+      (github.event.action == 'opened' || github.event.action == 'synchronize') &&
+      (needs.pr-quality.result == 'success' || needs.pr-quality.result == 'skipped')
     # Ensure Gemini review only runs after PR quality checks are successful to avoid reviews on incomplete or broken code.
     needs: pr-quality
     uses: ./.github/workflows/reusable-gemini-review.yml
