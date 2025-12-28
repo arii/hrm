@@ -28,16 +28,30 @@ async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
     throw new ApiError(404, 'Playlist not found.')
   }
 
+  const tracks = playlist.tracks.items
+    .map((item) => {
+      if (!item.track || item.track.type !== 'track') {
+        return null
+      }
+      return {
+        uri: item.track.uri,
+        name: item.track.name,
+        artist: item.track.artists.map((artist) => artist.name).join(', '),
+        duration: item.track.duration_ms,
+      }
+    })
+    // The map operation above can return null for non-track items,
+    // so we filter them out here.
+    .filter(Boolean)
+
   return NextResponse.json({
-    id: playlist.id,
     name: playlist.name,
     description: playlist.description,
     imageUrl:
       playlist.images && playlist.images.length > 0
-        ? (playlist.images[0]?.url ?? null)
-        : null,
-    owner: playlist.owner?.display_name ?? null,
-    trackCount: playlist.tracks?.total ?? 0,
+        ? (playlist.images[0]?.url ?? '')
+        : '',
+    tracks,
   })
 }
 

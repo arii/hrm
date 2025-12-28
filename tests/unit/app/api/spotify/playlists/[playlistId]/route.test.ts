@@ -7,7 +7,7 @@ jest.mock('next-auth/next')
 jest.mock('@spotify/web-api-ts-sdk')
 
 describe('GET /api/spotify/playlists/[playlistId]', () => {
-  it('should return playlist details for a valid playlist ID', async () => {
+  it('should return playlist details and tracks for a valid playlist ID', async () => {
     // Arrange
     const mockSession = { accessToken: 'test-token' }
     ;(getServerSession as jest.Mock).mockResolvedValue(mockSession)
@@ -18,7 +18,28 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
       description: 'A test playlist',
       images: [{ url: 'http://example.com/image.jpg' }],
       owner: { display_name: 'Test User' },
-      tracks: { total: 10 },
+      tracks: {
+        items: [
+          {
+            track: {
+              type: 'track',
+              uri: 'spotify:track:1',
+              name: 'Track 1',
+              artists: [{ name: 'Artist 1' }],
+              duration_ms: 180000,
+            },
+          },
+          {
+            track: {
+              type: 'track',
+              uri: 'spotify:track:2',
+              name: 'Track 2',
+              artists: [{ name: 'Artist 2' }],
+              duration_ms: 240000,
+            },
+          },
+        ],
+      },
     }
     const mockGetPlaylist = jest.fn().mockResolvedValue(mockPlaylist)
     ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue({
@@ -35,12 +56,23 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
     // Assert
     expect(response.status).toBe(200)
     expect(data).toEqual({
-      id: '123',
       name: 'Test Playlist',
       description: 'A test playlist',
       imageUrl: 'http://example.com/image.jpg',
-      owner: 'Test User',
-      trackCount: 10,
+      tracks: [
+        {
+          uri: 'spotify:track:1',
+          name: 'Track 1',
+          artist: 'Artist 1',
+          duration: 180000,
+        },
+        {
+          uri: 'spotify:track:2',
+          name: 'Track 2',
+          artist: 'Artist 2',
+          duration: 240000,
+        },
+      ],
     })
   })
 })

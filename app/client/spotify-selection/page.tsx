@@ -8,7 +8,8 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 
@@ -30,12 +31,18 @@ const PlaylistDetails = dynamic(
 
 const SpotifySelectionPage = () => {
   const { spotifyData, sendData } = useWebSocket()
-  const [selectedPlaylistUri, setSelectedPlaylistUri] = useState<string | null>(
-    null
-  )
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const selectedPlaylistUri = searchParams.get('playlist')
 
   const handlePlaylistSelected = (uri: string) => {
-    setSelectedPlaylistUri(uri)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('playlist', uri)
+    router.push(`?${params.toString()}`)
+  }
+
+  const handleBack = () => {
+    router.back()
   }
 
   const handlePlaylistPlay = (uri: string, trackUri?: string) => {
@@ -86,7 +93,7 @@ const SpotifySelectionPage = () => {
             <PlaylistDetails
               key={selectedPlaylistUri}
               playlistUri={selectedPlaylistUri}
-              onBack={() => setSelectedPlaylistUri(null)}
+              onBack={handleBack}
               onPlaylistPlay={handlePlaylistPlay}
             />
           ) : (
@@ -106,4 +113,10 @@ const SpotifySelectionPage = () => {
   )
 }
 
-export default SpotifySelectionPage
+const SpotifySelectionPageWithSuspense = () => (
+  <Suspense fallback={<Skeleton variant="rectangular" height={600} />}>
+    <SpotifySelectionPage />
+  </Suspense>
+)
+
+export default SpotifySelectionPageWithSuspense
