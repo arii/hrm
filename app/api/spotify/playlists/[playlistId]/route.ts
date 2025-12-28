@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
+import logger from '@/utils/logger'
 
 interface MappedTrack {
   uri: string
@@ -47,10 +48,8 @@ async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
   let pageCount = 0
   while (next && allItems.length < MAX_TRACKS_LIMIT) {
     pageCount++
-    console.log(
-      `[${new Date().toISOString()}] Fetching page ${pageCount} of playlist ${playlistId}, current track count: ${
-        allItems.length
-      }, next URL: ${next}`
+    logger.debug(
+      `Fetching page ${pageCount} of playlist ${playlistId}, current track count: ${allItems.length}, next URL: ${next}`
     )
     const nextUrl = new URL(next)
     const offset = parseInt(nextUrl.searchParams.get(OFFSET_PARAM) || '0', 10)
@@ -62,11 +61,12 @@ async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
 
     if (offset === 0) break // Should not happen if next is set
 
+    // @ts-expect-error - The Spotify SDK type for limit is MaxInt<50>, but the API supports up to 100.
     const nextPage = await spotify.playlists.getPlaylistItems(
       playlistId,
       undefined,
       undefined,
-      limit as any,
+      limit,
       offset
     )
     allItems = [...allItems, ...nextPage.items]
