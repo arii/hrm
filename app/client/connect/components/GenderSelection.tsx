@@ -4,7 +4,7 @@
 import React from 'react'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import { Gender } from '../../../types'
+import { Gender } from '@/types'
 
 interface GenderSelectionProps {
   gender: Gender

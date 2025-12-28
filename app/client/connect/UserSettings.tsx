@@ -67,6 +67,7 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
 
   // This effect synchronizes the local display state with parent props for weight.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!isWeightFocused.current) {
       const currentWeightInKg = parseFloat(weightInKg)
       if (!isNaN(currentWeightInKg)) {
@@ -77,6 +78,7 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
 
   // This effect synchronizes the local display state with parent props for height.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!isHeightFocused.current) {
       const currentHeightInCm = parseFloat(heightInCm)
       if (!isNaN(currentHeightInCm)) {
