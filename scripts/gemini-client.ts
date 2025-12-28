@@ -24,7 +24,9 @@ const preset = getArg('--preset')
 // `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
 // It is used as the primary fallback to mitigate rate-limiting issues with the experimental `gemini-2.0-flash-exp` model.
 const MODEL_FALLBACKS = process.env.GEMINI_MODEL_FALLBACKS
-  ? process.env.GEMINI_MODEL_FALLBACKS.split(',').map((m) => m.trim())
+  ? process.env.GEMINI_MODEL_FALLBACKS.split(',')
+      .map((m) => m.trim())
+      .filter(Boolean)
   : [
       'gemini-2.0-flash-exp',
       'gemini-1.5-flash-latest',
