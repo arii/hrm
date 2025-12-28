@@ -5,6 +5,8 @@
 
 set -e
 
+pnpm run build
+
 # Configuration
 TIMEOUT=120000 # Increased timeout for slower CI environments
 SERVER_LOG="/tmp/hrm-server.log"
