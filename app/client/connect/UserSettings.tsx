@@ -1,7 +1,7 @@
 // app/client/connect/UserSettings.tsx
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
@@ -54,39 +54,46 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   const [displayHeightFeet, setDisplayHeightFeet] = useState('')
   const [displayHeightInches, setDisplayHeightInches] = useState('')
 
+  // Refs to track focus state and prevent overwriting user input
+  const isWeightFocused = useRef(false)
+  const isHeightFocused = useRef(false)
+
   // Validation state
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
   const [heightError, setHeightError] = useState<string | null>(null)
 
-  // Initialize display values on mount and sync when unit system changes.
+  // Sync display values when props change (e.g., loaded from localStorage)
+  // or when the unit system is toggled.
   useEffect(() => {
-    const currentWeightInKg = parseFloat(weightInKg)
-    if (!isNaN(currentWeightInKg)) {
-      setDisplayWeight(toDisplay(currentWeightInKg, unitSystem).toString())
-    }
-
-    const currentHeightInCm = parseFloat(heightInCm)
-    if (!isNaN(currentHeightInCm)) {
-      if (unitSystem === 'METRIC') {
-        setDisplayHeightCm(currentHeightInCm.toString())
-      } else {
-        const { feet, inches } = cmToFeetAndInches(currentHeightInCm)
-        setDisplayHeightFeet(feet.toString())
-        setDisplayHeightInches(inches.toString())
+    // Only update from props if the user is not actively editing the field.
+    if (!isWeightFocused.current) {
+      const currentWeightInKg = parseFloat(weightInKg)
+      if (!isNaN(currentWeightInKg)) {
+        setDisplayWeight(toDisplay(currentWeightInKg, unitSystem).toString())
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unitSystem])
-  // This effect should only re-run when the unit system changes, not when the underlying weight/height
-  // values change. Including them would create a feedback loop where saving a value would immediately
-  // overwrite the user's input with a re-calculated (and possibly rounded) version.
+
+    if (!isHeightFocused.current) {
+      const currentHeightInCm = parseFloat(heightInCm)
+      if (!isNaN(currentHeightInCm)) {
+        if (unitSystem === 'METRIC') {
+          setDisplayHeightCm(currentHeightInCm.toString())
+        } else {
+          const { feet, inches } = cmToFeetAndInches(currentHeightInCm)
+          setDisplayHeightFeet(feet.toString())
+          setDisplayHeightInches(inches.toString())
+        }
+      }
+    }
+  }, [weightInKg, heightInCm, unitSystem])
 
   const handleAgeBlur = () => {
     setAgeError(validateAgeValue(userAge))
   }
 
   const handleWeightBlur = () => {
+    isWeightFocused.current = false
     const error = validateWeightValue(displayWeight, unitSystem)
     setWeightError(error)
     if (!error) {
@@ -98,6 +105,7 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   }
 
   const handleHeightBlur = () => {
+    isHeightFocused.current = false
     let cm = 0
     if (unitSystem === 'METRIC') {
       cm = parseFloat(displayHeightCm)
@@ -194,8 +202,9 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
           placeholder="e.g., 175"
           type="number"
           value={displayHeightCm}
+          onFocus={() => (isHeightFocused.current = true)}
           onChange={(e) => {
-            const val = e.target.valueAsNumber
+            const val = (e.target as HTMLInputElement).valueAsNumber
             setDisplayHeightCm(isNaN(val) ? '' : val.toString())
           }}
           onBlur={handleHeightBlur}
@@ -210,8 +219,9 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
             placeholder="e.g., 5"
             type="number"
             value={displayHeightFeet}
+            onFocus={() => (isHeightFocused.current = true)}
             onChange={(e) => {
-              const val = e.target.valueAsNumber
+              const val = (e.target as HTMLInputElement).valueAsNumber
               setDisplayHeightFeet(isNaN(val) ? '' : val.toString())
             }}
             onBlur={handleHeightBlur}
@@ -222,8 +232,9 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
             placeholder="e.g., 9"
             type="number"
             value={displayHeightInches}
+            onFocus={() => (isHeightFocused.current = true)}
             onChange={(e) => {
-              const val = e.target.valueAsNumber
+              const val = (e.target as HTMLInputElement).valueAsNumber
               setDisplayHeightInches(isNaN(val) ? '' : val.toString())
             }}
             onBlur={handleHeightBlur}
@@ -236,8 +247,9 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
         placeholder={unitSystem === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
         type="number"
         value={displayWeight}
+        onFocus={() => (isWeightFocused.current = true)}
         onChange={(e) => {
-          const val = e.target.valueAsNumber
+          const val = (e.target as HTMLInputElement).valueAsNumber
           setDisplayWeight(isNaN(val) ? '' : val.toString())
         }}
         onBlur={handleWeightBlur}
