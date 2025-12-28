@@ -40,7 +40,7 @@ jobs:
         shell: bash
         run: |
           RAW_ID="${{ github.head_ref || github.ref_name }}"
-          CLEAN_ID=$(echo "$RAW_ID" | sed 's/[^a-zA-Z0--9_-]/-/g' | cut -c1-64)
+          CLEAN_ID=$(echo "$RAW_ID" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
 
           if [ -z "$CLEAN_ID" ]; then
             echo "::error::Sanitized SESSION_ID is empty. Original value: $RAW_ID"
@@ -49,6 +49,47 @@ jobs:
 
           echo "Sanitized SESSION_ID: $CLEAN_ID"
           echo "session_id=$CLEAN_ID" >> $GITHUB_OUTPUT
+
+      - name: Unit Test Sanitization
+        shell: bash
+        run: |
+          # Test Case 1: Sanitization and Truncation
+          INPUT_1='feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization'
+          EXPECTED_1='feature-long-branch-name-with-slashes-and-more-slashes-to-test'
+          ACTUAL_1=$(echo "$INPUT_1" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
+          if [ "$ACTUAL_1" != "$EXPECTED_1" ]; then
+            echo "::error::Sanitization test 1 failed!"
+            echo "Input: '$INPUT_1'"
+            echo "Expected: '$EXPECTED_1'"
+            echo "Actual: '$ACTUAL_1'"
+            exit 1
+          fi
+
+          # Test Case 2: Short branch with slash
+          INPUT_2='short/branch'
+          EXPECTED_2='short-branch'
+          ACTUAL_2=$(echo "$INPUT_2" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
+          if [ "$ACTUAL_2" != "$EXPECTED_2" ]; then
+            echo "::error::Sanitization test 2 failed!"
+            echo "Input: '$INPUT_2'"
+            echo "Expected: '$EXPECTED_2'"
+            echo "Actual: '$ACTUAL_2'"
+            exit 1
+          fi
+
+          # Test Case 3: Special characters
+          INPUT_3='test/special!@#$%^&*()[]{}chars'
+          EXPECTED_3='test-special--------------chars'
+          ACTUAL_3=$(echo "$INPUT_3" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
+          if [ "$ACTUAL_3" != "$EXPECTED_3" ]; then
+            echo "::error::Sanitization test 3 failed!"
+            echo "Input: '$INPUT_3'"
+            echo "Expected: '$EXPECTED_3'"
+            echo "Actual: '$ACTUAL_3'"
+            exit 1
+          fi
+
+          echo "✅ Sanitization unit tests passed."
 
   dependency-check:
     name: 📦 Dependency Check
