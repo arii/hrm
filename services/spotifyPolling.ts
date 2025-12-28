@@ -445,17 +445,15 @@ export class SpotifyPolling implements SpotifyService {
   private async executeSdkCommand(
     commandName: string,
     action: () => Promise<unknown>,
-    logContext: Record<string, string | number | undefined> = {}
+    logContext: Record<
+      string,
+      string | number | undefined | boolean | null | object
+    > = {}
   ): Promise<void> {
     try {
       await action()
     } catch (error) {
-      // The SDK throws a SyntaxError on 204 No Content because it attempts to parse an
-      // empty response body, which is expected for some successful commands.
-      if (
-        error instanceof SyntaxError &&
-        error.message.includes('Unexpected end of JSON input')
-      ) {
+      if (this.isEmptyResponseError(error)) {
         logger.debug(
           { command: commandName, ...logContext },
           'Spotify command successful (204 No Content)'
@@ -464,5 +462,19 @@ export class SpotifyPolling implements SpotifyService {
       }
       throw error
     }
+  }
+
+  /**
+   * Checks if an error is a SyntaxError caused by an empty JSON response.
+   * The SDK throws this error on 204 No Content because it attempts to parse an
+   * empty response body, which is expected for some successful commands.
+   * @param error The error to check.
+   * @returns True if the error is an empty response error, false otherwise.
+   */
+  private isEmptyResponseError(error: unknown): boolean {
+    return (
+      error instanceof SyntaxError &&
+      error.message.includes('Unexpected end of JSON input')
+    )
   }
 }
