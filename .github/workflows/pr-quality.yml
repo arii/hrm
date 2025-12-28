@@ -58,6 +58,9 @@ jobs:
           # This safely gets the branch name for both pull requests (`head_ref`) and
           # direct pushes (`ref_name`). `head_ref` is preferred as it contains the
           # source branch name in PRs, whereas `ref_name` would be the target branch (e.g., `leader`).
+          # Passing the value as an env var mitigates script injection risks, though a
+          # malicious actor with control over the branch name could still theoretically
+          # cause issues. This is a reasonable trade-off for this use case.
           RAW_REF: ${{ github.head_ref || github.ref_name }}
         run: |
           # Replace any character that is not a letter, number, hyphen, or underscore with a hyphen.
@@ -95,6 +98,7 @@ jobs:
           assert_sanitize 'short/branch' 'short-branch' # Test a simple case with a slash.
           assert_sanitize 'test/special!@#$%^&*()[]{}chars' 'test-special--------------chars' # Test various special characters.
           assert_sanitize '!@#$%' '-----' # Test a string with only special characters.
+          assert_sanitize '' '' # Test an empty string.
 
           echo "✅ Sanitization unit tests passed."
 
