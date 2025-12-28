@@ -71,6 +71,20 @@ export interface WebSocketContextType extends WebSocketState {
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
 // Helper for stable ID
+const generateUUID = () => {
+  // Native support check
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+
+  // Fallback for insecure contexts or older browsers
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
 const getClientId = () => {
   // IMPORTANT: This client-side ID is for session persistence and UX ONLY.
   // It is NOT a security feature. It is vulnerable to tampering and should not
@@ -79,7 +93,7 @@ const getClientId = () => {
   if (typeof window === 'undefined') return ''
   let id = localStorage.getItem('hrm_client_uuid')
   if (!id) {
-    id = crypto.randomUUID() // Browser native UUID
+    id = generateUUID()
     localStorage.setItem('hrm_client_uuid', id)
   }
   return id
