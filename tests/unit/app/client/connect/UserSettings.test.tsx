@@ -145,4 +145,45 @@ describe('UserSettings', () => {
     )
     expect(weightInput).toHaveValue(90)
   })
+
+  it('handles rapid switching between weight and height inputs', async () => {
+    const { rerender } = render(
+      <UserSettings {...defaultProps} unitSystem="IMPERIAL" />
+    )
+    const weightInput = screen.getByLabelText(/Weight/i)
+    const feetInput = screen.getByLabelText(/Feet/i)
+    const inchesInput = screen.getByLabelText(/Inches/i)
+
+    // User starts typing in the weight input
+    fireEvent.focus(weightInput)
+    fireEvent.change(weightInput, { target: { value: '160' } })
+    expect(weightInput).toHaveValue(160)
+
+    // User quickly switches to the height input
+    fireEvent.focus(feetInput)
+    fireEvent.change(feetInput, { target: { value: '6' } })
+    expect(feetInput).toHaveValue(6)
+
+    // While the height input is focused, an external prop change happens for weight
+    rerender(
+      <UserSettings {...defaultProps} weightInKg="80" unitSystem="IMPERIAL" />
+    )
+
+    // The weight input should NOT change and should retain the user's typed value
+    expect(weightInput).toHaveValue(160)
+
+    // User blurs the height input, which should save the height
+    fireEvent.blur(inchesInput)
+    await waitFor(() => {
+      // 6'0" is approx 182.88 cm
+      expect(defaultProps.setHeightInCm).toHaveBeenCalledWith('182.88')
+    })
+
+    // User goes back to the weight input and blurs it, which should save the weight
+    fireEvent.blur(weightInput)
+    await waitFor(() => {
+      // 160 lbs is approx 72.57 kg
+      expect(defaultProps.setWeightInKg).toHaveBeenCalledWith('72.57')
+    })
+  })
 })
