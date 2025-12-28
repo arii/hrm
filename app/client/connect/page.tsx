@@ -9,9 +9,9 @@ import { useHrZone } from '@/hooks/useHrZone'
 import ConnectView from './ConnectView'
 
 export default function ConnectPage() {
-  const [userName] = useLocalStorage('hrm-user-name', '')
-  const [userAge] = useLocalStorage('hrm-user-age', '')
-  const [weightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
+  const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
+  const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
+  const [weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
 
   const {
     connectAndStream,
@@ -39,8 +39,11 @@ export default function ConnectPage() {
   return (
     <ConnectView
       userName={userName}
+      setUserName={setUserName}
       userAge={userAge}
+      setUserAge={setUserAge}
       weightInKg={weightInKg}
+      setWeightInKg={setWeightInKg}
       isConnected={isConnected}
       isSupported={isSupported}
       deviceStatus={deviceStatus}

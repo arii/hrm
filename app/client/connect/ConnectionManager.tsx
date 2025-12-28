@@ -60,8 +60,10 @@ const ConnectionManager: React.FC<ConnectionManagerProps> = ({
               <CircularProgress size={20} color="inherit" />
               <span>Connecting...</span>
             </Stack>
-          ) : (
+          ) : isConnectable ? (
             'Connect Bluetooth HRM'
+          ) : (
+            'Enter Details to Connect'
           )}
         </Button>
       ) : (
