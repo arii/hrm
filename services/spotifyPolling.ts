@@ -20,6 +20,11 @@ import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
 import { env } from '../lib/env.js'
 
+// This constant is defined at the top of the file to ensure it's easily accessible
+// and to avoid magic strings in the code.
+const UNEXPECTED_END_OF_JSON_INPUT_ERROR_MESSAGE =
+  'Unexpected end of JSON input'
+
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
 
@@ -334,7 +339,7 @@ export class SpotifyPolling implements SpotifyService {
    * @param params.playlistUri The URI of a playlist to play (legacy).
    * @param params.contextUri The URI of a context to play (playlist, album, artist). Takes precedence over playlistUri.
    */
-  public handleCommand(
+  public async handleCommand(
     command: SpotifyCommand,
     params: {
       deviceId?: string
@@ -342,31 +347,29 @@ export class SpotifyPolling implements SpotifyService {
       playlistUri?: string
       contextUri?: string
     }
-  ) {
+  ): Promise<void> {
     const { deviceId, volume, playlistUri, contextUri } = params
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
-      return Promise.resolve()
-    }
-
-    if (command === 'GET_DEVICES') {
-      this.refreshDevices()
       return
     }
 
-    return (async () => {
-      try {
-        await this.executeSpotifyCommand(
-          command,
-          deviceId,
-          volume,
-          contextUri || playlistUri
-        )
-        setTimeout(() => this.getCurrentlyPlaying(), 500)
-      } catch (error) {
-        await logSpotifyCommandError(command, error)
-      }
-    })()
+    if (command === 'GET_DEVICES') {
+      await this.refreshDevices()
+      return
+    }
+
+    try {
+      await this.executeSpotifyCommand(
+        command,
+        deviceId,
+        volume,
+        contextUri || playlistUri
+      )
+      setTimeout(() => this.getCurrentlyPlaying(), 500)
+    } catch (error) {
+      await logSpotifyCommandError(command, error)
+    }
   }
 
   private async executeSpotifyCommand(
@@ -377,34 +380,59 @@ export class SpotifyPolling implements SpotifyService {
   ) {
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
-
     switch (command) {
       case 'PLAY':
-        if (contextUri) {
-          // The safe API wrapper handles the undefined deviceId correctly.
-          await this.sdk!.player.startResumePlayback(deviceId, contextUri)
-        } else {
-          await this.sdk!.player.startResumePlayback(deviceId)
-        }
+        // deviceId is optional
+        await this.executeSdkCommand(
+          command,
+          () =>
+            contextUri
+              ? this.sdk!.player.startResumePlayback(deviceId, contextUri)
+              : this.sdk!.player.startResumePlayback(deviceId),
+          { deviceId, contextUri }
+        )
         break
       case 'PAUSE':
-        await this.sdk!.player.pausePlayback(deviceId)
+        // deviceId is optional
+        await this.executeSdkCommand(
+          command,
+          () => this.sdk!.player.pausePlayback(deviceId),
+          { deviceId }
+        )
         break
       case 'NEXT':
-        await this.sdk!.player.skipToNext(deviceId)
+        // deviceId is optional
+        await this.executeSdkCommand(
+          command,
+          () => this.sdk!.player.skipToNext(deviceId),
+          { deviceId }
+        )
         break
       case 'PREVIOUS':
-        await this.sdk!.player.skipToPrevious(deviceId)
+        // deviceId is optional
+        await this.executeSdkCommand(
+          command,
+          () => this.sdk!.player.skipToPrevious(deviceId),
+          { deviceId }
+        )
         break
       case 'TRANSFER_PLAYBACK':
         if (deviceId) {
-          await this.sdk!.player.transferPlayback([deviceId], true)
+          await this.executeSdkCommand(
+            command,
+            () => this.sdk!.player.transferPlayback([deviceId], true),
+            { deviceId }
+          )
         }
         break
       case 'SET_VOLUME':
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
-          await this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId)
+          await this.executeSdkCommand(
+            command,
+            () => this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId),
+            { deviceId, volume: clampedVolume }
+          )
         }
         break
       case 'LOGIN':
@@ -413,5 +441,46 @@ export class SpotifyPolling implements SpotifyService {
       default:
         logger.warn({ command }, 'Unknown Spotify command')
     }
+  }
+
+  /**
+   * Executes a Spotify SDK command and suppresses syntax errors caused by 204 No Content responses.
+   * @param commandName The name of the command being executed (for logging).
+   * @param apiCall The SDK function to execute.
+   * @param logContext Additional context for logging. This is for internal logging only and is not passed to the Spotify SDK. e.g., `{ deviceId, contextUri }`
+   */
+  private async executeSdkCommand(
+    commandName: string,
+    apiCall: () => Promise<unknown>,
+    logContext: Record<string, string | number | undefined> = {}
+  ): Promise<void> {
+    try {
+      await apiCall()
+    } catch (error) {
+      if (this.isEmptyResponseError(error)) {
+        logger.debug(
+          { command: commandName, ...logContext },
+          'Spotify command successful (204 No Content)'
+        )
+        return
+      }
+      throw error
+    }
+  }
+
+  /**
+   * Checks if an error is a SyntaxError caused by an empty JSON response.
+   * The SDK throws this error on 204 No Content because it attempts to parse an
+   * empty response body. This is expected for successful playback control commands
+   * (like `PLAY`, `PAUSE`, `NEXT`, etc.) that do not return any data.
+   * @param error The error to check. We use `unknown` because catch clause variables are of type `unknown` in TypeScript.
+   * @returns True if the error is an empty response error, false otherwise.
+   * @see https://developer.spotify.com/documentation/web-api/concepts/api-calls#response-status-codes
+   */
+  private isEmptyResponseError(error: unknown): boolean {
+    return (
+      error instanceof SyntaxError &&
+      error.message.includes(UNEXPECTED_END_OF_JSON_INPUT_ERROR_MESSAGE)
+    )
   }
 }
