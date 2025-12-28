@@ -40,12 +40,17 @@ export const WebSocketProvider = ({
     if (typeof window === 'undefined') {
       return null
     }
-    let id = localStorage.getItem('clientId')
-    if (!id) {
-      id = window.crypto.randomUUID()
-      localStorage.setItem('clientId', id)
+    try {
+      let id = localStorage.getItem('clientId')
+      if (!id) {
+        id = window.crypto.randomUUID()
+        localStorage.setItem('clientId', id)
+      }
+      return id
+    } catch (error) {
+      console.error('Failed to access localStorage:', error)
+      return window.crypto.randomUUID() // Fallback to in-memory UUID
     }
-    return id
   })
 
   // Memoize the WebSocket URL to prevent re-computation on every render
@@ -73,7 +78,9 @@ export const WebSocketProvider = ({
 
   // Configuration for exponential backoff
   const MAX_RECONNECT_ATTEMPTS = 10
+  // The initial delay for the first reconnection attempt.
   const INITIAL_RECONNECT_DELAY = 1000 // 1 second
+  // The factor by which the reconnection delay is randomized to prevent clients from reconnecting simultaneously.
   const JITTER_FACTOR = 0.2 // 20% jitter
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
@@ -92,9 +99,13 @@ export const WebSocketProvider = ({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedActions = localStorage.getItem('pendingActions')
-      if (savedActions) {
-        pendingActions.current = JSON.parse(savedActions)
+      try {
+        const savedActions = localStorage.getItem('pendingActions')
+        if (savedActions) {
+          pendingActions.current = JSON.parse(savedActions)
+        }
+      } catch (error) {
+        console.error('Failed to access localStorage:', error)
       }
     }
   }, [])
@@ -154,7 +165,11 @@ export const WebSocketProvider = ({
           ws.send(JSON.stringify(action))
         })
         pendingActions.current = []
-        localStorage.setItem('pendingActions', '[]')
+        try {
+          localStorage.setItem('pendingActions', '[]')
+        } catch (error) {
+          console.error('Failed to access localStorage:', error)
+        }
       }
 
       reconnectAttempts.current = 0
@@ -263,10 +278,14 @@ export const WebSocketProvider = ({
         ws.send(JSON.stringify(augmentedData))
       } else {
         pendingActions.current.push(augmentedData)
-        localStorage.setItem(
-          'pendingActions',
-          JSON.stringify(pendingActions.current)
-        )
+        try {
+          localStorage.setItem(
+            'pendingActions',
+            JSON.stringify(pendingActions.current)
+          )
+        } catch (error) {
+          console.error('Failed to access localStorage:', error)
+        }
       }
     },
     [clientId]
