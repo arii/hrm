@@ -236,10 +236,10 @@ const handleIncomingMessage = (
           const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
           sessionState.lastUpdate = now
 
-          let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
           // Prioritize incoming weight, but fall back to stored or default weight.
+          // This is a fallback used when client-specific weight data is unavailable.
           const calculatedWeight =
             message.data.weight ??
             existingData.weightKg ??
@@ -251,14 +251,13 @@ const handleIncomingMessage = (
               age: currentAge,
               weightKg: calculatedWeight,
             })
-            currentAccumulated += caloriesPerMinute * dtMinutes
+            sessionState.accumulatedCalories += caloriesPerMinute * dtMinutes
           }
 
-          sessionState.accumulatedCalories = currentAccumulated
           hrmDataRepository.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
-            calories: Math.round(currentAccumulated * 10) / 10,
+            calories: Math.round(sessionState.accumulatedCalories * 10) / 10,
             weightKg: calculatedWeight,
           })
         }
