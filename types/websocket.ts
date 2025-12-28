@@ -89,6 +89,9 @@ export type ServerMessage =
 
 export type HrmInputData = {
   value: number | null
+  maxHr?: number
+  name?: string
+  age?: number
 }
 
 export interface HrmInputMessage {
