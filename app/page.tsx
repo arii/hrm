@@ -11,7 +11,7 @@ import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadi
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
-import HrmTiles from '../components/HrmTiles'
+import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
 
@@ -82,7 +82,7 @@ const Dashboard = () => {
         </Box>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
-          <HrmTiles />
+          <HrmConnectionPanel />
         </ErrorBoundary>
 
         <Box sx={{ width: '100%' }}>

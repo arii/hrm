@@ -1,127 +1,176 @@
-// app/client/connect/page.tsx
 'use client'
+
 import { useState } from 'react'
-import { Container, Typography, TextField, Box } from '@mui/material'
-import { useUserSettings } from '@/context/UserSettingsContext'
-import HrmConnectionPanel from '@/components/HrmConnectionPanel'
-import HrmTiles from '@/components/HrmTiles'
+import useLocalStorage from '@/hooks/useLocalStorage'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { useWebSocket } from '@/context/WebSocketContext'
+import { formatDuration } from '@/lib/utils'
+import ConnectView from './ConnectView'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { MeasurementSystem } from '../../../types'
+import { toKg, toDisplay } from '../../../utils/units'
+import { useCalorieCounter } from '@/hooks/useCalorieCounter'
+import { useHrZone } from '@/hooks/useHrZone'
+import { useHeightInput } from '@/hooks/useHeightInput'
+import { validateAgeValue, validateWeightValue } from './validation'
 
-const MIN_WEIGHT = 20
-const MAX_WEIGHT = 300
-const MIN_AGE = 1
-const MAX_AGE = 120
+export default function ConnectPage() {
+  const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
+  const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
+  // Height logic is now encapsulated in useHeightInput
+  const [_weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
+  const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
+    'hrm-user-gender',
+    'MALE'
+  )
+  const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
+    'hrm-user-units',
+    'IMPERIAL'
+  )
 
-const ConnectPage = () => {
-  const [userSettings, setUserSettings] = useUserSettings()
-  const [errors, setErrors] = useState({
-    userWeight: '',
-    userName: '',
-    userAge: '',
-  })
+  const [displayWeight, setDisplayWeight] = useState('')
+  const [ageError, setAgeError] = useState<string | null>(null)
+  const [weightError, setWeightError] = useState<string | null>(null)
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target
-    const isNumberField = name === 'userAge' || name === 'userWeight'
-    setUserSettings({
-      ...userSettings,
-      [name]: value === '' ? null : isNumberField ? Number(value) : value,
-    })
+  // Use the custom hook for height input logic
+  const {
+    displayHeight,
+    updateHeight: handleHeightChange,
+    commitHeight: handleHeightBlur,
+    error: heightError,
+  } = useHeightInput('175', unitSystem)
+
+  const handleAgeBlur = () => {
+    const error = validateAgeValue(userAge)
+    setAgeError(error)
   }
 
-  const validateField = (name: string, value: string | number | null) => {
-    let error = ''
-    if (name === 'userName') {
-      if (!value) {
-        error = 'Name is required.'
-      }
-    } else if (name === 'userAge') {
-      const age = Number(value)
-      if (value === null || value === undefined) {
-        error = 'Age is required.'
-      } else if (isNaN(age) || age < MIN_AGE || age > MAX_AGE) {
-        error = `Invalid age. Must be between ${MIN_AGE} and ${MAX_AGE}.`
-      }
-    } else if (name === 'userWeight') {
-      const weight = Number(value)
-      if (value === null || value === undefined) {
-        error = 'Weight is required.'
-      } else if (isNaN(weight) || weight < MIN_WEIGHT || weight > MAX_WEIGHT) {
-        error = `Invalid weight. Must be between ${MIN_WEIGHT} and ${MAX_WEIGHT}.`
+  const handleWeightChange = (newDisplayValue: string) => {
+    setDisplayWeight(newDisplayValue)
+  }
+
+  const handleWeightBlur = () => {
+    const error = validateWeightValue(displayWeight, unitSystem)
+    setWeightError(error)
+
+    const numericValue = parseFloat(displayWeight)
+    if (!error && !isNaN(numericValue) && numericValue > 0) {
+      const newKgValue = toKg(numericValue, unitSystem)
+      setWeightInKg(newKgValue.toFixed(2))
+    }
+  }
+
+  const {
+    connectAndStream,
+    disconnect,
+    forgetDevice,
+    deviceStatus,
+    batteryLevel,
+    isConnected,
+    isSupported,
+    disconnectionReason,
+  } = useBluetoothHRM()
+
+  const { connectionStatus, hrmData } = useWebSocket()
+
+  let deviceStatusMessage = deviceStatus
+  if (disconnectionReason === 'timeout') {
+    deviceStatusMessage = 'Connection unstable. Trying to reconnect...'
+  } else if (disconnectionReason === 'signal_loss') {
+    deviceStatusMessage = 'Signal lost. Trying to reconnect...'
+  }
+
+  const handleUnitChange = (newUnit: MeasurementSystem) => {
+    if (newUnit && newUnit !== unitSystem) {
+      setUnitSystem(newUnit)
+      // Height hook handles its own transient state reset if unit changes
+      // Update display weight to prevent flicker/empty value
+      const currentKg = parseFloat(_weightInKg)
+      if (!isNaN(currentKg)) {
+        const newDisplay = toDisplay(currentKg, newUnit)
+        setDisplayWeight(newDisplay.toString())
+      } else {
+        setDisplayWeight('')
       }
     }
-    return error
   }
 
-  const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    const { name, value } = event.target
-    const isNumberField = name === 'userAge' || name === 'userWeight'
-    const fieldValue =
-      value === '' ? null : isNumberField ? Number(value) : value
-    const error = validateField(name, fieldValue)
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: error,
-    }))
+  const handleConnect = () => {
+    const age = userAge ? parseFloat(userAge) : 0
+    connectAndStream(userName, age)
+  }
+
+  const currentUserData = hrmData.find((d) => d.name === userName)
+  const currentHR = currentUserData?.value || 0
+  const totalCalories = currentUserData?.calories ?? 0
+  const maxHr = userAge ? 220 - parseFloat(userAge) : 190
+  const hrZoneProps = useHrZone(currentHR, maxHr)
+
+  const {
+    workoutDuration,
+    resetWorkout: resetWorkoutSession,
+    hasStarted,
+    startWorkout,
+    endWorkout,
+    workoutStatus,
+  } = useWorkoutSession({
+    isConnected,
+    totalCalories,
+  })
+
+  const { calories, resetCalories } = useCalorieCounter(
+    currentHR,
+    parseFloat(userAge) || 30,
+    parseFloat(_weightInKg) || 70,
+    workoutStatus === 'running'
+  )
+
+  const resetWorkout = () => {
+    resetWorkoutSession()
+    resetCalories()
   }
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Connect & Settings
-        </Typography>
-
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h5" component="h2" gutterBottom>
-            Your Details
-          </Typography>
-          <TextField
-            label="Name"
-            type="text"
-            fullWidth
-            name="userName"
-            value={userSettings.userName ?? ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            error={!!errors.userName}
-            helperText={errors.userName}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Age"
-            type="number"
-            fullWidth
-            name="userAge"
-            value={userSettings.userAge ?? ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            error={!!errors.userAge}
-            helperText={errors.userAge}
-            inputProps={{ min: MIN_AGE, max: MAX_AGE }}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Weight (kg)"
-            type="number"
-            fullWidth
-            name="userWeight"
-            value={userSettings.userWeight ?? ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            error={!!errors.userWeight}
-            helperText={errors.userWeight}
-            inputProps={{ min: MIN_WEIGHT, max: MAX_WEIGHT }}
-            sx={{ mb: 2 }}
-          />
-        </Box>
-
-        <HrmConnectionPanel />
-        <Box sx={{ mt: 4 }}>
-          <HrmTiles />
-        </Box>
-      </Box>
-    </Container>
+    <ConnectView
+      duration={formatDuration(workoutDuration)}
+      caloriesBurned={calories}
+      userName={userName}
+      setUserName={setUserName}
+      userAge={userAge}
+      setUserAge={setUserAge}
+      onAgeBlur={handleAgeBlur}
+      ageError={ageError}
+      userHeight={displayHeight}
+      setUserHeight={handleHeightChange}
+      onHeightBlur={handleHeightBlur}
+      heightError={heightError}
+      userWeight={displayWeight}
+      setUserWeight={handleWeightChange}
+      onWeightBlur={handleWeightBlur}
+      weightError={weightError}
+      gender={gender}
+      setGender={setGender}
+      unitSystem={unitSystem}
+      onUnitChange={handleUnitChange}
+      isConnected={isConnected}
+      deviceStatus={deviceStatusMessage}
+      batteryLevel={batteryLevel}
+      onConnect={handleConnect}
+      onDisconnect={disconnect}
+      onForgetDevice={forgetDevice}
+      isSupported={isSupported}
+      currentHR={currentHR}
+      hrZoneProps={{
+        percentage: hrZoneProps.percentage,
+        progressColor: hrZoneProps.progressColor,
+      }}
+      connectionStatus={connectionStatus}
+      bluetoothConnected={isConnected}
+      hasStarted={hasStarted}
+      onReset={resetWorkout}
+      workoutStatus={workoutStatus}
+      onStartWorkout={startWorkout}
+      onEndWorkout={endWorkout}
+    />
   )
 }
-
-export default ConnectPage
