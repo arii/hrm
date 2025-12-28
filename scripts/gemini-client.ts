@@ -170,21 +170,42 @@ ${task}
   }
 }
 
-export function getReviewContextFromEnv(): ReviewContext {
-  const failedChecksRaw = process.env.FAILED_CHECKS_JSON
-  let failedChecks = []
-  if (failedChecksRaw) {
-    try {
-      failedChecks = JSON.parse(failedChecksRaw)
-    } catch (error) {
-      console.warn(
-        `Warning: Could not parse FAILED_CHECKS_JSON: ${(error as Error).message}`
-      )
-      // Default to an empty array if parsing fails
-      failedChecks = []
+interface FailedCheck {
+  name: string
+  conclusion: string
+  detailsUrl: string
+}
+
+function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
+  if (!jsonStr) return []
+  try {
+    const parsed = JSON.parse(jsonStr)
+    if (!Array.isArray(parsed)) {
+      console.warn('Warning: FAILED_CHECKS_JSON is not an array.')
+      return []
     }
+    // Use a type guard to filter and validate the shape of each object
+    return parsed.filter((item): item is FailedCheck => {
+      const isValid =
+        typeof item.name === 'string' &&
+        typeof item.conclusion === 'string' &&
+        typeof item.detailsUrl === 'string'
+      if (!isValid) {
+        console.warn('Warning: Invalid item in FAILED_CHECKS_JSON:', item)
+      }
+      return isValid
+    })
+  } catch (e) {
+    console.warn(
+      `Warning: Failed to parse FAILED_CHECKS_JSON: ${(e as Error).message}`
+    )
+    return []
   }
+}
+
+function getReviewContextFromEnv(): ReviewContext {
   return {
+    failedChecks: parseFailedChecks(process.env.FAILED_CHECKS_JSON),
     prNumber: process.env.PR_NUMBER || '',
     prTitle: process.env.PR_TITLE || '',
     prAuthor: process.env.PR_AUTHOR || '',
@@ -209,6 +230,18 @@ export function getReviewContextFromEnv(): ReviewContext {
   }
 }
 
+const CHECK_FIX_GUIDANCE: Record<string, string> = {
+  lint: 'Usually caused by code not following project style rules. Run `pnpm run lint -- --fix` locally to auto-fix many issues. Check the log for specific rule violations.',
+  build:
+    'Often due to TypeScript errors (e.g., type mismatches, invalid syntax) or missing dependencies. Check the build log for the exact error message.',
+  unit_tests:
+    'A test case failed. Run `pnpm run test:unit` locally to replicate. The log will show which test and assertion failed.',
+  visual_tests:
+    'The UI has changed unexpectedly. If the change is intentional, update the snapshots. Otherwise, fix the UI component. See the log for a link to the visual diff.',
+  infra_tests:
+    'The application failed to start or respond correctly. This can be due to environment configuration issues or fatal errors in the server code. Check the server startup logs.',
+}
+
 function buildReviewPrompt(
   diff: string,
   context: ReviewContext,
@@ -229,6 +262,17 @@ function buildReviewPrompt(
       )
       .join('\n')}`
 
+    const guidance = context.failedChecks
+      .map((check) => {
+        const key = Object.keys(CHECK_FIX_GUIDANCE).find((key) =>
+          check.name.toLowerCase().includes(key)
+        )
+        return key
+          ? `- **${check.name}**: ${CHECK_FIX_GUIDANCE[key]}`
+          : `- **${check.name}**: Check the logs linked above for details.`
+      })
+      .join('\n')
+
     prompt += `
 
 ## 🚨 CI Failure Analysis
@@ -238,11 +282,7 @@ The following CI checks failed. Your primary task is to identify the cause of th
 ${checksTable}
 
 ### How to Fix Common Failures:
-- **Linting (\`lint\`):** Usually caused by code not following project style rules. Run \`pnpm run lint -- --fix\` locally to auto-fix many issues. Check the log for specific rule violations.
-- **Build (\`build\`):** Often due to TypeScript errors (e.g., type mismatches, invalid syntax) or missing dependencies. Check the build log for the exact error message.
-- **Unit Tests (\`unit_tests\`):** A test case failed. Run \`pnpm run test:unit\` locally to replicate. The log will show which test and assertion failed.
-- **Visual Tests (\`visual_tests\`):** The UI has changed unexpectedly. If the change is intentional, update the snapshots. Otherwise, fix the UI component. See the log for a link to the visual diff.
-- **Infrastructure (\`infra_tests\`):** The application failed to start or respond correctly. This can be due to environment configuration issues or fatal errors in the server code. Check the server startup logs.
+${guidance}
 
 **Your Task:**
 1.  **Analyze the diff** to find the code that likely caused these failures.

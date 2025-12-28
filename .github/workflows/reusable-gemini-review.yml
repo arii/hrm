@@ -179,29 +179,31 @@ jobs:
         run: |
           echo "🔎 Fetching CI check statuses for PR #${{ github.event.pull_request.number }}..."
           set +e
-          # Fetch checks, filter out the current review workflow, format, and limit to the first 10 failures.
-          # We only care about failed or cancelled checks to provide fix guidance.
-          CHECKS_OUTPUT=$(gh pr checks ${{ github.event.pull_request.number }} \
-            --json name,conclusion,detailsUrl 2>&1)
+          # Capture stdout to a file and stderr to a log file to prevent JSON corruption from warnings.
+          gh pr checks ${{ github.event.pull_request.number }} \
+            --json name,conclusion,detailsUrl > checks_output.json 2> gh_error.log
           EXIT_CODE=$?
           set -e
 
           if [ $EXIT_CODE -ne 0 ]; then
+            ERROR_LOG=$(cat gh_error.log)
             ERROR_MESSAGE="Get PR Checks: Failed to fetch PR checks (exit code $EXIT_CODE)."
-            if [[ "$CHECKS_OUTPUT" == *"Could not resolve to a PullRequest"* ]]; then
+            if [[ "$ERROR_LOG" == *"Could not resolve to a PullRequest"* ]]; then
               FRIENDLY_ERROR="Could not find the pull request. This might be a permissions issue or an invalid PR number."
-            elif [[ "$CHECKS_OUTPUT" == *"HTTP 401"* ]] || [[ "$CHECKS_OUTPUT" == *"Bad credentials"* ]]; then
+            elif [[ "$ERROR_LOG" == *"HTTP 401"* ]] || [[ "$ERROR_LOG" == *"Bad credentials"* ]]; then
               FRIENDLY_ERROR="Authentication failed. The GitHub token is likely invalid or has insufficient permissions."
             else
               FRIENDLY_ERROR="An unexpected error occurred."
             fi
-            echo "::warning::${ERROR_MESSAGE} ${FRIENDLY_ERROR} Raw output: ${CHECKS_OUTPUT}"
+            echo "::warning::${ERROR_MESSAGE} ${FRIENDLY_ERROR} Raw error log: ${ERROR_LOG}"
             CHECKS_JSON="[]"
           else
+            CHECKS_OUTPUT=$(cat checks_output.json)
             # Slice the results to get the first 10 failed checks to prevent an overly long prompt.
             CHECKS_JSON=$(echo "$CHECKS_OUTPUT" | jq -c 'map(select(.name != "gemini-review" and .name != "gemini-rereview" and (.conclusion == "failure" or .conclusion == "cancelled"))) | .[0:10]')
 
-            # Validate that the result is valid JSON before proceeding
+            # Validate that the result is valid JSON before proceeding.
+            # This is a safe guard in case the gh command output changes in a non-JSON way even on success.
             if ! echo "$CHECKS_JSON" | jq -e . > /dev/null; then
               echo "::warning::Get PR Checks: Generated CHECKS_JSON is not valid JSON. Defaulting to empty array. Content was: $CHECKS_JSON"
               CHECKS_JSON="[]"
