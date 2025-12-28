@@ -11,11 +11,45 @@ jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
 }))
 
-// Mock navigator.bluetooth
-const mockBluetooth = {
-  requestDevice: jest.fn(),
-  getDevices: jest.fn(),
+// Deeply mock the navigator.bluetooth structure
+const mockCharacteristic = {
+  startNotifications: jest.fn().mockResolvedValue(undefined),
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+  getDescriptor: jest.fn().mockResolvedValue({
+    readValue: jest.fn().mockResolvedValue(new DataView(new ArrayBuffer(0))),
+  }),
+  readValue: jest.fn().mockResolvedValue(new DataView(new ArrayBuffer(1))),
 }
+
+const mockService = {
+  getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+}
+
+const mockGattServer = {
+  connect: jest.fn().mockResolvedValue(undefined), // This is not used in the hook's logic directly
+  disconnect: jest.fn(),
+  getPrimaryService: jest.fn().mockResolvedValue(mockService),
+}
+
+const mockDevice = {
+  id: 'test-device-id',
+  name: 'Test HRM',
+  gatt: {
+    connected: false,
+    connect: jest.fn().mockResolvedValue(mockGattServer),
+    disconnect: jest.fn(),
+  },
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+  watchAdvertisements: jest.fn().mockResolvedValue(undefined),
+}
+
+const mockBluetooth = {
+  requestDevice: jest.fn().mockResolvedValue(mockDevice),
+  getDevices: jest.fn().mockResolvedValue([mockDevice]),
+}
+
 Object.defineProperty(navigator, 'bluetooth', {
   value: mockBluetooth,
   writable: true,
@@ -23,38 +57,15 @@ Object.defineProperty(navigator, 'bluetooth', {
 
 describe('useBluetoothHRM', () => {
   let mockSendData: jest.Mock
-  let mockCharacteristic: {
-    startNotifications: jest.Mock
-    addEventListener: jest.Mock
-    removeEventListener: jest.Mock
-  }
-  let mockGattServer: {
-    connect: jest.Mock
-    disconnect: jest.Mock
-    getPrimaryService: jest.Mock
-  }
-  let mockDevice: {
-    id: string
-    name: string
-    gatt: {
-      connected: boolean
-      connect: jest.Mock
-      disconnect: jest.Mock
-    }
-    addEventListener: jest.Mock
-    removeEventListener: jest.Mock
-  }
   let consoleWarnSpy: jest.SpyInstance
   let consoleInfoSpy: jest.SpyInstance
 
   beforeAll(() => {
-    // Suppress console.warn and console.info for all tests in this suite
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
     consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => {})
   })
 
   afterAll(() => {
-    // Restore console methods
     consoleWarnSpy.mockRestore()
     consoleInfoSpy.mockRestore()
   })
@@ -64,44 +75,27 @@ describe('useBluetoothHRM', () => {
     mockSendData = jest.fn()
     ;(useWebSocket as jest.Mock).mockReturnValue({
       sendData: mockSendData,
-      connectionStatus: 'Connected',
     })
-
-    mockCharacteristic = {
-      startNotifications: jest.fn().mockResolvedValue(undefined),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-    }
-    const mockService = {
-      getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
-    }
-    mockGattServer = {
-      connect: jest.fn().mockResolvedValue({
-        getPrimaryService: jest.fn().mockResolvedValue(mockService),
-      }),
-      disconnect: jest.fn(),
-      getPrimaryService: jest.fn().mockResolvedValue(mockService),
-    }
-
-    mockDevice = {
-      id: 'test-device-id',
-      name: 'Test HRM',
-      gatt: {
-        connected: false,
-        connect: jest.fn().mockResolvedValue(mockGattServer),
-        disconnect: jest.fn(),
-      },
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-    }
-
+    // Reset all mock implementations to their default behavior
+    jest.clearAllMocks()
     mockBluetooth.requestDevice.mockResolvedValue(mockDevice)
-    mockBluetooth.getDevices.mockResolvedValue([])
+    mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+    mockDevice.gatt.connect.mockResolvedValue(mockGattServer)
+    mockGattServer.getPrimaryService.mockResolvedValue(mockService)
+    mockService.getCharacteristic.mockResolvedValue(mockCharacteristic)
+    Object.defineProperty(mockDevice.gatt, 'connected', {
+      value: false,
+      writable: true,
+    })
   })
 
   afterEach(() => {
     jest.useRealTimers()
-    jest.clearAllMocks()
+    document.cookie.split(';').forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, '')
+        .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`)
+    })
   })
 
   type UseBluetoothHRMReturn = ReturnType<typeof useBluetoothHRM>
@@ -110,31 +104,18 @@ describe('useBluetoothHRM', () => {
     result: { current: UseBluetoothHRMReturn }
   }) => {
     await act(async () => {
-      hook.result.current.connectAndStream('Test User', 30)
-      await Promise.resolve() // Allow promises to resolve
+      await hook.result.current.connectAndStream('Test User', 30)
     })
-    // Simulate gatt connected state
-    Object.defineProperty(mockDevice.gatt, 'connected', {
-      value: true,
-      writable: true,
-    })
-
-    // Manually trigger the first characteristic value change to signal that the
-    // connection is live and not stale. This is what sets isConnected to true.
+    Object.defineProperty(mockDevice.gatt, 'connected', { value: true })
     const characteristicValueChangedCallback =
       mockCharacteristic.addEventListener.mock.calls.find(
         (call) => call[0] === 'characteristicvaluechanged'
       )?.[1]
-
-    if (characteristicValueChangedCallback) {
-      act(() => {
-        characteristicValueChangedCallback({
-          target: {
-            value: new DataView(new Uint8Array([0, 75]).buffer),
-          },
-        })
+    act(() => {
+      characteristicValueChangedCallback?.({
+        target: { value: new DataView(new Uint8Array([0, 75]).buffer) },
       })
-    }
+    })
   }
 
   it('should send a "death packet" when the connection becomes stale', async () => {
@@ -142,7 +123,6 @@ describe('useBluetoothHRM', () => {
     await simulateConnection({ result })
     await waitFor(() => expect(result.current.isConnected).toBe(true))
 
-    // Advance time by 5 seconds (more than the 4-second threshold)
     act(() => {
       jest.advanceTimersByTime(5000)
     })
@@ -151,7 +131,7 @@ describe('useBluetoothHRM', () => {
       type: 'HRM_INPUT',
       data: {
         value: 0,
-        maxHr: 190, // 220 - 30
+        maxHr: 190,
         name: 'Test User',
         age: 30,
       },
@@ -165,24 +145,18 @@ describe('useBluetoothHRM', () => {
     await simulateConnection({ result })
     await waitFor(() => expect(result.current.isConnected).toBe(true))
 
-    // Advance time to trigger staleness
     act(() => {
       jest.advanceTimersByTime(5000)
     })
-
     await waitFor(() => expect(result.current.isConnected).toBe(false))
 
-    // Simulate a new heart rate value arriving
     const characteristicValueChangedCallback =
       mockCharacteristic.addEventListener.mock.calls.find(
         (call) => call[0] === 'characteristicvaluechanged'
       )?.[1]
-
     act(() => {
-      characteristicValueChangedCallback({
-        target: {
-          value: new DataView(new Uint8Array([0, 75]).buffer),
-        },
+      characteristicValueChangedCallback?.({
+        target: { value: new DataView(new Uint8Array([0, 78]).buffer) },
       })
     })
 
@@ -193,9 +167,7 @@ describe('useBluetoothHRM', () => {
   it('should report isConnected as false initially and true after connection', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
     expect(result.current.isConnected).toBe(false)
-
     await simulateConnection({ result })
-
     await waitFor(() => expect(result.current.isConnected).toBe(true))
   })
 
@@ -204,7 +176,6 @@ describe('useBluetoothHRM', () => {
     await simulateConnection({ result })
     await waitFor(() => expect(result.current.isConnected).toBe(true))
 
-    // Advance time by 2 seconds (less than the 4-second threshold)
     act(() => {
       jest.advanceTimersByTime(2000)
     })
@@ -219,32 +190,21 @@ describe('useBluetoothHRM', () => {
 
   it('should use the device name as a fallback when no user name is provided', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
-
-    // Simulate connection without providing a user name
     await act(async () => {
-      result.current.connectAndStream(undefined, 30)
-      await Promise.resolve()
+      await result.current.connectAndStream(undefined, 30)
     })
-    Object.defineProperty(mockDevice.gatt, 'connected', {
-      value: true,
-      writable: true,
-    })
-
+    Object.defineProperty(mockDevice.gatt, 'connected', { value: true })
     const characteristicValueChangedCallback =
       mockCharacteristic.addEventListener.mock.calls.find(
         (call) => call[0] === 'characteristicvaluechanged'
       )?.[1]
-
     act(() => {
-      characteristicValueChangedCallback({
-        target: {
-          value: new DataView(new Uint8Array([0, 80]).buffer),
-        },
+      characteristicValueChangedCallback?.({
+        target: { value: new DataView(new Uint8Array([0, 80]).buffer) },
       })
     })
 
     await waitFor(() => expect(result.current.isConnected).toBe(true))
-
     expect(mockSendData).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -259,21 +219,17 @@ describe('useBluetoothHRM', () => {
     await simulateConnection({ result })
     await waitFor(() => expect(result.current.isConnected).toBe(true))
 
-    // Advance time to trigger staleness
     act(() => {
       jest.advanceTimersByTime(5000)
     })
-
     await waitFor(() => expect(result.current.isConnected).toBe(false))
     expect(result.current.deviceStatus).toBe('Connected (No Data)')
 
-    // Simulate the device disconnecting
     const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
       (call) => call[0] === 'gattserverdisconnected'
     )?.[1]
-
     act(() => {
-      onDisconnectedCallback()
+      onDisconnectedCallback?.()
     })
 
     expect(result.current.deviceStatus).toContain('Signal Lost. Retrying...')

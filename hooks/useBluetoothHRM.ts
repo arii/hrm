@@ -107,7 +107,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     userName,
     userAge,
   } = props
-  const { sendData, connectionStatus } = useWebSocket()
+  const { sendData } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [isStale, setIsStale] = useState(true)
   const [disconnectionReason, setDisconnectionReason] =
@@ -437,8 +437,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const connectAndStream = useCallback(
     async (name?: string, age?: number): Promise<void> => {
       if (deviceStatus.startsWith('Connected') && !isStale) return
-      if (connectionStatus !== 'Connected') {
-        setDeviceStatus('Waiting for WebSocket connection...')
+      if (!deviceRef.current?.gatt?.connected) {
+        setDeviceStatus('Waiting for Bluetooth connection...')
         return
       }
 
@@ -465,13 +465,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         handleConnectionError(error)
       }
     },
-    [
-      deviceStatus,
-      connectionStatus,
-      connectToGatt,
-      handleConnectionError,
-      isStale,
-    ]
+    [deviceStatus, connectToGatt, handleConnectionError, isStale]
   )
 
   return {

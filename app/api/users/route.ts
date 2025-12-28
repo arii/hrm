@@ -1,4 +1,5 @@
 // app/api/users/route.ts
+import { withCsrf } from '@/lib/middleware/csrf'
 import { withValidation } from '@/lib/middleware/validation'
 import { CreateUserProfileSchema } from '@/lib/validation/schemas'
 import { UserProfile } from '@/types/core'
@@ -32,6 +33,6 @@ async function createUser(
   return NextResponse.json(newUser, { status: 201 })
 }
 
-export const POST = withValidation({ schema: CreateUserProfileSchema })(
-  createUser
+export const POST = withCsrf(
+  withValidation({ schema: CreateUserProfileSchema })(createUser)
 )

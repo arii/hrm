@@ -1,10 +1,11 @@
 // File: app/api/spotify/control/route.ts
+import { withCsrf } from '@/lib/middleware/csrf'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import logger from '@/utils/logger'
 
-export async function POST(req: NextRequest) {
+async function handler(req: NextRequest) {
   const session = await getServerSession(authOptions)
 
   if (!session || !session.accessToken) {
@@ -148,3 +149,5 @@ export async function POST(req: NextRequest) {
     )
   }
 }
+
+export const POST = withCsrf(handler)

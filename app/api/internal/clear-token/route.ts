@@ -1,3 +1,4 @@
+import { withCsrf } from '@/lib/middleware/csrf'
 import { ApiError } from '@/lib/errors'
 import * as fs from 'fs'
 import { NextResponse } from 'next/server'
@@ -8,7 +9,7 @@ import logger from '@/utils/logger'
  * API route to clear the persisted Spotify token file.
  * This is called during logout to ensure a fresh authentication flow.
  */
-export async function POST(_req: Request) {
+async function handler(_req: Request) {
   try {
     const tokenFilePath = path.join(
       process.cwd(),
@@ -49,3 +50,5 @@ export async function POST(_req: Request) {
     )
   }
 }
+
+export const POST = withCsrf(handler)
