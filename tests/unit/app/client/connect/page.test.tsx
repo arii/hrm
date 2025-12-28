@@ -29,16 +29,16 @@ jest.mock('@/hooks/useBluetoothHRM', () => ({
     isSupported: true,
     attemptReconnection: jest.fn(),
   })),
-}));
+}))
 
 describe('ConnectPage', () => {
-    beforeAll(() => {
-        global.fetch = jest.fn(() =>
-        Promise.resolve({
-            json: () => Promise.resolve({}),
-        })
-        ) as jest.Mock;
-    });
+  beforeAll(() => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({}),
+      })
+    ) as jest.Mock
+  })
 
   it('renders all settings fields', () => {
     render(
