@@ -103,9 +103,6 @@ export default function ConnectPage() {
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
   const totalCalories = currentUserData?.totalCalories ?? 0
-  const maxHr = userAge ? 220 - parseInt(userAge) : 190
-  const hrZoneProps = getHrZoneProps(currentHR, maxHr)
-  const totalCalories = currentUserData?.calories ?? 0
   const maxHr = userAge ? 220 - parseFloat(userAge) : 190
   const hrZoneProps = useHrZone(currentHR, maxHr)
 
@@ -136,7 +133,6 @@ export default function ConnectPage() {
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
-      caloriesBurned={caloriesBurned}
       totalCalories={totalCalories}
       caloriesBurned={calories}
       userName={userName}

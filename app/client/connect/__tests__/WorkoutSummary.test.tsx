@@ -1,4 +1,3 @@
-
 import { render, screen } from '@testing-library/react'
 import WorkoutSummary from '../WorkoutSummary'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'

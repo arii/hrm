@@ -2,6 +2,8 @@
 // Centralized constants for the application.
 
 export const MAX_HR_DEFAULT = 185
+export const USER_AGE_DEFAULT = 30
+export const USER_WEIGHT_DEFAULT_KG = 70
 
 // Battery level thresholds for UI icons
 export const BATTERY_LEVEL_FULL = 70

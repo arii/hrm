@@ -124,12 +124,6 @@ const HrmConnectionPanel = () => {
               },
             }}
           >
-            <HrTile
-              name={user.name || ''}
-              bpm={user.value}
-              percentMax={user.percentage}
-              calories={user.totalCalories || 0}
-              isConnected={user.isConnected}
             <HrTileWithCalories
               user={user}
               isAlerting={user.isAlerting}

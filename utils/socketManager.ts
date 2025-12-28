@@ -21,6 +21,7 @@ import {
   sendWebSocketMessage,
   ConnectionMonitor,
 } from './websocketUtils.js'
+import { USER_AGE_DEFAULT, USER_WEIGHT_DEFAULT_KG } from './constants.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
@@ -68,8 +69,8 @@ const updateCaloriesForClient = (clientId: string): boolean => {
       if (durationMinutes > 0 && durationMinutes < 5) {
         const caloriesBurned = estimateCaloriesBurned({
           heartRate: avgHr,
-          age: clientData.age ?? 30,
-          weightKg: clientData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG,
+          age: clientData.age ?? USER_AGE_DEFAULT,
+          weightKg: clientData.weightKg ?? USER_WEIGHT_DEFAULT_KG,
           durationMinutes: durationMinutes,
         })
 
@@ -173,7 +174,7 @@ const initSocketManager = (
 export const resetSocketManager = () => {
   if (calorieUpdateInterval) {
     clearInterval(calorieUpdateInterval)
-    calorieUpdateInterval = null
+    calorieUpdateInterval = undefined
   }
   hrmDataRepository.clear()
   clientSessionState.clear()
