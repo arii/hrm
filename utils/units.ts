@@ -62,3 +62,33 @@ export const cmToFeetAndInches = (
   const inches = roundedTotalInches % FEET_TO_INCHES
   return { feet, inches }
 }
+
+/**
+ * Updates the display height based on the measurement system.
+ * @param cm The height in centimeters.
+ * @param unitSystem The target measurement system.
+ * @returns An object with the display height values.
+ */
+export const updateDisplayHeight = (
+  cm: number,
+  unitSystem: MeasurementSystem
+): {
+  displayHeightCm: string
+  displayHeightFeet: string
+  displayHeightInches: string
+} => {
+  if (unitSystem === 'METRIC') {
+    return {
+      displayHeightCm: cm.toString(),
+      displayHeightFeet: '',
+      displayHeightInches: '',
+    }
+  } else {
+    const { feet, inches } = cmToFeetAndInches(cm)
+    return {
+      displayHeightCm: '',
+      displayHeightFeet: feet.toString(),
+      displayHeightInches: inches.toString(),
+    }
+  }
+}
