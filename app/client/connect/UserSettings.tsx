@@ -37,10 +37,7 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   weightInKg,
   setWeightInKg,
 }) => {
-  const [heightInCm, setHeightInCm] = useLocalStorage(
-    'hrm-user-height',
-    '175'
-  ) // Always CM
+  const [heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', '175') // Always CM
   const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
     'hrm-user-units',
     'IMPERIAL'
@@ -58,8 +55,6 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   const [heightError, setHeightError] = useState<string | null>(null)
 
   // Initialize display values on mount and sync when unit system changes.
-  // This avoids a feedback loop where saving a value would trigger a recalculation
-  // and overwrite the user's input with a potentially rounded value.
   useEffect(() => {
     const currentWeightInKg = parseFloat(weightInKg)
     if (!isNaN(currentWeightInKg)) {
@@ -120,7 +115,6 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   ) => {
     if (newUnit && newUnit !== unitSystem) {
       setUnitSystem(newUnit)
-      // Reset errors when unit system changes
       setWeightError(null)
       setHeightError(null)
     }

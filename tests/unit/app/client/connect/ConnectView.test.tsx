@@ -53,12 +53,8 @@ describe('ConnectView', () => {
   it('renders UserSettings when not connected and workout has not started', () => {
     render(<ConnectView {...defaultProps} />)
     expect(screen.getByText('UserSettings Mock')).toBeInTheDocument()
-    expect(
-      screen.queryByText('ConnectionManager Mock')
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByText('WorkoutManager Mock')
-    ).toBeInTheDocument()
+    expect(screen.getByText('ConnectionManager Mock')).toBeInTheDocument()
+    expect(screen.getByText('WorkoutManager Mock')).toBeInTheDocument()
   })
 
   it('shows user details and hides UserSettings when connected', () => {

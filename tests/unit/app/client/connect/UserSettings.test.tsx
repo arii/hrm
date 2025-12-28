@@ -1,13 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  act,
-} from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import UserSettings from '../../../../../app/client/connect/UserSettings'
 import React, { Dispatch, SetStateAction } from 'react'
 
