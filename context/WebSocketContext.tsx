@@ -117,21 +117,19 @@ export const WebSocketProvider = ({
 
         // Create a new state array by merging existing and new data
         const mergedHrmData = state.hrmData.map((existingUser) => {
-          if (incomingClients.has(existingUser.clientId)) {
-            const updatedUser = payload.find(
-              (newUser) => newUser.clientId === existingUser.clientId
-            )
+          const updatedUser = payload.find(
+            (newUser) => newUser.clientId === existingUser.clientId
+          )
+          if (updatedUser) {
             // CRITICAL FIX: The order of spread operators is essential.
             // By spreading existingUser first, then updatedUser, we ensure
             // that any fields NOT present in the (potentially partial) `updatedUser`
             // payload are preserved from the existing state.
-            return updatedUser
-              ? {
-                  ...existingUser,
-                  ...updatedUser,
-                  isConnected: true,
-                }
-              : { ...existingUser, isConnected: true }
+            return {
+              ...existingUser,
+              ...updatedUser,
+              isConnected: true,
+            }
           }
           return { ...existingUser, isConnected: false }
         })
