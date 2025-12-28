@@ -21,7 +21,8 @@ const outputFile = getArg('--output')
 const preset = getArg('--preset')
 
 // List of models to try in order.
-// Prioritizing newer models as requested to fix 404 errors with older/deprecated ones.
+// `gemini-2.5-flash-image` is prioritized as a fallback due to its higher quota limits,
+// which helps mitigate rate-limiting issues with the primary `gemini-2.0-flash-exp` model.
 const MODEL_FALLBACKS = [
   'gemini-2.0-flash-exp',
   'gemini-2.5-flash-image',
@@ -134,9 +135,13 @@ async function generateContentWithFallback(
         error.message?.includes('429') || error.status === 429
 
       if (isNotFound || isBadRequest || isRateLimited) {
-        let reason = 'Not Found/Invalid'
+        let reason = 'Unknown Error'
         if (isRateLimited) {
           reason = 'Rate Limited'
+        } else if (isNotFound) {
+          reason = 'Not Found'
+        } else if (isBadRequest) {
+          reason = 'Invalid Request'
         }
         console.warn(
           `Model ${modelName} failed (${reason}). Trying next model...`
