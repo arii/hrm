@@ -263,6 +263,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
     }
     setDeviceStatus(`Failed: ${msg}`)
+    setDeviceStatus('Disconnected')
   }, [])
 
   const onDisconnected = useCallback(() => {

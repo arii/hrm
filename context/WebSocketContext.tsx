@@ -70,6 +70,113 @@ export interface WebSocketContextType extends WebSocketState {
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
+export const generateUUID = (): string => {
+  // Modern secure generation
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+
+  // Robust fallback
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
+const getClientId = () => {
+  // IMPORTANT: This client-side ID is for session persistence and UX ONLY.
+  // It is NOT a security feature. It is vulnerable to tampering and should not
+  // be used for authentication or authorization. For any sensitive operations,
+  // a proper server-side session with secure authentication (e.g., cookies, JWTs) is required.
+  if (typeof window === 'undefined') return ''
+  let id = localStorage.getItem('hrm_client_uuid')
+  if (!id) {
+    id = generateUUID()
+    localStorage.setItem('hrm_client_uuid', id)
+  }
+  return id
+}
+
+// Unified State Object managed by a reducer
+export const reducer = (
+  state: WebSocketState,
+  message: ServerMessage | { type: 'RESET_STATE' }
+): WebSocketState => {
+  switch (message.type) {
+    case 'RESET_STATE':
+      return INITIAL_STATE
+    case 'INITIAL_STATE': {
+      const hrmDataWithConnection =
+        message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ||
+        []
+      return {
+        ...state,
+        ...message.payload,
+        timerData: {
+          ...state.timerData,
+          ...message.payload.timerData,
+        },
+        spotifyData: {
+          ...state.spotifyData,
+          ...message.payload.spotifyData,
+        },
+        hrmData: hrmDataWithConnection,
+      }
+    }
+    case 'HRM_UPDATE': {
+      const payload = message.payload as ServerHrmData[]
+      const incomingClientIds = new Set(payload.map((p) => p.clientId))
+      const mergedHrmData = state.hrmData
+        .map((existingUser) => {
+          const updatedUser = payload.find(
+            (newUser) => newUser.clientId === existingUser.clientId
+          )
+          return {
+            ...existingUser,
+            ...(updatedUser || {}),
+            isConnected: incomingClientIds.has(existingUser.clientId),
+          }
+        })
+        .filter(
+          (user) =>
+            user.isConnected ||
+            state.hrmData.some((u) => u.clientId === user.clientId)
+        )
+
+      payload.forEach((newUser) => {
+        if (
+          !mergedHrmData.some(
+            (existingUser) => existingUser.clientId === newUser.clientId
+          )
+        ) {
+          mergedHrmData.push({ ...newUser, isConnected: true })
+        }
+      })
+
+      return { ...state, hrmData: mergedHrmData }
+    }
+    case 'TIMER_UPDATE':
+      return {
+        ...state,
+        timerData: { ...state.timerData, ...message.payload },
+      }
+    case 'SPOTIFY_UPDATE':
+      return {
+        ...state,
+        spotifyData: { ...state.spotifyData, ...message.payload },
+      }
+    case 'ACTIVE_ALERTS_UPDATE':
+      return { ...state, activeAlerts: message.payload }
+    case 'SPOTIFY_SERVICE_INIT_UPDATE':
+      return { ...state, spotifyServiceInitialized: message.payload }
+    case 'EXECUTE_SPOTIFY':
+      return state
+    default:
+      return state
+  }
+}
+
 export const WebSocketProvider = ({
   children,
   serverUrl,
@@ -77,85 +184,6 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
-  // Unified State Object managed by a reducer
-  const reducer = (
-    state: WebSocketState,
-    message: ServerMessage | { type: 'RESET_STATE' }
-  ): WebSocketState => {
-    switch (message.type) {
-      case 'RESET_STATE':
-        return INITIAL_STATE
-      case 'INITIAL_STATE': {
-        const hrmDataWithConnection =
-          message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ||
-          []
-        return {
-          ...state,
-          ...message.payload,
-          timerData: {
-            ...state.timerData,
-            ...message.payload.timerData,
-          },
-          spotifyData: {
-            ...state.spotifyData,
-            ...message.payload.spotifyData,
-          },
-          hrmData: hrmDataWithConnection,
-        }
-      }
-      case 'HRM_UPDATE': {
-        const payload = message.payload as ServerHrmData[]
-        const incomingClientIds = new Set(payload.map((p) => p.clientId))
-        const mergedHrmData = state.hrmData
-          .map((existingUser) => {
-            const updatedUser = payload.find(
-              (newUser) => newUser.clientId === existingUser.clientId
-            )
-            return {
-              ...existingUser,
-              ...(updatedUser || {}),
-              isConnected: incomingClientIds.has(existingUser.clientId),
-            }
-          })
-          .filter(
-            (user) =>
-              user.isConnected ||
-              state.hrmData.some((u) => u.clientId === user.clientId)
-          )
-
-        payload.forEach((newUser) => {
-          if (
-            !mergedHrmData.some(
-              (existingUser) => existingUser.clientId === newUser.clientId
-            )
-          ) {
-            mergedHrmData.push({ ...newUser, isConnected: true })
-          }
-        })
-
-        return { ...state, hrmData: mergedHrmData }
-      }
-      case 'TIMER_UPDATE':
-        return {
-          ...state,
-          timerData: { ...state.timerData, ...message.payload },
-        }
-      case 'SPOTIFY_UPDATE':
-        return {
-          ...state,
-          spotifyData: { ...state.spotifyData, ...message.payload },
-        }
-      case 'ACTIVE_ALERTS_UPDATE':
-        return { ...state, activeAlerts: message.payload }
-      case 'SPOTIFY_SERVICE_INIT_UPDATE':
-        return { ...state, spotifyServiceInitialized: message.payload }
-      case 'EXECUTE_SPOTIFY':
-        return state
-      default:
-        return state
-    }
-  }
-
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
@@ -224,6 +252,14 @@ export const WebSocketProvider = ({
     }, 30000)
   }, [stopHeartbeat])
 
+  // Append clientId to query string
+  const getUrlWithId = useCallback(() => {
+    const base = serverUrl || getWebSocketURL()
+    const url = new URL(base)
+    url.searchParams.append('clientId', getClientId())
+    return url.toString()
+  }, [serverUrl])
+
   const connect = useCallback(() => {
     if (
       typeof window === 'undefined' ||
@@ -233,7 +269,7 @@ export const WebSocketProvider = ({
     }
 
     shouldReconnect.current = true
-    const ws = new WebSocket(serverUrl || getWebSocketURL())
+    const ws = new WebSocket(getUrlWithId())
     wsRef.current = ws
 
     ws.onopen = () => {
