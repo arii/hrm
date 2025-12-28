@@ -29,12 +29,28 @@ runs:
         RAW: ${{ inputs.value }}
         LEN: ${{ inputs.max-length }}
       run: |
-        # 1. Strip newlines (tr -d '\n') to protect GITHUB_OUTPUT
-        # 2. Replace invalid chars with hyphen
-        # 3. Squeeze repeating hyphens (tr -s '-')
-        # 4. Truncate
+        # Detailed Sanitization Steps:
+        # 1. `tr -d '\n'`: Removes any newline characters. This is a critical safety measure to
+        #    prevent multi-line inputs from breaking the key=value format of GITHUB_OUTPUT.
+        # 2. `sed 's/[^a-zA-Z0-9_-]/-/g'`: Replaces any character that is NOT an alphanumeric,
+        #    underscore, or hyphen with a hyphen. This is the core sanitization step.
+        # 3. `tr -s '-'`: Squeezes (compresses) any sequence of one or more hyphens into a single
+        #    hyphen. This prevents inputs like `feature//branch` from becoming `feature--branch`.
+        # 4. `cut -c1-"$LEN"`: Truncates the string to the maximum allowed length specified by the
+        #    `max-length` input.
         CLEAN=$(echo "$RAW" | tr -d '\n' | sed 's/[^a-zA-Z0-9_-]/-/g' | tr -s '-' | cut -c1-"$LEN")
 
-        # Remove trailing hyphens if any (optional but clean)
+        # 5. Remove Leading AND Trailing hyphens for safety and cleanliness.
+        #    `${CLEAN#-}` removes a leading hyphen.
+        #    `${CLEAN%-}` removes a trailing hyphen.
+        CLEAN=${CLEAN#-}
         CLEAN=${CLEAN%-}
+
+        # 6. Fallback Check: If the sanitization results in an empty string
+        #    (e.g., input was only invalid characters), output a warning.
+        #    The calling workflow can then decide how to handle it.
+        if [[ -z "$CLEAN" ]]; then
+          echo "::warning::Input resulted in an empty string after sanitization."
+        fi
+
         echo "result=$CLEAN" >> "$GITHUB_OUTPUT"

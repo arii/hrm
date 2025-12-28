@@ -77,12 +77,24 @@ jobs:
             value: 'feature/branch-'
             max-length: '64'
             expected: 'feature-branch'
+          - name: "At Max Length"
+            value: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
+            max-length: '64'
+            expected: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
+          - name: "Only Invalid Chars"
+            value: '!@#$%^&*()'
+            max-length: '64'
+            expected: ''
+          - name: "Leading and Trailing Invalid Chars"
+            value: '!!test-branch!!'
+            max-length: '64'
+            expected: 'test-branch'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Sanitize String (Test Case - ${{ matrix.name }})
-        id: sanitize
+        id: sanitize_step
         uses: ./.github/actions/sanitize-string
         with:
           value: ${{ matrix.value }}
@@ -90,7 +102,7 @@ jobs:
 
       - name: Verify (Test Case - ${{ matrix.name }})
         run: |
-          actual="${{ steps.sanitize.outputs.sanitized-value }}"
+          actual="${{ steps.sanitize_step.outputs.sanitized-value }}"
           expected="${{ matrix.expected }}"
           if [ "$actual" != "$expected" ]; then
             echo "Test Case Failed: ${{ matrix.name }}"
@@ -123,7 +135,7 @@ jobs:
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           cache: 'pnpm'
@@ -179,7 +191,7 @@ jobs:
       # We still set up pnpm/node just to ensure the binaries are in PATH
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with: { node-version: '20.x' }
 
       - name: Sanitize SESSION_ID
@@ -306,7 +318,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with: { node-version: '20.x' }
 
       - name: Configure Session-specific Cache
@@ -422,7 +434,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with: { node-version: '20.x' }
 
       - name: Configure Session-specific Cache
