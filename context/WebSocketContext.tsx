@@ -25,7 +25,7 @@ export interface HrmData extends ServerHrmData {
   isConnected: boolean
 }
 
-interface WebSocketState {
+export interface WebSocketState {
   hrmData: HrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
@@ -33,7 +33,7 @@ interface WebSocketState {
   spotifyServiceInitialized?: boolean
 }
 
-const INITIAL_STATE: WebSocketState = {
+export const INITIAL_STATE: WebSocketState = {
   hrmData: [],
   timerData: {
     isRunning: false,
@@ -70,6 +70,86 @@ export interface WebSocketContextType extends WebSocketState {
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
+// Unified State Object managed by a reducer
+export const reducer = (
+  state: WebSocketState,
+  message: ServerMessage | { type: 'RESET_STATE' }
+): WebSocketState => {
+  switch (message.type) {
+    case 'RESET_STATE':
+      return INITIAL_STATE
+    case 'INITIAL_STATE': {
+      // When the initial state is loaded, ensure all HRM data is marked as connected.
+      const hrmDataWithConnection =
+        message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ||
+        []
+      return {
+        ...state,
+        ...message.payload,
+        hrmData: hrmDataWithConnection,
+      }
+    }
+    case 'HRM_UPDATE': {
+      const payload = message.payload as ServerHrmData[]
+      // Create a new state array by merging existing and new data
+      // The previous logic used a Set of incoming client IDs to determine who was connected,
+      // but this was flawed. By using the payload as the single source of truth, we ensure
+      // that only users who are actively sending data are marked as connected.
+      const mergedHrmData = state.hrmData.map((existingUser) => {
+        const updatedUser = payload.find(
+          (newUser) => newUser.clientId === existingUser.clientId
+        )
+        if (updatedUser) {
+          // CRITICAL FIX: The order of spread operators is essential.
+          // By spreading existingUser first, then updatedUser, we ensure
+          // that any fields NOT present in the (potentially partial) `updatedUser`
+          // payload are preserved from the existing state.
+          return {
+            ...existingUser,
+            ...updatedUser,
+            isConnected: true,
+          }
+        }
+        return { ...existingUser, isConnected: false }
+      })
+
+      // Add any brand-new users from the payload who were not in the previous state
+      payload.forEach((newUser) => {
+        if (
+          !state.hrmData.some(
+            (existingUser) => existingUser.clientId === newUser.clientId
+          )
+        ) {
+          mergedHrmData.push({ ...newUser, isConnected: true })
+        }
+      })
+
+      return { ...state, hrmData: mergedHrmData }
+    }
+    case 'TIMER_UPDATE':
+      return {
+        ...state,
+        timerData: { ...state.timerData, ...message.payload },
+      }
+    case 'SPOTIFY_UPDATE':
+      return {
+        ...state,
+        spotifyData: { ...state.spotifyData, ...message.payload },
+      }
+    case 'ACTIVE_ALERTS_UPDATE':
+      return { ...state, activeAlerts: message.payload }
+    case 'SPOTIFY_SERVICE_INIT_UPDATE':
+      return { ...state, spotifyServiceInitialized: message.payload }
+    case 'EXECUTE_SPOTIFY':
+      // This message type is handled by useSpotifyRemoteExecution hook
+      // We don't need to update state here, just pass it through
+      return state
+    default:
+      return state
+  }
+}
+
+
 export const WebSocketProvider = ({
   children,
   serverUrl,
@@ -90,82 +170,6 @@ export const WebSocketProvider = ({
   const MAX_RECONNECT_ATTEMPTS = 10
   const INITIAL_RECONNECT_DELAY = 1000 // 1 second
   const JITTER_FACTOR = 0.2 // 20% jitter
-
-  // Unified State Object managed by a reducer
-  const reducer = (
-    state: WebSocketState,
-    message: ServerMessage | { type: 'RESET_STATE' }
-  ): WebSocketState => {
-    switch (message.type) {
-      case 'RESET_STATE':
-        return INITIAL_STATE
-      case 'INITIAL_STATE': {
-        // When the initial state is loaded, ensure all HRM data is marked as connected.
-        const hrmDataWithConnection =
-          message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ||
-          []
-        return {
-          ...state,
-          ...message.payload,
-          hrmData: hrmDataWithConnection,
-        }
-      }
-      case 'HRM_UPDATE': {
-        const payload = message.payload as ServerHrmData[]
-        // Create a new state array by merging existing and new data
-        const mergedHrmData = state.hrmData.map((existingUser) => {
-          const updatedUser = payload.find(
-            (newUser) => newUser.clientId === existingUser.clientId
-          )
-          if (updatedUser) {
-            // CRITICAL FIX: The order of spread operators is essential.
-            // By spreading existingUser first, then updatedUser, we ensure
-            // that any fields NOT present in the (potentially partial) `updatedUser`
-            // payload are preserved from the existing state.
-            return {
-              ...existingUser,
-              ...updatedUser,
-              isConnected: true,
-            }
-          }
-          return { ...existingUser, isConnected: false }
-        })
-
-        // Add any brand-new users from the payload who were not in the previous state
-        payload.forEach((newUser) => {
-          if (
-            !state.hrmData.some(
-              (existingUser) => existingUser.clientId === newUser.clientId
-            )
-          ) {
-            mergedHrmData.push({ ...newUser, isConnected: true })
-          }
-        })
-
-        return { ...state, hrmData: mergedHrmData }
-      }
-      case 'TIMER_UPDATE':
-        return {
-          ...state,
-          timerData: { ...state.timerData, ...message.payload },
-        }
-      case 'SPOTIFY_UPDATE':
-        return {
-          ...state,
-          spotifyData: { ...state.spotifyData, ...message.payload },
-        }
-      case 'ACTIVE_ALERTS_UPDATE':
-        return { ...state, activeAlerts: message.payload }
-      case 'SPOTIFY_SERVICE_INIT_UPDATE':
-        return { ...state, spotifyServiceInitialized: message.payload }
-      case 'EXECUTE_SPOTIFY':
-        // This message type is handled by useSpotifyRemoteExecution hook
-        // We don't need to update state here, just pass it through
-        return state
-      default:
-        return state
-    }
-  }
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
