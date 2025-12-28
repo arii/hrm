@@ -22,7 +22,7 @@ import { env } from '../lib/env.js'
 
 // This constant is defined at the top of the file to ensure it's easily accessible
 // and to avoid magic strings in the code.
-const SPOTIFY_EMPTY_RESPONSE_SYNTAX_ERROR_MESSAGE =
+const UNEXPECTED_END_OF_JSON_INPUT_ERROR_MESSAGE =
   'Unexpected end of JSON input'
 
 // We use SDK types now, but keep internal state types as needed.
@@ -347,7 +347,7 @@ export class SpotifyPolling implements SpotifyService {
       playlistUri?: string
       contextUri?: string
     }
-  ): Promise<void> {
+  ): Promise<boolean> {
     const { deviceId, volume, playlistUri, contextUri } = params
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
@@ -479,7 +479,7 @@ export class SpotifyPolling implements SpotifyService {
   private isEmptyResponseError(error: unknown): boolean {
     return (
       error instanceof SyntaxError &&
-      error.message.includes(SPOTIFY_EMPTY_RESPONSE_SYNTAX_ERROR_MESSAGE)
+      error.message.includes(UNEXPECTED_END_OF_JSON_INPUT_ERROR_MESSAGE)
     )
   }
 }

@@ -536,6 +536,7 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should re-throw other errors from executeSdkCommand', async () => {
+      // Simulate the SDK throwing a different error
       const otherError = new Error('Some other error')
       mockPlayer.startResumePlayback.mockRejectedValue(otherError)
 
