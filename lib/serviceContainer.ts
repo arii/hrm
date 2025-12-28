@@ -33,4 +33,11 @@ class ServiceContainer {
 }
 
 // Export a singleton instance of the container
-export const serviceContainer = new ServiceContainer()
+// Ensure a single instance of the container exists globally.
+// This is crucial for accessing services from both the custom server and Next.js API routes.
+declare const global: {
+  serviceContainer: ServiceContainer | undefined
+}
+
+export const serviceContainer =
+  global.serviceContainer || (global.serviceContainer = new ServiceContainer())
