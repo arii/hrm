@@ -69,26 +69,27 @@ const HrmConnectionPanel = () => {
   ])
 
   const tileData = useMemo(() => {
-    // Filter out users with placeholder names or no identity
-    return hrmData
-      .filter((user) => {
-        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-        const hasNoIdentity = user.name == null
-        return !(isPlaceholderName || hasNoIdentity) && user.isConnected
-      })
-      .map((user) => {
-        const matchingAlert = activeAlerts.find(
-          (alert) =>
-            alert.clientId === user.clientId &&
-            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
-        )
+    const user = hrmData.find((user) => {
+      const isPlaceholderName = !!user.name && /new user/i.test(user.name)
+      const hasNoIdentity = user.name == null
+      return !(isPlaceholderName || hasNoIdentity) && user.isConnected
+    })
 
-        return {
-          ...user,
-          isAlerting: !!matchingAlert,
-          alertMessage: matchingAlert?.message,
-        }
-      })
+    if (!user) return []
+
+    const matchingAlert = activeAlerts.find(
+      (alert) =>
+        alert.clientId === user.clientId &&
+        (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
+    )
+
+    return [
+      {
+        ...user,
+        isAlerting: !!matchingAlert,
+        alertMessage: matchingAlert?.message,
+      },
+    ]
   }, [hrmData, activeAlerts])
 
   return (
@@ -125,7 +126,7 @@ const HrmConnectionPanel = () => {
         >
           <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
           <Link href="/client/connect" passHref>
-            <IconButton aria-label="settings">
+            <IconButton aria-label="settings" disabled>
               <SettingsIcon />
             </IconButton>
           </Link>
@@ -151,13 +152,18 @@ const HrmConnectionPanel = () => {
         }}
       >
         <HrTileWithCalories
-          user={tileData[0] || {
-            name: session?.user?.name || userSettings.userName || 'Unknown User',
-            value: null,
-            calories: 0,
-            percentMax: 0,
-            clientId: 'placeholder-tile',
-          }}
+          user={
+            tileData[0] || {
+              name:
+                session?.user?.name ||
+                userSettings.userName ||
+                'Unknown User',
+              value: 0,
+              calories: 0,
+              maxHr: 220 - (userSettings.userAge || 30),
+              clientId: 'placeholder-tile',
+            }
+          }
           isAlerting={false}
         />
       </Box>
