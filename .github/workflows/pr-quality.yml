@@ -94,7 +94,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Sanitize String (Test Case - ${{ matrix.name }})
-        id: sanitize
+        id: sanitize_step
         uses: ./.github/actions/sanitize-string
         with:
           value: ${{ matrix.value }}
@@ -102,7 +102,7 @@ jobs:
 
       - name: Verify (Test Case - ${{ matrix.name }})
         run: |
-          actual="${{ steps.sanitize.outputs.sanitized-value }}"
+          actual="${{ steps.sanitize_step.outputs.sanitized-value }}"
           expected="${{ matrix.expected }}"
           if [ "$actual" != "$expected" ]; then
             echo "Test Case Failed: ${{ matrix.name }}"
