@@ -132,6 +132,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     ((device: BluetoothDevice) => Promise<boolean>) | null
   >(null)
 
+  const setActiveConfig = (name: string, age?: number) => {
+    activeConfigRef.current = {
+      name,
+      age,
+    }
+  }
+
   useEffect(() => {
     statusRef.current = deviceStatus
   }, [deviceStatus])
@@ -377,12 +384,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
           if (knownDevice) {
             setDeviceStatus(`Found known device: ${knownDevice.name}`)
-            const finalName =
-              name || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`
-            activeConfigRef.current = {
-              name: finalName,
-              age: age ? age : undefined,
-            }
+            setActiveConfig(
+              name || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`,
+              age
+            )
             await connectToGatt(knownDevice)
           } else {
             setDeviceStatus(
@@ -402,7 +407,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     const autoConnect = async () => {
       if (
         isSupported &&
-        connectionStatus === 'Connected' &&
+        deviceId &&
         !deviceRef.current &&
         userName &&
         userAge
@@ -412,21 +417,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
 
     autoConnect()
-  }, [
-    isSupported,
-    connectionStatus,
-    userName,
-    userAge,
-    attemptReconnection,
-  ])
+  }, [isSupported, deviceId, userName, userAge, attemptReconnection])
 
   /**
    * @function connectAndStream
    * @description Connects to a Bluetooth HRM device and starts streaming data.
    * It attempts to reconnect to a saved device or prompts the user to select a new one.
    *
-   * @param {string} [userName] - The user's name for display.
-   * @param {number} [userAge] - The user's age to calculate max heart rate.
+   * @param {string} [name] - The user's name for display.
+   * @param {number} [age] - The user's age to calculate max heart rate.
    * @returns {Promise<void>} A promise that resolves on successful connection, or rejects on failure.
    * @throws {Error} If the connection fails for any reason (e.g., WebSocket disconnected,
    * device not found, user cancellation).
@@ -454,12 +453,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         })
 
         if (deviceToConnect) {
-          const finalName =
-            name || `Bluetooth HRM (${deviceToConnect.name || 'Unknown'})`
-          activeConfigRef.current = {
-            name: finalName,
-            age: age ? age : undefined,
-          }
+          setActiveConfig(
+            name || `Bluetooth HRM (${deviceToConnect.name || 'Unknown'})`,
+            age
+          )
           await connectToGatt(deviceToConnect)
         }
       } catch (error) {

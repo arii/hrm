@@ -1,5 +1,6 @@
 // hooks/useCookie.ts
 import { useState, useCallback } from 'react'
+import logger from '@/utils/logger'
 
 const getCookie = (name: string): string | undefined => {
   if (typeof document === 'undefined') return undefined
@@ -22,7 +23,7 @@ function useCookie<T>(key: string, initialValue: T) {
     try {
       return item ? JSON.parse(item) : initialValue
     } catch (error) {
-      console.log(error)
+      logger.error({ error }, 'Failed to parse cookie')
       return initialValue
     }
   })
@@ -35,7 +36,7 @@ function useCookie<T>(key: string, initialValue: T) {
         setStoredValue(valueToStore)
         setCookie(key, JSON.stringify(valueToStore))
       } catch (error) {
-        console.log(error)
+        logger.error({ error }, 'Failed to set cookie')
       }
     },
     [key, storedValue]
