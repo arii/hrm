@@ -23,6 +23,7 @@ const envSchema = z.object({
     .string()
     .default('10000')
     .transform(Number),
+  WEBSOCKET_GRACE_PERIOD_MS: z.string().default('5000').transform(Number),
 })
 
 export const env = envSchema.parse(process.env)

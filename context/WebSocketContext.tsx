@@ -70,6 +70,38 @@ export interface WebSocketContextType extends WebSocketState {
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
+// Helper for stable ID
+const DEFAULT_UUID_FALLBACK = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+
+export const generateUUID = () => {
+  const isSecureContext =
+    typeof window !== 'undefined' && window.location.protocol === 'https:'
+  // Use native crypto.randomUUID only in secure contexts (HTTPS)
+  if (isSecureContext && typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+
+  // Fallback for insecure contexts or older browsers
+  return DEFAULT_UUID_FALLBACK.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
+const getClientId = () => {
+  // IMPORTANT: This client-side ID is for session persistence and UX ONLY.
+  // It is NOT a security feature. It is vulnerable to tampering and should not
+  // be used for authentication or authorization. For any sensitive operations,
+  // a proper server-side session with secure authentication (e.g., cookies, JWTs) is required.
+  if (typeof window === 'undefined') return ''
+  let id = localStorage.getItem('hrm_client_uuid')
+  if (!id) {
+    id = generateUUID()
+    localStorage.setItem('hrm_client_uuid', id)
+  }
+  return id
+}
 // Unified State Object managed by a reducer
 export const reducer = (
   state: WebSocketState,
@@ -157,7 +189,6 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
-  const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
@@ -226,6 +257,14 @@ export const WebSocketProvider = ({
     }, 30000)
   }, [stopHeartbeat])
 
+  // Append clientId to query string
+  const getUrlWithId = useCallback(() => {
+    const base = serverUrl || getWebSocketURL()
+    const url = new URL(base)
+    url.searchParams.append('clientId', getClientId())
+    return url.toString()
+  }, [serverUrl])
+
   const connect = useCallback(() => {
     if (
       typeof window === 'undefined' ||
@@ -235,7 +274,7 @@ export const WebSocketProvider = ({
     }
 
     shouldReconnect.current = true
-    const ws = new WebSocket(wsUrl)
+    const ws = new WebSocket(getUrlWithId())
     wsRef.current = ws
 
     ws.onopen = () => {
@@ -359,7 +398,7 @@ export const WebSocketProvider = ({
         console.error('Failed to parse WebSocket message:', e)
       }
     }
-  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
+  }, [getUrlWithId, throttledDispatch, startHeartbeat, stopHeartbeat])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
