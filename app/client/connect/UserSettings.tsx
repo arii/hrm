@@ -66,17 +66,10 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   // Sync display values when props change (e.g., loaded from localStorage)
   // or when the unit system is toggled.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    // This effect synchronizes the local display state with parent props.
-    // It's safe to disable the lint rule here because:
-    // 1. It only runs when external props change, not on internal state updates, preventing infinite loops.
-    // 2. It's guarded by the `is...Focused` ref, preventing updates while the user is typing.
-    // This pattern is necessary to have an input that is both controlled by external data and freely editable by the user.
-
-    // Only update from props if the user is not actively editing the field.
     if (!isWeightFocused.current) {
       const currentWeightInKg = parseFloat(weightInKg)
       if (!isNaN(currentWeightInKg)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDisplayWeight(toDisplay(currentWeightInKg, unitSystem).toString())
       }
     }
