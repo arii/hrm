@@ -21,13 +21,59 @@ const outputFile = getArg('--output')
 const preset = getArg('--preset')
 
 // List of models to try in order.
-// Prioritizing newer models as requested to fix 404 errors with older/deprecated ones.
-const MODEL_FALLBACKS = [
+// `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
+// It is used as the primary fallback to mitigate rate-limiting issues with the experimental `gemini-2.0-flash-exp` model.
+
+// Note: The first model in the default list is experimental. For production stability,
+// it is recommended to either update this list to prioritize a stable model
+// or to configure a production-ready list via the GEMINI_MODEL_FALLBACKS environment variable.
+const defaultFallbacks = [
   'gemini-2.0-flash-exp',
-  'gemini-1.5-pro',
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-8b',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-pro-latest',
 ]
+
+export function getModelFallbacks(): string[] {
+  const envFallbacks = process.env.GEMINI_MODEL_FALLBACKS
+  if (!envFallbacks) {
+    return defaultFallbacks
+  }
+
+  let userFallbacks: string[] = []
+  try {
+    userFallbacks = envFallbacks
+      .split(',')
+      .map((m) => m.trim())
+      .filter((m) => {
+        if (!m) return false
+        if (!m.startsWith('gemini-')) {
+          console.warn(
+            `Warning: Invalid model name "${m}" in GEMINI_MODEL_FALLBACKS. It will be ignored.`
+          )
+          return false
+        }
+        return true
+      })
+  } catch (error) {
+    console.warn(
+      `Warning: Could not parse GEMINI_MODEL_FALLBACKS: ${
+        (error as Error).message
+      }. Using default fallbacks.`
+    )
+    return defaultFallbacks
+  }
+
+  if (userFallbacks.length === 0) {
+    console.warn(
+      'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
+    )
+    return defaultFallbacks
+  }
+
+  return userFallbacks
+}
+
+const MODEL_FALLBACKS = getModelFallbacks()
 
 interface ReviewContext {
   prNumber: string
@@ -129,10 +175,21 @@ async function generateContentWithFallback(
       const isNotFound = error.message?.includes('404') || error.status === 404
       const isBadRequest =
         error.message?.includes('400') || error.status === 400 // Sometimes invalid model is 400
+      const isRateLimited =
+        error.message?.includes('429') || error.status === 429
 
-      if (isNotFound || isBadRequest) {
+      if (isNotFound || isBadRequest || isRateLimited) {
+        let reason = 'Unknown Error'
+        if (isRateLimited) {
+          reason = 'Rate Limited'
+        } else if (isNotFound) {
+          reason = 'Not Found'
+        } else if (isBadRequest) {
+          reason = 'Invalid Request'
+        }
+        const details = reason === 'Unknown Error' ? `: ${error.message}` : ''
         console.warn(
-          `Model ${modelName} failed (Not Found/Invalid). Trying next model...`
+          `Model ${modelName} failed (${reason}${details}). Trying next model...`
         )
         continue
       }
