@@ -13,7 +13,8 @@ runs:
         RAW_ID: ${{ inputs.session-id }}
       run: |
         # Sanitize: Replace any character that is not alphanumeric, hyphen, or underscore with a hyphen.
-        # Truncate: Limit the string to 64 characters to comply with artifact/cache key length limits.
+        # Truncate: Limit the string to 64 characters. This is a conservative limit to ensure
+        # compatibility with various systems, including GitHub Actions cache and artifact naming conventions.
         SANITIZED_ID=$(echo "$RAW_ID" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
 
         echo "Sanitized ID: $SANITIZED_ID"
