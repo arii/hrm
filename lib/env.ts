@@ -25,6 +25,7 @@ const envSchema = z.object({
     .transform(Number),
   WEBSOCKET_GRACE_PERIOD_MS: z.string().default('5000').transform(Number),
   MAX_WS_CLIENTS: z.string().default('1000').transform(Number),
+  INTERNAL_TOKEN_DELIVERY_SECRET: z.string().min(1),
 })
 
 export const env = envSchema.parse(process.env)
