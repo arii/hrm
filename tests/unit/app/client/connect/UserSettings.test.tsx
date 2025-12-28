@@ -3,30 +3,8 @@
  */
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import UserSettings from '../../../../../app/client/connect/UserSettings'
-import React, { Dispatch, SetStateAction } from 'react'
+import React from 'react'
 import { Gender, MeasurementSystem } from '../../../../../types'
-
-const mockLocalStorageStore: { [key: string]: string } = {}
-
-jest.mock('@/hooks/useLocalStorage', () => ({
-  __esModule: true,
-  default: jest.fn(
-    (key: string, initialValue: string): [string, (value: string) => void] => {
-      const [value, setValue] = React.useState(() =>
-        mockLocalStorageStore[key] !== undefined
-          ? mockLocalStorageStore[key]
-          : initialValue
-      )
-
-      const set = (newValue: string) => {
-        mockLocalStorageStore[key] = newValue
-        setValue(newValue)
-      }
-
-      return [value, set]
-    }
-  ),
-}))
 
 describe('UserSettings Logic', () => {
   const defaultProps = {
@@ -43,14 +21,6 @@ describe('UserSettings Logic', () => {
     unitSystem: 'IMPERIAL' as MeasurementSystem,
     onUnitChange: jest.fn(),
   }
-
-  beforeEach(() => {
-    // Reset mocks before each test
-    jest.clearAllMocks()
-    for (const key in mockLocalStorageStore) {
-      delete mockLocalStorageStore[key]
-    }
-  })
 
   it('shows error for invalid age input (too high)', async () => {
     render(<UserSettings {...defaultProps} userAge="150" />)

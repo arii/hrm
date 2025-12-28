@@ -194,10 +194,7 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
           placeholder="e.g., 175"
           type="number"
           value={displayHeightCm}
-          onChange={(e) => {
-            const val = e.target.valueAsNumber
-            setDisplayHeightCm(isNaN(val) ? '' : val.toString())
-          }}
+          onChange={(e) => setDisplayHeightCm(e.target.value)}
           onBlur={handleHeightBlur}
           error={!!heightError}
           helperText={heightError}
@@ -210,10 +207,7 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
             placeholder="e.g., 5"
             type="number"
             value={displayHeightFeet}
-            onChange={(e) => {
-              const val = e.target.valueAsNumber
-              setDisplayHeightFeet(isNaN(val) ? '' : val.toString())
-            }}
+            onChange={(e) => setDisplayHeightFeet(e.target.value)}
             onBlur={handleHeightBlur}
           />
           <TextField
@@ -222,10 +216,7 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
             placeholder="e.g., 9"
             type="number"
             value={displayHeightInches}
-            onChange={(e) => {
-              const val = e.target.valueAsNumber
-              setDisplayHeightInches(isNaN(val) ? '' : val.toString())
-            }}
+            onChange={(e) => setDisplayHeightInches(e.target.value)}
             onBlur={handleHeightBlur}
           />
         </Stack>
@@ -236,10 +227,7 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
         placeholder={unitSystem === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
         type="number"
         value={displayWeight}
-        onChange={(e) => {
-          const val = e.target.valueAsNumber
-          setDisplayWeight(isNaN(val) ? '' : val.toString())
-        }}
+        onChange={(e) => setDisplayWeight(e.target.value)}
         onBlur={handleWeightBlur}
         error={!!weightError}
         helperText={weightError}

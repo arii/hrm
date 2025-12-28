@@ -1,5 +1,5 @@
-// app/client/connect/page.tsx
 'use client'
+// app/client/connect/page.tsx
 
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
