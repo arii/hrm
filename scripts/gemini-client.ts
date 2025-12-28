@@ -143,8 +143,9 @@ async function generateContentWithFallback(
         } else if (isBadRequest) {
           reason = 'Invalid Request'
         }
+        const details = reason === 'Unknown Error' ? `: ${error.message}` : ''
         console.warn(
-          `Model ${modelName} failed (${reason}). Trying next model...`
+          `Model ${modelName} failed (${reason}${details}). Trying next model...`
         )
         continue
       }
