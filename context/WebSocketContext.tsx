@@ -79,8 +79,9 @@ export const reducer = (
     case 'RESET_STATE':
       return INITIAL_STATE
     case 'INITIAL_STATE': {
-      // When the initial state is loaded, all users present in the hrmData are assumed to be
-      // connected. This ensures that the UI correctly reflects their status.
+      // When the initial state is loaded, all users present in the hrmData have their
+      // connection status explicitly set to true. This ensures that the UI correctly
+      // reflects their status.
       const hrmDataWithConnection =
         message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) || []
       return {
