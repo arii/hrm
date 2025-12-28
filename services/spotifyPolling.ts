@@ -347,7 +347,7 @@ export class SpotifyPolling implements SpotifyService {
       playlistUri?: string
       contextUri?: string
     }
-  ): Promise<boolean> {
+  ): Promise<void> {
     const { deviceId, volume, playlistUri, contextUri } = params
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
@@ -475,6 +475,7 @@ export class SpotifyPolling implements SpotifyService {
    * (like `PLAY`, `PAUSE`, `NEXT`, etc.) that do not return any data.
    * @param error The error to check. We use `unknown` because catch clause variables are of type `unknown` in TypeScript.
    * @returns True if the error is an empty response error, false otherwise.
+   * @see https://developer.spotify.com/documentation/web-api/concepts/api-calls#response-status-codes
    */
   private isEmptyResponseError(error: unknown): boolean {
     return (
