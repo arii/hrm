@@ -14,7 +14,7 @@ on:
 # Permissions granted to the GITHUB_TOKEN for the release-please-action.
 # Scoped as narrowly as possible for security (principle of least privilege).
 #
-# - contents: write: to commit version bumps and update CHANGELOG.
+# - contents: write: to create release tags, commit version bumps, and update CHANGELOG.
 # - pull-requests: write: to create the release PR.
 # - issues: write: to link issues in the release notes.
 # - releases: write: to create the GitHub release.
