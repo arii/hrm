@@ -87,7 +87,7 @@ describe('usePlaylistDetails', () => {
     await waitFor(() => expect(result.current.loading).toBe(false))
 
     expect(result.current.data).toBeNull()
-    expect(result.current.error).toContain('Failed to parse')
+    expect(result.current.error).toContain('Received invalid data')
   })
 
   it('should return an error for network errors', async () => {

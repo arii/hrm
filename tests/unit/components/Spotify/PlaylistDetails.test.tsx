@@ -30,7 +30,12 @@ describe('PlaylistDetails', () => {
         description: 'Test Description',
         imageUrl: 'http://example.com/image.jpg',
         tracks: [
-          { name: 'Test Track', artist: 'Test Artist', duration: 60000 },
+          {
+            name: 'Test Track',
+            artist: 'Test Artist',
+            duration: '1:00',
+            uri: 'spotify:track:123',
+          },
         ],
       },
       loading: false,

@@ -76,4 +76,61 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
       ],
     })
   })
+
+  it('should handle pagination and fetch all tracks', async () => {
+    // Arrange
+    const mockSession = { accessToken: 'test-token' }
+    ;(getServerSession as jest.Mock).mockResolvedValue(mockSession)
+
+    const mockPlaylistPage1 = {
+      id: '123',
+      name: 'Test Playlist',
+      description: 'A test playlist',
+      images: [{ url: 'http://example.com/image.jpg' }],
+      owner: { display_name: 'Test User' },
+      tracks: {
+        items: new Array(100).fill(null).map((_, i) => ({
+          track: {
+            type: 'track',
+            uri: `spotify:track:${i}`,
+            name: `Track ${i}`,
+            artists: [{ name: `Artist ${i}` }],
+            duration_ms: 180000,
+          },
+        })),
+        next: 'http://localhost/api/spotify/playlists/123?offset=100&limit=100',
+      },
+    }
+    const mockPlaylistPage2 = {
+      items: new Array(50).fill(null).map((_, i) => ({
+        track: {
+          type: 'track',
+          uri: `spotify:track:${100 + i}`,
+          name: `Track ${100 + i}`,
+          artists: [{ name: `Artist ${100 + i}` }],
+          duration_ms: 180000,
+        },
+      })),
+      next: null,
+    }
+    const mockGetPlaylist = jest.fn().mockResolvedValue(mockPlaylistPage1)
+    const mockGetPlaylistItems = jest.fn().mockResolvedValue(mockPlaylistPage2)
+    ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue({
+      playlists: {
+        getPlaylist: mockGetPlaylist,
+        getPlaylistItems: mockGetPlaylistItems,
+      },
+    })
+
+    const req = new Request('http://localhost/api/spotify/playlists/123')
+    const context = { params: { playlistId: '123' } }
+
+    // Act
+    const response = await GET(req, context)
+    const data = await response.json()
+
+    // Assert
+    expect(response.status).toBe(200)
+    expect(data.tracks.length).toBe(150)
+  })
 })

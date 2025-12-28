@@ -57,8 +57,9 @@ export const usePlaylistDetails = (playlistUri: string | null) => {
           if (!signal.aborted) {
             setData(result)
           }
-        } catch (_err) {
-          throw new Error('Failed to parse playlist data.')
+        } catch (parseErr) {
+          console.error('Failed to parse playlist data:', parseErr)
+          throw new Error('Received invalid data from the server.')
         }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
@@ -66,6 +67,7 @@ export const usePlaylistDetails = (playlistUri: string | null) => {
           return
         }
         if (!signal.aborted) {
+          console.error('Error fetching playlist details:', err)
           const message =
             err instanceof Error ? err.message : 'An unknown error occurred'
           setError(message)
