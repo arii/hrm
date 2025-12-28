@@ -1,7 +1,7 @@
 // app/client/connect/UserSettings.tsx
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import {
@@ -88,11 +88,11 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
     }
   }, [heightInCm, unitSystem])
 
-  const handleAgeBlur = () => {
+  const handleAgeBlur = useCallback(() => {
     setAgeError(validateAgeValue(userAge))
-  }
+  }, [userAge])
 
-  const handleWeightBlur = () => {
+  const handleWeightBlur = useCallback(() => {
     isWeightFocused.current = false
     const error = validateWeightValue(displayWeight, unitSystem)
     setWeightError(error)
@@ -102,9 +102,9 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
         setWeightInKg(toKg(numericValue, unitSystem).toFixed(2))
       }
     }
-  }
+  }, [displayWeight, unitSystem, setWeightInKg])
 
-  const handleHeightBlur = () => {
+  const handleHeightBlur = useCallback(() => {
     isHeightFocused.current = false
     let cm = 0
     if (unitSystem === 'METRIC') {
@@ -120,27 +120,36 @@ const UserSettingsComponent: React.FC<UserSettingsProps> = ({
     if (!error) {
       setHeightInCm(cm.toFixed(2))
     }
-  }
+  }, [
+    displayHeightCm,
+    displayHeightFeet,
+    displayHeightInches,
+    unitSystem,
+    setHeightInCm,
+  ])
 
-  const handleUnitChange = (
-    _event: React.MouseEvent<HTMLElement>,
-    newUnit: MeasurementSystem | null
-  ) => {
-    if (newUnit && newUnit !== unitSystem) {
-      onUnitChange(newUnit)
-      setWeightError(null)
-      setHeightError(null)
-    }
-  }
+  const handleUnitChange = useCallback(
+    (
+      _event: React.MouseEvent<HTMLElement>,
+      newUnit: MeasurementSystem | null
+    ) => {
+      if (newUnit && newUnit !== unitSystem) {
+        onUnitChange(newUnit)
+        setWeightError(null)
+        setHeightError(null)
+      }
+    },
+    [unitSystem, onUnitChange]
+  )
 
-  const handleGenderChange = (
-    _event: React.MouseEvent<HTMLElement>,
-    newGender: Gender | null
-  ) => {
-    if (newGender) {
-      setGender(newGender)
-    }
-  }
+  const handleGenderChange = useCallback(
+    (_event: React.MouseEvent<HTMLElement>, newGender: Gender | null) => {
+      if (newGender) {
+        setGender(newGender)
+      }
+    },
+    [setGender]
+  )
 
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
