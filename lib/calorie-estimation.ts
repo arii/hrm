@@ -42,8 +42,8 @@ export const estimateCaloriesPerMinute = (
   // A simplified, gender-neutral version of the Harris-Benedict equation, adapted for activity.
   /**
    * Constants used in the calorie estimation formula.
-   * These values are derived from the Journal of Sports Sciences:
-   * https://www.tandfonline.com/doi/abs/10.1080/02640410400023363
+   * These values are derived from the Journal of Sports Sciences.
+   * @see https://www.tandfonline.com/doi/abs/10.1080/02640410400023363
    */
   const CALORIE_ESTIMATION_CONSTANTS = {
     // The intercept is a baseline adjustment for the model.
