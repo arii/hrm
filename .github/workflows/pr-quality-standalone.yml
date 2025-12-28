@@ -90,11 +90,13 @@ jobs:
         run: echo "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright" >> $GITHUB_ENV
 
       - name: Sanitize SESSION_ID
-        shell: bash
-        run: |
-          # Replace / with - in SESSION_ID to prevent invalid artifact names
-          SAFE_SESSION_ID=$(echo "${{ env.SESSION_ID }}" | tr '/' '-')
-          echo "SESSION_ID=$SAFE_SESSION_ID" >> $GITHUB_ENV
+        id: sanitize_id
+        uses: ./.github/actions/sanitize-string
+        with:
+          value: ${{ env.SESSION_ID }}
+
+      - name: Update Environment for Sanitized ID
+        run: echo "SESSION_ID=${{ steps.sanitize_id.outputs.sanitized-value }}" >> $GITHUB_ENV
 
       # --- GLOBAL PERSISTENCE CONFIG ---
       - name: Install pnpm

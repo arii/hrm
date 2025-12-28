@@ -4,6 +4,12 @@ name: Gemini Orchestrator
 on:
   pull_request:
     types: [opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      command:
+        description: 'Command to run'
+        required: true
+        default: 'review'
   issue_comment:
     types: [created]
 
@@ -11,8 +17,9 @@ jobs:
   # 1. Run CI checks on every push to a PR
   pr-quality:
     if: github.event_name == 'pull_request'
-    uses: ./.github/workflows/pr-quality-standalone.yml
-    secrets: inherit
+    uses: ./.github/workflows/pr-quality.yml
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 2. Trigger review AFTER CI checks are done for a PR event
   review-on-pr-update:
@@ -40,3 +47,29 @@ jobs:
       trigger_event: 'comment'
       comment_body: ${{ github.event.comment.body }}
     secrets: inherit
+
+
+
+  gemini-dispatch:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: self-hosted
+    steps:
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+      - name: Run Gemini Client
+        run: pnpm tsx scripts/gemini-client.ts --preset "${{ github.event.inputs.command }}"
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  gemini-invoke:
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@gemini-bot')
+    runs-on: self-hosted
+    steps:
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+      - name: Run Gemini Client
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: pnpm tsx scripts/gemini-client.ts --comment-body "$COMMENT_BODY"
