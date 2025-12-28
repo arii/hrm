@@ -76,7 +76,10 @@ describe('useBluetoothHRM', () => {
     })
 
     mockSetDeviceId = jest.fn()
-    ;(useCookie as jest.Mock).mockReturnValue(['test-device-id', mockSetDeviceId])
+    ;(useCookie as jest.Mock).mockReturnValue([
+      'test-device-id',
+      mockSetDeviceId,
+    ])
 
     mockCharacteristic = {
       startNotifications: jest.fn().mockResolvedValue(undefined),

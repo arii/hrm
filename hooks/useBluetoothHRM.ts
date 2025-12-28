@@ -116,7 +116,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
-  const [deviceId, setDeviceId] = useCookie<string | null>('hrm_device_id', null)
+  const [deviceId, setDeviceId] = useCookie<string | null>(
+    'hrm_device_id',
+    null
+  )
 
   const lastUpdateRef = useRef<number>(0)
   const activeConfigRef = useRef<{ name: string; age?: number } | null>(null)
@@ -161,7 +164,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         // By sending a value of 0, we explicitly tell the server that this
         // user's heart rate is no longer available. The backend uses this
         // signal to remove the user from any active displays, preventing
-        // a "frozen" state where the last known heart rate is shown indefinitely.
+        // a "frozen" "state where the last known heart rate is shown indefinitely.
         const config = activeConfigRef.current
         sendData({
           type: 'HRM_INPUT',
@@ -362,7 +365,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [connectToGatt])
 
   const attemptReconnection = useCallback(
-    async (userName?: string, userAge?: number) => {
+    async (name?: string, age?: number) => {
       if (!navigator.bluetooth?.getDevices) return
 
       try {
@@ -375,10 +378,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           if (knownDevice) {
             setDeviceStatus(`Found known device: ${knownDevice.name}`)
             const finalName =
-              userName || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`
+              name || `Bluetooth HRM (${knownDevice.name || 'Unknown'})`
             activeConfigRef.current = {
               name: finalName,
-              age: userAge ? userAge : undefined,
+              age: age ? age : undefined,
             }
             await connectToGatt(knownDevice)
           } else {
@@ -396,15 +399,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   useEffect(() => {
-    if (
-      isSupported &&
-      connectionStatus === 'Connected' &&
-      !deviceRef.current &&
-      userName &&
-      userAge
-    ) {
-      attemptReconnection(userName, userAge)
+    const autoConnect = async () => {
+      if (
+        isSupported &&
+        connectionStatus === 'Connected' &&
+        !deviceRef.current &&
+        userName &&
+        userAge
+      ) {
+        await attemptReconnection(userName, userAge)
+      }
     }
+
+    autoConnect()
   }, [
     isSupported,
     connectionStatus,
@@ -427,7 +434,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    * @sideeffect Updates component state throughout the connection process.
    */
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<void> => {
+    async (name?: string, age?: number): Promise<void> => {
       if (deviceStatus.startsWith('Connected') && !isStale) return
       if (connectionStatus !== 'Connected') {
         setDeviceStatus('Waiting for WebSocket connection...')
@@ -448,10 +455,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (deviceToConnect) {
           const finalName =
-            userName || `Bluetooth HRM (${deviceToConnect.name || 'Unknown'})`
+            name || `Bluetooth HRM (${deviceToConnect.name || 'Unknown'})`
           activeConfigRef.current = {
             name: finalName,
-            age: userAge ? userAge : undefined,
+            age: age ? age : undefined,
           }
           await connectToGatt(deviceToConnect)
         }
