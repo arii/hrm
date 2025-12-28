@@ -82,6 +82,7 @@ const initSocketManager = (
     getClientSessionState().set(extWs.clientId, {
       lastUpdate: Date.now(),
       hrSamples: [],
+      consecutiveFailures: 0,
     })
 
     extWs.on('message', (message) => {
