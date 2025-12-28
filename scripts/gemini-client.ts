@@ -35,7 +35,13 @@ const defaultFallbacks = [
 
 export function getModelFallbacks(): string[] {
   const envFallbacks = process.env.GEMINI_MODEL_FALLBACKS
-  if (!envFallbacks) {
+  if (envFallbacks === undefined || envFallbacks === null) {
+    return defaultFallbacks
+  }
+  if (envFallbacks.trim() === '') {
+    console.warn(
+      'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
+    )
     return defaultFallbacks
   }
 

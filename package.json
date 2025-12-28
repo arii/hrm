@@ -25,7 +25,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm run test:all",
-    "test:unit": "cross-env NEXTAUTH_SECRET=test-secret-unit jest tests/unit --coverage",
+    "test:unit": "cross-env INTERNAL_TOKEN_DELIVERY_SECRET=test-secret-internal NEXTAUTH_SECRET=test-secret-unit jest tests/unit --coverage",
     "test:components": "cross-env NEXTAUTH_SECRET=test-secret-unit jest --config jest.config.components.cjs",
     "test:unit:watch": "jest tests/unit --watch",
     "test:json": "scripts/test-json-with-server.sh",

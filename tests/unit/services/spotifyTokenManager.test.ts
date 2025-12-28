@@ -12,6 +12,7 @@ jest.mock('fs', () => ({
   readFileSync: jest.fn(),
   writeFileSync: jest.fn(),
   unlinkSync: jest.fn(),
+  renameSync: jest.fn(),
 }))
 
 describe('SpotifyTokenManager', () => {
