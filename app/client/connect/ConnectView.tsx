@@ -18,8 +18,11 @@ import { formatDuration } from '@/lib/utils'
 
 interface ConnectViewProps {
   userName: string;
+  setUserName: (value: string) => void;
   userAge: string;
+  setUserAge: (value: string) => void;
   weightInKg: string;
+  setWeightInKg: (value: string) => void;
   isConnected: boolean;
   isSupported: boolean;
   deviceStatus: string;
@@ -35,8 +38,11 @@ interface ConnectViewProps {
 
 const ConnectView: React.FC<ConnectViewProps> = ({
   userName,
+  setUserName,
   userAge,
+  setUserAge,
   weightInKg,
+  setWeightInKg,
   isConnected,
   isSupported,
   deviceStatus,
@@ -123,7 +129,14 @@ const ConnectView: React.FC<ConnectViewProps> = ({
         </Typography>
 
         {!showUserDetails ? (
-          <UserSettings />
+          <UserSettings
+            userName={userName}
+            setUserName={setUserName}
+            userAge={userAge}
+            setUserAge={setUserAge}
+            weightInKg={weightInKg}
+            setWeightInKg={setWeightInKg}
+          />
         ) : (
           <Box
             sx={{
