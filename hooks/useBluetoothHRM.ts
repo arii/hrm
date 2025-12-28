@@ -368,9 +368,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     async (name?: string, age?: number) => {
       if (!navigator.bluetooth?.getDevices) return
 
+      let devices: BluetoothDevice[] = []
       try {
         setDeviceStatus('Searching for known devices...')
-        const devices = await navigator.bluetooth.getDevices()
+        devices = await navigator.bluetooth.getDevices()
 
         if (deviceId && devices.length > 0) {
           const knownDevice = devices.find((d) => d.id === deviceId)
@@ -405,7 +406,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   useEffect(() => {
-    const autoConnect = async () => {
+    const autoConnect = () => {
       if (
         isSupported &&
         deviceId &&
@@ -413,7 +414,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         userName &&
         userAge
       ) {
-        await attemptReconnection(userName, userAge)
+        attemptReconnection(userName, userAge)
       }
     }
 

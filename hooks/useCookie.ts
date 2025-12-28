@@ -9,11 +9,16 @@ export const getCookie = (name: string): string | undefined => {
   return match && match[2] ? match[2] : undefined
 }
 
-export const setCookie = (name: string, value: string, days = 365) => {
+export const setCookie = (
+  name: string,
+  value: string,
+  days = 365,
+  secure = process.env.NODE_ENV === 'production'
+) => {
   if (typeof document !== 'undefined') {
     const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    const secure = process.env.NODE_ENV === 'production' ? '; Secure' : ''
-    document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax${secure}`
+    const secureFlag = secure ? '; Secure' : ''
+    document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax${secureFlag}`
   }
 }
 
