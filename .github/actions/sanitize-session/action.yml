@@ -1,0 +1,20 @@
+name: 'Sanitize Session ID'
+description: 'Sanitizes a string for safe use as a GitHub Actions artifact name or cache key.'
+inputs:
+  session-id:
+    description: 'The raw ID to be sanitized.'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Sanitize and Truncate ID
+      shell: bash
+      env:
+        RAW_ID: ${{ inputs.session-id }}
+      run: |
+        # Sanitize: Replace any character that is not alphanumeric, hyphen, or underscore with a hyphen.
+        # Truncate: Limit the string to 64 characters to comply with artifact/cache key length limits.
+        SANITIZED_ID=$(echo "$RAW_ID" | sed 's/[^a-zA-Z0-9_-]/-/g' | cut -c1-64)
+
+        echo "Sanitized ID: $SANITIZED_ID"
+        echo "SESSION_ID=$SANITIZED_ID" >> $GITHUB_ENV
