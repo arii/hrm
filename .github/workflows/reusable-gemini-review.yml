@@ -197,7 +197,7 @@ jobs:
             fi
             echo "::warning::${ERROR_MESSAGE} ${FRIENDLY_ERROR} Raw error log: ${ERROR_LOG}"
             CHECKS_JSON="[]"
-          else
+          elif [ -s "checks_output.json" ]; then
             CHECKS_OUTPUT=$(cat checks_output.json)
             # Slice the results to get the first 10 failed checks to prevent an overly long prompt.
             CHECKS_JSON=$(echo "$CHECKS_OUTPUT" | jq -c 'map(select(.name != "gemini-review" and .name != "gemini-rereview" and (.conclusion == "failure" or .conclusion == "cancelled"))) | .[0:10]')
@@ -208,6 +208,9 @@ jobs:
               echo "::warning::Get PR Checks: Generated CHECKS_JSON is not valid JSON. Defaulting to empty array. Content was: $CHECKS_JSON"
               CHECKS_JSON="[]"
             fi
+          else
+            echo "::warning::Get PR Checks: The checks_output.json file is empty. Defaulting to empty array."
+            CHECKS_JSON="[]"
           fi
 
           if [ "$CHECKS_JSON" == "[]" ]; then

@@ -27,8 +27,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Dependencies
-        run: npm install
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
 
       - name: Check if PR Enrichment is Disabled
         id: check-disabled
@@ -156,9 +156,7 @@ jobs:
             const fs = require('fs');
 
             try {
-              let rawData = fs.readFileSync('pr_description.json', 'utf8');
-              rawData = rawData.replace(/```json/g, '').replace(/```/g, '').trim();
-
+              const rawData = fs.readFileSync('pr_description.json', 'utf8');
               const result = JSON.parse(rawData);
 
               if (result.description) {
