@@ -12,7 +12,6 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useUserSettings } from '@/context/UserSettingsContext'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
@@ -20,12 +19,13 @@ import {
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
-  const [userSettings, setUserSettings] = useUserSettings()
   const [hrValue, setHrValue] = useState(100)
+  const [name, setName] = useState('Mock User')
+  const [age, setAge] = useState(30)
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
 
   const isStreaming = intervalId !== null
-  const { userName, userAge, maxHr, restingHr } = userSettings
+  const maxHr = 220 - age
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -56,13 +56,13 @@ export default function MockPage() {
     const message: HrmMetadataUpdateMessage = {
       type: 'HRM_METADATA_UPDATE',
       data: {
-        maxHr: maxHr ?? 220 - (userAge ?? 30),
-        name: userName ?? 'Mock User',
-        age: userAge ?? 30,
+        maxHr: maxHr,
+        name: name,
+        age: age,
       },
     }
     sendData(message)
-  }, [sendData, userName, userAge, maxHr])
+  }, [sendData, name, age, maxHr])
 
   // NOTE: In a real client, metadata would likely be sent once upon connection
   // or when the user explicitly saves settings. For this mock, we send it
@@ -136,13 +136,8 @@ export default function MockPage() {
               <TextField
                 label="User Name"
                 placeholder="e.g., Mock User"
-                value={userName ?? ''}
-                onChange={(e) =>
-                  setUserSettings((prev) => ({
-                    ...prev,
-                    userName: e.target.value,
-                  }))
-                }
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 fullWidth
               />
             </Grid>
@@ -151,47 +146,8 @@ export default function MockPage() {
                 label="Age"
                 placeholder="e.g., 30"
                 type="number"
-                value={userAge ?? ''}
-                onChange={(e) =>
-                  setUserSettings((prev) => ({
-                    ...prev,
-                    userAge: e.target.value
-                      ? parseInt(e.target.value, 10)
-                      : null,
-                  }))
-                }
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 6 }}>
-              <TextField
-                label="Max HR"
-                placeholder="e.g., 190"
-                type="number"
-                value={maxHr ?? ''}
-                onChange={(e) =>
-                  setUserSettings((prev) => ({
-                    ...prev,
-                    maxHr: e.target.value ? parseInt(e.target.value, 10) : null,
-                  }))
-                }
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 6 }}>
-              <TextField
-                label="Resting HR"
-                placeholder="e.g., 60"
-                type="number"
-                value={restingHr ?? ''}
-                onChange={(e) =>
-                  setUserSettings((prev) => ({
-                    ...prev,
-                    restingHr: e.target.value
-                      ? parseInt(e.target.value, 10)
-                      : null,
-                  }))
-                }
+                value={age}
+                onChange={(e) => setAge(parseInt(e.target.value, 10))}
                 fullWidth
               />
             </Grid>

@@ -5,13 +5,13 @@ on:
   workflow_call:
     outputs:
       needs-review:
-        description: 'Whether a re-review is needed'
+        description: "Whether a re-review is needed"
         value: ${{ jobs.analyze-changes.outputs.needs-review }}
       review-type:
-        description: 'Type of review required'
+        description: "Type of review required"
         value: ${{ jobs.analyze-changes.outputs.review-type }}
       skip-reason:
-        description: 'Reason for skipping review'
+        description: "Reason for skipping review"
         value: ${{ jobs.analyze-changes.outputs.skip-reason }}
 
 permissions:
