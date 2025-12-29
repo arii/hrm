@@ -39,6 +39,25 @@ This automated process ensures that code merged into the `leader` branch always 
 
 The project contains legacy Python-based pre-commit hooks (`.pre-commit-config.yaml`). These are now considered **deprecated** in favor of the Husky-based Node.js tooling. The Python hooks will be removed in a future pull request to eliminate redundancy.
 
+## Code Organization
+
+### Barrel Exports for Cleaner Imports
+
+To improve code organization and simplify import statements, this project has adopted the use of barrel exports (`index.ts` files) for key directories. As of the latest update, the following directories now have barrel exports:
+
+-   `components/`
+-   `constants/`
+-   `context/`
+-   `hooks/`
+-   `lib/`
+-   `services/`
+-   `utils/`
+
+**Contribution Guidelines**: When adding a new file to a directory that contains an `index.ts` barrel file, you must **manually update** the `index.ts` file to include an export for the new module. This ensures that all modules are consistently available through the barrel.
+
+**Next Steps**: A follow-up task will be created to refactor the entire codebase to utilize these new barrel exports. This will involve updating all direct import paths to use the new, cleaner barrel imports. This work was deferred to a separate task to avoid introducing breaking changes while resolving a complex testing issue.
+
+
 ## Current Focus
 
 The primary focus of ongoing development is to enhance the user experience and improve the long-term maintainability of the application. Key priorities include:

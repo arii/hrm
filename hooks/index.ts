@@ -1,10 +1,17 @@
+// This file is generated automatically. Do not edit it manually.
+
 export * from './useAudio'
 export * from './useAutoConnect'
 export * from './useBluetoothHRM'
+export * from './useCalorieCounter'
 export * from './useDebounce'
+export * from './useFetchWithRetry'
+export * from './useHeightInput'
+export * from './useHrZone'
 export * from './useLocalStorage'
 export * from './useSpotifyRemoteExecution'
 export * from './useSpotifyWebPlayback'
 export * from './useUserPreferences'
+export * from './useUserWeight'
 export * from './useVolumePreference'
 export * from './useWorkoutSession'
