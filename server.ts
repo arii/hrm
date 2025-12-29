@@ -139,6 +139,52 @@ app.prepare().then(async () => {
     res.status(200).json({ healthy, details })
   })
 
+  // Intercept the token delivery route before it hits the Next.js handler
+  expressApp.post(
+    '/api/internal/token-delivery',
+    express.json(), // Use express.json() only for this route
+    async (req, res) => {
+      try {
+        const tokenData = req.body
+        if (!tokenData || !tokenData.refresh_token) {
+          return res.status(400).json({ error: 'Missing token data.' })
+        }
+
+        const secretHeader = req.headers['x-internal-token-secret'] || ''
+        if (secretHeader !== env.NEXTAUTH_SECRET) {
+          return res.status(401).json({ error: 'Unauthorized.' })
+        }
+
+        if (!services.spotifyService || !services.spotifyService.isReady()) {
+          logger.warn(
+            'Internal token delivery failed: Spotify service not available.'
+          )
+          return res
+            .status(503)
+            .json({ error: 'Spotify service is not available.' })
+        }
+
+        await services.spotifyService.handleTokenUpdate({
+          ...tokenData,
+          provider: 'spotify',
+          sub: '',
+          scope: '',
+          obtainedAt: Date.now(),
+        })
+
+        logger.info(
+          'Spotify token delivered and processed successfully via server intercept.'
+        )
+        return res
+          .status(200)
+          .json({ ok: true, message: 'Token delivered successfully.' })
+      } catch (err) {
+        logger.error({ err }, 'Unhandled error in server-side token-delivery')
+        return res.status(500).json({ error: 'server_error' })
+      }
+    }
+  )
+
   expressApp.use((req, res) => handle(req, res))
 
   // 5. Upgrade Handling
