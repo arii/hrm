@@ -244,7 +244,11 @@ async function generateContentWithFallback(
       console.log(`Successfully generated content using ${modelName}.`)
       return result.response.text()
     } catch (error: unknown) {
-      lastError = error
+      if (error instanceof Error) {
+        lastError = error
+      } else {
+        lastError = new Error(String(error))
+      }
       const errorMessage = (error as Error).message || ''
       const errorStatus = (error as { status?: number }).status
 
