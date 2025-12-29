@@ -206,21 +206,27 @@ const handleIncomingMessage = async (
 
     switch (message.type) {
       case 'SPOTIFY_TOKEN_UPDATE': {
-        const { accessToken, refreshToken, expiresIn, tokenType } =
+        const { accessToken, refreshToken, expiresIn, tokenType, scope } =
           message.payload
         logger.info({ clientId }, 'Received Spotify token update from client.')
-        // Hydrate the service with the user's token
-        // Mapping to snake_case as expected by SpotifyTokenManager/SDK
-        await services.spotifyService.handleTokenUpdate({
-          provider: 'spotify',
-          sub: 'unknown',
-          access_token: accessToken,
-          refresh_token: refreshToken || '',
-          expires_in: expiresIn || 3600,
-          token_type: tokenType || 'Bearer',
-          scope: '', // Optional, usually managed by the backend config
-          obtainedAt: Date.now(),
-        })
+        try {
+          // Hydrate the service with the user's token
+          await services.spotifyService.handleTokenUpdate({
+            provider: 'spotify',
+            sub: 'unknown',
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+            expires_in: expiresIn || 3600,
+            token_type: tokenType || 'Bearer',
+            scope: scope || '',
+            obtainedAt: Date.now(),
+          })
+        } catch (error) {
+          logger.error(
+            { clientId, error },
+            'Failed to handle Spotify token update.'
+          )
+        }
         break
       }
       case 'PING': {

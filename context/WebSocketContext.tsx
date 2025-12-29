@@ -413,12 +413,13 @@ export const WebSocketProvider = ({
           accessToken: session.accessToken,
           refreshToken: session.refreshToken,
           expiresIn: session.expires ? Math.round((new Date(session.expires).getTime() - Date.now()) / 1000) : undefined,
+          scope: session.scope,
         },
       })
     }
   }, [session, sendData])
 
-  // Sync on Session Change
+  // Sync on Session Change: Ensures the server has the latest access token after a refresh.
   useEffect(() => {
     if (connectionStatus === 'Connected') {
       sendToken()

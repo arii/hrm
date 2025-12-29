@@ -163,6 +163,7 @@ export interface SpotifyTokenUpdateMessage {
     refreshToken?: string
     expiresIn?: number
     tokenType?: string
+    scope?: string
   }
 }
 
@@ -256,6 +257,7 @@ export const SpotifyTokenUpdateMessageSchema = z.object({
     refreshToken: z.string().optional(),
     expiresIn: z.number().optional(),
     tokenType: z.string().optional(),
+    scope: z.string().optional(),
   }),
 })
 
