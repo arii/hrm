@@ -129,8 +129,9 @@ export const WebSocketProvider = ({
       }
       return id
     } catch (error) {
-      console.error('Failed to access localStorage:', error)
-      return window.crypto.randomUUID() // Fallback to in-memory UUID
+      console.error('Failed to access localStorage for clientId:', error)
+      // Fallback to a non-persistent, in-memory UUID if localStorage is unavailable
+      return window.crypto.randomUUID()
     }
   })
 
@@ -180,9 +181,15 @@ export const WebSocketProvider = ({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedActions = localStorage.getItem('pendingActions')
-      if (savedActions) {
-        pendingActions.current = JSON.parse(savedActions)
+      try {
+        const savedActions = localStorage.getItem('pendingActions')
+        if (savedActions) {
+          pendingActions.current = JSON.parse(savedActions)
+        }
+      } catch (error) {
+        console.error('Failed to retrieve pending actions from localStorage:', error)
+        // Clear potentially corrupted data
+        localStorage.removeItem('pendingActions')
       }
     }
   }, [])
@@ -236,7 +243,7 @@ export const WebSocketProvider = ({
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
-      // Set test flag for Playwright tests - use a more reliable method
+      // Set test flag for Playwright tests
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
       }
@@ -252,7 +259,11 @@ export const WebSocketProvider = ({
           ws.send(JSON.stringify(action))
         })
         pendingActions.current = []
-        localStorage.setItem('pendingActions', '[]')
+        try {
+          localStorage.setItem('pendingActions', '[]')
+        } catch (error) {
+          console.error('Failed to clear pending actions in localStorage:', error)
+        }
       }
 
       // Reset reconnect attempts on successful connection
@@ -331,9 +342,8 @@ export const WebSocketProvider = ({
           return // Pong message is handled, no state dispatch needed
         }
 
-        // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
+        // Handle EXECUTE_SPOTIFY messages specially
         if (message.type === 'EXECUTE_SPOTIFY') {
-          // Dispatch a custom event that the remote execution hook can listen to
           window.dispatchEvent(
             new CustomEvent('spotify-remote-command', {
               detail: message,
@@ -357,11 +367,9 @@ export const WebSocketProvider = ({
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
-    // Stop heartbeat on manual disconnect
     stopHeartbeat()
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
     }
     if (wsRef.current) {
       wsRef.current.close()
@@ -371,7 +379,12 @@ export const WebSocketProvider = ({
 
   useEffect(() => {
     connectRef.current = connect
-    connect()
+    try {
+        connect()
+    } catch (error) {
+        console.error("Failed to initiate WebSocket connection:", error)
+        setConnectionStatus("Error")
+    }
 
     return () => {
       disconnect()
@@ -392,10 +405,14 @@ export const WebSocketProvider = ({
         data
       )
       pendingActions.current.push(data)
-      localStorage.setItem(
-        'pendingActions',
-        JSON.stringify(pendingActions.current)
-      )
+      try {
+        localStorage.setItem(
+          'pendingActions',
+          JSON.stringify(pendingActions.current)
+        )
+      } catch (error) {
+        console.error('Failed to save pending actions to localStorage:', error)
+      }
     }
   }, [])
 
