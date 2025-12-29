@@ -11,6 +11,7 @@ import IconButton from '@mui/material/IconButton'
 import SettingsIcon from '@mui/icons-material/Settings'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { DASHBOARD_WIDGET_HEIGHT } from '@/constants/layout'
 import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
@@ -116,7 +117,10 @@ const HrmConnectionPanel = () => {
               borderRadius: 2,
               height: '100%',
               justifyContent: 'center',
-              minHeight: 220,
+              minHeight: {
+                xs: 'auto',
+                md: DASHBOARD_WIDGET_HEIGHT,
+              },
             }}
           >
             <Box
