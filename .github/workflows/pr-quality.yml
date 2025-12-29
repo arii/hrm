@@ -386,6 +386,14 @@ jobs:
         run: |
           set +e  # Disable exit on error to continue reporting even if commands fail
 
+          # Cap the log truncation size to prevent excessively large comments
+          if [ -z "$LOG_TRUNCATE_BYTES" ] || ! [[ "$LOG_TRUNCATE_BYTES" =~ ^[0-9]+$ ]]; then
+             LOG_TRUNCATE_BYTES=20000
+          fi
+          if [ "$LOG_TRUNCATE_BYTES" -gt 50000 ]; then
+             LOG_TRUNCATE_BYTES=50000
+          fi
+
           # 1. SETUP: Find PR number and define checks
           PR_NUMBER="${{ github.event.pull_request.number }}"
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
