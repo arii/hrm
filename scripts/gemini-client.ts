@@ -792,7 +792,8 @@ async function handleError(error: unknown) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
-  const technicalDetails = error.message || 'No technical details available.'
+  const technicalDetails =
+    error instanceof Error ? error.message : 'No technical details available.'
 
   if (error instanceof GoogleGenerativeAIError) {
     if (error.message.includes('400') || error.message.includes('404')) {
@@ -804,7 +805,7 @@ async function handleError(error: unknown) {
       userMessage =
         'The generative AI service is temporarily unavailable. Please try again later.'
     }
-  } else if (error.message.includes('api key')) {
+  } else if (technicalDetails.includes('api key')) {
     category = 'Configuration Issue'
     userMessage = 'The GEMINI_API_KEY is either invalid or missing.'
   }
