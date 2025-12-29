@@ -36,6 +36,33 @@ The `any` type is a powerful tool, but it's a dangerous one. It effectively disa
     }
     ```
 
+### The Dangers of Unsafe Type Assertions
+
+A type assertion (`as string`) tells the TypeScript compiler, "Trust me, I know what I'm doing." This can be dangerous because if you are wrong, you will introduce a runtime error. This is especially common with values that can be `null` or `undefined` at runtime, such as environment variables.
+
+**Don't do this:**
+
+```typescript
+// Unsafe: This will throw a TypeError if API_KEY is not set.
+const apiKey = process.env.API_KEY as string;
+console.log(apiKey.toLowerCase());
+```
+
+**Do this instead:**
+
+Use a runtime check to validate the value before you use it. This is a form of type narrowing that ensures your code is safe.
+
+```typescript
+const apiKey = process.env.API_KEY;
+
+if (typeof apiKey !== 'string' || apiKey.length === 0) {
+  throw new Error('API_KEY environment variable is not set.');
+}
+
+// Safe: TypeScript now knows apiKey is a string.
+console.log(apiKey.toLowerCase());
+```
+
 5.  **`Record<string, any>`:** In some cases, you might need to use `Record<string, any>`. This is still a bit of a code smell, but it's better than a naked `any`. It's useful when you have an object with a known set of keys, but the values can be of any type.
 
     ```typescript
