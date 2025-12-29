@@ -1,15 +1,19 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
+import { z } from 'zod'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
+import logger from '../utils/logger.js'
 
-export interface SpotifyTokenPayload {
-  provider: string
-  sub: string
-  access_token: string
-  refresh_token: string
-  expires_in: number
-  scope: string
-  obtainedAt: number
-}
+const SpotifyTokenPayloadSchema = z.object({
+  provider: z.string(),
+  sub: z.string(),
+  access_token: z.string(),
+  refresh_token: z.string(),
+  expires_in: z.number(),
+  scope: z.string(),
+  obtainedAt: z.number(),
+})
+
+export type SpotifyTokenPayload = z.infer<typeof SpotifyTokenPayloadSchema>
 
 export interface TokenRecord {
   receivedAt: number
@@ -34,16 +38,23 @@ export class SpotifyTokenManager {
    * Updates the in-memory token.
    * @param {SpotifyTokenPayload} payload - The new token payload.
    */
-  public updateToken(payload: SpotifyTokenPayload): void {
+  public updateToken(payload: unknown): void {
+    const validation = SpotifyTokenPayloadSchema.safeParse(payload)
+    if (!validation.success) {
+      logger.error({ error: validation.error }, 'Invalid Spotify token payload received.')
+      return
+    }
+
     this.currentToken = {
       receivedAt: Date.now(),
-      payload: payload,
+      payload: validation.data,
     }
-    console.log('Updated in-memory Spotify tokens for:', this.currentToken.payload.sub)
+    logger.info({ userId: this.currentToken.payload.sub }, 'Updated in-memory Spotify tokens.')
   }
 
   private async refreshToken(): Promise<boolean> {
     if (!this.currentToken?.payload.refresh_token) return false
+    const userId = this.currentToken.payload.sub
 
     const maxRetries = 3
     let attempt = 0
@@ -82,10 +93,7 @@ export class SpotifyTokenManager {
         }
 
         const data = (await response.json()) as SpotifyTokenResponse
-        console.log(
-          'Spotify token refresh successful. Status:',
-          response.status
-        )
+        logger.info({ userId }, 'Spotify token refresh successful.')
 
         // Update current token with new values
         this.currentToken = {
@@ -104,13 +112,13 @@ export class SpotifyTokenManager {
       } catch (error: unknown) {
         const err = error as Error
         if (err.message && err.message.includes('(Non-retriable)')) {
-          console.error('Failed to refresh Spotify token (fatal):', err)
+          logger.error({ userId, error: err }, 'Failed to refresh Spotify token (fatal).')
           return false
         }
 
-        console.error(
-          `Failed to refresh Spotify token (attempt ${attempt}/${maxRetries}):`,
-          err
+        logger.warn(
+          { userId, attempt, maxRetries, error: err },
+          `Failed to refresh Spotify token (attempt ${attempt}/${maxRetries}).`
         )
         if (attempt >= maxRetries) return false
         // Exponential backoff
@@ -132,23 +140,26 @@ export class SpotifyTokenManager {
 
     if (Date.now() >= expiresAt - 60000) {
       if (this.currentToken.payload.refresh_token) {
-        console.log(
-          'Spotify access token is expiring soon, initiating refresh...'
-        )
+        logger.info({ userId: this.currentToken.payload.sub }, 'Spotify access token is expiring soon, initiating refresh...')
         if (!this.refreshPromise) {
           this.refreshPromise = this.refreshToken()
-            .then(() => {
+            .then((success) => {
+              if (success) {
+                logger.info({ userId: this.currentToken?.payload.sub }, 'Spotify access token refresh completed.')
+              }
               this.refreshPromise = null
-              console.log('Spotify access token refresh completed.')
+              return success
             })
             .catch((error) => {
               this.refreshPromise = null
-              console.error('Spotify access token refresh failed:', error)
+              logger.error({ userId: this.currentToken?.payload.sub, error }, 'Spotify access token refresh failed unexpectedly.')
+              return false
             })
         }
         await this.refreshPromise
       } else {
-        console.log(
+        logger.warn(
+            { userId: this.currentToken.payload.sub },
           'Spotify access token expired, but no refresh token available. Cannot refresh.'
         )
       }
