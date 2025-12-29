@@ -445,10 +445,10 @@ export function buildReviewPrompt(
   prompt += `\n## Project Documentation & Guidelines\n${contextContent}\n`
 
   // --- Diff Section ---
-  const maxDiffLength = parseInt(
-    process.env.GEMINI_MAX_DIFF_LENGTH || '60000',
-    10
-  )
+  let maxDiffLength = parseInt(process.env.GEMINI_MAX_DIFF_LENGTH || '', 10)
+  if (isNaN(maxDiffLength) || maxDiffLength <= 0) {
+    maxDiffLength = 60000 // Default value
+  }
   const truncatedDiff =
     diff.length > maxDiffLength
       ? diff.substring(0, maxDiffLength) + '\n...[DIFF TRUNCATED]'

@@ -66,6 +66,14 @@ describe('buildReviewPrompt', () => {
     delete process.env.GEMINI_MAX_DIFF_LENGTH;
   });
 
+  it('should use the default maxDiffLength if the environment variable is invalid', () => {
+    process.env.GEMINI_MAX_DIFF_LENGTH = 'invalid';
+    const longDiff = 'a'.repeat(60001);
+    const prompt = buildReviewPrompt(longDiff, mockContextBase, 'fake-docs');
+    expect(prompt).toContain('...[DIFF TRUNCATED]');
+    delete process.env.GEMINI_MAX_DIFF_LENGTH;
+  });
+
   it('should include the log snippet in the "Fix Mode" prompt when available', () => {
     const contextWithLogSnippet: ReviewContext = {
       ...mockContextBase,
