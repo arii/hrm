@@ -12,8 +12,12 @@ import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
+import SpotifySearchInput from '@/components/SpotifySearchInput'
+import VolumeSlider from '@/components/Spotify/VolumeSlider'
 
 const SpotifyControls = () => {
   const router = useRouter()

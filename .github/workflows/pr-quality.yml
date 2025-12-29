@@ -162,12 +162,6 @@ jobs:
           echo "::notice::Knip output may be available in logs above"
           exit 1
 
-      - name: Fail on Knip Errors
-        if: steps.knip.outcome == 'failure'
-        run: |
-          echo "::error::Knip found dead code. See the 'knip-report' artifact for details."
-          exit 1
-
       - name: Lint Code
         id: lint
         run: pnpm run lint 2>&1 | tee lint-output.log

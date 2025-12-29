@@ -2,9 +2,12 @@
 // API route for the standalone Spotify playlist selection page
 // This endpoint is only used by app/client/spotify-selection/page.tsx
 
+import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
+import { withErrorHandler } from '@/lib/middleware/errorHandler'
+import { ApiError } from '@/lib/errors'
 
 /**
  * API route to fetch preset and user Spotify playlists.

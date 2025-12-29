@@ -1,3 +1,4 @@
+import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
 import { serviceContainer } from '@/lib/serviceContainer'
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
     // The service might be uninitialized (not ready) because it's waiting for this very token to initialize.
     // This check created a circular dependency. We must allow the token delivery to proceed to bootstrap the SDK.
     if (!spotifyService) {
-      throw new Api-Error(503, 'Spotify service is not available.')
+      throw new ApiError(503, 'Spotify service is not available.')
     }
 
     // 4. Directly and reliably update the service with the new token

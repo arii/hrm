@@ -28,15 +28,19 @@ const config: KnipConfig = {
     'public/mockServiceWorker.js',
   ],
   ignoreDependencies: [
+    // Used in tests, but Knip doesn't see it
+    'jest-environment-jsdom',
     // types for web bluetooth api
     '@types/web-bluetooth',
     // Eslint plugin
     'eslint-plugin-react',
+    'wait-on',
   ],
   ignoreBinaries: [
     'scripts/test-json-with-server.sh',
     'scripts/test-with-server.sh',
     'python3',
+    'sleep',
   ],
 }
 

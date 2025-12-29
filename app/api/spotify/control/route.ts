@@ -1,6 +1,7 @@
 // File: app/api/spotify/control/route.ts
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
+import { authOptions } from '@/lib/auth'
 import logger from '@/utils/logger'
 
 export async function POST(req: NextRequest) {
