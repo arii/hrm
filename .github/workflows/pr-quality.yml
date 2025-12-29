@@ -41,7 +41,7 @@ env:
   # Browsers are installed INSIDE the workspace so they persist with clean: false
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
   # Unique session identifier for concurrent runs
-  SESSION_ID: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+  SESSION_ID: '${{ github.event.pull_request.number || github.ref_name || github.run_id }}'
 
 jobs:
   # ===========================================================================
@@ -127,6 +127,16 @@ jobs:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 0
           clean: true # 🧹 Wipes previous run artifacts to ensure a fresh start
+
+      # Sanitize SESSION_ID early in infra-setup too, to ensure consistent naming
+      - name: Sanitize SESSION_ID
+        id: sanitize_id
+        uses: ./.github/actions/sanitize-string
+        with:
+          value: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+
+      - name: Update Environment for Sanitized ID
+        run: echo "SESSION_ID=${{ steps.sanitize_id.outputs.sanitized-value }}" >> $GITHUB_ENV
 
       - name: Verify Lockfile
         run: |
@@ -217,7 +227,8 @@ jobs:
         id: sanitize_id
         uses: ./.github/actions/sanitize-string
         with:
-          value: ${{ env.SESSION_ID }}
+          # Use explicit context value instead of env context to prevent empty string errors
+          value: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
 
       - name: Update Environment for Sanitized ID
         run: echo "SESSION_ID=${{ steps.sanitize_id.outputs.sanitized-value }}" >> $GITHUB_ENV
