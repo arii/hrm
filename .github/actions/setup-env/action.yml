@@ -13,6 +13,10 @@ inputs:
     description: 'Version of Node.js to use.'
     required: false
     default: '20.x'
+  gh-version:
+    description: 'Version of GitHub CLI to install.'
+    required: false
+    default: '2.53.0'
 
 runs:
   using: 'composite'
@@ -38,7 +42,7 @@ runs:
       shell: bash
       run: |
         mkdir -p $HOME/.local/bin
-        GH_VERSION=2.53.0
+        GH_VERSION=${{ inputs.gh-version }}
         curl -L https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz -o gh.tar.gz
         tar xvf gh.tar.gz
         mv gh_${GH_VERSION}_linux_amd64/bin/gh $HOME/.local/bin/

@@ -55,6 +55,7 @@ jobs:
         uses: ./.github/actions/setup-env
         with:
           ref: ${{ inputs.branch || github.ref }}
+          gh-version: '2.53.0'
 
       - name: Define Dynamic Cache Path
         shell: bash
@@ -86,7 +87,6 @@ jobs:
         id: build
         env:
           NEXTAUTH_URL: http://localhost:3000
-          NEXTAUTH_SECRET: build-verification-secret
         run: |
           set -o pipefail
           pnpm run build 2>&1 | tee logs/build-output.log
