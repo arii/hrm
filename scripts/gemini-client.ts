@@ -3,7 +3,6 @@ import {
   SchemaType,
   GoogleGenerativeAIError,
   GenerateContentRequest,
-  ModelParams,
 } from '@google/generative-ai'
 import { readFile, writeFile } from 'fs/promises'
 import path from 'path'
@@ -110,16 +109,17 @@ export class JsonProcessor {
   public process(text: string): {
     success: boolean
     data: unknown
+    raw: string
   } {
     try {
       // First, try parsing the text directly.
-      return { success: true, data: JSON.parse(text) }
+      return { success: true, data: JSON.parse(text), raw: text }
     } catch {
       // If direct parsing fails, try to extract JSON from a markdown code block.
       const jsonBlock = this.extractJsonBlock(text)
       if (jsonBlock) {
         try {
-          return { success: true, data: JSON.parse(jsonBlock) }
+          return { success: true, data: JSON.parse(jsonBlock), raw: text }
         } catch (e) {
           console.error('Error parsing JSON block:', e)
           // If parsing the extracted block fails, return a structured error.
@@ -129,6 +129,7 @@ export class JsonProcessor {
               error: 'JSON Parse Error',
               message: 'Could not parse the JSON block found in the markdown.',
             },
+            raw: text,
           }
         }
       }
@@ -139,6 +140,7 @@ export class JsonProcessor {
           error: 'JSON Parse Error',
           message: 'No valid JSON found in the response.',
         },
+        raw: text,
       }
     }
   }
@@ -230,16 +232,17 @@ async function main() {
 async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
   prompt: string,
-  config?: ModelParams
+  config?: GenerateContentRequest
 ) {
   let lastError: unknown
 
   for (const modelName of MODEL_FALLBACKS) {
     console.log(`Attempting to use model: ${modelName}...`)
     try {
-      const model = genAI.getGenerativeModel({ model: modelName, ...config })
+      const model = genAI.getGenerativeModel({ model: modelName })
       const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        ...config,
       })
       console.log(`Successfully generated content using ${modelName}.`)
       return result.response.text()
