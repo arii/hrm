@@ -11,5 +11,5 @@ if [ -f .env.production ]; then
   set +a
 fi
 
-# For Next.js standalone output, the entry point is server.js inside .next/standalone
-exec node .next/standalone/server.js
+# For Next.js standalone output, the entry point is now our custom server.
+exec node .next/standalone/dist/standalone-server.js
