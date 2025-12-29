@@ -126,6 +126,7 @@ jobs:
           
           # Add metadata section
           # Use printf to safely handle multi-line strings and avoid YAML parsing errors.
+          # Direct assignment can fail if indentation is not perfect (e.g., an un-indented empty line).
           # See: https://trstringer.com/github-actions-multiline-strings/
           if [ -z "$CURRENT_BODY" ]; then
             NEW_BODY="$METADATA"
