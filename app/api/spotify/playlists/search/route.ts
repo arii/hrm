@@ -2,8 +2,6 @@
 // API route to search for public Spotify playlists
 // This endpoint is used by the PlaylistSelector component to search for popular playlists
 
-import { authOptions } from '@/lib/auth'
-import { ApiError } from '@/lib/errors'
 import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'

@@ -2,16 +2,10 @@
 
 import { useState } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
 import { toKg, toDisplay } from '../../../utils/units'
-import { useCalorieCounter } from '@/hooks/useCalorieCounter'
-import { useHrZone } from '@/hooks/useHrZone'
-import { useHeightInput } from '@/hooks/useHeightInput'
 import { validateAgeValue, validateWeightValue } from './validation'
 
 export default function ConnectPage() {

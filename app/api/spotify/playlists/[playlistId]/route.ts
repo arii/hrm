@@ -3,9 +3,6 @@
  * API Route: Fetches details for a single Spotify playlist.
  */
 import { NextResponse } from 'next/server'
-import { withErrorHandler } from '@/lib/middleware/errorHandler'
-import { ApiError } from '@/lib/errors'
-import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 
 /**
  * GET handler for fetching single playlist details.

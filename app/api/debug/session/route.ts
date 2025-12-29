@@ -1,6 +1,5 @@
 import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
-import { authOptions } from '@/lib/auth'
 
 /**
  * Debug route to return the server side NextAuth session.

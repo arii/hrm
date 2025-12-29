@@ -3,9 +3,6 @@
  * API Route: Fetches tracks for a specific Spotify playlist with pagination.
  */
 import { NextResponse } from 'next/server'
-import { withErrorHandler } from '@/lib/middleware/errorHandler'
-import { ApiError } from '@/lib/errors'
-import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 
 type SpotifyPagingParams =
   | 0
