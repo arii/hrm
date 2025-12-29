@@ -72,8 +72,8 @@ const Dashboard = () => {
   }, [])
 
   return (
-    <PageContainer maxWidth="xl" hasNavBar={true}>
-      <Box sx={mainGridStyles} onClick={handleInteraction}>
+    <PageContainer maxWidth="xl" hasNavBar={true} onClick={handleInteraction}>
+      <Box sx={mainGridStyles}>
         {/*
          * The extra Box with height: '100%' is necessary to ensure the TimerDisplay
          * component stretches to fill the full height of the grid cell. The grid

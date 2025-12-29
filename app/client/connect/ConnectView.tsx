@@ -128,7 +128,7 @@ export default function ConnectView({
   if (!isSupported) {
     return (
       <PageContainer maxWidth="sm" hasNavBar={true}>
-        <Box sx={{ py: 10, textAlign: 'center' }}>
+        <Box sx={{ textAlign: 'center' }}>
           <BluetoothDisabledIcon
             sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }}
           />

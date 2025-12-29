@@ -6,28 +6,14 @@ import BottomNavBar from './BottomNavBar'
 
 /**
  * Props for the PageContainer component.
- * It wraps the MUI Container component and adds a consistent layout with an optional BottomNavBar.
+ * Extends MUI ContainerProps and adds a `hasNavBar` prop for consistent layout.
  */
-interface PageContainerProps {
-  /**
-   * The content to be rendered inside the container.
-   */
-  children: React.ReactNode
+interface PageContainerProps extends ContainerProps {
   /**
    * If true, the bottom navigation bar will be displayed, and appropriate padding will be added.
    * @default true
    */
   hasNavBar?: boolean
-  /**
-   * Determine the max-width of the container. The container width grows with the size of the screen.
-   * Set to false to disable maxWidth.
-   * @default 'xl'
-   */
-  maxWidth?: ContainerProps['maxWidth']
-  /**
-   * The system prop that allows defining system overrides as well as custom CSS styles.
-   */
-  sx?: ContainerProps['sx']
 }
 
 const PageContainer: React.FC<PageContainerProps> = ({
@@ -35,6 +21,7 @@ const PageContainer: React.FC<PageContainerProps> = ({
   hasNavBar = true,
   maxWidth = 'xl',
   sx,
+  ...props
 }) => {
   const theme = useTheme()
 
@@ -44,11 +31,12 @@ const PageContainer: React.FC<PageContainerProps> = ({
         maxWidth={maxWidth}
         sx={{
           py: { xs: 2, sm: 3 },
-          ...(hasNavBar && { pb: theme.spacing(10) }), // Use theme spacing
+          ...(hasNavBar && { pb: theme.spacing(10) }),
           minHeight: '100vh',
           backgroundColor: 'background.default',
           ...sx,
         }}
+        {...props}
       >
         {children}
       </Container>
