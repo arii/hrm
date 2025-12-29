@@ -10,6 +10,7 @@
   },
   "include": [
     "server.ts",
+    "standalone-server.ts",
     "services/**/*.ts",
     "utils/**/*.ts",
     "types/**/*.ts",
