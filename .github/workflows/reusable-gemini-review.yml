@@ -163,8 +163,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ARI_PAT: ${{ secrets.ARI_PAT }}
         run: |
-          # Get the initial list of failed checks
-          FAILED_CHECKS_RAW_JSON=$(gh pr checks ${{ github.event.pull_request.number }} --json name,conclusion,detailsUrl | jq -c 'map(select(.conclusion == "failure" or .conclusion == "cancelled"))')
+          # Get the initial list of failed checks, filtering for GitHub Actions only
+          FAILED_CHECKS_RAW_JSON=$(gh pr checks ${{ github.event.pull_request.number }} --json name,conclusion,detailsUrl,checkRun | jq -c 'map(select((.conclusion == "failure" or .conclusion == "cancelled") and .checkRun != null))')
 
           # Initialize an empty array for the final result
           FINAL_CHECKS_JSON="[]"
