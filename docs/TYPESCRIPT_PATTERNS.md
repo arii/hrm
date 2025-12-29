@@ -134,3 +134,40 @@ let data: any; // Reason: The data comes from a third-party API with no type def
 ```
 
 By following these guidelines, we can ensure that our codebase remains type-safe and maintainable.
+
+## Testing Private Members
+
+Testing private members of a class can be challenging in TypeScript. While it's often a sign that your component might be doing too much, sometimes it's necessary to inspect internal state to ensure correctness. Instead of resorting to unsafe type assertions (`as any`), we use a type-safe pattern that exposes private members only in a test environment.
+
+### The `_test_` Property Pattern
+
+This pattern involves adding a public property to your class (e.g., `_test_`) that is conditionally defined based on the `NODE_ENV`.
+
+```typescript
+class MyService {
+  private myPrivateValue = 42;
+
+  /**
+   * @internal
+   * Test-only properties for inspecting internal state. This object is only defined
+   * when `process.env.NODE_ENV === 'test'`, ensuring it does not exist in production.
+   */
+  public _test_ =
+    process.env.NODE_ENV === 'test'
+      ? {
+          getMyPrivateValue: () => this.myPrivateValue,
+        }
+      : undefined;
+}
+
+// In your test file:
+const service = new MyService();
+if (service._test_) {
+  expect(service._test_.getMyPrivateValue()).toBe(42);
+}
+```
+
+This approach has several advantages:
+- It's type-safe. The `_test_` property is properly typed, and your tests will fail to compile if you try to access a property that doesn't exist.
+- It's explicit. It clearly communicates that these properties are for testing purposes only.
+- It's safe for production. The `_test_` property is `undefined` in production, so there's no risk of it being used accidentally.
