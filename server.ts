@@ -24,6 +24,11 @@ const app = next({
 const handle = app.getRequestHandler()
 const expressApp = express()
 
+if (!env.INTERNAL_TOKEN_DELIVERY_SECRET) {
+  logger.fatal('INTERNAL_TOKEN_DELIVERY_SECRET is not set. The server will not start.')
+  process.exit(1)
+}
+
 app.prepare().then(async () => {
   const server = createServer(expressApp)
 
@@ -193,7 +198,7 @@ app.prepare().then(async () => {
           token_type: 'Bearer',
           expires_in: tokenData.expires_in || 0,
           refresh_token: tokenData.refresh_token || '',
-          scope: '',
+          scope: tokenData.scope || '',
           obtainedAt: Date.now(),
         })
 
