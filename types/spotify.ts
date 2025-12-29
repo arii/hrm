@@ -7,3 +7,15 @@ export interface Track {
   album: { name: string }
   imageUrl?: string | null
 }
+
+export interface Playlist {
+  name: string
+  uri: string
+  id?: string
+  isPreset?: boolean
+  isSearchResult?: boolean
+  imageUrl?: string | null
+  description?: string | null
+  trackCount?: number
+  owner?: string
+}
