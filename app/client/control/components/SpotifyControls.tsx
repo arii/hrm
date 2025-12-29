@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
+import { DeviceIdSchema } from '@/types/branded'
 import PlaybackControls from './PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
@@ -35,7 +36,9 @@ const SpotifyControls = () => {
       type: 'SPOTIFY_COMMAND',
       command: 'PLAY',
       uri: uri,
-      ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+      ...(targetDeviceId
+        ? { deviceId: DeviceIdSchema.parse(targetDeviceId) }
+        : {}),
     }
     sendData(message)
   }
@@ -113,7 +116,9 @@ const SpotifyControls = () => {
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+        ...(targetDeviceId
+          ? { deviceId: DeviceIdSchema.parse(targetDeviceId) }
+          : {}),
       }
       sendData(message)
     },

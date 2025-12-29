@@ -4,7 +4,7 @@
  * and the client hooks via the WebSocket connection.
  */
 import { WebSocket } from 'ws'
-import { ClientId, DeviceId, DeviceIdSchema } from './branded'
+import { ClientId, DeviceId, DeviceIdSchema } from './branded.js'
 import type {
   HrmStreamData as HrmData,
   TimerData,
