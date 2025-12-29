@@ -39,6 +39,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
       )
       // If parsing fails, the hook will fallback to the initialValue.
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [key, initialValue])
 
   // Return a wrapped version of useState's setter function that ...
@@ -50,20 +51,15 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         return
       }
       try {
-        // Allow value to be a function so we have same API as useState
-        const valueToStore =
-          value instanceof Function ? value(storedValue) : value
-        // Save state
-        setStoredValue(valueToStore)
-        // Save to local storage
-        if (typeof window !== 'undefined') {
+        // Use a functional update to get the latest state value.
+        setStoredValue((currentStoredValue) => {
+          const valueToStore =
+            value instanceof Function ? value(currentStoredValue) : value
           window.localStorage.setItem(key, JSON.stringify(valueToStore))
-        }
+          return valueToStore
+        })
       } catch (error) {
-        console.error(
-          `Failed to set localStorage key “${key}”:`,
-          error
-        )
+        console.error(`Failed to set localStorage key “${key}”:`, error)
       }
     },
     [key]
