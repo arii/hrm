@@ -109,17 +109,16 @@ export class JsonProcessor {
   public process(text: string): {
     success: boolean
     data: unknown
-    raw: string
   } {
     try {
       // First, try parsing the text directly.
-      return { success: true, data: JSON.parse(text), raw: text }
+      return { success: true, data: JSON.parse(text) }
     } catch {
       // If direct parsing fails, try to extract JSON from a markdown code block.
       const jsonBlock = this.extractJsonBlock(text)
       if (jsonBlock) {
         try {
-          return { success: true, data: JSON.parse(jsonBlock), raw: text }
+          return { success: true, data: JSON.parse(jsonBlock) }
         } catch (e) {
           console.error('Error parsing JSON block:', e)
           // If parsing the extracted block fails, return a structured error.
@@ -129,7 +128,6 @@ export class JsonProcessor {
               error: 'JSON Parse Error',
               message: 'Could not parse the JSON block found in the markdown.',
             },
-            raw: text,
           }
         }
       }
@@ -140,7 +138,6 @@ export class JsonProcessor {
           error: 'JSON Parse Error',
           message: 'No valid JSON found in the response.',
         },
-        raw: text,
       }
     }
   }
