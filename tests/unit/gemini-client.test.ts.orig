@@ -1,0 +1,153 @@
+/**
+ * @jest-environment node
+ */
+import { getModelFallbacks, JsonProcessor } from '../../scripts/gemini-client'
+
+describe('JsonProcessor', () => {
+  const processor = new JsonProcessor()
+
+  it('should parse a valid JSON string', () => {
+    const jsonString = '{"key": "value", "number": 123}'
+    const result = processor.process(jsonString)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({ key: 'value', number: 123 })
+  })
+
+  it('should extract and parse a JSON block from markdown', () => {
+    const markdownString =
+      'Some text before\n```json\n{"key": "value"}\n```\nSome text after'
+    const result = processor.process(markdownString)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({ key: 'value' })
+  })
+
+  it('should return an error for invalid JSON', () => {
+    const invalidJson = '{"key": "value",}'
+    const result = processor.process(invalidJson)
+    expect(result.success).toBe(false)
+    expect(result.data.error).toBe('JSON Parse Error')
+  })
+
+  it('should return an error for a malformed JSON block in markdown', () => {
+    const markdownString = '```json\n{"key": "value",}\n```'
+    const result = processor.process(markdownString)
+    expect(result.success).toBe(false)
+    expect(result.data.error).toBe('JSON Parse Error')
+  })
+
+  it('should return an error if no JSON is found', () => {
+    const nonJsonString = 'This is just a regular string.'
+    const result = processor.process(nonJsonString)
+    expect(result.success).toBe(false)
+    expect(result.data.error).toBe('JSON Parse Error')
+  })
+})
+
+describe('getModelFallbacks', () => {
+  const originalEnv = process.env
+
+  beforeEach(() => {
+    jest.resetModules()
+    process.env = { ...originalEnv }
+  })
+
+  afterEach(() => {
+    process.env = originalEnv
+  })
+
+  it('should return the default fallback list when the environment variable is not set', () => {
+    delete process.env.GEMINI_MODEL_FALLBACKS
+    const fallbacks = getModelFallbacks()
+    expect(fallbacks).toEqual([
+<<<<<<< HEAD
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-2.5-pro',
+=======
+      'gemini-2.0-flash-exp',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-pro-latest',
+>>>>>>> 2de6ed4c2... feat: Implement context caching for Gemini client
+    ])
+  })
+
+  it('should return the correct list of models from a valid environment variable', () => {
+    process.env.GEMINI_MODEL_FALLBACKS =
+      'gemini-pro, gemini-pro-vision, gemini-ultra'
+    const fallbacks = getModelFallbacks()
+    expect(fallbacks).toEqual([
+      'gemini-pro',
+      'gemini-pro-vision',
+      'gemini-ultra',
+    ])
+  })
+
+  it('should filter out invalid model names and log a warning', () => {
+    const consoleWarnSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {})
+    process.env.GEMINI_MODEL_FALLBACKS =
+      'gemini-pro, not-gemini, gemini-ultra, also-not-gemini'
+    const fallbacks = getModelFallbacks()
+    expect(fallbacks).toEqual(['gemini-pro', 'gemini-ultra'])
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'Warning: Invalid model name "not-gemini" in GEMINI_MODEL_FALLBACKS. It will be ignored.'
+    )
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'Warning: Invalid model name "also-not-gemini" in GEMINI_MODEL_FALLBACKS. It will be ignored.'
+    )
+    consoleWarnSpy.mockRestore()
+  })
+
+  it('should return the default list if the environment variable is an empty string', () => {
+    const consoleWarnSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {})
+    process.env.GEMINI_MODEL_FALLBACKS = ''
+    const fallbacks = getModelFallbacks()
+    expect(fallbacks).toEqual([
+<<<<<<< HEAD
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-2.5-pro',
+=======
+      'gemini-2.0-flash-exp',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-pro-latest',
+>>>>>>> 2de6ed4c2... feat: Implement context caching for Gemini client
+    ])
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
+    )
+    consoleWarnSpy.mockRestore()
+  })
+
+  it('should return the default list if the environment variable contains only invalid models', () => {
+    const consoleWarnSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {})
+    process.env.GEMINI_MODEL_FALLBACKS = 'invalid1, invalid2'
+    const fallbacks = getModelFallbacks()
+    expect(fallbacks).toEqual([
+<<<<<<< HEAD
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-2.5-pro',
+=======
+      'gemini-2.0-flash-exp',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-pro-latest',
+>>>>>>> 2de6ed4c2... feat: Implement context caching for Gemini client
+    ])
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
+    )
+    consoleWarnSpy.mockRestore()
+  })
+})
