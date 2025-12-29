@@ -121,34 +121,38 @@ jobs:
           ADDITIONS: ${{ env.ADDITIONS }}
           DELETIONS: ${{ env.DELETIONS }}
           CATEGORIES: ${{ env.CATEGORIES }}
+          PR_TEMPLATE_PATH: .github/PULL_REQUEST_TEMPLATE.md
         run: |
           PROMPT_FILE=$(mktemp)
-          PR_TEMPLATE=$(cat .github/PULL_REQUEST_TEMPLATE.md)
+          node -e '
+            const fs = require("fs");
+            const template = fs.readFileSync(process.env.PR_TEMPLATE_PATH, "utf8");
 
-          cat <<EOF > "$PROMPT_FILE"
-          You are an AI assistant. Your task is to generate a pull request description based on the provided template and PR data.
+            const prompt = `You are an AI assistant. Your task is to generate a pull request description based on the provided template and PR data.
 
-          ### PR Template
-          $PR_TEMPLATE
+            ### PR Template
+            ${template}
 
-          ### PR Data
-          PR Title: $PR_TITLE
-          PR Author: $PR_AUTHOR
-          PR Body: $PR_BODY
-          Files Changed: $FILE_COUNT
-          Lines Added: $ADDITIONS
-          Lines Deleted: $DELETIONS
-          Impact Areas: $CATEGORIES
+            ### PR Data
+            PR Title: ${process.env.PR_TITLE}
+            PR Author: ${process.env.PR_AUTHOR}
+            PR Body: ${process.env.PR_BODY}
+            Files Changed: ${process.env.FILE_COUNT}
+            Lines Added: ${process.env.ADDITIONS}
+            Lines Deleted: ${process.env.DELETIONS}
+            Impact Areas: ${process.env.CATEGORIES}
 
-          ### Instructions
-          Generate a JSON object with a single key "description", which contains the populated pull request description as a markdown string.
+            ### Instructions
+            Generate a JSON object with a single key "description", which contains the populated pull request description as a markdown string.
 
-          ### Output Format
-          You MUST return a valid JSON object. Do not include markdown formatting like \`\`\`json.
-          {
-            "description": "The full, populated pull request description as a markdown string."
-          }
-          EOF
+            ### Output Format
+            You MUST return a valid JSON object. Do not include markdown formatting like \`\`\`json.
+            {
+              "description": "The full, populated pull request description as a markdown string."
+            }
+            `;
+            fs.writeFileSync(process.argv[1], prompt);
+          ' "$PROMPT_FILE"
 
           npx tsx scripts/gemini-client.ts --task-file "$PROMPT_FILE" --output "pr_description.json"
 

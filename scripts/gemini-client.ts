@@ -273,13 +273,12 @@ async function generateContentWithFallback(
  */
 export function cleanJsonOutput(text: string): string {
   if (!text) return ''
-  // Remove markdown code blocks if present. Matches multiline ```json ... ``` or ``` ... ``` code blocks, case-insensitively.
+  // Improved regex to handle potential leading text before the block
   const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i
   const match = codeBlockRegex.exec(text)
   if (match && match[1]) {
     return match[1].trim()
   }
-  // Fallback for cases where the model might just return the JSON object without fences.
   return text.trim()
 }
 
@@ -304,7 +303,7 @@ ${task}
     const text = await generateContentWithFallback(genAI, prompt)
     await writeOutput(text, outputFile)
   } catch (error) {
-    handleError(error)
+    await handleError(error)
   }
 }
 
@@ -740,7 +739,7 @@ async function runReviewPreset(
       await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
     }
   } catch (error) {
-    handleError(error)
+    await handleError(error)
   }
 }
 
@@ -756,7 +755,7 @@ async function writeOutput(
   }
 }
 
-function handleError(error: any) {
+async function handleError(error: any) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
@@ -794,13 +793,9 @@ function handleError(error: any) {
   if (outputFile) {
     await writeOutput(JSON.stringify(errorOutput, null, 2), outputFile)
     console.error(`Error details written to ${outputFile}:`, errorOutput)
-    // Exit 0 so the next workflow step can read the JSON and post the comment
-    process.exit(0)
-  } else {
-    process.exit(1)
   }
 
-  // Still exit with 1 to signal failure to the workflow runner
+  // Always exit with a failure code to ensure the CI step fails.
   process.exit(1)
 }
 
