@@ -135,7 +135,7 @@ export class JsonProcessor {
   }
 }
 
-interface ReviewContext {
+export interface ReviewContext {
   prNumber: string
   prTitle: string
   prAuthor: string
@@ -307,7 +307,7 @@ ${task}
 }
 
 // 1. Update Interface to support future Log Injection
-interface FailedCheck {
+export interface FailedCheck {
   name: string
   conclusion: string
   detailsUrl: string
@@ -371,10 +371,11 @@ function getReviewContextFromEnv(): ReviewContext {
 // 2. New Helper: Build the "Fix Mode" Sub-Prompt
 function buildFixModeSubPrompt(context: ReviewContext): string {
   const failureList = context.failedChecks
-    .map((c) =>
-      `- **${c.name}** (${c.conclusion}) ${
-        c.logSnippet ? `\n  Error: \`${c.logSnippet}\`` : ''
-      }`
+    .map(
+      (c) =>
+        `- **${c.name}** (${c.conclusion}) - [View Log](${c.detailsUrl})${
+          c.logSnippet ? `\n  Error: \`${c.logSnippet}\`` : ''
+        }`
     )
     .join('\n')
 
