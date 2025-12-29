@@ -1,8 +1,15 @@
 // hooks/useLocalStorage.ts
 import { useState, useEffect, useCallback, useRef } from 'react'
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function isPlainObject<T extends Record<string, unknown>>(
+  value: unknown
+): value is T {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    value.constructor === Object
+  )
 }
 
 // Hook
@@ -24,11 +31,18 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         const parsed = JSON.parse(item)
 
         // Handle object migration by merging stored data with initial defaults.
-        if (
-          isPlainObject(parsed) &&
-          isPlainObject(initialValueRef.current)
-        ) {
-          setStoredValue({ ...initialValueRef.current, ...parsed })
+        if (isPlainObject(parsed) && isPlainObject(initialValueRef.current)) {
+          const merged = { ...initialValueRef.current, ...parsed }
+          const allowedKeys = new Set(Object.keys(initialValueRef.current))
+
+          // Remove any keys from the merged object that are not in the current schema.
+          // This prevents "zombie" keys from accumulating in localStorage over time.
+          Object.keys(merged).forEach((k) => {
+            if (!allowedKeys.has(k)) {
+              delete (merged as Record<string, unknown>)[k]
+            }
+          })
+          setStoredValue(merged)
         } else {
           setStoredValue(parsed)
         }
@@ -40,7 +54,6 @@ function useLocalStorage<T>(key: string, initialValue: T) {
       )
       // If parsing fails, the hook will fallback to the initialValue.
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
   // Return a wrapped version of useState's setter function that ...

@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { useUserPreferences } from '@/hooks/useUserPreferences'
 
 describe('useUserPreferences', () => {
@@ -17,7 +17,7 @@ describe('useUserPreferences', () => {
     expect(prefs.autoConnect).toBe(false)
   })
 
-  it('should set and retrieve userWeight', () => {
+  it('should set and retrieve userWeight', async () => {
     const { result } = renderHook(() => useUserPreferences())
 
     act(() => {
@@ -30,11 +30,13 @@ describe('useUserPreferences', () => {
 
     // Verify persistence
     const { result: result2 } = renderHook(() => useUserPreferences())
-    const [prefs2] = result2.current
-    expect(prefs2.userWeight).toBe(80)
+    await waitFor(() => {
+      const [prefs2] = result2.current
+      expect(prefs2.userWeight).toBe(80)
+    })
   })
 
-  it('should set and retrieve autoConnect', () => {
+  it('should set and retrieve autoConnect', async () => {
     const { result } = renderHook(() => useUserPreferences())
 
     act(() => {
@@ -47,11 +49,13 @@ describe('useUserPreferences', () => {
 
     // Verify persistence
     const { result: result2 } = renderHook(() => useUserPreferences())
-    const [prefs2] = result2.current
-    expect(prefs2.autoConnect).toBe(true)
+    await waitFor(() => {
+      const [prefs2] = result2.current
+      expect(prefs2.autoConnect).toBe(true)
+    })
   })
 
-  it('should handle migration from older schema', () => {
+  it('should handle migration from older schema', async () => {
     // Simulate a pre-existing localStorage item with an older schema
     const oldPrefs = {
       theme: 'light',
@@ -60,14 +64,16 @@ describe('useUserPreferences', () => {
     window.localStorage.setItem('user-prefs', JSON.stringify(oldPrefs))
 
     const { result } = renderHook(() => useUserPreferences())
-    const [prefs] = result.current
 
-    // Verify that old data is preserved
-    expect(prefs.theme).toBe('light')
-    expect(prefs.volumeLevel).toBe(50)
+    await waitFor(() => {
+      const [prefs] = result.current
+      // Verify that old data is preserved
+      expect(prefs.theme).toBe('light')
+      expect(prefs.volumeLevel).toBe(50)
 
-    // Verify that new fields are initialized to their default values
-    expect(prefs.userWeight).toBeNull()
-    expect(prefs.autoConnect).toBe(false)
+      // Verify that new fields are initialized to their default values
+      expect(prefs.userWeight).toBeNull()
+      expect(prefs.autoConnect).toBe(false)
+    })
   })
 })

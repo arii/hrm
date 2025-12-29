@@ -767,7 +767,10 @@ async function handleError(error: any) {
     verdict: 'comment',
   }
 
-  console.error('Error during content generation:', JSON.stringify(errorOutput, null, 2))
+  console.error(
+    'Error during content generation:',
+    JSON.stringify(errorOutput, null, 2)
+  )
 
   // Always write a valid JSON structure to the output file on error.
   if (outputFile) {

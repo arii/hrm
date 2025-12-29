@@ -23,10 +23,10 @@ on:
         required: true
     outputs:
       needs-review:
-        description: "Whether a re-review is needed"
+        description: 'Whether a re-review is needed'
         value: ${{ jobs.analyze-changes.outputs.needs-review }}
       skip-reason:
-        description: "Reason for skipping review"
+        description: 'Reason for skipping review'
         value: ${{ jobs.analyze-changes.outputs.skip-reason }}
 
 permissions:
@@ -156,7 +156,6 @@ jobs:
         run: |
           CHECKS_JSON=$(gh pr checks ${{ github.event.pull_request.number }} --json name,conclusion,detailsUrl | jq -c 'map(select(.conclusion == "failure" or .conclusion == "cancelled"))')
           echo "FAILED_CHECKS_JSON=${CHECKS_JSON}" >> $GITHUB_ENV
-
 
       - name: Run Gemini Review
         env:
