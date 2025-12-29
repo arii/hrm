@@ -25,6 +25,9 @@ jobs:
   review-on-pr-update:
     if: github.event_name == 'pull_request'
     needs: [pr-quality]
+    permissions:
+      contents: read
+      issues: write
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       # Pass the result of the CI checks. It's crucial for the reusable workflow
@@ -39,6 +42,9 @@ jobs:
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       (startsWith(github.event.comment.body, '@gemini-bot') || startsWith(github.event.comment.body, '@jules fix'))
+    permissions:
+      contents: read
+      issues: write
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       # CI checks do not run on a comment event, so we pass a neutral status.
