@@ -286,7 +286,6 @@ jobs:
             reports/performance/
           retention-days: 7
 
-
       # Fail the job if any tests failed (must be at the very end)
       - name: Fail Workflow on Test Failures
         if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_dev.outcome == 'failure' || steps.infra_tests_prod.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')

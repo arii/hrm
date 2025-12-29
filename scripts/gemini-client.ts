@@ -388,18 +388,18 @@ function buildFixModeSubPrompt(context: ReviewContext): string {
   return `\n\n####################################################################\n🚨 IMMEDIATE ACTION REQUIRED: CI/CD PIPELINE FAILURE\n####################################################################\n\nYou are now in **DEBUG MODE**.\nOne or more critical checks have failed. Your PRIORITY is to fix these errors.\n\n**Failing Checks:**\n${failureList}\n\n**Debug Mode Rules:**\n1. 🚫 **IGNORE** style nits, variable naming, or minor refactors unless they caused the error.\n2. 🔍 **ANALYZE** the provided diff specifically looking for logic that breaks tests or builds.\n3. 🛠️ **GENERATE FIXES**: You MUST provide a "Proposed Fix" section containing a valid **Unified Diff** or specific code block to resolve the failure. Example:\n   \`\`\`diff\n   --- a/tests/unit/services/test.ts\n   +++ b/tests/unit/services/test.ts\n   @@ -10,7 +10,7 @@\n    describe('myTest', () => {\n      it('should return true', () => {\n   -    expect(myFunction()).toBe(false);\n   +    expect(myFunction()).toBe(true);\n      });\n    });\n   \`\`\`\n4. 🧠 **Reasoning**: Explain *why* the test failed (e.g., "Mock data missing," "Timeout too short," "Type mismatch").\n\n**Guidance for Common Failures:**\n- **Jest/Unit Tests**: Check for missing mocks in \`tests/unit\`, async/await issues, or component render failures.\n- **TypeScript/Build**: Look for type mismatches in the diff.\n- **Playwright/E2E**: Check for selector changes or network timeouts.\n\nIf you cannot identify the exact fix, provide the specific \`console.log\` or debugging steps the user should run to capture the necessary error detail.\n####################################################################\n`
 }
 
-import sanitizeHtml from 'sanitize-html';
+import sanitizeHtml from 'sanitize-html'
 
 function sanitizeForPrompt(text: string | undefined): string {
-  if (!text) return '';
+  if (!text) return ''
 
   // First, strip any HTML tags to simplify matching and remove potential vectors
   const plainText = sanitizeHtml(text, {
     allowedTags: [],
     allowedAttributes: {},
-  });
+  })
 
-  const lowerCaseText = plainText.toLowerCase();
+  const lowerCaseText = plainText.toLowerCase()
 
   // A list of regular expressions designed to catch common prompt injection patterns.
   // These are more robust than simple string matching.
@@ -416,16 +416,18 @@ function sanitizeForPrompt(text: string | undefined): string {
     // A broader pattern to catch instructions aimed at subverting the original goal.
     // This looks for imperative verbs followed by phrases that negate the initial context.
     /^(stop|halt|cease|end)\s+(your|the)\s+(current|previous)\s+(task|review)/i,
-  ];
+  ]
 
   // If any of these patterns match, we sanitize the whole string.
-  if (injectionPatterns.some(pattern => pattern.test(lowerCaseText))) {
+  if (injectionPatterns.some((pattern) => pattern.test(lowerCaseText))) {
     // Log the detection for security auditing purposes (optional, but good practice)
-    console.warn(`[SECURITY] Potential prompt injection detected and sanitized.`);
-    return '[sanitized]';
+    console.warn(
+      `[SECURITY] Potential prompt injection detected and sanitized.`
+    )
+    return '[sanitized]'
   }
 
-  return plainText; // Return the HTML-sanitized text
+  return plainText // Return the HTML-sanitized text
 }
 
 export function buildReviewPrompt(
@@ -455,24 +457,38 @@ export function buildReviewPrompt(
   prompt += `\n\n## Project Documentation & Guidelines\n\n${sanitizeForPrompt(contextContent)}\n`
 
   // --- Diff Section ---
-  let maxDiffLength = 60000; // Default value
-  const maxDiffLengthEnv = process.env.GEMINI_MAX_DIFF_LENGTH;
+  let maxDiffLength = 60000 // Default value
+  const maxDiffLengthEnv = process.env.GEMINI_MAX_DIFF_LENGTH
   if (maxDiffLengthEnv) {
     if (/^\d+$/.test(maxDiffLengthEnv)) {
       try {
-        const parsedValue = parseInt(maxDiffLengthEnv, 10);
-        if (Number.isSafeInteger(parsedValue) && parsedValue > 0 && parsedValue < 1000000) {
-          maxDiffLength = parsedValue;
+        const parsedValue = parseInt(maxDiffLengthEnv, 10)
+        if (
+          Number.isSafeInteger(parsedValue) &&
+          parsedValue > 0 &&
+          parsedValue < 1000000
+        ) {
+          maxDiffLength = parsedValue
         } else {
-          console.warn(new Error(`Invalid GEMINI_MAX_DIFF_LENGTH value: ${maxDiffLengthEnv}. Using default ${maxDiffLength}.`));
+          console.warn(
+            new Error(
+              `Invalid GEMINI_MAX_DIFF_LENGTH value: ${maxDiffLengthEnv}. Using default ${maxDiffLength}.`
+            )
+          )
         }
       } catch (error) {
-        console.warn(new Error(
-          `Could not parse GEMINI_MAX_DIFF_LENGTH: ${(error as Error).message}`
-        ));
+        console.warn(
+          new Error(
+            `Could not parse GEMINI_MAX_DIFF_LENGTH: ${(error as Error).message}`
+          )
+        )
       }
     } else {
-      console.warn(new Error(`Invalid GEMINI_MAX_DIFF_LENGTH format: ${maxDiffLengthEnv}. Using default ${maxDiffLength}.`));
+      console.warn(
+        new Error(
+          `Invalid GEMINI_MAX_DIFF_LENGTH format: ${maxDiffLengthEnv}. Using default ${maxDiffLength}.`
+        )
+      )
     }
   }
   const truncatedDiff =
@@ -497,22 +513,22 @@ export function buildReviewPrompt(
     // Add re-review specific context
     if (isReReview) {
       prompt += `\n\n## Review History\n- **Previous Reviews**: ${context.reviewCount}\n- **Resolved Comments**: ${context.resolvedCount}\n- **Changes Requested**: ${context.changesRequested}\n\n### Focus Areas for Re-Review:\n1. Verify that previous feedback has been addressed\n2. Check for introduction of new issues\n3. Assess overall code quality improvement\n4. Determine if the PR is ready for approval\n\n### Previous Review Feedback:\n${
-  context.previousReviews
-    ? (() => {
-        try {
-          const reviews = JSON.parse(context.previousReviews)
-          return reviews
-            .map(
-              (r: any, i: number) =>
-                `\n\n#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
-            )
-            .join('\n---\n')
-        } catch (e) {
-          return context.previousReviews // Fallback to raw string if parsing fails
-        }
-      })()
-    : 'None'
-}\n`
+        context.previousReviews
+          ? (() => {
+              try {
+                const reviews = JSON.parse(context.previousReviews)
+                return reviews
+                  .map(
+                    (r: any, i: number) =>
+                      `\n\n#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
+                  )
+                  .join('\n---\n')
+              } catch (e) {
+                return context.previousReviews // Fallback to raw string if parsing fails
+              }
+            })()
+          : 'None'
+      }\n`
     }
 
     // Add test coverage concerns
@@ -754,7 +770,10 @@ async function handleError(error: any) {
     verdict: 'comment',
   }
 
-  console.error('Error during content generation:', JSON.stringify(errorOutput, null, 2))
+  console.error(
+    'Error during content generation:',
+    JSON.stringify(errorOutput, null, 2)
+  )
 
   // Always write a valid JSON structure to the output file on error.
   if (outputFile) {
