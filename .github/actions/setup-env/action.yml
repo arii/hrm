@@ -7,9 +7,6 @@ inputs:
     description: 'Number of commits to fetch. 0 for all history.'
     required: false
     default: '1'
-  ref:
-    description: 'The branch, tag or SHA to checkout.'
-    required: false
 
 runs:
   using: 'composite'
@@ -17,7 +14,6 @@ runs:
     - name: 'Checkout Code'
       uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.ref }}
         fetch-depth: ${{ inputs.fetch-depth }}
 
     - name: 'Setup Node.js'

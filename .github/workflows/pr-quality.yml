@@ -130,7 +130,6 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
-          ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 0
 
       - name: Run Knip
@@ -212,7 +211,6 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
-          ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 0
 
       - name: Configure Envs
@@ -270,7 +268,6 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
-          ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 0
 
       - name: Configure Envs
