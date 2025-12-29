@@ -210,12 +210,15 @@ async function generateContentWithFallback(
 
 /**
  * Cleans a string that is expected to be JSON, removing common markdown code blocks.
+ * Large Language Models sometimes wrap their JSON output in markdown code fences
+ * (e.g., ```json\\n{...}\\n```), which can cause JSON.parse() to fail. This function
+ * reliably extracts the JSON content from within these fences.
  * @param text The raw string output from the model.
  * @returns A cleaned string, trimmed and free of markdown code fences.
  */
 export function cleanJsonOutput(text: string): string {
   if (!text) return ''
-  // Remove markdown code blocks if present. Matches ```json ... ``` or ``` ... ```.
+  // Remove markdown code blocks if present. Matches ```json ... ``` or ``` ... ```, case-insensitively.
   const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i
   const match = codeBlockRegex.exec(text)
   if (match && match[1]) {
