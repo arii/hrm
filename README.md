@@ -279,8 +279,7 @@ pnpm run dev                 # Start dev server (Next.js + WebSocket + services)
 pnpm run build               # Build for production
 pnpm run start               # Start production server with PM2
 pnpm run prepare             # Install git hooks with Husky
-pnpm run lint                # Run ESLint
-pnpm run lint:fix            # Auto-fix lint issues
+pnpm run lint                # Run ESLint (use "pnpm run lint -- --fix" to auto-fix)
 pnpm run format              # Format codebase with Prettier
 pnpm run format:check        # Verify formatting without writing
 pnpm run test:core           # Canonical Playwright suite (chromium baseline screenshots)
