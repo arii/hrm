@@ -1,4 +1,5 @@
 'use client'
+import { useSession } from 'next-auth/react'
 import throttle from 'lodash/throttle'
 import {
   createContext,
@@ -117,6 +118,7 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
+  const { data: session } = useSession()
   const [clientId] = useState(() => {
     if (typeof window === 'undefined') {
       return null
@@ -265,6 +267,8 @@ export const WebSocketProvider = ({
       }
       // Start the client-side heartbeat
       startHeartbeat()
+      // Send token immediately upon connection
+      sendToken()
     }
 
     ws.onclose = (event) => {
@@ -398,6 +402,28 @@ export const WebSocketProvider = ({
       )
     }
   }, [])
+
+  // Create a handler to send the token
+  const sendToken = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN && session?.accessToken) {
+      console.log('[WebSocketProvider] Syncing Spotify token to server')
+      sendData({
+        type: 'SPOTIFY_TOKEN_UPDATE',
+        payload: {
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken,
+          expiresIn: session.expires ? Math.round((new Date(session.expires).getTime() - Date.now()) / 1000) : undefined,
+        },
+      })
+    }
+  }, [session, sendData])
+
+  // Sync on Session Change
+  useEffect(() => {
+    if (connectionStatus === 'Connected') {
+      sendToken()
+    }
+  }, [session?.accessToken, connectionStatus, sendToken])
 
   const contextValue = {
     ...appState,

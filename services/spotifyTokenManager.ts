@@ -30,6 +30,7 @@ export interface SpotifyTokenPayload {
   refresh_token: string
   expires_in: number
   scope: string
+  token_type: string
   obtainedAt: number
 }
 
@@ -59,6 +60,7 @@ export class SpotifyTokenManager {
           refresh_token: '',
           expires_in: 3600,
           scope: '',
+          token_type: 'Bearer',
           obtainedAt: Date.now(),
         },
       }

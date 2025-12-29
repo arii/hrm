@@ -156,6 +156,16 @@ export interface PingMessage {
   type: 'PING'
 }
 
+export interface SpotifyTokenUpdateMessage {
+  type: 'SPOTIFY_TOKEN_UPDATE'
+  payload: {
+    accessToken: string
+    refreshToken?: string
+    expiresIn?: number
+    tokenType?: string
+  }
+}
+
 export type ClientCommandMessage =
   | HrmInputMessage
   | HrmMetadataUpdateMessage
@@ -166,6 +176,7 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
+  | SpotifyTokenUpdateMessage
 
 import { z } from 'zod'
 
@@ -238,6 +249,16 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
+export const SpotifyTokenUpdateMessageSchema = z.object({
+  type: z.literal('SPOTIFY_TOKEN_UPDATE'),
+  payload: z.object({
+    accessToken: z.string(),
+    refreshToken: z.string().optional(),
+    expiresIn: z.number().optional(),
+    tokenType: z.string().optional(),
+  }),
+})
+
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
   HrmMetadataUpdateMessageSchema,
@@ -248,4 +269,5 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
   PingMessageSchema, // Add PING schema to the union
+  SpotifyTokenUpdateMessageSchema,
 ])

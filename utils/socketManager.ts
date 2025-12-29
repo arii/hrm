@@ -195,7 +195,7 @@ const broadcastState = () => {
 /**
  * Handles incoming JSON messages from client applications.
  */
-const handleIncomingMessage = (
+const handleIncomingMessage = async (
   ws: ExtWebSocket,
   messageString: string,
   clientId: string
@@ -205,6 +205,24 @@ const handleIncomingMessage = (
     const message = ClientCommandMessageSchema.parse(parsedJson)
 
     switch (message.type) {
+      case 'SPOTIFY_TOKEN_UPDATE': {
+        const { accessToken, refreshToken, expiresIn, tokenType } =
+          message.payload
+        logger.info({ clientId }, 'Received Spotify token update from client.')
+        // Hydrate the service with the user's token
+        // Mapping to snake_case as expected by SpotifyTokenManager/SDK
+        await services.spotifyService.handleTokenUpdate({
+          provider: 'spotify',
+          sub: 'unknown',
+          access_token: accessToken,
+          refresh_token: refreshToken || '',
+          expires_in: expiresIn || 3600,
+          token_type: tokenType || 'Bearer',
+          scope: '', // Optional, usually managed by the backend config
+          obtainedAt: Date.now(),
+        })
+        break
+      }
       case 'PING': {
         // This is now a no-op. The server relies on native WebSocket ping/pong
         // frames for heartbeat. The case is retained for backward
