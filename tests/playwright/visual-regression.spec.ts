@@ -137,6 +137,13 @@ test.describe('Visual Regression Tests', () => {
     // Wait for a stable UI element instead of arbitrary timeout
     await expect(dashboardPage.locator('body')).toBeVisible()
 
+    // Explicitly wait for the WebSocket to connect and display the "Connected"
+    // status. This is critical for ensuring the UI is stable after the async
+    // clientId resolution and subsequent connection.
+    await expect(
+      dashboardPage.locator('[data-testid="ws-status-indicator"]')
+    ).toHaveText('Connected', { timeout: WAIT_TIMEOUTS.WEBSOCKET_CONNECT })
+
     // Capture full-page screenshot - mask dynamic content using data-testid selectors
     await expect(dashboardPage).toHaveScreenshot('dashboard-viewer.png', {
       fullPage: true,
