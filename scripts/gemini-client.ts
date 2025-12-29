@@ -362,9 +362,15 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
   }
 }
 
+type ReviewDepth = 'detailed' | 'standard' | 'focused'
+
 function getReviewContextFromEnv(): ReviewContext {
   const failedChecks = parseFailedChecks(process.env.FAILED_CHECKS_JSON)
   const reviewDepth = process.env.REVIEW_DEPTH
+  const isValidReviewDepth = (depth: string | undefined): depth is ReviewDepth => {
+    return ['detailed', 'standard', 'focused'].includes(depth || '')
+  }
+
   return {
     prNumber: process.env.PR_NUMBER || '',
     prTitle: process.env.PR_TITLE || '',
@@ -373,12 +379,7 @@ function getReviewContextFromEnv(): ReviewContext {
     prLabels: process.env.PR_LABELS || '',
     filesChanged: parseInt(process.env.FILES_CHANGED || '0'),
     totalLoc: parseInt(process.env.TOTAL_LOC || '0'),
-    reviewDepth:
-      reviewDepth === 'detailed' ||
-      reviewDepth === 'standard' ||
-      reviewDepth === 'focused'
-        ? reviewDepth
-        : 'standard',
+    reviewDepth: isValidReviewDepth(reviewDepth) ? reviewDepth : 'standard',
     changedAreas: process.env.CHANGED_AREAS || '',
     reviewCount: parseInt(process.env.REVIEW_COUNT || '0'),
     resolvedCount: parseInt(process.env.RESOLVED_COUNT || '0'),

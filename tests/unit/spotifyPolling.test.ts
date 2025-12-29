@@ -110,6 +110,9 @@ describe('SpotifyPolling Service', () => {
     // Initialize the service and await its creation, which includes SDK setup
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
+    // Note: This is a common pattern for testing private properties in TypeScript.
+    // It allows us to access the private `pollInterval` and `tokenRefreshInterval`
+    // properties for testing purposes without exposing them in the public API.
     type SpotifyPollingWithPrivateAccess = SpotifyPolling & {
       pollInterval: NodeJS.Timeout | null
       tokenRefreshInterval: NodeJS.Timeout | null
