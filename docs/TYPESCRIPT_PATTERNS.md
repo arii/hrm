@@ -29,6 +29,16 @@ The `any` type is a powerful tool, but it's a dangerous one. It effectively disa
     }
     ```
 
+5.  **`Record<string, any>`:** In some cases, you might need to use `Record<string, any>`. This is still a bit of a code smell, but it's better than a naked `any`. It's useful when you have an object with a known set of keys, but the values can be of any type.
+
+    ```typescript
+    function processUserData(user: Record<string, any>) {
+      if (typeof user.name === 'string') {
+        console.log(user.name.toUpperCase());
+      }
+    }
+    ```
+
 ### Type Narrowing
 
 When you have a variable of a broad type (like `unknown`), you can use type narrowing to determine a more specific type.
