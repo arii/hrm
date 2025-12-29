@@ -1,6 +1,6 @@
 // utils/brandedId.ts
 import crypto from 'crypto'
-import { ClientId, ClientIdSchema } from '../types/branded'
+import { ClientId, ClientIdSchema } from '../types/branded.js'
 
 /**
  * Generates a new, random ClientId.
