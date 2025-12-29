@@ -172,7 +172,27 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       name: userName || '',
       age: userAge || 0,
     }
-  }, [userName, userAge])
+
+    if (deviceStatus.startsWith('Connected')) {
+      const { name, age } = userDetailsRef.current
+      const calculatedMaxHr = calculateMaxHr(age)
+      const deviceName = deviceRef.current?.name || 'Unknown'
+
+      const metadataData: HrmMetadataUpdateData = {
+        maxHr: calculatedMaxHr,
+        name: name || `Bluetooth HRM (${deviceName})`,
+      }
+      if (typeof age === 'number') {
+        metadataData.age = age
+      }
+
+      const metadata: HrmMetadataUpdateMessage = {
+        type: 'HRM_METADATA_UPDATE',
+        data: metadataData,
+      }
+      sendData(metadata)
+    }
+  }, [userName, userAge, deviceStatus, sendData])
 
   useEffect(() => {
     statusRef.current = deviceStatus
@@ -182,6 +202,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   // Bluetooth devices can broadcast at very high rates (e.g., 60Hz), which can flood the
   // server and client with unnecessary updates. A frequency of 4Hz (250ms) is sufficient
   // for a smooth UI experience without causing network congestion.
+  /* eslint-disable react-hooks/refs */
   const throttledSend = useMemo(
     () =>
       throttle((message: HrmInputMessage) => {
@@ -198,6 +219,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     // last invocation time) across renders.
     []
   )
+  /* eslint-enable react-hooks/refs */
 
   // Cleanup
   useEffect(() => {
@@ -365,23 +387,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         await characteristic.startNotifications()
         lastDataTime.current = Date.now()
 
-        // Send metadata once upon successful connection
-        const { name, age } = userDetailsRef.current || {}
-        const calculatedMaxHr = calculateMaxHr(age)
-
-        const metadataData: HrmMetadataUpdateData = {
-          maxHr: calculatedMaxHr,
-          name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
-        }
-        if (typeof age === 'number') {
-          metadataData.age = age
-        }
-
-        const metadata: HrmMetadataUpdateMessage = {
-          type: 'HRM_METADATA_UPDATE',
-          data: metadataData,
-        }
-        sendData(metadata)
 
         characteristic.addEventListener(
           'characteristicvaluechanged',
@@ -416,7 +421,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw error
       }
     },
-    [onDisconnected, sendData]
+    [onDisconnected, sendData, throttledSend]
   )
 
   useEffect(() => {
