@@ -1,21 +1,10 @@
 # .github/actions/setup-env/action.yml
 name: 'Setup Environment'
-description: 'Checks out code, sets up Node.js and pnpm, installs dependencies and Playwright.'
-
-inputs:
-  fetch-depth:
-    description: 'Number of commits to fetch. 0 for all history.'
-    required: false
-    default: '1'
+description: 'Sets up Node.js and pnpm, installs dependencies and Playwright.'
 
 runs:
   using: 'composite'
   steps:
-    - name: 'Checkout Code'
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: ${{ inputs.fetch-depth }}
-
     - name: 'Setup pnpm'
       uses: pnpm/action-setup@v4
       with:

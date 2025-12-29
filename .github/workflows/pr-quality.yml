@@ -124,10 +124,13 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
 
       - name: Run Knip
         id: knip
@@ -202,10 +205,13 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
 
       - name: Configure Envs
         run: |
@@ -256,10 +262,13 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
 
       - name: Configure Envs
         run: |
