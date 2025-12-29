@@ -16,16 +16,16 @@ runs:
       with:
         fetch-depth: ${{ inputs.fetch-depth }}
 
+    - name: 'Setup pnpm'
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+
     - name: 'Setup Node.js'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
         cache: 'pnpm'
-
-    - name: 'Setup pnpm'
-      uses: pnpm/action-setup@v4
-      with:
-        version: 9
 
     - name: Install GitHub CLI
       shell: bash
@@ -67,3 +67,9 @@ runs:
     - name: 'Install Playwright (Chromium)'
       shell: bash
       run: pnpm exec playwright install chromium
+
+    - name: 'Run Setup Script'
+      shell: bash
+      run: |
+        chmod +x ./scripts/setup.sh
+        ./scripts/setup.sh

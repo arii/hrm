@@ -124,9 +124,6 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
@@ -205,9 +202,6 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
@@ -262,9 +256,6 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
@@ -301,7 +292,7 @@ jobs:
 
       - name: Upload Report on Failure
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report-visual-${{ env.SESSION_ID }}
           path: playwright-report/
