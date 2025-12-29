@@ -5,6 +5,7 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { IncomingMessage } from 'http'
+import { randomUUID } from 'crypto'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -89,18 +90,26 @@ const initSocketManager = (
     const extWs = ws as ExtWebSocket
 
     const params = getRequestParams(req)
-    const clientId =
-      params.get('clientId') ||
-      `user-${Math.random().toString(36).substring(2, 9)}`
+    const requestedId = params.get('clientId')
+
+    // Validate requestedId to prevent injection/garbage. V4 UUIDs are 36 chars.
+    const isValidId = requestedId && /^[0-9a-fA-F-]{36}$/.test(requestedId)
+    const clientId = isValidId ? requestedId : randomUUID()
     extWs.clientId = clientId
 
-    // it's a stale or "zombie" connection. Overwrite it with the new socket.
+    logger.info(
+      { clientId, isReconnection: !!isValidId },
+      'WebSocket client connecting'
+    )
 
+    // Handle conflicts if a socket for this clientId already exists (e.g., fast refresh)
     if (clientSockets.has(clientId)) {
-      logger.warn(
-        { clientId },
-        'Existing socket found. Overwriting with new connection.'
-      )
+      const oldWs = clientSockets.get(clientId)
+      // If the old socket is different and still open, terminate it.
+      if (oldWs && oldWs !== ws && oldWs.readyState === WebSocket.OPEN) {
+        logger.warn({ clientId }, 'Terminating zombie connection.')
+        oldWs.terminate() // Force-close the old connection
+      }
     }
 
     clientSockets.set(clientId, extWs)
@@ -135,33 +144,25 @@ const initSocketManager = (
     })
 
     extWs.on('close', () => {
-      logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      logger.info({ clientId }, 'WebSocket client disconnected')
+      clientSockets.delete(clientId)
 
       // CRITICAL: Do NOT immediately delete clientData.
-      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
-      // NOTE: In a high-traffic production environment, this could lead to
-      // memory pressure if many clients disconnect and don't reconnect.
-      // A more robust solution might involve a separate cleanup process
-      // or a maximum number of inactive sessions.
+      // Wait a grace period to allow for a page refresh.
       setTimeout(() => {
-        // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
-        if (clientSockets.get(clientId) === extWs) {
-          logger.info(
-            { clientId: extWs.clientId },
-            'Session expired. Deleting data.'
-          )
+        // After the grace period, check if a new connection for this client has been established.
+        // If not, it's safe to assume the session has truly ended.
+        if (!clientSockets.has(clientId)) {
+          logger.info({ clientId }, 'Session expired. Deleting data.')
           try {
-            hrmDataRepository.deleteById(extWs.clientId)
-            clientSessionState.delete(extWs.clientId)
+            hrmDataRepository.deleteById(clientId)
+            clientSessionState.delete(clientId)
             broadcastState()
           } catch (err) {
             logger.error(
-              { clientId: extWs.clientId, error: err },
+              { clientId, error: err },
               'Error during session cleanup'
             )
-          } finally {
-            // Always remove the socket reference to prevent leaks
-            clientSockets.delete(extWs.clientId)
           }
         }
       }, env.WEBSOCKET_GRACE_PERIOD_MS)
