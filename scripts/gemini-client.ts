@@ -317,7 +317,7 @@ ${task}
           error: {
             category: 'Invalid JSON Response',
             message:
-              'The response from the generative AI was not valid JSON, even after attempting to extract it from markdown.',
+              "The response from the generative AI was not valid JSON, even after attempting to extract it from markdown. Consider verifying the prompt or checking the model's output format.",
             details: result.data, // Contains the raw response for debugging.
           },
         }
