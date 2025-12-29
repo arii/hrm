@@ -145,9 +145,7 @@ describe('TimerControls', () => {
     await waitFor(() => {
       expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
     })
-    expect(
-      disconnectedContext.sendData
-    ).not.toHaveBeenCalledWith({
+    expect(disconnectedContext.sendData).not.toHaveBeenCalledWith({
       type: 'TIMER_COMMAND',
       command: 'START',
     })
