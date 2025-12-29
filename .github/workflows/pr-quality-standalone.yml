@@ -291,6 +291,29 @@ jobs:
         if: false
         run: echo "This step is disabled. Review is triggered by the gemini-review-on-failure job."
 
+      # Fail the job if any tests failed (must be at the very end)
+      - name: Fail Workflow on Test Failures
+        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_dev.outcome == 'failure' || steps.infra_tests_prod.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        run: |
+          echo "One or more tests failed. Failing the workflow."
+          exit 1
+
+      - name: Clean Workspace (Preserve Cache)
+        if: always()
+        continue-on-error: true
+        run: |
+          # Delete everything EXCEPT .next and node_modules
+          find . -maxdepth 1 -mindepth 1 \
+            -not -name '.next' \
+            -not -name 'node_modules' \
+            -not -name '.git' \
+            -not -name '.cache' \
+            -exec rm -rf {} +
+
+          # Reset git state to ensure code is fresh
+          git reset --hard HEAD
+          git clean -fdx --exclude .next --exclude node_modules --exclude .eslintcache --exclude .cache
+
   gemini-review-on-failure:
     name: 🤖 Gemini Review on Failure
     needs: [test]

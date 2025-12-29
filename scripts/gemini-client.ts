@@ -281,22 +281,19 @@ ${task}
 
   try {
     const text = await generateContentWithFallback(genAI, prompt)
+
+    // Attempt to parse JSON, but fall back to raw text if it's likely Markdown
     const jsonProcessor = new JsonProcessor()
     const result = jsonProcessor.process(text || '')
 
     if (result.success) {
+      // It's valid JSON (e.g., structured data request)
       await writeOutput(JSON.stringify(result.data, null, 2), outputFile)
     } else {
-      console.error('Error: Failed to parse JSON from generic task response.')
-      const errorJson = {
-        error: {
-          category: 'Invalid JSON Response',
-          message:
-            'The AI response could not be parsed as valid JSON.',
-          details: result.data,
-        },
-      }
-      await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
+      // Fallback: Assume it's a Markdown review or unstructured text
+      // Log a warning but preserve the content
+      console.warn('Output is not JSON, treating as raw text.')
+      await writeOutput(text || '', outputFile)
     }
   } catch (error) {
     handleError(error)
