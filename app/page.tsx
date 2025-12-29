@@ -71,13 +71,20 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+          gap: 2,
+          // Enforce a minimum height for the main dashboard widgets to prevent layout shift
+          gridAutoRows: 'minmax(220px, auto)',
+        }}
+      >
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Box
-          sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
-        >
+        {/* minWidth: 0 is a grid item fix to prevent content overflow */}
+        <Box sx={{ minWidth: 0 }}>
           <TimerDisplay />
         </Box>
 
