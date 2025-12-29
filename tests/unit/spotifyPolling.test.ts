@@ -110,21 +110,21 @@ describe('SpotifyPolling Service', () => {
     // Initialize the service and await its creation, which includes SDK setup
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
+    type SpotifyPollingWithPrivateAccess = SpotifyPolling & {
+      pollInterval: NodeJS.Timeout | null
+      tokenRefreshInterval: NodeJS.Timeout | null
+    }
+    const serviceWithAccess =
+      spotifyService as unknown as SpotifyPollingWithPrivateAccess
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((spotifyService as any).pollInterval) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((spotifyService as any).pollInterval)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(spotifyService as any).pollInterval = null
+    if (serviceWithAccess.pollInterval) {
+      clearInterval(serviceWithAccess.pollInterval)
+      serviceWithAccess.pollInterval = null
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((spotifyService as any).tokenRefreshInterval) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((spotifyService as any).tokenRefreshInterval)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(spotifyService as any).tokenRefreshInterval = null
+    if (serviceWithAccess.tokenRefreshInterval) {
+      clearInterval(serviceWithAccess.tokenRefreshInterval)
+      serviceWithAccess.tokenRefreshInterval = null
     }
   })
 

@@ -2,6 +2,7 @@ import {
   GoogleGenerativeAI,
   SchemaType,
   GoogleGenerativeAIError,
+  GenerateContentRequest,
 } from '@google/generative-ai'
 import { readFile, writeFile } from 'fs/promises'
 import path from 'path'
@@ -104,7 +105,11 @@ export class JsonProcessor {
    * @param text The raw text response from the model.
    * @returns An object with success status, the parsed data or error object, and the raw text.
    */
-  public process(text: string): { success: boolean; data: any; raw: string } {
+  public process(text: string): {
+    success: boolean
+    data: unknown
+    raw: string
+  } {
     try {
       // First, try parsing the text directly.
       return { success: true, data: JSON.parse(text), raw: text }
@@ -114,7 +119,7 @@ export class JsonProcessor {
       if (jsonBlock) {
         try {
           return { success: true, data: JSON.parse(jsonBlock), raw: text }
-        } catch (e) {
+        } catch (_e) {
           // If parsing the extracted block fails, return a structured error.
           return {
             success: false,
@@ -227,9 +232,9 @@ async function main() {
 async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
   prompt: string,
-  config?: any
+  config?: GenerateContentRequest
 ) {
-  let lastError
+  let lastError: unknown
 
   for (const modelName of MODEL_FALLBACKS) {
     console.log(`Attempting to use model: ${modelName}...`)
@@ -241,9 +246,12 @@ async function generateContentWithFallback(
       })
       console.log(`Successfully generated content using ${modelName}.`)
       return result.response.text()
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error
-      const isNotFound = error.message?.includes('404') || error.status === 404
+      const errorMessage = (error as Error).message || ''
+      const errorStatus = (error as { status?: number }).status
+
+      const isNotFound = errorMessage.includes('404') || errorStatus === 404
       const isBadRequest =
         error.message?.includes('400') || error.status === 400 // Sometimes invalid model is 400
       const isRateLimited =
@@ -354,6 +362,7 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
 
 function getReviewContextFromEnv(): ReviewContext {
   const failedChecks = parseFailedChecks(process.env.FAILED_CHECKS_JSON)
+  const reviewDepth = process.env.REVIEW_DEPTH
   return {
     prNumber: process.env.PR_NUMBER || '',
     prTitle: process.env.PR_TITLE || '',
@@ -362,7 +371,12 @@ function getReviewContextFromEnv(): ReviewContext {
     prLabels: process.env.PR_LABELS || '',
     filesChanged: parseInt(process.env.FILES_CHANGED || '0'),
     totalLoc: parseInt(process.env.TOTAL_LOC || '0'),
-    reviewDepth: (process.env.REVIEW_DEPTH as any) || 'standard',
+    reviewDepth:
+      reviewDepth === 'detailed' ||
+      reviewDepth === 'standard' ||
+      reviewDepth === 'focused'
+        ? reviewDepth
+        : 'standard',
     changedAreas: process.env.CHANGED_AREAS || '',
     reviewCount: parseInt(process.env.REVIEW_COUNT || '0'),
     resolvedCount: parseInt(process.env.RESOLVED_COUNT || '0'),
@@ -469,15 +483,19 @@ ${logsSection}
 ${
   context.previousReviews
     ? (() => {
+        interface Review {
+          createdAt: string
+          body: string
+        }
         try {
-          const reviews = JSON.parse(context.previousReviews)
+          const reviews = JSON.parse(context.previousReviews) as Review[]
           return reviews
             .map(
-              (r: any, i: number) =>
+              (r: Review, i: number) =>
                 `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
             )
             .join('\n---\n')
-        } catch (e) {
+        } catch (_e) {
           return context.previousReviews // Fallback to raw string if parsing fails
         }
       })()
@@ -762,7 +780,7 @@ async function writeOutput(
   }
 }
 
-async function handleError(error: any) {
+async function handleError(error: unknown) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
@@ -795,7 +813,10 @@ async function handleError(error: any) {
     verdict: 'comment',
   }
 
-  console.error('Error during content generation:', JSON.stringify(errorOutput, null, 2))
+  console.error(
+    'Error during content generation:',
+    JSON.stringify(errorOutput, null, 2)
+  )
 
   // Always write a valid JSON structure to the output file on error.
   if (outputFile) {
