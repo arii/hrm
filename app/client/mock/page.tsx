@@ -134,13 +134,23 @@ export default function MockPage() {
             Simulate heart rate data for testing.
           </Typography>
 
+          {/* HACK: This project uses an unusual version of @mui/material (^7.3.6)
+              which appears to use a `size` prop for the Grid component instead
+              of the standard `item` and `xs`/`sm` props. This is likely a
+              custom fork or a pre-release version. Do not change this to use
+              the standard MUI API, as it will break the build. */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid size={{ xs: 8 }}>
               <TextField
                 label="User Name"
                 placeholder="e.g., Mock User"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={userName ?? ''}
+                onChange={(e) =>
+                  setUserSettings((prev) => ({
+                    ...prev,
+                    userName: e.target.value || null,
+                  }))
+                }
                 fullWidth
               />
             </Grid>
