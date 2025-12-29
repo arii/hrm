@@ -9,10 +9,10 @@ import { WebSocketProvider, useWebSocket } from '../../../context/WebSocketConte
 const originalWebSocket = global.WebSocket;
 
 let mockWebSocketInstance: {
-  onopen: ((event: any) => void) | null;
-  onclose: ((event: any) => void) | null;
-  onmessage: ((event: any) => void) | null;
-  onerror: ((event: any) => void) | null;
+  onopen: ((event: Partial<Event>) => void) | null;
+  onclose: ((event: Partial<Event>) => void) | null;
+  onmessage: ((event: Partial<MessageEvent>) => void) | null;
+  onerror: ((event: Partial<Event>) => void) | null;
   close: jest.Mock;
   send: jest.Mock;
   readyState: number;
@@ -107,7 +107,7 @@ describe('WebSocketProvider', () => {
     act(() => {
       if (mockWebSocketInstance?.onopen) {
         mockWebSocketInstance.readyState = 1; // OPEN
-        mockWebSocketInstance.onopen({} as any);
+        mockWebSocketInstance.onopen({});
       }
     });
     expect(screen.getByTestId('status').textContent).toBe('Connected');
@@ -124,7 +124,7 @@ describe('WebSocketProvider', () => {
     act(() => {
         if (mockWebSocketInstance?.onopen) {
             mockWebSocketInstance.readyState = 1; // OPEN
-            mockWebSocketInstance.onopen({} as any);
+            mockWebSocketInstance.onopen({});
         }
     });
 
