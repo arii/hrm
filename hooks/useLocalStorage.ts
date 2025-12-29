@@ -13,7 +13,22 @@ function useLocalStorage<T>(key: string, initialValue: T) {
       // Get from local storage by key
       const item = window.localStorage.getItem(key)
       // Parse stored json or if none return initialValue
-      return item ? JSON.parse(item) : initialValue
+      const stored = item ? JSON.parse(item) : initialValue
+
+      // For objects, merge stored settings with initial value to add any new keys.
+      // This provides a safe migration path for users with older settings.
+      if (
+        typeof stored === 'object' &&
+        !Array.isArray(stored) &&
+        stored !== null &&
+        typeof initialValue === 'object' &&
+        !Array.isArray(initialValue) &&
+        initialValue !== null
+      ) {
+        return { ...initialValue, ...stored }
+      }
+
+      return stored
     } catch (error) {
       // If error also return initialValue
       console.log(error)
