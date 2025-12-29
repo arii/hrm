@@ -33,16 +33,22 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         }
       }
     } catch (error) {
-      console.error(`Failed to read from localStorage key “${key}”:`, error)
+      console.error(
+        `Failed to read or parse from localStorage key “${key}”:`,
+        error
+      )
       // If parsing fails, the hook will fallback to the initialValue.
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]) // Only run on mount.
+  }, [key, initialValue])
 
   // Return a wrapped version of useState's setter function that ...
   // ... persists the new value to localStorage.
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
+      // Prevent execution on server.
+      if (typeof window === 'undefined') {
+        return
+      }
       try {
         // Allow value to be a function so we have same API as useState
         const valueToStore =
@@ -50,12 +56,12 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         // Save state
         setStoredValue(valueToStore)
         // Save to local storage
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem(key, JSON.stringify(valueToStore))
-        }
+        window.localStorage.setItem(key, JSON.stringify(valueToStore))
       } catch (error) {
-        // A more advanced implementation would handle the error case
-        console.log(error)
+        console.error(
+          `Failed to set localStorage key “${key}”:`,
+          error
+        )
       }
     },
     [key, storedValue]

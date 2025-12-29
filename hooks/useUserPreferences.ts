@@ -6,6 +6,7 @@ export interface UserPreferences {
   volumeLevel: number
   defaultWorkDuration: number
   defaultRestDuration: number
+  // Nullable fields represent user-provided data that may not yet be set.
   favoritePlaylist: string | null
   userName: string | null
   userAge: number | null
