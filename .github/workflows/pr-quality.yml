@@ -144,7 +144,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'pnpm'
+          # cache: 'pnpm' # Removed: We manage store path manually below
+
+      - name: Cache pnpm Store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
 
       - name: Cache Playwright
         uses: actions/cache@v4
@@ -589,6 +597,7 @@ jobs:
         with:
           name: lint-report
           path: logs
+        continue-on-error: true
 
       - name: Post Comprehensive Quality Report
         if: always()
@@ -674,6 +683,7 @@ jobs:
                echo '```'
                echo ""
                echo "</details>"
+            fi # <--- Added missing fi here
             
             if [ "$VISUAL_TESTS_RESULT" != "success" ] && [ "$VISUAL_TESTS_RESULT" != "skipped" ]; then
               FAILED_ANY=1
