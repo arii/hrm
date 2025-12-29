@@ -49,6 +49,9 @@ const TimerControls = () => {
   const { timerData, sendData, connectionStatus } = useWebSocket()
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
+  const [optimisticIsRunning, setOptimisticIsRunning] = useState(
+    timerData.isRunning
+  )
 
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
@@ -62,6 +65,11 @@ const TimerControls = () => {
   useEffect(() => {
     latestRest.current = restTime
   }, [restTime])
+
+  // Sync optimistic state with server state
+  useEffect(() => {
+    setOptimisticIsRunning(timerData.isRunning)
+  }, [timerData.isRunning])
 
   useEffect(() => {
     const message: TimerConfigMessage = {
@@ -118,9 +126,25 @@ const TimerControls = () => {
     [sendData, spotifyDeviceId, spotifyDevices]
   )
 
+  const serverIsRunning = useRef(timerData.isRunning)
+  useEffect(() => {
+    serverIsRunning.current = timerData.isRunning
+  }, [timerData.isRunning])
+
   const sendTimerCommand = useCallback(
     (command: 'START' | 'STOP') => {
-      if (connectionStatus !== 'Connected') return
+      // Optimistically update the UI
+      setOptimisticIsRunning(command === 'START')
+
+      if (connectionStatus !== 'Connected') {
+        console.warn(
+          `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
+        )
+        // Revert the optimistic update after a short delay
+        setTimeout(() => setOptimisticIsRunning(serverIsRunning.current), 500)
+        return
+      }
+
       if (command === 'START') {
         const config: TimerConfigMessage = {
           type: 'TIMER_CONFIG',
@@ -145,7 +169,7 @@ const TimerControls = () => {
   }
 
   const controlsDisabled =
-    timerData.isRunning || connectionStatus !== 'Connected'
+    optimisticIsRunning || connectionStatus !== 'Connected'
   const modes = ['TABATA', 'STOPWATCH']
 
   return (
@@ -221,8 +245,14 @@ const TimerControls = () => {
         </Box>
 
         <Box sx={{ textAlign: 'center', mb: 1.5 }}>
-          <Typography variant="h6" sx={{ color: 'white', mb: 0.5 }}>
-            {timerData.isRunning ? 'Timer Running' : 'Timer Stopped'}
+          <Typography
+            variant="h6"
+            sx={{ color: 'white', mb: 0.5 }}
+            data-testid={
+              optimisticIsRunning ? 'timer-running' : 'timer-stopped'
+            }
+          >
+            {optimisticIsRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#EF4444' }}>
             {timerData.currentPhase}
@@ -291,7 +321,7 @@ const TimerControls = () => {
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
-            {!timerData.isRunning ? (
+            {!optimisticIsRunning ? (
               <Button
                 data-testid="start-timer-button"
                 variant="contained"
