@@ -281,7 +281,23 @@ ${task}
 
   try {
     const text = await generateContentWithFallback(genAI, prompt)
-    await writeOutput(text, outputFile)
+    const jsonProcessor = new JsonProcessor()
+    const result = jsonProcessor.process(text || '')
+
+    if (result.success) {
+      await writeOutput(JSON.stringify(result.data, null, 2), outputFile)
+    } else {
+      console.error('Error: Failed to parse JSON from generic task response.')
+      const errorJson = {
+        error: {
+          category: 'Invalid JSON Response',
+          message:
+            'The AI response could not be parsed as valid JSON.',
+          details: result.data,
+        },
+      }
+      await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
+    }
   } catch (error) {
     handleError(error)
   }
