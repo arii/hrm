@@ -5,6 +5,7 @@ import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import react from 'eslint-plugin-react' // Explicitly import the React plugin
+import testingLibrary from 'eslint-plugin-testing-library'
 
 export default defineConfig([
   // 1. GLOBAL IGNORES
@@ -99,6 +100,12 @@ export default defineConfig([
   },
   {
     files: ['tests/unit/**/*.{ts,tsx}'],
+    plugins: {
+      'testing-library': testingLibrary,
+    },
+    rules: {
+      ...testingLibrary.configs.react.rules,
+    },
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
