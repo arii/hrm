@@ -4,6 +4,7 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
+import { IncomingMessage } from 'http'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -25,6 +26,7 @@ import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
+import { env } from '../lib/env.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -34,12 +36,40 @@ let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
+// State Management:
+// - hrmDataRepository: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
+// - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
+// - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
 const hrmDataRepository = new HrmDataRepository()
+
+// Track active sockets separately so we can handle "zombie" sockets during reconnects
+const clientSockets = new Map<string, WebSocket>()
+
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
   { lastUpdate: number; accumulatedCalories: number }
 >()
+
+/**
+ * Safely parses the WebSocket request URL to extract search parameters.
+ * Handles cases where headers or URL might be malformed.
+ * @param req - The incoming HTTP request from the WebSocket upgrade.
+ * @returns URLSearchParams object, which will be empty if parsing fails.
+ */
+const getRequestParams = (req: IncomingMessage): URLSearchParams => {
+  try {
+    // Fallback to localhost if host header is missing, which can happen in some proxy/test setups
+    const host = req.headers.host || 'localhost'
+    const protocol = 'http' // WebSocket upgrades start as HTTP
+    const url = new URL(req.url || '/', `${protocol}://${host}`)
+    return url.searchParams
+  } catch (error) {
+    logger.error({ error }, 'Failed to parse WebSocket connection URL')
+    // Return empty params to prevent a crash on invalid URL
+    return new URLSearchParams()
+  }
+}
 
 /**
  * Initializes the WebSocket Server manager and registers the core services.
@@ -55,29 +85,50 @@ const initSocketManager = (
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
-  wss.on('connection', (ws: WebSocket) => {
+  wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket
+
+    const params = getRequestParams(req)
+    const clientId =
+      params.get('clientId') ||
+      `user-${Math.random().toString(36).substring(2, 9)}`
+    extWs.clientId = clientId
+
+    // it's a stale or "zombie" connection. Overwrite it with the new socket.
+
+    if (clientSockets.has(clientId)) {
+      logger.warn(
+        { clientId },
+        'Existing socket found. Overwriting with new connection.'
+      )
+    }
+
+    clientSockets.set(clientId, extWs)
+
     extWs.isAlive = true
     extWs.on('pong', () => {
       extWs.isAlive = true
     })
 
-    extWs.clientId = `user-${Math.random().toString(36).substring(2, 9)}`
     logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
-    // Initialize new client
-    const newClient: HrmStreamData = {
-      clientId: extWs.clientId,
-      value: 0,
-      maxHr: 185,
-      age: 30,
-      calories: 0, // Initialize to 0
+    if (!hrmDataRepository.findById(clientId)) {
+      // Initialize new client
+      const newClient: HrmStreamData = {
+        clientId: extWs.clientId,
+        value: 0,
+        maxHr: 185,
+        age: 30,
+        calories: 0, // Initialize to 0
+      }
+      hrmDataRepository.save(newClient)
+      clientSessionState.set(extWs.clientId, {
+        lastUpdate: Date.now(),
+        accumulatedCalories: 0,
+      })
+    } else {
+      logger.info({ clientId }, 'Reconnected with existing session.')
     }
-    hrmDataRepository.save(newClient)
-    clientSessionState.set(extWs.clientId, {
-      lastUpdate: Date.now(),
-      accumulatedCalories: 0,
-    })
 
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)
@@ -85,9 +136,35 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-      hrmDataRepository.deleteById(extWs.clientId)
-      clientSessionState.delete(extWs.clientId)
-      broadcastState()
+
+      // CRITICAL: Do NOT immediately delete clientData.
+      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
+      // NOTE: In a high-traffic production environment, this could lead to
+      // memory pressure if many clients disconnect and don't reconnect.
+      // A more robust solution might involve a separate cleanup process
+      // or a maximum number of inactive sessions.
+      setTimeout(() => {
+        // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
+        if (clientSockets.get(clientId) === extWs) {
+          logger.info(
+            { clientId: extWs.clientId },
+            'Session expired. Deleting data.'
+          )
+          try {
+            hrmDataRepository.deleteById(extWs.clientId)
+            clientSessionState.delete(extWs.clientId)
+            broadcastState()
+          } catch (err) {
+            logger.error(
+              { clientId: extWs.clientId, error: err },
+              'Error during session cleanup'
+            )
+          } finally {
+            // Always remove the socket reference to prevent leaks
+            clientSockets.delete(extWs.clientId)
+          }
+        }
+      }, env.WEBSOCKET_GRACE_PERIOD_MS)
     })
   })
 
@@ -161,6 +238,19 @@ const handleIncomingMessage = (
           const updateData: Partial<HrmStreamData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
+
+          // Prevent overwriting a real name with a default "Unknown" name
+          if (
+            existingData.name &&
+            !/^(user|new user|unknown|bluetooth hrm)/i.test(
+              existingData.name
+            ) &&
+            updateData.name &&
+            /^(user|new user|unknown|bluetooth hrm)/i.test(updateData.name)
+          ) {
+            delete updateData.name
+          }
+
           hrmDataRepository.save({ ...existingData, ...updateData })
         }
         broadcastState()
@@ -283,4 +373,4 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+export { initSocketManager, getRequestParams }

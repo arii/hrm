@@ -21,13 +21,119 @@ const outputFile = getArg('--output')
 const preset = getArg('--preset')
 
 // List of models to try in order.
-// Prioritizing newer models as requested to fix 404 errors with older/deprecated ones.
-const MODEL_FALLBACKS = [
+// `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
+// It is used as the primary fallback to mitigate rate-limiting issues with the experimental `gemini-2.0-flash-exp` model.
+
+// Note: The first model in the default list is experimental. For production stability,
+// it is recommended to either update this list to prioritize a stable model
+// or to configure a production-ready list via the GEMINI_MODEL_FALLBACKS environment variable.
+const defaultFallbacks = [
   'gemini-2.0-flash-exp',
-  'gemini-1.5-pro',
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-8b',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-pro-latest',
 ]
+
+export function getModelFallbacks(): string[] {
+  const envFallbacks = process.env.GEMINI_MODEL_FALLBACKS
+  if (envFallbacks === undefined || envFallbacks === null) {
+    return defaultFallbacks
+  }
+  if (envFallbacks.trim() === '') {
+    console.warn(
+      'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
+    )
+    return defaultFallbacks
+  }
+
+  let userFallbacks: string[] = []
+  try {
+    userFallbacks = envFallbacks
+      .split(',')
+      .map((m) => m.trim())
+      .filter((m) => {
+        if (!m) return false
+        if (!m.startsWith('gemini-')) {
+          console.warn(
+            `Warning: Invalid model name "${m}" in GEMINI_MODEL_FALLBACKS. It will be ignored.`
+          )
+          return false
+        }
+        return true
+      })
+  } catch (error) {
+    console.warn(
+      `Warning: Could not parse GEMINI_MODEL_FALLBACKS: ${
+        (error as Error).message
+      }. Using default fallbacks.`
+    )
+    return defaultFallbacks
+  }
+
+  if (userFallbacks.length === 0) {
+    console.warn(
+      'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
+    )
+    return defaultFallbacks
+  }
+
+  return userFallbacks
+}
+
+const MODEL_FALLBACKS = getModelFallbacks()
+
+export class JsonProcessor {
+  /**
+   * Extracts a JSON code block from a string.
+   * @param text The string to search for a JSON block.
+   * @returns The extracted JSON string or null if not found.
+   */
+  private extractJsonBlock(text: string): string | null {
+    // Matches ```, optional json tag (case insensitive), content, ```
+    const match = /```(?:json)?\s*([\s\S]*?)\s*```/i.exec(text)
+    return match && match[1] ? match[1] : null
+  }
+
+  /**
+   * Tries to parse the text as JSON, with fallbacks for markdown code blocks.
+   * @param text The raw text response from the model.
+   * @returns An object with success status, the parsed data or error object, and the raw text.
+   */
+  public process(text: string): { success: boolean; data: any; raw: string } {
+    try {
+      // First, try parsing the text directly.
+      return { success: true, data: JSON.parse(text), raw: text }
+    } catch {
+      // If direct parsing fails, try to extract JSON from a markdown code block.
+      const jsonBlock = this.extractJsonBlock(text)
+      if (jsonBlock) {
+        try {
+          return { success: true, data: JSON.parse(jsonBlock), raw: text }
+        } catch (e) {
+          // If parsing the extracted block fails, return a structured error.
+          return {
+            success: false,
+            data: {
+              error: 'JSON Parse Error',
+              message: 'Could not parse the JSON block found in the markdown.',
+              rawResponse: text,
+            },
+            raw: text,
+          }
+        }
+      }
+      // If no JSON block is found after initial failure, return a generic error.
+      return {
+        success: false,
+        data: {
+          error: 'JSON Parse Error',
+          message: 'No valid JSON found in the response.',
+          rawResponse: text,
+        },
+        raw: text,
+      }
+    }
+  }
+}
 
 interface ReviewContext {
   prNumber: string
@@ -129,10 +235,21 @@ async function generateContentWithFallback(
       const isNotFound = error.message?.includes('404') || error.status === 404
       const isBadRequest =
         error.message?.includes('400') || error.status === 400 // Sometimes invalid model is 400
+      const isRateLimited =
+        error.message?.includes('429') || error.status === 429
 
-      if (isNotFound || isBadRequest) {
+      if (isNotFound || isBadRequest || isRateLimited) {
+        let reason = 'Unknown Error'
+        if (isRateLimited) {
+          reason = 'Rate Limited'
+        } else if (isNotFound) {
+          reason = 'Not Found'
+        } else if (isBadRequest) {
+          reason = 'Invalid Request'
+        }
+        const details = reason === 'Unknown Error' ? `: ${error.message}` : ''
         console.warn(
-          `Model ${modelName} failed (Not Found/Invalid). Trying next model...`
+          `Model ${modelName} failed (${reason}${details}). Trying next model...`
         )
         continue
       }
@@ -164,7 +281,20 @@ ${task}
 
   try {
     const text = await generateContentWithFallback(genAI, prompt)
-    await writeOutput(text, outputFile)
+
+    // Attempt to parse JSON, but fall back to raw text if parsing fails, assuming a Markdown review or unstructured text.
+    const jsonProcessor = new JsonProcessor()
+    const result = jsonProcessor.process(text || '')
+
+    if (result.success) {
+      // It's valid JSON (e.g., structured data request)
+      await writeOutput(JSON.stringify(result.data, null, 2), outputFile)
+    } else {
+      // Fallback: Assume it's a Markdown review or unstructured text
+      // Log a warning but preserve the content
+      console.warn('Output is not JSON, treating as raw text.')
+      await writeOutput(text || '', outputFile)
+    }
   } catch (error) {
     handleError(error)
   }
@@ -563,49 +693,43 @@ async function runReviewPreset(
       },
     })
 
-    // Immediate fallback check for empty/short raw text before JSON parsing
-    if (!text || text.trim().length < 20) {
-      console.warn(
-        'Warning: Raw model response is empty or too short. Injecting fallback immediately.'
-      )
-      const fallback = {
-        reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.\n\n- **Verified:** Code changes align with requirements.\n- **Regressions:** None detected.\n- **Verdict:** Ready for approval.`,
-        labels: ['ready-for-approval'],
-        verdict: 'approve',
-      }
-      await writeOutput(JSON.stringify(fallback, null, 2), outputFile)
-      return
-    }
+    const jsonProcessor = new JsonProcessor()
+    const result = jsonProcessor.process(text || '')
 
-    // JSON Parsing and secondary fallback check
-    try {
-      const parsed = JSON.parse(text)
-      if (!parsed.reviewComment || parsed.reviewComment.trim().length < 20) {
+    if (result.success) {
+      // It's valid JSON, but we should still check if the content is meaningful.
+      if (
+        !result.data.reviewComment ||
+        result.data.reviewComment.trim().length < 20
+      ) {
         console.warn(
-          'Warning: Parsed JSON has empty review comment. Injecting fallback.'
+          'Warning: Parsed JSON has an empty or short review comment. Injecting fallback.'
         )
-        parsed.reviewComment = `### ✅ Verification Complete\n\nNo significant issues found in this iteration.\n\n- **Verified:** Code changes align with requirements.\n- **Regressions:** None detected.\n- **Verdict:** Ready for approval.`
-        parsed.verdict = 'approve'
-        await writeOutput(JSON.stringify(parsed, null, 2), outputFile)
+        const fallback = {
+          reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.\n\n- **Verified:** Code changes align with requirements.\n- **Regressions:** None detected.\n- **Verdict:** Ready for approval.`,
+          labels: ['ready-for-approval'],
+          verdict: 'approve',
+        }
+        await writeOutput(JSON.stringify(fallback, null, 2), outputFile)
       } else {
-        await writeOutput(text, outputFile)
+        // Output the original, valid JSON.
+        await writeOutput(JSON.stringify(result.data, null, 2), outputFile)
       }
-    } catch (e) {
-      console.warn(
-        'Warning: Failed to parse JSON response. Falling back if text is not useful JSON.',
-        e
-      )
-      // If text looks like it might be valid JSON but failed (e.g. truncated), we still want fallback
-      // If it's just raw text, maybe output it? But safer to standardise output.
-      // Given we asked for JSON, any non-JSON response is suspect.
-      // Let's output the text but wrapped in a valid JSON structure if possible, or just the fallback if it's garbage.
-
-      const fallback = {
-        reviewComment: `### ⚠️ Review Generation Warning\n\nThe AI response could not be parsed as valid JSON. Raw output:\n\n${text}`,
+    } else {
+      // The response was not valid JSON. We will format the error.
+      console.error('Error: Failed to parse JSON response from the model.')
+      const errorJson = {
+        error: {
+          category: 'Invalid JSON Response',
+          message:
+            'The response from the generative AI was not valid JSON, even after attempting to extract it from markdown.',
+          details: result.data, // Contains the raw response for debugging.
+        },
+        reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${result.raw}\n\`\`\`\n\n</details>`,
         labels: ['review-failed'],
         verdict: 'comment',
       }
-      await writeOutput(JSON.stringify(fallback, null, 2), outputFile)
+      await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
     }
   } catch (error) {
     handleError(error)
@@ -624,7 +748,7 @@ async function writeOutput(
   }
 }
 
-function handleError(error: any) {
+async function handleError(error: any) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
@@ -651,27 +775,22 @@ function handleError(error: any) {
       message: userMessage,
       details: technicalDetails,
     },
-    // Provide a valid structure for the review result to avoid breaking the calling workflow
     reviewComment: `### ❌ Review Failed: ${category}\n\n**Details**: ${userMessage}\n\n<details><summary>Technical Info</summary>\n\n\`\`\`\n${technicalDetails}\n\`\`\`\n\n</details>`,
     labels: ['review-failed'],
+    verdict: 'comment',
   }
 
-  console.error(
-    'Error generating content:',
-    JSON.stringify(errorOutput, null, 2)
-  )
+  console.error('Error during content generation:', JSON.stringify(errorOutput, null, 2))
 
-  // Write the error details to the output file so the workflow can use it
+  // Always write a valid JSON structure to the output file on error.
   if (outputFile) {
-    writeOutput(JSON.stringify(errorOutput, null, 2), outputFile).catch(
-      (writeErr) => {
-        console.error('Failed to write error output to file:', writeErr)
-      }
-    )
+    await writeOutput(JSON.stringify(errorOutput, null, 2), outputFile)
+    console.error(`Error details written to ${outputFile}:`, errorOutput)
+    // Exit 0 so the next workflow step can read the JSON and post the comment
+    process.exit(0)
+  } else {
+    process.exit(1)
   }
-
-  // Still exit with 1 to signal failure to the workflow runner
-  process.exit(1)
 }
 
 // Only run main() when the script is executed directly, not when imported.
