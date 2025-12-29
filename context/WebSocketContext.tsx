@@ -14,6 +14,7 @@ import {
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
+import usePersistedClientId from '../hooks/usePersistedClientId'
 import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
 
 // Client-side extension of HrmData to include connection status
@@ -117,36 +118,22 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
-  const [clientId, setClientId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        let id = localStorage.getItem('clientId')
-        if (!id) {
-          id = window.crypto.randomUUID()
-          localStorage.setItem('clientId', id)
-        }
-        setClientId(id)
-      } catch (error) {
-        console.error('Failed to access localStorage:', error)
-        setClientId(window.crypto.randomUUID()) // Fallback to in-memory UUID
-      }
-    }
-  }, [])
+  const clientId = usePersistedClientId('clientId')
 
   // Memoize the WebSocket URL to prevent re-computation on every render
   const wsUrl = useMemo(() => {
-    const url = serverUrl || getWebSocketURL()
-    if (!clientId) return url // Return base URL if clientId isn't generated yet (SSR)
+    // A null clientId on the client indicates that the value is still being loaded from localStorage.
+    // A null return value from this hook signals that the WebSocket should not attempt to connect yet.
+    if (!clientId) return null
 
+    const url = serverUrl || getWebSocketURL()
     try {
       const urlObject = new URL(url)
       urlObject.searchParams.set('clientId', clientId)
       return urlObject.toString()
     } catch (_error) {
       console.error('Invalid WebSocket URL:', url)
-      return url // Fallback to the original URL on error
+      return null // Prevent connection attempts with an invalid URL
     }
   }, [serverUrl, clientId])
 
