@@ -28,6 +28,8 @@ jobs:
     permissions:
       checks: write
       pull-requests: write
+      contents: read
+      issues: write
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       # Pass the result of the CI checks. It's crucial for the reusable workflow
@@ -45,6 +47,8 @@ jobs:
     permissions:
       checks: write
       pull-requests: write
+      contents: read
+      issues: write
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       # CI checks do not run on a comment event, so we pass a neutral status.
