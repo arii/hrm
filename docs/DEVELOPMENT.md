@@ -35,6 +35,27 @@ If ESLint finds errors it cannot fix automatically, the commit will be aborted. 
 
 This automated process ensures that code merged into the `leader` branch always adheres to our quality standards without requiring manual checks. You can run these checks for the entire project at any time with `pnpm run lint` and `pnpm run format`.
 
+### Commit Message Standards
+
+To ensure a clean, readable, and automated changelog, this project enforces the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+
+**Guidance vs. Enforcement:**
+
+This project uses a two-layered approach to commit message validation:
+
+- **Local Hook (Guidance)**: The local `commit-msg` hook is intentionally **non-blocking**. Its role is to provide immediate **guidance**. If your commit message does not meet the standards, it will print a `⚠️ warning` but **will still allow you to commit**. This is designed to reduce friction during local development, especially for "work-in-progress" commits or when you need to create a commit quickly.
+
+- **CI Workflow (Enforcement)**: The `Lint Commit Messages` GitHub Actions workflow is the project's source of truth for **enforcement**. It runs on every pull request and will **fail** if any commit message in the PR does not adhere to the rules. The workflow will post a comment on the PR with a link to the failed job's logs for easy debugging. A pull request with a failing `commitlint` check **cannot be merged**.
+
+**Key Rules ([`commitlint.config.cjs`](../commitlint.config.cjs)):**
+
+- **Type Prefix is Required**: Your commit message must start with a type (e.g., `feat:`, `fix:`, `chore:`, `docs:`).
+- **Subject Casing is Flexible**: The subject can be in any case (e.g., `feat: Add new feature` or `feat: add new feature`).
+- **Subject Length**: The subject line must be no longer than 100 characters.
+- **Body Line Length**: There is no line length limit for the commit body, so you can paste logs or detailed explanations.
+
+For more details on the rules, please refer to the [official commitlint documentation](https://github.com/conventional-changelog/commitlint/#what-is-commitlint).
+
 ### Legacy Pre-commit Hooks
 
 The project contains legacy Python-based pre-commit hooks (`.pre-commit-config.yaml`). These are now considered **deprecated** in favor of the Husky-based Node.js tooling. The Python hooks will be removed in a future pull request to eliminate redundancy.

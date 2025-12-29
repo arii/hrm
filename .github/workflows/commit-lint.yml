@@ -1,0 +1,33 @@
+name: Lint Commit Messages
+on: [pull_request]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Validate PR commits
+        id: lint
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+      - name: Post Comment on Failure
+        if: failure()
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            :no_entry: **Commit Message Linting Failed**
+
+            One or more of your commit messages do not follow the project's conventions.
+            Please review the [commitlint logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details.
+
+            You can also refer to the [commit message guidelines](https://github.com/conventional-changelog/commitlint/#what-is-commitlint) for help.
