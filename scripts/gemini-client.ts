@@ -90,7 +90,7 @@ class JsonProcessor {
   private extractJsonBlock(text: string): string | null {
     // Matches ```, optional json tag (case insensitive), content, ```
     const match = /```(?:json)?\s*([\s\S]*?)\s*```/i.exec(text)
-    return match ? match[1] : null
+    return match && match[1] ? match[1] : null
   }
 
   /**
@@ -735,7 +735,7 @@ async function writeOutput(
   }
 }
 
-function handleError(error: any) {
+async function handleError(error: any) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
