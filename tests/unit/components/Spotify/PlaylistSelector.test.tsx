@@ -121,10 +121,24 @@ describe('PlaylistSelector', () => {
 
     // Check the aria-label for the list item
     const rockClassicsItem = await screen.findByText('Rock Classics')
-    const listItem = rockClassicsItem.closest('li')
+    let listItem = rockClassicsItem.closest('li')
     expect(listItem).toHaveAttribute(
       'aria-label',
-      'Select playlist: Rock Classics'
+      'Select playlist: Rock Classics, not selected'
+    )
+
+    // Click the item to select it
+    await user.click(rockClassicsItem)
+
+    // Re-open the dropdown to check the updated aria-label
+    await user.click(input)
+
+    // Check the aria-label for the list item again
+    const rockClassicsItemAfterClick = await screen.findByText('Rock Classics')
+    listItem = rockClassicsItemAfterClick.closest('li')
+    expect(listItem).toHaveAttribute(
+      'aria-label',
+      'Select playlist: Rock Classics, selected'
     )
 
     // Check the aria-label for the play button within that list item
