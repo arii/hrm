@@ -87,7 +87,12 @@ jobs:
             const path = require('path');
 
             try {
-              const rawData = fs.readFileSync(path.resolve(process.cwd(), 'triage_result.json'), 'utf8');
+              const filePath = path.resolve(process.cwd(), 'triage_result.json');
+              if (!fs.existsSync(filePath)) {
+                core.setFailed('Triage result file not found. The Gemini client may have crashed silently.');
+                return;
+              }
+              const rawData = fs.readFileSync(filePath, 'utf8');
               const result = JSON.parse(rawData);
 
               // Gracefully handle cases where the Gemini agent fails and returns a structured error.

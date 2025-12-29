@@ -88,7 +88,8 @@ class JsonProcessor {
    * @returns The extracted JSON string or null if not found.
    */
   private extractJsonBlock(text: string): string | null {
-    const match = /```json\n([\s\S]*?)\n```/.exec(text)
+    // Matches ```, optional json tag (case insensitive), content, ```
+    const match = /```(?:json)?\s*([\s\S]*?)\s*```/i.exec(text)
     return match ? match[1] : null
   }
 
@@ -770,17 +771,11 @@ function handleError(error: any) {
 
   // Always write a valid JSON structure to the output file on error.
   if (outputFile) {
-    writeFile(path.resolve(process.cwd(), outputFile), JSON.stringify(errorOutput, null, 2))
-      .then(() => {
-        console.log(`Error details written to ${outputFile}`)
-        process.exit(1)
-      })
-      .catch((writeErr) => {
-        console.error('Critical: Failed to write error output to file:', writeErr)
-        process.exit(1)
-      })
+    await writeOutput(JSON.stringify(errorOutput, null, 2), outputFile)
+    console.log(`Error details written to ${outputFile}`)
+    // Exit 0 so the next workflow step can read the JSON and post the comment
+    process.exit(0)
   } else {
-    // If no output file is specified, just exit.
     process.exit(1)
   }
 }
