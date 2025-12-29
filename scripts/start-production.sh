@@ -11,6 +11,12 @@ if [ -f .env.production ]; then
   set +a
 fi
 
+if [ -f .env.local ]; then
+  set -a
+  source .env.local
+  set +a
+fi
+
 # Explicitly run the compiled server entry point
 # This expects a 'dist' directory with the compiled server.
 exec node dist/server.js

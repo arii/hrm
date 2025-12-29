@@ -1,27 +1,41 @@
 name: 'Setup Environment'
-description: 'Checks out code, sets up Node.js, pnpm, and installs dependencies'
+description: 'Sets up Node.js, pnpm, installs gh CLI, and installs dependencies. Requires repo to be checked out first.'
+
+inputs:
+  node-version:
+    description: 'Version of Node.js to use.'
+    required: false
+    default: '20.x'
+  gh-version:
+    description: 'Version of GitHub CLI to install.'
+    required: false
+    # Pinned to a specific version to ensure stability.
+    # Update this version deliberately as needed.
+    default: '2.53.0'
+
 runs:
   using: 'composite'
   steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        clean: false
-
-    - name: Sanitize Workspace (Preserve Cache)
+    - name: Install GitHub CLI
       shell: bash
       run: |
-        git reset --hard HEAD
-        git clean -fdx --exclude .next --exclude node_modules --exclude .eslintcache --exclude .cache
+        # Installs a specific version of the GitHub CLI, which is required
+        # for posting comments and other interactions with the GitHub API.
+        # The version is passed as an input to allow for easy updates.
+        mkdir -p $HOME/.local/bin
+        GH_VERSION=${{ inputs.gh-version }}
+        curl -L https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz -o gh.tar.gz
+        tar xvf gh.tar.gz
+        mv gh_${GH_VERSION}_linux_amd64/bin/gh $HOME/.local/bin/
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Install pnpm
       uses: pnpm/action-setup@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@v4
       with:
-        node-version: '20.x'
+        node-version: ${{ inputs.node-version }}
         cache: 'pnpm'
 
     - name: Run Setup Script

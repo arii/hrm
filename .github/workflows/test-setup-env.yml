@@ -1,0 +1,49 @@
+name: Test Setup Env Action
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-setup-env:
+    name: Test Setup Env
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+        with:
+          node-version: '20.x'
+          gh-version: '2.53.0'
+
+      - name: Verify Node.js Version
+        id: node_version
+        run: |
+          NODE_VERSION=$(node -v)
+          echo "Node.js version: $NODE_VERSION"
+          if [[ "$NODE_VERSION" != v20* ]]; then
+            echo "Incorrect Node.js version. Expected v20, got $NODE_VERSION"
+            exit 1
+          fi
+
+      - name: Verify pnpm Version
+        run: |
+          pnpm -v
+
+      - name: Verify GitHub CLI Version
+        id: gh_version
+        run: |
+          GH_VERSION_OUTPUT=$(gh --version)
+          echo "GitHub CLI output: $GH_VERSION_OUTPUT"
+          # Extract version number which is the third field
+          GH_VERSION=$(echo "$GH_VERSION_OUTPUT" | awk '{print $3}')
+          echo "Detected GitHub CLI version: $GH_VERSION"
+          if [[ "$GH_VERSION" != "2.53.0" ]]; then
+            echo "Incorrect GitHub CLI version. Expected 2.53.0, got $GH_VERSION"
+            exit 1
+          fi
+
+      - name: Verify Dependencies
+        run: |
+          ls node_modules
