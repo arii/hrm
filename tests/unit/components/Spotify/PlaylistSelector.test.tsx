@@ -30,6 +30,9 @@ describe('PlaylistSelector', () => {
         onPlaylistPlay={jest.fn()}
       />
     )
+    const user = userEvent.setup()
+    const input = await screen.findByRole('combobox')
+    await user.click(input)
 
     // Wait for the playlists to be fetched and rendered
     await waitFor(() => {
@@ -48,9 +51,36 @@ describe('PlaylistSelector', () => {
       />
     )
     const user = userEvent.setup()
-
+    const input = await screen.findByRole('combobox')
+    await user.click(input)
     const rockClassicsItem = await screen.findByText('Rock Classics')
     await user.click(rockClassicsItem)
+
+    // Verify the callback was called with the correct URI
+    expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:2')
+  })
+
+  it('should call onPlaylistSelected when a playlist is selected using the keyboard', async () => {
+    const onPlaylistSelected = jest.fn()
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={onPlaylistSelected}
+        onPlaylistPlay={jest.fn()}
+      />
+    )
+    const user = userEvent.setup()
+    const input = await screen.findByRole('combobox')
+
+    // Open the dropdown
+    await user.click(input)
+
+    // Wait for options to appear
+    await screen.findByText('Chill Hits')
+
+    // Navigate down to the second item ('Rock Classics') and press Enter
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard('{Enter}')
 
     // Verify the callback was called with the correct URI
     expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:2')
@@ -65,7 +95,8 @@ describe('PlaylistSelector', () => {
       />
     )
     const user = userEvent.setup()
-
+    const input = await screen.findByRole('combobox')
+    await user.click(input)
     const focusFlowItem = await screen.findByText('Focus Flow')
     const listItem = focusFlowItem.closest('li')
     if (!listItem) throw new Error('Playlist item not found')
@@ -75,5 +106,49 @@ describe('PlaylistSelector', () => {
     await user.click(playButton)
 
     expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:3')
+  })
+
+  it('should have the correct aria-labels for accessibility', async () => {
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={jest.fn()}
+        onPlaylistPlay={jest.fn()}
+      />
+    )
+    const user = userEvent.setup()
+    const input = await screen.findByRole('combobox')
+    await user.click(input)
+
+    // Check the aria-label for the list item
+    const rockClassicsItem = await screen.findByText('Rock Classics')
+    let listItem = rockClassicsItem.closest('li')
+    expect(listItem).toHaveAttribute(
+      'aria-label',
+      'Select playlist: Rock Classics, not selected'
+    )
+
+    // Click the item to select it
+    await user.click(rockClassicsItem)
+
+    // Re-open the dropdown to check the updated aria-label
+    await user.click(input)
+
+    // Check the aria-label for the list item again
+    const rockClassicsItemAfterClick = await screen.findByText('Rock Classics')
+    listItem = rockClassicsItemAfterClick.closest('li')
+    expect(listItem).toHaveAttribute(
+      'aria-label',
+      'Select playlist: Rock Classics, selected'
+    )
+
+    // Check the aria-label for the play button within that list item
+    if (!listItem) throw new Error('Playlist item not found')
+    const playButton = within(listItem).getByRole('button', {
+      name: /play playlist/i,
+    })
+    expect(playButton).toHaveAttribute(
+      'aria-label',
+      'Play playlist: Rock Classics'
+    )
   })
 })
