@@ -10,9 +10,11 @@ import PageContainer from '../../../components/PageContainer'
 import '@testing-library/jest-dom'
 
 // Mock the BottomNavBar component to isolate the PageContainer's functionality
-jest.mock('../../../components/BottomNavBar', () => () => (
-  <div data-testid="bottom-nav-bar" />
-))
+jest.mock('../../../components/BottomNavBar', () => {
+  const MockedBottomNavBar = () => <div data-testid="bottom-nav-bar" />
+  MockedBottomNavBar.displayName = 'MockedBottomNavBar'
+  return MockedBottomNavBar
+})
 
 const renderWithTheme = (ui: React.ReactElement) => {
   return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>)

@@ -6,7 +6,9 @@ import BottomNavBar from './BottomNavBar'
 
 /**
  * Props for the PageContainer component.
- * Extends MUI ContainerProps and adds a `hasNavBar` prop for consistent layout.
+ * @description Extends MUI's ContainerProps to allow all standard container props (like `onClick`, `id`, etc.)
+ * to be passed through. This is crucial for flexibility and event handling.
+ * It also adds a custom `hasNavBar` prop for consistent layout management.
  */
 interface PageContainerProps extends ContainerProps {
   /**
@@ -14,6 +16,16 @@ interface PageContainerProps extends ContainerProps {
    * @default true
    */
   hasNavBar?: boolean
+  /**
+   * Determine the max-width of the container. The container width grows with the size of the screen.
+   * Set to false to disable maxWidth.
+   * @default 'xl'
+   */
+  maxWidth?: ContainerProps['maxWidth']
+  /**
+   * The system prop that allows defining system overrides as well as custom CSS styles.
+   */
+  sx?: ContainerProps['sx']
 }
 
 const PageContainer: React.FC<PageContainerProps> = ({
