@@ -162,7 +162,12 @@ interface ReviewContext {
   hasTestChanges: boolean
   missingTests: boolean
   testFiles?: string | undefined
-  failedChecks: { name: string; conclusion: string; detailsUrl: string }[]
+  failedChecks: {
+    name: string
+    conclusion: string
+    detailsUrl: string
+    logs?: string
+  }[]
 }
 
 async function main() {
@@ -400,7 +405,7 @@ function buildReviewPrompt(
         const truncatedLog =
           check.logs && check.logs.length > 15000
             ? check.logs.substring(0, 15000) + '\n... [LOGS TRUNCATED]'
-            : check.logs
+            : check.logs || ''
         return `
 <details>
 <summary><strong>${check.name}</strong> (${check.conclusion})</summary>
