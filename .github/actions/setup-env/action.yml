@@ -27,6 +27,10 @@ runs:
     - name: Sanitize Workspace (Preserve Cache)
       shell: bash
       run: |
+        # This step is crucial for self-hosted runners to prevent contamination
+        # between workflow runs. It resets the git repository to a clean state
+        # but preserves cached directories like node_modules and .next,
+        # which significantly speeds up the build process.
         git reset --hard HEAD
         git clean -fdx --exclude .next --exclude node_modules --exclude .eslintcache --exclude .cache
 
