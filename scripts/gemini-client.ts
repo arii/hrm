@@ -250,9 +250,9 @@ async function generateContentWithFallback(
 
       const isNotFound = errorMessage.includes('404') || errorStatus === 404
       const isBadRequest =
-        error.message?.includes('400') || error.status === 400 // Sometimes invalid model is 400
+        errorMessage.includes('400') || errorStatus === 400 // Sometimes invalid model is 400
       const isRateLimited =
-        error.message?.includes('429') || error.status === 429
+        errorMessage.includes('429') || errorStatus === 429
 
       if (isNotFound || isBadRequest || isRateLimited) {
         let reason = 'Unknown Error'
@@ -263,7 +263,7 @@ async function generateContentWithFallback(
         } else if (isBadRequest) {
           reason = 'Invalid Request'
         }
-        const details = reason === 'Unknown Error' ? `: ${error.message}` : ''
+        const details = reason === 'Unknown Error' ? `: ${errorMessage}` : ''
         console.warn(
           `Model ${modelName} failed (${reason}${details}). Trying next model...`
         )

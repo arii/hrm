@@ -116,7 +116,8 @@ describe('SpotifyPolling Service', () => {
         clearInterval(pollInterval)
         spotifyService._test_.setPollInterval(null)
       }
-      const tokenRefreshInterval = spotifyService._test_.getTokenRefreshInterval()
+      const tokenRefreshInterval =
+        spotifyService._test_.getTokenRefreshInterval()
       if (tokenRefreshInterval) {
         clearInterval(tokenRefreshInterval)
         spotifyService._test_.setTokenRefreshInterval(null)

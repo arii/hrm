@@ -29,10 +29,15 @@ describe('JsonProcessor', () => {
   })
 
   it('should return an error for a malformed JSON block in markdown', () => {
+    // Suppress expected console.error for this test
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
     const markdownString = '```json\n{"key": "value",}\n```'
     const result = processor.process(markdownString)
     expect(result.success).toBe(false)
     expect(result.data.error).toBe('JSON Parse Error')
+    consoleErrorSpy.mockRestore()
   })
 
   it('should return an error if no JSON is found', () => {
