@@ -164,7 +164,17 @@ jobs:
             const fs = require('fs');
 
             try {
-              const rawData = fs.readFileSync('pr_description.json', 'utf8');
+              let rawData = fs.readFileSync('pr_description.json', 'utf8');
+
+              // Clean the raw data to remove markdown code fences
+              const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i;
+              const match = codeBlockRegex.exec(rawData);
+              if (match && match[1]) {
+                rawData = match[1].trim();
+              } else {
+                rawData = rawData.trim();
+              }
+
               const result = JSON.parse(rawData);
 
               if (result.description) {
