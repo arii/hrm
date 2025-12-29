@@ -2,11 +2,9 @@
 /** @jest-environment node */
 
 import { GET } from '@/app/api/spotify/access-token/route'
-import { authOptions } from '@/lib/auth'
 import { getServerSession } from 'next-auth/next'
 import { getToken } from 'next-auth/jwt'
 import { serviceContainer } from '@/lib/serviceContainer'
-import { NextResponse } from 'next/server'
 
 // 1. Mock NextAuth dependencies
 jest.mock('next-auth/next', () => ({
@@ -49,7 +47,9 @@ describe('API Route: /api/spotify/access-token', () => {
 
   it('should return 401 if no session exists', async () => {
     mockedGetServerSession.mockResolvedValue(null)
-    const response = await GET(new Request('http://localhost/api/spotify/access-token'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/access-token')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(401)
@@ -61,21 +61,25 @@ describe('API Route: /api/spotify/access-token', () => {
     mockedGetToken.mockResolvedValue({
       accessToken: 'jwt-access-token',
       refreshToken: 'jwt-refresh-token',
-      sub: 'test-user-id'
+      sub: 'test-user-id',
     })
 
-    const response = await GET(new Request('http://localhost/api/spotify/access-token'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/access-token')
+    )
     await response.json() // Consume body
 
     // Assert: Service container was accessed
     expect(mockedServiceContainerGet).toHaveBeenCalledWith('spotifyService')
 
     // Assert: Data was passed to handleTokenUpdate
-    expect(mockHandleTokenUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      access_token: 'jwt-access-token',
-      refresh_token: 'jwt-refresh-token',
-      provider: 'spotify'
-    }))
+    expect(mockHandleTokenUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        access_token: 'jwt-access-token',
+        refresh_token: 'jwt-refresh-token',
+        provider: 'spotify',
+      })
+    )
   })
 
   it('should NOT crash the request if service hydration fails', async () => {
@@ -85,7 +89,9 @@ describe('API Route: /api/spotify/access-token', () => {
       throw new Error('Service not ready')
     })
 
-    const response = await GET(new Request('http://localhost/api/spotify/access-token'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/access-token')
+    )
     const data = await response.json()
 
     // Assert: The client still gets their token despite internal error
@@ -96,7 +102,9 @@ describe('API Route: /api/spotify/access-token', () => {
   it('should return 200 and token even if no refresh token is present', async () => {
     mockedGetToken.mockResolvedValue({ accessToken: 'jwt-access-token' }) // No refresh token
 
-    const response = await GET(new Request('http://localhost/api/spotify/access-token'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/access-token')
+    )
 
     // Assert: Should not attempt to hydrate
     expect(mockedServiceContainerGet).not.toHaveBeenCalled()

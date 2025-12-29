@@ -163,8 +163,14 @@ export class SpotifyPolling implements SpotifyService {
     // Idempotency Check: If the new access token is the same as the current one, do nothing.
     // This prevents redundant SDK re-initializations from concurrent hydration calls.
     const currentSdkToken = this.tokenManager.getSdkAccessToken()
-    if (currentSdkToken && currentSdkToken.access_token === tokens.access_token) {
-      logger.debug({ userId: tokens.sub }, 'Skipping token update; token is unchanged.')
+    if (
+      currentSdkToken &&
+      currentSdkToken.access_token === tokens.access_token
+    ) {
+      logger.debug(
+        { userId: tokens.sub },
+        'Skipping token update; token is unchanged.'
+      )
       return
     }
 

@@ -21,7 +21,9 @@ describe('SpotifyTokenManager (In-Memory)', () => {
   const clientSecret = 'test_client_secret'
   let tokenManager: SpotifyTokenManager
 
-  const getMockTokenPayload = (overrides: Partial<SpotifyTokenPayload> = {}): SpotifyTokenPayload => ({
+  const getMockTokenPayload = (
+    overrides: Partial<SpotifyTokenPayload> = {}
+  ): SpotifyTokenPayload => ({
     provider: 'spotify',
     sub: 'test_user',
     access_token: 'initial_access_token',
@@ -50,7 +52,10 @@ describe('SpotifyTokenManager (In-Memory)', () => {
 
     const accessToken = await tokenManager.getValidAccessToken()
     expect(accessToken).toBe('initial_access_token')
-    expect(logger.info).toHaveBeenCalledWith({ userId: 'test_user' }, 'Updated in-memory Spotify tokens.')
+    expect(logger.info).toHaveBeenCalledWith(
+      { userId: 'test_user' },
+      'Updated in-memory Spotify tokens.'
+    )
   })
 
   it('should not refresh a valid token', async () => {
@@ -67,7 +72,6 @@ describe('SpotifyTokenManager (In-Memory)', () => {
       obtainedAt: Date.now() - 3601 * 1000, // Expired over an hour ago
     })
     tokenManager.updateToken(payload)
-
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: () =>
@@ -89,7 +93,6 @@ describe('SpotifyTokenManager (In-Memory)', () => {
       obtainedAt: Date.now() - 3601 * 1000, // Expired
     })
     tokenManager.updateToken(payload)
-
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
       status: 500,
@@ -101,8 +104,8 @@ describe('SpotifyTokenManager (In-Memory)', () => {
     expect(global.fetch).toHaveBeenCalledTimes(3) // Check for retry logic
     expect(accessToken).toBe('initial_access_token') // Returns the old, expired token
     expect(logger.warn).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: 'test_user', attempt: 3 }),
-        expect.stringContaining('Failed to refresh Spotify token')
+      expect.objectContaining({ userId: 'test_user', attempt: 3 }),
+      expect.stringContaining('Failed to refresh Spotify token')
     )
   })
 
@@ -111,7 +114,6 @@ describe('SpotifyTokenManager (In-Memory)', () => {
       obtainedAt: Date.now() - 3601 * 1000, // Expired
     })
     tokenManager.updateToken(payload)
-
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: () =>
@@ -123,11 +125,13 @@ describe('SpotifyTokenManager (In-Memory)', () => {
     })
 
     // Simulate 5 concurrent calls
-    const promises = Array(5).fill(0).map(() => tokenManager.getValidAccessToken())
+    const promises = Array(5)
+      .fill(0)
+      .map(() => tokenManager.getValidAccessToken())
     const results = await Promise.all(promises)
 
     // All results should be the new token
-    results.forEach(token => expect(token).toBe('new_access_token'))
+    results.forEach((token) => expect(token).toBe('new_access_token'))
 
     // But fetch should only have been called once
     expect(global.fetch).toHaveBeenCalledTimes(1)
@@ -145,7 +149,7 @@ describe('SpotifyTokenManager (In-Memory)', () => {
     expect(global.fetch).not.toHaveBeenCalled()
     expect(accessToken).toBe('initial_access_token') // Returns the old, expired token
     expect(logger.warn).toHaveBeenCalledWith(
-        { userId: 'test_user' },
+      { userId: 'test_user' },
       'Spotify access token expired, but no refresh token available. Cannot refresh.'
     )
   })

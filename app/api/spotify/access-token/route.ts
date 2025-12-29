@@ -13,23 +13,22 @@ import { env } from '@/lib/env'
  * @param req The incoming NextRequest, used to extract the JWT.
  */
 async function _tryHydrateSpotifyService(req: NextRequest): Promise<void> {
-  let userId: string | null = null;
-  let token: JWT | null = null;
+  let userId: string | null = null
+  let token: JWT | null = null
 
   try {
-    token = await getToken({ req, secret: env.NEXTAUTH_SECRET });
-    userId = token?.sub || null;
+    token = await getToken({ req, secret: env.NEXTAUTH_SECRET })
+    userId = token?.sub || null
 
     if (
-        token &&
-        typeof token.accessToken === 'string' &&
-        typeof token.refreshToken === 'string'
+      token &&
+      typeof token.accessToken === 'string' &&
+      typeof token.refreshToken === 'string'
     ) {
-      const spotifyService = serviceContainer.get('spotifyService');
+      const spotifyService = serviceContainer.get('spotifyService')
 
-      const expiresIn = token.exp && token.iat
-        ? Math.max(0, token.exp - token.iat)
-        : 3600;
+      const expiresIn =
+        token.exp && token.iat ? Math.max(0, token.exp - token.iat) : 3600
 
       await spotifyService.handleTokenUpdate({
         provider: 'spotify',
@@ -38,16 +37,26 @@ async function _tryHydrateSpotifyService(req: NextRequest): Promise<void> {
         refresh_token: token.refreshToken,
         expires_in: expiresIn,
         scope: '',
-        obtainedAt: Date.now()
-      });
-      logger.debug({ userId }, 'Successfully hydrated SpotifyService from access-token route.');
+        obtainedAt: Date.now(),
+      })
+      logger.debug(
+        { userId },
+        'Successfully hydrated SpotifyService from access-token route.'
+      )
     } else if (token) {
-        // This case is important for debugging token issues.
-        logger.warn({ userId }, 'JWT was retrieved but missing accessToken or refreshToken.');
+      // This case is important for debugging token issues.
+      logger.warn(
+        { userId },
+        'JWT was retrieved but missing accessToken or refreshToken.'
+      )
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    logger.warn({ error: errorMessage, userId }, 'Failed to get JWT for service hydration.');
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred'
+    logger.warn(
+      { error: errorMessage, userId },
+      'Failed to get JWT for service hydration.'
+    )
   }
 }
 
@@ -87,7 +96,10 @@ export async function GET(req: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
-    logger.error({ error: message }, 'Internal Server Error in access-token route.')
+    logger.error(
+      { error: message },
+      'Internal Server Error in access-token route.'
+    )
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

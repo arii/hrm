@@ -1,7 +1,7 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import { z } from 'zod'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
-import logger from '../utils/logger.js'
+import logger from '@/utils/logger'
 
 /**
  * Zod schema for the Spotify token payload.
@@ -48,7 +48,10 @@ export class SpotifyTokenManager {
   public updateToken(payload: unknown): void {
     const validation = SpotifyTokenPayloadSchema.safeParse(payload)
     if (!validation.success) {
-      logger.error({ error: validation.error }, 'Invalid Spotify token payload received.')
+      logger.error(
+        { error: validation.error },
+        'Invalid Spotify token payload received.'
+      )
       return
     }
 
@@ -56,13 +59,19 @@ export class SpotifyTokenManager {
       receivedAt: Date.now(),
       payload: validation.data,
     }
-    logger.info({ userId: this.currentToken.payload.sub }, 'Updated in-memory Spotify tokens.')
+    logger.info(
+      { userId: this.currentToken.payload.sub },
+      'Updated in-memory Spotify tokens.'
+    )
   }
 
   private async refreshToken(): Promise<boolean> {
     if (!this.currentToken?.payload.refresh_token) {
-        logger.warn({ userId: this.currentToken?.payload.sub }, 'Token refresh skipped: No refresh token available.');
-        return false;
+      logger.warn(
+        { userId: this.currentToken?.payload.sub },
+        'Token refresh skipped: No refresh token available.'
+      )
+      return false
     }
     const userId = this.currentToken.payload.sub
 
@@ -122,8 +131,11 @@ export class SpotifyTokenManager {
       } catch (error: unknown) {
         const err = error as Error
         if (err.message && err.message.includes('(Non-retriable)')) {
-            logger.error({ userId, error: err.message }, 'Failed to refresh Spotify token (fatal). The refresh token may be revoked.');
-            return false
+          logger.error(
+            { userId, error: err.message },
+            'Failed to refresh Spotify token (fatal). The refresh token may be revoked.'
+          )
+          return false
         }
 
         logger.warn(
@@ -149,20 +161,23 @@ export class SpotifyTokenManager {
       this.currentToken.payload.expires_in * 1000
 
     if (Date.now() >= expiresAt - 60000) {
-        if (this.currentToken.payload.refresh_token) {
-            if (!this.refreshPromise) {
-                logger.info({ userId: this.currentToken.payload.sub }, 'Spotify access token is expiring soon, initiating refresh...');
-                this.refreshPromise = this.refreshToken().finally(() => {
-                    this.refreshPromise = null;
-                });
-            }
-            await this.refreshPromise;
-        } else {
-            logger.warn(
-                { userId: this.currentToken.payload.sub },
-              'Spotify access token expired, but no refresh token available. Cannot refresh.'
-            )
+      if (this.currentToken.payload.refresh_token) {
+        if (!this.refreshPromise) {
+          logger.info(
+            { userId: this.currentToken.payload.sub },
+            'Spotify access token is expiring soon, initiating refresh...'
+          )
+          this.refreshPromise = this.refreshToken().finally(() => {
+            this.refreshPromise = null
+          })
         }
+        await this.refreshPromise
+      } else {
+        logger.warn(
+          { userId: this.currentToken.payload.sub },
+          'Spotify access token expired, but no refresh token available. Cannot refresh.'
+        )
+      }
     }
 
     return this.currentToken.payload.access_token
