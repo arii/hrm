@@ -116,6 +116,7 @@ const HrmConnectionPanel = () => {
               borderRadius: 2,
               height: '100%',
               justifyContent: 'center',
+              minHeight: 220,
             }}
           >
             <Box
