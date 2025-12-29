@@ -56,7 +56,9 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         // Save state
         setStoredValue(valueToStore)
         // Save to local storage
-        window.localStorage.setItem(key, JSON.stringify(valueToStore))
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(key, JSON.stringify(valueToStore))
+        }
       } catch (error) {
         console.error(
           `Failed to set localStorage key “${key}”:`,
