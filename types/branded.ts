@@ -15,7 +15,13 @@ export type Brand<K, T> = K & { __brand: T }
  * @example "user-a1b2c3d4"
  */
 export type ClientId = Brand<string, 'ClientId'>
-export const ClientIdSchema = z.string().min(1).brand<'ClientId'>()
+export const ClientIdSchema = z
+  .string()
+  .regex(
+    /^user-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    'Invalid Client ID format'
+  )
+  .brand<'ClientId'>()
 
 /**
  * A unique identifier for a Spotify playback device.

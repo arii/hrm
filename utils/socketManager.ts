@@ -5,8 +5,8 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { IncomingMessage } from 'http'
-import { ClientId, DeviceId } from '../types/branded'
-import { generateClientId, toClientId } from './brandedId'
+import { ClientId, DeviceId } from '../types/branded.js'
+import { generateClientId, toClientId } from './brandedId.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -16,19 +16,19 @@ import {
   ServerMessage,
   StateSnapshot,
   ExtWebSocket,
-} from '../types/websocket'
-import { HrmStreamData } from '../types/core'
-import { CALORIE_DEFAULTS } from './constants' // Ensure this import exists
+} from '../types/websocket.js'
+import { HrmStreamData } from '../types/core.js'
+import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import {
   broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
-} from './websocketUtils'
-import logger from './logger'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation'
-import { HrmDataRepository } from '../lib/repositories/HrmDataRepository'
-import { AppServices } from '../lib/services'
-import { env } from '../lib/env'
+} from './websocketUtils.js'
+import logger from './logger.js'
+import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
+import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
+import { AppServices } from '../lib/services.js'
+import { env } from '../lib/env.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
