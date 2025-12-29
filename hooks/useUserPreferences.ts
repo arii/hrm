@@ -6,9 +6,12 @@ export interface UserPreferences {
   volumeLevel: number
   defaultWorkDuration: number
   defaultRestDuration: number
-  favoritePlaylist: string | null
-  userName: string | null
+  // Nullable fields represent user-provided data that may not yet be set.
+  favoritePlaylist: string
+  userName: string
   userAge: number | null
+  userWeight: number | null
+  autoConnect: boolean
 }
 
 export const useUserPreferences = () => {
@@ -17,9 +20,11 @@ export const useUserPreferences = () => {
     volumeLevel: 70,
     defaultWorkDuration: 20,
     defaultRestDuration: 10,
-    favoritePlaylist: null,
-    userName: null,
+    favoritePlaylist: '',
+    userName: '',
     userAge: null,
+    userWeight: null,
+    autoConnect: false,
   })
 
   return [prefs, setPrefs] as const
