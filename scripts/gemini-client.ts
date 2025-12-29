@@ -366,18 +366,6 @@ function getReviewContextFromEnv(): ReviewContext {
   }
 }
 
-const CHECK_FIX_GUIDANCE: Record<string, string> = {
-  lint: 'Usually caused by code not following project style rules. Run `pnpm run lint -- --fix` locally to auto-fix many issues. Check the log for specific rule violations.',
-  build:
-    'Often due to TypeScript errors (e.g., type mismatches, invalid syntax) or missing dependencies. Check the build log for the exact error message.',
-  unit_tests:
-    'A test case failed. Run `pnpm run test:unit` locally to replicate. The log will show which test and assertion failed.',
-  visual_tests:
-    'The UI has changed unexpectedly. If the change is intentional, update the snapshots. Otherwise, fix the UI component. See the log for a link to the visual diff.',
-  infra_tests:
-    'The application failed to start or respond correctly. This can be due to environment configuration issues or fatal errors in the server code. Check the server startup logs.',
-}
-
 function buildReviewPrompt(
   diff: string,
   context: ReviewContext,
@@ -400,12 +388,7 @@ function buildReviewPrompt(
 
     const guidance = context.failedChecks
       .map((check) => {
-        const key = Object.keys(CHECK_FIX_GUIDANCE).find((key) =>
-          check.name.toLowerCase().includes(key)
-        )
-        return key
-          ? `- **${check.name}**: ${CHECK_FIX_GUIDANCE[key]}`
-          : `- **${check.name}**: Check the logs linked above for details.`
+        return `- **${check.name}**: Check the logs linked above for details.`
       })
       .join('\n')
 
