@@ -19,9 +19,13 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
+
+// Constants
+const OPTIMISTIC_UI_SYNC_TIMEOUT = 3000 // ms
+const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
 
 const actionButtonBaseSx = {
   flex: 1,
@@ -55,21 +59,30 @@ const TimerControls = () => {
 
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
-  const latestWork = useRef<number>(workTime)
-  const latestRest = useRef<number>(restTime)
-
-  useEffect(() => {
-    latestWork.current = workTime
-  }, [workTime])
-
-  useEffect(() => {
-    latestRest.current = restTime
-  }, [restTime])
 
   // Sync optimistic state with server state
   useEffect(() => {
     setOptimisticIsRunning(timerData.isRunning)
   }, [timerData.isRunning])
+
+  // Safety timeout to prevent optimistic UI from getting stuck.
+  // If the optimistic state and server state are different for too long,
+  // revert the optimistic state to match the server.
+  useEffect(() => {
+    if (optimisticIsRunning === timerData.isRunning) {
+      return // States are in sync, do nothing.
+    }
+
+    const safetyTimeout = setTimeout(() => {
+      console.warn(
+        `[TimerControls] Optimistic state timed out. Reverting to server state (isRunning: ${timerData.isRunning}).`
+      )
+      setOptimisticIsRunning(timerData.isRunning)
+    }, OPTIMISTIC_UI_SYNC_TIMEOUT)
+
+    // Cleanup the timeout if the states sync up before it fires
+    return () => clearTimeout(safetyTimeout)
+  }, [optimisticIsRunning, timerData.isRunning])
 
   useEffect(() => {
     const message: TimerConfigMessage = {
@@ -126,30 +139,29 @@ const TimerControls = () => {
     [sendData, spotifyDeviceId, spotifyDevices]
   )
 
-  const serverIsRunning = useRef(timerData.isRunning)
-  useEffect(() => {
-    serverIsRunning.current = timerData.isRunning
-  }, [timerData.isRunning])
-
   const sendTimerCommand = useCallback(
     (command: 'START' | 'STOP') => {
       // Optimistically update the UI
       setOptimisticIsRunning(command === 'START')
 
+      // If disconnected, revert the optimistic update after a short delay
       if (connectionStatus !== 'Connected') {
         console.warn(
           `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
         )
-        // Revert the optimistic update after a short delay
-        setTimeout(() => setOptimisticIsRunning(serverIsRunning.current), 500)
+        setTimeout(
+          () => setOptimisticIsRunning(timerData.isRunning),
+          DISCONNECTED_UI_REVERT_DELAY
+        )
         return
       }
 
+      // When starting, send the most up-to-date config.
       if (command === 'START') {
         const config: TimerConfigMessage = {
           type: 'TIMER_CONFIG',
-          workDuration: latestWork.current,
-          restDuration: latestRest.current,
+          workDuration: workTime,
+          restDuration: restTime,
         }
         sendData(config)
       }
@@ -159,7 +171,14 @@ const TimerControls = () => {
       if (command === 'START') sendSpotifyCommand('NEXT')
       else if (command === 'STOP') sendSpotifyCommand('PAUSE')
     },
-    [sendData, latestWork, latestRest, sendSpotifyCommand, connectionStatus]
+    [
+      sendData,
+      sendSpotifyCommand,
+      connectionStatus,
+      timerData.isRunning,
+      workTime,
+      restTime,
+    ]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
