@@ -1,9 +1,10 @@
 
-import { buildReviewPrompt } from '../../../scripts/gemini-client';
+import { buildReviewPrompt, parseFailedChecks } from '../../../scripts/gemini-client';
 import type { ReviewContext, FailedCheck } from '../../../scripts/gemini-client';
 
-describe('buildReviewPrompt', () => {
-  const mockContextBase: ReviewContext = {
+describe('Gemini Client Script', () => {
+  describe('buildReviewPrompt', () => {
+    const mockContextBase: ReviewContext = {
     prNumber: '123',
     prTitle: 'Test PR',
     prAuthor: 'test-author',
@@ -66,6 +67,14 @@ describe('buildReviewPrompt', () => {
     delete process.env.GEMINI_MAX_DIFF_LENGTH;
   });
 
+  it('should use the default maxDiffLength if the environment variable is an unsafe integer', () => {
+    process.env.GEMINI_MAX_DIFF_LENGTH = '9007199254740992'; // Number.MAX_SAFE_INTEGER + 1
+    const longDiff = 'a'.repeat(60001);
+    const prompt = buildReviewPrompt(longDiff, mockContextBase, 'fake-docs');
+    expect(prompt).toContain('...[DIFF TRUNCATED]');
+    delete process.env.GEMINI_MAX_DIFF_LENGTH;
+  });
+
   it('should use the default maxDiffLength if the environment variable is not a number string', () => {
     process.env.GEMINI_MAX_DIFF_LENGTH = 'not-a-number';
     const longDiff = 'a'.repeat(60001);
@@ -97,5 +106,39 @@ describe('buildReviewPrompt', () => {
     const prompt = buildReviewPrompt('fake-diff', contextWithLogSnippet, 'fake-docs');
     expect(prompt).toContain('**Error Snippet:**');
     expect(prompt).toContain('Error: Type `any` not allowed.');
+  });
+});
+
+  describe('parseFailedChecks', () => {
+    it('should correctly parse a valid JSON string with a log snippet', () => {
+      const jsonStr = `[{"name":"build","conclusion":"failure","detailsUrl":"http://example.com","logSnippet":"Error: Build failed."}]`;
+      const result = parseFailedChecks(jsonStr);
+      expect(result).toEqual([
+        {
+          name: 'build',
+          conclusion: 'failure',
+          detailsUrl: 'http://example.com',
+          logSnippet: 'Error: Build failed.',
+        },
+      ]);
+    });
+
+    it('should correctly parse a valid JSON string without a log snippet', () => {
+      const jsonStr = `[{"name":"test","conclusion":"success","detailsUrl":"http://example.com"}]`;
+      const result = parseFailedChecks(jsonStr);
+      expect(result).toEqual([
+        {
+          name: 'test',
+          conclusion: 'success',
+          detailsUrl: 'http://example.com',
+        },
+      ]);
+    });
+
+    it('should return an empty array for an invalid JSON string', () => {
+      const jsonStr = `[{"name":"test"}]`; // Missing required fields
+      const result = parseFailedChecks(jsonStr);
+      expect(result).toEqual([]);
+    });
   });
 });

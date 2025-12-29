@@ -314,7 +314,7 @@ export interface FailedCheck {
   logSnippet?: string // Prepared for the future workflow update
 }
 
-function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
+export function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
   if (!jsonStr) return []
   try {
     const parsed = JSON.parse(jsonStr)
@@ -325,9 +325,13 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
     // Use a type guard to filter and validate the shape of each object
     return parsed.filter((item): item is FailedCheck => {
       const isValid =
+        typeof item === 'object' &&
+        item !== null &&
         typeof item.name === 'string' &&
         typeof item.conclusion === 'string' &&
-        typeof item.detailsUrl === 'string'
+        typeof item.detailsUrl === 'string' &&
+        (typeof item.logSnippet === 'string' ||
+          typeof item.logSnippet === 'undefined')
       if (!isValid) {
         console.warn('Warning: Invalid item in FAILED_CHECKS_JSON:', item)
       }
@@ -447,14 +451,18 @@ export function buildReviewPrompt(
   // --- Diff Section ---
   let maxDiffLength = 60000; // Default value
   const maxDiffLengthEnv = process.env.GEMINI_MAX_DIFF_LENGTH;
-  if (maxDiffLengthEnv && /^\d+$/.test(maxDiffLengthEnv)) {
-    try {
-      const parsedValue = parseInt(maxDiffLengthEnv, 10);
-      if (parsedValue > 0) {
-        maxDiffLength = parsedValue;
+  if (maxDiffLengthEnv) {
+    if (/^\d+$/.test(maxDiffLengthEnv)) {
+      try {
+        const parsedValue = parseInt(maxDiffLengthEnv, 10);
+        if (Number.isSafeInteger(parsedValue) && parsedValue > 0) {
+          maxDiffLength = parsedValue;
+        }
+      } catch (error) {
+        console.warn(
+          `Could not parse GEMINI_MAX_DIFF_LENGTH: ${(error as Error).message}`
+        );
       }
-    } catch (error) {
-      // Ignore error and use default
     }
   }
   const truncatedDiff =
