@@ -231,7 +231,7 @@ async function generateContentWithFallback(
   prompt: string,
   config?: Omit<GenerateContentRequest, 'contents'>
 ) {
-  let lastError: unknown
+  let lastError: Error | null = null
 
   for (const modelName of MODEL_FALLBACKS) {
     console.log(`Attempting to use model: ${modelName}...`)
