@@ -107,4 +107,34 @@ describe('PlaylistSelector', () => {
 
     expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:3')
   })
+
+  it('should have the correct aria-labels for accessibility', async () => {
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={jest.fn()}
+        onPlaylistPlay={jest.fn()}
+      />
+    )
+    const user = userEvent.setup()
+    const input = await screen.findByRole('combobox')
+    await user.click(input)
+
+    // Check the aria-label for the list item
+    const rockClassicsItem = await screen.findByText('Rock Classics')
+    const listItem = rockClassicsItem.closest('li')
+    expect(listItem).toHaveAttribute(
+      'aria-label',
+      'Select playlist: Rock Classics'
+    )
+
+    // Check the aria-label for the play button within that list item
+    if (!listItem) throw new Error('Playlist item not found')
+    const playButton = within(listItem).getByRole('button', {
+      name: /play playlist/i,
+    })
+    expect(playButton).toHaveAttribute(
+      'aria-label',
+      'Play playlist: Rock Classics'
+    )
+  })
 })
