@@ -357,24 +357,10 @@ jobs:
           path: logs
         continue-on-error: true
 
-      - name: Download Knip Report
-        uses: actions/download-artifact@v4
-        with:
-          name: knip-report
-          path: logs
-        continue-on-error: true
-
       - name: Download Build Report
         uses: actions/download-artifact@v4
         with:
           name: build-report
-          path: logs
-        continue-on-error: true
-
-      - name: Download Setup Report
-        uses: actions/download-artifact@v4
-        with:
-          name: setup-report
           path: logs
         continue-on-error: true
 
@@ -385,142 +371,91 @@ jobs:
           path: logs
         continue-on-error: true
 
-      - name: Post Comprehensive Quality Report
+      - name: Report Failure to Jules
+        if: needs.quality-check.result == 'failure' || needs.core-tests.result == 'failure' || needs.visual-tests.result == 'failure'
         env:
-          QUALITY_RESULT: ${{ needs.quality-check.result }}
-          CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
-          VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
-          LOG_TRUNCATE_BYTES: 15000
-          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          # Pass all test outcomes to the script as env vars for easier access
+          QUALITY_CHECK_OUTCOME: ${{ needs.quality-check.result }}
+          CORE_TESTS_OUTCOME: ${{ needs.core-tests.result }}
+          VISUAL_TESTS_OUTCOME: ${{ needs.visual-tests.result }}
+          LOG_TRUNCATE_BYTES: 20000
         run: |
-          set +e
-          
-          if [ -z "$LOG_TRUNCATE_BYTES" ] || ! [[ "$LOG_TRUNCATE_BYTES" =~ ^[0-9]+$ ]]; then
-             LOG_TRUNCATE_BYTES=15000
-          fi
-          if [ "$LOG_TRUNCATE_BYTES" -gt 50000 ]; then
-             LOG_TRUNCATE_BYTES=50000
-          fi
+          set +e  # Disable exit on error to continue reporting even if commands fail
 
-          if [ -f "logs/lint-output.log" ]; then
-            mv "logs/lint-output.log" "logs/code-quality.log"
-          fi
-
+          # 1. SETUP: Find PR number and define checks
           PR_NUMBER="${{ github.event.pull_request.number }}"
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
-            PR_NUMBER="${{ github.event.inputs.pr_number }}"
+            PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number')
           fi
+
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
-            PR_NUMBER="${{ inputs.pr_number }}"
-          fi
-          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
-            PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number' 2>/dev/null)
-          fi
-          
-          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
-            echo "::warning::No Pull Request found. Skipping comment."
+            echo "::warning::No Pull Request found for this branch. Skipping comment."
             exit 0
           fi
-          
-          mkdir -p test-results
+
           COMMENT_FILE="test-results/pr-comment.md"
+          mkdir -p test-results
 
-          {
-            echo "## 📋 Quality Gate Results"
-            echo ""
-            echo "| Check | Status |"
-            echo "|-------|--------|"
-            echo "| Code Quality | $([ "$QUALITY_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$QUALITY_RESULT) |"
-            echo "| Core Tests | $([ "$CORE_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$CORE_TESTS_RESULT) |"
-            echo "| Visual Tests | $([ "$VISUAL_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_RESULT) |"
-            echo ""
+          # Define checks in a readable, maintainable format.
+          # Each line: <OUTCOME_VAR_NAME>|<Display Name>|<primary_log_file>
+          read -r -d '' CHECKS_DEFINITION <<'EOF'
+          QUALITY_CHECK_OUTCOME|Quality Check|logs/lint-output.log;logs/build-output.log
+          CORE_TESTS_OUTCOME|Core Tests|logs/infra-tests.log;logs/unit-tests.log
+          VISUAL_TESTS_OUTCOME|Visual Tests|logs/visual-tests.log
+          EOF
 
-            FAILED_ANY=0
+          # 2. AGGREGATION: Loop through checks to find failures and collect logs
+          FAILED_CHECKS_LIST=""
+          LOGS_BODY=""
 
-            if [ "$QUALITY_RESULT" != "success" ] && [ "$QUALITY_RESULT" != "skipped" ]; then
-              FAILED_ANY=1
-              echo "<details><summary><strong>❌ Code Quality Failures</strong></summary>"
-              echo ""
-              echo '```'
-              FOUND_LOG=0
-              if [ -f "logs/code-quality.log" ]; then
-                echo "--- LINT FAILURES ---"
-                tail -c $LOG_TRUNCATE_BYTES "logs/code-quality.log" | sed -r 's/\x1b\[[0-9;]*m//g'
-                echo ""
-                FOUND_LOG=1
-              fi
-
-              if [ -f "logs/knip-output.txt" ]; then
-                echo "--- KNIP FAILURES ---"
-                tail -c $LOG_TRUNCATE_BYTES "logs/knip-output.txt" | sed -r 's/\x1b\[[0-9;]*m//g'
-                echo ""
-                FOUND_LOG=1
-              fi
-
-              if [ -f "logs/build-output.log" ]; then
-                echo "--- BUILD FAILURES ---"
-                tail -c $LOG_TRUNCATE_BYTES "logs/build-output.log" | sed -r 's/\x1b\[[0-9;]*m//g'
-                echo ""
-                FOUND_LOG=1
-              fi
-
-              if [ -f "logs/setup-output.log" ]; then
-                echo "--- SETUP FAILURES ---"
-                tail -c $LOG_TRUNCATE_BYTES "logs/setup-output.log" | sed -r 's/\x1b\[[0-9;]*m//g'
-                echo ""
-                FOUND_LOG=1
-              fi
-
-              if [ $FOUND_LOG -eq 0 ]; then
-                echo "Log file not found. Check workflow run for details."
-              fi
-              echo '```'
-              echo ""
-              echo "</details>"
-            fi
-
-            if [ "$CORE_TESTS_RESULT" != "success" ] && [ "$CORE_TESTS_RESULT" != "skipped" ]; then
-              FAILED_ANY=1
-               echo "<details><summary><strong>❌ Core Tests Failures</strong></summary>"
-               echo ""
-               echo '```'
-               if [ -f "logs/infra-tests.log" ]; then
-                 tail -c $LOG_TRUNCATE_BYTES "logs/infra-tests.log" | sed -r 's/\x1b\[[0-9;]*m//g'
-               elif [ -f "logs/unit-tests.log" ]; then
-                 tail -c $LOG_TRUNCATE_BYTES "logs/unit-tests.log" | sed -r 's/\x1b\[[0-9;]*m//g'
-               else
-                 echo "Log file not found"
-               fi
-               echo '```'
-               echo ""
-               echo "</details>"
-            fi
-
-            if [ "$VISUAL_TESTS_RESULT" != "success" ] && [ "$VISUAL_TESTS_RESULT" != "skipped" ]; then
-              FAILED_ANY=1
-              echo "<details><summary><strong>❌ Visual Tests Failures</strong></summary>"
-              echo ""
-              echo '```'
-              if [ -f "logs/visual-tests.log" ]; then
-                tail -c $LOG_TRUNCATE_BYTES "logs/visual-tests.log" | sed -r 's/\x1b\[[0-9;]*m//g'
-              else
-                echo "Log file not found"
-              fi
-              echo '```'
-              echo ""
-              echo "</details>"
-            fi
-
-            if [ $FAILED_ANY -eq 0 ]; then
-              echo "✅ All quality checks passed!"
+          # Helper function to append a log file's content to the comment body
+          append_log_to_body() {
+            local log_file="$1"
+            local test_name="$2"
+            if [ -f "$log_file" ]; then
+              LOGS_BODY="${LOGS_BODY}\n### ${test_name} Log (${log_file##*/})\n" # Add filename to header
+              LOGS_BODY="${LOGS_BODY}\`\`\`\n"
+              # Append truncated, color-code-stripped log content
+              LOGS_BODY="${LOGS_BODY}$(tail -c "${{ env.LOG_TRUNCATE_BYTES }}" "$log_file" | sed -r 's/\x1b\[[0-9;]*m//g')\n"
+              LOGS_BODY="${LOGS_BODY}\`\`\`\n"
             else
-              echo ""
-              echo "---"
-              echo "*Note: Logs are truncated to 15KB. View the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for complete details.*"
+              LOGS_BODY="${LOGS_BODY}\n### ${test_name} Log\n_Log file not found: ${log_file}_\n"
             fi
-          } > "$COMMENT_FILE"
-          
-          gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE" || {
-            echo "::error::Failed to post comment to PR #$PR_NUMBER"
-            exit 1
           }
+
+          while IFS='|' read -r outcome_var display_name log_files; do
+            # Use indirect expansion to get the outcome value (e.g., $QUALITY_CHECK_OUTCOME)
+            if [ "${!outcome_var}" == "failure" ]; then
+              # Add to the comma-separated list of failed checks
+              if [ -z "$FAILED_CHECKS_LIST" ]; then
+                FAILED_CHECKS_LIST="$display_name"
+              else
+                FAILED_CHECKS_LIST="$FAILED_CHECKS_LIST, $display_name"
+              fi
+
+              # Append the primary log files for this check
+              for log_file in $(echo "$log_files" | tr ';' ' '); do
+                append_log_to_body "$log_file" "$display_name"
+              done
+            fi
+          done <<< "$CHECKS_DEFINITION"
+
+
+          # 3. REPORTING: If any checks failed, construct and post the comment
+          if [ -n "$FAILED_CHECKS_LIST" ]; then
+            # Construct the final comment body
+            COMMENT_HEADER="@jules fix: CI checks failed: ${FAILED_CHECKS_LIST}. Review requested.\n\n"
+            # Add a notice about truncated logs and a link to the full logs
+            LOG_FOOTER="---\n*Note: Logs are truncated. View the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.*"
+            COMMENT_DETAILS="<details><summary><strong>Failed Test Report Log</strong></summary>${LOGS_BODY}\n${LOG_FOOTER}\n</details>"
+            # Write to file
+            echo -e "${COMMENT_HEADER}${COMMENT_DETAILS}" > "$COMMENT_FILE"
+
+            # Post the comment to the PR, with error handling
+            if ! gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE"; then
+              echo "::error::Failed to post comment to PR. The GitHub token may have expired or lack permissions."
+            fi
+          else
+            echo "::warning::Job failed, but no specific test outcome was 'failure'. A step may have failed unexpectedly."
+          fi
