@@ -131,6 +131,7 @@ export class JsonProcessor {
             data: {
               error: 'JSON Parse Error',
               message: 'Could not parse the JSON block found in the markdown.',
+              rawResponse: text,
             },
           }
         }
@@ -141,6 +142,7 @@ export class JsonProcessor {
         data: {
           error: 'JSON Parse Error',
           message: 'No valid JSON found in the response.',
+          rawResponse: text,
         },
       }
     }
@@ -768,7 +770,7 @@ async function runReviewPreset(
           details: result.data, // Contains the error info from JsonProcessor.
         },
         reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${
-          text || ''
+          (result.data as { rawResponse: string }).rawResponse || ''
         }\n\`\`\`\n\n</details>`,
         labels: ['review-failed'],
         verdict: 'comment',
