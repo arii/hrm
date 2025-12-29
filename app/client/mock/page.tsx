@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
+import useDebounce from '../../../hooks/useDebounce'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
@@ -22,13 +23,13 @@ const DEFAULT_USER_AGE = 30
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
+  const [userSettings, setUserSettings] = useUserSettings()
+  const debouncedUserSettings = useDebounce(userSettings, 500)
   const [hrValue, setHrValue] = useState(100)
-  const [name, setName] = useState('Mock User')
-  const [age, setAge] = useState(30)
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
 
   const isStreaming = intervalId !== null
-  const maxHr = 220 - age
+  const { userName, userAge, maxHr, restingHr } = debouncedUserSettings
 
   // Signal when page is ready for testing
   useEffect(() => {
