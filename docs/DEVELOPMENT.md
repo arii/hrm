@@ -99,6 +99,12 @@ When creating new internal modules or utilities (e.g., a new file in `lib/` or `
 
 **Example Scenario**: Creating a new file `lib/stringUtils.ts` with helper functions that use built-in JavaScript methods. This does not require any changes to `package.json`.
 
+### Server-Side Module Resolution
+
+> **⚠️ Critical**: When working with files that are consumed by the custom server (e.g., `server.ts`, `standalone-server.ts`, and modules in `lib/`, `services/`, `utils/`), you must use **relative imports** (e.g., `../utils/logger`) instead of path aliases (e.g., `@/utils/logger`).
+
+The application uses a custom Node.js server setup (`standalone-server.ts`) for production. While Next.js handles path alias resolution for the frontend and API routes, the standard Node.js runtime executing the server build does **not** automatically resolve `tsconfig.json` path aliases. Using path aliases in server-side code will cause `MODULE_NOT_FOUND` errors at runtime in production.
+
 ## Architectural Patterns
 
 ### Type-Safe API Wrappers
