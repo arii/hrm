@@ -3,8 +3,9 @@ import {
   SchemaType,
   GoogleGenerativeAIError,
   GenerativeModel,
+  GoogleAICacheManager,
+  GoogleAIFileManager,
 } from '@google/generative-ai'
-import { GoogleAICacheManager, GoogleAIFileManager } from "@google/generative-ai/server";
 import { readFile, writeFile } from 'fs/promises'
 import * as fs from 'fs';
 import path from 'path'
@@ -815,10 +816,12 @@ async function runReviewPreset(
   }
 
   const isCached = !!cachedModel;
-  const prompt = buildReviewPrompt(diff, context, contextContent, isCached)
+  const cachedPrompt = buildReviewPrompt(diff, context, contextContent, true);
+  const fullPrompt = buildReviewPrompt(diff, context, contextContent, false);
+  const primaryPrompt = isCached ? cachedPrompt : fullPrompt;
 
   try {
-    const text = await generateContentWithFallback(genAI, prompt, prompt, {
+    const text = await generateContentWithFallback(genAI, primaryPrompt, fullPrompt, {
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: {
