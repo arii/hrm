@@ -84,8 +84,10 @@ const MODEL_FALLBACKS = getModelFallbacks()
 export class JsonProcessor {
   /**
    * Extracts a JSON code block from a string.
+   *
    * @param text The string to search for a JSON block.
    * @returns The extracted JSON string or null if not found.
+   * @private
    */
   private extractJsonBlock(text: string): string | null {
     // Matches ```, optional json tag (case insensitive), content, ```
@@ -95,6 +97,7 @@ export class JsonProcessor {
 
   /**
    * Tries to parse the text as JSON, with fallbacks for markdown code blocks.
+   *
    * @param text The raw text response from the model.
    * @returns An object with success status, the parsed data or error object, and the raw text.
    */
