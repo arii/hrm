@@ -64,7 +64,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         )
       }
     },
-    [key, storedValue]
+    [key]
   )
 
   useEffect(() => {
