@@ -23,10 +23,6 @@ on:
         description: 'PR number to post comments to (optional)'
         required: false
         type: string
-    secrets:
-      GH_TOKEN:
-        description: 'GitHub token for posting comments'
-        required: true
 
 concurrency:
   group: pr-quality-${{ github.event.pull_request.number || github.ref || github.run_id }}
