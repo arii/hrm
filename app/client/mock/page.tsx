@@ -17,6 +17,9 @@ import {
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
 
+const DEFAULT_USER_NAME = 'Mock User'
+const DEFAULT_USER_AGE = 30
+
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
   const [hrValue, setHrValue] = useState(100)
@@ -56,13 +59,13 @@ export default function MockPage() {
     const message: HrmMetadataUpdateMessage = {
       type: 'HRM_METADATA_UPDATE',
       data: {
-        maxHr: maxHr,
-        name: name,
-        age: age,
+        maxHr: maxHr ?? 220 - (userAge ?? DEFAULT_USER_AGE),
+        name: userName ?? DEFAULT_USER_NAME,
+        age: userAge ?? DEFAULT_USER_AGE,
       },
     }
     sendData(message)
-  }, [sendData, name, age, maxHr])
+  }, [sendData, userName, userAge, maxHr])
 
   // NOTE: In a real client, metadata would likely be sent once upon connection
   // or when the user explicitly saves settings. For this mock, we send it
@@ -149,6 +152,41 @@ export default function MockPage() {
                 value={age}
                 onChange={(e) => setAge(parseInt(e.target.value, 10))}
                 fullWidth
+                inputProps={{ min: 1, max: 120 }}
+              />
+            </Grid>
+            <Grid size={{ xs: 6 }}>
+              <TextField
+                label="Max HR"
+                placeholder="e.g., 190"
+                type="number"
+                value={maxHr ?? ''}
+                onChange={(e) =>
+                  setUserSettings((prev) => ({
+                    ...prev,
+                    maxHr: e.target.value ? parseInt(e.target.value, 10) : null,
+                  }))
+                }
+                fullWidth
+                inputProps={{ min: 100, max: 220 }}
+              />
+            </Grid>
+            <Grid size={{ xs: 6 }}>
+              <TextField
+                label="Resting HR"
+                placeholder="e.g., 60"
+                type="number"
+                value={restingHr ?? ''}
+                onChange={(e) =>
+                  setUserSettings((prev) => ({
+                    ...prev,
+                    restingHr: e.target.value
+                      ? parseInt(e.target.value, 10)
+                      : null,
+                  }))
+                }
+                fullWidth
+                inputProps={{ min: 30, max: 100 }}
               />
             </Grid>
           </Grid>
