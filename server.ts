@@ -141,10 +141,20 @@ app.prepare().then(async () => {
     res.status(200).json({ healthy, details })
   })
 
-  // Intercept the token delivery route before it hits the Next.js handler
+  /**
+   * @description Intercepts the internal token delivery route to ensure the Spotify token
+   * is handled by the `spotifyService` instance in this server process.
+   * Next.js API routes run in a separate process and cannot access the singleton
+   * `spotifyService` instance created here. This handler ensures that the token
+   * is delivered to the correct, active service.
+   * It uses a separate, dedicated secret (`INTERNAL_TOKEN_DELIVERY_SECRET`) for
+   * security, rather than exposing the `NEXTAUTH_SECRET`.
+   */
   expressApp.post(
     '/api/internal/token-delivery',
-    express.json(), // Use express.json() only for this route
+    // Use express.json() middleware only for this route to avoid conflicts
+    // with Next.js's body parsing on other API routes.
+    express.json(),
     async (req, res) => {
       try {
         const tokenData = req.body as Partial<TokenPayload>
@@ -157,7 +167,7 @@ app.prepare().then(async () => {
           ? rawHeader[0]
           : rawHeader || ''
 
-        const expected = env.NEXTAUTH_SECRET || ''
+        const expected = env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
         const isValid =
           secretHeader.length === expected.length &&
           crypto.timingSafeEqual(
@@ -179,11 +189,10 @@ app.prepare().then(async () => {
         }
 
         await services.spotifyService.handleTokenUpdate({
-          ...tokenData,
           access_token: tokenData.access_token || '',
+          token_type: 'Bearer',
           expires_in: tokenData.expires_in || 0,
-          provider: 'spotify',
-          sub: '',
+          refresh_token: tokenData.refresh_token || '',
           scope: '',
           obtainedAt: Date.now(),
         })
@@ -195,8 +204,12 @@ app.prepare().then(async () => {
           .status(200)
           .json({ ok: true, message: 'Token delivered successfully.' })
       } catch (err) {
-        logger.error({ err }, 'Unhandled error in server-side token-delivery')
-        return res.status(500).json({ error: 'server_error' })
+        const error = err instanceof Error ? err : new Error('An unknown error occurred')
+        logger.error(
+          { err: error, message: error.message },
+          'Unhandled error in server-side token-delivery'
+        )
+        return res.status(500).json({ error: 'server_error', message: error.message })
       }
     }
   )

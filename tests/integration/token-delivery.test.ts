@@ -45,10 +45,13 @@ describe('POST /api/internal/token-delivery', () => {
         }
 
         await spotifyService.handleTokenUpdate({
-          ...tokenData,
           access_token: tokenData.access_token || '',
+          token_type: 'Bearer',
           expires_in: tokenData.expires_in || 0,
-        } as TokenPayload);
+          refresh_token: tokenData.refresh_token || '',
+          scope: '',
+          obtainedAt: Date.now(),
+        });
 
         return res.status(200).json({ ok: true, message: 'Token delivered successfully.' });
     });
@@ -57,16 +60,18 @@ describe('POST /api/internal/token-delivery', () => {
   it('should return 200 OK for a valid token and secret', async () => {
     const response = await request(app)
       .post('/api/internal/token-delivery')
-      .set('x-internal-token-secret', env.NEXTAUTH_SECRET)
+      .set('x-internal-token-secret', env.INTERNAL_TOKEN_DELIVERY_SECRET)
       .send({ refresh_token: 'test-refresh-token', access_token: 'test-access-token', expires_in: 3600 });
 
     expect(response.status).toBe(200);
     expect(response.body.ok).toBe(true);
-    expect(mockSpotifyService.handleTokenUpdate).toHaveBeenCalledWith({
+    expect(mockSpotifyService.handleTokenUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
         refresh_token: 'test-refresh-token',
         access_token: 'test-access-token',
         expires_in: 3600,
-    });
+      })
+    );
   });
 
   it('should return 401 Unauthorized for an invalid secret', async () => {
@@ -82,7 +87,7 @@ describe('POST /api/internal/token-delivery', () => {
   it('should return 400 Bad Request if refresh_token is missing', async () => {
     const response = await request(app)
       .post('/api/internal/token-delivery')
-      .set('x-internal-token-secret', env.NEXTAUTH_SECRET)
+      .set('x-internal-token-secret', env.INTERNAL_TOKEN_DELIVERY_SECRET)
       .send({ expires_in: 3600 });
 
     expect(response.status).toBe(400);
@@ -93,7 +98,7 @@ describe('POST /api/internal/token-delivery', () => {
     mockSpotifyService.isReady.mockReturnValue(false);
     const response = await request(app)
       .post('/api/internal/token-delivery')
-      .set('x-internal-token-secret', env.NEXTAUTH_SECRET)
+      .set('x-internal-token-secret', env.INTERNAL_TOKEN_DELIVERY_SECRET)
       .send({ refresh_token: 'test-refresh-token' });
 
     expect(response.status).toBe(503);
