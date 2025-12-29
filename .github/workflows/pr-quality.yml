@@ -353,6 +353,13 @@ jobs:
           path: logs
         continue-on-error: true
 
+      - name: Download Knip Report
+        uses: actions/download-artifact@v4
+        with:
+          name: knip-report
+          path: logs
+        continue-on-error: true
+
       - name: Download Build Report
         uses: actions/download-artifact@v4
         with:
@@ -396,7 +403,7 @@ jobs:
           # Define checks in a readable, maintainable format.
           # Each line: <OUTCOME_VAR_NAME>|<Display Name>|<primary_log_file>
           read -r -d '' CHECKS_DEFINITION <<'EOF'
-          QUALITY_CHECK_OUTCOME|Quality Check|logs/lint-output.log;logs/build-output.log
+          QUALITY_CHECK_OUTCOME|Quality Check|logs/lint-output.log;logs/build-output.log;logs/knip-output.txt
           CORE_TESTS_OUTCOME|Core Tests|logs/infra-tests.log;logs/unit-tests.log
           VISUAL_TESTS_OUTCOME|Visual Tests|logs/visual-tests.log
           EOF
