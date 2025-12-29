@@ -12,9 +12,10 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  # This is required to allow release-please to create a GitHub release.
+  # See: https://github.com/googleapis/release-please-action#workflow-permissions
+  # `releases: write` is required to create a GitHub release.
   releases: write
-  # This is required to allow release-please to comment on linked issues.
+  # `issues: write` is required to comment on linked issues.
   issues: write
 
 jobs:
