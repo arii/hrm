@@ -282,7 +282,7 @@ ${task}
   try {
     const text = await generateContentWithFallback(genAI, prompt)
 
-    // Attempt to parse JSON, but fall back to raw text if it's likely Markdown
+    // Attempt to parse JSON, but fall back to raw text if parsing fails, assuming a Markdown review or unstructured text.
     const jsonProcessor = new JsonProcessor()
     const result = jsonProcessor.process(text || '')
 
