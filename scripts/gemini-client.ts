@@ -81,6 +81,7 @@ export function getModelFallbacks(): string[] {
 
 const MODEL_FALLBACKS = getModelFallbacks()
 
+
 class JsonProcessor {
   /**
    * Extracts a JSON code block from a string.
@@ -260,6 +261,26 @@ async function generateContentWithFallback(
   }
 
   throw new Error(`All models failed. Last error: ${lastError?.message}`)
+}
+
+/**
+ * Cleans a string that is expected to be JSON, removing common markdown code blocks.
+ * Large Language Models sometimes wrap their JSON output in markdown code fences
+ * (e.g., ```json\\n{...}\\n```), which can cause JSON.parse() to fail. This function
+ * reliably extracts the JSON content from within these fences.
+ * @param text The raw string output from the model.
+ * @returns A cleaned string, trimmed and free of markdown code fences.
+ */
+export function cleanJsonOutput(text: string): string {
+  if (!text) return ''
+  // Remove markdown code blocks if present. Matches multiline ```json ... ``` or ``` ... ``` code blocks, case-insensitively.
+  const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i
+  const match = codeBlockRegex.exec(text)
+  if (match && match[1]) {
+    return match[1].trim()
+  }
+  // Fallback for cases where the model might just return the JSON object without fences.
+  return text.trim()
 }
 
 async function runGenericTask(
@@ -735,7 +756,7 @@ async function writeOutput(
   }
 }
 
-async function handleError(error: any) {
+function handleError(error: any) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
@@ -762,9 +783,9 @@ async function handleError(error: any) {
       message: userMessage,
       details: technicalDetails,
     },
+    // Provide a valid structure for the review result to avoid breaking the calling workflow
     reviewComment: `### ❌ Review Failed: ${category}\n\n**Details**: ${userMessage}\n\n<details><summary>Technical Info</summary>\n\n\`\`\`\n${technicalDetails}\n\`\`\`\n\n</details>`,
     labels: ['review-failed'],
-    verdict: 'comment',
   }
 
   console.error('Error during content generation:', JSON.stringify(errorOutput, null, 2))
@@ -778,6 +799,9 @@ async function handleError(error: any) {
   } else {
     process.exit(1)
   }
+
+  // Still exit with 1 to signal failure to the workflow runner
+  process.exit(1)
 }
 
 // Only run main() when the script is executed directly, not when imported.
