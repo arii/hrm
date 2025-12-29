@@ -15,7 +15,7 @@ on:
         description: 'PR number to post comments to (optional)'
         required: false
         type: string
-  
+
   workflow_call:
     inputs:
       branch:
@@ -199,12 +199,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
-          include-hidden-files: true  # Required to upload the .next directory
+          include-hidden-files: true # Required to upload the .next directory
           path: |
             dist/**
             .next/**
           retention-days: 1
-      
+
       - name: Handle Build Artifact Upload Failure
         if: failure() && steps.upload-build.conclusion == 'failure'
         run: |
@@ -458,25 +458,25 @@ jobs:
           VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
         run: |
           set +e
-          
+
           FAILED_JOBS=""
           FAILURE_COUNT=0
-          
+
           if [ "$CODE_QUALITY_RESULT" != "success" ] && [ "$CODE_QUALITY_RESULT" != "skipped" ]; then
             FAILED_JOBS="$FAILED_JOBS- Code Quality ($CODE_QUALITY_RESULT)"$'\n'
             FAILURE_COUNT=$((FAILURE_COUNT + 1))
           fi
-          
+
           if [ "$CORE_TESTS_RESULT" != "success" ] && [ "$CORE_TESTS_RESULT" != "skipped" ]; then
             FAILED_JOBS="$FAILED_JOBS- Core Tests ($CORE_TESTS_RESULT)"$'\n'
             FAILURE_COUNT=$((FAILURE_COUNT + 1))
           fi
-          
+
           if [ "$VISUAL_TESTS_RESULT" != "success" ] && [ "$VISUAL_TESTS_RESULT" != "skipped" ]; then
             FAILED_JOBS="$FAILED_JOBS- Visual Regression Tests ($VISUAL_TESTS_RESULT)"$'\n'
             FAILURE_COUNT=$((FAILURE_COUNT + 1))
           fi
-          
+
           echo "FAILED_JOBS<<EOF" >> $GITHUB_ENV
           echo "$FAILED_JOBS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -505,8 +505,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT }}
         run: |
           set +e
-          
-          
+
+
           # Find PR number
           # Move lint output to code-quality for consistent naming
           if [ -f "logs/lint-output.log" ]; then
@@ -527,15 +527,15 @@ jobs:
             # Fall back to searching for PR on current branch
             PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number' 2>/dev/null)
           fi
-          
+
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
             echo "::warning::No Pull Request found. Skipping comment."
             exit 0
           fi
-          
+
           mkdir -p test-results
           COMMENT_FILE="test-results/pr-comment.md"
-          
+
           # Build the comment with embedded logs
           {
             echo "## 📋 Quality Gate Results"
@@ -603,7 +603,7 @@ jobs:
               echo "*Note: Logs are truncated to 15KB. View the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for complete details.*"
             fi
           } > "$COMMENT_FILE"
-          
+
           # Post the comment
           gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE" || {
             echo "::error::Failed to post comment to PR #$PR_NUMBER"

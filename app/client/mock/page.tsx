@@ -57,8 +57,8 @@ export default function MockPage() {
       type: 'HRM_METADATA_UPDATE',
       data: {
         maxHr: maxHr ?? 220 - (userAge ?? 30),
-        name: userName,
-        age: userAge,
+        name: userName ?? 'Mock User',
+        age: userAge ?? 30,
       },
     }
     sendData(message)
@@ -132,18 +132,21 @@ export default function MockPage() {
           </Typography>
 
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={8}>
+            <Grid size={{ xs: 8 }}>
               <TextField
                 label="User Name"
                 placeholder="e.g., Mock User"
                 value={userName ?? ''}
                 onChange={(e) =>
-                  setUserSettings((prev) => ({ ...prev, userName: e.target.value }))
+                  setUserSettings((prev) => ({
+                    ...prev,
+                    userName: e.target.value,
+                  }))
                 }
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 4 }}>
               <TextField
                 label="Age"
                 placeholder="e.g., 30"
@@ -152,13 +155,15 @@ export default function MockPage() {
                 onChange={(e) =>
                   setUserSettings((prev) => ({
                     ...prev,
-                    userAge: e.target.value ? parseInt(e.target.value, 10) : null,
+                    userAge: e.target.value
+                      ? parseInt(e.target.value, 10)
+                      : null,
                   }))
                 }
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 6 }}>
               <TextField
                 label="Max HR"
                 placeholder="e.g., 190"
@@ -173,7 +178,7 @@ export default function MockPage() {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 6 }}>
               <TextField
                 label="Resting HR"
                 placeholder="e.g., 60"
