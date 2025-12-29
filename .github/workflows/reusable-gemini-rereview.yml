@@ -92,6 +92,8 @@ jobs:
             SKIP_REASON="merge"
           elif [[ "$COMMIT_MSG" =~ ^(docs?|chore|style): ]]; then
             SKIP_REASON="trivial"
+          elif [[ "$CHANGES_REQUESTED" -gt 0 && "$SIGNIFICANT_CHANGES" -lt 2 ]]; then
+            SKIP_REASON="insignificant changes"
           elif [[ "$TOTAL_REVIEWS" -eq 0 && "$SIGNIFICANT_CHANGES" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="initial"
@@ -140,6 +142,8 @@ jobs:
               summary = 'No code changes detected. Review will resume when code changes are pushed.';
             } else if (skipReason === 'awaiting code changes') {
               summary = 'Awaiting code changes from Jules. Review will resume when code is updated.';
+            } else if (skipReason === 'insignificant changes') {
+              summary = 'Insignificant changes detected. Review will resume when more substantial code changes are pushed.';
             } else if (skipReason === 'no') {
               summary = 'No re-review criteria were met.';
             }
