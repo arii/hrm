@@ -1,7 +1,7 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import { z } from 'zod'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
-import logger from '../utils/logger'
+import logger from '../utils/logger.js'
 
 /**
  * Zod schema for the Spotify token payload.
