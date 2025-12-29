@@ -101,24 +101,26 @@ const initSocketManager = (
     extWs.clientId = clientId
 
     // --- Start Detailed Debug Logging ---
-    const fullUrl = new URL(
-      req.url || '',
-      `http://${req.headers.host || 'localhost'}`
-    )
-    logger.info(
-      {
-        source: 'socketManager-connection',
-        requestedId: requestedId,
-        isIdValid: success,
-        finalClientId: clientId,
-        isReconnection: success,
-        remoteAddress: req.socket.remoteAddress,
-        xForwardedFor: req.headers['x-forwarded-for'],
-        origin: req.headers.origin,
-        url: fullUrl.toString(),
-      },
-      'WebSocket connection details'
-    )
+    if (req) {
+      const fullUrl = new URL(
+        req.url || '',
+        `http://${req.headers.host || 'localhost'}`
+      )
+      logger.info(
+        {
+          source: 'socketManager-connection',
+          requestedId: requestedId,
+          isIdValid: success,
+          finalClientId: clientId,
+          isReconnection: success,
+          remoteAddress: req.socket.remoteAddress,
+          xForwardedFor: req.headers['x-forwarded-for'],
+          origin: req.headers.origin,
+          url: fullUrl.toString(),
+        },
+        'WebSocket connection details'
+      )
+    }
     // --- End Detailed Debug Logging ---
 
     // it's a stale or "zombie" connection. Overwrite it with the new socket.
