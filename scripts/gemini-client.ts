@@ -772,7 +772,7 @@ async function handleError(error: any) {
   // Always write a valid JSON structure to the output file on error.
   if (outputFile) {
     await writeOutput(JSON.stringify(errorOutput, null, 2), outputFile)
-    console.log(`Error details written to ${outputFile}`)
+    console.error(`Error details written to ${outputFile}`)
     // Exit 0 so the next workflow step can read the JSON and post the comment
     process.exit(0)
   } else {
