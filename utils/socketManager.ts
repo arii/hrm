@@ -92,13 +92,16 @@ const initSocketManager = (
     const params = getRequestParams(req)
     const requestedId = params.get('clientId')
 
-    // Validate requestedId to prevent injection/garbage. V4 UUIDs are 36 chars.
-    const isValidId = requestedId && /^[0-9a-fA-F-]{36}$/.test(requestedId)
-    const clientId = isValidId ? requestedId : randomUUID()
+    // Use Zod for validation since it is already imported
+    const uuidSchema = z.string().uuid()
+    const { success } = uuidSchema.safeParse(requestedId)
+
+    // Use requested ID if valid, otherwise generate new
+    const clientId = success && requestedId ? requestedId : randomUUID()
     extWs.clientId = clientId
 
     logger.info(
-      { clientId, isReconnection: !!isValidId },
+      { clientId, isReconnection: success },
       'WebSocket client connecting'
     )
 
@@ -145,7 +148,12 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId }, 'WebSocket client disconnected')
-      clientSockets.delete(clientId)
+
+      // FIX: Only delete from map if THIS socket is the one stored.
+      // This prevents the 'close' event of a zombie socket from killing the active socket.
+      if (clientSockets.get(clientId) === extWs) {
+        clientSockets.delete(clientId)
+      }
 
       // CRITICAL: Do NOT immediately delete clientData.
       // Wait a grace period to allow for a page refresh.
