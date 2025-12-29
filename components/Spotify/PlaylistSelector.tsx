@@ -208,6 +208,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
               // Use Autocomplete's hover state for background color
               '&[aria-selected="true"]': {
                 backgroundColor: 'action.hover',
+                outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: '-2px',
               },
               '&:hover': {
                 backgroundColor: 'action.hover',
@@ -247,8 +249,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                         option.owner ? ` • ${option.owner}` : ''
                       }`
                     : option.owner
-                    ? option.owner
-                    : undefined
+                      ? option.owner
+                      : undefined
                 }
               />
               {option.isPreset && (
