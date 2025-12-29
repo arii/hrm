@@ -5,128 +5,18 @@ import PlayArrow from '@mui/icons-material/PlayArrow'
 import Search from '@mui/icons-material/Search'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
-import Box, { BoxProps } from '@mui/material/Box'
+import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
 import List from '@mui/material/List'
-import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
-
-interface Playlist {
-  name: string
-  uri: string
-  id?: string
-  isPreset?: boolean
-  isSearchResult?: boolean
-  imageUrl?: string | null
-  description?: string | null
-  trackCount?: number
-  owner?: string
-}
-
-interface PlaylistItemProps extends Omit<BoxProps, 'onClick'> {
-  playlist: Playlist
-  selected: boolean
-  onClick?: () => void
-  onPlay: (event: React.MouseEvent<HTMLElement>) => void
-}
-
-const PlaylistItem: React.FC<PlaylistItemProps> = ({
-  playlist,
-  selected,
-  onClick,
-  onPlay,
-  ...boxProps
-}) => (
-  <Box
-    key={playlist.uri}
-    sx={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      width: '100%',
-      borderBottom: '1px solid',
-      borderColor: 'divider',
-      py: 0.5,
-    }}
-    role="option"
-    {...boxProps}
-  >
-    <ListItemButton
-      selected={selected}
-      onClick={onClick}
-      sx={{
-        flexGrow: 1,
-        '&:hover': {
-          backgroundColor: 'action.hover',
-        },
-      }}
-    >
-      {playlist.imageUrl ? (
-        <Box
-          component="img"
-          src={playlist.imageUrl}
-          alt={playlist.name}
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 1,
-            mr: 1.5,
-            objectFit: 'cover',
-          }}
-        />
-      ) : (
-        <MusicNote sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }} />
-      )}
-      <ListItemText
-        primary={playlist.name}
-        secondary={
-          playlist.trackCount !== undefined
-            ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
-            : playlist.owner
-              ? playlist.owner
-              : undefined
-        }
-      />
-      {playlist.isPreset && (
-        <Chip
-          label="Preset"
-          size="small"
-          sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-        />
-      )}
-      {playlist.isSearchResult && !playlist.isPreset && (
-        <Chip
-          label="Spotify"
-          size="small"
-          color="success"
-          sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-        />
-      )}
-    </ListItemButton>
-
-    <Box sx={{ pl: 1, display: 'flex', alignItems: 'center' }}>
-      <IconButton
-        edge="end"
-        aria-label="play"
-        onClick={onPlay}
-        sx={{
-          '&:hover': {
-            backgroundColor: 'action.hover',
-            transform: 'scale(1.1)',
-          },
-        }}
-      >
-        <PlayArrow />
-      </IconButton>
-    </Box>
-  </Box>
-)
+import { Playlist } from '../../types/spotify'
 
 interface PlaylistSelectorProps {
   onPlaylistSelected: (uri: string) => void
@@ -193,7 +83,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
       setSearchLoading(true)
       try {
         const response = await fetch(
-          `/api/spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`
+          `/api/spotify/playlists/search?q=${encodeURIComponent(
+            debouncedSearch
+          )}`
         )
         if (!response.ok) {
           throw new Error('Failed to search playlists')
@@ -305,25 +197,92 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             }}
           />
         )}
-        renderOption={(props, option) => {
-          return (
-            <li {...props}>
-              {/*
-                The `PlaylistItem` is rendered as a `div` (default for Box) to avoid nesting `<li>` elements,
-                which is invalid HTML and causes accessibility issues. The `Autocomplete`
-                component's `renderOption` wraps the returned element in an `<li>`.
-              */}
-              <PlaylistItem
-                playlist={option}
-                selected={selectedPlaylist?.uri === option.uri}
-                onPlay={(e) => {
-                  e.stopPropagation()
+        renderOption={(props, option) => (
+          <Box
+            component="li"
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              width: '100%',
+              py: 0.5,
+              // Use Autocomplete's hover state for background color
+              '&[aria-selected="true"]': {
+                backgroundColor: 'action.hover',
+              },
+              '&:hover': {
+                backgroundColor: 'action.hover',
+              },
+            }}
+            {...props}
+            aria-label={`Select playlist: ${option.name}`}
+          >
+            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+              {option.imageUrl ? (
+                <Box
+                  component="img"
+                  src={option.imageUrl}
+                  alt={option.name}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 1,
+                    mr: 1.5,
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <MusicNote
+                  sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
+                />
+              )}
+              <ListItemText
+                primary={option.name}
+                secondary={
+                  option.trackCount !== undefined
+                    ? `${option.trackCount} tracks${
+                        option.owner ? ` • ${option.owner}` : ''
+                      }`
+                    : option.owner
+                    ? option.owner
+                    : undefined
+                }
+              />
+              {option.isPreset && (
+                <Chip
+                  label="Preset"
+                  size="small"
+                  sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
+                />
+              )}
+              {option.isSearchResult && !option.isPreset && (
+                <Chip
+                  label="Spotify"
+                  size="small"
+                  color="success"
+                  sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
+                />
+              )}
+            </Box>
+            <Box sx={{ pl: 1, display: 'flex', alignItems: 'center' }}>
+              <IconButton
+                edge="end"
+                aria-label={`Play ${option.name}`}
+                onClick={(e) => {
+                  e.stopPropagation() // Prevent Autocomplete from closing
                   onPlaylistPlay(option.uri)
                 }}
-              />
-            </li>
-          )
-        }}
+                sx={{
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                    transform: 'scale(1.1)',
+                  },
+                }}
+              >
+                <PlayArrow />
+              </IconButton>
+            </Box>
+          </Box>
+        )}
         groupBy={(option) => {
           if (option.isSearchResult) return 'Spotify Results'
           if (option.isPreset) return 'Preset Playlists'

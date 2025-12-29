@@ -60,6 +60,32 @@ describe('PlaylistSelector', () => {
     expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:2')
   })
 
+  it('should call onPlaylistSelected when a playlist is selected using the keyboard', async () => {
+    const onPlaylistSelected = jest.fn()
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={onPlaylistSelected}
+        onPlaylistPlay={jest.fn()}
+      />
+    )
+    const user = userEvent.setup()
+    const input = await screen.findByRole('combobox')
+
+    // Open the dropdown
+    await user.click(input)
+
+    // Wait for options to appear
+    await screen.findByText('Chill Hits')
+
+    // Navigate down to the second item ('Rock Classics') and press Enter
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard('{Enter}')
+
+    // Verify the callback was called with the correct URI
+    expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:2')
+  })
+
   it('should call onPlaylistPlay with the correct URI when the play button is clicked', async () => {
     const onPlaylistPlay = jest.fn()
     render(
