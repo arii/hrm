@@ -400,7 +400,18 @@ function buildFixModeSubPrompt(context: ReviewContext): string {
   **Debug Mode Rules:**
   1. 🚫 **IGNORE** style nits, variable naming, or minor refactors unless they caused the error.
   2. 🔍 **ANALYZE** the provided diff specifically looking for logic that breaks tests or builds.
-  3. 🛠️ **GENERATE FIXES**: You MUST provide a "Proposed Fix" section containing a valid **Unified Diff** or specific code block to resolve the failure.
+  3. 🛠️ **GENERATE FIXES**: You MUST provide a "Proposed Fix" section containing a valid **Unified Diff** or specific code block to resolve the failure. Example:
+     \`\`\`diff
+     --- a/tests/unit/services/test.ts
+     +++ b/tests/unit/services/test.ts
+     @@ -10,7 +10,7 @@
+      describe('myTest', () => {
+        it('should return true', () => {
+     -    expect(myFunction()).toBe(false);
+     +    expect(myFunction()).toBe(true);
+        });
+      });
+     \`\`\`
   4. 🧠 **Reasoning**: Explain *why* the test failed (e.g., "Mock data missing," "Timeout too short," "Type mismatch").
 
   **Guidance for Common Failures:**
@@ -411,6 +422,12 @@ function buildFixModeSubPrompt(context: ReviewContext): string {
   If you cannot identify the exact fix, provide the specific \`console.log\` or debugging steps the user should run to capture the necessary error detail.
   ####################################################################
   `
+}
+
+function sanitizeForPrompt(text: string | undefined): string {
+  if (!text) return '';
+  // Basic sanitization to remove common prompt injection prefixes
+  return text.replace(/^(ignore|disregard|forget) the above instructions/gim, '[sanitized]');
 }
 
 export function buildReviewPrompt(
@@ -432,8 +449,8 @@ export function buildReviewPrompt(
   let prompt = `# Code Review Task: ${reviewIteration}\n`
 
   prompt += `## Review Context
-- **PR #${context.prNumber}**: ${context.prTitle}
-- **Description**: ${context.prDescription}
+- **PR #${context.prNumber}**: ${sanitizeForPrompt(context.prTitle)}
+- **Description**: ${sanitizeForPrompt(context.prDescription)}
 - **Author**: ${context.prAuthor}
 - **Files Changed**: ${context.filesChanged}
 - **Lines Changed**: ~${context.totalLoc}
@@ -442,11 +459,11 @@ export function buildReviewPrompt(
 - **Labels**: ${context.prLabels || 'none'}
 `
   if (context.issueNumber) {
-    prompt += `- **Linked Issue #${context.issueNumber}**: ${context.issueTitle}\n`
+    prompt += `- **Linked Issue #${context.issueNumber}**: ${sanitizeForPrompt(context.issueTitle)}\n`
   }
 
   // --- Documentation Section (Cached or Injected) ---
-  prompt += `\n## Project Documentation & Guidelines\n${contextContent}\n`
+  prompt += `\n## Project Documentation & Guidelines\n${sanitizeForPrompt(contextContent)}\n`
 
   // --- Diff Section ---
   let maxDiffLength = 60000; // Default value
@@ -457,19 +474,23 @@ export function buildReviewPrompt(
         const parsedValue = parseInt(maxDiffLengthEnv, 10);
         if (Number.isSafeInteger(parsedValue) && parsedValue > 0) {
           maxDiffLength = parsedValue;
+        } else {
+          console.warn(`Invalid GEMINI_MAX_DIFF_LENGTH value: ${maxDiffLengthEnv}. Using default ${maxDiffLength}.`);
         }
       } catch (error) {
         console.warn(
           `Could not parse GEMINI_MAX_DIFF_LENGTH: ${(error as Error).message}`
         );
       }
+    } else {
+      console.warn(`Invalid GEMINI_MAX_DIFF_LENGTH format: ${maxDiffLengthEnv}. Using default ${maxDiffLength}.`);
     }
   }
   const truncatedDiff =
     diff.length > maxDiffLength
       ? diff.substring(0, maxDiffLength) + '\n...[DIFF TRUNCATED]'
       : diff
-  prompt += `\n## Code Changes (Diff)\n\`\`\`diff\n${truncatedDiff}\n\`\`\`\n`
+  prompt += `\n## Code Changes (Diff)\n\`\`\`diff\n${sanitizeForPrompt(truncatedDiff)}\n\`\`\`\n`
 
   // --- Logic Branching: Fix Mode vs Standard Review ---
   if (hasFailures) {
