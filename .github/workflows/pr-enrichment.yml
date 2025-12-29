@@ -27,6 +27,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install Dependencies
+        run: npm install
+
       - name: Check if PR Enrichment is Disabled
         id: check-disabled
         run: |
@@ -103,27 +106,88 @@ jobs:
           fi
           echo "SCOPE=$SCOPE" >> $GITHUB_ENV
 
-      - name: Update PR Description
+      - name: Generate PR Description
+        id: generate-description
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          FILE_COUNT: ${{ env.FILE_COUNT }}
+          ADDITIONS: ${{ env.ADDITIONS }}
+          DELETIONS: ${{ env.DELETIONS }}
+          CATEGORIES: ${{ env.CATEGORIES }}
         run: |
-          CONTEXT_FILE=$(mktemp)
-          cat <<EOF > "$CONTEXT_FILE"
-          PR Title: ${{ github.event.pull_request.title }}
-          PR Author: ${{ github.event.pull_request.user.login }}
-          PR Body: ${{ github.event.pull_request.body }}
-          Files Changed: ${{ env.FILE_COUNT }}
-          Lines Added: ${{ env.ADDITIONS }}
-          Lines Deleted: ${{ env.DELETIONS }}
-          Impact Areas: ${{ env.CATEGORIES }}
+          PROMPT_FILE=$(mktemp)
+          PR_TEMPLATE=$(cat .github/PULL_REQUEST_TEMPLATE.md)
+
+          cat <<EOF > "$PROMPT_FILE"
+          You are an AI assistant. Your task is to generate a pull request description based on the provided template and PR data.
+
+          ### PR Template
+          $PR_TEMPLATE
+
+          ### PR Data
+          PR Title: $PR_TITLE
+          PR Author: $PR_AUTHOR
+          PR Body: $PR_BODY
+          Files Changed: $FILE_COUNT
+          Lines Added: $ADDITIONS
+          Lines Deleted: $DELETIONS
+          Impact Areas: $CATEGORIES
+
+          ### Instructions
+          Generate a JSON object with a single key "description", which contains the populated pull request description as a markdown string.
+
+          ### Output Format
+          You MUST return a valid JSON object. Do not include markdown formatting like \`\`\`json.
+          {
+            "description": "The full, populated pull request description as a markdown string."
+          }
           EOF
 
-          # Generate the new PR description
-          NEW_BODY=$(npx tsx scripts/gemini-client.ts --task-file .github/PULL_REQUEST_TEMPLATE.md --context "$CONTEXT_FILE")
+          npx tsx scripts/gemini-client.ts --task-file "$PROMPT_FILE" --output "pr_description.json"
 
-          # Update the PR description
-          gh pr edit "$PR_NUMBER" --body "$NEW_BODY" || echo "::warning::Could not update PR description"
+      - name: Update PR Description
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            try {
+              let rawData = fs.readFileSync('pr_description.json', 'utf8');
+              rawData = rawData.replace(/```json/g, '').replace(/```/g, '').trim();
+
+              const result = JSON.parse(rawData);
+              let newBody = result.description;
+
+              if (newBody) {
+                let originalBody = context.payload.pull_request.body || '';
+
+                // Make the process idempotent
+                const detailsRegex = /<details>\n<summary>Original PR Body<\/summary>\n\n([\s\S]*?)\n<\/details>\n\n/;
+                const match = originalBody.match(detailsRegex);
+                if (match) {
+                  originalBody = match[1];
+                }
+
+                newBody = '<details>\n<summary>Original PR Body</summary>\n\n' + originalBody + '\n</details>\n\n' + newBody;
+
+                await github.rest.pulls.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: context.issue.number,
+                  body: newBody,
+                });
+              } else {
+                core.setFailed('Generated description is empty.');
+              }
+
+            } catch (error) {
+              console.error('Error processing description result:', error);
+              core.setFailed('Failed to update PR description: ' + error.message);
+            }
 
       - name: Enhance PR Title
         if: steps.check-disabled.outputs.disabled == 'false' && env.DISABLE_TITLE_ENHANCEMENT != 'true'
@@ -161,7 +225,7 @@ jobs:
               NEW_TITLE="$PREFIX($SCOPE): $CURRENT_TITLE"
               echo "Updating title from: $CURRENT_TITLE"
               echo "Updating title to: $NEW_TITLE"
-              gh pr edit "$PR_NUMBER" --title "$NEW_TITLE" || echo "::warning::Could not update PR title"
+              gh pr edit "$PR_NUMBER" --title "$NEW_TITLE" || (echo "::error::Could not update PR title" && exit 1)
             fi
           fi
 
