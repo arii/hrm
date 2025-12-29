@@ -48,6 +48,21 @@ export class SpotifyPolling implements SpotifyService {
   private devicePollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
 
+  // Expose intervals for testing purposes
+  public _test_ =
+    process.env.NODE_ENV === 'test'
+      ? {
+          getPollInterval: () => this.pollInterval,
+          getTokenRefreshInterval: () => this.tokenRefreshInterval,
+          setPollInterval: (interval: NodeJS.Timeout | null) => {
+            this.pollInterval = interval
+          },
+          setTokenRefreshInterval: (interval: NodeJS.Timeout | null) => {
+            this.tokenRefreshInterval = interval
+          },
+        }
+      : undefined
+
   // Internal auth/state values
   private readonly broadcastUpdate: (message: ServerMessage) => void
 

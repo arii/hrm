@@ -16,6 +16,19 @@ The `any` type is a powerful tool, but it's a dangerous one. It effectively disa
 
 3.  **Type Assertions:** If you have more information about the type of a value than TypeScript does, you can use a type assertion. However, be careful with type assertions, as they can lead to runtime errors if you're wrong.
 
+4.  **`Record<string, unknown>`:** When working with dynamic objects where the keys are strings but the values are of unknown types, `Record<string, unknown>` is a great alternative to `any`.
+
+    ```typescript
+    function processDynamicObject(obj: Record<string, unknown>) {
+      for (const key in obj) {
+        const value = obj[key];
+        if (typeof value === 'string') {
+          console.log(value.toUpperCase());
+        }
+      }
+    }
+    ```
+
 ### Type Narrowing
 
 When you have a variable of a broad type (like `unknown`), you can use type narrowing to determine a more specific type.
