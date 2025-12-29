@@ -289,7 +289,6 @@ ${task}
     // If the output file is expected to be JSON, we attempt to clean and parse it
     // to prevent markdown code blocks (```json) from breaking downstream consumers.
     if (outputFile && outputFile.endsWith('.json')) {
-      console.log(`Output file is .json. Attempting to parse and sanitize AI response...`)
       const processor = new JsonProcessor()
       const result = processor.process(text)
 
@@ -299,8 +298,6 @@ ${task}
 
       if (!result.success) {
         console.error('Failed to parse generated content as JSON. Error details written to output file.')
-      } else {
-        console.log('Successfully sanitized and parsed JSON output.')
       }
     } else {
       // For non-JSON files, write exact raw output
