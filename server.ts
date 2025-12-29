@@ -194,6 +194,8 @@ app.prepare().then(async () => {
           refresh_token: tokenData.refresh_token || '',
           scope: tokenData.scope || '',
           obtainedAt: Date.now(),
+          provider: 'spotify',
+          sub: '',
         })
 
         logger.info(
@@ -203,12 +205,15 @@ app.prepare().then(async () => {
           .status(200)
           .json({ ok: true, message: 'Token delivered successfully.' })
       } catch (err) {
-        const error = err instanceof Error ? err : new Error('An unknown error occurred')
+        const error =
+          err instanceof Error ? err : new Error('An unknown error occurred')
         logger.error(
           { err: error, message: error.message },
           'Unhandled error in server-side token-delivery'
         )
-        return res.status(500).json({ error: 'server_error', message: error.message })
+        return res
+          .status(500)
+          .json({ error: 'server_error', message: error.message })
       }
     }
   )
