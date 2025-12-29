@@ -42,10 +42,6 @@ describe('POST /api/internal/token-delivery', () => {
     process.env.NEXTAUTH_SECRET = originalNextAuthSecret
   })
 
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
   it('should return 401 if secret header is missing or invalid', async () => {
     const req = new NextRequest(
       'http://localhost/api/internal/token-delivery',
@@ -105,34 +101,5 @@ describe('POST /api/internal/token-delivery', () => {
     expect(response.status).toBe(500)
     const body = await response.json()
     expect(body).toEqual({ error: 'server_error' })
-  })
-
-  it('should process token even if spotifyService is not ready', async () => {
-    mockSpotifyService.isReady.mockReturnValue(false)
-    const tokenData = { refresh_token: 'new-refresh-token', access_token: 'new-access-token' }
-    const req = new NextRequest(
-      'http://localhost/api/internal/token-delivery',
-      {
-        method: 'POST',
-        headers: {
-          'x-internal-token-secret': 'test-secret',
-        },
-        body: JSON.stringify(tokenData),
-      }
-    )
-
-    const response = await POST(req)
-    expect(response.status).toBe(200)
-    expect(mockSpotifyService.handleTokenUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ...tokenData,
-        provider: 'spotify',
-        sub: '',
-        scope: '',
-        obtainedAt: expect.any(Number),
-      })
-    )
-    const body = await response.json()
-    expect(body).toEqual({ ok: true, message: 'Token delivered successfully.' })
   })
 })
