@@ -29,11 +29,9 @@ jobs:
     secrets: inherit
 
   gemini-rereview:
-    if: github.event.action == 'synchronize'
+    if: github.event.action == 'synchronize' || github.event.action == 'opened'
     uses: ./.github/workflows/reusable-gemini-rereview.yml
     secrets: inherit
-
-
 
   gemini-dispatch:
     if: github.event_name == 'workflow_dispatch'
