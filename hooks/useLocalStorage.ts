@@ -71,7 +71,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
 
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === key && e.newValue) {
+      if (typeof window !== 'undefined' && e.key === key && e.newValue) {
         try {
           setStoredValue(JSON.parse(e.newValue))
         } catch (error) {
