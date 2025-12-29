@@ -1,32 +1,30 @@
 // tests/unit/utils/brandedId.test.ts
 import { generateClientId, toClientId } from '../../../utils/brandedId'
-import { ClientId } from '../../../types/branded'
+import { ZodError } from 'zod'
 
-describe('brandedId utilities', () => {
+describe('brandedId', () => {
   describe('generateClientId', () => {
-    it('should generate a ClientId that starts with "user-"', () => {
+    it('should generate a ClientId with the correct prefix', () => {
       const clientId = generateClientId()
-      expect(clientId.startsWith('user-')).toBe(true)
+      expect(clientId).toMatch(/^user-/)
     })
 
-    it('should generate a unique ClientId each time', () => {
+    it('should generate a unique ClientId on each call', () => {
       const clientId1 = generateClientId()
       const clientId2 = generateClientId()
-      expect(clientId1).not.toBe(clientId2)
+      expect(clientId1).not.toEqual(clientId2)
     })
   })
 
   describe('toClientId', () => {
-    it('should cast a string to a ClientId', () => {
-      const id = 'test-id'
+    it('should correctly cast a valid string to a ClientId', () => {
+      const id = 'user-12345'
       const clientId = toClientId(id)
-      expect(clientId).toBe(id)
+      expect(clientId).toEqual(id)
     })
 
-    it('should return a value that can be assigned to a ClientId variable', () => {
-      const id = 'test-id'
-      const clientId: ClientId = toClientId(id)
-      expect(clientId).toBe(id)
+    it('should throw a ZodError if the string is empty', () => {
+      expect(() => toClientId('')).toThrow(ZodError)
     })
   })
 })

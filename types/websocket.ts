@@ -4,7 +4,7 @@
  * and the client hooks via the WebSocket connection.
  */
 import { WebSocket } from 'ws'
-import { ClientId, DeviceId } from './branded'
+import { ClientId, DeviceId, DeviceIdSchema } from './branded'
 import type {
   HrmStreamData as HrmData,
   TimerData,
@@ -219,7 +219,7 @@ export const SpotifyCommandMessageSchema = z.object({
     z.literal('SET_VOLUME'),
     z.literal('GET_DEVICES'), // <--- ADDED
   ]),
-  deviceId: z.string().optional(),
+  deviceId: DeviceIdSchema.optional(),
   volume: z.number().min(0).max(100).optional(),
   playlistUri: z.string().optional(),
   contextUri: z.string().optional(),
