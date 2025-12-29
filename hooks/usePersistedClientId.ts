@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 /**
  * Generates a pseudo-random string that is sufficiently random for non-critical use cases like client IDs.
@@ -33,26 +33,30 @@ const getUUID = (): string => {
  * @returns {string | null} The client ID, or null during the initial server render.
  */
 function usePersistedClientId(key: string): string | null {
-  const [id, setId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
+  // By using the lazy initializer pattern for useState, we ensure that the logic to
+  // access localStorage only runs on the client-side, and only once during the
+  // component's initial render. This resolves the 'set-state-in-effect' linting
+  // error by avoiding a separate effect for initialization. The initial state on
+  // the server will be null, and the client will hydrate with the persisted value.
+  const [id] = useState(() => {
+    if (typeof window === 'undefined') {
+      return null
+    }
 
     try {
       const stored = localStorage.getItem(key)
       if (stored) {
-        setId(stored)
-      } else {
-        const newId = getUUID()
-        localStorage.setItem(key, newId)
-        setId(newId)
+        return stored
       }
+      const newId = getUUID()
+      localStorage.setItem(key, newId)
+      return newId
     } catch (e) {
       console.error('LocalStorage access failed:', e)
-      setId(getUUID()) // Fallback to an in-memory ID if localStorage is blocked
+      // Fallback to an in-memory ID if localStorage is blocked
+      return getUUID()
     }
-  }, [key])
-
+  })
   return id
 }
 
