@@ -49,6 +49,8 @@ jobs:
           echo "COMMIT_MSG=$MSG" >> $GITHUB_ENV
 
           # 3. Detect Significant Changes
+          # A "significant change" is any change to a file that is not a markdown file,
+          # an image, a package lock file, or a gitignore file.
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
           CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
@@ -61,11 +63,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          CHANGES_REQUESTED=$(gh pr view "$PR_NUMBER" --json reviews --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
-          APPROVED=$(gh pr view "$PR_NUMBER" --json reviews --jq '[.reviews[] | select(.state == "APPROVED")] | length')
-          REVIEW_COMMENTS=$(gh pr view "$PR_NUMBER" --json comments --jq '[.comments[] | select(.author.login == "arii")] | length')
-          TOTAL_REVIEWS=$(gh pr view "$PR_NUMBER" --json reviews --jq '[.reviews[]] | length')
-          LAST_COMMENT_TIMESTAMP=$(gh pr view "$PR_NUMBER" --json comments --jq -r '[.comments[] | select(.author.login == "arii")] | .[-1].createdAt // ""')
+          PR_DATA=$(gh pr view "$PR_NUMBER" --json reviews,comments)
+
+          CHANGES_REQUESTED=$(echo "$PR_DATA" | jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
+          APPROVED=$(echo "$PR_DATA" | jq '[.reviews[] | select(.state == "APPROVED")] | length')
+          REVIEW_COMMENTS=$(echo "$PR_DATA" | jq '[.comments[] | select(.author.login == "arii")] | length')
+          TOTAL_REVIEWS=$(echo "$PR_DATA" | jq '[.reviews[]] | length')
+          LAST_COMMENT_TIMESTAMP=$(echo "$PR_DATA" | jq -r '[.comments[] | select(.author.login == "arii")] | .[-1].createdAt // ""')
+
           echo "CHANGES_REQUESTED=${CHANGES_REQUESTED:-0}" >> $GITHUB_ENV
           echo "APPROVED=${APPROVED:-0}" >> $GITHUB_ENV
           echo "REVIEW_COMMENTS=${REVIEW_COMMENTS:-0}" >> $GITHUB_ENV
@@ -87,7 +92,9 @@ jobs:
           TOTAL_REVIEWS: ${{ env.TOTAL_REVIEWS || 0 }}
           LAST_COMMENT_TIMESTAMP: ${{ env.LAST_COMMENT_TIMESTAMP }}
         run: |
+          # REQ: Number of "Changes Requested" reviews on the PR.
           REQ="${CHANGES_REQUESTED:-0}"
+          # SIG: Number of "significant" files changed in the last push.
           SIG="${SIGNIFICANT_CHANGES:-0}"
 
           NEEDS_REVIEW="false"
@@ -101,7 +108,7 @@ jobs:
             COMMENT_TIME=$(date -d "$LAST_COMMENT_TIMESTAMP" +%s)
             CURRENT_TIME=$(date +%s)
             TIME_DIFF=$((CURRENT_TIME - COMMENT_TIME))
-            if [ "$TIME_DIFF" -lt 300 ]; then # 5 minutes
+            if [ "$TIME_DIFF" -lt 600 ]; then # 10 minutes
               SKIP_REASON="too recent"
               echo "::debug::Skipping review: Last comment was only ${TIME_DIFF} seconds ago."
               echo "needs-review=false" >> $GITHUB_OUTPUT
