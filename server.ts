@@ -1,4 +1,5 @@
 // server.ts (Refactored)
+import crypto from 'crypto'
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
@@ -8,6 +9,8 @@ import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
+import { createTokenDeliveryHandler } from './lib/api-handlers.js' // New import
+import { TokenPayload } from './types/index.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
@@ -138,6 +141,23 @@ app.prepare().then(async () => {
 
     res.status(200).json({ healthy, details })
   })
+
+  /**
+   * @description Intercepts the internal token delivery route to ensure the Spotify token
+   * is handled by the `spotifyService` instance in this server process.
+   * Next.js API routes run in a separate process and cannot access the singleton
+   * `spotifyService` instance created here. This handler ensures that the token
+   * is delivered to the correct, active service.
+   * It uses a separate, dedicated secret (`INTERNAL_TOKEN_DELIVERY_SECRET`) for
+   * security, rather than exposing the `NEXTAUTH_SECRET`.
+   */
+  expressApp.post(
+    '/api/internal/token-delivery',
+    // Use express.json() middleware only for this route to avoid conflicts
+    // with Next.js's body parsing on other API routes.
+    express.json(),
+    createTokenDeliveryHandler(services)
+  )
 
   expressApp.use((req, res) => handle(req, res))
 

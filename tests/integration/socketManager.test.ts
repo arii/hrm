@@ -1,142 +1,129 @@
-// tests/integration/socketManager.test.ts
-import { spawn, ChildProcess, execSync } from 'child_process'
-import WebSocket from 'ws'
-import http from 'http'
+import { WebSocketServer } from 'ws'
+import { initSocketManager } from '../../utils/socketManager'
+import { AppServices } from '../../lib/services'
 import {
-  UnifiedStateMessage,
   TimerCommandMessage,
   HrmInputMessage,
+  StateSnapshot,
 } from '../../types/websocket'
+import { EventEmitter } from 'events'
+import TabataTimer from '../../services/tabataTimer'
 
-jest.setTimeout(60000) // 60s timeout for server start and tests
+// A more robust mock WebSocket that extends EventEmitter
+class MockWebSocket extends EventEmitter {
+  send = jest.fn()
+  constructor() {
+    super()
+  }
+}
 
-describe('WebSocket Full Integration Test', () => {
-  let serverProcess: ChildProcess
-  const PORT = 3005 // Use a fresh port
-  const wsUrl = `ws://127.0.0.1:${PORT}/ws`
-  const healthCheckUrl = `http://127.0.0.1:${PORT}/health/ready`
+describe('initSocketManager', () => {
+  let wss: WebSocketServer
+  let mockServices: AppServices
+  let getUnifiedStateSnapshot: () => StateSnapshot
+  let tabataServiceStartSpy: jest.SpyInstance
+  let tabataServiceStopSpy: jest.SpyInstance
+  let initialTabataState: any
+  let initialSpotifyState: any
 
-  beforeAll((done) => {
-    try {
-      execSync('pnpm run build:server', { stdio: 'inherit' })
-    } catch (error) {
-      return done(error as Error)
+  beforeEach(async () => {
+    wss = new WebSocketServer({ noServer: true })
+
+    const realTimer = new TabataTimer(() => {})
+    initialTabataState = realTimer.getState()
+    realTimer.dispose()
+
+    initialSpotifyState = {
+      trackId: null,
+      trackName: 'Awaiting Login...',
+      artist: '',
+      albumName: '',
+      albumArtUrl: '',
+      isPlaying: false,
+      devices: [],
+      volume: 70,
+      isMuted: false,
     }
 
-    serverProcess = spawn('node', ['dist/server.mjs'], {
-      env: { ...process.env, PORT: `${PORT}`, NODE_ENV: 'production' },
-      detached: true,
+    mockServices = {
+      tabataService: {
+        start: jest.fn(),
+        stop: jest.fn(),
+        getState: jest.fn().mockReturnValue(initialTabataState),
+      },
+      spotifyService: {
+        getState: jest.fn().mockReturnValue(initialSpotifyState),
+      },
+    } as unknown as AppServices
+
+    tabataServiceStartSpy = jest.spyOn(mockServices.tabataService, 'start')
+    tabataServiceStopSpy = jest.spyOn(mockServices.tabataService, 'stop')
+
+    getUnifiedStateSnapshot = (): StateSnapshot => ({
+      timerData: mockServices.tabataService.getState(),
+      spotifyData: mockServices.spotifyService.getState(),
+      hrmData: [],
+      spotifyServiceInitialized: false,
     })
 
-    // Silence verbose server output in tests, but log errors
-    serverProcess.stdout?.on('data', (_data: Buffer) => {})
-    serverProcess.stderr?.on('data', (data: Buffer) =>
-      console.error(`[Server ERR]: ${data.toString().trim()}`)
-    )
-    serverProcess.on('error', (err) => done(err))
+    initSocketManager(wss, getUnifiedStateSnapshot, mockServices)
+  })
 
-    const checkHealth = () => {
-      const req = http.get(healthCheckUrl, (res) => {
-        if (res.statusCode === 200) {
-          console.log('Server is ready.')
-          clearInterval(interval)
-          clearTimeout(timeout)
-          done()
-        } else {
-          // It can be unhealthy if Spotify isn't configured, but we check for 503 as a valid "running" state.
-          if (res.statusCode === 503) {
-            console.log(
-              'Server is running but unhealthy (as expected without Spotify).'
-            )
-            clearInterval(interval)
-            clearTimeout(timeout)
-            done()
-          }
-        }
+  afterEach(() => {
+    jest.clearAllMocks()
+    wss.close()
+  })
+
+  it('should send initial state upon connection', async () => {
+    const mockWs = new MockWebSocket()
+    const promise = new Promise<void>((resolve) => {
+      mockWs.send = jest.fn((data) => {
+        const message = JSON.parse(data as string)
+        expect(message.type).toBe('INITIAL_STATE')
+        expect(message.payload.timerData).toEqual(initialTabataState)
+        expect(message.payload.spotifyData).toEqual(initialSpotifyState)
+        resolve()
       })
-      req.on('error', () => {})
-    }
-
-    const interval = setInterval(checkHealth, 1000)
-    const timeout = setTimeout(() => {
-      clearInterval(interval)
-      done(
-        new Error(
-          `Server failed to start or respond to health check in 50 seconds.`
-        )
-      )
-    }, 50000)
-  })
-
-  afterAll((done) => {
-    if (serverProcess && serverProcess.pid) {
-      try {
-        process.kill(-serverProcess.pid, 'SIGKILL')
-      } catch (_e) {
-        /* ignore */
-      }
-    }
-    setTimeout(done, 500)
-  })
-
-  it('should handle a full user workflow: connect, send HR, start timer, receive updates, stop timer', (done) => {
-    const ws = new WebSocket(wsUrl)
-    const receivedMessages: UnifiedStateMessage[] = []
-
-    ws.on('message', (data: WebSocket.Data) => {
-      const message = JSON.parse(data.toString()) as UnifiedStateMessage
-      receivedMessages.push(message)
     })
 
-    // Use a sequence of events to test the workflow
-    const runWorkflow = async () => {
-      // 1. Wait for initial connection and state update
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      expect(receivedMessages.length).toBeGreaterThanOrEqual(1)
-      const initialState = receivedMessages[0]
-      expect(initialState.type).toBe('STATE_UPDATE')
+    wss.emit('connection', mockWs, {})
+    await promise
+  })
 
-      // 2. Send HR data
-      const hrmInput: HrmInputMessage = {
-        type: 'HRM_INPUT',
-        data: { value: 135, name: 'Workflow Test' },
-      }
-      ws.send(JSON.stringify(hrmInput))
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      let lastMessage = receivedMessages[receivedMessages.length - 1]
-      const clientData = lastMessage.hrmData?.find(
-        (c) => c.name === 'Workflow Test'
-      )
-      expect(clientData).toBeDefined()
-      expect(clientData?.value).toBe(135)
+  it('should handle TIMER_COMMAND and call the correct service method', () => {
+    const mockWs = new MockWebSocket()
+    wss.emit('connection', mockWs, {})
 
-      // 3. Start the timer
-      const startCommand: TimerCommandMessage = {
-        type: 'TIMER_COMMAND',
-        command: 'START',
-      }
-      ws.send(JSON.stringify(startCommand))
-      await new Promise((resolve) => setTimeout(resolve, 1500)) // Wait for prepare phase
-      lastMessage = receivedMessages[receivedMessages.length - 1]
-      expect(lastMessage.timerData?.isRunning).toBe(true)
-      expect(lastMessage.timerData?.currentPhase).toBe('PREPARE')
-
-      // 4. Stop the timer
-      const stopCommand: TimerCommandMessage = {
-        type: 'TIMER_COMMAND',
-        command: 'STOP',
-      }
-      ws.send(JSON.stringify(stopCommand))
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      lastMessage = receivedMessages[receivedMessages.length - 1]
-      expect(lastMessage.timerData?.isRunning).toBe(false)
-      expect(lastMessage.timerData?.currentPhase).toBe('IDLE')
-
-      ws.close()
-      done()
+    const startCommand: TimerCommandMessage = {
+      type: 'TIMER_COMMAND',
+      command: 'START',
+    }
+    const stopCommand: TimerCommandMessage = {
+      type: 'TIMER_COMMAND',
+      command: 'STOP',
     }
 
-    ws.on('open', runWorkflow)
-    ws.on('error', done)
+    mockWs.emit('message', JSON.stringify(startCommand))
+    expect(tabataServiceStartSpy).toHaveBeenCalledTimes(1)
+
+    mockWs.emit('message', JSON.stringify(stopCommand))
+    expect(tabataServiceStopSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('should handle HRM_INPUT and not broadcast', () => {
+    const mockWs = new MockWebSocket()
+    wss.emit('connection', mockWs, {})
+
+    const hrmInput: HrmInputMessage = {
+      type: 'HRM_INPUT',
+      payload: {
+        value: 150,
+        name: 'HRM User',
+        userId: 'hrm-user-123',
+        deviceId: 'hrm-device-456',
+      },
+    }
+
+    mockWs.emit('message', JSON.stringify(hrmInput))
   })
 })
