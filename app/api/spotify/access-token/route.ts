@@ -13,8 +13,10 @@ import { env } from '@/lib/env'
  * @param req The incoming NextRequest, used to extract the JWT.
  */
 async function _tryHydrateSpotifyService(req: NextRequest): Promise<void> {
+  let userId: string | null = null
   try {
     const token = await getToken({ req, secret: env.NEXTAUTH_SECRET })
+    userId = token?.sub || null
 
     if (token && token.accessToken && token.refreshToken) {
       const spotifyService = serviceContainer.get('spotifyService')
@@ -30,12 +32,12 @@ async function _tryHydrateSpotifyService(req: NextRequest): Promise<void> {
         scope: '',
         obtainedAt: Date.now()
       })
-      logger.debug('Successfully hydrated SpotifyService from access-token route.')
+      logger.debug({ userId }, 'Successfully hydrated SpotifyService from access-token route.')
     }
   } catch (error) {
     // This can happen if the request is malformed or there's an issue with JWT parsing.
     // We log it as a warning because this internal process should not fail the client's request.
-    logger.warn({ error }, 'Failed to get JWT for service hydration.')
+    logger.warn({ error, userId }, 'Failed to get JWT for service hydration.')
   }
 }
 
