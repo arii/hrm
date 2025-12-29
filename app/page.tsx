@@ -4,7 +4,6 @@
  * Consumes all real-time data streams and renders the unified MUI visualization.
  */
 'use client'
-import Container from '@mui/material/Container'
 import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
@@ -13,6 +12,7 @@ import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
+import PageContainer from '../components/PageContainer'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
 
@@ -72,16 +72,8 @@ const Dashboard = () => {
   }, [])
 
   return (
-    <Container
-      maxWidth="xl"
-      onClick={handleInteraction}
-      sx={{
-        py: { xs: 2, sm: 3 },
-        minHeight: '100vh',
-        backgroundColor: 'background.default',
-      }}
-    >
-      <Box sx={mainGridStyles}>
+    <PageContainer maxWidth="xl" hasNavBar={true}>
+      <Box sx={mainGridStyles} onClick={handleInteraction}>
         {/*
          * The extra Box with height: '100%' is necessary to ensure the TimerDisplay
          * component stretches to fill the full height of the grid cell. The grid
@@ -116,7 +108,7 @@ const Dashboard = () => {
       <ErrorBoundary fallback={<ErrorFallback />}>
         <SpotifyDisplay />
       </ErrorBoundary>
-    </Container>
+    </PageContainer>
   )
 }
 
