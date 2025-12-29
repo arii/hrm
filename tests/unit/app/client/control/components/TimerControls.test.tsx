@@ -113,4 +113,80 @@ describe('TimerControls', () => {
       command: 'START',
     })
   })
+
+  it('handles connection drop after render but before interaction', async () => {
+    const { rerender } = render(
+      <WebSocketContext.Provider value={mockWebSocketContext}>
+        <TimerControls />
+      </WebSocketContext.Provider>
+    )
+
+    // Simulate connection drop
+    const disconnectedContext = {
+      ...mockWebSocketContext,
+      connectionStatus: 'Disconnected',
+    }
+    rerender(
+      <WebSocketContext.Provider value={disconnectedContext}>
+        <TimerControls />
+      </WebSocketContext.Provider>
+    )
+
+    const startButton = screen.getByTestId('start-timer-button')
+    act(() => {
+      fireEvent.click(startButton)
+    })
+
+    // ...then revert because of the disconnection
+    act(() => {
+      jest.advanceTimersByTime(600)
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
+    })
+    expect(disconnectedContext.sendData).not.toHaveBeenCalledWith({
+      type: 'TIMER_COMMAND',
+      command: 'START',
+    })
+  })
+
+  it('reverts optimistic UI if server state does not sync after timeout', async () => {
+    const sendDataSpy = jest.spyOn(mockWebSocketContext, 'sendData')
+    const { rerender } = render(
+      <WebSocketContext.Provider value={mockWebSocketContext}>
+        <TimerControls />
+      </WebSocketContext.Provider>
+    )
+
+    const startButton = screen.getByTestId('start-timer-button')
+    act(() => {
+      fireEvent.click(startButton)
+    })
+
+    // UI optimistically shows "Running"
+    await screen.findByTestId('timer-running')
+
+    // IMPORTANT: We do NOT update the context's timerData.isRunning to simulate
+    // the server failing to respond or the message being dropped.
+    rerender(
+      <WebSocketContext.Provider value={mockWebSocketContext}>
+        <TimerControls />
+      </WebSocketContext.Provider>
+    )
+
+    // Advance timers past the safety timeout
+    act(() => {
+      jest.advanceTimersByTime(3100)
+    })
+
+    // The UI should revert to the server's state, which is still "stopped"
+    await waitFor(() => {
+      expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
+    })
+    expect(sendDataSpy).toHaveBeenCalledWith({
+      type: 'TIMER_COMMAND',
+      command: 'START',
+    })
+  })
 })
