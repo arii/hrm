@@ -59,9 +59,9 @@ describe('getModelFallbacks', () => {
     delete process.env.GEMINI_MODEL_FALLBACKS
     const fallbacks = getModelFallbacks()
     expect(fallbacks).toEqual([
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
       'gemini-2.0-flash-exp',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-pro-latest',
     ])
   })
 
@@ -100,9 +100,9 @@ describe('getModelFallbacks', () => {
     process.env.GEMINI_MODEL_FALLBACKS = ''
     const fallbacks = getModelFallbacks()
     expect(fallbacks).toEqual([
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
       'gemini-2.0-flash-exp',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-pro-latest',
     ])
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
@@ -117,9 +117,9 @@ describe('getModelFallbacks', () => {
     process.env.GEMINI_MODEL_FALLBACKS = 'invalid1, invalid2'
     const fallbacks = getModelFallbacks()
     expect(fallbacks).toEqual([
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
       'gemini-2.0-flash-exp',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-pro-latest',
     ])
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
