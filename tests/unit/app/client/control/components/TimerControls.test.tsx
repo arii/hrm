@@ -152,4 +152,32 @@ describe('TimerControls', () => {
       command: 'START',
     })
   })
+
+  it('reverts optimistic UI if server state does not sync after safety timeout', async () => {
+    render(
+      <WebSocketContext.Provider value={mockWebSocketContext}>
+        <TimerControls />
+      </WebSocketContext.Provider>
+    )
+
+    const startButton = screen.getByTestId('start-timer-button')
+    act(() => {
+      fireEvent.click(startButton)
+    })
+
+    // The UI should immediately update to show the timer as running
+    await screen.findByTestId('timer-running')
+
+    // Now, we advance the timers beyond the safety timeout.
+    // Since the mock `timerData.isRunning` is still `false`, the safety timeout should trigger.
+    act(() => {
+      jest.advanceTimersByTime(3100)
+    })
+
+    // The UI should revert back to the original state
+    await waitFor(() => {
+      expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('start-timer-button')).toBeInTheDocument()
+  })
 })
