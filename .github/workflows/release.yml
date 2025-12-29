@@ -12,6 +12,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  # This is required to allow release-please to create a GitHub release.
   releases: write
 
 jobs:
