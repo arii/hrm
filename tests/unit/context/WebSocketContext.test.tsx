@@ -5,11 +5,9 @@ import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { WebSocketProvider, useWebSocket } from '../../../context/WebSocketContext';
 
-// Mock crypto as a fallback.
-Object.defineProperty(global.self, 'crypto', {
-  value: { randomUUID: () => 'test-uuid-fallback' },
-  configurable: true,
-});
+// Store original global objects to restore them after tests
+const originalWebSocket = global.WebSocket;
+const originalCrypto = global.self.crypto;
 
 // Mock the WebSocket class.
 let mockWebSocketInstance: {
@@ -28,8 +26,6 @@ const mockWebSocket = jest.fn().mockImplementation(() => {
   };
   return mockWebSocketInstance;
 });
-// @ts-ignore
-global.WebSocket = mockWebSocket;
 
 // Mock the URL utility.
 jest.mock('../../../utils/urls', () => ({
@@ -51,20 +47,33 @@ const TestComponent = () => {
 
 describe('WebSocketProvider', () => {
 
+  beforeAll(() => {
+    // Assign mocks before all tests run
+    global.WebSocket = mockWebSocket as any;
+    Object.defineProperty(global.self, 'crypto', {
+        value: { randomUUID: () => 'test-uuid' },
+        configurable: true,
+    });
+  });
+
+  afterAll(() => {
+    // Restore original globals after all tests have completed
+    global.WebSocket = originalWebSocket;
+    global.self.crypto = originalCrypto;
+    localStorageGetItemSpy.mockRestore();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
-    // This refined mock handles different keys. It provides the clientId
-    // but returns null for 'pendingActions', preventing the JSON.parse error.
+    // This mock implementation handles different keys. It provides the clientId
+    // for the WebSocket connection and returns null for 'pendingActions' to
+    // prevent the JSON.parse error during component mount.
     localStorageGetItemSpy.mockImplementation((key: string) => {
       if (key === 'clientId') {
         return 'test-uuid';
       }
       return null;
     });
-  });
-
-  afterAll(() => {
-    localStorageGetItemSpy.mockRestore();
   });
 
   it('should establish a WebSocket connection on mount', async () => {
