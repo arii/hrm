@@ -34,7 +34,7 @@ export interface TokenRecord {
  */
 export class SpotifyTokenManager {
   private currentToken: TokenRecord | null = null
-  private refreshPromise: Promise<boolean> | null = null
+  private isRefreshing = false
 
   constructor(
     private clientId: string,
@@ -59,7 +59,7 @@ export class SpotifyTokenManager {
     logger.info({ userId: this.currentToken.payload.sub }, 'Updated in-memory Spotify tokens.')
   }
 
-  private async refreshToken(): Promise<boolean> {
+  private async refreshAccessToken(): Promise<boolean> {
     if (!this.currentToken?.payload.refresh_token) return false
     const userId = this.currentToken.payload.sub
 
@@ -147,23 +147,12 @@ export class SpotifyTokenManager {
 
     if (Date.now() >= expiresAt - 60000) {
       if (this.currentToken.payload.refresh_token) {
-        logger.info({ userId: this.currentToken.payload.sub }, 'Spotify access token is expiring soon, initiating refresh...')
-        if (!this.refreshPromise) {
-          this.refreshPromise = this.refreshToken()
-            .then((success) => {
-              if (success) {
-                logger.info({ userId: this.currentToken?.payload.sub }, 'Spotify access token refresh completed.')
-              }
-              this.refreshPromise = null
-              return success
-            })
-            .catch((error) => {
-              this.refreshPromise = null
-              logger.error({ userId: this.currentToken?.payload.sub, error }, 'Spotify access token refresh failed unexpectedly.')
-              return false
-            })
+        if (!this.isRefreshing) {
+          this.isRefreshing = true
+          logger.info({ userId: this.currentToken.payload.sub }, 'Spotify access token is expiring soon, initiating refresh...')
+          await this.refreshAccessToken()
+          this.isRefreshing = false
         }
-        await this.refreshPromise
       } else {
         logger.warn(
             { userId: this.currentToken.payload.sub },
