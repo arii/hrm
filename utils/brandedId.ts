@@ -1,5 +1,6 @@
 // utils/brandedId.ts
-import { ClientId } from '../types/branded'
+import crypto from 'crypto'
+import { ClientId, ClientIdSchema } from '../types/branded'
 
 /**
  * Generates a new, random ClientId.
@@ -7,23 +8,18 @@ import { ClientId } from '../types/branded'
  * @returns A freshly generated ClientId.
  */
 export const generateClientId = (): ClientId => {
-  return `user-${Math.random().toString(36).substring(2, 9)}` as ClientId
+  return ClientIdSchema.parse(`user-${crypto.randomUUID()}`)
 }
 
 /**
- * Casts a plain string to the ClientId branded type.
- * This is used to safely convert an ID received from an external source (e.g., URL param)
- * into the application's type-safe domain.
- *
- * It's important to note that this is a type assertion, which is a way to tell
- * the TypeScript compiler to trust us that the provided string is, in fact, a
- * ClientId. This is a safe and necessary practice at the boundaries of the
- * application, where we receive data from external sources that are not yet
- * part of our type-safe domain.
+ * Safely casts a plain string to the ClientId branded type using Zod validation.
+ * This ensures that any string passed from an external source (e.g., URL param)
+ * conforms to the expected format before being used in the application.
  *
  * @param id The string to cast.
- * @returns The string as a ClientId.
+ * @returns The validated string as a ClientId.
+ * @throws {z.ZodError} if the id is not a non-empty string.
  */
 export const toClientId = (id: string): ClientId => {
-  return id as ClientId
+  return ClientIdSchema.parse(id)
 }

@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 /**
  * Branded types are a way to create distinct types that are still strings at runtime
  * but are treated as separate types by the TypeScript compiler. This prevents
@@ -13,6 +15,7 @@ export type Brand<K, T> = K & { __brand: T }
  * @example "user-a1b2c3d4"
  */
 export type ClientId = Brand<string, 'ClientId'>
+export const ClientIdSchema = z.string().min(1).brand<'ClientId'>()
 
 /**
  * A unique identifier for a Spotify playback device.
@@ -20,3 +23,4 @@ export type ClientId = Brand<string, 'ClientId'>
  * @example "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
  */
 export type DeviceId = Brand<string, 'DeviceId'>
+export const DeviceIdSchema = z.string().min(1).brand<'DeviceId'>()
