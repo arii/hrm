@@ -272,7 +272,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                 edge="end"
                 aria-label={`Play playlist: ${option.name}`}
                 onClick={(e) => {
-                  e.stopPropagation() // Prevent Autocomplete from closing
+                  // Prevent the click from propagating to the Autocomplete component,
+                  // which would otherwise close the dropdown.
+                  e.stopPropagation()
                   onPlaylistPlay(option.uri)
                 }}
                 sx={{
