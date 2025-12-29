@@ -5,12 +5,14 @@
  * It encapsulates the logic for device discovery, connection, disconnection,
  * data streaming, and automatic reconnection on signal loss.
  */
-import { useCallback, useState, useRef, useEffect } from 'react'
+import { useCallback, useState, useRef, useEffect, useMemo } from 'react'
 import {
   HrmInputData,
+  HrmInputMessage,
   HrmMetadataUpdateMessage,
   HrmMetadataUpdateData,
 } from '../types/websocket'
+import throttle from 'lodash/throttle'
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -154,6 +156,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     ((device: BluetoothDevice) => Promise<boolean>) | null
   >(null)
 
+  // Keep track of the latest sendData function to avoid stale closures
+  const sendDataRef = useRef(sendData)
+  useEffect(() => {
+    sendDataRef.current = sendData
+  }, [sendData])
+
   useEffect(() => {
     userDetailsRef.current = { name: userName || '', age: userAge || 0 }
   }, [userName, userAge])
@@ -170,14 +178,37 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     statusRef.current = deviceStatus
   }, [deviceStatus])
 
+  // Throttling is used to limit the frequency of heart rate updates sent over the WebSocket.
+  // Bluetooth devices can broadcast at very high rates (e.g., 60Hz), which can flood the
+  // server and client with unnecessary updates. A frequency of 4Hz (250ms) is sufficient
+  // for a smooth UI experience without causing network congestion.
+  const throttledSend = useMemo(
+    () =>
+      throttle((message: HrmInputMessage) => {
+        try {
+          // Always call the current sendData via the ref
+          sendDataRef.current(message)
+        } catch (error) {
+          logger.error({ error, message }, 'Error sending throttled HRM data.')
+        }
+      }, 250),
+    // The empty dependency array `[]` ensures that the throttled function is created only
+    // once when the component mounts and is reused on subsequent renders. This is critical
+    // for `throttle` to work correctly as it needs to maintain its internal state (like the
+    // last invocation time) across renders.
+    []
+  )
+
   // Cleanup
   useEffect(() => {
     return () => {
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
       if (deviceRef.current?.gatt?.connected)
         deviceRef.current.gatt.disconnect()
+      // Also cancel any pending throttled calls to prevent memory leaks
+      throttledSend.cancel()
     }
-  }, [])
+  }, [throttledSend])
 
   // Watchdog for stale data
   useEffect(() => {
@@ -334,6 +365,24 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         await characteristic.startNotifications()
         lastDataTime.current = Date.now()
 
+        // Send metadata once upon successful connection
+        const { name, age } = userDetailsRef.current || {}
+        const calculatedMaxHr = calculateMaxHr(age)
+
+        const metadataData: HrmMetadataUpdateData = {
+          maxHr: calculatedMaxHr,
+          name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
+        }
+        if (typeof age === 'number') {
+          metadataData.age = age
+        }
+
+        const metadata: HrmMetadataUpdateMessage = {
+          type: 'HRM_METADATA_UPDATE',
+          data: metadataData,
+        }
+        sendData(metadata)
+
         characteristic.addEventListener(
           'characteristicvaluechanged',
           (event: unknown) => {
@@ -342,28 +391,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
 
-            const { name, age } = userDetailsRef.current || {}
-            const calculatedMaxHr = calculateMaxHr(age)
-
-            const metadataData: HrmMetadataUpdateData = {
-              maxHr: calculatedMaxHr,
-              name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
-            }
-            if (typeof age === 'number') {
-              metadataData.age = age
-            }
-
-            const metadata: HrmMetadataUpdateMessage = {
-              type: 'HRM_METADATA_UPDATE',
-              data: metadataData,
-            }
-            sendData(metadata)
-
             const data: HrmInputData = {
               value: heartRate,
             }
 
-            sendData({
+            // Use the throttled sender for HR updates to avoid overwhelming the WebSocket.
+            throttledSend({
               type: 'HRM_INPUT',
               data,
             })
