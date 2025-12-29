@@ -406,11 +406,14 @@ function buildFixModeSubPrompt(context: ReviewContext): string {
   `
 }
 
-function buildReviewPrompt(
+export function buildReviewPrompt(
   diff: string,
   context: ReviewContext,
   contextContent: string
 ): string {
+  // SECURITY NOTE: Ensure that the `diff`, `context`, and `contextContent` parameters
+  // do not contain sensitive information (e.g., API keys, internal URLs) before
+  // being passed to this function, as they will be sent to an external service.
   const isReReview = context.reviewCount > 0
   const hasFailures = context.failedChecks && context.failedChecks.length > 0
 

@@ -454,6 +454,25 @@ graph TD
 
 For more detailed guidelines, especially for AI agents, see [.github/prompts/AGENTS.md](.github/prompts/AGENTS.md).
 
+### Bifurcated Prompt Strategy for Gemini Code Review
+
+To enhance the quality and focus of our AI-driven code reviews, we employ a "Bifurcated Prompt Strategy" for the Gemini agent. This strategy tailors the review prompt based on the CI/CD status of a pull request, ensuring the agent's feedback is always relevant to the current context.
+
+#### 1. Standard Review Mode
+
+*   **Trigger:** This is the default mode, activated when all CI checks pass.
+*   **Objective:** To perform a comprehensive review of the code's quality, architecture, and adherence to project standards.
+*   **Key Feature - Compliance Checklist:** When a pull request is linked to a GitHub issue, the agent is explicitly instructed to verify that the code changes fulfill the issue's requirements. It will generate a "Compliance Checklist" section in its review to confirm this.
+
+#### 2. Fix Mode
+
+*   **Trigger:** This mode is automatically activated if any CI checks (e.g., unit tests, build) fail.
+*   **Objective:** To act as a senior support engineer, prioritizing the diagnosis and resolution of the CI failure above all else.
+*   **Behavior:**
+    *   The agent is instructed to ignore stylistic nits and minor refactoring suggestions.
+    *   Its primary goal is to analyze the error and the provided diff to generate a specific, actionable code fix.
+    *   The review will be titled with an "IMMEDIATE ACTION REQUIRED" header to highlight the urgency.
+
 ## Contributing
 
 We welcome contributions to the HRM Dashboard! Please follow these guidelines to ensure a smooth development process.
