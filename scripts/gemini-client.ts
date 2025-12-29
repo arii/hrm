@@ -208,6 +208,23 @@ async function generateContentWithFallback(
   throw new Error(`All models failed. Last error: ${lastError?.message}`)
 }
 
+/**
+ * Cleans a string that is expected to be JSON, removing common markdown code blocks.
+ * @param text The raw string output from the model.
+ * @returns A cleaned string, trimmed and free of markdown code fences.
+ */
+export function cleanJsonOutput(text: string): string {
+  if (!text) return ''
+  // Remove markdown code blocks if present. Matches ```json ... ``` or ``` ... ```.
+  const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i
+  const match = codeBlockRegex.exec(text)
+  if (match && match[1]) {
+    return match[1].trim()
+  }
+  // Fallback for cases where the model might just return the JSON object without fences.
+  return text.trim()
+}
+
 async function runGenericTask(
   genAI: GoogleGenerativeAI,
   task: string,
@@ -642,7 +659,8 @@ async function runReviewPreset(
 
     // JSON Parsing and secondary fallback check
     try {
-      const parsed = JSON.parse(text)
+      const cleanedText = cleanJsonOutput(text || '')
+      const parsed = JSON.parse(cleanedText)
       if (!parsed.reviewComment || parsed.reviewComment.trim().length < 20) {
         console.warn(
           'Warning: Parsed JSON has empty review comment. Injecting fallback.'
@@ -651,7 +669,8 @@ async function runReviewPreset(
         parsed.verdict = 'approve'
         await writeOutput(JSON.stringify(parsed, null, 2), outputFile)
       } else {
-        await writeOutput(text, outputFile)
+        // Output the cleaned and parsed JSON to ensure a valid and clean file for consumers.
+        await writeOutput(JSON.stringify(parsed, null, 2), outputFile)
       }
     } catch (e) {
       console.warn(
