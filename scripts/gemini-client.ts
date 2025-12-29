@@ -445,9 +445,17 @@ export function buildReviewPrompt(
   prompt += `\n## Project Documentation & Guidelines\n${contextContent}\n`
 
   // --- Diff Section ---
-  let maxDiffLength = parseInt(process.env.GEMINI_MAX_DIFF_LENGTH || '', 10)
-  if (isNaN(maxDiffLength) || maxDiffLength <= 0) {
-    maxDiffLength = 60000 // Default value
+  let maxDiffLength = 60000; // Default value
+  const maxDiffLengthEnv = process.env.GEMINI_MAX_DIFF_LENGTH;
+  if (maxDiffLengthEnv && /^\d+$/.test(maxDiffLengthEnv)) {
+    try {
+      const parsedValue = parseInt(maxDiffLengthEnv, 10);
+      if (parsedValue > 0) {
+        maxDiffLength = parsedValue;
+      }
+    } catch (error) {
+      // Ignore error and use default
+    }
   }
   const truncatedDiff =
     diff.length > maxDiffLength

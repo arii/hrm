@@ -66,6 +66,14 @@ describe('buildReviewPrompt', () => {
     delete process.env.GEMINI_MAX_DIFF_LENGTH;
   });
 
+  it('should use the default maxDiffLength if the environment variable is not a number string', () => {
+    process.env.GEMINI_MAX_DIFF_LENGTH = 'not-a-number';
+    const longDiff = 'a'.repeat(60001);
+    const prompt = buildReviewPrompt(longDiff, mockContextBase, 'fake-docs');
+    expect(prompt).toContain('...[DIFF TRUNCATED]');
+    delete process.env.GEMINI_MAX_DIFF_LENGTH;
+  });
+
   it('should use the default maxDiffLength if the environment variable is invalid', () => {
     process.env.GEMINI_MAX_DIFF_LENGTH = 'invalid';
     const longDiff = 'a'.repeat(60001);
