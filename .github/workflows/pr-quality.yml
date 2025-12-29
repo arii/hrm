@@ -187,7 +187,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts-${{ env.SESSION_ID }}
+          name: build-artifacts
           include-hidden-files: true
           path: |
             dist/
@@ -215,7 +215,7 @@ jobs:
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts-${{ env.SESSION_ID }}
+          name: build-artifacts
           path: .
           merge-multiple: true
 
@@ -269,7 +269,7 @@ jobs:
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts-${{ env.SESSION_ID }}
+          name: build-artifacts
           path: .
           merge-multiple: true
 
