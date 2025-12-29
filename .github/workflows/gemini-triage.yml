@@ -84,26 +84,55 @@ jobs:
           github-token: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
+            const path = require('path');
 
             try {
-              let rawData = fs.readFileSync('triage_result.json', 'utf8');
-              // Sanitize: Remove markdown code blocks if Gemini added them
-              rawData = rawData.replace(/```json/g, '').replace(/```/g, '').trim();
-
+              const filePath = path.resolve(process.cwd(), 'triage_result.json');
+              if (!fs.existsSync(filePath)) {
+                core.setFailed('Triage result file not found. The Gemini client may have crashed silently.');
+                return;
+              }
+              const rawData = fs.readFileSync(filePath, 'utf8');
               const result = JSON.parse(rawData);
+
+              // Gracefully handle cases where the Gemini agent fails and returns a structured error.
+              if (result.error) {
+                console.error('Triage failed with structured error:', result.error);
+                const errorComment = `
+                ### ❌ Smart Triage Failed: ${result.error.category || 'Unknown Error'}
+
+                **Details**: ${result.error.message || 'No message provided.'}
+
+                <details><summary>Technical Information</summary>
+
+                \`\`\`json
+                ${JSON.stringify(result.error.details, null, 2)}
+                \`\`\`
+
+                </details>
+                `;
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: errorComment.trim(),
+                });
+                core.setFailed(`Triage failed: ${result.error.message}`);
+                return;
+              }
+
+              // Proceed with standard triage actions if no error is present.
               console.log('Parsed Triage Result:', result);
 
-              // 1. Apply Labels
               if (result.labels && result.labels.length > 0) {
                 await github.rest.issues.addLabels({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: context.issue.number,
-                  labels: result.labels
+                  labels: result.labels,
                 });
               }
 
-              // 2. Construct Comment Body
               const commentBody = `
               ### 🤖 Gemini Smart Triage
 
@@ -122,14 +151,13 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body: commentBody.trim()
+                body: commentBody.trim(),
               });
 
-              // 3. Auto-update Title and Body if suggestions exist
               if (result.suggested_title || result.suggested_body) {
                 const newTitle = result.suggested_title || context.payload.issue.title;
-
                 let newBody = context.payload.issue.body;
+
                 if (result.suggested_body) {
                   const originalBody = context.payload.issue.body;
                   let suggestedBody = result.suggested_body;
@@ -144,11 +172,33 @@ jobs:
                   repo: context.repo.repo,
                   issue_number: context.issue.number,
                   title: newTitle,
-                  body: newBody
+                  body: newBody,
                 });
               }
-
             } catch (error) {
-              console.error('Error processing triage result:', error);
-              core.setFailed('Failed to apply triage actions: ' + error.message);
+              console.error('Fatal error processing triage result:', error);
+              const fatalErrorComment = `
+              ### ❌ Smart Triage Failed: Unhandled Exception
+
+              A critical error occurred while processing the triage result. This is likely an issue with the workflow script itself.
+
+              <details><summary>Error Details</summary>
+
+              \`\`\`
+              ${error.stack || error.message}
+              \`\`\`
+
+              </details>
+              `;
+              try {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: fatalErrorComment.trim(),
+                });
+              } catch (commentError) {
+                console.error('Failed to post fatal error comment:', commentError);
+              }
+              core.setFailed('Failed to apply triage actions due to a fatal error: ' + error.message);
             }

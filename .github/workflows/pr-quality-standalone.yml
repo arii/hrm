@@ -257,7 +257,9 @@ jobs:
           retention-days: 7
 
       - name: Report Failure to Jules
-        if: failure()
+        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_dev.outcome == 'failure' || steps.infra_tests_prod.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        # This step reports CI failures to the bot.
+        # The bot will then decide whether to trigger a review based on the re-review workflow logic.
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           LINT_OUTCOME: ${{ steps.lint.outcome }}
@@ -318,7 +320,9 @@ jobs:
             fi
           done <<< "$CHECKS_DEFINITION"
           if [ -n "$FAILED_CHECKS_LIST" ]; then
+            # Construct the final comment body
             COMMENT_HEADER="@jules fix: CI checks failed: ${FAILED_CHECKS_LIST}. Review requested.\n\n"
+            # Add a notice about truncated logs and a link to the full logs
             LOG_FOOTER="---\n*Note: Logs are truncated. View the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.*"
             COMMENT_DETAILS="<details><summary><strong>Failed Test Report Log</strong></summary>${LOGS_BODY}\n${LOG_FOOTER}\n</details>"
             echo -e "${COMMENT_HEADER}${COMMENT_DETAILS}" > "$COMMENT_FILE"
