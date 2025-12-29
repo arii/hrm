@@ -155,16 +155,25 @@ export class SpotifyPolling implements SpotifyService {
 
   /**
    * Asynchronously handles the token update signal by directly accepting the payload.
-   * This function updates the token manager, re-initializes the SDK,
-   * and immediately triggers a poll and broadcast.
+   * This function is idempotent; it will not re-initialize the SDK if the provided
+   * access token is the same as the one already in use.
    * @param {SpotifyTokenPayload} tokens - The new token payload.
    */
   public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
+    // Idempotency Check: If the new access token is the same as the current one, do nothing.
+    // This prevents redundant SDK re-initializations from concurrent hydration calls.
+    const currentSdkToken = this.tokenManager.getSdkAccessToken()
+    if (currentSdkToken && currentSdkToken.access_token === tokens.access_token) {
+      logger.debug({ userId: tokens.sub }, 'Skipping token update; token is unchanged.')
+      return
+    }
+
     logger.info(
-      { tokens },
+      { userId: tokens.sub },
       'Spotify token payload received. Updating SDK and forcing poll.'
     )
     this.tokenManager.updateToken(tokens)
+
     // Re-initialize the SDK with the new in-memory token
     const sdkToken = this.tokenManager.getSdkAccessToken()
     if (sdkToken) {
