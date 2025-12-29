@@ -34,10 +34,23 @@ concurrency:
 
 env:
   FORCE_COLOR: 1
-  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
-  SESSION_ID: '${{ github.event.pull_request.number || github.ref_name || github.run_id }}'
 
 jobs:
+  prepare-env:
+    name: 📝 Prepare Environment
+    runs-on: ubuntu-latest
+    outputs:
+      session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sanitize SESSION_ID
+        id: sanitize_id
+        uses: ./.github/actions/sanitize-string
+        with:
+          value: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+
   test-actions:
     name: ⚙️ Test Composite Actions
     runs-on: ubuntu-latest
@@ -103,136 +116,19 @@ jobs:
           fi
           echo "✅ Test Case Passed: ${{ matrix.name }}"
 
-  infra-setup:
-    name: 🏗️ Infra Setup
-    needs: test-actions
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.branch || github.ref }}
-          fetch-depth: 0
-          clean: true
-
-      - name: Sanitize SESSION_ID
-        id: sanitize_id
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
-
-      - name: Update Environment for Sanitized ID
-        run: echo "SESSION_ID=${{ steps.sanitize_id.outputs.sanitized-value }}" >> $GITHUB_ENV
-
-      - name: Verify Lockfile
-        run: |
-          if [ ! -f pnpm-lock.yaml ]; then
-            echo "::error::pnpm-lock.yaml is missing! caching will fail."
-            exit 1
-          fi
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-
-      # Enable Corepack to manage pnpm. This is the recommended approach for Node.js 20+
-      # and avoids potential issues with third-party actions like pnpm/action-setup.
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Cache pnpm Store
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: pnpm-store-${{ runner.os }}-node20-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-node20-
-            pnpm-store-${{ runner.os }}-
-
-      - name: Cache Playwright
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json', 'pnpm-lock.yaml') }}
-          restore-keys: |
-            playwright-${{ runner.os }}-
-
-      - name: Configure Persistent Store
-        shell: bash
-        run: |
-          mkdir -p ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set side-effects-cache true
-
-      - name: Create Runtime Envs
-        run: |
-          mkdir -p logs
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
-      - name: Run Setup Script
-        run: |
-          chmod +x ./scripts/setup.sh
-          ./scripts/setup.sh
-
-      - name: Install Playwright (Binary Only)
-        run: pnpm exec playwright install chromium
-
   quality-check:
     name: 🛡️ Quality Check
-    needs: [infra-setup, test-actions]
+    needs: [prepare-env, test-actions]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      SESSION_ID: ${{ needs.infra-setup.outputs.session_id }}
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
         with:
           ref: ${{ inputs.branch || github.ref }}
-          clean: false
-
-      - uses: actions/setup-node@v4
-        with: { node-version: '20.x' }
-
-      # Enable Corepack to manage pnpm. This is the recommended approach for Node.js 20+
-      # and avoids potential issues with third-party actions like pnpm/action-setup.
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Configure Session-specific Cache
-        run: |
-          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set side-effects-cache true
-
-      - name: Verify Dependencies
-        id: setup_deps
-        shell: bash
-        run: |
-          set -o pipefail
-          {
-            if [ ! -d "node_modules" ]; then
-              echo "node_modules missing, reinstalling dependencies..."
-              pnpm install --frozen-lockfile
-              pnpm exec playwright install chromium
-            fi
-          } 2>&1 | tee setup-output.log
-
-      - name: Upload Setup Report
-        if: failure() && steps.setup_deps.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: setup-report
-          path: setup-output.log
-          retention-days: 3
+          fetch-depth: 0
 
       - name: Run Knip
         id: knip
@@ -244,19 +140,11 @@ jobs:
 
       - name: Upload Knip Report
         if: always() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
-        id: upload-knip
         uses: actions/upload-artifact@v4
         with:
           name: knip-report
           path: knip-output.txt
           retention-days: 3
-
-      - name: Handle Knip Upload Failure
-        if: failure() && steps.upload-knip.conclusion == 'failure'
-        run: |
-          echo "::error::Failed to upload knip report artifact"
-          echo "::notice::Knip output may be available in logs above"
-          exit 1
 
       - name: Lint Code
         id: lint
@@ -267,20 +155,12 @@ jobs:
         continue-on-error: true
 
       - name: Upload Lint Report
-        if: always() && steps.lint.outcome == 'failure' && hashFiles('lint-output.log') != ''
-        id: upload-lint
+        if: steps.lint.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: lint-report
           path: lint-output.log
           retention-days: 3
-
-      - name: Handle Lint Upload Failure
-        if: failure() && steps.upload-lint.conclusion == 'failure'
-        run: |
-          echo "::error::Failed to upload lint report artifact"
-          echo "::notice::Lint output may be available in logs above"
-          exit 1
 
       - name: Fail on Lint Errors
         if: steps.lint.outcome == 'failure'
@@ -306,61 +186,33 @@ jobs:
 
       - name: Upload Build Artifacts
         if: success()
-        id: upload-build
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           include-hidden-files: true
           path: |
-            dist/**
-            .next/**
+            dist/
+            .next/
           retention-days: 1
-      
-      - name: Handle Build Artifact Upload Failure
-        if: failure() && steps.upload-build.conclusion == 'failure'
-        run: |
-          echo "::error::Failed to upload build artifacts"
-          echo "::notice::Build output may be available in logs above"
-          exit 1
 
   core-tests:
     name: 🧪 Core Logic
-    needs: [infra-setup, quality-check]
+    needs: [prepare-env, quality-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      SESSION_ID: ${{ needs.infra-setup.outputs.session_id }}
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
         with:
           ref: ${{ inputs.branch || github.ref }}
-          clean: false
-
-      - uses: actions/setup-node@v4
-        with: { node-version: '20.x' }
-
-      # Enable Corepack to manage pnpm. This is the recommended approach for Node.js 20+
-      # and avoids potential issues with third-party actions like pnpm/action-setup.
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Configure Session-specific Cache
-        run: |
-          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set side-effects-cache true
+          fetch-depth: 0
 
       - name: Configure Envs
         run: |
           echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
           echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
-      - name: Verify Dependencies
-        run: |
-          if [ ! -d "node_modules" ]; then
-            echo "node_modules missing, reinstalling dependencies..."
-            pnpm install --frozen-lockfile
-            pnpm exec playwright install chromium
-          fi
 
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
@@ -368,44 +220,6 @@ jobs:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: .
           merge-multiple: true
-
-      - name: Verify Build Presence (Debug)
-        run: |
-          echo "Checking for build artifacts..."
-          ls -la | head -20
-          if [ -d ".next" ]; then
-            echo "✅ .next directory found"
-          else
-            echo "⚠️ .next directory MISSING"
-          fi
-          if [ -d "dist" ]; then
-            echo "✅ dist directory found"
-          else
-            echo "⚠️ dist directory MISSING"
-          fi
-
-      - name: Verify Server Build
-        run: |
-          if [ ! -f "dist/server.js" ]; then
-            echo "::error::Server build failed - dist/server.js not found"
-            echo "Contents of dist directory:"
-            ls -la dist/ 2>/dev/null || echo "dist directory does not exist"
-            echo "Contents of current directory:"
-            ls -la | grep -E "^d" | head -20
-            exit 1
-          fi
-          echo "✅ Server successfully built at dist/server.js"
-
-      - name: Check dist Before Infra Tests
-        run: |
-          echo "Checking dist before infra tests..."
-          if [ -f "dist/server.js" ]; then
-            echo "✅ dist/server.js exists"
-            ls -lh dist/server.js
-          else
-            echo "❌ dist/server.js NOT FOUND"
-            ls -la dist/ 2>/dev/null || echo "dist directory does not exist"
-          fi
 
       - name: Run Infra Tests
         id: infra-tests
@@ -428,7 +242,6 @@ jobs:
 
       - name: Upload Test Reports
         if: always() && (steps.infra-tests.outcome == 'failure' || steps.unit-tests.outcome == 'failure')
-        id: upload-tests
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
@@ -437,51 +250,24 @@ jobs:
             unit-tests.log
           retention-days: 3
 
-      - name: Handle Test Report Upload Failure
-        if: failure() && steps.upload-tests.conclusion == 'failure'
-        run: |
-          echo "::error::Failed to upload test report artifacts"
-          echo "::notice::Test logs are available in the workflow logs above"
-          exit 1
-
   visual-tests:
     name: 🎨 Visual Regression
-    needs: [infra-setup, quality-check]
+    needs: [prepare-env, quality-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      SESSION_ID: ${{ needs.infra-setup.outputs.session_id }}
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
         with:
           ref: ${{ inputs.branch || github.ref }}
-          clean: false
-
-      - uses: actions/setup-node@v4
-        with: { node-version: '20.x' }
-
-      # Enable Corepack to manage pnpm. This is the recommended approach for Node.js 20+
-      # and avoids potential issues with third-party actions like pnpm/action-setup.
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Configure Session-specific Cache
-        run: |
-          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set side-effects-cache true
+          fetch-depth: 0
 
       - name: Configure Envs
         run: |
           echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
           echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
-      - name: Verify Dependencies
-        run: |
-          if [ ! -d "node_modules" ]; then
-            echo "node_modules missing, reinstalling dependencies..."
-            pnpm install --frozen-lockfile
-            pnpm exec playwright install chromium
-          fi
 
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
@@ -508,7 +294,7 @@ jobs:
           retention-days: 3
 
       - name: Upload Report on Failure
-        if: always() && steps.visual-tests.outcome == 'failure'
+        if: failure()
         uses: actions/upload-artifact@v5
         with:
           name: playwright-report-visual-${{ env.SESSION_ID }}
@@ -556,48 +342,10 @@ jobs:
   quality-report:
     name: 📊 Quality Report
     if: always()
-    needs: [infra-setup, quality-check, core-tests, visual-tests]
+    needs: [prepare-env, quality-check, core-tests, visual-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Collect Failure Information
-        id: failures
-        env:
-          INFRA_RESULT: ${{ needs.infra-setup.result }}
-          CODE_QUALITY_RESULT: ${{ needs.quality-check.result }}
-          CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
-          VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
-        run: |
-          set +e
-          
-          FAILED_JOBS=""
-          FAILURE_COUNT=0
-          
-          if [ "$INFRA_RESULT" != "success" ] && [ "$INFRA_RESULT" != "skipped" ]; then
-            FAILED_JOBS="$FAILED_JOBS- Infrastructure Setup ($INFRA_RESULT)"$'\n'
-            FAILURE_COUNT=$((FAILURE_COUNT + 1))
-          fi
-
-          if [ "$CODE_QUALITY_RESULT" != "success" ] && [ "$CODE_QUALITY_RESULT" != "skipped" ]; then
-            FAILED_JOBS="$FAILED_JOBS- Code Quality ($CODE_QUALITY_RESULT)"$'\n'
-            FAILURE_COUNT=$((FAILURE_COUNT + 1))
-          fi
-          
-          if [ "$CORE_TESTS_RESULT" != "success" ] && [ "$CORE_TESTS_RESULT" != "skipped" ]; then
-            FAILED_JOBS="$FAILED_JOBS- Core Tests ($CORE_TESTS_RESULT)"$'\n'
-            FAILURE_COUNT=$((FAILURE_COUNT + 1))
-          fi
-          
-          if [ "$VISUAL_TESTS_RESULT" != "success" ] && [ "$VISUAL_TESTS_RESULT" != "skipped" ]; then
-            FAILED_JOBS="$FAILED_JOBS- Visual Regression Tests ($VISUAL_TESTS_RESULT)"$'\n'
-            FAILURE_COUNT=$((FAILURE_COUNT + 1))
-          fi
-          
-          echo "FAILED_JOBS<<EOF" >> $GITHUB_ENV
-          echo "$FAILED_JOBS" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          echo "FAILURE_COUNT=$FAILURE_COUNT" >> $GITHUB_ENV
 
       - name: Download All Test Logs
         uses: actions/download-artifact@v4
@@ -642,9 +390,7 @@ jobs:
         continue-on-error: true
 
       - name: Post Comprehensive Quality Report
-        if: always()
         env:
-          INFRA_RESULT: ${{ needs.infra-setup.result }}
           QUALITY_RESULT: ${{ needs.quality-check.result }}
           CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
           VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
@@ -688,22 +434,12 @@ jobs:
             echo ""
             echo "| Check | Status |"
             echo "|-------|--------|"
-            echo "| Infra Setup | $([ "$INFRA_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_RESULT) |"
             echo "| Code Quality | $([ "$QUALITY_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$QUALITY_RESULT) |"
             echo "| Core Tests | $([ "$CORE_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$CORE_TESTS_RESULT) |"
             echo "| Visual Tests | $([ "$VISUAL_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_RESULT) |"
             echo ""
 
             FAILED_ANY=0
-
-            if [ "$INFRA_RESULT" != "success" ] && [ "$INFRA_RESULT" != "skipped" ]; then
-              FAILED_ANY=1
-              echo "<details><summary><strong>❌ Infrastructure Setup Failures</strong></summary>"
-              echo ""
-              echo "Infrastructure setup failed. Check the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
-              echo ""
-              echo "</details>"
-            fi
 
             if [ "$QUALITY_RESULT" != "success" ] && [ "$QUALITY_RESULT" != "skipped" ]; then
               FAILED_ANY=1
