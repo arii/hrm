@@ -1,0 +1,33 @@
+name: Test Setup Env Action
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-setup-env:
+    name: Test Setup Env
+    runs-on: self-hosted
+    steps:
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+        with:
+          node-version: '20.x'
+          gh-version: '2.53.0'
+
+      - name: Verify Node.js Version
+        run: |
+          node -v
+          node -v | grep "v20"
+
+      - name: Verify pnpm Version
+        run: |
+          pnpm -v
+
+      - name: Verify GitHub CLI Version
+        run: |
+          gh --version
+          gh --version | grep "2.53.0"
+
+      - name: Verify Dependencies
+        run: |
+          ls node_modules
