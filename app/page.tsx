@@ -78,6 +78,7 @@ const Dashboard = () => {
           gap: 2,
           // Enforce a minimum height for the main dashboard widgets to prevent layout shift
           gridAutoRows: 'minmax(220px, auto)',
+          alignItems: 'stretch', // Ensure all items in the row have the same height
         }}
       >
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
