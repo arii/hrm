@@ -357,4 +357,78 @@ describe('WebSocket Manager', () => {
       )
     })
   })
+
+  describe('SPOTIFY_TOKEN_UPDATE Handling', () => {
+    it('should call spotifyService.handleTokenUpdate on SPOTIFY_TOKEN_UPDATE message', (done) => {
+      const tokenPayload = {
+        accessToken: 'test_access_token',
+        refreshToken: 'test_refresh_token',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+        scope: 'test_scope',
+      }
+      const message = JSON.stringify({
+        type: 'SPOTIFY_TOKEN_UPDATE',
+        payload: tokenPayload,
+      })
+
+      mockWs.emit('message', message.toString());
+
+      process.nextTick(() => {
+        expect(mockServices.spotifyService.handleTokenUpdate).toHaveBeenCalledWith({
+            provider: 'spotify',
+            sub: 'unknown',
+            access_token: tokenPayload.accessToken,
+            refresh_token: tokenPayload.refreshToken,
+            expires_in: tokenPayload.expiresIn,
+            token_type: tokenPayload.tokenType,
+            scope: tokenPayload.scope,
+            obtainedAt: expect.any(Number),
+        });
+        done();
+      });
+    })
+
+    it('should log a warning if expiresIn is not provided', (done) => {
+        const tokenPayload = {
+            accessToken: 'test_access_token',
+        };
+        const message = JSON.stringify({
+            type: 'SPOTIFY_TOKEN_UPDATE',
+            payload: tokenPayload,
+        });
+
+        mockWs.emit('message', message.toString());
+
+        process.nextTick(() => {
+            expect(logger.warn).toHaveBeenCalledWith(expect.any(Object), 'expiresIn is not defined. Defaulting to 3600.');
+            done();
+        });
+    });
+
+    it('should log an error if handleTokenUpdate throws an exception', (done) => {
+        const errorMessage = 'Token update failed';
+        mockServices.spotifyService.handleTokenUpdate.mockReturnValue(Promise.reject(new Error(errorMessage)));
+
+        const tokenPayload = {
+            accessToken: 'test_access_token',
+        };
+        const message = JSON.stringify({
+            type: 'SPOTIFY_TOKEN_UPDATE',
+            payload: tokenPayload,
+        });
+
+        mockWs.emit('message', message.toString());
+
+        process.nextTick(() => {
+            expect(logger.error).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    error: errorMessage,
+                }),
+                'Failed to handle Spotify token update.'
+            );
+            done();
+        });
+    });
+  })
 })

@@ -195,7 +195,7 @@ const broadcastState = () => {
 /**
  * Handles incoming JSON messages from client applications.
  */
-const handleIncomingMessage = async (
+const handleIncomingMessage = (
   ws: ExtWebSocket,
   messageString: string,
   clientId: string
@@ -209,9 +209,10 @@ const handleIncomingMessage = async (
         const { accessToken, refreshToken, expiresIn, tokenType, scope } =
           message.payload
         logger.info({ clientId }, 'Received Spotify token update from client.')
-        try {
-          // Hydrate the service with the user's token
-          await services.spotifyService.handleTokenUpdate({
+        if (!expiresIn) {
+          logger.warn({ clientId }, 'expiresIn is not defined. Defaulting to 3600.')
+        }
+        Promise.resolve(services.spotifyService.handleTokenUpdate({
             provider: 'spotify',
             sub: 'unknown',
             access_token: accessToken,
@@ -220,13 +221,12 @@ const handleIncomingMessage = async (
             token_type: tokenType || 'Bearer',
             scope: scope || '',
             obtainedAt: Date.now(),
-          })
-        } catch (error) {
-          logger.error(
-            { clientId, error },
-            'Failed to handle Spotify token update.'
-          )
-        }
+        })).catch(error => {
+            logger.error(
+                { clientId, error: (error as Error).message },
+                'Failed to handle Spotify token update.'
+            )
+        })
         break
       }
       case 'PING': {
