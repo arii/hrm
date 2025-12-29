@@ -4,6 +4,7 @@
  * and the client hooks via the WebSocket connection.
  */
 import { WebSocket } from 'ws'
+import { ClientId, DeviceId } from './branded'
 import type {
   HrmStreamData as HrmData,
   TimerData,
@@ -19,7 +20,7 @@ import type {
  * unique identifier and the last ping time for watchdog monitoring.
  */
 export interface ExtWebSocket extends WebSocket {
-  clientId: string
+  clientId: ClientId
   isAlive: boolean
   clientType?: 'dashboard' | 'controller'
 }
@@ -59,7 +60,7 @@ export type StateSnapshot = Omit<InitialStateSnapshotPayload, 'hrmData'>
 // TOPIC-BASED REAL-TIME MESSAGES
 // Use a discriminated union for type-safe message handling
 export interface ActiveAlert {
-  clientId: string
+  clientId: ClientId
   code: 'HRM_STALE' | 'BAD_PLACEMENT'
   message: string
   severity: 'warning' | 'error'
@@ -128,7 +129,7 @@ export interface TimerConfigMessage {
 export interface SpotifyCommandMessage {
   type: 'SPOTIFY_COMMAND'
   command: SpotifyCommand
-  deviceId?: string
+  deviceId?: DeviceId
   volume?: number
   playlistUri?: string // Added to support your incoming message
   contextUri?: string // Generic support for albums/artists
