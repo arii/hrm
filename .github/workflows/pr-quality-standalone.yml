@@ -286,10 +286,6 @@ jobs:
             reports/performance/
           retention-days: 7
 
-      # This step is intentionally empty.
-      - name: Report Failure to Jules
-        if: false
-        run: echo "This step is disabled. Review is triggered by the gemini-review-on-failure job."
 
       # Fail the job if any tests failed (must be at the very end)
       - name: Fail Workflow on Test Failures

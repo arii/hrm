@@ -81,7 +81,7 @@ export function getModelFallbacks(): string[] {
 
 const MODEL_FALLBACKS = getModelFallbacks()
 
-class JsonProcessor {
+export class JsonProcessor {
   /**
    * Extracts a JSON code block from a string.
    * @param text The string to search for a JSON block.
