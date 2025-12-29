@@ -98,7 +98,9 @@ const HrmConnectionPanel = () => {
         display: 'flex',
         flexWrap: 'wrap',
         gap: 2,
-        height: '100%', // Ensure the panel fills the grid cell height
+        flexGrow: 1,
+        width: { xs: '100%', lg: 'calc(50% - 16px)' },
+        minHeight: { xs: 'auto', md: 220 }, // Stabilize height on larger screens
       }}
     >
       {isLoading || tileData.length === 0 ? (

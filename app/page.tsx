@@ -71,21 +71,13 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-          gap: 2,
-          // Enforce a minimum height for the main dashboard widgets to prevent layout shift
-          gridAutoRows: 'minmax(220px, auto)',
-          alignItems: 'stretch', // Ensure all items in the row have the same height
-        }}
-      >
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        {/* minWidth: 0 is a grid item fix to prevent content overflow */}
-        <Box sx={{ minWidth: 0 }}>
+        <Box
+          sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
+        >
           <TimerDisplay />
         </Box>
 
@@ -93,8 +85,7 @@ const Dashboard = () => {
           <HrmConnectionPanel />
         </ErrorBoundary>
 
-        {/* This Box now correctly spans all columns in the parent grid */}
-        <Box sx={{ gridColumn: '1 / -1' }}>
+        <Box sx={{ width: '100%' }}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
             <WorkoutTableViewer docId={DOC_ID} />
           ) : (
