@@ -65,12 +65,17 @@ jobs:
           APPROVED=$(gh pr view "$PR_NUMBER" --json reviews --jq '[.reviews[] | select(.state == "APPROVED")] | length')
           REVIEW_COMMENTS=$(gh pr view "$PR_NUMBER" --json comments --jq '[.comments[] | select(.author.login == "arii")] | length')
           TOTAL_REVIEWS=$(gh pr view "$PR_NUMBER" --json reviews --jq '[.reviews[]] | length')
+          LAST_COMMENT_TIMESTAMP=$(gh pr view "$PR_NUMBER" --json comments --jq -r '[.comments[] | select(.author.login == "arii")] | .[-1].createdAt // ""')
           echo "CHANGES_REQUESTED=${CHANGES_REQUESTED:-0}" >> $GITHUB_ENV
           echo "APPROVED=${APPROVED:-0}" >> $GITHUB_ENV
           echo "REVIEW_COMMENTS=${REVIEW_COMMENTS:-0}" >> $GITHUB_ENV
           echo "TOTAL_REVIEWS=${TOTAL_REVIEWS:-0}" >> $GITHUB_ENV
+          echo "LAST_COMMENT_TIMESTAMP=$LAST_COMMENT_TIMESTAMP" >> $GITHUB_ENV
 
       - name: Decide Re-Review Strategy
+        # This step determines whether a re-review is needed based on the current state of the PR.
+        # It considers factors like the number of significant changes, the commit message,
+        # and the time since the last review comment.
         id: decision
         env:
           IS_MERGE: ${{ env.IS_MERGE || 0 }}
@@ -80,6 +85,7 @@ jobs:
           APPROVED: ${{ env.APPROVED || 0 }}
           REVIEW_COMMENTS: ${{ env.REVIEW_COMMENTS || 0 }}
           TOTAL_REVIEWS: ${{ env.TOTAL_REVIEWS || 0 }}
+          LAST_COMMENT_TIMESTAMP: ${{ env.LAST_COMMENT_TIMESTAMP }}
         run: |
           REQ="${CHANGES_REQUESTED:-0}"
           SIG="${SIGNIFICANT_CHANGES:-0}"
@@ -89,6 +95,20 @@ jobs:
           SKIP_REASON="no criteria met"
           
           echo "::debug::Analyzing for re-review. CHANGES_REQUESTED=${REQ}, SIGNIFICANT_CHANGES=${SIG}"
+
+          # Skip if the last comment was very recent to avoid rapid-fire reviews
+          if [ -n "$LAST_COMMENT_TIMESTAMP" ]; then
+            COMMENT_TIME=$(date -d "$LAST_COMMENT_TIMESTAMP" +%s)
+            CURRENT_TIME=$(date +%s)
+            TIME_DIFF=$((CURRENT_TIME - COMMENT_TIME))
+            if [ "$TIME_DIFF" -lt 300 ]; then # 5 minutes
+              SKIP_REASON="too recent"
+              echo "::debug::Skipping review: Last comment was only ${TIME_DIFF} seconds ago."
+              echo "needs-review=false" >> $GITHUB_OUTPUT
+              echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
 
           # Skip if no significant changes (just response comments, no code changes)
           if [[ "$SIG" -eq 0 ]]; then
