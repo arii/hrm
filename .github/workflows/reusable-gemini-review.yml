@@ -160,7 +160,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           # Pass secrets for redaction
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ARI_PAT: ${{ secrets.ARI_PAT }}
         run: |
           # Get the initial list of failed checks
@@ -191,8 +190,8 @@ jobs:
               # Fetch logs, if fails, write a more descriptive error to the log file itself
               gh job view "$job_id" --log > "$raw_log_file" 2>&1 || echo "Error: Failed to fetch logs for job ${job_id}. This may be due to the job still being in progress or permissions issues." > "$raw_log_file"
               
-              # Enforce a hard size limit on the log file (e.g., 15KB)
-              truncate -s 15K "$raw_log_file"
+              # Enforce a hard size limit on the log file (e.g., 15KB) by taking the tail of the file
+              tail -c 15K "$raw_log_file" > "$raw_log_file.tmp" && mv "$raw_log_file.tmp" "$raw_log_file"
 
               # Run redaction script, with a more descriptive fallback error message
               if ! pnpm tsx scripts/redact-secrets.ts "$raw_log_file" "$redacted_log_file"; then
