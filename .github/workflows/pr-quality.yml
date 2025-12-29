@@ -124,6 +124,9 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
@@ -203,6 +206,9 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
@@ -258,6 +264,9 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
