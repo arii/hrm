@@ -20,15 +20,23 @@ async function _tryHydrateSpotifyService(req: NextRequest): Promise<void> {
     token = await getToken({ req, secret: env.NEXTAUTH_SECRET });
     userId = token?.sub || null;
 
-    if (token && token.accessToken && token.refreshToken) {
+    if (
+        token &&
+        typeof token.accessToken === 'string' &&
+        typeof token.refreshToken === 'string'
+    ) {
       const spotifyService = serviceContainer.get('spotifyService');
+
+      const expiresIn = token.exp && token.iat
+        ? Math.max(0, token.exp - token.iat)
+        : 3600;
 
       await spotifyService.handleTokenUpdate({
         provider: 'spotify',
         sub: token.sub || 'unknown',
-        access_token: token.accessToken as string,
-        refresh_token: token.refreshToken as string,
-        expires_in: 3600, // Nominal value; the service handles its own refresh logic.
+        access_token: token.accessToken,
+        refresh_token: token.refreshToken,
+        expires_in: expiresIn,
         scope: '',
         obtainedAt: Date.now()
       });
