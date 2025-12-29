@@ -1,36 +1,12 @@
 # .github/actions/setup-env/action.yml
 name: 'Setup Environment'
-description: 'Checks out code, sets up Node.js and pnpm, and installs dependencies.'
-
-inputs:
-  fetch-depth:
-    description: 'Number of commits to fetch. 0 for all history.'
-    required: false
-    default: '1'
-  ref:
-    description: 'The branch, tag or SHA to checkout.'
-    required: false
+description: 'Sets up Node.js and pnpm, installs dependencies and Playwright.'
 
 runs:
   using: 'composite'
   steps:
-    - name: 'Checkout Code'
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.ref }}
-        fetch-depth: ${{ inputs.fetch-depth }}
-
-    - name: 'Sanitize workspace'
-      shell: bash
-      run: |
-        git config --global --add safe.directory "$GITHUB_WORKSPACE"
-        git clean -xdf
-        git reset --hard
-
     - name: 'Setup pnpm'
-      uses: pnpm/action-setup@v3
-      with:
-        version: 9
+      uses: pnpm/action-setup@v4
 
     - name: 'Setup Node.js'
       uses: actions/setup-node@v4
@@ -66,3 +42,27 @@ runs:
     - name: 'Install Dependencies'
       shell: bash
       run: pnpm install --frozen-lockfile
+
+    - name: Cache Playwright
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          playwright-${{ runner.os }}-
+
+    - name: 'Install Playwright (Chromium)'
+      shell: bash
+      run: pnpm exec playwright install chromium
+
+    - name: Configure Envs
+      shell: bash
+      run: |
+        echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
+        echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID || github.run_id }}" >> .env.local
+
+    - name: 'Run Setup Script'
+      shell: bash
+      run: |
+        chmod +x ./scripts/setup.sh
+        ./scripts/setup.sh
