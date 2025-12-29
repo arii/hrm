@@ -81,26 +81,27 @@ jobs:
           REVIEW_COMMENTS: ${{ env.REVIEW_COMMENTS || 0 }}
           TOTAL_REVIEWS: ${{ env.TOTAL_REVIEWS || 0 }}
         run: |
+          REQ="${CHANGES_REQUESTED:-0}"
+          SIG="${SIGNIFICANT_CHANGES:-0}"
+
           NEEDS_REVIEW="false"
           REVIEW_TYPE="none"
           SKIP_REASON="no criteria met"
           
           # Skip if no significant changes (just response comments, no code changes)
-          if [[ "$SIGNIFICANT_CHANGES" -eq 0 ]]; then
+          if [[ "$SIG" -eq 0 ]]; then
             SKIP_REASON="no code changes"
-          elif [[ "$IS_MERGE" -eq 1 && "$SIGNIFICANT_CHANGES" -eq 0 ]]; then
+          elif [[ "$IS_MERGE" -eq 1 && "$SIG" -eq 0 ]]; then
             SKIP_REASON="merge"
           elif [[ "$COMMIT_MSG" =~ ^(docs?|chore|style): ]]; then
             SKIP_REASON="trivial"
-          elif [[ "$CHANGES_REQUESTED" -gt 0 && "$SIGNIFICANT_CHANGES" -lt 2 ]]; then
-            SKIP_REASON="insignificant changes"
-          elif [[ "$TOTAL_REVIEWS" -eq 0 && "$SIGNIFICANT_CHANGES" -gt 0 ]]; then
+          elif [[ "$TOTAL_REVIEWS" -eq 0 && "$SIG" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="initial"
-          elif [[ "$CHANGES_REQUESTED" -gt 0 && "$SIGNIFICANT_CHANGES" -gt 0 ]]; then
+          elif [[ "$REQ" -gt 0 && "$SIG" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="full"
-          elif [[ "$APPROVED" -gt 0 && "$SIGNIFICANT_CHANGES" -gt 0 ]]; then
+          elif [[ "$APPROVED" -gt 0 && "$SIG" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="verification"
           else
@@ -142,8 +143,6 @@ jobs:
               summary = 'No code changes detected. Review will resume when code changes are pushed.';
             } else if (skipReason === 'awaiting code changes') {
               summary = 'Awaiting code changes from Jules. Review will resume when code is updated.';
-            } else if (skipReason === 'insignificant changes') {
-              summary = 'Insignificant changes detected. Review will resume when more substantial code changes are pushed.';
             } else if (skipReason === 'no') {
               summary = 'No re-review criteria were met.';
             }
