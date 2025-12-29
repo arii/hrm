@@ -128,9 +128,7 @@ jobs:
           if [ -z "$CURRENT_BODY" ]; then
             NEW_BODY="$METADATA"
           else
-            NEW_BODY="$CURRENT_BODY
-
-$METADATA"
+            NEW_BODY=$(printf '%s\n\n%s' "$CURRENT_BODY" "$METADATA")
           fi
           
           # Update PR using gh pr edit with proper escaping
