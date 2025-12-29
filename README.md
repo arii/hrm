@@ -239,20 +239,23 @@ The server will start with:
 
 ### Production Build
 
+To create a production-ready build, run the following command:
+
 ```bash
-# Build TypeScript server and Next.js app (optional; pnpm run start auto-builds if needed)
+# 1. Build the Next.js app with standalone output
 pnpm run build
 
-# Start with PM2 (requires .env.production)
+# 2. Start the server using the standalone entry point
+# This requires a .env.production file.
 pnpm run start
 
-# View logs
+# 3. View logs
 pnpm run pm2:logs
 ```
 
-`pnpm run start` now checks for `.env.production` and verifies build artifacts. When `.next/` or
-`dist/server.mjs` are missing it runs `pnpm run build` before launching PM2, so manual builds are
-only required when you want to inspect the output ahead of time.
+The `pnpm run build` command is configured for a **standalone** output, as defined in `next.config.js`. This process bundles only the essential files required for production into a `.next/standalone` directory. This creates a lean, production-optimized server and results in smaller Docker images and more reliable deployments, making it ideal for containerized environments.
+
+Because of this standalone output, the application cannot be started with the standard `next start` command. Instead, it must be run by directly executing the server file within the standalone directory (`.next/standalone/server.js`). The `pnpm run start` script is configured to handle this, using PM2 for process management.
 
 ## Project Structure
 
