@@ -316,6 +316,7 @@ interface FailedCheck {
   name: string
   conclusion: string
   detailsUrl: string
+  logs?: string // Added optional logs field
 }
 
 function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
@@ -331,7 +332,8 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
       const isValid =
         typeof item.name === 'string' &&
         typeof item.conclusion === 'string' &&
-        typeof item.detailsUrl === 'string'
+        typeof item.detailsUrl === 'string' &&
+        (typeof item.logs === 'string' || typeof item.logs === 'undefined') // Validate logs field
       if (!isValid) {
         console.warn('Warning: Invalid item in FAILED_CHECKS_JSON:', item)
       }
@@ -404,35 +406,42 @@ function buildReviewPrompt(
       )
       .join('\n')}`
 
-    const guidance = context.failedChecks
+    const logsSection = context.failedChecks
       .map((check) => {
-        const key = Object.keys(CHECK_FIX_GUIDANCE).find((key) =>
-          check.name.toLowerCase().includes(key)
-        )
-        return key
-          ? `- **${check.name}**: ${CHECK_FIX_GUIDANCE[key]}`
-          : `- **${check.name}**: Check the logs linked above for details.`
+        // Limit log size to avoid excessively large prompts
+        const truncatedLog =
+          check.logs && check.logs.length > 15000
+            ? check.logs.substring(0, 15000) + '\n... [LOGS TRUNCATED]'
+            : check.logs
+        return `
+<details>
+<summary><strong>${check.name}</strong> (${check.conclusion})</summary>
+
+\`\`\`
+${truncatedLog || 'No logs available.'}
+\`\`\`
+
+</details>
+`
       })
       .join('\n')
 
     prompt += `
-
 ## 🚨 CI Failure Analysis
-
-The following CI checks failed. Your primary task is to identify the cause of these failures in the code and provide specific guidance on how to fix them.
+The following CI checks failed. Your primary task is to **analyze the provided logs** to identify the root cause and suggest a specific code fix.
 
 ${checksTable}
 
-### How to Fix Common Failures:
-${guidance}
+### Failed Job Logs
+${logsSection}
 
 **Your Task:**
-1.  **Analyze the diff** to find the code that likely caused these failures.
-2.  **Provide a clear explanation** of why each check failed.
-3.  **Offer specific, actionable code changes** to fix the failures.
+1.  **Analyze the logs** for each failed check to understand the error.
+2.  **Examine the diff** to find the code that caused the failure.
+3.  **Provide a clear, root-cause explanation** of the failure.
+4.  **Offer a specific, actionable code change** to fix the issue.
 
 ---
-
 `
   }
 
