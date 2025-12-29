@@ -734,10 +734,11 @@ async function runReviewPreset(
     const result = jsonProcessor.process(text || '')
 
     if (result.success) {
+      const reviewData = result.data as { reviewComment?: string }
       // It's valid JSON, but we should still check if the content is meaningful.
       if (
-        !result.data.reviewComment ||
-        result.data.reviewComment.trim().length < 20
+        !reviewData.reviewComment ||
+        reviewData.reviewComment.trim().length < 20
       ) {
         console.warn(
           'Warning: Parsed JSON has an empty or short review comment. Injecting fallback.'
@@ -760,9 +761,11 @@ async function runReviewPreset(
           category: 'Invalid JSON Response',
           message:
             'The response from the generative AI was not valid JSON, even after attempting to extract it from markdown.',
-          details: result.data, // Contains the raw response for debugging.
+          details: result.data, // Contains the error info from JsonProcessor.
         },
-        reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${result.raw}\n\`\`\`\n\n</details>`,
+        reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${
+          text || ''
+        }\n\`\`\`\n\n</details>`,
         labels: ['review-failed'],
         verdict: 'comment',
       }
