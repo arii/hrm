@@ -300,7 +300,33 @@ ${task}
 
   try {
     const text = await generateContentWithFallback(genAI, prompt)
-    await writeOutput(text, outputFile)
+    let outputContent = text
+
+    if (outputFile && outputFile.endsWith('.json')) {
+      const jsonProcessor = new JsonProcessor()
+      const result = jsonProcessor.process(text || '')
+
+      if (result.success) {
+        outputContent = JSON.stringify(result.data, null, 2)
+      } else {
+        // The response was not valid JSON. We will format the error.
+        console.error(
+          'Error: Failed to parse JSON response from the model for generic task.'
+        )
+        const errorJson = {
+          error: {
+            category: 'Invalid JSON Response',
+            message:
+              'The response from the generative AI was not valid JSON, even after attempting to extract it from markdown.',
+            details: result.data, // Contains the raw response for debugging.
+          },
+        }
+        outputContent = JSON.stringify(errorJson, null, 2)
+        process.exitCode = 1
+      }
+    }
+
+    await writeOutput(outputContent, outputFile)
   } catch (error) {
     handleError(error)
   }

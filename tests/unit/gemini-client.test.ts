@@ -21,6 +21,13 @@ describe('JsonProcessor', () => {
     expect(result.data).toEqual({ key: 'value' })
   })
 
+  it('should handle a JSON block with no "json" tag', () => {
+    const markdownString = '```\n{"key": "value"}\n```'
+    const result = processor.process(markdownString)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({ key: 'value' })
+  })
+
   it('should return an error for invalid JSON', () => {
     const invalidJson = '{"key": "value",}'
     const result = processor.process(invalidJson)
