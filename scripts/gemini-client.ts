@@ -3,9 +3,13 @@ import {
   SchemaType,
   GoogleGenerativeAIError,
   GenerateContentRequest,
+  GenerativeModel,
 } from '@google/generative-ai'
+import { GoogleAICacheManager, GoogleAIFileManager } from "@google/generative-ai/server";
 import { readFile, writeFile } from 'fs/promises'
+import * as fs from 'fs';
 import path from 'path'
+import { createHash } from 'crypto';
 
 // Simple arg parsing
 const args = process.argv.slice(2)
@@ -20,6 +24,7 @@ const taskFile = getArg('--task-file')
 const contextFiles = getArg('--context')?.split(',') || []
 const outputFile = getArg('--output')
 const preset = getArg('--preset')
+const useCache = args.includes('--use-cache')
 
 // List of models to try in order.
 // `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
@@ -88,6 +93,85 @@ export function getModelFallbacks(): string[] {
 
 const MODEL_FALLBACKS = getModelFallbacks()
 
+// --- Caching Logic ---
+
+async function createCacheForContext(apiKey: string, files: string[], tag: string) {
+  const fileManager = new GoogleAIFileManager(apiKey);
+  const cacheManager = new GoogleAICacheManager(apiKey);
+
+  console.log(`📦 [Cache] Processing ${files.length} context files...`);
+
+  const hash = createHash('sha256');
+  const failedFiles: string[] = [];
+  const uploadedFiles: { fileUri: string, mimeType: string }[] = [];
+
+  // Sequentially process files to ensure correct hashing
+  for (const file of files.filter(f => f.trim().length > 0)) {
+    try {
+      const filePath = path.resolve(process.cwd(), file.trim());
+
+      // Stream-based hashing for each file
+      const stream = fs.createReadStream(filePath);
+      await new Promise((resolve, reject) => {
+          stream.on('data', (chunk) => hash.update(chunk));
+          stream.on('end', resolve);
+          stream.on('error', reject);
+      });
+
+      const uploadResult = await fileManager.uploadFile(filePath, {
+        mimeType: "text/plain",
+        displayName: path.basename(filePath),
+      });
+
+      uploadedFiles.push({
+        fileUri: uploadResult.file.uri,
+        mimeType: uploadResult.file.mimeType
+      });
+    } catch (e) {
+      console.warn(`⚠️ [Cache] Failed to process file ${file}: ${(e as Error).message}`);
+      failedFiles.push(file);
+    }
+  }
+
+
+  if (uploadedFiles.length === 0) {
+    throw new Error(`No files were successfully uploaded for caching. Failed files: ${failedFiles.join(', ')}`);
+  }
+
+  const contentHash = hash.digest('hex').substring(0, 16);
+
+
+  // 2. Create Cache
+  // Use a dedicated model for caching if specified, otherwise default to the primary model.
+  const cacheModel = process.env.GEMINI_CACHE_MODEL || MODEL_FALLBACKS[0];
+  console.log(`💾 [Cache] Creating cache with model: ${cacheModel}...`);
+
+  const ttlSeconds = process.env.GEMINI_CACHE_TTL_SECONDS ? parseInt(process.env.GEMINI_CACHE_TTL_SECONDS, 10) : 3600;
+
+  try {
+    const cacheResult = await cacheManager.create({
+      model: cacheModel,
+      displayName: `CI-${tag}-${contentHash}`,
+      // The cache is set to live for 1 hour (3600 seconds) by default, but can be configured.
+      // This is suitable for CI jobs, as the runner will be ephemeral and the cache
+      // will not be needed after the job completes.
+      ttlSeconds: ttlSeconds,
+      contents: [
+        {
+          role: "user",
+          parts: uploadedFiles.map(fd => ({ fileData: fd })),
+        },
+      ],
+    });
+
+    console.log(`✅ [Cache] Active: ${cacheResult.name}`);
+    return cacheResult;
+  } catch (error) {
+      console.warn(`⚠️ [Cache] Failed to create cache: ${(error as Error).message}`);
+      throw error;
+  }
+}
+
 export class JsonProcessor {
   /**
    * Extracts a JSON code block from a string.
@@ -103,28 +187,19 @@ export class JsonProcessor {
   /**
    * Tries to parse the text as JSON, with fallbacks for markdown code blocks.
    * @param text The raw text response from the model.
-   * @returns An object with success status, the parsed data or error object.
-   * @note The `raw` property has been definitively removed from the successful return type.
-   * Rationale: While debugging is important, the risk of accidentally exposing sensitive
-   * information from a model's raw output in downstream logs or application logic was
-   * deemed too high. To support debugging, the full raw text *is* included in the
-   * error response if JSON parsing fails, providing a safe middle ground.
+   * @returns An object with success status, the parsed data or error object, and the raw text.
    */
-  public process(text: string): {
-    success: boolean
-    data: unknown
-  } {
+  public process(text: string): { success: boolean; data: any; raw: string } {
     try {
       // First, try parsing the text directly.
-      return { success: true, data: JSON.parse(text) }
+      return { success: true, data: JSON.parse(text), raw: text }
     } catch {
       // If direct parsing fails, try to extract JSON from a markdown code block.
       const jsonBlock = this.extractJsonBlock(text)
       if (jsonBlock) {
         try {
-          return { success: true, data: JSON.parse(jsonBlock) }
+          return { success: true, data: JSON.parse(jsonBlock), raw: text }
         } catch (e) {
-          console.error('Error parsing JSON block:', e)
           // If parsing the extracted block fails, return a structured error.
           return {
             success: false,
@@ -133,6 +208,7 @@ export class JsonProcessor {
               message: 'Could not parse the JSON block found in the markdown.',
               rawResponse: text,
             },
+            raw: text,
           }
         }
       }
@@ -144,6 +220,7 @@ export class JsonProcessor {
           message: 'No valid JSON found in the response.',
           rawResponse: text,
         },
+        raw: text,
       }
     }
   }
@@ -186,36 +263,42 @@ async function main() {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
+  let cachedModel: GenerativeModel | null = null;
 
-  let contextContent = ''
+  // Always load file content for the fallback mechanism.
+  const contextParts: string[] = [];
   for (const file of contextFiles) {
     const trimmedFile = file.trim()
     if (!trimmedFile) continue
     try {
-      const content = await readFile(
-        path.resolve(process.cwd(), trimmedFile),
-        'utf-8'
-      )
-      contextContent += `\n\n--- Start of Context File: ${trimmedFile} ---\n${content}\n--- End of Context File: ${trimmedFile} ---\n`
+      const content = await readFile(path.resolve(process.cwd(), trimmedFile), 'utf-8')
+      contextParts.push(`\n\n--- Start of Context File: ${trimmedFile} ---\n${content}\n--- End of Context File: ${trimmedFile} ---\n`)
     } catch (error) {
-      console.warn(
-        `Warning: Could not read context file ${trimmedFile}: ${(error as Error).message}`
-      )
-      contextContent += `\n\n--- Context File: ${trimmedFile} (MISSING/ERROR) ---\n`
+      contextParts.push(`\n\n--- Context File: ${trimmedFile} (MISSING/ERROR) ---\n`)
+    }
+  }
+  const contextContent = contextParts.join('');
+
+  // 1. Attempt Caching Strategy if requested
+  if (useCache && contextFiles.length > 0) {
+    try {
+      const cache = await createCacheForContext(apiKey, contextFiles, preset || 'task');
+      cachedModel = genAI.getGenerativeModelFromCachedContent(cache);
+    } catch (error) {
+      console.warn(`⚠️ [Cache] Cache initialization failed. Error: ${(error as Error).message}`);
+      console.log(`🔄 Falling back to standard text-based context due to CACHE FAILURE: ${(error as Error).message}`);
+      cachedModel = null;
     }
   }
 
   if (preset === 'review') {
-    await runReviewPreset(genAI, contextContent, outputFile)
+    await runReviewPreset(genAI, contextContent, outputFile, cachedModel)
   } else {
-    // Default/Generic mode
+    // Generic Task
     let finalTask = task
     if (taskFile) {
       try {
-        finalTask = await readFile(
-          path.resolve(process.cwd(), taskFile),
-          'utf-8'
-        )
+        finalTask = await readFile(path.resolve(process.cwd(), taskFile), 'utf-8')
       } catch (e) {
         console.error(`Error reading task file ${taskFile}:`, e)
         process.exit(1)
@@ -228,41 +311,52 @@ async function main() {
       )
       process.exit(1)
     }
-    await runGenericTask(genAI, finalTask, contextContent, outputFile)
+    await runGenericTask(genAI, finalTask, contextContent, outputFile, cachedModel)
   }
 }
 
 async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
   prompt: string,
-  config?: Omit<GenerateContentRequest, 'contents'>
+  fullPrompt: string,
+  config?: any,
+  cachedModel?: GenerativeModel | null
 ) {
-  let lastError: Error | null = null
+    // Priority 1: Use Cached Model if available
+  if (cachedModel) {
+    try {
+      console.log(`🚀 Using Cached Model for generation...`);
+      const result = await cachedModel.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        ...config,
+      })
+      return result.response.text()
+    } catch (error: any) {
+      console.warn(`⚠️ Cached model failed (${error.message}). Falling back to standard text-based generation.`);
+      // Fall through to standard loop
+    }
+  }
+
+  // Priority 2: Standard Fallback Loop
+  let lastError
 
   for (const modelName of MODEL_FALLBACKS) {
     console.log(`Attempting to use model: ${modelName}...`)
     try {
       const model = genAI.getGenerativeModel({ model: modelName })
       const result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
         ...config,
       })
       console.log(`Successfully generated content using ${modelName}.`)
       return result.response.text()
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        lastError = error
-      } else {
-        lastError = new Error(String(error))
-      }
-      const errorMessage = (error as Error).message || ''
-      const errorStatus = (error as { status?: number }).status
-
-      const isNotFound = errorMessage.includes('404') || errorStatus === 404
+    } catch (error: any) {
+      lastError = error
+      const isNotFound = error.message?.includes('404') || error.status === 404
       const isBadRequest =
-        errorMessage.includes('400') || errorStatus === 400 // Sometimes invalid model is 400
+        error.message?.includes('400') || error.status === 400 // Sometimes invalid model is 400
       const isRateLimited =
-        errorMessage.includes('429') || errorStatus === 429
+        error.message?.includes('429') || error.status === 429
 
       if (isNotFound || isBadRequest || isRateLimited) {
         let reason = 'Unknown Error'
@@ -273,7 +367,7 @@ async function generateContentWithFallback(
         } else if (isBadRequest) {
           reason = 'Invalid Request'
         }
-        const details = reason === 'Unknown Error' ? `: ${errorMessage}` : ''
+        const details = reason === 'Unknown Error' ? `: ${error.message}` : ''
         console.warn(
           `Model ${modelName} failed (${reason}${details}). Trying next model...`
         )
@@ -311,24 +405,37 @@ async function runGenericTask(
   genAI: GoogleGenerativeAI,
   task: string,
   contextContent: string,
-  outputFile: string | null | undefined
+  outputFile: string | null | undefined,
+  cachedModel?: GenerativeModel | null
 ) {
-  const prompt = `
+  const systemInstructions = `
 You are an AI assistant helping with a software project.
 Please use the provided context files to inform your response.
 Do not hallucinate content that is not in the context files if you are asked about specifics of the project.
+`;
+
+  // For the cached model, the context is already in the cache.
+  // We only need to send the instructions and the task.
+  const prompt = `${systemInstructions}
+
+--- Task ---
+${task}
+`;
+
+  // For the non-cached model, we send everything.
+  const fullPrompt = `${systemInstructions}
 
 ${contextContent}
 
 --- Task ---
 ${task}
-`
+`;
 
   try {
-    const text = await generateContentWithFallback(genAI, prompt)
-    await writeOutput(text, outputFile)
+    const text = await generateContentWithFallback(genAI, prompt, fullPrompt, {}, cachedModel);
+    await writeOutput(text, outputFile);
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 
@@ -407,7 +514,8 @@ function getReviewContextFromEnv(): ReviewContext {
 function buildReviewPrompt(
   diff: string,
   context: ReviewContext,
-  contextContent: string
+  contextContent: string,
+  isCached: boolean
 ): string {
   const isReReview = context.reviewCount > 0
   const reviewIteration = isReReview
@@ -537,9 +645,16 @@ ${context.commitMessages}
   }
 
   // Project Documentation
-  prompt += `\n## Project Documentation & Guidelines
+  // Conditionally include contextContent only if not using a cached model
+  if (!isCached) {
+    prompt += `\n## Project Documentation & Guidelines
 ${contextContent}
-`
+`;
+  } else {
+    prompt += `\n## Project Documentation & Guidelines
+[INFO: Full file content is available in the cached context.]
+`;
+  }
 
   // The actual diff
   // Truncate diff if extremely large
@@ -669,7 +784,8 @@ Make your feedback:
 async function runReviewPreset(
   genAI: GoogleGenerativeAI,
   contextContent: string,
-  outputFile: string | null | undefined
+  outputFile: string | null | undefined,
+  cachedModel?: GenerativeModel | null
 ) {
   const context = getReviewContextFromEnv()
 
@@ -715,10 +831,11 @@ async function runReviewPreset(
     return
   }
 
-  const prompt = buildReviewPrompt(diff, context, contextContent)
+  const fullPrompt = buildReviewPrompt(diff, context, contextContent, false);
+  const cachedPrompt = cachedModel ? buildReviewPrompt(diff, context, contextContent, true) : fullPrompt;
 
   try {
-    const text = await generateContentWithFallback(genAI, prompt, {
+    const text = await generateContentWithFallback(genAI, cachedPrompt, fullPrompt, {
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: {
@@ -734,7 +851,7 @@ async function runReviewPreset(
           required: ['reviewComment', 'labels'],
         },
       },
-    })
+    }, cachedModel)
 
     const jsonProcessor = new JsonProcessor()
     const result = jsonProcessor.process(text || '')

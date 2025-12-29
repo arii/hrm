@@ -206,7 +206,7 @@ jobs:
           FILES_CONTENT: ${{ env.FILES }}
         run: |
           echo "Invoking Gemini Agent..."
-          
+
           # Include current file hashes to help with context
           echo "File state information:" > file_state.txt
           for file in $(echo "$FILES_CONTENT" | tr ',' '\n'); do
@@ -216,7 +216,7 @@ jobs:
               echo "  $file: $LINES lines (hash: $HASH)" >> file_state.txt
             fi
           done
-          
+
           cat > prompt.txt << 'PROMPTEOF'
           You are a code generation assistant. Your task is to generate code changes in unified diff format.
 
@@ -237,7 +237,7 @@ jobs:
           Target Files (may be empty, infer from task):
           PROMPTEOF
           echo "$FILES_CONTENT" >> prompt.txt
-          
+
           # Include current file state for context
           if [ -f file_state.txt ]; then
             cat >> prompt.txt << 'PROMPTEOF'
@@ -246,7 +246,7 @@ jobs:
           PROMPTEOF
             cat file_state.txt >> prompt.txt
           fi
-          
+
           cat >> prompt.txt << 'PROMPTEOF'
 
           Generate the unified diff for the changes described above.
@@ -273,10 +273,28 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CONTEXT_FILES: ${{ env.FILES }}
         run: |
+          # Calculate total size of context files
+          TOTAL_SIZE=0
+          IFS=',' read -ra FILES <<< "$CONTEXT_FILES"
+          for file in "${FILES[@]}"; do
+            if [ -f "$file" ]; then
+              SIZE=$(stat -c%s "$file")
+              TOTAL_SIZE=$((TOTAL_SIZE + SIZE))
+            fi
+          done
+
+          CACHE_FLAG=""
+          # Use caching if total size exceeds 32KB (32768 bytes)
+          if [ "$TOTAL_SIZE" -gt 32768 ]; then
+             echo "::notice::Total context size ($TOTAL_SIZE bytes) exceeds 32KB threshold. Enabling Context Caching."
+             CACHE_FLAG="--use-cache"
+          fi
+
           npx tsx scripts/gemini-client.ts \
             --task-file "prompt.txt" \
             --context "$CONTEXT_FILES" \
-            --output "patch.diff"
+            --output "patch.diff" \
+            $CACHE_FLAG
 
       - name: 'Gemini: Apply Patch'
         if: env.AGENT_PROVIDER == 'gemini'
@@ -288,10 +306,10 @@ jobs:
             echo "::error::patch.diff file not found. The gemini-client failed to generate a patch."
             exit 1
           fi
-          
+
           PATCH_SIZE=$(wc -c < patch.diff)
           echo "::notice::Patch file size: $PATCH_SIZE bytes"
-          
+
           if [ $PATCH_SIZE -eq 0 ]; then
             echo "::error::patch.diff is empty. The gemini-client did not generate any code changes."
             echo "::notice::Possible causes:"
@@ -299,7 +317,7 @@ jobs:
             echo "::notice::  - The API response was incomplete or malformed"
             exit 1
           fi
-          
+
           # Step 1: Extract from markdown code block if present (do this FIRST)
           FIRST_LINE=$(head -1 patch.diff)
           if [[ "$FIRST_LINE" == *'```'* ]]; then
@@ -314,7 +332,7 @@ jobs:
               echo "::warning::Markdown extraction resulted in empty file, using original"
             fi
           fi
-          
+
           # Step 2: Enhanced conversational text filtering
           # Remove common LLM preamble/postamble text while preserving the diff
           # Set DISABLE_TEXT_FILTERING=true to skip this step
@@ -358,7 +376,7 @@ jobs:
           else
             echo "::notice::Conversational text filtering disabled (DISABLE_TEXT_FILTERING=true)"
           fi
-          
+
           # Validate patch format starts with --- a/
           if ! head -1 patch.diff | grep -q "^--- a/"; then
             echo "::error::Patch does not start with '--- a/' header"
@@ -369,9 +387,9 @@ jobs:
             head -30 patch.diff | sed 's/^/::notice::  /'
             exit 1
           fi
-          
+
           echo "::notice::✅ Patch validation passed. Validating patch can be applied..."
-          
+
           # Check if patch can be applied cleanly without actually applying it
           if ! git apply --check patch.diff 2>&1; then
             APPLY_ERROR=$(git apply --check patch.diff 2>&1)
@@ -418,11 +436,11 @@ jobs:
               exit 1
             fi
           fi
-          
+
           echo "::notice::✅ Patch validation passed. Applying patch..."
           git config user.name "AI Agent"
           git config user.email "ai@agent.local"
-          
+
           # Apply patch to current branch (will be committed by create-pull-request action)
           if ! git apply patch.diff; then
             echo "::error::Failed to apply patch. This should not happen after validation passed."
@@ -466,7 +484,7 @@ jobs:
               sed 's/ARI_[A-Z_]*[=:][^ ]*/***REDACTED***/gi' | \
               sed 's/Authorization:[^ ]*/***REDACTED***/gi'
           }
-          
+
           {
             echo "# Patch Failure Debug Report"
             echo ""
@@ -500,7 +518,7 @@ jobs:
             echo "---"
             echo "*This report has been scrubbed of sensitive information (secrets, tokens, API keys)*"
           } > patch-debug-report.md
-          
+
           cat patch-debug-report.md
 
       - name: Upload Debug Report
@@ -520,7 +538,7 @@ jobs:
         run: |
           # Generate unique build-time values for CI verification only
           BUILD_ID=$(uuidgen || python3 -c "import uuid; print(uuid.uuid4())")
-          
+
           # Only use provided secrets, never use defaults
           if [ -z "$NEXTAUTH_URL_SECRET" ]; then
             echo "::warning::NEXTAUTH_URL secret not configured. Using generated build-time value."
@@ -528,14 +546,14 @@ jobs:
           else
             echo "NEXTAUTH_URL=$NEXTAUTH_URL_SECRET" >> $GITHUB_ENV
           fi
-          
+
           if [ -z "$NEXTAUTH_SECRET_SECRET" ]; then
             echo "::warning::NEXTAUTH_SECRET secret not configured. Generating build-time value."
             echo "NEXTAUTH_SECRET=build-verification-$BUILD_ID" >> $GITHUB_ENV
           else
             echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET_SECRET" >> $GITHUB_ENV
           fi
-          
+
           echo "::notice::Build-time secrets configured for verification phase"
 
       - name: 'Gemini: Verify Changes'
@@ -546,7 +564,7 @@ jobs:
         run: |
           echo "::notice::Building project..."
           pnpm run build
-          
+
           echo "::notice::Running lint fixes..."
           pnpm run lint --fix || echo "::warning::Lint fix encountered issues, continuing..."
 
@@ -556,14 +574,14 @@ jobs:
           # Build a commitlint-compliant message with intelligent scope extraction
           # Format: feat(scope): lowercase description under 72 characters
           # This ensures compliance with conventional commits while preserving context
-          
+
           TITLE="${{ env.TITLE }}"
-          
+
           # Generate commit message following conventional commits and commitlint rules
           # Rules: lowercase subject, max 100 chars, must be lowercase (no sentence case)
           TITLE_LOWER=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]')
           SCOPE="ai"
-          
+
           # If title already has a conventional commit format, use as-is (just lowercase)
           if echo "$TITLE_LOWER" | grep -qE '^(feat|fix|chore|docs|style|refactor|perf|test)(\([^)]*\))?:[[:space:]]'; then
             COMMIT_MESSAGE="$TITLE_LOWER"
@@ -571,16 +589,16 @@ jobs:
             # Add feat(ai): prefix if not already present
             COMMIT_MESSAGE="feat($SCOPE): $TITLE_LOWER"
           fi
-          
+
           # Trim whitespace
           COMMIT_MESSAGE=$(echo "$COMMIT_MESSAGE" | xargs)
-          
+
           # Enforce commitlint subject-max-length: 100 chars
           if [ ${#COMMIT_MESSAGE} -gt 100 ]; then
             echo "::warning::Commit message exceeds 100 characters, truncating"
             COMMIT_MESSAGE="${COMMIT_MESSAGE:0:97}..."
           fi
-          
+
           echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_ENV
           echo "::notice::Generated commit message: $COMMIT_MESSAGE (${#COMMIT_MESSAGE} chars)"
 

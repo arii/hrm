@@ -108,7 +108,7 @@ importers:
         specifier: ^9.39.1
         version: 9.39.2
       '@google/generative-ai':
-        specifier: 0.24.1
+        specifier: ^0.24.1
         version: 0.24.1
       '@jest/globals':
         specifier: ^30.2.0
