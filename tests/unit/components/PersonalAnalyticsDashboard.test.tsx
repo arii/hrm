@@ -3,7 +3,7 @@
  */
 // File: tests/unit/components/PersonalAnalyticsDashboard.test.tsx
 import React from 'react'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { PersonalAnalyticsDashboard } from '../../../components/PersonalAnalyticsDashboard'
 import * as useCalorieCounter from '../../../hooks/useCalorieCounter'
 
@@ -17,10 +17,11 @@ describe('PersonalAnalyticsDashboard', () => {
       calories: 100,
       resetCalories: jest.fn(),
     })
-    const { getByText } = render(
+    // Render the component; prefer using screen queries over destructuring from render
+    render(
       <PersonalAnalyticsDashboard heartRate={120} age={30} weight={70} />
     )
 
-    expect(getByText('Calories Burned: 100.00')).toBeInTheDocument()
+    expect(screen.getByText('Calories Burned: 100.00')).toBeInTheDocument()
   })
 })

@@ -10,6 +10,8 @@ import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
+import ErrorBoundary from '../components/ErrorBoundary'
+import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
@@ -70,15 +72,7 @@ const Dashboard = () => {
   }, [])
 
   return (
-    <Container
-      maxWidth="xl"
-      onClick={handleInteraction}
-      sx={{
-        py: { xs: 2, sm: 3 },
-        minHeight: '100vh',
-        backgroundColor: 'background.default',
-      }}
-    >
+    <PageContainer maxWidth="xl" hasNavBar={true} onClick={handleInteraction}>
       <Box sx={mainGridStyles}>
         {/*
          * The extra Box with height: '100%' is necessary to ensure the TimerDisplay
@@ -89,11 +83,13 @@ const Dashboard = () => {
         <Box sx={{ height: '100%' }}>
           <TimerDisplay />
         </Box>
-        {/*
-         * HrmConnectionPanel does not need a height wrapper because
-         * it's internally structured to fill the height of its container.
-         */}
-        <HrmConnectionPanel />
+        <ErrorBoundary fallback={<ErrorFallback />}>
+          {/*
+           * HrmConnectionPanel does not need a height wrapper because
+           * it's internally structured to fill the height of its container.
+           */}
+          <HrmConnectionPanel />
+        </ErrorBoundary>
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
         {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
@@ -109,8 +105,10 @@ const Dashboard = () => {
         )}
       </Box>
 
-      <SpotifyDisplay />
-    </Container>
+      <ErrorBoundary fallback={<ErrorFallback />}>
+        <SpotifyDisplay />
+      </ErrorBoundary>
+    </PageContainer>
   )
 }
 
