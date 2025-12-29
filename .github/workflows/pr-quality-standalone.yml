@@ -50,131 +50,87 @@ jobs:
             exit 1
           fi
 
-  setup:
-    name: 🏗️ Setup
+  lint:
+    name: 🎨 Lint
     runs-on: self-hosted
-    timeout-minutes: 10
-    outputs:
-      session_id: ${{ env.SESSION_ID }}
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch || github.ref }}
-          fetch-depth: 0
-          clean: false
-
-      - name: Sanitize Workspace (Preserve Cache)
-        run: |
-          git reset --hard HEAD
-          git clean -fdx --exclude .next --exclude node_modules --exclude .eslintcache --exclude .cache
-
-      - name: Sanitize SESSION_ID
-        shell: bash
-        run: |
-          SAFE_SESSION_ID=$(echo "${{ env.SESSION_ID }}" | tr '/' '-')
-          echo "SESSION_ID=$SAFE_SESSION_ID" >> $GITHUB_ENV
-
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-
-      - name: Configure Persistent Store
-        shell: bash
-        run: |
-          mkdir -p ~/.local/share/pnpm/store
-          pnpm config set store-dir ~/.local/share/pnpm/store
-          pnpm config set side-effects-cache true
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '20.x'
-
-      - name: Create Runtime Envs
-        run: |
-          mkdir -p logs coverage playwright-report test-results
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
-      - name: Run Setup Script
-        run: |
-          chmod +x ./scripts/setup.sh
-          ./scripts/setup.sh
-
-      - name: Upload Workspace Artifact
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint Code
+        run: pnpm run lint 2>&1 | tee lint-output.log
+      - name: Upload lint logs
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: workspace-${{ env.SESSION_ID }}
-          path: |
-            .
-            !node_modules/.cache
-          retention-days: 1
-
-  lint:
-    name: 🎨 Lint
-    needs: setup
-    runs-on: self-hosted
-    timeout-minutes: 5
-    steps:
-      - name: Download Workspace Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: workspace-${{ needs.setup.outputs.session_id }}
-          path: .
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '20.x'
-
-      - name: Restore pnpm store config
-        shell: bash
-        run: |
-          mkdir -p ~/.local/share/pnpm/store
-          pnpm config set store-dir ~/.local/share/pnpm/store
-
-      - name: Lint Code
-        run: pnpm run lint
+          name: lint-logs-${{ github.run_id }}
+          path: lint-output.log
 
   build:
     name: 🔨 Build
-    needs: setup
     runs-on: self-hosted
     timeout-minutes: 10
+    needs: [lint]
     steps:
-      - name: Download Workspace Artifact
-        uses: actions/download-artifact@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          name: workspace-${{ needs.setup.outputs.session_id }}
-          path: .
-
+          ref: ${{ inputs.branch || github.ref }}
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '20.x'
-
-      - name: Restore pnpm store config
+      - name: Get pnpm store directory
+        id: pnpm-cache
         shell: bash
-        run: |
-          mkdir -p ~/.local/share/pnpm/store
-          pnpm config set store-dir ~/.local/share/pnpm/store
-
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       - name: Verify Build
         env:
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-        run: pnpm run build
-
+        run: pnpm run build 2>&1 | tee build-output.log
+      - name: Upload build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ github.run_id }}
+          path: build-output.log
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ needs.setup.outputs.session_id }}
+          name: build-artifact-${{ github.run_id }}
           path: |
             dist/
             .next/
@@ -182,114 +138,136 @@ jobs:
 
   test:
     name: 🧪 Tests
-    needs: [setup, build]
     runs-on: self-hosted
     timeout-minutes: 20
+    needs: [build]
     steps:
-      - name: Download Workspace Artifact
-        uses: actions/download-artifact@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          name: workspace-${{ needs.setup.outputs.session_id }}
-          path: .
-
+          ref: ${{ inputs.branch || github.ref }}
       - name: Download Build Artifact
         uses: actions/download-artifact@v4
         with:
-          name: build-${{ needs.setup.outputs.session_id }}
-
+          name: build-artifact-${{ github.run_id }}
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '20.x'
-
-      - name: Restore pnpm store config
+      - name: Get pnpm store directory
+        id: pnpm-cache
         shell: bash
-        run: |
-          mkdir -p ~/.local/share/pnpm/store
-          pnpm config set store-dir ~/.local/share/pnpm/store
-
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
       - name: Install Playwright Browsers
         run: pnpm exec playwright install chromium
 
-      # --- Infrastructure Tests ---
-      - name: Run Dev Server Test (Pre-Build)
+      - name: Run all tests
         run: |
           set -o pipefail
-          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-dev-results.xml pnpm run test:infra:dev --reporter=junit
-      - name: Publish Dev Server Test Results
+          # This script will run all test suites and output individual JUnit XML files
+          # For now, we'll just run them sequentially and pipe to a single log
+          (
+            echo "--- Running Infrastructure Tests (Dev) ---"
+            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-dev-results.xml pnpm run test:infra:dev --reporter=junit
+            echo "--- Running Infrastructure Tests (Prod) ---"
+            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-prod-results.xml pnpm run test:infra:prod --reporter=junit
+            echo "--- Running Unit Tests ---"
+            pnpm run test:unit
+            echo "--- Running Performance Tests ---"
+            pnpm run start
+            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit
+            pnpm run kill-all || true
+            echo "--- Running Visual Tests ---"
+            pnpm run test:visual
+          ) 2>&1 | tee all-tests-output.log
+
+      - name: Publish Test Results
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: Infrastructure (Dev)
-          path: test-results/infra-dev-results.xml
+          name: Tests
+          path: test-results/**/*.xml
           reporter: java-junit
 
-      - name: Run Production Server Test (Post-Build)
-        run: |
-          set -o pipefail
-          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-prod-results.xml pnpm run test:infra:prod --reporter=junit
-      - name: Publish Production Server Test Results
-        uses: dorny/test-reporter@v1
-        if: always()
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
         with:
-          name: Infrastructure (Prod)
-          path: test-results/infra-prod-results.xml
-          reporter: java-junit
+          name: test-logs-${{ github.run_id }}
+          path: all-tests-output.log
 
-      # --- Unit Tests ---
-      - name: Run Unit Tests
-        run: pnpm run test:unit
-
-      - name: Publish Unit Test Results
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Unit Tests
-          path: test-results/unit-results.xml
-          reporter: java-junit
-
-      # --- Performance Tests ---
-      - name: Start Application for Performance Test
-        run: pnpm run start
-      - name: Run Performance Test
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          retry_on: error
-          command: PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit
-      - name: Publish Performance Test Results to GitHub Checks
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Performance Tests Report
-          path: test-results/perf-results.xml
-          reporter: java-junit
-      - name: Stop Application
-        if: always()
-        run: pnpm run kill-all || true
-
-      # --- Visual Tests ---
-      - name: Run Visual Tests
-        run: pnpm run test:visual
-
-      - name: Publish Visual Test Results
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Visual Tests
-          path: test-results/results.xml
-          reporter: java-junit
-
-  gemini-review-on-failure:
-    name: 🤖 Gemini Review on Failure
+  report-failure:
+    name: 🚨 Report Failure
+    runs-on: self-hosted
     needs: [lint, build, test]
     if: failure()
-    uses: ./.github/workflows/reusable-gemini-review.yml
-    with:
-      trigger_event: 'pull_request'
-      pr_quality_result: 'failure'
-    secrets: inherit
+
+    steps:
+      - name: Download all logs
+        uses: actions/download-artifact@v4
+        with:
+          path: all-logs
+
+      - name: Install GitHub CLI
+        run: |
+          mkdir -p $HOME/.local/bin
+          GH_VERSION=2.63.0
+          curl -L https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz -o gh.tar.gz
+          tar xvf gh.tar.gz
+          mv gh_${GH_VERSION}_linux_amd64/bin/gh $HOME/.local/bin/
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Aggregate logs and post comment
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+        run: |
+          set +e
+          PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number')
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No PR found. Skipping comment."
+            exit 0
+          fi
+
+          FAILED_CHECKS_LIST=""
+          LOGS_BODY=""
+
+          if [ "$LINT_RESULT" == "failure" ]; then
+            FAILED_CHECKS_LIST="Lint"
+            LOGS_BODY="$LOGS_BODY\n### Lint Log\n\`\`\`\n$(cat all-logs/lint-logs-${{ github.run_id }}/lint-output.log | tail -c 10000)\n\`\`\`"
+          fi
+          if [ "$BUILD_RESULT" == "failure" ]; then
+            [ -n "$FAILED_CHECKS_LIST" ] && FAILED_CHECKS_LIST="$FAILED_CHECKS_LIST, Build" || FAILED_CHECKS_LIST="Build"
+            LOGS_BODY="$LOGS_BODY\n### Build Log\n\`\`\`\n$(cat all-logs/build-logs-${{ github.run_id }}/build-output.log | tail -c 10000)\n\`\`\`"
+          fi
+          if [ "$TEST_RESULT" == "failure" ]; then
+            [ -n "$FAILED_CHECKS_LIST" ] && FAILED_CHECKS_LIST="$FAILED_CHECKS_LIST, Test" || FAILED_CHECKS_LIST="Test"
+            LOGS_BODY="$LOGS_BODY\n### Test Log\n\`\`\`\n$(cat all-logs/test-logs-${{ github.run_id }}/all-tests-output.log | tail -c 20000)\n\`\`\`"
+          fi
+
+          if [ -n "$FAILED_CHECKS_LIST" ]; then
+            COMMENT_HEADER="@jules fix: CI checks failed: ${FAILED_CHECKS_LIST}. Review requested.\n\n"
+            LOG_FOOTER="---\n*Note: Logs are truncated. View the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.*"
+            COMMENT_DETAILS="<details><summary><strong>Failed Test Report Log</strong></summary>${LOGS_BODY}\n${LOG_FOOTER}\n</details>"
+            gh pr comment "$PR_NUMBER" --body "$(echo -e "${COMMENT_HEADER}${COMMENT_DETAILS}")"
+          fi
