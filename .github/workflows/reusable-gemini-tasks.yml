@@ -40,12 +40,14 @@ jobs:
       - name: Run Gemini Analysis
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          SCHEDULED_CONTEXT_FILES: ${{ vars.SCHEDULED_CONTEXT_FILES || 'README.md,FRONTEND_IMPROVEMENT_PLAN.md' }}
+          SCHEDULED_CONTEXT_FILES: ${{ vars.SCHEDULED_CONTEXT_FILES || 'README.md,FRONTEND_IMPROVEMENT_PLAN.md,docs/COMPONENT_INVENTORY.md' }}
         run: |
+          # Always attempt cache for scheduled triage as it usually involves reading full documentation
           npx tsx scripts/gemini-client.ts \
             --task-file "task_input.txt" \
             --context "$SCHEDULED_CONTEXT_FILES" \
-            --output "report.md"
+            --output "report.md" \
+            --use-cache
 
       - name: Create Report Issue
         uses: actions/github-script@v7

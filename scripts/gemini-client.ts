@@ -2,9 +2,13 @@ import {
   GoogleGenerativeAI,
   SchemaType,
   GoogleGenerativeAIError,
+  GenerativeModel,
 } from '@google/generative-ai'
+import { GoogleAICacheManager, GoogleAIFileManager } from "@google/generative-ai/server";
 import { readFile, writeFile } from 'fs/promises'
+import * as fs from 'fs';
 import path from 'path'
+import { createHash } from 'crypto';
 
 // Simple arg parsing
 const args = process.argv.slice(2)
@@ -19,6 +23,7 @@ const taskFile = getArg('--task-file')
 const contextFiles = getArg('--context')?.split(',') || []
 const outputFile = getArg('--output')
 const preset = getArg('--preset')
+const useCache = args.includes('--use-cache')
 
 // List of models to try in order.
 // `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
@@ -86,6 +91,85 @@ export function getModelFallbacks(): string[] {
 }
 
 const MODEL_FALLBACKS = getModelFallbacks()
+
+// --- Caching Logic ---
+
+async function createCacheForContext(apiKey: string, files: string[], tag: string) {
+  const fileManager = new GoogleAIFileManager(apiKey);
+  const cacheManager = new GoogleAICacheManager(apiKey);
+
+  console.log(`📦 [Cache] Processing ${files.length} context files...`);
+
+  const hash = createHash('sha256');
+  const failedFiles: string[] = [];
+  const uploadedFiles: { fileUri: string, mimeType: string }[] = [];
+
+  // Sequentially process files to ensure correct hashing
+  for (const file of files.filter(f => f.trim().length > 0)) {
+    try {
+      const filePath = path.resolve(process.cwd(), file.trim());
+
+      // Stream-based hashing for each file
+      const stream = fs.createReadStream(filePath);
+      await new Promise((resolve, reject) => {
+          stream.on('data', (chunk) => hash.update(chunk));
+          stream.on('end', resolve);
+          stream.on('error', reject);
+      });
+
+      const uploadResult = await fileManager.uploadFile(filePath, {
+        mimeType: "text/plain",
+        displayName: path.basename(filePath),
+      });
+
+      uploadedFiles.push({
+        fileUri: uploadResult.file.uri,
+        mimeType: uploadResult.file.mimeType
+      });
+    } catch (e) {
+      console.warn(`⚠️ [Cache] Failed to process file ${file}: ${(e as Error).message}`);
+      failedFiles.push(file);
+    }
+  }
+
+
+  if (uploadedFiles.length === 0) {
+    throw new Error(`No files were successfully uploaded for caching. Failed files: ${failedFiles.join(', ')}`);
+  }
+
+  const contentHash = hash.digest('hex').substring(0, 16);
+
+
+  // 2. Create Cache
+  // Use a dedicated model for caching if specified, otherwise default to the primary model.
+  const cacheModel = process.env.GEMINI_CACHE_MODEL || MODEL_FALLBACKS[0];
+  console.log(`💾 [Cache] Creating cache with model: ${cacheModel}...`);
+
+  const ttlSeconds = process.env.GEMINI_CACHE_TTL_SECONDS ? parseInt(process.env.GEMINI_CACHE_TTL_SECONDS, 10) : 3600;
+
+  try {
+    const cacheResult = await cacheManager.create({
+      model: cacheModel,
+      displayName: `CI-${tag}-${contentHash}`,
+      // The cache is set to live for 1 hour (3600 seconds) by default, but can be configured.
+      // This is suitable for CI jobs, as the runner will be ephemeral and the cache
+      // will not be needed after the job completes.
+      ttlSeconds: ttlSeconds,
+      contents: [
+        {
+          role: "user",
+          parts: uploadedFiles.map(fd => ({ fileData: fd })),
+        },
+      ],
+    });
+
+    console.log(`✅ [Cache] Active: ${cacheResult.name}`);
+    return cacheResult;
+  } catch (error) {
+      console.warn(`⚠️ [Cache] Failed to create cache: ${(error as Error).message}`);
+      throw error;
+  }
+}
 
 export class JsonProcessor {
   /**
@@ -173,36 +257,42 @@ async function main() {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
+  let cachedModel: GenerativeModel | null = null;
 
-  let contextContent = ''
+  // Always load file content for the fallback mechanism.
+  const contextParts: string[] = [];
   for (const file of contextFiles) {
     const trimmedFile = file.trim()
     if (!trimmedFile) continue
     try {
-      const content = await readFile(
-        path.resolve(process.cwd(), trimmedFile),
-        'utf-8'
-      )
-      contextContent += `\n\n--- Start of Context File: ${trimmedFile} ---\n${content}\n--- End of Context File: ${trimmedFile} ---\n`
+      const content = await readFile(path.resolve(process.cwd(), trimmedFile), 'utf-8')
+      contextParts.push(`\n\n--- Start of Context File: ${trimmedFile} ---\n${content}\n--- End of Context File: ${trimmedFile} ---\n`)
     } catch (error) {
-      console.warn(
-        `Warning: Could not read context file ${trimmedFile}: ${(error as Error).message}`
-      )
-      contextContent += `\n\n--- Context File: ${trimmedFile} (MISSING/ERROR) ---\n`
+      contextParts.push(`\n\n--- Context File: ${trimmedFile} (MISSING/ERROR) ---\n`)
+    }
+  }
+  const contextContent = contextParts.join('');
+
+  // 1. Attempt Caching Strategy if requested
+  if (useCache && contextFiles.length > 0) {
+    try {
+      const cache = await createCacheForContext(apiKey, contextFiles, preset || 'task');
+      cachedModel = genAI.getGenerativeModelFromCachedContent(cache);
+    } catch (error) {
+      console.warn(`⚠️ [Cache] Cache initialization failed. Error: ${(error as Error).message}`);
+      console.log(`🔄 Falling back to standard text-based context due to CACHE FAILURE: ${(error as Error).message}`);
+      cachedModel = null;
     }
   }
 
   if (preset === 'review') {
-    await runReviewPreset(genAI, contextContent, outputFile)
+    await runReviewPreset(genAI, contextContent, outputFile, cachedModel)
   } else {
-    // Default/Generic mode
+    // Generic Task
     let finalTask = task
     if (taskFile) {
       try {
-        finalTask = await readFile(
-          path.resolve(process.cwd(), taskFile),
-          'utf-8'
-        )
+        finalTask = await readFile(path.resolve(process.cwd(), taskFile), 'utf-8')
       } catch (e) {
         console.error(`Error reading task file ${taskFile}:`, e)
         process.exit(1)
@@ -215,15 +305,33 @@ async function main() {
       )
       process.exit(1)
     }
-    await runGenericTask(genAI, finalTask, contextContent, outputFile)
+    await runGenericTask(genAI, finalTask, contextContent, outputFile, cachedModel)
   }
 }
 
 async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
   prompt: string,
-  config?: any
+  fullPrompt: string,
+  config?: any,
+  cachedModel?: GenerativeModel | null
 ) {
+    // Priority 1: Use Cached Model if available
+  if (cachedModel) {
+    try {
+      console.log(`🚀 Using Cached Model for generation...`);
+      const result = await cachedModel.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        ...config,
+      })
+      return result.response.text()
+    } catch (error: any) {
+      console.warn(`⚠️ Cached model failed (${error.message}). Falling back to standard text-based generation.`);
+      // Fall through to standard loop
+    }
+  }
+
+  // Priority 2: Standard Fallback Loop
   let lastError
 
   for (const modelName of MODEL_FALLBACKS) {
@@ -231,7 +339,7 @@ async function generateContentWithFallback(
     try {
       const model = genAI.getGenerativeModel({ model: modelName })
       const result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
         ...config,
       })
       console.log(`Successfully generated content using ${modelName}.`)
@@ -291,9 +399,11 @@ async function runGenericTask(
   genAI: GoogleGenerativeAI,
   task: string,
   contextContent: string,
-  outputFile: string | null | undefined
+  outputFile: string | null | undefined,
+  cachedModel?: GenerativeModel | null
 ) {
-  const prompt = `
+  const prompt = `Task: ${task}`
+  const fullPrompt = `
 You are an AI assistant helping with a software project.
 Please use the provided context files to inform your response.
 Do not hallucinate content that is not in the context files if you are asked about specifics of the project.
@@ -305,7 +415,7 @@ ${task}
 `
 
   try {
-    const text = await generateContentWithFallback(genAI, prompt)
+    const text = await generateContentWithFallback(genAI, prompt, fullPrompt, {}, cachedModel)
     await writeOutput(text, outputFile)
   } catch (error) {
     handleError(error)
@@ -638,7 +748,8 @@ Make your feedback:
 async function runReviewPreset(
   genAI: GoogleGenerativeAI,
   contextContent: string,
-  outputFile: string | null | undefined
+  outputFile: string | null | undefined,
+  cachedModel?: GenerativeModel | null
 ) {
   const context = getReviewContextFromEnv()
 
@@ -687,7 +798,7 @@ async function runReviewPreset(
   const prompt = buildReviewPrompt(diff, context, contextContent)
 
   try {
-    const text = await generateContentWithFallback(genAI, prompt, {
+    const text = await generateContentWithFallback(genAI, prompt, prompt, {
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: {
@@ -703,7 +814,7 @@ async function runReviewPreset(
           required: ['reviewComment', 'labels'],
         },
       },
-    })
+    }, cachedModel)
 
     const jsonProcessor = new JsonProcessor()
     const result = jsonProcessor.process(text || '')
