@@ -16,6 +16,8 @@ inputs:
   gh-version:
     description: 'Version of GitHub CLI to install.'
     required: false
+    # Pinned to a specific version to ensure stability.
+    # Update this version deliberately as needed.
     default: '2.53.0'
 
 runs:
