@@ -1,7 +1,7 @@
 import { authOptions } from '@/lib/auth'
 import logger from '@/utils/logger'
 import { getServerSession } from 'next-auth/next'
-import { getToken } from 'next-auth/jwt'
+import { getToken, JWT } from 'next-auth/jwt'
 import { NextRequest, NextResponse } from 'next/server'
 import { serviceContainer } from '@/lib/serviceContainer'
 import { env } from '@/lib/env'
@@ -13,16 +13,16 @@ import { env } from '@/lib/env'
  * @param req The incoming NextRequest, used to extract the JWT.
  */
 async function _tryHydrateSpotifyService(req: NextRequest): Promise<void> {
-  let userId: string | null = null
+  let userId: string | null = null;
+  let token: JWT | null = null;
+
   try {
-    const token = await getToken({ req, secret: env.NEXTAUTH_SECRET })
-    userId = token?.sub || null
+    token = await getToken({ req, secret: env.NEXTAUTH_SECRET });
+    userId = token?.sub || null;
 
     if (token && token.accessToken && token.refreshToken) {
-      const spotifyService = serviceContainer.get('spotifyService')
+      const spotifyService = serviceContainer.get('spotifyService');
 
-      // The handleTokenUpdate method is idempotent and safe to call.
-      // It will internally validate and update the token if necessary.
       await spotifyService.handleTokenUpdate({
         provider: 'spotify',
         sub: token.sub || 'unknown',
@@ -31,13 +31,15 @@ async function _tryHydrateSpotifyService(req: NextRequest): Promise<void> {
         expires_in: 3600, // Nominal value; the service handles its own refresh logic.
         scope: '',
         obtainedAt: Date.now()
-      })
-      logger.debug({ userId }, 'Successfully hydrated SpotifyService from access-token route.')
+      });
+      logger.debug({ userId }, 'Successfully hydrated SpotifyService from access-token route.');
+    } else if (token) {
+        // This case is important for debugging token issues.
+        logger.warn({ userId }, 'JWT was retrieved but missing accessToken or refreshToken.');
     }
   } catch (error) {
-    // This can happen if the request is malformed or there's an issue with JWT parsing.
-    // We log it as a warning because this internal process should not fail the client's request.
-    logger.warn({ error, userId }, 'Failed to get JWT for service hydration.')
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    logger.warn({ error: errorMessage, userId }, 'Failed to get JWT for service hydration.');
   }
 }
 

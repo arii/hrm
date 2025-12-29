@@ -106,6 +106,33 @@ describe('SpotifyTokenManager (In-Memory)', () => {
     )
   })
 
+  it('should only refresh the token once when called concurrently', async () => {
+    const payload = getMockTokenPayload({
+      obtainedAt: Date.now() - 3601 * 1000, // Expired
+    })
+    tokenManager.updateToken(payload)
+
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          access_token: 'new_access_token',
+          expires_in: 3600,
+          refresh_token: 'new_refresh_token',
+        }),
+    })
+
+    // Simulate 5 concurrent calls
+    const promises = Array(5).fill(0).map(() => tokenManager.getValidAccessToken())
+    const results = await Promise.all(promises)
+
+    // All results should be the new token
+    results.forEach(token => expect(token).toBe('new_access_token'))
+
+    // But fetch should only have been called once
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+  })
+
   it('should not refresh if no refresh token is available', async () => {
     const payload = getMockTokenPayload({
       refresh_token: '', // No refresh token

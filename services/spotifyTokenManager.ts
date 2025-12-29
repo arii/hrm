@@ -34,7 +34,7 @@ export interface TokenRecord {
  */
 export class SpotifyTokenManager {
   private currentToken: TokenRecord | null = null
-  private isRefreshing = false
+  private refreshPromise: Promise<boolean> | null = null
 
   constructor(
     private clientId: string,
@@ -59,8 +59,11 @@ export class SpotifyTokenManager {
     logger.info({ userId: this.currentToken.payload.sub }, 'Updated in-memory Spotify tokens.')
   }
 
-  private async refreshAccessToken(): Promise<boolean> {
-    if (!this.currentToken?.payload.refresh_token) return false
+  private async refreshToken(): Promise<boolean> {
+    if (!this.currentToken?.payload.refresh_token) {
+        logger.warn({ userId: this.currentToken?.payload.sub }, 'Token refresh skipped: No refresh token available.');
+        return false;
+    }
     const userId = this.currentToken.payload.sub
 
     const maxRetries = 3
@@ -119,13 +122,13 @@ export class SpotifyTokenManager {
       } catch (error: unknown) {
         const err = error as Error
         if (err.message && err.message.includes('(Non-retriable)')) {
-          logger.error({ userId, error: err }, 'Failed to refresh Spotify token (fatal).')
-          return false
+            logger.error({ userId, error: err.message }, 'Failed to refresh Spotify token (fatal). The refresh token may be revoked.');
+            return false
         }
 
         logger.warn(
-          { userId, attempt, maxRetries, error: err },
-          `Failed to refresh Spotify token (attempt ${attempt}/${maxRetries}).`
+          { userId, attempt, maxRetries, error: err.message },
+          `Failed to refresh Spotify token (attempt ${attempt}/${maxRetries}). Retrying...`
         )
         if (attempt >= maxRetries) return false
         // Exponential backoff
@@ -146,19 +149,20 @@ export class SpotifyTokenManager {
       this.currentToken.payload.expires_in * 1000
 
     if (Date.now() >= expiresAt - 60000) {
-      if (this.currentToken.payload.refresh_token) {
-        if (!this.isRefreshing) {
-          this.isRefreshing = true
-          logger.info({ userId: this.currentToken.payload.sub }, 'Spotify access token is expiring soon, initiating refresh...')
-          await this.refreshAccessToken()
-          this.isRefreshing = false
+        if (this.currentToken.payload.refresh_token) {
+            if (!this.refreshPromise) {
+                logger.info({ userId: this.currentToken.payload.sub }, 'Spotify access token is expiring soon, initiating refresh...');
+                this.refreshPromise = this.refreshToken().finally(() => {
+                    this.refreshPromise = null;
+                });
+            }
+            await this.refreshPromise;
+        } else {
+            logger.warn(
+                { userId: this.currentToken.payload.sub },
+              'Spotify access token expired, but no refresh token available. Cannot refresh.'
+            )
         }
-      } else {
-        logger.warn(
-            { userId: this.currentToken.payload.sub },
-          'Spotify access token expired, but no refresh token available. Cannot refresh.'
-        )
-      }
     }
 
     return this.currentToken.payload.access_token
