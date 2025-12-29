@@ -1,4 +1,5 @@
-// This file is generated automatically. Do not edit it manually.
+// Barrel file for presentational components.
+// For guidelines on contributing to this file, see `docs/DEVELOPMENT.md`.
 
 export * from './animation/variants'
 export * from './AuthButton'
@@ -26,7 +27,7 @@ export * from './shared/StyledCard'
 export * from './SideLabel'
 export * from './Spotify/CurrentSpotifyItemDisplay'
 export * from './Spotify/PlaylistSelector'
-export * from './Spotify/VolumeSlider'
+export { VolumeSlider as SpotifyVolumeSlider } from './Spotify/VolumeSlider'
 export * from './SpotifyDeviceSelectorWrapper'
 export * from './SpotifyDisplay'
 export * from './SpotifySearchInput'

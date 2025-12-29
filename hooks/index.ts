@@ -1,4 +1,5 @@
-// This file is generated automatically. Do not edit it manually.
+// Barrel file for React hooks.
+// For guidelines on contributing to this file, see `docs/DEVELOPMENT.md`.
 
 export * from './useAudio'
 export * from './useAutoConnect'

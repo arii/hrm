@@ -70,7 +70,6 @@ To improve code organization and simplify import statements, this project has ad
 -   `constants/`
 -   `context/`
 -   `hooks/`
--   `lib/`
 -   `services/`
 -   `utils/`
 
