@@ -1,10 +1,15 @@
 // hooks/useLocalStorage.ts
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
 
 // Hook
 function useLocalStorage<T>(key: string, initialValue: T) {
   // 1. Initialize state with initialValue to match Server Side rendering.
   const [storedValue, setStoredValue] = useState<T>(initialValue)
+  const initialValueRef = useRef(initialValue)
 
   // 2. Sync with localStorage inside useEffect (Client-side only).
   useEffect(() => {
@@ -20,14 +25,10 @@ function useLocalStorage<T>(key: string, initialValue: T) {
 
         // Handle object migration by merging stored data with initial defaults.
         if (
-          typeof parsed === 'object' &&
-          !Array.isArray(parsed) &&
-          parsed !== null &&
-          typeof initialValue === 'object' &&
-          !Array.isArray(initialValue) &&
-          initialValue !== null
+          isPlainObject(parsed) &&
+          isPlainObject(initialValueRef.current)
         ) {
-          setStoredValue({ ...initialValue, ...parsed })
+          setStoredValue({ ...initialValueRef.current, ...parsed })
         } else {
           setStoredValue(parsed)
         }
@@ -39,8 +40,8 @@ function useLocalStorage<T>(key: string, initialValue: T) {
       )
       // If parsing fails, the hook will fallback to the initialValue.
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-  }, [key, initialValue])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
 
   // Return a wrapped version of useState's setter function that ...
   // ... persists the new value to localStorage.
