@@ -88,13 +88,18 @@ jobs:
           REVIEW_TYPE="none"
           SKIP_REASON="no criteria met"
           
+          echo "::debug::Analyzing for re-review. CHANGES_REQUESTED=${REQ}, SIGNIFICANT_CHANGES=${SIG}"
+
           # Skip if no significant changes (just response comments, no code changes)
           if [[ "$SIG" -eq 0 ]]; then
             SKIP_REASON="no code changes"
+            echo "::debug::Skipping review. Reason: No significant changes."
           elif [[ "$IS_MERGE" -eq 1 && "$SIG" -eq 0 ]]; then
             SKIP_REASON="merge"
+            echo "::debug::Skipping review. Reason: Merge commit with no significant changes."
           elif [[ "$COMMIT_MSG" =~ ^(docs?|chore|style): ]]; then
             SKIP_REASON="trivial"
+            echo "::debug::Skipping review. Reason: Trivial change (docs/chore/style)."
           elif [[ "$TOTAL_REVIEWS" -eq 0 && "$SIG" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="initial"
@@ -106,6 +111,7 @@ jobs:
             REVIEW_TYPE="verification"
           else
             SKIP_REASON="awaiting code changes"
+            echo "::debug::Skipping review. Reason: Awaiting code changes."
           fi
           echo "needs-review=$NEEDS_REVIEW" >> $GITHUB_OUTPUT
           echo "review-type=$REVIEW_TYPE" >> $GITHUB_OUTPUT
