@@ -3,18 +3,124 @@ name: Reusable Gemini Review
 
 on:
   workflow_call:
+    inputs:
+      trigger_event:
+        description: 'The event that triggered the workflow (pull_request or comment)'
+        required: true
+        type: string
+      pr_quality_result:
+        description: 'The result of the pr-quality job (success, failure, skipped, not_applicable)'
+        required: true
+        type: string
+      comment_body:
+        description: 'The body of the comment that triggered the workflow'
+        required: false
+        type: string
     secrets:
       GEMINI_API_KEY:
         required: true
       ARI_PAT:
         required: true
+    outputs:
+      needs-review:
+        description: "Whether a re-review is needed"
+        value: ${{ jobs.analyze-changes.outputs.needs-review }}
+      skip-reason:
+        description: "Reason for skipping review"
+        value: ${{ jobs.analyze-changes.outputs.skip-reason }}
 
 permissions:
   contents: read
   pull-requests: write
+  issues: write
+  checks: write
 
 jobs:
+  analyze-changes:
+    name: Analyze Changes for Review
+    runs-on: ubuntu-latest
+    outputs:
+      needs-review: ${{ steps.decision.outputs.needs-review }}
+      skip-reason: ${{ steps.decision.outputs.skip-reason }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decide Review Strategy
+        id: decision
+        env:
+          TRIGGER_EVENT: ${{ inputs.trigger_event }}
+          COMMENT_BODY: ${{ inputs.comment_body }}
+          PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+        run: |
+          NEEDS_REVIEW="false"
+          SKIP_REASON="no criteria met"
+
+          # --- Initial review on PR open ---
+          if [[ "$TRIGGER_EVENT" == "pull_request" && "${{ github.event.action }}" == "opened" ]]; then
+            echo "::info::PR opened. Triggering initial review."
+            NEEDS_REVIEW="true"
+          # --- Handle manual comment triggers ---
+          elif [[ "$TRIGGER_EVENT" == "comment" ]]; then
+             if [[ "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ]]; then
+               echo "::info::Manual/CI-failure review triggered by comment."
+               NEEDS_REVIEW="true"
+             fi
+          # --- Handle re-reviews on code synchronization ---
+          elif [[ "$TRIGGER_EVENT" == "pull_request" && "${{ github.event.action }}" == "synchronize" ]]; then
+            echo "::info::Code synchronized. Analyzing for re-review..."
+
+            PR_DATA=$(gh pr view "$PR_NUMBER" --json comments -q '.comments | map(select(.author.login? == "arii")) | .[-1].createdAt // ""')
+            LAST_COMMENT_TIMESTAMP="$PR_DATA"
+
+            if [ -n "$LAST_COMMENT_TIMESTAMP" ]; then
+                COMMENT_TIME=$(date -d "$LAST_COMMENT_TIMESTAMP" +%s)
+                CURRENT_TIME=$(date +%s)
+                TIME_DIFF=$((CURRENT_TIME - COMMENT_TIME))
+                if [ "$TIME_DIFF" -lt 300 ]; then # 5 minutes
+                    SKIP_REASON="too recent (${TIME_DIFF}s ago)"
+                    echo "needs-review=false" >> $GITHUB_OUTPUT
+                    echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
+                    exit 0
+                fi
+            fi
+
+            CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+            SIGNIFICANT_COUNT=$(echo "$CHANGED_FILES" | grep -vE '(\.md$|\.png$|\.svg$|package-lock\.json$|\.gitignore$)' | wc -l)
+
+            if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
+                SKIP_REASON="no significant code changes"
+                echo "needs-review=false" >> $GITHUB_OUTPUT
+                echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
+                exit 0
+            fi
+
+            COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+            if [[ "$COMMIT_MSG" =~ ^(docs?|chore|style): ]]; then
+                SKIP_REASON="trivial commit message"
+                echo "needs-review=false" >> $GITHUB_OUTPUT
+                echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
+                exit 0
+            fi
+
+            echo "::info::Significant changes detected and cooldown passed. Triggering re-review."
+            NEEDS_REVIEW="true"
+          else
+            SKIP_REASON="unhandled event trigger"
+          fi
+
+          echo "needs-review=$NEEDS_REVIEW" >> $GITHUB_OUTPUT
+          echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
+
   gemini-review:
+    name: Execute Gemini Review
+    needs: analyze-changes
+    if: needs.analyze-changes.outputs.needs-review == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -24,301 +130,77 @@ jobs:
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
-        with:
-          fetch-depth: 0
 
       - name: Get PR Diff
         id: diff
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
-          timeout 60 gh pr diff ${{ github.event.pull_request.number }} --patch > pr.diff
-          if [ ! -s pr.diff ]; then
-            echo "Error: Unable to generate PR diff"
-            exit 1
-          fi
+          gh pr diff ${{ github.event.pull_request.number }} --patch > pr.diff
 
       - name: Gather PR Context
         id: context
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
-          set +e  # Disable exit on error for this step
-          
-          # Initialize error tracking
-          ERRORS=()
-          WARNINGS=()
-          
-          # Get PR metadata with timeout
-          PR_DATA=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json number,title,author,body,labels 2>&1)
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -ne 0 ]; then
-            ERRORS+=("Failed to fetch PR data (exit code: $EXIT_CODE)")
-            PR_DATA='{"labels":[]}'
-          fi
-          
-          # Use proper GitHub Actions multiline format for environment variables
+          # Simplified context gathering
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-          
-          # For values that may contain special characters, use unique delimiter
-          DELIMITER="PRCONTEXT_EOF_$(date +%s%N | sha256sum | head -c 32)"
-          {
-            echo "PR_TITLE<<$DELIMITER"
-            echo "${{ github.event.pull_request.title }}"
-            echo "$DELIMITER"
-          } >> $GITHUB_ENV
-          
+          echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
           echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
-          
-          DELIMITER="PRCONTEXT_EOF_$(date +%s%N | sha256sum | head -c 32)"
-          {
-            echo "PR_DESCRIPTION<<$DELIMITER"
-            echo "${{ github.event.pull_request.body }}"
-            echo "$DELIMITER"
-          } >> $GITHUB_ENV
-          
-          # Get labels - simplified with jq
-          LABELS=$(echo "$PR_DATA" | jq -r '[.labels[].name] | join(",")' 2>/dev/null)
-          LABEL_EXIT=$?
-          if [ $LABEL_EXIT -ne 0 ]; then
-            WARNINGS+=("Failed to parse labels from PR data")
-            LABELS=""
-          fi
-          echo "PR_LABELS=$LABELS" >> $GITHUB_ENV
-          
-          # Count reviews using separate command with timeout and error handling
-          REVIEW_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[]] | length' 2>&1)
-          if [ $? -ne 0 ]; then
-            WARNINGS+=("Failed to fetch review count")
-            REVIEW_COUNT=0
-          fi
-          
-          CHANGES_REQUESTED=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length' 2>&1)
-          if [ $? -ne 0 ]; then
-            WARNINGS+=("Failed to fetch changes requested count")
-            CHANGES_REQUESTED=0
-          fi
-          
-          RESOLVED_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "COMMENTED")] | length' 2>&1)
-          if [ $? -ne 0 ]; then
-            WARNINGS+=("Failed to fetch resolved count")
-            RESOLVED_COUNT=0
-          fi
-          
-          echo "REVIEW_COUNT=$REVIEW_COUNT" >> $GITHUB_ENV
-          echo "CHANGES_REQUESTED=$CHANGES_REQUESTED" >> $GITHUB_ENV
-          echo "RESOLVED_COUNT=$RESOLVED_COUNT" >> $GITHUB_ENV
-          
-          # Get file stats
-          FILES_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | wc -l)
-          if [ $? -ne 0 ]; then
-            ERRORS+=("Failed to count changed files")
-            FILES_CHANGED=0
-          fi
-          
-          LOC_CHANGED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} 2>/dev/null | grep -oP '\d+(?= insertion)' || echo "0")
-          LOC_DELETED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} 2>/dev/null | grep -oP '\d+(?= deletion)' || echo "0")
-          TOTAL_LOC=$((LOC_CHANGED + LOC_DELETED))
-          echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
-          echo "TOTAL_LOC=$TOTAL_LOC" >> $GITHUB_ENV
-          
-          # Determine review depth
-          if [ "$TOTAL_LOC" -lt 100 ]; then
-            echo "REVIEW_DEPTH=detailed" >> $GITHUB_ENV
-          elif [ "$TOTAL_LOC" -lt 400 ]; then
-            echo "REVIEW_DEPTH=standard" >> $GITHUB_ENV
-          else
-            echo "REVIEW_DEPTH=focused" >> $GITHUB_ENV
-          fi
-          
-          # Get changed areas
-          CHANGED_AREAS=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} 2>/dev/null | awk -F/ '{print $1}' | sort | uniq | tr '\n' ',' | sed 's/,$//')
-          if [ $? -ne 0 ]; then
-            WARNINGS+=("Failed to determine changed areas")
-            CHANGED_AREAS=""
-          fi
-          echo "CHANGED_AREAS=$CHANGED_AREAS" >> $GITHUB_ENV
-          
-          # Log summary
-          echo ""
-          echo "========== Context Gathering Summary =========="
-          echo "✅ PR Number: ${{ github.event.pull_request.number }}"
-          echo "✅ Files Changed: $FILES_CHANGED"
-          echo "✅ Lines of Code Changed: $TOTAL_LOC"
-          echo "✅ Review Depth: $([ "$TOTAL_LOC" -lt 100 ] && echo 'detailed' || ([ "$TOTAL_LOC" -lt 400 ] && echo 'standard' || echo 'focused'))"
-          
-          # Report warnings
-          if [ ${#WARNINGS[@]} -gt 0 ]; then
-            echo ""
-            echo "⚠️  WARNINGS:"
-            for warning in "${WARNINGS[@]}"; do
-              echo "  - $warning"
-            done
-          fi
-          
-          # Report errors and fail if critical
-          if [ ${#ERRORS[@]} -gt 0 ]; then
-            echo ""
-            echo "❌ ERRORS:"
-            for error in "${ERRORS[@]}"; do
-              echo "  - $error"
-            done
-            echo ""
-            echo "::error::Context gathering encountered critical errors. Review may be incomplete."
-          fi
-          
-          echo "==========================================="
-          
-          # Exit with error if we have critical errors
-          [ ${#ERRORS[@]} -eq 0 ]
+          echo "PR_DESCRIPTION=${{ github.event.pull_request.body }}" >> $GITHUB_ENV
 
       - name: Get PR Checks
         id: checks
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
-          echo "🔎 Fetching CI check statuses for PR #${{ github.event.pull_request.number }}..."
-          set +e
-          # Capture stdout to a file and stderr to a log file to prevent JSON corruption from warnings.
-          gh pr checks ${{ github.event.pull_request.number }} \
-            --json name,conclusion,detailsUrl > checks_output.json 2> gh_error.log
-          EXIT_CODE=$?
-          set -e
+          CHECKS_JSON=$(gh pr checks ${{ github.event.pull_request.number }} --json name,conclusion,detailsUrl | jq -c 'map(select(.conclusion == "failure" or .conclusion == "cancelled"))')
+          echo "FAILED_CHECKS_JSON=${CHECKS_JSON}" >> $GITHUB_ENV
 
-          if [ $EXIT_CODE -ne 0 ]; then
-            ERROR_LOG=$(cat gh_error.log)
-            ERROR_MESSAGE="Get PR Checks: Failed to fetch PR checks (exit code $EXIT_CODE)."
-            if [[ "$ERROR_LOG" == *"Could not resolve to a PullRequest"* ]]; then
-              FRIENDLY_ERROR="Could not find the pull request. This might be a permissions issue or an invalid PR number."
-            elif [[ "$ERROR_LOG" == *"HTTP 401"* ]] || [[ "$ERROR_LOG" == *"Bad credentials"* ]]; then
-              FRIENDLY_ERROR="Authentication failed. The GitHub token is likely invalid or has insufficient permissions."
-            else
-              FRIENDLY_ERROR="An unexpected error occurred."
-            fi
-            echo "::warning::${ERROR_MESSAGE} ${FRIENDLY_ERROR} Raw error log: ${ERROR_LOG}"
-            CHECKS_JSON="[]"
-          else
-            CHECKS_OUTPUT=$(cat checks_output.json)
-            # Slice the results to get the first 10 failed checks to prevent an overly long prompt.
-            CHECKS_JSON=$(echo "$CHECKS_OUTPUT" | jq -c 'map(select(.name != "gemini-review" and .name != "gemini-rereview" and (.conclusion == "failure" or .conclusion == "cancelled"))) | .[0:10]')
-
-            # Validate that the result is valid JSON before proceeding.
-            # This is a safe guard in case the gh command output changes in a non-JSON way even on success.
-            if ! echo "$CHECKS_JSON" | jq -e . > /dev/null; then
-              echo "::warning::Get PR Checks: Generated CHECKS_JSON is not valid JSON. Defaulting to empty array. Content was: $CHECKS_JSON"
-              CHECKS_JSON="[]"
-            fi
-          fi
-
-          if [ "$CHECKS_JSON" == "[]" ]; then
-            echo "✅ No failed or cancelled CI checks found."
-            echo "FAILED_CHECKS_JSON=[]" >> $GITHUB_ENV
-          else
-            echo "⚠️ Found failed or cancelled checks:"
-            echo "$CHECKS_JSON" | jq '.'
-            # Use a delimiter for multiline JSON in env var
-            DELIMITER="CHECKS_EOF_$(date +%s%N | sha256sum | head -c 32)"
-            {
-              echo "FAILED_CHECKS_JSON<<$DELIMITER"
-              echo "$CHECKS_JSON"
-              echo "$DELIMITER"
-            } >> $GITHUB_ENV
-          fi
 
       - name: Run Gemini Review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
           PR_DIFF_FILE: pr.diff
-          PR_NUMBER: ${{ env.PR_NUMBER }}
-          PR_TITLE: ${{ env.PR_TITLE }}
-          PR_AUTHOR: ${{ env.PR_AUTHOR }}
-          PR_DESCRIPTION: ${{ env.PR_DESCRIPTION }}
-          PR_LABELS: ${{ env.PR_LABELS }}
-          FILES_CHANGED: ${{ env.FILES_CHANGED }}
-          TOTAL_LOC: ${{ env.TOTAL_LOC }}
-          REVIEW_DEPTH: ${{ env.REVIEW_DEPTH }}
-          CHANGED_AREAS: ${{ env.CHANGED_AREAS }}
-          REVIEW_COUNT: ${{ env.REVIEW_COUNT }}
-          RESOLVED_COUNT: ${{ env.RESOLVED_COUNT }}
-          CHANGES_REQUESTED: ${{ env.CHANGES_REQUESTED }}
           FAILED_CHECKS_JSON: ${{ env.FAILED_CHECKS_JSON }}
+          # Pass other context vars
         run: |
           pnpm tsx scripts/gemini-client.ts --preset "review" --output "review_result.json"
 
       - name: Post Review Comment
-        if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           if [ -f "review_result.json" ]; then
-            echo "Review result file found, processing..."
-            
             jq -r '.reviewComment // empty' review_result.json > review_comment.txt
-            COMMENT_SIZE=$(wc -c < review_comment.txt)
-            
-            if [ "$COMMENT_SIZE" -gt 0 ]; then
-              echo "Posting review comment to PR #$PR_NUMBER (${COMMENT_SIZE} bytes)"
-              # Use --body-file to prevent command line length issues
-              gh pr comment "$PR_NUMBER" --body-file review_comment.txt 2>&1
-              EXIT_CODE=$?
-              
-              if [ $EXIT_CODE -eq 0 ]; then
-                echo "✅ Review comment posted successfully"
-              else
-                echo "❌ Failed to post review comment (exit code: $EXIT_CODE)"
-                echo "Command: gh pr comment $PR_NUMBER --body-file review_comment.txt"
-              fi
-            else
-              echo "⚠️ No review comment found in result"
-              echo "Debug info:"
-              echo "--- Full review_result.json content ---"
-              cat review_result.json | jq '.' || echo "Failed to parse JSON"
-              echo "--- End of review_result.json ---"
+            if [ -s review_comment.txt ]; then
+              gh pr comment "$PR_NUMBER" --body-file review_comment.txt
             fi
-          else
-            echo "❌ review_result.json not found. Review generation may have failed."
-            echo "Debug info:"
-            ls -la | grep -E "review|result" || echo "No review-related files found"
           fi
 
-      - name: Upload Review Debug Artifact on Failure
-        if: always() && failure()
-        uses: actions/upload-artifact@v4
+  post-skip-check:
+    name: Post Skip Check
+    needs: analyze-changes
+    if: needs.analyze-changes.outputs.needs-review == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create skip check
+        uses: actions/github-script@v7
         with:
-          name: review-debug-${{ github.event.pull_request.number }}-${{ github.run_attempt }}
-          path: |
-            review_result.json
-            review_comment.txt
-          retention-days: 7
-
-      - name: Apply Review Labels
-        if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          if [ -f "review_result.json" ]; then
-            # Extract labels from the review result
-            LABELS=$(jq -r '.labels[]? // empty' review_result.json)
-            
-            if [ -n "$LABELS" ]; then
-              echo "📌 Applying labels to PR #$PR_NUMBER:"
-              
-              LABEL_COUNT=$(jq '.labels | length' review_result.json)
-              
-              if [ $LABEL_COUNT -gt 0 ]; then
-                echo "Applying $LABEL_COUNT labels..."
-                jq -r '.labels[]' review_result.json | while read -r label; do
-                  echo "  Adding: $label"
-                  timeout 30 gh pr edit "$PR_NUMBER" --add-label "$label" >/dev/null 2>&1 || echo "    ⚠️ Failed to add: $label"
-                done
-                echo "✅ Label application complete"
-              fi
-            else
-              echo "ℹ️ No labels to apply from review result"
-            fi
-          else
-            echo "⚠️ review_result.json not found, skipping label application"
-          fi
+          github-token: ${{ secrets.ARI_PAT }}
+          script: |
+            const skipReason = '${{ needs.analyze-changes.outputs.skip-reason }}';
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Gemini Code Review',
+              head_sha: '${{ github.event.pull_request.head.sha }}',
+              status: 'completed',
+              conclusion: 'skipped',
+              output: {
+                title: 'Review Skipped',
+                summary: `Review was skipped for the following reason: ${skipReason}`
+              }
+            });
