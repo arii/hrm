@@ -158,6 +158,7 @@ jobs:
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             pnpm-store-${{ runner.os }}-
+            pnpm-store-
 
       - name: Cache Playwright
         uses: actions/cache@v4
@@ -240,12 +241,24 @@ jobs:
           pnpm config set side-effects-cache true
 
       - name: Verify Dependencies
+        id: setup_deps
         run: |
           # Ensure dependencies are installed if node_modules is missing
-          if [ ! -d "node_modules" ]; then
-            echo "node_modules missing, reinstalling dependencies..."
-            pnpm install --frozen-lockfile
-          fi
+          {
+            if [ ! -d "node_modules" ]; then
+              echo "node_modules missing, reinstalling dependencies..."
+              pnpm install --frozen-lockfile
+              pnpm exec playwright install chromium
+            fi
+          } 2>&1 | tee setup-output.log
+
+      - name: Upload Setup Report
+        if: failure() && steps.setup_deps.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: setup-report
+          path: setup-output.log
+          retention-days: 30
 
       - name: Run Knip
         id: knip
@@ -629,6 +642,14 @@ jobs:
         # Continue on error: artifact might not exist if build passed
         continue-on-error: true
 
+      - name: Download Setup Report
+        uses: actions/download-artifact@v4
+        with:
+          name: setup-report
+          path: logs
+        # Continue on error: artifact might not exist if setup passed
+        continue-on-error: true
+
       - name: Download Core Test Reports
         uses: actions/download-artifact@v4
         with:
@@ -705,6 +726,9 @@ jobs:
               elif [ -f "logs/build-output.log" ]; then
                 echo "--- BUILD FAILURES ---"
                 tail -c $LOG_TRUNCATE_BYTES "logs/build-output.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+              elif [ -f "logs/setup-output.log" ]; then
+                echo "--- SETUP FAILURES ---"
+                tail -c $LOG_TRUNCATE_BYTES "logs/setup-output.log" | sed -r 's/\x1b\[[0-9;]*m//g'
               else
                 echo "Log file not found. Check workflow run for details."
               fi
