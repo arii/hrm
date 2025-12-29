@@ -214,6 +214,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
               },
             }}
             {...props}
+            // Add aria-label for screen reader accessibility.
+            // This ensures that screen readers announce both the action and the playlist name.
             aria-label={`Select playlist: ${option.name}`}
           >
             <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
