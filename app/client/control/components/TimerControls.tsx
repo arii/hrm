@@ -23,6 +23,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
 
+// Constants
+const OPTIMISTIC_UI_SYNC_TIMEOUT = 3000 // ms
+const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
+
 const actionButtonBaseSx = {
   flex: 1,
   width: '100%',
@@ -74,7 +78,7 @@ const TimerControls = () => {
         `[TimerControls] Optimistic state timed out. Reverting to server state (isRunning: ${timerData.isRunning}).`
       )
       setOptimisticIsRunning(timerData.isRunning)
-    }, 3000) // 3-second timeout
+    }, OPTIMISTIC_UI_SYNC_TIMEOUT)
 
     // Cleanup the timeout if the states sync up before it fires
     return () => clearTimeout(safetyTimeout)
@@ -145,7 +149,10 @@ const TimerControls = () => {
         console.warn(
           `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
         )
-        setTimeout(() => setOptimisticIsRunning(timerData.isRunning), 500)
+        setTimeout(
+          () => setOptimisticIsRunning(timerData.isRunning),
+          DISCONNECTED_UI_REVERT_DELAY
+        )
         return
       }
 
