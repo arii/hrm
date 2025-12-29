@@ -16,6 +16,13 @@ The `any` type is a powerful tool, but it's a dangerous one. It effectively disa
 
 3.  **Type Assertions:** If you have more information about the type of a value than TypeScript does, you can use a type assertion. However, be careful with type assertions, as they can lead to runtime errors if you're wrong.
 
+    ```typescript
+    function processUnknown(data: unknown) {
+      const myData = data as { message: string };
+      console.log(myData.message);
+    }
+    ```
+
 4.  **`Record<string, unknown>`:** When working with dynamic objects where the keys are strings but the values are of unknown types, `Record<string, unknown>` is a great alternative to `any`.
 
     ```typescript

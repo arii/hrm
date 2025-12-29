@@ -228,7 +228,7 @@ async function main() {
 async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
   prompt: string,
-  config?: GenerateContentRequest
+  config?: Omit<GenerateContentRequest, 'contents'>
 ) {
   let lastError: unknown
 
