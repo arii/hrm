@@ -41,6 +41,9 @@ runs:
     - name: Install GitHub CLI
       shell: bash
       run: |
+        # Installs a specific version of the GitHub CLI, which is required
+        # for posting comments and other interactions with the GitHub API.
+        # The version is passed as an input to allow for easy updates.
         mkdir -p $HOME/.local/bin
         GH_VERSION=${{ inputs.gh-version }}
         curl -L https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz -o gh.tar.gz

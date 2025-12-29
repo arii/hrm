@@ -86,6 +86,9 @@ jobs:
       - name: Verify Build
         id: build
         env:
+          # The NEXTAUTH_SECRET is not explicitly set here because it is
+          # automatically sourced from the .env.local file created in the
+          # "Create Runtime Envs" step.
           NEXTAUTH_URL: http://localhost:3000
         run: |
           set -o pipefail
