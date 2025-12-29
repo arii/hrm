@@ -5,11 +5,9 @@ import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { WebSocketProvider, useWebSocket } from '../../../context/WebSocketContext';
 
-// Store original global objects to restore them after tests
+// Store original WebSocket to restore it later
 const originalWebSocket = global.WebSocket;
-const originalCrypto = global.self.crypto;
 
-// Mock the WebSocket class.
 let mockWebSocketInstance: {
   onopen: ((event: any) => void) | null;
   onclose: ((event: any) => void) | null;
@@ -19,21 +17,25 @@ let mockWebSocketInstance: {
   send: jest.Mock;
   readyState: number;
 };
-const mockWebSocket = jest.fn().mockImplementation(() => {
+
+// A clean, simple mock for the WebSocket class
+const mockWebSocket = jest.fn((...args) => {
   mockWebSocketInstance = {
-    onopen: null, onclose: null, onmessage: null, onerror: null,
-    close: jest.fn(), send: jest.fn(), readyState: 0,
+    onopen: null,
+    onclose: null,
+    onmessage: null,
+    onerror: null,
+    close: jest.fn(),
+    send: jest.fn(),
+    readyState: 0, // CONNECTING
   };
   return mockWebSocketInstance;
 });
 
-// Mock the URL utility.
+// Mock the URL utility, as its dependency might not be available in Jest
 jest.mock('../../../utils/urls', () => ({
   getWebSocketURL: jest.fn(() => 'ws://localhost:3001'),
 }));
-
-// Set up a more specific spy for localStorage.
-const localStorageGetItemSpy = jest.spyOn(Storage.prototype, 'getItem');
 
 const TestComponent = () => {
   const { connectionStatus, sendData } = useWebSocket();
@@ -46,50 +48,65 @@ const TestComponent = () => {
 };
 
 describe('WebSocketProvider', () => {
+  // Use spies for localStorage to avoid overwriting the global object
+  let getItemSpy: jest.SpyInstance;
+  let setItemSpy: jest.SpyInstance;
 
   beforeAll(() => {
-    // Assign mocks before all tests run
+    // Assign the mock to the global scope
     global.WebSocket = mockWebSocket as any;
-    Object.defineProperty(global.self, 'crypto', {
-        value: { randomUUID: () => 'test-uuid' },
-        configurable: true,
-    });
   });
 
   afterAll(() => {
-    // Restore original globals after all tests have completed
+    // Restore the original WebSocket class
     global.WebSocket = originalWebSocket;
-    global.self.crypto = originalCrypto;
-    localStorageGetItemSpy.mockRestore();
   });
 
   beforeEach(() => {
+    // Reset all mocks before each test
     jest.clearAllMocks();
-    // This mock implementation handles different keys. It provides the clientId
-    // for the WebSocket connection and returns null for 'pendingActions' to
-    // prevent the JSON.parse error during component mount.
-    localStorageGetItemSpy.mockImplementation((key: string) => {
-      if (key === 'clientId') {
-        return 'test-uuid';
-      }
-      return null;
+
+    // Spy on localStorage and provide a specific implementation for the tests
+    getItemSpy = jest.spyOn(Storage.prototype, 'getItem');
+    setItemSpy = jest.spyOn(Storage.prototype, 'setItem');
+
+    // For these tests, we want to simulate a client that already has an ID
+    getItemSpy.mockImplementation((key) => {
+      if (key === 'clientId') return 'test-uuid';
+      return null; // Ensure other keys like 'pendingActions' return null
     });
   });
 
+  afterEach(() => {
+    // Restore the spies after each test to avoid leakage
+    getItemSpy.mockRestore();
+    setItemSpy.mockRestore();
+  });
+
   it('should establish a WebSocket connection on mount', async () => {
-    render(<WebSocketProvider><TestComponent /></WebSocketProvider>);
+    render(
+      <WebSocketProvider>
+        <TestComponent />
+      </WebSocketProvider>
+    );
+
     await waitFor(() => {
-      expect(localStorageGetItemSpy).toHaveBeenCalledWith('clientId');
+      expect(getItemSpy).toHaveBeenCalledWith('clientId');
       expect(mockWebSocket).toHaveBeenCalledWith('ws://localhost:3001/?clientId=test-uuid');
     });
   });
 
   it('should update connection status to "Connected" on open', async () => {
-    render(<WebSocketProvider><TestComponent /></WebSocketProvider>);
+    render(
+      <WebSocketProvider>
+        <TestComponent />
+      </WebSocketProvider>
+    );
     await waitFor(() => expect(mockWebSocketInstance).toBeDefined());
+
     act(() => {
       if (mockWebSocketInstance?.onopen) {
-        mockWebSocketInstance.readyState = 1;
+        mockWebSocketInstance.readyState = 1; // OPEN
         mockWebSocketInstance.onopen({} as any);
       }
     });
@@ -97,16 +114,23 @@ describe('WebSocketProvider', () => {
   });
 
   it('should send data when the connection is open', async () => {
-    render(<WebSocketProvider><TestComponent /></WebSocketProvider>);
+    render(
+      <WebSocketProvider>
+        <TestComponent />
+      </WebSocketProvider>
+    );
     await waitFor(() => expect(mockWebSocketInstance).toBeDefined());
+
     act(() => {
-      if (mockWebSocketInstance?.onopen) {
-        mockWebSocketInstance.readyState = 1;
-        mockWebSocketInstance.onopen({} as any);
-      }
+        if (mockWebSocketInstance?.onopen) {
+            mockWebSocketInstance.readyState = 1; // OPEN
+            mockWebSocketInstance.onopen({} as any);
+        }
     });
+
     const sendButton = screen.getByText('Send');
     act(() => sendButton.click());
+
     expect(mockWebSocketInstance.send).toHaveBeenCalledWith(JSON.stringify({ type: 'PING' }));
   });
 });
