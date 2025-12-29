@@ -95,27 +95,25 @@ const HrmConnectionPanel = () => {
   return (
     <Box
       sx={{
-        flexGrow: 1,
-        width: { xs: '100%', lg: 'calc(50% - 16px)' },
         display: 'flex',
         flexWrap: 'wrap',
         gap: 2,
+        height: '100%',
       }}
     >
       {isLoading || tileData.length === 0 ? (
         <>
           <Box
             sx={{
-              width: '100%',
               display: 'flex',
               flexDirection: 'column',
+              width: { xs: '100%', sm: 'calc(50% - 8px)' },
+              height: '100%', // Ensure the container fills the grid cell
               gap: 2,
               p: 2,
               border: 1,
               borderColor: 'divider',
               borderRadius: 2,
-              height: '100%',
-              justifyContent: 'center',
             }}
           >
             <Box

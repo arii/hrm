@@ -6,21 +6,31 @@ export interface UserPreferences {
   volumeLevel: number
   defaultWorkDuration: number
   defaultRestDuration: number
-  favoritePlaylist: string | null
-  userName: string | null
+  // Nullable fields represent user-provided data that may not yet be set.
+  favoritePlaylist: string
+  userName: string
   userAge: number | null
+  userWeight: number | null
+  autoConnect: boolean
+}
+
+const DEFAULT_PREFERENCES: UserPreferences = {
+  theme: 'dark',
+  volumeLevel: 70,
+  defaultWorkDuration: 20,
+  defaultRestDuration: 10,
+  favoritePlaylist: '',
+  userName: '',
+  userAge: null,
+  userWeight: null,
+  autoConnect: false,
 }
 
 export const useUserPreferences = () => {
-  const [prefs, setPrefs] = useLocalStorage<UserPreferences>('user-prefs', {
-    theme: 'dark',
-    volumeLevel: 70,
-    defaultWorkDuration: 20,
-    defaultRestDuration: 10,
-    favoritePlaylist: null,
-    userName: null,
-    userAge: null,
-  })
+  const [prefs, setPrefs] = useLocalStorage<UserPreferences>(
+    'user-prefs',
+    DEFAULT_PREFERENCES
+  )
 
   return [prefs, setPrefs] as const
 }

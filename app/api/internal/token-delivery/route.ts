@@ -34,7 +34,11 @@ export async function POST(req: NextRequest) {
 
     // 3. Get the singleton instance of the Spotify service
     const spotifyService = serviceContainer.get('spotifyService')
-    if (!spotifyService || !spotifyService.isReady()) {
+
+    // FIX: Removed `!spotifyService.isReady()` check.
+    // The service might be uninitialized (not ready) because it's waiting for this very token to initialize.
+    // This check created a circular dependency. We must allow the token delivery to proceed to bootstrap the SDK.
+    if (!spotifyService) {
       throw new ApiError(503, 'Spotify service is not available.')
     }
 
