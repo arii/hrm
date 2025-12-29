@@ -28,7 +28,9 @@ async function _tryHydrateSpotifyService(req: NextRequest): Promise<void> {
       const spotifyService = serviceContainer.get('spotifyService')
 
       const expiresIn =
-        token.exp && token.iat ? Math.max(0, token.exp - token.iat) : 3600
+        typeof token.exp === 'number' && typeof token.iat === 'number'
+          ? Math.max(0, token.exp - token.iat)
+          : 3600
 
       await spotifyService.handleTokenUpdate({
         provider: 'spotify',
