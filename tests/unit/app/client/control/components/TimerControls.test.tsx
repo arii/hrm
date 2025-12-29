@@ -113,4 +113,43 @@ describe('TimerControls', () => {
       command: 'START',
     })
   })
+
+  it('handles connection drop after render but before interaction', async () => {
+    const { rerender } = render(
+      <WebSocketContext.Provider value={mockWebSocketContext}>
+        <TimerControls />
+      </WebSocketContext.Provider>
+    )
+
+    // Simulate connection drop
+    const disconnectedContext = {
+      ...mockWebSocketContext,
+      connectionStatus: 'Disconnected',
+    }
+    rerender(
+      <WebSocketContext.Provider value={disconnectedContext}>
+        <TimerControls />
+      </WebSocketContext.Provider>
+    )
+
+    const startButton = screen.getByTestId('start-timer-button')
+    act(() => {
+      fireEvent.click(startButton)
+    })
+
+    // ...then revert because of the disconnection
+    act(() => {
+      jest.advanceTimersByTime(600)
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
+    })
+    expect(
+      disconnectedContext.sendData
+    ).not.toHaveBeenCalledWith({
+      type: 'TIMER_COMMAND',
+      command: 'START',
+    })
+  })
 })
