@@ -214,6 +214,32 @@ jobs:
       - name: Install Playwright Browsers
         run: pnpm exec playwright install chromium
 
+      # --- Infrastructure Tests ---
+      - name: Run Dev Server Test (Pre-Build)
+        run: |
+          set -o pipefail
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-dev-results.xml pnpm run test:infra:dev --reporter=junit
+      - name: Publish Dev Server Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Infrastructure (Dev)
+          path: test-results/infra-dev-results.xml
+          reporter: java-junit
+
+      - name: Run Production Server Test (Post-Build)
+        run: |
+          set -o pipefail
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-prod-results.xml pnpm run test:infra:prod --reporter=junit
+      - name: Publish Production Server Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Infrastructure (Prod)
+          path: test-results/infra-prod-results.xml
+          reporter: java-junit
+
+      # --- Unit Tests ---
       - name: Run Unit Tests
         run: pnpm run test:unit
 
@@ -225,6 +251,28 @@ jobs:
           path: test-results/unit-results.xml
           reporter: java-junit
 
+      # --- Performance Tests ---
+      - name: Start Application for Performance Test
+        run: pnpm run start
+      - name: Run Performance Test
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_on: error
+          command: PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit
+      - name: Publish Performance Test Results to GitHub Checks
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Performance Tests Report
+          path: test-results/perf-results.xml
+          reporter: java-junit
+      - name: Stop Application
+        if: always()
+        run: pnpm run kill-all || true
+
+      # --- Visual Tests ---
       - name: Run Visual Tests
         run: pnpm run test:visual
 
