@@ -266,7 +266,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             <Box sx={{ pl: 1, display: 'flex', alignItems: 'center' }}>
               <IconButton
                 edge="end"
-                aria-label={`Play ${option.name}`}
+                aria-label={`Play playlist: ${option.name}`}
                 onClick={(e) => {
                   e.stopPropagation() // Prevent Autocomplete from closing
                   onPlaylistPlay(option.uri)
