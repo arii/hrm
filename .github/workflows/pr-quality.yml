@@ -128,6 +128,12 @@ jobs:
           fetch-depth: 0
           clean: true # 🧹 Wipes previous run artifacts to ensure a fresh start
 
+      - name: Verify Lockfile
+        run: |
+          if [ ! -f pnpm-lock.yaml ]; then
+            echo "::error::pnpm-lock.yaml is missing! caching will fail."
+            exit 1
+          fi
       # --- GLOBAL PERSISTENCE CONFIG ---
       - name: Install pnpm
         uses: pnpm/action-setup@v4

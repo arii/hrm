@@ -38,7 +38,7 @@ runs:
         #    hyphen. This prevents inputs like `feature//branch` from becoming `feature--branch`.
         # 4. `cut -c1-"$LEN"`: Truncates the string to the maximum allowed length specified by the
         #    `max-length` input.
-        CLEAN=$(echo "$RAW" | tr -d '\n' | sed 's/[^a-zA-Z0-9_-]/-/g' | tr -s '-' | cut -c1-"$LEN")
+        CLEAN=$(printf "%s" "$RAW" | tr -d '\n' | sed 's/[^a-zA-Z0-9_-]/-/g' | tr -s '-' | cut -c1-"$LEN")
 
         # 5. Remove Leading AND Trailing hyphens for safety and cleanliness.
         #    `${CLEAN#-}` removes a leading hyphen.
