@@ -28,9 +28,9 @@ const preset = getArg('--preset')
 // it is recommended to either update this list to prioritize a stable model
 // or to configure a production-ready list via the GEMINI_MODEL_FALLBACKS environment variable.
 const defaultFallbacks = [
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
   'gemini-2.0-flash-exp',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-pro-latest',
 ]
 
 export function getModelFallbacks(): string[] {
@@ -262,25 +262,6 @@ async function generateContentWithFallback(
   throw new Error(`All models failed. Last error: ${lastError?.message}`)
 }
 
-/**
- * Cleans a string that is expected to be JSON, removing common markdown code blocks.
- * Large Language Models sometimes wrap their JSON output in markdown code fences
- * (e.g., ```json\\n{...}\\n```), which can cause JSON.parse() to fail. This function
- * reliably extracts the JSON content from within these fences.
- * @param text The raw string output from the model.
- * @returns A cleaned string, trimmed and free of markdown code fences.
- */
-export function cleanJsonOutput(text: string): string {
-  if (!text) return ''
-  // Improved regex to handle potential leading text before the block
-  const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i
-  const match = codeBlockRegex.exec(text)
-  if (match && match[1]) {
-    return match[1].trim()
-  }
-  return text.trim()
-}
-
 async function runGenericTask(
   genAI: GoogleGenerativeAI,
   task: string,
@@ -300,7 +281,29 @@ ${task}
 
   try {
     const text = await generateContentWithFallback(genAI, prompt)
-    await writeOutput(text, outputFile)
+
+    // INTELLIGENT JSON HANDLING
+    // If the output file is expected to be JSON, we attempt to clean and parse it
+    // to prevent markdown code blocks (```json) from breaking downstream consumers.
+    if (outputFile && outputFile.endsWith('.json')) {
+      console.log(`Output file is .json. Attempting to parse and sanitize AI response...`)
+      const processor = new JsonProcessor()
+      const result = processor.process(text)
+
+      // Always write valid JSON to the file
+      // If parsing failed, result.data contains the error object, which is still valid JSON
+      await writeOutput(JSON.stringify(result.data, null, 2), outputFile)
+
+      if (!result.success) {
+        console.error('Failed to parse generated content as JSON. Error details written to output file.')
+      } else {
+        console.log('Successfully sanitized and parsed JSON output.')
+      }
+    } else {
+      // For non-JSON files, write exact raw output
+      await writeOutput(text, outputFile)
+    }
+
   } catch (error) {
     handleError(error)
   }
@@ -738,7 +741,7 @@ async function runReviewPreset(
       await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
     }
   } catch (error) {
-    await handleError(error)
+    handleError(error)
   }
 }
 
@@ -781,7 +784,6 @@ async function handleError(error: any) {
       message: userMessage,
       details: technicalDetails,
     },
-    // Provide a valid structure for the review result to avoid breaking the calling workflow
     reviewComment: `### ❌ Review Failed: ${category}\n\n**Details**: ${userMessage}\n\n<details><summary>Technical Info</summary>\n\n\`\`\`\n${technicalDetails}\n\`\`\`\n\n</details>`,
     labels: ['review-failed'],
     verdict: 'comment',
