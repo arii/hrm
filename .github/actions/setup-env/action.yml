@@ -22,9 +22,10 @@ runs:
         node-version: '20'
         cache: 'pnpm'
 
-    - name: 'Enable Corepack'
-      shell: bash
-      run: corepack enable
+    - name: 'Setup pnpm'
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
 
     - name: Install GitHub CLI
       shell: bash
