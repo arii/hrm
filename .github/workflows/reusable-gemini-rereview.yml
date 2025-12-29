@@ -108,7 +108,7 @@ jobs:
             COMMENT_TIME=$(date -d "$LAST_COMMENT_TIMESTAMP" +%s)
             CURRENT_TIME=$(date +%s)
             TIME_DIFF=$((CURRENT_TIME - COMMENT_TIME))
-            if [ "$TIME_DIFF" -lt 600 ]; then # 10 minutes
+            if [ "$TIME_DIFF" -lt 300 ]; then # 5 minutes
               SKIP_REASON="too recent"
               echo "::debug::Skipping review: Last comment was only ${TIME_DIFF} seconds ago."
               echo "needs-review=false" >> $GITHUB_OUTPUT
