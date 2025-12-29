@@ -154,7 +154,9 @@ const SpotifyControls = () => {
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
         volume: sanitized,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+        ...(targetDeviceId
+          ? { deviceId: DeviceIdSchema.parse(targetDeviceId) }
+          : {}),
       }
       sendData(message)
       lastSentVolumeRef.current = messageKey
