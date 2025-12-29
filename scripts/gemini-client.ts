@@ -402,23 +402,34 @@ async function runGenericTask(
   outputFile: string | null | undefined,
   cachedModel?: GenerativeModel | null
 ) {
-  const prompt = `Task: ${task}`
-  const fullPrompt = `
+  const systemInstructions = `
 You are an AI assistant helping with a software project.
 Please use the provided context files to inform your response.
 Do not hallucinate content that is not in the context files if you are asked about specifics of the project.
+`;
+
+  // For the cached model, the context is already in the cache.
+  // We only need to send the instructions and the task.
+  const prompt = `${systemInstructions}
+
+--- Task ---
+${task}
+`;
+
+  // For the non-cached model, we send everything.
+  const fullPrompt = `${systemInstructions}
 
 ${contextContent}
 
 --- Task ---
 ${task}
-`
+`;
 
   try {
-    const text = await generateContentWithFallback(genAI, prompt, fullPrompt, {}, cachedModel)
-    await writeOutput(text, outputFile)
+    const text = await generateContentWithFallback(genAI, prompt, fullPrompt, {}, cachedModel);
+    await writeOutput(text, outputFile);
   } catch (error) {
-    handleError(error)
+    handleError(error);
   }
 }
 
@@ -497,7 +508,8 @@ const CHECK_FIX_GUIDANCE: Record<string, string> = {
 function buildReviewPrompt(
   diff: string,
   context: ReviewContext,
-  contextContent: string
+  contextContent: string,
+  isCached: boolean
 ): string {
   const isReReview = context.reviewCount > 0
   const reviewIteration = isReReview
@@ -616,9 +628,16 @@ ${context.commitMessages}
   }
 
   // Project Documentation
-  prompt += `\n## Project Documentation & Guidelines
+  // Conditionally include contextContent only if not using a cached model
+  if (!isCached) {
+    prompt += `\n## Project Documentation & Guidelines
 ${contextContent}
-`
+`;
+  } else {
+    prompt += `\n## Project Documentation & Guidelines
+[INFO: Full file content is available in the cached context.]
+`;
+  }
 
   // The actual diff
   // Truncate diff if extremely large
@@ -795,7 +814,8 @@ async function runReviewPreset(
     return
   }
 
-  const prompt = buildReviewPrompt(diff, context, contextContent)
+  const isCached = !!cachedModel;
+  const prompt = buildReviewPrompt(diff, context, contextContent, isCached)
 
   try {
     const text = await generateContentWithFallback(genAI, prompt, prompt, {
