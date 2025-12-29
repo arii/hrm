@@ -28,9 +28,9 @@ const preset = getArg('--preset')
 // it is recommended to either update this list to prioritize a stable model
 // or to configure a production-ready list via the GEMINI_MODEL_FALLBACKS environment variable.
 const defaultFallbacks = [
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
   'gemini-2.0-flash-exp',
-  'gemini-1.5-flash-latest',
-  'gemini-1.5-pro-latest',
 ]
 
 export function getModelFallbacks(): string[] {
@@ -81,7 +81,7 @@ export function getModelFallbacks(): string[] {
 
 const MODEL_FALLBACKS = getModelFallbacks()
 
-class JsonProcessor {
+export class JsonProcessor {
   /**
    * Extracts a JSON code block from a string.
    * @param text The string to search for a JSON block.
@@ -281,7 +281,20 @@ ${task}
 
   try {
     const text = await generateContentWithFallback(genAI, prompt)
-    await writeOutput(text, outputFile)
+
+    // Attempt to parse JSON, but fall back to raw text if parsing fails, assuming a Markdown review or unstructured text.
+    const jsonProcessor = new JsonProcessor()
+    const result = jsonProcessor.process(text || '')
+
+    if (result.success) {
+      // It's valid JSON (e.g., structured data request)
+      await writeOutput(JSON.stringify(result.data, null, 2), outputFile)
+    } else {
+      // Fallback: Assume it's a Markdown review or unstructured text
+      // Log a warning but preserve the content
+      console.warn('Output is not JSON, treating as raw text.')
+      await writeOutput(text || '', outputFile)
+    }
   } catch (error) {
     handleError(error)
   }

@@ -1,7 +1,50 @@
 /**
  * @jest-environment node
  */
-import { getModelFallbacks } from '../../scripts/gemini-client'
+import {
+  getModelFallbacks,
+  JsonProcessor,
+} from '../../scripts/gemini-client'
+
+describe('JsonProcessor', () => {
+  const processor = new JsonProcessor()
+
+  it('should parse a valid JSON string', () => {
+    const jsonString = '{"key": "value", "number": 123}'
+    const result = processor.process(jsonString)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({ key: 'value', number: 123 })
+  })
+
+  it('should extract and parse a JSON block from markdown', () => {
+    const markdownString =
+      'Some text before\n```json\n{"key": "value"}\n```\nSome text after'
+    const result = processor.process(markdownString)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({ key: 'value' })
+  })
+
+  it('should return an error for invalid JSON', () => {
+    const invalidJson = '{"key": "value",}'
+    const result = processor.process(invalidJson)
+    expect(result.success).toBe(false)
+    expect(result.data.error).toBe('JSON Parse Error')
+  })
+
+  it('should return an error for a malformed JSON block in markdown', () => {
+    const markdownString = '```json\n{"key": "value",}\n```'
+    const result = processor.process(markdownString)
+    expect(result.success).toBe(false)
+    expect(result.data.error).toBe('JSON Parse Error')
+  })
+
+  it('should return an error if no JSON is found', () => {
+    const nonJsonString = 'This is just a regular string.'
+    const result = processor.process(nonJsonString)
+    expect(result.success).toBe(false)
+    expect(result.data.error).toBe('JSON Parse Error')
+  })
+})
 
 describe('getModelFallbacks', () => {
   const originalEnv = process.env
@@ -19,9 +62,9 @@ describe('getModelFallbacks', () => {
     delete process.env.GEMINI_MODEL_FALLBACKS
     const fallbacks = getModelFallbacks()
     expect(fallbacks).toEqual([
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
       'gemini-2.0-flash-exp',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-pro-latest',
     ])
   })
 
@@ -60,9 +103,9 @@ describe('getModelFallbacks', () => {
     process.env.GEMINI_MODEL_FALLBACKS = ''
     const fallbacks = getModelFallbacks()
     expect(fallbacks).toEqual([
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
       'gemini-2.0-flash-exp',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-pro-latest',
     ])
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
@@ -77,9 +120,9 @@ describe('getModelFallbacks', () => {
     process.env.GEMINI_MODEL_FALLBACKS = 'invalid1, invalid2'
     const fallbacks = getModelFallbacks()
     expect(fallbacks).toEqual([
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
       'gemini-2.0-flash-exp',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-pro-latest',
     ])
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'

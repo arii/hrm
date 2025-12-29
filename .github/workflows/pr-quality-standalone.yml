@@ -286,119 +286,13 @@ jobs:
             reports/performance/
           retention-days: 7
 
-      # Post comment on PR when tests fail
-      - name: Report Failure to Jules
+
+      # Fail the job if any tests failed (must be at the very end)
+      - name: Fail Workflow on Test Failures
         if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_dev.outcome == 'failure' || steps.infra_tests_prod.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
-        # This step reports CI failures to the bot.
-        # The bot will then decide whether to trigger a review based on the re-review workflow logic.
-        env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
-          # Pass all test outcomes to the script as env vars for easier access
-          LINT_OUTCOME: ${{ steps.lint.outcome }}
-          BUILD_OUTCOME: ${{ steps.build.outcome }}
-          INFRA_TESTS_DEV_OUTCOME: ${{ steps.infra_tests_dev.outcome }}
-          INFRA_TESTS_PROD_OUTCOME: ${{ steps.infra_tests_prod.outcome }}
-          UNIT_TESTS_OUTCOME: ${{ steps.unit_tests.outcome }}
-          VISUAL_TESTS_OUTCOME: ${{ steps.visual_tests.outcome }}
-          PERF_TESTS_OUTCOME: ${{ steps.perf_tests.outcome }}
         run: |
-          set +e  # Disable exit on error to continue reporting even if commands fail
-
-          # 1. SETUP: Find PR number and define checks
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
-            PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number')
-          fi
-
-          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
-            echo "::warning::No Pull Request found for this branch. Skipping comment."
-            exit 0
-          fi
-
-          COMMENT_FILE="test-results/pr-comment.md"
-          mkdir -p test-results
-
-          # Define checks in a readable, maintainable format.
-          # Each line: <OUTCOME_VAR_NAME>|<Display Name>|<primary_log_file>
-          read -r -d '' CHECKS_DEFINITION <<'EOF'
-          LINT_OUTCOME|Lint|logs/lint-output.log
-          BUILD_OUTCOME|Build|logs/build-output.log
-          INFRA_TESTS_DEV_OUTCOME|Infrastructure (Dev)|logs/infra-dev-output.log
-          INFRA_TESTS_PROD_OUTCOME|Infrastructure (Prod)|logs/infra-prod-output.log
-          UNIT_TESTS_OUTCOME|Unit Tests|logs/unit-output.log
-          VISUAL_TESTS_OUTCOME|Visual Tests|logs/visual-output.log
-          PERF_TESTS_OUTCOME|Performance Tests|logs/performance-output.log
-          EOF
-
-          # 2. AGGREGATION: Loop through checks to find failures and collect logs
-          FAILED_CHECKS_LIST=""
-          LOGS_BODY=""
-
-          # Helper function to append a log file's content to the comment body
-          append_log_to_body() {
-            local log_file="$1"
-            local test_name="$2"
-            if [ -f "$log_file" ]; then
-              LOGS_BODY="${LOGS_BODY}\n### ${test_name} Log\n"
-              LOGS_BODY="${LOGS_BODY}\`\`\`\n"
-              # Append truncated, color-code-stripped log content
-              LOGS_BODY="${LOGS_BODY}$(tail -c "${{ env.LOG_TRUNCATE_BYTES }}" "$log_file" | sed -r 's/\x1b\[[0-9;]*m//g')\n"
-              LOGS_BODY="${LOGS_BODY}\`\`\`\n"
-            else
-              LOGS_BODY="${LOGS_BODY}\n### ${test_name} Log\n_Log file not found: ${log_file}_\n"
-            fi
-          }
-
-          while IFS='|' read -r outcome_var display_name log_file; do
-            # Use indirect expansion to get the outcome value (e.g., $LINT_OUTCOME)
-            if [ "${!outcome_var}" == "failure" ]; then
-              # Add to the comma-separated list of failed checks
-              if [ -z "$FAILED_CHECKS_LIST" ]; then
-                FAILED_CHECKS_LIST="$display_name"
-              else
-                FAILED_CHECKS_LIST="$FAILED_CHECKS_LIST, $display_name"
-              fi
-
-              # Append the primary log file for this check
-              append_log_to_body "$log_file" "$display_name"
-
-              # Special case: Performance tests have additional, specific logs
-              if [ "$display_name" == "Performance Tests" ]; then
-                append_log_to_body "logs/ws-stress-client.log" "WebSocket Stress Client"
-                append_log_to_body "logs/frontend-perf-server.log" "Frontend Perf Server"
-              fi
-            fi
-          done <<< "$CHECKS_DEFINITION"
-
-
-          # 3. REPORTING: If any checks failed, construct and post the comment
-          if [ -n "$FAILED_CHECKS_LIST" ]; then
-            # Construct the final comment body
-            COMMENT_HEADER="@jules fix: CI checks failed: ${FAILED_CHECKS_LIST}. Review requested.\n\n"
-            # Add a notice about truncated logs and a link to the full logs
-            LOG_FOOTER="---\n*Note: Logs are truncated. View the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.*"
-            COMMENT_DETAILS="<details><summary><strong>Failed Test Report Log</strong></summary>${LOGS_BODY}\n${LOG_FOOTER}\n</details>"
-            # Write to file
-            echo -e "${COMMENT_HEADER}${COMMENT_DETAILS}" > "$COMMENT_FILE"
-
-            # Post the comment to the PR, with error handling
-            if ! gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE"; then
-              echo "::error::Failed to post comment to PR. The GitHub token may have expired or lack permissions."
-              # To prevent failing the entire workflow for a reporting issue, we don't exit 1 here.
-              # The overall job will still fail based on the test steps.
-            fi
-          else
-            echo "::warning::Job failed, but no specific test outcome was 'failure'. A step may have failed unexpectedly."
-          fi
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        if: always()
-        with:
-          ref: ${{ inputs.branch || github.ref }}
-          fetch-depth: 0
-          # CHANGED: Set to false to keep .next/cache and node_modules on disk
-          clean: false
+          echo "One or more tests failed. Failing the workflow."
+          exit 1
 
       - name: Clean Workspace (Preserve Cache)
         if: always()
@@ -416,9 +310,12 @@ jobs:
           git reset --hard HEAD
           git clean -fdx --exclude .next --exclude node_modules --exclude .eslintcache --exclude .cache
 
-      # Fail the job if any tests failed (must be at the very end)
-      - name: Fail Workflow on Test Failures
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_dev.outcome == 'failure' || steps.infra_tests_prod.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
-        run: |
-          echo "One or more tests failed. Failing the workflow."
-          exit 1
+  gemini-review-on-failure:
+    name: 🤖 Gemini Review on Failure
+    needs: [test]
+    if: failure()
+    uses: ./.github/workflows/reusable-gemini-review.yml
+    with:
+      trigger_event: 'pull_request'
+      pr_quality_result: 'failure'
+    secrets: inherit
