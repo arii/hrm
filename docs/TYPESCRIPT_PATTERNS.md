@@ -45,6 +45,35 @@ function processData(data: unknown) {
 }
 ```
 
+### Discriminated Unions
+
+Discriminated unions are a powerful pattern for working with heterogeneous data. They allow you to define a type that can be one of several different shapes, and then use a common property to determine which shape the data has.
+
+```typescript
+interface Success {
+  type: 'SUCCESS';
+  data: string;
+}
+
+interface Failure {
+  type: 'FAILURE';
+  error: string;
+}
+
+type Result = Success | Failure;
+
+function processResult(result: Result) {
+  switch (result.type) {
+    case 'SUCCESS':
+      console.log(result.data.toUpperCase());
+      break;
+    case 'FAILURE':
+      console.error(result.error);
+      break;
+  }
+}
+```
+
 ### When is `any` Acceptable?
 
 There are very few scenarios where using `any` is the only option:
