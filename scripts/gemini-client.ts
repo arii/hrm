@@ -262,6 +262,25 @@ async function generateContentWithFallback(
   throw new Error(`All models failed. Last error: ${lastError?.message}`)
 }
 
+/**
+ * Cleans a string that is expected to be JSON, removing common markdown code blocks.
+ * Large Language Models sometimes wrap their JSON output in markdown code fences
+ * (e.g., ```json\\n{...}\\n```), which can cause JSON.parse() to fail. This function
+ * reliably extracts the JSON content from within these fences.
+ * @param text The raw string output from the model.
+ * @returns A cleaned string, trimmed and free of markdown code fences.
+ */
+export function cleanJsonOutput(text: string): string {
+  if (!text) return ''
+  // Improved regex to handle potential leading text before the block
+  const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i
+  const match = codeBlockRegex.exec(text)
+  if (match && match[1]) {
+    return match[1].trim()
+  }
+  return text.trim()
+}
+
 async function runGenericTask(
   genAI: GoogleGenerativeAI,
   task: string,
@@ -281,20 +300,7 @@ ${task}
 
   try {
     const text = await generateContentWithFallback(genAI, prompt)
-
-    // Attempt to parse JSON, but fall back to raw text if parsing fails, assuming a Markdown review or unstructured text.
-    const jsonProcessor = new JsonProcessor()
-    const result = jsonProcessor.process(text || '')
-
-    if (result.success) {
-      // It's valid JSON (e.g., structured data request)
-      await writeOutput(JSON.stringify(result.data, null, 2), outputFile)
-    } else {
-      // Fallback: Assume it's a Markdown review or unstructured text
-      // Log a warning but preserve the content
-      console.warn('Output is not JSON, treating as raw text.')
-      await writeOutput(text || '', outputFile)
-    }
+    await writeOutput(text, outputFile)
   } catch (error) {
     handleError(error)
   }
@@ -732,7 +738,7 @@ async function runReviewPreset(
       await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
     }
   } catch (error) {
-    handleError(error)
+    await handleError(error)
   }
 }
 
@@ -775,6 +781,7 @@ async function handleError(error: any) {
       message: userMessage,
       details: technicalDetails,
     },
+    // Provide a valid structure for the review result to avoid breaking the calling workflow
     reviewComment: `### ❌ Review Failed: ${category}\n\n**Details**: ${userMessage}\n\n<details><summary>Technical Info</summary>\n\n\`\`\`\n${technicalDetails}\n\`\`\`\n\n</details>`,
     labels: ['review-failed'],
     verdict: 'comment',
