@@ -1,5 +1,5 @@
 // standalone-server.ts
-import express, { Request, Response } from 'express'
+import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
 import { env } from './lib/env.js'
@@ -104,15 +104,13 @@ app.prepare().then(async () => {
 
   initSocketManager(wsManager.wss, getUnifiedStateSnapshot, services)
 
-  expressApp.get('/api/health', (_req: Request, res: Response) => {
+  expressApp.get('/api/health', (_req, res) => {
     res.status(200).json({ status: 'ok' })
   })
 
-  expressApp.get(
-    '/api/internal/health/services',
-    async (_req: Request, res: Response) => {
-      const timerCheck = checkTimerService(services.tabataService)
-      const wsCheck = await checkWebSocketService()
+  expressApp.get('/api/internal/health/services', async (_req, res) => {
+    const timerCheck = checkTimerService(services.tabataService)
+    const wsCheck = await checkWebSocketService()
 
     const healthy = timerCheck.healthy && wsCheck.healthy
     const details = {
@@ -123,9 +121,10 @@ app.prepare().then(async () => {
     res.status(200).json({ healthy, details })
   })
 
-  expressApp.use((req: Request, res: Response) => handle(req, res))
+  expressApp.use((req, res) => handle(req, res))
 
   const wsConnections = new Map<string, number>()
+  const WS_MAX_CONNECTIONS = 5
 
   server.on('upgrade', (req, socket, head) => {
     const ip =
@@ -134,7 +133,7 @@ app.prepare().then(async () => {
 
     if (env.NODE_ENV !== 'test' && ip) {
       const count = wsConnections.get(ip) || 0
-      if (count >= env.WS_MAX_CONNECTIONS) {
+      if (count >= WS_MAX_CONNECTIONS) {
         logger.warn(
           `WebSocket connection from ${ip} rejected. Rate limit exceeded.`
         )
