@@ -28,6 +28,10 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Environment
+        # This composite action (`/.github/actions/setup-env`) checks out the repo,
+        # sets up Node.js, configures pnpm, and installs dependencies from the
+        # frozen lockfile (`pnpm install --frozen-lockfile`). It ensures a
+        # consistent and reproducible environment for subsequent steps.
         uses: ./.github/actions/setup-env
 
       - name: Check if PR Enrichment is Disabled
