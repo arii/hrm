@@ -209,7 +209,7 @@ jobs:
               CHECKS_JSON="[]"
             fi
           else
-            echo "::warning::Get PR Checks: The checks_output.json file is empty. Defaulting to empty array."
+            echo "::warning::Get PR Checks: The checks_output.json file is empty (likely due to no failed checks or an error during check execution). Defaulting to empty array."
             CHECKS_JSON="[]"
           fi
 

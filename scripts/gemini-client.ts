@@ -218,7 +218,7 @@ async function generateContentWithFallback(
  */
 export function cleanJsonOutput(text: string): string {
   if (!text) return ''
-  // Remove markdown code blocks if present. Matches ```json ... ``` or ``` ... ```, case-insensitively.
+  // Remove markdown code blocks if present. Matches multiline ```json ... ``` or ``` ... ``` code blocks, case-insensitively.
   const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i
   const match = codeBlockRegex.exec(text)
   if (match && match[1]) {
@@ -676,9 +676,9 @@ async function runReviewPreset(
         await writeOutput(JSON.stringify(parsed, null, 2), outputFile)
       }
     } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e)
       console.warn(
-        'Warning: Failed to parse JSON response. Falling back if text is not useful JSON.',
-        e
+        `Warning: JSON parsing failed. Error: ${errorMessage}. Raw output:\n---\n${text}\n---`
       )
       // If text looks like it might be valid JSON but failed (e.g. truncated), we still want fallback
       // If it's just raw text, maybe output it? But safer to standardise output.
