@@ -385,49 +385,47 @@ function buildFixModeSubPrompt(context: ReviewContext): string {
     )
     .join('\n')
 
-  return `
-
-  ####################################################################
-  🚨 IMMEDIATE ACTION REQUIRED: CI/CD PIPELINE FAILURE
-  ####################################################################
-
-  You are now in **DEBUG MODE**.
-  One or more critical checks have failed. Your PRIORITY is to fix these errors.
-
-  **Failing Checks:**
-  ${failureList}
-
-  **Debug Mode Rules:**
-  1. 🚫 **IGNORE** style nits, variable naming, or minor refactors unless they caused the error.
-  2. 🔍 **ANALYZE** the provided diff specifically looking for logic that breaks tests or builds.
-  3. 🛠️ **GENERATE FIXES**: You MUST provide a "Proposed Fix" section containing a valid **Unified Diff** or specific code block to resolve the failure. Example:
-     \`\`\`diff
-     --- a/tests/unit/services/test.ts
-     +++ b/tests/unit/services/test.ts
-     @@ -10,7 +10,7 @@
-      describe('myTest', () => {
-        it('should return true', () => {
-     -    expect(myFunction()).toBe(false);
-     +    expect(myFunction()).toBe(true);
-        });
-      });
-     \`\`\`
-  4. 🧠 **Reasoning**: Explain *why* the test failed (e.g., "Mock data missing," "Timeout too short," "Type mismatch").
-
-  **Guidance for Common Failures:**
-  - **Jest/Unit Tests**: Check for missing mocks in \`tests/unit\`, async/await issues, or component render failures.
-  - **TypeScript/Build**: Look for type mismatches in the diff.
-  - **Playwright/E2E**: Check for selector changes or network timeouts.
-
-  If you cannot identify the exact fix, provide the specific \`console.log\` or debugging steps the user should run to capture the necessary error detail.
-  ####################################################################
-  `
+  return `\n\n####################################################################\n🚨 IMMEDIATE ACTION REQUIRED: CI/CD PIPELINE FAILURE\n####################################################################\n\nYou are now in **DEBUG MODE**.\nOne or more critical checks have failed. Your PRIORITY is to fix these errors.\n\n**Failing Checks:**\n${failureList}\n\n**Debug Mode Rules:**\n1. 🚫 **IGNORE** style nits, variable naming, or minor refactors unless they caused the error.\n2. 🔍 **ANALYZE** the provided diff specifically looking for logic that breaks tests or builds.\n3. 🛠️ **GENERATE FIXES**: You MUST provide a "Proposed Fix" section containing a valid **Unified Diff** or specific code block to resolve the failure. Example:\n   \`\`\`diff\n   --- a/tests/unit/services/test.ts\n   +++ b/tests/unit/services/test.ts\n   @@ -10,7 +10,7 @@\n    describe('myTest', () => {\n      it('should return true', () => {\n   -    expect(myFunction()).toBe(false);\n   +    expect(myFunction()).toBe(true);\n      });\n    });\n   \`\`\`\n4. 🧠 **Reasoning**: Explain *why* the test failed (e.g., "Mock data missing," "Timeout too short," "Type mismatch").\n\n**Guidance for Common Failures:**\n- **Jest/Unit Tests**: Check for missing mocks in \`tests/unit\`, async/await issues, or component render failures.\n- **TypeScript/Build**: Look for type mismatches in the diff.\n- **Playwright/E2E**: Check for selector changes or network timeouts.\n\nIf you cannot identify the exact fix, provide the specific \`console.log\` or debugging steps the user should run to capture the necessary error detail.\n####################################################################\n`
 }
+
+import sanitizeHtml from 'sanitize-html';
 
 function sanitizeForPrompt(text: string | undefined): string {
   if (!text) return '';
-  // Basic sanitization to remove common prompt injection prefixes
-  return text.replace(/^(ignore|disregard|forget) the above instructions/gim, '[sanitized]');
+
+  // First, strip any HTML tags to simplify matching and remove potential vectors
+  const plainText = sanitizeHtml(text, {
+    allowedTags: [],
+    allowedAttributes: {},
+  });
+
+  const lowerCaseText = plainText.toLowerCase();
+
+  // A list of regular expressions designed to catch common prompt injection patterns.
+  // These are more robust than simple string matching.
+  const injectionPatterns = [
+    // Matches "ignore/disregard the above/previous instructions" and variations
+    /(ignore|disregard|forget|disregard)\s+(all\s+)?(the\s+)?(above|previous|prior|following)\s+(instructions|context|directions|prompt|rules)/i,
+
+    // Matches requests to reveal the system prompt
+    /(what are|reveal|provide|give me|show me)\s+(your|the)\s+(instructions|prompt|system prompt|rules)/i,
+
+    // Matches attempts to change the agent's persona or goal
+    /(you are now|act as|role-play as|your new goal is|your new task is)/i,
+
+    // A broader pattern to catch instructions aimed at subverting the original goal.
+    // This looks for imperative verbs followed by phrases that negate the initial context.
+    /^(stop|halt|cease|end)\s+(your|the)\s+(current|previous)\s+(task|review)/i,
+  ];
+
+  // If any of these patterns match, we sanitize the whole string.
+  if (injectionPatterns.some(pattern => pattern.test(lowerCaseText))) {
+    // Log the detection for security auditing purposes (optional, but good practice)
+    console.warn(`[SECURITY] Potential prompt injection detected and sanitized.`);
+    return '[sanitized]';
+  }
+
+  return plainText; // Return the HTML-sanitized text
 }
 
 export function buildReviewPrompt(
@@ -446,24 +444,15 @@ export function buildReviewPrompt(
     : 'Initial Review'
 
   // --- Base Prompt Construction (DRY Principle) ---
-  let prompt = `# Code Review Task: ${reviewIteration}\n`
+  let prompt = `\n\n# Code Review Task: ${reviewIteration}\n`
 
-  prompt += `## Review Context
-- **PR #${context.prNumber}**: ${sanitizeForPrompt(context.prTitle)}
-- **Description**: ${sanitizeForPrompt(context.prDescription)}
-- **Author**: ${context.prAuthor}
-- **Files Changed**: ${context.filesChanged}
-- **Lines Changed**: ~${context.totalLoc}
-- **Areas Affected**: ${context.changedAreas}
-- **Review Depth**: ${context.reviewDepth}
-- **Labels**: ${context.prLabels || 'none'}
-`
+  prompt += `\n\n## Review Context\n- **PR #${context.prNumber}**: ${sanitizeForPrompt(context.prTitle)}\n- **Description**: ${sanitizeForPrompt(context.prDescription)}\n- **Author**: ${context.prAuthor}\n- **Files Changed**: ${context.filesChanged}\n- **Lines Changed**: ~${context.totalLoc}\n- **Areas Affected**: ${context.changedAreas}\n- **Review Depth**: ${context.reviewDepth}\n- **Labels**: ${context.prLabels || 'none'}\n`
   if (context.issueNumber) {
-    prompt += `- **Linked Issue #${context.issueNumber}**: ${sanitizeForPrompt(context.issueTitle)}\n`
+    prompt += `- **Linked Issue #${context.issueNumber}**: ${sanitizeForPrompt(context.issueTitle)}\n\n`
   }
 
   // --- Documentation Section (Cached or Injected) ---
-  prompt += `\n## Project Documentation & Guidelines\n${sanitizeForPrompt(contextContent)}\n`
+  prompt += `\n\n## Project Documentation & Guidelines\n\n${sanitizeForPrompt(contextContent)}\n`
 
   // --- Diff Section ---
   let maxDiffLength = 60000; // Default value
@@ -472,71 +461,42 @@ export function buildReviewPrompt(
     if (/^\d+$/.test(maxDiffLengthEnv)) {
       try {
         const parsedValue = parseInt(maxDiffLengthEnv, 10);
-        if (Number.isSafeInteger(parsedValue) && parsedValue > 0) {
+        if (Number.isSafeInteger(parsedValue) && parsedValue > 0 && parsedValue < 1000000) {
           maxDiffLength = parsedValue;
         } else {
-          console.warn(`Invalid GEMINI_MAX_DIFF_LENGTH value: ${maxDiffLengthEnv}. Using default ${maxDiffLength}.`);
+          console.warn(new Error(`Invalid GEMINI_MAX_DIFF_LENGTH value: ${maxDiffLengthEnv}. Using default ${maxDiffLength}.`));
         }
       } catch (error) {
-        console.warn(
+        console.warn(new Error(
           `Could not parse GEMINI_MAX_DIFF_LENGTH: ${(error as Error).message}`
-        );
+        ));
       }
     } else {
-      console.warn(`Invalid GEMINI_MAX_DIFF_LENGTH format: ${maxDiffLengthEnv}. Using default ${maxDiffLength}.`);
+      console.warn(new Error(`Invalid GEMINI_MAX_DIFF_LENGTH format: ${maxDiffLengthEnv}. Using default ${maxDiffLength}.`));
     }
   }
   const truncatedDiff =
     diff.length > maxDiffLength
       ? diff.substring(0, maxDiffLength) + '\n...[DIFF TRUNCATED]'
       : diff
-  prompt += `\n## Code Changes (Diff)\n\`\`\`diff\n${sanitizeForPrompt(truncatedDiff)}\n\`\`\`\n`
+  prompt += `\n\n## Code Changes (Diff)\n\n\`\`\`diff\n${sanitizeForPrompt(truncatedDiff)}\n\`\`\`\n`
 
   // --- Logic Branching: Fix Mode vs Standard Review ---
   if (hasFailures) {
     // >> BRANCH A: FIX MODE
     prompt += buildFixModeSubPrompt(context)
-    prompt += `\n## Output Format (Failure Response)
-Return a JSON object with:
-\`\`\`json
-{
-  "reviewComment": "Markdown report focusing ONLY on the fix. Use code blocks for the solution.",
-  "labels": ["needs-fixes", "ci-failure"],
-  "verdict": "request_changes"
-}
-\`\`\`
-`
+    prompt += `\n\n## Output Format (Failure Response)\nReturn a JSON object with:\n\`\`\`json\n{\n  "reviewComment": "Markdown report focusing ONLY on the fix. Use code blocks for the solution.",\n  "labels": ["needs-fixes", "ci-failure"],\n  "verdict": "request_changes"\n}\n\`\`\`\n`
   } else {
     // >> BRANCH B: STANDARD REVIEW (with original logic preserved)
 
     // Explicit Requirement Compliance (New Feature)
     if (context.linkedIssueBody) {
-      prompt += `\n## Linked Issue Requirements
-       The user is trying to solve issue #${context.issueNumber || '?'}:
-       "${context.issueTitle}"
-
-       **Issue Description:**
-       ${context.linkedIssueBody}
-
-       **Requirement:** In your review, you MUST explicitly verify if these requirements are met by the code changes. Create a 'Compliance Checklist' section.
-       `
+      prompt += `\n\n## Linked Issue Requirements\n\nThe user is trying to solve issue #${context.issueNumber || '?'}:\n"${context.issueTitle}"\n\n**Issue Description:**\n${context.linkedIssueBody}\n\n**Requirement:** In your review, you MUST explicitly verify if these requirements are met by the code changes. Create a 'Compliance Checklist' section.\n`
     }
 
     // Add re-review specific context
     if (isReReview) {
-      prompt += `\n## Review History
-- **Previous Reviews**: ${context.reviewCount}
-- **Resolved Comments**: ${context.resolvedCount}
-- **Changes Requested**: ${context.changesRequested}
-
-### Focus Areas for Re-Review:
-1. Verify that previous feedback has been addressed
-2. Check for introduction of new issues
-3. Assess overall code quality improvement
-4. Determine if the PR is ready for approval
-
-### Previous Review Feedback:
-${
+      prompt += `\n\n## Review History\n- **Previous Reviews**: ${context.reviewCount}\n- **Resolved Comments**: ${context.resolvedCount}\n- **Changes Requested**: ${context.changesRequested}\n\n### Focus Areas for Re-Review:\n1. Verify that previous feedback has been addressed\n2. Check for introduction of new issues\n3. Assess overall code quality improvement\n4. Determine if the PR is ready for approval\n\n### Previous Review Feedback:\n${
   context.previousReviews
     ? (() => {
         try {
@@ -544,7 +504,7 @@ ${
           return reviews
             .map(
               (r: any, i: number) =>
-                `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
+                `\n\n#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
             )
             .join('\n---\n')
         } catch (e) {
@@ -552,8 +512,7 @@ ${
         }
       })()
     : 'None'
-}
-`
+}\n`
     }
 
     // Add test coverage concerns
@@ -565,16 +524,10 @@ ${
 
     // Commit messages for understanding intent
     if (context.commitMessages) {
-      prompt += `\n## Commit Messages (Development Intent)
-${context.commitMessages}
-`
+      prompt += `\n\n## Commit Messages (Development Intent)\n${context.commitMessages}\n`
     }
 
-    prompt += `\n---
-
-## Review Instructions
-
-`
+    prompt += `\n\n---\n\n## Review Instructions\n\n`
 
     if (isReReview) {
       prompt += `### Re-Review Guidelines:
@@ -634,46 +587,11 @@ Provide a structured review with:
 `
     }
 
-    prompt += `\n## Project Context
-- This is a Next.js/TypeScript HRM (Heart Rate Monitor) application
-- Focus on real-time data handling and WebSocket performance
-- Security is critical (authentication, data privacy)
-- Maintain backward compatibility unless explicitly breaking change
-- Follow patterns established in DEVELOPMENT.md and DESIGN_GUIDELINES.md
-`
+    prompt += `\n\n## Project Context\n- This is a Next.js/TypeScript HRM (Heart Rate Monitor) application\n- Focus on real-time data handling and WebSocket performance\n- Security is critical (authentication, data privacy)\n- Maintain backward compatibility unless explicitly breaking change\n- Follow patterns established in DEVELOPMENT.md and DESIGN_GUIDELINES.md\n`
 
-    prompt += `\n## Known Areas of Technical Debt (from audit):
-When reviewing, be especially vigilant about:
-- Callback hell in server.ts (prefer async/await)
-- Type safety (avoid 'any', use proper TypeScript types)
-- Error handling (ensure proper try/catch and error messages)
-- WebSocket connection management (prevent memory leaks)
-- Authentication state consistency
-`
+    prompt += `\n\n## Known Areas of Technical Debt (from audit):\nWhen reviewing, be especially vigilant about:\n- Callback hell in server.ts (prefer async/await)\n- Type safety (avoid 'any', use proper TypeScript types)\n- Error handling (ensure proper try/catch and error messages)\n- WebSocket connection management (prevent memory leaks)\n- Authentication state consistency\n`
 
-    prompt += `\n## Response Format (JSON)
-Return a JSON object with:
-\`\`\`json
-{
-  "reviewComment": "Your formatted markdown review comment",
-  "labels": ["label1", "label2"],
-  "verdict": "approve" | "request_changes" | "comment"
-}
-\`\`\`
-
-Make your feedback:
-- **Specific**: Reference exact file/line numbers
-- **Actionable**: Provide concrete suggestions
-- **Constructive**: Focus on improvement, not criticism
-- **Contextual**: Consider the change in the broader codebase
-- **Balanced**: Acknowledge good practices while noting improvements
-
-**Markdown Formatting (STRICT):**
-- You MUST add **TWO NEWLINES** (\`\\n\\n\`) before every header.
-- You MUST add **ONE NEWLINE** (\`\\n\`) after every header.
-- Do not clump sections together.
-- Ensure lists are properly spaced.
-`
+    prompt += `\n\n## Response Format (JSON)\nReturn a JSON object with:\n\`\`\`json\n{\n  "reviewComment": "Your formatted markdown review comment",\n  "labels": ["label1", "label2"],\n  "verdict": "approve" | "request_changes" | "comment"\n}\n\`\`\`\n\nMake your feedback:\n- **Specific**: Reference exact file/line numbers\n- **Actionable**: Provide concrete suggestions\n- **Constructive**: Focus on improvement, not criticism\n- **Contextual**: Consider the change in the broader codebase\n- **Balanced**: Acknowledge good practices while noting improvements\n\n**Markdown Formatting (STRICT):**\n- You MUST add **TWO NEWLINES** (\`\\n\\n\`) before every header.\n- You MUST add **ONE NEWLINE** (\`\\n\`) after every header.\n- Do not clump sections together.\n- Ensure lists are properly spaced.\n`
   }
   return prompt
 }
