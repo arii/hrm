@@ -98,6 +98,7 @@ const HrmConnectionPanel = () => {
         display: 'flex',
         flexWrap: 'wrap',
         gap: 2,
+        height: '100%', // Ensure the panel fills the grid cell height
       }}
     >
       {isLoading || tileData.length === 0 ? (

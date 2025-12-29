@@ -142,15 +142,12 @@ jobs:
         id: context
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
-          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          # Use heredoc syntax for multiline environment variables
+          # Simplified context gathering
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
           echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
-          echo 'PR_DESCRIPTION<<EOF' >> $GITHUB_ENV
-          echo "$PR_BODY" >> $GITHUB_ENV
-          echo 'EOF' >> $GITHUB_ENV
+          echo "PR_DESCRIPTION=${{ github.event.pull_request.body }}" >> $GITHUB_ENV
 
       - name: Get PR Checks
         id: checks
