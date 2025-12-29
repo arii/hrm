@@ -605,7 +605,7 @@ jobs:
   quality-report:
     name: 📊 Quality Report
     if: always()
-    needs: [quality-check, core-tests, visual-tests]
+    needs: [infra-setup, quality-check, core-tests, visual-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -613,6 +613,7 @@ jobs:
       - name: Collect Failure Information
         id: failures
         env:
+          INFRA_RESULT: ${{ needs.infra-setup.result }}
           CODE_QUALITY_RESULT: ${{ needs.quality-check.result }}
           CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
           VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
@@ -622,6 +623,11 @@ jobs:
           FAILED_JOBS=""
           FAILURE_COUNT=0
           
+          if [ "$INFRA_RESULT" != "success" ] && [ "$INFRA_RESULT" != "skipped" ]; then
+            FAILED_JOBS="$FAILED_JOBS- Infrastructure Setup ($INFRA_RESULT)"$'\n'
+            FAILURE_COUNT=$((FAILURE_COUNT + 1))
+          fi
+
           if [ "$CODE_QUALITY_RESULT" != "success" ] && [ "$CODE_QUALITY_RESULT" != "skipped" ]; then
             FAILED_JOBS="$FAILED_JOBS- Code Quality ($CODE_QUALITY_RESULT)"$'\n'
             FAILURE_COUNT=$((FAILURE_COUNT + 1))
@@ -692,6 +698,7 @@ jobs:
       - name: Post Comprehensive Quality Report
         if: always()
         env:
+          INFRA_RESULT: ${{ needs.infra-setup.result }}
           QUALITY_RESULT: ${{ needs.quality-check.result }}
           CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
           VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
@@ -745,6 +752,7 @@ jobs:
             echo ""
             echo "| Check | Status |"
             echo "|-------|--------|"
+            echo "| Infra Setup | $([ "$INFRA_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_RESULT) |"
             echo "| Code Quality | $([ "$QUALITY_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$QUALITY_RESULT) |"
             echo "| Core Tests | $([ "$CORE_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$CORE_TESTS_RESULT) |"
             echo "| Visual Tests | $([ "$VISUAL_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_RESULT) |"
@@ -752,6 +760,16 @@ jobs:
             
             # Add failed logs
             FAILED_ANY=0
+
+            if [ "$INFRA_RESULT" != "success" ] && [ "$INFRA_RESULT" != "skipped" ]; then
+              FAILED_ANY=1
+              echo "<details><summary><strong>❌ Infrastructure Setup Failures</strong></summary>"
+              echo ""
+              echo "Infrastructure setup failed. Check the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
+              echo ""
+              echo "</details>"
+            fi
+
             if [ "$QUALITY_RESULT" != "success" ] && [ "$QUALITY_RESULT" != "skipped" ]; then
               FAILED_ANY=1
               echo "<details><summary><strong>❌ Code Quality Failures</strong></summary>"
@@ -828,6 +846,8 @@ jobs:
             fi
             
             if [ $FAILED_ANY -eq 0 ]; then
+              # Check for critical skips - if Code Quality is skipped but not Failed, it's suspicious
+              # But simple logic: if no failures found so far, say Passed.
               echo "✅ All quality checks passed!"
             else
               echo ""
