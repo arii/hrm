@@ -741,7 +741,7 @@ async function runReviewPreset(
       await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
     }
   } catch (error) {
-    handleError(error)
+    await handleError(error)
   }
 }
 
