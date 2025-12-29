@@ -142,8 +142,8 @@ test.describe('Visual Regression Tests', () => {
       fullPage: true,
       animations: 'disabled',
       caret: 'hide', // Hide text cursor
-      threshold: 0.3, // Increased tolerance for CI rendering variance
-      maxDiffPixelRatio: 0.05, // Allow up to 5% pixel difference
+      threshold: 0.2, // Allow for minor rendering differences
+      maxDiffPixelRatio: 0.02, // Allow up to 2% pixel difference (robustness fix)
       mask: [
         // Use precise data-testid selectors for dynamic content masking
         ...getTimerMasks(dashboardPage),

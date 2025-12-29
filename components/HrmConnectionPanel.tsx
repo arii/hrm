@@ -95,12 +95,11 @@ const HrmConnectionPanel = () => {
   return (
     <Box
       sx={{
+        flexGrow: 1,
+        width: { xs: '100%', lg: 'calc(50% - 16px)' },
         display: 'flex',
         flexWrap: 'wrap',
         gap: 2,
-        flexGrow: 1,
-        width: { xs: '100%', lg: 'calc(50% - 16px)' },
-        minHeight: { xs: 'auto', md: 220 }, // Stabilize height on larger screens
       }}
     >
       {isLoading || tileData.length === 0 ? (
