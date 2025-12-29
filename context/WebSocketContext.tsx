@@ -117,6 +117,7 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
+  const isMounted = useRef(false);
   const [clientId] = useState(() => {
     if (typeof window === 'undefined') {
       return null
@@ -178,6 +179,13 @@ export const WebSocketProvider = ({
 
   // Ref to hold the connect function, ensuring it's always up-to-date
   const connectRef = useRef<() => void>(() => {})
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+        isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -311,8 +319,10 @@ export const WebSocketProvider = ({
           )
 
           reconnectTimeoutRef.current = setTimeout(() => {
-            setConnectionStatus('Reconnecting...')
-            connectRef.current()
+            if (isMounted.current) {
+                setConnectionStatus('Reconnecting...')
+                connectRef.current()
+            }
           }, reconnectDelay)
         } else {
           console.error(
