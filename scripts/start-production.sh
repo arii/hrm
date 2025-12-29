@@ -11,6 +11,5 @@ if [ -f .env.production ]; then
   set +a
 fi
 
-# Explicitly run the compiled server entry point
-# This expects a 'dist' directory with the compiled server.
-exec node dist/server.js
+# For Next.js standalone output, the entry point is server.js inside .next/standalone
+exec node .next/standalone/server.js

@@ -10,6 +10,7 @@
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
     "deploy": "bash scripts/deploy.sh",
     "build": "pnpm run build:server && next build",
+    "verify:build": "pnpm run build && test -f .next/standalone/server.js || (echo 'Error: Standalone server file not found at .next/standalone/server.js after build.' && exit 1)",
     "build:server": "pnpm exec tsc -p tsconfig.build.json",
     "analyze": "cross-env ANALYZE=true pnpm run build:server && cross-env ANALYZE=true next build --webpack",
     "start": "pm2 start ecosystem.config.cjs --env production",
