@@ -123,7 +123,15 @@ describe('POST /api/internal/token-delivery', () => {
 
     const response = await POST(req)
     expect(response.status).toBe(200)
-    expect(mockSpotifyService.handleTokenUpdate).toHaveBeenCalled()
+    expect(mockSpotifyService.handleTokenUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ...tokenData,
+        provider: 'spotify',
+        sub: '',
+        scope: '',
+        obtainedAt: expect.any(Number),
+      })
+    )
     const body = await response.json()
     expect(body).toEqual({ ok: true, message: 'Token delivered successfully.' })
   })
