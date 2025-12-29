@@ -14,6 +14,8 @@ permissions:
   pull-requests: write
   # This is required to allow release-please to create a GitHub release.
   releases: write
+  # This is required to allow release-please to comment on linked issues.
+  issues: write
 
 jobs:
   release:
