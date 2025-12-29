@@ -93,7 +93,38 @@ jobs:
                 return;
               }
               const rawData = fs.readFileSync(filePath, 'utf8');
-              const result = JSON.parse(rawData);
+              // Use a regex to extract JSON content from within a markdown code block.
+              // This is more robust as it ignores conversational text around the code block.
+              const match = rawData.match(/```json\s*([\s\S]*?)\s*```/);
+              const jsonString = match ? match[1] : rawData;
+
+              let result;
+              try {
+                result = JSON.parse(jsonString.trim());
+              } catch (parseError) {
+                console.error('Failed to parse JSON after extraction:', parseError);
+                const errorComment = `
+                ### ❌ Smart Triage Failed: Invalid JSON Response
+
+                The response from the triage agent could not be parsed as valid JSON.
+
+                <details><summary>Raw Response</summary>
+
+                \`\`\`
+                ${rawData.substring(0, 1000)}
+                \`\`\`
+
+                </details>
+                `;
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: errorComment.trim(),
+                });
+                core.setFailed('The extracted triage result was not valid JSON.');
+                return;
+              }
 
               // Gracefully handle cases where the Gemini agent fails and returns a structured error.
               if (result.error) {
