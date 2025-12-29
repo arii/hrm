@@ -6,7 +6,6 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  distDir: '.next_prod',
   images: {
     remotePatterns: [
       {
@@ -17,6 +16,7 @@ const nextConfig = {
       },
     ],
   },
+  output: 'standalone',
   env: {
     TESTING: process.env.TESTING,
   },

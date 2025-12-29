@@ -37,11 +37,15 @@ jobs:
         env:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET_BUILD_PLACEHOLDER }}
           NEXTAUTH_URL: 'http://localhost:3000'
+          IS_DEPLOYMENT: 'true'
         run: |
-          # 1. Build Next.js (Standalone enabled in next.config.js)
+          # 1. Use production config with .next_prod distDir
+          cp deploy/next.config.js next.config.js
+
+          # 2. Build Next.js
           pnpm run build
 
-          # 2. Package Artifact (Hybrid Strategy)
+          # 3. Package Artifact (Hybrid Strategy)
           ./scripts/package.sh
 
       - name: 🚚 Transfer Artifact

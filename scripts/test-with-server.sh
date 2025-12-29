@@ -18,8 +18,7 @@ log() {
 cleanup() {
     EXIT_CODE=$?
     log "🛑 Shutting down server..."
-    pnpm pm2 kill || true
-
+    
     if [ $EXIT_CODE -ne 0 ]; then
         log "❌ Failure detected (Exit Code: $EXIT_CODE)."
         if [ -f "$SERVER_LOG" ]; then
@@ -30,6 +29,8 @@ cleanup() {
             log "No server log found at $SERVER_LOG"
         fi
     fi
+    
+    pnpm pm2 kill || true
     exit $EXIT_CODE
 }
 

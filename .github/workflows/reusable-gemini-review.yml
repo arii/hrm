@@ -23,10 +23,10 @@ on:
         required: true
     outputs:
       needs-review:
-        description: "Whether a re-review is needed"
+        description: 'Whether a re-review is needed'
         value: ${{ jobs.analyze-changes.outputs.needs-review }}
       skip-reason:
-        description: "Reason for skipping review"
+        description: 'Reason for skipping review'
         value: ${{ jobs.analyze-changes.outputs.skip-reason }}
 
 permissions:
@@ -62,8 +62,13 @@ jobs:
           NEEDS_REVIEW="false"
           SKIP_REASON="no criteria met"
 
+          # --- Check for quality check failures first ---
+          if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
+            echo "::info::Quality checks failed. Triggering review to analyze failures."
+            NEEDS_REVIEW="true"
+            SKIP_REASON=""
           # --- Initial review on PR open ---
-          if [[ "$TRIGGER_EVENT" == "pull_request" && "${{ github.event.action }}" == "opened" ]]; then
+          elif [[ "$TRIGGER_EVENT" == "pull_request" && "${{ github.event.action }}" == "opened" ]]; then
             echo "::info::PR opened. Triggering initial review."
             NEEDS_REVIEW="true"
           # --- Handle manual comment triggers ---
@@ -76,19 +81,24 @@ jobs:
           elif [[ "$TRIGGER_EVENT" == "pull_request" && "${{ github.event.action }}" == "synchronize" ]]; then
             echo "::info::Code synchronized. Analyzing for re-review..."
 
-            PR_DATA=$(gh pr view "$PR_NUMBER" --json comments -q '.comments | map(select(.author.login? == "arii")) | .[-1].createdAt // ""')
-            LAST_COMMENT_TIMESTAMP="$PR_DATA"
+            # Check for recent review comments (containing "## Review" or "Review Summary" to exclude test reports)
+            PR_DATA=$(gh pr view "$PR_NUMBER" --json comments -q '.comments | map(select(.author.login? == "arii" and (.body | contains("## Review") or contains("Review Summary") or contains("Suggested Fix")))) | .[-1].createdAt // ""')
+            LAST_REVIEW_TIMESTAMP="$PR_DATA"
 
-            if [ -n "$LAST_COMMENT_TIMESTAMP" ]; then
-                COMMENT_TIME=$(date -d "$LAST_COMMENT_TIMESTAMP" +%s)
+            if [ -n "$LAST_REVIEW_TIMESTAMP" ]; then
+                REVIEW_TIME=$(date -d "$LAST_REVIEW_TIMESTAMP" +%s)
                 CURRENT_TIME=$(date +%s)
-                TIME_DIFF=$((CURRENT_TIME - COMMENT_TIME))
+                TIME_DIFF=$((CURRENT_TIME - REVIEW_TIME))
                 if [ "$TIME_DIFF" -lt 300 ]; then # 5 minutes
-                    SKIP_REASON="too recent (${TIME_DIFF}s ago)"
+                    SKIP_REASON="recent review exists (${TIME_DIFF}s ago)"
                     echo "needs-review=false" >> $GITHUB_OUTPUT
                     echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
                     exit 0
                 fi
+            else
+                # No previous review found, trigger a new one
+                echo "::info::No previous review found. Triggering initial review."
+                NEEDS_REVIEW="true"
             fi
 
             CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
@@ -226,7 +236,6 @@ jobs:
           echo "$FINAL_CHECKS_JSON" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-
       - name: Run Gemini Review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -261,7 +270,7 @@ jobs:
       - name: Create skip check
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.ARI_PAT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const skipReason = '${{ needs.analyze-changes.outputs.skip-reason }}';
             await github.rest.checks.create({

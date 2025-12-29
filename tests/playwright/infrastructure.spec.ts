@@ -117,6 +117,7 @@ test.describe('Infrastructure & Scripts', () => {
     }
 
     const prodServer = spawn('./scripts/start-production.sh', [], {
+      cwd: process.cwd(), // Explicitly set to project root
       detached: true,
       stdio: 'pipe',
       env,
