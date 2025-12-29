@@ -156,7 +156,7 @@ interface ReviewContext {
   hasTestChanges: boolean
   missingTests: boolean
   testFiles?: string | undefined
-  failedChecks: { name: string; conclusion: string; detailsUrl: string }[]
+  failedChecks: FailedCheck[]
 }
 
 async function main() {
@@ -306,10 +306,12 @@ ${task}
   }
 }
 
+// 1. Update Interface to support future Log Injection
 interface FailedCheck {
   name: string
   conclusion: string
   detailsUrl: string
+  logSnippet?: string // Prepared for the future workflow update
 }
 
 function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
@@ -366,16 +368,42 @@ function getReviewContextFromEnv(): ReviewContext {
   }
 }
 
-const CHECK_FIX_GUIDANCE: Record<string, string> = {
-  lint: 'Usually caused by code not following project style rules. Run `pnpm run lint -- --fix` locally to auto-fix many issues. Check the log for specific rule violations.',
-  build:
-    'Often due to TypeScript errors (e.g., type mismatches, invalid syntax) or missing dependencies. Check the build log for the exact error message.',
-  unit_tests:
-    'A test case failed. Run `pnpm run test:unit` locally to replicate. The log will show which test and assertion failed.',
-  visual_tests:
-    'The UI has changed unexpectedly. If the change is intentional, update the snapshots. Otherwise, fix the UI component. See the log for a link to the visual diff.',
-  infra_tests:
-    'The application failed to start or respond correctly. This can be due to environment configuration issues or fatal errors in the server code. Check the server startup logs.',
+// 2. New Helper: Build the "Fix Mode" Sub-Prompt
+function buildFixModeSubPrompt(context: ReviewContext): string {
+  const failureList = context.failedChecks
+    .map((c) =>
+      `- **${c.name}** (${c.conclusion}) ${
+        c.logSnippet ? `\n  Error: \`${c.logSnippet}\`` : ''
+      }`
+    )
+    .join('\n')
+
+  return `
+
+  ####################################################################
+  🚨 IMMEDIATE ACTION REQUIRED: CI/CD PIPELINE FAILURE
+  ####################################################################
+
+  You are now in **DEBUG MODE**.
+  One or more critical checks have failed. Your PRIORITY is to fix these errors.
+
+  **Failing Checks:**
+  ${failureList}
+
+  **Debug Mode Rules:**
+  1. 🚫 **IGNORE** style nits, variable naming, or minor refactors unless they caused the error.
+  2. 🔍 **ANALYZE** the provided diff specifically looking for logic that breaks tests or builds.
+  3. 🛠️ **GENERATE FIXES**: You MUST provide a "Proposed Fix" section containing a valid **Unified Diff** or specific code block to resolve the failure.
+  4. 🧠 **Reasoning**: Explain *why* the test failed (e.g., "Mock data missing," "Timeout too short," "Type mismatch").
+
+  **Guidance for Common Failures:**
+  - **Jest/Unit Tests**: Check for missing mocks in \`tests/unit\`, async/await issues, or component render failures.
+  - **TypeScript/Build**: Look for type mismatches in the diff.
+  - **Playwright/E2E**: Check for selector changes or network timeouts.
+
+  If you cannot identify the exact fix, provide the specific \`console.log\` or debugging steps the user should run to capture the necessary error detail.
+  ####################################################################
+  `
 }
 
 function buildReviewPrompt(
@@ -384,51 +412,14 @@ function buildReviewPrompt(
   contextContent: string
 ): string {
   const isReReview = context.reviewCount > 0
+  const hasFailures = context.failedChecks && context.failedChecks.length > 0
+
   const reviewIteration = isReReview
     ? `Re-Review #${context.reviewCount + 1}`
     : 'Initial Review'
 
+  // --- Base Prompt Construction (DRY Principle) ---
   let prompt = `# Code Review Task: ${reviewIteration}\n`
-
-  if (context.failedChecks && context.failedChecks.length > 0) {
-    const checksTable = `| Check Name | Status | Log URL |\n|------------|--------|---------|\n${context.failedChecks
-      .map(
-        (check) =>
-          `| ${check.name} | ${check.conclusion} | [View Log](${check.detailsUrl}) |`
-      )
-      .join('\n')}`
-
-    const guidance = context.failedChecks
-      .map((check) => {
-        const key = Object.keys(CHECK_FIX_GUIDANCE).find((key) =>
-          check.name.toLowerCase().includes(key)
-        )
-        return key
-          ? `- **${check.name}**: ${CHECK_FIX_GUIDANCE[key]}`
-          : `- **${check.name}**: Check the logs linked above for details.`
-      })
-      .join('\n')
-
-    prompt += `
-
-## 🚨 CI Failure Analysis
-
-The following CI checks failed. Your primary task is to identify the cause of these failures in the code and provide specific guidance on how to fix them.
-
-${checksTable}
-
-### How to Fix Common Failures:
-${guidance}
-
-**Your Task:**
-1.  **Analyze the diff** to find the code that likely caused these failures.
-2.  **Provide a clear explanation** of why each check failed.
-3.  **Offer specific, actionable code changes** to fix the failures.
-
----
-
-`
-  }
 
   prompt += `## Review Context
 - **PR #${context.prNumber}**: ${context.prTitle}
@@ -439,14 +430,54 @@ ${guidance}
 - **Review Depth**: ${context.reviewDepth}
 - **Labels**: ${context.prLabels || 'none'}
 `
-
   if (context.issueNumber) {
     prompt += `- **Linked Issue #${context.issueNumber}**: ${context.issueTitle}\n`
   }
 
-  // Add re-review specific context
-  if (isReReview) {
-    prompt += `\n## Review History
+  // --- Documentation Section (Cached or Injected) ---
+  prompt += `\n## Project Documentation & Guidelines\n${contextContent}\n`
+
+  // --- Diff Section ---
+  const maxDiffLength = 60000 // Unified and increased context window
+  const truncatedDiff =
+    diff.length > maxDiffLength
+      ? diff.substring(0, maxDiffLength) + '\n...[DIFF TRUNCATED]'
+      : diff
+  prompt += `\n## Code Changes (Diff)\n\`\`\`diff\n${truncatedDiff}\n\`\`\`\n`
+
+  // --- Logic Branching: Fix Mode vs Standard Review ---
+  if (hasFailures) {
+    // >> BRANCH A: FIX MODE
+    prompt += buildFixModeSubPrompt(context)
+    prompt += `\n## Output Format (Failure Response)
+Return a JSON object with:
+\`\`\`json
+{
+  "reviewComment": "Markdown report focusing ONLY on the fix. Use code blocks for the solution.",
+  "labels": ["needs-fixes", "ci-failure"],
+  "verdict": "request_changes"
+}
+\`\`\`
+`
+  } else {
+    // >> BRANCH B: STANDARD REVIEW (with original logic preserved)
+
+    // Explicit Requirement Compliance (New Feature)
+    if (context.linkedIssueBody) {
+      prompt += `\n## Linked Issue Requirements
+       The user is trying to solve issue #${context.issueNumber || '?'}:
+       "${context.issueTitle}"
+
+       **Issue Description:**
+       ${context.linkedIssueBody}
+
+       **Requirement:** In your review, you MUST explicitly verify if these requirements are met by the code changes. Create a 'Compliance Checklist' section.
+       `
+    }
+
+    // Add re-review specific context
+    if (isReReview) {
+      prompt += `\n## Review History
 - **Previous Reviews**: ${context.reviewCount}
 - **Resolved Comments**: ${context.resolvedCount}
 - **Changes Requested**: ${context.changesRequested}
@@ -476,56 +507,30 @@ ${
     : 'None'
 }
 `
-  }
+    }
 
-  // Add test coverage concerns
-  if (context.missingTests) {
-    prompt += `\n⚠️ **TEST COVERAGE ALERT**: Source code was modified without corresponding test changes.\n`
-  } else if (context.hasTestChanges) {
-    prompt += `\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`
-  }
+    // Add test coverage concerns
+    if (context.missingTests) {
+      prompt += `\n⚠️ **TEST COVERAGE ALERT**: Source code was modified without corresponding test changes.\n`
+    } else if (context.hasTestChanges) {
+      prompt += `\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`
+    }
 
-  // Issue context
-  if (context.linkedIssueBody) {
-    prompt += `\n## Issue Description
-${context.linkedIssueBody}
-`
-  }
-
-  // Commit messages for understanding intent
-  if (context.commitMessages) {
-    prompt += `\n## Commit Messages (Development Intent)
+    // Commit messages for understanding intent
+    if (context.commitMessages) {
+      prompt += `\n## Commit Messages (Development Intent)
 ${context.commitMessages}
 `
-  }
+    }
 
-  // Project Documentation
-  prompt += `\n## Project Documentation & Guidelines
-${contextContent}
-`
-
-  // The actual diff
-  // Truncate diff if extremely large
-  const maxDiffLength = 50000
-  const truncatedDiff =
-    diff.length > maxDiffLength
-      ? diff.substring(0, maxDiffLength) + '\n...[DIFF TRUNCATED]'
-      : diff
-
-  prompt += `\n## Code Changes (Diff)
-\`\`\`diff
-${truncatedDiff}
-\`\`\`
-
----
+    prompt += `\n---
 
 ## Review Instructions
 
 `
 
-  // Tailor instructions based on review type and depth
-  if (isReReview) {
-    prompt += `### Re-Review Guidelines:
+    if (isReReview) {
+      prompt += `### Re-Review Guidelines:
 1. **Verification First**: Check if previous concerns were addressed
 2. **New Issues**: Identify any regressions or new problems introduced
 3. **Progressive Approval**: If most issues resolved and only minor items remain, indicate near-approval status
@@ -539,10 +544,9 @@ ${truncatedDiff}
 - Provide specific, actionable feedback for any remaining concerns
 - If NO issues found: "✅ Verified [Specific Change]. No regressions found. Ready for approval."
 `
-  } else {
-    // Initial review instructions based on depth
-    if (context.reviewDepth === 'detailed') {
-      prompt += `### Detailed Review Guidelines (Small Change):
+    } else {
+      if (context.reviewDepth === 'detailed') {
+        prompt += `### Detailed Review Guidelines (Small Change):
 Review every aspect thoroughly:
 1. **Code Quality**: Readability, maintainability, adherence to patterns
 2. **Architecture**: Proper separation of concerns, appropriate abstractions
@@ -551,8 +555,8 @@ Review every aspect thoroughly:
 5. **Testing**: Coverage of edge cases, test quality
 6. **Documentation**: Code comments, type definitions, API docs
 `
-    } else if (context.reviewDepth === 'standard') {
-      prompt += `### Standard Review Guidelines (Medium Change):
+      } else if (context.reviewDepth === 'standard') {
+        prompt += `### Standard Review Guidelines (Medium Change):
 Focus on key areas:
 1. **Correctness**: Does the code solve the intended problem?
 2. **Architecture**: Are changes well-structured and maintainable?
@@ -560,8 +564,8 @@ Focus on key areas:
 4. **Testing**: Are key paths covered?
 5. **Breaking Changes**: Backward compatibility concerns?
 `
-    } else {
-      prompt += `### Focused Review Guidelines (Large Change):
+      } else {
+        prompt += `### Focused Review Guidelines (Large Change):
 Prioritize high-impact areas:
 1. **Architecture**: Overall design and structure
 2. **Critical Paths**: Security, data integrity, performance bottlenecks
@@ -570,9 +574,9 @@ Prioritize high-impact areas:
 
 Note: For large changes, consider suggesting to break into smaller PRs if feasible.
 `
-    }
+      }
 
-    prompt += `\n### Output Format:
+      prompt += `\n### Output Format:
 Provide a structured review with:
 1. **Summary**: High-level assessment of the change
 2. **Strengths**: What's done well
@@ -581,10 +585,9 @@ Provide a structured review with:
 5. **Recommendations**: Specific, actionable improvements
 6. **Verdict**: Approve / Request Changes / Comment
 `
-  }
+    }
 
-  // Add project-specific context
-  prompt += `\n## Project Context
+    prompt += `\n## Project Context
 - This is a Next.js/TypeScript HRM (Heart Rate Monitor) application
 - Focus on real-time data handling and WebSocket performance
 - Security is critical (authentication, data privacy)
@@ -592,8 +595,7 @@ Provide a structured review with:
 - Follow patterns established in DEVELOPMENT.md and DESIGN_GUIDELINES.md
 `
 
-  // Add specific checks for common issues from audit
-  prompt += `\n## Known Areas of Technical Debt (from audit):
+    prompt += `\n## Known Areas of Technical Debt (from audit):
 When reviewing, be especially vigilant about:
 - Callback hell in server.ts (prefer async/await)
 - Type safety (avoid 'any', use proper TypeScript types)
@@ -602,12 +604,12 @@ When reviewing, be especially vigilant about:
 - Authentication state consistency
 `
 
-  prompt += `\n## Response Format (JSON)
+    prompt += `\n## Response Format (JSON)
 Return a JSON object with:
 \`\`\`json
 {
   "reviewComment": "Your formatted markdown review comment",
-  "labels": ["label1", "label2"],  // Suggested labels (e.g., "needs-tests", "security-concern", "ready-for-review", "size-small", "size-large")
+  "labels": ["label1", "label2"],
   "verdict": "approve" | "request_changes" | "comment"
 }
 \`\`\`
@@ -625,7 +627,7 @@ Make your feedback:
 - Do not clump sections together.
 - Ensure lists are properly spaced.
 `
-
+  }
   return prompt
 }
 
