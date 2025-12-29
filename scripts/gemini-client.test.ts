@@ -54,4 +54,10 @@ describe('cleanJsonOutput', () => {
     const expected = 'This is a string with ``` inside it.'
     expect(cleanJsonOutput(input)).toBe(expected)
   })
+
+  it('should handle content with extra whitespace in the fences', () => {
+    const input = '```json\n   {"key": "value"}   \n```'
+    const expected = '{"key": "value"}'
+    expect(cleanJsonOutput(input)).toBe(expected)
+  })
 })
