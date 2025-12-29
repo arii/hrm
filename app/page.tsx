@@ -93,7 +93,8 @@ const Dashboard = () => {
           <HrmConnectionPanel />
         </ErrorBoundary>
 
-        <Box sx={{ width: '100%' }}>
+        {/* This Box now correctly spans all columns in the parent grid */}
+        <Box sx={{ gridColumn: '1 / -1' }}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
             <WorkoutTableViewer docId={DOC_ID} />
           ) : (
