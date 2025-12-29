@@ -8,7 +8,7 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const PlaylistSelector = dynamic(
@@ -19,15 +19,25 @@ const PlaylistSelector = dynamic(
   }
 )
 
+const PlaylistDetails = dynamic(
+  () => import('../../../components/Spotify/PlaylistDetails'),
+  {
+    ssr: false,
+    loading: () => (
+      <Skeleton variant="rectangular" height={300} sx={{ mt: 2 }} />
+    ),
+  }
+)
+
 const SpotifySelectionPage = () => {
   const { spotifyData, sendData } = useWebSocket()
-  const router = useRouter()
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
+    null
+  )
 
   const handlePlaylistSelected = (uri: string) => {
     const playlistId = uri.split(':').pop()
-    if (playlistId) {
-      router.push(`/spotify/playlist/${playlistId}`)
-    }
+    setSelectedPlaylistId(playlistId || null)
   }
 
   const handlePlaylistPlay = (uri: string) => {
@@ -84,6 +94,10 @@ const SpotifySelectionPage = () => {
           />
         </CardContent>
       </Card>
+
+      {selectedPlaylistId && (
+        <PlaylistDetails playlistId={selectedPlaylistId} />
+      )}
     </Container>
   )
 }

@@ -30,6 +30,9 @@ describe('PlaylistSelector', () => {
         onPlaylistPlay={jest.fn()}
       />
     )
+    const user = userEvent.setup()
+    const input = await screen.findByRole('combobox')
+    await user.click(input)
 
     // Wait for the playlists to be fetched and rendered
     await waitFor(() => {
@@ -48,7 +51,8 @@ describe('PlaylistSelector', () => {
       />
     )
     const user = userEvent.setup()
-
+    const input = await screen.findByRole('combobox')
+    await user.click(input)
     const rockClassicsItem = await screen.findByText('Rock Classics')
     await user.click(rockClassicsItem)
 
@@ -65,7 +69,8 @@ describe('PlaylistSelector', () => {
       />
     )
     const user = userEvent.setup()
-
+    const input = await screen.findByRole('combobox')
+    await user.click(input)
     const focusFlowItem = await screen.findByText('Focus Flow')
     const listItem = focusFlowItem.closest('li')
     if (!listItem) throw new Error('Playlist item not found')
