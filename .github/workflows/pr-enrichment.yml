@@ -160,9 +160,9 @@ jobs:
               rawData = rawData.replace(/```json/g, '').replace(/```/g, '').trim();
 
               const result = JSON.parse(rawData);
-              let newBody = result.description;
 
-              if (newBody) {
+              if (result.description) {
+                let newBody = result.description;
                 let originalBody = context.payload.pull_request.body || '';
 
                 // Make the process idempotent
@@ -181,13 +181,17 @@ jobs:
                   body: newBody,
                 });
               } else {
-                core.setFailed('Generated description is empty.');
+                core.setFailed('Generated description is empty or missing from the JSON output.');
               }
 
             } catch (error) {
               console.error('Error processing description result:', error);
               core.setFailed('Failed to update PR description: ' + error.message);
             }
+
+      - name: Cleanup
+        if: always()
+        run: rm -f pr_description.json
 
       - name: Enhance PR Title
         if: steps.check-disabled.outputs.disabled == 'false' && env.DISABLE_TITLE_ENHANCEMENT != 'true'
