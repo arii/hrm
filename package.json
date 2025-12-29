@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rm -rf .next dist coverage test-results playwright-report *.log *.backup nohup.out diff.txt",
     "prebuild": "pnpm run clean",
-    "dev": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm server.ts | pnpm exec pino-pretty",
+    "dev": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm --loader tsconfig-paths/esm server.ts | pnpm exec pino-pretty",
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
     "deploy": "bash scripts/deploy.sh",
     "build": "pnpm run build:server && next build",
@@ -140,6 +140,7 @@
     "storybook": "^8.6.14",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.49.0",
