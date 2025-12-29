@@ -374,7 +374,9 @@ function buildFixModeSubPrompt(context: ReviewContext): string {
     .map(
       (c) =>
         `- **${c.name}** (${c.conclusion}) - [View Log](${c.detailsUrl})${
-          c.logSnippet ? `\n  Error: \`${c.logSnippet}\`` : ''
+          c.logSnippet
+            ? `\n  **Error Snippet:**\n  \`\`\`\n  ${c.logSnippet}\n  \`\`\``
+            : ''
         }`
     )
     .join('\n')
@@ -427,6 +429,7 @@ export function buildReviewPrompt(
 
   prompt += `## Review Context
 - **PR #${context.prNumber}**: ${context.prTitle}
+- **Description**: ${context.prDescription}
 - **Author**: ${context.prAuthor}
 - **Files Changed**: ${context.filesChanged}
 - **Lines Changed**: ~${context.totalLoc}
@@ -442,7 +445,10 @@ export function buildReviewPrompt(
   prompt += `\n## Project Documentation & Guidelines\n${contextContent}\n`
 
   // --- Diff Section ---
-  const maxDiffLength = 60000 // Unified and increased context window
+  const maxDiffLength = parseInt(
+    process.env.GEMINI_MAX_DIFF_LENGTH || '60000',
+    10
+  )
   const truncatedDiff =
     diff.length > maxDiffLength
       ? diff.substring(0, maxDiffLength) + '\n...[DIFF TRUNCATED]'

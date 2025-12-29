@@ -1,6 +1,6 @@
 
 import { buildReviewPrompt } from '../../../scripts/gemini-client';
-import type { ReviewContext } from '../../../scripts/gemini-client';
+import type { ReviewContext, FailedCheck } from '../../../scripts/gemini-client';
 
 describe('buildReviewPrompt', () => {
   const mockContextBase: ReviewContext = {
@@ -54,7 +54,32 @@ describe('buildReviewPrompt', () => {
     const prompt = buildReviewPrompt('fake-diff', contextWithFailures, 'fake-docs');
     expect(prompt).toContain('🚨 IMMEDIATE ACTION REQUIRED: CI/CD PIPELINE FAILURE');
     expect(prompt).toContain('You are now in **DEBUG MODE**');
-    expect(prompt).toContain('- **test:unit** (failure)');
+    expect(prompt).toContain('- **test:unit** (failure) - [View Log](http://example.com)');
     expect(prompt).not.toContain('## Review Instructions');
+  });
+
+  it('should use the GEMINI_MAX_DIFF_LENGTH environment variable for truncation', () => {
+    process.env.GEMINI_MAX_DIFF_LENGTH = '10';
+    const longDiff = 'a'.repeat(20);
+    const prompt = buildReviewPrompt(longDiff, mockContextBase, 'fake-docs');
+    expect(prompt).toContain('...[DIFF TRUNCATED]');
+    delete process.env.GEMINI_MAX_DIFF_LENGTH;
+  });
+
+  it('should include the log snippet in the "Fix Mode" prompt when available', () => {
+    const contextWithLogSnippet: ReviewContext = {
+      ...mockContextBase,
+      failedChecks: [
+        {
+          name: 'build',
+          conclusion: 'failure',
+          detailsUrl: 'http://example.com',
+          logSnippet: 'Error: Type `any` not allowed.',
+        },
+      ],
+    };
+    const prompt = buildReviewPrompt('fake-diff', contextWithLogSnippet, 'fake-docs');
+    expect(prompt).toContain('**Error Snippet:**');
+    expect(prompt).toContain('Error: Type `any` not allowed.');
   });
 });
