@@ -104,7 +104,9 @@ export class JsonProcessor {
    * Tries to parse the text as JSON, with fallbacks for markdown code blocks.
    * @param text The raw text response from the model.
    * @returns An object with success status, the parsed data or error object.
-   * Note: The `raw` property was intentionally omitted to prevent potential security risks.
+   * @note The `raw` property was intentionally omitted from the successful return type
+   * to prevent accidental exposure of potentially sensitive raw model output in downstream consumers.
+   * The full raw text is only exposed in the error path for debugging purposes.
    */
   public process(text: string): {
     success: boolean
