@@ -144,12 +144,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          # cache: 'pnpm' # Removed: We manage store path manually below
+          # cache: 'pnpm' # Removed to avoid rigid OS-dependent paths
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Cache pnpm Store
         uses: actions/cache@v4
         with:
-          path: ~/.local/share/pnpm/store
+          path: ${{ env.STORE_PATH }}
           key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             pnpm-store-${{ runner.os }}-
@@ -165,10 +170,9 @@ jobs:
       - name: Configure Persistent Store
         shell: bash
         run: |
-          mkdir -p ~/.local/share/pnpm/store
           # Use session-specific cache directories to prevent conflicts
           mkdir -p ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set store-dir ~/.local/share/pnpm/store
+          # Note: We do NOT set store-dir here anymore to respect the system default (and cached) path
           pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
           pnpm config set side-effects-cache true
 
@@ -606,6 +610,7 @@ jobs:
         with:
           name: lint-report
           path: logs
+        # Continue on error: artifact might not exist if lint passed or wasn't run
         continue-on-error: true
 
       - name: Download Knip Report
@@ -613,6 +618,7 @@ jobs:
         with:
           name: knip-report
           path: logs
+        # Continue on error: artifact might not exist if knip passed
         continue-on-error: true
 
       - name: Download Build Report
@@ -620,6 +626,7 @@ jobs:
         with:
           name: build-report
           path: logs
+        # Continue on error: artifact might not exist if build passed
         continue-on-error: true
 
       - name: Download Core Test Reports
@@ -627,6 +634,7 @@ jobs:
         with:
           name: test-reports
           path: logs
+        # Continue on error: artifact might not exist if tests passed or weren't run
         continue-on-error: true
 
       - name: Post Comprehensive Quality Report
