@@ -2,9 +2,19 @@
 name: 'Setup Environment'
 description: 'Sets up Node.js and pnpm, installs dependencies and Playwright.'
 
+inputs:
+  session_id:
+    description: 'A unique session ID for the workflow run'
+    required: false
+
 runs:
   using: 'composite'
   steps:
+    - name: Configure Envs
+      shell: bash
+      run: |
+        echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
+        echo "NEXTAUTH_SECRET=ci-secret-${{ inputs.session_id || github.run_id }}" >> .env.local
     - name: 'Setup pnpm'
       uses: pnpm/action-setup@v4
 

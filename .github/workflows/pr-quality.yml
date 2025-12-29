@@ -129,13 +129,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Configure Envs
-        run: |
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
       - name: Setup Environment
         uses: ./.github/actions/setup-env
+        with:
+          session_id: ${{ needs.prepare-env.outputs.session_id }}
 
       - name: Run Knip
         id: knip
@@ -215,13 +212,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Configure Envs
-        run: |
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
       - name: Setup Environment
         uses: ./.github/actions/setup-env
+        with:
+          session_id: ${{ needs.prepare-env.outputs.session_id }}
 
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
@@ -272,13 +266,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Configure Envs
-        run: |
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
       - name: Setup Environment
         uses: ./.github/actions/setup-env
+        with:
+          session_id: ${{ needs.prepare-env.outputs.session_id }}
 
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
