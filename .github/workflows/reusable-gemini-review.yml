@@ -142,15 +142,17 @@ jobs:
         id: context
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
+          # Map the body to an env var first to avoid shell injection issues
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          # Use heredoc syntax for multiline environment variables
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
           echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
-          echo 'PR_DESCRIPTION<<EOF' >> $GITHUB_ENV
+
+          # Fix: Use heredoc syntax for multi-line content
+          echo "PR_DESCRIPTION<<EOF" >> $GITHUB_ENV
           echo "$PR_BODY" >> $GITHUB_ENV
-          echo 'EOF' >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Get PR Checks
         id: checks
@@ -169,7 +171,10 @@ jobs:
           FAILED_CHECKS_JSON: ${{ env.FAILED_CHECKS_JSON }}
           # Pass other context vars
         run: |
-          pnpm tsx scripts/gemini-client.ts --preset "review" --output "review_result.json"
+          pnpm tsx scripts/gemini-client.ts \
+            --preset "review" \
+            --context "docs/DEVELOPMENT.md,docs/DESIGN_GUIDELINES.md,docs/TYPESCRIPT_PATTERNS.md" \
+            --output "review_result.json"
 
       - name: Post Review Comment
         env:

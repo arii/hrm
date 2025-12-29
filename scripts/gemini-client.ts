@@ -28,9 +28,9 @@ const preset = getArg('--preset')
 // it is recommended to either update this list to prioritize a stable model
 // or to configure a production-ready list via the GEMINI_MODEL_FALLBACKS environment variable.
 const defaultFallbacks = [
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
   'gemini-2.0-flash-exp',
-  'gemini-1.5-flash-latest',
-  'gemini-1.5-pro-latest',
 ]
 
 export function getModelFallbacks(): string[] {
