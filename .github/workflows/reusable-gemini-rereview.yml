@@ -93,25 +93,28 @@ jobs:
           # Skip if no significant changes (just response comments, no code changes)
           if [[ "$SIG" -eq 0 ]]; then
             SKIP_REASON="no code changes"
-            echo "::debug::Skipping review. Reason: No significant changes."
+            echo "::debug::Skipping review: No significant code changes detected (SIG=0)."
           elif [[ "$IS_MERGE" -eq 1 && "$SIG" -eq 0 ]]; then
             SKIP_REASON="merge"
-            echo "::debug::Skipping review. Reason: Merge commit with no significant changes."
+            echo "::debug::Skipping review: Merge commit with no significant changes."
           elif [[ "$COMMIT_MSG" =~ ^(docs?|chore|style): ]]; then
             SKIP_REASON="trivial"
-            echo "::debug::Skipping review. Reason: Trivial change (docs/chore/style)."
+            echo "::debug::Skipping review: Trivial change detected from commit message."
           elif [[ "$TOTAL_REVIEWS" -eq 0 && "$SIG" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="initial"
+            echo "::debug::Triggering initial review: No reviews yet and significant changes present."
           elif [[ "$REQ" -gt 0 && "$SIG" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="full"
+            echo "::debug::Triggering full re-review: Changes were requested and new significant changes are present."
           elif [[ "$APPROVED" -gt 0 && "$SIG" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="verification"
+            echo "::debug::Triggering verification review: PR was approved but new significant changes were pushed."
           else
             SKIP_REASON="awaiting code changes"
-            echo "::debug::Skipping review. Reason: Awaiting code changes."
+            echo "::debug::Skipping review: No actionable criteria met."
           fi
           echo "needs-review=$NEEDS_REVIEW" >> $GITHUB_OUTPUT
           echo "review-type=$REVIEW_TYPE" >> $GITHUB_OUTPUT
