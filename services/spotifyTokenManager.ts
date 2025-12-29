@@ -3,6 +3,13 @@ import { z } from 'zod'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
 import logger from '../utils/logger.js'
 
+/**
+ * Zod schema for the Spotify token payload.
+ * This provides runtime validation to ensure that the token data, which comes
+ * from an external source (NextAuth's JWT), conforms to the expected shape.
+ * This is a critical safeguard against unexpected data structures or types
+ * that could cause runtime errors.
+ */
 const SpotifyTokenPayloadSchema = z.object({
   provider: z.string(),
   sub: z.string(),

@@ -8,8 +8,8 @@ import { env } from '@/lib/env'
 
 /**
  * Attempts to hydrate the server-side SpotifyService with the token from the JWT.
- * This is a "fire-and-forget" operation; it logs errors but does not block
- * the main API response to the client. It's designed to be called without `await`.
+ * This operation is critical for ensuring the backend service is ready for WebSocket
+ * commands after a page reload. It's designed to be awaited.
  * @param req The incoming NextRequest, used to extract the JWT.
  */
 async function _tryHydrateSpotifyService(req: NextRequest): Promise<void> {
@@ -41,8 +41,8 @@ async function _tryHydrateSpotifyService(req: NextRequest): Promise<void> {
 
 /**
  * API route to securely provide the Spotify access token to the client.
- * ALSO: Triggers a fire-and-forget hydration of the server-side SpotifyService
- * to ensure it's initialized on session resumption.
+ * ALSO: Awaits the hydration of the server-side SpotifyService to ensure it's
+ * initialized on session resumption, which is critical for serverless environments.
  */
 export async function GET(req: Request) {
   try {
@@ -64,9 +64,9 @@ export async function GET(req: Request) {
       )
     }
 
-    // 2. Trigger the internal service hydration without waiting for it to complete.
-    // This ensures the client gets their token quickly, while the server updates in the background.
-    _tryHydrateSpotifyService(req as NextRequest)
+    // 2. Await the internal service hydration to ensure it completes before the
+    // serverless function potentially freezes. The latency is negligible (<10ms).
+    await _tryHydrateSpotifyService(req as NextRequest)
 
     // 3. Return the access token to the client.
     return NextResponse.json({
