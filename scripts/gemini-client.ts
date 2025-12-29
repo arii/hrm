@@ -119,7 +119,8 @@ export class JsonProcessor {
       if (jsonBlock) {
         try {
           return { success: true, data: JSON.parse(jsonBlock), raw: text }
-        } catch (_e) {
+        } catch (e) {
+          console.error('Error parsing JSON block:', e)
           // If parsing the extracted block fails, return a structured error.
           return {
             success: false,
@@ -354,7 +355,8 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
     })
   } catch (e) {
     console.warn(
-      `Warning: Failed to parse FAILED_CHECKS_JSON: ${(e as Error).message}`
+      `Warning: Failed to parse FAILED_CHECKS_JSON: ${(e as Error).message}`,
+      e
     )
     return []
   }
