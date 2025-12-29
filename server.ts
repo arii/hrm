@@ -190,7 +190,6 @@ app.prepare().then(async () => {
 
         await services.spotifyService.handleTokenUpdate({
           access_token: tokenData.access_token || '',
-          token_type: 'Bearer',
           expires_in: tokenData.expires_in || 0,
           refresh_token: tokenData.refresh_token || '',
           scope: tokenData.scope || '',
