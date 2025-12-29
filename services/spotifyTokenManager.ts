@@ -1,27 +1,5 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
-import fs from 'fs'
-import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
-
-/**
- * Helper for atomic writes to prevent file corruption.
- * Writes to a temporary file and then atomically renames it to the final destination.
- * @param {string} filePath - The final path of the file.
- * @param {TokenRecord} data - The data to be serialized to JSON.
- */
-const writeTokenFileSafe = (filePath: string, data: TokenRecord) => {
-  const tempPath = `${filePath}.tmp`
-  try {
-    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2))
-    fs.renameSync(tempPath, filePath) // Atomic rename
-  } catch (error) {
-    console.error(`Failed to write token file safely: ${error}`)
-    // Clean up temp file if it exists
-    if (fs.existsSync(tempPath)) {
-      fs.unlinkSync(tempPath)
-    }
-  }
-}
 
 export interface SpotifyTokenPayload {
   provider: string
@@ -38,37 +16,22 @@ export interface TokenRecord {
   payload: SpotifyTokenPayload
 }
 
+/**
+ * In-memory manager for Spotify tokens.
+ * This relies on external "hydration" (via UI or Auth callbacks) to populate the token.
+ * It does not persist to disk, making it suitable for serverless/containerized environments.
+ */
 export class SpotifyTokenManager {
-  /**
-   * Directly set the access token (for command injection/testing).
-   */
-  public setAccessToken(token: string) {
-    if (this.currentToken) {
-      this.currentToken.payload.access_token = token
-      this.currentToken.payload.obtainedAt = Date.now()
-      writeTokenFileSafe(this.tokenFile, this.currentToken)
-      console.log('Access token updated via setAccessToken.')
-    } else {
-      // If no token record exists, create a minimal one
-      this.currentToken = {
-        receivedAt: Date.now(),
-        payload: {
-          provider: 'manual',
-          sub: 'manual',
-          access_token: token,
-          refresh_token: '',
-          expires_in: 3600,
-          scope: '',
-          obtainedAt: Date.now(),
-        },
-      }
-      writeTokenFileSafe(this.tokenFile, this.currentToken)
-      console.log('Access token created via setAccessToken.')
-    }
-  }
+  private currentToken: TokenRecord | null = null
+  private refreshPromise: Promise<boolean> | null = null
+
+  constructor(
+    private clientId: string,
+    private clientSecret: string
+  ) {}
 
   /**
-   * Updates the in-memory token and persists it to disk.
+   * Updates the in-memory token.
    * @param {SpotifyTokenPayload} payload - The new token payload.
    */
   public updateToken(payload: SpotifyTokenPayload): void {
@@ -76,36 +39,7 @@ export class SpotifyTokenManager {
       receivedAt: Date.now(),
       payload: payload,
     }
-    // Persist for future runs
-    writeTokenFileSafe(this.tokenFile, this.currentToken)
-    console.log(
-      'Updated in-memory and persisted Spotify tokens for:',
-      this.currentToken.payload.sub
-    )
-  }
-  private tokenFile: string
-  private currentToken: TokenRecord | null = null
-  private refreshPromise: Promise<void> | null = null
-
-  constructor(
-    private clientId: string,
-    private clientSecret: string,
-    logDir: string = path.resolve(process.cwd(), 'logs')
-  ) {
-    this.tokenFile = path.join(logDir, 'spotify_tokens.json')
-    this.loadTokens()
-  }
-
-  private loadTokens() {
-    try {
-      if (fs.existsSync(this.tokenFile)) {
-        const data = fs.readFileSync(this.tokenFile, 'utf8')
-        this.currentToken = JSON.parse(data) as TokenRecord
-        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
-      }
-    } catch (err) {
-      console.warn('Failed to load Spotify tokens:', err)
-    }
+    console.log('Updated in-memory Spotify tokens for:', this.currentToken.payload.sub)
   }
 
   private async refreshToken(): Promise<boolean> {
@@ -135,7 +69,6 @@ export class SpotifyTokenManager {
 
         if (!response.ok) {
           const errorBody = await response.text()
-          // Don't retry client errors (4xx) unless it's rate limiting (429)
           if (
             response.status >= 400 &&
             response.status < 500 &&
@@ -151,9 +84,7 @@ export class SpotifyTokenManager {
         const data = (await response.json()) as SpotifyTokenResponse
         console.log(
           'Spotify token refresh successful. Status:',
-          response.status,
-          'Body:',
-          data
+          response.status
         )
 
         // Update current token with new values
@@ -169,13 +100,6 @@ export class SpotifyTokenManager {
           },
         }
 
-        // Save updated token
-        writeTokenFileSafe(this.tokenFile, this.currentToken)
-
-        console.log(
-          'Refreshed Spotify token for:',
-          this.currentToken.payload.sub
-        )
         return true
       } catch (error: unknown) {
         const err = error as Error
@@ -199,8 +123,6 @@ export class SpotifyTokenManager {
   }
 
   async getValidAccessToken(): Promise<string | null> {
-    // Always reload the token file before returning the access token
-    this.loadTokens()
     if (!this.currentToken) return null
 
     // Check if token needs refresh
@@ -213,8 +135,6 @@ export class SpotifyTokenManager {
         console.log(
           'Spotify access token is expiring soon, initiating refresh...'
         )
-        // Refresh if within 1 minute of expiry
-        // Ensure only one refresh happens at a time
         if (!this.refreshPromise) {
           this.refreshPromise = this.refreshToken()
             .then(() => {
@@ -235,14 +155,6 @@ export class SpotifyTokenManager {
     }
 
     return this.currentToken.payload.access_token
-  }
-
-  getUserId(): string | null {
-    return this.currentToken?.payload.sub ?? null
-  }
-
-  getCurrentRefreshToken(): string | null {
-    return this.currentToken?.payload.refresh_token ?? null
   }
 
   getSdkAccessToken(): AccessToken | null {

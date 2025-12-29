@@ -1,25 +1,22 @@
-import { authOptions } from '@/lib/auth' // Using alias for cleaner imports
+import { authOptions } from '@/lib/auth'
 import logger from '@/utils/logger'
 import { getServerSession } from 'next-auth/next'
+import { getToken } from 'next-auth/jwt'
 import { NextResponse } from 'next/server'
+import { serviceContainer } from '@/lib/serviceContainer'
+import { env } from '@/lib/env'
 
 /**
  * API route to securely provide the Spotify access token to the client.
- *
- * This endpoint is called by the `useSpotifyWebPlayback` hook. It retrieves the
- * access token from the user's server-side session and returns it. This is the
- * recommended way to expose the token to the client-side SDK without exposing
- * it publicly or storing it in an insecure manner.
- *
- * @param _req The incoming Next.js API request (unused).
- * @returns A NextResponse object with the access token or an error.
+ * * ALSO: Hydrates the server-side SpotifyService if it's missing credentials.
+ * This ensures that on page reload (session resumption), the WebSocket service
+ * gets the necessary tokens to function.
  */
-export async function GET(_req: Request) {
+export async function GET(req: Request) {
   try {
-    // 1. Get the server-side session (NextAuth automatically refreshes tokens)
+    // 1. Get the server-side session
     const session = await getServerSession(authOptions)
 
-    // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
       logger.error('No session or access token found.')
       return NextResponse.json(
@@ -28,16 +25,45 @@ export async function GET(_req: Request) {
       )
     }
 
-    // 3. Check for refresh errors from NextAuth
     if (session.error === 'RefreshAccessTokenError') {
-      logger.error('Token refresh failed in NextAuth')
       return NextResponse.json(
         { error: 'Token refresh failed. Please re-authenticate.' },
         { status: 401 }
       )
     }
 
-    // 4. Return the access token (already refreshed by NextAuth if needed)
+    // --- SERVICE HYDRATION START ---
+    // We retrieve the raw JWT to get the refresh token (which is NOT in the session object)
+    // and pass it to the internal SpotifyService.
+    try {
+      const token = await getToken({
+        req: req as any,
+        secret: env.NEXTAUTH_SECRET
+      })
+
+      if (token && token.accessToken && token.refreshToken) {
+        const spotifyService = serviceContainer.get('spotifyService')
+
+        // Only update if the service needs it or if we want to ensure freshness
+        // handleTokenUpdate is safe to call; it handles internal state updates.
+        await spotifyService.handleTokenUpdate({
+          provider: 'spotify',
+          sub: token.sub || 'unknown',
+          access_token: token.accessToken as string,
+          refresh_token: token.refreshToken as string,
+          expires_in: 3600, // Nominal, service handles refresh
+          scope: '',
+          obtainedAt: Date.now()
+        })
+        logger.debug('Hydrated SpotifyService from access-token route.')
+      }
+    } catch (hydrationError) {
+      // Don't block the client response if internal hydration fails
+      logger.warn({ error: hydrationError }, 'Failed to hydrate SpotifyService')
+    }
+    // --- SERVICE HYDRATION END ---
+
+    // 4. Return the access token to the client
     return NextResponse.json({
       accessToken: session.accessToken,
     })
