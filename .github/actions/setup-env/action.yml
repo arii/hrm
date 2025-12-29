@@ -55,6 +55,12 @@ runs:
       shell: bash
       run: pnpm exec playwright install chromium
 
+    - name: Configure Envs
+      shell: bash
+      run: |
+        echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
+        echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID || github.run_id }}" >> .env.local
+
     - name: 'Run Setup Script'
       shell: bash
       run: |

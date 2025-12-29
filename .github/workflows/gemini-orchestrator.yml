@@ -60,6 +60,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: self-hosted
     steps:
+      - uses: actions/checkout@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-env
       - name: Run Gemini Client
@@ -71,6 +72,7 @@ jobs:
     if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@gemini-bot')
     runs-on: self-hosted
     steps:
+      - uses: actions/checkout@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-env
       - name: Run Gemini Client

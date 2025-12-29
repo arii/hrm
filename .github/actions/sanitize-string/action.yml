@@ -29,6 +29,7 @@ runs:
         RAW: ${{ inputs.value }}
         LEN: ${{ inputs.max-length }}
       run: |
+        export LC_ALL=C
         # Detailed Sanitization Steps:
         # 1. `tr -d '\n'`: Removes any newline characters. This is a critical safety measure to
         #    prevent multi-line inputs from breaking the key=value format of GITHUB_OUTPUT.

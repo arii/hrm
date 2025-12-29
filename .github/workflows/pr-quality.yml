@@ -129,11 +129,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Configure Envs
-        run: |
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
@@ -215,11 +210,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Configure Envs
-        run: |
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
@@ -271,11 +261,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: Configure Envs
-        run: |
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
