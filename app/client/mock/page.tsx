@@ -12,24 +12,20 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
-import useDebounce from '../../../hooks/useDebounce'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
 
-const DEFAULT_USER_NAME = 'Mock User'
-const DEFAULT_USER_AGE = 30
-
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
-  const [userSettings, setUserSettings] = useUserSettings()
-  const debouncedUserSettings = useDebounce(userSettings, 500)
   const [hrValue, setHrValue] = useState(100)
+  const [name, setName] = useState('Mock User')
+  const [age, setAge] = useState(30)
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
 
   const isStreaming = intervalId !== null
-  const { userName, userAge, maxHr, restingHr } = debouncedUserSettings
+  const maxHr = 220 - age
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -60,13 +56,13 @@ export default function MockPage() {
     const message: HrmMetadataUpdateMessage = {
       type: 'HRM_METADATA_UPDATE',
       data: {
-        maxHr: maxHr ?? 220 - (userAge ?? DEFAULT_USER_AGE),
-        name: userName ?? DEFAULT_USER_NAME,
-        age: userAge ?? DEFAULT_USER_AGE,
+        maxHr: maxHr,
+        name: name,
+        age: age,
       },
     }
     sendData(message)
-  }, [sendData, userName, userAge, maxHr])
+  }, [sendData, name, age, maxHr])
 
   // NOTE: In a real client, metadata would likely be sent once upon connection
   // or when the user explicitly saves settings. For this mock, we send it
@@ -135,11 +131,6 @@ export default function MockPage() {
             Simulate heart rate data for testing.
           </Typography>
 
-          {/* HACK: This project uses an unusual version of @mui/material (^7.3.6)
-              which appears to use a `size` prop for the Grid component instead
-              of the standard `item` and `xs`/`sm` props. This is likely a
-              custom fork or a pre-release version. Do not change this to use
-              the standard MUI API, as it will break the build. */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid size={{ xs: 8 }}>
               <TextField
@@ -160,8 +151,14 @@ export default function MockPage() {
                 label="Age"
                 placeholder="e.g., 30"
                 type="number"
-                value={age}
-                onChange={(e) => setAge(parseInt(e.target.value, 10))}
+                value={userAge ?? ''}
+                onChange={(e) => {
+                  const newAge = parseInt(e.target.value, 10)
+                  setUserSettings((prev) => ({
+                    ...prev,
+                    userAge: isNaN(newAge) ? null : newAge,
+                  }))
+                }}
                 fullWidth
                 inputProps={{ min: 1, max: 120 }}
               />
@@ -172,12 +169,13 @@ export default function MockPage() {
                 placeholder="e.g., 190"
                 type="number"
                 value={maxHr ?? ''}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const newMaxHr = parseInt(e.target.value, 10)
                   setUserSettings((prev) => ({
                     ...prev,
-                    maxHr: e.target.value ? parseInt(e.target.value, 10) : null,
+                    maxHr: isNaN(newMaxHr) ? null : newMaxHr,
                   }))
-                }
+                }}
                 fullWidth
                 inputProps={{ min: 100, max: 220 }}
               />
@@ -188,14 +186,13 @@ export default function MockPage() {
                 placeholder="e.g., 60"
                 type="number"
                 value={restingHr ?? ''}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const newRestingHr = parseInt(e.target.value, 10)
                   setUserSettings((prev) => ({
                     ...prev,
-                    restingHr: e.target.value
-                      ? parseInt(e.target.value, 10)
-                      : null,
+                    restingHr: isNaN(newRestingHr) ? null : newRestingHr,
                   }))
-                }
+                }}
                 fullWidth
                 inputProps={{ min: 30, max: 100 }}
               />
