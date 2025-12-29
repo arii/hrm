@@ -108,34 +108,21 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          CURRENT_BODY="${{ github.event.pull_request.body }}"
-          
-          # Build metadata section
-          METADATA="## 📊 Change Summary
-          
-          - **Scope**: ${{ env.SCOPE }} (${{ env.FILE_COUNT }} files changed)
-          - **Lines Added**: ${{ env.ADDITIONS }}
-          - **Lines Deleted**: ${{ env.DELETIONS }}
-          - **Impact Areas**: ${{ env.CATEGORIES }}"
-          
-          # Check if metadata section already exists and remove it
-          if echo "$CURRENT_BODY" | grep -q "## 📊 Change Summary"; then
-            # Remove the old metadata section using awk
-            CURRENT_BODY=$(printf '%s\n' "$CURRENT_BODY" | awk '!/^## 📊 Change Summary/,!/^- \*\*Impact Areas/ {print}' | sed '/^[[:space:]]*$/d')
-          fi
-          
-          # Add metadata section
-          # Use printf to safely handle multi-line strings and avoid YAML parsing errors.
-          # Direct assignment is fragile as it can fail if indentation is not perfect
-          # (e.g., an un-indented empty line can cause a syntax error).
-          # See: https://trstringer.com/github-actions-multiline-strings/ for more details.
-          if [ -z "$CURRENT_BODY" ]; then
-            NEW_BODY="$METADATA"
-          else
-            NEW_BODY=$(printf '%s\n\n%s' "$CURRENT_BODY" "$METADATA")
-          fi
-          
-          # Update PR using gh pr edit with proper escaping
+          CONTEXT_FILE=$(mktemp)
+          cat <<EOF > "$CONTEXT_FILE"
+          PR Title: ${{ github.event.pull_request.title }}
+          PR Author: ${{ github.event.pull_request.user.login }}
+          PR Body: ${{ github.event.pull_request.body }}
+          Files Changed: ${{ env.FILE_COUNT }}
+          Lines Added: ${{ env.ADDITIONS }}
+          Lines Deleted: ${{ env.DELETIONS }}
+          Impact Areas: ${{ env.CATEGORIES }}
+          EOF
+
+          # Generate the new PR description
+          NEW_BODY=$(npx tsx scripts/gemini-client.ts --task-file .github/PULL_REQUEST_TEMPLATE.md --context "$CONTEXT_FILE")
+
+          # Update the PR description
           gh pr edit "$PR_NUMBER" --body "$NEW_BODY" || echo "::warning::Could not update PR description"
 
       - name: Enhance PR Title
