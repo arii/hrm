@@ -3,38 +3,41 @@ import { useState, useEffect, useCallback } from 'react'
 
 // Hook
 function useLocalStorage<T>(key: string, initialValue: T) {
-  // State to store our value
-  // Pass initial state function to useState so logic is only executed once
-  const [storedValue, setStoredValue] = useState<T>(() => {
+  // 1. Initialize state with initialValue to match Server Side rendering.
+  const [storedValue, setStoredValue] = useState<T>(initialValue)
+
+  // 2. Sync with localStorage inside useEffect (Client-side only).
+  useEffect(() => {
+    // Prevent execution on server.
     if (typeof window === 'undefined') {
-      return initialValue
+      return
     }
+
     try {
-      // Get from local storage by key
       const item = window.localStorage.getItem(key)
-      // Parse stored json or if none return initialValue
-      const stored = item ? JSON.parse(item) : initialValue
+      if (item) {
+        const parsed = JSON.parse(item)
 
-      // For objects, merge stored settings with initial value to add any new keys.
-      // This provides a safe migration path for users with older settings.
-      if (
-        typeof stored === 'object' &&
-        !Array.isArray(stored) &&
-        stored !== null &&
-        typeof initialValue === 'object' &&
-        !Array.isArray(initialValue) &&
-        initialValue !== null
-      ) {
-        return { ...initialValue, ...stored }
+        // Handle object migration by merging stored data with initial defaults.
+        if (
+          typeof parsed === 'object' &&
+          !Array.isArray(parsed) &&
+          parsed !== null &&
+          typeof initialValue === 'object' &&
+          !Array.isArray(initialValue) &&
+          initialValue !== null
+        ) {
+          setStoredValue({ ...initialValue, ...parsed })
+        } else {
+          setStoredValue(parsed)
+        }
       }
-
-      return stored
     } catch (error) {
-      // If error also return initialValue
-      console.log(error)
-      return initialValue
+      console.error(`Failed to read from localStorage key “${key}”:`, error)
+      // If parsing fails, the hook will fallback to the initialValue.
     }
-  })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]) // Only run on mount.
 
   // Return a wrapped version of useState's setter function that ...
   // ... persists the new value to localStorage.
@@ -61,7 +64,14 @@ function useLocalStorage<T>(key: string, initialValue: T) {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key && e.newValue) {
-        setStoredValue(JSON.parse(e.newValue))
+        try {
+          setStoredValue(JSON.parse(e.newValue))
+        } catch (error) {
+          console.error(
+            `Failed to parse storage change from localStorage key “${key}”:`,
+            error
+          )
+        }
       }
     }
     window.addEventListener('storage', handleStorageChange)
