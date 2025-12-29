@@ -1,4 +1,5 @@
 // server.ts (Refactored)
+import crypto from 'crypto'
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
@@ -8,6 +9,7 @@ import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
+import { TokenPayload } from './types/index.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
@@ -145,13 +147,25 @@ app.prepare().then(async () => {
     express.json(), // Use express.json() only for this route
     async (req, res) => {
       try {
-        const tokenData = req.body
-        if (!tokenData || !tokenData.refresh_token) {
-          return res.status(400).json({ error: 'Missing token data.' })
+        const tokenData = req.body as Partial<TokenPayload>
+        if (!tokenData.refresh_token) {
+          return res.status(400).json({ error: 'Missing refresh_token.' })
         }
 
-        const secretHeader = req.headers['x-internal-token-secret'] || ''
-        if (secretHeader !== env.NEXTAUTH_SECRET) {
+        const rawHeader = req.headers['x-internal-token-secret']
+        const secretHeader = Array.isArray(rawHeader)
+          ? rawHeader[0]
+          : rawHeader || ''
+
+        const expected = env.NEXTAUTH_SECRET || ''
+        const isValid =
+          secretHeader.length === expected.length &&
+          crypto.timingSafeEqual(
+            Buffer.from(secretHeader),
+            Buffer.from(expected)
+          )
+
+        if (!isValid) {
           return res.status(401).json({ error: 'Unauthorized.' })
         }
 
@@ -166,6 +180,8 @@ app.prepare().then(async () => {
 
         await services.spotifyService.handleTokenUpdate({
           ...tokenData,
+          access_token: tokenData.access_token || '',
+          expires_in: tokenData.expires_in || 0,
           provider: 'spotify',
           sub: '',
           scope: '',
