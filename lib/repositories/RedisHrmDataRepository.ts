@@ -57,9 +57,7 @@ export class RedisHrmDataRepository {
       maxHr: data.maxHr.toString(),
       age: (data.age || 0).toString(),
       calories: data.calories.toString(),
-    }
-    if (data.name) {
-      dataToSave.name = data.name
+      name: data.name,
     }
     await redisClient.hSet(this.getKey(data.clientId), dataToSave)
   }

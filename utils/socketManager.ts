@@ -113,6 +113,7 @@ const initSocketManager = (
         maxHr: 185,
         age: 30,
         calories: 0,
+        name: 'New User',
       }
       await hrmDataRepository.save(newClient)
       clientSessionState.set(extWs.clientId, {
