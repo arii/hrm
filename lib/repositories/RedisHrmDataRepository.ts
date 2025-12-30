@@ -21,7 +21,7 @@ export class RedisHrmDataRepository {
       maxHr: Number(data.maxHr),
       age: Number(data.age),
       calories: Number(data.calories),
-      name: data.name,
+      name: data.name || '',
     }
   }
 
@@ -40,7 +40,7 @@ export class RedisHrmDataRepository {
             maxHr: Number(hrmData.maxHr),
             age: Number(hrmData.age),
             calories: Number(hrmData.calories),
-            name: hrmData.name,
+            name: hrmData.name || '',
           })
         }
       }
@@ -66,12 +66,16 @@ export class RedisHrmDataRepository {
   }
 
   async clear(): Promise<void> {
+    const keys: string[] = [];
     try {
       for await (const key of redisClient.scanIterator({
         MATCH: `${HRM_DATA_KEY_PREFIX}*`,
         COUNT: 100,
       })) {
-        await redisClient.del(key)
+        keys.push(key);
+      }
+      if (keys.length > 0) {
+        await redisClient.del(keys);
       }
     } catch (error) {
       logger.error('Error clearing HRM data keys from Redis:', error)

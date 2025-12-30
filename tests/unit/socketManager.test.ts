@@ -19,12 +19,13 @@ import { StateSnapshot, ExtWebSocket } from '../../types/websocket'
 import {
   broadcast,
   sendWebSocketMessage,
-  ConnectionMonitor,
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
 import redisClient from '../../lib/redis'
 import { AppServices } from '@/lib/services'
 import { IncomingMessage } from 'http'
+import { TabataTimer } from '@/services/tabataTimer'
+import { SpotifyPolling } from '@/services/spotifyPolling'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -121,14 +122,15 @@ describe('WebSocket Manager', () => {
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
 
     mockServices = {
-      tabataService: {
-        handleCommand: jest.fn(),
-        setMode: jest.fn(),
-        setConfig: jest.fn(),
-      } as any,
-      spotifyService: {
-        handleCommand: jest.fn(),
-      } as any,
+        tabataService: {
+            handleCommand: jest.fn(),
+            setMode: jest.fn(),
+            setConfig: jest.fn(),
+        } as unknown as jest.Mocked<TabataTimer>,
+        spotifyService: {
+            handleCommand: jest.fn(),
+        } as unknown as jest.Mocked<SpotifyPolling>,
+        isSpotifyInitialized: true
     }
 
     getSnapshot = jest.fn().mockReturnValue({
