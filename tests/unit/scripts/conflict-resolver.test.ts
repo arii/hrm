@@ -41,13 +41,14 @@ describe('runConflictResolution', () => {
           getGenerativeModel: () => ({
             generateContent: jest.fn(),
           }),
-        }) as jest.Mock
+        }) as any
     )
   })
 
   it('should generate a report for valid conflicts', async () => {
-    const { runConflictResolution } =
-      await import('@/scripts/conflict-resolver')
+    const { runConflictResolution } = await import(
+      '@/scripts/conflict-resolver'
+    )
     mockedReadFile.mockResolvedValue('file1.ts\0file2.ts\0')
     mockedParseConflicts
       .mockResolvedValueOnce([
@@ -91,8 +92,9 @@ describe('runConflictResolution', () => {
   })
 
   it('should handle malformed AI response', async () => {
-    const { runConflictResolution } =
-      await import('@/scripts/conflict-resolver')
+    const { runConflictResolution } = await import(
+      '@/scripts/conflict-resolver'
+    )
     mockedReadFile.mockResolvedValue('file1.ts\0')
     mockedParseConflicts.mockResolvedValueOnce([
       {

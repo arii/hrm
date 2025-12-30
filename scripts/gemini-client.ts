@@ -19,7 +19,7 @@ const getArg = (key: string) => {
 const task = getArg('--task')
 const taskFile = getArg('--task-file')
 const contextFiles = getArg('--context')?.split(',') || []
-const contextFile = getArg('--context-file')
+const contextFile = getArg('--context-file');
 const outputFile = getArg('--output')
 const preset = getArg('--preset')
 
@@ -211,12 +211,10 @@ async function main() {
     await runReviewPreset(genAI, contextContent, outputFile)
   } else if (preset === 'resolve-conflict') {
     if (!contextFile) {
-      console.error(
-        'Error: --context-file is required for resolve-conflict preset'
-      )
-      process.exit(1)
+      console.error('Error: --context-file is required for resolve-conflict preset');
+      process.exit(1);
     }
-    await runConflictResolution(genAI, contextFile, outputFile)
+    await runConflictResolution(genAI, contextFile, outputFile);
   } else {
     // Default/Generic mode
     let finalTask = task
@@ -269,8 +267,10 @@ export async function generateContentWithFallback(
       const errorStatus = (error as { status?: number }).status
 
       const isNotFound = errorMessage.includes('404') || errorStatus === 404
-      const isBadRequest = errorMessage.includes('400') || errorStatus === 400 // Sometimes invalid model is 400
-      const isRateLimited = errorMessage.includes('429') || errorStatus === 429
+      const isBadRequest =
+        errorMessage.includes('400') || errorStatus === 400 // Sometimes invalid model is 400
+      const isRateLimited =
+        errorMessage.includes('429') || errorStatus === 429
 
       if (isNotFound || isBadRequest || isRateLimited) {
         let reason = 'Unknown Error'
