@@ -68,9 +68,7 @@ const HRMonitorStatusIndicator = ({
       role="status"
       aria-live="polite"
     >
-      <Box sx={{ display: 'flex' }} aria-label={`Status: ${deviceStatus}`}>
-        {getStatusIcon(deviceStatus)}
-      </Box>
+      <Box sx={{ display: 'flex' }}>{getStatusIcon(deviceStatus)}</Box>
       <Typography variant="body2" sx={{ flexGrow: 1 }}>
         {deviceStatus}
       </Typography>
