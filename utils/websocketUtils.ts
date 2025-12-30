@@ -45,6 +45,7 @@ export const sendWebSocketMessage = (
   }
 }
 
+import { publish } from '../lib/broadcaster.js';
 /**
  * Broadcasts a typed WebSocket message to all connected and open clients.
  * This is the preferred method for server-wide state updates.
@@ -58,24 +59,7 @@ export const broadcast = (
   message: ServerMessage,
   origin?: string
 ): void => {
-  const messageString = JSON.stringify(message)
-  wss.clients.forEach((client) => {
-    const extClient = client as ExtWebSocket
-    if (extClient.readyState === WebSocket.OPEN) {
-      try {
-        extClient.send(messageString)
-      } catch (error) {
-        logger.error(
-          {
-            clientId: extClient.clientId,
-            error,
-            origin,
-          },
-          'Failed to broadcast WebSocket message to a client.'
-        )
-      }
-    }
-  })
+  publish(message);
 }
 
 /**
