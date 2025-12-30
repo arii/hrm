@@ -1,11 +1,14 @@
 // server.ts (Refactored)
+import { validateEnv } from './lib/env.js'
+validateEnv()
+
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
-import { env } from './lib/env.js' // New import
+import { env } from './lib/env.js'
 import { serviceContainer } from './lib/serviceContainer.js'
-import { AppServices, createServices } from './lib/services.js' // New import
-import { WebSocketManager } from './lib/websocket.js' // New import
+import { AppServices, createServices } from './lib/services.js'
+import { WebSocketManager } from './lib/websocket.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'

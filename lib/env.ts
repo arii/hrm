@@ -27,7 +27,7 @@ const schema = z.object({
   SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
 })
 
-function validateAndGetEnv() {
+export function validateEnv() {
   const parsedEnv = schema.safeParse(process.env)
 
   if (!parsedEnv.success) {
@@ -40,7 +40,7 @@ function validateAndGetEnv() {
 
   if (
     process.env.NODE_ENV !== 'test' &&
-    parsedEnv.data.TESTING !== true &&
+    process.env.TESTING !== 'true' &&
     process.env.npm_lifecycle_event !== 'build'
   ) {
     if (!parsedEnv.data.SPOTIFY_CLIENT_ID) {
@@ -56,9 +56,4 @@ function validateAndGetEnv() {
   return parsedEnv.data
 }
 
-/**
- * The validated and typed environment variables.
- * This object is assigned only after successful validation, making it
- * immutable and type-safe from the start.
- */
-export const env: z.infer<typeof schema> = validateAndGetEnv()
+export const env = validateEnv()
