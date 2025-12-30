@@ -4,7 +4,6 @@
  * Consumes all real-time data streams and renders the unified MUI visualization.
  */
 'use client'
-import Container from '@mui/material/Container'
 import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
@@ -13,6 +12,7 @@ import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
+import PageContainer from '../components/PageContainer'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
 
