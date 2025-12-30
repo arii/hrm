@@ -56,42 +56,42 @@ jobs:
           echo "FILES<<EOF" >> $GITHUB_ENV
           echo "$FILES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-          
+
           # Categorize changes
           CATEGORIES=()
-          
+
           if echo "$FILES" | grep -qE '^app/|^components/|^lib/'; then
             CATEGORIES+=("features")
           fi
-          
+
           if echo "$FILES" | grep -qE '^tests/|\.test\.|\.spec\.'; then
             CATEGORIES+=("testing")
           fi
-          
+
           if echo "$FILES" | grep -qE '^\.github/workflows/|scripts/'; then
             CATEGORIES+=("ci")
           fi
-          
+
           if echo "$FILES" | grep -qE '\.md$|docs/'; then
             CATEGORIES+=("docs")
           fi
-          
+
           if echo "$FILES" | grep -qE 'package\.json|tsconfig|eslint|prettier'; then
             CATEGORIES+=("build-config")
           fi
-          
+
           if echo "$FILES" | grep -qE '\.css$|theme/|styles'; then
             CATEGORIES+=("styling")
           fi
-          
+
           # Store categories
           IFS=', ' read -ra CATS <<< "${CATEGORIES[@]}"
           echo "CATEGORIES=${CATEGORIES[*]}" >> $GITHUB_ENV
-          
+
           # Count file changes
           FILE_COUNT=$(echo "$FILES" | wc -l)
           echo "FILE_COUNT=$FILE_COUNT" >> $GITHUB_ENV
-          
+
           # Get lines changed
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
@@ -99,7 +99,7 @@ jobs:
           DELETIONS=$(git diff --numstat "$BASE_SHA" "$HEAD_SHA" | awk '{sum+=$2} END {print sum}')
           echo "ADDITIONS=${ADDITIONS:-0}" >> $GITHUB_ENV
           echo "DELETIONS=${DELETIONS:-0}" >> $GITHUB_ENV
-          
+
           # Determine change scope
           if [ "$FILE_COUNT" -le 3 ] && [ "${ADDITIONS:-0}" -le 100 ]; then
             SCOPE="small"
@@ -206,7 +206,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           CURRENT_TITLE="${{ github.event.pull_request.title }}"
-          
+
           # Only enhance if title doesn't have scope prefix already
           if [[ ! "$CURRENT_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore|ci)\( ]]; then
             
