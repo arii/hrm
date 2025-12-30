@@ -1,23 +1,33 @@
 // lib/middleware/errorHandler.ts
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { ApiError } from '@/lib/errors'
 import logger from '@/utils/logger'
 
-type ApiHandler = (req: Request, ...args: unknown[]) => Promise<NextResponse>
+// This handler type now supports both static routes (context is undefined)
+// and dynamic routes (context is provided).
+type ApiHandler<T = unknown> = (
+  req: NextRequest,
+  context?: { params: T }
+) => Promise<NextResponse>
 
 /**
- * Wraps an API route handler to provide centralized error handling.
+ * Wraps an API route handler with centralized error handling.
+ * This catches instances of `ApiError` and returns a formatted JSON response,
+ * while logging and returning a generic 500 error for all other exceptions.
  *
- * This function catches any errors that occur during the execution of the handler,
- * logs them, and returns a standardized JSON error response.
+ * It is designed to work with both static and dynamic Next.js App Router routes.
  *
- * @param handler The API route handler to wrap.
- * @returns A new handler with error handling.
+ * @template T The expected type of the `params` object for dynamic routes.
+ * @param {ApiHandler<T>} handler The API route handler to wrap.
+ * @returns A new handler function with error handling.
  */
-export function withErrorHandler(handler: ApiHandler): ApiHandler {
-  return async (req: Request, ...args: unknown[]) => {
+export function withErrorHandler<T = unknown>(
+  handler: ApiHandler<T>
+): (req: NextRequest, context?: { params: T }) => Promise<NextResponse> {
+  return async (req: NextRequest, context?: { params: T }) => {
     try {
-      return await handler(req, ...args)
+      // The handler can be called with context; static handlers will simply ignore it.
+      return await handler(req, context)
     } catch (error) {
       if (error instanceof ApiError) {
         logger.warn({ err: error }, `API Error: ${error.message}`)
