@@ -53,20 +53,26 @@ export async function parseConflicts(filePath: string): Promise<ConflictBlock[]>
   CONFLICT_REGEX.lastIndex = 0;
 
   let match;
+  let lastIndex = 0;
+  let currentLine = 1;
   while ((match = CONFLICT_REGEX.exec(content)) !== null) {
     // Add nullish coalescing fallbacks to satisfy TypeScript's type checker,
     // which correctly identifies that regex capture groups can be undefined.
     const [fullMatch, currentLabel, currentContent, incomingContent, incomingLabel] = match;
 
-    // Calculate line numbers
+    // Calculate line numbers efficiently using an accumulator
     const matchIndex = match.index;
-    const preMatchLines = content.substring(0, matchIndex).split('\n');
-    const startLine = preMatchLines.length;
+    const newlines = (content.substring(lastIndex, matchIndex).match(/\n/g) || []).length;
+    currentLine += newlines;
+    const startLine = currentLine;
     const endLine = startLine + (fullMatch ?? '').split('\n').length - 1;
 
     // Get Context (5 lines before and after)
     const contextBefore = lines.slice(Math.max(0, startLine - 6), startLine - 1).join('\n');
     const contextAfter = lines.slice(endLine, Math.min(lines.length, endLine + 5)).join('\n');
+
+    lastIndex = matchIndex + (fullMatch ?? '').length;
+    currentLine = endLine;
 
     conflicts.push({
       id: `conflict-${filePath}-${startLine}`,
