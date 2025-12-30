@@ -6,7 +6,7 @@ import {
   Episode,
 } from '@spotify/web-api-ts-sdk'
 import { ServerMessage } from '../types/websocket'
-import { SpotifyDevice, SpotifyData } from '../types/core'
+import { SpotifyDevice as SpotifyData } from '../types/core'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,

@@ -155,10 +155,17 @@ export const HrmStreamDataSchema = z.object({
   name: z.string().optional(),
   age: z.number().optional(),
   calories: z.number(),
-});
+})
 
-export const TimerModeSchema = z.enum(['STOPWATCH', 'TABATA']);
-export const TimerPhaseSchema = z.enum(['IDLE', 'PREPARE', 'WORK', 'REST', 'COOLDOWN', 'RUNNING']);
+export const TimerModeSchema = z.enum(['STOPWATCH', 'TABATA'])
+export const TimerPhaseSchema = z.enum([
+  'IDLE',
+  'PREPARE',
+  'WORK',
+  'REST',
+  'COOLDOWN',
+  'RUNNING',
+])
 
 export const TimerDataSchema = z.object({
   isRunning: z.boolean(),
@@ -171,7 +178,7 @@ export const TimerDataSchema = z.object({
   restDuration: z.number(),
   soundToPlay: z.enum(['WORK', 'REST', 'COUNTDOWN']).optional(),
   soundEventId: z.number(),
-});
+})
 
 export const SpotifyDeviceSchema = z.object({
   id: z.string(),
@@ -181,7 +188,7 @@ export const SpotifyDeviceSchema = z.object({
   name: z.string(),
   type: z.string(),
   volume_percent: z.number(),
-});
+})
 
 export const SpotifyPlaybackStateSchema = z.object({
   trackId: z.string().nullable(),
@@ -193,19 +200,26 @@ export const SpotifyPlaybackStateSchema = z.object({
   devices: z.array(SpotifyDeviceSchema),
   volume: z.number(),
   isMuted: z.boolean(),
-});
+})
 
 export const SpotifyPlaylistItemSchema = z.object({
   id: z.string(),
   name: z.string(),
   uri: z.string(),
-});
+})
 
 export const SpotifyPlaylistSchema = z.object({
   name: z.string(),
   uri: z.string(),
-});
-export const MeasurementSystemSchema = z.enum(['IMPERIAL', 'METRIC']);
-export const WorkoutItemSchema = z.object({ category: z.string(), exercises: z.array(z.string()) });
-export const WorkoutDataSchema = z.array(WorkoutItemSchema);
-export const SpotifyExecutionMessageSchema = z.object({type: z.literal('EXECUTE_SPOTIFY'), payload: SpotifyCommandMessageSchema});
+})
+export const MeasurementSystemSchema = z.enum(['IMPERIAL', 'METRIC'])
+export const WorkoutItemSchema = z.object({
+  category: z.string(),
+  exercises: z.array(z.string()),
+})
+export const WorkoutDataSchema = z.array(WorkoutItemSchema)
+export const SpotifyExecutionMessageSchema = z.object({
+  type: z.literal('EXECUTE_SPOTIFY'),
+  payload: SpotifyCommandMessageSchema,
+})
+export const WorkoutColumnItemSchema = z.object({ title: z.string(), details: z.string().optional() }

@@ -162,8 +162,8 @@ describe('WebSocket Manager', () => {
   describe('Connection Monitoring', () => {
     it('should initialize and start the ConnectionMonitor', () => {
       expect(ConnectionMonitor).toHaveBeenCalledWith(mockWss)
-      const monitorInstance: any = (ConnectionMonitor as jest.Mock).mock.results[0]
-        .value
+      const monitorInstance: any = (ConnectionMonitor as jest.Mock).mock
+        .results[0].value
       expect(monitorInstance.start).toHaveBeenCalled()
     })
 
@@ -183,8 +183,8 @@ describe('WebSocket Manager', () => {
 
     it('should stop the ConnectionMonitor when the server closes', () => {
       mockWss.emit('close')
-      const monitorInstance: any = (ConnectionMonitor as jest.Mock).mock.results[0]
-        .value
+      const monitorInstance: any = (ConnectionMonitor as jest.Mock).mock
+        .results[0].value
       expect(monitorInstance.stop).toHaveBeenCalled()
     })
   })
