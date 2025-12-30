@@ -197,100 +197,107 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             }}
           />
         )}
-        renderOption={(props, option) => (
-          <Box
-            component="li"
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              width: '100%',
-              py: 0.5,
-              // Use Autocomplete's hover state for background color
-              '&[aria-selected="true"]': {
-                backgroundColor: 'action.hover',
-                outline: (theme) => `2px solid ${theme.palette.primary.main}`,
-                outlineOffset: '-2px',
-              },
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
-            }}
-            {...props}
-            // Add aria-label for screen reader accessibility.
-            // This ensures that screen readers announce both the action and the playlist name.
-            aria-label={`Select playlist: ${option.name}, ${
-              selectedPlaylist?.uri === option.uri ? 'selected' : 'not selected'
-            }`}
-          >
-            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-              {option.imageUrl ? (
-                <Box
-                  component="img"
-                  src={option.imageUrl}
-                  alt={option.name}
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 1,
-                    mr: 1.5,
-                    objectFit: 'cover',
+        renderOption={(props, option) => {
+          // Destructure key out to satisfy React 19/MUI requirements
+          const { key, ...otherProps } = props
+          return (
+            <Box
+              key={key}
+              component="li"
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                width: '100%',
+                py: 0.5,
+                // Use Autocomplete's hover state for background color
+                '&[aria-selected="true"]': {
+                  backgroundColor: 'action.hover',
+                  outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: '-2px',
+                },
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+              }}
+              {...otherProps}
+              // Add aria-label for screen reader accessibility.
+              // This ensures that screen readers announce both the action and the playlist name.
+              aria-label={`Select playlist: ${option.name}, ${
+                selectedPlaylist?.uri === option.uri
+                  ? 'selected'
+                  : 'not selected'
+              }`}
+            >
+              <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+                {option.imageUrl ? (
+                  <Box
+                    component="img"
+                    src={option.imageUrl}
+                    alt={option.name}
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1,
+                      mr: 1.5,
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <MusicNote
+                    sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
+                  />
+                )}
+                <ListItemText
+                  primary={option.name}
+                  secondary={
+                    option.trackCount !== undefined
+                      ? `${option.trackCount} tracks${
+                          option.owner ? ` • ${option.owner}` : ''
+                        }`
+                      : option.owner
+                        ? option.owner
+                        : undefined
+                  }
+                />
+                {option.isPreset && (
+                  <Chip
+                    label="Preset"
+                    size="small"
+                    sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
+                  />
+                )}
+                {option.isSearchResult && !option.isPreset && (
+                  <Chip
+                    label="Spotify"
+                    size="small"
+                    color="success"
+                    sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
+                  />
+                )}
+              </Box>
+              <Box sx={{ pl: 1, display: 'flex', alignItems: 'center' }}>
+                <IconButton
+                  edge="end"
+                  aria-label={`Play playlist: ${option.name}`}
+                  onClick={(e) => {
+                    // Prevent the click from propagating to the Autocomplete component,
+                    // which would otherwise close the dropdown.
+                    e.stopPropagation()
+                    onPlaylistPlay(option.uri)
                   }}
-                />
-              ) : (
-                <MusicNote
-                  sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
-                />
-              )}
-              <ListItemText
-                primary={option.name}
-                secondary={
-                  option.trackCount !== undefined
-                    ? `${option.trackCount} tracks${
-                        option.owner ? ` • ${option.owner}` : ''
-                      }`
-                    : option.owner
-                      ? option.owner
-                      : undefined
-                }
-              />
-              {option.isPreset && (
-                <Chip
-                  label="Preset"
-                  size="small"
-                  sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-                />
-              )}
-              {option.isSearchResult && !option.isPreset && (
-                <Chip
-                  label="Spotify"
-                  size="small"
-                  color="success"
-                  sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-                />
-              )}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                      transform: 'scale(1.1)',
+                    },
+                  }}
+                >
+                  <PlayArrow />
+                </IconButton>
+              </Box>
             </Box>
-            <Box sx={{ pl: 1, display: 'flex', alignItems: 'center' }}>
-              <IconButton
-                edge="end"
-                aria-label={`Play playlist: ${option.name}`}
-                onClick={(e) => {
-                  // Prevent the click from propagating to the Autocomplete component,
-                  // which would otherwise close the dropdown.
-                  e.stopPropagation()
-                  onPlaylistPlay(option.uri)
-                }}
-                sx={{
-                  '&:hover': {
-                    backgroundColor: 'action.hover',
-                    transform: 'scale(1.1)',
-                  },
-                }}
-              >
-                <PlayArrow />
-              </IconButton>
-            </Box>
-          </Box>
-        )}
+          )
+        }}
         groupBy={(option) => {
           if (option.isSearchResult) return 'Spotify Results'
           if (option.isPreset) return 'Preset Playlists'

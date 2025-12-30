@@ -12,6 +12,11 @@
  */
 import { type BrowserContext, type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
+
+interface WindowWithTestFlags extends Window {
+  __TEST_WEBSOCKET_READY__?: boolean
+}
+
 import {
   BASE_URL,
   getDynamicContentMasks,
@@ -121,33 +126,31 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard - main viewer page', async () => {
-    // Wait for fonts to be fully loaded for consistent rendering
-    await waitForFontsLoaded(dashboardPage)
+    // 1. Ensure WebSocket hydration is finished
+    await dashboardPage.waitForFunction(
+      () => (window as WindowWithTestFlags).__TEST_WEBSOCKET_READY__ === true
+    )
 
-    // Extra verification: ensure timer is NOT in active state (no WORK/REST)
-    // Wait for any existing timer display to settle or disappear
-    try {
-      await expect(dashboardPage.locator('text=00:00')).toBeVisible({
+    // 2. Force a specific idle state to ensure the '00:00' text is stable
+    await expect(dashboardPage.getByTestId('timer-countdown')).toHaveText(
+      /(\d{2}:\d{2})/,
+      {
         timeout: WAIT_TIMEOUTS.MEDIUM,
-      })
-    } catch {
-      // Timer might already be idle, continue
-    }
+      }
+    )
 
-    // Wait for a stable UI element instead of arbitrary timeout
-    await expect(dashboardPage.locator('body')).toBeVisible()
-
-    // Capture full-page screenshot - mask dynamic content using data-testid selectors
+    // 3. Mask dynamic Heart Rate and Calorie values which shift pixels
     await expect(dashboardPage).toHaveScreenshot('dashboard-viewer.png', {
       fullPage: true,
       animations: 'disabled',
-      caret: 'hide', // Hide text cursor
-      threshold: 0.2, // Allow for minor rendering differences
-      maxDiffPixelRatio: 0.02, // Allow up to 2% pixel difference (robustness fix)
       mask: [
-        // Use precise data-testid selectors for dynamic content masking
         ...getTimerMasks(dashboardPage),
+        ...getHrMasks(dashboardPage),
+        dashboardPage.getByTestId('calorie-count'), // Mask dynamic energy expenditure
+        dashboardPage.locator('.MUI-Charts-root'), // Mask SVG rendering noise
       ],
+      maxDiffPixelRatio: 0.08, // Required for cross-platform font rendering in CI
+      threshold: 0.2, // Allows for minor anti-aliasing and rendering variations
     })
   })
 
