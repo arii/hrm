@@ -28,6 +28,9 @@ The agent will operate through [Primary Tooling, e.g., "the official GitHub CLI 
 # Example setup commands
 mkdir -p .tmp/[agent-workspace]
 cd .tmp/[agent-workspace]
+
+# If the agent needs to install dependencies, it should use pnpm
+pnpm install --frozen-lockfile
 ```
 
 ### Step 2: Data Ingestion
