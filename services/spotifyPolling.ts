@@ -5,8 +5,8 @@ import {
   Track,
   Episode,
 } from '@spotify/web-api-ts-sdk'
-import { ServerMessage } from '../types/websocket'
-import { SpotifyDevice, SpotifyPlaybackState } from '../types/core'
+import { ServerMessage, SpotifyData } from '../types/websocket'
+import { SpotifyDevice } from '../types/core'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
@@ -78,7 +78,7 @@ export class SpotifyPolling implements SpotifyService {
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
 
-  private state: SpotifyPlaybackState = {
+  private state: SpotifyData = {
     trackId: null,
     trackName: 'Awaiting Login...',
     artist: '',
@@ -163,7 +163,7 @@ export class SpotifyPolling implements SpotifyService {
     }
   }
 
-  public getState(): SpotifyPlaybackState {
+  public getState(): SpotifyData {
     return { ...this.state }
   }
 

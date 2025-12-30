@@ -6,6 +6,7 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { IncomingMessage } from 'http'
 import {
+  ClientCommandMessageSchema,
   ClientRegistrationMessage,
   SpotifyCommandMessage,
   SpotifyExecutionMessage,
@@ -15,7 +16,6 @@ import {
   ExtWebSocket,
   HrmStreamData,
 } from '../types/index'
-import { ClientCommandMessageSchema } from '../lib/validation/schemas'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import {
   broadcast,
@@ -322,7 +322,7 @@ const handleIncomingMessage = (
             target.clientType === 'dashboard'
           ) {
             const executionMessage: SpotifyExecutionMessage = {
-              type: 'EXECUTE_SPOTIFY',
+              type: 'SPOTIFY_COMMAND',
               payload: commandMsg,
             }
             sendWebSocketMessage(

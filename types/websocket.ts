@@ -3,7 +3,6 @@
  * Defines the strict interfaces for all data passed between the server services
  * and the client hooks via the WebSocket connection.
  */
-import { z } from '../lib/zod'
 import { WebSocket } from 'ws'
 import type {
   HrmStreamData as HrmData,
@@ -11,19 +10,6 @@ import type {
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
 } from './core'
-import {
-  HrmInputMessageSchema,
-  HrmMetadataUpdateMessageSchema,
-  TimerCommandMessageSchema,
-  TimerModeCommandMessageSchema,
-  SpotifyCommandMessageSchema,
-  TimerConfigMessageSchema,
-  GetStateMessageSchema,
-  ClientRegistrationMessageSchema,
-  PingMessageSchema,
-  ClientCommandMessageSchema,
-  SpotifyExecutionMessageSchema,
-} from '../lib/validation/schemas'
 
 // --- WebSocket Connection & Augmentation ---
 
@@ -32,6 +18,7 @@ import {
  * application-specific properties for tracking client state, such as a
  * unique identifier and the last ping time for watchdog monitoring.
  */
+export type SpotifyExecutionMessage = z.infer<typeof SpotifyCommandMessageSchema>;
 export interface ExtWebSocket extends WebSocket {
   clientId: string
   isAlive: boolean
@@ -101,22 +88,30 @@ export type ServerMessage =
 
 // --- Client Input Command Interfaces ---
 
-export type HrmInputMessage = z.infer<typeof HrmInputMessageSchema>
-export type HrmMetadataUpdateMessage = z.infer<
-  typeof HrmMetadataUpdateMessageSchema
->
-export type TimerCommandMessage = z.infer<typeof TimerCommandMessageSchema>
-export type TimerModeCommandMessage = z.infer<
-  typeof TimerModeCommandMessageSchema
->
-export type SpotifyCommandMessage = z.infer<typeof SpotifyCommandMessageSchema>
-export type TimerConfigMessage = z.infer<typeof TimerConfigMessageSchema>
-export type GetStateMessage = z.infer<typeof GetStateMessageSchema>
-export type ClientRegistrationMessage = z.infer<
-  typeof ClientRegistrationMessageSchema
->
-export type PingMessage = z.infer<typeof PingMessageSchema>
-export type ClientCommandMessage = z.infer<typeof ClientCommandMessageSchema>
-export type SpotifyExecutionMessage = z.infer<
-  typeof SpotifyExecutionMessageSchema
->
+
+
+
+import {
+  HrmInputMessageSchema,
+  HrmMetadataUpdateMessageSchema,
+  TimerCommandMessageSchema,
+  TimerModeCommandMessageSchema,
+  SpotifyCommandMessageSchema,
+  TimerConfigMessageSchema,
+  GetStateMessageSchema,
+  ClientRegistrationMessageSchema,
+  PingMessageSchema,
+  ClientCommandMessageSchema
+} from '../lib/validation/schemas';
+import { z } from 'zod';
+
+export type HrmInputMessage = z.infer<typeof HrmInputMessageSchema>;
+export type HrmMetadataUpdateMessage = z.infer<typeof HrmMetadataUpdateMessageSchema>;
+export type TimerCommandMessage = z.infer<typeof TimerCommandMessageSchema>;
+export type TimerModeCommandMessage = z.infer<typeof TimerModeCommandMessageSchema>;
+export type SpotifyCommandMessage = z.infer<typeof SpotifyCommandMessageSchema>;
+export type TimerConfigMessage = z.infer<typeof TimerConfigMessageSchema>;
+export type GetStateMessage = z.infer<typeof GetStateMessageSchema>;
+export type ClientRegistrationMessage = z.infer<typeof ClientRegistrationMessageSchema>;
+export type PingMessage = z.infer<typeof PingMessageSchema>;
+export type ClientCommandMessage = z.infer<typeof ClientCommandMessageSchema>;
