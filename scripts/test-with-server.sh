@@ -52,7 +52,6 @@ fi
 
 # Export environment variables for testing
 export PORT
-export TESTING=true
 export NEXTAUTH_SECRET="test-secret-for-ci"
 export NEXTAUTH_URL="http://127.0.0.1:$PORT"
 HEALTH_CHECK_URL="${HEALTH_CHECK_URL_TEMPLATE/\{\{PORT\}\}/$PORT}"
@@ -62,6 +61,7 @@ log "🧹 Cleaning up any old PM2 processes..."
 pnpm pm2 kill || true
 
 log "🛠️ Building the application..."
+export TESTING=true
 pnpm run build
 
 log "🚀 Starting server with PM2 on port $PORT..."
