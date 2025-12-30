@@ -334,15 +334,9 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      - name: Use Production Config
-        shell: bash
-        run: cp deploy/next.config.js next.config.js
-
       - name: Verify Build
         id: build
         shell: bash
-        env:
-          IS_DEPLOYMENT: 'true'
         run: |
           set -o pipefail
           pnpm run build 2>&1 | tee build-output.log
