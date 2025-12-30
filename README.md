@@ -162,24 +162,9 @@ To generate a secure `NEXTAUTH_SECRET`:
 openssl rand -base64 32
 ```
 
-**6. Start the Development Server with Docker Compose**
-
-With Redis now a required service, the recommended way to run the application locally is with Docker Compose.
+**6. Start the Development Server**
 
 ```bash
-# Start all services (Next.js app and Redis) in the background
-docker-compose up -d
-```
-
-This will build the application container, start a Redis container, and run the development server.
-
-**7. (Alternative) Start the Development Server Manually**
-
-```bash
-# Make sure you have a Redis server running and accessible
-# Set the REDIS_URL in your .env.local file
-REDIS_URL=redis://localhost:6379
-
 # Start the custom server (Next.js + WebSocket + background services)
 pnpm run dev
 ```

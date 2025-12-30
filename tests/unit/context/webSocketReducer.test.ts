@@ -79,11 +79,13 @@ describe('webSocketReducer', () => {
   describe('HRM_UPDATE action', () => {
     const baseUser: HrmStreamData = {
       clientId: '1',
-      value: 100,
+      userName: 'User A',
+      userAge: 30,
       maxHr: 190,
-      age: 30,
+      restingHr: 60,
+      hrm: 100,
+      zone: 'warmup',
       calories: 10,
-      name: 'User A',
     }
 
     it('should add a new user', () => {

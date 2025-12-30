@@ -8,6 +8,7 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   NEXTAUTH_URL: z.string().url().min(1),
   NEXTAUTH_SECRET: z.string().min(1),
+  REDIS_URL: z.string().url().min(1),
   SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
   SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
   SPOTIFY_DEBUG: z
@@ -25,7 +26,6 @@ const envSchema = z.object({
     .transform(Number),
   WEBSOCKET_GRACE_PERIOD_MS: z.string().default('5000').transform(Number),
   MAX_WS_CLIENTS: z.string().default('1000').transform(Number),
-  REDIS_URL: z.string().url().min(1).default('redis://localhost:6379'),
 })
 
 export const env = envSchema.parse(process.env)

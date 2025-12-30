@@ -24,9 +24,7 @@ import {
 } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
-import { RedisHrmDataRepository } from '../lib/repositories/RedisHrmDataRepository.js'
-import redisClient from '../lib/redis.js'
-import { subscribe } from '../lib/broadcaster.js'
+import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
 
@@ -42,41 +40,16 @@ let services: AppServices
 // - hrmDataRepository: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
 // - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
-const hrmDataRepository = new RedisHrmDataRepository()
+const hrmDataRepository = new HrmDataRepository()
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
 
-const SESSION_STATE_KEY_PREFIX = 'session-state:'
-
-async function getClientSessionState(
-  clientId: string
-): Promise<{ lastUpdate: number; accumulatedCalories: number } | undefined> {
-  const state = await redisClient.hGetAll(
-    `${SESSION_STATE_KEY_PREFIX}${clientId}`
-  )
-  if (!Object.keys(state).length) {
-    return undefined
-  }
-  return {
-    lastUpdate: Number(state.lastUpdate),
-    accumulatedCalories: Number(state.accumulatedCalories),
-  }
-}
-
-async function setClientSessionState(
-  clientId: string,
-  state: { lastUpdate: number; accumulatedCalories: number }
-): Promise<void> {
-  await redisClient.hSet(`${SESSION_STATE_KEY_PREFIX}${clientId}`, {
-    lastUpdate: state.lastUpdate.toString(),
-    accumulatedCalories: state.accumulatedCalories.toString(),
-  })
-}
-
-async function deleteClientSessionState(clientId: string): Promise<void> {
-  await redisClient.del(`${SESSION_STATE_KEY_PREFIX}${clientId}`)
-}
+// Track internal state for calculations (not sent to client)
+const clientSessionState = new Map<
+  string,
+  { lastUpdate: number; accumulatedCalories: number }
+>()
 
 /**
  * Safely parses the WebSocket request URL to extract search parameters.
@@ -112,15 +85,7 @@ const initSocketManager = (
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
-  subscribe((message) => {
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        sendWebSocketMessage(client, message, 'socketManager.broadcast')
-      }
-    })
-  })
-
-  wss.on('connection', async (ws: WebSocket, req: IncomingMessage) => {
+  wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket
 
     const params = getRequestParams(req)
@@ -147,8 +112,7 @@ const initSocketManager = (
 
     logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
-    const existingData = await hrmDataRepository.findById(clientId)
-    if (!existingData) {
+    if (!hrmDataRepository.findById(clientId)) {
       // Initialize new client
       const newClient: HrmStreamData = {
         clientId: extWs.clientId,
@@ -157,8 +121,8 @@ const initSocketManager = (
         age: 30,
         calories: 0, // Initialize to 0
       }
-      await hrmDataRepository.save(newClient)
-      await setClientSessionState(extWs.clientId, {
+      hrmDataRepository.save(newClient)
+      clientSessionState.set(extWs.clientId, {
         lastUpdate: Date.now(),
         accumulatedCalories: 0,
       })
@@ -179,7 +143,7 @@ const initSocketManager = (
       // memory pressure if many clients disconnect and don't reconnect.
       // A more robust solution might involve a separate cleanup process
       // or a maximum number of inactive sessions.
-      setTimeout(async () => {
+      setTimeout(() => {
         // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
         if (clientSockets.get(clientId) === extWs) {
           logger.info(
@@ -187,9 +151,9 @@ const initSocketManager = (
             'Session expired. Deleting data.'
           )
           try {
-            await hrmDataRepository.deleteById(extWs.clientId)
-            await deleteClientSessionState(extWs.clientId)
-            await broadcastState()
+            hrmDataRepository.deleteById(extWs.clientId)
+            clientSessionState.delete(extWs.clientId)
+            broadcastState()
           } catch (err) {
             logger.error(
               { clientId: extWs.clientId, error: err },
@@ -212,26 +176,26 @@ const initSocketManager = (
 /**
  * Resets the socket manager state. Use this for testing purposes only.
  */
-export const resetSocketManager = async () => {
-  await hrmDataRepository.clear()
-  const keys = await redisClient.keys(`${SESSION_STATE_KEY_PREFIX}*`)
-  if (keys.length) {
-    await redisClient.del(keys)
-  }
+export const resetSocketManager = () => {
+  hrmDataRepository.clear()
+  clientSessionState.clear()
 }
 
-const broadcastState = async () => {
-  const payload = await hrmDataRepository.findAll()
-  broadcast({
-    type: 'HRM_UPDATE',
-    payload,
-  })
+const broadcastState = () => {
+  broadcast(
+    wsServerInstance,
+    {
+      type: 'HRM_UPDATE',
+      payload: hrmDataRepository.findAll(),
+    },
+    'socketManager.broadcastState'
+  )
 }
 
 /**
  * Handles incoming JSON messages from client applications.
  */
-const handleIncomingMessage = async (
+const handleIncomingMessage = (
   ws: ExtWebSocket,
   messageString: string,
   clientId: string
@@ -257,10 +221,9 @@ const handleIncomingMessage = async (
       }
       case 'GET_STATE': {
         const stateSnapshot = getUnifiedStateSnapshot()
-        const hrmData = await hrmDataRepository.findAll()
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData,
+          hrmData: hrmDataRepository.findAll(),
         }
         const initialStateMessage: ServerMessage = {
           type: 'INITIAL_STATE',
@@ -270,7 +233,7 @@ const handleIncomingMessage = async (
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        const existingData = await hrmDataRepository.findById(clientId)
+        const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
           const updateData: Partial<HrmStreamData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
@@ -288,14 +251,14 @@ const handleIncomingMessage = async (
             delete updateData.name
           }
 
-          await hrmDataRepository.save({ ...existingData, ...updateData })
+          hrmDataRepository.save({ ...existingData, ...updateData })
         }
-        await broadcastState()
+        broadcastState()
         break
       }
       case 'HRM_INPUT': {
-        const existingData = await hrmDataRepository.findById(clientId)
-        const sessionState = await getClientSessionState(clientId)
+        const existingData = hrmDataRepository.findById(clientId)
+        const sessionState = clientSessionState.get(clientId)
 
         if (existingData && sessionState) {
           const now = Date.now()
@@ -317,19 +280,16 @@ const handleIncomingMessage = async (
           }
 
           // Update the internal state with high precision value
-          await setClientSessionState(clientId, {
-            ...sessionState,
-            accumulatedCalories: currentAccumulated,
-          })
+          sessionState.accumulatedCalories = currentAccumulated
 
           // ONLY update the value and calories
-          await hrmDataRepository.save({
+          hrmDataRepository.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
           })
         }
-        await broadcastState()
+        broadcastState()
         break
       }
 

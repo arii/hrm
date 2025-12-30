@@ -10,7 +10,6 @@ describe('HrmDataRepository', () => {
     maxHr: 190,
     age: 25,
     calories: 100,
-    name: 'Client 1',
   }
   const client2: HrmStreamData = {
     clientId: 'client2',
@@ -18,7 +17,6 @@ describe('HrmDataRepository', () => {
     maxHr: 180,
     age: 35,
     calories: 150,
-    name: 'Client 2',
   }
 
   beforeEach(() => {
