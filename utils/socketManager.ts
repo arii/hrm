@@ -301,11 +301,14 @@ const handleIncomingMessage = (
           const currentAge = existingData.age ?? 30
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
+            // TODO: The server does not have access to the user's gender.
+            // This is a temporary fix to unblock the build.
             const caloriesBurned = estimateCaloriesBurned({
               heartRate: currentHr,
               age: currentAge,
               weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
               durationMinutes: dtMinutes,
+              gender: 'MALE',
             })
             currentAccumulated += caloriesBurned
           }

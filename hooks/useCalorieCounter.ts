@@ -1,42 +1,27 @@
-// File: hooks/useCalorieCounter.ts
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation'
+import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
+import { useUserPhysicalProfile } from '@/context/UserPhysicalProfileContext'
 
 /**
- * A hook to calculate and manage calories burned during a workout.
- * It accumulates calories using a delta-time approach to ensure accuracy
- * and prevent drift over time.
- *
- * @param heartRate - The current heart rate in beats per minute (BPM).
- * @param age - The user's age in years.
- * @param weight - The user's weight in kilograms (kg).
- * @param isActive - A boolean flag indicating if the workout/calculation is active.
- * @returns An object containing:
- *  - `calories`: The total accumulated calories burned (number).
- *  - `resetCalories`: A function to reset the calorie count to 0.
+ * Automatically tracks calorie burn based on the current user's global physical profile.
  */
 export const useCalorieCounter = (
   heartRate: number,
-  age: number,
-  weight: number,
   isActive: boolean
 ): { calories: number; resetCalories: () => void } => {
+  const { profile } = useUserPhysicalProfile()
   const [calories, setCalories] = useState(0)
+
+  // Refs for calculation loop to avoid re-binding the interval
   const lastTickRef = useRef<number | null>(null)
-
-  // Use `useRef` to hold the latest values of frequently-changing props.
-  // This prevents the interval from resetting every time they change, as
-  // updating a ref does not trigger a re-render.
   const heartRateRef = useRef(heartRate)
-  const ageRef = useRef(age)
-  const weightRef = useRef(weight)
+  const profileRef = useRef(profile)
 
-  // Effect to keep the refs updated with the latest prop values
+  // Sync Refs
   useEffect(() => {
     heartRateRef.current = heartRate
-    ageRef.current = age
-    weightRef.current = weight
-  }, [heartRate, age, weight])
+    profileRef.current = profile
+  }, [heartRate, profile])
 
   useEffect(() => {
     if (!isActive) {
@@ -44,22 +29,24 @@ export const useCalorieCounter = (
       return
     }
 
-    // Initialize the baseline time when activation starts
     lastTickRef.current = Date.now()
 
     const tick = () => {
       const now = Date.now()
       if (lastTickRef.current) {
         const deltaSeconds = (now - lastTickRef.current) / 1000
-        // Use the ref's current value for calculation
+
+        // Only calculate if we have valid biometric data
         if (heartRateRef.current > 0) {
-          const caloriesBurned = estimateCaloriesBurned({
+          const inc = estimateCaloriesBurned({
             heartRate: heartRateRef.current,
-            age: ageRef.current,
-            weightKg: weightRef.current,
             durationMinutes: deltaSeconds / 60,
+            // Inject latest profile data directly from ref
+            age: profileRef.current.age,
+            weightKg: profileRef.current.weight,
+            gender: profileRef.current.gender
           })
-          setCalories((prev) => prev + caloriesBurned)
+          setCalories((prev) => prev + inc)
         }
       }
       lastTickRef.current = now
@@ -67,10 +54,6 @@ export const useCalorieCounter = (
 
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
-    // The interval should only be reset when the `isActive` flag changes.
-    // Other dependencies like `heartRate`, `age`, and `weight` are managed
-    // via refs to avoid resetting the interval on every change, which would
-    // otherwise cause performance issues and prevent calorie accumulation.
   }, [isActive])
 
   const resetCalories = useCallback(() => {

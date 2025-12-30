@@ -8,16 +8,12 @@
 // User and Profile
 // =================================================================================================
 
+export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
+export type Gender = 'MALE' | 'FEMALE'
+
 /**
- * Represents a user's profile information.
- *
- * @property {string} id - The unique identifier for the user (UUID).
- * @property {string} username - The user's chosen username. Must be unique.
- * @property {string} email - The user's email address. Must be unique.
- * @property {string | null} firstName - The user's first name.
- * @property {string | null} lastName - The user's last name.
- * @property {string} createdAt - The timestamp when the user was created (ISO 8601).
- * @property {string} updatedAt - The timestamp when the user was last updated (ISO 8601).
+ * Represents a user's identity and authentication profile.
+ * Source of truth for AuthN/AuthZ.
  */
 export interface UserProfile {
   id: string
@@ -27,6 +23,19 @@ export interface UserProfile {
   lastName: string | null
   createdAt: string
   updatedAt: string
+}
+
+/**
+ * Represents a user's physical attributes for health calculations.
+ * Source of truth for Calorie/Zone engines.
+ */
+export interface UserPhysicalProfile {
+  userId: string
+  age: number
+  weight: number // Always stored normalized in KG for internal calc
+  gender: Gender
+  unitSystem: MeasurementSystem
+  maxHr?: number // Optional override
 }
 
 // =================================================================================================

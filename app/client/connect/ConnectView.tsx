@@ -25,6 +25,8 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material'
+import { useUserPhysicalProfile } from '@/context/UserPhysicalProfileContext'
+import { calculateMaxHr } from '@/lib/hrm/calculators'
 
 interface ConnectViewProps {
   duration: string
@@ -105,7 +107,9 @@ export default function ConnectView({
   onStartWorkout,
   onEndWorkout,
 }: ConnectViewProps) {
+  const { profile, updateProfile } = useUserPhysicalProfile()
   const [isResetting, setIsResetting] = useState(false)
+  const [maxHr, setMaxHr] = useState(profile.maxHr?.toString() ?? '')
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -175,8 +179,17 @@ export default function ConnectView({
               setUserName={setUserName}
               userAge={userAge}
               setUserAge={setUserAge}
-              onAgeBlur={onAgeBlur}
+              onAgeBlur={() => {
+                onAgeBlur()
+                if (userAge) {
+                  const newMaxHr = calculateMaxHr(parseInt(userAge, 10))
+                  setMaxHr(newMaxHr.toString())
+                  updateProfile({ maxHr: newMaxHr })
+                }
+              }}
               ageError={ageError}
+              maxHr={maxHr}
+              setMaxHr={setMaxHr}
               userHeight={userHeight}
               setUserHeight={setUserHeight}
               onHeightBlur={onHeightBlur}

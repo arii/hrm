@@ -129,8 +129,6 @@ export default function ConnectPage() {
 
   const { calories, resetCalories } = useCalorieCounter(
     currentHR,
-    parseFloat(userAge) || 30,
-    parseFloat(_weightInKg) || 70,
     workoutStatus === 'running'
   )
 

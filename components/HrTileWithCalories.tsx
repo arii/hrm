@@ -2,13 +2,11 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useUserSettings } from '@/context/UserSettingsContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import HrTile from './HrTile'
 import { HrmData } from '@/types/websocket'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
-import { useUserWeight } from '@/hooks/useUserWeight'
 import { useHrZone } from '@/hooks/useHrZone'
 
 interface HrTileWithCaloriesProps {
@@ -22,14 +20,10 @@ const HrTileWithCalories = ({
   isAlerting,
   alertMessage,
 }: HrTileWithCaloriesProps) => {
-  const [userSettings] = useUserSettings()
   const { timerData } = useWebSocket()
-  const [weightInKg] = useUserWeight()
 
   const { calories, resetCalories } = useCalorieCounter(
     user.value || 0,
-    userSettings.userAge || 30,
-    weightInKg || 70,
     timerData.isRunning
   )
 

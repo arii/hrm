@@ -1,20 +1,14 @@
-// hooks/useUserWeight.ts
-import useLocalStorage from './useLocalStorage'
+import { useUserPhysicalProfile } from '@/context/UserPhysicalProfileContext'
 
 /**
- * A hook to manage the user's weight preference, persisted in local storage.
- * The weight is always stored in Kilograms (kg).
- *
- * @returns A tuple containing:
- *  - `weightInKg`: The current user weight in kg (number).
- *  - `setWeight`: A function to update the user's weight in kg.
+ * @deprecated Use useUserPhysicalProfile() directly.
  */
 export const useUserWeight = (): [number, (value: number) => void] => {
-  const [weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
+  const { profile, updateProfile } = useUserPhysicalProfile()
 
-  const setWeight = (value: number) => {
-    setWeightInKg(value.toString())
-  }
-
-  return [parseFloat(weightInKg), setWeight]
+  // Return compatible signature: [weightInKg, setter]
+  return [
+    profile.weight,
+    (newWeight: number) => updateProfile({ weight: newWeight })
+  ]
 }
