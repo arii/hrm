@@ -226,7 +226,8 @@ jobs:
             echo "::notice::No PR found for branch '$BRANCH'. Creating a new one."
 
             gh auth setup-git
-            git checkout leader
+            DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+            git checkout $DEFAULT_BRANCH
             git pull
             git branch -D "$BRANCH" 2>/dev/null || true
 
@@ -238,7 +239,7 @@ jobs:
             git push --force -u origin "$BRANCH"
 
             gh pr create \
-              --base leader \
+              --base $DEFAULT_BRANCH \
               --head "$BRANCH" \
               --title "$TITLE" \
               --body-file pr_body.md
