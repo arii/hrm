@@ -77,4 +77,10 @@ describe('HrTile', () => {
       `color: ${theme.palette.getContrastText(ZONE_COLORS.grey)}`
     )
   })
+
+  it('formats the calorie display to one decimal place', () => {
+    render(<HrTile name="Test" bpm={120} percentMax={65} calories={123.456} />)
+    const calorieDisplay = screen.getByTestId('calorie-display')
+    expect(calorieDisplay).toHaveTextContent('123.5 KCAL')
+  })
 })
