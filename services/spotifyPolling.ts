@@ -78,7 +78,7 @@ export class SpotifyPolling implements SpotifyService {
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
 
-  private state: SpotifyData = {
+  private state: SpotifyPlaybackState = {
     trackId: null,
     trackName: 'Awaiting Login...',
     artist: '',
@@ -163,7 +163,7 @@ export class SpotifyPolling implements SpotifyService {
     }
   }
 
-  public getState(): SpotifyData {
+  public getState(): SpotifyPlaybackState {
     return { ...this.state }
   }
 
@@ -330,7 +330,7 @@ export class SpotifyPolling implements SpotifyService {
     }
     try {
       const response = await this.sdk.player.getAvailableDevices()
-      const validDevices: SpotifyDevice[] = (response.devices || [])
+      const validDevices: any[] = (response.devices || [])
         .filter((d: Device): d is Device & { id: string } => d.id !== null)
         .map((d) => ({
           // Non-null assertion is safe here due to the type guard in the filter.
