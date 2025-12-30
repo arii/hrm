@@ -61,7 +61,8 @@ chmod +x ./scripts/verify-deployment.sh
 
 echo "📦 Hydrating production dependencies..."
 # Use the dynamic command (pnpm or npx pnpm)
-$PNPM_CMD install --prod --ignore-scripts
+# Suppress WARN messages about missing bin symlinks (non-fatal in production)
+$PNPM_CMD install --prod --ignore-scripts 2>&1 | grep -v "WARN.*Failed to create bin" || true
 
 echo "🔄 Reloading PM2..."
 # Use pnpm exec to ensure the project's local pm2 is used

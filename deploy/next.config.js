@@ -1,9 +1,3 @@
-import bundleAnalyzer from '@next/bundle-analyzer'
-
-const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
-})
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -69,4 +63,4 @@ const nextConfig = {
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
 }
 
-export default withBundleAnalyzer(nextConfig)
+export default nextConfig

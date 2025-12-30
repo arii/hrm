@@ -39,7 +39,7 @@ jobs:
           NEXTAUTH_URL: 'http://localhost:3000'
           IS_DEPLOYMENT: 'true'
         run: |
-          # 1. Use production config with .next_prod distDir
+          # 1. Use production config with standalone output
           cp deploy/next.config.js next.config.js
 
           # 2. Build Next.js
