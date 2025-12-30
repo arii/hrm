@@ -1,4 +1,5 @@
 // components/PageContainer.tsx
+'use client'
 import React from 'react'
 import Container, { ContainerProps } from '@mui/material/Container'
 import { useTheme } from '@mui/material/styles'

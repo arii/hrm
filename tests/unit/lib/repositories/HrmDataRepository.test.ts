@@ -25,11 +25,13 @@ describe('HrmDataRepository', () => {
 
   it('should save and find a client by ID', () => {
     repository.save(client1)
+    // eslint-disable-next-line testing-library/await-async-queries
     const found = repository.findById('client1')
     expect(found).toEqual(client1)
   })
 
   it('should return undefined for a non-existent client', () => {
+    // eslint-disable-next-line testing-library/await-async-queries
     const found = repository.findById('non-existent')
     expect(found).toBeUndefined()
   })
@@ -51,6 +53,7 @@ describe('HrmDataRepository', () => {
   it('should delete a client by ID', () => {
     repository.save(client1)
     repository.deleteById('client1')
+    // eslint-disable-next-line testing-library/await-async-queries
     const found = repository.findById('client1')
     expect(found).toBeUndefined()
   })
@@ -71,6 +74,7 @@ describe('HrmDataRepository', () => {
     repository.save(client1)
     const updatedClient = { ...client1, value: 100 }
     repository.save(updatedClient)
+    // eslint-disable-next-line testing-library/await-async-queries
     const found = repository.findById('client1')
     expect(found).toEqual(updatedClient)
   })

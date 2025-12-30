@@ -142,7 +142,6 @@ describe('PlaylistSelector', () => {
     )
 
     // Check the aria-label for the play button within that list item
-    if (!listItem) throw new Error('Playlist item not found')
     const playButton = within(listItem).getByRole('button', {
       name: /play playlist/i,
     })
