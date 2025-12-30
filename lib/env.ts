@@ -27,13 +27,7 @@ const schema = z.object({
   SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
 })
 
-let envInstance: z.infer<typeof schema>
-
 function validateAndGetEnv() {
-  if (envInstance) {
-    return envInstance
-  }
-
   const parsedEnv = schema.safeParse(process.env)
 
   if (!parsedEnv.success) {
@@ -59,8 +53,7 @@ function validateAndGetEnv() {
     }
   }
 
-  envInstance = parsedEnv.data
-  return envInstance
+  return parsedEnv.data
 }
 
 /**
