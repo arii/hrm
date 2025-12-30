@@ -46,8 +46,9 @@ describe('runConflictResolution', () => {
   })
 
   it('should generate a report for valid conflicts', async () => {
-    const { runConflictResolution } =
-      await import('@/scripts/conflict-resolver')
+    const { runConflictResolution } = await import(
+      '@/scripts/conflict-resolver'
+    )
     mockedReadFile.mockResolvedValue('file1.ts\0file2.ts\0')
     mockedParseConflicts
       .mockResolvedValueOnce([
@@ -91,8 +92,9 @@ describe('runConflictResolution', () => {
   })
 
   it('should handle malformed AI response', async () => {
-    const { runConflictResolution } =
-      await import('@/scripts/conflict-resolver')
+    const { runConflictResolution } = await import(
+      '@/scripts/conflict-resolver'
+    )
     mockedReadFile.mockResolvedValue('file1.ts\0')
     mockedParseConflicts.mockResolvedValueOnce([
       {
@@ -114,10 +116,10 @@ describe('runConflictResolution', () => {
       'report.md'
     )
 
-    expect(mockedHandleError).toHaveBeenCalledWith(
-      new Error('Failed to parse AI resolution JSON')
-    )
-    // It should still try to write a report, even if one file fails.
+    expect(mockedHandleError).not.toHaveBeenCalled()
     expect(mockedWriteOutput).toHaveBeenCalledTimes(1)
+    const writtenContent = mockedWriteOutput.mock.calls[0][0] as string
+    expect(writtenContent).toContain('### ⚠️ Unprocessed Files')
+    expect(writtenContent).toContain('Failed to parse AI resolution JSON')
   })
 })
