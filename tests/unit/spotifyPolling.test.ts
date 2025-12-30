@@ -17,7 +17,10 @@ import {
   logSpotifyCommandError,
 } from '../../services/spotifyApiErrorHandling.js'
 import { SpotifyCommand, SpotifyService } from '../../types/interfaces.js'
-import { SafeSpotifyApi, createSafeSpotifyApi } from '../../services/safeSpotifyApi.js'
+import {
+  SafeSpotifyApi,
+  createSafeSpotifyApi,
+} from '../../services/safeSpotifyApi.js'
 import { env } from '../../lib/env.js'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 
