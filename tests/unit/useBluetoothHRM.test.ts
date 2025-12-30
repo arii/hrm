@@ -262,4 +262,98 @@ describe('useBluetoothHRM', () => {
     expect(result.current.isConnected).toBe(true)
     expect(result.current.disconnectionReason).toBe(null)
   })
+
+  describe('Metadata', () => {
+    it('should send metadata on initial connect, but not again if user details do not change', async () => {
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ userName: 'Test User', userAge: 30 })
+      )
+      await simulateConnection({ result })
+
+      expect(mockSendData).toHaveBeenCalledTimes(1)
+      expect(mockSendData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'HRM_METADATA_UPDATE',
+          data: expect.objectContaining({ name: 'Test User', age: 30 }),
+        })
+      )
+
+      // Simulate a re-render without prop changes
+      act(() => {
+        result.current.connectAndStream('Test User', 30)
+      })
+
+      // No new metadata should be sent
+      expect(mockSendData).toHaveBeenCalledTimes(1)
+    })
+
+    it('should send metadata again if user details change during an active connection', async () => {
+      const { result, rerender } = renderHook(
+        ({ userName, userAge }) => useBluetoothHRM({ userName, userAge }),
+        {
+          initialProps: { userName: 'Test User', userAge: 30 },
+        }
+      )
+      await simulateConnection({ result })
+
+      expect(mockSendData).toHaveBeenCalledTimes(1) // Initial metadata
+      expect(mockSendData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'HRM_METADATA_UPDATE',
+          data: expect.objectContaining({ name: 'Test User', age: 30 }),
+        })
+      )
+
+      // Change user name
+      rerender({ userName: 'Updated User', userAge: 30 })
+
+      expect(mockSendData).toHaveBeenCalledTimes(2) // New metadata sent
+      expect(mockSendData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'HRM_METADATA_UPDATE',
+          data: expect.objectContaining({ name: 'Updated User', age: 30 }),
+        })
+      )
+    })
+  })
+
+  describe('Throttling', () => {
+    it('should throttle heart rate updates with a configurable frequency', async () => {
+      const { result } = renderHook(() => useBluetoothHRM({ throttleMs: 500 }))
+      await simulateConnection({ result })
+
+      const characteristicCallback =
+        mockCharacteristic.addEventListener.mock.calls.find(
+          (call) => call[0] === 'characteristicvaluechanged'
+        )?.[1]
+
+      expect(characteristicCallback).toBeDefined()
+
+      // Simulate 5 rapid events in less than 500ms
+      for (let i = 0; i < 5; i++) {
+        act(() => {
+          characteristicCallback({
+            target: { value: new DataView(new Uint8Array([0, 70 + i]).buffer) },
+          })
+        })
+      }
+
+      // The first call should be immediate
+      expect(mockSendData).toHaveBeenCalledTimes(2) // 1 for metadata, 1 for first HR value
+
+      // Advance time by 499ms
+      act(() => {
+        jest.advanceTimersByTime(499)
+      })
+      // No new calls should have been made
+      expect(mockSendData).toHaveBeenCalledTimes(2)
+
+      // Advance time past the 500ms throttle interval
+      act(() => {
+        jest.advanceTimersByTime(1)
+      })
+      // The throttled call should now have been made
+      expect(mockSendData).toHaveBeenCalledTimes(3)
+    })
+  })
 })
