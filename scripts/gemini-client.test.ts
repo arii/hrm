@@ -44,8 +44,7 @@ describe('cleanJsonOutput', () => {
   })
 
   it('should handle content before and after the markdown block', () => {
-    const input =
-      'Here is the JSON:\n```json\n{"key": "value"}\n```\nLet me know what you think.'
+    const input = 'Here is the JSON:\n```json\n{"key": "value"}\n```\nLet me know what you think.'
     const expected = '{"key": "value"}'
     expect(cleanJsonOutput(input)).toBe(expected)
   })
