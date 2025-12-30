@@ -194,7 +194,7 @@ jobs:
       - name: 'Jules: Create Tracking PR'
         if: env.AGENT_PROVIDER == 'jules'
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: ${{ env.BRANCH }}
           TITLE: ${{ env.TITLE }}
           PROMPT: ${{ env.PROMPT }}
@@ -202,27 +202,45 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$BRANCH"
-          git commit --allow-empty -m "chore: initiate jules session"
-          git push origin "$BRANCH"
+          gh auth setup-git
 
-          # Use a heredoc for the body to handle multiline content gracefully
-          PR_BODY=$(cat <<EOF
+          EXISTING_PR_URL=$(gh pr list --head "$BRANCH" --json url --limit 1 -q '.[0].url' || echo "")
+
+          (
+          cat <<EOF
           A Jules session has been initiated to address this task.
 
           **Task Details:**
-          $PROMPT
+          EOF
+          echo "$PROMPT"
+          cat <<EOF
 
           **Jules Session URL:**
           [Follow the progress here]($SESSION_URL)
           EOF
-          )
+          ) > pr_body.md
 
-          echo "$PR_BODY" | gh pr create \
-            --base leader \
-            --head "$BRANCH" \
-            --title "$TITLE" \
-            --body-file -
+          if [ -n "$EXISTING_PR_URL" ]; then
+            echo "::notice::PR for branch '$BRANCH' already exists. Updating body: $EXISTING_PR_URL"
+            gh pr edit "$EXISTING_PR_URL" --body-file pr_body.md
+          else
+            echo "::notice::No PR found for branch '$BRANCH'. Creating a new one."
+
+            git checkout leader
+            git pull
+            git branch -D "$BRANCH" 2>/dev/null || true
+
+            git checkout -b "$BRANCH"
+            git commit --allow-empty -m "chore: initiate jules session"
+            # Use --force to overwrite the remote branch from a previous failed run
+            git push --force -u origin "$BRANCH"
+
+            gh pr create \
+              --base leader \
+              --head "$BRANCH" \
+              --title "$TITLE" \
+              --body-file pr_body.md
+          fi
 
       - name: 'Gemini: Verify Client Exists'
         if: env.AGENT_PROVIDER == 'gemini'
