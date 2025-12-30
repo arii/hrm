@@ -35,10 +35,18 @@ const testingSchema = baseSchema.extend({
   SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
 })
 
-const schema =
-  process.env.NODE_ENV === 'test' || process.env.TESTING === 'true'
-    ? testingSchema
-    : productionSchema
+const buildSchema = baseSchema.extend({
+  SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
+  SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
+})
+
+let schema = productionSchema
+if (process.env.NODE_ENV === 'test' || process.env.TESTING === 'true') {
+  schema = testingSchema
+}
+if (process.env.npm_lifecycle_event === 'build') {
+  schema = buildSchema
+}
 
 const parsedEnv = schema.safeParse(process.env)
 
