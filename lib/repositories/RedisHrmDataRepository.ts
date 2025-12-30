@@ -21,7 +21,7 @@ export class RedisHrmDataRepository {
       maxHr: Number(data.maxHr),
       age: Number(data.age),
       calories: Number(data.calories),
-      name: data.name ?? '',
+      name: data.name || '',
     }
   }
 
@@ -40,7 +40,7 @@ export class RedisHrmDataRepository {
             maxHr: Number(hrmData.maxHr),
             age: Number(hrmData.age),
             calories: Number(hrmData.calories),
-            name: hrmData.name ?? '',
+            name: hrmData.name || '',
           })
         }
       }
