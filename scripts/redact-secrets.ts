@@ -43,7 +43,11 @@ export function redactSecrets(logContent: string): string {
   for (const envVar in process.env) {
     const value = process.env[envVar]
     // Redact if the value is non-trivial and the key suggests it's a secret
-    if (value && value.length > 8 && /(key|token|secret|password|pat)/i.test(envVar)) {
+    if (
+      value &&
+      value.length > 8 &&
+      /(key|token|secret|password|pat)/i.test(envVar)
+    ) {
       if (redactedContent.includes(value)) {
         // Use a simple string replacement for the exact value
         redactedContent = redactedContent.split(value).join('***REDACTED***')
@@ -70,9 +74,13 @@ function main() {
     const logContent = readFileSync(inputFile, 'utf-8')
     const redactedContent = redactSecrets(logContent)
     writeFileSync(outputFile, redactedContent)
-    console.log(`Successfully redacted secrets from ${inputFile} to ${outputFile}`)
+    console.log(
+      `Successfully redacted secrets from ${inputFile} to ${outputFile}`
+    )
   } catch (error) {
-    console.error(`Error processing files: ${error instanceof Error ? error.message : String(error)}`)
+    console.error(
+      `Error processing files: ${error instanceof Error ? error.message : String(error)}`
+    )
     process.exit(1)
   }
 }
