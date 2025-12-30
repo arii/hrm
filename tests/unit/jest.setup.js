@@ -1,7 +1,6 @@
 // tests/unit/jest.setup.js
 /* eslint-disable @typescript-eslint/no-var-requires */
 require('@testing-library/jest-dom')
-const { jest } = require('@jest/globals')
 
 // Set up environment variables for tests
 process.env.NEXTAUTH_URL = 'http://localhost:3000'
