@@ -5,6 +5,8 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { IncomingMessage } from 'http'
+import { ClientId, DeviceId } from '../types/branded.js'
+import { generateClientId, toClientId } from './brandedId.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -16,7 +18,7 @@ import {
   ExtWebSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
+import { CALORIE_DEFAULTS } from './constants.js'
 import {
   broadcast,
   sendWebSocketMessage,
@@ -43,11 +45,11 @@ let services: AppServices
 const hrmDataRepository = new HrmDataRepository()
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
-const clientSockets = new Map<string, WebSocket>()
+const clientSockets = new Map<ClientId, WebSocket>()
 
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
-  string,
+  ClientId,
   { lastUpdate: number; accumulatedCalories: number }
 >()
 
@@ -89,9 +91,23 @@ const initSocketManager = (
     const extWs = ws as ExtWebSocket
 
     const params = getRequestParams(req)
-    const clientId =
-      params.get('clientId') ||
-      `user-${Math.random().toString(36).substring(2, 9)}`
+    const clientIdFromParams = params.get('clientId')
+
+    let clientId: ClientId
+    if (clientIdFromParams) {
+      try {
+        clientId = toClientId(clientIdFromParams)
+      } catch (error) {
+        logger.warn(
+          { error, receivedId: clientIdFromParams },
+          'Invalid ClientId received. Generating a new one.'
+        )
+        clientId = generateClientId()
+      }
+    } else {
+      clientId = generateClientId()
+    }
+
     extWs.clientId = clientId
 
     // it's a stale or "zombie" connection. Overwrite it with the new socket.
@@ -198,7 +214,7 @@ const broadcastState = () => {
 const handleIncomingMessage = (
   ws: ExtWebSocket,
   messageString: string,
-  clientId: string
+  clientId: ClientId
 ) => {
   try {
     const parsedJson = JSON.parse(messageString)
@@ -335,7 +351,7 @@ const handleIncomingMessage = (
 
         const spotifyService = services.spotifyService
         const spotifyCommandParams: {
-          deviceId?: string
+          deviceId?: DeviceId
           volume?: number
           playlistUri?: string
           contextUri?: string

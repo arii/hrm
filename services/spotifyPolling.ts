@@ -7,6 +7,7 @@ import {
 } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyDevice } from '../types/core'
+import { DeviceIdSchema } from '../types/branded.js'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
@@ -334,7 +335,7 @@ export class SpotifyPolling implements SpotifyService {
         .filter((d: Device): d is Device & { id: string } => d.id !== null)
         .map((d) => ({
           // Non-null assertion is safe here due to the type guard in the filter.
-          id: d.id,
+          id: DeviceIdSchema.parse(d.id),
           is_active: d.is_active,
           is_private_session: d.is_private_session,
           is_restricted: d.is_restricted,

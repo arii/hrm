@@ -8,6 +8,7 @@ import {
   TimerConfigMessage,
   TimerModeCommandMessage,
 } from '@/types/websocket'
+import { DeviceIdSchema } from '@/types/branded'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import FitnessCenter from '@mui/icons-material/FitnessCenter'
 import PlayArrow from '@mui/icons-material/PlayArrow'
@@ -133,7 +134,7 @@ const TimerControls = () => {
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,
-        ...(deviceId ? { deviceId } : {}),
+        ...(deviceId ? { deviceId: DeviceIdSchema.parse(deviceId) } : {}),
       }
       sendData(message)
     },
