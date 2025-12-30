@@ -68,8 +68,8 @@ jobs:
         continue-on-error: true
         working-directory: ./pr-code # Run commands inside the subdir
         run: |
-          git config user.email "bot@example.com"
-          git config user.name "Gemini Bot"
+          git config --global user.email "bot@example.com"
+          git config --global user.name "Gemini Bot"
 
           # Fetch the leader branch to make it available for rebase
           git fetch origin leader:leader
@@ -79,7 +79,7 @@ jobs:
           else
             echo "Rebase failed as expected. Capturing conflicts..."
             # List conflicting files and write to the PARENT directory
-            git diff --name-only --diff-filter=U -z > ../conflicts.txt
+            git diff --name-only --diff-filter=U > ../conflicts.txt
           fi
 
       # Step 5: Run the TRUSTED script from the base checkout to analyze the UNTRUSTED files.

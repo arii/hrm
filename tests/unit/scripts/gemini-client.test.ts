@@ -29,7 +29,7 @@ describe('runConflictResolution', () => {
 
   it('should generate a report for valid conflicts', async () => {
     const { runConflictResolution } = await import('@/scripts/gemini-client')
-    mockedReadFile.mockResolvedValue('file1.ts\0file2.ts')
+    mockedReadFile.mockResolvedValue('file1.ts\nfile2.ts')
     mockedParseConflicts
       .mockResolvedValueOnce([
         {
@@ -75,10 +75,14 @@ describe('runConflictResolution', () => {
       'report.md'
     )
 
-    expect(mockedWriteFile).toHaveBeenCalledTimes(1)
-    const writtenContent = mockedWriteFile.mock.calls[0][1] as string;
-    expect(writtenContent).toContain('### 📂 `file1.ts` (Lines 1-3)');
-    expect(writtenContent).toContain('### 📂 `file2.ts` (Lines 10-12)');
+    expect(mockedWriteFile).toHaveBeenCalledWith(
+      path.resolve(process.cwd(), 'report.md'),
+      expect.stringContaining('### 📂 `file1.ts` (Lines 1-3)')
+    )
+    expect(mockedWriteFile).toHaveBeenCalledWith(
+      path.resolve(process.cwd(), 'report.md'),
+      expect.stringContaining('### 📂 `file2.ts` (Lines 10-12)')
+    )
   })
 
   it('should handle malformed AI response', async () => {
