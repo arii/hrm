@@ -1,19 +1,24 @@
 /**
  * @jest-environment jsdom
  */
+
+// --- CRITICAL FIX: Mock localStorage at the top level ---
+// This ensures the mock is in place BEFORE any other modules are imported.
+Object.defineProperty(window, 'localStorage', {
+  value: {
+    getItem: jest.fn((key) => {
+      if (key === 'clientId') return 'test-uuid';
+      return null;
+    }),
+    setItem: jest.fn(() => null),
+    clear: jest.fn(() => null),
+  },
+  writable: true,
+});
+
 import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { WebSocketProvider, useWebSocket } from '../../../context/WebSocketContext';
-
-// --- CRITICAL FIX: Mock localStorage at the top level ---
-// This ensures the mock is in place BEFORE the WebSocketContext module is imported and its state is initialized.
-const getItemSpy = jest.spyOn(Storage.prototype, 'getItem');
-const setItemSpy = jest.spyOn(Storage.prototype, 'setItem');
-
-getItemSpy.mockImplementation((key) => {
-  if (key === 'clientId') return 'test-uuid';
-  return null;
-});
 
 // Store original WebSocket to restore it later
 const originalWebSocket = global.WebSocket;
@@ -58,14 +63,9 @@ describe('WebSocketProvider', () => {
 
   afterAll(() => {
     global.WebSocket = originalWebSocket;
-    getItemSpy.mockRestore();
-    setItemSpy.mockRestore();
   });
 
   beforeEach(() => {
-    // Clear call history before each test
-    getItemSpy.mockClear();
-    setItemSpy.mockClear();
     mockWebSocket.mockClear();
   });
 
@@ -77,7 +77,7 @@ describe('WebSocketProvider', () => {
     );
 
     await waitFor(() => {
-      expect(getItemSpy).toHaveBeenCalledWith('clientId');
+      expect(window.localStorage.getItem).toHaveBeenCalledWith('clientId');
       expect(mockWebSocket).toHaveBeenCalledWith('ws://localhost:3001/?clientId=test-uuid');
     });
   });
