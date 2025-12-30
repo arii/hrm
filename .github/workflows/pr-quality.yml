@@ -125,11 +125,24 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup Environment
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Dependencies and Browsers
         id: setup
-        run: |
-          ./.github/actions/setup-env > setup-output.log 2>&1
         shell: bash
+        run: |
+          set -o pipefail
+          {
+            pnpm install --frozen-lockfile
+            pnpm exec playwright install chromium
+          } 2>&1 | tee setup-output.log
         continue-on-error: true
 
       - name: Upload Setup Report
