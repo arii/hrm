@@ -107,5 +107,5 @@ jobs:
         uses: mshick/add-pr-comment@v2
         with:
           message-path: resolution-report.md
-          issue: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+          pr-number: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
       # --- AI CONFLICT RESOLUTION END ---
