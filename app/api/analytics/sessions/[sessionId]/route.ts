@@ -10,9 +10,9 @@ import { NextRequest } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  context: { params: { sessionId: string } }
 ) {
-  const { sessionId } = params
+  const { sessionId } = context.params
 
   // Security: Validate format (alphanumeric, underscores, hyphens only)
   if (!/^[a-zA-Z0-9_.-]+$/.test(sessionId)) {
@@ -29,7 +29,7 @@ export async function GET(
 
     return NextResponse.json({ data })
   } catch (error) {
-    // @ts-ignore
+    // @ts-expect-error
     if (error.code === 'ENOENT') {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
