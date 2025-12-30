@@ -7,6 +7,7 @@ import {
 import { readFile, writeFile } from 'fs/promises'
 import path from 'path'
 import { runConflictResolution } from './conflict-resolver'
+import { MODEL_FALLBACKS as defaultFallbacks } from './gemini-models'
 
 // Simple arg parsing
 const args = process.argv.slice(2)
@@ -22,24 +23,6 @@ const contextFiles = getArg('--context')?.split(',') || []
 const contextFile = getArg('--context-file')
 const outputFile = getArg('--output')
 const preset = getArg('--preset')
-
-// List of models to try in order.
-// The first model in the list is the primary model, and the rest are fallbacks.
-
-// UPDATED: Aligned with latest model recommendations (Q3 2025+)
-// 1. gemini-2.5-flash: Next-gen standard workhorse.
-// 2. gemini-2.5-flash-lite: Next-gen ultra-low-cost model.
-// 3. gemini-2.0-flash: Previous generation flash model.
-// 4. gemini-2.0-flash-lite: Previous generation ultra-low-cost model.
-// 5. gemini-2.5-pro: Expensive, high-intelligence fallback.
-
-const defaultFallbacks = [
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
-  'gemini-2.5-pro',
-]
 
 export function getModelFallbacks(): string[] {
   const envFallbacks = process.env.GEMINI_MODEL_FALLBACKS
