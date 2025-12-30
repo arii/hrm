@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render, screen, act } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { LoadingProvider, useLoading } from '@/context/LoadingContext'
 import { Button } from '@mui/material'
@@ -37,15 +37,11 @@ describe('LoadingProvider', () => {
       </LoadingProvider>
     )
 
-    act(() => {
-      screen.getByText('Start Loading').click()
-    })
+    fireEvent.click(screen.getByText('Start Loading'))
 
     expect(screen.getByTestId('loading-state')).toHaveTextContent('Loading')
 
-    act(() => {
-      screen.getByText('Stop Loading').click()
-    })
+    fireEvent.click(screen.getByText('Stop Loading'))
 
     expect(screen.getByTestId('loading-state')).toHaveTextContent('Not Loading')
   })

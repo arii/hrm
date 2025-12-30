@@ -97,7 +97,6 @@ describe('SpotifyDisplay', () => {
 
   describe('when authenticated', () => {
     let mockSendData: jest.Mock
-    let rerender: (ui: React.ReactElement) => void
     let initialSpotifyData: SpotifyData
 
     beforeEach(() => {
@@ -126,11 +125,6 @@ describe('SpotifyDisplay', () => {
         connectionStatus: 'Connected',
         spotifyServiceInitialized: true,
       })
-
-      const { rerender: rerenderComponent } = renderWithProviders(
-        <SpotifyDisplay />
-      )
-      rerender = (ui: React.ReactElement) => rerenderComponent(ui)
     })
 
     afterEach(() => {
@@ -138,6 +132,7 @@ describe('SpotifyDisplay', () => {
     })
 
     it('updates volume on external change when user is not sliding', () => {
+      const { rerender } = renderWithProviders(<SpotifyDisplay />)
       const slider = screen.getByRole('slider', { name: /volume control/i })
       expect(slider).toHaveValue('50')
 
@@ -153,6 +148,7 @@ describe('SpotifyDisplay', () => {
     })
 
     it('does not update volume on external change while user is sliding', () => {
+      const { rerender } = renderWithProviders(<SpotifyDisplay />)
       const slider = screen.getByRole('slider', { name: /volume control/i })
       expect(slider).toHaveValue('50')
 
@@ -173,6 +169,7 @@ describe('SpotifyDisplay', () => {
     })
 
     it('re-enables external updates after sliding and debounce period', () => {
+      const { rerender } = renderWithProviders(<SpotifyDisplay />)
       const slider = screen.getByRole('slider', { name: /volume control/i })
       expect(slider).toHaveValue('50')
 

@@ -14,7 +14,10 @@ const CurrentSpotifyItemDisplay = () => {
 
   if (connectionStatus === 'Connecting') {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box
+        sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+        data-testid="loading-skeletons"
+      >
         <Skeleton variant="rectangular" width={64} height={64} />
         <Box>
           <Skeleton variant="text" width={150} />

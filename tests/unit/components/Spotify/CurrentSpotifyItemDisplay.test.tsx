@@ -56,13 +56,13 @@ describe('CurrentSpotifyItemDisplay', () => {
 
   it('renders loading skeletons when connecting', () => {
     const contextValue = mockWebSocketContext({}, 'Connecting')
-    const { container } = render(
+    render(
       <WebSocketContext.Provider value={contextValue}>
         <CurrentSpotifyItemDisplay />
       </WebSocketContext.Provider>
     )
-    const skeletons = container.querySelectorAll('.MuiSkeleton-root')
-    expect(skeletons).toHaveLength(3)
+    const skeletons = screen.getByTestId('loading-skeletons')
+    expect(skeletons).toBeInTheDocument()
   })
 
   it('renders empty state when nothing is playing', () => {

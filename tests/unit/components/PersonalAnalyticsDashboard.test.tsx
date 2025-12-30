@@ -18,9 +18,7 @@ describe('PersonalAnalyticsDashboard', () => {
       resetCalories: jest.fn(),
     })
     // Render the component; prefer using screen queries over destructuring from render
-    render(
-      <PersonalAnalyticsDashboard heartRate={120} age={30} weight={70} />
-    )
+    render(<PersonalAnalyticsDashboard heartRate={120} age={30} weight={70} />)
 
     expect(screen.getByText('Calories Burned: 100.00')).toBeInTheDocument()
   })
