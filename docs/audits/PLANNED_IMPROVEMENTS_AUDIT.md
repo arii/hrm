@@ -1,36 +1,53 @@
-# Audit of Planned Improvements, Issues, and Tests
+# Comprehensive Audit of Planned Improvements, Issues, and Tests
 
-This document provides a consolidated overview of known issues, planned improvements, and the current state of testing, based on existing project documentation.
+This document provides a consolidated overview of known issues, planned improvements, and the current state of testing, synthesized from a comprehensive review of all project documentation, including Architecture Decision Records (ADRs), audit reports, and development guidelines.
 
-## Frontend UI/UX Improvements
+## 1. Architecture and Design
 
-Based on the `FRONTEND_IMPROVEMENT_PLAN.md`, the following areas have been identified for enhancement:
+### Key Decisions (from ADRs)
+- **Framework**: Next.js is the chosen frontend framework for its rich feature set and performance.
+- **State Management**: React Context is used for global state management to leverage built-in React features and avoid external dependencies.
+- **Authentication**: NextAuth.js is used for authentication, supporting OAuth providers like Spotify.
+- **Logging**: Pino is used for structured, high-performance logging.
+- **Asynchronous Control**: `AbortController` is the standard for managing complex asynchronous operations.
 
-### Priority 1: Visual Polish & Modern Design
-- **Typography & Visual Hierarchy**: Increase font sizes and weights for better readability, especially on the timer and HR tiles.
-- **Color System**: Implement a more vibrant, WCAG AA compliant color palette.
-- **Spacing & Layout**: Increase padding and reduce the vertical space of the Google Doc integration to avoid a cramped feel.
+### Planned Improvements (from AUDIT_FRONTEND.md)
+- **Component Architecture**: Refactor "prop-drilling" in components like the dashboard by creating self-sufficient child components that fetch their own data from the WebSocket context.
+- **UI/UX Polish**: A detailed `FRONTEND_IMPROVEMENT_PLAN.md` outlines a multi-phase roadmap for enhancing typography, color systems, mobile experience, and accessibility.
 
-### Priority 2: Mobile Experience Optimization
-- **Touch Targets**: Ensure all interactive elements meet minimum touch target sizes (44-48px).
-- **Layout Adjustments**: Implement a mobile-first grid layout to prevent horizontal scrolling and optimize content flow on smaller screens.
+## 2. Code Hygiene and Technical Debt
 
-### Priority 3: Interactive Feedback & Microinteractions
-- **Control Feedback**: Add hover, focus, and loading states to controls to provide better user feedback.
-- **Data Visualization**: Use animations (e.g., a pulse) to indicate live data and show data freshness.
+### Known Issues (from AUDIT_CODE_HYGIENE.md)
+- **Unstable Dependencies**: The project uses pre-release versions for some critical packages, which should be pinned to stable releases.
+- **Build Process**: A hack in the build script (`cp dist/server.js dist/server.mjs`) should be replaced by resolving the underlying module resolution issue.
+- **Error Handling**: The `SpotifyPolling` service has an "error swallowing" pattern that should be replaced with a fail-fast or health-check-based approach.
+- **Security**: The Express server is missing common security headers (e.g., CSP, HSTS), which should be added using a library like `helmet`.
+- **Legacy Patterns**: The Spotify token delivery mechanism in `server.ts` uses fragile `setTimeout` logic and should be refactored to an event-driven model.
 
-### Priority 4: Accessibility & Usability
-- **Keyboard Navigation**: Implement comprehensive keyboard shortcuts and visible focus indicators.
-- **Screen Reader Support**: Add appropriate ARIA labels and live regions to announce dynamic content changes.
+## 3. Testing Strategy
 
-### Priority 5: Performance & Loading States
-- **Progressive Loading**: Use skeleton loaders and smooth fade-in animations to improve the perceived loading experience.
-- **Error Handling**: Implement graceful error boundaries and offline indicators.
+### Current State (from TESTING.md and TESTING_GUIDELINES.md)
+- The project uses a combination of Jest for unit tests and Playwright for E2E and visual regression testing.
+- A `window.__TEST_WEBSOCKET_READY__` flag is used to synchronize Playwright tests with the WebSocket connection, improving stability.
+- Test artifacts are strictly excluded from version control via `.gitignore`.
 
-## Testing
+### Planned Improvements (from TESTING.md and FRONTEND_IMPROVEMENT_PLAN.md)
+- **Consolidation**: The test suite is planned to be consolidated into a single `core-functionality.spec.ts` to reduce redundancy and execution time.
+- **Stability**: Unstable tests relying on fixed delays (`waitForTimeout`) will be refactored to use more resilient waiting strategies.
+- **Accessibility Testing**: The plan includes adding automated accessibility testing with `axe-core`.
+- **Performance Optimization**: The test suite will be optimized by enabling parallel execution and reducing the number of screenshots.
 
-The project has a solid testing foundation, but the following areas are noted for improvement:
+## 4. Documentation
 
-- **Visual Regression**: The existing Playwright-based visual regression suite is stable but needs to be updated as UI improvements are implemented.
-- **Accessibility Testing**: The improvement plan calls for adding accessibility testing with `axe-core`.
-- **Responsive Design Testing**: The testing strategy should be updated to explicitly cover responsive design validation.
+### Known Issues (from AUDIT_DOCUMENTATION.md)
+- **Organizational Issues**: The root directory is cluttered, and many markdown files should be consolidated into the `docs/` directory.
+- **Missing Documentation**: The project lacks an Architecture Decision Record (ADR) for the custom stateful server, a CI/CD pipeline guide, and a simple onboarding checklist in the README.
+- **Inline Comments**: There is a lack of high-quality TSDoc comments in key service files like `tabataTimer.ts`.
+
+## 5. Development Standards
+
+### Key Practices (from DEVELOPMENT.md, DEVELOPMENT_STANDARDS.md)
+- **Package Manager**: `pnpm` is the standard package manager, and its use is enforced.
+- **Code Quality**: Pre-commit hooks with `lint-staged`, Husky, Prettier, and ESLint are used to maintain code quality.
+- **Commit Messages**: The project follows the Conventional Commits specification.
+- **Import Paths**: The use of `@/*` path aliases for absolute imports is the standard convention.
