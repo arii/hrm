@@ -63,12 +63,16 @@ if (typeof apiKey !== 'string' || apiKey.length === 0) {
 console.log(apiKey.toLowerCase());
 ```
 
-5.  **`Record<string, any>`:** In some cases, you might need to use `Record<string, any>`. This is still a bit of a code smell, but it's better than a naked `any`. It's useful when you have an object with a known set of keys, but the values can be of any type.
+5.  **`Record<string, any>` (Use with Caution):** `Record<string, any>` should be treated as a last resort. While it provides more structure than a naked `any`, it still disables type checking for the values of an object. The preferred approach is almost always `Record<string, unknown>` combined with type narrowing.
+
+    Only use `Record<string, any>` in rare scenarios where you are forced to interact with a library or API that is so dynamic and poorly typed that `unknown` and type narrowing become genuinely impractical. If you must use it, provide a clear comment explaining why `Record<string, unknown>` was not a viable alternative.
 
     ```typescript
-    function processUserData(user: Record<string, any>) {
-      if (typeof user.name === 'string') {
-        console.log(user.name.toUpperCase());
+    // Use this as a last resort when `Record<string, unknown>` is not feasible.
+    function processLegacyData(data: Record<string, any>) {
+      // Justification: Interfacing with a legacy, untyped module.
+      if (typeof data.name === 'string') {
+        console.log(data.name.toUpperCase());
       }
     }
     ```
