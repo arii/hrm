@@ -2,38 +2,35 @@ import { WebSocketContextType, HrmData } from '@/context/WebSocketContext'
 import { SpotifyData, TimerData } from '@/types/websocket'
 
 export const mockSpotifyData: SpotifyData = {
-  trackId: 'test-track-id',
   trackName: 'Test Track',
-  artist: 'Test Artist',
-  albumName: 'Test Album',
+  artistName: 'Test Artist',
   albumArtUrl:
     'https://i.scdn.co/image/ab67616d0000b273f8e7a4a8c2d1b7a6f7d1b7a6',
   isPlaying: true,
-  devices: [],
-  volume: 50,
-  isMuted: false,
+  durationMs: 0,
+  progressMs: 0,
+  volumePercent: 50,
 }
 
 export const mockSpotifyDataNoActivePlayback: SpotifyData = {
-  trackId: null,
   trackName: 'Awaiting Login...',
-  artist: '',
-  albumName: '',
+  artistName: '',
   albumArtUrl: '',
   isPlaying: false,
-  devices: [],
-  volume: 70,
-  isMuted: false,
+  durationMs: 0,
+  progressMs: 0,
+  volumePercent: 70,
 }
 
 export const mockTimerData: TimerData = {
-  currentPhase: 'WORK',
+  phase: 'WORK',
   timeRemaining: 20,
   isRunning: true,
   mode: 'TABATA',
   workDuration: 20,
   restDuration: 10,
-  caloriesBurned: 0,
+  cycle: 0,
+  totalCycles: 0,
   soundEventId: 0,
   timeElapsed: 0,
 }
