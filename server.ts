@@ -16,6 +16,7 @@ import path from 'path'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
+  dir: process.cwd(),
   hostname: env.HOST,
   port: env.PORT,
 })
@@ -92,7 +93,9 @@ app.prepare().then(async () => {
 
   // --- Static Asset Serving (Production Only) ---
   if (env.NODE_ENV === 'production') {
-    const staticPath = path.join(process.cwd(), '.next/static')
+    const isDeployment = process.env.IS_DEPLOYMENT === 'true'
+    const nextDir = isDeployment ? '.next_prod' : '.next'
+    const staticPath = path.join(process.cwd(), nextDir, 'static')
     expressApp.use(
       '/_next/static',
       express.static(staticPath, {

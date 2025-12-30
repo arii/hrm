@@ -69,3 +69,5 @@ diff.txt
 !.vscode/settings.json
 !.vscode/tasks.json
 verification/screenshots/
+.next_prod/
+release.tar.gz

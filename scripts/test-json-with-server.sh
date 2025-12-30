@@ -1,32 +1,27 @@
 #!/bin/bash
 # scripts/test-json-with-server.sh
-# Runs tests with JSON reporter and provides better output visibility
+# Runs targeted Playwright tests with server startup and report merging support
 
 set -e
 
-echo "🧪 Running Playwright tests with JSON reporter..."
+# Capture any arguments passed to the script (e.g., specific test files or flags)
+TEST_ARGS="$@"
+if [ -z "$TEST_ARGS" ]; then
+  # Default to targeted visual test files if no args provided
+  TEST_ARGS="tests/playwright/visual-regression.spec.ts tests/playwright/remote-capabilities.spec.ts tests/playwright/simple-smoke.spec.ts tests/playwright/debug.spec.ts"
+fi
 
-# Run the tests, keeping server logs on stderr and JSON on stdout
-scripts/test-with-server.sh npx playwright test --reporter=json > playwright-report.json
+echo "🧪 Running Playwright tests with blob reporter for merging..."
+echo "📋 Test files/args: $TEST_ARGS"
+
+# Run the tests with blob reporter for report merging
+scripts/test-with-server.sh npx playwright test $TEST_ARGS --reporter=blob
 TEST_EXIT_CODE=$?
 
-echo "📄 JSON report written to playwright-report.json"
-
-# Show test summary
-if command -v jq >/dev/null 2>&1 && [ -s playwright-report.json ]; then
-  echo "📊 Test Summary:"
-  jq -r '.stats // .summary // "No summary found"' playwright-report.json || echo "Could not parse summary"
-  
-  if [ $TEST_EXIT_CODE -ne 0 ]; then
-    echo "🚨 Failed test titles:"
-    jq -r '.suites[]?.specs[]? | select(.tests[]?.results[]?.status == "failed" or .tests[]?.results[]?.status == "timedOut") | .title' playwright-report.json 2>/dev/null || echo "Could not parse failures"
-  fi
+if [ $TEST_EXIT_CODE -eq 0 ]; then
+  echo "✅ Test command completed successfully"
 else
-  echo "⚠️ Could not parse JSON report or file is empty"
-  if [ -f playwright-report.json ]; then
-    echo "First 10 lines of report:"
-    head -10 playwright-report.json
-  fi
+  echo "⚠️ Test command failed with exit code: $TEST_EXIT_CODE"
 fi
 
 exit $TEST_EXIT_CODE

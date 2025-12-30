@@ -26,18 +26,18 @@ cp -r .next/static/* release_build/.next/static/
 echo "📋 Adding custom server..."
 cp -r dist release_build/
 
-# 5. Copy Process Management & Scripts
-echo "📋 Adding runtime scripts..."
-cp ecosystem.config.cjs release_build/
-cp scripts/start-production.sh release_build/
+# 5. Copy Production Configuration & Scripts
+echo "📋 Adding production config and runtime scripts..."
+cp deploy/next.config.js release_build/
+cp deploy/ecosystem.config.cjs release_build/
+cp deploy/start-production.sh release_build/
 mkdir -p release_build/scripts
 # Only copy runtime scripts, exclude dev/test scripts if desired
 cp scripts/deploy-artifact.sh release_build/scripts/
 cp scripts/verify-deployment.sh release_build/scripts/
 
 # 6. Critical: Dependency Manifests
-# We overwrite the standalone package.json with the real one to ensure
-# 'pnpm install' on the server has the full context if needed.
+# Include package.json and lock file for reference and optional install on server
 cp package.json release_build/
 cp pnpm-lock.yaml release_build/
 

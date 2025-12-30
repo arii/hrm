@@ -30,13 +30,9 @@ jobs:
       actions: read
       checks: write
       issues: write
-    uses: ./.github/workflows/pr-quality-standalone.yml
-    secrets: inherit
-  # Incoming change to use pr-quality after confirming no regressions
-  # in commeting on PRs with ARI_PAT
-  #  uses: ./.github/workflows/pr-quality.yml
-  #  secrets:
-  #    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    uses: ./.github/workflows/pr-quality.yml
+    secrets:
+      GH_TOKEN: ${{ secrets.ARI_PAT }}
 
   # 2. Trigger review AFTER CI checks are done for a PR event
   review-on-pr-update:

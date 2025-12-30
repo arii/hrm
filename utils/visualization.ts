@@ -57,7 +57,7 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
   [HrZoneName.NoData]: {
     color: 'text-gray-400',
     progressColor: '#9ca3af',
-    bgColor: '#9ca3af',
+    bgColor: '#B0BEC5', // Lighter grey for better visibility
   },
   [HrZoneName.Unknown]: {
     color: 'text-gray-400',
@@ -101,14 +101,20 @@ export const getHrZoneProps = (
   // 2. Look up the UI properties from the map
   const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
 
-  // 3. Combine domain data with UI properties
+  // 3. Determine text color - force white for grey zones for better contrast
+  let textColor = theme.palette.getContrastText(zoneUiProps.bgColor)
+  if (zoneName === HrZoneName.NoData || zoneName === HrZoneName.Unknown) {
+    textColor = '#FFFFFF' // Force white text for grey zones
+  }
+
+  // 4. Combine domain data with UI properties
   return {
     zone: zoneName, // The enum member is a string at runtime
     percentage: percentage,
     color: zoneUiProps.color,
     progressColor: zoneUiProps.progressColor,
     backgroundColor: zoneUiProps.bgColor,
-    textColor: theme.palette.getContrastText(zoneUiProps.bgColor),
+    textColor: textColor,
     bpm: bpm,
   }
 }
