@@ -151,7 +151,7 @@ export default defineConfig([
   },
 
   // Storybook Configuration
-  ...storybook.configs['flat/recommended'],
+  storybook.configs['flat/recommended'],
 
   // 9. Prettier Config (Must be last to override conflicting rules)
   // This disables ESLint's stylistic rules in favor of Prettier.

@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import HrTile from '../components/HrTile';
-import { HrTileProps } from '@/types';
 
 const meta: Meta<typeof HrTile> = {
   title: 'Components/HrTile',
