@@ -150,7 +150,7 @@ test.describe('Visual Regression Tests', () => {
         dashboardPage.locator('.MUI-Charts-root'), // Mask SVG rendering noise
       ],
       maxDiffPixelRatio: 0.08, // Required for cross-platform font rendering in CI
-      threshold: 0.2,
+      threshold: 0.2, // Allows for minor anti-aliasing and rendering variations
     })
   })
 
