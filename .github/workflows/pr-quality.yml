@@ -19,6 +19,10 @@ on:
         description: 'PR number to post comments to (optional)'
         required: false
         type: string
+      pr_number:
+        description: 'PR number to post comments to (optional)'
+        required: false
+        type: string
 
 concurrency:
   group: pr-quality-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -399,9 +403,9 @@ jobs:
           fi
 
           # 1. SETUP: Find PR number and define checks
-          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_NUMBER="${{ inputs.pr_number || github.event.pull_request.number }}"
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
-            PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number')
+            PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number' 2>/dev/null)
           fi
 
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then

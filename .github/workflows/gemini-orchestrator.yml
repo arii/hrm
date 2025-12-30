@@ -31,6 +31,8 @@ jobs:
       checks: write
       issues: write
     uses: ./.github/workflows/pr-quality.yml
+    with:
+      pr_number: ${{ github.event.pull_request.number }}
     secrets: inherit
 
   # 2. Trigger review AFTER CI checks are done for a PR event
