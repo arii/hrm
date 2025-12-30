@@ -1,6 +1,6 @@
 // types/analytics.ts
 
 export interface HrmDataLogEntry {
-  timestamp: string;
-  value: number;
+  timestamp: string
+  value: number
 }
