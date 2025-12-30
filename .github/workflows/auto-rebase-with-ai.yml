@@ -94,12 +94,14 @@ jobs:
             exit 0
           fi
 
-          # Pass the path to the conflicts file directly to the script.
-          # This is safer than expanding file paths in the shell, which could be vulnerable
-          # to injection attacks if a filename contained special characters.
+          # Read the list of conflicting files.
+          # Prepend 'pr-code/' to each file path so the script knows where to find them.
+          CONFLICT_FILES=$(awk '{print "pr-code/"$0}' conflicts.txt | tr '\n' ',')
+
+          # Run the trusted script from the root
           pnpm tsx scripts/gemini-client.ts \
             --preset "resolve-conflict" \
-            --context-file "conflicts.txt" \
+            --context "$CONFLICT_FILES" \
             --output "resolution-report.md"
 
       - name: Post Resolution Report
