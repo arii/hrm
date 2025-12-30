@@ -98,6 +98,9 @@ importers:
         specifier: ^4.1.13
         version: 4.2.1
     devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.11.0
+        version: 4.11.0(playwright-core@1.57.0)
       '@commitlint/cli':
         specifier: ^20.2.0
         version: 20.2.0(@types/node@25.0.3)(typescript@5.9.3)
@@ -297,6 +300,11 @@ packages:
     resolution: {integrity: sha512-u05zNUirlukJAf9oEHmxSF31L1XQhz9XdpVILt7+xhrz65oQqBpiOWFkGvRWL0IpjOUJ878idKoNmYPxrFnkeg==}
     peerDependencies:
       zod: ^4.0.0
+
+  '@axe-core/playwright@4.11.0':
+    resolution: {integrity: sha512-70vBT/Ylqpm65RQz2iCG2o0JJCEG/WCNyefTr2xcOcr1CoSee60gNQYUMZZ7YukoKkFLv26I/jjlsvwwp532oQ==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -7483,6 +7491,11 @@ snapshots:
     dependencies:
       openapi3-ts: 4.5.0
       zod: 4.2.1
+
+  '@axe-core/playwright@4.11.0(playwright-core@1.57.0)':
+    dependencies:
+      axe-core: 4.11.0
+      playwright-core: 1.57.0
 
   '@babel/code-frame@7.27.1':
     dependencies:

@@ -208,7 +208,11 @@ const TimerDisplay = () => {
           }}
           alignItems="center"
         >
-          <IconButton onClick={toggleMute} sx={{ color: 'white' }}>
+          <IconButton
+            onClick={toggleMute}
+            sx={{ color: 'white' }}
+            aria-label={muted ? 'Unmute' : 'Mute'}
+          >
             {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
           </IconButton>
           <Slider
