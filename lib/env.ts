@@ -27,29 +27,47 @@ const schema = z.object({
   SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
 })
 
-const parsedEnv = schema.safeParse(process.env)
+let envInstance: z.infer<typeof schema>
 
-if (!parsedEnv.success) {
-  console.error(
-    '❌ Invalid environment variables:',
-    JSON.stringify(parsedEnv.error.format(), null, 2)
-  )
-  process.exit(1)
-}
+function validateAndGetEnv() {
+  if (envInstance) {
+    return envInstance
+  }
 
-if (
-  process.env.NODE_ENV !== 'test' &&
-  process.env.TESTING !== 'true' &&
-  process.env.npm_lifecycle_event !== 'build'
-) {
-  if (!parsedEnv.data.SPOTIFY_CLIENT_ID) {
-    console.error('❌ Missing SPOTIFY_CLIENT_ID')
+  const parsedEnv = schema.safeParse(process.env)
+
+  if (!parsedEnv.success) {
+    console.error(
+      '❌ Invalid environment variables:',
+      JSON.stringify(parsedEnv.error.format(), null, 2)
+    )
     process.exit(1)
   }
-  if (!parsedEnv.data.SPOTIFY_CLIENT_SECRET) {
-    console.error('❌ Missing SPOTIFY_CLIENT_SECRET')
-    process.exit(1)
+
+  if (
+    process.env.NODE_ENV !== 'test' &&
+    process.env.TESTING !== 'true' &&
+    process.env.npm_lifecycle_event !== 'build'
+  ) {
+    if (!parsedEnv.data.SPOTIFY_CLIENT_ID) {
+      console.error('❌ Missing SPOTIFY_CLIENT_ID')
+      process.exit(1)
+    }
+    if (!parsedEnv.data.SPOTIFY_CLIENT_SECRET) {
+      console.error('❌ Missing SPOTIFY_CLIENT_SECRET')
+      process.exit(1)
+    }
   }
+
+  envInstance = parsedEnv.data
+  return envInstance
 }
 
-export const env = parsedEnv.data
+export const env = new Proxy(
+  {},
+  {
+    get(_target, prop: keyof z.infer<typeof schema>) {
+      return validateAndGetEnv()[prop]
+    },
+  }
+) as z.infer<typeof schema>
