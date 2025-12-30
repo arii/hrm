@@ -3,7 +3,8 @@
  * Tests Spotify commands and volume control
  */
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
-import { SpotifyPolling } from '../../services/spotifyPolling'
+import { SpotifyPolling } from '../../services/spotifyPolling';
+import { PlayerEndpoints, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'
 import logger from '@/utils/logger'

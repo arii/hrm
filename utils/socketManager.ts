@@ -14,8 +14,8 @@ import {
   ServerMessage,
   StateSnapshot,
   ExtWebSocket,
-} from '../types/websocket.js'
-import { HrmStreamData } from '../types/core.js'
+  HrmStreamData,
+} from '../types/index'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import {
   broadcast,
