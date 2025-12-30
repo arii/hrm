@@ -223,3 +223,4 @@ export const SpotifyExecutionMessageSchema = z.object({
   payload: SpotifyCommandMessageSchema,
 })
 export const WorkoutColumnItemSchema = z.object({ title: z.string(), details: z.string().optional() }
+)

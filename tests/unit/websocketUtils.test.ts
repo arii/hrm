@@ -56,8 +56,8 @@ describe('ConnectionMonitor', () => {
   let mockWss: jest.Mocked<WebSocketServer>
   let connectionMonitor: ConnectionMonitor
   const WATCHDOG_INTERVAL = 5000 // Use a shorter interval for testing
-  let setIntervalSpy: any
-  let clearIntervalSpy: any
+  let setIntervalSpy: jest.SpyInstance
+  let clearIntervalSpy: jest.SpyInstance
 
   beforeEach(() => {
     jest.useFakeTimers()
