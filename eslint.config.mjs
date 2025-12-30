@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from "eslint-plugin-storybook";
+
 import js from '@eslint/js'
 import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
@@ -146,6 +149,9 @@ export default defineConfig([
       ],
     },
   },
+
+  // Storybook Configuration
+  ...storybook.configs['flat/recommended'],
 
   // 9. Prettier Config (Must be last to override conflicting rules)
   // This disables ESLint's stylistic rules in favor of Prettier.
