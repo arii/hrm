@@ -52,4 +52,4 @@ export type SpotifyPlaylist = z.infer<typeof SpotifyPlaylistSchema>
 export type MeasurementSystem = z.infer<typeof MeasurementSystemSchema>
 export type WorkoutItem = z.infer<typeof WorkoutItemSchema>
 export type WorkoutData = z.infer<typeof WorkoutDataSchema>
-export type WorkoutColumnItem = z.infer<typeof WorkoutColumnItemSchema>;
+export type WorkoutColumnItem = z.infer<typeof WorkoutColumnItemSchema>
