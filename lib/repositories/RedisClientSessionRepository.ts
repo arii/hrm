@@ -1,7 +1,7 @@
 // lib/repositories/RedisClientSessionRepository.ts
 import redisClient from '../redis'
 import logger from '@/utils/logger'
-import { ClientSessionState } from '@/types/index'
+import { ClientSessionState } from '../../types'
 
 const SESSION_STATE_KEY_PREFIX = 'session-state:'
 

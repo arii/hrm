@@ -68,3 +68,8 @@ export interface UserProfile {
   gender: Gender
   unitSystem: MeasurementSystem
 }
+
+export interface ClientSessionState {
+  lastUpdate: number
+  accumulatedCalories: number
+}

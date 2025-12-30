@@ -15,14 +15,22 @@ redisClient.connect().catch((err) => {
   logger.error('Failed to connect to Redis:', err)
 })
 
+export const pubSubClient = redisClient.duplicate()
+pubSubClient.on('error', (err) => logger.error('Redis Pub/Sub Client Error', err))
+
 export const disconnect = async (): Promise<void> => {
+  const quitPromises: Promise<string | void>[] = []
   if (redisClient.isOpen) {
-    try {
-      await redisClient.quit()
-      logger.info('Redis client disconnected successfully.')
-    } catch (err) {
-      logger.error('Failed to disconnect from Redis:', err)
-    }
+    quitPromises.push(redisClient.quit())
+  }
+  if (pubSubClient.isOpen) {
+    quitPromises.push(pubSubClient.quit())
+  }
+  try {
+    await Promise.all(quitPromises)
+    logger.info('Redis clients disconnected successfully.')
+  } catch (err) {
+    logger.error('Failed to disconnect from Redis:', err)
   }
 }
 

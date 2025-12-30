@@ -1,27 +1,42 @@
 // lib/broadcaster.ts
-import redisClient from './redis'
+import redisClient, { pubSubClient } from './redis'
 import logger from '@/utils/logger'
 import { ServerMessage } from '@/types/websocket'
 
-const CHANNEL = 'hrm-channel'
+const CHANNEL = 'hrm-data'
 
-export function broadcast(message: ServerMessage) {
-  redisClient.publish(CHANNEL, JSON.stringify(message))
-}
+export class RedisPubSubBroadcaster {
+  private subscriber: typeof pubSubClient
 
-export function subscribe(
-  onMessage: (channel: string, message: string) => void
-) {
-  const subscriber = redisClient.duplicate()
-  subscriber.connect()
-  subscriber.subscribe(CHANNEL, onMessage)
-  logger.info(`Subscribed to Redis channel: ${CHANNEL}`)
+  constructor() {
+    this.subscriber = pubSubClient.duplicate()
+    this.subscriber.connect().catch((err) => {
+      logger.error({ err }, 'Failed to connect Redis subscriber client')
+    })
+  }
 
-  return {
-    unsubscribe: () => {
-      subscriber.unsubscribe(CHANNEL)
-      subscriber.quit()
-      logger.info(`Unsubscribed from Redis channel: ${CHANNEL}`)
-    },
+  async broadcastHrmData(message: ServerMessage): Promise<void> {
+    try {
+      await redisClient.publish(CHANNEL, JSON.stringify(message))
+    } catch (error) {
+      logger.error({ error }, 'Failed to broadcast HRM data')
+    }
+  }
+
+  subscribeToHrmData(onMessage: (message: string) => void): void {
+    this.subscriber.subscribe(CHANNEL, onMessage).catch((err) => {
+      logger.error({ err }, `Failed to subscribe to Redis channel: ${CHANNEL}`)
+    })
+    logger.info(`Subscribed to Redis channel: ${CHANNEL}`)
+  }
+
+  async disconnect(): Promise<void> {
+    try {
+      await this.subscriber.unsubscribe(CHANNEL)
+      await this.subscriber.quit()
+      logger.info(`Unsubscribed and disconnected from Redis channel: ${CHANNEL}`)
+    } catch (error) {
+      logger.error({ error }, 'Failed to disconnect broadcaster')
+    }
   }
 }

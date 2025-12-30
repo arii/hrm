@@ -16,7 +16,7 @@ export class RedisHrmDataRepository {
       return undefined
     }
     return {
-      clientId: data.clientId,
+      clientId: data.clientId ?? '',
       value: Number(data.value),
       maxHr: Number(data.maxHr),
       age: Number(data.age),
@@ -30,7 +30,7 @@ export class RedisHrmDataRepository {
       const keys: string[] = []
       for await (const key of redisClient.scanIterator({
         MATCH: `${HRM_DATA_KEY_PREFIX}*`,
-        COUNT: 100, // Adjust count as needed for performance
+        COUNT: 100,
       })) {
         keys.push(key)
       }
@@ -39,15 +39,16 @@ export class RedisHrmDataRepository {
         return []
       }
 
-      const pipeline = redisClient.pipeline()
-      keys.forEach((key) => pipeline.hGetAll(key))
-      const results = await pipeline.exec()
+      const multi = redisClient.multi()
+      keys.forEach((key) => {
+        multi.hGetAll(key)
+      })
+      const results = (await multi.exec()) as (Record<string, string> | null)[]
 
       return results
-        .map((result) => {
-          const hrmData = result as Record<string, string>
-          if (hrmData && hrmData.clientId) {
-            return {
+        .map((hrmData) => {
+          if (hrmData && typeof hrmData === 'object' && hrmData.clientId) {
+            const result: HrmStreamData = {
               clientId: hrmData.clientId,
               value: Number(hrmData.value),
               maxHr: Number(hrmData.maxHr),
@@ -55,6 +56,7 @@ export class RedisHrmDataRepository {
               calories: Number(hrmData.calories),
               name: hrmData.name ?? '',
             }
+            return result
           }
           return null
         })

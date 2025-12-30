@@ -25,8 +25,7 @@ import { RedisHrmDataRepository } from '../lib/repositories/RedisHrmDataReposito
 import { RedisClientSessionRepository } from '../lib/repositories/RedisClientSessionRepository.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
-import { broadcast } from '../lib/broadcaster.js'
-import { subscribe } from '../lib/broadcaster.js'
+import { RedisPubSubBroadcaster } from '../lib/broadcaster.js'
 
 let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
@@ -35,6 +34,7 @@ let services: AppServices
 
 const hrmDataRepository = new RedisHrmDataRepository()
 const clientSessionRepository = new RedisClientSessionRepository()
+const broadcaster = new RedisPubSubBroadcaster()
 const clientSockets = new Map<string, WebSocket>()
 
 const getRequestParams = (req: IncomingMessage): URLSearchParams => {
@@ -60,7 +60,7 @@ const initSocketManager = (
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
-  subscribe((channel, message) => {
+  broadcaster.subscribeToHrmData((message: string) => {
     try {
       const parsedMessage: ServerMessage = JSON.parse(message)
       wsServerInstance.clients.forEach((client) => {
@@ -68,13 +68,13 @@ const initSocketManager = (
           sendWebSocketMessage(
             client as ExtWebSocket,
             parsedMessage,
-            `redis-broadcast:${channel}`
+            `redis-broadcast:hrm-data`
           )
         }
       })
     } catch (error) {
       logger.error(
-        { error, channel },
+        { error, channel: 'hrm-data' },
         'Failed to process message from Redis channel'
       )
     }
@@ -160,11 +160,12 @@ const initSocketManager = (
 
 export const resetSocketManager = async () => {
   await hrmDataRepository.clear()
+  await broadcaster.disconnect()
 }
 
 const broadcastState = async () => {
   const payload = await hrmDataRepository.findAll()
-  broadcast({
+  await broadcaster.broadcastHrmData({
     type: 'HRM_UPDATE',
     payload,
   })

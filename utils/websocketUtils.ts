@@ -2,13 +2,11 @@
 /**
  * @internal
  * Provides standardized, type-safe utilities for sending and broadcasting
- * WebSocket messages. This version is updated to use a Redis-based
- * Pub/Sub broadcaster for scalability.
+ * WebSocket messages.
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ExtWebSocket, ServerMessage } from '../types/websocket.js'
 import logger from './logger.js'
-import { broadcast as redisBroadcast } from '../lib/broadcaster.js'
 
 /**
  * Sends a typed WebSocket message to a single client.
@@ -34,14 +32,6 @@ export const sendWebSocketMessage = (
       'Failed to send WebSocket message.'
     )
   }
-}
-
-/**
- * Broadcasts a typed WebSocket message to all connected clients across
- * all server instances via Redis Pub/Sub.
- */
-export const broadcast = (message: ServerMessage): void => {
-  redisBroadcast(message)
 }
 
 /**
