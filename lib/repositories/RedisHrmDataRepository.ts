@@ -26,28 +26,43 @@ export class RedisHrmDataRepository {
   }
 
   async findAll(): Promise<HrmStreamData[]> {
-    const data: HrmStreamData[] = []
     try {
+      const keys: string[] = []
       for await (const key of redisClient.scanIterator({
         MATCH: `${HRM_DATA_KEY_PREFIX}*`,
-        COUNT: 100,
+        COUNT: 100, // Adjust count as needed for performance
       })) {
-        const hrmData = await redisClient.hGetAll(key)
-        if (hrmData && hrmData.clientId) {
-          data.push({
-            clientId: hrmData.clientId,
-            value: Number(hrmData.value),
-            maxHr: Number(hrmData.maxHr),
-            age: Number(hrmData.age),
-            calories: Number(hrmData.calories),
-            name: hrmData.name ?? '',
-          })
-        }
+        keys.push(key)
       }
+
+      if (keys.length === 0) {
+        return []
+      }
+
+      const pipeline = redisClient.pipeline()
+      keys.forEach((key) => pipeline.hGetAll(key))
+      const results = await pipeline.exec()
+
+      return results
+        .map((result) => {
+          const hrmData = result as Record<string, string>
+          if (hrmData && hrmData.clientId) {
+            return {
+              clientId: hrmData.clientId,
+              value: Number(hrmData.value),
+              maxHr: Number(hrmData.maxHr),
+              age: Number(hrmData.age),
+              calories: Number(hrmData.calories),
+              name: hrmData.name ?? '',
+            }
+          }
+          return null
+        })
+        .filter((item): item is HrmStreamData => item !== null)
     } catch (error) {
-      logger.error('Error scanning HRM data keys from Redis:', error)
+      logger.error('Error finding all HRM data from Redis:', error)
+      return []
     }
-    return data
   }
 
   async save(data: HrmStreamData): Promise<void> {
@@ -70,11 +85,16 @@ export class RedisHrmDataRepository {
 
   async clear(): Promise<void> {
     try {
+      const keys: string[] = []
       for await (const key of redisClient.scanIterator({
         MATCH: `${HRM_DATA_KEY_PREFIX}*`,
         COUNT: 100,
       })) {
-        await redisClient.del(key)
+        keys.push(key)
+      }
+
+      if (keys.length > 0) {
+        await redisClient.del(keys)
       }
     } catch (error) {
       logger.error('Error clearing HRM data keys from Redis:', error)

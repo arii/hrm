@@ -15,4 +15,15 @@ redisClient.connect().catch((err) => {
   logger.error('Failed to connect to Redis:', err)
 })
 
+export const disconnect = async (): Promise<void> => {
+  if (redisClient.isOpen) {
+    try {
+      await redisClient.quit()
+      logger.info('Redis client disconnected successfully.')
+    } catch (err) {
+      logger.error('Failed to disconnect from Redis:', err)
+    }
+  }
+}
+
 export default redisClient

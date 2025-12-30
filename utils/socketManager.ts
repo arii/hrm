@@ -22,6 +22,7 @@ import { sendWebSocketMessage, ConnectionMonitor } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { RedisHrmDataRepository } from '../lib/repositories/RedisHrmDataRepository.js'
+import { RedisClientSessionRepository } from '../lib/repositories/RedisClientSessionRepository.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
 import { broadcast } from '../lib/broadcaster.js'
@@ -33,11 +34,8 @@ let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
 const hrmDataRepository = new RedisHrmDataRepository()
+const clientSessionRepository = new RedisClientSessionRepository()
 const clientSockets = new Map<string, WebSocket>()
-const clientSessionState = new Map<
-  string,
-  { lastUpdate: number; accumulatedCalories: number }
->()
 
 const getRequestParams = (req: IncomingMessage): URLSearchParams => {
   try {
@@ -115,7 +113,7 @@ const initSocketManager = (
         calories: 0,
       }
       await hrmDataRepository.save(newClient)
-      clientSessionState.set(extWs.clientId, {
+      await clientSessionRepository.save(extWs.clientId, {
         lastUpdate: Date.now(),
         accumulatedCalories: 0,
       })
@@ -140,7 +138,7 @@ const initSocketManager = (
           )
           try {
             await hrmDataRepository.deleteById(extWs.clientId)
-            clientSessionState.delete(extWs.clientId)
+            await clientSessionRepository.deleteById(extWs.clientId)
             await broadcastState()
           } catch (err) {
             logger.error(
@@ -162,7 +160,6 @@ const initSocketManager = (
 
 export const resetSocketManager = async () => {
   await hrmDataRepository.clear()
-  clientSessionState.clear()
 }
 
 const broadcastState = async () => {
@@ -229,11 +226,10 @@ const handleIncomingMessage = async (
       }
       case 'HRM_INPUT': {
         const existingData = await hrmDataRepository.findById(clientId)
-        const sessionState = clientSessionState.get(clientId)
+        const sessionState = await clientSessionRepository.findById(clientId)
         if (existingData && sessionState) {
           const now = Date.now()
           const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
-          sessionState.lastUpdate = now
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
@@ -246,7 +242,12 @@ const handleIncomingMessage = async (
             })
             currentAccumulated += caloriesBurned
           }
-          sessionState.accumulatedCalories = currentAccumulated
+
+          await clientSessionRepository.save(clientId, {
+            lastUpdate: now,
+            accumulatedCalories: currentAccumulated,
+          })
+
           await hrmDataRepository.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
