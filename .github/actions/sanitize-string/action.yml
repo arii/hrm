@@ -13,7 +13,7 @@ outputs:
     description: 'The sanitized and truncated string.'
     value: ${{ steps.sanitize.outputs.result }}
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - id: validate-input
       shell: bash
