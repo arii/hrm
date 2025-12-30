@@ -67,11 +67,15 @@ export class RedisHrmDataRepository {
 
   async clear(): Promise<void> {
     try {
+      const keys: string[] = []
       for await (const key of redisClient.scanIterator({
         MATCH: `${HRM_DATA_KEY_PREFIX}*`,
         COUNT: 100,
       })) {
-        await redisClient.del(key)
+        keys.push(key)
+      }
+      if (keys.length > 0) {
+        await redisClient.del(keys)
       }
     } catch (error) {
       logger.error('Error clearing HRM data keys from Redis:', error)
