@@ -11,5 +11,6 @@ module.exports = {
     // Disable body line length constraints to allow pasting logs/stack traces
     'body-max-line-length': [0],
   },
-  helpUrl: 'https://github.com/conventional-changelog/commitlint/#what-is-commitlint',
+  helpUrl:
+    'https://github.com/conventional-changelog/commitlint/#what-is-commitlint',
 }
