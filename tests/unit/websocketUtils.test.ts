@@ -11,10 +11,9 @@ import {
 } from '@jest/globals'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
-import { ConnectionMonitor } from '../../utils/websocketUtils';
-import { WebSocket } from 'ws'
+import { ConnectionMonitor } from '../../utils/websocketUtils'
 import logger from '../../utils/logger'
-import { ExtWebSocket import { ExtWebSocket } from '../../types/websocket'
+import { ExtWebSocket } from '@/types/websocket'
 
 // Mock the logger to prevent console output during tests
 jest.mock('../../utils/logger', () => ({
@@ -30,14 +29,14 @@ jest.mock('../../utils/logger', () => ({
 // Mock the 'ws' module to control the WebSocket server and clients
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
-    const wss = new EventEmitter() as any as jest.Mocked<WebSocketServer>
-    wss.clients = new Set<any>()
+    const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
+    wss.clients = new Set<MockWebSocket>()
     return wss
   }),
   WebSocket: jest.fn(),
 }))
 
-class MockWebSocket extends EventEmitter implements Partial<WebSocket> {
+class MockWebSocket extends EventEmitter implements Partial<ExtWebSocket> {
   isAlive = true
   clientId = `test-client-${Math.random()}`
   terminate = jest.fn()
@@ -57,8 +56,8 @@ describe('ConnectionMonitor', () => {
   let mockWss: jest.Mocked<WebSocketServer>
   let connectionMonitor: ConnectionMonitor
   const WATCHDOG_INTERVAL = 5000 // Use a shorter interval for testing
-  let setIntervalSpy: jest.SpiedFunction<any>
-  let clearIntervalSpy: jest.SpiedFunction<any>
+  let setIntervalSpy: jest.SpyInstance
+  let clearIntervalSpy: jest.SpyInstance
 
   beforeEach(() => {
     jest.useFakeTimers()
@@ -73,7 +72,7 @@ describe('ConnectionMonitor', () => {
     connectionMonitor.stop()
     jest.useRealTimers()
     jest.clearAllMocks()
-    ;(mockWss.clients as Set<any>).clear()
+    ;(mockWss.clients as Set<MockWebSocket>).clear()
     setIntervalSpy.mockRestore()
     clearIntervalSpy.mockRestore()
   })
@@ -105,7 +104,7 @@ describe('ConnectionMonitor', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
     const unresponsiveClient = new MockWebSocket()
     unresponsiveClient.isAlive = false // Simulate a client that missed a pong
-    ;(mockWss.clients as Set<any>).add(unresponsiveClient)
+    ;(mockWss.clients as Set<MockWebSocket>).add(unresponsiveClient)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)
@@ -121,7 +120,7 @@ describe('ConnectionMonitor', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
     const responsiveClient = new MockWebSocket()
     responsiveClient.isAlive = true
-    ;(mockWss.clients as Set<any>).add(responsiveClient)
+    ;(mockWss.clients as Set<MockWebSocket>).add(responsiveClient)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)
@@ -133,7 +132,7 @@ describe('ConnectionMonitor', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
     const activeClient = new MockWebSocket()
     activeClient.isAlive = true
-    ;(mockWss.clients as Set<any>).add(activeClient)
+    ;(mockWss.clients as Set<MockWebSocket>).add(activeClient)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)
@@ -149,9 +148,9 @@ describe('ConnectionMonitor', () => {
     const client3 = new MockWebSocket() // Responsive
 
     client2.isAlive = false
-    ;(mockWss.clients as Set<any>).add(client1)
-    ;(mockWss.clients as Set<any>).add(client2)
-    ;(mockWss.clients as Set<any>).add(client3)
+    ;(mockWss.clients as Set<MockWebSocket>).add(client1)
+    ;(mockWss.clients as Set<MockWebSocket>).add(client2)
+    ;(mockWss.clients as Set<MockWebSocket>).add(client3)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)

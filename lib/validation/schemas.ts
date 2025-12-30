@@ -110,13 +110,18 @@ export const SpotifyCommandMessageSchema = z.object({
     z.literal('PREVIOUS'),
     z.literal('TRANSFER_PLAYBACK'),
     z.literal('SET_VOLUME'),
-    z.literal('GET_DEVICES'), // <--- ADDED
+    z.literal('GET_DEVICES'),
   ]),
   deviceId: z.string().optional(),
   volume: z.number().min(0).max(100).optional(),
   playlistUri: z.string().optional(),
   contextUri: z.string().optional(),
   uri: z.string().optional(),
+})
+
+export const SpotifyExecutionMessageSchema = z.object({
+  type: z.literal('EXECUTE_SPOTIFY'),
+  payload: SpotifyCommandMessageSchema,
 })
 
 export const GetStateMessageSchema = z.object({
@@ -141,7 +146,7 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   TimerConfigMessageSchema,
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
-  PingMessageSchema, // Add PING schema to the union
+  PingMessageSchema,
 ])
 
 // =================================================================
@@ -155,10 +160,17 @@ export const HrmStreamDataSchema = z.object({
   name: z.string().optional(),
   age: z.number().optional(),
   calories: z.number(),
-});
+})
 
-export const TimerModeSchema = z.enum(['STOPWATCH', 'TABATA']);
-export const TimerPhaseSchema = z.enum(['IDLE', 'PREPARE', 'WORK', 'REST', 'COOLDOWN', 'RUNNING']);
+export const TimerModeSchema = z.enum(['STOPWATCH', 'TABATA'])
+export const TimerPhaseSchema = z.enum([
+  'IDLE',
+  'PREPARE',
+  'WORK',
+  'REST',
+  'COOLDOWN',
+  'RUNNING',
+])
 
 export const TimerDataSchema = z.object({
   isRunning: z.boolean(),
@@ -171,7 +183,7 @@ export const TimerDataSchema = z.object({
   restDuration: z.number(),
   soundToPlay: z.enum(['WORK', 'REST', 'COUNTDOWN']).optional(),
   soundEventId: z.number(),
-});
+})
 
 export const SpotifyDeviceSchema = z.object({
   id: z.string(),
@@ -181,7 +193,7 @@ export const SpotifyDeviceSchema = z.object({
   name: z.string(),
   type: z.string(),
   volume_percent: z.number(),
-});
+})
 
 export const SpotifyPlaybackStateSchema = z.object({
   trackId: z.string().nullable(),
@@ -193,15 +205,39 @@ export const SpotifyPlaybackStateSchema = z.object({
   devices: z.array(SpotifyDeviceSchema),
   volume: z.number(),
   isMuted: z.boolean(),
-});
+})
 
 export const SpotifyPlaylistItemSchema = z.object({
   id: z.string(),
   name: z.string(),
   uri: z.string(),
-});
+})
 
 export const SpotifyPlaylistSchema = z.object({
   name: z.string(),
   uri: z.string(),
-});
+})
+
+export const MeasurementSystemSchema = z.enum(['METRIC', 'IMPERIAL'])
+
+export const HeartRateZoneSchema = z.enum([
+  'PEAK',
+  'CARDIO',
+  'FAT_BURN',
+  'WARM_UP',
+  'REST',
+])
+
+export const WorkoutItemSchema = z.object({
+  category: z.string(),
+  exercises: z.array(z.string()),
+})
+
+export const WorkoutDataSchema = z.array(WorkoutItemSchema)
+
+export const WorkoutColumnItemSchema = z.object({
+  title: z.string(),
+  details: z.string().optional(),
+})
+
+export const GenderSchema = z.enum(['MALE', 'FEMALE'])

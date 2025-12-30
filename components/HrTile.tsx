@@ -1,6 +1,5 @@
 // File: components/HrTile.tsx
 'use client'
-import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -11,6 +10,16 @@ import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
 import { useTheme } from '@mui/material/styles'
+
+export interface HrTileProps {
+  name: string
+  bpm: number
+  percentMax: number
+  calories?: number
+  isConnected?: boolean
+  isAlerting?: boolean
+  alertMessage?: string
+}
 
 // Define the style for the centered overlay
 const overlayStyles = {

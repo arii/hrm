@@ -1,7 +1,14 @@
 import React from 'react'
 import Skeleton from '@mui/material/Skeleton'
 import Box from '@mui/material/Box'
-import { DashboardSectionLoadingSkeletonProps } from '@/types'
+
+export interface DashboardSectionLoadingSkeletonProps {
+  width?: string | number
+  height?: string | number
+  shape?: 'text' | 'rectangular' | 'rounded' | 'circular'
+  count?: number
+  className?: string
+}
 
 const DashboardSectionLoadingSkeleton: React.FC<
   DashboardSectionLoadingSkeletonProps

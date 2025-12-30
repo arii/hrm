@@ -1,6 +1,6 @@
 // utils/units.ts
 
-import { MeasurementSystem } from '../types/index'
+import { MeasurementSystem } from '../types'
 
 export const KG_TO_LBS = 2.20462
 
