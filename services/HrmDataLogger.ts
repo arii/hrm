@@ -12,7 +12,10 @@ export interface HrmDataLogEntry {
 }
 
 export class HrmDataLogger {
-  private activeSessions: Map<string, { sessionId: string; stream: fs.WriteStream }> = new Map()
+  private activeSessions: Map<
+    string,
+    { sessionId: string; stream: fs.WriteStream }
+  > = new Map()
 
   constructor() {
     // Ensure the logs directory exists
@@ -27,7 +30,10 @@ export class HrmDataLogger {
 
     const stream = fs.createWriteStream(logFilePath, { flags: 'a' })
     stream.on('error', (err) => {
-      logger.error({ error: err, sessionId }, 'Error writing to HRM session log file')
+      logger.error(
+        { error: err, sessionId },
+        'Error writing to HRM session log file'
+      )
     })
 
     this.activeSessions.set(clientId, { sessionId, stream })
@@ -39,7 +45,10 @@ export class HrmDataLogger {
     if (session) {
       session.stream.end()
       this.activeSessions.delete(clientId)
-      logger.info({ clientId, sessionId: session.sessionId }, 'HRM session ended')
+      logger.info(
+        { clientId, sessionId: session.sessionId },
+        'HRM session ended'
+      )
     }
   }
 
