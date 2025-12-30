@@ -133,6 +133,7 @@ export interface SpotifyPlaybackState {
   durationMs: number | null
   progressMs: number | null
   volumePercent: number | null
+  devices: SpotifyDevice[]
 }
 
 export interface SpotifyPlaylistItem {

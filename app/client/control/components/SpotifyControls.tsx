@@ -6,6 +6,9 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import FormControl from '@mui/material/FormControl'
+import MenuItem from '@mui/material/MenuItem'
+import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -20,16 +23,19 @@ const SpotifyControls = () => {
   const router = useRouter()
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
     useWebSocket()
+  const { devices = [] } = spotifyData
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
-  const [selectedDeviceId] = useState<string>('')
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const prevActiveIdRef = useRef<string | undefined>(undefined)
 
   const handleTrackSelect = (uri: string) => {
+    const targetDeviceId = resolveTargetDeviceId()
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
       command: 'PLAY',
       uri: uri,
-      ...(selectedDeviceId ? { deviceId: selectedDeviceId } : {}),
+      ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
     }
     sendData(message)
   }
@@ -53,13 +59,57 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
+  // 4. Update selection logic and volume sync
+  useEffect(() => {
+    const activeDevice = devices.find((d) => d.is_active)
+    const activeId = activeDevice?.id
+
+    // Sync Selected Device
+    if (prevActiveIdRef.current === undefined && activeId) {
+      // Initial sync
+      setSelectedDeviceId(activeId)
+    } else if (activeId && activeId !== prevActiveIdRef.current) {
+      // Active device changed externally, update selection
+      setSelectedDeviceId(activeId)
+    } else {
+      // Check if selected device is still valid
+      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
+      if (selectedDeviceId && !selectedStillExists) {
+        setSelectedDeviceId(activeId ?? '')
+      }
+      if (!selectedDeviceId && activeId) {
+        setSelectedDeviceId(activeId)
+      }
+    }
+    prevActiveIdRef.current = activeId ?? undefined
+
+    // Sync Volume (if not dragging)
+    if (activeDevice && typeof activeDevice.volume === 'number') {
+      if (activeDevice.volume !== volume) {
+        setVolume(activeDevice.volume)
+      }
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [devices]) // Rely on devices update to trigger sync
+
+  const resolveTargetDeviceId = useCallback(() => {
+    if (selectedDeviceId) {
+      return selectedDeviceId
+    }
+    const activeDevice = devices.find((device) => device.is_active)
+    return activeDevice?.id
+  }, [devices, selectedDeviceId])
+
   const sendSpotifyCommand = useCallback(
     (
       command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
       overriddenDeviceId?: string
     ) => {
       const targetDeviceId =
-        overriddenDeviceId !== undefined ? overriddenDeviceId : selectedDeviceId
+        overriddenDeviceId !== undefined
+          ? overriddenDeviceId
+          : resolveTargetDeviceId()
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,
@@ -67,7 +117,7 @@ const SpotifyControls = () => {
       }
       sendData(message)
     },
-    [selectedDeviceId, sendData]
+    [resolveTargetDeviceId, sendData]
   )
 
   const handlePlaybackCommand = useCallback(
@@ -87,7 +137,7 @@ const SpotifyControls = () => {
   const sendVolumeCommand = useCallback(
     (value: number) => {
       if (connectionStatus !== 'Connected') return
-      const targetDeviceId = selectedDeviceId
+      const targetDeviceId = resolveTargetDeviceId()
 
       // Prevent sending volume command if no device is targeted
       if (!targetDeviceId) return
@@ -104,7 +154,7 @@ const SpotifyControls = () => {
       sendData(message)
       lastSentVolumeRef.current = messageKey
     },
-    [connectionStatus, selectedDeviceId, sendData]
+    [connectionStatus, resolveTargetDeviceId, sendData]
   )
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -190,6 +240,43 @@ const SpotifyControls = () => {
               onToggleMute={toggleMute}
             />
 
+            {devices.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
+                  Device
+                </Typography>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={selectedDeviceId}
+                    onChange={(e) => {
+                      const deviceId = e.target.value
+                      setSelectedDeviceId(deviceId)
+                      if (deviceId) {
+                        sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
+                      }
+                    }}
+                    disabled={connectionStatus !== 'Connected'}
+                    sx={{
+                      color: 'white',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'grey.600',
+                      },
+                      '& .MuiSvgIcon-root': {
+                        color: 'white',
+                      },
+                    }}
+                  >
+                    {devices
+                      .filter((device) => device.id)
+                      .map((device) => (
+                        <MenuItem key={device.id} value={device.id ?? ''}>
+                          {device.name} {device.is_active && '(Active)'}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+              </Box>
+            )}
             <Button
               variant="outlined"
               size="small"

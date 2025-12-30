@@ -41,6 +41,7 @@ export const INITIAL_STATE: WebSocketState = {
     durationMs: 0,
     progressMs: 0,
     volumePercent: 70,
+    devices: [],
   },
   activeAlerts: [],
   spotifyServiceInitialized: false,

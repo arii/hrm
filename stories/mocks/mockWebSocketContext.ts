@@ -10,6 +10,7 @@ export const mockSpotifyData: SpotifyData = {
   durationMs: 0,
   progressMs: 0,
   volumePercent: 50,
+  devices: [],
 }
 
 export const mockSpotifyDataNoActivePlayback: SpotifyData = {
@@ -20,6 +21,7 @@ export const mockSpotifyDataNoActivePlayback: SpotifyData = {
   durationMs: 0,
   progressMs: 0,
   volumePercent: 70,
+  devices: [],
 }
 
 export const mockTimerData: TimerData = {

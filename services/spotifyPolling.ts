@@ -86,6 +86,7 @@ export class SpotifyPolling implements SpotifyService {
     durationMs: 0,
     progressMs: 0,
     volumePercent: 70,
+    devices: [],
   }
 
   private sdk: SafeSpotifyApi | null = null
@@ -331,11 +332,10 @@ export class SpotifyPolling implements SpotifyService {
           is_active: d.is_active,
         }))
 
+      this.state.devices = validDevices
       this.broadcastUpdate({
         type: 'SPOTIFY_UPDATE',
-        payload: {
-          ...this.getState(),
-        },
+        payload: this.getState(),
       })
       logger.debug({ count: validDevices.length }, 'Devices refreshed')
     } catch (error) {
