@@ -421,6 +421,7 @@ function getReviewContextFromEnv(): ReviewContext {
   }
 }
 
+<<<<<<< HEAD
 // 3. Refactored buildReviewPrompt
 export async function buildReviewPrompt(
   diff: string,
@@ -462,6 +463,166 @@ export async function buildReviewPrompt(
       return context.previousReviews;
     }
   })() : 'None';
+=======
+function parseSpecializedRules(markdownContent: string) {
+  const rules = []
+  const sections = markdownContent.split('### ').slice(1)
+  for (const section of sections) {
+    const lines = section.split('\n')
+    if (!lines[0]) continue
+    const name = lines[0].trim()
+    const patternsLine = lines.find((line) => line.startsWith('**Patterns:**'))
+    if (!patternsLine) continue
+
+    const patterns = patternsLine
+      .replace('**Patterns:**', '')
+      .trim()
+      .split(',')
+      .map((p) => p.trim())
+    const ruleContent = lines.slice(lines.indexOf(patternsLine) + 1).join('\n')
+    rules.push({ name, patterns, rules: `### ${name}\n${ruleContent}` })
+  }
+  return rules
+}
+
+function getSpecializedRules(
+  changedFiles: string[],
+  specializedRulesFileContent: string
+): string {
+  const specializedRulesConfig = parseSpecializedRules(
+    specializedRulesFileContent
+  )
+  let appliedRules = ''
+  for (const rule of specializedRulesConfig) {
+    if (
+      rule.patterns.some((pattern) =>
+        changedFiles.some((file) => {
+          // If a pattern ends with a '/', treat it as a directory prefix
+          if (pattern.endsWith('/')) {
+            return file.startsWith(pattern)
+          }
+          // Otherwise, use original logic for full or partial file name match
+          return file.endsWith(`/${pattern}`) || file === pattern
+        })
+      )
+    ) {
+      appliedRules += rule.rules
+    }
+  }
+  return appliedRules
+}
+
+function buildReviewPrompt(
+  diff: string,
+  context: ReviewContext,
+  contextContent: string,
+  changedFiles: string[]
+): string {
+  const isReReview = context.reviewCount > 0
+  const reviewIteration = isReReview
+    ? `Re-Review #${context.reviewCount + 1}`
+    : 'Initial Review'
+
+  let prompt = `# Code Review Task: ${reviewIteration}\n`
+
+  if (context.failedChecks && context.failedChecks.length > 0) {
+    const checksTable = `| Check Name | Status | Log URL |\n|------------|--------|---------|\n${context.failedChecks
+      .map(
+        (check) =>
+          `| ${check.name} | ${check.conclusion} | [View Log](${check.detailsUrl}) |`
+      )
+      .join('\n')}`
+
+    const logsSection = context.failedChecks
+      .map((check) => {
+        const truncatedLog =
+          check.logs && check.logs.length > 15000
+            ? check.logs.substring(0, 15000) + '\n... [LOGS TRUNCATED]'
+            : check.logs || ''
+        return `
+<details>
+<summary><strong>${check.name}</strong> (${check.conclusion})</summary>
+
+\`\`\`
+${truncatedLog || 'No logs available.'}
+\`\`\`
+
+</details>
+`
+      })
+      .join('\n')
+
+    prompt += `
+## 🚨 CI Failure Analysis
+The following CI checks failed. Your primary task is to **analyze the provided logs** to identify the root cause and suggest a specific code fix.
+
+${checksTable}
+
+### Failed Job Logs
+${logsSection}
+
+**Your Task:**
+1.  **Analyze the logs** for each failed check to understand the error.
+2.  **Examine the diff** to find the code that caused the failure.
+3.  **Provide a clear, root-cause explanation** of the failure.
+4.  **Offer a specific, actionable code change** to fix the issue.
+
+---
+`
+  }
+
+  prompt += `## Review Context
+- **PR #${context.prNumber}**: ${context.prTitle}
+- **Author**: ${context.prAuthor}
+- **Files Changed**: ${context.filesChanged}
+- **Lines Changed**: ~${context.totalLoc}
+- **Areas Affected**: ${context.changedAreas}
+- **Review Depth**: ${context.reviewDepth}
+- **Labels**: ${context.prLabels || 'none'}
+`
+
+  if (context.issueNumber) {
+    prompt += `- **Linked Issue #${context.issueNumber}**: ${context.issueTitle}\n`
+  }
+
+  // Add re-review specific context
+  if (isReReview) {
+    prompt += `\n## Review History
+- **Previous Reviews**: ${context.reviewCount}
+- **Resolved Comments**: ${context.resolvedCount}
+- **Changes Requested**: ${context.changesRequested}
+
+### Focus Areas for Re-Review:
+1. Verify that previous feedback has been addressed
+2. Check for introduction of new issues
+3. Assess overall code quality improvement
+4. Determine if the PR is ready for approval
+
+### Previous Review Feedback:
+${
+  context.previousReviews
+    ? (() => {
+        interface Review {
+          createdAt: string
+          body: string
+        }
+        try {
+          const reviews = JSON.parse(context.previousReviews) as Review[]
+          return reviews
+            .map(
+              (r: Review, i: number) =>
+                `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
+            )
+            .join('\n---\n')
+        } catch (_e) {
+          return context.previousReviews // Fallback to raw string if parsing fails
+        }
+      })()
+    : 'None'
+}
+`
+  }
+>>>>>>> feat(ai): Enhance Gemini code review with specialized focus and artifacts
 
   let testCoverageAlert = '';
   if (context.missingTests) {
@@ -499,7 +660,101 @@ export async function buildReviewPrompt(
     promptTemplate = promptTemplate.replace(new RegExp(`{{${key}}}`, 'g'), value);
   }
 
+<<<<<<< HEAD
   return promptTemplate;
+=======
+  // Add project-specific context
+  prompt += `\n## Project Context
+- This is a Next.js/TypeScript HRM (Heart Rate Monitor) application
+- Focus on real-time data handling and WebSocket performance
+- Security is critical (authentication, data privacy)
+- Maintain backward compatibility unless explicitly breaking change
+- Follow patterns established in DEVELOPMENT.md and DESIGN_GUIDELINES.md
+`
+
+  // Add specialized rules based on changed files
+  const specializedRulesFileContent =
+    contextContent.match(
+      /--- Start of Context File: docs\/ai\/specialized-rules.md ---\n([\s\S]*?)--- End of Context File: docs\/ai\/specialized-rules.md ---/
+    )?.[1] || ''
+  const specializedRules = getSpecializedRules(
+    changedFiles,
+    specializedRulesFileContent
+  )
+  if (specializedRules) {
+    prompt += `\n## Specialized Focus Areas for this PR
+${specializedRules}
+`
+  }
+
+  // Add specific checks for common issues from audit
+  prompt += `\n## Known Areas of Technical Debt (from audit):
+When reviewing, be especially vigilant about:
+- Callback hell in server.ts (prefer async/await)
+- Type safety (avoid 'any', use proper TypeScript types)
+- Error handling (ensure proper try/catch and error messages)
+- WebSocket connection management (prevent memory leaks)
+- Authentication state consistency
+`
+
+  prompt += `
+## 🛠️ Stack Enforcement:
+- **TypeScript**: No usage of 'any'. Strict interface compliance.
+- **Next.js**: Use Server Components where possible; manage real-time state in Client Components using React Context.
+- **Error Handling**: Use the custom error types defined in \`lib/errors.ts\`.
+`
+
+  prompt += `\n## Response Format (JSON)
+Return a JSON object with:
+\`\`\`json
+{
+  "reviewComment": "Your formatted markdown review comment",
+  "labels": ["label1", "label2"],
+  "verdict": "approve" | "request_changes" | "comment",
+  "reviewArtifact": {
+    "findings": [
+      {
+        "file": "path/to/file.ts",
+        "line": 42,
+        "category": "Security" | "Performance" | "Debt" | "Style" | "Logic",
+        "severity": "Critical" | "High" | "Medium" | "Low",
+        "message": "Detailed description of the finding.",
+        "suggestion": "A concrete suggestion for improvement."
+      }
+    ]
+  }
+}
+\`\`\`
+
+Make your feedback:
+- **Specific**: Reference exact file/line numbers.
+- **Actionable**: Provide concrete suggestions.
+- **Constructive**: Focus on improvement, not criticism.
+- **Contextual**: Consider the change in the broader codebase.
+- **Balanced**: Acknowledge good practices while noting improvements.
+
+**Markdown Formatting (STRICT):**
+- You MUST add **TWO NEWLINES** (\`\\n\\n\`) before every header.
+- You MUST add **ONE NEWLINE** (\`\\n\`) after every header.
+- Do not clump sections together.
+- Ensure lists are properly spaced.
+`
+
+  return prompt
+>>>>>>> feat(ai): Enhance Gemini code review with specialized focus and artifacts
+}
+
+function getChangedFilesFromDiff(diff: string): string[] {
+  const files: string[] = []
+  // Regex matches 'diff --git a/<path> b/<path>' and handles spaces
+  const regex = /^diff --git a\/(.+?) b\//gm
+  let match
+  while ((match = regex.exec(diff)) !== null) {
+    if (match[1]) {
+      files.push(match[1])
+    }
+  }
+  return files
 }
 
 async function runReviewPreset(
@@ -550,6 +805,7 @@ async function runReviewPreset(
     return
   }
 
+<<<<<<< HEAD
   const prompt = await buildReviewPrompt(diff, context, contextContent)
   const text = await generateContentWithFallback(genAI, prompt, {
     generationConfig: {
@@ -563,6 +819,54 @@ async function runReviewPreset(
             items: { type: SchemaType.STRING },
           },
           verdict: { type: SchemaType.STRING },
+=======
+  const changedFiles = getChangedFilesFromDiff(diff)
+  const prompt = buildReviewPrompt(diff, context, contextContent, changedFiles)
+
+  try {
+    const text = await generateContentWithFallback(genAI, prompt, {
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          properties: {
+            reviewComment: { type: SchemaType.STRING },
+            labels: {
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.STRING },
+            },
+            verdict: { type: SchemaType.STRING },
+            reviewArtifact: {
+              type: SchemaType.OBJECT,
+              properties: {
+                findings: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      file: { type: SchemaType.STRING },
+                      line: { type: SchemaType.INTEGER },
+                      category: { type: SchemaType.STRING },
+                      severity: { type: SchemaType.STRING },
+                      message: { type: SchemaType.STRING },
+                      suggestion: { type: SchemaType.STRING },
+                    },
+                    required: [
+                      'file',
+                      'line',
+                      'category',
+                      'severity',
+                      'message',
+                      'suggestion',
+                    ],
+                  },
+                },
+              },
+              required: ['findings'],
+            },
+          },
+          required: ['reviewComment', 'labels', 'verdict', 'reviewArtifact'],
+>>>>>>> feat(ai): Enhance Gemini code review with specialized focus and artifacts
         },
         required: ['reviewComment', 'labels'],
       },
