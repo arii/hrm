@@ -231,6 +231,7 @@ jobs:
             git branch -D "$BRANCH" 2>/dev/null || true
 
             git checkout -b "$BRANCH"
+            # Create an empty commit to establish the branch and enable PR creation.
             git commit --allow-empty -m "chore: initiate jules session"
             # Use --force to ensure the remote branch accurately reflects the latest automated state,
             # effectively overwriting any previous partial or failed pushes.
