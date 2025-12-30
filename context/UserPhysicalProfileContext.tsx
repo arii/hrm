@@ -1,9 +1,9 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useMemo } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import useLocalStorage from '@/hooks/useLocalStorage'
-import { UserPhysicalProfile, Gender, MeasurementSystem } from '@/types/core'
+import { UserPhysicalProfile } from '@/types/core'
 
 // Default state for new users (or unauthenticated guests)
 const DEFAULT_PHYSICAL_PROFILE: UserPhysicalProfile = {
@@ -48,9 +48,12 @@ export const UserPhysicalProfileProvider: React.FC<{
     }
   }, [session, profile.userId, setProfile])
 
-  const updateProfile = (updates: Partial<UserPhysicalProfile>) => {
-    setProfile((prev) => ({ ...prev, ...updates }))
-  }
+  const updateProfile = useCallback(
+    (updates: Partial<UserPhysicalProfile>) => {
+      setProfile((prev) => ({ ...prev, ...updates }))
+    },
+    [setProfile]
+  )
 
   const value = useMemo(
     () => ({
@@ -58,7 +61,7 @@ export const UserPhysicalProfileProvider: React.FC<{
       updateProfile,
       isLoading: status === 'loading',
     }),
-    [profile, status, setProfile]
+    [profile, status, updateProfile]
   )
 
   return (
