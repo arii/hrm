@@ -232,7 +232,8 @@ jobs:
 
             git checkout -b "$BRANCH"
             git commit --allow-empty -m "chore: initiate jules session"
-            # Use --force to overwrite the remote branch from a previous failed run
+            # Use --force to ensure the remote branch accurately reflects the latest automated state,
+            # effectively overwriting any previous partial or failed pushes.
             git push --force -u origin "$BRANCH"
 
             gh pr create \
@@ -241,6 +242,9 @@ jobs:
               --title "$TITLE" \
               --body-file pr_body.md
           fi
+
+          # Clean up the temporary file
+          rm pr_body.md
 
       - name: 'Gemini: Verify Client Exists'
         if: env.AGENT_PROVIDER == 'gemini'
