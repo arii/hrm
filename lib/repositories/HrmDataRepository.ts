@@ -30,7 +30,7 @@ export class HrmDataRepository {
    * @param data The client data to save.
    */
   save(data: HrmStreamData): void {
-    this.clientData.set(data.clientId, data)
+    this.clientData.set(data.clientId, { ...data, name: data.name || 'New User' })
   }
 
   /**

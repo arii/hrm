@@ -83,6 +83,7 @@ describe('webSocketReducer', () => {
       maxHr: 190,
       age: 30,
       calories: 10,
+      name: 'User A',
     }
 
     it('should add a new user', () => {

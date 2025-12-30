@@ -57,7 +57,7 @@ export class RedisHrmDataRepository {
       maxHr: data.maxHr.toString(),
       age: (data.age || 0).toString(),
       calories: data.calories.toString(),
-      name: data.name || '',
+      name: data.name || 'New User',
     })
   }
 
