@@ -63,4 +63,9 @@ function validateAndGetEnv() {
   return envInstance
 }
 
+/**
+ * The validated and typed environment variables.
+ * This object is assigned only after successful validation, making it
+ * immutable and type-safe from the start.
+ */
 export const env: z.infer<typeof schema> = validateAndGetEnv()
