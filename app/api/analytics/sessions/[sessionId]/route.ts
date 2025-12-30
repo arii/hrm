@@ -29,7 +29,7 @@ export async function GET(
 
     return NextResponse.json({ data })
   } catch (error) {
-    // @ts-expect-error
+    // @ts-expect-error - The 'code' property is not part of the type definition for the error object
     if (error.code === 'ENOENT') {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
