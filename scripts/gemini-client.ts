@@ -6,6 +6,7 @@ import {
 } from '@google/generative-ai'
 import { readFile, writeFile } from 'fs/promises'
 import path from 'path'
+import { parseConflicts } from './utils/git-conflicts';
 
 // Simple arg parsing
 const args = process.argv.slice(2)
@@ -207,6 +208,8 @@ async function main() {
 
   if (preset === 'review') {
     await runReviewPreset(genAI, contextContent, outputFile)
+  } else if (preset === 'resolve-conflict') {
+    await runConflictResolution(genAI, contextFiles, outputFile);
   } else {
     // Default/Generic mode
     let finalTask = task
@@ -781,6 +784,86 @@ async function runReviewPreset(
     await handleError(error)
   }
 }
+
+async function runConflictResolution(
+  genAI: GoogleGenerativeAI,
+  conflictFiles: string[],
+  outputFile: string | null | undefined
+) {
+  console.log(`🔍 Analyzing conflicts in: ${conflictFiles.join(', ')}`);
+
+  const allConflicts = [];
+  for (const file of conflictFiles) {
+    if (!file.trim()) continue;
+    const fileConflicts = await parseConflicts(file.trim());
+    allConflicts.push(...fileConflicts);
+  }
+
+  if (allConflicts.length === 0) {
+    console.log("✅ No conflicts detected by parser.");
+    return;
+  }
+
+  const prompt = `
+You are an Expert Git Conflict Resolver for a TypeScript/Next.js application.
+Your task is to resolve the following merge conflicts intelligently.
+
+### Instructions:
+1. **Analyze Semantics**: Understand what "HEAD" (Current) and the "Incoming" branch were trying to achieve.
+2. **Preserve Both**: If both sides added valid, non-conflicting code (e.g., different imports, different map keys), KEEP BOTH.
+3. **Select Best**: If logic directly contradicts, choose the more robust/modern implementation (usually Incoming if it's a refactor).
+4. **Output Format**: Return a JSON array where each object contains the \`id\` of the conflict and the \`resolution\` string (the code to replace the conflict block with).
+
+### Conflicts to Resolve:
+${JSON.stringify(allConflicts, null, 2)}
+
+### Response Format (JSON Only):
+\`\`\`json
+[
+  {
+    "id": "conflict-src/file.ts-10",
+    "resolution": "import { A } from 'a';\\nimport { B } from 'b';"
+  }
+]
+\`\`\`
+`;
+
+  try {
+    const text = await generateContentWithFallback(genAI, prompt, {
+       generationConfig: { responseMimeType: "application/json" }
+    });
+
+    // Process the JSON output
+    const jsonProcessor = new JsonProcessor();
+    const result = jsonProcessor.process(text);
+
+    if (result.success) {
+        // In a real scenario, you might apply these changes directly to the files here.
+        // For now, we generate the report as requested.
+        const resolutions = result.data as any[];
+
+        let report = `# 🤖 Conflict Resolution Plan\n\n`;
+        report += `I have analyzed ${allConflicts.length} conflicts and propose the following resolutions:\n\n`;
+
+        for (const res of resolutions) {
+           const original = allConflicts.find(c => c.id === res.id);
+           if (!original) continue;
+
+           report += `### 📂 \`${original.file}\` (Lines ${original.startLine}-${original.endLine})\n`;
+           report += `**Resolution:**\n\`\`\`typescript\n${res.resolution}\n\`\`\`\n\n`;
+           report += `--- \n`;
+        }
+
+        await writeOutput(report, outputFile);
+    } else {
+        throw new Error("Failed to parse AI resolution JSON");
+    }
+
+  } catch (error) {
+    await handleError(error);
+  }
+}
+
 
 async function writeOutput(
   content: string,
