@@ -111,6 +111,7 @@ const initSocketManager = (
     })
 
     logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
+    services.hrmDataLogger.startSession(clientId)
 
     if (!hrmDataRepository.findById(clientId)) {
       // Initialize new client
@@ -136,6 +137,7 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      services.hrmDataLogger.endSession(clientId)
 
       // CRITICAL: Do NOT immediately delete clientData.
       // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
@@ -288,6 +290,7 @@ const handleIncomingMessage = (
             value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
           })
+          services.hrmDataLogger.log(clientId, message.data.value)
         }
         broadcastState()
         break

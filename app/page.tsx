@@ -79,6 +79,9 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
+      <Box sx={{ mb: 2 }}>
+        <a href="/analytics">View Analytics</a>
+      </Box>
       <Box sx={mainGridStyles}>
         {/*
          * The extra Box with height: '100%' is necessary to ensure the TimerDisplay
