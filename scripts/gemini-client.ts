@@ -815,23 +815,32 @@ export async function runConflictResolution(
   outputFile: string | null | undefined
 ) {
 
-  const conflictFilePaths = await readFile(contextFile, 'utf-8').then(content => content.split('\n'));
-  const allConflicts = [];
+  const conflictFilePaths = await readFile(contextFile, 'utf-8').then(content => content.split('\0'));
+  let report = `# 🤖 Conflict Resolution Plan\n\n`;
+  let totalConflicts = 0;
+  const prCodeRoot = path.resolve(process.cwd(), 'pr-code');
+
   for (const file of conflictFilePaths) {
     if (!file.trim()) continue;
-    const trimmedFile = `pr-code/${file.trim()}`;
+
+    const trimmedFile = path.normalize(path.join('pr-code', file.trim()));
+    const absolutePath = path.resolve(process.cwd(), trimmedFile);
+
+    if (!absolutePath.startsWith(prCodeRoot)) {
+      console.warn(`Skipping potential path traversal: ${file}`);
+      continue;
+    }
+
     const fileConflicts = await parseConflicts(trimmedFile);
-    allConflicts.push(...fileConflicts);
-  }
+    totalConflicts += fileConflicts.length;
 
-  if (allConflicts.length === 0) {
-    console.log("✅ No conflicts detected by parser.");
-    return;
-  }
+    if (fileConflicts.length === 0) {
+      continue;
+    }
 
-  const prompt = `
+    const prompt = `
 You are an Expert Git Conflict Resolver for a TypeScript/Next.js application.
-Your task is to resolve the following merge conflicts intelligently.
+Your task is to resolve the following merge conflicts intelligently for the file \`${trimmedFile}\`.
 
 ### Instructions:
 1. **Analyze Semantics**: Understand what "HEAD" (Current) and the "Incoming" branch were trying to achieve.
@@ -840,7 +849,7 @@ Your task is to resolve the following merge conflicts intelligently.
 4. **Output Format**: Return a JSON array where each object contains the \`id\` of the conflict and the \`resolution\` string (the code to replace the conflict block with).
 
 ### Conflicts to Resolve:
-${JSON.stringify(allConflicts, null, 2)}
+${JSON.stringify(fileConflicts, null, 2)}
 
 ### Response Format (JSON Only):
 \`\`\`json
@@ -853,40 +862,41 @@ ${JSON.stringify(allConflicts, null, 2)}
 \`\`\`
 `;
 
-  try {
-    const text = await generateContentWithFallback(genAI, prompt, {
-       generationConfig: { responseMimeType: "application/json" }
-    });
+    try {
+      const text = await generateContentWithFallback(genAI, prompt, {
+         generationConfig: { responseMimeType: "application/json" }
+      });
 
-    // Process the JSON output
-    const jsonProcessor = new JsonProcessor();
-    const result = jsonProcessor.process(text);
+      // Process the JSON output
+      const jsonProcessor = new JsonProcessor();
+      const result = jsonProcessor.process(text);
 
-    if (result.success && isResolutionArray(result.data)) {
-        // In a real scenario, you might apply these changes directly to the files here.
-        // For now, we generate the report as requested.
-        const resolutions = result.data;
+      if (result.success && isResolutionArray(result.data)) {
+          const resolutions = result.data;
 
-        let report = `# 🤖 Conflict Resolution Plan\n\n`;
-        report += `I have analyzed ${allConflicts.length} conflicts and propose the following resolutions:\n\n`;
+          for (const res of resolutions) {
+             const original = fileConflicts.find(c => c.id === res.id);
+             if (!original) continue;
 
-        for (const res of resolutions) {
-           const original = allConflicts.find(c => c.id === res.id);
-           if (!original) continue;
+             report += `### 📂 \`${original.file}\` (Lines ${original.startLine}-${original.endLine})\n`;
+             report += `**Resolution:**\n\`\`\`typescript\n${res.resolution}\n\`\`\`\n\n`;
+             report += `--- \n`;
+          }
+      } else {
+          throw new Error("Failed to parse AI resolution JSON");
+      }
 
-           report += `### 📂 \`${original.file}\` (Lines ${original.startLine}-${original.endLine})\n`;
-           report += `**Resolution:**\n\`\`\`typescript\n${res.resolution}\n\`\`\`\n\n`;
-           report += `--- \n`;
-        }
-
-        await writeOutput(report, outputFile);
-    } else {
-        throw new Error("Failed to parse AI resolution JSON");
+    } catch (error) {
+      await handleError(error);
     }
-
-  } catch (error) {
-    await handleError(error);
   }
+
+  if (totalConflicts === 0) {
+    console.log("✅ No conflicts detected by parser.");
+    return;
+  }
+
+  await writeOutput(report, outputFile);
 }
 
 
