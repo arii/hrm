@@ -21,6 +21,10 @@ export interface ConflictBlock {
  * 3. (Optional) Common Ancestor Content (ignored)
  * 4. Incoming Content
  * 5. Incoming Label (e.g., branch-name)
+ *
+ * @note This regex is designed to be robust for common cases but may have limitations
+ * with highly unusual or malformed conflict markers. It is an area to monitor for
+ * potential edge-case failures in real-world usage.
  */
 const CONFLICT_REGEX =
   /^<<<<<<< (.*?)\n([\s\S]*?)(?:^\|\|\|\|\|\|\| .*?\n[\s\S]*?)?^=======\n([\s\S]*?)^>>>>>>> (.*?)$/gm

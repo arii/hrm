@@ -134,12 +134,8 @@ const HrTile = ({
               </Typography>
 
               {/* Calorie Display */}
-              <Typography
-                variant="h6"
-                sx={{ fontWeight: 600 }}
-                data-testid="calorie-display"
-              >
-                {calories.toFixed(1)}{' '}
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {Math.floor(calories)}{' '}
                 <Typography
                   variant="caption"
                   component="span"
