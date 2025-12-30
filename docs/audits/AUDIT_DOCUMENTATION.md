@@ -78,7 +78,7 @@ The `README.md` `Quick Start` section needs to be corrected for clarity and accu
 
 **Proposed README `Quick Start` Section:**
 
-```markdown
+````markdown
 ## Quick Start
 
 ### 1. Prerequisites
@@ -88,29 +88,29 @@ The `README.md` `Quick Start` section needs to be corrected for clarity and accu
 
 ### 2. Setup
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/arii/hrm.git
-    cd hrm
-    ```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/arii/hrm.git
+   cd hrm
+   ```
+````
 
-2.  **Configure Environment:**
+2. **Configure Environment:**
 
-    ```bash
-    cp .env.example .env.local
-    ```
+   ```bash
+   cp .env.example .env.local
+   ```
 
-    _Edit `.env.local` and add your Spotify and NextAuth credentials._
+   _Edit `.env.local` and add your Spotify and NextAuth credentials._
 
-3.  **Install Dependencies:**
-    ```bash
-    pnpm install --frozen-lockfile
-    ```
-
-4.  **Install Browser Binaries:**
-    ```bash
-    pnpm exec playwright install --with-deps
-    ```
+3. **Install Dependencies:**
+   ```bash
+   pnpm install --frozen-lockfile
+   ```
+4. **Install Browser Binaries:**
+   ```bash
+   pnpm exec playwright install --with-deps
+   ```
 
 ### 3. Run the Application
 
@@ -119,4 +119,7 @@ pnpm run dev
 ```
 
 The application will be available at `http://127.0.0.1:3000`.
+
+```
+
 ```
