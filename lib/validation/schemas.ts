@@ -224,4 +224,4 @@ export const SpotifyExecutionMessageSchema = z.object({
 })
 export const WorkoutColumnItemSchema = z.object({ title: z.string(), details: z.string().optional() }
 )
-});
+}
