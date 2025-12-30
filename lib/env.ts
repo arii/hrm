@@ -1,16 +1,13 @@
 import { z } from 'zod'
 
-let envSchema = z.object({
+const baseSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
-  PORT: z.string().transform(Number).default('3000'),
+  PORT: z.string().default('3000').transform(Number),
   HOST: z.string().default('0.0.0.0'),
   NEXTAUTH_URL: z.string().url().min(1),
   NEXTAUTH_SECRET: z.string().min(1),
-  SPOTIFY_CLIENT_ID: z.string().min(1),
-  SPOTIFY_CLIENT_SECRET: z.string().min(1),
-  NEXT_PUBLIC_WS_URL: z.string().url(),
   SPOTIFY_DEBUG: z
     .enum(['true', 'false', '1', '0'])
     .transform((v) => v === 'true' || v === '1')
@@ -28,14 +25,19 @@ let envSchema = z.object({
   MAX_WS_CLIENTS: z.string().default('1000').transform(Number),
 })
 
-// When testing, some variables are not required
-if (process.env.TESTING === 'true') {
-  envSchema = envSchema.partial({
-    SPOTIFY_CLIENT_ID: true,
-    SPOTIFY_CLIENT_SECRET: true,
-    NEXT_PUBLIC_WS_URL: true,
-  })
-}
+const testingSchema = baseSchema.extend({
+  SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
+  SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
+  NEXT_PUBLIC_WS_URL: z.string().url().optional(),
+})
+
+const productionSchema = baseSchema.extend({
+  SPOTIFY_CLIENT_ID: z.string().min(1),
+  SPOTIFY_CLIENT_SECRET: z.string().min(1),
+  NEXT_PUBLIC_WS_URL: z.string().url(),
+})
+
+const envSchema = process.env.TESTING === 'true' ? testingSchema : productionSchema
 
 const parsedEnv = envSchema.safeParse(process.env)
 
