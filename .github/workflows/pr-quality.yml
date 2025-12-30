@@ -127,7 +127,9 @@ jobs:
 
       - name: Setup Environment
         id: setup
-        uses: ./.github/actions/setup-env
+        run: |
+          ./.github/actions/setup-env > setup-output.log 2>&1
+        shell: bash
         continue-on-error: true
 
       - name: Upload Setup Report
