@@ -7,7 +7,7 @@ import {
   mockTimerData,
 } from './mocks/mockWebSocketContext'
 import { TimerData } from '@/types/websocket'
-import { userEvent, within } from '@storybook/test'
+import { userEvent, within } from '@storybook/testing-library'
 
 const meta: Meta<typeof TimerDisplay> = {
   title: 'Components/TimerDisplay',

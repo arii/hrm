@@ -6,7 +6,6 @@ import theme from "../theme/theme";
 initialize();
 
 const preview: Preview = {
-  decorators: [mswDecorator],
   parameters: {
     controls: {
       matchers: {
@@ -23,6 +22,7 @@ const preview: Preview = {
     }
   },
   decorators: [
+    mswDecorator,
     (Story) => (
       <ThemeProvider theme={theme}>
         <CssBaseline />
