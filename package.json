@@ -120,6 +120,9 @@
     "@types/react-dom": "^19.2.2",
     "@types/web-bluetooth": "^0.0.21",
     "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/ui": "^4.0.16",
     "babel-jest": "^30.2.0",
     "babel-plugin-react-compiler": "1.0.0",
     "cross-env": "^10.1.0",
@@ -148,6 +151,8 @@
     "tsx": "4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0",
+    "vite-tsconfig-paths": "^6.0.3",
+    "vitest": "^4.0.16",
     "wait-on": "^9.0.3"
   },
   "engines": {
