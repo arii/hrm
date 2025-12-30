@@ -10,7 +10,7 @@ def create_jules_session(prompt, branch, title, owner, repo_name):
     """
     api_key = os.environ.get("JULES_API_KEY")
     if not api_key:
-        sys.stderr.write("Error: JULES_API_KEY environment variable not set. Please set it to your Jules API key.\n")
+        print("::error::JULES_API_KEY environment variable not set. Please set it to your Jules API key.")
         sys.exit(1)
 
     url = os.environ.get("JULES_API_URL", "https://api.jules.ai/v1/sessions")
@@ -40,9 +40,9 @@ def create_jules_session(prompt, branch, title, owner, repo_name):
             # Log for humans
             sys.stderr.write(f"Successfully created Jules session: {session_url}\n")
         else:
-            sys.stderr.write(f"Jules session created, but no URL found in response: {session_data}\n")
+            print(f"::warning::Jules session created, but no URL found in response: {session_data}")
     except requests.exceptions.RequestException as e:
-        sys.stderr.write(f"Error creating Jules session: {e}\n")
+        print(f"::error::Error creating Jules session: {e}")
         sys.exit(1)
 
 def main():
