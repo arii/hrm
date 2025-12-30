@@ -28,20 +28,6 @@ interface Resolution {
   resolution: string;
 }
 
-function isResolutionArray(data: unknown): data is Resolution[] {
-  if (!Array.isArray(data)) {
-    return false;
-  }
-  return data.every(item =>
-    typeof item === 'object' &&
-    item !== null &&
-    'id' in item &&
-    typeof item.id === 'string' &&
-    'resolution' in item &&
-    typeof item.resolution === 'string'
-  );
-}
-
 // List of models to try in order.
 // `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
 // It is used as the primary fallback to mitigate rate-limiting issues with the experimental `gemini-2.0-flash-exp` model.
@@ -809,7 +795,7 @@ async function runReviewPreset(
   }
 }
 
-export async function runConflictResolution(
+async function runConflictResolution(
   genAI: GoogleGenerativeAI,
   contextFile: string,
   outputFile: string | null | undefined
@@ -862,10 +848,10 @@ ${JSON.stringify(allConflicts, null, 2)}
     const jsonProcessor = new JsonProcessor();
     const result = jsonProcessor.process(text);
 
-    if (result.success && isResolutionArray(result.data)) {
+    if (result.success) {
         // In a real scenario, you might apply these changes directly to the files here.
         // For now, we generate the report as requested.
-        const resolutions = result.data;
+        const resolutions = result.data as Resolution[];
 
         let report = `# 🤖 Conflict Resolution Plan\n\n`;
         report += `I have analyzed ${allConflicts.length} conflicts and propose the following resolutions:\n\n`;
