@@ -1,5 +1,4 @@
 // lib/repositories/HrmDataRepository.ts
-import { ClientId } from '../../types/branded'
 import { HrmStreamData } from '../../types/core'
 
 /**
@@ -7,20 +6,20 @@ import { HrmStreamData } from '../../types/core'
  * Encapsulates the storage and retrieval of HrmStreamData.
  */
 export class HrmDataRepository {
-  private clientData = new Map<ClientId, HrmStreamData>()
+  private clientData = new Map<string, HrmStreamData>()
 
   /**
    * Finds a client's data by their ID.
-   * @param {ClientId} id The client's unique identifier.
-   * @returns {HrmStreamData | undefined} The client's data or undefined if not found.
+   * @param id The client's unique identifier.
+   * @returns The client's data or undefined if not found.
    */
-  findById(id: ClientId): HrmStreamData | undefined {
+  findById(id: string): HrmStreamData | undefined {
     return this.clientData.get(id)
   }
 
   /**
    * Retrieves all client data entries.
-   * @returns {HrmStreamData[]} An array of all client data.
+   * @returns An array of all client data.
    */
   findAll(): HrmStreamData[] {
     return Array.from(this.clientData.values())
@@ -28,8 +27,7 @@ export class HrmDataRepository {
 
   /**
    * Saves or updates a client's data.
-   * @param {HrmStreamData} data The client data to save.
-   * @returns {void}
+   * @param data The client data to save.
    */
   save(data: HrmStreamData): void {
     this.clientData.set(data.clientId, data)
@@ -37,16 +35,14 @@ export class HrmDataRepository {
 
   /**
    * Deletes a client's data by their ID.
-   * @param {ClientId} id The client's unique identifier.
-   * @returns {void}
+   * @param id The client's unique identifier.
    */
-  deleteById(id: ClientId): void {
+  deleteById(id: string): void {
     this.clientData.delete(id)
   }
 
   /**
    * Clears all client data from the repository.
-   * @returns {void}
    */
   clear(): void {
     this.clientData.clear()

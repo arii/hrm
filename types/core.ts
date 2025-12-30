@@ -1,5 +1,3 @@
-import { ClientId, DeviceId } from './branded'
-
 /**
  * @file This file contains the centralized, canonical data structures for the application.
  *
@@ -75,7 +73,7 @@ export interface HeartRateDataPoint {
  * Represents a single, real-time heart rate data stream from a client.
  */
 export interface HrmStreamData {
-  clientId: ClientId
+  clientId: string
   value: number
   maxHr: number
   name?: string
@@ -123,7 +121,7 @@ export interface TimerData {
  * Represents a single device available for Spotify playback.
  */
 export interface SpotifyDevice {
-  id: DeviceId
+  id: string
   is_active: boolean
   is_private_session: boolean
   is_restricted: boolean

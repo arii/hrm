@@ -7,7 +7,6 @@ import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
-import { DeviceIdSchema } from '@/types/branded'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -179,7 +178,7 @@ const SpotifyDisplay = () => {
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
         volume: sanitized,
-        deviceId: DeviceIdSchema.parse(targetDeviceId),
+        deviceId: targetDeviceId,
       }
       sendData(message)
     },
@@ -244,9 +243,7 @@ const SpotifyDisplay = () => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
       command,
-      ...(targetDeviceId && {
-        deviceId: DeviceIdSchema.parse(targetDeviceId),
-      }),
+      ...(targetDeviceId && { deviceId: targetDeviceId }),
     }
     sendData(message)
   }

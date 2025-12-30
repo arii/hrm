@@ -1,6 +1,5 @@
 import { WebSocketContextType, HrmData } from '@/context/WebSocketContext'
 import { SpotifyData, TimerData } from '@/types/websocket'
-import { ClientIdSchema } from '@/types/branded'
 
 export const mockSpotifyData: SpotifyData = {
   trackId: 'test-track-id',
@@ -40,7 +39,7 @@ export const mockTimerData: TimerData = {
 }
 
 export const mockHrmData: HrmData = {
-  clientId: ClientIdSchema.parse('user-123e4567-e89b-12d3-a456-426614174000'),
+  clientId: '12345',
   value: 120,
   maxHr: 195,
   name: 'Test HRM',
