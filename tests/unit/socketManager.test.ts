@@ -18,7 +18,6 @@ import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { HrmData, StateSnapshot, ExtWebSocket } from '../../types/websocket'
-import { ClientCommandMessageSchema } from '../../lib/validation/schemas'
 import {
   broadcast,
   sendWebSocketMessage,
@@ -341,15 +340,10 @@ describe('WebSocket Manager', () => {
 
     it('should handle unknown message types', () => {
       const message = JSON.stringify({ type: 'SOME_GARBAGE' })
-      jest
-        .spyOn(ClientCommandMessageSchema, 'parse')
-        .mockReturnValue({ type: 'SOME_GARBAGE' })
-
       mockWs.emit('message', message.toString())
-
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         expect.any(Object),
-        'Unknown message type received'
+        'WebSocket message validation failed'
       )
     })
   })
