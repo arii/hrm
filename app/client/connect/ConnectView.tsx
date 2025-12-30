@@ -14,7 +14,7 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
 import {
   ToggleButtonGroup,
@@ -48,7 +48,7 @@ interface ConnectViewProps {
   onWeightBlur: () => void
   weightError: string | null
   gender: Gender
-  setGender: React.Dispatch<React.SetStateAction<Gender>>
+  setGender: (gender: Gender) => void
   unitSystem: MeasurementSystem
   onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean

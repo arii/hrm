@@ -19,6 +19,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
+import { SpotifyDevice } from '@/types/core'
 
 // 1. State Shape
 interface SpotifyDisplayState {
@@ -27,6 +28,7 @@ interface SpotifyDisplayState {
   lastVolume: number // Last non-zero volume
   selectedDeviceId: string
   deviceMenuAnchor: null | HTMLElement
+  devices: SpotifyDevice[]
 }
 
 // 2. Actions
@@ -40,6 +42,7 @@ type SpotifyDisplayAction =
       type: 'SYNC_WITH_WEBSOCKET'
       payload: { volume?: number; isMuted?: boolean }
     }
+  | { type: 'SET_DEVICES'; payload: SpotifyDevice[] }
 
 // 3. Initial State Factory
 const initialStateFactory = (
@@ -51,6 +54,7 @@ const initialStateFactory = (
   lastVolume: volume && volume > 0 ? volume : 70, // Store last non-zero volume
   selectedDeviceId: '',
   deviceMenuAnchor: null,
+  devices: [],
 })
 
 // 4. Reducer Logic
@@ -104,6 +108,8 @@ const spotifyDisplayReducer = (
       return { ...state, deviceMenuAnchor: action.payload }
     case 'CLOSE_DEVICE_MENU':
       return { ...state, deviceMenuAnchor: null }
+    case 'SET_DEVICES':
+      return { ...state, devices: action.payload }
     default:
       return state
   }
@@ -130,9 +136,15 @@ const SpotifyDisplay = () => {
   // 5. Integrate useReducer
   const [state, dispatch] = useReducer(
     spotifyDisplayReducer,
-    initialStateFactory(spotifyData.volume, spotifyData.isMuted ?? false)
+    initialStateFactory(spotifyData.volumePercent ?? 70, false)
   )
-  const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
+  const {
+    displayVolume,
+    isMuted,
+    selectedDeviceId,
+    deviceMenuAnchor,
+    devices,
+  } = state
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -156,17 +168,19 @@ const SpotifyDisplay = () => {
     }
     dispatch({
       type: 'SYNC_WITH_WEBSOCKET',
-      payload: { volume: spotifyData.volume, isMuted: spotifyData.isMuted },
+      payload: {
+        volume: spotifyData.volumePercent ?? 70,
+        isMuted: false,
+      },
     })
-  }, [spotifyData.volume, spotifyData.isMuted, isSliding])
+  }, [spotifyData.volumePercent, isSliding])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
     (volume: number) => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId =
-        selectedDeviceId ||
-        spotifyData.devices?.find((device) => device.is_active)?.id
+        selectedDeviceId || devices?.find((device) => device.is_active)?.id
       if (!targetDeviceId) {
         console.warn(
           '[SpotifyDisplay] No target device for volume command. Aborting.'
@@ -182,7 +196,7 @@ const SpotifyDisplay = () => {
       }
       sendData(message)
     },
-    [connectionStatus, selectedDeviceId, sendData, spotifyData.devices]
+    [connectionStatus, selectedDeviceId, sendData, devices]
   )
 
   // Handler for the VolumeSlider component's onChange
@@ -216,7 +230,6 @@ const SpotifyDisplay = () => {
 
   // Effect to auto-select the active device
   useEffect(() => {
-    const devices = spotifyData.devices || []
     if (devices.length === 0) {
       if (selectedDeviceId !== '') {
         dispatch({ type: 'SELECT_DEVICE', payload: '' })
@@ -225,7 +238,7 @@ const SpotifyDisplay = () => {
     }
     const activeDevice = devices.find((device) => device.is_active)
     if (!selectedDeviceId && activeDevice) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
+      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id ?? '' })
       return
     }
     if (
@@ -234,7 +247,7 @@ const SpotifyDisplay = () => {
     ) {
       dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
     }
-  }, [spotifyData.devices, selectedDeviceId])
+  }, [devices, selectedDeviceId])
 
   const sendSpotifyCommand = (
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
@@ -289,7 +302,7 @@ const SpotifyDisplay = () => {
     const displayTrackName = isWaiting
       ? 'No Active Playback'
       : spotifyData.trackName
-    const displayArtist = isWaiting ? '' : `— ${spotifyData.artist}`
+    const displayArtist = isWaiting ? '' : `— ${spotifyData.artistName}`
 
     return (
       <Box
@@ -395,7 +408,7 @@ const SpotifyDisplay = () => {
             onToggleMute={handleToggleMute}
           />
           <SpotifyDeviceSelectorWrapper
-            availableDevices={spotifyData.devices || []}
+            availableDevices={devices || []}
             deviceMenuAnchor={deviceMenuAnchor}
             onDeviceSelect={handleDeviceSelect}
             onMenuOpen={(e) =>

@@ -24,10 +24,11 @@ export class TimerQueries {
   public getState(): TimerData {
     return {
       isRunning: this.state.isRunning,
-      currentPhase: this.state.currentPhase,
+      phase: this.state.currentPhase,
       timeRemaining: this.state.timeRemaining,
       timeElapsed: this.state.timeElapsed,
-      caloriesBurned: 0, // Placeholder
+      cycle: 0, // Placeholder
+      totalCycles: 0, // Placeholder
       mode: this.state.mode,
       workDuration: this.state.workDuration,
       restDuration: this.state.restDuration,

@@ -24,7 +24,7 @@ const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
   const {
-    currentPhase,
+    phase,
     timeRemaining,
     timeElapsed,
     mode,
@@ -37,12 +37,12 @@ const TimerDisplay = () => {
   let phaseColor: string
   let phaseLabel: string
 
-  if (currentPhase === 'PREPARE') {
+  if (phase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
     phaseColor = '#F59E0B' // Yellow/Warning
     phaseLabel = 'GET READY'
-  } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
+  } else if (mode === 'STOPWATCH' && phase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
@@ -51,19 +51,17 @@ const TimerDisplay = () => {
     phaseLabel = 'RUNNING'
   } else if (
     mode === 'TABATA' &&
-    (currentPhase === 'WORK' ||
-      currentPhase === 'REST' ||
-      currentPhase === 'COOLDOWN')
+    (phase === 'WORK' || phase === 'REST' || phase === 'COOLDOWN')
   ) {
     // TABATA: Show remaining time MM:SS
     const mm = Math.floor(timeRemaining / 60)
     const ss = timeRemaining % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
 
-    if (currentPhase === 'WORK') {
+    if (phase === 'WORK') {
       phaseColor = '#EF4444' // Red
       phaseLabel = 'WORK'
-    } else if (currentPhase === 'REST') {
+    } else if (phase === 'REST') {
       phaseColor = '#22C55E' // Green
       phaseLabel = 'REST'
     } else {
@@ -90,7 +88,7 @@ const TimerDisplay = () => {
         border: '2px solid #1a1a1a', // Subtle border for definition
         position: 'relative',
         animation:
-          currentPhase === 'WORK' || currentPhase === 'REST'
+          phase === 'WORK' || phase === 'REST'
             ? 'pulse-opacity 1.5s infinite'
             : 'none',
       }}
@@ -139,7 +137,7 @@ const TimerDisplay = () => {
           flex: `0 0 ${SIDE_COLUMN_WIDTH}`,
         }}
       >
-        {currentPhase !== 'IDLE' && (
+        {phase !== 'IDLE' && (
           <SideLabel
             text={mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
             ariaLabel={`Timer mode: ${mode}`}
@@ -160,7 +158,7 @@ const TimerDisplay = () => {
         }}
       >
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
-        {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
+        {phase !== 'IDLE' && phase !== 'RUNNING' && (
           <Typography
             data-testid="timer-phase"
             variant="h6"

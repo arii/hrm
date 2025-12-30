@@ -275,7 +275,7 @@ const TimerControls = () => {
             {optimisticIsRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#EF4444' }}>
-            {timerData.currentPhase}
+            {timerData.phase}
           </Typography>
         </Box>
 

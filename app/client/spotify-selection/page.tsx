@@ -41,21 +41,11 @@ const SpotifySelectionPage = () => {
   }
 
   const handlePlaylistPlay = (uri: string) => {
-    const activeDevice = spotifyData.devices?.find((device) => device.is_active)
-    if (activeDevice) {
-      sendData({
-        type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
-        playlistUri: uri,
-        deviceId: activeDevice.id,
-      })
-    } else {
-      sendData({
-        type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
-        playlistUri: uri,
-      })
-    }
+    sendData({
+      type: 'SPOTIFY_COMMAND',
+      command: 'PLAY',
+      playlistUri: uri,
+    })
   }
 
   return (
@@ -72,7 +62,7 @@ const SpotifySelectionPage = () => {
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h6">Now Playing</Typography>
               <Typography>
-                {spotifyData.trackName} - {spotifyData.artist}
+                {spotifyData.trackName} - {spotifyData.artistName}
               </Typography>
             </Box>
           ) : (

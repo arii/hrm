@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { MeasurementSystem } from '@/types/core'
+import { MeasurementSystem, Gender } from '@/types/core'
 import { toKg, toDisplay } from '@/utils/units'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { useHrZone } from '@/hooks/useHrZone'
@@ -24,11 +24,6 @@ export default function ConnectPage() {
   )
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
-
-  // Effect to sync displayWeight when unitSystem changes
-  useEffect(() => {
-    setDisplayWeight(toDisplay(profile.weight, profile.unitSystem).toString())
-  }, [profile.unitSystem, profile.weight])
 
   // Use the custom hook for height input logic
   const {
@@ -134,12 +129,12 @@ export default function ConnectPage() {
       setUserHeight={handleHeightChange}
       onHeightBlur={handleHeightBlur}
       heightError={heightError}
-      userWeight={displayWeight}
+      userWeight={toDisplay(profile.weight, profile.unitSystem).toString()}
       setUserWeight={handleWeightChange}
       onWeightBlur={handleWeightBlur}
       weightError={weightError}
       gender={profile.gender}
-      setGender={(gender) => updateProfile({ gender })}
+      setGender={(gender: Gender) => updateProfile({ gender })}
       unitSystem={profile.unitSystem}
       onUnitChange={handleUnitChange}
       isConnected={isConnected}

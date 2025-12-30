@@ -99,6 +99,8 @@ export interface TimerData {
   workDuration: number
   restDuration: number
   isRunning: boolean
+  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
+  soundEventId?: number
 }
 
 /**
@@ -111,6 +113,8 @@ export type TimerPhase =
   | 'REST'
   | 'COMPLETED'
   | 'PAUSED'
+  | 'RUNNING'
+  | 'COOLDOWN'
 
 /**
  * Represents the operational modes of the timer.
@@ -129,4 +133,25 @@ export interface SpotifyPlaybackState {
   durationMs: number | null
   progressMs: number | null
   volumePercent: number | null
+}
+
+export interface SpotifyPlaylistItem {
+  id: string
+  name: string
+  uri: string
+}
+
+export interface SpotifyPlaylist {
+  id: string
+  name: string
+  uri: string
+  tracks: SpotifyPlaylistItem[]
+}
+
+export interface SpotifyDevice {
+  id: string | null
+  name: string
+  type: string
+  volume: number
+  is_active: boolean
 }

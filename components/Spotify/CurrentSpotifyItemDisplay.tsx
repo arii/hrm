@@ -51,7 +51,7 @@ const CurrentSpotifyItemDisplay = () => {
       {spotifyData.albumArtUrl ? (
         <Image
           src={spotifyData.albumArtUrl}
-          alt={spotifyData.albumName || 'Album art'}
+          alt={'Album art'}
           width={64}
           height={64}
           style={{ borderRadius: '4px' }}
@@ -74,10 +74,7 @@ const CurrentSpotifyItemDisplay = () => {
           {spotifyData.trackName}
         </Typography>
         <Typography variant="body2" sx={{ color: 'grey.400' }}>
-          {spotifyData.artist}
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'grey.500' }}>
-          {spotifyData.albumName}
+          {spotifyData.artistName}
         </Typography>
       </Box>
       {spotifyAuthenticated && !isReady && (

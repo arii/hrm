@@ -6,7 +6,7 @@ import { Box, useTheme } from '@mui/material'
 import { TimerData } from '@/types/core'
 import { keyframes } from '@emotion/react'
 
-const getPhaseGradient = (phase: TimerData['currentPhase']) => {
+const getPhaseGradient = (phase: TimerData['phase']) => {
   switch (phase) {
     case 'PREPARE':
       return 'linear-gradient(135deg, #fde047 0%, #f59e0b 100%)' // Yellow
@@ -27,7 +27,7 @@ const move = keyframes`
   100% { transform: translate(-50%, -50%) scale(1.1); }
 `
 
-const PhaseBackground = ({ phase }: { phase: TimerData['currentPhase'] }) => {
+const PhaseBackground = ({ phase }: { phase: TimerData['phase'] }) => {
   const theme = useTheme()
   const [particles] = useState(() =>
     Array.from({ length: 20 }).map(() => ({

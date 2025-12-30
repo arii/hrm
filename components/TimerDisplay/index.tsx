@@ -35,10 +35,12 @@ const phaseProps: PhaseProps = {
   REST: { color: '#22c55e', label: 'REST' },
   RUNNING: { color: '#3b82f6', label: 'RUNNING' },
   IDLE: { color: '#6b7280', label: 'IDLE' },
+  COMPLETED: { color: '#6b7280', label: 'COMPLETED' },
+  PAUSED: { color: '#6b7280', label: 'PAUSED' },
   COOLDOWN: { color: '#6b7280', label: 'COOLDOWN' },
 }
 
-const getPhaseProps = (phase: TimerData['currentPhase']) => {
+const getPhaseProps = (phase: TimerData['phase']) => {
   return phaseProps[phase]
 }
 
@@ -46,7 +48,7 @@ const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
   const {
-    currentPhase,
+    phase,
     timeRemaining,
     timeElapsed,
     mode,
@@ -54,15 +56,15 @@ const TimerDisplay = () => {
     restDuration = 1,
   } = timerData
 
-  const { color: phaseColor, label: phaseLabel } = getPhaseProps(currentPhase)
+  const { color: phaseColor, label: phaseLabel } = getPhaseProps(phase)
 
   let displayTime: string
   let progressPercentage: number = 0
 
-  if (currentPhase === 'PREPARE') {
+  if (phase === 'PREPARE') {
     displayTime = String(timeRemaining)
     progressPercentage = (timeRemaining / PREPARE_DURATION) * 100
-  } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
+  } else if (mode === 'STOPWATCH' && phase === 'RUNNING') {
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
@@ -71,7 +73,7 @@ const TimerDisplay = () => {
     const mm = Math.floor(timeRemaining / 60)
     const ss = timeRemaining % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
-    const duration = currentPhase === 'WORK' ? workDuration : restDuration
+    const duration = phase === 'WORK' ? workDuration : restDuration
     progressPercentage =
       duration > 0 ? ((duration - timeRemaining) / duration) * 100 : 0
   } else {
@@ -91,7 +93,7 @@ const TimerDisplay = () => {
         border: '1px solid rgba(255, 255, 255, 0.1)',
       }}
     >
-      <PhaseBackground phase={currentPhase} />
+      <PhaseBackground phase={phase} />
 
       {/* Status Indicator */}
       <Box
@@ -129,7 +131,7 @@ const TimerDisplay = () => {
         />
       </Box>
       {/* Mode Indicator - Rotated on left side */}
-      {currentPhase !== 'IDLE' && (
+      {phase !== 'IDLE' && (
         <Box
           sx={{
             position: 'absolute',

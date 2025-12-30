@@ -147,6 +147,7 @@ const initSocketManager = (
       // Initialize new client
       const newClient: HrmStreamData = {
         clientId: extWs.clientId,
+        name: 'New User',
         value: 0,
         maxHr: 185,
         age: 30,

@@ -2,11 +2,7 @@
 // All other types should be defined in their respective files.
 
 // Import shared domain types to avoid re-definition
-import {
-  MeasurementSystem,
-  Gender,
-  UserPhysicalProfile,
-} from './core'
+import { MeasurementSystem, Gender, UserPhysicalProfile } from './core'
 import { TimerMode, TimerPhase } from './genericTimer'
 
 export interface HrTileProps {

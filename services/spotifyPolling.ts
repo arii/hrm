@@ -79,15 +79,13 @@ export class SpotifyPolling implements SpotifyService {
   private lastPlaybackState: boolean | null = null
 
   private state: SpotifyData = {
-    trackId: null,
     trackName: 'Awaiting Login...',
-    artist: '',
-    albumName: '',
+    artistName: '',
     albumArtUrl: '',
     isPlaying: false,
-    devices: [],
-    volume: 70,
-    isMuted: false,
+    durationMs: 0,
+    progressMs: 0,
+    volumePercent: 70,
   }
 
   private sdk: SafeSpotifyApi | null = null
@@ -257,10 +255,8 @@ export class SpotifyPolling implements SpotifyService {
           this.lastPlaybackState = false
           this.state = {
             ...this.state,
-            trackId: null,
             trackName: 'Nothing is currently playing.',
-            artist: '',
-            albumName: '',
+            artistName: '',
             albumArtUrl: '',
             isPlaying: false,
           }
@@ -284,29 +280,23 @@ export class SpotifyPolling implements SpotifyService {
         this.lastPlaybackState = isPlaying
 
         const trackName = item.name
-        const trackId = item.id
         let artistName = ''
-        let albumName = ''
         let albumArtUrl = ''
 
         if (item.type === 'track') {
           const track = item as Track
           artistName = track.artists.map((a) => a.name).join(', ')
-          albumName = track.album.name
           albumArtUrl = track.album.images?.[0]?.url ?? ''
         } else if (item.type === 'episode') {
           const episode = item as Episode
           artistName = episode.show.publisher
-          albumName = episode.show.name
           albumArtUrl = episode.show.images?.[0]?.url ?? ''
         }
 
         this.state = {
           ...this.state,
-          trackId,
           trackName,
-          artist: artistName,
-          albumName,
+          artistName: artistName,
           albumArtUrl,
           isPlaying,
         }
@@ -335,20 +325,19 @@ export class SpotifyPolling implements SpotifyService {
         .map((d) => ({
           // Non-null assertion is safe here due to the type guard in the filter.
           id: d.id,
-          is_active: d.is_active,
-          is_private_session: d.is_private_session,
-          is_restricted: d.is_restricted,
           name: d.name,
           type: d.type,
-          volume_percent: d.volume_percent ?? 0,
+          volume: d.volume_percent ?? 0,
+          is_active: d.is_active,
         }))
 
-      this.state.devices = validDevices
       this.broadcastUpdate({
         type: 'SPOTIFY_UPDATE',
-        payload: this.getState(),
+        payload: {
+          ...this.getState(),
+        },
       })
-      logger.debug({ count: this.state.devices.length }, 'Devices refreshed')
+      logger.debug({ count: validDevices.length }, 'Devices refreshed')
     } catch (error) {
       logger.error({ err: error }, 'Error fetching Spotify devices')
     }
