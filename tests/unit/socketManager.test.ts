@@ -17,12 +17,8 @@ import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
-import {
-  HrmData,
-  StateSnapshot,
-  ClientCommandMessageSchema,
-  ExtWebSocket,
-} from '../../types/websocket'
+import { HrmData, StateSnapshot, ExtWebSocket } from '../../types/websocket'
+import { ClientCommandMessageSchema } from '../../lib/validation/schemas'
 import {
   broadcast,
   sendWebSocketMessage,
