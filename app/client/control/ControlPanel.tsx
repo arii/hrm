@@ -31,7 +31,10 @@ const ControlPanel = () => {
   useEffect(() => {
     if (connectionStatus === 'Connected') {
       console.log('[ControlPanel] Registering as controller')
-      sendData({ type: 'REGISTER_CLIENT', role: 'controller' })
+      sendData({
+        type: 'REGISTER_CLIENT',
+        payload: { role: 'controller' },
+      })
     }
   }, [connectionStatus, sendData])
 

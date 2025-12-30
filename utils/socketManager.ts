@@ -6,17 +6,21 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { IncomingMessage } from 'http'
 import {
-  ClientRegistrationMessage,
-  SpotifyCommandMessage,
-  SpotifyExecutionMessage,
-  InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
   ExtWebSocket,
 } from '../types/websocket.js'
-import { ClientCommandMessageSchema } from '../lib/validation/schemas.js'
+import {
+  ClientCommandMessageSchema,
+  HrmInputMessage,
+  HrmMetadataMessage,
+  RegisterClientMessage,
+  SetModeMessage,
+  SpotifyCommandMessage,
+  TimerCommandMessage,
+  TimerConfigMessage,
+} from '../lib/validation/schemas.js'
 import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import {
   broadcast,
   sendWebSocketMessage,
@@ -212,7 +216,8 @@ const handleIncomingMessage = (
         break
       }
       case 'REGISTER_CLIENT': {
-        ws.clientType = (message as ClientRegistrationMessage).role
+        const registrationMessage = message as RegisterClientMessage
+        ws.clientType = registrationMessage.payload.role
         logger.info(
           { clientId, clientType: ws.clientType },
           'Client registered'
@@ -221,7 +226,7 @@ const handleIncomingMessage = (
       }
       case 'GET_STATE': {
         const stateSnapshot = getUnifiedStateSnapshot()
-        const payload: InitialStateSnapshotPayload = {
+        const payload = {
           ...stateSnapshot,
           hrmData: hrmDataRepository.findAll(),
         }
@@ -233,10 +238,13 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_METADATA_UPDATE': {
+        const metadataMessage = message as HrmMetadataMessage
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
           const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
+            Object.entries(metadataMessage.payload).filter(
+              ([_, value]) => value !== null
+            )
           )
 
           // Prevent overwriting a real name with a default "Unknown" name
@@ -257,6 +265,7 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_INPUT': {
+        const inputMessage = message as HrmInputMessage
         const existingData = hrmDataRepository.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
 
@@ -266,14 +275,15 @@ const handleIncomingMessage = (
           sessionState.lastUpdate = now
 
           let currentAccumulated = sessionState.accumulatedCalories
-          const currentHr = message.data.value ?? existingData.value
+          const currentHr = inputMessage.payload.value ?? existingData.value
           const currentAge = existingData.age ?? 30
+          const currentWeight = existingData.weight ?? 75 // Use a default if not set
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             const caloriesBurned = estimateCaloriesBurned({
               heartRate: currentHr,
               age: currentAge,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
+              weightKg: currentWeight,
               durationMinutes: dtMinutes,
             })
             currentAccumulated += caloriesBurned
@@ -285,7 +295,7 @@ const handleIncomingMessage = (
           // ONLY update the value and calories
           hrmDataRepository.save({
             ...existingData,
-            value: message.data.value ?? existingData.value,
+            value: inputMessage.payload.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
           })
         }
@@ -293,27 +303,25 @@ const handleIncomingMessage = (
         break
       }
 
-      case 'TIMER_COMMAND':
-        services.tabataService.handleCommand(message.command)
+      case 'TIMER_COMMAND': {
+        const timerCommand = message as TimerCommandMessage
+        services.tabataService.handleCommand(timerCommand.payload.command)
         break
-
-      case 'SET_MODE':
-        services.tabataService.setMode(message.mode)
+      }
+      case 'SET_MODE': {
+        const setModeCommand = message as SetModeMessage
+        services.tabataService.setMode(setModeCommand.payload.mode)
         break
-
-      case 'TIMER_CONFIG':
-        services.tabataService.setConfig({
-          workDuration: message.workDuration,
-          restDuration: message.restDuration,
-        })
+      }
+      case 'TIMER_CONFIG': {
+        const timerConfig = message as TimerConfigMessage
+        services.tabataService.setConfig(timerConfig.payload)
         break
-
+      }
       case 'SPOTIFY_COMMAND': {
-        const commandMsg = message as SpotifyCommandMessage
-        logger.info(
-          { clientId, command: commandMsg.command },
-          'Forwarding Spotify command'
-        )
+        const spotifyCommand = message as SpotifyCommandMessage
+        const { command, ...params } = spotifyCommand.payload
+        logger.info({ clientId, command }, 'Forwarding Spotify command')
 
         wsServerInstance.clients.forEach((client: WebSocket) => {
           const target = client as ExtWebSocket
@@ -321,9 +329,9 @@ const handleIncomingMessage = (
             target.readyState === WebSocket.OPEN &&
             target.clientType === 'dashboard'
           ) {
-            const executionMessage: SpotifyExecutionMessage = {
+            const executionMessage: ServerMessage = {
               type: 'EXECUTE_SPOTIFY',
-              payload: commandMsg,
+              payload: spotifyCommand.payload,
             }
             sendWebSocketMessage(
               target,
@@ -333,23 +341,7 @@ const handleIncomingMessage = (
           }
         })
 
-        const spotifyService = services.spotifyService
-        const spotifyCommandParams: {
-          deviceId?: string
-          volume?: number
-          playlistUri?: string
-          contextUri?: string
-        } = {}
-        if (commandMsg.deviceId)
-          spotifyCommandParams.deviceId = commandMsg.deviceId
-        if (commandMsg.volume !== undefined)
-          spotifyCommandParams.volume = commandMsg.volume
-        if (commandMsg.playlistUri)
-          spotifyCommandParams.playlistUri = commandMsg.playlistUri
-        if (commandMsg.contextUri)
-          spotifyCommandParams.contextUri = commandMsg.contextUri
-
-        spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
+        services.spotifyService.handleCommand(command, params)
         break
       }
       default: {

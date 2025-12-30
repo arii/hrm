@@ -17,7 +17,8 @@ import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
-import { HrmData, StateSnapshot, ExtWebSocket } from '../../types/websocket'
+import { StateSnapshot, ExtWebSocket } from '../../types/websocket'
+import { HrmStreamData } from '../../types/core'
 import {
   broadcast,
   sendWebSocketMessage,
@@ -126,7 +127,7 @@ describe('WebSocket Manager', () => {
       resume: jest.fn(),
       getState: jest.fn(),
       getSnapshot: jest.fn(),
-      cleanup: jest.fn(),
+      dispose: jest.fn(),
     }
 
     const mockSpotifyPolling: jest.Mocked<SpotifyPolling> = {
@@ -137,7 +138,7 @@ describe('WebSocket Manager', () => {
       handleTokenUpdate: jest.fn(),
       startPolling: jest.fn(),
       stopPolling: jest.fn(),
-      cleanup: jest.fn(),
+      dispose: jest.fn(),
       refreshDevices: jest.fn(),
     }
 
@@ -200,7 +201,7 @@ describe('WebSocket Manager', () => {
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
+          payload: { value: hr, age: 30, weight: 75, gender: 'male' },
         })
         mockWs.emit('message', message.toString())
       }
@@ -221,7 +222,7 @@ describe('WebSocket Manager', () => {
       expect(mockBroadcast).toHaveBeenCalled()
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const finalPayload: HrmData[] = lastCall[1].payload
+      const finalPayload: HrmStreamData[] = lastCall[1].payload
       const clientData = finalPayload.find((c) => c.calories > 0)
 
       expect(clientData).toBeDefined()
@@ -237,14 +238,14 @@ describe('WebSocket Manager', () => {
     it('should handle REGISTER_CLIENT message', () => {
       const message = JSON.stringify({
         type: 'REGISTER_CLIENT',
-        role: 'dashboard',
+        payload: { role: 'dashboard' },
       })
       mockWs.emit('message', message.toString())
       expect(mockWs.clientType).toBe('dashboard')
     })
 
     it('should send initial state on GET_STATE message', () => {
-      const message = JSON.stringify({ type: 'GET_STATE' })
+      const message = JSON.stringify({ type: 'GET_STATE', payload: null })
       mockWs.emit('message', message.toString())
 
       expect(getSnapshot).toHaveBeenCalled()
@@ -296,7 +297,7 @@ describe('WebSocket Manager', () => {
 
       const message = JSON.stringify({
         type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
+        payload: { command: 'PLAY' },
       })
       mockWs.emit('message', message.toString())
 
@@ -312,6 +313,7 @@ describe('WebSocket Manager', () => {
           deviceId: undefined,
           volume: undefined,
           playlistUri: undefined,
+          contextUri: undefined,
         }
       )
     })
@@ -319,11 +321,13 @@ describe('WebSocket Manager', () => {
     it('should extract contextUri and playlistUri from SPOTIFY_COMMAND', () => {
       const message = JSON.stringify({
         type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
-        deviceId: 'test_device',
-        volume: 50,
-        playlistUri: 'spotify:playlist:123',
-        contextUri: 'spotify:album:456',
+        payload: {
+          command: 'PLAY',
+          deviceId: 'test_device',
+          volume: 50,
+          playlistUri: 'spotify:playlist:123',
+          contextUri: 'spotify:album:456',
+        },
       })
       mockWs.emit('message', message.toString())
 

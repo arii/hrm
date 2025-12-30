@@ -41,6 +41,7 @@ export async function createServices(
       forcePollAndBroadcast: () => {},
       handleTokenUpdate: () => Promise.resolve(),
       cleanup: () => {},
+      refreshDevices: () => Promise.resolve(),
     }
   }
 

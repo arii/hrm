@@ -62,47 +62,42 @@ export const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
 })
 
 // =================================================================
-// WebSocket Message Schemas
+// WebSocket Message Schemas (Refactored for consistency)
 // =================================================================
 
-export const HrmInputDataSchema = z.object({
+// Payloads are defined first
+export const HrmInputPayloadSchema = z.object({
   value: z.number().nullable(),
+  age: z.number().optional(),
+  weight: z.number().optional(),
+  gender: z.enum(['male', 'female']).optional(),
 })
+export type HrmInputPayload = z.infer<typeof HrmInputPayloadSchema>
 
-export const HrmInputMessageSchema = z.object({
-  type: z.literal('HRM_INPUT'),
-  data: HrmInputDataSchema,
-})
-
-export const HrmMetadataUpdateDataSchema = z.object({
+export const HrmMetadataPayloadSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
 })
+export type HrmMetadataPayload = z.infer<typeof HrmMetadataPayloadSchema>
 
-export const HrmMetadataUpdateMessageSchema = z.object({
-  type: z.literal('HRM_METADATA_UPDATE'),
-  data: HrmMetadataUpdateDataSchema,
-})
-
-export const TimerCommandMessageSchema = z.object({
-  type: z.literal('TIMER_COMMAND'),
+export const TimerCommandPayloadSchema = z.object({
   command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
 })
+export type TimerCommandPayload = z.infer<typeof TimerCommandPayloadSchema>
 
-export const TimerModeCommandMessageSchema = z.object({
-  type: z.literal('SET_MODE'),
+export const SetModePayloadSchema = z.object({
   mode: z.union([z.literal('STOPWATCH'), z.literal('TABATA')]),
 })
+export type SetModePayload = z.infer<typeof SetModePayloadSchema>
 
-export const TimerConfigMessageSchema = z.object({
-  type: z.literal('TIMER_CONFIG'),
+export const TimerConfigPayloadSchema = z.object({
   workDuration: z.number(),
   restDuration: z.number(),
 })
+export type TimerConfigPayload = z.infer<typeof TimerConfigPayloadSchema>
 
-export const SpotifyCommandMessageSchema = z.object({
-  type: z.literal('SPOTIFY_COMMAND'),
+export const SpotifyCommandPayloadSchema = z.object({
   command: z.union([
     z.literal('PLAY'),
     z.literal('PAUSE'),
@@ -118,36 +113,89 @@ export const SpotifyCommandMessageSchema = z.object({
   contextUri: z.string().optional(),
   uri: z.string().optional(),
 })
+export type SpotifyCommandPayload = z.infer<typeof SpotifyCommandPayloadSchema>
 
-export const SpotifyExecutionMessageSchema = z.object({
-  type: z.literal('EXECUTE_SPOTIFY'),
-  payload: SpotifyCommandMessageSchema,
-})
-
-export const GetStateMessageSchema = z.object({
-  type: z.literal('GET_STATE'),
-})
-
-export const ClientRegistrationMessageSchema = z.object({
-  type: z.literal('REGISTER_CLIENT'),
+export const RegisterClientPayloadSchema = z.object({
   role: z.union([z.literal('dashboard'), z.literal('controller')]),
 })
+export type RegisterClientPayload = z.infer<
+  typeof RegisterClientPayloadSchema
+>
 
-export const PingMessageSchema = z.object({
-  type: z.literal('PING'),
-})
+// Base message structure
+const createMessageSchema = <T extends string, P extends z.ZodTypeAny>(
+  type: T,
+  payloadSchema: P
+) =>
+  z.object({
+    type: z.literal(type),
+    payload: payloadSchema,
+  })
+
+// Message schemas using the new structure
+export const HrmInputMessageSchema = createMessageSchema(
+  'HRM_INPUT',
+  HrmInputPayloadSchema
+)
+export type HrmInputMessage = z.infer<typeof HrmInputMessageSchema>
+
+export const HrmMetadataMessageSchema = createMessageSchema(
+  'HRM_METADATA_UPDATE',
+  HrmMetadataPayloadSchema
+)
+export type HrmMetadataMessage = z.infer<typeof HrmMetadataMessageSchema>
+
+export const TimerCommandMessageSchema = createMessageSchema(
+  'TIMER_COMMAND',
+  TimerCommandPayloadSchema
+)
+export type TimerCommandMessage = z.infer<typeof TimerCommandMessageSchema>
+
+export const SetModeMessageSchema = createMessageSchema(
+  'SET_MODE',
+  SetModePayloadSchema
+)
+export type SetModeMessage = z.infer<typeof SetModeMessageSchema>
+
+export const TimerConfigMessageSchema = createMessageSchema(
+  'TIMER_CONFIG',
+  TimerConfigPayloadSchema
+)
+export type TimerConfigMessage = z.infer<typeof TimerConfigMessageSchema>
+
+export const SpotifyCommandMessageSchema = createMessageSchema(
+  'SPOTIFY_COMMAND',
+  SpotifyCommandPayloadSchema
+)
+export type SpotifyCommandMessage = z.infer<typeof SpotifyCommandMessageSchema>
+
+export const RegisterClientMessageSchema = createMessageSchema(
+  'REGISTER_CLIENT',
+  RegisterClientPayloadSchema
+)
+export type RegisterClientMessage = z.infer<typeof RegisterClientMessageSchema>
+
+export const GetStateMessageSchema = createMessageSchema(
+  'GET_STATE',
+  z.null().optional()
+)
+export type GetStateMessage = z.infer<typeof GetStateMessageSchema>
+
+export const PingMessageSchema = createMessageSchema('PING', z.null().optional())
+export type PingMessage = z.infer<typeof PingMessageSchema>
 
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
-  HrmMetadataUpdateMessageSchema,
+  HrmMetadataMessageSchema,
   TimerCommandMessageSchema,
-  TimerModeCommandMessageSchema,
+  SetModeMessageSchema,
   SpotifyCommandMessageSchema,
   TimerConfigMessageSchema,
   GetStateMessageSchema,
-  ClientRegistrationMessageSchema,
+  RegisterClientMessageSchema,
   PingMessageSchema,
 ])
+export type ClientCommandMessage = z.infer<typeof ClientCommandMessageSchema>
 
 // =================================================================
 // Real-time Data Schemas
@@ -159,6 +207,8 @@ export const HrmStreamDataSchema = z.object({
   maxHr: z.number(),
   name: z.string().optional(),
   age: z.number().optional(),
+  weight: z.number().optional(),
+  gender: z.enum(['male', 'female']).optional(),
   calories: z.number(),
 })
 
@@ -186,13 +236,14 @@ export const TimerDataSchema = z.object({
 })
 
 export const SpotifyDeviceSchema = z.object({
-  id: z.string(),
+  id: z.string().nullable(),
   is_active: z.boolean(),
   is_private_session: z.boolean(),
   is_restricted: z.boolean(),
   name: z.string(),
   type: z.string(),
-  volume_percent: z.number(),
+  volume_percent: z.number().nullable(),
+  supports_volume: z.boolean(),
 })
 
 export const SpotifyPlaybackStateSchema = z.object({
@@ -205,6 +256,9 @@ export const SpotifyPlaybackStateSchema = z.object({
   devices: z.array(SpotifyDeviceSchema),
   volume: z.number(),
   isMuted: z.boolean(),
+  durationMs: z.number().optional(),
+  progressMs: z.number().optional(),
+  targetDeviceId: z.string().optional().nullable(),
 })
 
 export const SpotifyPlaylistItemSchema = z.object({
@@ -216,6 +270,10 @@ export const SpotifyPlaylistItemSchema = z.object({
 export const SpotifyPlaylistSchema = z.object({
   name: z.string(),
   uri: z.string(),
+  id: z.string(),
+  imageUrl: z.string().optional(),
+  owner: z.string().optional(),
+  description: z.string().optional(),
 })
 
 export const MeasurementSystemSchema = z.enum(['METRIC', 'IMPERIAL'])
@@ -240,4 +298,4 @@ export const WorkoutColumnItemSchema = z.object({
   details: z.string().optional(),
 })
 
-export const GenderSchema = z.enum(['MALE', 'FEMALE'])
+export const GenderSchema = z.enum(['male', 'female'])

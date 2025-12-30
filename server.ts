@@ -117,9 +117,8 @@ app.prepare().then(async () => {
 
   // 3. Initialize Socket Logic (Controllers)
   const getUnifiedStateSnapshot = (): StateSnapshot => ({
-    timerData: services.tabataService.getState(),
-    spotifyData: services.spotifyService.getState(),
-    spotifyServiceInitialized: services.isSpotifyInitialized,
+    timer: services.tabataService.getState(),
+    spotify: services.spotifyService.getState(),
   })
 
   initSocketManager(wsManager.wss, getUnifiedStateSnapshot, services)

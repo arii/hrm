@@ -14,8 +14,12 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
-import React, { useState } from 'react'
-import { MeasurementSystem, Gender } from '../../../types'
+import React from 'react'
+import { z } from 'zod'
+import {
+  GenderSchema,
+  MeasurementSystemSchema,
+} from '../../../lib/validation/schemas'
 import {
   ToggleButtonGroup,
   ToggleButton,
@@ -25,6 +29,9 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material'
+
+type Gender = z.infer<typeof GenderSchema>
+type MeasurementSystem = z.infer<typeof MeasurementSystemSchema>
 
 interface ConnectViewProps {
   duration: string
@@ -105,7 +112,7 @@ export default function ConnectView({
   onStartWorkout,
   onEndWorkout,
 }: ConnectViewProps) {
-  const [isResetting, setIsResetting] = useState(false)
+  const [isResetting, setIsResetting] = React.useState(false)
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />

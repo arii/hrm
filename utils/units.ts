@@ -1,7 +1,9 @@
 // utils/units.ts
 
-import { MeasurementSystem } from '../types'
+import { z } from 'zod'
+import { MeasurementSystemSchema } from '../lib/validation/schemas'
 
+export type MeasurementSystem = z.infer<typeof MeasurementSystemSchema>
 export const KG_TO_LBS = 2.20462
 
 /**

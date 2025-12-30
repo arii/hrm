@@ -1,4 +1,7 @@
-import { MeasurementSystem } from '../../../types'
+import { z } from 'zod'
+import { MeasurementSystemSchema } from '../../../lib/validation/schemas'
+
+type MeasurementSystem = z.infer<typeof MeasurementSystemSchema>
 
 export const WEIGHT_VALIDATION = {
   IMPERIAL: { min: 66, max: 440 }, // lbs

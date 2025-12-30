@@ -7,21 +7,24 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { MeasurementSystem } from '../../../types'
+import { z } from 'zod'
+import { MeasurementSystemSchema } from '../../../lib/validation/schemas'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import { validateAgeValue, validateWeightValue } from './validation'
 
+type MeasurementSystem = z.infer<typeof MeasurementSystemSchema>
+
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
   // Height logic is now encapsulated in useHeightInput
   const [_weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
-  const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
+  const [gender, setGender] = useLocalStorage<'male' | 'female'>(
     'hrm-user-gender',
-    'MALE'
+    'male'
   )
   const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
     'hrm-user-units',
