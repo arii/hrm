@@ -8,6 +8,8 @@ import Container from '@mui/material/Container'
 import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
+import Link from 'next/link'
+import { Button } from '@mui/material'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
@@ -80,7 +82,9 @@ const Dashboard = () => {
       }}
     >
       <Box sx={{ mb: 2 }}>
-        <a href="/analytics">View Analytics</a>
+        <Link href="/analytics" passHref>
+          <Button variant="contained">View Analytics</Button>
+        </Link>
       </Box>
       <Box sx={mainGridStyles}>
         {/*

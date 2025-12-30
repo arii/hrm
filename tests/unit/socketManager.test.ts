@@ -17,6 +17,7 @@ import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
+import { HrmDataLogger } from '../../services/HrmDataLogger'
 import {
   HrmData,
   StateSnapshot,
@@ -109,6 +110,7 @@ describe('WebSocket Manager', () => {
   let mockServices: {
     tabataService: jest.Mocked<TabataTimer>
     spotifyService: jest.Mocked<SpotifyPolling>
+    hrmDataLogger: jest.Mocked<HrmDataLogger>
   }
   let getSnapshot: () => StateSnapshot
   let mockWs: MockWebSocket
@@ -146,9 +148,17 @@ describe('WebSocket Manager', () => {
       refreshDevices: jest.fn(),
     }
 
+    const mockHrmDataLogger: jest.Mocked<HrmDataLogger> = {
+      startSession: jest.fn(),
+      endSession: jest.fn(),
+      log: jest.fn(),
+      close: jest.fn(),
+    }
+
     mockServices = {
       tabataService: mockTabataTimer,
       spotifyService: mockSpotifyPolling,
+      hrmDataLogger: mockHrmDataLogger,
     }
 
     getSnapshot = jest.fn().mockReturnValue({
