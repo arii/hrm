@@ -22,7 +22,7 @@ import {
   Paper,
   Box,
 } from '@mui/material'
-import { HrmDataLogEntry } from '../../services/HrmDataLogger'
+import { HrmDataLogEntry } from '@/types/analytics'
 
 const AnalyticsPage = () => {
   const [sessions, setSessions] = useState<string[]>([])

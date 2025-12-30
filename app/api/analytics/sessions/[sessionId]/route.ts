@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
-import { HrmDataLogEntry } from '@/services/HrmDataLogger'
+import { HrmDataLogEntry } from '@/types/analytics'
 
 const SESSIONS_DIR = path.join(process.cwd(), 'logs', 'hrm_sessions')
 

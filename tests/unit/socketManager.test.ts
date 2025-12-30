@@ -152,7 +152,6 @@ describe('WebSocket Manager', () => {
       startSession: jest.fn(),
       endSession: jest.fn(),
       log: jest.fn(),
-      close: jest.fn(),
     }
 
     mockServices = {

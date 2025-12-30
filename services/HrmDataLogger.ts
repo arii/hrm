@@ -3,13 +3,9 @@ import fs from 'fs'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import logger from '../utils/logger.js'
+import { HrmDataLogEntry } from '@/types/analytics'
 
 const LOG_DIR = path.join(process.cwd(), 'logs', 'hrm_sessions')
-
-export interface HrmDataLogEntry {
-  timestamp: string
-  value: number
-}
 
 export class HrmDataLogger {
   private activeSessions: Map<
