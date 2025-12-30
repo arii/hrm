@@ -15,6 +15,10 @@ import { ApiError } from '@/lib/errors'
 export async function getAuthenticatedSpotifyApi(): Promise<SpotifyApi> {
   const session = await getServerSession(authOptions)
 
+  if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+    throw new ApiError(500, 'Spotify client ID or secret not configured.')
+  }
+
   if (!session || !session.accessToken) {
     throw new ApiError(401, 'Not authenticated or token is missing.')
   }
@@ -28,5 +32,5 @@ export async function getAuthenticatedSpotifyApi(): Promise<SpotifyApi> {
     refresh_token: session.refreshToken ?? '',
   }
 
-  return SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID || '', token)
+  return SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID, token)
 }
