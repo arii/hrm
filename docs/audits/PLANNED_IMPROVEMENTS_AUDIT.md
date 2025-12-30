@@ -1,5 +1,7 @@
 # Comprehensive Audit of Planned Improvements, Issues, and Tests
 
+> **Maintenance Note:** This document is a manually curated summary of information from multiple source documents across the repository. It is intended to provide a high-level overview and may not be perfectly in sync with the latest changes in the source documents. Please refer to the original documents for the most up-to-date information.
+
 This document provides a consolidated overview of known issues, planned improvements, and the current state of testing, synthesized from a comprehensive review of all project documentation, including Architecture Decision Records (ADRs), audit reports, and development guidelines.
 
 ## 1. Architecture and Design
