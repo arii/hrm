@@ -10,9 +10,9 @@ import { NextRequest } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  context: { params: { sessionId: string } }
 ) {
-  const { sessionId } = params
+  const { sessionId } = context.params
   const logFilePath = path.join(SESSIONS_DIR, `${sessionId}.jsonl`)
 
   if (!fs.existsSync(logFilePath)) {
