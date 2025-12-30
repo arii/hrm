@@ -2,7 +2,7 @@
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
-import { env, validateServerRuntimeEnv } from './lib/env.js'
+import { env } from './lib/env.js' // New import
 import { serviceContainer } from './lib/serviceContainer.js'
 import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
@@ -24,7 +24,6 @@ const handle = app.getRequestHandler()
 const expressApp = express()
 
 app.prepare().then(async () => {
-  validateServerRuntimeEnv()
   const server = createServer(expressApp)
 
   // Global body parsing is intentionally omitted here.

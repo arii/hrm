@@ -25,7 +25,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm run test:all",
-    "test:unit": "cross-env TESTING=true NEXTAUTH_SECRET=test-secret-unit jest tests/unit --coverage",
+    "test:unit": "cross-env NEXTAUTH_SECRET=test-secret-unit jest tests/unit --coverage",
     "test:components": "cross-env NEXTAUTH_SECRET=test-secret-unit jest --config jest.config.components.cjs",
     "test:unit:watch": "jest tests/unit --watch",
     "test:json": "scripts/test-json-with-server.sh",
@@ -87,7 +87,7 @@
     "react-dom": "19.2.3",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
-    "zod": "^4.2.1"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
