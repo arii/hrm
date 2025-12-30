@@ -314,7 +314,7 @@ jobs:
         continue-on-error: true
 
       - name: Report Lint Failure
-        if: failure() && steps.lint.outcome == 'failure'
+        if: steps.lint.outcome == 'failure'
         run: |
           echo "### ❌ Lint Failure Report" >> $GITHUB_STEP_SUMMARY
           echo '```text' >> $GITHUB_STEP_SUMMARY
@@ -335,7 +335,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lint-report
-          path: logs/lint-output.log
+          path: logs/
           retention-days: 3
           if-no-files-found: ignore
 
@@ -416,7 +416,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-report
-          path: logs/build-output.log
+          path: logs/
           retention-days: 3
           if-no-files-found: ignore
 
@@ -546,36 +546,15 @@ jobs:
             exit 1
           fi
 
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Run Infra Tests
-        id: infra-tests
-        shell: bash
-        env:
-          NODE_ENV: production
-        run: |
-          set -o pipefail
-          mkdir -p test-results
-          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-results.xml pnpm run test:infra --reporter=junit 2>&1 | tee infra-tests.log
-        continue-on-error: true
-
-      - name: Publish Infrastructure Tests Results
-        uses: dorny/test-reporter@v1
-        if: always() && steps.infra-tests.outcome != 'skipped'
+        uses: ./.github/actions/run-test-job
         with:
-          name: Infrastructure (Prod)
-          path: test-results/infra-results.xml
-          reporter: java-junit
-        continue-on-error: true
-
-      - name: Upload Infra Test Logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: infra-test-logs-${{ env.SESSION_ID }}
-          path: |
-            infra-tests.log
-            test-results/infra-results.xml
-          if-no-files-found: ignore
-          retention-days: 3
+          test-command: 'pnpm run test:infra --reporter=junit'
+          test-type: 'infra'
+          reporter-path: 'test-results/infra-results.xml'
 
   unit-tests:
     name: 🧪 Unit Tests
@@ -619,34 +598,15 @@ jobs:
             exit 1
           fi
 
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Run Unit Tests
-        id: unit-tests
-        shell: bash
-        run: |
-          set -o pipefail
-          mkdir -p test-results
-          pnpm run test:unit 2>&1 | tee unit-tests.log
-        continue-on-error: true
-
-      - name: Publish Unit Tests Results
-        uses: dorny/test-reporter@v1
-        if: always() && steps.unit-tests.outcome != 'skipped'
+        uses: ./.github/actions/run-test-job
         with:
-          name: Unit Tests
-          path: test-results/unit-results.xml
-          reporter: java-junit
-        continue-on-error: true
-
-      - name: Upload Unit Test Logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-test-logs-${{ env.SESSION_ID }}
-          path: |
-            unit-tests.log
-            test-results/unit-results.xml
-          if-no-files-found: ignore
-          retention-days: 3
+          test-command: 'pnpm run test:unit'
+          test-type: 'unit'
+          reporter-path: 'test-results/unit-results.xml'
 
   perf-tests:
     name: 🧪 Performance Tests
@@ -693,9 +653,15 @@ jobs:
             exit 1
           fi
 
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Start Application for Performance Test
         if: always()
         run: pnpm run start
+
+      - name: Create test directories
+        run: mkdir -p test-results logs
 
       - name: Run Performance Test
         id: perf-tests
@@ -705,24 +671,36 @@ jobs:
           timeout_minutes: 10
           max_attempts: 3
           retry_on: error
-          command: PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit
-
-      - name: Publish Performance Test Results
-        uses: dorny/test-reporter@v1
-        if: always() && steps.perf-tests.outcome != 'skipped'
-        with:
-          name: Performance Tests Report
-          path: test-results/perf-results.xml
-          reporter: java-junit
+          command: bash -c "set -o pipefail; PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit 2>&1 | tee logs/perf-output.log"
         continue-on-error: true
 
-      - name: Upload Performance Metrics
+      - name: Report Perf Test Failure
+        if: steps.perf-tests.outcome == 'failure'
+        run: |
+          echo "### ❌ Perf Test Failure Report" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          [ -f logs/perf-output.log ] && tail -n 50 logs/perf-output.log >> $GITHUB_STEP_SUMMARY || echo "No log generated." >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Check Perf Test Result
+        if: always()
+        shell: bash
+        run: |
+          if [ ${{ steps.perf-tests.outcome }} = 'failure' ]; then
+            echo "::error::Perf tests failed"
+            exit 1
+          fi
+
+      - name: Upload Performance Test Logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: performance-metrics-${{ env.SESSION_ID }}
-          path: test-results/performance-metrics.json
+          name: perf-test-report
+          path: |
+            logs/
+            test-results/
           if-no-files-found: ignore
+          retention-days: 3
 
       - name: Stop Application
         if: always()
@@ -772,47 +750,16 @@ jobs:
             exit 1
           fi
 
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Run Visual Tests (Playwright)
-        id: visual-tests
-        shell: bash
-        run: |
-          set -o pipefail
-          mkdir -p test-results logs
-          pnpm run test:visual 2>&1 | tee logs/visual-output.log
-        continue-on-error: true
-
-      - name: Publish Visual Tests Results
-        uses: dorny/test-reporter@v1
-        if: always() && steps.visual-tests.outcome != 'skipped'
+        uses: ./.github/actions/run-test-job
         with:
-          name: Visual Tests Report
-          path: test-results/results.xml
-          reporter: java-junit
-        continue-on-error: true
-
-      - name: Merge Playwright Reports
-        if: always() && steps.visual-tests.outcome != 'skipped'
-        shell: bash
-        run: |
-          if [ -d "blob-report" ]; then
-            echo "📊 Merging Playwright blob reports..."
-            npx playwright merge-reports --reporter html ./blob-report || true
-          else
-            echo "⚠️ No blob-report directory found, skipping merge"
-          fi
-        continue-on-error: true
-
-      - name: Upload Visual Test Logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-test-logs-${{ env.SESSION_ID }}
-          path: |
-            logs/visual-output.log
-            test-results/results.xml
-            playwright-report/
-          if-no-files-found: ignore
-          retention-days: 5
+          test-command: 'pnpm run test:visual'
+          test-type: 'visual'
+          reporter-path: 'test-results/results.xml'
+          upload-paths: 'playwright-report/'
 
   integration-tests:
     name: 📊 Integration Tests Summary
@@ -864,14 +811,42 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: lint-report
-          path: logs/
+          path: lint-logs/
         continue-on-error: true
 
       - name: Download Build Report
         uses: actions/download-artifact@v4
         with:
           name: build-report
-          path: logs/
+          path: build-logs/
+        continue-on-error: true
+
+      - name: Download Infra Test Report
+        uses: actions/download-artifact@v4
+        with:
+          name: infra-test-report
+          path: infra-logs/
+        continue-on-error: true
+
+      - name: Download Unit Test Report
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-test-report
+          path: unit-logs/
+        continue-on-error: true
+
+      - name: Download Perf Test Report
+        uses: actions/download-artifact@v4
+        with:
+          name: perf-test-report
+          path: perf-logs/
+        continue-on-error: true
+
+      - name: Download Visual Test Report
+        uses: actions/download-artifact@v4
+        with:
+          name: visual-test-report
+          path: visual-logs/
         continue-on-error: true
 
       - name: Post Quality Summary with Details
@@ -895,6 +870,8 @@ jobs:
           fi
 
           mkdir -p test-results
+          STRIP_ANSI="sed -r 's/\x1b\[[0-9;]*m//g'"
+          SANITIZE_LOGS="sed 's/```/'''/g'"
 
           # Build the comment body
           {
@@ -915,7 +892,7 @@ jobs:
             if [ "$LINT_RESULT" != "success" ]; then
               echo "### ❌ Lint Failure Details"
               echo '```text'
-              [ -f "logs/lint-output.log" ] && tail -n 30 logs/lint-output.log | sed -r 's/\x1b\[[0-9;]*m//g' || echo "Log not found"
+              [ -f "lint-logs/logs/lint-output.log" ] && tail -n 30 lint-logs/logs/lint-output.log | ${SANITIZE_LOGS} | ${STRIP_ANSI} || echo "Log not found"
               echo '```'
               echo ""
             fi
@@ -923,7 +900,39 @@ jobs:
             if [ "$BUILD_RESULT" != "success" ]; then
               echo "### ❌ Build Failure Details"
               echo '```text'
-              [ -f "logs/build-output.log" ] && tail -n 50 logs/build-output.log | sed -r 's/\x1b\[[0-9;]*m//g' || echo "Log not found"
+              [ -f "build-logs/logs/build-output.log" ] && tail -n 50 build-logs/logs/build-output.log | ${SANITIZE_LOGS} | ${STRIP_ANSI} || echo "Log not found"
+              echo '```'
+              echo ""
+            fi
+
+            if [ "$INFRA_TESTS_OUTCOME" != "success" ]; then
+              echo "### ❌ Infra Tests Failure Details"
+              echo '```text'
+              [ -f "infra-logs/logs/infra-output.log" ] && tail -n 50 infra-logs/logs/infra-output.log | ${SANITIZE_LOGS} | ${STRIP_ANSI} || echo "Log not found"
+              echo '```'
+              echo ""
+            fi
+
+            if [ "$UNIT_TESTS_OUTCOME" != "success" ]; then
+              echo "### ❌ Unit Tests Failure Details"
+              echo '```text'
+              [ -f "unit-logs/logs/unit-output.log" ] && tail -n 50 unit-logs/logs/unit-output.log | ${SANITIZE_LOGS} | ${STRIP_ANSI} || echo "Log not found"
+              echo '```'
+              echo ""
+            fi
+
+            if [ "$PERF_TESTS_OUTCOME" != "success" ]; then
+              echo "### ❌ Perf Tests Failure Details"
+              echo '```text'
+              [ -f "perf-logs/logs/perf-output.log" ] && tail -n 50 perf-logs/logs/perf-output.log | ${SANITIZE_LOGS} | ${STRIP_ANSI} || echo "Log not found"
+              echo '```'
+              echo ""
+            fi
+
+            if [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
+              echo "### ❌ Visual Tests Failure Details"
+              echo '```text'
+              [ -f "visual-logs/logs/visual-output.log" ] && tail -n 50 visual-logs/logs/visual-output.log | ${SANITIZE_LOGS} | ${STRIP_ANSI} || echo "Log not found"
               echo '```'
               echo ""
             fi

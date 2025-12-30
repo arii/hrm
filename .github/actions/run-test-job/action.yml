@@ -1,0 +1,68 @@
+name: 'Run Test Job'
+description: 'Runs a test command, handles failure, and uploads artifacts'
+inputs:
+  test-command:
+    description: 'The command to run the tests'
+    required: true
+  test-type:
+    description: 'The type of test being run (e.g., infra, unit, perf, visual)'
+    required: true
+  reporter-path:
+    description: 'The path to the JUnit reporter file'
+    required: true
+  upload-paths:
+    description: 'Additional paths to upload as artifacts'
+    required: false
+runs:
+  using: 'composite'
+  steps:
+    - name: Create test directories
+      run: mkdir -p test-results logs
+      shell: bash
+
+    - name: Run ${{ inputs.test-type }} Tests
+      id: test-step
+      shell: bash
+      run: |
+        set -o pipefail
+        PLAYWRIGHT_JUNIT_OUTPUT_NAME=${{ inputs.reporter-path }} ${{ inputs.test-command }} 2>&1 | tee logs/${{ inputs.test-type }}-output.log
+      continue-on-error: true
+
+    - name: Report ${{ inputs.test-type }} Test Failure
+      if: steps.test-step.outcome == 'failure'
+      shell: bash
+      run: |
+        echo "### ❌ ${{ inputs.test-type }} Test Failure Report" >> $GITHUB_STEP_SUMMARY
+        echo '```text' >> $GITHUB_STEP_SUMMARY
+        [ -f logs/${{ inputs.test-type }}-output.log ] && tail -n 50 logs/${{ inputs.test-type }}-output.log >> $GITHUB_STEP_SUMMARY || echo "No log generated." >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: Check ${{ inputs.test-type }} Test Result
+      if: always()
+      shell: bash
+      run: |
+        if [ ${{ steps.test-step.outcome }} = 'failure' ]; then
+          echo "::error::${{ inputs.test-type }} tests failed"
+          exit 1
+        fi
+
+    - name: Publish ${{ inputs.test-type }} Test Results
+      uses: dorny/test-reporter@v1
+      if: always() && steps.test-step.outcome != 'skipped'
+      with:
+        name: ${{ inputs.test-type }} Tests
+        path: ${{ inputs.reporter-path }}
+        reporter: java-junit
+      continue-on-error: true
+
+    - name: Upload ${{ inputs.test-type }} Test Logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.test-type }}-test-report
+        path: |
+          logs/
+          test-results/
+          ${{ inputs.upload-paths }}
+        if-no-files-found: ignore
+        retention-days: 3
