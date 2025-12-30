@@ -202,7 +202,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          gh auth setup-git
 
           EXISTING_PR_URL=$(gh pr list --head "$BRANCH" --json url --limit 1 -q '.[0].url' || echo "")
 
@@ -226,6 +225,7 @@ jobs:
           else
             echo "::notice::No PR found for branch '$BRANCH'. Creating a new one."
 
+            gh auth setup-git
             git checkout leader
             git pull
             git branch -D "$BRANCH" 2>/dev/null || true
