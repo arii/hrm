@@ -6,38 +6,26 @@ This document describes the Storybook setup for developing and visualizing MUI c
 
 Storybook allows us to develop and test UI components independently from the main application, without needing to run the full server stack or mock WebSocket/Auth dependencies.
 
+## Available Stories
+
+### HrTile Component
+
+Location: `stories/HrTile.stories.tsx`
+
+The HrTile story demonstrates different heart rate zones with various configurations:
+
+- **Rest Zone** (45% - Green)
+- **Cardio Zone** (78% - Orange)
+- **Peak Zone** (95% - Red)
+
 ## Running Storybook
 
-To run the Storybook development server, use the following command:
-
 ```bash
+# Start Storybook development server
 npm run storybook
-```
 
-This will start the server and open a new browser tab with the Storybook UI.
-
-## Creating Stories
-
-Stories are located in the `stories` directory. To create a new story, create a new file with the `.stories.tsx` extension. You can then use the Storybook API to define your stories.
-
-## Mocking API Requests
-
-This project uses the `msw-storybook-addon` to mock API requests in stories. This allows you to test components that fetch data from an API without having to run the actual backend.
-
-To use the addon, you can define your mock API handlers in the `parameters` of your story. For example:
-
-```typescript
-export const MockedStory: Story = {
-  parameters: {
-    msw: {
-      handlers: [
-        rest.get('/api/user', (req, res, ctx) => {
-          return res(ctx.json({ name: 'John Doe' }));
-        }),
-      ],
-    },
-  },
-};
+# Build static Storybook
+npm run build-storybook
 ```
 
 ## Accessibility Testing
@@ -48,7 +36,12 @@ This project uses the Storybook Accessibility Addon (`@storybook/addon-a11y`) to
 
 1.  **Open a Story**: Navigate to any component story in the Storybook UI.
 2.  **Select the Accessibility Tab**: In the addons panel at the bottom of the screen, click on the "Accessibility" tab.
-3.  **Review the Results**: The panel will display a list of automated accessibility checks.
+3.  **Review the Results**: The panel will display a list of automated accessibility checks. It highlights:
+    - **Violations**: Issues that fail accessibility standards (e.g., WCAG). These should be fixed.
+    - **Passes**: Rules that the component correctly adheres to.
+    - **Incomplete**: Rules that could not be automatically checked and may require manual verification.
+
+By using this tool, you can catch common problems like incorrect color contrast, missing ARIA attributes, and improper element structures, ensuring our components are usable by as many people as possible.
 
 ## Benefits
 
