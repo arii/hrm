@@ -1,52 +1,53 @@
 // lib/repositories/RedisHrmDataRepository.ts
-import { HrmStreamData } from '../../types/core';
-import redisClient from '../redis';
+import { HrmStreamData } from '../../types/core'
+import redisClient from '../redis'
+import logger from '@/utils/logger'
 
-const HRM_DATA_KEY_PREFIX = 'hrm-data:';
+const HRM_DATA_KEY_PREFIX = 'hrm-data:'
 
 export class RedisHrmDataRepository {
   private getKey(id: string): string {
-    return `${HRM_DATA_KEY_PREFIX}${id}`;
+    return `${HRM_DATA_KEY_PREFIX}${id}`
   }
 
   async findById(id: string): Promise<HrmStreamData | undefined> {
-    const data = await redisClient.hGetAll(this.getKey(id));
+    const data = await redisClient.hGetAll(this.getKey(id))
     if (!Object.keys(data).length) {
-      return undefined;
+      return undefined
     }
     return {
-      ...data,
+      clientId: data.clientId,
       value: Number(data.value),
       maxHr: Number(data.maxHr),
       age: Number(data.age),
       calories: Number(data.calories),
-    } as HrmStreamData;
+      name: data.name,
+    }
   }
 
   async findAll(): Promise<HrmStreamData[]> {
-    const keys = await this.scanKeys(0);
-    const data = await Promise.all(
-      keys.map(async (key) => {
-        const hrmData = await redisClient.hGetAll(key);
-        return {
-          ...hrmData,
-          value: Number(hrmData.value),
-          maxHr: Number(hrmData.maxHr),
-          age: Number(hrmData.age),
-          calories: Number(hrmData.calories),
-        } as HrmStreamData;
-      })
-    );
-    return data;
-  }
-
-  private async scanKeys(cursor: number, keys: string[] = []): Promise<string[]> {
-    const result = await redisClient.scan(cursor, { MATCH: `${HRM_DATA_KEY_PREFIX}*`, COUNT: 100 });
-    keys.push(...result.keys);
-    if (result.cursor === 0) {
-      return keys;
+    const data: HrmStreamData[] = []
+    try {
+      for await (const key of redisClient.scanIterator({
+        MATCH: `${HRM_DATA_KEY_PREFIX}*`,
+        COUNT: 100,
+      })) {
+        const hrmData = await redisClient.hGetAll(key)
+        if (hrmData) {
+          data.push({
+            clientId: hrmData.clientId,
+            value: Number(hrmData.value),
+            maxHr: Number(hrmData.maxHr),
+            age: Number(hrmData.age),
+            calories: Number(hrmData.calories),
+            name: hrmData.name,
+          })
+        }
+      }
+    } catch (error) {
+      logger.error('Error scanning HRM data keys from Redis:', error)
     }
-    return this.scanKeys(result.cursor, keys);
+    return data
   }
 
   async save(data: HrmStreamData): Promise<void> {
@@ -54,20 +55,26 @@ export class RedisHrmDataRepository {
       clientId: data.clientId,
       value: data.value.toString(),
       maxHr: data.maxHr.toString(),
-      age: data.age.toString(),
+      age: (data.age || 0).toString(),
       calories: data.calories.toString(),
       name: data.name || '',
-    });
+    })
   }
 
   async deleteById(id: string): Promise<void> {
-    await redisClient.del(this.getKey(id));
+    await redisClient.del(this.getKey(id))
   }
 
   async clear(): Promise<void> {
-    const keys = await this.scanKeys(0);
-    if (keys.length) {
-      await redisClient.del(keys);
+    try {
+      for await (const key of redisClient.scanIterator({
+        MATCH: `${HRM_DATA_KEY_PREFIX}*`,
+        COUNT: 100,
+      })) {
+        await redisClient.del(key)
+      }
+    } catch (error) {
+      logger.error('Error clearing HRM data keys from Redis:', error)
     }
   }
 }

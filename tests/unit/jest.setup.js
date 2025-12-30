@@ -13,12 +13,12 @@ jest.mock('../../lib/redis', () => ({
     on: jest.fn(),
     connect: jest.fn().mockResolvedValue(undefined),
   },
-}));
+}))
 
 jest.mock('../../lib/broadcaster', () => ({
   publish: jest.fn(),
   subscribe: jest.fn(),
-}));
+}))
 
 // Set up environment variables for tests
 process.env.NEXTAUTH_URL = 'http://localhost:3000'

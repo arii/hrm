@@ -45,7 +45,7 @@ export const sendWebSocketMessage = (
   }
 }
 
-import { publish } from '../lib/broadcaster.js';
+import { publish } from '../lib/broadcaster.js'
 /**
  * Broadcasts a typed WebSocket message to all connected and open clients.
  * This is the preferred method for server-wide state updates.
@@ -54,12 +54,8 @@ import { publish } from '../lib/broadcaster.js';
  * @param message The `ServerMessage` object to broadcast.
  * @param origin Optional identifier of the calling service for contextual logging.
  */
-export const broadcast = (
-  wss: WebSocketServer,
-  message: ServerMessage,
-  origin?: string
-): void => {
-  publish(message);
+export const broadcast = (message: ServerMessage): void => {
+  publish(message)
 }
 
 /**

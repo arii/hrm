@@ -15,10 +15,7 @@ import {
 } from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
-import {
-  StateSnapshot,
-  ExtWebSocket,
-} from '../../types/websocket'
+import { StateSnapshot, ExtWebSocket } from '../../types/websocket'
 import {
   broadcast,
   sendWebSocketMessage,
@@ -113,7 +110,10 @@ describe('WebSocket Manager', () => {
   let mockWss: jest.Mocked<WebSocketServer>
   let mockServices: jest.Mocked<AppServices>
   let getSnapshot: () => StateSnapshot
-  let connectionHandler: (ws: MockWebSocket, req: Partial<IncomingMessage>) => void
+  let connectionHandler: (
+    ws: MockWebSocket,
+    req: Partial<IncomingMessage>
+  ) => void
 
   beforeEach(() => {
     jest.useFakeTimers()
@@ -140,7 +140,7 @@ describe('WebSocket Manager', () => {
     initSocketManager(mockWss, getSnapshot, mockServices)
 
     connectionHandler = mockWss.on.mock.calls.find(
-        (call) => call[0] === 'connection'
+      (call) => call[0] === 'connection'
     )?.[1]
   })
 
@@ -152,7 +152,7 @@ describe('WebSocket Manager', () => {
   })
 
   const connectClient = async (ws: MockWebSocket) => {
-    (mockWss.clients as Set<MockWebSocket>).add(ws)
+    ;(mockWss.clients as Set<MockWebSocket>).add(ws)
     await connectionHandler(ws, {
       url: `/?clientId=${ws.clientId}`,
       headers: { host: 'localhost' },
@@ -198,13 +198,13 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Message Handling', () => {
-    let mockWs: MockWebSocket;
+    let mockWs: MockWebSocket
 
     beforeEach(async () => {
-        mockWs = new MockWebSocket('test-client-1');
-        await connectClient(mockWs);
-        jest.clearAllMocks(); // Clear mocks after initial connection
-    });
+      mockWs = new MockWebSocket('test-client-1')
+      await connectClient(mockWs)
+      jest.clearAllMocks() // Clear mocks after initial connection
+    })
 
     it('should handle REGISTER_CLIENT message', async () => {
       const message = JSON.stringify({
@@ -212,7 +212,7 @@ describe('WebSocket Manager', () => {
         role: 'dashboard',
       })
       mockWs.emit('message', message)
-      await jest.runAllTimersAsync();
+      await jest.runAllTimersAsync()
 
       const extWs = mockWs as ExtWebSocket
       expect(extWs.clientType).toBe('dashboard')
@@ -221,7 +221,7 @@ describe('WebSocket Manager', () => {
     it('should send initial state on GET_STATE message', async () => {
       const message = JSON.stringify({ type: 'GET_STATE' })
       mockWs.emit('message', message)
-      await jest.runAllTimersAsync();
+      await jest.runAllTimersAsync()
 
       expect(getSnapshot).toHaveBeenCalled()
       expect(sendWebSocketMessage).toHaveBeenCalled()
@@ -231,36 +231,42 @@ describe('WebSocket Manager', () => {
       const message = JSON.stringify({
         type: 'HRM_METADATA_UPDATE',
         data: { name: 'New Name', maxHr: 190 },
-      });
+      })
 
-      mockRedis.hGetAll.mockResolvedValue({ clientId: 'test-client-1' });
-      mockWs.emit('message', message);
-      await jest.runAllTimersAsync();
+      mockRedis.hGetAll.mockResolvedValue({ clientId: 'test-client-1' })
+      mockWs.emit('message', message)
+      await jest.runAllTimersAsync()
 
-      expect(mockRedis.hSet).toHaveBeenCalledWith('hrm-data:test-client-1', expect.objectContaining({
-        name: 'New Name',
-        maxHr: '190'
-      }));
-    });
+      expect(mockRedis.hSet).toHaveBeenCalledWith(
+        'hrm-data:test-client-1',
+        expect.objectContaining({
+          name: 'New Name',
+          maxHr: '190',
+        })
+      )
+    })
 
     it('should handle HRM_INPUT and calculate calories', async () => {
       const message = JSON.stringify({
         type: 'HRM_INPUT',
         data: { value: 150 },
-      });
+      })
 
-      mockRedis.hGetAll.mockResolvedValue({ clientId: 'test-client-1' });
-      mockWs.emit('message', message);
-      await jest.runAllTimersAsync();
+      mockRedis.hGetAll.mockResolvedValue({ clientId: 'test-client-1' })
+      mockWs.emit('message', message)
+      await jest.runAllTimersAsync()
 
-      expect(mockRedis.hSet).toHaveBeenCalledWith('hrm-data:test-client-1', expect.objectContaining({
-        value: '150'
-      }));
-    });
+      expect(mockRedis.hSet).toHaveBeenCalledWith(
+        'hrm-data:test-client-1',
+        expect.objectContaining({
+          value: '150',
+        })
+      )
+    })
 
     it('should handle invalid JSON gracefully', async () => {
       mockWs.emit('message', 'invalid json')
-      await jest.runAllTimersAsync();
+      await jest.runAllTimersAsync()
 
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({ clientId: 'test-client-1' }),
@@ -271,7 +277,7 @@ describe('WebSocket Manager', () => {
     it('should handle Zod validation errors gracefully', async () => {
       const message = JSON.stringify({ type: 'INVALID_TYPE' })
       mockWs.emit('message', message)
-      await jest.runAllTimersAsync();
+      await jest.runAllTimersAsync()
 
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({ clientId: 'test-client-1' }),
