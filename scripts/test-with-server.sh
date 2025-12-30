@@ -61,6 +61,9 @@ HEALTH_CHECK_URL="${HEALTH_CHECK_URL_TEMPLATE/\{\{PORT\}\}/$PORT}"
 log "🧹 Cleaning up any old PM2 processes..."
 pnpm pm2 kill || true
 
+log "🛠️ Building the application..."
+pnpm run build
+
 log "🚀 Starting server with PM2 on port $PORT..."
 # Start server with `pnpm start`, which uses PM2
 # The PORT variable is passed via ecosystem.config.cjs
