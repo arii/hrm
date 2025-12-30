@@ -6,7 +6,7 @@ import {
   Episode,
 } from '@spotify/web-api-ts-sdk'
 import { ServerMessage } from '../types/websocket'
-import { SpotifyDevice as SpotifyData } from '../types/core'
+import { SpotifyDevice, SpotifyPlaybackState } from '../types/core'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
@@ -330,7 +330,7 @@ export class SpotifyPolling implements SpotifyService {
     }
     try {
       const response = await this.sdk.player.getAvailableDevices()
-      const validDevices: any[] = (response.devices || [])
+      const validDevices: SpotifyDevice[] = (response.devices || [])
         .filter((d: Device): d is Device & { id: string } => d.id !== null)
         .map((d) => ({
           // Non-null assertion is safe here due to the type guard in the filter.

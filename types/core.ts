@@ -16,6 +16,10 @@ import {
   SpotifyPlaybackStateSchema,
   SpotifyPlaylistItemSchema,
   SpotifyPlaylistSchema,
+  MeasurementSystemSchema,
+  WorkoutItemSchema,
+  WorkoutDataSchema,
+  WorkoutColumnItemSchema,
 } from '../lib/validation/schemas'
 
 // =================================================================================================
