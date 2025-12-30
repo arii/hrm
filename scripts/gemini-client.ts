@@ -19,8 +19,14 @@ const getArg = (key: string) => {
 const task = getArg('--task')
 const taskFile = getArg('--task-file')
 const contextFiles = getArg('--context')?.split(',') || []
+const contextFile = getArg('--context-file');
 const outputFile = getArg('--output')
 const preset = getArg('--preset')
+
+interface Resolution {
+  id: string;
+  resolution: string;
+}
 
 // List of models to try in order.
 // `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
@@ -209,7 +215,11 @@ async function main() {
   if (preset === 'review') {
     await runReviewPreset(genAI, contextContent, outputFile)
   } else if (preset === 'resolve-conflict') {
-    await runConflictResolution(genAI, contextFiles, outputFile);
+    if (!contextFile) {
+      console.error('Error: --context-file is required for resolve-conflict preset');
+      process.exit(1);
+    }
+    await runConflictResolution(genAI, contextFile, outputFile);
   } else {
     // Default/Generic mode
     let finalTask = task
@@ -787,15 +797,16 @@ async function runReviewPreset(
 
 async function runConflictResolution(
   genAI: GoogleGenerativeAI,
-  conflictFiles: string[],
+  contextFile: string,
   outputFile: string | null | undefined
 ) {
-  console.log(`🔍 Analyzing conflicts in: ${conflictFiles.join(', ')}`);
 
+  const conflictFilePaths = await readFile(contextFile, 'utf-8').then(content => content.split('\n'));
   const allConflicts = [];
-  for (const file of conflictFiles) {
+  for (const file of conflictFilePaths) {
     if (!file.trim()) continue;
-    const fileConflicts = await parseConflicts(file.trim());
+    const trimmedFile = `pr-code/${file.trim()}`;
+    const fileConflicts = await parseConflicts(trimmedFile);
     allConflicts.push(...fileConflicts);
   }
 
@@ -840,7 +851,7 @@ ${JSON.stringify(allConflicts, null, 2)}
     if (result.success) {
         // In a real scenario, you might apply these changes directly to the files here.
         // For now, we generate the report as requested.
-        const resolutions = result.data as any[];
+        const resolutions = result.data as Resolution[];
 
         let report = `# 🤖 Conflict Resolution Plan\n\n`;
         report += `I have analyzed ${allConflicts.length} conflicts and propose the following resolutions:\n\n`;
