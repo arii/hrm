@@ -38,6 +38,7 @@ export async function runConflictResolution(
     (content) => content.split('\0')
   )
   let report = `# 🤖 Conflict Resolution Plan\n\n`
+  const unprocessedFiles: { file: string; error: string }[] = []
   let totalConflicts = 0
   const prCodeRoot = path.resolve(process.cwd(), 'pr-code')
 
@@ -52,7 +53,15 @@ export async function runConflictResolution(
       continue
     }
 
-    const fileConflicts = await parseConflicts(trimmedFile)
+    let fileConflicts
+    try {
+      fileConflicts = await parseConflicts(trimmedFile)
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error'
+      unprocessedFiles.push({ file: trimmedFile, error: errorMessage })
+      continue
+    }
     totalConflicts += fileConflicts.length
 
     if (fileConflicts.length === 0) {
@@ -111,7 +120,17 @@ ${JSON.stringify(fileConflicts, null, 2)}
     }
   }
 
-  if (totalConflicts === 0) {
+  if (unprocessedFiles.length > 0) {
+    report += `---
+### ⚠️ Unprocessed Files
+The following files could not be processed due to errors:
+${unprocessedFiles
+  .map((f) => `- \`${f.file}\` (Reason: ${f.error})`)
+  .join('\n')}
+`
+  }
+
+  if (totalConflicts === 0 && unprocessedFiles.length === 0) {
     console.log('✅ No conflicts detected by parser.')
     return
   }
