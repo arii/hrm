@@ -1,6 +1,12 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useMemo, useCallback } from 'react'
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useCallback,
+} from 'react'
 import { useSession } from 'next-auth/react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { UserPhysicalProfile } from '@/types/core'
