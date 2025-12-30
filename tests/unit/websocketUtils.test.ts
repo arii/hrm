@@ -104,7 +104,7 @@ describe('ConnectionMonitor', () => {
 
   it('should terminate a client if isAlive is false', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
-    const unresponsiveClient = new MockWebSocket() as any
+    const unresponsiveClient = new MockWebSocket() as unknown as ExtWebSocket
     unresponsiveClient.isAlive = false // Simulate a client that missed a pong
     ;(mockWss.clients as Set<any>).add(unresponsiveClient)
 
@@ -120,7 +120,7 @@ describe('ConnectionMonitor', () => {
 
   it('should NOT terminate a client if isAlive is true', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
-    const responsiveClient = new MockWebSocket() as any
+    const responsiveClient = new MockWebSocket() as unknown as ExtWebSocket
     responsiveClient.isAlive = true
     ;(mockWss.clients as Set<any>).add(responsiveClient)
 
@@ -132,7 +132,7 @@ describe('ConnectionMonitor', () => {
 
   it('should set isAlive to false and ping active clients', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
-    const activeClient = new MockWebSocket() as any
+    const activeClient = new MockWebSocket() as unknown as ExtWebSocket
     activeClient.isAlive = true
     ;(mockWss.clients as Set<any>).add(activeClient)
 
@@ -145,9 +145,9 @@ describe('ConnectionMonitor', () => {
 
   it('should handle multiple clients correctly', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
-    const client1 = new MockWebSocket() as any // Responsive
-    const client2 = new MockWebSocket() as any // Unresponsive
-    const client3 = new MockWebSocket() as any // Responsive
+    const client1 = new MockWebSocket() as unknown as ExtWebSocket // Responsive
+    const client2 = new MockWebSocket() as unknown as ExtWebSocket // Unresponsive
+    const client3 = new MockWebSocket() as unknown as ExtWebSocket // Responsive
 
     client2.isAlive = false
     ;(mockWss.clients as Set<any>).add(client1)

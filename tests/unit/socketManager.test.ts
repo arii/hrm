@@ -162,20 +162,20 @@ describe('WebSocket Manager', () => {
   describe('Connection Monitoring', () => {
     it('should initialize and start the ConnectionMonitor', () => {
       expect(ConnectionMonitor).toHaveBeenCalledWith(mockWss)
-      const monitorInstance: any = (ConnectionMonitor as jest.Mock).mock
-        .results[0].value
+      const monitorInstance = (ConnectionMonitor as jest.Mock).mock.results[0]
+        .value
       expect(monitorInstance.start).toHaveBeenCalled()
     })
 
     it('should set isAlive to true on new connection', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
-      mockWss.emit('connection', newWs, { headers: {} })
+      mockWss.emit('connection', newWs, {})
       expect(newWs.isAlive).toBe(true)
     })
 
     it('should set isAlive to true on pong', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
-      mockWss.emit('connection', newWs, { headers: {} })
+      mockWss.emit('connection', newWs, {})
       newWs.isAlive = false // Manually set to false
       newWs.emit('pong')
       expect(newWs.isAlive).toBe(true)
@@ -183,8 +183,8 @@ describe('WebSocket Manager', () => {
 
     it('should stop the ConnectionMonitor when the server closes', () => {
       mockWss.emit('close')
-      const monitorInstance: any = (ConnectionMonitor as jest.Mock).mock
-        .results[0].value
+      const monitorInstance = (ConnectionMonitor as jest.Mock).mock.results[0]
+        .value
       expect(monitorInstance.stop).toHaveBeenCalled()
     })
   })
@@ -213,9 +213,9 @@ describe('WebSocket Manager', () => {
       const mockBroadcast = broadcast as jest.Mock
       jest.runOnlyPendingTimers()
       expect(mockBroadcast).toHaveBeenCalled()
-      const lastCall: any =
+      const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const finalPayload: any = lastCall[1].payload
+      const finalPayload: HrmStreamData[] = lastCall[1].payload
       const clientData = finalPayload.find((c) => c.calories > 0)
 
       expect(clientData).toBeDefined()
@@ -234,7 +234,7 @@ describe('WebSocket Manager', () => {
         role: 'dashboard',
       })
       mockWs.emit('message', message.toString())
-      expect((mockWs as any).clientType).toBe('dashboard')
+      expect(mockWs.clientType).toBe('dashboard')
     })
 
     it('should send initial state on GET_STATE message', () => {
@@ -243,7 +243,7 @@ describe('WebSocket Manager', () => {
 
       expect(getSnapshot).toHaveBeenCalled()
       expect(sendWebSocketMessage).toHaveBeenCalled()
-      const sentData: any = (sendWebSocketMessage as jest.Mock).mock.calls[0][1]
+      const sentData = (sendWebSocketMessage as jest.Mock).mock.calls[0][1]
       expect(sentData.type).toBe('INITIAL_STATE')
       expect(sentData.payload).toHaveProperty('timerData')
       expect(sentData.payload).toHaveProperty('spotifyData')
@@ -281,7 +281,7 @@ describe('WebSocket Manager', () => {
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
-      const dashboardWs = new MockWebSocket() as any
+      const dashboardWs = new MockWebSocket()
       dashboardWs.clientType = 'dashboard'
       const controllerWs = new MockWebSocket()
       controllerWs.clientType = 'controller'

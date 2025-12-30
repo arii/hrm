@@ -57,3 +57,4 @@ export type MeasurementSystem = z.infer<typeof MeasurementSystemSchema>
 export type WorkoutItem = z.infer<typeof WorkoutItemSchema>
 export type WorkoutData = z.infer<typeof WorkoutDataSchema>
 export type WorkoutColumnItem = z.infer<typeof WorkoutColumnItemSchema>
+export type Gender = z.infer<typeof GenderSchema>;

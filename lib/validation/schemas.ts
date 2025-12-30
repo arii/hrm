@@ -226,3 +226,4 @@ export const WorkoutColumnItemSchema = z.object({
   title: z.string(),
   details: z.string().optional(),
 })
+export const GenderSchema = z.enum(['MALE', 'FEMALE']);
