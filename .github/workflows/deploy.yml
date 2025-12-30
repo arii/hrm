@@ -39,13 +39,10 @@ jobs:
           NEXTAUTH_URL: 'http://localhost:3000'
           IS_DEPLOYMENT: 'true'
         run: |
-          # 1. Use production config with standalone output
-          cp deploy/next.config.js next.config.js
-
-          # 2. Build Next.js
+          # 1. Build Next.js
           pnpm run build
 
-          # 3. Package Artifact (Hybrid Strategy)
+          # 2. Package Artifact
           ./scripts/package.sh
 
       - name: 🚚 Transfer Artifact

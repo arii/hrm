@@ -174,9 +174,6 @@ jobs:
 
       - name: Verify Build
         id: build
-        env:
-          NEXTAUTH_URL: http://localhost:3000
-          NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
         run: |
           set -o pipefail
           pnpm run build 2>&1 | tee logs/build-output.log

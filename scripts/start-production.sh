@@ -28,36 +28,16 @@ if [ -f .env.production ]; then
 fi
 
 # Verify critical files exist before starting
-# Use absolute paths for clarity in error messages
-if [ ! -f "$PROJECT_ROOT/dist/server.js" ]; then
-  echo "❌ ERROR: dist/server.js not found"
-  echo "   Expected: $PROJECT_ROOT/dist/server.js"
+if [ ! -f "$PROJECT_ROOT/server.js" ]; then
+  echo "❌ ERROR: server.js not found"
+  echo "   Expected: $PROJECT_ROOT/server.js"
   echo "   Current dir: $(pwd)"
   echo "   Directory listing:"
   ls -la "$PROJECT_ROOT" | head -20
   exit 1
 fi
 
-if [ ! -d "$PROJECT_ROOT/.next_prod" ]; then
-  echo "❌ ERROR: .next_prod directory not found"
-  echo "   Expected: $PROJECT_ROOT/.next_prod"
-  echo "   Current dir: $(pwd)"
-  echo "   Directory listing:"
-  ls -la "$PROJECT_ROOT" | grep -E "^\." | head -20
-  exit 1
-fi
-
-if [ ! -f "$PROJECT_ROOT/.next_prod/BUILD_ID" ]; then
-  echo "❌ ERROR: .next_prod/BUILD_ID not found"
-  echo "   Expected: $PROJECT_ROOT/.next_prod/BUILD_ID"
-  echo "   .next_prod directory contents:"
-  ls -la "$PROJECT_ROOT/.next_prod" 2>/dev/null || echo "   .next_prod directory does not exist"
-  exit 1
-fi
-
 echo "✅ All critical files verified"
-echo "🎯 Next.js Build ID: $(cat "$PROJECT_ROOT/.next_prod/BUILD_ID")"
 
 # Explicitly run the compiled server entry point from project root
-# The dist/server.js file expects to find .next in the same directory
-exec node "$PROJECT_ROOT/dist/server.js"
+exec node "$PROJECT_ROOT/server.js"

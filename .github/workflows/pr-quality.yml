@@ -399,55 +399,55 @@ jobs:
         if: always() && steps.build.outcome == 'success'
         shell: bash
         run: |
-          echo "=== Checking .next_prod directory structure ==="
-          if [ ! -d ".next_prod" ]; then
-            echo "❌ ERROR: .next_prod directory not found!"
+          echo "=== Checking .next directory structure ==="
+          if [ ! -d ".next" ]; then
+            echo "❌ ERROR: .next directory not found!"
             exit 1
           fi
 
-          echo "📁 .next_prod directory contents:"
-          ls -la .next_prod/
+          echo "📁 .next directory contents:"
+          ls -la .next/
 
           echo ""
           echo "🔎 Checking critical files:"
-          if [ ! -f ".next_prod/BUILD_ID" ]; then
+          if [ ! -f ".next/BUILD_ID" ]; then
             echo "❌ ERROR: BUILD_ID not found!"
             exit 1
           fi
-          echo "✅ BUILD_ID: $(cat .next_prod/BUILD_ID)"
+          echo "✅ BUILD_ID: $(cat .next/BUILD_ID)"
 
-          if [ ! -d ".next_prod/server" ]; then
+          if [ ! -d ".next/server" ]; then
             echo "❌ ERROR: server directory not found!"
             exit 1
           fi
           echo "✅ server/ directory exists"
 
-          if [ ! -d ".next_prod/static" ]; then
+          if [ ! -d ".next/static" ]; then
             echo "⚠️  WARNING: static directory not found"
           else
             echo "✅ static/ directory exists"
           fi
 
           echo ""
-          echo "📊 .next_prod directory size:"
-          du -sh .next_prod/
+          echo "📊 .next directory size:"
+          du -sh .next/
 
           echo ""
           echo "📋 Directory structure (truncated):"
-          (ls -R .next_prod/ || true) | head -50
+          (ls -R .next/ || true) | head -50
 
       - name: 📦 Create Release Archive
         if: always() && steps.build.outcome == 'success'
         shell: bash
         run: |
-          echo "📦 Creating release archive with complete .next_prod directory..."
+          echo "📦 Creating release archive with complete .next directory..."
 
           # Use explicit directory names (not wildcards) to preserve all files
           # tar -c: create archive
           # -z: gzip compression
           # -f: output file
           tar -czf release.tar.gz \
-            .next_prod \
+            .next \
             dist \
             scripts/start-production.sh \
             scripts/deploy-artifact.sh \
@@ -466,7 +466,7 @@ jobs:
 
           echo ""
           echo "📊 Archive contents verification:"
-          (tar -tzf release.tar.gz | grep -E "BUILD_ID|\.next_prod/server" || true) | head -10
+          (tar -tzf release.tar.gz | grep -E "BUILD_ID|\.next/server" || true) | head -10
 
       - name: Upload Build Artifacts
         if: always() && steps.build.outcome == 'success'
@@ -514,7 +514,7 @@ jobs:
             echo "⚠️  No release archive found"
           fi
 
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
+          if [ -d ".next" ] && [ -d "dist" ]; then
             echo "✅ All build directories found"
           else
             echo "❌ Missing required build directories"
@@ -587,7 +587,7 @@ jobs:
             echo "⚠️  No release archive found"
           fi
 
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
+          if [ -d ".next" ] && [ -d "dist" ]; then
             echo "✅ All build directories found"
           else
             echo "❌ Missing required build directories"
@@ -661,7 +661,7 @@ jobs:
             echo "⚠️  No release archive found"
           fi
 
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
+          if [ -d ".next" ] && [ -d "dist" ]; then
             echo "✅ All build directories found"
           else
             echo "❌ Missing required build directories"
@@ -740,7 +740,7 @@ jobs:
             echo "⚠️  No release archive found"
           fi
 
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
+          if [ -d ".next" ] && [ -d "dist" ]; then
             echo "✅ All build directories found"
           else
             echo "❌ Missing required build directories"
