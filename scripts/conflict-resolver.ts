@@ -116,7 +116,9 @@ ${JSON.stringify(fileConflicts, null, 2)}
         throw new Error('Failed to parse AI resolution JSON')
       }
     } catch (error) {
-      await handleError(error)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown AI error'
+      unprocessedFiles.push({ file: trimmedFile, error: errorMessage })
     }
   }
 
@@ -132,6 +134,8 @@ ${unprocessedFiles
 
   if (totalConflicts === 0 && unprocessedFiles.length === 0) {
     console.log('✅ No conflicts detected by parser.')
+    // Write an empty report to prevent the workflow from failing.
+    await writeOutput('# ✅ No conflicts detected', outputFile)
     return
   }
 
