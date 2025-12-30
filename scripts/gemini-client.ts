@@ -6,7 +6,7 @@ import {
 } from '@google/generative-ai'
 import { readFile, writeFile } from 'fs/promises'
 import path from 'path'
-import { parseConflicts } from './utils/git-conflicts';
+import { runConflictResolution } from './conflict-resolver'
 
 // Simple arg parsing
 const args = process.argv.slice(2)
@@ -22,25 +22,6 @@ const contextFiles = getArg('--context')?.split(',') || []
 const contextFile = getArg('--context-file');
 const outputFile = getArg('--output')
 const preset = getArg('--preset')
-
-interface Resolution {
-  id: string;
-  resolution: string;
-}
-
-function isResolutionArray(data: unknown): data is Resolution[] {
-  if (!Array.isArray(data)) {
-    return false;
-  }
-  return data.every(item =>
-    typeof item === 'object' &&
-    item !== null &&
-    'id' in item &&
-    typeof item.id === 'string' &&
-    'resolution' in item &&
-    typeof item.resolution === 'string'
-  );
-}
 
 // List of models to try in order.
 // `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
@@ -259,7 +240,7 @@ async function main() {
   }
 }
 
-async function generateContentWithFallback(
+export async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
   prompt: string,
   config?: Omit<GenerateContentRequest, 'contents'>
@@ -809,98 +790,7 @@ async function runReviewPreset(
   }
 }
 
-export async function runConflictResolution(
-  genAI: GoogleGenerativeAI,
-  contextFile: string,
-  outputFile: string | null | undefined
-) {
-
-  const conflictFilePaths = await readFile(contextFile, 'utf-8').then(content => content.split('\0'));
-  let report = `# 🤖 Conflict Resolution Plan\n\n`;
-  let totalConflicts = 0;
-  const prCodeRoot = path.resolve(process.cwd(), 'pr-code');
-
-  for (const file of conflictFilePaths) {
-    if (!file.trim()) continue;
-
-    const trimmedFile = path.normalize(path.join('pr-code', file.trim()));
-    const absolutePath = path.resolve(process.cwd(), trimmedFile);
-
-    if (!absolutePath.startsWith(prCodeRoot)) {
-      console.warn(`Skipping potential path traversal: ${file}`);
-      continue;
-    }
-
-    const fileConflicts = await parseConflicts(trimmedFile);
-    totalConflicts += fileConflicts.length;
-
-    if (fileConflicts.length === 0) {
-      continue;
-    }
-
-    const prompt = `
-You are an Expert Git Conflict Resolver for a TypeScript/Next.js application.
-Your task is to resolve the following merge conflicts intelligently for the file \`${trimmedFile}\`.
-
-### Instructions:
-1. **Analyze Semantics**: Understand what "HEAD" (Current) and the "Incoming" branch were trying to achieve.
-2. **Preserve Both**: If both sides added valid, non-conflicting code (e.g., different imports, different map keys), KEEP BOTH.
-3. **Select Best**: If logic directly contradicts, choose the more robust/modern implementation (usually Incoming if it's a refactor).
-4. **Output Format**: Return a JSON array where each object contains the \`id\` of the conflict and the \`resolution\` string (the code to replace the conflict block with).
-
-### Conflicts to Resolve:
-${JSON.stringify(fileConflicts, null, 2)}
-
-### Response Format (JSON Only):
-\`\`\`json
-[
-  {
-    "id": "conflict-src/file.ts-10",
-    "resolution": "import { A } from 'a';\\nimport { B } from 'b';"
-  }
-]
-\`\`\`
-`;
-
-    try {
-      const text = await generateContentWithFallback(genAI, prompt, {
-         generationConfig: { responseMimeType: "application/json" }
-      });
-
-      // Process the JSON output
-      const jsonProcessor = new JsonProcessor();
-      const result = jsonProcessor.process(text);
-
-      if (result.success && isResolutionArray(result.data)) {
-          const resolutions = result.data;
-
-          for (const res of resolutions) {
-             const original = fileConflicts.find(c => c.id === res.id);
-             if (!original) continue;
-
-             report += `### 📂 \`${original.file}\` (Lines ${original.startLine}-${original.endLine})\n`;
-             report += `**Resolution:**\n\`\`\`typescript\n${res.resolution}\n\`\`\`\n\n`;
-             report += `--- \n`;
-          }
-      } else {
-          throw new Error("Failed to parse AI resolution JSON");
-      }
-
-    } catch (error) {
-      await handleError(error);
-    }
-  }
-
-  if (totalConflicts === 0) {
-    console.log("✅ No conflicts detected by parser.");
-    return;
-  }
-
-  await writeOutput(report, outputFile);
-}
-
-
-async function writeOutput(
+export async function writeOutput(
   content: string,
   outputFile: string | null | undefined
 ) {
@@ -912,7 +802,7 @@ async function writeOutput(
   }
 }
 
-async function handleError(error: unknown) {
+export async function handleError(error: unknown) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
