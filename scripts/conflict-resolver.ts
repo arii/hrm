@@ -5,7 +5,6 @@ import { parseConflicts } from './utils/git-conflicts'
 import {
   generateContentWithFallback,
   JsonProcessor,
-  handleError,
   writeOutput,
 } from './gemini-client'
 
