@@ -5,15 +5,12 @@
  */
 export const calculateMaxHr = (age: number): number => {
   if (!age || age <= 0) return 190 // Fallback default
-  return Math.round(208 - 0.7 * age)
+  return Math.round(208 - (0.7 * age))
 }
 
 /**
  * Calculates the target heart rate for a specific intensity percentage.
  */
-export const calculateTargetHr = (
-  maxHr: number,
-  percentage: number
-): number => {
+export const calculateTargetHr = (maxHr: number, percentage: number): number => {
   return Math.round(maxHr * (percentage / 100))
 }

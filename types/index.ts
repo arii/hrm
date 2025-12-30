@@ -3,12 +3,11 @@
 
 // Import shared domain types to avoid re-definition
 import {
-  TimerMode,
-  TimerPhase,
   MeasurementSystem,
   Gender,
   UserPhysicalProfile,
 } from './core'
+import { TimerMode, TimerPhase } from './genericTimer'
 
 export interface HrTileProps {
   name: string

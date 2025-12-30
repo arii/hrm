@@ -1,15 +1,13 @@
 'use client'
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useCallback,
-} from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import useLocalStorage from '@/hooks/useLocalStorage'
-import { UserPhysicalProfile } from '@/types/core'
+import {
+  UserPhysicalProfile,
+  Gender,
+  MeasurementSystem
+} from '@/types/core'
 
 // Default state for new users (or unauthenticated guests)
 const DEFAULT_PHYSICAL_PROFILE: UserPhysicalProfile = {
@@ -27,13 +25,9 @@ interface UserPhysicalProfileContextType {
   isLoading: boolean
 }
 
-const UserPhysicalProfileContext = createContext<
-  UserPhysicalProfileContextType | undefined
->(undefined)
+const UserPhysicalProfileContext = createContext<UserPhysicalProfileContextType | undefined>(undefined)
 
-export const UserPhysicalProfileProvider: React.FC<{
-  children: React.ReactNode
-}> = ({ children }) => {
+export const UserPhysicalProfileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { data: session, status } = useSession()
 
   // Persist profile to localStorage for immediate availability
@@ -47,28 +41,19 @@ export const UserPhysicalProfileProvider: React.FC<{
     if (session?.user?.email && profile.userId === 'guest') {
       // In a real app, you would Fetch the profile from API here.
       // For now, we just bind the record to the user's email/ID
-      setProfile((prev) => ({
-        ...prev,
-        userId: session.user?.email || 'authenticated-user',
-      }))
+      setProfile((prev) => ({ ...prev, userId: session.user?.email || 'authenticated-user' }))
     }
   }, [session, profile.userId, setProfile])
 
-  const updateProfile = useCallback(
-    (updates: Partial<UserPhysicalProfile>) => {
-      setProfile((prev) => ({ ...prev, ...updates }))
-    },
-    [setProfile]
-  )
+  const updateProfile = useCallback((updates: Partial<UserPhysicalProfile>) => {
+    setProfile((prev) => ({ ...prev, ...updates }))
+  }, [setProfile])
 
-  const value = useMemo(
-    () => ({
-      profile,
-      updateProfile,
-      isLoading: status === 'loading',
-    }),
-    [profile, status, updateProfile]
-  )
+  const value = useMemo(() => ({
+    profile,
+    updateProfile,
+    isLoading: status === 'loading',
+  }), [profile, status, updateProfile])
 
   return (
     <UserPhysicalProfileContext.Provider value={value}>
@@ -80,9 +65,7 @@ export const UserPhysicalProfileProvider: React.FC<{
 export const useUserPhysicalProfile = () => {
   const context = useContext(UserPhysicalProfileContext)
   if (context === undefined) {
-    throw new Error(
-      'useUserPhysicalProfile must be used within a UserPhysicalProfileProvider'
-    )
+    throw new Error('useUserPhysicalProfile must be used within a UserPhysicalProfileProvider')
   }
   return context
 }

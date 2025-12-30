@@ -189,7 +189,13 @@ export default function ConnectView({
               }}
               ageError={ageError}
               maxHr={maxHr}
-              setMaxHr={setMaxHr}
+              setMaxHr={(newMaxHr) => {
+                setMaxHr(newMaxHr)
+                const numericMaxHr = parseInt(newMaxHr, 10)
+                if (!isNaN(numericMaxHr)) {
+                  updateProfile({ maxHr: numericMaxHr })
+                }
+              }}
               userHeight={userHeight}
               setUserHeight={setUserHeight}
               onHeightBlur={onHeightBlur}

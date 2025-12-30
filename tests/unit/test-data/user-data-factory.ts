@@ -4,7 +4,7 @@ import {
   WorkoutSession,
   HeartRateDataPoint,
   Gender,
-  MeasurementSystem,
+  MeasurementSystem
 } from '@/types/core'
 import { v4 as uuidv4 } from 'uuid'
 

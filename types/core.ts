@@ -1,15 +1,21 @@
 /**
- * @file This file contains the centralized, canonical data structures for the application.
+ * @file This file contains the core domain types for the application.
+ * It serves as the single source of truth for data structures that are
+ * shared across multiple domains (e.g., database, API, client-side).
  *
- * @see /docs/decisions/0001-centralized-data-models.md
+ * @see /docs/decisions/0001-domain-driven-design-and-type-colocation.md
  */
 
 // =================================================================================================
-// User and Profile
+// Measurement and Biometrics
 // =================================================================================================
 
 export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
 export type Gender = 'MALE' | 'FEMALE'
+
+// =================================================================================================
+// User and Profile
+// =================================================================================================
 
 /**
  * Represents a user's identity and authentication profile.
@@ -43,13 +49,7 @@ export interface UserPhysicalProfile {
 // =================================================================================================
 
 /**
- * Represents a single workout session.
- *
- * @property {string} id - The unique identifier for the workout session (UUID).
- * @property {string} userId - The ID of the user who performed the workout.
- * @property {string} startedAt - The timestamp when the workout started (ISO 8601).
- * @property {string | null} endedAt - The timestamp when the workout ended (ISO 8601).
- * @property {string} notes - Any notes the user added for the workout.
+ * Represents a recorded workout session.
  */
 export interface WorkoutSession {
   id: string
@@ -60,12 +60,7 @@ export interface WorkoutSession {
 }
 
 /**
- * Represents a single heart rate data point.
- *
- * @property {string} id - The unique identifier for the data point (UUID).
- * @property {string} workoutSessionId - The ID of the workout session this data point belongs to.
- * @property {number} timestamp - The Unix epoch milliseconds when the heart rate was measured.
- * @property {number} heartRate - The heart rate in beats per minute.
+ * Represents a single heart rate measurement at a specific point in time.
  */
 export interface HeartRateDataPoint {
   id: string
@@ -75,98 +70,63 @@ export interface HeartRateDataPoint {
 }
 
 // =================================================================================================
-// Real-time Data and WebSocket Payloads
+// Real-time Data (from Server Services)
 // =================================================================================================
 
 /**
- * Represents a single, real-time heart rate data stream from a client.
+ * Represents the state of a single heart rate monitor stream, including
+ * calculated metrics like calories burned.
  */
 export interface HrmStreamData {
   clientId: string
-  value: number
+  name: string
+  value: number // The core BPM value
   maxHr: number
-  name?: string
-  age?: number
+  age: number
   calories: number
 }
 
 /**
- * Defines the possible modes for the application timer.
+ * Represents the complete state of the Tabata Timer service.
  */
-export type TimerMode = 'STOPWATCH' | 'TABATA'
+export interface TimerData {
+  phase: TimerPhase
+  timeRemaining: number
+  timeElapsed: number
+  cycle: number
+  totalCycles: number
+  mode: TimerMode
+  workDuration: number
+  restDuration: number
+  isRunning: boolean
+}
 
 /**
- * Defines the possible phases of the application timer.
+ * Represents the possible phases of the Tabata Timer.
  */
 export type TimerPhase =
   | 'IDLE'
   | 'PREPARE'
   | 'WORK'
   | 'REST'
-  | 'COOLDOWN'
-  | 'RUNNING'
+  | 'COMPLETED'
+  | 'PAUSED'
 
 /**
- * Represents the complete state of the application timer.
+ * Represents the operational modes of the timer.
  */
-export interface TimerData {
-  isRunning: boolean
-  currentPhase: TimerPhase
-  timeRemaining: number
-  timeElapsed: number
-  caloriesBurned: number
-  mode: TimerMode
-  workDuration: number
-  restDuration: number
-  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
-  soundEventId: number
-}
-
-// =================================================================================================
-// Spotify Integration
-// =================================================================================================
+export type TimerMode = 'STOPWATCH' | 'TABATA'
 
 /**
- * Represents a single device available for Spotify playback.
- */
-export interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
-
-/**
- * Represents the current playback state of Spotify.
+ * Represents the playback state from the Spotify Polling Service.
+ * This is a subset of the full Spotify API PlaybackState object.
  */
 export interface SpotifyPlaybackState {
-  trackId: string | null
-  trackName: string
-  artist: string
-  albumName: string
-  albumArtUrl: string
   isPlaying: boolean
-  devices: SpotifyDevice[]
-  volume: number
-  isMuted: boolean
-}
-
-/**
- * Represents a single item in a Spotify playlist.
- */
-export interface SpotifyPlaylistItem {
-  id: string
-  name: string
-  uri: string
-}
-
-/**
- * Represents a Spotify playlist.
- */
-export interface SpotifyPlaylist {
-  name: string
-  uri: string
+  trackName: string | null
+  artistName: string | null
+  albumArtUrl: string | null
+  durationMs: number | null
+  progressMs: number | null
+  volumePercent: number | null
 }
