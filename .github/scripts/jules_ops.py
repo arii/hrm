@@ -31,7 +31,16 @@ def create_jules_session(prompt, branch, title, owner, repo_name):
     try:
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
-        print(f"Successfully created Jules session: {response.json()}")
+        session_data = response.json()
+        session_url = session_data.get("url")
+
+        if session_url:
+            # Output for GitHub Actions
+            print(f"session_url={session_url}")
+            # Log for humans
+            sys.stderr.write(f"Successfully created Jules session: {session_url}\n")
+        else:
+            sys.stderr.write(f"Jules session created, but no URL found in response: {session_data}\n")
     except requests.exceptions.RequestException as e:
         sys.stderr.write(f"Error creating Jules session: {e}\n")
         sys.exit(1)

@@ -57,7 +57,7 @@ jobs:
     if: |
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
-      (startsWith(github.event.comment.body, '@gemini-bot') || startsWith(github.event.comment.body, '@jules fix'))
+      (startsWith(github.event.comment.body, '@gemini-bot') || startsWith(github.event.comment.body, '@jules fix') || startsWith(github.event.comment.body, '@gemini-update-pr'))
     permissions:
       contents: read
       issues: write

@@ -172,6 +172,7 @@ jobs:
         run: pip install requests
 
       - name: 'Jules: Execute API Call'
+        id: jules_session
         if: env.AGENT_PROVIDER == 'jules'
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -188,7 +189,40 @@ jobs:
             --branch "$BRANCH" \
             --title "$TITLE" \
             --owner "$REPO_OWNER" \
-            --repo-name "$REPO_NAME"
+            --repo-name "$REPO_NAME" >> $GITHUB_OUTPUT
+
+      - name: 'Jules: Create Tracking PR'
+        if: env.AGENT_PROVIDER == 'jules'
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          BRANCH: ${{ env.BRANCH }}
+          TITLE: ${{ env.TITLE }}
+          PROMPT: ${{ env.PROMPT }}
+          SESSION_URL: ${{ steps.jules_session.outputs.session_url }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git commit --allow-empty -m "chore: initiate jules session"
+          git push origin "$BRANCH"
+
+          # Use a heredoc for the body to handle multiline content gracefully
+          PR_BODY=$(cat <<EOF
+          A Jules session has been initiated to address this task.
+
+          **Task Details:**
+          $PROMPT
+
+          **Jules Session URL:**
+          [Follow the progress here]($SESSION_URL)
+          EOF
+          )
+
+          echo "$PR_BODY" | gh pr create \
+            --base leader \
+            --head "$BRANCH" \
+            --title "$TITLE" \
+            --body-file -
 
       - name: 'Gemini: Verify Client Exists'
         if: env.AGENT_PROVIDER == 'gemini'
