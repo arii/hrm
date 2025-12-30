@@ -120,6 +120,22 @@ When creating new internal modules or utilities (e.g., a new file in `lib/` or `
 
 **Example Scenario**: Creating a new file `lib/stringUtils.ts` with helper functions that use built-in JavaScript methods. This does not require any changes to `package.json`.
 
+## Testing Environment
+
+### Running Tests in a Production-Like Environment
+
+To ensure consistency between local development and the CI pipeline, the project uses a dedicated script to run tests in a production-like environment.
+
+```bash
+pnpm run start:test
+```
+
+This script performs the following actions:
+1.  **Builds the application for production**: It runs `pnpm run build`, creating an optimized version of the server and the Next.js frontend.
+2.  **Starts the production server**: It then starts the server using the compiled output from the `dist/` directory.
+
+This process is automatically managed by the `webServer` configuration in `playwright.config.ts` when you run Playwright tests (e.g., `pnpm run test:visual`). However, you can run `pnpm run start:test` manually if you need to start the server and then run specific tests against it. This is the most reliable way to replicate the exact conditions of the CI environment on your local machine.
+
 ## Architectural Patterns
 
 ### Type-Safe API Wrappers
