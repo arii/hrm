@@ -63,6 +63,12 @@ function validateAndGetEnv() {
   return envInstance
 }
 
+/**
+ * A Proxy object that provides access to the validated environment variables.
+ * The validation is performed lazily on the first access of any property.
+ * This ensures that the `env` object is always fully validated and typed
+ * before its properties are accessed.
+ */
 export const env = new Proxy(
   {},
   {
