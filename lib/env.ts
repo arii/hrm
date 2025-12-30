@@ -63,17 +63,4 @@ function validateAndGetEnv() {
   return envInstance
 }
 
-/**
- * A Proxy object that provides access to the validated environment variables.
- * The validation is performed lazily on the first access of any property.
- * This ensures that the `env` object is always fully validated and typed
- * before its properties are accessed.
- */
-export const env = new Proxy(
-  {},
-  {
-    get(_target, prop: keyof z.infer<typeof schema>) {
-      return validateAndGetEnv()[prop]
-    },
-  }
-) as z.infer<typeof schema>
+export const env: z.infer<typeof schema> = validateAndGetEnv()
