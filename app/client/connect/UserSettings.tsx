@@ -176,7 +176,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
 
         <TextField
           fullWidth
-          label={'Weight (${unit === "METRIC" ? "kg" : "lbs"})'}
+          label={`Weight (${unit === 'METRIC' ? 'kg' : 'lbs'})`}
           value={userWeight}
           onChange={(e) => {
             if (/^\d*\.?\d*$/.test(e.target.value))

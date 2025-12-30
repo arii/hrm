@@ -39,7 +39,7 @@ export const MeasurementSystemSchema = z.enum(['IMPERIAL', 'METRIC'])
 export const GenderSchema = z.enum(['MALE', 'FEMALE'])
 
 export const UserPhysicalProfileSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string(),
   age: z
     .number()
     .int()
