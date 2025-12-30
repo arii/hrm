@@ -45,7 +45,7 @@ export function validateRuntimeEnv() {
     }
     logger.error(
       'An unexpected error occurred during environment validation:',
-      error,
+      error
     )
     process.exit(1)
   }

@@ -2,10 +2,16 @@ services:
   hrm:
     build: .
     env_file:
-      - .env.example
+      - .env.local
     ports:
       - '3000:3000'
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     command: pnpm run dev
+    depends_on:
+      - redis
+  redis:
+    image: 'redis:alpine'
+    ports:
+      - '6379:6379'

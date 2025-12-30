@@ -24,7 +24,7 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
     - [Audio System](#audio-system)
   - [Documentation](#documentation)
   - [Architecture Overview](#architecture-overview)
-    - [Custom Stateful Server](#custom-stateful-server)
+    - [Horizontally Scalable with Redis](#horizontally-scalable-with-redis)
     - [Real-time Data Flow](#real-time-data-flow)
     - [Architecture Diagram](#architecture-diagram)
     - [Key Services](#key-services)
@@ -88,66 +88,53 @@ If you are not using the DevContainer, you can set up the project manually:
 Before setting up the project locally, ensure you have the following installed on your system:
 
 - **Node.js** (version 18.x or higher recommended)
-  - Download from [nodejs.org](https://nodejs.org/)
-  - Verify installation: `node --version`
-
 - **pnpm** (Package Manager)
-  - Install globally: `npm install -g pnpm`
-  - Verify installation: `pnpm --version`
-
 - **Git**
-  - Download from [git-scm.com](https://git-scm.com/)
-  - Verify installation: `git --version`
+- **Docker** (for running Redis)
+  - Download from [docker.com](https://www.docker.com/products/docker-desktop)
 
 #### Step-by-Step Setup Instructions
 
 **1. Clone the Repository**
 
 ```bash
-# Clone the repository to your local machine
 git clone https://github.com/arii/hrm.git
-
-# Navigate to the project directory
 cd hrm
 ```
 
-**2. Install pnpm (if not already installed)**
+**2. Install Project Dependencies**
 
 ```bash
-# Install pnpm globally using npm
-npm install -g pnpm
-
-# Verify pnpm installation
-pnpm --version
-```
-
-**3. Install Project Dependencies**
-
-```bash
-# Install all required dependencies using pnpm
 pnpm install --frozen-lockfile
 ```
 
-This will install all the Node.js packages required by the project and also set up pre-commit hooks using Husky to automatically lint and format your code when you commit.
-
-**4. Install Playwright Browser Dependencies**
+**3. Install Playwright Browser Dependencies**
 
 ```bash
-# Install Playwright browsers for testing
 pnpm exec playwright install --with-deps
+```
+
+**4. Start Redis**
+
+For the application to run, it needs a running Redis instance for WebSocket state management. The easiest way to get one is with Docker:
+
+```bash
+docker run -d --name hrm-redis -p 6379:6379 redis:alpine
 ```
 
 **5. Set Up Environment Variables**
 
 ```bash
-# Create your local environment file from the example
 cp .env.example .env.local
 ```
 
-Then open `.env.local` and fill in the required values:
+Then open `.env.local` and fill in the required values. At a minimum, you need `NEXTAUTH_SECRET` and `REDIS_URL`.
 
 ```bash
-# Spotify OAuth credentials (get these from developer.spotify.com/dashboard)
+# WebSocket State Management
+REDIS_URL=redis://127.0.0.1:6379
+
+# Spotify OAuth credentials (optional, but recommended)
 SPOTIFY_CLIENT_ID=your_client_id_here
 SPOTIFY_CLIENT_SECRET=your_client_secret_here
 
@@ -165,7 +152,6 @@ openssl rand -base64 32
 **6. Start the Development Server**
 
 ```bash
-# Start the custom server (Next.js + WebSocket + background services)
 pnpm run dev
 ```
 
@@ -378,15 +364,14 @@ The app includes the original HRM audio feedback system:
 
 ## Architecture Overview
 
-### Custom Stateful Server
+### Horizontally Scalable with Redis
 
-This application uses a custom Express server (`server.ts`) that is **stateful**. It manages:
+The application has been refactored for horizontal scalability. While it still uses a custom server for managing WebSocket connections and background services, the critical state is now externalized to Redis.
 
-1. Hosting the Next.js application.
-2. A persistent WebSocket server on the `/ws` endpoint.
-3. Long-running background services like the Tabata Timer and Spotify Polling.
+- **State Management**: WebSocket session data and real-time metrics (HRM data) are stored in Redis, providing a shared source of truth for all server instances.
+- **Pub/Sub Broadcasting**: A Redis Pub/Sub channel is used to broadcast events across all replicas, ensuring that clients connected to different nodes receive updates in real-time.
 
-**CRITICAL**: This architecture is incompatible with serverless deployment platforms like Vercel or Netlify. It must be deployed on a traditional Node.js host (e.g., VPS, Docker container, or a dedicated server).
+**CRITICAL**: This architecture requires a running Redis instance. It remains incompatible with serverless platforms like Vercel due to the custom server and background services, but it can now be deployed with multiple replicas behind a load balancer.
 
 ### Real-time Data Flow
 
@@ -406,12 +391,16 @@ graph TD
         B[WebSocket Client]
     end
 
-    subgraph "Server"
+    subgraph "Server (Replica 1...N)"
         C[Express Server]
         D[Next.js Middleware]
         E[WebSocket Server]
         F[Tabata Timer Service]
         G[Spotify Polling Service]
+    end
+
+    subgraph "Shared Infrastructure"
+        J[Redis (State & Pub/Sub)]
     end
 
     subgraph "External Services"
@@ -423,8 +412,13 @@ graph TD
     C -- Forwards to --> D
     B -- WebSocket Connection --> E
 
-    E -- Broadcasts State Updates --> B
-    E -- Receives Commands --> B
+    E -- Subscribes to --> J
+    E -- Publishes to --> J
+    E -- Reads/Writes State --> J
+
+    J -- Pushes Messages --> E
+
+    E -- Broadcasts to --> B
 
     F -- Updates --> E
     G -- Updates --> E

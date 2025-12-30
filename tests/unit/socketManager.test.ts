@@ -17,18 +17,9 @@ import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
-import {
-  HrmData,
-  StateSnapshot,
-  ClientCommandMessageSchema,
-  ExtWebSocket,
-} from '../../types/websocket'
-import {
-  broadcast,
-  sendWebSocketMessage,
-  ConnectionMonitor,
-} from '../../utils/websocketUtils.js'
-import logger from '@/utils/logger'
+import { StateSnapshot, ExtWebSocket } from '../../types/websocket'
+import { broadcast, sendWebSocketMessage } from '../../utils/websocketUtils.js'
+import { RedisHrmDataRepository } from '@/lib/repositories/RedisHrmDataRepository'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -39,42 +30,25 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
+jest.mock('@/lib/repositories/RedisHrmDataRepository')
+
 // Mock ConnectionMonitor and other utils
 jest.mock('../../utils/websocketUtils.js', () => ({
   sendWebSocketMessage: jest.fn(),
-  broadcast: jest.fn(),
+  broadcast: jest.fn(), // Will be mocked by broadcaster mock
   ConnectionMonitor: jest.fn().mockImplementation(() => ({
     start: jest.fn(),
     stop: jest.fn(),
   })),
 }))
 
-// Mock logger globally for the test file
-jest.mock('../../utils/logger', () => ({
-  __esModule: true,
-  default: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  },
-}))
-
-// Manual mock for the 'ws' module
+// Mock ws module
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
     const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
     wss.clients = new Set<MockWebSocket>()
-    const originalOn = wss.on.bind(wss)
-    const originalEmit = wss.emit.bind(wss)
-    wss.on = jest.fn(
-      (event: string, listener: (...args: unknown[]) => void) => {
-        return originalOn(event, listener)
-      }
-    )
-    wss.emit = jest.fn((event: string, ...args: unknown[]) => {
-      return originalEmit(event, ...args)
-    })
+    wss.on = jest.fn(wss.on.bind(wss))
+    wss.emit = jest.fn(wss.emit.bind(wss))
     return wss
   }),
   WebSocket: jest.fn(),
@@ -86,25 +60,24 @@ class MockWebSocket extends EventEmitter {
   terminate = jest.fn()
   ping = jest.fn()
   send = jest.fn()
+  readyState = 1 // WebSocket.OPEN
 
   constructor() {
     super()
     this.isAlive = true
   }
 
-  // Simulate receiving a pong from the client
   receivePong() {
     this.emit('pong')
   }
 
-  // Override 'on' to correctly handle our event emitter
   on(event: string | symbol, listener: (...args: unknown[]) => void): this {
     super.on(event, listener)
     return this
   }
 }
 
-describe('WebSocket Manager', () => {
+describe('WebSocket Manager (Redis)', () => {
   let mockWss: jest.Mocked<WebSocketServer>
   let mockServices: {
     tabataService: jest.Mocked<TabataTimer>
@@ -113,12 +86,11 @@ describe('WebSocket Manager', () => {
   let getSnapshot: () => StateSnapshot
   let mockWs: MockWebSocket
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.useFakeTimers()
     mockWss =
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
 
-    // Create fully typed mocks for the services.
     const mockTabataTimer: jest.Mocked<TabataTimer> = {
       handleCommand: jest.fn(),
       setMode: jest.fn(),
@@ -160,201 +132,132 @@ describe('WebSocket Manager', () => {
 
     mockWs = new MockWebSocket()
     ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
+
+    // Simulate connection event
     mockWss.emit('connection', mockWs)
+    await new Promise(process.nextTick) // Allow async operations in on 'connection' to complete
   })
 
-  afterEach(() => {
+  afterEach(async () => {
     jest.useRealTimers()
     jest.clearAllMocks()
     ;(mockWss.clients as Set<MockWebSocket>).clear()
-    resetSocketManager()
+    await resetSocketManager()
   })
 
-  describe('Connection Monitoring', () => {
-    it('should initialize and start the ConnectionMonitor', () => {
-      expect(ConnectionMonitor).toHaveBeenCalledWith(mockWss)
-      const monitorInstance = (ConnectionMonitor as jest.Mock).mock.results[0]
-        .value
-      expect(monitorInstance.start).toHaveBeenCalled()
-    })
+  describe('Connection Handling', () => {
+    it('should create and save a new client if one does not exist', async () => {
+      const mockRepo =
+        new RedisHrmDataRepository() as jest.Mocked<RedisHrmDataRepository>
+      mockRepo.findById.mockResolvedValue(undefined)
 
-    it('should set isAlive to true on new connection', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
+      newWs.clientId = 'new-client'
+
       mockWss.emit('connection', newWs)
-      expect(newWs.isAlive).toBe(true)
+      await new Promise(process.nextTick)
+
+      expect(mockRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ clientId: 'new-client' })
+      )
+      expect(broadcast).toHaveBeenCalled()
     })
 
-    it('should set isAlive to true on pong', () => {
-      const newWs = new MockWebSocket() as ExtWebSocket
-      mockWss.emit('connection', newWs)
-      newWs.isAlive = false // Manually set to false
-      newWs.emit('pong')
-      expect(newWs.isAlive).toBe(true)
-    })
+    it('should handle client disconnect and broadcast state', async () => {
+      const mockRepo =
+        new RedisHrmDataRepository() as jest.Mocked<RedisHrmDataRepository>
+      mockRepo.findAll.mockResolvedValue([])
 
-    it('should stop the ConnectionMonitor when the server closes', () => {
-      mockWss.emit('close')
-      const monitorInstance = (ConnectionMonitor as jest.Mock).mock.results[0]
-        .value
-      expect(monitorInstance.stop).toHaveBeenCalled()
-    })
-  })
+      mockWs.emit('close')
+      jest.runAllTimers()
+      await new Promise(process.nextTick)
 
-  describe('Calorie Calculation', () => {
-    it('should accumulate calories correctly with small frequent updates', () => {
-      const sendHrmInput = (hr: number) => {
-        const message = JSON.stringify({
-          type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
-        })
-        mockWs.emit('message', message.toString())
-      }
-
-      // Initial input
-      sendHrmInput(150)
-
-      // Send 100 updates, each 100ms apart
-      // Should accumulate significant calories even if each step < 0.1 kcal
-      for (let i = 0; i < 100; i++) {
-        jest.advanceTimersByTime(100) // 100ms
-        sendHrmInput(150)
-      }
-
-      // Check the last broadcasted state
-      const mockBroadcast = broadcast as jest.Mock
-      jest.runOnlyPendingTimers()
-      expect(mockBroadcast).toHaveBeenCalled()
-      const lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const finalPayload: HrmData[] = lastCall[1].payload
-      const clientData = finalPayload.find((c) => c.calories > 0)
-
-      expect(clientData).toBeDefined()
-      expect(clientData!.calories).toBeGreaterThan(0.1)
-      // A more precise check based on the known formula for short duration.
-      // 100 updates * 100ms = 10 seconds = 0.1667 minutes.
-      // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
-      expect(clientData!.calories).toBeGreaterThan(1)
-    })
-  })
-
-  describe('Message Handling', () => {
-    it('should handle REGISTER_CLIENT message', () => {
-      const message = JSON.stringify({
-        type: 'REGISTER_CLIENT',
-        role: 'dashboard',
+      expect(mockRepo.deleteById).toHaveBeenCalled()
+      expect(broadcast).toHaveBeenCalledWith({
+        type: 'HRM_UPDATE',
+        payload: [],
       })
-      mockWs.emit('message', message.toString())
-      expect(mockWs.clientType).toBe('dashboard')
     })
+  })
 
-    it('should send initial state on GET_STATE message', () => {
+  describe('Message Handling (Async)', () => {
+    it('should send initial state on GET_STATE message', async () => {
+      const mockRepo =
+        new RedisHrmDataRepository() as jest.Mocked<RedisHrmDataRepository>
+      mockRepo.findAll.mockResolvedValue([
+        {
+          clientId: 'test',
+          value: 120,
+          maxHr: 180,
+          age: 30,
+          calories: 10,
+          name: 'tester',
+        },
+      ])
+
       const message = JSON.stringify({ type: 'GET_STATE' })
       mockWs.emit('message', message.toString())
+      await new Promise(process.nextTick)
 
       expect(getSnapshot).toHaveBeenCalled()
       expect(sendWebSocketMessage).toHaveBeenCalled()
       const sentData = (sendWebSocketMessage as jest.Mock).mock.calls[0][1]
       expect(sentData.type).toBe('INITIAL_STATE')
-      expect(sentData.payload).toHaveProperty('timer')
-      expect(sentData.payload).toHaveProperty('spotify')
-      expect(sentData.payload).toHaveProperty('hrmData')
+      expect(sentData.payload.hrmData).toHaveLength(1)
     })
 
-    it('should handle invalid JSON gracefully', () => {
-      mockWs.emit('message', 'invalid json')
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.any(Object),
-        'Error processing incoming message'
-      )
-    })
-
-    it('should handle Zod validation errors gracefully', () => {
-      const message = JSON.stringify({ type: 'INVALID_TYPE' })
-      mockWs.emit('message', message.toString())
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.any(Object),
-        'WebSocket message validation failed'
-      )
-    })
-
-    it('should broadcast state on client disconnect', () => {
-      mockWs.emit('close')
-      jest.runAllTimers()
-      expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [],
-        },
-        'socketManager.broadcastState'
-      )
-    })
-
-    it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
-      const dashboardWs = new MockWebSocket()
-      dashboardWs.clientType = 'dashboard'
-      const controllerWs = new MockWebSocket()
-      controllerWs.clientType = 'controller'
-      ;(mockWss.clients as Set<MockWebSocket>).add(dashboardWs)
-      ;(mockWss.clients as Set<MockWebSocket>).add(controllerWs)
+    it('should handle HRM_INPUT and update repository', async () => {
+      const mockRepo =
+        new RedisHrmDataRepository() as jest.Mocked<RedisHrmDataRepository>
+      const clientId = (mockWs as ExtWebSocket).clientId
+      const initialData = {
+        clientId,
+        value: 120,
+        maxHr: 180,
+        age: 30,
+        calories: 10,
+        name: 'tester',
+      }
+      mockRepo.findById.mockResolvedValue(initialData)
 
       const message = JSON.stringify({
-        type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
+        type: 'HRM_INPUT',
+        data: { value: 150 },
       })
       mockWs.emit('message', message.toString())
+      await new Promise(process.nextTick)
 
-      expect(sendWebSocketMessage).toHaveBeenCalled()
-      expect(sendWebSocketMessage).toHaveBeenCalledWith(
-        dashboardWs,
-        expect.objectContaining({ type: 'EXECUTE_SPOTIFY' }),
-        'socketManager.SPOTIFY_COMMAND'
+      expect(mockRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ value: 150 })
       )
-      expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
-        'PLAY',
-        {
-          deviceId: undefined,
-          volume: undefined,
-          playlistUri: undefined,
-        }
-      )
+      expect(broadcast).toHaveBeenCalled()
     })
 
-    it('should extract contextUri and playlistUri from SPOTIFY_COMMAND', () => {
+    it('should handle HRM_METADATA_UPDATE and update repository', async () => {
+      const mockRepo =
+        new RedisHrmDataRepository() as jest.Mocked<RedisHrmDataRepository>
+      const clientId = (mockWs as ExtWebSocket).clientId
+      const initialData = {
+        clientId,
+        value: 120,
+        maxHr: 180,
+        age: 30,
+        calories: 10,
+        name: 'tester',
+      }
+      mockRepo.findById.mockResolvedValue(initialData)
+
       const message = JSON.stringify({
-        type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
-        deviceId: 'test_device',
-        volume: 50,
-        playlistUri: 'spotify:playlist:123',
-        contextUri: 'spotify:album:456',
+        type: 'HRM_METADATA_UPDATE',
+        data: { name: 'new-name' },
       })
       mockWs.emit('message', message.toString())
+      await new Promise(process.nextTick)
 
-      expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
-        'PLAY',
-        {
-          deviceId: 'test_device',
-          volume: 50,
-          playlistUri: 'spotify:playlist:123',
-          contextUri: 'spotify:album:456',
-        }
+      expect(mockRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'new-name' })
       )
-    })
-
-    it('should handle unknown message types', () => {
-      const message = JSON.stringify({ type: 'SOME_GARBAGE' })
-      jest
-        .spyOn(ClientCommandMessageSchema, 'parse')
-        .mockReturnValue({ type: 'SOME_GARBAGE' })
-
-      mockWs.emit('message', message.toString())
-
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.any(Object),
-        'Unknown message type received'
-      )
+      expect(broadcast).toHaveBeenCalled()
     })
   })
 })

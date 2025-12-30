@@ -1,9 +1,10 @@
 // File: utils/socketManager.ts (WebSocket Manager - Typed)
 /**
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
+ * Refactored for horizontal scalability using Redis for state and Pub/Sub.
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
-import { z } from 'zod' // Import z from zod
+import { z } from 'zod'
 import { IncomingMessage } from 'http'
 import {
   ClientCommandMessageSchema,
@@ -16,64 +17,40 @@ import {
   ExtWebSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
-import {
-  broadcast,
-  sendWebSocketMessage,
-  ConnectionMonitor,
-} from './websocketUtils.js'
+import { CALORIE_DEFAULTS } from './constants.js'
+import { sendWebSocketMessage, ConnectionMonitor } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
-import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
+import { RedisHrmDataRepository } from '../lib/repositories/RedisHrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
+import { broadcast } from '../lib/broadcaster.js'
+import { subscribe } from '../lib/broadcaster.js'
 
-// Define service instances to be managed
-// New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
-// Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
-// State Management:
-// - hrmDataRepository: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
-// - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
-// - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
-const hrmDataRepository = new HrmDataRepository()
-
-// Track active sockets separately so we can handle "zombie" sockets during reconnects
+const hrmDataRepository = new RedisHrmDataRepository()
 const clientSockets = new Map<string, WebSocket>()
-
-// Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
   { lastUpdate: number; accumulatedCalories: number }
 >()
 
-/**
- * Safely parses the WebSocket request URL to extract search parameters.
- * Handles cases where headers or URL might be malformed.
- * @param req - The incoming HTTP request from the WebSocket upgrade.
- * @returns URLSearchParams object, which will be empty if parsing fails.
- */
 const getRequestParams = (req: IncomingMessage): URLSearchParams => {
   try {
-    // Fallback to localhost if host header is missing, which can happen in some proxy/test setups
     const host = req.headers.host || 'localhost'
-    const protocol = 'http' // WebSocket upgrades start as HTTP
+    const protocol = 'http'
     const url = new URL(req.url || '/', `${protocol}://${host}`)
     return url.searchParams
   } catch (error) {
     logger.error({ error }, 'Failed to parse WebSocket connection URL')
-    // Return empty params to prevent a crash on invalid URL
     return new URLSearchParams()
   }
 }
 
-/**
- * Initializes the WebSocket Server manager and registers the core services.
- */
 const initSocketManager = (
   wss: WebSocketServer,
   getSnapshot: () => StateSnapshot,
@@ -85,16 +62,33 @@ const initSocketManager = (
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
-  wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-    const extWs = ws as ExtWebSocket
+  subscribe((channel, message) => {
+    try {
+      const parsedMessage: ServerMessage = JSON.parse(message)
+      wsServerInstance.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          sendWebSocketMessage(
+            client as ExtWebSocket,
+            parsedMessage,
+            `redis-broadcast:${channel}`
+          )
+        }
+      })
+    } catch (error) {
+      logger.error(
+        { error, channel },
+        'Failed to process message from Redis channel'
+      )
+    }
+  })
 
+  wss.on('connection', async (ws: WebSocket, req: IncomingMessage) => {
+    const extWs = ws as ExtWebSocket
     const params = getRequestParams(req)
     const clientId =
       params.get('clientId') ||
       `user-${Math.random().toString(36).substring(2, 9)}`
     extWs.clientId = clientId
-
-    // it's a stale or "zombie" connection. Overwrite it with the new socket.
 
     if (clientSockets.has(clientId)) {
       logger.warn(
@@ -102,7 +96,6 @@ const initSocketManager = (
         'Existing socket found. Overwriting with new connection.'
       )
     }
-
     clientSockets.set(clientId, extWs)
 
     extWs.isAlive = true
@@ -112,55 +105,49 @@ const initSocketManager = (
 
     logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
-    if (!hrmDataRepository.findById(clientId)) {
-      // Initialize new client
+    const existingClient = await hrmDataRepository.findById(clientId)
+    if (!existingClient) {
       const newClient: HrmStreamData = {
         clientId: extWs.clientId,
         value: 0,
         maxHr: 185,
         age: 30,
-        calories: 0, // Initialize to 0
+        calories: 0,
       }
-      hrmDataRepository.save(newClient)
+      await hrmDataRepository.save(newClient)
       clientSessionState.set(extWs.clientId, {
         lastUpdate: Date.now(),
         accumulatedCalories: 0,
       })
+      await broadcastState()
     } else {
       logger.info({ clientId }, 'Reconnected with existing session.')
     }
 
     extWs.on('message', (message) => {
-      handleIncomingMessage(extWs, message.toString(), extWs.clientId)
+      handleIncomingMessage(extWs, message.toString(), extWs.clientId).catch(
+        (err) => logger.error({ error: err }, 'Error handling incoming message')
+      )
     })
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-
-      // CRITICAL: Do NOT immediately delete clientData.
-      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
-      // NOTE: In a high-traffic production environment, this could lead to
-      // memory pressure if many clients disconnect and don't reconnect.
-      // A more robust solution might involve a separate cleanup process
-      // or a maximum number of inactive sessions.
-      setTimeout(() => {
-        // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
+      setTimeout(async () => {
         if (clientSockets.get(clientId) === extWs) {
           logger.info(
             { clientId: extWs.clientId },
             'Session expired. Deleting data.'
           )
           try {
-            hrmDataRepository.deleteById(extWs.clientId)
+            await hrmDataRepository.deleteById(extWs.clientId)
             clientSessionState.delete(extWs.clientId)
-            broadcastState()
+            await broadcastState()
           } catch (err) {
             logger.error(
               { clientId: extWs.clientId, error: err },
               'Error during session cleanup'
             )
           } finally {
-            // Always remove the socket reference to prevent leaks
             clientSockets.delete(extWs.clientId)
           }
         }
@@ -173,29 +160,20 @@ const initSocketManager = (
   })
 }
 
-/**
- * Resets the socket manager state. Use this for testing purposes only.
- */
-export const resetSocketManager = () => {
-  hrmDataRepository.clear()
+export const resetSocketManager = async () => {
+  await hrmDataRepository.clear()
   clientSessionState.clear()
 }
 
-const broadcastState = () => {
-  broadcast(
-    wsServerInstance,
-    {
-      type: 'HRM_UPDATE',
-      payload: hrmDataRepository.findAll(),
-    },
-    'socketManager.broadcastState'
-  )
+const broadcastState = async () => {
+  const payload = await hrmDataRepository.findAll()
+  broadcast({
+    type: 'HRM_UPDATE',
+    payload,
+  })
 }
 
-/**
- * Handles incoming JSON messages from client applications.
- */
-const handleIncomingMessage = (
+const handleIncomingMessage = async (
   ws: ExtWebSocket,
   messageString: string,
   clientId: string
@@ -205,41 +183,35 @@ const handleIncomingMessage = (
     const message = ClientCommandMessageSchema.parse(parsedJson)
 
     switch (message.type) {
-      case 'PING': {
-        // This is now a no-op. The server relies on native WebSocket ping/pong
-        // frames for heartbeat. The case is retained for backward
-        // compatibility with older clients that might still send this message.
+      case 'PING':
         break
-      }
-      case 'REGISTER_CLIENT': {
+      case 'REGISTER_CLIENT':
         ws.clientType = (message as ClientRegistrationMessage).role
         logger.info(
           { clientId, clientType: ws.clientType },
           'Client registered'
         )
         break
-      }
       case 'GET_STATE': {
         const stateSnapshot = getUnifiedStateSnapshot()
+        const hrmData = await hrmDataRepository.findAll()
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: hrmDataRepository.findAll(),
+          hrmData,
         }
         const initialStateMessage: ServerMessage = {
           type: 'INITIAL_STATE',
-          payload: payload,
+          payload,
         }
         sendWebSocketMessage(ws, initialStateMessage, 'socketManager.GET_STATE')
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataRepository.findById(clientId)
+        const existingData = await hrmDataRepository.findById(clientId)
         if (existingData) {
           const updateData: Partial<HrmStreamData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
-
-          // Prevent overwriting a real name with a default "Unknown" name
           if (
             existingData.name &&
             !/^(user|new user|unknown|bluetooth hrm)/i.test(
@@ -250,25 +222,21 @@ const handleIncomingMessage = (
           ) {
             delete updateData.name
           }
-
-          hrmDataRepository.save({ ...existingData, ...updateData })
+          await hrmDataRepository.save({ ...existingData, ...updateData })
         }
-        broadcastState()
+        await broadcastState()
         break
       }
       case 'HRM_INPUT': {
-        const existingData = hrmDataRepository.findById(clientId)
+        const existingData = await hrmDataRepository.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
-
         if (existingData && sessionState) {
           const now = Date.now()
           const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
           sessionState.lastUpdate = now
-
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
-
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             const caloriesBurned = estimateCaloriesBurned({
               heartRate: currentHr,
@@ -278,43 +246,34 @@ const handleIncomingMessage = (
             })
             currentAccumulated += caloriesBurned
           }
-
-          // Update the internal state with high precision value
           sessionState.accumulatedCalories = currentAccumulated
-
-          // ONLY update the value and calories
-          hrmDataRepository.save({
+          await hrmDataRepository.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
           })
         }
-        broadcastState()
+        await broadcastState()
         break
       }
-
       case 'TIMER_COMMAND':
         services.tabataService.handleCommand(message.command)
         break
-
       case 'SET_MODE':
         services.tabataService.setMode(message.mode)
         break
-
       case 'TIMER_CONFIG':
         services.tabataService.setConfig({
           workDuration: message.workDuration,
           restDuration: message.restDuration,
         })
         break
-
       case 'SPOTIFY_COMMAND': {
         const commandMsg = message as SpotifyCommandMessage
         logger.info(
           { clientId, command: commandMsg.command },
           'Forwarding Spotify command'
         )
-
         wsServerInstance.clients.forEach((client: WebSocket) => {
           const target = client as ExtWebSocket
           if (
@@ -332,7 +291,6 @@ const handleIncomingMessage = (
             )
           }
         })
-
         const spotifyService = services.spotifyService
         const spotifyCommandParams: {
           deviceId?: string
@@ -348,7 +306,6 @@ const handleIncomingMessage = (
           spotifyCommandParams.playlistUri = commandMsg.playlistUri
         if (commandMsg.contextUri)
           spotifyCommandParams.contextUri = commandMsg.contextUri
-
         spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
         break
       }
