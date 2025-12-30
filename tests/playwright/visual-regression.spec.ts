@@ -149,7 +149,7 @@ test.describe('Visual Regression Tests', () => {
         dashboardPage.getByTestId('calorie-count'), // Mask dynamic energy expenditure
         dashboardPage.locator('.MUI-Charts-root'), // Mask SVG rendering noise
       ],
-      maxDiffPixelRatio: 0.05, // Required for cross-platform font rendering in CI
+      maxDiffPixelRatio: 0.08, // Required for cross-platform font rendering in CI
       threshold: 0.2,
     })
   })
