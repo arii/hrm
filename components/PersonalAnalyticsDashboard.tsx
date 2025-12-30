@@ -4,21 +4,15 @@ import { useCalorieCounter } from '../hooks/useCalorieCounter'
 /**
  * A component to display the user's personal analytics.
  * @param {object} props - The component props.
- * @param {number} props.heartRate - The current heart rate.
- * @param {number} props.age - The user's age.
- * @param {number} props.weight - The user's weight in kg.
+ *  @param {number} props.heartRate - The current heart rate.
  * @returns {JSX.Element} - The rendered component.
  */
 export const PersonalAnalyticsDashboard = ({
   heartRate,
-  age,
-  weight,
 }: {
   heartRate: number
-  age: number
-  weight: number
 }) => {
-  const { calories } = useCalorieCounter(heartRate, age, weight, true)
+  const { calories } = useCalorieCounter(heartRate, true)
 
   return (
     <div>

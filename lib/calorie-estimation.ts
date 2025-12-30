@@ -36,9 +36,8 @@ export const estimateCaloriesBurned = (
   // Safety gates
   if (heartRate <= 30 || durationMinutes <= 0) return 0
 
-  const constants = gender === 'FEMALE'
-    ? KEYTEL_CONSTANTS.FEMALE
-    : KEYTEL_CONSTANTS.MALE
+  const constants =
+    gender === 'FEMALE' ? KEYTEL_CONSTANTS.FEMALE : KEYTEL_CONSTANTS.MALE
 
   // Calculate Energy Expenditure (EE) in kJ/min
   // Formula: EE = Intercept + (HR * C1) + (Weight * C2) + (Age * C3)

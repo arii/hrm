@@ -31,7 +31,9 @@ describe('useCalorieCounter', () => {
 
   it('should calculate calories correctly over time', () => {
     ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, true), { wrapper })
+    const { result } = renderHook(() => useCalorieCounter(120, true), {
+      wrapper,
+    })
 
     expect(result.current.calories).toBe(0)
 
@@ -54,7 +56,9 @@ describe('useCalorieCounter', () => {
 
   it('should not calculate calories when isActive is false', () => {
     ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, false), { wrapper })
+    const { result } = renderHook(() => useCalorieCounter(120, false), {
+      wrapper,
+    })
 
     expect(result.current.calories).toBe(0)
 
@@ -68,7 +72,9 @@ describe('useCalorieCounter', () => {
 
   it('should reset calories when resetCalories is called', () => {
     ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, true), { wrapper })
+    const { result } = renderHook(() => useCalorieCounter(120, true), {
+      wrapper,
+    })
 
     act(() => {
       jest.advanceTimersByTime(2000)

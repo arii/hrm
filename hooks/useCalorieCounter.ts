@@ -44,7 +44,7 @@ export const useCalorieCounter = (
             // Inject latest profile data directly from ref
             age: profileRef.current.age,
             weightKg: profileRef.current.weight,
-            gender: profileRef.current.gender
+            gender: profileRef.current.gender,
           })
           setCalories((prev) => prev + inc)
         }

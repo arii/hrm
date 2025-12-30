@@ -40,7 +40,11 @@ export const GenderSchema = z.enum(['MALE', 'FEMALE'])
 
 export const UserPhysicalProfileSchema = z.object({
   userId: z.string().uuid(),
-  age: z.number().int().min(10, 'Age must be at least 10').max(120, 'Invalid age'),
+  age: z
+    .number()
+    .int()
+    .min(10, 'Age must be at least 10')
+    .max(120, 'Invalid age'),
   // Input might be lbs or kg, but validation checks positive number
   weight: z.number().positive('Weight must be positive'),
   gender: GenderSchema,

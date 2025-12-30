@@ -9,6 +9,6 @@ export const useUserWeight = (): [number, (value: number) => void] => {
   // Return compatible signature: [weightInKg, setter]
   return [
     profile.weight,
-    (newWeight: number) => updateProfile({ weight: newWeight })
+    (newWeight: number) => updateProfile({ weight: newWeight }),
   ]
 }

@@ -54,7 +54,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   unit,
   setUnit,
 }) => {
-
   // Auto-calculation handler
   const handleAutoCalculate = () => {
     const ageNum = parseInt(userAge, 10)
@@ -143,7 +142,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             label="Height (cm)"
             value={userHeight.cm}
             onChange={(e) => {
-               if (/^\d*\.?\d*$/.test(e.target.value)) setUserHeight({ cm: e.target.value })
+              if (/^\d*\.?\d*$/.test(e.target.value))
+                setUserHeight({ cm: e.target.value })
             }}
             onBlur={onHeightBlur}
             error={!!heightError}
@@ -156,7 +156,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
               label="Feet"
               value={userHeight.feet}
               onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) setUserHeight({ feet: e.target.value })
+                if (/^\d*$/.test(e.target.value))
+                  setUserHeight({ feet: e.target.value })
               }}
               onBlur={onHeightBlur}
             />
@@ -165,7 +166,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
               label="Inches"
               value={userHeight.inches}
               onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) setUserHeight({ inches: e.target.value })
+                if (/^\d*$/.test(e.target.value))
+                  setUserHeight({ inches: e.target.value })
               }}
               onBlur={onHeightBlur}
             />
@@ -177,7 +179,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           label={'Weight (${unit === "METRIC" ? "kg" : "lbs"})'}
           value={userWeight}
           onChange={(e) => {
-            if (/^\d*\.?\d*$/.test(e.target.value)) setUserWeight(e.target.value)
+            if (/^\d*\.?\d*$/.test(e.target.value))
+              setUserWeight(e.target.value)
           }}
           onBlur={onWeightBlur}
           error={!!weightError}
