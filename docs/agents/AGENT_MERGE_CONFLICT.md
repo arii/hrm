@@ -18,19 +18,25 @@ This document outlines the role and workflow for the Merge Conflict Resolver age
 The agent is triggered automatically when the `auto-rebase` workflow fails.
 
 ### Step 1: Workspace Setup
+
 The agent checks out the branch and attempts the rebase operation locally to reproduce the conflict state.
 
 ### Step 2: Data Ingestion
+
 The agent scans for files containing standard git conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`).
 
 ### Step 3: Local Analysis
+
 For each conflicting file, the agent extracts:
+
 - **Current Change (HEAD)**: What was on the branch.
 - **Incoming Change (Upstream)**: What is being rebased onto.
 - **Context**: 5 lines before and after the conflict block.
 
 ### Step 4: Artifact Generation
+
 The agent produces a `resolution-summary.md` explaining the choices made.
 
 ### Step 5: Reporting
+
 The agent posts a comment on the PR with the summary and instructions to apply the patch.
