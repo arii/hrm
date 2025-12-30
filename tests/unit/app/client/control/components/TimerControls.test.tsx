@@ -66,9 +66,7 @@ describe('TimerControls', () => {
     )
 
     const startButton = screen.getByTestId('start-timer-button')
-    act(() => {
-      fireEvent.click(startButton)
-    })
+    fireEvent.click(startButton)
 
     // The UI should immediately update to show the timer as running
     await screen.findByTestId('timer-running')
@@ -94,14 +92,10 @@ describe('TimerControls', () => {
     )
 
     const startButton = screen.getByTestId('start-timer-button')
-    act(() => {
-      fireEvent.click(startButton)
-    })
+    fireEvent.click(startButton)
 
     // The UI should revert back to the original state
-    act(() => {
-      jest.advanceTimersByTime(600)
-    })
+    jest.advanceTimersByTime(600)
 
     await waitFor(() => {
       expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
@@ -133,14 +127,10 @@ describe('TimerControls', () => {
     )
 
     const startButton = screen.getByTestId('start-timer-button')
-    act(() => {
-      fireEvent.click(startButton)
-    })
+    fireEvent.click(startButton)
 
     // ...then revert because of the disconnection
-    act(() => {
-      jest.advanceTimersByTime(600)
-    })
+    jest.advanceTimersByTime(600)
 
     await waitFor(() => {
       expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
@@ -160,9 +150,7 @@ describe('TimerControls', () => {
     )
 
     const startButton = screen.getByTestId('start-timer-button')
-    act(() => {
-      fireEvent.click(startButton)
-    })
+    fireEvent.click(startButton)
 
     // UI optimistically shows "Running"
     await screen.findByTestId('timer-running')

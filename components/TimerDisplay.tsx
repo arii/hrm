@@ -132,6 +132,7 @@ const TimerDisplay = () => {
       </Box>
       {/* Left Column: Mode Indicator */}
       <Box
+        data-testid="left-column"
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -148,6 +149,7 @@ const TimerDisplay = () => {
         )}
       </Box>
       <CardContent
+        data-testid="main-content"
         sx={{
           py: { xs: 2, md: 3 },
           textAlign: 'center',
@@ -227,6 +229,7 @@ const TimerDisplay = () => {
       </CardContent>
       {/* Right Column: Tabata Durations */}
       <Box
+        data-testid="right-column"
         sx={{
           display: 'flex',
           alignItems: 'center',

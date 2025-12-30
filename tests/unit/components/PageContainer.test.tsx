@@ -49,25 +49,28 @@ describe('PageContainer', () => {
   })
 
   it('applies the maxWidth prop correctly', () => {
-    const { container } = renderWithTheme(
-      <PageContainer maxWidth="sm">
+    renderWithTheme(
+      <PageContainer maxWidth="sm" data-testid="page-container">
         <div>Test Child</div>
       </PageContainer>
     )
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-    const containerElement = container.querySelector('.MuiContainer-maxWidthSm')
-    expect(containerElement).toBeInTheDocument()
+    const containerElement = screen.getByTestId('page-container')
+    expect(containerElement).toHaveClass('MuiContainer-maxWidthSm')
   })
 
   it('forwards additional props to the underlying Container', () => {
     const handleClick = jest.fn()
     renderWithTheme(
-      <PageContainer id="my-container" onClick={handleClick}>
+      <PageContainer
+        id="my-container"
+        onClick={handleClick}
+        data-testid="page-container"
+      >
         <div>Test Child</div>
       </PageContainer>
     )
 
-    const containerElement = screen.getByText('Test Child').parentElement
+    const containerElement = screen.getByTestId('page-container')
     expect(containerElement).toHaveAttribute('id', 'my-container')
 
     fireEvent.click(containerElement)

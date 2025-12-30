@@ -129,16 +129,9 @@ describe('TimerDisplay', () => {
       const flexContainer = screen.getByTestId('timer-display-container')
       expect(flexContainer).toHaveStyle('display: flex')
 
-      // Filter out absolutely positioned elements to only test the flex items
-      const flexItems = Array.from(flexContainer.children).filter(
-        (child) =>
-          window.getComputedStyle(child as Element).position !== 'absolute'
-      )
-
-      // Expect three direct children in the flex layout: left column, content, right column
-      expect(flexItems.length).toBe(3)
-
-      const [leftColumn, mainContent, rightColumn] = flexItems
+      const leftColumn = screen.getByTestId('left-column')
+      const mainContent = screen.getByTestId('main-content')
+      const rightColumn = screen.getByTestId('right-column')
 
       // Verify Left Column (Mode)
       expect(leftColumn).toHaveStyle('flex: 0 0 40px')

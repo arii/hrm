@@ -97,11 +97,11 @@ describe('PlaylistSelector', () => {
     const user = userEvent.setup()
     const input = await screen.findByRole('combobox')
     await user.click(input)
-    const focusFlowItem = await screen.findByText('Focus Flow')
-    const listItem = focusFlowItem.closest('li')
-    if (!listItem) throw new Error('Playlist item not found')
+    const listItem = await screen.findByText('Focus Flow')
+    const parentLi = listItem.closest('li')
+    if (!parentLi) throw new Error('Playlist item not found')
 
-    const playButton = within(listItem).getByRole('button', { name: /play/i })
+    const playButton = within(parentLi).getByRole('button', { name: /play/i })
 
     await user.click(playButton)
 
@@ -120,7 +120,7 @@ describe('PlaylistSelector', () => {
     await user.click(input)
 
     // Check the aria-label for the list item
-    const rockClassicsItem = await screen.findByText('Rock Classics')
+    let rockClassicsItem = await screen.findByText('Rock Classics')
     let listItem = rockClassicsItem.closest('li')
     expect(listItem).toHaveAttribute(
       'aria-label',
@@ -134,8 +134,8 @@ describe('PlaylistSelector', () => {
     await user.click(input)
 
     // Check the aria-label for the list item again
-    const rockClassicsItemAfterClick = await screen.findByText('Rock Classics')
-    listItem = rockClassicsItemAfterClick.closest('li')
+    rockClassicsItem = await screen.findByText('Rock Classics')
+    listItem = rockClassicsItem.closest('li')
     expect(listItem).toHaveAttribute(
       'aria-label',
       'Select playlist: Rock Classics, selected'
