@@ -374,6 +374,7 @@ The app includes the original HRM audio feedback system:
 - **[Test Improvement Plan](TEST_IMPROVEMENT_PLAN.md)** – Roadmap for expanding automated coverage.
 - **[Testing Guide](TESTING.md)** – How to run and interpret the existing suites.
 - **[Automation Plan](docs/automation-plan.md)** – Chrome DevTools MCP and automation scripting strategy.
+- **[TypeScript Patterns](docs/TYPESCRIPT_PATTERNS.md)** – Best practices for writing type-safe code and avoiding `any`.
 
 ## Architecture Overview
 

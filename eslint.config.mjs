@@ -47,6 +47,7 @@ export default defineConfig([
   // 5. Custom Rules: General Variables & Formatting
   {
     rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',
         {

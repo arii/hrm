@@ -55,8 +55,7 @@ function createSafePlayerProxy(
           'skipToPrevious',
         ].includes(prop as string)
       ) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return function (...args: any[]) {
+        return function (...args: unknown[]) {
           const [deviceId, ...restArgs] = args
 
           if (!deviceId) {

@@ -2,6 +2,7 @@ import {
   GoogleGenerativeAI,
   SchemaType,
   GoogleGenerativeAIError,
+  GenerateContentRequest,
 } from '@google/generative-ai'
 import { readFile, writeFile } from 'fs/promises'
 import path from 'path'
@@ -102,19 +103,28 @@ export class JsonProcessor {
   /**
    * Tries to parse the text as JSON, with fallbacks for markdown code blocks.
    * @param text The raw text response from the model.
-   * @returns An object with success status, the parsed data or error object, and the raw text.
+   * @returns An object with success status, the parsed data or error object.
+   * @note The `raw` property has been definitively removed from the successful return type.
+   * Rationale: While debugging is important, the risk of accidentally exposing sensitive
+   * information from a model's raw output in downstream logs or application logic was
+   * deemed too high. To support debugging, the full raw text *is* included in the
+   * error response if JSON parsing fails, providing a safe middle ground.
    */
-  public process(text: string): { success: boolean; data: any; raw: string } {
+  public process(text: string): {
+    success: boolean
+    data: unknown
+  } {
     try {
       // First, try parsing the text directly.
-      return { success: true, data: JSON.parse(text), raw: text }
+      return { success: true, data: JSON.parse(text) }
     } catch {
       // If direct parsing fails, try to extract JSON from a markdown code block.
       const jsonBlock = this.extractJsonBlock(text)
       if (jsonBlock) {
         try {
-          return { success: true, data: JSON.parse(jsonBlock), raw: text }
+          return { success: true, data: JSON.parse(jsonBlock) }
         } catch (e) {
+          console.error('Error parsing JSON block:', e)
           // If parsing the extracted block fails, return a structured error.
           return {
             success: false,
@@ -123,7 +133,6 @@ export class JsonProcessor {
               message: 'Could not parse the JSON block found in the markdown.',
               rawResponse: text,
             },
-            raw: text,
           }
         }
       }
@@ -135,7 +144,6 @@ export class JsonProcessor {
           message: 'No valid JSON found in the response.',
           rawResponse: text,
         },
-        raw: text,
       }
     }
   }
@@ -227,9 +235,9 @@ async function main() {
 async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
   prompt: string,
-  config?: any
+  config?: Omit<GenerateContentRequest, 'contents'>
 ) {
-  let lastError
+  let lastError: Error | null = null
 
   for (const modelName of MODEL_FALLBACKS) {
     console.log(`Attempting to use model: ${modelName}...`)
@@ -241,13 +249,20 @@ async function generateContentWithFallback(
       })
       console.log(`Successfully generated content using ${modelName}.`)
       return result.response.text()
-    } catch (error: any) {
-      lastError = error
-      const isNotFound = error.message?.includes('404') || error.status === 404
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        lastError = error
+      } else {
+        lastError = new Error(String(error))
+      }
+      const errorMessage = (error as Error).message || ''
+      const errorStatus = (error as { status?: number }).status
+
+      const isNotFound = errorMessage.includes('404') || errorStatus === 404
       const isBadRequest =
-        error.message?.includes('400') || error.status === 400 // Sometimes invalid model is 400
+        errorMessage.includes('400') || errorStatus === 400 // Sometimes invalid model is 400
       const isRateLimited =
-        error.message?.includes('429') || error.status === 429
+        errorMessage.includes('429') || errorStatus === 429
 
       if (isNotFound || isBadRequest || isRateLimited) {
         let reason = 'Unknown Error'
@@ -258,7 +273,7 @@ async function generateContentWithFallback(
         } else if (isBadRequest) {
           reason = 'Invalid Request'
         }
-        const details = reason === 'Unknown Error' ? `: ${error.message}` : ''
+        const details = reason === 'Unknown Error' ? `: ${errorMessage}` : ''
         console.warn(
           `Model ${modelName} failed (${reason}${details}). Trying next model...`
         )
@@ -346,14 +361,24 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
     })
   } catch (e) {
     console.warn(
-      `Warning: Failed to parse FAILED_CHECKS_JSON: ${(e as Error).message}`
+      `Warning: Failed to parse FAILED_CHECKS_JSON: ${(e as Error).message}`,
+      e
     )
     return []
   }
 }
 
+type ReviewDepth = 'detailed' | 'standard' | 'focused'
+
 function getReviewContextFromEnv(): ReviewContext {
   const failedChecks = parseFailedChecks(process.env.FAILED_CHECKS_JSON)
+  const reviewDepth = process.env.REVIEW_DEPTH
+  const isValidReviewDepth = (
+    depth: string | undefined
+  ): depth is ReviewDepth => {
+    return ['detailed', 'standard', 'focused'].includes(depth || '')
+  }
+
   return {
     prNumber: process.env.PR_NUMBER || '',
     prTitle: process.env.PR_TITLE || '',
@@ -362,7 +387,7 @@ function getReviewContextFromEnv(): ReviewContext {
     prLabels: process.env.PR_LABELS || '',
     filesChanged: parseInt(process.env.FILES_CHANGED || '0'),
     totalLoc: parseInt(process.env.TOTAL_LOC || '0'),
-    reviewDepth: (process.env.REVIEW_DEPTH as any) || 'standard',
+    reviewDepth: isValidReviewDepth(reviewDepth) ? reviewDepth : 'standard',
     changedAreas: process.env.CHANGED_AREAS || '',
     reviewCount: parseInt(process.env.REVIEW_COUNT || '0'),
     resolvedCount: parseInt(process.env.RESOLVED_COUNT || '0'),
@@ -469,15 +494,19 @@ ${logsSection}
 ${
   context.previousReviews
     ? (() => {
+        interface Review {
+          createdAt: string
+          body: string
+        }
         try {
-          const reviews = JSON.parse(context.previousReviews)
+          const reviews = JSON.parse(context.previousReviews) as Review[]
           return reviews
             .map(
-              (r: any, i: number) =>
+              (r: Review, i: number) =>
                 `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
             )
             .join('\n---\n')
-        } catch (e) {
+        } catch (_e) {
           return context.previousReviews // Fallback to raw string if parsing fails
         }
       })()
@@ -711,10 +740,11 @@ async function runReviewPreset(
     const result = jsonProcessor.process(text || '')
 
     if (result.success) {
+      const reviewData = result.data as { reviewComment?: string }
       // It's valid JSON, but we should still check if the content is meaningful.
       if (
-        !result.data.reviewComment ||
-        result.data.reviewComment.trim().length < 20
+        !reviewData.reviewComment ||
+        reviewData.reviewComment.trim().length < 20
       ) {
         console.warn(
           'Warning: Parsed JSON has an empty or short review comment. Injecting fallback.'
@@ -737,9 +767,11 @@ async function runReviewPreset(
           category: 'Invalid JSON Response',
           message:
             'The response from the generative AI was not valid JSON, even after attempting to extract it from markdown.',
-          details: result.data, // Contains the raw response for debugging.
+          details: result.data, // Contains the error info from JsonProcessor.
         },
-        reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${result.raw}\n\`\`\`\n\n</details>`,
+        reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${
+          (result.data as { rawResponse: string }).rawResponse || ''
+        }\n\`\`\`\n\n</details>`,
         labels: ['review-failed'],
         verdict: 'comment',
       }
@@ -762,11 +794,12 @@ async function writeOutput(
   }
 }
 
-async function handleError(error: any) {
+async function handleError(error: unknown) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
-  const technicalDetails = error.message || 'No technical details available.'
+  const technicalDetails =
+    error instanceof Error ? error.message : 'No technical details available.'
 
   if (error instanceof GoogleGenerativeAIError) {
     if (error.message.includes('400') || error.message.includes('404')) {
@@ -778,7 +811,7 @@ async function handleError(error: any) {
       userMessage =
         'The generative AI service is temporarily unavailable. Please try again later.'
     }
-  } else if (error.message.includes('api key')) {
+  } else if (technicalDetails.includes('api key')) {
     category = 'Configuration Issue'
     userMessage = 'The GEMINI_API_KEY is either invalid or missing.'
   }
@@ -795,7 +828,10 @@ async function handleError(error: any) {
     verdict: 'comment',
   }
 
-  console.error('Error during content generation:', JSON.stringify(errorOutput, null, 2))
+  console.error(
+    'Error during content generation:',
+    JSON.stringify(errorOutput, null, 2)
+  )
 
   // Always write a valid JSON structure to the output file on error.
   if (outputFile) {
