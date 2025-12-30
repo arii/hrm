@@ -7,17 +7,18 @@ import React, {
   useMemo,
   useCallback,
 } from 'react'
+import { v4 as uuidv4 } from 'uuid'
 import { useSession } from 'next-auth/react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { UserPhysicalProfile } from '@/types/core'
 
 // Default state for new users (or unauthenticated guests)
 const DEFAULT_PHYSICAL_PROFILE: UserPhysicalProfile = {
-  userId: 'guest',
+  userId: uuidv4(), // Generate a unique ID for guests
   age: 30,
   weight: 70, // 70kg (~154lbs)
   gender: 'MALE',
-  unitSystem: 'IMPERIAL',
+  unitSystem: 'METRIC',
   maxHr: 190,
 }
 
@@ -44,13 +45,10 @@ export const UserPhysicalProfileProvider: React.FC<{
 
   // Sync userId from Auth Session if available
   useEffect(() => {
-    if (session?.user?.email && profile.userId === 'guest') {
+    if (session?.user?.email && profile.userId !== session.user.email) {
       // In a real app, you would Fetch the profile from API here.
-      // For now, we just bind the record to the user's email/ID
-      setProfile((prev) => ({
-        ...prev,
-        userId: session.user?.email || 'authenticated-user',
-      }))
+      // For now, we just bind the record to the user's ID
+      setProfile((prev) => ({ ...prev, userId: session.user?.email ?? '' }))
     }
   }, [session, profile.userId, setProfile])
 

@@ -45,6 +45,7 @@ export const mockHrmData: HrmData = {
   age: 30,
   calories: 100,
   isConnected: true,
+  gender: 'MALE',
 }
 
 export const mockWebSocketContext: WebSocketContextType = {

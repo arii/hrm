@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -14,10 +14,22 @@ import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import { validateAgeValue, validateWeightValue } from './validation'
 import { useUserPhysicalProfile } from '@/context/UserPhysicalProfileContext'
+import { HrmMetadataUpdateMessage } from '@/types/websocket'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const { profile, updateProfile } = useUserPhysicalProfile()
+  const { sendData } = useWebSocket()
+
+  useEffect(() => {
+    const message: HrmMetadataUpdateMessage = {
+      type: 'HRM_METADATA_UPDATE',
+      data: {
+        gender: profile.gender,
+      },
+    }
+    sendData(message)
+  }, [profile.gender, sendData])
 
   const [displayWeight, setDisplayWeight] = useState(() =>
     toDisplay(profile.weight, profile.unitSystem).toString()

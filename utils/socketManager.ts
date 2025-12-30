@@ -152,6 +152,7 @@ const initSocketManager = (
         maxHr: 185,
         age: 30,
         calories: 0, // Initialize to 0
+        gender: 'MALE',
       }
       hrmDataRepository.save(newClient)
       clientSessionState.set(extWs.clientId, {
@@ -302,14 +303,12 @@ const handleIncomingMessage = (
           const currentAge = existingData.age ?? 30
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            // TODO: The server does not have access to the user's gender.
-            // This is a temporary fix to unblock the build.
             const caloriesBurned = estimateCaloriesBurned({
               heartRate: currentHr,
               age: currentAge,
               weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
               durationMinutes: dtMinutes,
-              gender: 'MALE',
+              gender: existingData.gender,
             })
             currentAccumulated += caloriesBurned
           }

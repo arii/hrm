@@ -10,6 +10,7 @@ import type {
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
 } from './core'
+import { z } from 'zod'
 
 // --- WebSocket Connection & Augmentation ---
 
@@ -167,8 +168,6 @@ export type ClientCommandMessage =
   | ClientRegistrationMessage
   | PingMessage
 
-import { z } from 'zod'
-
 // --- Zod Schemas for Client Input Command Interfaces ---
 
 export const HrmInputDataSchema = z.object({
@@ -184,6 +183,7 @@ export const HrmMetadataUpdateDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
+  gender: z.enum(['MALE', 'FEMALE']).optional(),
 })
 
 export const HrmMetadataUpdateMessageSchema = z.object({
