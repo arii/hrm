@@ -6,7 +6,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import Container from '@mui/material/Container'
-import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
@@ -131,8 +130,8 @@ export default function MockPage() {
             Simulate heart rate data for testing.
           </Typography>
 
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 8 }}>
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <Box sx={{ flex: '2 1 0' }}>
               <TextField
                 label="User Name"
                 placeholder="e.g., Mock User"
@@ -140,8 +139,8 @@ export default function MockPage() {
                 onChange={(e) => setName(e.target.value)}
                 fullWidth
               />
-            </Grid>
-            <Grid size={{ xs: 4 }}>
+            </Box>
+            <Box sx={{ flex: '1 1 0' }}>
               <TextField
                 label="Age"
                 placeholder="e.g., 30"
@@ -150,8 +149,8 @@ export default function MockPage() {
                 onChange={(e) => setAge(parseInt(e.target.value, 10))}
                 fullWidth
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           <TextField
             label="Current BPM"
@@ -175,8 +174,16 @@ export default function MockPage() {
           >
             Select a zone to set HR:
           </Typography>
-          <Grid container spacing={1} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 'auto' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 1,
+              mb: 3,
+              justifyContent: 'center',
+            }}
+          >
+            <Box>
               <Button
                 fullWidth
                 variant="contained"
@@ -186,8 +193,8 @@ export default function MockPage() {
               >
                 Zone 1
               </Button>
-            </Grid>
-            <Grid size={{ xs: 'auto' }}>
+            </Box>
+            <Box>
               <Button
                 fullWidth
                 variant="contained"
@@ -197,8 +204,8 @@ export default function MockPage() {
               >
                 Zone 2
               </Button>
-            </Grid>
-            <Grid size={{ xs: 'auto' }}>
+            </Box>
+            <Box>
               <Button
                 fullWidth
                 variant="contained"
@@ -208,8 +215,8 @@ export default function MockPage() {
               >
                 Zone 3
               </Button>
-            </Grid>
-            <Grid size={{ xs: 'auto' }}>
+            </Box>
+            <Box>
               <Button
                 fullWidth
                 variant="contained"
@@ -219,8 +226,8 @@ export default function MockPage() {
               >
                 Zone 4
               </Button>
-            </Grid>
-            <Grid size={{ xs: 'auto' }}>
+            </Box>
+            <Box>
               <Button
                 fullWidth
                 variant="contained"
@@ -230,8 +237,8 @@ export default function MockPage() {
               >
                 Zone 5
               </Button>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           <Button
             variant="contained"
