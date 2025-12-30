@@ -18,8 +18,8 @@ The `any` type is a powerful tool, but it's a dangerous one. It effectively disa
 
     ```typescript
     function processUnknown(data: unknown) {
-      const myData = data as { message: string }
-      console.log(myData.message)
+      const myData = data as { message: string };
+      console.log(myData.message);
     }
     ```
 
@@ -28,9 +28,9 @@ The `any` type is a powerful tool, but it's a dangerous one. It effectively disa
     ```typescript
     function processDynamicObject(obj: Record<string, unknown>) {
       for (const key in obj) {
-        const value = obj[key]
+        const value = obj[key];
         if (typeof value === 'string') {
-          console.log(value.toUpperCase())
+          console.log(value.toUpperCase());
         }
       }
     }
@@ -44,8 +44,8 @@ A type assertion (`as string`) tells the TypeScript compiler, "Trust me, I know 
 
 ```typescript
 // Unsafe: This will throw a TypeError if API_KEY is not set.
-const apiKey = process.env.API_KEY as string
-console.log(apiKey.toLowerCase())
+const apiKey = process.env.API_KEY as string;
+console.log(apiKey.toLowerCase());
 ```
 
 **Do this instead:**
@@ -53,14 +53,14 @@ console.log(apiKey.toLowerCase())
 Use a runtime check to validate the value before you use it. This is a form of type narrowing that ensures your code is safe.
 
 ```typescript
-const apiKey = process.env.API_KEY
+const apiKey = process.env.API_KEY;
 
 if (typeof apiKey !== 'string' || apiKey.length === 0) {
-  throw new Error('API_KEY environment variable is not set.')
+  throw new Error('API_KEY environment variable is not set.');
 }
 
 // Safe: TypeScript now knows apiKey is a string.
-console.log(apiKey.toLowerCase())
+console.log(apiKey.toLowerCase());
 ```
 
 5.  **`Record<string, any>` (Use with Caution):** `Record<string, any>` should be treated as a last resort. While it provides more structure than a naked `any`, it still disables type checking for the values of an object. The preferred approach is almost always `Record<string, unknown>` combined with type narrowing.
@@ -72,7 +72,7 @@ console.log(apiKey.toLowerCase())
     function processLegacyData(data: Record<string, any>) {
       // Justification: Interfacing with a legacy, untyped module.
       if (typeof data.name === 'string') {
-        console.log(data.name.toUpperCase())
+        console.log(data.name.toUpperCase());
       }
     }
     ```
@@ -85,10 +85,10 @@ When you have a variable of a broad type (like `unknown`), you can use type narr
 function processData(data: unknown) {
   if (typeof data === 'string') {
     // TypeScript now knows that `data` is a string.
-    console.log(data.toUpperCase())
+    console.log(data.toUpperCase());
   } else if (data instanceof Error) {
     // TypeScript now knows that `data` is an Error.
-    console.error(data.message)
+    console.error(data.message);
   }
 }
 ```
@@ -99,25 +99,25 @@ Discriminated unions are a powerful pattern for working with heterogeneous data.
 
 ```typescript
 interface Success {
-  type: 'SUCCESS'
-  data: string
+  type: 'SUCCESS';
+  data: string;
 }
 
 interface Failure {
-  type: 'FAILURE'
-  error: string
+  type: 'FAILURE';
+  error: string;
 }
 
-type Result = Success | Failure
+type Result = Success | Failure;
 
 function processResult(result: Result) {
   switch (result.type) {
     case 'SUCCESS':
-      console.log(result.data.toUpperCase())
-      break
+      console.log(result.data.toUpperCase());
+      break;
     case 'FAILURE':
-      console.error(result.error)
-      break
+      console.error(result.error);
+      break;
   }
 }
 ```
@@ -134,7 +134,7 @@ If you absolutely must use `any`, you need to document the reason for its use. Y
 
 ```typescript
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let data: any // Reason: The data comes from a third-party API with no type definitions.
+let data: any; // Reason: The data comes from a third-party API with no type definitions.
 ```
 
 By following these guidelines, we can ensure that our codebase remains type-safe and maintainable.
@@ -149,7 +149,7 @@ This pattern involves adding a public property to your class (e.g., `_test_`) th
 
 ```typescript
 class MyService {
-  private myPrivateValue = 42
+  private myPrivateValue = 42;
 
   /**
    * @internal
@@ -161,18 +161,17 @@ class MyService {
       ? {
           getMyPrivateValue: () => this.myPrivateValue,
         }
-      : undefined
+      : undefined;
 }
 
 // In your test file:
-const service = new MyService()
+const service = new MyService();
 if (service._test_) {
-  expect(service._test_.getMyPrivateValue()).toBe(42)
+  expect(service._test_.getMyPrivateValue()).toBe(42);
 }
 ```
 
 This approach has several advantages:
-
 - It's type-safe. The `_test_` property is properly typed, and your tests will fail to compile if you try to access a property that doesn't exist.
 - It's explicit. It clearly communicates that these properties are for testing purposes only.
 - It's safe for production. The `_test_` property is `undefined` in production, so there's no risk of it being used accidentally.

@@ -71,7 +71,6 @@ const Dashboard = () => {
 
   return (
     <Container
-      component="main"
       maxWidth="xl"
       onClick={handleInteraction}
       sx={{

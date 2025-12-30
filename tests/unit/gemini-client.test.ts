@@ -2,10 +2,6 @@
  * @jest-environment node
  */
 import { getModelFallbacks, JsonProcessor } from '../../scripts/gemini-client'
-import {
-  GeminiModel,
-  MODEL_FALLBACKS as defaultFallbacks,
-} from '../../scripts/gemini-models'
 
 describe('JsonProcessor', () => {
   const processor = new JsonProcessor()
@@ -29,7 +25,7 @@ describe('JsonProcessor', () => {
     const invalidJson = '{"key": "value",}'
     const result = processor.process(invalidJson)
     expect(result.success).toBe(false)
-    expect((result.data as { error: string }).error).toBe('JSON Parse Error')
+    expect(result.data.error).toBe('JSON Parse Error')
   })
 
   it('should return an error for a malformed JSON block in markdown', () => {
@@ -40,7 +36,7 @@ describe('JsonProcessor', () => {
     const markdownString = '```json\n{"key": "value",}\n```'
     const result = processor.process(markdownString)
     expect(result.success).toBe(false)
-    expect((result.data as { error: string }).error).toBe('JSON Parse Error')
+    expect(result.data.error).toBe('JSON Parse Error')
     consoleErrorSpy.mockRestore()
   })
 
@@ -48,7 +44,7 @@ describe('JsonProcessor', () => {
     const nonJsonString = 'This is just a regular string.'
     const result = processor.process(nonJsonString)
     expect(result.success).toBe(false)
-    expect((result.data as { error: string }).error).toBe('JSON Parse Error')
+    expect(result.data.error).toBe('JSON Parse Error')
   })
 })
 
@@ -67,15 +63,23 @@ describe('getModelFallbacks', () => {
   it('should return the default fallback list when the environment variable is not set', () => {
     delete process.env.GEMINI_MODEL_FALLBACKS
     const fallbacks = getModelFallbacks()
-    expect(fallbacks).toEqual(defaultFallbacks)
+    expect(fallbacks).toEqual([
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-2.5-pro',
+    ])
   })
 
   it('should return the correct list of models from a valid environment variable', () => {
-    process.env.GEMINI_MODEL_FALLBACKS = `${GeminiModel.GEMINI_2_5_PRO}, gemini-experimental-model`
+    process.env.GEMINI_MODEL_FALLBACKS =
+      'gemini-pro, gemini-pro-vision, gemini-ultra'
     const fallbacks = getModelFallbacks()
     expect(fallbacks).toEqual([
-      GeminiModel.GEMINI_2_5_PRO,
-      'gemini-experimental-model',
+      'gemini-pro',
+      'gemini-pro-vision',
+      'gemini-ultra',
     ])
   })
 
@@ -83,9 +87,10 @@ describe('getModelFallbacks', () => {
     const consoleWarnSpy = jest
       .spyOn(console, 'warn')
       .mockImplementation(() => {})
-    process.env.GEMINI_MODEL_FALLBACKS = `${GeminiModel.GEMINI_2_5_PRO}, not-gemini, gemini-ultra, also-not-gemini`
+    process.env.GEMINI_MODEL_FALLBACKS =
+      'gemini-pro, not-gemini, gemini-ultra, also-not-gemini'
     const fallbacks = getModelFallbacks()
-    expect(fallbacks).toEqual([GeminiModel.GEMINI_2_5_PRO, 'gemini-ultra'])
+    expect(fallbacks).toEqual(['gemini-pro', 'gemini-ultra'])
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       'Warning: Invalid model name "not-gemini" in GEMINI_MODEL_FALLBACKS. It will be ignored.'
     )
@@ -101,7 +106,13 @@ describe('getModelFallbacks', () => {
       .mockImplementation(() => {})
     process.env.GEMINI_MODEL_FALLBACKS = ''
     const fallbacks = getModelFallbacks()
-    expect(fallbacks).toEqual(defaultFallbacks)
+    expect(fallbacks).toEqual([
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-2.5-pro',
+    ])
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
     )
@@ -114,7 +125,13 @@ describe('getModelFallbacks', () => {
       .mockImplementation(() => {})
     process.env.GEMINI_MODEL_FALLBACKS = 'invalid1, invalid2'
     const fallbacks = getModelFallbacks()
-    expect(fallbacks).toEqual(defaultFallbacks)
+    expect(fallbacks).toEqual([
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-2.5-pro',
+    ])
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
     )
