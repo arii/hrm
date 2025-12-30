@@ -125,6 +125,9 @@ jobs:
         with:
           fetch-depth: 1
 
+      # Inlining setup steps from the composite action (.github/actions/setup-env)
+      # This is necessary to ensure pnpm is available on the PATH for subsequent steps
+      # and to reliably capture all setup logs in a single file.
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
