@@ -139,24 +139,30 @@ export default function ConnectPage() {
     resetCalories()
   }
 
+  const userSettings = {
+    userName,
+    setUserName,
+    userAge,
+    setUserAge,
+    onAgeBlur: handleAgeBlur,
+    ageError,
+    userHeight: displayHeight,
+    setUserHeight: handleHeightChange,
+    onHeightBlur: handleHeightBlur,
+    heightError,
+    userWeight: displayWeight,
+    setUserWeight: handleWeightChange,
+    onWeightBlur: handleWeightBlur,
+    weightError,
+    unit: unitSystem,
+    setUnit: handleUnitChange,
+  }
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
       caloriesBurned={calories}
-      userName={userName}
-      setUserName={setUserName}
-      userAge={userAge}
-      setUserAge={setUserAge}
-      onAgeBlur={handleAgeBlur}
-      ageError={ageError}
-      userHeight={displayHeight}
-      setUserHeight={handleHeightChange}
-      onHeightBlur={handleHeightBlur}
-      heightError={heightError}
-      userWeight={displayWeight}
-      setUserWeight={handleWeightChange}
-      onWeightBlur={handleWeightBlur}
-      weightError={weightError}
+      userSettings={userSettings}
       gender={gender}
       setGender={setGender}
       unitSystem={unitSystem}

@@ -13,7 +13,7 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
-import UserSettings from './UserSettings'
+import UserSettings, { UserSettingsProps } from './UserSettings'
 import React, { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
 import {
@@ -29,22 +29,7 @@ import {
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
-  userName: string
-  setUserName: (name: string) => void
-  userAge: string
-  setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
-  userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (
-    height: Partial<{ cm: string; feet: string; inches: string }>
-  ) => void
-  onHeightBlur: () => void
-  heightError: string | null
-  userWeight: string
-  setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
-  weightError: string | null
+  userSettings: UserSettingsProps
   gender: Gender
   setGender: React.Dispatch<React.SetStateAction<Gender>>
   unitSystem: MeasurementSystem
@@ -70,20 +55,7 @@ interface ConnectViewProps {
 export default function ConnectView({
   duration,
   caloriesBurned,
-  userName,
-  setUserName,
-  userAge,
-  setUserAge,
-  onAgeBlur,
-  ageError,
-  userHeight,
-  setUserHeight,
-  onHeightBlur,
-  heightError,
-  userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
+  userSettings,
   gender,
   setGender,
   unitSystem,
@@ -106,6 +78,7 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
+  const { userName, userAge } = userSettings
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -170,24 +143,7 @@ export default function ConnectView({
               </ToggleButton>
             </ToggleButtonGroup>
 
-            <UserSettings
-              userName={userName}
-              setUserName={setUserName}
-              userAge={userAge}
-              setUserAge={setUserAge}
-              onAgeBlur={onAgeBlur}
-              ageError={ageError}
-              userHeight={userHeight}
-              setUserHeight={setUserHeight}
-              onHeightBlur={onHeightBlur}
-              heightError={heightError}
-              userWeight={userWeight}
-              setUserWeight={setUserWeight}
-              onWeightBlur={onWeightBlur}
-              weightError={weightError}
-              unit={unitSystem}
-              setUnit={onUnitChange}
-            />
+            <UserSettings {...userSettings} />
 
             <FormControl component="fieldset">
               <FormLabel component="legend">Gender</FormLabel>
