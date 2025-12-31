@@ -290,13 +290,11 @@ jobs:
           path: .
 
       - name: Install yq
-        run: |
-          sudo wget https://github.com/mikefarah/yq/releases/download/v4.30.5/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
-          yq --version
+        uses: mikefarah/yq@v4
 
       - name: Manage Labels
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: ./.github/scripts/manage-pr-labels.sh
 
