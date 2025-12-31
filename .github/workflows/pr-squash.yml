@@ -12,6 +12,9 @@ permissions:
 jobs:
   squash-and-rebase:
     runs-on: ubuntu-latest
+    outputs:
+      outcome: ${{ steps.squash_rebase.outcome }}
+      head_ref: ${{ steps.pr_data.outputs.head_ref }}
     if: github.event.issue.pull_request && (contains(github.event.comment.body, '@pr-squash') || contains(github.event.comment.body, '@pr-squash-rebase'))
     steps:
       - name: Acknowledge command
@@ -151,13 +154,14 @@ jobs:
               body: messageBody
             });
 
-      - name: Trigger PR Quality Check
-        if: steps.squash_rebase.outcome == 'success'
-        uses: ./.github/workflows/pr-quality.yml
-        with:
-          branch: ${{ steps.pr_data.outputs.head_ref }}
-          pr_number: ${{ github.event.issue.number }}
-          # Force full quality checks on the newly squashed commit.
-          has_changes: 'true'
-        secrets:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  trigger-quality-check:
+    needs: squash-and-rebase
+    if: needs.squash-and-rebase.outputs.outcome == 'success'
+    uses: ./.github/workflows/pr-quality.yml
+    with:
+      branch: ${{ needs.squash-and-rebase.outputs.head_ref }}
+      pr_number: ${{ github.event.issue.number }}
+      # Force full quality checks on the newly squashed commit.
+      has_changes: 'true'
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
