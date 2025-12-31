@@ -414,7 +414,8 @@ function buildReviewPrompt(
     ? `Re-Review #${context.reviewCount + 1}`
     : 'Initial Review'
 
-  let prompt = `# Code Review Task: ${reviewIteration}\n`
+  const promptParts: string[] = []
+  promptParts.push(`# Code Review Task: ${reviewIteration}\n`)
 
   if (context.failedChecks && context.failedChecks.length > 0) {
     const checksTable = `| Check Name | Status | Log URL |\n|------------|--------|---------|\n${context.failedChecks
@@ -426,7 +427,6 @@ function buildReviewPrompt(
 
     const logsSection = context.failedChecks
       .map((check) => {
-        // Limit log size to avoid excessively large prompts
         const truncatedLog =
           check.logs && check.logs.length > 15000
             ? check.logs.substring(0, 15000) + '\n... [LOGS TRUNCATED]'
@@ -444,7 +444,7 @@ ${truncatedLog || 'No logs available.'}
       })
       .join('\n')
 
-    prompt += `
+    promptParts.push(`
 ## 🚨 CI Failure Analysis
 The following CI checks failed. Your primary task is to **analyze the provided logs** to identify the root cause and suggest a specific code fix.
 
@@ -460,10 +460,10 @@ ${logsSection}
 4.  **Offer a specific, actionable code change** to fix the issue.
 
 ---
-`
+`)
   }
 
-  prompt += `## Review Context
+  promptParts.push(`## Review Context
 - **PR #${context.prNumber}**: ${context.prTitle}
 - **Author**: ${context.prAuthor}
 - **Files Changed**: ${context.filesChanged}
@@ -471,15 +471,34 @@ ${logsSection}
 - **Areas Affected**: ${context.changedAreas}
 - **Review Depth**: ${context.reviewDepth}
 - **Labels**: ${context.prLabels || 'none'}
-`
+`)
 
   if (context.issueNumber) {
-    prompt += `- **Linked Issue #${context.issueNumber}**: ${context.issueTitle}\n`
+    promptParts.push(
+      `- **Linked Issue #${context.issueNumber}**: ${context.issueTitle}\n`
+    )
   }
 
-  // Add re-review specific context
   if (isReReview) {
-    prompt += `\n## Review History
+    const previousReviews = context.previousReviews
+      ? (() => {
+          try {
+            const reviews = JSON.parse(context.previousReviews) as {
+              createdAt: string
+              body: string
+            }[]
+            return reviews
+              .map(
+                (r, i) => `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
+              )
+              .join('\n---\n')
+          } catch {
+            return context.previousReviews
+          }
+        })()
+      : 'None'
+
+    promptParts.push(`\n## Review History
 - **Previous Reviews**: ${context.reviewCount}
 - **Resolved Comments**: ${context.resolvedCount}
 - **Changes Requested**: ${context.changesRequested}
@@ -491,65 +510,43 @@ ${logsSection}
 4. Determine if the PR is ready for approval
 
 ### Previous Review Feedback:
-${
-  context.previousReviews
-    ? (() => {
-        interface Review {
-          createdAt: string
-          body: string
-        }
-        try {
-          const reviews = JSON.parse(context.previousReviews) as Review[]
-          return reviews
-            .map(
-              (r: Review, i: number) =>
-                `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
-            )
-            .join('\n---\n')
-        } catch (_e) {
-          return context.previousReviews // Fallback to raw string if parsing fails
-        }
-      })()
-    : 'None'
-}
-`
+${previousReviews}
+`)
   }
 
-  // Add test coverage concerns
   if (context.missingTests) {
-    prompt += `\n⚠️ **TEST COVERAGE ALERT**: Source code was modified without corresponding test changes.\n`
+    promptParts.push(
+      `\n⚠️ **TEST COVERAGE ALERT**: Source code was modified without corresponding test changes.\n`
+    )
   } else if (context.hasTestChanges) {
-    prompt += `\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`
+    promptParts.push(
+      `\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`
+    )
   }
 
-  // Issue context
   if (context.linkedIssueBody) {
-    prompt += `\n## Issue Description
+    promptParts.push(`\n## Issue Description
 ${context.linkedIssueBody}
-`
+`)
   }
 
-  // Commit messages for understanding intent
   if (context.commitMessages) {
-    prompt += `\n## Commit Messages (Development Intent)
+    promptParts.push(`\n## Commit Messages (Development Intent)
 ${context.commitMessages}
-`
+`)
   }
 
-  // Project Documentation
-  prompt += `\n## Project Documentation & Guidelines
+  promptParts.push(`\n## Project Documentation & Guidelines
 ${contextContent}
-`
+`)
 
-  // The actual diff
-  // Truncate diff if extremely large
   const maxDiffLength = 50000
   const truncatedDiff =
     diff.length > maxDiffLength
       ? diff.substring(0, maxDiffLength) + '\n...[DIFF TRUNCATED]'
       : diff
 
-  prompt += `\n## Code Changes (Diff)
+  promptParts.push(`\n## Code Changes (Diff)
 \`\`\`diff
 ${truncatedDiff}
 \`\`\`
@@ -558,11 +555,10 @@ ${truncatedDiff}
 
 ## Review Instructions
 
-`
+`)
 
-  // Tailor instructions based on review type and depth
   if (isReReview) {
-    prompt += `### Re-Review Guidelines:
+    promptParts.push(`### Re-Review Guidelines:
 1. **Verification First**: Check if previous concerns were addressed
 2. **New Issues**: Identify any regressions or new problems introduced
 3. **Progressive Approval**: If most issues resolved and only minor items remain, indicate near-approval status
@@ -575,11 +571,10 @@ ${truncatedDiff}
 - If near approval, explicitly state "✅ Ready for approval pending: [list minor items]"
 - Provide specific, actionable feedback for any remaining concerns
 - If NO issues found: "✅ Verified [Specific Change]. No regressions found. Ready for approval."
-`
+`)
   } else {
-    // Initial review instructions based on depth
     if (context.reviewDepth === 'detailed') {
-      prompt += `### Detailed Review Guidelines (Small Change):
+      promptParts.push(`### Detailed Review Guidelines (Small Change):
 Review every aspect thoroughly:
 1. **Code Quality**: Readability, maintainability, adherence to patterns
 2. **Architecture**: Proper separation of concerns, appropriate abstractions
@@ -587,18 +582,18 @@ Review every aspect thoroughly:
 4. **Performance**: Inefficiencies, N+1 queries, memory leaks
 5. **Testing**: Coverage of edge cases, test quality
 6. **Documentation**: Code comments, type definitions, API docs
-`
+`)
     } else if (context.reviewDepth === 'standard') {
-      prompt += `### Standard Review Guidelines (Medium Change):
+      promptParts.push(`### Standard Review Guidelines (Medium Change):
 Focus on key areas:
 1. **Correctness**: Does the code solve the intended problem?
 2. **Architecture**: Are changes well-structured and maintainable?
 3. **Security & Performance**: Any critical issues?
 4. **Testing**: Are key paths covered?
 5. **Breaking Changes**: Backward compatibility concerns?
-`
+`)
     } else {
-      prompt += `### Focused Review Guidelines (Large Change):
+      promptParts.push(`### Focused Review Guidelines (Large Change):
 Prioritize high-impact areas:
 1. **Architecture**: Overall design and structure
 2. **Critical Paths**: Security, data integrity, performance bottlenecks
@@ -606,10 +601,10 @@ Prioritize high-impact areas:
 4. **Test Strategy**: Are high-risk areas covered?
 
 Note: For large changes, consider suggesting to break into smaller PRs if feasible.
-`
+`)
     }
 
-    prompt += `\n### Output Format:
+    promptParts.push(`\n### Output Format:
 Provide a structured review with:
 1. **Summary**: High-level assessment of the change
 2. **Strengths**: What's done well
@@ -617,29 +612,27 @@ Provide a structured review with:
 4. **Test Coverage**: Assessment of test quality/coverage
 5. **Recommendations**: Specific, actionable improvements
 6. **Verdict**: Approve / Request Changes / Comment
-`
+`)
   }
 
-  // Add project-specific context
-  prompt += `\n## Project Context
+  promptParts.push(`\n## Project Context
 - This is a Next.js/TypeScript HRM (Heart Rate Monitor) application
 - Focus on real-time data handling and WebSocket performance
 - Security is critical (authentication, data privacy)
 - Maintain backward compatibility unless explicitly breaking change
 - Follow patterns established in DEVELOPMENT.md and DESIGN_GUIDELINES.md
-`
+`)
 
-  // Add specific checks for common issues from audit
-  prompt += `\n## Known Areas of Technical Debt (from audit):
+  promptParts.push(`\n## Known Areas of Technical Debt (from audit):
 When reviewing, be especially vigilant about:
 - Callback hell in server.ts (prefer async/await)
 - Type safety (avoid 'any', use proper TypeScript types)
 - Error handling (ensure proper try/catch and error messages)
 - WebSocket connection management (prevent memory leaks)
 - Authentication state consistency
-`
+`)
 
-  prompt += `\n## Response Format (JSON)
+  promptParts.push(`\n## Response Format (JSON)
 Return a JSON object with:
 \`\`\`json
 {
@@ -661,9 +654,9 @@ Make your feedback:
 - You MUST add **ONE NEWLINE** (\`\\n\`) after every header.
 - Do not clump sections together.
 - Ensure lists are properly spaced.
-`
+`)
 
-  return prompt
+  return promptParts.join('')
 }
 
 async function runReviewPreset(
