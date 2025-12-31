@@ -34,7 +34,9 @@ export class RedisPubSubBroadcaster {
     try {
       await this.subscriber.unsubscribe(CHANNEL)
       await this.subscriber.quit()
-      logger.info(`Unsubscribed and disconnected from Redis channel: ${CHANNEL}`)
+      logger.info(
+        `Unsubscribed and disconnected from Redis channel: ${CHANNEL}`
+      )
     } catch (error) {
       logger.error({ error }, 'Failed to disconnect broadcaster')
     }
