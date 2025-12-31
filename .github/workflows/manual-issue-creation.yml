@@ -1,0 +1,75 @@
+# .github/workflows/manual-issue-creation.yml
+name: Manual Issue Creation
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  actions: read
+
+jobs:
+  create-issues-from-comment:
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '/create-issues')
+    runs-on: ubuntu-latest
+    name: Create Issues from Gemini Review
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+
+      - name: Find Latest Review Workflow Run
+        id: find_run
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          # Get the head SHA of the PR
+          HEAD_SHA=$(gh pr view $PR_NUMBER --json headRefOid --jq .headRefOid)
+          echo "::info::Found head SHA: $HEAD_SHA"
+
+          # Find the most recent successful workflow run for that commit SHA
+          RUN_ID=$(gh run list --commit "$HEAD_SHA" --workflow ci.yml --status "success" --json databaseId --limit 1 | jq -r '.[0].databaseId')
+
+          if [ -z "$RUN_ID" ]; then
+            echo "run_id=not_found" >> $GITHUB_OUTPUT
+            echo "::warning::No successful CI workflow run found for branch '$BRANCH_NAME'."
+          else
+            echo "::info::Found latest successful run ID: $RUN_ID"
+            echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Handle No Run Found
+        if: steps.find_run.outputs.run_id == 'not_found'
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh pr comment $PR_NUMBER --body "Could not find a successful CI workflow run to source review artifacts. Please ensure the 'ci.yml' workflow has completed successfully for this branch."
+          exit 1
+
+      - name: Download Review Artifact
+        id: download_artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh run download ${{ steps.find_run.outputs.run_id }} --name review-result --dir .
+          if [ ! -f "review_result.json" ]; then
+            echo "::error::Failed to download or find review_result.json artifact."
+            exit 1
+          fi
+          echo "::info::Artifact downloaded successfully."
+
+      - name: Create Suggested Issues
+        env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          pnpm tsx scripts/create-review-issues.ts
