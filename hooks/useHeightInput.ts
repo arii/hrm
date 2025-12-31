@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { MeasurementSystem } from '../types'
 import { cmToFeetAndInches, feetAndInchesToCm } from '../utils/units'
-import { validateHeightValue } from '../app/client/connect/validation'
+import { validateHeightValue } from '@/lib/validation/userMetrics'
 import useLocalStorage from './useLocalStorage'
 
 interface HeightState {
