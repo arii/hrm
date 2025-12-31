@@ -31,7 +31,8 @@ app.prepare().then(async () => {
   const server = createServer(expressApp)
 
   // 1. Apply Middleware (Rate Limits)
-  const { spotifyApiLimiter, internalApiLimiter, generalApiLimiter } = createRateLimiters()
+  const { spotifyApiLimiter, internalApiLimiter, generalApiLimiter } =
+    createRateLimiters()
 
   if (env.NODE_ENV !== 'test') {
     expressApp.use('/api/spotify/', spotifyApiLimiter)
@@ -54,7 +55,9 @@ app.prepare().then(async () => {
 
   // 3. Initialize Services
   const wsManager = new WebSocketManager()
-  const services: AppServices = await createServices(wsManager.createBroadcaster())
+  const services: AppServices = await createServices(
+    wsManager.createBroadcaster()
+  )
 
   // Register services to container
   serviceContainer.register('spotifyService', services.spotifyService)
@@ -70,14 +73,16 @@ app.prepare().then(async () => {
   initSocketManager(wsManager.wss, getUnifiedStateSnapshot, services)
 
   // 5. API Routes
-  expressApp.get('/api/health', (_, res) => res.status(200).json({ status: 'ok' }))
+  expressApp.get('/api/health', (_, res) =>
+    res.status(200).json({ status: 'ok' })
+  )
 
   expressApp.get('/api/internal/health/services', async (_, res) => {
     const timerCheck = checkTimerService(services.tabataService)
     const wsCheck = await checkWebSocketService()
     res.status(200).json({
       healthy: timerCheck.healthy && wsCheck.healthy,
-      details: { timer: timerCheck, websocket: wsCheck }
+      details: { timer: timerCheck, websocket: wsCheck },
     })
   })
 

@@ -16,11 +16,11 @@ export const createRateLimiters = () => {
   // Return no-ops if in test environment or strictly not needed
   if (env.NODE_ENV === 'test') {
     return {
-      spotifyApiLimiter: (req: Request, res: Response, next: NextFunction) =>
+      spotifyApiLimiter: (_req: Request, _res: Response, next: NextFunction) =>
         next(),
-      internalApiLimiter: (req: Request, res: Response, next: NextFunction) =>
+      internalApiLimiter: (_req: Request, _res: Response, next: NextFunction) =>
         next(),
-      generalApiLimiter: (req: Request, res: Response, next: NextFunction) =>
+      generalApiLimiter: (_req: Request, _res: Response, next: NextFunction) =>
         next(),
     }
   }
