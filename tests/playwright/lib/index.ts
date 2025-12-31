@@ -127,7 +127,3 @@ export type { Page, BrowserContext, Locator } from '@playwright/test'
 // Re-export URL utilities
 // ============================================================================
 export { getBaseURL, getWebSocketURL, getAPIURL } from '../../../utils/urls'
-
-// Export BASE_URL for backward compatibility
-import { getBaseURL } from '../../../utils/urls'
-export const BASE_URL = getBaseURL()

@@ -1,0 +1,27 @@
+name: Knip
+on:
+  push:
+    branches:
+      - leader
+  pull_request:
+    branches:
+      - leader
+jobs:
+  knip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Setup Node.zjs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run Knip
+        run: pnpm knip

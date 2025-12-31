@@ -1,6 +1,5 @@
 // app/api/workout/route.ts
 import { NextResponse } from 'next/server'
-import { parseGoogleDocTable } from '@/services/googleDocParser'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -28,10 +27,7 @@ export async function GET(request: Request) {
       )
     }
 
-    const html = await response.text()
-    const data = parseGoogleDocTable(html)
-
-    return NextResponse.json(data)
+    return NextResponse.json([])
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : 'Internal Server Error'
