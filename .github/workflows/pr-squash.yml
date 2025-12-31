@@ -44,8 +44,9 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          # A PAT is required to allow the action to push to protected branches and trigger CI
-          token: ${{ secrets.PAT_TOKEN }}
+          # Using the default GITHUB_TOKEN. For this to work on protected branches,
+          # the repository settings may need to be adjusted to allow the github-actions bot to push.
+          token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ steps.pr_data.outputs.head_ref }}
           fetch-depth: 0
 
@@ -60,6 +61,7 @@ jobs:
         env:
           PR_TITLE: ${{ steps.pr_data.outputs.pr_title }}
           PR_BODY: ${{ steps.pr_data.outputs.pr_body }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
 
