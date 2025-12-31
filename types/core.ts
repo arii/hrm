@@ -155,6 +155,17 @@ export interface SpotifyPlaylistItem {
 }
 
 /**
+ * Defines the parameters that can be passed to the Spotify service's handleCommand method.
+ */
+export interface SpotifyCommandParameters {
+  deviceId?: string
+  volume?: number
+  playlistUri?: string
+  contextUri?: string
+  uri?: string
+}
+
+/**
  * Represents a Spotify playlist.
  */
 export interface SpotifyPlaylist {
