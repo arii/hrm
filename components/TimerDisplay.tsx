@@ -24,7 +24,7 @@ const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
   const {
-    phase,
+    currentPhase: phase,
     timeRemaining,
     timeElapsed,
     mode,
