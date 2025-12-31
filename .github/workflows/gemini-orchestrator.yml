@@ -33,6 +33,8 @@ jobs:
       - name: Route Comment
         id: router
         run: |
+          # @gemini-bot implies both a review and an invocation
+          # @jules fix is for review only
           COMMENT_BODY="${{ github.event.comment.body }}"
           if [[ "$COMMENT_BODY" == '@gemini-bot'* || "$COMMENT_BODY" == '@jules fix'* ]]; then
             echo "is_review_comment=true" >> $GITHUB_OUTPUT
