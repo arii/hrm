@@ -19,10 +19,12 @@ import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
 import { Playlist } from '../../types/spotify'
 
 interface PlaylistSelectorProps {
+  onPlaylistSelected: (uri: string) => void
   onPlaylistPlay: (uri: string) => void
 }
 
 const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
+  onPlaylistSelected,
   onPlaylistPlay,
 }) => {
   const [presetPlaylists, setPresetPlaylists] = useState<Playlist[]>([])
@@ -130,7 +132,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   const handlePlaylistSelect = (playlist: Playlist | null) => {
     setSelectedPlaylist(playlist)
     if (playlist) {
-      onPlaylistPlay(playlist.uri)
+      onPlaylistSelected(playlist.uri)
     }
   }
 
@@ -278,6 +280,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                   edge="end"
                   aria-label={`Play playlist: ${option.name}`}
                   onClick={(e) => {
+                    // Prevent the click from propagating to the Autocomplete component,
+                    // which would otherwise close the dropdown.
                     e.stopPropagation()
                     onPlaylistPlay(option.uri)
                   }}

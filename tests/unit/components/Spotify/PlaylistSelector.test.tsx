@@ -24,7 +24,12 @@ describe('PlaylistSelector', () => {
   })
 
   it('should fetch and display playlists on render', async () => {
-    render(<PlaylistSelector onPlaylistPlay={jest.fn()} />)
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={jest.fn()}
+        onPlaylistPlay={jest.fn()}
+      />
+    )
     const user = userEvent.setup()
     const input = await screen.findByRole('combobox')
     await user.click(input)
@@ -37,9 +42,14 @@ describe('PlaylistSelector', () => {
     })
   })
 
-  it('should call onPlaylistPlay with the correct URI when a playlist is selected from the list', async () => {
-    const onPlaylistPlay = jest.fn()
-    render(<PlaylistSelector onPlaylistPlay={onPlaylistPlay} />)
+  it('should call onPlaylistSelected with the correct URI when a playlist is selected from the list', async () => {
+    const onPlaylistSelected = jest.fn()
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={onPlaylistSelected}
+        onPlaylistPlay={jest.fn()}
+      />
+    )
     const user = userEvent.setup()
     const input = await screen.findByRole('combobox')
     await user.click(input)
@@ -47,12 +57,17 @@ describe('PlaylistSelector', () => {
     await user.click(rockClassicsItem)
 
     // Verify the callback was called with the correct URI
-    expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:2')
+    expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:2')
   })
 
-  it('should call onPlaylistPlay when a playlist is selected using the keyboard', async () => {
-    const onPlaylistPlay = jest.fn()
-    render(<PlaylistSelector onPlaylistPlay={onPlaylistPlay} />)
+  it('should call onPlaylistSelected when a playlist is selected using the keyboard', async () => {
+    const onPlaylistSelected = jest.fn()
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={onPlaylistSelected}
+        onPlaylistPlay={jest.fn()}
+      />
+    )
     const user = userEvent.setup()
     const input = await screen.findByRole('combobox')
 
@@ -68,12 +83,17 @@ describe('PlaylistSelector', () => {
     await user.keyboard('{Enter}')
 
     // Verify the callback was called with the correct URI
-    expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:2')
+    expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:2')
   })
 
   it('should call onPlaylistPlay with the correct URI when the play button is clicked', async () => {
     const onPlaylistPlay = jest.fn()
-    render(<PlaylistSelector onPlaylistPlay={onPlaylistPlay} />)
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={jest.fn()}
+        onPlaylistPlay={onPlaylistPlay}
+      />
+    )
     const user = userEvent.setup()
     const input = await screen.findByRole('combobox')
     await user.click(input)
@@ -89,7 +109,12 @@ describe('PlaylistSelector', () => {
   })
 
   it('should have the correct aria-labels for accessibility', async () => {
-    render(<PlaylistSelector onPlaylistPlay={jest.fn()} />)
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={jest.fn()}
+        onPlaylistPlay={jest.fn()}
+      />
+    )
     const user = userEvent.setup()
     const input = await screen.findByRole('combobox')
     await user.click(input)
