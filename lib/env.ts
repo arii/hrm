@@ -53,7 +53,11 @@ const serverSchema = z.object({
    */
   SPOTIFY_CALLBACK_URL: z.string().url().optional(),
   SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().int().positive().optional(),
-  SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().int().positive().optional(),
+  SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .optional(),
   WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().int().positive().optional(),
 })
 
@@ -98,7 +102,10 @@ const parsed = finalSchema.safeParse(envRecord)
 
 if (parsed.success === false) {
   // We can't use the logger here, because the logger depends on the env variables.
-  console.error('❌ Invalid environment variables:\n', ...formatErrors(parsed.error))
+  console.error(
+    '❌ Invalid environment variables:\n',
+    ...formatErrors(parsed.error)
+  )
   process.exit(1)
 }
 
