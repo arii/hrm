@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import useLocalStorage from '@/hooks/useLocalStorage'
+import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
@@ -15,30 +15,17 @@ import { useHeightInput } from '@/hooks/useHeightInput'
 import { validateAgeValue, validateWeightValue } from './validation'
 
 export default function ConnectPage() {
-  const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
-  const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  // Height logic is now encapsulated in useHeightInput
-  const [_weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
-  const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
-    'hrm-user-gender',
-    'MALE'
-  )
-  const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
-    'hrm-user-units',
-    'IMPERIAL'
-  )
+  const [userSettings, setUserSettings] = useUserSettings()
+  const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
   const [displayWeight, setDisplayWeight] = useState(() => {
-    const kg = parseFloat(_weightInKg)
-    if (isNaN(kg)) {
-      return ''
-    }
+    const kg = userWeight || 0
     return toDisplay(kg, unitSystem).toString()
   })
+
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
 
-  // Use the custom hook for height input logic
   const {
     displayHeight,
     updateHeight: handleHeightChange,
@@ -47,7 +34,7 @@ export default function ConnectPage() {
   } = useHeightInput('175', unitSystem)
 
   const handleAgeBlur = () => {
-    const error = validateAgeValue(userAge)
+    const error = validateAgeValue(String(userAge || ''))
     setAgeError(error)
   }
 
@@ -62,7 +49,7 @@ export default function ConnectPage() {
     const numericValue = parseFloat(displayWeight)
     if (!error && !isNaN(numericValue) && numericValue > 0) {
       const newKgValue = toKg(numericValue, unitSystem)
-      setWeightInKg(newKgValue.toFixed(2))
+      setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
     }
   }
 
@@ -77,7 +64,7 @@ export default function ConnectPage() {
     disconnectionReason,
   } = useBluetoothHRM({
     userName,
-    userAge: userAge ? parseFloat(userAge) : 0,
+    userAge: userAge || 0,
   })
 
   const { connectionStatus, hrmData } = useWebSocket()
@@ -91,10 +78,8 @@ export default function ConnectPage() {
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
-      setUnitSystem(newUnit)
-      // Height hook handles its own transient state reset if unit changes
-      // Update display weight to prevent flicker/empty value
-      const currentKg = parseFloat(_weightInKg)
+      setUserSettings((prev) => ({ ...prev, unitSystem: newUnit }))
+      const currentKg = userWeight || 0
       if (!isNaN(currentKg)) {
         const newDisplay = toDisplay(currentKg, newUnit)
         setDisplayWeight(newDisplay.toString())
@@ -105,14 +90,13 @@ export default function ConnectPage() {
   }
 
   const handleConnect = () => {
-    const age = userAge ? parseFloat(userAge) : 0
-    connectAndStream(userName, age)
+    connectAndStream(userName, userAge || 0)
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
   const totalCalories = currentUserData?.calories ?? 0
-  const maxHr = userAge ? 220 - parseFloat(userAge) : 190
+  const maxHr = userAge ? 220 - userAge : 190
   const hrZoneProps = useHrZone(currentHR, maxHr)
 
   const {
@@ -129,8 +113,8 @@ export default function ConnectPage() {
 
   const { calories, resetCalories } = useCalorieCounter(
     currentHR,
-    parseFloat(userAge) || 30,
-    parseFloat(_weightInKg) || 70,
+    userAge || 30,
+    userWeight || 70,
     workoutStatus === 'running'
   )
 
@@ -144,9 +128,13 @@ export default function ConnectPage() {
       duration={formatDuration(workoutDuration)}
       caloriesBurned={calories}
       userName={userName}
-      setUserName={setUserName}
-      userAge={userAge}
-      setUserAge={setUserAge}
+      setUserName={(name) =>
+        setUserSettings((prev) => ({ ...prev, userName: name }))
+      }
+      userAge={String(userAge || '')}
+      setUserAge={(age) =>
+        setUserSettings((prev) => ({ ...prev, userAge: Number(age) }))
+      }
       onAgeBlur={handleAgeBlur}
       ageError={ageError}
       userHeight={displayHeight}
@@ -158,7 +146,7 @@ export default function ConnectPage() {
       onWeightBlur={handleWeightBlur}
       weightError={weightError}
       gender={gender}
-      setGender={setGender}
+      setGender={(g) => setUserSettings((prev) => ({ ...prev, gender: g }))}
       unitSystem={unitSystem}
       onUnitChange={handleUnitChange}
       isConnected={isConnected}
