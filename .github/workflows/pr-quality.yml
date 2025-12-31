@@ -558,8 +558,8 @@ jobs:
           NODE_ENV: production
         run: |
           set -o pipefail
-          mkdir -p test-results
-          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-results.xml pnpm run test:infra --reporter=junit 2>&1 | tee infra-tests.log
+          mkdir -p logs test-results
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-results.xml pnpm run test:infra --reporter=junit 2>&1 | tee logs/infra-tests.log
         continue-on-error: true
 
       - name: Publish Infrastructure Tests Results
@@ -577,7 +577,7 @@ jobs:
         with:
           name: infra-test-logs-${{ env.SESSION_ID }}
           path: |
-            infra-tests.log
+            logs/infra-tests.log
             test-results/infra-results.xml
           if-no-files-found: ignore
           retention-days: 3
@@ -630,8 +630,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          mkdir -p test-results
-          pnpm run test:unit 2>&1 | tee unit-tests.log
+          mkdir -p logs test-results
+          pnpm run test:unit 2>&1 | tee logs/unit-tests.log
         continue-on-error: true
 
       - name: Publish Unit Tests Results
@@ -649,7 +649,7 @@ jobs:
         with:
           name: unit-test-logs-${{ env.SESSION_ID }}
           path: |
-            unit-tests.log
+            logs/unit-tests.log
             test-results/unit-results.xml
           if-no-files-found: ignore
           retention-days: 3
@@ -712,7 +712,11 @@ jobs:
           timeout_minutes: 10
           max_attempts: 3
           retry_on: error
-          command: PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit
+          command: |
+            set -o pipefail
+            mkdir -p logs test-results
+            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit 2>&1 | tee logs/perf-output.log
+        continue-on-error: true
 
       - name: Publish Performance Test Results
         uses: dorny/test-reporter@v1
@@ -730,6 +734,17 @@ jobs:
           name: performance-metrics-${{ env.SESSION_ID }}
           path: test-results/performance-metrics.json
           if-no-files-found: ignore
+
+      - name: Upload Perf Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-test-logs-${{ env.SESSION_ID }}
+          path: |
+            logs/perf-output.log
+            test-results/perf-results.xml
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Stop Application
         if: always()
@@ -990,6 +1005,34 @@ jobs:
           path: logs/
         continue-on-error: true
 
+      - name: Download Infra Test Logs
+        uses: actions/download-artifact@v4
+        with:
+          name: infra-test-logs-${{ needs.prepare-env.outputs.session_id }}
+          path: logs/
+        continue-on-error: true
+
+      - name: Download Unit Test Logs
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-test-logs-${{ needs.prepare-env.outputs.session_id }}
+          path: logs/
+        continue-on-error: true
+
+      - name: Download Perf Test Logs
+        uses: actions/download-artifact@v4
+        with:
+          name: perf-test-logs-${{ needs.prepare-env.outputs.session_id }}
+          path: logs/
+        continue-on-error: true
+
+      - name: Download Visual Test Logs
+        uses: actions/download-artifact@v4
+        with:
+          name: visual-test-logs-${{ needs.prepare-env.outputs.session_id }}
+          path: logs/
+        continue-on-error: true
+
       - name: Post Quality Summary with Details
         if: always()
         env:
@@ -1029,18 +1072,56 @@ jobs:
 
             # Add failure logs
             if [ "$LINT_RESULT" != "success" ]; then
-              echo "### ❌ Lint Failure Details"
+              echo "<details><summary>❌ Lint Failure Details</summary>"
               echo '```text'
               [ -f "logs/lint-output.log" ] && tail -n 30 logs/lint-output.log | sed -r 's/\x1b\[[0-9;]*m//g' || echo "Log not found"
               echo '```'
+              echo "</details>"
               echo ""
             fi
 
             if [ "$BUILD_RESULT" != "success" ]; then
-              echo "### ❌ Build Failure Details"
+              echo "<details><summary>❌ Build Failure Details</summary>"
               echo '```text'
               [ -f "logs/build-output.log" ] && tail -n 50 logs/build-output.log | sed -r 's/\x1b\[[0-9;]*m//g' || echo "Log not found"
               echo '```'
+              echo "</details>"
+              echo ""
+            fi
+
+            if [ "$INFRA_TESTS_OUTCOME" != "success" ]; then
+              echo "<details><summary>❌ Infra Tests Failure Details</summary>"
+              echo '```text'
+              [ -f "logs/infra-tests.log" ] && tail -n 50 logs/infra-tests.log | sed -r 's/\x1b\[[0-9;]*m//g' || echo "Log not found"
+              echo '```'
+              echo "</details>"
+              echo ""
+            fi
+
+            if [ "$UNIT_TESTS_OUTCOME" != "success" ]; then
+              echo "<details><summary>❌ Unit Tests Failure Details</summary>"
+              echo '```text'
+              [ -f "logs/unit-tests.log" ] && tail -n 50 logs/unit-tests.log | sed -r 's/\x1b\[[0-9;]*m//g' || echo "Log not found"
+              echo '```'
+              echo "</details>"
+              echo ""
+            fi
+
+            if [ "$PERF_TESTS_OUTCOME" != "success" ]; then
+              echo "<details><summary>❌ Performance Tests Failure Details</summary>"
+              echo '```text'
+              [ -f "logs/perf-output.log" ] && tail -n 50 logs/perf-output.log | sed -r 's/\x1b\[[0-9;]*m//g' || echo "Log not found"
+              echo '```'
+              echo "</details>"
+              echo ""
+            fi
+
+            if [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
+              echo "<details><summary>❌ Visual Tests Failure Details</summary>"
+              echo '```text'
+              [ -f "logs/visual-output.log" ] && tail -n 50 logs/visual-output.log | sed -r 's/\x1b\[[0-9;]*m//g' || echo "Log not found"
+              echo '```'
+              echo "</details>"
               echo ""
             fi
 
