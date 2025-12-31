@@ -8,7 +8,6 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const PlaylistSelector = dynamic(
@@ -19,26 +18,9 @@ const PlaylistSelector = dynamic(
   }
 )
 
-const PlaylistDetails = dynamic(
-  () => import('../../../components/Spotify/PlaylistDetails'),
-  {
-    ssr: false,
-    loading: () => (
-      <Skeleton variant="rectangular" height={300} sx={{ mt: 2 }} />
-    ),
-  }
-)
 
 const SpotifySelectionPage = () => {
   const { spotifyData, sendData } = useWebSocket()
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
-    null
-  )
-
-  const handlePlaylistSelected = (uri: string) => {
-    const playlistId = uri.split(':').pop()
-    setSelectedPlaylistId(playlistId || null)
-  }
 
   const handlePlaylistPlay = (uri: string) => {
     const activeDevice = spotifyData.devices?.find((device) => device.is_active)
@@ -88,16 +70,9 @@ const SpotifySelectionPage = () => {
           <Typography variant="h6" gutterBottom>
             Select a Playlist to view its tracks
           </Typography>
-          <PlaylistSelector
-            onPlaylistSelected={handlePlaylistSelected}
-            onPlaylistPlay={handlePlaylistPlay}
-          />
+          <PlaylistSelector onPlaylistPlay={handlePlaylistPlay} />
         </CardContent>
       </Card>
-
-      {selectedPlaylistId && (
-        <PlaylistDetails playlistId={selectedPlaylistId} />
-      )}
     </Container>
   )
 }
