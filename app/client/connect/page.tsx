@@ -1,21 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { useUserSettings } from '@/context/UserSettingsContext'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
-import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
 import { toKg, toDisplay } from '../../../utils/units'
-import { useCalorieCounter } from '@/hooks/useCalorieCounter'
-import { useHrZone } from '@/hooks/useHrZone'
-import { useHeightInput } from '@/hooks/useHeightInput'
 import { validateAgeValue, validateWeightValue } from './validation'
 
 export default function ConnectPage() {
-  const [userSettings, setUserSettings] = useUserSettings()
+  const [userSettings, setUserSettings] = useState({
+    userName: 'Test User',
+    userAge: 30,
+    userWeight: 70,
+    gender: 'male',
+    unitSystem: 'METRIC' as MeasurementSystem,
+  })
   const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
   const [displayWeight, setDisplayWeight] = useState(() => {
@@ -25,13 +24,8 @@ export default function ConnectPage() {
 
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
-
-  const {
-    displayHeight,
-    updateHeight: handleHeightChange,
-    commitHeight: handleHeightBlur,
-    error: heightError,
-  } = useHeightInput('175', unitSystem)
+  const [heightError, setHeightError] = useState<string | null>(null)
+  const [displayHeight, setDisplayHeight] = useState('175')
 
   const handleAgeBlur = () => {
     const error = validateAgeValue(String(userAge || ''))
@@ -53,28 +47,7 @@ export default function ConnectPage() {
     }
   }
 
-  const {
-    connectAndStream,
-    disconnect,
-    forgetDevice,
-    deviceStatus,
-    batteryLevel,
-    isConnected,
-    isSupported,
-    disconnectionReason,
-  } = useBluetoothHRM({
-    userName,
-    userAge: userAge || 0,
-  })
-
   const { connectionStatus, hrmData } = useWebSocket()
-
-  let deviceStatusMessage = deviceStatus
-  if (disconnectionReason === 'timeout') {
-    deviceStatusMessage = 'Connection unstable. Trying to reconnect...'
-  } else if (disconnectionReason === 'signal_loss') {
-    deviceStatusMessage = 'Signal lost. Trying to reconnect...'
-  }
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
@@ -89,44 +62,13 @@ export default function ConnectPage() {
     }
   }
 
-  const handleConnect = () => {
-    connectAndStream(userName, userAge || 0)
-  }
-
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
-  const totalCalories = currentUserData?.calories ?? 0
-  const maxHr = userAge ? 220 - userAge : 190
-  const hrZoneProps = useHrZone(currentHR, maxHr)
-
-  const {
-    workoutDuration,
-    resetWorkout: resetWorkoutSession,
-    hasStarted,
-    startWorkout,
-    endWorkout,
-    workoutStatus,
-  } = useWorkoutSession({
-    isConnected,
-    totalCalories,
-  })
-
-  const { calories, resetCalories } = useCalorieCounter(
-    currentHR,
-    userAge || 30,
-    userWeight || 70,
-    workoutStatus === 'running'
-  )
-
-  const resetWorkout = () => {
-    resetWorkoutSession()
-    resetCalories()
-  }
 
   return (
     <ConnectView
-      duration={formatDuration(workoutDuration)}
-      caloriesBurned={calories}
+      duration={'00:00:00'}
+      caloriesBurned={0}
       userName={userName}
       setUserName={(name) =>
         setUserSettings((prev) => ({ ...prev, userName: name }))
@@ -138,8 +80,8 @@ export default function ConnectPage() {
       onAgeBlur={handleAgeBlur}
       ageError={ageError}
       userHeight={displayHeight}
-      setUserHeight={handleHeightChange}
-      onHeightBlur={handleHeightBlur}
+      setUserHeight={setDisplayHeight}
+      onHeightBlur={() => setHeightError(null)}
       heightError={heightError}
       userWeight={displayWeight}
       setUserWeight={handleWeightChange}
@@ -149,25 +91,25 @@ export default function ConnectPage() {
       setGender={(g) => setUserSettings((prev) => ({ ...prev, gender: g }))}
       unitSystem={unitSystem}
       onUnitChange={handleUnitChange}
-      isConnected={isConnected}
-      deviceStatus={deviceStatusMessage}
-      batteryLevel={batteryLevel}
-      onConnect={handleConnect}
-      onDisconnect={disconnect}
-      onForgetDevice={forgetDevice}
-      isSupported={isSupported}
+      isConnected={false}
+      deviceStatus={'Disconnected'}
+      batteryLevel={null}
+      onConnect={() => {}}
+      onDisconnect={() => {}}
+      onForgetDevice={() => {}}
+      isSupported={true}
       currentHR={currentHR}
       hrZoneProps={{
-        percentage: hrZoneProps.percentage,
-        progressColor: hrZoneProps.progressColor,
+        percentage: 0,
+        progressColor: '#000',
       }}
       connectionStatus={connectionStatus}
-      bluetoothConnected={isConnected}
-      hasStarted={hasStarted}
-      onReset={resetWorkout}
-      workoutStatus={workoutStatus}
-      onStartWorkout={startWorkout}
-      onEndWorkout={endWorkout}
+      bluetoothConnected={false}
+      hasStarted={false}
+      onReset={() => {}}
+      workoutStatus={'stopped'}
+      onStartWorkout={() => {}}
+      onEndWorkout={() => {}}
     />
   )
 }

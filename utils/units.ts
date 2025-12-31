@@ -33,32 +33,3 @@ export const toDisplay = (
 
 export const INCH_TO_CM = 2.54
 export const FEET_TO_INCHES = 12
-
-/**
- * Converts height in feet and inches to centimeters.
- * @param feet The number of feet.
- * @param inches The number of inches.
- * @returns The height in centimeters.
- */
-export const feetAndInchesToCm = (feet: number, inches: number): number => {
-  const totalInches = feet * FEET_TO_INCHES + inches
-  return totalInches * INCH_TO_CM
-}
-
-/**
- * Converts height in centimeters to feet and inches.
- * @param cm The height in centimeters.
- * @returns An object with feet and inches.
- */
-export const cmToFeetAndInches = (
-  cm: number
-): { feet: number; inches: number } => {
-  if (isNaN(cm) || cm < 0) {
-    return { feet: 0, inches: 0 }
-  }
-  const totalInches = cm / INCH_TO_CM
-  const roundedTotalInches = Math.round(totalInches)
-  const feet = Math.floor(roundedTotalInches / FEET_TO_INCHES)
-  const inches = roundedTotalInches % FEET_TO_INCHES
-  return { feet, inches }
-}

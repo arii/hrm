@@ -1,6 +1,5 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
-import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
   SpotifyCommandMessage,
@@ -8,7 +7,6 @@ import {
   TimerConfigMessage,
   TimerModeCommandMessage,
 } from '@/types/websocket'
-import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import FitnessCenter from '@mui/icons-material/FitnessCenter'
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import Stop from '@mui/icons-material/Stop'
@@ -58,9 +56,6 @@ const TimerControls = () => {
     timerData.isRunning
   )
 
-  const debouncedWorkTime = useDebounce(workTime, 500)
-  const debouncedRestTime = useDebounce(restTime, 500)
-
   // Sync optimistic state with server state
   useEffect(() => {
     setOptimisticIsRunning(timerData.isRunning)
@@ -88,57 +83,11 @@ const TimerControls = () => {
   useEffect(() => {
     const message: TimerConfigMessage = {
       type: 'TIMER_CONFIG',
-      workDuration: debouncedWorkTime,
-      restDuration: debouncedRestTime,
+      workDuration: workTime,
+      restDuration: restTime,
     }
     sendData(message)
-  }, [debouncedWorkTime, debouncedRestTime, sendData])
-
-  interface SpotifyDevice {
-    id: string
-    name: string
-    is_active?: boolean
-  }
-  const [spotifyDeviceId, setSpotifyDeviceId] = useState<string>('')
-  const [spotifyDevices, setSpotifyDevices] = useState<SpotifyDevice[]>([])
-  useEffect(() => {
-    const fetchDevices = async () => {
-      try {
-        const response = await fetch(API_SPOTIFY_DEVICES)
-        if (!response.ok) throw new Error('Failed to fetch devices')
-        const devices: SpotifyDevice[] = await response.json()
-        setSpotifyDevices(Array.isArray(devices) ? devices : [])
-        const activeDevice = devices.find((d) => d.is_active)
-        setSpotifyDeviceId(
-          activeDevice ? activeDevice.id : devices[0]?.id || ''
-        )
-      } catch (_err) {
-        setSpotifyDevices([])
-        setSpotifyDeviceId('')
-      }
-    }
-    fetchDevices()
-  }, [])
-
-  const sendSpotifyCommand = useCallback(
-    (command: 'NEXT' | 'PAUSE') => {
-      let deviceId: string | null = spotifyDeviceId
-      if (!deviceId && spotifyDevices.length > 0) {
-        const activeDevice = spotifyDevices.find((d) => d.is_active)
-        deviceId = activeDevice
-          ? activeDevice.id
-          : spotifyDevices[0]?.id || null
-        if (deviceId) setSpotifyDeviceId(deviceId)
-      }
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        ...(deviceId ? { deviceId } : {}),
-      }
-      sendData(message)
-    },
-    [sendData, spotifyDeviceId, spotifyDevices]
-  )
+  }, [workTime, restTime, sendData])
 
   const sendTimerCommand = useCallback(
     (command: 'START' | 'STOP') => {
@@ -168,13 +117,9 @@ const TimerControls = () => {
       }
       const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
       sendData(message)
-
-      if (command === 'START') sendSpotifyCommand('NEXT')
-      else if (command === 'STOP') sendSpotifyCommand('PAUSE')
     },
     [
       sendData,
-      sendSpotifyCommand,
       connectionStatus,
       timerData.isRunning,
       workTime,

@@ -1,10 +1,6 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
-import { useError } from '@/context/ErrorContext'
 import { useSession, signOut } from 'next-auth/react'
-import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
-import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import PauseIcon from '@mui/icons-material/Pause'
@@ -111,16 +107,14 @@ const spotifyDisplayReducer = (
 
 const SpotifyDisplay = () => {
   const { data: session, status } = useSession()
-  const { addError } = useError()
 
   // Effect to handle session-level errors, like token refresh failure
   useEffect(() => {
     if (session?.error === 'RefreshAccessTokenError') {
-      addError('Spotify session expired. Please log in again.', 'persistent')
       // Sign out to clear the invalid session
       signOut()
     }
-  }, [session, addError])
+  }, [session])
 
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
@@ -139,15 +133,9 @@ const SpotifyDisplay = () => {
     window.location.reload()
   }
 
-  const {
-    player,
-    isReady,
-    deviceId,
-    isAuthenticated: spotifyAuthenticated,
-  } = useSpotifyWebPlayback()
-
-  // Enable remote Spotify control from controllers
-  useSpotifyRemoteExecution(player)
+  const isReady = false
+  const deviceId = ''
+  const spotifyAuthenticated = false
 
   // Synchronize local UI state with WebSocket data (the source of truth)
   useEffect(() => {
@@ -160,59 +148,6 @@ const SpotifyDisplay = () => {
     })
   }, [spotifyData.volume, spotifyData.isMuted, isSliding])
 
-  // Centralized command sender for volume changes
-  const sendVolumeCommand = useCallback(
-    (volume: number) => {
-      if (connectionStatus !== 'Connected') return
-      const targetDeviceId =
-        selectedDeviceId ||
-        spotifyData.devices?.find((device) => device.is_active)?.id
-      if (!targetDeviceId) {
-        console.warn(
-          '[SpotifyDisplay] No target device for volume command. Aborting.'
-        )
-        return
-      }
-      const sanitized = clampVolume(volume)
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        deviceId: targetDeviceId,
-      }
-      sendData(message)
-    },
-    [connectionStatus, selectedDeviceId, sendData, spotifyData.devices]
-  )
-
-  // Handler for the VolumeSlider component's onChange
-  const handleVolumeChange = (newVolume: number) => {
-    setIsSliding(true)
-    dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
-
-    // Debounce sending the command to avoid API flooding
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current)
-    }
-    debounceTimeoutRef.current = setTimeout(() => {
-      sendVolumeCommand(newVolume)
-      setIsSliding(false)
-    }, 300)
-  }
-
-  // Handler for the VolumeSlider's mute button
-  const handleToggleMute = useCallback(() => {
-    // Calculate the next state to determine the command payload
-    const newMutedState = !isMuted
-    const newVolume = newMutedState
-      ? 0
-      : state.lastVolume > 0
-        ? state.lastVolume
-        : 50
-
-    dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
-    sendVolumeCommand(newVolume) // Send command with the new volume
-  }, [isMuted, state.lastVolume, sendVolumeCommand])
 
   // Effect to auto-select the active device
   useEffect(() => {
@@ -409,12 +344,6 @@ const SpotifyDisplay = () => {
             gap: 1,
           }}
         >
-          <VolumeSlider
-            volume={displayVolume}
-            muted={isMuted}
-            onVolumeChange={handleVolumeChange}
-            onToggleMute={handleToggleMute}
-          />
           <SpotifyDeviceSelectorWrapper
             availableDevices={spotifyData.devices || []}
             deviceMenuAnchor={deviceMenuAnchor}
