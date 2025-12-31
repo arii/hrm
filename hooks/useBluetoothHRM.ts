@@ -19,6 +19,7 @@ import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import deviceManager, {
   DisconnectionReason,
+  DeviceManagerEvent,
 } from '@/services/deviceManager'
 
 /**
@@ -55,6 +56,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     userDetailsRef.current = { name: userName || '', age: userAge || 0 }
   }, [userName, userAge])
 
+  /* eslint-disable react-hooks/refs */
   const throttledSend = useMemo(
     () =>
       throttle((message: HrmInputMessage) => {
@@ -66,27 +68,32 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }, throttleMs),
     [throttleMs]
   )
+  /* eslint-enable react-hooks/refs */
 
   useEffect(() => {
-    const onStatusChange = (status: string) => setDeviceStatus(status)
-    const onHeartRate = (heartRate: number) => {
-      const data: HrmInputData = { value: heartRate }
-      throttledSend({ type: 'HRM_INPUT', data })
+    const handleDeviceEvent = (event: DeviceManagerEvent) => {
+      switch (event.type) {
+        case 'statusChange':
+          setDeviceStatus(event.payload as string)
+          break
+        case 'heartRate': {
+          const data: HrmInputData = { value: event.payload as number }
+          throttledSend({ type: 'HRM_INPUT', data })
+          break
+        }
+        case 'batteryLevel':
+          setBatteryLevel(event.payload as number | null)
+          break
+        case 'disconnected':
+          setDisconnectionReason(event.payload as DisconnectionReason)
+          break
+      }
     }
-    const onBatteryLevel = (level: number | null) => setBatteryLevel(level)
-    const onDisconnected = (reason: DisconnectionReason) =>
-      setDisconnectionReason(reason)
 
-    deviceManager.on('statusChange', onStatusChange)
-    deviceManager.on('heartRate', onHeartRate)
-    deviceManager.on('batteryLevel', onBatteryLevel)
-    deviceManager.on('disconnected', onDisconnected)
+    deviceManager.on(handleDeviceEvent)
 
     return () => {
-      deviceManager.off('statusChange', onStatusChange)
-      deviceManager.off('heartRate', onHeartRate)
-      deviceManager.off('batteryLevel', onBatteryLevel)
-      deviceManager.off('disconnected', onDisconnected)
+      deviceManager.off(handleDeviceEvent)
       throttledSend.cancel()
     }
   }, [throttledSend])
@@ -124,7 +131,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
     try {
       await deviceManager.connectAndStream()
-    } catch (error) {
+    } catch (_error) {
       // Error is already handled and status is set by the device manager
     }
   }, [connectionStatus, deviceStatus])

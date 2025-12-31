@@ -86,7 +86,7 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should send throttled heart rate data', () => {
-    const { result } = renderHook(() => useBluetoothHRM({ throttleMs: 500 }))
+    renderHook(() => useBluetoothHRM({ throttleMs: 500 }))
 
     act(() => {
       const onHeartRate = (deviceManager.on as jest.Mock).mock.calls.find(

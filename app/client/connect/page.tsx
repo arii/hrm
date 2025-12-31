@@ -105,8 +105,7 @@ export default function ConnectPage() {
   }
 
   const handleConnect = () => {
-    const age = userAge ? parseFloat(userAge) : 0
-    connectAndStream(userName, age)
+    connectAndStream()
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)
