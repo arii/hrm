@@ -207,6 +207,8 @@ async function main() {
 
   if (preset === 'review') {
     await runReviewPreset(genAI, contextContent, outputFile)
+  } else if (preset === 'resolve-conflicts') {
+    await runConflictResolution(genAI, contextContent, outputFile)
   } else {
     // Default/Generic mode
     let finalTask = task
@@ -780,6 +782,76 @@ async function runReviewPreset(
   } catch (error) {
     await handleError(error)
   }
+}
+
+async function runConflictResolution(
+  genAI: GoogleGenerativeAI,
+  contextContent: string,
+  outputFile: string | null | undefined
+) {
+  const conflictFile = getArg('--conflict-file')
+  if (!conflictFile) {
+    throw new Error('--conflict-file is required for resolve-conflicts preset')
+  }
+  const conflictContent = await readFile(conflictFile, 'utf-8')
+
+  const prompt = `
+You are an AI assistant that resolves git merge conflicts.
+Analyze the following file with merge conflicts and provide the resolved version.
+${contextContent}
+
+--- CONFLICT FILE ---
+${conflictContent}
+`
+
+  const text = await generateContentWithFallback(genAI, prompt, {
+    generationConfig: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: SchemaType.OBJECT,
+        properties: {
+          resolutions: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                filePath: { type: SchemaType.STRING },
+                resolvedContent: { type: SchemaType.STRING },
+              },
+              required: ['filePath', 'resolvedContent'],
+            },
+          },
+        },
+        required: ['resolutions'],
+      },
+    },
+  })
+
+  const jsonProcessor = new JsonProcessor()
+  const result = jsonprocessor.process(text || '')
+  if (result.success && isResolutionArray(result.data)) {
+    await writeOutput(JSON.stringify({ resolutions: result.data }), outputFile)
+  } else if (result.success) {
+    throw new Error('AI resolution did not conform to expected schema')
+  } else {
+    throw new Error('Failed to parse AI resolution JSON')
+  }
+}
+
+interface Resolution {
+  filePath: string
+  resolvedContent: string
+}
+
+function isResolutionArray(data: unknown): data is Resolution[] {
+  if (!Array.isArray(data)) return false
+  return data.every(
+    (item) =>
+      typeof item === 'object' &&
+      item !== null &&
+      'filePath' in item &&
+      'resolvedContent' in item
+  )
 }
 
 async function writeOutput(
