@@ -79,13 +79,14 @@ export class SpotifyPolling implements SpotifyService {
   private lastPlaybackState: boolean | null = null
 
   private state: SpotifyData = {
+    trackId: null,
     trackName: 'Awaiting Login...',
-    artistName: '',
+    artist: '',
+    albumName: '',
     albumArtUrl: '',
     isPlaying: false,
-    durationMs: 0,
-    progressMs: 0,
-    volumePercent: 70,
+    volume: 70,
+    isMuted: false,
     devices: [],
   }
 
@@ -257,7 +258,7 @@ export class SpotifyPolling implements SpotifyService {
           this.state = {
             ...this.state,
             trackName: 'Nothing is currently playing.',
-            artistName: '',
+            artist: '',
             albumArtUrl: '',
             isPlaying: false,
           }
@@ -281,23 +282,28 @@ export class SpotifyPolling implements SpotifyService {
         this.lastPlaybackState = isPlaying
 
         const trackName = item.name
-        let artistName = ''
+        let artist = ''
         let albumArtUrl = ''
+        let albumName = ''
 
         if (item.type === 'track') {
           const track = item as Track
-          artistName = track.artists.map((a) => a.name).join(', ')
+          artist = track.artists.map((a) => a.name).join(', ')
           albumArtUrl = track.album.images?.[0]?.url ?? ''
+          albumName = track.album.name
         } else if (item.type === 'episode') {
           const episode = item as Episode
-          artistName = episode.show.publisher
+          artist = episode.show.publisher
           albumArtUrl = episode.show.images?.[0]?.url ?? ''
+          albumName = episode.show.name
         }
 
         this.state = {
           ...this.state,
+          trackId: item.id,
           trackName,
-          artistName: artistName,
+          artist,
+          albumName,
           albumArtUrl,
           isPlaying,
         }
@@ -323,14 +329,17 @@ export class SpotifyPolling implements SpotifyService {
       const response = await this.sdk.player.getAvailableDevices()
       const validDevices: SpotifyDevice[] = (response.devices || [])
         .filter((d: Device): d is Device & { id: string } => d.id !== null)
-        .map((d) => ({
-          // Non-null assertion is safe here due to the type guard in the filter.
-          id: d.id,
-          name: d.name,
-          type: d.type,
-          volume: d.volume_percent ?? 0,
-          is_active: d.is_active,
-        }))
+        .map(
+          (d): SpotifyDevice => ({
+            id: d.id,
+            name: d.name,
+            type: d.type,
+            is_active: d.is_active,
+            is_private_session: d.is_private_session,
+            is_restricted: d.is_restricted,
+            volume_percent: d.volume_percent ?? 0,
+          })
+        )
 
       this.state.devices = validDevices
       this.broadcastUpdate({

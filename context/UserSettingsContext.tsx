@@ -65,11 +65,11 @@ export const UserSettingsProvider: React.FC<{ children: ReactNode }> = ({
 
       Object.entries(updates).forEach(([key, value]) => {
         if (prefKeys.includes(key)) {
-          ;(prefsToUpdate as any)[key] = value
+          ;(prefsToUpdate as { [k: string]: unknown })[key] = value
         } else if (profileKeys.includes(key)) {
-          ;(profileToUpdate as any)[key] = value
+          ;(profileToUpdate as { [k: string]: unknown })[key] = value
         } else if (key === 'userName') {
-          ;(prefsToUpdate as any)[key] = value
+          ;(prefsToUpdate as { [k: string]: unknown })[key] = value
         }
       })
 

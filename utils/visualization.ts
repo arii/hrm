@@ -129,7 +129,9 @@ interface TimerProps {
 /**
  * Returns props (color, text) for the Tabata Timer phase display.
  */
-export const getTimerProps = (phase: TimerData['phase']): TimerProps => {
+export const getTimerProps = (
+  phase: TimerData['currentPhase']
+): TimerProps => {
   switch (phase) {
     case 'PREPARE':
       return {

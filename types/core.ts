@@ -5,6 +5,13 @@
  */
 
 // =================================================================================================
+// Measurement and Biometrics
+// =================================================================================================
+
+export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
+export type Gender = 'MALE' | 'FEMALE'
+
+// =================================================================================================
 // User and Profile
 // =================================================================================================
 
@@ -27,6 +34,19 @@ export interface UserProfile {
   lastName: string | null
   createdAt: string
   updatedAt: string
+}
+
+/**
+ * Represents a user's physical attributes for health calculations.
+ * Source of truth for Calorie/Zone engines.
+ */
+export interface UserPhysicalProfile {
+  userId: string
+  age: number
+  weight: number // Always stored normalized in KG for internal calc
+  gender: Gender
+  unitSystem: MeasurementSystem
+  maxHr?: number // Optional override
 }
 
 // =================================================================================================
@@ -79,6 +99,7 @@ export interface HrmStreamData {
   name?: string
   age?: number
   calories: number
+  gender: Gender
 }
 
 /**

@@ -84,9 +84,9 @@ const SpotifyControls = () => {
     prevActiveIdRef.current = activeId ?? undefined
 
     // Sync Volume (if not dragging)
-    if (activeDevice && typeof activeDevice.volume === 'number') {
-      if (activeDevice.volume !== volume) {
-        setVolume(activeDevice.volume)
+    if (activeDevice && typeof activeDevice.volume_percent === 'number') {
+      if (activeDevice.volume_percent !== volume) {
+        setVolume(activeDevice.volume_percent)
       }
     }
 

@@ -14,7 +14,7 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
 import {
   ToggleButtonGroup,
@@ -35,6 +35,8 @@ interface ConnectViewProps {
   setUserAge: (age: string) => void
   onAgeBlur: () => void
   ageError: string | null
+  maxHr: string
+  setMaxHr: (hr: string) => void
   userHeight: { cm: string; feet: string; inches: string }
   setUserHeight: (
     height: Partial<{ cm: string; feet: string; inches: string }>
@@ -76,6 +78,8 @@ export default function ConnectView({
   setUserAge,
   onAgeBlur,
   ageError,
+  maxHr,
+  setMaxHr,
   userHeight,
   setUserHeight,
   onHeightBlur,
@@ -177,6 +181,8 @@ export default function ConnectView({
               setUserAge={setUserAge}
               onAgeBlur={onAgeBlur}
               ageError={ageError}
+              maxHr={maxHr}
+              setMaxHr={setMaxHr}
               userHeight={userHeight}
               setUserHeight={setUserHeight}
               onHeightBlur={onHeightBlur}
