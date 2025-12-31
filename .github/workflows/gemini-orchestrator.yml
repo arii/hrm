@@ -32,21 +32,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 100
       - name: Check for file changes and find last non-empty commit
         id: check_files
         run: |
-          if git diff --quiet HEAD^ HEAD . ; then
+          # Use HEAD~1 for broader compatibility (works for initial commit)
+          if git diff --quiet HEAD~1 HEAD . ; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            # Find the last commit with file changes
-            for sha in $(git log --format=%H); do
-              if ! git diff --quiet $sha^ $sha; then
-                echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
-                break
+            # Find the last commit with file changes, searching recent history
+            for sha in $(git log --format=%H -n 100); do
+              # Ensure the parent commit exists before diffing
+              if git cat-file -e $sha^ &>/dev/null; then
+                if ! git diff --quiet $sha^ $sha; then
+                  echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
+                  break
+                fi
               fi
             done
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           fi
   # 1. Run CI checks on every push to a PR
   pr-quality:
