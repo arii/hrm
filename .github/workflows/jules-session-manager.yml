@@ -95,11 +95,10 @@ jobs:
         run: |
           SESSION_ID=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | .[] | .body' | grep -oP '(?<=<!-- JULES_SESSION_ID=)\S+(?= *-->)' | tail -n 1)
           if [ -z "$SESSION_ID" ]; then
-            echo "id_found=false" >> $GITHUB_OUTPUT
-          else
-            echo "id_found=true" >> $GITHUB_OUTPUT
-            echo "JULES_SESSION_ID=$SESSION_ID" >> $GITHUB_ENV
+            echo "::error::Could not find Jules session ID in PR comments. Was a session previously created using '@jules-new' and completed successfully?"
+            exit 1
           fi
+          echo "JULES_SESSION_ID=$SESSION_ID" >> $GITHUB_ENV
 
       - name: 'Validate JULES_API_URL Secret'
         run: |
@@ -131,7 +130,7 @@ jobs:
             --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1) || echo "error_message=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
 
       - name: 'Run Jules Operation: Delete'
-        if: steps.find_session_id.outputs.id_found == 'true' && env.COMMAND == 'delete'
+        if: env.COMMAND == 'delete'
         id: jules_op_delete
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -141,25 +140,6 @@ jobs:
             --command "delete" \
             --session-id "$JULES_SESSION_ID" \
             --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1) || echo "error_message=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
-
-      - name: 'Handle Missing Session ID'
-        if: steps.find_session_id.outputs.id_found == 'false' && env.COMMAND == 'delete'
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: ${{ github.event.comment.id }},
-              content: 'confused'
-            })
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: ${{ github.event.issue.number }},
-              body: `Could not find a Jules session ID to delete. Was a session previously created using '@jules-new' and completed successfully?`
-            })
 
       - name: 'Post Session ID Comment'
         if: success() && env.COMMAND == 'new'
@@ -178,7 +158,7 @@ jobs:
             }
 
       - name: 'Add Reaction to Comment'
-        if: success() && (steps.jules_op_new.outcome == 'success' || steps.jules_op_delete.outcome == 'success')
+        if: success()
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
