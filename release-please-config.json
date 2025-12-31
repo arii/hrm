@@ -2,6 +2,7 @@
   "changelog-path": "docs/CHANGELOG.md",
   "packages": {
     ".": {
+      "release-type": "node",
       "package-name": "hrm"
     }
   }
