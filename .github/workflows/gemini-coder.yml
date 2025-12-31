@@ -172,7 +172,6 @@ jobs:
         run: pip install requests
 
       - name: 'Jules: Execute API Call'
-        id: jules_session
         if: env.AGENT_PROVIDER == 'jules'
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -180,6 +179,7 @@ jobs:
           TITLE: ${{ env.TITLE }}
           REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
+        id: jules_session
         run: |
           # Read prompt from file to avoid CLI argument length limits or exposure
           FULL_PROMPT=$(cat jules_prompt.txt)

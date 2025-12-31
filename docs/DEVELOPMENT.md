@@ -69,18 +69,6 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Test Suite Optimization**: Consolidating and stabilizing the test suite as described in [TESTING.md](./TESTING.md) to ensure faster and more reliable CI/CD feedback.
 - **Code Quality & Documentation**: Continuously refactoring components for clarity and keeping all development documentation up-to-date.
 
-## CI/CD and Automation
-
-### Manual PR Enrichment
-
-The CI/CD pipeline includes a feature for automated PR enrichment, which can be manually triggered by adding a comment to a pull request with the following command:
-
-```
-@gemini-update-pr
-```
-
-This command will invoke the "PR Enrichment" workflow, which performs tasks such as AI-based code analysis and adds the results to the pull request description. This is useful when you want to re-run the analysis after making significant changes to a PR.
-
 ## Completed Milestones
 
 - **Tabata Timer Refactoring**: The `TabataTimer` service was successfully refactored to support both stopwatch and Tabata modes with a more robust and maintainable architecture.
