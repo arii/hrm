@@ -21,6 +21,29 @@ permissions:
   actions: read
 
 jobs:
+  comment-router:
+    name: 🔍 Comment Router
+    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    outputs:
+      is_review_comment: ${{ steps.router.outputs.is_review_comment }}
+      is_gemini_invoke: ${{ steps.router.outputs.is_gemini_invoke }}
+      is_update_pr: ${{ steps.router.outputs.is_update_pr }}
+    steps:
+      - name: Route Comment
+        id: router
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          if [[ "$COMMENT_BODY" == '@gemini-bot'* || "$COMMENT_BODY" == '@jules fix'* ]]; then
+            echo "is_review_comment=true" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$COMMENT_BODY" == '@gemini-bot'* ]]; then
+            echo "is_gemini_invoke=true" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$COMMENT_BODY" == '@gemini-update-pr' ]]; then
+            echo "is_update_pr=true" >> $GITHUB_OUTPUT
+          fi
+
   check-diff:
     name: 📝 Check for file changes
     if: github.event_name == 'pull_request'
@@ -90,10 +113,8 @@ jobs:
 
   # 3. Trigger review immediately for a comment command (e.g., @jules fix or @gemini-bot)
   review-on-comment:
-    if: |
-      github.event_name == 'issue_comment' &&
-      github.event.issue.pull_request &&
-      (startsWith(github.event.comment.body, '@gemini-bot') || startsWith(github.event.comment.body, '@jules fix'))
+    if: needs.comment-router.outputs.is_review_comment == 'true'
+    needs: [comment-router]
     permissions:
       contents: read
       issues: write
@@ -122,7 +143,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   gemini-invoke:
-    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@gemini-bot')
+    if: needs.comment-router.outputs.is_gemini_invoke == 'true'
+    needs: [comment-router]
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
@@ -136,10 +158,8 @@ jobs:
         run: pnpm tsx scripts/gemini-client.ts --comment-body "$COMMENT_BODY"
 
   update-pr-on-comment:
-    if: |
-      github.event_name == 'issue_comment' &&
-      github.event.issue.pull_request &&
-      github.event.comment.body == '@gemini-update-pr'
+    if: needs.comment-router.outputs.is_update_pr == 'true'
+    needs: [comment-router]
     runs-on: ubuntu-latest
     steps:
       - name: 'Trigger PR Enrichment'
