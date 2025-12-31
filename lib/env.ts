@@ -40,7 +40,7 @@ export function validateEnv() {
 
   if (
     process.env.NODE_ENV !== 'test' &&
-    process.env.TESTING !== 'true' &&
+    parsedEnv.data.TESTING !== true &&
     process.env.npm_lifecycle_event !== 'build'
   ) {
     if (!parsedEnv.data.SPOTIFY_CLIENT_ID) {
