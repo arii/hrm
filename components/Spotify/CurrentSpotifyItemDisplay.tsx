@@ -75,7 +75,7 @@ const CurrentSpotifyItemDisplay = () => {
         </Typography>
         <Typography variant="body2" sx={{ color: 'grey.400' }}>
           {spotifyData.artist}
-        </Typography}
+        </Typography>
       </Box>
       {spotifyAuthenticated && !isReady && (
         <Typography
