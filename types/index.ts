@@ -68,3 +68,12 @@ export interface UserProfile {
   gender: Gender
   unitSystem: MeasurementSystem
 }
+
+export interface Workout {
+  id: string
+  startTime: number
+  endTime: number
+  duration: number
+  caloriesBurned: number
+  userName: string
+}

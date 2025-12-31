@@ -5,6 +5,7 @@
  * cohesive public API for managing the timer. It delegates all logic to the
  * respective modules, acting as a facade.
  */
+import { saveWorkout } from './workoutService.js'
 import { ServerMessage } from '../types/websocket'
 import { TimerData, TimerMode } from '../types/core'
 import {
@@ -20,6 +21,7 @@ class TabataTimer {
   private readonly state: DualModeTimerState
   private readonly queries: TimerQueries
   private readonly commands: TimerCommands
+  private userName: string = 'Unknown'
 
   constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.state = createInitialTimerState()
@@ -49,9 +51,34 @@ class TabataTimer {
         break
       case 'STOP':
         this.commands.stop()
+        this.saveWorkoutSession()
         break
       default:
         console.warn(`Unknown timer command: ${command}`)
+    }
+  }
+
+  public setUserName(userName: string): void {
+    this.userName = userName
+  }
+
+  private async saveWorkoutSession(): Promise<void> {
+    const { timeElapsed } = this.queries.getState()
+    if (timeElapsed > 0) {
+      const workout = {
+        id: new Date().toISOString(),
+        startTime: Date.now() - timeElapsed * 1000,
+        endTime: Date.now(),
+        duration: timeElapsed,
+        caloriesBurned: 0, // Placeholder for now
+        userName: this.userName,
+      }
+      try {
+        await saveWorkout(workout)
+        console.log('Workout session saved successfully.')
+      } catch (error) {
+        console.error('Failed to save workout session:', error)
+      }
     }
   }
 

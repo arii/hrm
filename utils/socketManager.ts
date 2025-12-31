@@ -283,6 +283,9 @@ const handleIncomingMessage = (
           }
 
           hrmDataRepository.save({ ...existingData, ...updateData })
+          if (updateData.name) {
+            services.tabataService.setUserName(updateData.name)
+          }
         }
         broadcastState()
         break

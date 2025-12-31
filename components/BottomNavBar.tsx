@@ -3,6 +3,7 @@
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import SettingsIcon from '@mui/icons-material/Settings'
+import HistoryIcon from '@mui/icons-material/History'
 import BottomNavigation from '@mui/material/BottomNavigation'
 import BottomNavigationAction from '@mui/material/BottomNavigationAction'
 import Link from 'next/link'
@@ -16,6 +17,8 @@ export default function BottomNavBar() {
       return 1
     } else if (pathname === '/client/connect') {
       return 2
+    } else if (pathname === '/history') {
+      return 3
     }
     return 0 // Default to Dashboard
   })
@@ -67,6 +70,18 @@ export default function BottomNavBar() {
         icon={<FavoriteIcon />}
         component={Link}
         href="/client/connect"
+        sx={{
+          '&:hover, &.Mui-focusVisible': {
+            backgroundColor: 'action.hover',
+          },
+        }}
+      />
+      <BottomNavigationAction
+        label="History"
+        aria-label="Navigate to Workout History page"
+        icon={<HistoryIcon />}
+        component={Link}
+        href="/history"
         sx={{
           '&:hover, &.Mui-focusVisible': {
             backgroundColor: 'action.hover',
