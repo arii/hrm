@@ -4,7 +4,7 @@
 // File: tests/unit/hooks/useHrmTileData.test.ts
 import { renderHook } from '@testing-library/react'
 import useHrmTileData from '@/hooks/useHrmTileData'
-import { HrmData, Alert } from '@/types/websocket'
+import { HrmData, ActiveAlert } from '@/types/websocket'
 
 describe('useHrmTileData', () => {
   it('should filter out users with placeholder names', () => {
@@ -31,8 +31,14 @@ describe('useHrmTileData', () => {
     const hrmData: HrmData[] = [
       { clientId: '1', name: 'User One', heartRate: 120 },
     ]
-    const activeAlerts: Alert[] = [
-      { clientId: '1', code: 'BAD_PLACEMENT', message: 'Check placement' },
+    const activeAlerts: ActiveAlert[] = [
+      {
+        clientId: '1',
+        code: 'BAD_PLACEMENT',
+        message: 'Check placement',
+        severity: 'warning',
+        timestamp: Date.now(),
+      },
     ]
     const { result } = renderHook(() => useHrmTileData(hrmData, activeAlerts))
     expect(result.current[0].isAlerting).toBe(true)
@@ -43,8 +49,14 @@ describe('useHrmTileData', () => {
     const hrmData: HrmData[] = [
       { clientId: '1', name: 'User One', heartRate: 120 },
     ]
-    const activeAlerts: Alert[] = [
-      { clientId: '2', code: 'BAD_PLACEMENT', message: 'Check placement' },
+    const activeAlerts: ActiveAlert[] = [
+      {
+        clientId: '2',
+        code: 'BAD_PLACEMENT',
+        message: 'Check placement',
+        severity: 'warning',
+        timestamp: Date.now(),
+      },
     ]
     const { result } = renderHook(() => useHrmTileData(hrmData, activeAlerts))
     expect(result.current[0].isAlerting).toBe(false)

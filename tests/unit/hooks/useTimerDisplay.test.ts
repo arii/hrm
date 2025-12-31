@@ -4,11 +4,11 @@
 // File: tests/unit/hooks/useTimerDisplay.test.ts
 import { renderHook } from '@testing-library/react'
 import useTimerDisplay from '@/hooks/useTimerDisplay'
-import { TimerState } from '@/types/websocket'
+import { TimerData } from '@/types/websocket'
 
 describe('useTimerDisplay', () => {
   it('should return "GET READY" state for PREPARE phase', () => {
-    const timerData: TimerState = {
+    const timerData: TimerData = {
       currentPhase: 'PREPARE',
       timeRemaining: 5,
       timeElapsed: 0,
@@ -21,7 +21,7 @@ describe('useTimerDisplay', () => {
   })
 
   it('should return "RUNNING" state for STOPWATCH mode', () => {
-    const timerData: TimerState = {
+    const timerData: TimerData = {
       currentPhase: 'RUNNING',
       timeRemaining: 0,
       timeElapsed: 95,
@@ -34,20 +34,20 @@ describe('useTimerDisplay', () => {
   })
 
   it('should return "WORK" state for TABATA WORK phase', () => {
-    const timerData: TimerState = {
+    const timerData: TimerData = {
       currentPhase: 'WORK',
       timeRemaining: 15,
       timeElapsed: 5,
       mode: 'TABATA',
     }
-    const { result } = renderHook(() => useTimerDisplay(timerData))
+    const { result } = renderHook(() => useTimerDisplay(.timerData))
     expect(result.current.displayTime).toBe('00:15')
     expect(result.current.phaseColor).toBe('#EF4444')
     expect(result.current.phaseLabel).toBe('WORK')
   })
 
   it('should return "REST" state for TABATA REST phase', () => {
-    const timerData: TimerState = {
+    const timerData: TimerData = {
       currentPhase: 'REST',
       timeRemaining: 8,
       timeElapsed: 2,
@@ -60,7 +60,7 @@ describe('useTimerDisplay', () => {
   })
 
   it('should return "COOLDOWN" state for TABATA COOLDOWN phase', () => {
-    const timerData: TimerState = {
+    const timerData: TimerData = {
       currentPhase: 'COOLDOWN',
       timeRemaining: 25,
       timeElapsed: 5,
@@ -73,7 +73,7 @@ describe('useTimerDisplay', () => {
   })
 
   it('should return "READY" state for IDLE phase', () => {
-    const timerData: TimerState = {
+    const timerData: TimerData = {
       currentPhase: 'IDLE',
       timeRemaining: 0,
       timeElapsed: 0,

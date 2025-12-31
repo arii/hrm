@@ -5,7 +5,7 @@
 import { renderHook } from '@testing-library/react'
 import useHrmAutoConnect from '@/hooks/useHrmAutoConnect'
 import { Session } from 'next-auth'
-import { UserSettings } from '@/types/index'
+import { UserPreferences } from '@/hooks/useUserPreferences'
 
 describe('useHrmAutoConnect', () => {
   const mockConnectAndStream = jest.fn()
@@ -14,7 +14,7 @@ describe('useHrmAutoConnect', () => {
     connectionStatus: 'Connected',
     deviceStatus: 'Disconnected',
     session: { user: { name: 'Test User' } } as Session,
-    userSettings: { userName: 'Settings User', userAge: 30 } as UserSettings,
+    userSettings: { userName: 'Settings User', userAge: 30 } as UserPreferences,
     connectAndStream: mockConnectAndStream,
   }
 

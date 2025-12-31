@@ -22,12 +22,7 @@ const SIDE_COLUMN_WIDTH = '40px'
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
-  const {
-    currentPhase,
-    mode,
-    workDuration = 20,
-    restDuration = 10,
-  } = timerData
+  const { currentPhase, mode, workDuration = 20, restDuration = 10 } = timerData
 
   const { displayTime, phaseColor, phaseLabel } = useTimerDisplay(timerData)
 

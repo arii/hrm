@@ -1,5 +1,5 @@
 // File: hooks/useTimerDisplay.ts
-import { TimerState } from '@/types/websocket'
+import { TimerData } from '@/types/websocket'
 import { useMemo } from 'react'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -7,10 +7,10 @@ const pad = (n: number) => String(n).padStart(2, '0')
 /**
  * @hook useTimerDisplay
  * @description A hook to derive display properties for the timer based on its state.
- * @param {TimerState} timerData - The current state of the timer.
+ * @param {TimerData} timerData - The current state of the timer.
  * @returns {object} An object containing displayTime, phaseColor, and phaseLabel.
  */
-const useTimerDisplay = (timerData: TimerState) => {
+const useTimerDisplay = (timerData: TimerData) => {
   const { currentPhase, timeRemaining, timeElapsed, mode } = timerData
 
   const displayState = useMemo(() => {

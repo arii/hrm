@@ -1,13 +1,13 @@
 // File: hooks/useHrmAutoConnect.ts
 import { useEffect, useRef } from 'react'
 import { Session } from 'next-auth'
-import { UserSettings } from '@/types/index'
+import { UserPreferences } from './useUserPreferences'
 
 interface UseHrmAutoConnectProps {
   connectionStatus: string
   deviceStatus: string
   session: Session | null
-  userSettings: UserSettings
+  userSettings: UserPreferences
   connectAndStream: (userName: string, userAge: number) => Promise<void>
 }
 
