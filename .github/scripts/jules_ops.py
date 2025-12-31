@@ -9,8 +9,8 @@ def create_jules_session(prompt, branch, title, owner, repo_name, jules_api_url)
     Creates a new Jules session via the API and returns the session ID.
     """
     api_key = os.environ.get("JULES_API_KEY")
-    if not api_key:
-        sys.stderr.write("Error: JULES_API_KEY environment variable not set.\n")
+    if not api_key or not api_key.strip():
+        sys.stderr.write("Error: JULES_API_KEY environment variable not set or empty.\n")
         sys.exit(1)
 
     headers = {
@@ -47,8 +47,8 @@ def delete_jules_session(session_id, jules_api_url):
     Deletes a Jules session via the API.
     """
     api_key = os.environ.get("JULES_API_KEY")
-    if not api_key:
-        sys.stderr.write("Error: JULES_API_KEY environment variable not set.\n")
+    if not api_key or not api_key.strip():
+        sys.stderr.write("Error: JULES_API_KEY environment variable not set or empty.\n")
         sys.exit(1)
 
     if not session_id:

@@ -60,7 +60,7 @@ jobs:
           # We assume the PR is up-to-date with the base branch
           # This gets the logs from the point the branch was created
           MERGE_BASE=$(git merge-base "origin/$BASE_REF" "HEAD")
-          LOGS=$(git log --pretty=format:"- %s" "$MERGE_BASE..HEAD")
+          LOGS=$(git log -n 50 --pretty=format:"- %s" "$MERGE_BASE..HEAD")
 
           # Construct the full prompt
           FULL_PROMPT=$(cat <<EOM
@@ -95,7 +95,7 @@ jobs:
         run: |
           SESSION_ID=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | .[] | .body' | grep -oP '(?<=<!-- JULES_SESSION_ID=)\S+(?= *-->)' | tail -n 1)
           if [ -z "$SESSION_ID" ]; then
-            echo "::error::Could not find Jules session ID in PR comments."
+            echo "::error::Could not find Jules session ID in PR comments. Was a session previously created using '@jules-new' and completed successfully?"
             exit 1
           fi
           echo "JULES_SESSION_ID=$SESSION_ID" >> $GITHUB_ENV
