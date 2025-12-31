@@ -164,6 +164,7 @@ export interface ReviewContext {
   prAuthor: string
   prDescription: string
   prLabels: string
+  prBranchName: string
   filesChanged: number
   totalLoc: number
   reviewDepth: 'detailed' | 'standard' | 'focused'
@@ -401,6 +402,7 @@ function getReviewContextFromEnv(): ReviewContext {
     prAuthor: process.env.PR_AUTHOR || '',
     prDescription: process.env.PR_DESCRIPTION || '',
     prLabels: process.env.PR_LABELS || '',
+    prBranchName: process.env.PR_BRANCH_NAME || '',
     filesChanged: parseInt(process.env.FILES_CHANGED || '0'),
     totalLoc: parseInt(process.env.TOTAL_LOC || '0'),
     reviewDepth: isValidReviewDepth(reviewDepth) ? reviewDepth : 'standard',
@@ -574,8 +576,16 @@ async function runReviewPreset(
   const result = jsonProcessor.process(text || '')
   const commitComment = `\n\n> Reviewed at commit: \`${context.commitHash}\``
 
+  const prContext = {
+    repo: process.env.GITHUB_REPOSITORY,
+    prNumber: context.prNumber,
+    branchName: context.prBranchName,
+    commitHash: context.commitHash,
+  }
+
   if (result.success) {
-    const reviewData = result.data as { reviewComment?: string }
+    const reviewData = result.data as { reviewComment?: string; prContext?: unknown }
+    reviewData.prContext = prContext
     // It's valid JSON, but we should still check if the content is meaningful.
     if (
       !reviewData.reviewComment ||
