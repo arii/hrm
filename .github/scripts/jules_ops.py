@@ -4,7 +4,7 @@ import sys
 import requests
 import argparse
 
-def create_jules_session(prompt, branch, title, owner, repo_name):
+def create_jules_session(prompt, branch, title, owner, repo_name, jules_api_url):
     """
     Creates a new Jules session via the API and returns the session ID.
     """
@@ -12,8 +12,6 @@ def create_jules_session(prompt, branch, title, owner, repo_name):
     if not api_key:
         sys.stderr.write("Error: JULES_API_KEY environment variable not set.\n")
         sys.exit(1)
-
-    url = os.environ.get("JULES_API_URL", "https://api.jules.ai/v1/sessions")
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -29,7 +27,7 @@ def create_jules_session(prompt, branch, title, owner, repo_name):
     }
 
     try:
-        response = requests.post(url, headers=headers, json=payload)
+        response = requests.post(jules_api_url, headers=headers, json=payload)
         response.raise_for_status()
         response_data = response.json()
         print(f"Successfully created Jules session: {response_data}")
@@ -44,7 +42,7 @@ def create_jules_session(prompt, branch, title, owner, repo_name):
             sys.stderr.write(f"Response: {e.response.text}\n")
         sys.exit(1)
 
-def delete_jules_session(session_id):
+def delete_jules_session(session_id, jules_api_url):
     """
     Deletes a Jules session via the API.
     """
@@ -57,7 +55,7 @@ def delete_jules_session(session_id):
         sys.stderr.write("Error: --session-id is required for the 'delete' command.\n")
         sys.exit(1)
 
-    url = os.environ.get("JULES_API_URL", "https://api.jules.ai/v1/sessions") + f"/{session_id}"
+    url = f"{jules_api_url}/{session_id}"
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -86,6 +84,7 @@ def main():
     parser.add_argument("--title", help="The title for the task or PR.")
     parser.add_argument("--owner", help="The owner of the repository.")
     parser.add_argument("--repo-name", help="The name of the repository.")
+    parser.add_argument("--jules-api-url", default="https://api.jules.ai/v1/sessions", help="The URL of the Jules API.")
 
     args = parser.parse_args()
 
@@ -99,6 +98,7 @@ def main():
             title=args.title,
             owner=args.owner,
             repo_name=args.repo_name,
+            jules_api_url=args.jules_api_url
         )
         if 'GITHUB_OUTPUT' in os.environ:
             with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
@@ -107,7 +107,7 @@ def main():
             print(f"session_id={session_id}")
 
     elif args.command == 'delete':
-        delete_jules_session(session_id=args.session_id)
+        delete_jules_session(session_id=args.session_id, jules_api_url=args.jules_api_url)
 
 if __name__ == "__main__":
     main()

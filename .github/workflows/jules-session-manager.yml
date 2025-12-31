@@ -120,7 +120,8 @@ jobs:
             --branch "$BRANCH" \
             --title "$TITLE" \
             --owner "$REPO_OWNER" \
-            --repo-name "$REPO_NAME"
+            --repo-name "$REPO_NAME" \
+            --jules-api-url "${{ secrets.JULES_API_URL }}"
 
       - name: 'Run Jules Operation: Delete'
         if: env.COMMAND == 'delete'
@@ -131,7 +132,8 @@ jobs:
         run: |
           python3 .github/scripts/jules_ops.py \
             --command "delete" \
-            --session-id "$JULES_SESSION_ID"
+            --session-id "$JULES_SESSION_ID" \
+            --jules-api-url "${{ secrets.JULES_API_URL }}"
 
       - name: 'Post Session ID Comment'
         if: success() && env.COMMAND == 'new'
