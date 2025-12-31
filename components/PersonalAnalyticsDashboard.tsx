@@ -1,3 +1,6 @@
+// File: components/PersonalAnalyticsDashboard.tsx
+import { useCalorieCounter } from '../hooks/useCalorieCounter'
+
 /**
  * A component to display the user's personal analytics.
  * @param {object} props - The component props.
@@ -15,10 +18,12 @@ export const PersonalAnalyticsDashboard = ({
   age: number
   weight: number
 }) => {
+  const { calories } = useCalorieCounter(heartRate, age, weight, true)
+
   return (
     <div>
       <h2>Personal Analytics</h2>
-      <p>This component has been temporarily simplified to remove dead code.</p>
+      <p>Calories Burned: {calories.toFixed(2)}</p>
     </div>
   )
 }
