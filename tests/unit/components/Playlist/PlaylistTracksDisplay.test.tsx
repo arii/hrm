@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 // tests/unit/components/Playlist/PlaylistTracksDisplay.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import PlaylistTracksDisplay from '@/components/Playlist/PlaylistTracksDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
 import { formatDuration } from '@/utils/formatters'
@@ -37,11 +37,13 @@ describe('PlaylistTracksDisplay', () => {
 
   it('should render error state', async () => {
     ;(fetch as jest.Mock).mockRejectedValueOnce(new Error('Failed to fetch'))
-    render(
-      <WebSocketContext.Provider value={mockContextValue}>
-        <PlaylistTracksDisplay playlistId="123" />
-      </WebSocketContext.Provider>
-    )
+    await act(async () => {
+      render(
+        <WebSocketContext.Provider value={mockContextValue}>
+          <PlaylistTracksDisplay playlistId="123" />
+        </WebSocketContext.Provider>
+      )
+    })
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Failed to fetch'
     )
@@ -52,11 +54,13 @@ describe('PlaylistTracksDisplay', () => {
       ok: true,
       json: async () => ({ tracks: [], total: 0 }),
     })
-    render(
-      <WebSocketContext.Provider value={mockContextValue}>
-        <PlaylistTracksDisplay playlistId="123" />
-      </WebSocketContext.Provider>
-    )
+    await act(async () => {
+      render(
+        <WebSocketContext.Provider value={mockContextValue}>
+          <PlaylistTracksDisplay playlistId="123" />
+        </WebSocketContext.Provider>
+      )
+    })
     expect(
       await screen.findByText('This playlist is empty.')
     ).toBeInTheDocument()
@@ -82,11 +86,13 @@ describe('PlaylistTracksDisplay', () => {
       json: async () => mockTracks,
     })
 
-    render(
-      <WebSocketContext.Provider value={mockContextValue}>
-        <PlaylistTracksDisplay playlistId="123" />
-      </WebSocketContext.Provider>
-    )
+    await act(async () => {
+      render(
+        <WebSocketContext.Provider value={mockContextValue}>
+          <PlaylistTracksDisplay playlistId="123" />
+        </WebSocketContext.Provider>
+      )
+    })
 
     expect(await screen.findByText('Track 1')).toBeInTheDocument()
     expect(screen.getByText('Artist 1')).toBeInTheDocument()

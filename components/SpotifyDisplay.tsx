@@ -299,12 +299,12 @@ const SpotifyDisplay = () => {
         sx={{
           backgroundColor: 'grey.900',
           color: 'common.white',
-          px: { xs: 2, sm: 3 },
+          px: 3,
           py: 1.5,
           borderRadius: 2,
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
+          display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           position: 'fixed',
           bottom: 56,
           left: 0,
@@ -314,14 +314,7 @@ const SpotifyDisplay = () => {
           width: '100%',
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifySelf: 'start',
-            gap: 2,
-          }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {displayTrackName} {displayArtist}
           </Typography>
@@ -357,14 +350,7 @@ const SpotifyDisplay = () => {
           )}
         </Box>
 
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            justifySelf: 'center',
-          }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <IconButton
             size="small"
             onClick={() => sendSpotifyCommand('PREVIOUS')}
@@ -401,14 +387,7 @@ const SpotifyDisplay = () => {
           </IconButton>
         </Box>
 
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifySelf: 'end',
-            gap: 1,
-          }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <VolumeSlider
             volume={displayVolume}
             muted={isMuted}

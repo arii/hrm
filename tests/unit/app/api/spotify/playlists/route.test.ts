@@ -5,7 +5,6 @@ import { GET } from '@/app/api/spotify/playlists/route'
 import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
-import { NextRequest } from 'next/server'
 
 // Mock 'next-auth' to prevent TypeError during initialization
 jest.mock('next-auth', () => ({
@@ -59,8 +58,9 @@ describe('API Route: /api/spotify/playlists', () => {
   it('should return 401 Unauthorized if no session is found', async () => {
     mockedGetServerSession.mockResolvedValue(null)
 
-    const req = new NextRequest('http://localhost/api/spotify/playlists')
-    const response = await GET(req)
+    const response = await GET(
+      new Request('http://localhost/api/spotify/playlists')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(401)
@@ -73,8 +73,9 @@ describe('API Route: /api/spotify/playlists', () => {
       accessToken: 'fake-access-token',
     })
 
-    const req = new NextRequest('http://localhost/api/spotify/playlists')
-    const response = await GET(req)
+    const response = await GET(
+      new Request('http://localhost/api/spotify/playlists')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(200)
@@ -109,8 +110,9 @@ describe('API Route: /api/spotify/playlists', () => {
       mockSpotifyApiWithError
     )
 
-    const req = new NextRequest('http://localhost/api/spotify/playlists')
-    const response = await GET(req)
+    const response = await GET(
+      new Request('http://localhost/api/spotify/playlists')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(500)

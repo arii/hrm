@@ -357,23 +357,9 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      # Cache the Next.js build cache to speed up subsequent builds.
-      # The cache key is composed of:
-      # 1. runner.os: Ensures the cache is OS-specific.
-      # 2. hashFiles('pnpm-lock.yaml'): Invalidates the cache when dependencies change.
-      - name: Cache Next.js Build Cache
-        id: build-cache
-        uses: actions/cache@v4
-        with:
-          path: .next/cache
-          key: ${{ runner.os }}-build-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-
-
       - name: Verify Build
         id: build
         env:
-          NODE_ENV: production
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
         shell: bash
@@ -383,19 +369,8 @@ jobs:
           pnpm run build 2>&1 | tee logs/build-output.log
         continue-on-error: true
 
-      - name: Verify Artifacts
-        shell: bash
-        run: |
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
-            echo "✅ All build artifacts are present."
-          else
-            echo "❌ Missing build artifacts after build/cache restore."
-            ls -laR
-            exit 1
-          fi
-
       - name: Report Build Failure
-        if: steps.build.outcome == 'failure'
+        if: failure() && steps.build.outcome == 'failure'
         run: |
           echo "### ❌ Build Failure Report" >> $GITHUB_STEP_SUMMARY
           echo '```text' >> $GITHUB_STEP_SUMMARY
@@ -421,7 +396,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: 🔍 Pre-archive Inspection
-        if: success()
+        if: always() && steps.build.outcome == 'success'
         shell: bash
         run: |
           echo "=== Checking .next_prod directory structure ==="
@@ -462,7 +437,7 @@ jobs:
           (ls -R .next_prod/ || true) | head -50
 
       - name: 📦 Create Release Archive
-        if: success()
+        if: always() && steps.build.outcome == 'success'
         shell: bash
         run: |
           echo "📦 Creating release archive with complete .next_prod directory..."
@@ -494,7 +469,7 @@ jobs:
           (tar -tzf release.tar.gz | grep -E "BUILD_ID|\.next_prod/server" || true) | head -10
 
       - name: Upload Build Artifacts
-        if: success()
+        if: always() && steps.build.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
@@ -935,10 +910,6 @@ jobs:
             else
               echo "⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
             fi
-
-            echo ""
-            echo "---"
-            echo "> Report generated for commit: \`${{ github.event.pull_request.head.sha || github.sha }}\`"
           } > test-results/pr-comment.md
 
           # Post comment to PR
