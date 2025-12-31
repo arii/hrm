@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { MeasurementSystem } from '../types'
 import { cmToFeetAndInches, feetAndInchesToCm } from '../utils/units'
 import { validateHeightValue } from '../app/client/connect/validation'
@@ -17,6 +17,12 @@ export const useHeightInput = (
   const [cmValue, setCmValue] = useLocalStorage('hrm-user-height', initialCm)
   const [transientState, setTransientState] = useState<HeightState | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    // If the unit system changes, discard any transient input
+    // to prevent displaying stale data from the old unit system.
+    setTransientState(null)
+  }, [unitSystem])
 
   // Calculate the display value: either the user's transient input (while typing)
   // or the persisted value converted to the current unit system.

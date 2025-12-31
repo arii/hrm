@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -28,15 +28,19 @@ export default function ConnectPage() {
     'IMPERIAL'
   )
 
-  const [displayWeight, setDisplayWeight] = useState(() => {
-    const kg = parseFloat(_weightInKg)
-    if (isNaN(kg)) {
-      return ''
-    }
-    return toDisplay(kg, unitSystem).toString()
-  })
+  const [displayWeight, setDisplayWeight] = useState('')
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const kg = parseFloat(_weightInKg)
+    if (!isNaN(kg)) {
+      setDisplayWeight(toDisplay(kg, unitSystem).toString())
+    } else {
+      setDisplayWeight('')
+    }
+    // This effect should run when the canonical weight or the unit system changes.
+  }, [_weightInKg, unitSystem])
 
   // Use the custom hook for height input logic
   const {
