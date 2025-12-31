@@ -41,6 +41,18 @@ jobs:
             core.setOutput('pr_title', response.data.title);
             core.setOutput('pr_body', response.data.body);
 
+      - name: Determine command
+        id: command
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const commentBody = `${{ github.event.comment.body }}`;
+            if (commentBody.includes('@pr-squash-rebase')) {
+              core.setOutput('command', 'squash-rebase');
+            } else {
+              core.setOutput('command', 'squash');
+            }
+
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
@@ -55,10 +67,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Squash and Rebase
+      - name: Squash / Rebase
         id: squash_rebase
         continue-on-error: true
         env:
+          COMMAND: ${{ steps.command.outputs.command }}
           PR_TITLE: ${{ steps.pr_data.outputs.pr_title }}
           PR_BODY: ${{ steps.pr_data.outputs.pr_body }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,9 +94,14 @@ jobs:
 
           git commit -F "$COMMIT_MSG_FILE"
 
-          if ! git rebase "origin/$BASE_BRANCH"; then
-            echo "::error::Automatic rebase failed. The PR has conflicts with the base branch. Please rebase manually."
-            exit 1
+          if [ "$COMMAND" = "squash-rebase" ]; then
+            echo "Rebasing onto base branch..."
+            if ! git rebase "origin/$BASE_BRANCH"; then
+              echo "::error::Automatic rebase failed. The PR has conflicts with the base branch. Please rebase manually."
+              exit 1
+            fi
+          else
+            echo "Skipping rebase."
           fi
 
           git push --force-with-lease origin $HEAD_BRANCH
@@ -111,6 +129,15 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            const command = '${{ steps.command.outputs.command }}';
+            let messageBody;
+
+            if (command === 'squash-rebase') {
+              messageBody = '✅ Commits squashed and rebased successfully!';
+            } else {
+              messageBody = '✅ Commits squashed successfully!';
+            }
+
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -121,5 +148,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ github.event.issue.number }},
-              body: '✅ Commits squashed and rebased successfully!'
+              body: messageBody
             });
