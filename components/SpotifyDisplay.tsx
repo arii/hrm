@@ -136,7 +136,7 @@ const SpotifyDisplay = () => {
   // 5. Integrate useReducer
   const [state, dispatch] = useReducer(
     spotifyDisplayReducer,
-    initialStateFactory(spotifyData.volumePercent ?? 70, false)
+    initialStateFactory(spotifyData.volume ?? 70, false)
   )
   const {
     displayVolume,
@@ -169,11 +169,11 @@ const SpotifyDisplay = () => {
     dispatch({
       type: 'SYNC_WITH_WEBSOCKET',
       payload: {
-        volume: spotifyData.volumePercent ?? 70,
+        volume: spotifyData.volume ?? 70,
         isMuted: false,
       },
     })
-  }, [spotifyData.volumePercent, isSliding])
+  }, [spotifyData.volume, isSliding])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
@@ -302,7 +302,7 @@ const SpotifyDisplay = () => {
     const displayTrackName = isWaiting
       ? 'No Active Playback'
       : spotifyData.trackName
-    const displayArtist = isWaiting ? '' : `— ${spotifyData.artistName}`
+    const displayArtist = isWaiting ? '' : `— ${spotifyData.artist}`
 
     return (
       <Box
