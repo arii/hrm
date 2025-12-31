@@ -63,7 +63,7 @@ const SpotifySelectionPage = () => {
               <Typography variant="h6">Now Playing</Typography>
               <Typography>
                 {spotifyData.trackName} - {spotifyData.artist}
-              </Typography}
+              </Typography>
             </Box>
           ) : (
             <Typography sx={{ textAlign: 'center' }}>
