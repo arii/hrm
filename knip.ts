@@ -2,6 +2,8 @@ import type { KnipConfig } from 'knip'
 
 const config: KnipConfig = {
   entry: [
+    'server.ts',
+    'proxy.ts',
     'app/**/*.ts',
     'app/**/*.tsx',
     'components/**/*.ts',
@@ -19,12 +21,14 @@ const config: KnipConfig = {
     'stories/**/*.tsx',
     '.storybook/**/*.ts',
     '.storybook/**/*.tsx',
-    'server.ts',
-    'proxy.ts',
+    'jest.config.cjs',
+    'next.config.js',
+    'playwright.config.ts',
+    'eslint.config.mjs',
+    'commitlint.config.cjs',
   ],
   project: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs', '**/*.mjs'],
   ignore: [
-    '.github',
     'node_modules',
     'dist',
     '.next',
@@ -35,24 +39,21 @@ const config: KnipConfig = {
     'ecosystem.config.cjs',
     'scripts/get-available-port.mjs',
     'public/mockServiceWorker.js',
-    'next.config.js',
-    'jest.config.cjs',
-    'commitlint.config.cjs',
-    'playwright.config.ts',
-    'eslint.config.mjs',
   ],
   ignoreDependencies: [
+    // Used in tests, but Knip doesn't see it
+    'jest-environment-jsdom',
     // types for web bluetooth api
     '@types/web-bluetooth',
     // Eslint plugin
     'eslint-plugin-react',
-    'eslint-plugin-storybook',
-    'dotenv',
+    'wait-on',
   ],
   ignoreBinaries: [
     'scripts/test-json-with-server.sh',
     'scripts/test-with-server.sh',
     'python3',
+    'sleep',
   ],
 }
 

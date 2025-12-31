@@ -56,34 +56,6 @@ This project uses a two-layered approach to commit message validation:
 
 For more details on the rules, please refer to the [official commitlint documentation](https://github.com/conventional-changelog/commitlint/#what-is-commitlint).
 
-### Pull Request Automation
-
-#### Squash and Rebase
-
-To maintain a clean and linear Git history, this project provides an automated tool to squash and rebase pull requests.
-
-**Usage**:
-
-1.  Open a pull request.
-2.  Ensure all checks have passed and the PR is ready for merging.
-3.  Add a comment to the PR containing one of the following commands:
-    - `@pr-squash`
-    - `@pr-squash-rebase`
-
-**What it does**:
-
-- The GitHub Action will be triggered by the comment.
-- It will squash all commits in the pull request into a single commit.
-- The commit message for the squashed commit will be automatically generated from the pull request's title and body.
-- The squashed commit will be rebased on top of the latest commit of the target branch (e.g., `leader`).
-- The action will then force-push the updated branch to the pull request.
-
-**Conflict Handling**:
-
-If the action encounters a merge conflict during the rebase, it will fail gracefully. It will post a comment on the pull request informing you that the rebase could not be completed automatically and that manual intervention is required.
-
-> **Note on Protected Branches**: For this action to work on a protected branch, the repository's settings may need to be adjusted to allow the `github-actions[bot]` to push to the branch. For more information, see the [GitHub documentation on managing protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches).
-
 ### Legacy Pre-commit Hooks
 
 The project contains legacy Python-based pre-commit hooks (`.pre-commit-config.yaml`). These are now considered **deprecated** in favor of the Husky-based Node.js tooling. The Python hooks will be removed in a future pull request to eliminate redundancy.
@@ -102,24 +74,6 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Tabata Timer Refactoring**: The `TabataTimer` service was successfully refactored to support both stopwatch and Tabata modes with a more robust and maintainable architecture.
 - **Spotify Controls Overhaul**: The Spotify controls were redesigned and implemented, including volume control, device selection, and improved UI feedback.
 - **Bluetooth Connection Flow**: The Bluetooth HRM connection page (`client/connect`) was stabilized and now includes auto-connect functionality.
-
-## GitHub Integrations
-
-### Jules AI Session Management
-
-This project uses a GitHub Actions workflow to manage Jules AI sessions directly from pull request comments. The following commands are available to authorized users (OWNER, MEMBER, or COLLABORATOR):
-
-- `@jules-new`: Creates a new Jules session based on the context of the pull request.
-- `@jules-delete`: Deletes the Jules session associated with the pull request. If `@jules-new` has been used multiple times, this command will only delete the most recently created session.
-
-**Runner Environment:**
-
-This workflow is configured to run on `self-hosted` runners. This is an intentional design choice to ensure a consistent and secure environment for interacting with the Jules API. The self-hosted runner is expected to have the following tools pre-installed:
-
-- `gh` (GitHub CLI)
-- `jq`
-- `python3`
-- `pip`
 
 ## Dependency Management and Code Hygiene with Knip
 

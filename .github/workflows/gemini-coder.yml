@@ -179,7 +179,6 @@ jobs:
           TITLE: ${{ env.TITLE }}
           REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
-        id: jules_session
         run: |
           # Read prompt from file to avoid CLI argument length limits or exposure
           FULL_PROMPT=$(cat jules_prompt.txt)
@@ -189,65 +188,7 @@ jobs:
             --branch "$BRANCH" \
             --title "$TITLE" \
             --owner "$REPO_OWNER" \
-            --repo-name "$REPO_NAME" >> $GITHUB_OUTPUT
-
-      - name: 'Jules: Create Tracking PR'
-        if: env.AGENT_PROVIDER == 'jules'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: ${{ env.BRANCH }}
-          TITLE: ${{ env.TITLE }}
-          PROMPT: ${{ env.PROMPT }}
-          SESSION_URL: ${{ steps.jules_session.outputs.session_url }}
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          EXISTING_PR_URL=$(gh pr list --head "$BRANCH" --json url --limit 1 -q '.[0].url' || echo "")
-
-          (
-          cat <<EOF
-          A Jules session has been initiated to address this task.
-
-          **Task Details:**
-          EOF
-          echo "$PROMPT"
-          cat <<EOF
-
-          **Jules Session URL:**
-          [Follow the progress here]($SESSION_URL)
-          EOF
-          ) > pr_body.md
-
-          if [ -n "$EXISTING_PR_URL" ]; then
-            echo "::notice::PR for branch '$BRANCH' already exists. Updating body: $EXISTING_PR_URL"
-            gh pr edit "$EXISTING_PR_URL" --body-file pr_body.md
-          else
-            echo "::notice::No PR found for branch '$BRANCH'. Creating a new one."
-
-            gh auth setup-git
-            DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
-            git checkout $DEFAULT_BRANCH
-            git pull
-            git branch -D "$BRANCH" 2>/dev/null || true
-
-            git checkout -b "$BRANCH"
-            # Create an empty commit to establish the branch and enable PR creation.
-            git commit --allow-empty -m "chore: initiate jules session"
-            # Use --force to ensure the remote branch accurately reflects the latest automated state,
-            # effectively overwriting any previous partial or failed pushes.
-            git push --force -u origin "$BRANCH"
-
-            gh pr create \
-              --base $DEFAULT_BRANCH \
-              --head "$BRANCH" \
-              --title "$TITLE" \
-              --body-file pr_body.md
-          fi
-
-          # Clean up the temporary file
-          rm pr_body.md
+            --repo-name "$REPO_NAME"
 
       - name: 'Gemini: Verify Client Exists'
         if: env.AGENT_PROVIDER == 'gemini'

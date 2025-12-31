@@ -74,18 +74,11 @@ describe('PlaylistDetails', () => {
       ok: false,
     })
 
-    // Suppress console.error for this test
-    const consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {})
-
     render(<PlaylistDetails playlistId="test-playlist-id" />)
     await waitFor(() => {
       expect(
         screen.getByText('Failed to fetch playlist details')
       ).toBeInTheDocument()
     })
-
-    consoleErrorSpy.mockRestore()
   })
 })

@@ -96,6 +96,7 @@
     "@google/generative-ai": "0.24.1",
     "@jest/globals": "^30.2.0",
     "@next/bundle-analyzer": "^16.1.1",
+    "@octokit/rest": "^22.0.1",
     "@playwright/test": "^1.57.0",
     "@storybook/addon-a11y": "^10.1.11",
     "@storybook/addon-actions": "^8.6.14",
