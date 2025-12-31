@@ -80,6 +80,8 @@ To maintain a clean and linear Git history, this project provides an automated t
 
 If the action encounters a merge conflict during the rebase, it will fail gracefully. It will post a comment on the pull request informing you that the rebase could not be completed automatically and that manual intervention is required.
 
+> **Note on Protected Branches**: For this action to work on a protected branch, the repository's settings may need to be adjusted to allow the `github-actions[bot]` to push to the branch.
+
 ### Legacy Pre-commit Hooks
 
 The project contains legacy Python-based pre-commit hooks (`.pre-commit-config.yaml`). These are now considered **deprecated** in favor of the Husky-based Node.js tooling. The Python hooks will be removed in a future pull request to eliminate redundancy.
