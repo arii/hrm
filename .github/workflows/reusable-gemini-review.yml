@@ -58,81 +58,16 @@ jobs:
         id: decision
         env:
           TRIGGER_EVENT: ${{ inputs.trigger_event }}
+          ACTION_TYPE: ${{ github.event.action }}
           COMMENT_BODY: ${{ inputs.comment_body }}
-          PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
         run: |
-          NEEDS_REVIEW="false"
-          SKIP_REASON="no criteria met"
-
-          # --- Check for quality check failures first ---
-          if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
-            echo "::info::Quality checks failed. Triggering review to analyze failures."
-            NEEDS_REVIEW="true"
-            SKIP_REASON=""
-          # --- Initial review on PR open ---
-          elif [[ "$TRIGGER_EVENT" == "pull_request" && "${{ github.event.action }}" == "opened" ]]; then
-            echo "::info::PR opened. Triggering initial review."
-            NEEDS_REVIEW="true"
-          # --- Handle manual comment triggers ---
-          elif [[ "$TRIGGER_EVENT" == "comment" ]]; then
-             if [[ "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ]]; then
-               echo "::info::Manual/CI-failure review triggered by comment."
-               NEEDS_REVIEW="true"
-             fi
-          # --- Handle re-reviews on code synchronization ---
-          elif [[ "$TRIGGER_EVENT" == "pull_request" && "${{ github.event.action }}" == "synchronize" ]]; then
-            echo "::info::Code synchronized. Analyzing for re-review..."
-
-            # Check for recent review comments (containing "## Review" or "Review Summary" to exclude test reports)
-            PR_DATA=$(gh pr view "$PR_NUMBER" --json comments -q '.comments | map(select(.author.login? == "arii" and (.body | contains("## Review") or contains("Review Summary") or contains("Suggested Fix")))) | .[-1].createdAt // ""')
-            LAST_REVIEW_TIMESTAMP="$PR_DATA"
-
-            if [ -n "$LAST_REVIEW_TIMESTAMP" ]; then
-                REVIEW_TIME=$(date -d "$LAST_REVIEW_TIMESTAMP" +%s)
-                CURRENT_TIME=$(date +%s)
-                TIME_DIFF=$((CURRENT_TIME - REVIEW_TIME))
-                if [ "$TIME_DIFF" -lt 300 ]; then # 5 minutes
-                    SKIP_REASON="recent review exists (${TIME_DIFF}s ago)"
-                    echo "needs-review=false" >> $GITHUB_OUTPUT
-                    echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
-                    exit 0
-                fi
-            else
-                # No previous review found, trigger a new one
-                echo "::info::No previous review found. Triggering initial review."
-                NEEDS_REVIEW="true"
-            fi
-
-            CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-            SIGNIFICANT_COUNT=$(echo "$CHANGED_FILES" | grep -vE '(\.md$|\.png$|\.svg$|package-lock\.json$|\.gitignore$)' | wc -l)
-
-            if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                SKIP_REASON="no significant code changes"
-                echo "needs-review=false" >> $GITHUB_OUTPUT
-                echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
-                exit 0
-            fi
-
-            COMMIT_MSG=$(git log -1 --pretty=format:"%s")
-            if [[ "$COMMIT_MSG" =~ ^(docs?|chore|style): ]]; then
-                SKIP_REASON="trivial commit message"
-                echo "needs-review=false" >> $GITHUB_OUTPUT
-                echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
-                exit 0
-            fi
-
-            echo "::info::Significant changes detected and cooldown passed. Triggering re-review."
-            NEEDS_REVIEW="true"
-          else
-            SKIP_REASON="unhandled event trigger"
-          fi
-
-          echo "needs-review=$NEEDS_REVIEW" >> $GITHUB_OUTPUT
-          echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
+          chmod +x ./scripts/decide-review-strategy.sh
+          ./scripts/decide-review-strategy.sh
 
   gemini-review:
     name: Execute Gemini Review
@@ -259,10 +194,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if [ -f "review_result.json" ]; then
-            jq -r '.reviewComment // empty' review_result.json > review_comment.txt
-            if [ -s review_comment.txt ]; then
+            # Extract the original comment
+            REVIEW_COMMENT=$(jq -r '.reviewComment // empty' review_result.json)
+
+            # Check if there's a comment to post
+            if [ -n "$REVIEW_COMMENT" ]; then
+              # Create the commit hash line
+              COMMIT_HASH_MSG="> Reviewed commit: \`${HEAD_SHA}\`"
+
+              # Combine the header and the original comment
+              FINAL_COMMENT="${COMMIT_HASH_MSG}\n\n${REVIEW_COMMENT}"
+
+              # Write to a file to be used by the gh cli command
+              echo -e "$FINAL_COMMENT" > review_comment.txt
+
+              # Post the combined comment
               gh pr comment "$PR_NUMBER" --body-file review_comment.txt
             fi
           fi
