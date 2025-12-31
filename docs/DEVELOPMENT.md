@@ -147,3 +147,51 @@ When integrating with third-party libraries that may have incorrect or incomplet
 **Problem**: The `@spotify/web-api-ts-sdk` library does not correctly type the `deviceId` parameter as optional for several of its player methods. This can lead to runtime errors and requires unsafe type assertions in the application code.
 
 **Solution**: The `safeSpotifyApi.ts` module provides a `createSafeSpotifyApi` function that wraps the Spotify SDK instance in a `Proxy`. This proxy intercepts calls to the player methods and dynamically handles the `deviceId` parameter, ensuring that `undefined` values are not passed to the SDK. This encapsulates the workaround in a single, reusable module, eliminating the need for scattered type assertions and improving the overall type safety of the codebase.
+
+## Docker-Based Deployment
+
+This application is designed to be deployed as a Docker container. A multi-stage `Dockerfile` is provided to create a lean, secure, and optimized production image.
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/products/docker-desktop/) installed and running on your deployment server.
+
+### Building the Image
+
+To build the production Docker image, run the following command from the root of the project:
+
+```bash
+docker build -t hrm-dashboard .
+```
+
+This command will:
+1.  Install dependencies in a temporary builder stage.
+2.  Build the Next.js standalone application and the custom server.
+3.  Create a final, minimal image containing only the necessary production artifacts.
+4.  The final image runs the application under a non-root user (`nextjs`) for enhanced security.
+
+### Running the Container
+
+Before running the container, you must create a `.env.production` file on your host machine containing all the required production environment variables (see the "Environment Variables" section in the main README).
+
+To run the application in a Docker container:
+
+```bash
+docker run -d \
+  --name hrm-app \
+  -p 3000:3000 \
+  --env-file ./.env.production \
+  hrm-dashboard
+```
+
+**Explanation of flags:**
+- `-d`: Run the container in detached mode (in the background).
+- `--name hrm-app`: Assign a name to the container for easier management.
+- `-p 3000:3000`: Map port 3000 on the host to port 3000 in the container.
+- `--env-file ./.env.production`: Load environment variables from your `.env.production` file.
+
+The application will now be accessible at `http://<your_server_ip>:3000`.
+
+### Healthcheck
+
+The Docker image includes a `HEALTHCHECK` instruction that periodically curls the `/api/health` endpoint. This allows Docker to monitor the container's health and automatically restart it if it becomes unresponsive. You can inspect the health status using `docker inspect`.
