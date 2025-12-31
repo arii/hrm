@@ -6,7 +6,7 @@ import {
   getKeyGenerator,
 } from '../../../../lib/middleware/rateLimit'
 import { env } from '../../../../lib/env'
-import { NextFunction, Request, Response } from 'express'
+import { Request, Response } from 'express'
 import { Socket } from 'net'
 
 // Mock the env module to control NODE_ENV for tests
