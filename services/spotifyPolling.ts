@@ -6,7 +6,7 @@ import {
   Episode,
 } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
-import { SpotifyDevice } from '../types/core'
+import { SpotifyDevice, SpotifyCommandParameters } from '../types/core'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
@@ -365,14 +365,8 @@ export class SpotifyPolling implements SpotifyService {
    */
   public async handleCommand(
     command: SpotifyCommand,
-    params: {
-      deviceId?: string
-      volume?: number
-      playlistUri?: string
-      contextUri?: string
-    }
+    params: SpotifyCommandParameters
   ): Promise<void> {
-    const { deviceId, volume, playlistUri, contextUri } = params
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
       return
@@ -384,12 +378,8 @@ export class SpotifyPolling implements SpotifyService {
     }
 
     try {
-      await this.executeSpotifyCommand(
-        command,
-        deviceId,
-        volume,
-        contextUri || playlistUri
-      )
+      await this.executeSpotifyCommand(command, params)
+      // Slight delay to allow Spotify API to update before we re-poll
       setTimeout(() => this.getCurrentlyPlaying(), 500)
     } catch (error) {
       await logSpotifyCommandError(command, error)
@@ -398,26 +388,37 @@ export class SpotifyPolling implements SpotifyService {
 
   private async executeSpotifyCommand(
     command: SpotifyCommand,
-    deviceId?: string,
-    volume?: number,
-    contextUri?: string
+    params: SpotifyCommandParameters
   ) {
-    // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
-    // This triggers the action on the currently active device.
+    const { deviceId, volume, playlistUri, contextUri, uri } = params
+    const effectiveContextUri = contextUri || playlistUri
+
     switch (command) {
       case 'PLAY':
-        // deviceId is optional
         await this.executeSdkCommand(
           command,
-          () =>
-            contextUri
-              ? this.sdk!.player.startResumePlayback(deviceId, contextUri)
-              : this.sdk!.player.startResumePlayback(deviceId),
-          { deviceId, contextUri }
+          () => {
+            if (uri) {
+              // The Spotify API requires that if a `uri` (for a specific track) is provided,
+              // the `context_uri` must be omitted. The SDK handles this by accepting
+              // `undefined` for the context parameter.
+              return this.sdk!.player.startResumePlayback(deviceId, undefined, [
+                uri,
+              ])
+            }
+            if (effectiveContextUri) {
+              return this.sdk!.player.startResumePlayback(
+                deviceId,
+                effectiveContextUri
+              )
+            }
+            // If neither uri nor contextUri is provided, call with just deviceId.
+            return this.sdk!.player.startResumePlayback(deviceId)
+          },
+          { deviceId, contextUri: effectiveContextUri, uri }
         )
         break
       case 'PAUSE':
-        // deviceId is optional
         await this.executeSdkCommand(
           command,
           () => this.sdk!.player.pausePlayback(deviceId),
@@ -425,7 +426,6 @@ export class SpotifyPolling implements SpotifyService {
         )
         break
       case 'NEXT':
-        // deviceId is optional
         await this.executeSdkCommand(
           command,
           () => this.sdk!.player.skipToNext(deviceId),
@@ -433,7 +433,6 @@ export class SpotifyPolling implements SpotifyService {
         )
         break
       case 'PREVIOUS':
-        // deviceId is optional
         await this.executeSdkCommand(
           command,
           () => this.sdk!.player.skipToPrevious(deviceId),
