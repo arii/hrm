@@ -303,10 +303,10 @@ export async function generateContentWithFallback(
 
   // If the loop completes without returning, all models have failed.
   const finalError = new GoogleGenerativeAIError(
-    `All models failed. Last error: ${lastError?.message}`,
-    lastError || undefined
-  );
-  throw finalError;
+    `All models failed. Last error: ${lastError?.message}`
+  )
+  finalError.cause = lastError
+  throw finalError
 }
 
 /**
