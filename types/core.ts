@@ -19,6 +19,12 @@
  * @property {string} createdAt - The timestamp when the user was created (ISO 8601).
  * @property {string} updatedAt - The timestamp when the user was last updated (ISO 8601).
  */
+export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
+export type Gender = 'MALE' | 'FEMALE'
+
+/**
+ * Represents a user's identity and authentication profile.
+ */
 export interface UserProfile {
   id: string
   username: string
@@ -27,6 +33,18 @@ export interface UserProfile {
   lastName: string | null
   createdAt: string
   updatedAt: string
+}
+
+/**
+ * Represents a user's physical attributes for health calculations.
+ */
+export interface UserPhysicalProfile {
+  userId: string
+  age: number
+  weight: number // Stored normalized in KG
+  gender: Gender
+  unitSystem: MeasurementSystem
+  maxHr?: number // Optional override, otherwise calculated
 }
 
 // =================================================================================================

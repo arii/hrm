@@ -11,6 +11,7 @@ import {
   OpenAPIRegistry,
 } from '@asteasolutions/zod-to-openapi'
 import * as Schemas from '../lib/validation/schemas'
+import { z } from 'zod'
 
 const registry = new OpenAPIRegistry()
 
@@ -39,6 +40,40 @@ registry.registerPath({
       content: {
         'application/json': {
           schema: Schemas.UserProfileSchema.openapi('UserProfile'),
+        },
+      },
+    },
+    '400': {
+      description: 'Invalid request body',
+    },
+  },
+})
+
+// Define the API endpoints
+registry.registerPath({
+  method: 'post',
+  path: '/api/users/{userId}/physical-profile',
+  summary: 'Create a new user physical profile',
+  request: {
+    params: z.object({
+      userId: z.string().uuid(),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: Schemas.UserPhysicalProfileSchema.omit({ userId: true }).openapi(
+            'CreateUserPhysicalProfile'
+          ),
+        },
+      },
+    },
+  },
+  responses: {
+    '201': {
+      description: 'User physical profile created successfully',
+      content: {
+        'application/json': {
+          schema: Schemas.UserPhysicalProfileSchema.openapi('UserPhysicalProfile'),
         },
       },
     },

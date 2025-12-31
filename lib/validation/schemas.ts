@@ -35,6 +35,18 @@ export const HeartRateDataPointSchema = z.object({
   heartRate: z.number(),
 })
 
+export const MeasurementSystemSchema = z.enum(['IMPERIAL', 'METRIC'])
+export const GenderSchema = z.enum(['MALE', 'FEMALE'])
+
+export const UserPhysicalProfileSchema = z.object({
+  userId: z.string().uuid(),
+  age: z.number().min(1).max(120),
+  weight: z.number().positive(),
+  gender: GenderSchema,
+  unitSystem: MeasurementSystemSchema,
+  maxHr: z.number().optional(),
+})
+
 // =================================================================
 // API Request Schemas
 // =================================================================

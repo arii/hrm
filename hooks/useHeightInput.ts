@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { MeasurementSystem } from '../types'
+import { MeasurementSystem } from '../types/core'
 import { cmToFeetAndInches, feetAndInchesToCm } from '../utils/units'
 import { validateHeightValue } from '../app/client/connect/validation'
 import useLocalStorage from './useLocalStorage'

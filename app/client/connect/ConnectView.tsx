@@ -15,7 +15,7 @@ import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import React, { useState } from 'react'
-import { MeasurementSystem, Gender } from '../../../types'
+import { MeasurementSystem, Gender } from '../../../types/core'
 import {
   ToggleButtonGroup,
   ToggleButton,

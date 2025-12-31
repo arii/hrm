@@ -24,11 +24,11 @@ type AppRouterHandler<T, P> = (
 
 /**
  * A higher-order function that wraps an App Router API route handler to provide
- * automatic request body validation using a Zod schema.
+ * automatic request body and params validation using Zod schemas.
  *
  * @template T The expected type of the validated data.
  * @template P The expected type of the URL parameters.
- * @param {z.ZodType<T>} schema The Zod schema to validate the request body against.
+ * @param {{ schema: z.ZodType<T>; paramsSchema?: z.ZodType<P> }} options The validation schemas.
  * @returns A function that takes a handler and returns a new handler with validation logic.
  *
  * @example
@@ -42,13 +42,33 @@ type AppRouterHandler<T, P> = (
  *
  * export const POST = withValidation({ schema: CreateUserSchema })(postHandler);
  */
-export function withValidation<T, P>({ schema }: { schema: z.ZodType<T> }) {
+export function withValidation<T, P>({
+  schema,
+  paramsSchema,
+}: {
+  schema: z.ZodType<T>
+  paramsSchema?: z.ZodType<P>
+}) {
   return (handler: AppRouterHandler<T, P>) =>
-    async (req: Request, context: { params: P }) => {
+    async (req: Request, context: { params: any }) => {
       try {
+        let validatedParams = context.params
+        if (paramsSchema) {
+          validatedParams = paramsSchema.parse(context.params)
+        }
+        if (req.body === null) {
+          return NextResponse.json(
+            { message: 'Request body cannot be empty.' },
+            { status: 400 }
+          )
+        }
         const body = await req.json()
         const validatedData = schema.parse(body)
-        return handler(req, { ...context, body: validatedData })
+        return handler(req, {
+          ...context,
+          params: validatedParams,
+          body: validatedData,
+        })
       } catch (error) {
         if (error instanceof z.ZodError) {
           return NextResponse.json(

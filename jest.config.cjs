@@ -42,10 +42,11 @@ const config = {
     ],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
+    '/node_modules/(?!@asteasolutions/zod-to-openapi)',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
+    uuid: require.resolve('uuid'),
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
   },
