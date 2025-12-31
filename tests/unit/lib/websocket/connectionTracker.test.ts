@@ -57,13 +57,19 @@ describe('WebSocket Connection Tracker', () => {
 
   it('should return true and not track connections when NODE_ENV is "test"', () => {
     ;(env as { NODE_ENV: string }).NODE_ENV = 'test'
-    const result = handleConnectionLimit(mockReq, mockSocket as unknown as Socket)
+    const result = handleConnectionLimit(
+      mockReq,
+      mockSocket as unknown as Socket
+    )
     expect(result).toBe(true)
     expect(mockSocket.destroyed).toBe(false)
   })
 
   it('should allow a connection if the limit is not reached', () => {
-    const result = handleConnectionLimit(mockReq, mockSocket as unknown as Socket)
+    const result = handleConnectionLimit(
+      mockReq,
+      mockSocket as unknown as Socket
+    )
     expect(result).toBe(true)
     expect(mockSocket.destroyed).toBe(false)
   })
@@ -80,7 +86,10 @@ describe('WebSocket Connection Tracker', () => {
     }
 
     // The 6th connection should be rejected
-    const result = handleConnectionLimit(mockReq, mockSocket as unknown as Socket)
+    const result = handleConnectionLimit(
+      mockReq,
+      mockSocket as unknown as Socket
+    )
     expect(result).toBe(false)
     expect(mockSocket.destroyed).toBe(true)
     expect(mockSocket.buffer.join('')).toContain(
@@ -122,7 +131,10 @@ describe('WebSocket Connection Tracker', () => {
 
   it('should use x-forwarded-for header for IP address', () => {
     mockReq.headers['x-forwarded-for'] = '1.1.1.1'
-    const result = handleConnectionLimit(mockReq, mockSocket as unknown as Socket)
+    const result = handleConnectionLimit(
+      mockReq,
+      mockSocket as unknown as Socket
+    )
     expect(result).toBe(true)
   })
 
