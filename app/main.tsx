@@ -18,7 +18,7 @@ import { UserSettingsProvider } from '@/context/UserSettingsContext'
 export default function Main({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   return (
-    <ErrorBoundary fallback={<ErrorFallback />}>
+    <ErrorBoundary>
       <ErrorProvider>
         <LoadingProvider>
           <Providers>
