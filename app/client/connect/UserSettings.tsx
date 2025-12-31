@@ -86,7 +86,11 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         <ToggleButton value="IMPERIAL" aria-label="imperial units">
           Imperial (lbs, ft, in)
         </ToggleButton>
-        <ToggleButton value="METRIC" aria-label="metric units">
+        <ToggleButton
+          value="METRIC"
+          aria-label="metric units"
+          data-testid="metric-button"
+        >
           Metric (kg, cm)
         </ToggleButton>
       </ToggleButtonGroup>
@@ -150,6 +154,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         onBlur={onWeightBlur}
         error={!!weightError}
         helperText={weightError}
+        data-testid="weight-input"
       />
     </Stack>
   )

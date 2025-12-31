@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -28,9 +28,16 @@ export default function ConnectPage() {
     'IMPERIAL'
   )
 
-  const [displayWeight, setDisplayWeight] = useState('')
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
+
+  const displayWeight = useMemo(() => {
+    const kg = parseFloat(_weightInKg)
+    if (isNaN(kg)) return ''
+    return toDisplay(kg, unitSystem).toString()
+  }, [_weightInKg, unitSystem])
+
+  const [transientWeight, setTransientWeight] = useState<string | null>(null)
 
   // Use the custom hook for height input logic
   const {
@@ -40,30 +47,27 @@ export default function ConnectPage() {
     error: heightError,
   } = useHeightInput('175', unitSystem)
 
-  useEffect(() => {
-    const kg = parseFloat(_weightInKg)
-    if (!isNaN(kg)) {
-      setDisplayWeight(toDisplay(kg, unitSystem).toString())
-    }
-  }, [_weightInKg, unitSystem])
-
   const handleAgeBlur = () => {
     const error = validateAgeValue(userAge)
     setAgeError(error)
   }
 
   const handleWeightChange = (newDisplayValue: string) => {
-    setDisplayWeight(newDisplayValue)
+    setTransientWeight(newDisplayValue)
   }
 
   const handleWeightBlur = () => {
-    const error = validateWeightValue(displayWeight, unitSystem)
+    const valueToValidate = transientWeight ?? displayWeight
+    const error = validateWeightValue(valueToValidate, unitSystem)
     setWeightError(error)
 
-    const numericValue = parseFloat(displayWeight)
-    if (!error && !isNaN(numericValue) && numericValue > 0) {
-      const newKgValue = toKg(numericValue, unitSystem)
-      setWeightInKg(newKgValue.toFixed(2))
+    if (transientWeight !== null) {
+      const numericValue = parseFloat(transientWeight)
+      if (!error && !isNaN(numericValue) && numericValue > 0) {
+        const newKgValue = toKg(numericValue, unitSystem)
+        setWeightInKg(newKgValue.toFixed(2))
+      }
+      setTransientWeight(null) // Reset after commit
     }
   }
 
@@ -154,7 +158,7 @@ export default function ConnectPage() {
       setUserHeight={handleHeightChange}
       onHeightBlur={handleHeightBlur}
       heightError={heightError}
-      userWeight={displayWeight}
+      userWeight={transientWeight ?? displayWeight}
       setUserWeight={handleWeightChange}
       onWeightBlur={handleWeightBlur}
       weightError={weightError}
