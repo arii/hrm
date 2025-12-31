@@ -155,21 +155,6 @@ export default function ConnectView({
 
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
-            <ToggleButtonGroup
-              value={unitSystem}
-              exclusive
-              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
-              aria-label="measurement system"
-              fullWidth
-            >
-              <ToggleButton value="IMPERIAL" aria-label="imperial">
-                Imperial (lbs)
-              </ToggleButton>
-              <ToggleButton value="METRIC" aria-label="metric">
-                Metric (kg)
-              </ToggleButton>
-            </ToggleButtonGroup>
-
             <UserSettings
               userName={userName}
               setUserName={setUserName}
@@ -186,7 +171,6 @@ export default function ConnectView({
               onWeightBlur={onWeightBlur}
               weightError={weightError}
               unit={unitSystem}
-              setUnit={onUnitChange}
             />
 
             <FormControl component="fieldset">
