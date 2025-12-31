@@ -22,7 +22,7 @@ describe('API Route: /api/users', () => {
       })
 
       // Act
-      const response = await POST(request)
+      const response = await POST(request, { params: {} })
       const newUser = await response.json()
 
       // Assert
@@ -48,7 +48,7 @@ describe('API Route: /api/users', () => {
       })
 
       // Act
-      const response = await POST(request)
+      const response = await POST(request, { params: {} })
       const errorData = await response.json()
 
       // Assert
@@ -71,7 +71,7 @@ describe('API Route: /api/users', () => {
       })
 
       // Act
-      const response = await POST(request)
+      const response = await POST(request, { params: {} })
       const errorData = await response.json()
 
       // Assert

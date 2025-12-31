@@ -50,6 +50,7 @@ export function withValidation<T, P>({
   paramsSchema?: z.ZodType<P>
 }) {
   return (handler: AppRouterHandler<T, P>) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (req: Request, context: { params: any }) => {
       try {
         let validatedParams = context.params

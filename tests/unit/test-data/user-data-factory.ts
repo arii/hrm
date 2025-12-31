@@ -2,15 +2,15 @@ import {
   UserProfile,
   UserPhysicalProfile,
   WorkoutSession,
-  HeartRateDataPoint
+  HeartRateDataPoint,
 } from '@/types/core'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'crypto'
 
 // --- User Identity Factory ---
 export const createValidUserProfile = (
   overrides: Partial<UserProfile> = {}
 ): UserProfile => ({
-  id: uuidv4(),
+  id: randomUUID(),
   username: 'johndoe',
   email: 'john.doe@example.com',
   firstName: 'John',
@@ -24,7 +24,7 @@ export const createValidUserProfile = (
 export const createValidUserPhysicalProfile = (
   overrides: Partial<UserPhysicalProfile> = {}
 ): UserPhysicalProfile => ({
-  userId: uuidv4(),
+  userId: randomUUID(),
   age: 30,
   weight: 75, // 75kg
   gender: 'MALE',
@@ -36,8 +36,8 @@ export const createValidUserPhysicalProfile = (
 export const createValidWorkoutSession = (
   overrides: Partial<WorkoutSession> = {}
 ): WorkoutSession => ({
-  id: uuidv4(),
-  userId: uuidv4(),
+  id: randomUUID(),
+  userId: randomUUID(),
   startedAt: new Date().toISOString(),
   endedAt: null,
   notes: 'Test workout session',
@@ -48,8 +48,8 @@ export const createValidWorkoutSession = (
 export const createHeartRateDataPoint = (
   overrides: Partial<HeartRateDataPoint> = {}
 ): HeartRateDataPoint => ({
-  id: uuidv4(),
-  workoutSessionId: uuidv4(),
+  id: randomUUID(),
+  workoutSessionId: randomUUID(),
   timestamp: Date.now(),
   heartRate: 120, // default bpm
   ...overrides,

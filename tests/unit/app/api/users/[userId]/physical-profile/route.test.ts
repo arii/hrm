@@ -4,13 +4,13 @@
 import { POST } from '@/app/api/users/[userId]/physical-profile/route'
 import { NextRequest } from 'next/server'
 import { createValidUserPhysicalProfile } from '@/tests/unit/test-data/user-data-factory'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'crypto'
 
 describe('API Route: /api/users/[userId]/physical-profile', () => {
   describe('POST', () => {
     it('should create a new user physical profile and return 201 when the request body is valid', async () => {
       // Arrange
-      const userId = uuidv4()
+      const userId = randomUUID()
       const validRequestBody = createValidUserPhysicalProfile({ userId })
       const request = new NextRequest(
         `http://localhost/api/users/${userId}/physical-profile`,
