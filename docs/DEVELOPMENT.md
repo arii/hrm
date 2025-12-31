@@ -96,6 +96,25 @@ If the action encounters a merge conflict during the rebase, it will fail gracef
 
 > **Note on Protected Branches**: For this action to work on a protected branch, the repository's settings may need to be adjusted to allow the `github-actions[bot]` to push to the branch. For more information, see the [GitHub documentation on managing protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches).
 
+#### Automated Technical Debt Analysis
+
+This project includes a workflow to automatically analyze pull requests for technical debt and create deduplicated GitHub issues.
+
+**Usage**:
+
+1.  Navigate to the "Actions" tab of the repository.
+2.  Select the "Technical Debt Analysis" workflow.
+3.  Click "Run workflow".
+4.  Enter the pull request number you wish to analyze.
+
+**What it does**:
+
+- The workflow retrieves the diff of the specified pull request.
+- It uses the Gemini API to analyze the diff for potential technical debt.
+- For each piece of identified debt, it generates a unique "fingerprint".
+- It searches for open issues with the same fingerprint to prevent duplicates.
+- If no duplicate is found, it creates a new issue with the "tech-debt" and "ai-generated" labels.
+
 ### Legacy Pre-commit Hooks
 
 The project contains legacy Python-based pre-commit hooks (`.pre-commit-config.yaml`). These are now considered **deprecated** in favor of the Husky-based Node.js tooling. The Python hooks will be removed in a future pull request to eliminate redundancy.
