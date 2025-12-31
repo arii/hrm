@@ -74,7 +74,7 @@ jobs:
       - name: Create Suggested Issues
         env:
           PR_NUMBER: ${{ inputs.pr_number }}
-          GITHUB_TOKEN: ${{ secrets.gh_token }}
+          GH_TOKEN: ${{ secrets.gh_token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           pnpm tsx scripts/create-review-issues.ts
