@@ -4,7 +4,7 @@ import { env } from '../env.js'
 import { Request, Response, NextFunction } from 'express'
 
 // Helper to generate consistent key generator
-const getKeyGenerator = (req: Request) => {
+export const getKeyGenerator = (req: Request) => {
   return (
     (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
     req.socket.remoteAddress ||

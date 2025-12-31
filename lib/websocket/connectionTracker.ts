@@ -37,3 +37,11 @@ export const handleConnectionLimit = (
 
   return true
 }
+
+// Exported for testing purposes only
+export const _private = {
+  wsConnections,
+  resetWsConnections: () => {
+    wsConnections.clear()
+  },
+}
