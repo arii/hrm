@@ -7,11 +7,11 @@
  */
 import { useCallback, useState, useRef, useEffect, useMemo } from 'react'
 import {
-  HrmInputData,
+  HrmInputPayload,
   HrmInputMessage,
-  HrmMetadataUpdateMessage,
-  HrmMetadataUpdateData,
-} from '../types/websocket'
+  HrmMetadataMessage,
+  HrmMetadataPayload,
+} from '../lib/validation/schemas'
 import throttle from 'lodash.throttle'
 import isEqual from 'lodash.isequal'
 import { calculateMaxHr } from '../utils/constants'
@@ -162,7 +162,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
   const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
-  const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
+  const lastSentMetadataRef = useRef<HrmMetadataPayload | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
@@ -191,7 +191,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       const calculatedMaxHr = calculateMaxHr(age)
       const deviceName = deviceRef.current?.name || 'Unknown'
 
-      const metadataData: HrmMetadataUpdateData = {
+      const metadataData: HrmMetadataPayload = {
         maxHr: calculatedMaxHr,
         name: name || `Bluetooth HRM (${deviceName})`,
       }
@@ -201,9 +201,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       // Prevent sending redundant metadata updates
       if (!isEqual(lastSentMetadataRef.current, metadataData)) {
-        const metadata: HrmMetadataUpdateMessage = {
+        const metadata: HrmMetadataMessage = {
           type: 'HRM_METADATA_UPDATE',
-          data: metadataData,
+          payload: metadataData,
         }
         sendData(metadata)
         lastSentMetadataRef.current = metadataData
@@ -420,14 +420,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
 
-            const data: HrmInputData = {
+            const data: HrmInputPayload = {
               value: heartRate,
             }
 
             // Use the throttled sender for HR updates to avoid overwhelming the WebSocket.
             throttledSend({
               type: 'HRM_INPUT',
-              data,
+              payload: data,
             })
           }
         )

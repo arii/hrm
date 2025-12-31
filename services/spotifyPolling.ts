@@ -344,7 +344,8 @@ export class SpotifyPolling implements SpotifyService {
           name: d.name,
           type: d.type,
           volume_percent: d.volume_percent,
-          supports_volume: (d as any).supports_volume ?? true,
+          supports_volume: (d as Device & { supports_volume?: boolean })
+            .supports_volume ?? true,
         }))
 
       this.state.devices = validDevices
@@ -462,10 +463,7 @@ export class SpotifyPolling implements SpotifyService {
             { deviceId, volume: clampedVolume }
           )
         }
-        break
-      case 'LOGIN':
-        logger.debug('Received LOGIN command')
-        break
+        break;
       default:
         logger.warn({ command }, 'Unknown Spotify command')
     }

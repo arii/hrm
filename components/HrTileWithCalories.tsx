@@ -6,13 +6,13 @@ import { useUserSettings } from '@/context/UserSettingsContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import HrTile from './HrTile'
-import { HrmData } from '@/types/websocket'
+import { HrmStreamData } from '@/types/core'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { useUserWeight } from '@/hooks/useUserWeight'
 import { useHrZone } from '@/hooks/useHrZone'
 
 interface HrTileWithCaloriesProps {
-  user: HrmData
+  user: HrmStreamData
   isAlerting: boolean
   alertMessage?: string
 }

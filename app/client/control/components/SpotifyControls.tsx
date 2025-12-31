@@ -14,7 +14,8 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
+import { SpotifyCommandMessage, SpotifyDevice } from '@/types/websocket'
+import { SpotifyCommand } from '@/types/interfaces'
 import PlaybackControls from './PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
@@ -27,15 +28,17 @@ const SpotifyControls = () => {
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const prevActiveIdRef = useRef<string | undefined>(undefined)
+  const prevActiveIdRef = useRef<string | null | undefined>(undefined)
 
   const handleTrackSelect = (uri: string) => {
     const targetDeviceId = resolveTargetDeviceId()
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
-      command: 'PLAY',
-      uri: uri,
-      ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+      payload: {
+        command: 'PLAY',
+        uri: uri,
+        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+      },
     }
     sendData(message)
   }
@@ -54,14 +57,14 @@ const SpotifyControls = () => {
     if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
       sendData({
         type: 'SPOTIFY_COMMAND',
-        command: 'GET_DEVICES',
+        payload: { command: 'GET_DEVICES' },
       })
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
   // 4. Update selection logic and volume sync
   useEffect(() => {
-    const activeDevice = devices.find((d) => d.is_active)
+    const activeDevice = devices.find((d: SpotifyDevice) => d.is_active)
     const activeId = activeDevice?.id
 
     // Sync Selected Device
@@ -73,7 +76,9 @@ const SpotifyControls = () => {
       setSelectedDeviceId(activeId)
     } else {
       // Check if selected device is still valid
-      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
+      const selectedStillExists = devices.some(
+        (d: SpotifyDevice) => d.id === selectedDeviceId
+      )
       if (selectedDeviceId && !selectedStillExists) {
         setSelectedDeviceId(activeId ?? '')
       }
@@ -97,7 +102,9 @@ const SpotifyControls = () => {
     if (selectedDeviceId) {
       return selectedDeviceId
     }
-    const activeDevice = devices.find((device) => device.is_active)
+    const activeDevice = devices.find(
+      (device: SpotifyDevice) => device.is_active
+    )
     return activeDevice?.id
   }, [devices, selectedDeviceId])
 
@@ -112,8 +119,10 @@ const SpotifyControls = () => {
           : resolveTargetDeviceId()
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
-        command,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+        payload: {
+          command,
+          ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+        },
       }
       sendData(message)
     },
@@ -147,9 +156,11 @@ const SpotifyControls = () => {
       if (lastSentVolumeRef.current === messageKey) return
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+        payload: {
+          command: 'SET_VOLUME',
+          volume: sanitized,
+          ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+        },
       }
       sendData(message)
       lastSentVolumeRef.current = messageKey
@@ -266,11 +277,13 @@ const SpotifyControls = () => {
                       },
                     }}
                   >
-                    {devices.map((device) => (
-                      <MenuItem key={device.id} value={device.id}>
-                        {device.name} {device.is_active && '(Active)'}
-                      </MenuItem>
-                    ))}
+                    {devices
+                      .filter((device: SpotifyDevice) => device.id)
+                      .map((device: SpotifyDevice) => (
+                        <MenuItem key={device.id} value={device.id || ''}>
+                          {device.name} {device.is_active && '(Active)'}
+                        </MenuItem>
+                      ))}
                   </Select>
                 </FormControl>
               </Box>

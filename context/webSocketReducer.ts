@@ -1,8 +1,7 @@
 import {
-  SpotifyData,
+  SpotifyPlaybackState,
   TimerData,
   ServerMessage,
-  ActiveAlert,
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 
@@ -14,8 +13,8 @@ export interface HrmData extends ServerHrmData {
 export interface WebSocketState {
   hrmData: HrmData[]
   timerData: TimerData
-  spotifyData: SpotifyData
-  activeAlerts: ActiveAlert[]
+  spotifyData: SpotifyPlaybackState
+  activeAlerts: string[]
   spotifyServiceInitialized?: boolean
 }
 

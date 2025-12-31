@@ -61,8 +61,8 @@ log "🧹 Cleaning up any old PM2 processes..."
 pnpm pm2 kill || true
 
 log "🛠️ Building the application..."
-export TESTING=true
 pnpm run build
+export TESTING=true
 
 log "🚀 Starting server with PM2 on port $PORT..."
 # Start server with `pnpm start`, which uses PM2

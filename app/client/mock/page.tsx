@@ -14,7 +14,7 @@ import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
   HrmInputMessage,
-  HrmMetadataUpdateMessage,
+  HrmMetadataMessage,
 } from '../../../types/websocket'
 
 export default function MockPage() {
@@ -43,7 +43,7 @@ export default function MockPage() {
     (hr: number) => {
       const message: HrmInputMessage = {
         type: 'HRM_INPUT',
-        data: {
+        payload: {
           value: hr,
         },
       }
@@ -53,9 +53,9 @@ export default function MockPage() {
   )
 
   const sendMetadataPacket = useCallback(() => {
-    const message: HrmMetadataUpdateMessage = {
+    const message: HrmMetadataMessage = {
       type: 'HRM_METADATA_UPDATE',
-      data: {
+      payload: {
         maxHr: maxHr,
         name: name,
         age: age,

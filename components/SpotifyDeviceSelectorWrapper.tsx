@@ -49,15 +49,17 @@ const SpotifyDeviceSelectorWrapper = ({
         }}
       >
         {availableDevices.length > 0 ? (
-          availableDevices.map((device) => (
-            <MenuItem
-              key={device.id}
-              onClick={() => onDeviceSelect(device.id)}
-              selected={device.is_active}
-            >
-              {device.name} {device.is_active && '✓'}
-            </MenuItem>
-          ))
+          availableDevices
+            .filter((device) => device.id)
+            .map((device) => (
+              <MenuItem
+                key={device.id}
+                onClick={() => onDeviceSelect(device.id!)}
+                selected={device.is_active}
+              >
+                {device.name} {device.is_active && '✓'}
+              </MenuItem>
+            ))
         ) : (
           <MenuItem disabled>No devices available</MenuItem>
         )}

@@ -75,15 +75,13 @@ const HrmConnectionPanel = () => {
       })
       .map((user) => {
         const matchingAlert = activeAlerts.find(
-          (alert) =>
-            alert.clientId === user.clientId &&
-            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
+          (alert) => alert === user.clientId
         )
 
         return {
           ...user,
           isAlerting: !!matchingAlert,
-          alertMessage: matchingAlert?.message,
+          alertMessage: matchingAlert,
         }
       })
   }, [hrmData, activeAlerts])

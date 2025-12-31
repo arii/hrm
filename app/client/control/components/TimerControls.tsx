@@ -6,7 +6,7 @@ import {
   SpotifyCommandMessage,
   TimerCommandMessage,
   TimerConfigMessage,
-  TimerModeCommandMessage,
+  SetModeMessage,
 } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import FitnessCenter from '@mui/icons-material/FitnessCenter'
@@ -88,8 +88,10 @@ const TimerControls = () => {
   useEffect(() => {
     const message: TimerConfigMessage = {
       type: 'TIMER_CONFIG',
-      workDuration: debouncedWorkTime,
-      restDuration: debouncedRestTime,
+      payload: {
+        workDuration: debouncedWorkTime,
+        restDuration: debouncedRestTime,
+      },
     }
     sendData(message)
   }, [debouncedWorkTime, debouncedRestTime, sendData])
@@ -132,8 +134,7 @@ const TimerControls = () => {
       }
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
-        command,
-        ...(deviceId ? { deviceId } : {}),
+        payload: { command, ...(deviceId ? { deviceId } : {}) },
       }
       sendData(message)
     },
@@ -161,12 +162,17 @@ const TimerControls = () => {
       if (command === 'START') {
         const config: TimerConfigMessage = {
           type: 'TIMER_CONFIG',
-          workDuration: workTime,
-          restDuration: restTime,
+          payload: {
+            workDuration: workTime,
+            restDuration: restTime,
+          },
         }
         sendData(config)
       }
-      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
+      const message: TimerCommandMessage = {
+        type: 'TIMER_COMMAND',
+        payload: { command },
+      }
       sendData(message)
 
       if (command === 'START') sendSpotifyCommand('NEXT')
@@ -184,7 +190,10 @@ const TimerControls = () => {
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
     if (connectionStatus !== 'Connected') return
-    const message: TimerModeCommandMessage = { type: 'SET_MODE', mode }
+    const message: SetModeMessage = {
+      type: 'SET_MODE',
+      payload: { mode },
+    }
     sendData(message)
   }
 

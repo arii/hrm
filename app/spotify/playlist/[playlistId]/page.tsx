@@ -75,8 +75,10 @@ const PlaylistPage = () => {
   const handleDeviceSelect = (deviceId: string) => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
-      command: 'TRANSFER_PLAYBACK',
-      deviceId,
+      payload: {
+        command: 'TRANSFER_PLAYBACK',
+        deviceId,
+      },
     }
     sendData(message)
     setDeviceMenuAnchor(null)

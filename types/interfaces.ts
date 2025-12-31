@@ -5,9 +5,10 @@
  * rather than concrete implementations, consuming code becomes more modular,
  * testable, and easier to refactor.
  */
-
+import { z } from 'zod'
 import { SpotifyTokenPayload } from '../services/spotifyTokenManager'
 import { SpotifyPlaybackState } from './websocket'
+import { SpotifyCommandPayloadSchema } from '../lib/validation/schemas'
 
 /**
  * Represents a service that provides a snapshot of its current state.
@@ -76,15 +77,9 @@ export interface SpotifyTokenHandler {
 /**
  * Defines the set of valid commands that can be sent to the Spotify service.
  */
-export type SpotifyCommand =
-  | 'PLAY'
-  | 'PAUSE'
-  | 'NEXT'
-  | 'PREVIOUS'
-  | 'SET_VOLUME'
-  | 'TRANSFER_PLAYBACK'
-  | 'GET_DEVICES'
-  | 'LOGIN' // Kept for legacy or future use
+export type SpotifyCommand = z.infer<
+  typeof SpotifyCommandPayloadSchema
+>['command']
 
 // --- Composite Service Interfaces ---
 

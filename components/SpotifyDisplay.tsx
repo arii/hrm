@@ -6,7 +6,7 @@ import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
+import { SpotifyCommandMessage, SpotifyDevice } from '@/types/websocket'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -166,7 +166,7 @@ const SpotifyDisplay = () => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId =
         selectedDeviceId ||
-        spotifyData.devices?.find((device) => device.is_active)?.id
+        spotifyData.devices?.find((device: SpotifyDevice) => device.is_active)?.id
       if (!targetDeviceId) {
         console.warn(
           '[SpotifyDisplay] No target device for volume command. Aborting.'
@@ -176,9 +176,11 @@ const SpotifyDisplay = () => {
       const sanitized = clampVolume(volume)
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        deviceId: targetDeviceId,
+        payload: {
+          command: 'SET_VOLUME',
+          volume: sanitized,
+          deviceId: targetDeviceId,
+        },
       }
       sendData(message)
     },
@@ -223,14 +225,14 @@ const SpotifyDisplay = () => {
       }
       return
     }
-    const activeDevice = devices.find((device) => device.is_active)
+    const activeDevice = devices.find((device: SpotifyDevice) => device.is_active)
     if (!selectedDeviceId && activeDevice) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
+      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id as string })
       return
     }
     if (
       selectedDeviceId &&
-      !devices.some((device) => device.id === selectedDeviceId)
+      !devices.some((device: SpotifyDevice) => device.id === selectedDeviceId)
     ) {
       dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
     }
@@ -242,8 +244,7 @@ const SpotifyDisplay = () => {
   ) => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
-      command,
-      ...(targetDeviceId && { deviceId: targetDeviceId }),
+      payload: { command, ...(targetDeviceId && { deviceId: targetDeviceId }) },
     }
     sendData(message)
   }

@@ -75,8 +75,10 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   const handlePlayTrack = (trackUri: string) => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
-      command: 'PLAY',
-      playlistUri: trackUri,
+      payload: {
+        command: 'PLAY',
+        uri: trackUri,
+      },
     }
     sendData(message)
   }
@@ -84,7 +86,9 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   const handlePause = () => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
-      command: 'PAUSE',
+      payload: {
+        command: 'PAUSE',
+      },
     }
     sendData(message)
   }
