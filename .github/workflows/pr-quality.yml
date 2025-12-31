@@ -701,18 +701,19 @@ jobs:
           fi
 
       - name: Start Application for Performance Test
+        # Note: The `if: always()` condition was intentionally removed along with the `retry` action.
+        # Performance tests are not run if the build or other preceding steps fail, as the results would not be meaningful.
         if: always()
         run: pnpm run start
 
       - name: Run Performance Test
         id: perf-tests
-        if: always()
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          retry_on: error
-          command: PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit 2>&1 | tee perf-tests.log
+        continue-on-error: true
 
       - name: Publish Performance Test Results
         uses: dorny/test-reporter@v1
@@ -730,6 +731,17 @@ jobs:
           name: performance-metrics-${{ env.SESSION_ID }}
           path: test-results/performance-metrics.json
           if-no-files-found: ignore
+
+      - name: Upload Perf Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-test-logs-${{ env.SESSION_ID }}
+          path: |
+            perf-tests.log
+            test-results/perf-results.xml
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Stop Application
         if: always()
@@ -969,25 +981,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download Test Logs
-        shell: bash
-        run: |
-          mkdir -p logs test-results
-          echo "Downloading test artifacts..."
-        continue-on-error: true
-
-      - name: Download Lint Report
+      - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: lint-report
-          path: logs/
-        continue-on-error: true
-
-      - name: Download Build Report
-        uses: actions/download-artifact@v4
-        with:
-          name: build-report
-          path: logs/
+          path: artifacts/
         continue-on-error: true
 
       - name: Post Quality Summary with Details
@@ -1010,52 +1007,80 @@ jobs:
             exit 0
           fi
 
-          mkdir -p test-results
+          # Function to add log details to the comment body
+          add_log_details() {
+            local title="$1"
+            local log_file="$2"
+            local max_lines="$3"
 
-          # Build the comment body
-          {
-            echo "## 📋 Quality Gate Results"
-            echo ""
-            echo "| Check | Status |"
-            echo "|-------|--------|"
-            echo "| Knip | $([ "$KNIP_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$KNIP_RESULT) |"
-            echo "| Lint | $([ "$LINT_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$LINT_RESULT) |"
-            echo "| Build | $([ "$BUILD_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$BUILD_RESULT) |"
-            echo "| Infra Tests | $([ "$INFRA_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_TESTS_OUTCOME) |"
-            echo "| Unit Tests | $([ "$UNIT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$UNIT_TESTS_OUTCOME) |"
-            echo "| Perf Tests | $([ "$PERF_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$PERF_TESTS_OUTCOME) |"
-            echo "| Visual Tests | $([ "$VISUAL_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_OUTCOME) |"
-            echo ""
-
-            # Add failure logs
-            if [ "$LINT_RESULT" != "success" ]; then
-              echo "### ❌ Lint Failure Details"
-              echo '```text'
-              [ -f "logs/lint-output.log" ] && tail -n 30 logs/lint-output.log | sed -r 's/\x1b\[[0-9;]*m//g' || echo "Log not found"
-              echo '```'
+            if [ -f "$log_file" ]; then
               echo ""
-            fi
-
-            if [ "$BUILD_RESULT" != "success" ]; then
-              echo "### ❌ Build Failure Details"
+              echo "### ❌ $title"
               echo '```text'
-              [ -f "logs/build-output.log" ] && tail -n 50 logs/build-output.log | sed -r 's/\x1b\[[0-9;]*m//g' || echo "Log not found"
+              # Use sed to clean ANSI color codes
+              tail -n "$max_lines" "$log_file" | sed -r 's/\x1b\[[0-9;]*m//g'
               echo '```'
-              echo ""
-            fi
-
-            # Summary
-            if [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
-               [ "$INFRA_TESTS_OUTCOME" = "success" ] && [ "$UNIT_TESTS_OUTCOME" = "success" ] && [ "$PERF_TESTS_OUTCOME" = "success" ] && [ "$VISUAL_TESTS_OUTCOME" = "success" ]; then
-              echo "✅ **All quality checks passed!**"
             else
-              echo "⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+              echo ""
+              echo "### ❌ $title"
+              echo '```text'
+              echo "Log file not found."
+              echo '```'
             fi
+          }
 
-            echo ""
-            echo "---"
-            echo "> Report generated for commit: \`${{ github.event.pull_request.head.sha || github.sha }}\`"
-          } > test-results/pr-comment.md
+          # Prepare the main comment body
+          COMMENT_BODY="## 📋 Quality Gate Results\n\n"
+          COMMENT_BODY+="| Check | Status |\n"
+          COMMENT_BODY+="|-------|--------|\n"
+          COMMENT_BODY+="| Knip | $([ "$KNIP_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$KNIP_RESULT) |\n"
+          COMMENT_BODY+="| Lint | $([ "$LINT_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$LINT_RESULT) |\n"
+          COMMENT_BODY+="| Build | $([ "$BUILD_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$BUILD_RESULT) |\n"
+          COMMENT_BODY+="| Infra Tests | $([ "$INFRA_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_TESTS_OUTCOME) |\n"
+          COMMENT_BODY+="| Unit Tests | $([ "$UNIT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$UNIT_TESTS_OUTCOME) |\n"
+          COMMENT_BODY+="| Perf Tests | $([ "$PERF_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$PERF_TESTS_OUTCOME) |\n"
+          COMMENT_BODY+="| Visual Tests | $([ "$VISUAL_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_OUTCOME) |\n"
+
+          # Append log details for failed checks
+          LOG_DETAILS=""
+          if [ "$KNIP_RESULT" != "success" ]; then
+            LOG_DETAILS+=$(add_log_details "Knip Failure Details" "artifacts/knip-report/knip-output.txt" 50)
+          fi
+          if [ "$LINT_RESULT" != "success" ]; then
+            LOG_DETAILS+=$(add_log_details "Lint Failure Details" "artifacts/lint-report/lint-output.log" 50)
+          fi
+          if [ "$BUILD_RESULT" != "success" ]; then
+            LOG_DETAILS+=$(add_log_details "Build Failure Details" "artifacts/build-report/build-output.log" 50)
+          fi
+          if [ "$INFRA_TESTS_OUTCOME" != "success" ]; then
+            LOG_DETAILS+=$(add_log_details "Infrastructure Test Failure Details" "artifacts/infra-test-logs-${{ needs.prepare-env.outputs.session_id }}/infra-tests.log" 50)
+          fi
+          if [ "$UNIT_TESTS_OUTCOME" != "success" ]; then
+            LOG_DETAILS+=$(add_log_details "Unit Test Failure Details" "artifacts/unit-test-logs-${{ needs.prepare-env.outputs.session_id }}/unit-tests.log" 50)
+          fi
+          if [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
+            LOG_DETAILS+=$(add_log_details "Visual Test Failure Details" "artifacts/visual-test-logs-${{ needs.prepare-env.outputs.session_id }}/visual-output.log" 50)
+          fi
+          if [ "$PERF_TESTS_OUTCOME" != "success" ]; then
+            LOG_DETAILS+=$(add_log_details "Performance Test Failure Details" "artifacts/perf-test-logs-${{ needs.prepare-env.outputs.session_id }}/perf-tests.log" 50)
+          fi
+
+          # Combine main body and log details
+          if [ -n "$LOG_DETAILS" ]; then
+            COMMENT_BODY+="\n${LOG_DETAILS}"
+          fi
+
+          if [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
+             [ "$INFRA_TESTS_OUTCOME" = "success" ] && [ "$UNIT_TESTS_OUTCOME" = "success" ] && [ "$PERF_TESTS_OUTCOME" = "success" ] && [ "$VISUAL_TESTS_OUTCOME" = "success" ]; then
+            SUMMARY_MSG="✅ **All quality checks passed!**"
+          else
+            SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+          fi
+
+          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${{ github.event.pull_request.head.sha || github.sha }}\`"
+
+          # Write the final comment to a file
+          echo -e "$COMMENT_BODY" > test-results/pr-comment.md
 
           # Post comment to PR
           gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
