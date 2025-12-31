@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -28,13 +28,7 @@ export default function ConnectPage() {
     'IMPERIAL'
   )
 
-  const [displayWeight, setDisplayWeight] = useState(() => {
-    const kg = parseFloat(_weightInKg)
-    if (isNaN(kg)) {
-      return ''
-    }
-    return toDisplay(kg, unitSystem).toString()
-  })
+  const [displayWeight, setDisplayWeight] = useState('')
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
 
@@ -45,6 +39,13 @@ export default function ConnectPage() {
     commitHeight: handleHeightBlur,
     error: heightError,
   } = useHeightInput('175', unitSystem)
+
+  useEffect(() => {
+    const kg = parseFloat(_weightInKg)
+    if (!isNaN(kg)) {
+      setDisplayWeight(toDisplay(kg, unitSystem).toString())
+    }
+  }, [_weightInKg, unitSystem])
 
   const handleAgeBlur = () => {
     const error = validateAgeValue(userAge)

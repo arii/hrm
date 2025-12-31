@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { MeasurementSystem } from '../types'
 import { cmToFeetAndInches, feetAndInchesToCm } from '../utils/units'
 import { validateHeightValue } from '../app/client/connect/validation'
@@ -15,53 +15,49 @@ export const useHeightInput = (
   unitSystem: MeasurementSystem
 ) => {
   const [cmValue, setCmValue] = useLocalStorage('hrm-user-height', initialCm)
-  const [transientState, setTransientState] = useState<HeightState | null>(null)
+  const [displayHeight, setDisplayHeight] = useState<HeightState>({
+    cm: '',
+    feet: '',
+    inches: '',
+  })
   const [error, setError] = useState<string | null>(null)
 
-  // Calculate the display value: either the user's transient input (while typing)
-  // or the persisted value converted to the current unit system.
-  const displayHeight = useMemo(() => {
-    if (transientState) return transientState
-
+  useEffect(() => {
     const numericHeight = parseFloat(cmValue)
-    const derived: HeightState = { cm: '', feet: '', inches: '' }
-
-    if (!isNaN(numericHeight)) {
-      if (unitSystem === 'METRIC') {
-        derived.cm = String(Math.round(numericHeight))
-      } else {
-        const { feet, inches } = cmToFeetAndInches(numericHeight)
-        derived.feet = String(feet)
-        derived.inches = String(inches)
-      }
+    if (isNaN(numericHeight)) {
+      setDisplayHeight({ cm: '', feet: '', inches: '' })
+      return
     }
-    return derived
-  }, [cmValue, unitSystem, transientState])
+
+    if (unitSystem === 'METRIC') {
+      setDisplayHeight({
+        cm: String(Math.round(numericHeight)),
+        feet: '',
+        inches: '',
+      })
+    } else {
+      const { feet, inches } = cmToFeetAndInches(numericHeight)
+      setDisplayHeight({ cm: '', feet: String(feet), inches: String(inches) })
+    }
+  }, [cmValue, unitSystem])
 
   const updateHeight = (newDisplayValue: Partial<HeightState>) => {
-    setTransientState((prev) => ({
-      ...(prev ?? displayHeight),
+    setDisplayHeight((prev) => ({
+      ...prev,
       ...newDisplayValue,
     }))
   }
 
   const commitHeight = () => {
     let newCmValue = 0
-    // If transientState is null, we are just re-validating the existing value
-    // But usually commit is called on blur after typing.
-    // If user didn't type, transientState is null, displayHeight is derived.
-    const current = transientState ?? displayHeight
-
     if (unitSystem === 'METRIC') {
-      newCmValue = parseFloat(current.cm)
+      newCmValue = parseFloat(displayHeight.cm)
     } else {
-      const feet = parseFloat(current.feet)
-      // Default to 0 if empty string to allow inputs like "5ft" (implied 0in)
-      const inchesStr = current.inches.trim()
-      const inches = inchesStr === '' ? 0 : parseFloat(current.inches)
-
-      if (!isNaN(feet) && !isNaN(inches)) {
-        newCmValue = feetAndInchesToCm(feet, inches)
+      const feet = parseFloat(displayHeight.feet)
+      const inchesStr = displayHeight.inches.trim()
+      const inches = inchesStr === '' ? 0 : parseFloat(displayHeight.inches)
+      if (!isNaN(feet) || !isNaN(inches)) {
+        newCmValue = feetAndInchesToCm(feet || 0, inches || 0)
       }
     }
 
@@ -71,7 +67,6 @@ export const useHeightInput = (
     if (!validationError && newCmValue > 0) {
       setCmValue(newCmValue.toFixed(2))
     }
-    setTransientState(null)
   }
 
   return {
