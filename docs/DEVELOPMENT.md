@@ -56,6 +56,16 @@ This project uses a two-layered approach to commit message validation:
 
 For more details on the rules, please refer to the [official commitlint documentation](https://github.com/conventional-changelog/commitlint/#what-is-commitlint).
 
+### Manual Test Deployment
+
+For any pull request, you can trigger a deployment to the test environment to manually verify your changes. This is useful for testing features that are difficult to cover with automated tests.
+
+To trigger a deployment, add a comment to your pull request containing the following phrase:
+
+`@test-deployment`
+
+A GitHub Actions workflow will automatically build your branch, deploy it to the test server, and add a '🚀' reaction to your comment to confirm the process has started.
+
 ### Pull Request Automation
 
 #### Squash and Rebase

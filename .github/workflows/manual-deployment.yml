@@ -1,0 +1,81 @@
+name: Manual Test Deployment
+
+on:
+  issue_comment:
+    types: [created]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  deploy-test:
+    # Only run on PRs from authorized users, and if comment contains the trigger phrase
+    if: >-
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@test-deployment') &&
+      contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: self-hosted
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.issue.number }}
+      cancel-in-progress: true
+    env:
+      TEST_HOST: ${{ secrets.TEST_HOST }}
+      TEST_USER: ${{ secrets.TEST_USER }}
+      TEST_PATH: ${{ secrets.TEST_PATH }}
+
+    steps:
+      - name: Add reaction to comment
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            })
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: 'refs/pull/${{ github.event.issue.number }}/head'
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📥 Install Dependencies
+        run: pnpm install
+
+      - name: 🛡️ Audit Dependencies
+        run: pnpm audit
+
+      - name: 🏗️ Build Standalone Artifact
+        env:
+          # This secret is a placeholder required for the Next.js build process.
+          # It does not need to be a real secret, as it's only used during compilation.
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET_BUILD_PLACEHOLDER }}
+          NEXTAUTH_URL: 'http://localhost:3000'
+          IS_DEPLOYMENT: 'true'
+        run: |
+          # 1. Use production config with standalone output
+          cp deploy/next.config.js next.config.js
+          # 2. Build Next.js
+          pnpm run build
+          # 3. Package Artifact (Hybrid Strategy)
+          ./scripts/package.sh
+
+      - name: 🚚 Transfer Artifact
+        run: |
+          # Transfer the Release Archive (contains all scripts)
+          scp release.tar.gz $TEST_USER@$TEST_HOST:$TEST_PATH/
+
+      - name: 🚀 Execute Deployment
+        run: |
+          # Extract tarball and run deploy script (which it contains)
+          ssh $TEST_USER@$TEST_HOST "bash -l -c 'cd $TEST_PATH && tar -xzf release.tar.gz --overwrite && ./scripts/deploy-artifact.sh'"
