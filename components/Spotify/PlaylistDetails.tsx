@@ -8,10 +8,46 @@ import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import { useEffect, useState } from 'react'
+import { FixedSizeList, ListChildComponentProps } from 'react-window'
 import { Track } from '../../types/spotify'
 
 interface PlaylistDetailsProps {
   playlistId: string
+}
+
+function renderRow(props: ListChildComponentProps<Track[]>) {
+  const { index, style, data } = props
+  const track = data[index]
+
+  return (
+    <ListItem
+      style={style}
+      key={track.id}
+      component="div"
+      disablePadding
+      divider
+    >
+      <MusicNote sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }} />
+      <ListItemText
+        primary={track.name}
+        secondary={`${(track.artists || []).map((a) => a.name).join(', ')} - ${track.album?.name || 'Unknown Album'}`}
+        primaryTypographyProps={{
+          style: {
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          },
+        }}
+        secondaryTypographyProps={{
+          style: {
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          },
+        }}
+      />
+    </ListItem>
+  )
 }
 
 const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({ playlistId }) => {
@@ -62,20 +98,24 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({ playlistId }) => {
   }
 
   return (
-    <Paper sx={{ maxHeight: '400px', overflow: 'auto', mt: 2 }}>
-      <List dense>
-        {tracks.map((track) => (
-          <ListItem key={track.id} divider>
-            <MusicNote
-              sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}
-            />
-            <ListItemText
-              primary={track.name}
-              secondary={`${(track.artists || []).map((a) => a.name).join(', ')} - ${track.album?.name || 'Unknown Album'}`}
-            />
-          </ListItem>
-        ))}
-      </List>
+    <Paper
+      sx={{
+        width: '100%',
+        height: 400,
+        mt: 2,
+        boxSizing: 'border-box',
+      }}
+    >
+      <FixedSizeList
+        height={400}
+        width="100%"
+        itemSize={50}
+        itemCount={tracks.length}
+        overscanCount={5}
+        itemData={tracks}
+      >
+        {renderRow}
+      </FixedSizeList>
     </Paper>
   )
 }

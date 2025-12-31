@@ -4,6 +4,7 @@ import PlaylistSelector from '@/components/Spotify/PlaylistSelector'
 import '@testing-library/jest-dom'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import React from 'react'
 
 const mockPlaylists = {
   presetPlaylists: [
@@ -12,6 +13,18 @@ const mockPlaylists = {
   ],
   userPlaylists: [{ id: '3', name: 'Focus Flow', uri: 'spotify:playlist:3' }],
 }
+
+// eslint-disable-next-line react/display-name
+const TestListboxComponent = React.forwardRef<
+  HTMLUListElement,
+  { children?: React.ReactNode }
+>((props, ref) => {
+  return (
+    <ul ref={ref} {...props}>
+      {props.children}
+    </ul>
+  )
+})
 
 describe('PlaylistSelector', () => {
   beforeEach(() => {
@@ -28,6 +41,7 @@ describe('PlaylistSelector', () => {
       <PlaylistSelector
         onPlaylistSelected={jest.fn()}
         onPlaylistPlay={jest.fn()}
+        ListboxComponent={TestListboxComponent}
       />
     )
     const user = userEvent.setup()
@@ -48,6 +62,7 @@ describe('PlaylistSelector', () => {
       <PlaylistSelector
         onPlaylistSelected={onPlaylistSelected}
         onPlaylistPlay={jest.fn()}
+        ListboxComponent={TestListboxComponent}
       />
     )
     const user = userEvent.setup()
@@ -66,6 +81,7 @@ describe('PlaylistSelector', () => {
       <PlaylistSelector
         onPlaylistSelected={onPlaylistSelected}
         onPlaylistPlay={jest.fn()}
+        ListboxComponent={TestListboxComponent}
       />
     )
     const user = userEvent.setup()
@@ -92,6 +108,7 @@ describe('PlaylistSelector', () => {
       <PlaylistSelector
         onPlaylistSelected={jest.fn()}
         onPlaylistPlay={onPlaylistPlay}
+        ListboxComponent={TestListboxComponent}
       />
     )
     const user = userEvent.setup()
@@ -113,6 +130,7 @@ describe('PlaylistSelector', () => {
       <PlaylistSelector
         onPlaylistSelected={jest.fn()}
         onPlaylistPlay={jest.fn()}
+        ListboxComponent={TestListboxComponent}
       />
     )
     const user = userEvent.setup()

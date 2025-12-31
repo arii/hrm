@@ -13,15 +13,79 @@ import List from '@mui/material/List'
 import ListItemText from '@mui/material/ListItemText'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  createContext,
+  useContext,
+  forwardRef,
+} from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
 import { Playlist } from '../../types/spotify'
+import { FixedSizeList, ListChildComponentProps } from 'react-window'
 
 interface PlaylistSelectorProps {
   onPlaylistSelected: (uri: string) => void
   onPlaylistPlay: (uri: string) => void
 }
+
+const LISTBOX_PADDING = 8 // px
+
+function renderRow(props: ListChildComponentProps) {
+  const { data, index, style } = props
+  const dataSet = data[index]
+  const inlineStyle = {
+    ...style,
+    top: (style.top as number) + LISTBOX_PADDING,
+  }
+
+  return React.cloneElement(dataSet, {
+    style: inlineStyle,
+  })
+}
+
+const OuterElementContext = createContext({})
+
+const OuterElementType = forwardRef<HTMLDivElement>((props, ref) => {
+  const outerProps = useContext(OuterElementContext)
+  return <div ref={ref} {...props} {...outerProps} />
+})
+
+// eslint-disable-next-line react/display-name
+const ListboxComponent = forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLElement>
+>(function ListboxComponent(props, ref) {
+  const { children, ...other } = props
+  const itemData: React.ReactElement[] = React.Children.toArray(
+    children
+  ) as React.ReactElement[]
+  const itemCount = itemData.length
+  const itemSize = 56 // Based on image height (48px) + padding (8px)
+
+  const height = Math.min(itemCount, 8) * itemSize
+
+  return (
+    <div ref={ref}>
+      <OuterElementContext.Provider value={other}>
+        <FixedSizeList
+          height={height + 2 * LISTBOX_PADDING}
+          width="100%"
+          outerElementType={OuterElementType}
+          innerElementType="ul"
+          itemSize={itemSize}
+          itemCount={itemCount}
+          itemData={itemData}
+          overscanCount={5}
+        >
+          {renderRow}
+        </FixedSizeList>
+      </OuterElementContext.Provider>
+    </div>
+  )
+})
 
 const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   onPlaylistSelected,
@@ -312,7 +376,12 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
           )
         }
         sx={{ mb: 2 }}
-        ListboxComponent={List}
+        disableListWrap
+        ListboxComponent={
+          ListboxComponent as React.ComponentType<
+            React.HTMLAttributes<HTMLElement>
+          >
+        }
       />
     </Box>
   )

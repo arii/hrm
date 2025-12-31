@@ -7,6 +7,24 @@ import { Track } from '../../../../types/spotify'
 // Mock the fetch API
 global.fetch = jest.fn()
 
+// Mock react-window
+jest.mock('react-window', () => ({
+  ...jest.requireActual('react-window'),
+  FixedSizeList: ({ children, ...props }: any) => {
+    return (
+      <div {...props}>
+        {props.itemData.map((item: any, index: number) =>
+          children({
+            index,
+            style: {},
+            data: props.itemData,
+          })
+        )}
+      </div>
+    )
+  },
+}))
+
 describe('PlaylistDetails', () => {
   const mockTracks: Track[] = [
     {
