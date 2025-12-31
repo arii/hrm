@@ -1,4 +1,11 @@
-import { cleanJsonOutput } from './gemini-client'
+import { buildReviewPrompt, ReviewContext, cleanJsonOutput } from './gemini-client'
+import { readFile } from 'fs/promises'
+
+jest.mock('fs/promises', () => ({
+  readFile: jest.fn(),
+}))
+
+const mockedReadFile = readFile as jest.Mock
 
 describe('cleanJsonOutput', () => {
   it('should remove markdown code blocks with "json" identifier', () => {
@@ -60,5 +67,50 @@ describe('cleanJsonOutput', () => {
     const input = '```json\n   {"key": "value"}   \n```'
     const expected = '{"key": "value"}'
     expect(cleanJsonOutput(input)).toBe(expected)
+  })
+})
+
+describe('buildReviewPrompt', () => {
+  it('should correctly build a review prompt from a template', async () => {
+    const mockTemplate = `
+# Review for {{prTitle}}
+## Description
+{{prDescription}}
+---
+{{truncatedDiff}}
+`
+    mockedReadFile.mockResolvedValue(mockTemplate)
+
+    const mockContext: ReviewContext = {
+      prNumber: '123',
+      prTitle: 'Test PR',
+      prAuthor: 'Test Author',
+      prDescription: 'This is a test PR.\nIt has multiple lines.',
+      prLabels: 'bug, needs-review',
+      filesChanged: 2,
+      totalLoc: 100,
+      reviewDepth: 'standard',
+      changedAreas: 'frontend, backend',
+      reviewCount: 0,
+      resolvedCount: 0,
+      changesRequested: 0,
+      previousReviews: '',
+      commitMessages: 'feat: add new feature',
+      hasTestChanges: true,
+      missingTests: false,
+      testFiles: 'test.ts',
+      failedChecks: [],
+    }
+
+    const mockDiff = 'diff --git a/file.txt b/file.txt\n--- a/file.txt\n+++ b/file.txt\n@@ -1 +1 @@\n-hello\n+world'
+    const mockContextContent = 'This is some context.'
+
+    const prompt = await buildReviewPrompt(mockDiff, mockContext, mockContextContent)
+
+    expect(readFile).toHaveBeenCalledWith('prompts/standard-review.md', 'utf-8')
+    expect(prompt).toContain('# Review for Test PR')
+    expect(prompt).toContain('## Description\nThis is a test PR.\nIt has multiple lines.')
+    expect(prompt).toContain(mockDiff)
+    expect(prompt).not.toContain('{{prTitle}}')
   })
 })

@@ -52,3 +52,10 @@ Return a JSON object with:
   "verdict": "request_changes"
 }
 ```
+
+**Markdown Formatting Guidelines:**
+- Use standard Markdown for all formatting.
+- Ensure proper spacing between sections for readability. For example, use a blank line to separate paragraphs and lists from headings.
+- Use headings (`##`, `###`) to structure the review.
+- Use bullet points (`-` or `*`) for lists of issues or recommendations.
+- Use code fences (```) for code blocks.
