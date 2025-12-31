@@ -75,24 +75,6 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Spotify Controls Overhaul**: The Spotify controls were redesigned and implemented, including volume control, device selection, and improved UI feedback.
 - **Bluetooth Connection Flow**: The Bluetooth HRM connection page (`client/connect`) was stabilized and now includes auto-connect functionality.
 
-## GitHub Integrations
-
-### Jules AI Session Management
-
-This project uses a GitHub Actions workflow to manage Jules AI sessions directly from pull request comments. The following commands are available to authorized users (OWNER, MEMBER, or COLLABORATOR):
-
--   `@jules-new`: Creates a new Jules session based on the context of the pull request.
--   `@jules-delete`: Deletes the Jules session associated with the pull request. If `@jules-new` has been used multiple times, this command will only delete the most recently created session.
-
-**Runner Environment:**
-
-This workflow is configured to run on `self-hosted` runners. This is an intentional design choice to ensure a consistent and secure environment for interacting with the Jules API. The self-hosted runner is expected to have the following tools pre-installed:
-
--   `gh` (GitHub CLI)
--   `jq`
--   `python3`
--   `pip`
-
 ## Dependency Management and Code Hygiene with Knip
 
 To maintain a clean and efficient codebase, this project uses [Knip](https://knip.dev/) to detect unused files, dependencies, and exports. Knip is integrated into our CI/CD pipeline to ensure that all code additions are continuously monitored for unused code.
