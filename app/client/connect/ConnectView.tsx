@@ -46,7 +46,7 @@ interface ConnectViewProps {
   onWeightBlur: () => void
   weightError: string | null
   gender: Gender
-  setGender: React.Dispatch<React.SetStateAction<Gender>>
+  setGender: (gender: Gender) => void
   unitSystem: MeasurementSystem
   onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
