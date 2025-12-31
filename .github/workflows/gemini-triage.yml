@@ -93,7 +93,10 @@ jobs:
                 return;
               }
               const rawData = fs.readFileSync(filePath, 'utf8');
-              const result = JSON.parse(rawData);
+              // The model may return a JSON object wrapped in markdown.
+              // This is a robust way to strip the markdown and parse the JSON.
+              const cleanedData = rawData.trim().replace(/^```json|```$/g, '').trim();
+              const result = JSON.parse(cleanedData);
 
               // Gracefully handle cases where the Gemini agent fails and returns a structured error.
               if (result.error) {
