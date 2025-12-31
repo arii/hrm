@@ -45,6 +45,8 @@ logs/spotify_tokens.json
 logs/*
 
 # Misc / System / Editor
+__pycache__/
+*.pyc
 /.eslintcache
 /blob-report/
 .DS_Store

@@ -1,0 +1,191 @@
+# .github/workflows/jules-session-manager.yml
+name: Jules Session Manager
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  jules-command:
+    if: |
+      github.event.issue.pull_request &&
+      contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) &&
+      (startsWith(github.event.comment.body, '@jules-delete') || startsWith(github.event.comment.body, '@jules-new'))
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 'Parse Command'
+        id: parse_command
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          if [[ "$COMMENT_BODY" == "@jules-delete"* ]]; then
+            echo "COMMAND=delete" >> $GITHUB_ENV
+          elif [[ "$COMMENT_BODY" == "@jules-new"* ]]; then
+            echo "COMMAND=new" >> $GITHUB_ENV
+          fi
+
+      - name: 'Get PR Context'
+        id: pr_context
+        if: env.COMMAND == 'new'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          # Fetch basic PR data
+          PR_DATA=$(gh pr view "$PR_NUMBER" --json headRefName,baseRefName,body,title,comments,reviews)
+          BRANCH=$(echo "$PR_DATA" | jq -r .headRefName)
+          BASE_REF=$(echo "$PR_DATA" | jq -r .baseRefName)
+          BODY=$(echo "$PR_DATA" | jq -r .body)
+          TITLE=$(echo "$PR_DATA" | jq -r .title)
+
+          # Fetch and format comments
+          COMMENTS=$(echo "$PR_DATA" | jq -r '.comments | .[] | "- \(.body)"' | sed 's/^/  /')
+          REVIEWS=$(echo "$PR_DATA" | jq -r '.reviews | .[] | select(.body != "") | "- \(.body)"' | sed 's/^/  /')
+
+          # Fetch git logs
+          # We assume the PR is up-to-date with the base branch
+          # This gets the logs from the point the branch was created
+          MERGE_BASE=$(git merge-base "origin/$BASE_REF" "HEAD")
+          LOGS=$(git log -n 50 --pretty=format:"- %s" "$MERGE_BASE..HEAD")
+
+          # Construct the full prompt
+          FULL_PROMPT=$(cat <<EOM
+          **PR Title:** $TITLE
+
+          **PR Body:**
+          $BODY
+
+          **Review Comments:**
+          $REVIEWS
+
+          **Other Comments:**
+          $COMMENTS
+
+          **Git Logs:**
+          $LOGS
+          EOM
+          )
+
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "PROMPT<<EOF" >> $GITHUB_ENV
+          echo "$FULL_PROMPT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "TITLE=$TITLE" >> $GITHUB_ENV
+
+      - name: 'Find Jules Session ID'
+        id: find_session_id
+        if: env.COMMAND == 'delete'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          SESSION_ID=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | .[] | .body' | grep -oP '(?<=<!-- JULES_SESSION_ID=)\S+(?= *-->)' | tail -n 1)
+          if [ -z "$SESSION_ID" ]; then
+            echo "::error::Could not find Jules session ID in PR comments. Was a session previously created using '@jules-new' and completed successfully?"
+            exit 1
+          fi
+          echo "JULES_SESSION_ID=$SESSION_ID" >> $GITHUB_ENV
+
+      - name: 'Validate JULES_API_URL Secret'
+        run: |
+          if [ -z "${{ secrets.JULES_API_URL }}" ]; then
+            echo "::error::JULES_API_URL secret is not set. Please configure it in your repository secrets."
+            exit 1
+          fi
+      - name: 'Install Dependencies'
+        run: pip install -r .github/scripts/requirements.txt
+
+      - name: 'Run Jules Operation: New'
+        if: env.COMMAND == 'new'
+        id: jules_op_new
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          BRANCH: ${{ env.BRANCH }}
+          TITLE: ${{ env.TITLE }}
+          PROMPT: ${{ env.PROMPT }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          ERROR_MESSAGE=$(python3 .github/scripts/jules_ops.py \
+            --command "new" \
+            --prompt "$PROMPT" \
+            --branch "$BRANCH" \
+            --title "$TITLE" \
+            --owner "$REPO_OWNER" \
+            --repo-name "$REPO_NAME" \
+            --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1) || echo "error_message=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
+
+      - name: 'Run Jules Operation: Delete'
+        if: env.COMMAND == 'delete'
+        id: jules_op_delete
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          JULES_SESSION_ID: ${{ env.JULES_SESSION_ID }}
+        run: |
+          ERROR_MESSAGE=$(python3 .github/scripts/jules_ops.py \
+            --command "delete" \
+            --session-id "$JULES_SESSION_ID" \
+            --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1) || echo "error_message=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
+
+      - name: 'Post Session ID Comment'
+        if: success() && env.COMMAND == 'new'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const sessionId = "${{ steps.jules_op_new.outputs.session_id }}";
+            if (sessionId) {
+              github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: ${{ github.event.issue.number }},
+                body: `<!-- JULES_SESSION_ID=${sessionId} -->`
+              });
+            }
+
+      - name: 'Add Reaction to Comment'
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ github.event.comment.id }},
+              content: '+1'
+            })
+      - name: 'Handle Failure'
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const errorMessage = `${{ steps.jules_op_new.outputs.error_message || steps.jules_op_delete.outputs.error_message }}`;
+            const body = `Jules operation failed with the following error:\n\n\`\`\`\n${errorMessage}\n\`\`\``;
+            github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ github.event.comment.id }},
+              content: '-1'
+            })
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.issue.number }},
+              body: body
+            })
