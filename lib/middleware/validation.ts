@@ -50,6 +50,9 @@ export function withValidation<T, P>({
   paramsSchema?: z.ZodType<P>
 }) {
   return (handler: AppRouterHandler<T, P>) =>
+    // The 'context.params' is typed as 'any' to accommodate the dynamic nature
+    // of Next.js route parameters. The 'paramsSchema' is used to validate and
+    // provide type safety to the handler.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (req: Request, context: { params: any }) => {
       try {
