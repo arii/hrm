@@ -9,6 +9,7 @@ permissions:
   contents: read
   pull-requests: read
   issues: write
+  reactions: write
 
 jobs:
   jules-command:
@@ -101,8 +102,10 @@ jobs:
           echo "JULES_SESSION_ID=$SESSION_ID" >> $GITHUB_ENV
 
       - name: 'Validate JULES_API_URL Secret'
+        env:
+          JULES_API_URL: ${{ secrets.JULES_API_URL }}
         run: |
-          if [ -z "${{ secrets.JULES_API_URL }}" ]; then
+          if [ -z "$JULES_API_URL" ]; then
             echo "::error::JULES_API_URL secret is not set. Please configure it in your repository secrets."
             exit 1
           fi
