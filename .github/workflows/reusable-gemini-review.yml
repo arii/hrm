@@ -61,70 +61,89 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
+          # Set default outputs
           NEEDS_REVIEW="false"
           SKIP_REASON="no criteria met"
 
-          # --- Check for quality check failures first ---
-          if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
-            echo "::info::Quality checks failed. Triggering review to analyze failures."
-            NEEDS_REVIEW="true"
-            SKIP_REASON=""
-          # --- Initial review on PR open ---
-          elif [[ "$TRIGGER_EVENT" == "pull_request" && "${{ github.event.action }}" == "opened" ]]; then
+          # --- Always review on initial PR open ---
+          if [[ "$TRIGGER_EVENT" == "pull_request" && "${{ github.event.action }}" == "opened" ]]; then
             echo "::info::PR opened. Triggering initial review."
             NEEDS_REVIEW="true"
-          # --- Handle manual comment triggers ---
-          elif [[ "$TRIGGER_EVENT" == "comment" ]]; then
-             if [[ "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ]]; then
-               echo "::info::Manual/CI-failure review triggered by comment."
-               NEEDS_REVIEW="true"
-             fi
-          # --- Handle re-reviews on code synchronization ---
-          elif [[ "$TRIGGER_EVENT" == "pull_request" && "${{ github.event.action }}" == "synchronize" ]]; then
-            echo "::info::Code synchronized. Analyzing for re-review..."
-
-            # Check for recent review comments (containing "## Review" or "Review Summary" to exclude test reports)
-            PR_DATA=$(gh pr view "$PR_NUMBER" --json comments -q '.comments | map(select(.author.login? == "arii" and (.body | contains("## Review") or contains("Review Summary") or contains("Suggested Fix")))) | .[-1].createdAt // ""')
-            LAST_REVIEW_TIMESTAMP="$PR_DATA"
-
-            if [ -n "$LAST_REVIEW_TIMESTAMP" ]; then
-                REVIEW_TIME=$(date -d "$LAST_REVIEW_TIMESTAMP" +%s)
-                CURRENT_TIME=$(date +%s)
-                TIME_DIFF=$((CURRENT_TIME - REVIEW_TIME))
-                if [ "$TIME_DIFF" -lt 300 ]; then # 5 minutes
-                    SKIP_REASON="recent review exists (${TIME_DIFF}s ago)"
-                    echo "needs-review=false" >> $GITHUB_OUTPUT
-                    echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
-                    exit 0
-                fi
-            else
-                # No previous review found, trigger a new one
-                echo "::info::No previous review found. Triggering initial review."
-                NEEDS_REVIEW="true"
-            fi
-
-            CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-            SIGNIFICANT_COUNT=$(echo "$CHANGED_FILES" | grep -vE '(\.md$|\.png$|\.svg$|package-lock\.json$|\.gitignore$)' | wc -l)
-
-            if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                SKIP_REASON="no significant code changes"
-                echo "needs-review=false" >> $GITHUB_OUTPUT
-                echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
-                exit 0
-            fi
-
-            COMMIT_MSG=$(git log -1 --pretty=format:"%s")
-            if [[ "$COMMIT_MSG" =~ ^(docs?|chore|style): ]]; then
-                SKIP_REASON="trivial commit message"
-                echo "needs-review=false" >> $GITHUB_OUTPUT
-                echo "skip-reason=$SKIP_REASON" >> $GITHUB_OUTPUT
-                exit 0
-            fi
-
-            echo "::info::Significant changes detected and cooldown passed. Triggering re-review."
+            SKIP_REASON=""
+          # --- Always review on manual comment triggers ---
+          elif [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ) ]]; then
+            echo "::info::Manual review triggered by comment."
             NEEDS_REVIEW="true"
+            SKIP_REASON=""
           else
-            SKIP_REASON="unhandled event trigger"
+            # --- This is a re-review or a CI failure trigger ---
+            echo "::info::Analyzing for re-review..."
+
+            # 1. Find the last relevant comment from the bot
+            # It can be a review summary or a CI failure report. Both should contain a commit hash.
+            LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments -q '.comments | map(select(.author.login? == "arii" and (.body | contains("## Review") or contains("Review Summary") or contains("Suggested Fix") or contains("> Failed at commit:")))) | .[-1].body // ""')
+
+            if [ -z "$LAST_COMMENT_BODY" ]; then
+              echo "::info::No previous review or failure comment found. Triggering review."
+              NEEDS_REVIEW="true"
+              SKIP_REASON=""
+            else
+              # 2. Extract the last reviewed commit hash from the comment
+              # The line looks like: `> Failed at commit: `commit_sha`` or `> Reviewed commit: `commit_sha``
+              LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oP '(?<=> Failed at commit: `)[a-f0-9]+(?=`)|(?<=Reviewed commit: `)[a-f0-9]+(?=`)')
+
+              if [ -z "$LAST_REVIEWED_SHA" ]; then
+                  echo "::warning::Found a previous comment, but could not extract a commit hash. Proceeding with review."
+                  NEEDS_REVIEW="true"
+                  SKIP_REASON=""
+              else
+                  echo "::info::Last reviewed commit SHA is: $LAST_REVIEWED_SHA"
+                  echo "::info::Current HEAD SHA is: $HEAD_SHA"
+
+                  # 3. Compare with the current HEAD SHA
+                  if [[ "$LAST_REVIEWED_SHA" == "$HEAD_SHA" ]]; then
+                      SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
+                      NEEDS_REVIEW="false"
+                  else
+                      # 4. Hashes are different, check if the changes are substantial
+                      echo "::info::Commit hashes differ. Checking for substantial changes between $LAST_REVIEWED_SHA and $HEAD_SHA..."
+                      # Ensure the last reviewed SHA is actually in the history
+                      if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
+                          CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
+
+                          if [ -z "$CHANGED_FILES" ]; then
+                              SKIP_REASON="no file changes detected between $LAST_REVIEWED_SHA and $HEAD_SHA"
+                              NEEDS_REVIEW="false"
+                          else
+                              echo "::info::Files changed:\n$CHANGED_FILES"
+                              # Count significant changes (exclude docs, lockfiles, etc.)
+                              SIGNIFICANT_COUNT=$(echo "$CHANGED_FILES" | grep -vE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' | wc -l)
+
+                              if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
+                                  SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
+                                  NEEDS_REVIEW="false"
+                              else
+                                  echo "::info::$SIGNIFICANT_COUNT significant change(s) detected. Triggering re-review."
+                                  NEEDS_REVIEW="true"
+                                  SKIP_REASON=""
+                              fi
+                          fi
+                      else
+                          echo "::warning::Last reviewed commit SHA ($LAST_REVIEWED_SHA) not found in history. Reviewing all changes from base."
+                          # Fallback to diffing against the base of the PR
+                          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+                          SIGNIFICANT_COUNT=$(echo "$CHANGED_FILES" | grep -vE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' | wc -l)
+                          if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
+                              SKIP_REASON="no significant code changes from base"
+                              NEEDS_REVIEW="false"
+                          else
+                              NEEDS_REVIEW="true"
+                              SKIP_REASON=""
+                          fi
+                      fi
+                  fi
+              fi
+            fi
           fi
 
           echo "needs-review=$NEEDS_REVIEW" >> $GITHUB_OUTPUT
@@ -260,10 +279,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if [ -f "review_result.json" ]; then
-            jq -r '.reviewComment // empty' review_result.json > review_comment.txt
-            if [ -s review_comment.txt ]; then
+            # Extract the original comment
+            REVIEW_COMMENT=$(jq -r '.reviewComment // empty' review_result.json)
+
+            # Check if there's a comment to post
+            if [ -n "$REVIEW_COMMENT" ]; then
+              # Create the commit hash line
+              COMMIT_HASH_MSG="> Reviewed commit: \`${HEAD_SHA}\`"
+
+              # Combine the header and the original comment
+              FINAL_COMMENT="${COMMIT_HASH_MSG}\n\n${REVIEW_COMMENT}"
+
+              # Write to a file to be used by the gh cli command
+              echo -e "$FINAL_COMMENT" > review_comment.txt
+
+              # Post the combined comment
               gh pr comment "$PR_NUMBER" --body-file review_comment.txt
             fi
           fi
