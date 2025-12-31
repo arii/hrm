@@ -261,12 +261,11 @@ const SpotifyDisplay = () => {
   if (!isLoggedIn) {
     return (
       <Box
-        sx={{
+        sx={(theme) => ({
           backgroundColor: 'grey.900',
           color: 'common.white',
           px: 3,
           py: 1.5,
-          borderRadius: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -277,7 +276,8 @@ const SpotifyDisplay = () => {
           zIndex: 1100,
           boxShadow: 3,
           width: '100%',
-        }}
+          borderRadius: theme.shape.borderRadius,
+        })}
       >
         <AuthButton providerId="spotify" providerName="Spotify" />
       </Box>
@@ -295,25 +295,29 @@ const SpotifyDisplay = () => {
       <Box
         aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
           spotifyData.isPlaying ? 'Playing' : 'Paused'
-        }${isReady ? ', Browser player ready' : ''}`}
-        sx={{
-          backgroundColor: 'grey.900',
-          color: 'common.white',
-          px: 3,
-          py: 1.5,
-          borderRadius: 2,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'fixed',
-          bottom: 56,
-          left: 0,
-          right: 0,
-          zIndex: 1100,
-          boxShadow: 3,
-          width: '100%',
-        }}
-      >
+          }${isReady ? ', Browser player ready' : ''}`}
+          sx={(theme) => ({
+            backgroundColor: 'grey.900',
+            color: 'common.white',
+            px: 3,
+            py: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            position: 'fixed',
+            bottom: 56,
+            left: 0,
+            right: 0,
+            zIndex: 1100,
+            boxShadow: 3,
+            width: '100%',
+            transition: 'box-shadow 0.3s',
+            '&:hover': {
+              boxShadow: 6,
+            },
+            borderRadius: theme.shape.borderRadius,
+          })}
+        >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {displayTrackName} {displayArtist}
@@ -327,7 +331,6 @@ const SpotifyDisplay = () => {
                 color: 'common.white',
                 px: 1,
                 py: 0.5,
-                borderRadius: 1,
               }}
             >
               🔄 Connecting Player...
@@ -342,7 +345,6 @@ const SpotifyDisplay = () => {
                 color: 'common.white',
                 px: 1,
                 py: 0.5,
-                borderRadius: 1,
               }}
             >
               🎵 Browser Player Active

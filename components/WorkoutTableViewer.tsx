@@ -69,7 +69,16 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
   }
 
   return (
-    <TableContainer component={Paper} elevation={2}>
+    <TableContainer
+      component={Paper}
+      elevation={2}
+      sx={{
+        transition: 'box-shadow 0.3s',
+        '&:hover': {
+          boxShadow: 6,
+        },
+      }}
+    >
       <Table sx={{ minWidth: 650 }} aria-label="workout table">
         {/* Render Headers */}
         {data.headers.length > 0 && (

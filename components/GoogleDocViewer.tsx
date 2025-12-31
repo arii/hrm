@@ -46,18 +46,27 @@ const GoogleDocViewer = ({
   }, [])
 
   return (
-    <Card elevation={6} sx={{ position: 'relative' }}>
+    <Card
+      elevation={6}
+      sx={{
+        position: 'relative',
+        transition: 'box-shadow 0.3s',
+        '&:hover': {
+          boxShadow: 3,
+        },
+      }}
+    >
       <CardContent sx={{ p: 1 }}>
         <Box
-          sx={{
+          sx={(theme) => ({
             width: '100%',
             height: `${dynamicHeight}px`,
             overflow: 'hidden',
-            borderRadius: 1,
             border: '1px solid',
             borderColor: 'grey.300',
             position: 'relative',
-          }}
+            borderRadius: theme.shape.borderRadius,
+          })}
         >
           {iframeLoading && (
             <Skeleton

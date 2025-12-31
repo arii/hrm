@@ -26,6 +26,6 @@ describe('LoadingIndicator', () => {
   it('should be visible when isLoading is true', () => {
     useLoadingMock.mockReturnValue({ isLoading: true })
     render(<LoadingIndicator />)
-    expect(screen.getByRole('progressbar')).toBeVisible()
+    expect(screen.getByRole('progressbar', { hidden: true })).toBeVisible()
   })
 })

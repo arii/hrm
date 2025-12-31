@@ -86,13 +86,16 @@ const TimerDisplay = () => {
         color: phaseColor, // Dynamic color based on phase
         height: '100%',
         display: 'flex',
-        borderRadius: 2,
         border: '2px solid #1a1a1a', // Subtle border for definition
         position: 'relative',
         animation:
           currentPhase === 'WORK' || currentPhase === 'REST'
             ? 'pulse-opacity 1.5s infinite'
             : 'none',
+        transition: 'box-shadow 0.3s',
+        '&:hover': {
+          boxShadow: 3,
+        },
       }}
     >
       {/* Status Indicator */}
