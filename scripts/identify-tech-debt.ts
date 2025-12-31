@@ -8,15 +8,12 @@ import {
 } from './gemini-client';
 
 // Simple arg parsing
-const args = process.argv.slice(2);
 const getArg = (key: string) => {
+  const args = process.argv.slice(2);
   const index = args.indexOf(key);
   if (index !== -1 && index + 1 < args.length) return args[index + 1];
   return null;
 };
-
-const diffFile = getArg('--diff-file');
-const outputFile = getArg('--output');
 
 interface TechDebtIssue {
   title: string;
@@ -28,7 +25,7 @@ interface TechDebtResponse {
   issues: TechDebtIssue[];
 }
 
-function isTechDebtResponse(data: unknown): data is TechDebtResponse {
+export function isTechDebtResponse(data: unknown): data is TechDebtResponse {
     if (typeof data !== 'object' || data === null || !('issues' in data)) {
         return false;
     }
@@ -52,7 +49,10 @@ function isTechDebtResponse(data: unknown): data is TechDebtResponse {
 }
 
 
-async function main() {
+export async function main() {
+  const diffFile = getArg('--diff-file');
+  const outputFile = getArg('--output');
+
   if (!diffFile || !outputFile) {
     console.error('Usage: tsx scripts/identify-tech-debt.ts --diff-file <path/to/diff> --output <path/to/output.json>');
     process.exit(1);
