@@ -44,10 +44,11 @@ export async function runConflictResolution(
   for (const file of conflictFilePaths) {
     if (!file.trim()) continue
 
-    const trimmedFile = path.normalize(path.join('pr-code', file.trim()))
+    const trimmedFile = path.join('pr-code', file.trim())
     const absolutePath = path.resolve(process.cwd(), trimmedFile)
+    const relativePath = path.relative(prCodeRoot, absolutePath)
 
-    if (!absolutePath.startsWith(prCodeRoot)) {
+    if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
       console.warn(`Skipping potential path traversal: ${file}`)
       continue
     }
@@ -101,9 +102,7 @@ ${JSON.stringify(fileConflicts, null, 2)}
       const result = jsonProcessor.process(text)
 
       if (result.success && isResolutionArray(result.data)) {
-        const resolutions = result.data
-
-        for (const res of resolutions) {
+        for (const res of result.data) {
           const original = fileConflicts.find((c) => c.id === res.id)
           if (!original) continue
 

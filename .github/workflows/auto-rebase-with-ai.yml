@@ -88,22 +88,19 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
-      - name: Create Placeholder Report on Unexpected Rebase Success
-        if: steps.rebase.outcome == 'failure' && steps.manual_rebase.outcome == 'success'
-        run: echo "✅ Manual rebase succeeded without conflicts. No resolution needed." > resolution-report.md
         run: |
           if [ ! -f conflicts.txt ]; then
             echo "No conflicts file found, skipping resolution."
             exit 0
           fi
-
-          # Pass the path to the conflicts file directly to the script.
-          # This is safer than expanding file paths in the shell, which could be vulnerable
-          # to injection attacks if a filename contained special characters.
           pnpm tsx scripts/gemini-client.ts \
             --preset "resolve-conflict" \
             --context-file "conflicts.txt" \
             --output "resolution-report.md"
+
+      - name: Create Placeholder Report on Unexpected Rebase Success
+        if: steps.rebase.outcome == 'failure' && steps.manual_rebase.outcome == 'success'
+        run: echo "✅ Manual rebase succeeded without conflicts. No resolution needed." > resolution-report.md
 
       - name: Post Resolution Report
         if: steps.rebase.outcome == 'failure'
