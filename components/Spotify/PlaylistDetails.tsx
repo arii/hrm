@@ -2,12 +2,12 @@
 import MusicNote from '@mui/icons-material/MusicNote'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
-import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import { useEffect, useState } from 'react'
+import { FixedSizeList, ListChildComponentProps } from 'react-window'
 import { Track } from '../../types/spotify'
 
 interface PlaylistDetailsProps {
@@ -61,21 +61,32 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({ playlistId }) => {
     )
   }
 
+  const renderRow = ({ index, style }: ListChildComponentProps) => {
+    const track = tracks[index]
+    return (
+      <ListItem style={style} key={track.id} component="div" divider>
+        <MusicNote sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }} />
+        <ListItemText
+          primary={track.name}
+          secondary={`${(track.artists || []).map((a) => a.name).join(', ')} - ${track.album?.name || 'Unknown Album'}`}
+        />
+      </ListItem>
+    )
+  }
+
+  const ITEM_SIZE = 50 // Adjust this based on your item height
+
   return (
-    <Paper sx={{ maxHeight: '400px', overflow: 'auto', mt: 2 }}>
-      <List dense>
-        {tracks.map((track) => (
-          <ListItem key={track.id} divider>
-            <MusicNote
-              sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}
-            />
-            <ListItemText
-              primary={track.name}
-              secondary={`${(track.artists || []).map((a) => a.name).join(', ')} - ${track.album?.name || 'Unknown Album'}`}
-            />
-          </ListItem>
-        ))}
-      </List>
+    <Paper sx={{ height: '400px', width: '100%', mt: 2 }}>
+      <FixedSizeList
+        height={400}
+        width="100%"
+        itemSize={ITEM_SIZE}
+        itemCount={tracks.length}
+        overscanCount={5}
+      >
+        {renderRow}
+      </FixedSizeList>
     </Paper>
   )
 }

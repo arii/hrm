@@ -9,11 +9,11 @@ import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
-import List from '@mui/material/List'
 import ListItemText from '@mui/material/ListItemText'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
+import { ListChildComponentProps, VariableSizeList } from 'react-window'
 import { useDebounce } from '../../hooks/useDebounce'
 import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
 import { Playlist } from '../../types/spotify'
@@ -312,10 +312,96 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
           )
         }
         sx={{ mb: 2 }}
-        ListboxComponent={List}
+        ListboxComponent={
+          ListboxComponent as React.ComponentType<React.HTMLAttributes<HTMLElement>>
+        }
       />
     </Box>
   )
 }
+
+const LISTBOX_PADDING = 8 // px
+
+function renderRow(props: ListChildComponentProps) {
+  const { data, index, style } = props
+  const dataSet = data[index]
+  const inlineStyle = {
+    ...style,
+    top: (style.top as number) + LISTBOX_PADDING,
+  }
+
+  return React.cloneElement(dataSet, {
+    style: inlineStyle,
+  })
+}
+
+const OuterElementContext = React.createContext({})
+
+const OuterElementType = React.forwardRef<HTMLDivElement>((props, ref) => {
+  const outerProps = React.useContext(OuterElementContext)
+  return <div ref={ref} {...props} {...outerProps} />
+})
+
+const ITEM_SIZE = 56 // Estimated height for playlist items
+const GROUP_HEADER_SIZE = 36 // Estimated height for group headers
+
+const ListboxComponent = React.forwardRef<HTMLDivElement>(
+  function ListboxComponent(props, ref) {
+    const { children, ...other } = props
+    const itemData = React.Children.toArray(children)
+    const itemCount = itemData.length
+    const listRef = React.useRef<VariableSizeList>(null)
+
+    React.useEffect(() => {
+      if (listRef.current) {
+        listRef.current.resetAfterIndex(0)
+      }
+    }, [itemData])
+
+    const getItemSize = (index: number) => {
+      const item = itemData[index] as React.ReactElement
+      // NOTE: This relies on an internal MUI class name.
+      // This is a common workaround for virtualizing MUI Autocomplete,
+      // but it might break if MUI changes its internal class structure.
+      if (item.props.className?.includes('MuiAutocomplete-groupLabel')) {
+        return GROUP_HEADER_SIZE
+      }
+      return ITEM_SIZE
+    }
+
+    const getHeight = () => {
+      const maxHeight = 8 * ITEM_SIZE
+      let calculatedHeight = 0
+      for (let i = 0; i < itemCount; i++) {
+        calculatedHeight += getItemSize(i)
+      }
+      return Math.min(calculatedHeight, maxHeight)
+    }
+
+    if (itemCount === 0) {
+      return null
+    }
+
+    return (
+      <div ref={ref}>
+        <OuterElementContext.Provider value={other}>
+          <VariableSizeList
+            itemData={itemData}
+            height={getHeight() + 2 * LISTBOX_PADDING}
+            width="100%"
+            ref={listRef}
+            outerElementType={OuterElementType}
+            innerElementType="ul"
+            itemSize={getItemSize}
+            overscanCount={5}
+            itemCount={itemCount}
+          >
+            {renderRow}
+          </VariableSizeList>
+        </OuterElementContext.Provider>
+      </div>
+    )
+  }
+)
 
 export default PlaylistSelector
