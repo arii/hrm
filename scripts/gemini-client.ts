@@ -176,6 +176,7 @@ export interface ReviewContext {
   issueNumber?: string | undefined
   issueTitle?: string | undefined
   commitMessages: string
+  commitHash: string
   hasTestChanges: boolean
   missingTests: boolean
   testFiles?: string | undefined
@@ -183,64 +184,72 @@ export interface ReviewContext {
 }
 
 async function main() {
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) {
-    console.error('Error: GEMINI_API_KEY environment variable is not set.')
-    process.exit(1)
-  }
-
-  const genAI = new GoogleGenerativeAI(apiKey)
-
-  let contextContent = ''
-  for (const file of contextFiles) {
-    const trimmedFile = file.trim()
-    if (!trimmedFile) continue
-    try {
-      const content = await readFile(
-        path.resolve(process.cwd(), trimmedFile),
-        'utf-8'
-      )
-      contextContent += `\n\n--- Start of Context File: ${trimmedFile} ---\n${content}\n--- End of Context File: ${trimmedFile} ---\n`
-    } catch (error) {
-      console.warn(
-        `Warning: Could not read context file ${trimmedFile}: ${(error as Error).message}`
-      )
-      contextContent += `\n\n--- Context File: ${trimmedFile} (MISSING/ERROR) ---\n`
-    }
-  }
-
-  if (preset === 'review') {
-    await runReviewPreset(genAI, contextContent, outputFile)
-  } else if (preset === 'resolve-conflict') {
-    if (!contextFile) {
-      console.error(
-        'Error: --context-file is required for resolve-conflict preset'
-      )
+  let reviewContext: ReviewContext | undefined
+  try {
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) {
+      // This is a fatal error, so we exit early.
+      console.error('Error: GEMINI_API_KEY environment variable is not set.')
       process.exit(1)
     }
-    await runConflictResolution(genAI, contextFile, outputFile)
-  } else {
-    // Default/Generic mode
-    let finalTask = task
-    if (taskFile) {
+
+    const genAI = new GoogleGenerativeAI(apiKey)
+
+    let contextContent = ''
+    for (const file of contextFiles) {
+      const trimmedFile = file.trim()
+      if (!trimmedFile) continue
       try {
-        finalTask = await readFile(
-          path.resolve(process.cwd(), taskFile),
+        const content = await readFile(
+          path.resolve(process.cwd(), trimmedFile),
           'utf-8'
         )
-      } catch (e) {
-        console.error(`Error reading task file ${taskFile}:`, e)
-        process.exit(1)
+        contextContent += `\n\n--- Start of Context File: ${trimmedFile} ---\n${content}\n--- End of Context File: ${trimmedFile} ---\n`
+      } catch (error) {
+        console.warn(
+          `Warning: Could not read context file ${trimmedFile}: ${(error as Error).message}`
+        )
+        contextContent += `\n\n--- Context File: ${trimmedFile} (MISSING/ERROR) ---\n`
       }
     }
 
-    if (!finalTask) {
-      console.error(
-        'Usage: npx tsx scripts/gemini-client.ts --task "task description" OR --task-file "path/to/task.txt" [--context "file1.md,file2.md"] [--output "output.md"]'
-      )
-      process.exit(1)
+    if (preset === 'review') {
+      reviewContext = getReviewContextFromEnv()
+      await runReviewPreset(genAI, contextContent, outputFile, reviewContext)
+    } else if (preset === 'resolve-conflict') {
+      if (!contextFile) {
+        console.error(
+          'Error: --context-file is required for resolve-conflict preset'
+        )
+        process.exit(1)
+      }
+      await runConflictResolution(genAI, contextFile, outputFile)
+    } else {
+      // Default/Generic mode
+      let finalTask = task
+      if (taskFile) {
+        try {
+          finalTask = await readFile(
+            path.resolve(process.cwd(), taskFile),
+            'utf-8'
+          )
+        } catch (e) {
+          console.error(`Error reading task file ${taskFile}:`, e)
+          process.exit(1)
+        }
+      }
+
+      if (!finalTask) {
+        console.error(
+          'Usage: npx tsx scripts/gemini-client.ts --task "task description" OR --task-file "path/to/task.txt" [--context "file1.md,file2.md"] [--output "output.md"]'
+        )
+        process.exit(1)
+      }
+      await runGenericTask(genAI, finalTask, contextContent, outputFile)
     }
-    await runGenericTask(genAI, finalTask, contextContent, outputFile)
+  } catch (error) {
+    // Centralized error handling.
+    await handleError(error, outputFile, reviewContext)
   }
 }
 
@@ -335,13 +344,8 @@ ${contextContent}
 --- Task ---
 ${task}
 `
-
-  try {
-    const text = await generateContentWithFallback(genAI, prompt)
-    await writeOutput(text, outputFile)
-  } catch (error) {
-    handleError(error)
-  }
+  const text = await generateContentWithFallback(genAI, prompt)
+  await writeOutput(text, outputFile)
 }
 
 function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
@@ -409,6 +413,7 @@ function getReviewContextFromEnv(): ReviewContext {
     issueNumber: process.env.ISSUE_NUMBER,
     issueTitle: process.env.ISSUE_TITLE,
     commitMessages: process.env.COMMIT_MESSAGES || '',
+    commitHash: process.env.COMMIT_HASH || '',
     hasTestChanges: process.env.HAS_TEST_CHANGES === 'true',
     missingTests: process.env.MISSING_TESTS === 'true',
     testFiles: process.env.TEST_FILES,
@@ -500,10 +505,9 @@ export async function buildReviewPrompt(
 async function runReviewPreset(
   genAI: GoogleGenerativeAI,
   contextContent: string,
-  outputFile: string | null | undefined
+  outputFile: string | null | undefined,
+  context: ReviewContext
 ) {
-  const context = getReviewContextFromEnv()
-
   // Skip logic
   if (
     context.prLabels.includes('ready-for-approval') ||
@@ -547,69 +551,67 @@ async function runReviewPreset(
   }
 
   const prompt = await buildReviewPrompt(diff, context, contextContent)
-
-  try {
-    const text = await generateContentWithFallback(genAI, prompt, {
-      generationConfig: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: SchemaType.OBJECT,
-          properties: {
-            reviewComment: { type: SchemaType.STRING },
-            labels: {
-              type: SchemaType.ARRAY,
-              items: { type: SchemaType.STRING },
-            },
-            verdict: { type: SchemaType.STRING },
+  const text = await generateContentWithFallback(genAI, prompt, {
+    generationConfig: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: SchemaType.OBJECT,
+        properties: {
+          reviewComment: { type: SchemaType.STRING },
+          labels: {
+            type: SchemaType.ARRAY,
+            items: { type: SchemaType.STRING },
           },
-          required: ['reviewComment', 'labels'],
+          verdict: { type: SchemaType.STRING },
         },
+        required: ['reviewComment', 'labels'],
       },
-    })
+    },
+  })
 
-    const jsonProcessor = new JsonProcessor()
-    const result = jsonProcessor.process(text || '')
+  const jsonProcessor = new JsonProcessor()
+  const result = jsonProcessor.process(text || '')
+  const commitComment = `\n\n> Reviewed at commit: \`${context.commitHash}\``
 
-    if (result.success) {
-      const reviewData = result.data as { reviewComment?: string }
-      // It's valid JSON, but we should still check if the content is meaningful.
-      if (
-        !reviewData.reviewComment ||
-        reviewData.reviewComment.trim().length < 20
-      ) {
-        console.warn(
-          'Warning: Parsed JSON has an empty or short review comment. Injecting fallback.'
-        )
-        const fallback = {
-          reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.\n\n- **Verified:** Code changes align with requirements.\n- **Regressions:** None detected.\n- **Verdict:** Ready for approval.`,
-          labels: ['ready-for-approval'],
-          verdict: 'approve',
-        }
-        await writeOutput(JSON.stringify(fallback, null, 2), outputFile)
-      } else {
-        // Output the original, valid JSON.
-        await writeOutput(JSON.stringify(result.data, null, 2), outputFile)
+  if (result.success) {
+    const reviewData = result.data as { reviewComment?: string }
+    // It's valid JSON, but we should still check if the content is meaningful.
+    if (
+      !reviewData.reviewComment ||
+      reviewData.reviewComment.trim().length < 20
+    ) {
+      console.warn(
+        'Warning: Parsed JSON has an empty or short review comment. Injecting fallback.'
+      )
+      const fallback = {
+        reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.${commitComment}`,
+        labels: ['ready-for-approval'],
+        verdict: 'approve',
       }
+      await writeOutput(JSON.stringify(fallback, null, 2), outputFile)
     } else {
-      // The response was not valid JSON. We will format the error.
-      console.error('Error: Failed to parse JSON response from the model.')
-      const errorJson = {
-        error: {
-          category: 'Invalid JSON Response',
-          message:
-            'The response from the generative AI was not valid JSON, even after attempting to extract it from markdown.',
-          details: result.data, // Contains the error info from JsonProcessor.
-        },
-        reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${
-          (result.data as { rawResponse: string }).rawResponse || ''
-        }\n\`\`\`\n\n</details>`,
-        labels: ['review-failed'],
-        verdict: 'comment',
-      }
-      await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
+      // Add commit hash to the review comment
+      reviewData.reviewComment += commitComment
+      // Output the original, valid JSON.
+      await writeOutput(JSON.stringify(reviewData, null, 2), outputFile)
     }
-  } catch (error) {
-    await handleError(error)
+  } else {
+    // The response was not valid JSON. We will format the error.
+    console.error('Error: Failed to parse JSON response from the model.')
+    const errorJson = {
+      error: {
+        category: 'Invalid JSON Response',
+        message:
+          'The response from the generative AI was not valid JSON, even after attempting to extract it from markdown.',
+        details: result.data, // Contains the error info from JsonProcessor.
+      },
+      reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.${commitComment}\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${
+        (result.data as { rawResponse: string }).rawResponse || ''
+      }\n\`\`\`\n\n</details>`,
+      labels: ['review-failed'],
+      verdict: 'comment',
+    }
+    await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
   }
 }
 
@@ -625,12 +627,25 @@ export async function writeOutput(
   }
 }
 
-export async function handleError(error: unknown) {
+export async function handleError(
+  error: unknown,
+  outputFile: string | null | undefined,
+  context?: ReviewContext
+) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
-  const technicalDetails =
-    error instanceof Error ? error.message : 'No technical details available.'
+  let technicalDetails = 'No technical details available.'
+
+  if (error instanceof Error) {
+    technicalDetails = error.stack || error.message
+    if (error.message.includes('api key')) {
+      category = 'Configuration Issue'
+      userMessage = 'The GEMINI_API_KEY is either invalid or missing.'
+    }
+  } else if (typeof error === 'string') {
+    technicalDetails = error
+  }
 
   if (error instanceof GoogleGenerativeAIError) {
     if (error.message.includes('400') || error.message.includes('404')) {
@@ -647,6 +662,10 @@ export async function handleError(error: unknown) {
     userMessage = 'The GEMINI_API_KEY is either invalid or missing.'
   }
 
+  const commitComment = context?.commitHash
+    ? `\n\n> Attempted review at commit: \`${context.commitHash}\``
+    : ''
+
   const errorOutput = {
     error: {
       category: category,
@@ -654,7 +673,7 @@ export async function handleError(error: unknown) {
       details: technicalDetails,
     },
     // Provide a valid structure for the review result to avoid breaking the calling workflow
-    reviewComment: `### ❌ Review Failed: ${category}\n\n**Details**: ${userMessage}\n\n<details><summary>Technical Info</summary>\n\n\`\`\`\n${technicalDetails}\n\`\`\`\n\n</details>`,
+    reviewComment: `### ❌ Review Failed: ${category}\n\n**Details**: ${userMessage}${commitComment}\n\n<details><summary>Technical Info</summary>\n\n\`\`\`\n${technicalDetails}\n\`\`\`\n\n</details>`,
     labels: ['review-failed'],
     verdict: 'comment',
   }
@@ -671,6 +690,7 @@ export async function handleError(error: unknown) {
     // Exit 0 so the next workflow step can read the JSON and post the comment
     process.exit(0)
   } else {
+    // If there's no output file, we should exit with a non-zero code to fail the CI step.
     process.exit(1)
   }
 }
