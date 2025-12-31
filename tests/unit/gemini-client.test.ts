@@ -270,11 +270,7 @@ describe('buildReviewPrompt', () => {
       ],
     }
 
-    const prompt = await buildReviewPrompt(
-      'test diff',
-      context,
-      'test context'
-    )
+    const prompt = await buildReviewPrompt('test diff', context, 'test context')
     expect(mockedReadFile).toHaveBeenCalledWith('prompts/fix-mode.md', 'utf-8')
     expect(prompt).toContain('IMMEDIATE ACTION REQUIRED')
     expect(prompt).toContain('You are now in **DEBUG MODE**')
