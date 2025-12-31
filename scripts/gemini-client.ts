@@ -422,19 +422,73 @@ function getReviewContextFromEnv(): ReviewContext {
 }
 
 // 3. Refactored buildReviewPrompt
+export function getSpecializedRules(changedFiles: string[]): string {
+  let rules = ''
+  const hasWebSocketChanges = changedFiles.some(
+    (f) =>
+      f.includes('server.ts') ||
+      f.includes('lib/websocket.ts') ||
+      f.includes('utils/socketManager.ts')
+  )
+  const hasAuthChanges = changedFiles.some(
+    (f) =>
+      f.includes('lib/auth.ts') ||
+      f.includes('app/api/auth') ||
+      f.includes('hooks/useAuth.ts')
+  )
+
+  if (hasWebSocketChanges) {
+    rules += `
+### ⚡ Real-Time & WebSocket Focus:
+- **State Synchronization**: Verify that any state changes initiated by the client are correctly synchronized with the server's state and broadcast to other clients. Check for potential race conditions.
+- **Connection Management**: Ensure WebSocket connections are properly managed. Look for robust heartbeat mechanisms, reconnection logic, and proper cleanup of event listeners to prevent memory leaks.
+- **Error Handling**: Scrutinize error handling for WebSocket operations. The system should gracefully handle unexpected disconnections, invalid messages, and server-side errors.
+`
+  }
+
+  if (hasAuthChanges) {
+    rules += `
+### 🔐 Authentication & Session Focus:
+- **Token Handling**: In long-running WebSocket connections, validate that session token expiration and refresh logic is correctly handled.
+- **Provider Configuration**: Ensure NextAuth.js providers are securely configured, especially regarding token issuance and validation.
+- **Secure Data Flow**: Verify that sensitive user data is handled securely throughout the authentication process and not unnecessarily exposed.
+`
+  }
+
+  return rules
+}
+
 export async function buildReviewPrompt(
   diff: string,
   context: ReviewContext,
   contextContent: string
 ): Promise<string> {
   const isReReview = context.reviewCount > 0
-  const hasFailures = context.failedChecks && context.failedChecks.length > 0;
+  const hasFailures = context.failedChecks && context.failedChecks.length > 0
+  let promptTemplate: string
+  let specializedRules = ''
 
-  const templatePath = hasFailures ? 'prompts/fix-mode.md' : 'prompts/standard-review.md';
-  let promptTemplate = await readFile(templatePath, 'utf-8');
+  if (hasFailures) {
+    promptTemplate = await readFile('prompts/fix-mode.md', 'utf-8')
+  } else {
+    try {
+      // Attempt to use the new, consolidated template
+      promptTemplate = await readFile('prompts/review.md', 'utf-8')
+      const changedFiles = context.changedAreas.split(', ')
+      specializedRules = getSpecializedRules(changedFiles)
+    } catch (error) {
+      // Fallback to the old template logic if the new one doesn't exist
+      console.warn(
+        "Warning: 'prompts/review.md' not found. Falling back to legacy templates."
+      )
+      promptTemplate = await readFile('prompts/standard-review.md', 'utf-8')
+    }
+  }
 
   // --- Base Context Section ---
-  const reviewIteration = isReReview ? `Re-Review #${context.reviewCount + 1}` : 'Initial Review';
+  const reviewIteration = isReReview
+    ? `Re-Review #${context.reviewCount + 1}`
+    : 'Initial Review'
 
   // --- Diff Section ---
   const maxDiffLength = 60000; // Increased context window for 2.0 Flash
@@ -493,6 +547,7 @@ export async function buildReviewPrompt(
     truncatedDiff,
     failureList,
     testCoverageAlert,
+    specializedRules,
   };
 
   for (const [key, value] of Object.entries(placeholders)) {
@@ -563,6 +618,18 @@ async function runReviewPreset(
             items: { type: SchemaType.STRING },
           },
           verdict: { type: SchemaType.STRING },
+          artifacts: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                title: { type: SchemaType.STRING },
+                description: { type: SchemaType.STRING },
+                category: { type: SchemaType.STRING },
+              },
+              required: ['title', 'description', 'category'],
+            },
+          },
         },
         required: ['reviewComment', 'labels'],
       },
@@ -574,8 +641,10 @@ async function runReviewPreset(
   const commitComment = `\n\n> Reviewed at commit: \`${context.commitHash}\``
 
   if (result.success) {
-    const reviewData = result.data as { reviewComment?: string }
-    // It's valid JSON, but we should still check if the content is meaningful.
+    const reviewData = result.data as {
+      reviewComment?: string
+      artifacts?: unknown[]
+    }
     if (
       !reviewData.reviewComment ||
       reviewData.reviewComment.trim().length < 20
@@ -587,12 +656,15 @@ async function runReviewPreset(
         reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.${commitComment}`,
         labels: ['ready-for-approval'],
         verdict: 'approve',
+        artifacts: [],
       }
       await writeOutput(JSON.stringify(fallback, null, 2), outputFile)
     } else {
-      // Add commit hash to the review comment
       reviewData.reviewComment += commitComment
-      // Output the original, valid JSON.
+      // Ensure artifacts is an array, defaulting to empty if not present.
+      reviewData.artifacts = Array.isArray(reviewData.artifacts)
+        ? reviewData.artifacts
+        : []
       await writeOutput(JSON.stringify(reviewData, null, 2), outputFile)
     }
   } else {

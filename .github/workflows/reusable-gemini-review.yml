@@ -176,56 +176,71 @@ jobs:
         id: checks
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
-          # Pass secrets for redaction
-          ARI_PAT: ${{ secrets.ARI_PAT }}
+          ARI_PAT: ${{ secrets.ARI_PAT }} # Pass for redaction
         run: |
-          # Get the initial list of failed checks
           FAILED_CHECKS_RAW_JSON=$(gh pr checks ${{ github.event.pull_request.number }} --json name,conclusion,detailsUrl | jq -c 'map(select(.conclusion == "failure" or .conclusion == "cancelled"))')
-
-          # Initialize an empty array for the final result
           FINAL_CHECKS_JSON="[]"
 
-          # Use mapfile to safely read lines into arrays, preserving spaces
           mapfile -t NAMES < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].name')
           mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion')
           mapfile -t URLS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl')
           mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl | split("/")[-1]')
 
-          # Create a temporary directory for parallel log processing
           LOG_DIR=$(mktemp -d)
 
-          # Define the processing function for a single job
           process_job() {
             local i=$1
             local job_id=${JOB_IDS[i]}
+            local job_name=${NAMES[i]}
+            local job_url=${URLS[i]}
             local raw_log_file="$LOG_DIR/raw_log_${i}.txt"
             local redacted_log_file="$LOG_DIR/redacted_log_${i}.txt"
+            local summary_file="$LOG_DIR/summary_${i}.txt"
 
             if ! [[ "$job_id" =~ ^[0-9]+$ ]]; then
               echo "Error: Could not parse Job ID from URL." > "$redacted_log_file"
             else
-              # Fetch logs, if fails, write a more descriptive error to the log file itself
-              gh job view "$job_id" --log > "$raw_log_file" 2>&1 || echo "Error: Failed to fetch logs for job ${job_id}. This may be due to the job still being in progress or permissions issues." > "$raw_log_file"
-              
-              # Enforce a hard size limit on the log file (e.g., 15KB) by taking the tail of the file
-              tail -c 15K "$raw_log_file" > "$raw_log_file.tmp" && mv "$raw_log_file.tmp" "$raw_log_file"
-
-              # Run redaction script, with a more descriptive fallback error message
+              gh job view "$job_id" --log > "$raw_log_file" 2>&1 || echo "Error: Failed to fetch logs for job ${job_id}." > "$raw_log_file"
+              tail -c 25K "$raw_log_file" > "$raw_log_file.tmp" && mv "$raw_log_file.tmp" "$raw_log_file"
               if ! pnpm tsx scripts/redact-secrets.ts "$raw_log_file" "$redacted_log_file"; then
-                echo "Error: The redaction script failed for job ${job_id}. This is an internal error in the review workflow." > "$redacted_log_file"
+                echo "Error: Redaction script failed for job ${job_id}." > "$redacted_log_file"
+              fi
+            fi
+
+            if [[ "$job_name" == *"visual"* || "$job_name" == *"e2e"* || "$job_name" == *"playwright"* ]]; then
+              echo "Playwright job detected: '$job_name'. Fetching artifact summary."
+              local run_id=$(echo "$job_url" | grep -oP 'runs/\K[0-9]+')
+              if [[ -n "$run_id" ]]; then
+                local artifact_dir=$(mktemp -d)
+                if gh run download "$run_id" -n playwright-report -D "$artifact_dir" >/dev/null 2>&1; then
+                  unzip -q "$artifact_dir/playwright-report" -d "$artifact_dir/unzipped_report" >/dev/null 2>&1
+                  local report_json_path="$artifact_dir/unzipped_report/data/report.json"
+                  if [[ -f "$report_json_path" ]]; then
+                    jq -r '
+                      .suites[] | .. | .specs? // empty | .[] | select(.ok | not) |
+                      "Test: " + .title + "\nError: " + (.tests[].results[] | select(.error) | .error.message)
+                    ' "$report_json_path" | sed 's/\\n/ /g' | head -c 8000 > "$summary_file"
+                  fi
+                fi
+                rm -rf "$artifact_dir"
               fi
             fi
           }
           export -f process_job
           export LOG_DIR
-          export -a JOB_IDS
-          # Run the processing in parallel
+          export -a JOB_IDS NAMES URLS
+
           seq 0 $((${#JOB_IDS[@]} - 1)) | xargs -n 1 -P 4 -I {} bash -c 'process_job "{}"'
 
-          # Combine results into the final JSON
           FINAL_CHECKS_JSON="[]"
           for i in $(seq 0 $((${#NAMES[@]} - 1))); do
             LOGS=$(<"$LOG_DIR/redacted_log_${i}.txt")
+            SUMMARY_FILE="$LOG_DIR/summary_${i}.txt"
+            if [[ -f "$SUMMARY_FILE" && -s "$SUMMARY_FILE" ]]; then
+              SUMMARY_CONTENT=$(<"$SUMMARY_FILE")
+              SUMMARY_HEADER="### Playwright Failure Summary (from Artifacts)"
+              LOGS=$(printf '%s\n\n%s\n\n%s' "$SUMMARY_HEADER" "$SUMMARY_CONTENT" "$LOGS")
+            fi
             CHECK_JSON=$(jq -n \
               --arg name "${NAMES[i]}" \
               --arg conclusion "${CONCLUSIONS[i]}" \
@@ -235,10 +250,8 @@ jobs:
             FINAL_CHECKS_JSON=$(echo "$FINAL_CHECKS_JSON" | jq --argjson item "$CHECK_JSON" '. + [$item]')
           done
 
-          # Clean up
           rm -rf "$LOG_DIR"
 
-          # Use heredoc syntax to safely set the multiline JSON as an environment variable
           echo "FAILED_CHECKS_JSON<<EOF" >> $GITHUB_ENV
           echo "$FINAL_CHECKS_JSON" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -266,6 +279,25 @@ jobs:
             if [ -s review_comment.txt ]; then
               gh pr comment "$PR_NUMBER" --body-file review_comment.txt
             fi
+          fi
+
+      - name: Create Issues from Artifacts
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -f "review_result.json" ]; then
+            jq -c '.artifacts[] | select(.category == "technical-debt" or .category == "refactor-needed")' review_result.json | while read -r artifact; do
+              title=$(echo "$artifact" | jq -r .title)
+              body=$(echo "$artifact" | jq -r .description)
+              category=$(echo "$artifact" | jq -r .category)
+
+              # Add reference to the PR that generated the issue
+              body+="\n\n*Created from review of PR #${PR_NUMBER}*"
+
+              gh issue create --title "$title" --body "$body" --label "$category"
+            done
           fi
 
   post-skip-check:
