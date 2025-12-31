@@ -76,7 +76,10 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               {data.headers.map((header, index) => (
-                <TableCell key={index} sx={{ fontWeight: 'bold' }}>
+                <TableCell
+                  key={index}
+                  sx={{ fontWeight: 'bold', py: 1.5, px: 2 }}
+                >
                   {header}
                 </TableCell>
               ))}
@@ -92,7 +95,10 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
               sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
             >
               {row.map((cell, cellIndex) => (
-                <TableCell key={cellIndex} sx={{ verticalAlign: 'top' }}>
+                <TableCell
+                  key={cellIndex}
+                  sx={{ verticalAlign: 'top', py: 1.5, px: 2 }}
+                >
                   <Typography
                     variant="body2"
                     component="pre"

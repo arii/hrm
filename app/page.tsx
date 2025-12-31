@@ -10,6 +10,7 @@ import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
+import Paper from '@mui/material/Paper'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
@@ -46,7 +47,7 @@ const mainGridStyles: SxProps = {
     xs: '1fr',
     lg: '1fr 1fr',
   },
-  gap: 2,
+  gap: 3, // Increased gap for more spacing between cards
 }
 
 const Dashboard = () => {
@@ -86,26 +87,32 @@ const Dashboard = () => {
          * itself defines the cell's height, but the child needs to explicitly
          * be told to occupy that full height.
          */}
-        <Box sx={{ height: '100%' }}>
+        <Paper elevation={3} sx={{ p: 2, height: '100%' }}>
           <TimerDisplay />
-        </Box>
+        </Paper>
         {/*
          * HrmConnectionPanel does not need a height wrapper because
          * it's internally structured to fill the height of its container.
          */}
-        <HrmConnectionPanel />
+        <Paper elevation={3} sx={{ p: 2 }}>
+          <HrmConnectionPanel />
+        </Paper>
       </Box>
-      <Box sx={{ width: '100%', mt: 2 }}>
+      <Box sx={{ width: '100%', mt: 3 }}>
         {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
-          <WorkoutTableViewer docId={DOC_ID} />
+          <Paper elevation={3} sx={{ p: 2 }}>
+            <WorkoutTableViewer docId={DOC_ID} />
+          </Paper>
         ) : (
-          <GoogleDocViewer
-            title="Today's Training Regimen"
-            embedUrl={DOC_URL}
-            height={500}
-            isShrunk={docIsManuallyShrunk}
-            onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
-          />
+          <Paper elevation={3} sx={{ p: 2 }}>
+            <GoogleDocViewer
+              title="Today's Training Regimen"
+              embedUrl={DOC_URL}
+              height={500}
+              isShrunk={docIsManuallyShrunk}
+              onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
+            />
+          </Paper>
         )}
       </Box>
 
