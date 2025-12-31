@@ -910,10 +910,6 @@ jobs:
             else
               echo "⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
             fi
-
-            echo ""
-            echo "---"
-            echo "> Report generated for commit: \`${{ github.event.pull_request.head.sha || github.sha }}\`"
           } > test-results/pr-comment.md
 
           # Post comment to PR
