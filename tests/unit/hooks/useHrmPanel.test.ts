@@ -2,8 +2,8 @@
 // tests/unit/hooks/useHrmPanel.test.ts
 import { renderHook } from '@testing-library/react'
 import { useHrmPanel } from '@/hooks/useHrmPanel'
-import { HrmData, Alert } from '@/types/websocket'
-import { UserSettings } from '@/types/index'
+import { HrmData, ActiveAlert } from '@/types/websocket'
+import { UserPreferences } from '@/hooks/useUserPreferences'
 
 // Mock next-auth
 jest.mock('next-auth/react', () => ({
@@ -16,7 +16,7 @@ const initialHrmData: HrmData[] = [
   {
     clientId: '1',
     name: 'Test User',
-    heartRate: 120,
+    value: 120,
     zone: 'Cardio',
     calories: 100,
     maxHr: 180,
@@ -25,7 +25,7 @@ const initialHrmData: HrmData[] = [
   {
     clientId: '2',
     name: 'New User',
-    heartRate: 130,
+    value: 130,
     zone: 'Peak',
     calories: 150,
     maxHr: 190,
@@ -33,7 +33,7 @@ const initialHrmData: HrmData[] = [
   },
 ]
 
-const initialActiveAlerts: Alert[] = [
+const initialActiveAlerts: ActiveAlert[] = [
   {
     clientId: '1',
     code: 'BAD_PLACEMENT',
@@ -43,35 +43,17 @@ const initialActiveAlerts: Alert[] = [
   },
 ]
 
-const initialUserSettings: UserSettings = {
+const initialUserSettings: UserPreferences = {
   userName: 'Test User',
   userAge: 30,
-  maxHr: 190,
-  restingHr: 60,
-  weight: 70,
-  height: 180,
-  gender: 'male',
-  birthDate: '1994-01-01',
-  timeZone: 'UTC',
-  weekStartsOn: 'monday',
-  email: 'test@example.com',
-  name: 'Test User',
-  stravaRefreshToken: 'strava-refresh-token',
-  stravaAccessToken: 'strava-access-token',
-  stravaTokenExpiresAt: Date.now() + 3600,
-  stravaUser: {
-    id: 12345,
-    username: 'testuser',
-    firstname: 'Test',
-    lastname: 'User',
-    city: 'Test City',
-    state: 'Test State',
-    country: 'Test Country',
-    sex: 'M',
-    profile: 'https://test.com/profile.png',
-  },
+  theme: 'dark',
+  volumeLevel: 80,
+  favoritePlaylist: '',
+  defaultWorkDuration: 20,
+  defaultRestDuration: 10,
+  userWeight: 70,
+  autoConnect: true,
 }
-
 
 const initialProps = {
   hrmData: initialHrmData,

@@ -1,16 +1,16 @@
 // hooks/useHrmPanel.ts
 import { useMemo, useEffect, useRef } from 'react'
-import { HrmData, Alert } from '@/types/websocket'
+import { HrmData, ActiveAlert } from '@/types/websocket'
 import { useSession } from 'next-auth/react'
-import { UserSettings } from '@/types/index'
+import { UserPreferences } from './useUserPreferences'
 
 interface UseHrmPanelProps {
   hrmData: HrmData[]
-  activeAlerts: Alert[]
-  connectionStatus: 'Connected' | 'Connecting...' | 'Reconnecting...' | 'Disconnected'
-  deviceStatus: 'Disconnected' | 'Connecting' | 'Connected' | 'Error'
+  activeAlerts: ActiveAlert[]
+  connectionStatus: string
+  deviceStatus: string
   connectAndStream: (userName: string, userAge: number) => Promise<void>
-  userSettings: UserSettings
+  userSettings: UserPreferences
 }
 
 export const useHrmPanel = ({
@@ -40,13 +40,7 @@ export const useHrmPanel = ({
     }
 
     autoConnect()
-  }, [
-    connectionStatus,
-    deviceStatus,
-    connectAndStream,
-    session,
-    userSettings,
-  ])
+  }, [connectionStatus, deviceStatus, connectAndStream, session, userSettings])
 
   const tileData = useMemo(() => {
     return hrmData

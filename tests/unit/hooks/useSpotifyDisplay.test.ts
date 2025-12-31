@@ -108,9 +108,12 @@ describe('useSpotifyDisplay', () => {
   })
 
   it('should handle play/pause toggle', () => {
-    const { result, rerender } = renderHook((props) => useSpotifyDisplay(props), {
-      initialProps,
-    })
+    const { result, rerender } = renderHook(
+      (props) => useSpotifyDisplay(props),
+      {
+        initialProps,
+      }
+    )
 
     act(() => {
       result.current.handlers.handlePlayPauseToggle()

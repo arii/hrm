@@ -1,12 +1,5 @@
 // hooks/useSpotifyDisplay.ts
-import {
-  useReducer,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  Dispatch,
-} from 'react'
+import { useReducer, useCallback, useEffect, useRef, useState } from 'react'
 import { SpotifyData } from '@/types/websocket'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { SpotifyCommandMessage } from '@/types/websocket'
@@ -106,7 +99,7 @@ const spotifyDisplayReducer = (
 interface UseSpotifyDisplayProps {
   spotifyData: SpotifyData
   sendData: (data: SpotifyCommandMessage) => void
-  connectionStatus: 'Connected' | 'Connecting...' | 'Reconnecting...' | 'Disconnected'
+  connectionStatus: string
   session: Session | null
 }
 
@@ -183,8 +176,8 @@ export const useSpotifyDisplay = ({
     const newVolume = newMutedState
       ? 0
       : state.lastVolume > 0
-      ? state.lastVolume
-      : 50
+        ? state.lastVolume
+        : 50
     dispatch({ type: 'TOGGLE_MUTE' })
     sendVolumeCommand(newVolume)
   }, [isMuted, state.lastVolume, sendVolumeCommand])
