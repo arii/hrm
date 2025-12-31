@@ -2,7 +2,9 @@
  * @jest-environment node
  */
 import {
+  afterAll,
   afterEach,
+  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -15,6 +17,7 @@ import {
 } from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
+import { TLSSocket } from 'tls'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import {
@@ -29,6 +32,7 @@ import {
   ConnectionMonitor,
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
+import { createMockRequest } from './test-data/request-data-factory'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -83,6 +87,7 @@ jest.mock('ws', () => ({
 class MockWebSocket extends EventEmitter {
   isAlive: boolean
   clientType: string | undefined
+  clientId?: string
   terminate = jest.fn()
   ping = jest.fn()
   send = jest.fn()
@@ -157,10 +162,10 @@ describe('WebSocket Manager', () => {
     })
 
     initSocketManager(mockWss, getSnapshot, mockServices)
-
+    const mockReq = createMockRequest()
     mockWs = new MockWebSocket()
     ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
-    mockWss.emit('connection', mockWs)
+    mockWss.emit('connection', mockWs, mockReq)
   })
 
   afterEach(() => {
@@ -168,6 +173,112 @@ describe('WebSocket Manager', () => {
     jest.clearAllMocks()
     ;(mockWss.clients as Set<MockWebSocket>).clear()
     resetSocketManager()
+  })
+
+  describe('Connection Logging', () => {
+    it('should log connection metadata on new connection', () => {
+      const loggerInfoSpy = jest.spyOn(logger, 'info')
+      const mockReq = createMockRequest('/?clientId=new-client-123')
+      const newWs = new MockWebSocket()
+
+      mockWss.emit('connection', newWs, mockReq)
+
+      expect(loggerInfoSpy).toHaveBeenCalledWith(
+        {
+          clientId: 'new-client-123',
+          ip: '127.0.0.1',
+          isSecure: false,
+          origin: 'http://localhost:3000',
+          userAgent: 'jest-test',
+          host: 'localhost:3000',
+        },
+        'WebSocket client connected'
+      )
+    })
+
+    it('should log a warning when overwriting an existing socket', () => {
+      const loggerWarnSpy = jest.spyOn(logger, 'warn')
+      const mockReq = createMockRequest('/?clientId=test-client') // Same clientId as in beforeEach
+      const newWs = new MockWebSocket()
+
+      mockWss.emit('connection', newWs, mockReq)
+
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        {
+          clientId: 'test-client',
+          ip: '127.0.0.1',
+          isSecure: false,
+          origin: 'http://localhost:3000',
+          userAgent: 'jest-test',
+          host: 'localhost:3000',
+        },
+        'Existing socket found. Overwriting with new connection.'
+      )
+    })
+
+    it('should correctly identify a secure TLSSocket connection', () => {
+      const loggerInfoSpy = jest.spyOn(logger, 'info')
+      // Simulate a TLSSocket by creating an object with the correct prototype chain
+      const mockTlsSocket = Object.create(TLSSocket.prototype)
+      const mockReq = createMockRequest(
+        '/?clientId=secure-client',
+        {},
+        mockTlsSocket
+      )
+      const newWs = new MockWebSocket()
+
+      mockWss.emit('connection', newWs, mockReq)
+
+      expect(loggerInfoSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          clientId: 'secure-client',
+          isSecure: true,
+        }),
+        'WebSocket client connected'
+      )
+    })
+
+    describe('Production Redaction', () => {
+      let originalNodeEnv: string | undefined
+
+      beforeAll(() => {
+        originalNodeEnv = process.env.NODE_ENV
+      })
+
+      afterAll(() => {
+        process.env.NODE_ENV = originalNodeEnv
+      })
+
+      it('should redact sensitive fields in production', async () => {
+        process.env.NODE_ENV = 'production'
+
+        const loggerInfoSpy = jest.spyOn(logger, 'info')
+        const mockReq = createMockRequest('/?clientId=prod-client')
+        const newWs = new MockWebSocket()
+
+        // Re-import the module to get the version with the updated process.env
+        await jest.isolateModulesAsync(async () => {
+          const { initSocketManager: initSocketManagerProd } =
+            await import('../../utils/socketManager')
+
+          // Use the re-imported init function
+          initSocketManagerProd(mockWss, getSnapshot, mockServices)
+          mockWss.emit('connection', newWs, mockReq)
+
+          expect(loggerInfoSpy).toHaveBeenCalledWith(
+            {
+              clientId: 'prod-client',
+              ip: '[REDACTED]',
+              isSecure: false,
+              origin: '[REDACTED]',
+              userAgent: '[REDACTED]',
+              host: 'localhost:3000',
+            },
+            'WebSocket client connected'
+          )
+        })
+      })
+    })
   })
 
   describe('Connection Monitoring', () => {
@@ -180,13 +291,15 @@ describe('WebSocket Manager', () => {
 
     it('should set isAlive to true on new connection', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
-      mockWss.emit('connection', newWs)
+      const mockReq = createMockRequest()
+      mockWss.emit('connection', newWs, mockReq)
       expect(newWs.isAlive).toBe(true)
     })
 
     it('should set isAlive to true on pong', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
-      mockWss.emit('connection', newWs)
+      const mockReq = createMockRequest()
+      mockWss.emit('connection', newWs, mockReq)
       newWs.isAlive = false // Manually set to false
       newWs.emit('pong')
       expect(newWs.isAlive).toBe(true)
@@ -245,7 +358,7 @@ describe('WebSocket Manager', () => {
         role: 'dashboard',
       })
       mockWs.emit('message', message.toString())
-      expect(mockWs.clientType).toBe('dashboard')
+      expect((mockWs as ExtWebSocket).clientType).toBe('dashboard')
     })
 
     it('should send initial state on GET_STATE message', () => {
@@ -264,7 +377,7 @@ describe('WebSocket Manager', () => {
     it('should handle invalid JSON gracefully', () => {
       mockWs.emit('message', 'invalid json')
       expect(logger.error).toHaveBeenCalledWith(
-        expect.any(Object),
+        expect.objectContaining({ clientId: 'test-client' }),
         'Error processing incoming message'
       )
     })
@@ -273,7 +386,7 @@ describe('WebSocket Manager', () => {
       const message = JSON.stringify({ type: 'INVALID_TYPE' })
       mockWs.emit('message', message.toString())
       expect(logger.error).toHaveBeenCalledWith(
-        expect.any(Object),
+        expect.objectContaining({ clientId: 'test-client' }),
         'WebSocket message validation failed'
       )
     })
@@ -292,9 +405,9 @@ describe('WebSocket Manager', () => {
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
-      const dashboardWs = new MockWebSocket()
+      const dashboardWs = new MockWebSocket() as ExtWebSocket
       dashboardWs.clientType = 'dashboard'
-      const controllerWs = new MockWebSocket()
+      const controllerWs = new MockWebSocket() as ExtWebSocket
       controllerWs.clientType = 'controller'
       ;(mockWss.clients as Set<MockWebSocket>).add(dashboardWs)
       ;(mockWss.clients as Set<MockWebSocket>).add(controllerWs)
@@ -313,11 +426,7 @@ describe('WebSocket Manager', () => {
       )
       expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
         'PLAY',
-        {
-          deviceId: undefined,
-          volume: undefined,
-          playlistUri: undefined,
-        }
+        {}
       )
     })
 
@@ -347,12 +456,12 @@ describe('WebSocket Manager', () => {
       const message = JSON.stringify({ type: 'SOME_GARBAGE' })
       jest
         .spyOn(ClientCommandMessageSchema, 'parse')
-        .mockReturnValue({ type: 'SOME_GARBAGE' })
+        .mockReturnValue({ type: 'SOME_GARBAGE' } as unknown)
 
       mockWs.emit('message', message.toString())
 
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.any(Object),
+        expect.objectContaining({ clientId: 'test-client' }),
         'Unknown message type received'
       )
     })
