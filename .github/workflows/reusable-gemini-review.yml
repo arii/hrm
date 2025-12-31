@@ -190,6 +190,12 @@ jobs:
             --context "docs/DEVELOPMENT.md,docs/DESIGN_GUIDELINES.md,docs/TYPESCRIPT_PATTERNS.md" \
             --output "review_result.json"
 
+      - name: Upload review result
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-result
+          path: review_result.json
+
       - name: Post Review Comment
         env:
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
@@ -215,6 +221,33 @@ jobs:
               gh pr comment "$PR_NUMBER" --body-file review_comment.txt
             fi
           fi
+
+  manage-labels:
+    name: Manage PR Labels
+    needs: gemini-review
+    if: needs.gemini-review.result != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download review result
+        uses: actions/download-artifact@v4
+        with:
+          name: review-result
+          path: .
+
+      - name: Install yq
+        uses: mikefarah/yq@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Manage Labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: ./.github/scripts/manage-pr-labels.sh
 
   post-skip-check:
     name: Post Skip Check
