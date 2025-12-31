@@ -6,6 +6,7 @@ import {
 } from '@google/generative-ai'
 import { readFile, writeFile } from 'fs/promises'
 import path from 'path'
+import { runConflictResolution } from './conflict-resolver'
 
 // Simple arg parsing
 const args = process.argv.slice(2)
@@ -18,12 +19,12 @@ const getArg = (key: string) => {
 const task = getArg('--task')
 const taskFile = getArg('--task-file')
 const contextFiles = getArg('--context')?.split(',') || []
+const contextFile = getArg('--context-file')
 const outputFile = getArg('--output')
 const preset = getArg('--preset')
 
 // List of models to try in order.
-// `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
-// It is used as the primary fallback to mitigate rate-limiting issues with the experimental `gemini-2.0-flash-exp` model.
+// The first model in the list is the primary model, and the rest are fallbacks.
 
 // UPDATED: Aligned with latest model recommendations (Q3 2025+)
 // 1. gemini-2.5-flash: Next-gen standard workhorse.
@@ -207,6 +208,14 @@ async function main() {
 
   if (preset === 'review') {
     await runReviewPreset(genAI, contextContent, outputFile)
+  } else if (preset === 'resolve-conflict') {
+    if (!contextFile) {
+      console.error(
+        'Error: --context-file is required for resolve-conflict preset'
+      )
+      process.exit(1)
+    }
+    await runConflictResolution(genAI, contextFile, outputFile)
   } else {
     // Default/Generic mode
     let finalTask = task
@@ -232,7 +241,7 @@ async function main() {
   }
 }
 
-async function generateContentWithFallback(
+export async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
   prompt: string,
   config?: Omit<GenerateContentRequest, 'contents'>
@@ -259,10 +268,8 @@ async function generateContentWithFallback(
       const errorStatus = (error as { status?: number }).status
 
       const isNotFound = errorMessage.includes('404') || errorStatus === 404
-      const isBadRequest =
-        errorMessage.includes('400') || errorStatus === 400 // Sometimes invalid model is 400
-      const isRateLimited =
-        errorMessage.includes('429') || errorStatus === 429
+      const isBadRequest = errorMessage.includes('400') || errorStatus === 400 // Sometimes invalid model is 400
+      const isRateLimited = errorMessage.includes('429') || errorStatus === 429
 
       if (isNotFound || isBadRequest || isRateLimited) {
         let reason = 'Unknown Error'
@@ -782,7 +789,7 @@ async function runReviewPreset(
   }
 }
 
-async function writeOutput(
+export async function writeOutput(
   content: string,
   outputFile: string | null | undefined
 ) {
@@ -794,7 +801,7 @@ async function writeOutput(
   }
 }
 
-async function handleError(error: unknown) {
+export async function handleError(error: unknown) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
