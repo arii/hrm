@@ -1,10 +1,9 @@
 // File: app/components/dashboard/HrmConnectionPanel.tsx
 'use client'
-import { useMemo, useEffect, useCallback, useRef } from 'react'
+import { useMemo, useEffect, useCallback } from 'react'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
-import { useSession } from 'next-auth/react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import Link from 'next/link'
 import IconButton from '@mui/material/IconButton'
@@ -17,10 +16,8 @@ import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTileWithCalories from './HrTileWithCalories'
 
 const HrmConnectionPanel = () => {
-  const { data: session } = useSession()
   const [userSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
-  const autoConnectAttempted = useRef(false)
   const {
     connectAndStream,
     disconnect,
@@ -29,41 +26,22 @@ const HrmConnectionPanel = () => {
     isConnected,
     isSupported,
   } = useBluetoothHRM({
-    userName: userSettings.userName,
-    userAge: userSettings.userAge || 30,
+    userPreferences: userSettings,
   })
 
   const handleConnect = useCallback(() => {
-    const userName =
-      session?.user?.name || userSettings.userName || 'Unknown User'
-    const userAge = userSettings.userAge || 30
-    connectAndStream(userName, userAge).catch((error) => {
+    connectAndStream().catch((error) => {
       // It's common for the requestDevice promise to be cancelled by the user.
       // We catch it here to prevent an unhandled rejection error in the console.
       if (error.name !== 'NotFoundError') {
         console.error('Failed to connect to HRM device:', error)
       }
     })
-  }, [session, userSettings, connectAndStream])
+  }, [connectAndStream])
 
   useEffect(() => {
-    // Auto-connect logic: Use `getDevices()` for gesture-less reconnection.
-    const autoConnect = async () => {
-      if (
-        connectionStatus === 'Connected' &&
-        deviceStatus === 'Disconnected' &&
-        !autoConnectAttempted.current
-      ) {
-        autoConnectAttempted.current = true
-        const userName =
-          session?.user?.name || userSettings.userName || 'Unknown User'
-        const userAge = userSettings.userAge || 30
-        await connectAndStream(userName, userAge)
-      }
-    }
-
-    autoConnect()
-  }, [connectionStatus, deviceStatus, connectAndStream, session, userSettings])
+    // Auto-connect logic is now handled by the useBluetoothHRM hook
+  }, [])
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity
@@ -170,6 +148,7 @@ const HrmConnectionPanel = () => {
             <HrTileWithCalories
               user={user}
               isAlerting={user.isAlerting}
+              userPreferences={userSettings}
               {...(user.alertMessage && { alertMessage: user.alertMessage })}
             />
           </Box>

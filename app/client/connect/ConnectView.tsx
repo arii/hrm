@@ -14,8 +14,7 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
-import React, { useState } from 'react'
-import { MeasurementSystem, Gender } from '../../../types'
+import { useState } from 'react'
 import {
   ToggleButtonGroup,
   ToggleButton,
@@ -25,30 +24,13 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material'
+import { UserPreferences } from '@/hooks/useUserPreferences'
 
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
-  userName: string
-  setUserName: (name: string) => void
-  userAge: string
-  setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
-  userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (
-    height: Partial<{ cm: string; feet: string; inches: string }>
-  ) => void
-  onHeightBlur: () => void
-  heightError: string | null
-  userWeight: string
-  setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
-  weightError: string | null
-  gender: Gender
-  setGender: React.Dispatch<React.SetStateAction<Gender>>
-  unitSystem: MeasurementSystem
-  onUnitChange: (unit: MeasurementSystem) => void
+  userPreferences: UserPreferences
+  setUserPreferences: (prefs: UserPreferences) => void
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -70,24 +52,8 @@ interface ConnectViewProps {
 export default function ConnectView({
   duration,
   caloriesBurned,
-  userName,
-  setUserName,
-  userAge,
-  setUserAge,
-  onAgeBlur,
-  ageError,
-  userHeight,
-  setUserHeight,
-  onHeightBlur,
-  heightError,
-  userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
-  gender,
-  setGender,
-  unitSystem,
-  onUnitChange,
+  userPreferences,
+  setUserPreferences,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -156,9 +122,12 @@ export default function ConnectView({
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
             <ToggleButtonGroup
-              value={unitSystem}
+              value={userPreferences.unitSystem}
               exclusive
-              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
+              onChange={(_e, newUnit) =>
+                newUnit &&
+                setUserPreferences({ ...userPreferences, unitSystem: newUnit })
+              }
               aria-label="measurement system"
               fullWidth
             >
@@ -171,22 +140,8 @@ export default function ConnectView({
             </ToggleButtonGroup>
 
             <UserSettings
-              userName={userName}
-              setUserName={setUserName}
-              userAge={userAge}
-              setUserAge={setUserAge}
-              onAgeBlur={onAgeBlur}
-              ageError={ageError}
-              userHeight={userHeight}
-              setUserHeight={setUserHeight}
-              onHeightBlur={onHeightBlur}
-              heightError={heightError}
-              userWeight={userWeight}
-              setUserWeight={setUserWeight}
-              onWeightBlur={onWeightBlur}
-              weightError={weightError}
-              unit={unitSystem}
-              setUnit={onUnitChange}
+              userPreferences={userPreferences}
+              setUserPreferences={setUserPreferences}
             />
 
             <FormControl component="fieldset">
@@ -195,8 +150,13 @@ export default function ConnectView({
                 row
                 aria-label="gender"
                 name="gender"
-                value={gender}
-                onChange={(e) => setGender(e.target.value as Gender)}
+                value={userPreferences.gender}
+                onChange={(e) =>
+                  setUserPreferences({
+                    ...userPreferences,
+                    gender: e.target.value as 'MALE' | 'FEMALE',
+                  })
+                }
               >
                 <FormControlLabel
                   value="MALE"
@@ -226,10 +186,10 @@ export default function ConnectView({
               Connected as
             </Typography>
             <Typography variant="h5" fontWeight="bold">
-              {userName}
+              {userPreferences.userName}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Age: {userAge}
+              Age: {userPreferences.userAge}
             </Typography>
           </Box>
         )}
@@ -252,8 +212,8 @@ export default function ConnectView({
               size="large"
               onClick={onConnect}
               disabled={
-                !userName.trim() ||
-                !userAge.trim() ||
+                !userPreferences.userName.trim() ||
+                !userPreferences.userAge ||
                 deviceStatus.includes('Connecting')
               }
             >
@@ -322,7 +282,7 @@ export default function ConnectView({
         {isConnected && (
           <Box sx={{ mt: 2 }}>
             <HrTile
-              name={userName}
+              name={userPreferences.userName}
               bpm={currentHR}
               percentMax={hrZoneProps.percentage}
               isAlerting={false}

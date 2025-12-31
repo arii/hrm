@@ -5,7 +5,6 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { IncomingMessage } from 'http'
-import { TLSSocket } from 'tls'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -73,35 +72,6 @@ const getRequestParams = (req: IncomingMessage): URLSearchParams => {
 }
 
 /**
- * Creates a metadata object for logging, with sensitive data redaction in production.
- * @param req - The incoming HTTP request.
- * @param clientId - The client's identifier.
- * @returns An object with connection details for logging.
- */
-const getLogMeta = (
-  req: IncomingMessage,
-  clientId: string
-): Record<string, unknown> => {
-  // DEV-NOTE: Be mindful of logging sensitive data. In a real-world scenario,
-  // IP addresses and user-agents might be considered PII and should be
-  // handled according to privacy policies. Redacting in production is a safeguard.
-  const isProduction = process.env.NODE_ENV === 'production'
-
-  const ip = req.socket.remoteAddress
-  const userAgent = req.headers['user-agent']
-  const origin = req.headers.origin
-
-  return {
-    clientId,
-    ip: isProduction ? '[REDACTED]' : ip,
-    isSecure: req.socket instanceof TLSSocket,
-    origin: isProduction ? '[REDACTED]' : origin,
-    userAgent: isProduction ? '[REDACTED]' : userAgent,
-    host: req.headers.host || '[UNKNOWN]',
-  }
-}
-
-/**
  * Initializes the WebSocket Server manager and registers the core services.
  */
 const initSocketManager = (
@@ -121,15 +91,14 @@ const initSocketManager = (
     const params = getRequestParams(req)
     const clientId =
       params.get('clientId') ||
-      `[GENERATED]-user-${Math.random().toString(36).substring(2, 9)}`
-    const logMeta = getLogMeta(req, clientId)
+      `user-${Math.random().toString(36).substring(2, 9)}`
     extWs.clientId = clientId
 
     // it's a stale or "zombie" connection. Overwrite it with the new socket.
 
     if (clientSockets.has(clientId)) {
       logger.warn(
-        logMeta,
+        { clientId },
         'Existing socket found. Overwriting with new connection.'
       )
     }
@@ -141,7 +110,7 @@ const initSocketManager = (
       extWs.isAlive = true
     })
 
-    logger.info(logMeta, 'WebSocket client connected')
+    logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
     if (!hrmDataRepository.findById(clientId)) {
       // Initialize new client

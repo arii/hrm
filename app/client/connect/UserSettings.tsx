@@ -1,108 +1,139 @@
 // app/client/connect/UserSettings.tsx
-import React from 'react'
+import React, { useState, useMemo } from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import {
+  cmToFeetAndInches,
+  feetAndInchesToCm,
+  toKg,
+  toDisplay,
+} from '../../../utils/units'
+import {
+  validateAgeValue,
+  validateHeightValue,
+  validateWeightValue,
+} from './validation'
+import { UserPreferences } from '@/hooks/useUserPreferences'
 
 interface UserSettingsProps {
-  userName: string
-  setUserName: (name: string) => void
-  userAge: string
-  setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
-  userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (
-    height: Partial<{ cm: string; feet: string; inches: string }>
-  ) => void
-  onHeightBlur: () => void
-  heightError: string | null
-  userWeight: string
-  setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
-  weightError: string | null
-  unit: 'METRIC' | 'IMPERIAL'
-  setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
+  userPreferences: UserPreferences
+  setUserPreferences: (prefs: UserPreferences) => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
-  userName,
-  setUserName,
-  userAge,
-  setUserAge,
-  onAgeBlur,
-  ageError,
-  userHeight,
-  setUserHeight,
-  onHeightBlur,
-  heightError,
-  userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
-  unit,
-  setUnit,
+  userPreferences,
+  setUserPreferences,
 }) => {
+  const [ageError, setAgeError] = useState<string | null>(null)
+  const [weightError, setWeightError] = useState<string | null>(null)
+  const [heightError, setHeightError] = useState<string | null>(null)
+
+  const [displayWeight, setDisplayWeight] = useState<string | null>(null)
+
+  const derivedDisplayWeight = useMemo(
+    () =>
+      userPreferences.userWeight
+        ? toDisplay(
+            userPreferences.userWeight,
+            userPreferences.unitSystem
+          ).toString()
+        : '',
+    [userPreferences.userWeight, userPreferences.unitSystem]
+  )
+
+  const displayHeight = useMemo(() => {
+    const { userHeight, unitSystem } = userPreferences
+    if (userHeight === null) return { cm: '', feet: '', inches: '' }
+    if (unitSystem === 'METRIC') {
+      return {
+        cm: String(Math.round(userHeight)),
+        feet: '',
+        inches: '',
+      }
+    }
+    const { feet, inches } = cmToFeetAndInches(userHeight)
+    return {
+      cm: '',
+      feet: String(feet),
+      inches: String(inches),
+    }
+  }, [userPreferences])
+
+  const handleAgeBlur = () => {
+    const error = validateAgeValue(String(userPreferences.userAge ?? ''))
+    setAgeError(error)
+  }
+
+  const handleWeightBlur = () => {
+    const currentWeight = displayWeight ?? derivedDisplayWeight
+    const error = validateWeightValue(currentWeight, userPreferences.unitSystem)
+    setWeightError(error)
+
+    const numericValue = parseFloat(currentWeight)
+    if (!error && !isNaN(numericValue) && numericValue > 0) {
+      const newKgValue = toKg(numericValue, userPreferences.unitSystem)
+      setUserPreferences({ ...userPreferences, userWeight: newKgValue })
+    }
+  }
+
+  const handleHeightBlur = (value: string, field: 'cm' | 'feet' | 'inches') => {
+    const newHeight = { ...displayHeight, [field]: value }
+    let newCmValue = 0
+    if (userPreferences.unitSystem === 'METRIC') {
+      newCmValue = parseFloat(newHeight.cm)
+    } else {
+      const feet = parseFloat(newHeight.feet)
+      const inches = parseFloat(newHeight.inches)
+      if (!isNaN(feet) && !isNaN(inches)) {
+        newCmValue = feetAndInchesToCm(feet, inches)
+      }
+    }
+
+    const error = validateHeightValue(newCmValue, userPreferences.unitSystem)
+    setHeightError(error)
+
+    if (!error && newCmValue > 0) {
+      setUserPreferences({ ...userPreferences, userHeight: newCmValue })
+    }
+  }
+
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <TextField
         fullWidth
         label="Your Name"
         placeholder="e.g., Jane Doe"
-        value={userName}
-        onChange={(e) => setUserName(e.target.value)}
+        value={userPreferences.userName}
+        onChange={(e) =>
+          setUserPreferences({ ...userPreferences, userName: e.target.value })
+        }
       />
       <TextField
         fullWidth
         label="Your Age"
         placeholder="e.g., 30"
         type="number"
-        value={userAge}
-        onChange={(e) => {
-          if (/^\d*$/.test(e.target.value)) {
-            setUserAge(e.target.value)
-          }
-        }}
-        onBlur={onAgeBlur}
+        value={userPreferences.userAge ?? ''}
+        onChange={(e) =>
+          setUserPreferences({
+            ...userPreferences,
+            userAge: e.target.value ? parseInt(e.target.value, 10) : null,
+          })
+        }
+        onBlur={handleAgeBlur}
         error={!!ageError}
         helperText={ageError}
         inputProps={{ min: 1, max: 120 }}
       />
-      <ToggleButtonGroup
-        value={unit}
-        exclusive
-        onChange={(_, newUnit) => {
-          if (newUnit) {
-            setUnit(newUnit)
-          }
-        }}
-        aria-label="Unit system"
-        aria-describedby="unit-system-description"
-      >
-        <p id="unit-system-description" style={{ display: 'none' }}>
-          Currently selected unit system is {unit}.
-        </p>
-        <ToggleButton value="IMPERIAL" aria-label="imperial units">
-          Imperial (lbs, ft, in)
-        </ToggleButton>
-        <ToggleButton value="METRIC" aria-label="metric units">
-          Metric (kg, cm)
-        </ToggleButton>
-      </ToggleButtonGroup>
-      {unit === 'METRIC' ? (
+      {userPreferences.unitSystem === 'METRIC' ? (
         <TextField
           fullWidth
           label="Your Height (cm)"
           placeholder="e.g., 175"
           type="number"
-          value={userHeight.cm}
-          onChange={(e) => {
-            if (/^\d*\.?\d*$/.test(e.target.value)) {
-              setUserHeight({ cm: e.target.value })
-            }
-          }}
-          onBlur={onHeightBlur}
+          value={displayHeight.cm}
+          onChange={(e) => handleHeightBlur(e.target.value, 'cm')}
+          onBlur={() => handleHeightBlur(displayHeight.cm, 'cm')}
           error={!!heightError}
           helperText={heightError}
         />
@@ -113,41 +144,33 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             label="Feet"
             placeholder="e.g., 5"
             type="number"
-            value={userHeight.feet}
-            onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setUserHeight({ feet: e.target.value })
-              }
-            }}
-            onBlur={onHeightBlur}
+            value={displayHeight.feet}
+            onChange={(e) => handleHeightBlur(e.target.value, 'feet')}
+            onBlur={() => handleHeightBlur(displayHeight.feet, 'feet')}
           />
           <TextField
             fullWidth
             label="Inches"
             placeholder="e.g., 9"
             type="number"
-            value={userHeight.inches}
-            onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setUserHeight({ inches: e.target.value })
-              }
-            }}
-            onBlur={onHeightBlur}
+            value={displayHeight.inches}
+            onChange={(e) => handleHeightBlur(e.target.value, 'inches')}
+            onBlur={() => handleHeightBlur(displayHeight.inches, 'inches')}
           />
         </Stack>
       )}
       <TextField
         fullWidth
-        label={`Your Weight (${unit === 'METRIC' ? 'kg' : 'lbs'})`}
-        placeholder={unit === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
+        label={`Your Weight (${
+          userPreferences.unitSystem === 'METRIC' ? 'kg' : 'lbs'
+        })`}
+        placeholder={
+          userPreferences.unitSystem === 'METRIC' ? 'e.g., 70' : 'e.g., 154'
+        }
         type="number"
-        value={userWeight}
-        onChange={(e) => {
-          if (/^\d*\.?\d*$/.test(e.target.value)) {
-            setUserWeight(e.target.value)
-          }
-        }}
-        onBlur={onWeightBlur}
+        value={displayWeight ?? derivedDisplayWeight}
+        onChange={(e) => setDisplayWeight(e.target.value)}
+        onBlur={handleWeightBlur}
         error={!!weightError}
         helperText={weightError}
       />

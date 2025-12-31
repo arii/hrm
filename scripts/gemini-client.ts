@@ -22,8 +22,8 @@ const outputFile = getArg('--output')
 const preset = getArg('--preset')
 
 // List of models to try in order.
-// `gemini-1.5-flash-latest` is the recommended standard model for its balance of speed and capability.
-// It is used as the primary fallback to mitigate rate-limiting issues with the experimental `gemini-2.0-flash-exp` model.
+// The experimental `gemini-2.0-flash-exp` is prioritized for internal testing of the latest features.
+// `gemini-1.5-flash-latest` is the recommended standard model and serves as the primary, stable fallback.
 
 // UPDATED: Aligned with latest model recommendations (Q3 2025+)
 // 1. gemini-2.5-flash: Next-gen standard workhorse.

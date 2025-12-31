@@ -18,6 +18,7 @@ import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
+import { UserPreferences } from './useUserPreferences'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -38,39 +39,6 @@ const parseHeartRate = (value: DataView): number => {
 }
 
 /**
- * @function setCookie
- * @description Sets a browser cookie with a specified name, value, and expiration.
- * This function is a no-op in non-browser environments.
- * @param {string} name - The name of the cookie.
- * @param {string} value - The value to store in the cookie.
- * @param {number} [days=365] - The number of days until the cookie expires.
- * @sideeffect Creates or updates a cookie in `document.cookie`.
- */
-const setCookie = (name: string, value: string, days = 365) => {
-  if (typeof document !== 'undefined') {
-    const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    document.cookie = `${name}=${encodeURIComponent(
-      value
-    )}; expires=${expires}; path=/`
-  }
-}
-
-/**
- * @function getCookie
- * @description Retrieves the value of a cookie by its name.
- * Returns an empty string if the cookie is not found or in a non-browser environment.
- * @param {string} name - The name of the cookie to retrieve.
- * @returns {string} The decoded value of the cookie.
- */
-const getCookie = (name: string): string => {
-  if (typeof document === 'undefined') return ''
-  return document.cookie.split('; ').reduce((r, v) => {
-    const parts = v.split('=')
-    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
-  }, '')
-}
-
-/**
  * @interface UseBluetoothHRMProps
  * @description Props for configuring the useBluetoothHRM hook.
  */
@@ -88,8 +56,7 @@ interface UseBluetoothHRMProps {
    * A lower value will send more frequent updates, while a higher value will send fewer.
    */
   throttleMs?: number
-  userName?: string | null
-  userAge?: number | null
+  userPreferences: UserPreferences
 }
 
 /**
@@ -127,31 +94,29 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  *   deviceStatus,
  *   isConnected,
  *   batteryLevel
- * } = useBluetoothHRM({ dataLivenessTimeoutMs: 5000 });
+ * } = useBluetoothHRM({ dataLivenessTimeoutMs: 5000, userPreferences });
  *
  * return (
  *   <div>
  *     <p>Device Status: {deviceStatus}</p>
  *     <p>Connected: {isConnected ? 'Yes' : 'No'}</p>
  *     {batteryLevel && <p>Battery: {batteryLevel}%</p>}
- *     <button onClick={() => connectAndStream('John Doe', 30)}>Connect</button>
+ *     <button onClick={connectAndStream}>Connect</button>
  *     <button onClick={disconnect}>Disconnect</button>
  *   </div>
  * );
  * ```
  */
-const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
+const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
   const {
     dataLivenessTimeoutMs = 10000,
     throttleMs = 250,
-    userName,
-    userAge,
+    userPreferences,
   } = props
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
     useState<DisconnectionReason>(null)
-  const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
@@ -161,7 +126,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
   const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -176,27 +140,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [sendData])
 
   useEffect(() => {
-    userDetailsRef.current = { name: userName || '', age: userAge || 0 }
-  }, [userName, userAge])
-
-  useEffect(() => {
-    // Keep the ref updated if props change
-    userDetailsRef.current = {
-      name: userName || '',
-      age: userAge || 0,
-    }
-
     if (deviceStatus.startsWith('Connected')) {
-      const { name, age } = userDetailsRef.current
-      const calculatedMaxHr = calculateMaxHr(age)
+      const { userName, userAge } = userPreferences
+      const calculatedMaxHr = calculateMaxHr(userAge ?? 0)
       const deviceName = deviceRef.current?.name || 'Unknown'
 
       const metadataData: HrmMetadataUpdateData = {
         maxHr: calculatedMaxHr,
-        name: name || `Bluetooth HRM (${deviceName})`,
+        name: userName || `Bluetooth HRM (${deviceName})`,
       }
-      if (typeof age === 'number') {
-        metadataData.age = age
+      if (typeof userAge === 'number') {
+        metadataData.age = userAge
       }
 
       // Prevent sending redundant metadata updates
@@ -209,7 +163,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         lastSentMetadataRef.current = metadataData
       }
     }
-  }, [userName, userAge, deviceStatus, sendData])
+  }, [userPreferences, deviceStatus, sendData])
 
   useEffect(() => {
     statusRef.current = deviceStatus
@@ -297,7 +251,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
     setDeviceStatus('Disconnected')
-    setSavedDevice(null)
     setBatteryLevel(null)
     deviceRef.current = null
   }, [])
@@ -313,7 +266,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     logger.info('Initiating device forget sequence...')
     disconnect()
     try {
-      setCookie('hrm_device_id', '', -1)
       if (navigator.bluetooth && navigator.bluetooth.getDevices) {
         const devices = await navigator.bluetooth.getDevices()
         for (const device of devices) {
@@ -435,8 +387,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         device.addEventListener('gattserverdisconnected', onDisconnected)
 
         setDeviceStatus(`Connected to: ${device.name}`)
-        setSavedDevice(device)
-        setCookie('hrm_device_id', device.id)
         isManualDisconnect.current = false
         setDisconnectionReason(null)
         return true
@@ -452,90 +402,64 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     connectToGattRef.current = connectToGatt
   }, [connectToGatt])
 
-  /**
-   * @function connectAndStream
-   * @description Connects to a Bluetooth HRM device and starts streaming data.
-   * It attempts to reconnect to a saved device or prompts the user to select a new one.
-   *
-   * @param {string} [userName] - The user's name for display.
-   * @param {number} [userAge] - The user's age to calculate max heart rate.
-   * @returns {Promise<void>} A promise that resolves on successful connection, or rejects on failure.
-   * @throws {Error} If the connection fails for any reason (e.g., WebSocket disconnected,
-   * device not found, user cancellation).
-   * @sideeffect May trigger the browser's Bluetooth device picker.
-   * @sideeffect Updates component state throughout the connection process.
-   */
-  const connectAndStream = useCallback(
-    async (
-      userNameFromArgs?: string,
-      userAgeFromArgs?: number
-    ): Promise<void> => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
+  const connectAndStream = useCallback(async (): Promise<void> => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    if (statusRef.current.startsWith('Connected')) return
+    if (connectionStatus !== 'Connected') {
+      const err = new Error('WebSocket not connected')
+      handleConnectionError(err)
+      throw err
+    }
+
+    try {
+      setDeviceStatus('Scanning for devices...')
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [HR_SERVICE_UUID] }],
+        optionalServices: [BATTERY_SERVICE_UUID],
+      })
+
+      if (device) {
+        await connectToGatt(device)
       }
+    } catch (error) {
+      handleConnectionError(error)
+      throw error
+    }
+  }, [connectionStatus, connectToGatt, handleConnectionError])
 
-      // Prioritize args, but fall back to props.
-      userDetailsRef.current = {
-        name: userNameFromArgs || userName || '',
-        age: userAgeFromArgs || userAge || 0,
-      }
-
-      if (statusRef.current.startsWith('Connected')) return
-      if (connectionStatus !== 'Connected') {
-        const err = new Error('WebSocket not connected')
-        handleConnectionError(err)
-        throw err
-      }
-
-      try {
-        setDeviceStatus('Checking saved devices...')
-        let device = savedDevice
-
-        if (!device) {
-          const savedDeviceId = getCookie('hrm_device_id')
-          if (savedDeviceId && navigator.bluetooth?.getDevices) {
-            const devices = await navigator.bluetooth.getDevices()
-            const foundDevice = devices.find((d) => d.id === savedDeviceId)
-
-            if (foundDevice) {
-              // Attempt to reconnect to the previously saved device
-              await connectToGatt(foundDevice)
-              return
-            }
+  useEffect(() => {
+    const autoConnect = async () => {
+      if (
+        userPreferences.autoConnect &&
+        userPreferences.deviceId &&
+        isSupported &&
+        !deviceRef.current &&
+        connectionStatus === 'Connected'
+      ) {
+        try {
+          const devices = await navigator.bluetooth.getDevices()
+          const device = devices.find((d) => d.id === userPreferences.deviceId)
+          if (device) {
+            await connectToGatt(device)
           }
+        } catch (error) {
+          logger.error('Auto-connect failed', error)
+          handleConnectionError(error)
         }
-
-        if (!device) {
-          setDeviceStatus('Scanning for devices...')
-          // Note: acceptAllDevices is an alternative if filters fail,
-          // but strict filtering is better for UX to avoid showing non-HRM devices.
-          device = await navigator.bluetooth.requestDevice({
-            filters: [{ services: [HR_SERVICE_UUID] }],
-            optionalServices: [BATTERY_SERVICE_UUID],
-          })
-        }
-
-        if (device) {
-          await connectToGatt(device)
-        }
-        // If `requestDevice` is cancelled by the user, it throws a `NotFoundError`,
-        // which is caught and handled below. A resolved promise without a device
-        // is not an expected behavior.
-      } catch (error) {
-        handleConnectionError(error)
-        // Re-throw the error to ensure the promise rejects
-        throw error
       }
-    },
-    [
-      connectionStatus,
-      savedDevice,
-      connectToGatt,
-      handleConnectionError,
-      userName,
-      userAge,
-    ]
-  )
+    }
+    autoConnect()
+  }, [
+    userPreferences.autoConnect,
+    userPreferences.deviceId,
+    isSupported,
+    connectionStatus,
+    connectToGatt,
+    handleConnectionError,
+  ])
 
   return {
     connectAndStream,
@@ -544,7 +468,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     deviceStatus,
     batteryLevel,
     isConnected: deviceStatus.startsWith('Connected'),
-    isSupported, // Export this flag
+    isSupported,
     disconnectionReason,
   }
 }

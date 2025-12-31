@@ -8,28 +8,29 @@ import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import HrTile from './HrTile'
 import { HrmData } from '@/types/websocket'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
-import { useUserWeight } from '@/hooks/useUserWeight'
 import { useHrZone } from '@/hooks/useHrZone'
+import { UserPreferences } from '@/hooks/useUserPreferences'
 
 interface HrTileWithCaloriesProps {
   user: HrmData
   isAlerting: boolean
   alertMessage?: string
+  userPreferences: UserPreferences
 }
 
 const HrTileWithCalories = ({
   user,
   isAlerting,
   alertMessage,
+  userPreferences,
 }: HrTileWithCaloriesProps) => {
   const [userSettings] = useUserSettings()
   const { timerData } = useWebSocket()
-  const [weightInKg] = useUserWeight()
 
   const { calories, resetCalories } = useCalorieCounter(
     user.value || 0,
     userSettings.userAge || 30,
-    weightInKg || 70,
+    userPreferences.userWeight || 70,
     timerData.isRunning
   )
 
