@@ -30,6 +30,17 @@ Prefer clear, readable conditional structures. For complex flow control, conside
 
 Real-time/Stateful Context: All logic must consider the application's core requirement for real-time, stateful data synchronization. Focus on solutions that maintain predictability and performance when reacting to WebSocket events.
 Security and Performance: Ensure the refactored code is performant, especially for data processing, and adheres to secure coding practices.
+
+**Code Quality and Maintainability:**
+
+- **No Magic Numbers**: Hardcoded values should be defined as constants in a dedicated constants file (`lib/constants.ts` or similar). This improves readability and maintainability.
+- **Modularity and Single Responsibility**: Avoid creating overly long scripts or components. Break down large files like `gemini-client.ts` and `page.tsx` into smaller, reusable functions or components with a single responsibility.
+- **Shared Helper Functions**: Encourage the creation and use of shared helper functions for common tasks. Place these in the `utils` or `lib` directory.
+- **Testing**:
+    - When introducing a new frontend component or backend service, it must be accompanied by a corresponding test.
+    - Use data factories or mock data generators for all tests to ensure consistency and readability.
+    - Use ARIA labels and `data-testid` attributes for easier and more reliable testing of UI components.
+
 Output Format:
 
 Explanation: Start with a section titled Improvements: containing a concise, technical explanation of what was improved and why, with specific references to the modern features used (e.g., "Improved data transformation using array spread for guaranteed immutability and leveraged optional chaining for safe access to the nested session.data object.").
