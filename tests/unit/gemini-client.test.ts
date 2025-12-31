@@ -1,7 +1,20 @@
 /**
  * @jest-environment node
  */
-import { getModelFallbacks, JsonProcessor } from '../../scripts/gemini-client'
+import {
+  buildReviewPrompt,
+  getModelFallbacks,
+  getSpecializedRules,
+  JsonProcessor,
+  ReviewContext,
+} from '../../scripts/gemini-client'
+import { readFile } from 'fs/promises'
+
+// Mock the readFile function
+jest.mock('fs/promises', () => ({
+  readFile: jest.fn(),
+}))
+const mockedReadFile = readFile as jest.Mock
 
 describe('JsonProcessor', () => {
   const processor = new JsonProcessor()
@@ -136,5 +149,135 @@ describe('getModelFallbacks', () => {
       'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
     )
     consoleWarnSpy.mockRestore()
+  })
+})
+
+describe('getSpecializedRules', () => {
+  it('should return an empty string if no relevant files are changed', () => {
+    const changedFiles = ['src/component.tsx', 'README.md']
+    const rules = getSpecializedRules(changedFiles)
+    expect(rules).toBe('')
+  })
+
+  it('should return WebSocket rules for WebSocket-related file changes', () => {
+    const changedFiles = ['server.ts', 'src/other.ts']
+    const rules = getSpecializedRules(changedFiles)
+    expect(rules).toContain('### ⚡ Real-Time & WebSocket Focus:')
+    expect(rules).not.toContain('### 🔐 Authentication & Session Focus:')
+  })
+
+  it('should return Authentication rules for auth-related file changes', () => {
+    const changedFiles = ['lib/auth.ts', 'src/other.ts']
+    const rules = getSpecializedRules(changedFiles)
+    expect(rules).not.toContain('### ⚡ Real-Time & WebSocket Focus:')
+    expect(rules).toContain('### 🔐 Authentication & Session Focus:')
+  })
+
+  it('should return both rule sets when files from both categories are changed', () => {
+    const changedFiles = ['utils/socketManager.ts', 'app/api/auth/route.ts']
+    const rules = getSpecializedRules(changedFiles)
+    expect(rules).toContain('### ⚡ Real-Time & WebSocket Focus:')
+    expect(rules).toContain('### 🔐 Authentication & Session Focus:')
+  })
+})
+
+describe('buildReviewPrompt', () => {
+  const baseContext: ReviewContext = {
+    prNumber: '123',
+    prTitle: 'Test PR',
+    prAuthor: 'test-author',
+    prDescription: 'Test description',
+    prLabels: 'test-label',
+    filesChanged: 1,
+    totalLoc: 10,
+    reviewDepth: 'standard',
+    changedAreas: 'test-area',
+    reviewCount: 0,
+    resolvedCount: 0,
+    changesRequested: 0,
+    previousReviews: 'None',
+    commitMessages: 'feat: test commit',
+    commitHash: 'testhash',
+    hasTestChanges: false,
+    missingTests: true,
+    failedChecks: [],
+  }
+
+  beforeEach(() => {
+    mockedReadFile.mockClear()
+  })
+
+  it('should load review.md and inject specialized rules when no failures', async () => {
+    const reviewTemplate =
+      'This is the review template. {{specializedRules}} {{prTitle}}'
+    mockedReadFile.mockResolvedValueOnce(reviewTemplate)
+
+    const context: ReviewContext = {
+      ...baseContext,
+      changedAreas: 'server.ts, lib/auth.ts',
+    }
+
+    const prompt = await buildReviewPrompt('test diff', context, 'test context')
+
+    expect(mockedReadFile).toHaveBeenCalledWith('prompts/review.md', 'utf-8')
+    expect(prompt).toContain('### ⚡ Real-Time & WebSocket Focus:')
+    expect(prompt).toContain('### 🔐 Authentication & Session Focus:')
+    expect(prompt).toContain('Test PR')
+  })
+
+  it('should fall back to standard-review.md if review.md is not found', async () => {
+    const consoleWarnSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {})
+    const standardTemplate = 'This is the standard template. {{prTitle}}'
+    mockedReadFile
+      .mockRejectedValueOnce(new Error('File not found'))
+      .mockResolvedValueOnce(standardTemplate)
+
+    const prompt = await buildReviewPrompt(
+      'test diff',
+      baseContext,
+      'test context'
+    )
+
+    expect(mockedReadFile).toHaveBeenCalledWith('prompts/review.md', 'utf-8')
+    expect(mockedReadFile).toHaveBeenCalledWith(
+      'prompts/standard-review.md',
+      'utf-8'
+    )
+    expect(prompt).not.toContain('{{specializedRules}}')
+    expect(prompt).toContain('Test PR')
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      "Warning: 'prompts/review.md' not found. Falling back to legacy templates."
+    )
+    consoleWarnSpy.mockRestore()
+  })
+
+  it('should generate a fix mode prompt when there are failed checks', async () => {
+    const fixModeTemplate =
+      'IMMEDIATE ACTION REQUIRED. You are now in **DEBUG MODE**. Failures: {{failureList}}'
+    mockedReadFile.mockResolvedValue(fixModeTemplate)
+
+    const context: ReviewContext = {
+      ...baseContext,
+      failedChecks: [
+        {
+          name: 'test-check',
+          conclusion: 'failure',
+          detailsUrl: 'http://test.com',
+          logSnippet: 'Test log snippet',
+        },
+      ],
+    }
+
+    const prompt = await buildReviewPrompt(
+      'test diff',
+      context,
+      'test context'
+    )
+    expect(mockedReadFile).toHaveBeenCalledWith('prompts/fix-mode.md', 'utf-8')
+    expect(prompt).toContain('IMMEDIATE ACTION REQUIRED')
+    expect(prompt).toContain('You are now in **DEBUG MODE**')
+    expect(prompt).toContain('- **test-check** (failure)')
   })
 })

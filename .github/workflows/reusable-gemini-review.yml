@@ -202,8 +202,9 @@ jobs:
             else
               gh job view "$job_id" --log > "$raw_log_file" 2>&1 || echo "Error: Failed to fetch logs for job ${job_id}." > "$raw_log_file"
               tail -c 25K "$raw_log_file" > "$raw_log_file.tmp" && mv "$raw_log_file.tmp" "$raw_log_file"
-              if ! pnpm tsx scripts/redact-secrets.ts "$raw_log_file" "$redacted_log_file"; then
+              if ! pnpm tsx scripts/redact-secrets.ts "$raw_log_file" "$redacted_log_file" > "$redacted_log_file.log" 2>&1; then
                 echo "Error: Redaction script failed for job ${job_id}." > "$redacted_log_file"
+                cat "$redacted_log_file.log" >> "$redacted_log_file"
               fi
             fi
 
@@ -219,10 +220,16 @@ jobs:
                     jq -r '
                       .suites[] | .. | .specs? // empty | .[] | select(.ok | not) |
                       "Test: " + .title + "\nError: " + (.tests[].results[] | select(.error) | .error.message)
-                    ' "$report_json_path" | sed 's/\\n/ /g' | head -c 8000 > "$summary_file"
+                    ' "$report_json_path" 2>/dev/null | sed 's/\\n/ /g' | head -c 8000 > "$summary_file"
+                  else
+                    echo "Playwright report.json not found." > "$summary_file"
                   fi
+                else
+                  echo "Failed to download Playwright report artifact." > "$summary_file"
                 fi
                 rm -rf "$artifact_dir"
+              else
+                echo "Could not determine run_id for Playwright job." > "$summary_file"
               fi
             fi
           }
@@ -288,7 +295,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           if [ -f "review_result.json" ]; then
-            jq -c '.artifacts[] | select(.category == "technical-debt" or .category == "refactor-needed")' review_result.json | while read -r artifact; do
+            jq -c '.artifacts[] | select(.category == "technical-debt" or .category == "refactor-needed" or .category == "security" or .category == "performance" or .category == "documentation")' review_result.json | while read -r artifact; do
               title=$(echo "$artifact" | jq -r .title)
               body=$(echo "$artifact" | jq -r .description)
               category=$(echo "$artifact" | jq -r .category)
