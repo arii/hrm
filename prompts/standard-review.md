@@ -128,8 +128,9 @@ Make your feedback:
 - **Contextual**: Consider the change in the broader codebase
 - **Balanced**: Acknowledge good practices while noting improvements
 
-**Markdown Formatting (STRICT):**
-- You MUST add **TWO NEWLINES** (`\n\n`) before every header.
-- You MUST add **ONE NEWLINE** (`\n`) after every header.
-- Do not clump sections together.
-- Ensure lists are properly spaced.
+**Markdown Formatting Guidelines:**
+- Use standard Markdown for all formatting.
+- Ensure proper spacing between sections for readability. For example, use a blank line to separate paragraphs and lists from headings.
+- Use headings (`##`, `###`) to structure the review.
+- Use bullet points (`-` or `*`) for lists of issues or recommendations.
+- Use code fences (```) for code blocks.
