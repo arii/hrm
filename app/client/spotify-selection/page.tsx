@@ -17,8 +17,6 @@ const PlaylistSelector = dynamic(
     loading: () => <Skeleton variant="rectangular" height={200} />,
   }
 )
-
-
 const SpotifySelectionPage = () => {
   const { spotifyData, sendData } = useWebSocket()
 
