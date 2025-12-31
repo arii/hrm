@@ -1,8 +1,6 @@
 import React, { memo } from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 
 interface UserSettingsProps {
   userName: string
@@ -42,15 +40,15 @@ const UserSettings: React.FC<UserSettingsProps> = memo(
     weightError,
     unit,
   }) => {
-  const handleHeightChange = (
-    value: number,
-    field: 'cm' | 'feet' | 'inches'
-  ) => {
-    const regex = field === 'cm' ? /^\d*\.?\d*$/ : /^\d*$/
-    if (regex.test(value.toString())) {
-      setUserHeight({ [field]: value.toString() })
+    const handleHeightChange = (
+      value: number,
+      field: 'cm' | 'feet' | 'inches'
+    ) => {
+      const regex = field === 'cm' ? /^\d*\.?\d*$/ : /^\d*$/
+      if (regex.test(value.toString())) {
+        setUserHeight({ [field]: value.toString() })
+      }
     }
-  }
     return (
       <Stack spacing={2} sx={{ mb: 3 }}>
         <TextField
@@ -83,7 +81,7 @@ const UserSettings: React.FC<UserSettingsProps> = memo(
             placeholder="e.g., 175"
             type="number"
             value={userHeight.cm}
-          onChange={(e) => handleHeightChange(e.target.valueAsNumber, 'cm')}
+            onChange={(e) => handleHeightChange(e.target.valueAsNumber, 'cm')}
             onBlur={onHeightBlur}
             error={!!heightError}
             helperText={heightError}
@@ -96,9 +94,9 @@ const UserSettings: React.FC<UserSettingsProps> = memo(
               placeholder="e.g., 5"
               type="number"
               value={userHeight.feet}
-            onChange={(e) =>
-              handleHeightChange(e.target.valueAsNumber, 'feet')
-            }
+              onChange={(e) =>
+                handleHeightChange(e.target.valueAsNumber, 'feet')
+              }
               onBlur={onHeightBlur}
             />
             <TextField
@@ -107,9 +105,9 @@ const UserSettings: React.FC<UserSettingsProps> = memo(
               placeholder="e.g., 9"
               type="number"
               value={userHeight.inches}
-            onChange={(e) =>
-              handleHeightChange(e.target.valueAsNumber, 'inches')
-            }
+              onChange={(e) =>
+                handleHeightChange(e.target.valueAsNumber, 'inches')
+              }
               onBlur={onHeightBlur}
             />
           </Stack>
@@ -133,5 +131,7 @@ const UserSettings: React.FC<UserSettingsProps> = memo(
     )
   }
 )
+
+UserSettings.displayName = 'UserSettings'
 
 export default UserSettings
