@@ -115,6 +115,14 @@ This project includes a workflow to automatically analyze pull requests for tech
 - It searches for open issues with the same fingerprint to prevent duplicates.
 - If no duplicate is found, it creates a new issue with the "tech-debt" and "ai-generated" labels.
 
+#### Creating Issues from PR Reviews
+
+The repository provides an automated workflow to create issues from the suggestions in a Gemini code review. This can be triggered in two ways:
+
+1.  **PR Comment**: Add a comment containing the command `/create-issues` to a pull request. The workflow will find the latest successful CI run for the PR, download the review artifact, and create issues for each suggestion.
+
+2.  **Manual Trigger**: Navigate to the "Actions" tab in the GitHub repository, select the "Create Issues from Command" workflow, and run it manually. You will be prompted to enter the Pull Request number you wish to source the review artifacts from.
+
 ### Legacy Pre-commit Hooks
 
 The project contains legacy Python-based pre-commit hooks (`.pre-commit-config.yaml`). These are now considered **deprecated** in favor of the Husky-based Node.js tooling. The Python hooks will be removed in a future pull request to eliminate redundancy.
