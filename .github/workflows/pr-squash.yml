@@ -150,3 +150,14 @@ jobs:
               issue_number: ${{ github.event.issue.number }},
               body: messageBody
             });
+
+      - name: Trigger PR Quality Check
+        if: steps.squash_rebase.outcome == 'success'
+        uses: ./.github/workflows/pr-quality.yml
+        with:
+          branch: ${{ steps.pr_data.outputs.head_ref }}
+          pr_number: ${{ github.event.issue.number }}
+          # Force full quality checks on the newly squashed commit.
+          has_changes: 'true'
+        secrets:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
