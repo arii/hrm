@@ -823,7 +823,7 @@ jobs:
   quality-report:
     name: 📊 Quality Report
     if: always()
-    needs: [prepare-env, knip-check, lint-check, build-check, integration-tests]
+    needs: [prepare-env, enforce-single-commit, knip-check, lint-check, build-check, integration-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -852,6 +852,7 @@ jobs:
       - name: Post Quality Summary with Details
         if: always()
         env:
+          SINGLE_COMMIT_RESULT: ${{ needs.enforce-single-commit.result }}
           KNIP_RESULT: ${{ needs.knip-check.result }}
           LINT_RESULT: ${{ needs.lint-check.result }}
           BUILD_RESULT: ${{ needs.build-check.result }}
@@ -877,13 +878,14 @@ jobs:
             echo ""
             echo "| Check | Status |"
             echo "|-------|--------|"
-            echo "| Knip | $([ "$KNIP_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$KNIP_RESULT) |"
-            echo "| Lint | $([ "$LINT_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$LINT_RESULT) |"
-            echo "| Build | $([ "$BUILD_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$BUILD_RESULT) |"
-            echo "| Infra Tests | $([ "$INFRA_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_TESTS_OUTCOME) |"
-            echo "| Unit Tests | $([ "$UNIT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$UNIT_TESTS_OUTCOME) |"
-            echo "| Perf Tests | $([ "$PERF_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$PERF_TESTS_OUTCOME) |"
-            echo "| Visual Tests | $([ "$VISUAL_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_OUTCOME) |"
+            echo "| Single Commit | $(if [ "$SINGLE_COMMIT_RESULT" = "success" ]; then echo '✅ success'; else echo '❌ '$SINGLE_COMMIT_RESULT; fi) |"
+            echo "| Knip | $(if [ "$KNIP_RESULT" = "success" ]; then echo '✅ success'; else echo '❌ '$KNIP_RESULT; fi) |"
+            echo "| Lint | $(if [ "$LINT_RESULT" = "success" ]; then echo '✅ success'; else echo '❌ '$LINT_RESULT; fi) |"
+            echo "| Build | $(if [ "$BUILD_RESULT" = "success" ]; then echo '✅ success'; else echo '❌ '$BUILD_RESULT; fi) |"
+            echo "| Infra Tests | $(if [ "$INFRA_TESTS_OUTCOME" = "success" ]; then echo '✅ success'; else echo '❌ '$INFRA_TESTS_OUTCOME; fi) |"
+            echo "| Unit Tests | $(if [ "$UNIT_TESTS_OUTCOME" = "success" ]; then echo '✅ success'; else echo '❌ '$UNIT_TESTS_OUTCOME; fi) |"
+            echo "| Perf Tests | $(if [ "$PERF_TESTS_OUTCOME" = "success" ]; then echo '✅ success'; else echo '❌ '$PERF_TESTS_OUTCOME; fi) |"
+            echo "| Visual Tests | $(if [ "$VISUAL_TESTS_OUTCOME" = "success" ]; then echo '✅ success'; else echo '❌ '$VISUAL_TESTS_OUTCOME; fi) |"
             echo ""
 
             # Add failure logs
@@ -904,7 +906,7 @@ jobs:
             fi
 
             # Summary
-            if [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
+            if [ "$SINGLE_COMMIT_RESULT" = "success" ] && [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
                [ "$INFRA_TESTS_OUTCOME" = "success" ] && [ "$UNIT_TESTS_OUTCOME" = "success" ] && [ "$PERF_TESTS_OUTCOME" = "success" ] && [ "$VISUAL_TESTS_OUTCOME" = "success" ]; then
               echo "✅ **All quality checks passed!**"
             else
@@ -923,7 +925,7 @@ jobs:
           }
 
           # Check if all passed
-          if [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
+          if [ "$SINGLE_COMMIT_RESULT" = "success" ] && [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
              [ "$INFRA_TESTS_OUTCOME" = "success" ] && [ "$UNIT_TESTS_OUTCOME" = "success" ] && [ "$PERF_TESTS_OUTCOME" = "success" ] && [ "$VISUAL_TESTS_OUTCOME" = "success" ]; then
             echo "✅ **All quality checks passed!**" >> $GITHUB_STEP_SUMMARY
           else
