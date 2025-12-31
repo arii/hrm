@@ -64,7 +64,7 @@ describe('components/SpotifyControls', () => {
     render(<SpotifyControls />)
     expect(mockSendData).toHaveBeenCalledWith({
       type: 'SPOTIFY_COMMAND',
-      command: 'GET_DEVICES',
+      payload: { command: 'GET_DEVICES' },
     })
   })
 
@@ -74,7 +74,7 @@ describe('components/SpotifyControls', () => {
     expect(mockSendData).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'SPOTIFY_COMMAND',
-        command: 'PAUSE',
+        payload: { command: 'PAUSE', deviceId: '1' },
       })
     )
   })

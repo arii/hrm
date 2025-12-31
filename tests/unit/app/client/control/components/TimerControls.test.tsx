@@ -76,7 +76,7 @@ describe('TimerControls', () => {
     expect(screen.getByTestId('stop-timer-button')).toBeInTheDocument()
     expect(sendDataSpy).toHaveBeenCalledWith({
       type: 'TIMER_COMMAND',
-      command: 'START',
+      payload: { command: 'START' },
     })
   })
 
@@ -186,7 +186,7 @@ describe('TimerControls', () => {
     })
     expect(sendDataSpy).toHaveBeenCalledWith({
       type: 'TIMER_COMMAND',
-      command: 'START',
+      payload: { command: 'START' },
     })
   })
 })

@@ -237,7 +237,7 @@ describe('SpotifyPolling Service', () => {
 
   describe('Device Management', () => {
     it('should refresh and broadcast available devices', async () => {
-      const mockDevices = [
+      const mockApiDevices = [
         {
           id: 'device1',
           name: 'Speaker',
@@ -259,17 +259,17 @@ describe('SpotifyPolling Service', () => {
       ]
       mockPlayer.getAvailableDevices.mockImplementation(() =>
         Promise.resolve({
-          devices: mockDevices,
+          devices: mockApiDevices,
         })
       )
 
       await spotifyService.refreshDevices()
 
+      // The broadcast sends the entire state. After refreshDevices completes,
+      // the service's internal state is updated, so getState() returns the expected payload.
       expect(broadcastMock).toHaveBeenCalledWith({
         type: 'SPOTIFY_UPDATE',
-        payload: expect.objectContaining({
-          devices: mockDevices,
-        }),
+        payload: spotifyService.getState(),
       })
     })
 

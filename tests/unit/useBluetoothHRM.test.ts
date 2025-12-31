@@ -274,7 +274,7 @@ describe('useBluetoothHRM', () => {
       expect(mockSendData).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'HRM_METADATA_UPDATE',
-          data: expect.objectContaining({ name: 'Test User', age: 30 }),
+          payload: expect.objectContaining({ name: 'Test User', age: 30 }),
         })
       )
 
@@ -300,7 +300,7 @@ describe('useBluetoothHRM', () => {
       expect(mockSendData).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'HRM_METADATA_UPDATE',
-          data: expect.objectContaining({ name: 'Test User', age: 30 }),
+          payload: expect.objectContaining({ name: 'Test User', age: 30 }),
         })
       )
 
@@ -311,7 +311,7 @@ describe('useBluetoothHRM', () => {
       expect(mockSendData).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'HRM_METADATA_UPDATE',
-          data: expect.objectContaining({ name: 'Updated User', age: 30 }),
+          payload: expect.objectContaining({ name: 'Updated User', age: 30 }),
         })
       )
     })

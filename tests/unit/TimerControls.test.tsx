@@ -106,8 +106,10 @@ describe('TimerControls', () => {
     expect(sendData).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'TIMER_CONFIG',
-        workDuration: 45,
-        restDuration: 15,
+        payload: {
+          workDuration: 45,
+          restDuration: 15,
+        },
       })
     )
   })
