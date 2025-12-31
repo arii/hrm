@@ -1,0 +1,97 @@
+# .github/workflows/tech-debt-analysis.yml
+name: Technical Debt Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'The pull request number to analyze.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  analyze:
+    name: Analyze for Technical Debt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Get PR Diff
+        id: diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          gh pr diff "$PR_NUMBER" --patch > pr.diff
+          echo "Diff for PR #${PR_NUMBER} saved to pr.diff"
+
+      - name: Run Technical Debt Analysis
+        id: analysis
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          npx tsx scripts/identify-tech-debt.ts \
+            --diff-file pr.diff \
+            --output tech-debt-issues.json
+
+      - name: Deduplicate and Create Issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f tech-debt-issues.json ]; then
+            echo "No technical debt analysis output file found. Exiting."
+            exit 0
+          fi
+
+          issues=$(jq -c '.issues[]' tech-debt-issues.json)
+
+          if [ -z "$issues" ]; then
+            echo "No technical debt issues found."
+            exit 0
+          fi
+
+          for issue in $issues; do
+            title=$(echo "$issue" | jq -r '.title')
+            description=$(echo "$issue" | jq -r '.description')
+            fingerprint=$(echo "$issue" | jq -r '.fingerprint')
+
+            # Search for existing issues with the same fingerprint
+            # The fingerprint is stored in a hidden HTML comment in the issue body
+            search_query="is:issue is:open repo:${{ github.repository }} \\"<!-- fingerprint: ${fingerprint} -->\\""
+            existing_issue=$(gh issue list --search "$search_query" --json number -q '.[0].number')
+
+            if [ -n "$existing_issue" ]; then
+              echo "Duplicate issue found for fingerprint '${fingerprint}': Issue #${existing_issue}. Skipping."
+            else
+              echo "No duplicate found for fingerprint '${fingerprint}'. Creating new issue."
+
+              # Construct the issue body with the description and the hidden fingerprint
+              body="${description}\n\n<!-- fingerprint: ${fingerprint} -->"
+
+              # Call the reusable workflow to create the issue
+              gh workflow call reusable-create-issue.yml \
+                -F title="$title" \
+                -F body="$body" \
+                -F labels="tech-debt, aı-generated"
+            fi
+          done

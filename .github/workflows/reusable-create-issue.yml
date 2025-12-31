@@ -1,0 +1,41 @@
+# .github/workflows/reusable-create-issue.yml
+name: Reusable Create Issue
+
+on:
+  workflow_call:
+    inputs:
+      title:
+        description: 'The title of the GitHub issue.'
+        required: true
+        type: string
+      body:
+        description: 'The body/description of the GitHub issue.'
+        required: true
+        type: string
+      labels:
+        description: 'A comma-separated list of labels to add to the issue.'
+        required: false
+        type: string
+        default: 'tech-debt'
+
+permissions:
+  issues: write
+
+jobs:
+  create-issue:
+    name: Create GitHub Issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TITLE: ${{ inputs.title }}
+          BODY: ${{ inputs.body }}
+          LABELS: ${{ inputs.labels }}
+        run: |
+          # Write the body to a file to handle multi-line content
+          echo "$BODY" > issue_body.md
+          gh issue create \
+            --title "$TITLE" \
+            --body-file issue_body.md \
+            --label "$LABELS"
