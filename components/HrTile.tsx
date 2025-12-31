@@ -49,7 +49,7 @@ const HrTile = ({
   return (
     <Tooltip title={tooltipTitle} arrow>
       <StyledCard
-        data-testid="hr-tile-card"
+        data-testid={`hrm-tile-${name}`}
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
           isConnected ? `${bpm} beats per minute` : 'Disconnected'

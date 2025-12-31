@@ -57,6 +57,10 @@ jobs:
     name: 🧪 Setup & All Tests
     runs-on: self-hosted
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1/2, 2/2]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -132,20 +136,20 @@ jobs:
         run: echo "VERSION=$(npx playwright --version | cut -d ' ' -f 2)" >> $GITHUB_OUTPUT
 
       # 2. Cache the browser binaries in the HOME directory
-      #- name: Cache Playwright Browsers
-      #  id: playwright-cache
-      #  uses: actions/cache@v4
-      #  with:
-      #    path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
-      #    key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.VERSION }}
-      #    restore-keys: |
-      #      ${{ runner.os }}-playwright-
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
       # 3. Install Browsers (ONLY if cache miss)
       # NOTE: If running on a new server, install OS deps manually once with:
       # sudo env PATH="$(dirname $(which node)):$PATH" npx playwright install-deps
       - name: Install Playwright Browsers
-        # if: steps.playwright-cache.outputs.cache-hit != 'true'
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         # CHANGE: Removed --with-deps (System deps are already on your server)
         run: pnpm exec playwright install chromium
 
@@ -256,7 +260,7 @@ jobs:
         if: steps.build.outcome == 'success'
         run: |
           set -o pipefail
-          pnpm run test:visual 2>&1 | tee logs/visual-output.log
+          pnpm run test:visual --shard=${{ matrix.shard }} 2>&1 | tee logs/visual-output.log
         # NOTE: This generates files in the default ./blob-report directory
         continue-on-error: true
 
