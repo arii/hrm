@@ -1,4 +1,7 @@
 # .github/workflows/reusable-gemini-review.yml
+# This workflow is responsible for generating code reviews and posting them as PR comments.
+# It does not create GitHub issues, so 'issues: write' permission is not required.
+# Issue creation is handled by the 'reusable-create-review-issues.yml' workflow.
 name: Reusable Gemini Review
 
 on:
@@ -38,7 +41,6 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  issues: write
   checks: write
   actions: read
 
