@@ -1,6 +1,6 @@
 // File: app/components/dashboard/HrmConnectionPanel.tsx
 'use client'
-import { useMemo, useEffect, useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
@@ -15,12 +15,13 @@ import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTileWithCalories from './HrTileWithCalories'
+import useHrmTileData from '@/hooks/useHrmTileData'
+import useHrmAutoConnect from '@/hooks/useHrmAutoConnect'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
   const [userSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
-  const autoConnectAttempted = useRef(false)
   const {
     connectAndStream,
     disconnect,
@@ -46,47 +47,15 @@ const HrmConnectionPanel = () => {
     })
   }, [session, userSettings, connectAndStream])
 
-  useEffect(() => {
-    // Auto-connect logic: Use `getDevices()` for gesture-less reconnection.
-    const autoConnect = async () => {
-      if (
-        connectionStatus === 'Connected' &&
-        deviceStatus === 'Disconnected' &&
-        !autoConnectAttempted.current
-      ) {
-        autoConnectAttempted.current = true
-        const userName =
-          session?.user?.name || userSettings.userName || 'Unknown User'
-        const userAge = userSettings.userAge || 30
-        await connectAndStream(userName, userAge)
-      }
-    }
+  useHrmAutoConnect({
+    connectionStatus,
+    deviceStatus,
+    session,
+    userSettings,
+    connectAndStream,
+  })
 
-    autoConnect()
-  }, [connectionStatus, deviceStatus, connectAndStream, session, userSettings])
-
-  const tileData = useMemo(() => {
-    // Filter out users with placeholder names or no identity
-    return hrmData
-      .filter((user) => {
-        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-        const hasNoIdentity = user.name == null
-        return !(isPlaceholderName || hasNoIdentity)
-      })
-      .map((user) => {
-        const matchingAlert = activeAlerts.find(
-          (alert) =>
-            alert.clientId === user.clientId &&
-            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
-        )
-
-        return {
-          ...user,
-          isAlerting: !!matchingAlert,
-          alertMessage: matchingAlert?.message,
-        }
-      })
-  }, [hrmData, activeAlerts])
+  const tileData = useHrmTileData(hrmData, activeAlerts)
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
