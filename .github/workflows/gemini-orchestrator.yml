@@ -86,7 +86,9 @@ jobs:
       pr_quality_result: ${{ needs.pr-quality.result }}
       trigger_event: 'pull_request'
       last_non_empty_commit: ${{ needs.check-diff.outputs.last_non_empty_commit }}
-    secrets: inherit
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ARI_PAT: ${{ secrets.ARI_PAT }}
 
   # 3. Trigger review immediately for a comment command (e.g., @jules fix or @gemini-bot)
   review-on-comment:
@@ -107,7 +109,9 @@ jobs:
       pr_quality_result: 'not_applicable'
       trigger_event: 'comment'
       comment_body: ${{ github.event.comment.body }}
-    secrets: inherit
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ARI_PAT: ${{ secrets.ARI_PAT }}
 
   gemini-dispatch:
     if: github.event_name == 'workflow_dispatch'
@@ -120,7 +124,7 @@ jobs:
         run: pnpm tsx scripts/gemini-client.ts --preset "${{ github.event.inputs.command }}"
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
   gemini-invoke:
     if: github.event.issue.pull_request && startsWith(github.event.comment.body, '@gemini-bot')
     runs-on: self-hosted
@@ -131,7 +135,7 @@ jobs:
       - name: Run Gemini Client
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: pnpm tsx scripts/gemini-client.ts --comment-body "$COMMENT_BODY"
 
