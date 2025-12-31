@@ -16,10 +16,12 @@ on:
         description: 'The body of the comment that triggered the workflow'
         required: false
         type: string
+      last_non_empty_commit:
+        description: 'The SHA of the last non-empty commit'
+        required: false
+        type: string
     secrets:
       GEMINI_API_KEY:
-        required: true
-      ARI_PAT:
         required: true
     outputs:
       needs-review:
@@ -145,9 +147,13 @@ jobs:
       - name: Get PR Diff
         id: diff
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr diff ${{ github.event.pull_request.number }} --patch > pr.diff
+          if [ -n "${{ inputs.last_non_empty_commit }}" ]; then
+            git diff ${{ github.event.pull_request.base.sha }}...${{ inputs.last_non_empty_commit }} > pr.diff
+          else
+            gh pr diff ${{ github.event.pull_request.number }} --patch > pr.diff
+          fi
 
       - name: Gather PR Context
         id: context

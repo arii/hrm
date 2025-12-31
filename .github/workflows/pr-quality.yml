@@ -11,6 +11,10 @@ on:
         description: 'PR number to post comments to (optional)'
         required: false
         type: string
+      has_changes:
+        description: 'Whether the PR has file changes'
+        required: true
+        type: string
 
   workflow_call:
     inputs:
@@ -28,7 +32,6 @@ on:
       GH_TOKEN:
         description: 'GitHub token (optional, uses github.token by default)'
         required: false
-
 permissions:
   contents: read
   checks: write
@@ -46,6 +49,7 @@ env:
 jobs:
   prepare-env:
     name: 📝 Prepare Environment
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     outputs:
       session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
@@ -252,6 +256,7 @@ jobs:
   knip-check:
     name: 🎒 Knip Check
     needs: [prepare-env]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -291,6 +296,7 @@ jobs:
   lint-check:
     name: 🔍 Lint Check
     needs: [prepare-env]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -342,6 +348,7 @@ jobs:
   build-check:
     name: 🏗️ Build Check
     needs: [prepare-env]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -504,6 +511,7 @@ jobs:
   infra-tests:
     name: 🧪 Infrastructure Tests
     needs: [prepare-env, knip-check, lint-check, build-check]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -580,6 +588,7 @@ jobs:
   unit-tests:
     name: 🧪 Unit Tests
     needs: [prepare-env, knip-check, lint-check, build-check]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -651,6 +660,7 @@ jobs:
   perf-tests:
     name: 🧪 Performance Tests
     needs: [prepare-env, knip-check, lint-check, build-check]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -731,6 +741,7 @@ jobs:
   visual-tests:
     name: 🧪 Visual Tests
     needs: [prepare-env, knip-check, lint-check, build-check]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -814,9 +825,54 @@ jobs:
           if-no-files-found: ignore
           retention-days: 5
 
+  copy-checks:
+    name: 📝 Copy checks from parent commit
+    if: inputs.has_changes != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Copy checks from parent commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the parent commit SHA
+          PARENT_SHA=$(git rev-parse HEAD^)
+          # Get the current commit SHA
+          CURRENT_SHA=$(git rev-parse HEAD)
+          # Define the list of jobs to copy
+          # NOTE: This list must be kept in sync with the job names in this workflow
+          JOBS_TO_COPY=(
+            "📝 Prepare Environment"
+            "🎒 Knip Check"
+            "🔍 Lint Check"
+            "🏗️ Build Check"
+            "🧪 Infrastructure Tests"
+            "🧪 Unit Tests"
+            "🧪 Performance Tests"
+            "🧪 Visual Tests"
+            "📊 Integration Tests Summary"
+            "📊 Quality Report"
+          )
+          # Get the checks from the parent commit
+          CHECKS=$(gh api "repos/${{ github.repository }}/commits/${PARENT_SHA}/check-runs" --jq '.check_runs')
+          # Create new checks for the current commit
+          for JOB_NAME in "${JOBS_TO_COPY[@]}"; do
+            CHECK=$(echo "${CHECKS}" | jq --arg name "${JOB_NAME}" '.[] | select(.name == $name)')
+            if [ -n "$CHECK" ]; then
+              CONCLUSION=$(echo "${CHECK}" | jq -r '.conclusion')
+              OUTPUT=$(echo "${CHECK}" | jq -c '.output')
+              BODY=$(jq -n --arg name "$JOB_NAME" --arg head_sha "$CURRENT_SHA" --arg status "completed" --arg conclusion "$CONCLUSION" --argjson output "$OUTPUT" '{name: $name, head_sha: $head_sha, status: $status, conclusion: $conclusion, output: $output}')
+              gh api "repos/${{ github.repository }}/check-runs" --input - <<< "$BODY"
+            fi
+          done
   integration-tests:
     name: 📊 Integration Tests Summary
-    if: always()
+    if: always() && inputs.has_changes == 'true'
     needs: [prepare-env, infra-tests, unit-tests, perf-tests, visual-tests]
     runs-on: ubuntu-latest
     outputs:
@@ -847,7 +903,7 @@ jobs:
 
   quality-report:
     name: 📊 Quality Report
-    if: always()
+    if: always() && inputs.has_changes == 'true'
     needs: [prepare-env, knip-check, lint-check, build-check, integration-tests]
     runs-on: ubuntu-latest
     steps:
