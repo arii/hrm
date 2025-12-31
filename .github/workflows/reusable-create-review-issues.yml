@@ -1,19 +1,24 @@
-# .github/workflows/manual-issue-creation.yml
-name: Manual Issue Creation
+# .github/workflows/reusable-create-review-issues.yml
+name: Reusable Create Review Issues
 
 on:
-  issue_comment:
-    types: [created]
+  workflow_call:
+    inputs:
+      pr_number:
+        description: 'The PR number to source review artifacts from'
+        required: true
+        type: string
+    secrets:
+      gh_token:
+        required: true
 
 permissions:
   contents: read
   issues: write
   pull-requests: read
-  actions: read
 
 jobs:
-  create-issues-from-comment:
-    if: github.event.issue.pull_request && contains(github.event.comment.body, '/create-issues')
+  create-review-issues:
     runs-on: ubuntu-latest
     name: Create Issues from Gemini Review
 
@@ -27,8 +32,8 @@ jobs:
       - name: Find Latest Review Workflow Run
         id: find_run
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
-          PR_NUMBER: ${{ github.event.issue.number }}
+          GH_TOKEN: ${{ secrets.gh_token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
         run: |
           # Get the head SHA of the PR
           HEAD_SHA=$(gh pr view $PR_NUMBER --json headRefOid --jq .headRefOid)
@@ -48,8 +53,8 @@ jobs:
       - name: Handle No Run Found
         if: steps.find_run.outputs.run_id == 'not_found'
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
-          PR_NUMBER: ${{ github.event.issue.number }}
+          GH_TOKEN: ${{ secrets.gh_token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
         run: |
           gh pr comment $PR_NUMBER --body "Could not find a successful CI workflow run to source review artifacts. Please ensure the 'ci.yml' workflow has completed successfully for this branch."
           exit 1
@@ -57,7 +62,7 @@ jobs:
       - name: Download Review Artifact
         id: download_artifact
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.gh_token }}
         run: |
           gh run download ${{ steps.find_run.outputs.run_id }} --name review-result --dir .
           if [ ! -f "review_result.json" ]; then
@@ -68,8 +73,8 @@ jobs:
 
       - name: Create Suggested Issues
         env:
-          PR_NUMBER: ${{ github.event.issue.number }}
-          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          GH_TOKEN: ${{ secrets.gh_token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           pnpm tsx scripts/create-review-issues.ts
