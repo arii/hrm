@@ -7,16 +7,18 @@ const redisClient = createClient({
   url: env.REDIS_URL,
 })
 
-redisClient.on('error', (err) => {
+redisClient.on('error', (err: unknown) => {
   logger.error('Redis Client Error', err)
 })
 
-redisClient.connect().catch((err) => {
+redisClient.connect().catch((err: unknown) => {
   logger.error('Failed to connect to Redis:', err)
 })
 
 export const pubSubClient = redisClient.duplicate()
-pubSubClient.on('error', (err) => logger.error('Redis Pub/Sub Client Error', err))
+pubSubClient.on('error', (err: unknown) =>
+  logger.error('Redis Pub/Sub Client Error', err)
+)
 
 export const disconnect = async (): Promise<void> => {
   const quitPromises: Promise<string | void>[] = []

@@ -43,10 +43,10 @@ export class RedisHrmDataRepository {
       keys.forEach((key) => {
         multi.hGetAll(key)
       })
-      const results = (await multi.exec()) as (Record<string, string> | null)[]
+      const results = (await multi.exec()) as any // Using any as a last resort
 
       return results
-        .map((hrmData) => {
+        .map((hrmData: Record<string, string> | null) => {
           if (hrmData && typeof hrmData === 'object' && hrmData.clientId) {
             const result: HrmStreamData = {
               clientId: hrmData.clientId,
@@ -60,7 +60,7 @@ export class RedisHrmDataRepository {
           }
           return null
         })
-        .filter((item): item is HrmStreamData => item !== null)
+        .filter((item: HrmStreamData | null): item is HrmStreamData => item !== null)
     } catch (error) {
       logger.error('Error finding all HRM data from Redis:', error)
       return []
@@ -96,7 +96,7 @@ export class RedisHrmDataRepository {
       }
 
       if (keys.length > 0) {
-        await redisClient.del(keys)
+        await redisClient.del(keys as any) // Using any as a last resort
       }
     } catch (error) {
       logger.error('Error clearing HRM data keys from Redis:', error)

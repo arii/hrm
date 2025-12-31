@@ -10,7 +10,7 @@ export class RedisPubSubBroadcaster {
 
   constructor() {
     this.subscriber = pubSubClient.duplicate()
-    this.subscriber.connect().catch((err) => {
+    this.subscriber.connect().catch((err: unknown) => {
       logger.error({ err }, 'Failed to connect Redis subscriber client')
     })
   }
@@ -24,7 +24,7 @@ export class RedisPubSubBroadcaster {
   }
 
   subscribeToHrmData(onMessage: (message: string) => void): void {
-    this.subscriber.subscribe(CHANNEL, onMessage).catch((err) => {
+    this.subscriber.subscribe(CHANNEL, onMessage).catch((err: unknown) => {
       logger.error({ err }, `Failed to subscribe to Redis channel: ${CHANNEL}`)
     })
     logger.info(`Subscribed to Redis channel: ${CHANNEL}`)

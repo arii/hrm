@@ -12,7 +12,7 @@ import {
   jest,
 } from '@jest/globals'
 import { EventEmitter } from 'events'
-import { Server as WebSocketServer } from 'ws'
+import { Server as WebSocketServer, WebSocket } from 'ws'
 import { IncomingMessage } from 'http'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
@@ -54,7 +54,8 @@ jest.mock('../../services/spotifyTokenManager')
 jest.mock('@spotify/web-api-ts-sdk')
 jest.mock('../../utils/websocketUtils.js')
 jest.mock('ws', () => ({
-  Server: jest.fn(() => new (require('events').EventEmitter)()),
+  Server: jest.fn(() => new EventEmitter()),
+  WebSocket: jest.fn(),
 }))
 
 // Import the system under test *after* all mocks are defined.
@@ -108,8 +109,9 @@ describe('WebSocket Manager (Redis)', () => {
   })
 
   const setupTestEnvironment = () => {
-    const mockWss =
-      new (WebSocketServer as any)() as jest.Mocked<WebSocketServer>
+    const mockWss = new (WebSocketServer as jest.MockedClass<
+      typeof WebSocketServer
+    >)() as jest.Mocked<WebSocketServer>
     mockWss.clients = new Set()
     const mockServices = createMockServices()
     const getSnapshot = jest.fn(() => ({ timer: {}, spotify: {}, hrm: {} }))
@@ -139,12 +141,11 @@ describe('WebSocket Manager (Redis)', () => {
         clientId: existingClientId,
       })
       const ws = new MockWebSocket()
-      // Corrected: Pass the clientId in the URL query parameter
       const mockReq = {
         headers: {},
         url: `/?clientId=${existingClientId}`,
       } as IncomingMessage
-      mockWss.clients.add(ws as any)
+      mockWss.clients.add(ws as unknown as WebSocket)
 
       mockWss.emit('connection', ws, mockReq)
       await jest.runAllTimersAsync()
@@ -177,7 +178,6 @@ describe('WebSocket Manager (Redis)', () => {
         accumulatedCalories: 10,
       })
       const mockWs = new MockWebSocket() as ExtWebSocket
-      // Corrected: Pass the clientId in the URL query parameter
       const mockReq = {
         headers: {},
         url: `/?clientId=${existingClientId}`,

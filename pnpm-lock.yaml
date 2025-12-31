@@ -49,9 +49,6 @@ importers:
       '@testing-library/react-hooks':
         specifier: ^8.0.1
         version: 8.0.1(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@types/redis':
-        specifier: ^4.0.11
-        version: 4.0.11
       cheerio:
         specifier: ^1.1.2
         version: 1.1.2
@@ -157,10 +154,10 @@ importers:
         version: 6.9.1
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.1(@testing-library/dom@10.4.0)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 16.3.1(@testing-library/dom@9.3.4)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@testing-library/user-event':
         specifier: ^14.6.1
-        version: 14.6.1(@testing-library/dom@10.4.0)
+        version: 14.6.1(@testing-library/dom@9.3.4)
       '@types/express':
         specifier: ^5.0.5
         version: 5.0.6
@@ -2772,10 +2769,6 @@ packages:
 
   '@types/react@19.2.7':
     resolution: {integrity: sha512-MWtvHrGZLFttgeEj28VXHxpmwYbor/ATPYbBfSFZEIRK0ecCFLl2Qo55z52Hss+UV9CRN7trSeq1zbgx7YDWWg==}
-
-  '@types/redis@4.0.11':
-    resolution: {integrity: sha512-bI+gth8La8Wg/QCR1+V1fhrL9+LZUSWfcqpOj2Kc80ZQ4ffbdL173vQd5wovmoV9i071FU9oP2g6etLuEwb6Rg==}
-    deprecated: This is a stub types definition. redis provides its own type definitions, so you do not need this installed.
 
   '@types/resolve@1.20.6':
     resolution: {integrity: sha512-A4STmOXPhMUtHH+S6ymgE2GiBSMqf4oTvcQZMcHzokuTLVYzXTB8ttjcgxOVaAp2lGwEdzZ0J+cRbbeevQj1UQ==}
@@ -10064,10 +10057,10 @@ snapshots:
       '@types/react': 19.2.7
       react-dom: 19.2.3(react@19.2.3)
 
-  '@testing-library/react@16.3.1(@testing-library/dom@10.4.0)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@testing-library/react@16.3.1(@testing-library/dom@9.3.4)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@babel/runtime': 7.28.4
-      '@testing-library/dom': 10.4.0
+      '@testing-library/dom': 9.3.4
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
     optionalDependencies:
@@ -10075,10 +10068,6 @@ snapshots:
       '@types/react-dom': 19.2.3(@types/react@19.2.7)
 
   '@testing-library/user-event@14.5.2(@testing-library/dom@10.4.0)':
-    dependencies:
-      '@testing-library/dom': 10.4.0
-
-  '@testing-library/user-event@14.6.1(@testing-library/dom@10.4.0)':
     dependencies:
       '@testing-library/dom': 10.4.0
 
@@ -10228,10 +10217,6 @@ snapshots:
   '@types/react@19.2.7':
     dependencies:
       csstype: 3.2.3
-
-  '@types/redis@4.0.11':
-    dependencies:
-      redis: 5.10.0
 
   '@types/resolve@1.20.6': {}
 
