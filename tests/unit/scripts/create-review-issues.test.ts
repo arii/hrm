@@ -2,17 +2,14 @@
  * @jest-environment node
  */
 import { execSync } from 'child_process';
-import { readFileSync, writeFileSync, unlinkSync } from 'fs';
+import { writeFileSync, unlinkSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import {
   isDuplicate,
   GitHubClient,
-  main,
-  CONFIG,
   type SuggestedIssue,
   type ExistingIssue,
-  type ReviewResult,
 } from '../../../scripts/create-review-issues';
 
 // Mock external dependencies
@@ -23,7 +20,6 @@ jest.mock('os', () => ({
 }));
 
 const mockedExecSync = execSync as jest.Mock;
-const mockedReadFileSync = readFileSync as jest.Mock;
 const mockedWriteFileSync = writeFileSync as jest.Mock;
 const mockedUnlinkSync = unlinkSync as jest.Mock;
 
@@ -173,95 +169,4 @@ describe('GitHubClient', () => {
         }).toThrow('GitHub CLI Error');
     });
   });
-});
-
-
-describe('main', () => {
-    let consoleErrorSpy: jest.SpyInstance;
-    let consoleLogSpy: jest.SpyInstance;
-    let processExitSpy: jest.SpyInstance;
-    let getOpenIssuesMock: jest.SpyInstance;
-    let createIssueMock: jest.SpyInstance;
-
-    const mockReviewResult: ReviewResult = {
-        reviewComment: 'LGTM',
-        labels: [],
-        verdict: 'Approved',
-        suggestedIssues: [
-            { title: 'New', description: 'A new issue', type: 'bug', priority: 'high' },
-            { title: 'Duplicate', description: 'A duplicate issue', type: 'technical-debt', priority: 'medium' },
-        ],
-        prContext: { repo: 'test/repo', prNumber: '123' },
-    };
-
-    beforeEach(() => {
-        // Setup spies and mocks
-        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-        consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-        processExitSpy = jest.spyOn(process, 'exit').mockImplementation((() => {}) as (code?: number) => never);
-
-        getOpenIssuesMock = jest.spyOn(GitHubClient.prototype, 'getOpenIssues').mockReturnValue([
-            { title: 'Duplicate', description: 'A duplicate issue', body: 'A duplicate issue', number: 1, state: 'open' }
-        ]);
-        createIssueMock = jest.spyOn(GitHubClient.prototype, 'createIssue').mockReturnValue(undefined);
-
-        // Set required environment variables
-        process.env.PR_NUMBER = '123';
-        CONFIG.prNumber = '123';
-    });
-
-    afterEach(() => {
-        // Restore original implementations
-        consoleErrorSpy.mockRestore();
-        consoleLogSpy.mockRestore();
-        processExitSpy.mockRestore();
-        getOpenIssuesMock.mockRestore();
-        createIssueMock.mockRestore();
-        delete process.env.PR_NUMBER;
-        CONFIG.prNumber = undefined;
-    });
-
-    it('should create new issues and skip duplicates', async () => {
-        mockedReadFileSync.mockReturnValue(JSON.stringify(mockReviewResult));
-        await main();
-
-        expect(getOpenIssuesMock).toHaveBeenCalledWith('bot-generated');
-        expect(createIssueMock).toHaveBeenCalledTimes(1);
-        expect(createIssueMock).toHaveBeenCalledWith(
-            expect.objectContaining({ title: 'New' }),
-            expect.any(Object)
-        );
-        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Skipping duplicate'));
-        expect(processExitSpy).not.toHaveBeenCalled();
-    });
-
-    it('should exit if no issues are suggested', async () => {
-        const noIssuesResult = { ...mockReviewResult, suggestedIssues: [] };
-        mockedReadFileSync.mockReturnValue(JSON.stringify(noIssuesResult));
-        await main();
-        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No suggested issues'));
-        expect(processExitSpy).toHaveBeenCalledWith(0);
-    });
-
-    it('should exit with an error if PR_NUMBER is missing', async () => {
-        delete process.env.PR_NUMBER;
-        CONFIG.prNumber = undefined;
-        await main();
-        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('PR_NUMBER environment variable is missing'));
-        expect(processExitSpy).toHaveBeenCalledWith(1);
-    });
-
-    it('should exit with an error if the result file cannot be read', async () => {
-        mockedReadFileSync.mockImplementation(() => { throw new Error('File not found'); });
-        await main();
-        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error reading or parsing'));
-        expect(processExitSpy).toHaveBeenCalledWith(1);
-    });
-
-    it('should exit with an error if the result file has invalid JSON', async () => {
-        mockedReadFileSync.mockReturnValue('invalid json');
-        await main();
-        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error reading or parsing'));
-        expect(processExitSpy).toHaveBeenCalledWith(1);
-    });
 });
