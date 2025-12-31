@@ -4,12 +4,12 @@
  * @see /docs/decisions/0001-centralized-data-models.md
  */
 
+import { z } from 'zod'
+import { UserProfileSchema } from '../lib/validation/schemas'
+
 // =================================================================================================
 // User and Profile
 // =================================================================================================
-
-import { z } from 'zod'
-import { UserProfileSchema } from '../lib/validation/schemas'
 
 /**
  * Represents a user's profile information.
