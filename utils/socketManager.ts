@@ -195,7 +195,7 @@ const initSocketManager = (
             clientSockets.delete(extWs.clientId)
           }
         }
-      }, env.WEBSOCKET_GRACE_PERIOD_MS)
+      }, env.WEBSOCKET_GRACE_PERIOD_MS ?? 5000)
     })
   })
 

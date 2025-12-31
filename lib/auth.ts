@@ -3,7 +3,6 @@ import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '@/utils/logger'
-import { getAPIURL } from '../utils/urls'
 import { env } from './env'
 import { refreshSpotifyToken } from './spotify'
 
@@ -246,14 +245,22 @@ export const authOptions: AuthOptions = {
               obtainedAt: Date.now(),
             }
 
-            const response = await fetch(getAPIURL('internal/token-delivery'), {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-internal-token-secret': env.NEXTAUTH_SECRET,
-              },
-              body: JSON.stringify(tokenPayload),
-            })
+            if (!env.NEXTAUTH_URL || !env.NEXTAUTH_SECRET) {
+              throw new Error(
+                'Missing NEXTAUTH_URL or NEXTAUTH_SECRET for token delivery'
+              )
+            }
+            const response = await fetch(
+              `${env.NEXTAUTH_URL}/api/internal/token-delivery`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-internal-token-secret': env.NEXTAUTH_SECRET,
+                },
+                body: JSON.stringify(tokenPayload),
+              }
+            )
             const responseBody = await response.text()
             if (response.ok) {
               logger.info(

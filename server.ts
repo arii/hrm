@@ -1,7 +1,5 @@
 // server.ts (Refactored)
-import { validateEnv } from './lib/env.js'
-validateEnv()
-
+import './lib/env'
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
@@ -20,8 +18,8 @@ import path from 'path'
 const app = next({
   dev: env.NODE_ENV !== 'production',
   dir: process.cwd(),
-  hostname: env.HOST,
-  port: env.PORT,
+  hostname: env.HOST ?? 'localhost',
+  port: env.PORT ?? 3000,
 })
 const handle = app.getRequestHandler()
 const expressApp = express()

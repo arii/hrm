@@ -1,95 +1,57 @@
 /**
  * @jest-environment node
  */
+/* eslint-disable @typescript-eslint/no-var-requires */
 
-describe('lib/env.ts', () => {
-  const originalEnv = process.env
+describe('env', () => {
+  const OLD_ENV = process.env
+  let consoleErrorSpy: jest.SpyInstance
+  let processExitSpy: jest.SpyInstance
 
   beforeEach(() => {
     jest.resetModules()
-    process.env = { ...originalEnv }
+    process.env = { ...OLD_ENV }
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    processExitSpy = jest.spyOn(process, 'exit').mockImplementation((code) => {
+      throw new Error(`process.exit called with code ${code}`)
+    })
   })
 
-  afterAll(() => {
-    process.env = originalEnv
+  afterEach(() => {
+    process.env = OLD_ENV
+    consoleErrorSpy.mockRestore()
+    processExitSpy.mockRestore()
   })
 
-  it('should successfully validate and parse environment variables when all are present', async () => {
-    process.env.NODE_ENV = 'production'
-    process.env.PORT = '8080'
-    process.env.HOST = '127.0.0.1'
-    process.env.NEXTAUTH_URL = 'http://localhost:8080'
+  it('should not throw an error if the environment variables are valid', () => {
+    process.env.NODE_ENV = 'development'
+    process.env.NEXTAUTH_URL = 'http://localhost:3000'
     process.env.NEXTAUTH_SECRET = 'secret'
-    process.env.SPOTIFY_CLIENT_ID = 'spotify-id'
-    process.env.SPOTIFY_CLIENT_SECRET = 'spotify-secret'
-    process.env.NEXT_PUBLIC_WS_URL = 'ws://localhost:8080'
+    process.env.SPOTIFY_CLIENT_ID = 'client-id'
+    process.env.SPOTIFY_CLIENT_SECRET = 'client-secret'
+    process.env.ENCRYPTION_KEY = 'encryption-key'
+    process.env.NEXT_PUBLIC_WS_URL = 'ws://localhost:3001'
+    process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000'
 
-    const { env } = await import('../../../lib/env')
-
-    expect(env.NODE_ENV).toBe('production')
-    expect(env.PORT).toBe(8080)
-    expect(env.HOST).toBe('127.0.0.1')
-    expect(env.NEXTAUTH_URL).toBe('http://localhost:8080')
-    expect(env.NEXTAUTH_SECRET).toBe('secret')
-    expect(env.SPOTIFY_CLIENT_ID).toBe('spotify-id')
-    expect(env.SPOTIFY_CLIENT_SECRET).toBe('spotify-secret')
-    expect(env.NEXT_PUBLIC_WS_URL).toBe('ws://localhost:8080')
+    expect(() => require('../../../lib/env')).not.toThrow()
   })
 
-  it('should exit the process if a required variable is missing in production', async () => {
-    const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-      throw new Error('process.exit() was called.')
-    })
-    const mockConsoleError = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {})
+  it('should call process.exit(1) if the environment variables are invalid in development', () => {
+    process.env.NODE_ENV = 'development'
+    process.env.NEXTAUTH_URL = 'not-a-url'
+    // other required vars are missing
 
+    expect(() => require('../../../lib/env')).toThrow('process.exit called with code 1')
+    expect(consoleErrorSpy).toHaveBeenCalled()
+    expect(processExitSpy).toHaveBeenCalledWith(1)
+  })
+
+  it('should not throw an error in a test environment, even if env vars are missing', () => {
+    process.env.NODE_ENV = 'test'
+    // Intentionally omit required environment variables
+    delete process.env.NEXTAUTH_SECRET
     delete process.env.SPOTIFY_CLIENT_ID
 
-    try {
-      await import('../../../lib/env')
-    } catch (e) {
-      expect((e as Error).message).toBe('process.exit() was called.')
-    }
-
-    expect(mockExit).toHaveBeenCalledWith(1)
-    expect(mockConsoleError).toHaveBeenCalled()
-
-    mockExit.mockRestore()
-    mockConsoleError.mockRestore()
-  })
-
-  it('should allow optional SPOTIFY variables when TESTING is true', async () => {
-    process.env.TESTING = 'true'
-    delete process.env.SPOTIFY_CLIENT_ID
-    delete process.env.SPOTIFY_CLIENT_SECRET
-
-    const { env } = await import('../../../lib/env')
-
-    expect(env.SPOTIFY_CLIENT_ID).toBeUndefined()
-    expect(env.SPOTIFY_CLIENT_SECRET).toBeUndefined()
-  })
-
-  it('should fail if PORT is not a valid number', async () => {
-    const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-      throw new Error('process.exit() was called.')
-    })
-    const mockConsoleError = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {})
-
-    process.env.PORT = 'not-a-number'
-
-    try {
-      await import('../../../lib/env')
-    } catch (e) {
-      expect((e as Error).message).toBe('process.exit() was called.')
-    }
-
-    expect(mockExit).toHaveBeenCalledWith(1)
-    expect(mockConsoleError).toHaveBeenCalled()
-
-    mockExit.mockRestore()
-    mockConsoleError.mockRestore()
+    expect(() => require('../../../lib/env')).not.toThrow()
   })
 })

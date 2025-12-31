@@ -205,14 +205,14 @@ export class SpotifyPolling implements SpotifyService {
     if (this.pollInterval) return // Already running
 
     // Interval for currently playing track
-    const trackIntervalMs = env.SPOTIFY_POLLING_INTERVAL_MS
+    const trackIntervalMs = env.SPOTIFY_POLLING_INTERVAL_MS ?? 5000
     this.pollInterval = setInterval(
       () => this.getCurrentlyPlaying(),
       trackIntervalMs
     )
 
     // Interval for available devices (less frequent)
-    const deviceIntervalMs = env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS
+    const deviceIntervalMs = env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS ?? 30000
     this.devicePollInterval = setInterval(
       () => this.refreshDevices(),
       deviceIntervalMs
