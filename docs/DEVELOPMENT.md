@@ -35,6 +35,18 @@ If ESLint finds errors it cannot fix automatically, the commit will be aborted. 
 
 This automated process ensures that code merged into the `leader` branch always adheres to our quality standards without requiring manual checks. You can run these checks for the entire project at any time with `pnpm run lint` and `pnpm run format`.
 
+### CI Workflow for Empty Commits
+
+To optimize CI resource usage and improve developer experience, the `pr-quality.yml` workflow includes special handling for "empty" commits. An empty commit is one that does not introduce any file changes, such as a commit created by a rebase or an automated tool.
+
+When an empty commit is pushed to a pull request, the workflow performs the following steps:
+
+1.  **Detects No Changes**: The `check-diff` job identifies that no files have been modified.
+2.  **Skips CI Jobs**: All major CI jobs (lint, build, test) are skipped to avoid redundant work.
+3.  **Copies Check Statuses**: The `copy-checks` job fetches the list of required status checks from the branch protection rules and copies the conclusions (e.g., `success`, `failure`) from the parent commit.
+
+This ensures that the pull request still meets branch protection requirements and can be merged, without wasting time and resources on unnecessary CI runs.
+
 ### Commit Message Standards
 
 To ensure a clean, readable, and automated changelog, this project enforces the [Conventional Commits](https://www.conventionalcommits.org/) specification.
