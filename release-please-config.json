@@ -1,3 +1,8 @@
 {
-  "changelog-path": "docs/CHANGELOG.md"
+  "changelog-path": "docs/CHANGELOG.md",
+  "packages": {
+    ".": {
+      "package-name": "hrm"
+    }
+  }
 }
