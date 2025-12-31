@@ -1,7 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws'
 import { IncomingMessage } from 'http'
 import { Socket } from 'net'
-import { parse } from 'url'
 import { ServerMessage } from '../types/websocket.js'
 
 export class WebSocketManager {
@@ -12,7 +11,8 @@ export class WebSocketManager {
   }
 
   public handleUpgrade(req: IncomingMessage, socket: Socket, head: Buffer) {
-    const { pathname } = parse(req.url || '')
+    const _ws_url = new URL(req.url || '', `http://${req.headers.host}`)
+    const { pathname } = _ws_url
     if (pathname === '/ws') {
       this.wss.handleUpgrade(req, socket, head, (ws) => {
         this.wss.emit('connection', ws, req)
