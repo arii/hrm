@@ -1,7 +1,9 @@
 'use client'
 import Image from 'next/image'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { Box, Typography, Skeleton } from '@mui/material'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Skeleton from '@mui/material/Skeleton'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 
 const CurrentSpotifyItemDisplay = () => {

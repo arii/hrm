@@ -16,11 +16,6 @@ import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
 import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
 
-// Client-side extension of HrmData to include connection status
-export interface HrmData extends ServerHrmData {
-  isConnected: boolean
-}
-
 export interface WebSocketContextType extends WebSocketState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void

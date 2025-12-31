@@ -1,26 +1,49 @@
 ## Import Path Conventions
 
-To maintain consistency and leverage the centralized barrel exports, please follow these import patterns:
+To maintain consistency, improve bundle size through tree-shaking, and ensure clarity, please follow these import patterns.
 
-### 1. From Barrel Exports (Recommended for common components, hooks, utils):
+### 1. Direct Imports for Project Components
 
+Always use direct, full paths for importing components, hooks, and utilities. This project uses path aliases (`@/*`) for easier access to top-level directories.
+
+**Correct:**
 ```typescript
-import { HrTile, BottomNavBar } from '@/components'
-import { useAudio, useLocalStorage } from '@/hooks'
-import { logger, dateUtils } from '@/utils'
+// Importing components
+import HrTile from '@/components/HrTile'
+import BottomNavBar from '@/components/BottomNavBar'
+
+// Importing hooks
+import { useAudio } from '@/hooks/useAudio'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
+
+// Importing utils
+import { logger } from '@/utils/logger'
+import { dateUtils } from '@/utils/dateUtils'
 ```
 
-### 2. Direct Imports (For specific modules not in barrel exports):
+### 2. Direct Imports for Material-UI (MUI)
 
+To enable effective tree-shaking and minimize the final application bundle size, you **must** import Material-UI components directly from their specific modules.
+
+**Correct:**
 ```typescript
-import { ToastProvider } from '@/context/ToastContext' // Correct path for ToastContext
-import theme from '@/lib/theme' // Correct path for theme configuration
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import { SxProps } from '@mui/material/styles'
 ```
 
-### 3. Avoid (Incorrect/Deprecated Patterns):
+**Incorrect (Do Not Use):**
+```typescript
+// ❌ Avoid barrel imports from the root of @mui/material
+import { Box, Button } from '@mui/material'
+```
+
+### 3. Avoid (Incorrect/Deprecated Patterns)
 
 ```typescript
-import { ToastContainer } from '@/components/Toast' // ❌ This component does not exist
-import { theme } from '@/styles/theme' // ❌ Incorrect path, use '@/lib/theme'
-import HrTile from '../../components/HrTile' // ❌ Avoid relative paths for top-level components
+// ❌ Barrel exports from project directories are disabled.
+import { HrTile } from '@/components'
+
+// ❌ Avoid deep relative paths for top-level modules. Use the `@/` alias instead.
+import HrTile from '../../components/HrTile'
 ```

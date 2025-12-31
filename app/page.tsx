@@ -5,7 +5,7 @@
  */
 'use client'
 import Container from '@mui/material/Container'
-import { SxProps } from '@mui/material'
+import { SxProps } from '@mui/material/styles'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'

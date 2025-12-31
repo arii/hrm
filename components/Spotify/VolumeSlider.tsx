@@ -1,6 +1,9 @@
 // components/Spotify/VolumeSlider.tsx
 import React from 'react'
-import { IconButton, Slider, Stack, Typography } from '@mui/material'
+import IconButton from '@mui/material/IconButton'
+import Slider from '@mui/material/Slider'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { VolumeUp, VolumeOff } from '@mui/icons-material'
 
 interface VolumeSliderProps {

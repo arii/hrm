@@ -16,15 +16,13 @@ import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import React, { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
-import {
-  ToggleButtonGroup,
-  ToggleButton,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-} from '@mui/material'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import ToggleButton from '@mui/material/ToggleButton'
+import FormControl from '@mui/material/FormControl'
+import FormLabel from '@mui/material/FormLabel'
+import RadioGroup from '@mui/material/RadioGroup'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Radio from '@mui/material/Radio'
 
 interface ConnectViewProps {
   duration: string

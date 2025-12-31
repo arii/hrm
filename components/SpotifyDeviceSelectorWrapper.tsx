@@ -1,6 +1,8 @@
 'use client'
 
-import { IconButton, Menu, MenuItem } from '@mui/material'
+import IconButton from '@mui/material/IconButton'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
 import SpeakerIcon from '@mui/icons-material/Speaker'
 import { MouseEvent } from 'react'
 import { SpotifyDevice } from '@/types/core'

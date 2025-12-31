@@ -1,6 +1,6 @@
 import type { Preview } from '@storybook/react'
 import { ThemeProvider } from '@mui/material/styles'
-import { CssBaseline } from '@mui/material'
+import CssBaseline from '@mui/material/CssBaseline'
 import { SessionProvider } from 'next-auth/react'
 import { initialize, mswLoader } from 'msw-storybook-addon'
 import React from 'react'

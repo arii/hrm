@@ -5,11 +5,7 @@ import {
   ActiveAlert,
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
-
-// Client-side extension of HrmData to include connection status
-export interface HrmData extends ServerHrmData {
-  isConnected: boolean
-}
+import { HrmData } from '../types'
 
 export interface WebSocketState {
   hrmData: HrmData[]

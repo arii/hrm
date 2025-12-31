@@ -1,5 +1,7 @@
 // This file is for component-specific prop types.
 // All other types should be defined in their respective files.
+import { HrmStreamData as ServerHrmData } from './core'
+import { TimerMode, TimerPhase } from './core'
 
 export interface HrTileProps {
   name: string
@@ -14,7 +16,10 @@ export interface HrTileProps {
   alertMessage?: string
 }
 
-import { TimerMode, TimerPhase } from './core'
+// Client-side extension of HrmData to include connection status
+export interface HrmData extends ServerHrmData {
+  isConnected: boolean
+}
 
 export interface HeartRateZonesProps {
   maxHr: number
