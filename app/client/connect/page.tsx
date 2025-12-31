@@ -1,44 +1,49 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
+import { useUserPhysicalProfile } from '@/context/UserPhysicalProfileContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { MeasurementSystem } from '../../../types'
-import { toKg, toDisplay } from '../../../utils/units'
+import { MeasurementSystem } from '@/types/core'
+import { toKg, toDisplay } from '@/utils/units'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
+import { calculateMaxHr } from '@/lib/hrm/calculators'
 import { validateAgeValue, validateWeightValue } from './validation'
+import { useUserPreferences } from '@/hooks'
 
 export default function ConnectPage() {
+  const { profile, updateProfile, isLoading } = useUserPhysicalProfile()
+  const {
+    age,
+    weight: weightInKg,
+    gender,
+    unitSystem,
+    maxHr: profileMaxHr,
+  } = profile
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
-  const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  // Height logic is now encapsulated in useHeightInput
-  const [_weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
-  const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
-    'hrm-user-gender',
-    'MALE'
-  )
-  const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
-    'hrm-user-units',
-    'IMPERIAL'
-  )
 
-  const [displayWeight, setDisplayWeight] = useState(() => {
-    const kg = parseFloat(_weightInKg)
-    if (isNaN(kg)) {
-      return ''
-    }
-    return toDisplay(kg, unitSystem).toString()
-  })
+  const [displayWeight, setDisplayWeight] = useState(() =>
+    toDisplay(weightInKg, unitSystem).toString()
+  )
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
+  const [localAge, setLocalAge] = useState(age.toString())
+  const [localMaxHr, setLocalMaxHr] = useState(
+    profileMaxHr ? profileMaxHr.toString() : ''
+  )
 
-  // Use the custom hook for height input logic
+  useEffect(() => {
+    setLocalAge(age.toString())
+    setDisplayWeight(toDisplay(weightInKg, unitSystem).toString())
+    setLocalMaxHr(profileMaxHr ? profileMaxHr.toString() : '')
+  }, [profile])
+
   const {
     displayHeight,
     updateHeight: handleHeightChange,
@@ -47,8 +52,11 @@ export default function ConnectPage() {
   } = useHeightInput('175', unitSystem)
 
   const handleAgeBlur = () => {
-    const error = validateAgeValue(userAge)
+    const error = validateAgeValue(localAge)
     setAgeError(error)
+    if (!error) {
+      updateProfile({ age: parseInt(localAge, 10) })
+    }
   }
 
   const handleWeightChange = (newDisplayValue: string) => {
@@ -62,7 +70,7 @@ export default function ConnectPage() {
     const numericValue = parseFloat(displayWeight)
     if (!error && !isNaN(numericValue) && numericValue > 0) {
       const newKgValue = toKg(numericValue, unitSystem)
-      setWeightInKg(newKgValue.toFixed(2))
+      updateProfile({ weight: newKgValue })
     }
   }
 
@@ -77,7 +85,7 @@ export default function ConnectPage() {
     disconnectionReason,
   } = useBluetoothHRM({
     userName,
-    userAge: userAge ? parseFloat(userAge) : 0,
+    userAge: age,
   })
 
   const { connectionStatus, hrmData } = useWebSocket()
@@ -91,28 +99,18 @@ export default function ConnectPage() {
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
-      setUnitSystem(newUnit)
-      // Height hook handles its own transient state reset if unit changes
-      // Update display weight to prevent flicker/empty value
-      const currentKg = parseFloat(_weightInKg)
-      if (!isNaN(currentKg)) {
-        const newDisplay = toDisplay(currentKg, newUnit)
-        setDisplayWeight(newDisplay.toString())
-      } else {
-        setDisplayWeight('')
-      }
+      updateProfile({ unitSystem: newUnit })
     }
   }
 
   const handleConnect = () => {
-    const age = userAge ? parseFloat(userAge) : 0
     connectAndStream(userName, age)
   }
+  const [prefs, setPrefs] = useUserPreferences()
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
-  const totalCalories = currentUserData?.calories ?? 0
-  const maxHr = userAge ? 220 - parseFloat(userAge) : 190
+  const maxHr = profileMaxHr || calculateMaxHr(age)
   const hrZoneProps = useHrZone(currentHR, maxHr)
 
   const {
@@ -124,13 +122,11 @@ export default function ConnectPage() {
     workoutStatus,
   } = useWorkoutSession({
     isConnected,
-    totalCalories,
+    totalCalories: currentUserData?.calories ?? 0,
   })
 
   const { calories, resetCalories } = useCalorieCounter(
     currentHR,
-    parseFloat(userAge) || 30,
-    parseFloat(_weightInKg) || 70,
     workoutStatus === 'running'
   )
 
@@ -143,12 +139,14 @@ export default function ConnectPage() {
     <ConnectView
       duration={formatDuration(workoutDuration)}
       caloriesBurned={calories}
-      userName={userName}
-      setUserName={setUserName}
-      userAge={userAge}
-      setUserAge={setUserAge}
+      userName={prefs.userName}
+      setUserName={(name: string) => setPrefs({ ...prefs, userName: name })}
+      userAge={localAge}
+      setUserAge={setLocalAge}
       onAgeBlur={handleAgeBlur}
       ageError={ageError}
+      maxHr={localMaxHr}
+      setMaxHr={setLocalMaxHr}
       userHeight={displayHeight}
       setUserHeight={handleHeightChange}
       onHeightBlur={handleHeightBlur}
@@ -158,7 +156,7 @@ export default function ConnectPage() {
       onWeightBlur={handleWeightBlur}
       weightError={weightError}
       gender={gender}
-      setGender={setGender}
+      setGender={(gender: 'MALE' | 'FEMALE') => updateProfile({ gender })}
       unitSystem={unitSystem}
       onUnitChange={handleUnitChange}
       isConnected={isConnected}

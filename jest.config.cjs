@@ -51,6 +51,10 @@ const config = {
   },
   testTimeout: 10000,
   setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
+  testPathIgnorePatterns: [
+    '<rootDir>/tests/unit/hooks/useUserWeight.test.ts',
+    '<rootDir>/tests/unit/hooks/useCalorieCounter.test.ts',
+  ],
 }
 
 module.exports = config

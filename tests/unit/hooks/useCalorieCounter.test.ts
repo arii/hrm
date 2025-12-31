@@ -1,14 +1,19 @@
 /**
  * @jest-environment jsdom
  */
-// File: tests/unit/hooks/useCalorieCounter.test.ts
+import React from 'react'
 import { renderHook, act } from '@testing-library/react'
-import { useCalorieCounter } from '../../../hooks/useCalorieCounter'
-import * as calorieEstimation from '../../../lib/calorie-estimation'
+import { useCalorieCounter } from '@/hooks/useCalorieCounter'
+import { UserPhysicalProfileProvider } from '@/context/UserPhysicalProfileContext'
+import * as calorieEstimation from '@/lib/calorie-estimation'
 
-jest.mock('../../../lib/calorie-estimation', () => ({
+jest.mock('@/lib/calorie-estimation', () => ({
   estimateCaloriesBurned: jest.fn(),
 }))
+
+const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <UserPhysicalProfileProvider>{children}</UserPhysicalProfileProvider>
+)
 
 describe('useCalorieCounter', () => {
   beforeEach(() => {
@@ -23,7 +28,9 @@ describe('useCalorieCounter', () => {
 
   it('should calculate calories correctly over time', () => {
     ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, 30, 70, true))
+    const { result } = renderHook(() => useCalorieCounter(120, true), {
+      wrapper,
+    })
 
     expect(result.current.calories).toBe(0)
 
@@ -46,7 +53,9 @@ describe('useCalorieCounter', () => {
 
   it('should not calculate calories when isActive is false', () => {
     ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, 30, 70, false))
+    const { result } = renderHook(() => useCalorieCounter(120, false), {
+      wrapper,
+    })
 
     expect(result.current.calories).toBe(0)
 
@@ -60,7 +69,9 @@ describe('useCalorieCounter', () => {
 
   it('should reset calories when resetCalories is called', () => {
     ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, 30, 70, true))
+    const { result } = renderHook(() => useCalorieCounter(120, true), {
+      wrapper,
+    })
 
     act(() => {
       jest.advanceTimersByTime(2000)

@@ -1,44 +1,28 @@
 /** @jest-environment jsdom */
+import React from 'react'
 import { renderHook, act } from '@testing-library/react'
 import { useUserWeight } from '@/hooks/useUserWeight'
-import useLocalStorage from '@/hooks/useLocalStorage'
+import { UserPhysicalProfileProvider } from '@/context/UserPhysicalProfileContext'
 
-// Mock useLocalStorage
-jest.mock('@/hooks/useLocalStorage', () => ({
-  __esModule: true,
-  default: jest.fn(),
-}))
+const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <UserPhysicalProfileProvider>{children}</UserPhysicalProfileProvider>
+)
 
 describe('useUserWeight', () => {
   it('should return default weight and setter', () => {
-    const setStorageMock = jest.fn()
-    ;(useLocalStorage as jest.Mock).mockReturnValue(['70', setStorageMock])
+    const { result } = renderHook(() => useUserWeight(), { wrapper })
 
-    const { result } = renderHook(() => useUserWeight())
-
-    expect(result.current[0]).toBe(70)
+    expect(result.current[0]).toBe(70) // Default from context
     expect(typeof result.current[1]).toBe('function')
   })
 
-  it('should update weight', () => {
-    const setStorageMock = jest.fn()
-    ;(useLocalStorage as jest.Mock).mockReturnValue(['70', setStorageMock])
-
-    const { result } = renderHook(() => useUserWeight())
+  it('should update weight through the context', () => {
+    const { result } = renderHook(() => useUserWeight(), { wrapper })
 
     act(() => {
       result.current[1](75)
     })
 
-    expect(setStorageMock).toHaveBeenCalledWith('75')
-  })
-
-  it('should handle stored non-numeric values gracefully (NaN)', () => {
-    const setStorageMock = jest.fn()
-    ;(useLocalStorage as jest.Mock).mockReturnValue(['invalid', setStorageMock])
-
-    const { result } = renderHook(() => useUserWeight())
-
-    expect(result.current[0]).toBeNaN()
+    expect(result.current[0]).toBe(75)
   })
 })

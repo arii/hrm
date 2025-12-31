@@ -60,3 +60,24 @@ export const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
   timestamp: true,
   heartRate: true,
 })
+
+export const MeasurementSystemSchema = z.enum(['IMPERIAL', 'METRIC'])
+export const GenderSchema = z.enum(['MALE', 'FEMALE'])
+
+export const UserPhysicalProfileSchema = z.object({
+  userId: z.string().uuid(),
+  age: z.number().int().min(10, 'Age must be at least 10').max(120, 'Invalid age'),
+  // Input might be lbs or kg, but validation checks positive number
+  weight: z.number().positive('Weight must be positive'),
+  gender: GenderSchema,
+  unitSystem: MeasurementSystemSchema.default('IMPERIAL'), // Default per requirements
+  maxHr: z.number().min(30).max(250).optional(),
+})
+
+export const CreateUserPhysicalProfileSchema = UserPhysicalProfileSchema.pick({
+  age: true,
+  weight: true,
+  gender: true,
+  unitSystem: true,
+  maxHr: true,
+})

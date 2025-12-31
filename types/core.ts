@@ -29,6 +29,22 @@ export interface UserProfile {
   updatedAt: string
 }
 
+export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
+export type Gender = 'MALE' | 'FEMALE'
+
+/**
+ * Represents a user's physical attributes for health calculations.
+ * Source of truth for Calorie/Zone engines.
+ */
+export interface UserPhysicalProfile {
+  userId: string
+  age: number
+  weight: number // Always stored normalized in KG for internal calc
+  gender: Gender
+  unitSystem: MeasurementSystem
+  maxHr?: number // Optional override
+}
+
 // =================================================================================================
 // Workout and Fitness
 // =================================================================================================

@@ -1,20 +1,24 @@
 // This file is for component-specific prop types.
 // All other types should be defined in their respective files.
 
+// Import shared domain types to avoid re-definition
+import {
+  TimerMode,
+  TimerPhase,
+  MeasurementSystem,
+  Gender,
+  UserPhysicalProfile,
+} from './core'
+
 export interface HrTileProps {
   name: string
   bpm: number
   percentMax: number // 0-100
   calories?: number
   isConnected?: boolean
-
-  // NEW: Flag to trigger the visual diagnostic state
   isAlerting?: boolean
-  // NEW: Message to display in the overlay when alerting
   alertMessage?: string
 }
-
-import { TimerMode, TimerPhase } from './core'
 
 export interface HeartRateZonesProps {
   maxHr: number
@@ -57,14 +61,5 @@ export interface DashboardSectionLoadingSkeletonProps {
   className?: string
 }
 
-// User Profile & Measurement System
-export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
-export type Gender = 'MALE' | 'FEMALE'
-
-export interface UserProfile {
-  name: string
-  age: number
-  weight: number // Stored normalized in KG
-  gender: Gender
-  unitSystem: MeasurementSystem
-}
+// Re-export specific types if components rely on them via this file
+export type { MeasurementSystem, Gender, UserPhysicalProfile }

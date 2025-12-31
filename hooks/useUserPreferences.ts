@@ -9,9 +9,12 @@ export interface UserPreferences {
   // Nullable fields represent user-provided data that may not yet be set.
   favoritePlaylist: string
   userName: string
-  userAge: number | null
-  userWeight: number | null
   autoConnect: boolean
+
+  /** @deprecated Use UserPhysicalProfileContext instead */
+  userAge: number | null
+  /** @deprecated Use UserPhysicalProfileContext instead */
+  userWeight: number | null
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {

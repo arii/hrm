@@ -1,68 +1,57 @@
-// File: lib/calorie-estimation.ts
-/**
- * Calorie Estimation Module
- *
- * This module provides functions for estimating calorie expenditure based on
- * physiological data. It is designed to be a standalone, testable unit.
- *
- * The primary estimation uses a formula derived from the Journal of Sports Sciences:
- * https://www.tandfonline.com/doi/abs/10.1080/02640410400023363
- *
- * The formula is adapted for use with METs (Metabolic Equivalents) and accounts for
- * age, weight, heart rate, and duration.
- */
+import { Gender } from '@/types/core'
 
 export interface CalorieEstimationParams {
   heartRate: number
   age: number
   weightKg: number
   durationMinutes: number
+  gender: Gender
 }
 
 /**
- * Estimates calories burned using a gender-neutral formula.
- *
- * This function implements a widely recognized formula for calorie expenditure
- * that relies on heart rate, age, and weight. It abstracts away the need for
- * a `gender` parameter by using a universal set of coefficients.
- *
- * This is the recommended function for all new calorie estimations.
- *
- * @param params - The physiological data for the calculation.
- * @returns The estimated number of calories burned.
+ * Constants for the Keytel Equation (Journal of Sports Sciences).
+ * @see https://www.tandfonline.com/doi/abs/10.1080/02640410400023363
  */
-export const estimateCaloriesBurned = (
-  params: CalorieEstimationParams
-): number => {
-  const { heartRate, age, weightKg, durationMinutes } = params
-
-  if (heartRate <= 30 || durationMinutes <= 0) {
-    return 0
-  }
-
-  // A simplified, gender-neutral version of the Harris-Benedict equation, adapted for activity.
-  /**
-   * Constants used in the calorie estimation formula.
-   * These values are derived from the Journal of Sports Sciences:
-   * https://www.tandfonline.com/doi/abs/10.1080/02640410400023363
-   */
-  const CALORIE_ESTIMATION_CONSTANTS = {
+const KEYTEL_CONSTANTS = {
+  MALE: {
     INTERCEPT: -55.0969,
     HR_FACTOR: 0.6309,
     WEIGHT_FACTOR: 0.1988,
     AGE_FACTOR: 0.2017,
-    KJ_TO_KCAL: 4.184,
-  }
-  const heartRateTerm = CALORIE_ESTIMATION_CONSTANTS.HR_FACTOR * heartRate
-  const weightTerm = CALORIE_ESTIMATION_CONSTANTS.WEIGHT_FACTOR * weightKg
-  const ageTerm = CALORIE_ESTIMATION_CONSTANTS.AGE_FACTOR * age
-  const caloriesPerMinute =
-    (CALORIE_ESTIMATION_CONSTANTS.INTERCEPT +
-      heartRateTerm +
-      weightTerm +
-      ageTerm) /
-    CALORIE_ESTIMATION_CONSTANTS.KJ_TO_KCAL
+  },
+  FEMALE: {
+    INTERCEPT: -20.4022,
+    HR_FACTOR: 0.4472,
+    WEIGHT_FACTOR: -0.1263, // Note: Weight factor is negative for females in this model
+    AGE_FACTOR: 0.074,
+  },
+  KJ_TO_KCAL: 4.184,
+}
 
-  const totalCalories = caloriesPerMinute * durationMinutes
-  return Math.max(0, totalCalories) // Ensure result is non-negative
+export const estimateCaloriesBurned = (
+  params: CalorieEstimationParams
+): number => {
+  const { heartRate, age, weightKg, durationMinutes, gender } = params
+
+  // Safety gates
+  if (heartRate <= 30 || durationMinutes <= 0) return 0
+
+  const constants =
+    gender === 'FEMALE' ? KEYTEL_CONSTANTS.FEMALE : KEYTEL_CONSTANTS.MALE
+
+  // Calculate Energy Expenditure (EE) in kJ/min
+  // Formula: EE = Intercept + (HR * C1) + (Weight * C2) + (Age * C3)
+  const energyKjPerMin =
+    constants.INTERCEPT +
+    constants.HR_FACTOR * heartRate +
+    constants.WEIGHT_FACTOR * weightKg +
+    constants.AGE_FACTOR * age
+
+  // Convert to kcal/min
+  const kcalPerMinute = energyKjPerMin / KEYTEL_CONSTANTS.KJ_TO_KCAL
+
+  const totalCalories = kcalPerMinute * durationMinutes
+
+  // Prevent negative values which can occur with low HR in the formula
+  return Math.max(0, totalCalories)
 }
