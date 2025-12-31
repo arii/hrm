@@ -13,7 +13,6 @@ import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
-import { disconnect } from './lib/redis.js'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -176,17 +175,4 @@ app.prepare().then(async () => {
   server.listen(env.PORT, () => {
     logger.info(`> Ready on http://${env.HOST}:${env.PORT}`)
   })
-
-  // Graceful shutdown
-  const cleanup = async () => {
-    logger.info('Shutting down server...')
-    await disconnect()
-    server.close(() => {
-      logger.info('Server shut down.')
-      process.exit(0)
-    })
-  }
-
-  process.on('SIGTERM', cleanup)
-  process.on('SIGINT', cleanup)
 })

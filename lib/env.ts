@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import logger from '@/utils/logger'
 
 const envSchema = z.object({
   NODE_ENV: z
@@ -9,7 +8,6 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   NEXTAUTH_URL: z.string().url().min(1),
   NEXTAUTH_SECRET: z.string().min(1),
-  REDIS_URL: z.string().url().min(1).optional(),
   SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
   SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
   SPOTIFY_DEBUG: z
@@ -30,23 +28,3 @@ const envSchema = z.object({
 })
 
 export const env = envSchema.parse(process.env)
-
-const runtimeEnvSchema = envSchema.extend({
-  REDIS_URL: z.string().url().min(1),
-})
-
-export function validateRuntimeEnv() {
-  try {
-    runtimeEnvSchema.parse(process.env)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      logger.error('Runtime environment validation failed:', error.issues)
-      process.exit(1)
-    }
-    logger.error(
-      'An unexpected error occurred during environment validation:',
-      error
-    )
-    process.exit(1)
-  }
-}

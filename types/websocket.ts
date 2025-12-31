@@ -167,7 +167,6 @@ export type ClientCommandMessage =
   | ClientRegistrationMessage
   | PingMessage
 
-export type WebSocketMessage = ServerMessage | ClientCommandMessage
 import { z } from 'zod'
 
 // --- Zod Schemas for Client Input Command Interfaces ---
