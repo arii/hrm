@@ -178,6 +178,8 @@ interface ReviewContext {
   }[]
 }
 
+import { runConflictResolution } from './conflict-resolver'
+
 async function main() {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
@@ -207,6 +209,27 @@ async function main() {
 
   if (preset === 'review') {
     await runReviewPreset(genAI, contextContent, outputFile)
+  } else if (preset === 'resolve-conflicts') {
+    const conflictFile = getArg('--context-file')
+    if (!conflictFile) {
+      console.error(
+        'Error: --context-file is required for resolve-conflicts preset.'
+      )
+      process.exit(1)
+    }
+    const agentDetailsFile = getArg('--agent-details')
+    if (!agentDetailsFile) {
+      console.error(
+        'Error: --agent-details is required for resolve-conflicts preset.'
+      )
+      process.exit(1)
+    }
+    await runConflictResolution(
+      genAI,
+      conflictFile,
+      outputFile,
+      agentDetailsFile
+    )
   } else {
     // Default/Generic mode
     let finalTask = task
