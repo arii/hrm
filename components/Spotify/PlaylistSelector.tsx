@@ -9,7 +9,6 @@ import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
-import List from '@mui/material/List'
 import ListItemText from '@mui/material/ListItemText'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
@@ -53,11 +52,10 @@ const OuterElementType = forwardRef<HTMLDivElement>((props, ref) => {
   return <div ref={ref} {...props} {...outerProps} />
 })
 
-// eslint-disable-next-line react/display-name
 const ListboxComponent = forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLElement>
->(function ListboxComponent(props, ref) {
+>(function Listbox(props, ref) {
   const { children, ...other } = props
   const itemData: React.ReactElement[] = React.Children.toArray(
     children

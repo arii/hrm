@@ -7,13 +7,18 @@ import { Track } from '../../../../types/spotify'
 // Mock the fetch API
 global.fetch = jest.fn()
 
+import { FixedSizeList } from 'react-window'
+
 // Mock react-window
 jest.mock('react-window', () => ({
   ...jest.requireActual('react-window'),
-  FixedSizeList: ({ children, ...props }: any) => {
+  FixedSizeList: ({
+    children,
+    ...props
+  }: React.ComponentProps<typeof FixedSizeList>) => {
     return (
       <div {...props}>
-        {props.itemData.map((item: any, index: number) =>
+        {props.itemData.map((item: Track, index: number) =>
           children({
             index,
             style: {},
@@ -46,8 +51,7 @@ describe('PlaylistDetails', () => {
   })
 
   it('displays a loading indicator while fetching data', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockImplementationOnce(
+    ;(fetch as jest.Mock).mockImplementationOnce(
       () =>
         new Promise((resolve) =>
           setTimeout(
@@ -67,8 +71,7 @@ describe('PlaylistDetails', () => {
   })
 
   it('displays the track list when data is fetched successfully', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValueOnce({
+    ;(fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ tracks: mockTracks }),
     })
@@ -87,8 +90,7 @@ describe('PlaylistDetails', () => {
   })
 
   it('displays an error message when the API call fails', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValueOnce({
+    ;(fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
     })
 

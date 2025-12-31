@@ -2,7 +2,6 @@
 import MusicNote from '@mui/icons-material/MusicNote'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
-import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
