@@ -55,7 +55,7 @@ const PlaylistPage = () => {
         if (!response.ok) {
           const errorData = await response.json()
           throw new Error(
-            errorData.message || 'Failed to fetch playlist details'
+            errorData.error || 'Failed to fetch playlist details'
           )
         }
         const data = await response.json()
