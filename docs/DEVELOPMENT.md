@@ -107,6 +107,7 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **UI/UX Polish**: Implementing the enhancements outlined in [FRONTEND_IMPROVEMENT_PLAN.md](./FRONTEND_IMPROVEMENT_PLAN.md), focusing on typography, color consistency, and mobile optimization.
 - **Accessibility**: Ensuring the application is fully accessible by meeting WCAG 2.1 AA compliance, including keyboard navigation and screen reader support.
 - **Test Suite Optimization**: Consolidating and stabilizing the test suite as described in [TESTING.md](./TESTING.md) to ensure faster and more reliable CI/CD feedback.
+  - **Playwright Sharding**: The CI workflow now uses Playwright's sharding feature to run E2E tests in parallel across multiple runners. This significantly reduces the time required to run the full test suite and provides faster feedback on pull requests.
 - **Code Quality & Documentation**: Continuously refactoring components for clarity and keeping all development documentation up-to-date.
 
 ## Completed Milestones
