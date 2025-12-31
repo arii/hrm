@@ -14,7 +14,7 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
 import {
   ToggleButtonGroup,
