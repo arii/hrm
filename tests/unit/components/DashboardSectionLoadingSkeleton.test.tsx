@@ -12,7 +12,9 @@ describe('DashboardSectionLoadingSkeleton', () => {
   })
 
   it('renders with a custom height and matches snapshot', () => {
-    const { asFragment } = render(<DashboardSectionLoadingSkeleton height="200px" />)
+    const { asFragment } = render(
+      <DashboardSectionLoadingSkeleton height="200px" />
+    )
     expect(asFragment()).toMatchSnapshot()
   })
 })

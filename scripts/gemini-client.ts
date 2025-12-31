@@ -353,24 +353,26 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
       return []
     }
     // Use a type guard to filter and validate the shape of each object
-    return parsed.map((item): FailedCheck | null => {
-      const logContent = item.logSnippet || item.logs; // Fallback to 'logs'
-      const isValid =
-        typeof item.name === 'string' &&
-        typeof item.conclusion === 'string' &&
-        typeof item.detailsUrl === 'string' &&
-        (typeof logContent === 'string' || typeof logContent === 'undefined')
-      if (!isValid) {
-        console.warn('Warning: Invalid item in FAILED_CHECKS_JSON:', item)
-        return null
-      }
-      return {
-        name: item.name,
-        conclusion: item.conclusion,
-        detailsUrl: item.detailsUrl,
-        logSnippet: logContent // Normalize to new property
-      }
-    }).filter((item): item is FailedCheck => item !== null)
+    return parsed
+      .map((item): FailedCheck | null => {
+        const logContent = item.logSnippet || item.logs // Fallback to 'logs'
+        const isValid =
+          typeof item.name === 'string' &&
+          typeof item.conclusion === 'string' &&
+          typeof item.detailsUrl === 'string' &&
+          (typeof logContent === 'string' || typeof logContent === 'undefined')
+        if (!isValid) {
+          console.warn('Warning: Invalid item in FAILED_CHECKS_JSON:', item)
+          return null
+        }
+        return {
+          name: item.name,
+          conclusion: item.conclusion,
+          detailsUrl: item.detailsUrl,
+          logSnippet: logContent, // Normalize to new property
+        }
+      })
+      .filter((item): item is FailedCheck => item !== null)
   } catch (e) {
     console.warn(
       `Warning: Failed to parse FAILED_CHECKS_JSON: ${(e as Error).message}`,
@@ -423,46 +425,63 @@ export async function buildReviewPrompt(
   contextContent: string
 ): Promise<string> {
   const isReReview = context.reviewCount > 0
-  const hasFailures = context.failedChecks && context.failedChecks.length > 0;
+  const hasFailures = context.failedChecks && context.failedChecks.length > 0
 
-  const templatePath = hasFailures ? 'prompts/fix-mode.md' : 'prompts/standard-review.md';
-  let promptTemplate = await readFile(templatePath, 'utf-8');
+  const templatePath = hasFailures
+    ? 'prompts/fix-mode.md'
+    : 'prompts/standard-review.md'
+  let promptTemplate = await readFile(templatePath, 'utf-8')
 
   // --- Base Context Section ---
-  const reviewIteration = isReReview ? `Re-Review #${context.reviewCount + 1}` : 'Initial Review';
+  const reviewIteration = isReReview
+    ? `Re-Review #${context.reviewCount + 1}`
+    : 'Initial Review'
 
   // --- Diff Section ---
-  const maxDiffLength = 60000; // Increased context window for 2.0 Flash
-  const truncatedDiff = diff.length > maxDiffLength
-      ? diff.substring(0, diff.lastIndexOf('\n', maxDiffLength)) + '\n...[DIFF TRUNCATED]'
-      : diff;
+  const maxDiffLength = 60000 // Increased context window for 2.0 Flash
+  const truncatedDiff =
+    diff.length > maxDiffLength
+      ? diff.substring(0, diff.lastIndexOf('\n', maxDiffLength)) +
+        '\n...[DIFF TRUNCATED]'
+      : diff
 
-  const failureList = context.failedChecks.map(c => {
-    const maxLogSnippetLength = 15000;
-    const truncatedLog = c.logSnippet && c.logSnippet.length > maxLogSnippetLength
-      ? c.logSnippet.substring(0, maxLogSnippetLength) + '\n... [LOGS TRUNCATED]'
-      : c.logSnippet;
-    return `- **${c.name}** (${c.conclusion}) ${truncatedLog ? `\n  Error: \`\`\`\n${truncatedLog}\n\`\`\`` : ''}`;
-  }).join('\n');
+  const failureList = context.failedChecks
+    .map((c) => {
+      const maxLogSnippetLength = 15000
+      const truncatedLog =
+        c.logSnippet && c.logSnippet.length > maxLogSnippetLength
+          ? c.logSnippet.substring(0, maxLogSnippetLength) +
+            '\n... [LOGS TRUNCATED]'
+          : c.logSnippet
+      return `- **${c.name}** (${c.conclusion}) ${truncatedLog ? `\n  Error: \`\`\`\n${truncatedLog}\n\`\`\`` : ''}`
+    })
+    .join('\n')
 
-  const previousReviews = context.previousReviews ? (() => {
-    interface Review {
-      createdAt: string;
-      body: string;
-    }
-    try {
-      const reviews = JSON.parse(context.previousReviews) as Review[];
-      return reviews.map((r: Review, i: number) => `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`).join('\n---\n');
-    } catch (_e) {
-      return context.previousReviews;
-    }
-  })() : 'None';
+  const previousReviews = context.previousReviews
+    ? (() => {
+        interface Review {
+          createdAt: string
+          body: string
+        }
+        try {
+          const reviews = JSON.parse(context.previousReviews) as Review[]
+          return reviews
+            .map(
+              (r: Review, i: number) =>
+                `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
+            )
+            .join('\n---\n')
+        } catch (_e) {
+          return context.previousReviews
+        }
+      })()
+    : 'None'
 
-  let testCoverageAlert = '';
+  let testCoverageAlert = ''
   if (context.missingTests) {
-    testCoverageAlert = `\n\n⚠️ **TEST COVERAGE ALERT**: Source code was modified without corresponding test changes.\n`;
+    testCoverageAlert = `\n\n⚠️ **TEST COVERAGE ALERT**: Source code was modified without corresponding test changes.\n`
   } else if (context.hasTestChanges) {
-    testCoverageAlert = `\n\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`;
+    testCoverageAlert = `\n\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`
   }
 
   const placeholders: { [key: string]: string } = {
@@ -488,13 +507,16 @@ export async function buildReviewPrompt(
     truncatedDiff,
     failureList,
     testCoverageAlert,
-  };
-
-  for (const [key, value] of Object.entries(placeholders)) {
-    promptTemplate = promptTemplate.replace(new RegExp(`{{${key}}}`, 'g'), value);
   }
 
-  return promptTemplate;
+  for (const [key, value] of Object.entries(placeholders)) {
+    promptTemplate = promptTemplate.replace(
+      new RegExp(`{{${key}}}`, 'g'),
+      value
+    )
+  }
+
+  return promptTemplate
 }
 
 async function runReviewPreset(
