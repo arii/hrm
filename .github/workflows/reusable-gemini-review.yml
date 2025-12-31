@@ -23,8 +23,6 @@ on:
     secrets:
       GEMINI_API_KEY:
         required: true
-      ARI_PAT:
-        required: true
     outputs:
       needs-review:
         description: 'Whether a re-review is needed'
