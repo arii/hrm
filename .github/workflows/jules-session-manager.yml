@@ -100,6 +100,12 @@ jobs:
           fi
           echo "JULES_SESSION_ID=$SESSION_ID" >> $GITHUB_ENV
 
+      - name: 'Validate JULES_API_URL Secret'
+        run: |
+          if [ -z "${{ secrets.JULES_API_URL }}" ]; then
+            echo "::error::JULES_API_URL secret is not set. Please configure it in your repository secrets."
+            exit 1
+          fi
       - name: 'Install Dependencies'
         run: pip install -r .github/scripts/requirements.txt
 
