@@ -3,7 +3,6 @@ import { IncomingMessage } from 'http'
 import { Socket } from 'net'
 import { env } from '../env.js'
 
-const WS_MAX_CONNECTIONS = 5
 const wsConnections = new Map<string, number>()
 
 export const handleConnectionLimit = (
@@ -17,10 +16,12 @@ export const handleConnectionLimit = (
     (req.headers['x-forwarded-for'] as string)?.split(',').shift()?.trim() ||
     req.socket.remoteAddress
 
+  // If the IP cannot be determined, allow the connection. This maintains
+  // the original behavior from when this logic was in server.ts.
   if (!ip) return true
 
   const count = wsConnections.get(ip) || 0
-  if (count >= WS_MAX_CONNECTIONS) {
+  if (count >= env.WS_MAX_CONNECTIONS) {
     socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
     socket.destroy()
     return false

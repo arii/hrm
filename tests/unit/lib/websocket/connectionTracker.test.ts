@@ -11,6 +11,7 @@ import { EventEmitter } from 'events'
 jest.mock('../../../../lib/env', () => ({
   env: {
     NODE_ENV: 'production',
+    WS_MAX_CONNECTIONS: 5,
   },
 }))
 
@@ -77,7 +78,12 @@ describe('WebSocket Connection Tracker', () => {
   it('should reject a connection if the limit is exceeded', () => {
     // Simulate 5 existing connections from the same IP
     for (let i = 0; i < 5; i++) {
-      handleConnectionLimit(mockReq, new MockSocket() as unknown as Socket)
+      const socket = new MockSocket()
+      const req = {
+        headers: {},
+        socket,
+      } as unknown as IncomingMessage
+      handleConnectionLimit(req, socket as unknown as Socket)
     }
 
     // The 6th connection should be rejected
