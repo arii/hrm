@@ -553,6 +553,7 @@ async function runReviewPreset(
   const prompt = await buildReviewPrompt(diff, context, contextContent)
   const text = await generateContentWithFallback(genAI, prompt, {
     generationConfig: {
+      maxOutputTokens: 8192,
       responseMimeType: 'application/json',
       responseSchema: {
         type: SchemaType.OBJECT,
