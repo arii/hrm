@@ -133,7 +133,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMENT_BODY: ${{ github.event.comment.body }}
-        run: pnpm tsx scripts/gemini-client.ts --comment-body "$COMMENT_BODY"
+        run: pnpm tsx scripts/gemini-client.ts --task "$COMMENT_BODY"
 
   update-pr-on-comment:
     if: |
