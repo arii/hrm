@@ -97,15 +97,9 @@ export default function ConnectPage() {
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
       setUnitSystem(newUnit)
-      // Height hook handles its own transient state reset if unit changes
-      // Update display weight to prevent flicker/empty value
-      const currentKg = parseFloat(_weightInKg)
-      if (!isNaN(currentKg)) {
-        const newDisplay = toDisplay(currentKg, newUnit)
-        setDisplayWeight(newDisplay.toString())
-      } else {
-        setDisplayWeight('')
-      }
+      // When unit system changes, we should clear any transient input
+      // The display value will be re-calculated by the useMemo hook
+      setTransientWeight(null)
     }
   }
 
