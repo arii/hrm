@@ -349,6 +349,81 @@ describe('WebSocket Manager', () => {
       // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
       expect(clientData!.calories).toBeGreaterThan(1)
     })
+
+    it('should use updated gender from USER_PROFILE_UPDATE for calorie calculation', () => {
+      // Step 1: Send a profile update to set the gender to FEMALE
+      const profileUpdateMessage = JSON.stringify({
+        type: 'USER_PROFILE_UPDATE',
+        payload: {
+          userId: 'test-user',
+          age: 30,
+          weight: 65, // in kg
+          gender: 'FEMALE',
+          unitSystem: 'METRIC',
+        },
+      })
+      mockWs.emit('message', profileUpdateMessage)
+      jest.runOnlyPendingTimers() // Process the message
+
+      // Step 2: Send HR data to trigger calorie calculation
+      const sendHrmInput = (hr: number) => {
+        const message = JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: hr },
+        })
+        mockWs.emit('message', message.toString())
+      }
+
+      sendHrmInput(160) // Initial HR
+      jest.advanceTimersByTime(10000) // 10 seconds
+      sendHrmInput(160)
+      jest.runOnlyPendingTimers() // Process timers and broadcasts
+
+      // Step 3: Verify the broadcasted calorie value
+      const mockBroadcast = broadcast as jest.Mock
+      expect(mockBroadcast).toHaveBeenCalled()
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const finalPayload: HrmData[] = lastCall[1].payload
+      const femaleClientData = finalPayload[0]
+
+      // We expect calories to be calculated, and it should be a specific value for females
+      // For a 30yo female, 65kg, at 160bpm for 10 seconds:
+      // The Keytel formula will give a specific (non-zero) result that is DIFFERENT from a male.
+      // This test confirms the gender from the profile update was used.
+      expect(femaleClientData.calories).toBeGreaterThan(0)
+      // A male with same stats would burn more. Let's just check it's not the default male calc.
+      // The exact value isn't critical, just that it's calculated and uses the female profile.
+      // A rough manual calculation suggests around ~2 kcal.
+      expect(femaleClientData.calories).toBeCloseTo(2.0, 1)
+
+      // Now, let's compare with a MALE profile to be sure
+      const maleProfileUpdate = JSON.stringify({
+        type: 'USER_PROFILE_UPDATE',
+        payload: {
+          userId: 'test-user',
+          age: 30,
+          weight: 65,
+          gender: 'MALE',
+          unitSystem: 'METRIC',
+        },
+      })
+      mockWs.emit('message', maleProfileUpdate)
+      jest.runOnlyPendingTimers()
+      sendHrmInput(160)
+      jest.advanceTimersByTime(10000)
+      sendHrmInput(160)
+      jest.runOnlyPendingTimers()
+
+      const maleLastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const maleFinalPayload: HrmData[] = maleLastCall[1].payload
+      const maleClientData = maleFinalPayload[0]
+
+      expect(maleClientData.calories).toBeGreaterThan(
+        femaleClientData.calories
+      )
+    })
   })
 
   describe('Message Handling', () => {

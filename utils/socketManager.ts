@@ -49,7 +49,11 @@ const clientSockets = new Map<string, WebSocket>()
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
-  { lastUpdate: number; accumulatedCalories: number }
+  {
+    lastUpdate: number
+    accumulatedCalories: number
+    weightKg?: number
+  }
 >()
 
 /**
@@ -158,6 +162,7 @@ const initSocketManager = (
       clientSessionState.set(extWs.clientId, {
         lastUpdate: Date.now(),
         accumulatedCalories: 0,
+        weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
       })
     } else {
       logger.info({ clientId }, 'Reconnected with existing session.')
@@ -265,6 +270,29 @@ const handleIncomingMessage = (
         sendWebSocketMessage(ws, initialStateMessage, 'socketManager.GET_STATE')
         break
       }
+      case 'USER_PROFILE_UPDATE': {
+        const profile = message.payload
+        const existingData = hrmDataRepository.findById(clientId)
+        if (existingData) {
+          const updatedData = {
+            ...existingData,
+            age: profile.age,
+            gender: profile.gender,
+            maxHr: profile.maxHr ?? existingData.maxHr,
+          }
+          hrmDataRepository.save(updatedData)
+        }
+
+        const sessionState = clientSessionState.get(clientId)
+        if (sessionState) {
+          clientSessionState.set(clientId, {
+            ...sessionState,
+            weightKg: profile.weight, // weight is already in KG
+          })
+        }
+        broadcastState()
+        break
+      }
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
@@ -306,7 +334,7 @@ const handleIncomingMessage = (
             const caloriesBurned = estimateCaloriesBurned({
               heartRate: currentHr,
               age: currentAge,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
+              weightKg: sessionState.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG,
               durationMinutes: dtMinutes,
               gender: existingData.gender,
             })

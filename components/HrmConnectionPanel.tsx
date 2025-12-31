@@ -18,7 +18,7 @@ import HrTileWithCalories from './HrTileWithCalories'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
-  const [userSettings] = useUserSettings()
+  const { settings: userSettings } = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const autoConnectAttempted = useRef(false)
   const {
@@ -30,13 +30,13 @@ const HrmConnectionPanel = () => {
     isSupported,
   } = useBluetoothHRM({
     userName: userSettings.userName,
-    userAge: userSettings.userAge || 30,
+    userAge: userSettings.age,
   })
 
   const handleConnect = useCallback(() => {
     const userName =
       session?.user?.name || userSettings.userName || 'Unknown User'
-    const userAge = userSettings.userAge || 30
+    const userAge = userSettings.age
     connectAndStream(userName, userAge).catch((error) => {
       // It's common for the requestDevice promise to be cancelled by the user.
       // We catch it here to prevent an unhandled rejection error in the console.
@@ -57,7 +57,7 @@ const HrmConnectionPanel = () => {
         autoConnectAttempted.current = true
         const userName =
           session?.user?.name || userSettings.userName || 'Unknown User'
-        const userAge = userSettings.userAge || 30
+        const userAge = userSettings.age
         await connectAndStream(userName, userAge)
       }
     }

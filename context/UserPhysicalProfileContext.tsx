@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { useSession } from 'next-auth/react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { UserPhysicalProfile } from '@/types/core'
+import { useWebSocket } from './WebSocketContext'
 
 // Default state for new users (or unauthenticated guests)
 const DEFAULT_PHYSICAL_PROFILE: UserPhysicalProfile = {
@@ -36,6 +37,7 @@ export const UserPhysicalProfileProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const { data: session, status } = useSession()
+  const { sendData, connectionStatus } = useWebSocket()
 
   // Persist profile to localStorage for immediate availability
   const [profile, setProfile] = useLocalStorage<UserPhysicalProfile>(
@@ -51,6 +53,16 @@ export const UserPhysicalProfileProvider: React.FC<{
       setProfile((prev) => ({ ...prev, userId: session.user?.email ?? '' }))
     }
   }, [session, profile.userId, setProfile])
+
+  // Effect to send profile data to the server via WebSocket
+  useEffect(() => {
+    if (connectionStatus === 'Connected' && profile) {
+      sendData({
+        type: 'USER_PROFILE_UPDATE',
+        payload: profile,
+      })
+    }
+  }, [profile, connectionStatus, sendData])
 
   const updateProfile = useCallback(
     (updates: Partial<UserPhysicalProfile>) => {

@@ -9,6 +9,7 @@ import type {
   TimerData,
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
+  UserPhysicalProfile,
 } from './core'
 import { z } from 'zod'
 
@@ -157,6 +158,11 @@ export interface PingMessage {
   type: 'PING'
 }
 
+export interface UserProfileUpdateMessage {
+  type: 'USER_PROFILE_UPDATE'
+  payload: UserPhysicalProfile
+}
+
 export type ClientCommandMessage =
   | HrmInputMessage
   | HrmMetadataUpdateMessage
@@ -167,6 +173,7 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
+  | UserProfileUpdateMessage
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
@@ -238,6 +245,27 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
+const GenderSchema = z.enum(['MALE', 'FEMALE'])
+const MeasurementSystemSchema = z.enum(['IMPERIAL', 'METRIC'])
+
+export const UserPhysicalProfileSchema = z.object({
+  userId: z.string(),
+  age: z
+    .number()
+    .int()
+    .min(10, 'Age must be at least 10')
+    .max(120, 'Invalid age'),
+  weight: z.number().positive('Weight must be positive'),
+  gender: GenderSchema,
+  unitSystem: MeasurementSystemSchema,
+  maxHr: z.number().min(30).max(250).optional(),
+})
+
+export const UserProfileUpdateMessageSchema = z.object({
+  type: z.literal('USER_PROFILE_UPDATE'),
+  payload: UserPhysicalProfileSchema,
+})
+
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
   HrmMetadataUpdateMessageSchema,
@@ -248,4 +276,5 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
   PingMessageSchema, // Add PING schema to the union
+  UserProfileUpdateMessageSchema,
 ])

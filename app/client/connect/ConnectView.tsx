@@ -14,7 +14,7 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
 import {
   ToggleButtonGroup,
@@ -25,8 +25,6 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material'
-import { useUserPhysicalProfile } from '@/context/UserPhysicalProfileContext'
-import { calculateMaxHr } from '@/lib/hrm/calculators'
 
 interface ConnectViewProps {
   duration: string
@@ -107,9 +105,7 @@ export default function ConnectView({
   onStartWorkout,
   onEndWorkout,
 }: ConnectViewProps) {
-  const { profile, updateProfile } = useUserPhysicalProfile()
   const [isResetting, setIsResetting] = useState(false)
-  const [maxHr, setMaxHr] = useState(profile.maxHr?.toString() ?? '')
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -179,23 +175,8 @@ export default function ConnectView({
               setUserName={setUserName}
               userAge={userAge}
               setUserAge={setUserAge}
-              onAgeBlur={() => {
-                onAgeBlur()
-                if (userAge) {
-                  const newMaxHr = calculateMaxHr(parseInt(userAge, 10))
-                  setMaxHr(newMaxHr.toString())
-                  updateProfile({ maxHr: newMaxHr })
-                }
-              }}
+              onAgeBlur={onAgeBlur}
               ageError={ageError}
-              maxHr={maxHr}
-              setMaxHr={(newMaxHr) => {
-                setMaxHr(newMaxHr)
-                const numericMaxHr = parseInt(newMaxHr, 10)
-                if (!isNaN(numericMaxHr)) {
-                  updateProfile({ maxHr: numericMaxHr })
-                }
-              }}
               userHeight={userHeight}
               setUserHeight={setUserHeight}
               onHeightBlur={onHeightBlur}

@@ -29,12 +29,12 @@ fi
 
 # Verify critical files exist before starting
 # Use absolute paths for clarity in error messages
-if [ ! -f "$PROJECT_ROOT/dist/server.js" ]; then
-  echo "❌ ERROR: dist/server.js not found"
-  echo "   Expected: $PROJECT_ROOT/dist/server.js"
+if [ ! -f "$PROJECT_ROOT/dist/server.mjs" ]; then
+  echo "❌ ERROR: dist/server.mjs not found"
+  echo "   Expected: $PROJECT_ROOT/dist/server.mjs"
   echo "   Current dir: $(pwd)"
   echo "   Directory listing:"
-  ls -la "$PROJECT_ROOT" | head -20
+  ls -la "$PROJECT_ROOT/dist" | head -20
   exit 1
 fi
 
@@ -60,4 +60,4 @@ echo "🎯 Next.js Build ID: $(cat "$PROJECT_ROOT/.next_prod/BUILD_ID")"
 
 # Explicitly run the compiled server entry point from project root
 # The dist/server.js file expects to find .next in the same directory
-exec node "$PROJECT_ROOT/dist/server.js"
+exec node "$PROJECT_ROOT/dist/server.mjs"

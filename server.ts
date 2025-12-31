@@ -14,23 +14,13 @@ import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
 
-const app = next({
-  dev: env.NODE_ENV !== 'production',
-  dir: process.cwd(),
-  hostname: env.HOST,
-  port: env.PORT,
-})
-const handle = app.getRequestHandler()
-const expressApp = express()
+const dev = env.NODE_ENV !== 'production'
+const nextApp = next({ dev, dir: process.cwd() })
+const handle = nextApp.getRequestHandler()
 
-app.prepare().then(async () => {
+nextApp.prepare().then(async () => {
+  const expressApp = express()
   const server = createServer(expressApp)
-
-  // Global body parsing is intentionally omitted here.
-  // Next.js API routes handle their own body parsing, and adding a global
-  // `express.json()` middleware can cause conflicts, such as the
-  // "TypeError: Response body object should not be disturbed or locked" error,
-  // by attempting to parse the request body twice.
 
   // --- Rate Limiting Setup ---
   if (env.NODE_ENV !== 'test') {
