@@ -30,9 +30,7 @@ describe('UserSettings', () => {
     expect(screen.getByLabelText('Your Name')).toHaveValue('John Doe')
     expect(screen.getByLabelText('Your Age')).toHaveValue(30)
     expect(screen.getByLabelText('Your Height (cm)')).toHaveValue(175)
-    expect(
-      screen.getByLabelText('Your Weight (kg)')
-    ).toHaveValue(70)
+    expect(screen.getByLabelText('Your Weight (kg)')).toHaveValue(70)
   })
 
   it('should switch to imperial units and display feet/inches fields', () => {

@@ -1,13 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {
-  cmToFeetAndInches,
-  feetAndInchesToCm,
-  toKg,
-  toDisplay,
-} from './units'
-import { MeasurementSystem } from '../types'
+import { cmToFeetAndInches, feetAndInchesToCm, toKg, toDisplay } from './units'
 
 describe('unit conversion utilities', () => {
   describe('cmToFeetAndInches', () => {

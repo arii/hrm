@@ -1,4 +1,4 @@
-import React, { memo } from 'react'
+import { memo } from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
@@ -48,9 +48,7 @@ function UserSettings({
     field: 'cm' | 'feet' | 'inches'
   ) => {
     const isMetric = field === 'cm'
-    const isValid = isMetric
-      ? /^\d*\.?\d*$/.test(value)
-      : /^\d*$/.test(value)
+    const isValid = isMetric ? /^\d*\.?\d*$/.test(value) : /^\d*$/.test(value)
 
     if (isValid) {
       setUserHeight({ [field]: value })
