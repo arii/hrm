@@ -120,14 +120,14 @@ jobs:
           REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          python3 .github/scripts/jules_ops.py \
+          ERROR_MESSAGE=$(python3 .github/scripts/jules_ops.py \
             --command "new" \
             --prompt "$PROMPT" \
             --branch "$BRANCH" \
             --title "$TITLE" \
             --owner "$REPO_OWNER" \
             --repo-name "$REPO_NAME" \
-            --jules-api-url "${{ secrets.JULES_API_URL }}"
+            --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1) || echo "error_message=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
 
       - name: 'Run Jules Operation: Delete'
         if: env.COMMAND == 'delete'
@@ -136,10 +136,10 @@ jobs:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
           JULES_SESSION_ID: ${{ env.JULES_SESSION_ID }}
         run: |
-          python3 .github/scripts/jules_ops.py \
+          ERROR_MESSAGE=$(python3 .github/scripts/jules_ops.py \
             --command "delete" \
             --session-id "$JULES_SESSION_ID" \
-            --jules-api-url "${{ secrets.JULES_API_URL }}"
+            --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1) || echo "error_message=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
 
       - name: 'Post Session ID Comment'
         if: success() && env.COMMAND == 'new'
@@ -175,6 +175,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const errorMessage = `${{ steps.jules_op_new.outputs.error_message || steps.jules_op_delete.outputs.error_message }}`;
+            const body = `Jules operation failed with the following error:\n\n\`\`\`\n${errorMessage}\n\`\`\``;
             github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -185,5 +187,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ github.event.issue.number }},
-              body: `Jules operation failed. Please check the workflow run for details.`
+              body: body
             })

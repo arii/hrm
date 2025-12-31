@@ -108,7 +108,7 @@ The primary focus of ongoing development is to enhance the user experience and i
 This project uses a GitHub Actions workflow to manage Jules AI sessions directly from pull request comments. The following commands are available to authorized users (OWNER, MEMBER, or COLLABORATOR):
 
 -   `@jules-new`: Creates a new Jules session based on the context of the pull request.
--   `@jules-delete`: Deletes the Jules session associated with the pull request.
+-   `@jules-delete`: Deletes the Jules session associated with the pull request. If `@jules-new` has been used multiple times, this command will only delete the most recently created session.
 
 **Runner Environment:**
 
