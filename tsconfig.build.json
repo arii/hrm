@@ -13,6 +13,7 @@
     "services/**/*.ts",
     "utils/**/*.ts",
     "types/**/*.ts",
-    "lib/**/*.ts"
+    "lib/**/*.ts",
+    "scripts/**/*.ts"
   ]
 }

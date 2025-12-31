@@ -149,7 +149,15 @@ export class JsonProcessor {
   }
 }
 
-interface ReviewContext {
+// 1. Update Interface to support future Log Injection
+export interface FailedCheck {
+  name: string
+  conclusion: string
+  detailsUrl: string
+  logSnippet?: string // Prepared for the future workflow update
+}
+
+export interface ReviewContext {
   prNumber: string
   prTitle: string
   prAuthor: string
@@ -170,12 +178,7 @@ interface ReviewContext {
   hasTestChanges: boolean
   missingTests: boolean
   testFiles?: string | undefined
-  failedChecks: {
-    name: string
-    conclusion: string
-    detailsUrl: string
-    logs?: string
-  }[]
+  failedChecks: FailedCheck[]
 }
 
 async function main() {
@@ -298,12 +301,14 @@ async function generateContentWithFallback(
  */
 export function cleanJsonOutput(text: string): string {
   if (!text) return ''
-  // Improved regex to handle potential leading text before the block
   const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i
   const match = codeBlockRegex.exec(text)
-  if (match && match[1]) {
+  // If a match is found, return the trimmed content of the capture group.
+  // match[1] can be an empty string, which is the desired output for empty blocks.
+  if (match && match[1] !== undefined) {
     return match[1].trim()
   }
+  // If no code block is found, return the original text, trimmed.
   return text.trim()
 }
 
@@ -332,13 +337,6 @@ ${task}
   }
 }
 
-interface FailedCheck {
-  name: string
-  conclusion: string
-  detailsUrl: string
-  logs?: string // Added optional logs field
-}
-
 function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
   if (!jsonStr) return []
   try {
@@ -348,17 +346,24 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
       return []
     }
     // Use a type guard to filter and validate the shape of each object
-    return parsed.filter((item): item is FailedCheck => {
+    return parsed.map((item): FailedCheck | null => {
+      const logContent = item.logSnippet || item.logs; // Fallback to 'logs'
       const isValid =
         typeof item.name === 'string' &&
         typeof item.conclusion === 'string' &&
         typeof item.detailsUrl === 'string' &&
-        (typeof item.logs === 'string' || typeof item.logs === 'undefined') // Validate logs field
+        (typeof logContent === 'string' || typeof logContent === 'undefined')
       if (!isValid) {
         console.warn('Warning: Invalid item in FAILED_CHECKS_JSON:', item)
+        return null
       }
-      return isValid
-    })
+      return {
+        name: item.name,
+        conclusion: item.conclusion,
+        detailsUrl: item.detailsUrl,
+        logSnippet: logContent // Normalize to new property
+      }
+    }).filter((item): item is FailedCheck => item !== null)
   } catch (e) {
     console.warn(
       `Warning: Failed to parse FAILED_CHECKS_JSON: ${(e as Error).message}`,
@@ -404,266 +409,85 @@ function getReviewContextFromEnv(): ReviewContext {
   }
 }
 
-function buildReviewPrompt(
+// 3. Refactored buildReviewPrompt
+export async function buildReviewPrompt(
   diff: string,
   context: ReviewContext,
   contextContent: string
-): string {
+): Promise<string> {
   const isReReview = context.reviewCount > 0
-  const reviewIteration = isReReview
-    ? `Re-Review #${context.reviewCount + 1}`
-    : 'Initial Review'
+  const hasFailures = context.failedChecks && context.failedChecks.length > 0;
 
-  let prompt = `# Code Review Task: ${reviewIteration}\n`
+  const templatePath = hasFailures ? 'prompts/fix-mode.md' : 'prompts/standard-review.md';
+  let promptTemplate = await readFile(templatePath, 'utf-8');
 
-  if (context.failedChecks && context.failedChecks.length > 0) {
-    const checksTable = `| Check Name | Status | Log URL |\n|------------|--------|---------|\n${context.failedChecks
-      .map(
-        (check) =>
-          `| ${check.name} | ${check.conclusion} | [View Log](${check.detailsUrl}) |`
-      )
-      .join('\n')}`
+  // --- Base Context Section ---
+  const reviewIteration = isReReview ? `Re-Review #${context.reviewCount + 1}` : 'Initial Review';
 
-    const logsSection = context.failedChecks
-      .map((check) => {
-        // Limit log size to avoid excessively large prompts
-        const truncatedLog =
-          check.logs && check.logs.length > 15000
-            ? check.logs.substring(0, 15000) + '\n... [LOGS TRUNCATED]'
-            : check.logs || ''
-        return `
-<details>
-<summary><strong>${check.name}</strong> (${check.conclusion})</summary>
+  // --- Diff Section ---
+  const maxDiffLength = 60000; // Increased context window for 2.0 Flash
+  const truncatedDiff = diff.length > maxDiffLength
+      ? diff.substring(0, diff.lastIndexOf('\n', maxDiffLength)) + '\n...[DIFF TRUNCATED]'
+      : diff;
 
-\`\`\`
-${truncatedLog || 'No logs available.'}
-\`\`\`
+  const failureList = context.failedChecks.map(c => {
+    const maxLogSnippetLength = 15000;
+    const truncatedLog = c.logSnippet && c.logSnippet.length > maxLogSnippetLength
+      ? c.logSnippet.substring(0, maxLogSnippetLength) + '\n... [LOGS TRUNCATED]'
+      : c.logSnippet;
+    return `- **${c.name}** (${c.conclusion}) ${truncatedLog ? `\n  Error: \`\`\`\n${truncatedLog}\n\`\`\`` : ''}`;
+  }).join('\n');
 
-</details>
-`
-      })
-      .join('\n')
-
-    prompt += `
-## 🚨 CI Failure Analysis
-The following CI checks failed. Your primary task is to **analyze the provided logs** to identify the root cause and suggest a specific code fix.
-
-${checksTable}
-
-### Failed Job Logs
-${logsSection}
-
-**Your Task:**
-1.  **Analyze the logs** for each failed check to understand the error.
-2.  **Examine the diff** to find the code that caused the failure.
-3.  **Provide a clear, root-cause explanation** of the failure.
-4.  **Offer a specific, actionable code change** to fix the issue.
-
----
-`
-  }
-
-  prompt += `## Review Context
-- **PR #${context.prNumber}**: ${context.prTitle}
-- **Author**: ${context.prAuthor}
-- **Files Changed**: ${context.filesChanged}
-- **Lines Changed**: ~${context.totalLoc}
-- **Areas Affected**: ${context.changedAreas}
-- **Review Depth**: ${context.reviewDepth}
-- **Labels**: ${context.prLabels || 'none'}
-`
-
-  if (context.issueNumber) {
-    prompt += `- **Linked Issue #${context.issueNumber}**: ${context.issueTitle}\n`
-  }
-
-  // Add re-review specific context
-  if (isReReview) {
-    prompt += `\n## Review History
-- **Previous Reviews**: ${context.reviewCount}
-- **Resolved Comments**: ${context.resolvedCount}
-- **Changes Requested**: ${context.changesRequested}
-
-### Focus Areas for Re-Review:
-1. Verify that previous feedback has been addressed
-2. Check for introduction of new issues
-3. Assess overall code quality improvement
-4. Determine if the PR is ready for approval
-
-### Previous Review Feedback:
-${
-  context.previousReviews
-    ? (() => {
-        interface Review {
-          createdAt: string
-          body: string
-        }
-        try {
-          const reviews = JSON.parse(context.previousReviews) as Review[]
-          return reviews
-            .map(
-              (r: Review, i: number) =>
-                `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
-            )
-            .join('\n---\n')
-        } catch (_e) {
-          return context.previousReviews // Fallback to raw string if parsing fails
-        }
-      })()
-    : 'None'
-}
-`
-  }
-
-  // Add test coverage concerns
-  if (context.missingTests) {
-    prompt += `\n⚠️ **TEST COVERAGE ALERT**: Source code was modified without corresponding test changes.\n`
-  } else if (context.hasTestChanges) {
-    prompt += `\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`
-  }
-
-  // Issue context
-  if (context.linkedIssueBody) {
-    prompt += `\n## Issue Description
-${context.linkedIssueBody}
-`
-  }
-
-  // Commit messages for understanding intent
-  if (context.commitMessages) {
-    prompt += `\n## Commit Messages (Development Intent)
-${context.commitMessages}
-`
-  }
-
-  // Project Documentation
-  prompt += `\n## Project Documentation & Guidelines
-${contextContent}
-`
-
-  // The actual diff
-  // Truncate diff if extremely large
-  const maxDiffLength = 50000
-  const truncatedDiff =
-    diff.length > maxDiffLength
-      ? diff.substring(0, maxDiffLength) + '\n...[DIFF TRUNCATED]'
-      : diff
-
-  prompt += `\n## Code Changes (Diff)
-\`\`\`diff
-${truncatedDiff}
-\`\`\`
-
----
-
-## Review Instructions
-
-`
-
-  // Tailor instructions based on review type and depth
-  if (isReReview) {
-    prompt += `### Re-Review Guidelines:
-1. **Verification First**: Check if previous concerns were addressed
-2. **New Issues**: Identify any regressions or new problems introduced
-3. **Progressive Approval**: If most issues resolved and only minor items remain, indicate near-approval status
-4. **Focus on Critical**: At this stage, focus on blocking issues only unless asking for major refactoring
-5. **No Issues Found**: If the changes are perfect and no issues are found, YOU MUST explicitly describe what you verified and why it is correct. Do not output an empty review.
-
-### Output Format for Re-Review:
-- Start with a summary of what was fixed from previous review
-- List any remaining issues (categorize as blocking vs. nice-to-have)
-- If near approval, explicitly state "✅ Ready for approval pending: [list minor items]"
-- Provide specific, actionable feedback for any remaining concerns
-- If NO issues found: "✅ Verified [Specific Change]. No regressions found. Ready for approval."
-`
-  } else {
-    // Initial review instructions based on depth
-    if (context.reviewDepth === 'detailed') {
-      prompt += `### Detailed Review Guidelines (Small Change):
-Review every aspect thoroughly:
-1. **Code Quality**: Readability, maintainability, adherence to patterns
-2. **Architecture**: Proper separation of concerns, appropriate abstractions
-3. **Security**: Input validation, auth/auth, data exposure
-4. **Performance**: Inefficiencies, N+1 queries, memory leaks
-5. **Testing**: Coverage of edge cases, test quality
-6. **Documentation**: Code comments, type definitions, API docs
-`
-    } else if (context.reviewDepth === 'standard') {
-      prompt += `### Standard Review Guidelines (Medium Change):
-Focus on key areas:
-1. **Correctness**: Does the code solve the intended problem?
-2. **Architecture**: Are changes well-structured and maintainable?
-3. **Security & Performance**: Any critical issues?
-4. **Testing**: Are key paths covered?
-5. **Breaking Changes**: Backward compatibility concerns?
-`
-    } else {
-      prompt += `### Focused Review Guidelines (Large Change):
-Prioritize high-impact areas:
-1. **Architecture**: Overall design and structure
-2. **Critical Paths**: Security, data integrity, performance bottlenecks
-3. **Public APIs**: Interface design and breaking changes
-4. **Test Strategy**: Are high-risk areas covered?
-
-Note: For large changes, consider suggesting to break into smaller PRs if feasible.
-`
+  const previousReviews = context.previousReviews ? (() => {
+    interface Review {
+      createdAt: string;
+      body: string;
     }
+    try {
+      const reviews = JSON.parse(context.previousReviews) as Review[];
+      return reviews.map((r: Review, i: number) => `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`).join('\n---\n');
+    } catch (_e) {
+      return context.previousReviews;
+    }
+  })() : 'None';
 
-    prompt += `\n### Output Format:
-Provide a structured review with:
-1. **Summary**: High-level assessment of the change
-2. **Strengths**: What's done well
-3. **Issues**: Categorized by severity (blocking, important, nice-to-have)
-4. **Test Coverage**: Assessment of test quality/coverage
-5. **Recommendations**: Specific, actionable improvements
-6. **Verdict**: Approve / Request Changes / Comment
-`
+  let testCoverageAlert = '';
+  if (context.missingTests) {
+    testCoverageAlert = `\n\n⚠️ **TEST COVERAGE ALERT**: Source code was modified without corresponding test changes.\n`;
+  } else if (context.hasTestChanges) {
+    testCoverageAlert = `\n\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`;
   }
 
-  // Add project-specific context
-  prompt += `\n## Project Context
-- This is a Next.js/TypeScript HRM (Heart Rate Monitor) application
-- Focus on real-time data handling and WebSocket performance
-- Security is critical (authentication, data privacy)
-- Maintain backward compatibility unless explicitly breaking change
-- Follow patterns established in DEVELOPMENT.md and DESIGN_GUIDELINES.md
-`
+  const placeholders: { [key: string]: string } = {
+    reviewIteration,
+    prNumber: context.prNumber,
+    prTitle: context.prTitle,
+    prAuthor: context.prAuthor,
+    filesChanged: context.filesChanged.toString(),
+    totalLoc: context.totalLoc.toString(),
+    changedAreas: context.changedAreas,
+    reviewDepth: context.reviewDepth,
+    prLabels: context.prLabels || 'none',
+    issueNumber: context.issueNumber || '?',
+    issueTitle: context.issueTitle || '',
+    reviewCount: context.reviewCount.toString(),
+    resolvedCount: context.resolvedCount.toString(),
+    changesRequested: context.changesRequested.toString(),
+    previousReviews,
+    testFiles: context.testFiles || '',
+    linkedIssueBody: context.linkedIssueBody || '',
+    commitMessages: context.commitMessages,
+    contextContent,
+    truncatedDiff,
+    failureList,
+    testCoverageAlert,
+  };
 
-  // Add specific checks for common issues from audit
-  prompt += `\n## Known Areas of Technical Debt (from audit):
-When reviewing, be especially vigilant about:
-- Callback hell in server.ts (prefer async/await)
-- Type safety (avoid 'any', use proper TypeScript types)
-- Error handling (ensure proper try/catch and error messages)
-- WebSocket connection management (prevent memory leaks)
-- Authentication state consistency
-`
+  for (const [key, value] of Object.entries(placeholders)) {
+    promptTemplate = promptTemplate.replace(new RegExp(`{{${key}}}`, 'g'), value);
+  }
 
-  prompt += `\n## Response Format (JSON)
-Return a JSON object with:
-\`\`\`json
-{
-  "reviewComment": "Your formatted markdown review comment",
-  "labels": ["label1", "label2"],  // Suggested labels (e.g., "needs-tests", "security-concern", "ready-for-review", "size-small", "size-large")
-  "verdict": "approve" | "request_changes" | "comment"
-}
-\`\`\`
-
-Make your feedback:
-- **Specific**: Reference exact file/line numbers
-- **Actionable**: Provide concrete suggestions
-- **Constructive**: Focus on improvement, not criticism
-- **Contextual**: Consider the change in the broader codebase
-- **Balanced**: Acknowledge good practices while noting improvements
-
-**Markdown Formatting (STRICT):**
-- You MUST add **TWO NEWLINES** (\`\\n\\n\`) before every header.
-- You MUST add **ONE NEWLINE** (\`\\n\`) after every header.
-- Do not clump sections together.
-- Ensure lists are properly spaced.
-`
-
-  return prompt
+  return promptTemplate;
 }
 
 async function runReviewPreset(
@@ -715,7 +539,7 @@ async function runReviewPreset(
     return
   }
 
-  const prompt = buildReviewPrompt(diff, context, contextContent)
+  const prompt = await buildReviewPrompt(diff, context, contextContent)
 
   try {
     const text = await generateContentWithFallback(genAI, prompt, {
