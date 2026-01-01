@@ -1,72 +1,125 @@
 // app/client/connect/UserSettings.tsx
 import React from 'react'
 import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import { z } from 'zod'
+import ValidatedTextField from '@/components/shared/Form/ValidatedTextField'
+import { ZodIssue } from 'zod'
+
+// Schemas
+const nameSchema = z.string().min(1, 'Name is required')
+const ageSchema = z
+  .string()
+  .min(1, 'Age is required')
+  .refine((val) => /^\d+$/.test(val), {
+    message: 'Age must be a valid number',
+  })
+  .refine((val) => parseInt(val, 10) >= 1 && parseInt(val, 10) <= 120, {
+    message: 'Age must be between 1 and 120',
+  })
+
+const weightSchema = (unit: 'METRIC' | 'IMPERIAL') =>
+  z
+    .string()
+    .min(1, 'Weight is required')
+    .refine((val) => /^\d*\.?\d+$/.test(val), {
+      message: 'Weight must be a valid number',
+    })
+    .refine((val) => parseFloat(val) > 0, {
+      message: 'Weight must be a positive number',
+    })
+    .refine(
+      (val) =>
+        unit === 'METRIC'
+          ? parseFloat(val) >= 20 && parseFloat(val) <= 500
+          : parseFloat(val) >= 44 && parseFloat(val) <= 1100,
+      {
+        message:
+          unit === 'METRIC'
+            ? 'Weight must be between 20kg and 500kg'
+            : 'Weight must be between 44lbs and 1100lbs',
+      }
+    )
+
+const heightCmSchema = z
+  .string()
+  .min(1, 'Height is required')
+  .refine((val) => /^\d*\.?\d+$/.test(val), {
+    message: 'Height must be a valid number',
+  })
+  .refine((val) => parseFloat(val) > 0, {
+    message: 'Height must be a positive number',
+  })
+  .refine((val) => parseFloat(val) >= 50 && parseFloat(val) <= 300, {
+    message: 'Height must be between 50cm and 300cm',
+  })
+
+const heightFeetSchema = z
+  .string()
+  .min(1, 'Feet is required')
+  .refine((val) => /^\d+$/.test(val), {
+    message: 'Feet must be a valid number',
+  })
+  .refine((val) => parseInt(val, 10) >= 1 && parseInt(val, 10) <= 9, {
+    message: 'Feet must be between 1 and 9',
+  })
+
+const heightInchesSchema = z
+  .string()
+  .min(1, 'Inches is required')
+  .refine((val) => /^\d+$/.test(val), {
+    message: 'Inches must be a valid number',
+  })
+  .refine((val) => parseInt(val, 10) >= 0 && parseInt(val, 10) <= 11, {
+    message: 'Inches must be between 0 and 11',
+  })
+
 
 interface UserSettingsProps {
   userName: string
-  setUserName: (name: string) => void
   userAge: string
-  setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
   userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (
-    height: Partial<{ cm: string; feet: string; inches: string }>
-  ) => void
-  onHeightBlur: () => void
-  heightError: string | null
   userWeight: string
-  setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
-  weightError: string | null
   unit: 'METRIC' | 'IMPERIAL'
+  onStateChanged: (
+    id: string,
+    value: string,
+    isValid: boolean,
+    issues: ZodIssue[]
+  ) => void
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
   userName,
-  setUserName,
   userAge,
-  setUserAge,
-  onAgeBlur,
-  ageError,
   userHeight,
-  setUserHeight,
-  onHeightBlur,
-  heightError,
   userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
   unit,
+  onStateChanged,
   setUnit,
 }) => {
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
-      <TextField
+      <ValidatedTextField
+        id="userName"
         fullWidth
         label="Your Name"
         placeholder="e.g., Jane Doe"
         value={userName}
-        onChange={(e) => setUserName(e.target.value)}
+        onStateChanged={onStateChanged}
+        validationSchema={nameSchema}
       />
-      <TextField
+      <ValidatedTextField
+        id="userAge"
         fullWidth
         label="Your Age"
         placeholder="e.g., 30"
         type="number"
         value={userAge}
-        onChange={(e) => {
-          if (/^\d*$/.test(e.target.value)) {
-            setUserAge(e.target.value)
-          }
-        }}
-        onBlur={onAgeBlur}
-        error={!!ageError}
-        helperText={ageError}
+        onStateChanged={onStateChanged}
+        validationSchema={ageSchema}
         inputProps={{ min: 1, max: 120 }}
       />
       <ToggleButtonGroup
@@ -91,65 +144,50 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         </ToggleButton>
       </ToggleButtonGroup>
       {unit === 'METRIC' ? (
-        <TextField
+        <ValidatedTextField
+          id="userHeight.cm"
           fullWidth
           label="Your Height (cm)"
           placeholder="e.g., 175"
           type="number"
           value={userHeight.cm}
-          onChange={(e) => {
-            if (/^\d*\.?\d*$/.test(e.target.value)) {
-              setUserHeight({ cm: e.target.value })
-            }
-          }}
-          onBlur={onHeightBlur}
-          error={!!heightError}
-          helperText={heightError}
+          onStateChanged={onStateChanged}
+          validationSchema={heightCmSchema}
         />
       ) : (
         <Stack direction="row" spacing={2}>
-          <TextField
+          <ValidatedTextField
+            id="userHeight.feet"
             fullWidth
             label="Feet"
             placeholder="e.g., 5"
             type="number"
             value={userHeight.feet}
-            onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setUserHeight({ feet: e.target.value })
-              }
-            }}
-            onBlur={onHeightBlur}
+            onStateChanged={onStateChanged}
+            validationSchema={heightFeetSchema}
           />
-          <TextField
+          <ValidatedTextField
+            id="userHeight.inches"
             fullWidth
             label="Inches"
             placeholder="e.g., 9"
             type="number"
             value={userHeight.inches}
-            onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setUserHeight({ inches: e.target.value })
-              }
-            }}
-            onBlur={onHeightBlur}
+            onStateChanged={onStateChanged}
+            validationSchema={heightInchesSchema}
           />
         </Stack>
       )}
-      <TextField
+      <ValidatedTextField
+        id="userWeight"
         fullWidth
         label={`Your Weight (${unit === 'METRIC' ? 'kg' : 'lbs'})`}
         placeholder={unit === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
         type="number"
         value={userWeight}
-        onChange={(e) => {
-          if (/^\d*\.?\d*$/.test(e.target.value)) {
-            setUserWeight(e.target.value)
-          }
-        }}
-        onBlur={onWeightBlur}
-        error={!!weightError}
-        helperText={weightError}
+        onStateChanged={onStateChanged}
+        validationSchema={weightSchema(unit)}
+        validationDependencies={[unit]}
       />
     </Stack>
   )
