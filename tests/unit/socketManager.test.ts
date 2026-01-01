@@ -474,6 +474,5 @@ describe('WebSocket Manager', () => {
         'Unknown message type received'
       )
     })
-
   })
 })

@@ -1,4 +1,3 @@
-
 /**
  * @jest-environment jsdom
  */
@@ -12,10 +11,10 @@ jest.mock('../../../context/WebSocketContext', () => ({
 
 describe('useBluetoothHRM', () => {
   let sendDataMock: jest.Mock
-  let mockGatt: any
-  let mockCharacteristic: any
-  let mockDevice: any
-  let mockServer: any
+  let mockGatt: BluetoothRemoteGATTServer
+  let mockCharacteristic: BluetoothRemoteGATTCharacteristic
+  let mockDevice: BluetoothDevice
+  let mockServer: BluetoothRemoteGATTServer
 
   beforeEach(() => {
     sendDataMock = jest.fn()
@@ -28,18 +27,18 @@ describe('useBluetoothHRM', () => {
       startNotifications: jest.fn(),
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
-    }
+    } as unknown as BluetoothRemoteGATTCharacteristic
 
     mockServer = {
       getPrimaryService: jest.fn().mockResolvedValue({
         getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
       }),
-    }
+    } as unknown as BluetoothRemoteGATTServer
 
     mockGatt = {
       connect: jest.fn().mockResolvedValue(mockServer),
       disconnect: jest.fn(),
-    }
+    } as unknown as BluetoothRemoteGATTServer
 
     mockDevice = {
       id: 'test-device-id',
@@ -47,11 +46,11 @@ describe('useBluetoothHRM', () => {
       gatt: mockGatt,
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
-    }
+    } as unknown as BluetoothDevice
 
     global.navigator.bluetooth = {
       requestDevice: jest.fn().mockResolvedValue(mockDevice),
-    } as any
+    } as unknown as Bluetooth
   })
 
   it('should send a null HRM value on disconnection', async () => {
@@ -61,9 +60,9 @@ describe('useBluetoothHRM', () => {
       await result.current.connectAndStream()
     })
 
-    const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
-      (call: any) => call[0] === 'gattserverdisconnected'
-    )[1]
+    const onDisconnectedCallback = (
+      mockDevice.addEventListener as jest.Mock
+    ).mock.calls.find((call) => call[0] === 'gattserverdisconnected')[1]
 
     act(() => {
       onDisconnectedCallback()
