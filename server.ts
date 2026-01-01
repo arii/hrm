@@ -157,15 +157,15 @@ app.prepare().then(async () => {
       const count = wsConnections.get(ip) || 0
       if (count >= WS_MAX_CONNECTIONS) {
         wsLogger.error(
-        {
-          event: 'HANDSHAKE_ERROR',
-          remoteAddress: ip,
-          origin: req.headers.origin,
-          errorCode: 429,
-          errorMessage: 'Too Many Requests',
-        },
-        'WebSocket handshake failed'
-      )
+          {
+            event: 'HANDSHAKE_ERROR',
+            remoteAddress: ip,
+            origin: req.headers.origin,
+            errorCode: 429,
+            errorMessage: 'Too Many Requests',
+          },
+          'WebSocket handshake failed'
+        )
         socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
         socket.destroy()
         return

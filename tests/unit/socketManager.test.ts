@@ -203,8 +203,8 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should log a warning when overwriting an existing socket', () => {
-      const { wsLogger } = require('../../utils/logger')
+    it('should log a warning when overwriting an existing socket', async () => {
+      const { wsLogger } = await import('../../utils/logger')
       const loggerWarnSpy = jest.spyOn(wsLogger, 'warn')
       const mockReq = createMockRequest('/?clientId=test-client') // Same clientId as in beforeEach
       const newWs = new MockWebSocket()

@@ -7,7 +7,7 @@ interface Logger {
   info: (msg: string | object, ...args: unknown[]) => void
   warn: (msg: string | object, ...args: unknown[]) => void
   error: (msg: string | object, ...args: unknown[]) => void
-  child(bindings: Record<string, any>): Logger
+  child(bindings: Record<string, unknown>): Logger
 }
 
 const createLogger = (): Logger => {
