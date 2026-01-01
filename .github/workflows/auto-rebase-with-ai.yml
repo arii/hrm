@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: 'leader'
-          token: ${{ secrets.ARI_PAT }}
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Setup Node & PNPM
         uses: ./.github/actions/setup-env
@@ -35,7 +35,7 @@ jobs:
         uses: peter-evans/rebase@v3
         continue-on-error: true
         with:
-          token: ${{ secrets.ARI_PAT }}
+          token: ${{ secrets.PAT_TOKEN }}
           base: leader
           exclude-labels: 'no-rebase,wip'
 
@@ -45,7 +45,7 @@ jobs:
         if: steps.rebase.conclusion == 'failure'
         id: pr_data
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
         run: |
           PR_DATA=$(gh pr view $PR_NUMBER --json headRefOid)
@@ -58,7 +58,7 @@ jobs:
         with:
           ref: ${{ steps.pr_data.outputs.HEAD_SHA }}
           path: 'pr-code' # Checkout to a subdirectory
-          token: ${{ secrets.ARI_PAT }}
+          token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0 # Needed for rebase
 
       # Step 4: Manually reproduce the rebase failure inside the UNTRUSTED directory.
@@ -87,7 +87,7 @@ jobs:
         if: steps.rebase.conclusion == 'failure' && steps.manual_rebase.conclusion == 'failure'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           if [ ! -f conflicts.txt ]; then
             echo "No conflicts file found, skipping resolution."
