@@ -5,6 +5,7 @@
 import { jest } from '@jest/globals'
 import HrTile from '@/components/HrTile'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import { ZONE_COLORS } from '@/utils/visualization'
 import theme from '@/lib/theme'
@@ -76,5 +77,36 @@ describe('HrTile', () => {
     expect(card).toHaveStyle(
       `color: ${theme.palette.getContrastText(ZONE_COLORS.grey)}`
     )
+  })
+
+  describe('Calorie Display', () => {
+    test.each([
+      { calories: 123.456, expected: '123.46' },
+      { calories: 78, expected: '78.00' },
+      { calories: 0, expected: '0.00' },
+      { calories: 99.995, expected: '100.00' },
+      { calories: null, expected: '0.00' },
+      { calories: undefined, expected: '0.00' },
+    ])('formats $calories as $expected', async ({ calories, expected }) => {
+      const user = userEvent.setup()
+      render(
+        <HrTile
+          name="Test Runner"
+          bpm={130}
+          percentMax={70}
+          calories={calories}
+        />
+      )
+
+      // Check the visible calorie display
+      const calorieElement = screen.getByText(expected)
+      expect(calorieElement).toBeInTheDocument()
+
+      // Check tooltip formatting by hovering
+      const card = screen.getByTestId('hr-tile-card')
+      await user.hover(card)
+      const tooltip = await screen.findByRole('tooltip')
+      expect(tooltip).toHaveTextContent(`Kcal: ${expected}`)
+    })
   })
 })
