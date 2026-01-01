@@ -82,7 +82,7 @@ jobs:
           fi
   # 1. Run CI checks on every push to a PR
   pr-quality:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && needs.check-diff.outputs.has_changes == 'true'
     needs: [check-diff]
     permissions:
       contents: read
@@ -98,7 +98,7 @@ jobs:
 
   # 2. Trigger review AFTER CI checks are done for a PR event
   review-on-pr-update:
-    if: always() && github.event_name == 'pull_request'
+    if: always() && github.event_name == 'pull_request' && needs.check-diff.outputs.has_changes == 'true'
     needs: [check-diff, pr-quality]
     permissions:
       contents: read
