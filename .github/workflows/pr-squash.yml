@@ -163,5 +163,3 @@ jobs:
       pr_number: ${{ github.event.issue.number }}
       # Force full quality checks on the newly squashed commit.
       has_changes: 'true'
-    secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
