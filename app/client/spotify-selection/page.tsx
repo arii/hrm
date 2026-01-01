@@ -71,8 +71,8 @@ const SpotifySelectionPage = () => {
       }
       const data = await response.json()
       setTracks(data.tracks ?? [])
-    } catch (err) {
-      if ((err as Error).name === 'AbortError') {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
         return
       }
       console.error('Failed to fetch playlist tracks:', err)
