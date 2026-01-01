@@ -96,6 +96,21 @@ If the action encounters a merge conflict during the rebase, it will fail gracef
 
 > **Note on Protected Branches**: For this action to work on a protected branch, the repository's settings may need to be adjusted to allow the `github-actions[bot]` to push to the branch. For more information, see the [GitHub documentation on managing protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches).
 
+#### Automatic Rebase
+
+To keep pull requests up-to-date with the `leader` branch, the project uses an automated rebase workflow (`.github/workflows/auto-rebase-with-ai.yml`).
+
+**Triggers**:
+
+-   **Push to `leader`**: When new commits are pushed to the `leader` branch, the workflow automatically attempts to rebase all open pull requests.
+-   **Pull Request Events**: The workflow can also be triggered for a specific pull request when it is opened, synchronized, or manually dispatched.
+
+**Behavior**:
+
+-   The workflow uses the `peter-evans/rebase` action to perform the rebase.
+-   **Exclusions**: It will automatically skip any pull requests that have the `no-rebase` or `wip` labels.
+-   **AI Conflict Resolution**: If a rebase fails on a pull request-triggered event, the workflow will attempt to use the Gemini API to automatically resolve the merge conflicts. This AI intervention does **not** run during the bulk rebase triggered by a push to `leader`.
+
 #### AI-Powered Workflows
 
 The project leverages AI-powered workflows to automate code reviews, update pull requests, and more.
