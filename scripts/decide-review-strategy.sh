@@ -21,9 +21,35 @@ SKIP_REASON="no criteria met"
 
 # --- Check for quality check failures first ---
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
-  echo "::info::Quality checks failed. Triggering review to analyze failures."
-  NEEDS_REVIEW="true"
-  SKIP_REASON=""
+  # Fetch the quality report to determine the type of failure
+  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments -q '.comments | map(select(.author.login? == "arii" and (.body | contains("Quality Gate Results")))) | .[-1].body // ""')
+  
+  if [ -z "$QUALITY_REPORT" ]; then
+    echo "::info::Quality checks failed but no report found. Skipping review."
+    NEEDS_REVIEW="false"
+    SKIP_REASON="quality failure with no detailed report (likely static analysis)"
+  else
+    # Check if only static analysis checks failed (knip, lint, build)
+    # If only these failed, skip review. Otherwise, review runtime/test failures
+    HAS_KNIP_FAILURE=$(echo "$QUALITY_REPORT" | grep -c "Knip.*❌" || echo 0)
+    HAS_LINT_FAILURE=$(echo "$QUALITY_REPORT" | grep -c "Lint.*❌" || echo 0)
+    HAS_BUILD_FAILURE=$(echo "$QUALITY_REPORT" | grep -c "Build.*❌" || echo 0)
+    HAS_INFRA_FAILURE=$(echo "$QUALITY_REPORT" | grep -c "Infra Tests.*❌" || echo 0)
+    HAS_UNIT_FAILURE=$(echo "$QUALITY_REPORT" | grep -c "Unit Tests.*❌" || echo 0)
+    HAS_PERF_FAILURE=$(echo "$QUALITY_REPORT" | grep -c "Perf Tests.*❌" || echo 0)
+    HAS_VISUAL_FAILURE=$(echo "$QUALITY_REPORT" | grep -c "Visual Tests.*❌" || echo 0)
+    
+    # Only trigger review if there are runtime/integration test failures, not just static analysis
+    if [[ $HAS_INFRA_FAILURE -gt 0 || $HAS_UNIT_FAILURE -gt 0 || $HAS_PERF_FAILURE -gt 0 || $HAS_VISUAL_FAILURE -gt 0 ]]; then
+      echo "::info::Runtime/test failures detected. Triggering review to analyze."
+      NEEDS_REVIEW="true"
+      SKIP_REASON=""
+    else
+      echo "::info::Only static analysis failures (knip/lint/build). Skipping review."
+      NEEDS_REVIEW="false"
+      SKIP_REASON="static analysis failures only (knip/lint/build)"
+    fi
+  fi
 # --- Always review on initial PR open ---
 elif [[ "$TRIGGER_EVENT" == "pull_request" && "$ACTION_TYPE" == "opened" ]]; then
   echo "::info::PR opened. Triggering initial review."
@@ -39,8 +65,9 @@ else
   echo "::info::Analyzing for re-review..."
 
   # 1. Find the last relevant comment from the bot
-  # It can be a review summary or a CI failure report. Both should contain a commit hash.
-  LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments -q '.comments | map(select(.author.login? == "arii" and (.body | contains("## Review") or contains("Review Summary") or contains("Suggested Fix") or contains("> Failed at commit:")))) | .[-1].body // ""')
+  # It can be a review summary, code suggestion, or CI failure report
+  # Look for common patterns: commit hashes or review-related keywords
+  LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments -q '.comments | map(select(.author.login? == "arii" and (.body | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""')
 
   if [ -z "$LAST_COMMENT_BODY" ]; then
     echo "::info::No previous review or failure comment found. Triggering review."
@@ -48,8 +75,13 @@ else
     SKIP_REASON=""
   else
     # 2. Extract the last reviewed commit hash from the comment
-    # The line looks like: `> Failed at commit: `commit_sha`` or `> Reviewed commit: `commit_sha``
-    LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oP '(?<=> Failed at commit: `)[a-f0-9]+(?=`)|(?<=Reviewed commit: `)[a-f0-9]+(?=`)')
+    # Try multiple patterns to find commit hashes
+    LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oP '(?<=> Failed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed commit: `)[a-f0-9]{7,40}(?=`)|(?<=commit: `)[a-f0-9]{7,40}(?=`)|(?<=`)[a-f0-9]{7,40}(?=` commit)' | head -1)
+    
+    # If no hash found with backticks, try hex pattern (7-40 chars)
+    if [ -z "$LAST_REVIEWED_SHA" ]; then
+      LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oE '\b[a-f0-9]{7,40}\b' | head -1)
+    fi
 
     if [ -z "$LAST_REVIEWED_SHA" ]; then
         echo "::warning::Found a previous comment, but could not extract a commit hash. Proceeding with review."

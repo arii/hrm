@@ -1,5 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
 # Run commitlint; if it fails, print a warning but exit 0 (success)
 npx --no -- commitlint --edit "$1" || {
