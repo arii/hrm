@@ -17,7 +17,7 @@ export const test = base.extend<PageFixtures>({
     const page = await context.newPage()
     page.on('console', (msg) => {
       if (!msg.text().includes('DOCS_timing')) {
-        console.log(`Console ${msg.type()}: ${msg.text()}`)
+        // Suppress Google Docs viewer console noise
       }
     })
     await page.setViewportSize({ width: 1920, height: 1080 })

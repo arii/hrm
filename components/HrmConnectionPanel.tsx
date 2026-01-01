@@ -41,7 +41,7 @@ const HrmConnectionPanel = () => {
       // It's common for the requestDevice promise to be cancelled by the user.
       // We catch it here to prevent an unhandled rejection error in the console.
       if (error.name !== 'NotFoundError') {
-        console.error('Failed to connect to HRM device:', error)
+        // Handle other errors if needed
       }
     })
   }, [session, userSettings, connectAndStream])

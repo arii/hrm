@@ -50,7 +50,6 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         }
       }
     } catch (error) {
-      console.error(`Error reading or parsing localStorage key “${key}”`, error)
     }
   }, [key, initialValue])
 
@@ -59,9 +58,6 @@ function useLocalStorage<T>(key: string, initialValue: T) {
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
       if (typeof window === 'undefined') {
-        console.warn(
-          `Attempted to set localStorage key “${key}” on the server.`
-        )
         return
       }
       try {
@@ -72,7 +68,6 @@ function useLocalStorage<T>(key: string, initialValue: T) {
           return valueToStore
         })
       } catch (error) {
-        console.error(`Error setting localStorage key “${key}”:`, error)
       }
     },
     [key]
@@ -84,7 +79,6 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         try {
           setStoredValue(JSON.parse(e.newValue))
         } catch (error) {
-          console.error(`Error parsing storage change for key “${key}”:`, error)
         }
       }
     }

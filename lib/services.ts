@@ -18,8 +18,7 @@ export async function createServices(
 
   try {
     spotifyService = await SpotifyPolling.create(broadcast)
-  } catch (e) {
-    console.error('SpotifyPolling initialization failed:', e)
+  } catch (_e) {
     isSpotifyInitialized = false
     // Fallback stub
     spotifyService = {

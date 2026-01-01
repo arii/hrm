@@ -27,7 +27,6 @@ export const useSpotifyRemoteExecution = (
     if (!player) return
 
     // Register this client as the "Dashboard" (The Executor)
-    console.log('[Spotify Remote] Registering as dashboard')
     sendData({ type: 'REGISTER_CLIENT', role: 'dashboard' })
 
     // Listen for custom events dispatched by the WebSocket context
@@ -35,7 +34,6 @@ export const useSpotifyRemoteExecution = (
       const message = event.detail as SpotifyExecutionMessage
       if (message.type === 'EXECUTE_SPOTIFY') {
         const { command, volume, deviceId } = message.payload
-        console.log(`[Dashboard] Executing Remote Command: ${command}`)
 
         try {
           switch (command) {
@@ -88,8 +86,8 @@ export const useSpotifyRemoteExecution = (
               }
               break
           }
-        } catch (execError) {
-          console.error('[Dashboard] Command execution failed:', execError)
+        } catch (_execError) {
+          // Execution errors are logged on the server-side, no action needed here.
         }
       }
     }

@@ -31,8 +31,8 @@ const useVolumePreference = (defaultVolume = 70) => {
       lastVolumeRef.current = preferredVolume
       setMutedState(isMuted)
       setVolumeState(isMuted ? 0 : preferredVolume)
-    } catch (error) {
-      console.warn('Failed to read audio preferences from localStorage:', error)
+    } catch (_error) {
+      // Local storage might not be available
     } finally {
       setIsLoaded(true)
     }
@@ -79,8 +79,8 @@ const useVolumePreference = (defaultVolume = 70) => {
       window.dispatchEvent(
         new CustomEvent('hrm:muteChange', { detail: isMuting })
       )
-    } catch (error) {
-      console.warn('Could not persist mute preference:', error)
+    } catch (_error) {
+      // Local storage might not be available
     }
   }, [muted, volume])
 

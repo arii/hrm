@@ -48,7 +48,6 @@ describe('useBluetoothHRM', () => {
   let consoleInfoSpy: jest.SpyInstance
 
   beforeAll(() => {
-    // Suppress console.warn and console.info for all tests in this suite
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
     consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => {})
   })

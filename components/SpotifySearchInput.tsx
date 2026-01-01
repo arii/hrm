@@ -85,7 +85,6 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
         const tracks = data.tracks?.items || []
         setResults(tracks)
       } catch (error) {
-        console.error('Spotify Search Error:', error)
         enqueueSnackbar(
           error instanceof Error ? error.message : 'Failed to search Spotify',
           { variant: 'error' }

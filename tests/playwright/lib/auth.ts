@@ -211,8 +211,8 @@ export async function navigateToProtectedRoute(
       .isVisible({ timeout: 3000 })
       .catch(() => false)
 
-    if (isLoginButtonVisible) {
-      console.log('ℹ️  Login button found. Auth required for this route.')
+    if (isLogin-button-visible) {
+      // Future: Implement automatic login flow if needed
     }
   }
 

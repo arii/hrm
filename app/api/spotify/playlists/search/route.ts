@@ -98,9 +98,6 @@ export async function GET(req: NextRequest) {
         { status: error.statusCode }
       )
     }
-    const message =
-      error instanceof Error ? error.message : 'An unknown error occurred.'
-    console.error(`[API /playlists/search] Internal Server Error: ${message}`)
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

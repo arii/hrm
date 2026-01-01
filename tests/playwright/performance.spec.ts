@@ -67,7 +67,6 @@ test.describe('Frontend Performance', () => {
     await page.getByRole('button', { name: /STOP Streaming HR/ }).click()
 
     // --- Analysis ---
-    console.log('--- Collected Performance Metrics ---')
     console.table(metrics)
 
     const heapSizes = metrics.map((m) => m.JSHeapUsedSize)
@@ -78,12 +77,9 @@ test.describe('Frontend Performance', () => {
         ? (finalHeapSize - initialHeapSize) / initialHeapSize
         : 0
 
-    console.log(`Heap Growth Ratio: ${(heapGrowthRatio * 100).toFixed(2)}%`)
-
     const layoutCounts = metrics.map((m) => m.LayoutCount)
     const totalLayouts =
       (layoutCounts[layoutCounts.length - 1] || 0) - (layoutCounts[0] || 0)
-    console.log(`Total Layouts during test: ${totalLayouts}`)
 
     // --- Reporting ---
     const outputDir = 'test-results'
@@ -103,7 +99,6 @@ test.describe('Frontend Performance', () => {
     fs.mkdirSync(outputDir, { recursive: true })
     // Write the report to a file
     fs.writeFileSync(outputFile, JSON.stringify(report, null, 2))
-    console.log(`Performance report saved to ${outputFile}`)
 
     // --- Assertion ---
     expect(heapGrowthRatio).toBeLessThan(HEAP_GROWTH_THRESHOLD)

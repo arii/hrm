@@ -57,15 +57,12 @@ export async function waitForPageReady(
     )
   } catch {
     // Fallback: If custom signal fails, wait for a known stable element
-    console.warn('__TEST_READY__ signal not found, proceeding with UI check')
     await page
       .waitForSelector('main, [role="main"], body > div', {
         state: 'visible',
         timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
       })
-      .catch(() => {
-        console.warn('No main element found, continuing anyway')
-      })
+      .catch(() => {})
   }
 }
 
@@ -150,7 +147,6 @@ export async function waitForElementStable(
     )
     .catch(() => {
       // If timeout, assume stable enough for testing
-      console.warn(`Element ${selector} may still be animating`)
     })
 }
 

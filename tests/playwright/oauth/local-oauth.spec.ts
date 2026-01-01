@@ -23,11 +23,9 @@ test.describe('Spotify OAuth Integration (Local)', () => {
 
   test.beforeAll(async () => {
     if (!CHROME_PROFILE) {
-      console.warn(
         '⚠️  No CHROME_PROFILE_PATH set. Test will run with a fresh profile (login may be required).'
       )
     } else if (!fs.existsSync(CHROME_PROFILE)) {
-      console.warn(
         `⚠️  Profile path not found: ${CHROME_PROFILE}. Test will run with fresh profile.`
       )
     }
@@ -39,7 +37,6 @@ test.describe('Spotify OAuth Integration (Local)', () => {
     const userDataDir =
       CHROME_PROFILE || path.join(os.tmpdir(), 'playwright-temp-profile')
 
-    console.log(`🚀 Launching browser with profile: ${userDataDir}`)
 
     context = await chromium.launchPersistentContext(userDataDir, {
       headless: false, // Must be headed to see/interact with Spotify login if needed
@@ -53,7 +50,6 @@ test.describe('Spotify OAuth Integration (Local)', () => {
     const page = context.pages()[0] || (await context.newPage())
 
     // 1. Navigate to the Control page (protected route)
-    console.log(`Testing URL: ${BASE_URL}/client/control`)
     await page.goto(`${BASE_URL}/client/control`)
 
     // 2. Check for Login State
@@ -61,7 +57,6 @@ test.describe('Spotify OAuth Integration (Local)', () => {
     const loginButton = page.getByText('🎵 Login with Spotify')
 
     if (await loginButton.isVisible({ timeout: 3000 })) {
-      console.log('ℹ️  Login button found. Initiating OAuth flow...')
       await loginButton.click()
 
       // Wait for potential redirects (Spotify -> Callback -> App)
@@ -70,7 +65,6 @@ test.describe('Spotify OAuth Integration (Local)', () => {
         waitUntil: 'networkidle',
       })
     } else {
-      console.log('ℹ️  No login button found. Assuming already authenticated.')
     }
 
     // 3. Verify "State Cookie Missing" Error NOT present
@@ -91,7 +85,6 @@ test.describe('Spotify OAuth Integration (Local)', () => {
       // @ts-expect-error - assuming we might expose this for debug, otherwise check UI
       return window._socketStatus || 'unknown'
     })
-    console.log(`WebSocket State: ${socketState}`)
 
     // 5. Verify User Identity (if provided)
     if (EXPECTED_USER) {
@@ -101,7 +94,6 @@ test.describe('Spotify OAuth Integration (Local)', () => {
       )
       const debugJson = await debugAuthResponse.json()
 
-      console.log('Auth Debug Info:', debugJson)
       expect(debugJson.userId).toBe(EXPECTED_USER)
     }
 
@@ -123,7 +115,6 @@ test.describe('Spotify OAuth Integration (Local)', () => {
       '❌ No Refresh Token found on server'
     ).toBeTruthy()
 
-    console.log('✅ OAuth Flow & Token Exchange Verified Successfully')
 
     // Short pause to verify visually if running manually
     // await page.pause();

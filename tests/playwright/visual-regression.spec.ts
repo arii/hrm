@@ -99,7 +99,6 @@ test.describe('Visual Regression Tests', () => {
       }
     } catch (error) {
       // Timer not running or failed to stop, log and continue
-      console.warn('Timer check/stop encountered an issue (ignoring):', error)
     }
 
     // Replace iframe with stable content for dashboard
@@ -111,7 +110,6 @@ test.describe('Visual Regression Tests', () => {
       })
       await replaceIframeWithStableWorkout(dashboardPage)
     } catch (e) {
-      console.warn(
         'Failed to replace iframe (it might be missing or slow to load):',
         e
       )

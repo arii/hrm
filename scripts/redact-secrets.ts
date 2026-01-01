@@ -64,7 +64,6 @@ function main() {
   const outputFile = process.argv[3]
 
   if (!inputFile || !outputFile) {
-    console.error(
       'Usage: ts-node scripts/redact-secrets.ts <input-file> <output-file>'
     )
     process.exit(1)
@@ -74,11 +73,9 @@ function main() {
     const logContent = readFileSync(inputFile, 'utf-8')
     const redactedContent = redactSecrets(logContent)
     writeFileSync(outputFile, redactedContent)
-    console.log(
       `Successfully redacted secrets from ${inputFile} to ${outputFile}`
     )
   } catch (error) {
-    console.error(
       `Error processing files: ${error instanceof Error ? error.message : String(error)}`
     )
     process.exit(1)

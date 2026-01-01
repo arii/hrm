@@ -16,16 +16,11 @@ const AuthButton = ({ providerId, providerName }: AuthButtonProps) => {
   const handleLogin = async () => {
     setIsLoading(true)
     try {
-      console.log(
-        `[AuthButton] Clicking login for ${providerName}, calling signIn()...`
-      )
       const result = await signIn(providerId, {
         callbackUrl: '/',
         redirect: true,
       })
-      console.log(`[AuthButton] signIn() result for ${providerName}:`, result)
     } catch (error) {
-      console.error(`[AuthButton] signIn() error for ${providerName}:`, error)
       setIsLoading(false)
     }
   }

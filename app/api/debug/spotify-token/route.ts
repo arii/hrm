@@ -21,7 +21,6 @@ export async function GET() {
     }
     return NextResponse.json({ ok: true, token })
   } catch (err) {
-    console.error('debug/spotify-token error:', err)
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
   }
 }

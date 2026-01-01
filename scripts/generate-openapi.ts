@@ -59,5 +59,3 @@ const openapiSpec = generator.generateDocument({
 
 const outputPath = resolve(process.cwd(), 'public', 'openapi.json')
 writeFileSync(outputPath, JSON.stringify(openapiSpec, null, 2))
-
-console.log(`✅ OpenAPI specification generated at ${outputPath}`)

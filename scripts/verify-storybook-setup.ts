@@ -19,13 +19,10 @@ const NC = '\x1b[0m' // No Color
 const log = (msg: string, type: 'info' | 'success' | 'error' = 'info') => {
   switch (type) {
     case 'success':
-      console.log(`${GREEN}✅ ${msg}${NC}`)
       break
     case 'error':
-      console.log(`${RED}❌ ${msg}${NC}`)
       break
     default:
-      console.log(`${YELLOW}ℹ️  ${msg}${NC}`)
   }
 }
 
@@ -77,7 +74,6 @@ function verifyFiles() {
   if (missing.length > 0) {
     log(`Missing files:\n   - ${missing.join('\n   - ')}`, 'error')
     if (missing.includes('components/HrTile.stories.tsx')) {
-      console.log(
         `\n${YELLOW}Hint: You need to create the story file for HrTile before running the build.${NC}`
       )
     }
@@ -99,12 +95,10 @@ function verifyFiles() {
 // }
 
 // --- Execution ---
-console.log('🚀 Starting Storybook Environment Verification...\n')
 verifyDependencies()
 verifyFiles()
 // Optional: Uncomment the line below if you want to run the actual build process as part of this check
 // dryRunBuild();
 
-console.log(
   `\n${GREEN}✨ Verification Complete. Environment is ready for Storybook.${NC}`
 )

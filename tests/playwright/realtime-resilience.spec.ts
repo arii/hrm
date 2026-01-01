@@ -12,7 +12,6 @@ test.describe('WebSocket Resilience', () => {
     ).toHaveText('Connected', { timeout: 15000 })
 
     // 2. Simulate server restart
-    console.log('--- Restarting hrm-server instance for test...')
     execSync('pnpm pm2 restart hrm-server', { stdio: 'inherit' })
 
     // 3. Assert client-side disconnection and reconnection

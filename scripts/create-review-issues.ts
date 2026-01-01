@@ -68,7 +68,6 @@ export class GitHubClient {
   }
 
   getOpenIssues(labelFilter?: string): ExistingIssue[] {
-    console.log('🔍 Fetching existing issues to prevent duplicates...')
     let cmd = `gh issue list --state open --json number,title,state,body --limit 100`
     if (labelFilter) {
       cmd += ` --label "${labelFilter}"`
@@ -80,13 +79,11 @@ export class GitHubClient {
       const parsed = JSON.parse(output)
       const validationResult = ExistingIssuesSchema.safeParse(parsed)
       if (!validationResult.success) {
-        console.warn(`Warning: Invalid format for existing issues.`, validationResult.error)
         return []
       }
       return validationResult.data
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error'
-      console.warn(
         `Warning: Failed to fetch or parse existing issues. Duplicate detection might fail.
         Error: ${errorMessage}
         Raw GH CLI output:
@@ -133,7 +130,6 @@ export class GitHubClient {
     const body = `${issue.description}${footer}`
     const title = issue.title
 
-    console.log(`🚀 Creating issue: "${title}"...`)
 
     const tempDir = os.tmpdir()
     const titleFile = path.join(tempDir, `issue_title_${Date.now()}.txt`)
@@ -145,7 +141,6 @@ export class GitHubClient {
 
       const cmd = `gh issue create --title-file "${titleFile}" --body-file "${bodyFile}" --label "${labels}"`
       const url = this.execute(cmd)
-      console.log(`✅ Issue created: ${url}`)
     } finally {
       unlinkSync(titleFile)
       unlinkSync(bodyFile)
@@ -180,7 +175,6 @@ export function isDuplicate(
 
 export async function main() {
   if (!CONFIG.prNumber) {
-    console.error('❌ Error: PR_NUMBER environment variable is missing.')
     process.exit(1)
   }
 
@@ -193,13 +187,11 @@ export async function main() {
     const parsedJson = JSON.parse(content)
     const validationResult = ReviewResultSchema.safeParse(parsedJson)
     if (!validationResult.success) {
-      console.error(`❌ Error validating ${CONFIG.resultFile}:`, validationResult.error)
       process.exit(1)
       return // Explicit return for clarity
     }
     result = validationResult.data
   } catch (e) {
-    console.error(
       `❌ Error reading or parsing ${CONFIG.resultFile}: ${(e as Error).message}`
     )
     process.exit(1)
@@ -207,7 +199,6 @@ export async function main() {
   }
 
   if (!result.suggestedIssues || result.suggestedIssues.length === 0) {
-    console.log('✨ No suggested issues found in the review result.')
     process.exit(0)
   }
 
@@ -220,7 +211,6 @@ export async function main() {
 
   for (const issue of result.suggestedIssues) {
     if (isDuplicate(issue, existingIssues)) {
-      console.log(`⏭️  Skipping duplicate: "${issue.title}"`)
       skippedCount++
       continue
     }
@@ -235,15 +225,11 @@ export async function main() {
     createdCount++
   }
 
-  console.log(`\n--- Summary ---`)
-  console.log(`Created: ${createdCount}`)
-  console.log(`Skipped (Duplicate): ${skippedCount}`)
 }
 
 // istanbul ignore next
 if (require.main === module) {
   main().catch((err) => {
-    console.error('Unhandled error:', err)
     process.exit(1)
   })
 }

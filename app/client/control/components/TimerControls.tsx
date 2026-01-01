@@ -75,9 +75,6 @@ const TimerControls = () => {
     }
 
     const safetyTimeout = setTimeout(() => {
-      console.warn(
-        `[TimerControls] Optimistic state timed out. Reverting to server state (isRunning: ${timerData.isRunning}).`
-      )
       setOptimisticIsRunning(timerData.isRunning)
     }, OPTIMISTIC_UI_SYNC_TIMEOUT)
 
@@ -147,7 +144,6 @@ const TimerControls = () => {
 
       // If disconnected, revert the optimistic update after a short delay
       if (connectionStatus !== 'Connected') {
-        console.warn(
           `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
         )
         setTimeout(

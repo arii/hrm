@@ -33,14 +33,12 @@ describe('API Route: /api/workout', () => {
       let consoleErrorSpy: jest.SpyInstance
 
       beforeAll(() => {
-        // Suppress console.error for these specific tests
         consoleErrorSpy = jest
           .spyOn(console, 'error')
           .mockImplementation(() => {})
       })
 
       afterAll(() => {
-        // Restore console.error
         consoleErrorSpy.mockRestore()
       })
 

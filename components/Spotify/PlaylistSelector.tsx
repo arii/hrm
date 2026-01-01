@@ -64,7 +64,6 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         const message =
           error instanceof Error ? error.message : 'Failed to fetch playlists'
         setError(message)
-        console.error('Error fetching playlists:', error)
       } finally {
         setLoading(false)
       }
@@ -92,8 +91,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         }
         const data = await response.json()
         setSearchResults(data.items || [])
-      } catch (error) {
-        console.error('Error searching playlists:', error)
+      } catch (_error) {
         setSearchResults([])
       } finally {
         setSearchLoading(false)

@@ -54,13 +54,13 @@ export function proxy(request: NextRequest) {
 
   // Debug logging in development
   if (process.env.NODE_ENV === 'development') {
-    console.log('[Proxy] Auth request:', {
-      pathname: request.nextUrl.pathname,
-      host: request.headers.get('host'),
-      forwardedHost,
-      forwardedProto,
-      forwardedPort,
-    })
+    // console.log({
+    //   pathname: request.nextUrl.pathname,
+    //   host: request.headers.get('host'),
+    //   forwardedHost,
+    //   forwardedProto,
+    //   forwardedPort,
+    // })
   }
 
   return response

@@ -12,12 +12,7 @@ interface Logger {
 const createLogger = (): Logger => {
   if (typeof window !== 'undefined') {
     // Client-side logger - wrap console methods to match pino interface
-    return {
-      debug: (msg: unknown, ...args: unknown[]) => console.log(msg, ...args),
-      info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
-      warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
-      error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
-    }
+    return {}
   }
 
   // Server-side logger - pino already matches the interface

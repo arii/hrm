@@ -68,7 +68,6 @@ export function withValidation<T, P>({ schema }: { schema: z.ZodType<T> }) {
             { status: 400 }
           )
         }
-        console.error('Unhandled error in withValidation:', error)
         return NextResponse.json(
           { message: 'An internal server error occurred.' },
           { status: 500 }

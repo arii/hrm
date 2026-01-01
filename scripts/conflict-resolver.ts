@@ -49,7 +49,6 @@ export async function runConflictResolution(
     const relativePath = path.relative(prCodeRoot, absolutePath)
 
     if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
-      console.warn(`Skipping potential path traversal: ${file}`)
       continue
     }
 
@@ -135,7 +134,6 @@ ${unprocessedFiles
   }
 
   if (totalConflicts === 0 && unprocessedFiles.length === 0) {
-    console.log('✅ No conflicts detected by parser.')
     // Write an empty report to prevent the workflow from failing.
     await writeOutput('# ✅ No conflicts detected', outputFile)
     return

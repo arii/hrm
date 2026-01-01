@@ -43,8 +43,7 @@ export async function GET(req: Request) {
 
     const data = await response.json()
     return NextResponse.json(data)
-  } catch (error) {
-    console.error('Spotify Search Error:', error)
+  } catch (_error) {
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

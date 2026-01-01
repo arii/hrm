@@ -25,7 +25,6 @@ export async function getUserPlaylists(
   accessToken: string
 ): Promise<SpotifyPlaylistItem[]> {
   if (!accessToken) {
-    console.warn('Cannot get user playlists: Access token is missing.')
     return []
   }
   try {
@@ -53,8 +52,7 @@ export async function getUserPlaylists(
       name: item.name,
       uri: item.uri,
     }))
-  } catch (error) {
-    console.error('Error fetching user playlists:', error)
+  } catch (_error) {
     return []
   }
 }

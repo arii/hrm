@@ -9,7 +9,6 @@ let messageCounter = 0
 const send = (msg: object): Promise<void> => {
   return new Promise((resolve, reject) => {
     const msgString = JSON.stringify({ ...msg, messageId: ++messageCounter })
-    console.log(`[SEED] SEND: ${msgString}`)
 
     ws.send(msgString, (err) => {
       if (err) {
@@ -29,7 +28,6 @@ const run = async () => {
     restDuration: 5,
   })
   await send({ type: 'TIMER_COMMAND', command: 'START' })
-  console.log('[SEED] Timer seeded')
 
   // Mock HR data
   await send({
@@ -40,7 +38,6 @@ const run = async () => {
     type: 'HRM_INPUT',
     data: { name: 'Dev-Dummy-2', value: 95, age: 25, maxHr: 195 },
   })
-  console.log('[SEED] HR data seeded')
 
   // Mock Spotify playback by sending a command
   await send({
@@ -51,28 +48,18 @@ const run = async () => {
     deviceId: 'development-mock-device',
     playlistUri: 'spotify:playlist:37i9dQZF1DXcBWIGoYBM5M',
   })
-  console.log('[SEED] Spotify command sent')
 
-  console.log('✅ Development data seeded')
   ws.close()
 }
 
 ws.on('open', () => {
-  console.log('[SEED] WebSocket connection opened')
   run().catch((err) => {
-    console.error('[SEED] Error running seed script:', err)
     ws.close()
   })
 })
 
-ws.on('message', (data) => {
-  console.log(`[SEED] RECV: ${data.toString()}`)
-})
+ws.on('message', (data) => {})
 
-ws.on('close', () => {
-  console.log('[SEED] WebSocket connection closed')
-})
+ws.on('close', () => {})
 
-ws.on('error', (error) => {
-  console.error('[SEED] WebSocket error:', error.message)
-})
+ws.on('error', (error) => {})

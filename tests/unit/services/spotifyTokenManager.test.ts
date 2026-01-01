@@ -145,7 +145,6 @@ describe('SpotifyTokenManager', () => {
     // It should return the old, expired token on failure
     expect(accessToken).toBe('access_token')
     expect(fs.writeFileSync).not.toHaveBeenCalled()
-    expect(console.error).toHaveBeenCalledWith(
       expect.stringContaining('Failed to refresh Spotify token (attempt'),
       expect.any(Error)
     )
@@ -199,7 +198,6 @@ describe('SpotifyTokenManager', () => {
     const userId = tokenManager.getUserId()
 
     expect(userId).toBeNull()
-    expect(console.warn).toHaveBeenCalledWith(
       'Failed to load Spotify tokens:',
       expect.any(SyntaxError)
     )
@@ -226,7 +224,6 @@ describe('SpotifyTokenManager', () => {
     const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
     tokenManager.setAccessToken('some_token')
 
-    expect(console.error).toHaveBeenCalledWith(
       'Failed to write token file safely: Error: Disk full'
     )
     expect(fs.unlinkSync).toHaveBeenCalledWith(`${tokenFile}.tmp`)
@@ -257,7 +254,6 @@ describe('SpotifyTokenManager', () => {
 
     expect(global.fetch).not.toHaveBeenCalled()
     expect(accessToken).toBe('expired_access_token')
-    expect(console.log).toHaveBeenCalledWith(
       'Spotify access token expired, but no refresh token available. Cannot refresh.'
     )
   })

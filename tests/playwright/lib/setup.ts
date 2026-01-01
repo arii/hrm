@@ -55,7 +55,6 @@ export async function warmupEndpoints(
   const baseUrl = getBaseURL()
   const warmupPage = await context.newPage()
 
-  console.log('🔥 Warming up server endpoints...')
 
   for (const route of routes) {
     await warmupPage.goto(`${baseUrl}${route}`)
@@ -63,7 +62,6 @@ export async function warmupEndpoints(
   }
 
   await warmupPage.close()
-  console.log('✅ Server endpoints warmed up')
 }
 
 /**
@@ -91,7 +89,6 @@ export async function createTestPage(
   if (enableConsoleLogging) {
     page.on('console', (msg) => {
       if (!msg.text().includes('DOCS_timing')) {
-        console.log(`Console ${msg.type()}: ${msg.text()}`)
       }
     })
   }
@@ -163,7 +160,6 @@ export async function replaceIframeWithStableWorkout(
     const iframe = page.frameLocator('iframe')
     await iframe.getByText('Sample Workout Plan').waitFor({ timeout: 2000 })
   } catch {
-    console.warn(
       'Warning: Iframe with data:text/html src not found. Iframe may be missing.'
     )
   }
@@ -320,7 +316,6 @@ export async function stopTimer(
       }
     }
   } catch (error) {
-    console.warn('Timer check/stop encountered an issue (ignoring):', error)
   }
 }
 

@@ -168,9 +168,6 @@ const SpotifyDisplay = () => {
         selectedDeviceId ||
         spotifyData.devices?.find((device) => device.is_active)?.id
       if (!targetDeviceId) {
-        console.warn(
-          '[SpotifyDisplay] No target device for volume command. Aborting.'
-        )
         return
       }
       const sanitized = clampVolume(volume)

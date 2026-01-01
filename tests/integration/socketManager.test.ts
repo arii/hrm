@@ -30,22 +30,18 @@ describe('WebSocket Full Integration Test', () => {
 
     // Silence verbose server output in tests, but log errors
     serverProcess.stdout?.on('data', (_data: Buffer) => {})
-    serverProcess.stderr?.on('data', (data: Buffer) =>
-      console.error(`[Server ERR]: ${data.toString().trim()}`)
-    )
+    serverProcess.stderr?.on('data', (data: Buffer) => {})
     serverProcess.on('error', (err) => done(err))
 
     const checkHealth = () => {
       const req = http.get(healthCheckUrl, (res) => {
         if (res.statusCode === 200) {
-          console.log('Server is ready.')
           clearInterval(interval)
           clearTimeout(timeout)
           done()
         } else {
           // It can be unhealthy if Spotify isn't configured, but we check for 503 as a valid "running" state.
           if (res.statusCode === 503) {
-            console.log(
               'Server is running but unhealthy (as expected without Spotify).'
             )
             clearInterval(interval)

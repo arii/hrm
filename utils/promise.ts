@@ -26,7 +26,6 @@
  *   timeoutMs: 10000,
  *   errorMessage: 'Task timed out',
  *   signal
- * }).then(console.log).catch(console.error);
  *
  * // To cancel the task manually:
  * // controller.abort();

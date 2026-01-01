@@ -119,8 +119,8 @@ export default function ConnectView({
     try {
       await onForgetDevice()
       onReset()
-    } catch (error) {
-      console.error('Reset failed:', error)
+    } catch (_error) {
+      // Handle or log error if needed in the future
     } finally {
       setIsResetting(false)
     }

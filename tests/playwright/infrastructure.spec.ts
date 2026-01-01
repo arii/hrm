@@ -42,8 +42,6 @@ test.describe('Infrastructure & Scripts', () => {
         stdout: Buffer
         stderr: Buffer
       }
-      console.error('Lint Output:', execError.stdout?.toString())
-      console.error('Lint Errors:', execError.stderr?.toString())
       throw new Error(`Linting failed with status ${execError.status}`)
     }
   })
@@ -66,8 +64,8 @@ test.describe('Infrastructure & Scripts', () => {
     const nextDir = path.join(process.cwd(), '.next')
     try {
       await fs.rm(nextDir, { recursive: true, force: true })
-    } catch (error) {
-      console.warn(`Could not remove .next directory: ${error}`)
+    } catch (_error) {
+      // Ignore errors if the directory doesn't exist
     }
 
     const PORT = 3005
@@ -83,21 +81,13 @@ test.describe('Infrastructure & Scripts', () => {
     devServer.stdout.on('data', (data) => (stdout += data.toString()))
     devServer.stderr.on('data', (data) => (stderr += data.toString()))
 
+    await waitForPort(PORT)
+    // Cleanup: Kill the entire process group.
+    // The `-` before devServer.pid is crucial; it kills the group, not just the parent process.
     try {
-      await waitForPort(PORT)
-    } catch (error) {
-      // If waitForPort fails, log the server output and re-throw
-      console.error('DEV SERVER STDOUT:\n', stdout)
-      console.error('DEV SERVER STDERR:\n', stderr)
-      throw error // Re-throw the original error to fail the test
-    } finally {
-      // Cleanup: Kill the entire process group.
-      // The `-` before devServer.pid is crucial; it kills the group, not just the parent process.
-      try {
-        if (devServer.pid) process.kill(-devServer.pid)
-      } catch (_e) {
-        // Ignore errors, likely "ESRCH" if the process already terminated.
-      }
+      if (devServer.pid) process.kill(-devServer.pid)
+    } catch (_e) {
+      // Ignore errors, likely "ESRCH" if the process already terminated.
     }
   })
 
@@ -128,18 +118,11 @@ test.describe('Infrastructure & Scripts', () => {
     prodServer.stdout.on('data', (data) => (stdout += data.toString()))
     prodServer.stderr.on('data', (data) => (stderr += data.toString()))
 
+    await waitForPort(PORT)
     try {
-      await waitForPort(PORT)
-    } catch (error) {
-      console.error('PROD SERVER STDOUT:\n', stdout)
-      console.error('PROD SERVER STDERR:\n', stderr)
-      throw error
-    } finally {
-      try {
-        if (prodServer.pid) process.kill(-prodServer.pid)
-      } catch (_e) {
-        // Ignore errors
-      }
+      if (prodServer.pid) process.kill(-prodServer.pid)
+    } catch (_e) {
+      // Ignore errors
     }
   })
 })

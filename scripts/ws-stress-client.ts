@@ -26,19 +26,12 @@ let connections = 0
 let errors = 0
 const clients: WebSocket[] = []
 
-console.log(`🚀 Starting WebSocket Stress Test`)
-console.log(`   - Target: ${URL}`)
-console.log(`   - Concurrent Clients: ${CONCURRENT_CLIENTS}`)
-console.log(`   - Test Duration: ${DURATION_S} seconds`)
-console.log(`   - Message Interval: ${SEND_INTERVAL_MS} ms`)
-console.log('------------------------------------------')
 
 const createClient = (id: number) => {
   const ws = new WebSocket(URL)
 
   ws.on('open', () => {
     connections++
-    console.log(`[Client ${id}] Connection opened.`)
 
     const messageInterval = setInterval(() => {
       const message = {
@@ -63,12 +56,10 @@ const createClient = (id: number) => {
 
   ws.on('error', (error) => {
     errors++
-    console.error(`[Client ${id}] Error: ${error.message}`)
   })
 
   ws.on('close', () => {
     connections--
-    console.log(`[Client ${id}] Connection closed.`)
   })
 
   clients.push(ws)
@@ -80,7 +71,6 @@ for (let i = 0; i < CONCURRENT_CLIENTS; i++) {
 }
 
 const reportInterval = setInterval(() => {
-  console.log(
     `[Report] Connections: ${connections} | Messages Sent: ${messagesSent} | Errors: ${errors}`
   )
 }, 5000)
@@ -88,11 +78,6 @@ const reportInterval = setInterval(() => {
 // Stop the test and print final report
 setTimeout(
   () => {
-    console.log('------------------------------------------')
-    console.log(`🏁 Test Finished`)
-    console.log(`   - Total Messages Sent: ${messagesSent}`)
-    console.log(`   - Total Errors: ${errors}`)
-    console.log('------------------------------------------')
     clearInterval(reportInterval)
     // The process should exit as all sockets are closed
   },

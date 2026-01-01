@@ -15,9 +15,6 @@ interface TimerSoundProviderProps {
 const TimerSoundProvider = ({ children }: TimerSoundProviderProps) => {
   useEffect(() => {
     const handleFirstInteraction = () => {
-      console.log(
-        '[TimerSoundProvider] User interaction detected, initializing audio...'
-      )
       audioManager.loadAudio()
       // Clean up listeners after initialization
       document.removeEventListener('click', handleFirstInteraction)

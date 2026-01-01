@@ -60,7 +60,6 @@ describe('Spotify Playlist Service', () => {
       }
       ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk)
 
-      // Suppress console.error for this test
       const consoleErrorSpy = jest
         .spyOn(console, 'error')
         .mockImplementation(() => {})
@@ -68,7 +67,6 @@ describe('Spotify Playlist Service', () => {
       const playlists = await getUserPlaylists('test_token')
       expect(playlists).toEqual([])
 
-      // Restore console.error
       consoleErrorSpy.mockRestore()
     })
   })

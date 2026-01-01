@@ -29,7 +29,6 @@ describe('JsonProcessor', () => {
   })
 
   it('should return an error for a malformed JSON block in markdown', () => {
-    // Suppress expected console.error for this test
     const consoleErrorSpy = jest
       .spyOn(console, 'error')
       .mockImplementation(() => {})

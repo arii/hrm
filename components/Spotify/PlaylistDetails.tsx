@@ -33,7 +33,6 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({ playlistId }) => {
         const data = await response.json()
         setTracks(data.tracks ?? [])
       } catch (err) {
-        console.error('Failed to fetch playlist details:', err)
         setError(
           err instanceof Error ? err.message : 'An unknown error occurred'
         )

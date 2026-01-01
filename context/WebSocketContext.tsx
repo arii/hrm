@@ -129,7 +129,6 @@ export const WebSocketProvider = ({
       }
       return id
     } catch (error) {
-      console.error('Failed to access localStorage:', error)
       return window.crypto.randomUUID() // Fallback to in-memory UUID
     }
   })
@@ -144,7 +143,6 @@ export const WebSocketProvider = ({
       urlObject.searchParams.set('clientId', clientId)
       return urlObject.toString()
     } catch (_error) {
-      console.error('Invalid WebSocket URL:', url)
       return url // Fallback to the original URL on error
     }
   }, [serverUrl, clientId])
@@ -210,9 +208,6 @@ export const WebSocketProvider = ({
         // time, but not so long that a genuinely stale connection would persist
         // for an excessive period.
         pongTimeoutRef.current = setTimeout(() => {
-          console.warn(
-            '[WebSocketProvider] Pong not received in time. Connection may be stale. Forcing reconnect.'
-          )
           wsRef.current?.close() // Triggers the onclose reconnect logic
         }, 15000)
       }
@@ -233,7 +228,6 @@ export const WebSocketProvider = ({
     wsRef.current = ws
 
     ws.onopen = () => {
-      console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
       // Set test flag for Playwright tests - use a more reliable method
@@ -245,7 +239,6 @@ export const WebSocketProvider = ({
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
 
       if (pendingActions.current.length > 0) {
-        console.log(
           `[useWebSocket] Sending ${pendingActions.current.length} pending actions.`
         )
         pendingActions.current.forEach((action) => {
@@ -268,7 +261,6 @@ export const WebSocketProvider = ({
     }
 
     ws.onclose = (event) => {
-      console.log(
         '[WebSocketProvider] Disconnected from server',
         event.code,
         event.reason
@@ -295,7 +287,6 @@ export const WebSocketProvider = ({
           const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
           const reconnectDelay = delay + jitter
 
-          console.log(
             `[WebSocketProvider] Reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`
           )
 
@@ -304,7 +295,6 @@ export const WebSocketProvider = ({
             connectRef.current()
           }, reconnectDelay)
         } else {
-          console.error(
             '[WebSocketProvider] Max reconnection attempts reached.'
           )
           setConnectionStatus(
@@ -315,7 +305,6 @@ export const WebSocketProvider = ({
     }
 
     ws.onerror = (_err) => {
-      console.warn('[WebSocketProvider] Connection error')
       setConnectionStatus('Error')
     }
 
@@ -350,7 +339,6 @@ export const WebSocketProvider = ({
           dispatch(message)
         }
       } catch (e) {
-        console.error('Failed to parse WebSocket message:', e)
       }
     }
   }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
@@ -366,7 +354,6 @@ export const WebSocketProvider = ({
     if (wsRef.current) {
       wsRef.current.close()
     }
-    console.log('[useWebSocket] Manually disconnected.')
   }, [stopHeartbeat])
 
   useEffect(() => {
@@ -382,10 +369,8 @@ export const WebSocketProvider = ({
     const ws = wsRef.current
     if (ws && ws.readyState === WebSocket.OPEN) {
       const jsonStr = JSON.stringify(data)
-      console.log('[WebSocketProvider] Sending:', data)
       ws.send(jsonStr)
     } else {
-      console.warn(
         '[WebSocketProvider] WebSocket not open, queueing action. State:',
         ws?.readyState,
         'Data:',

@@ -38,13 +38,11 @@ export async function parseConflicts(
     const fileSizeInMB = stats.size / (1024 * 1024)
     if (fileSizeInMB > 1) {
       // 1 MB limit
-      console.warn(
         `Skipping large file: ${filePath} (${fileSizeInMB.toFixed(2)} MB)`
       )
       return []
     }
   } catch (error) {
-    console.error(`Failed to stat file, skipping: ${filePath}`)
     return []
   }
 
@@ -52,7 +50,6 @@ export async function parseConflicts(
   try {
     content = await readFile(filePath, 'utf-8')
   } catch (error) {
-    console.error(`Failed to read file for conflict parsing: ${filePath}`)
     return []
   }
 

@@ -30,7 +30,6 @@ const ControlPanel = () => {
   // Register this client as a controller
   useEffect(() => {
     if (connectionStatus === 'Connected') {
-      console.log('[ControlPanel] Registering as controller')
       sendData({ type: 'REGISTER_CLIENT', role: 'controller' })
     }
   }, [connectionStatus, sendData])
@@ -42,9 +41,6 @@ const ControlPanel = () => {
         document.visibilityState === 'visible' &&
         connectionStatus !== 'Connected'
       ) {
-        console.log(
-          '[ControlPanel] Page visible, attempting to reconnect WebSocket...'
-        )
         connect() // Attempt to reconnect
       }
     }

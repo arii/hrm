@@ -47,7 +47,6 @@ export function getModelFallbacks(): string[] {
     return defaultFallbacks
   }
   if (envFallbacks.trim() === '') {
-    console.warn(
       'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
     )
     return defaultFallbacks
@@ -61,7 +60,6 @@ export function getModelFallbacks(): string[] {
       .filter((m) => {
         if (!m) return false
         if (!m.startsWith('gemini-')) {
-          console.warn(
             `Warning: Invalid model name "${m}" in GEMINI_MODEL_FALLBACKS. It will be ignored.`
           )
           return false
@@ -69,7 +67,6 @@ export function getModelFallbacks(): string[] {
         return true
       })
   } catch (error) {
-    console.warn(
       `Warning: Could not parse GEMINI_MODEL_FALLBACKS: ${
         (error as Error).message
       }. Using default fallbacks.`
@@ -78,7 +75,6 @@ export function getModelFallbacks(): string[] {
   }
 
   if (userFallbacks.length === 0) {
-    console.warn(
       'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
     )
     return defaultFallbacks
@@ -125,7 +121,6 @@ export class JsonProcessor {
         try {
           return { success: true, data: JSON.parse(jsonBlock) }
         } catch (e) {
-          console.error('Error parsing JSON block:', e)
           // If parsing the extracted block fails, return a structured error.
           return {
             success: false,
@@ -190,7 +185,6 @@ async function main() {
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) {
       // This is a fatal error, so we exit early.
-      console.error('Error: GEMINI_API_KEY environment variable is not set.')
       process.exit(1)
     }
 
@@ -207,7 +201,6 @@ async function main() {
         )
         contextContent += `\n\n--- Start of Context File: ${trimmedFile} ---\n${content}\n--- End of Context File: ${trimmedFile} ---\n`
       } catch (error) {
-        console.warn(
           `Warning: Could not read context file ${trimmedFile}: ${(error as Error).message}`
         )
         contextContent += `\n\n--- Context File: ${trimmedFile} (MISSING/ERROR) ---\n`
@@ -219,7 +212,6 @@ async function main() {
       await runReviewPreset(genAI, contextContent, outputFile, reviewContext)
     } else if (preset === 'resolve-conflict') {
       if (!contextFile) {
-        console.error(
           'Error: --context-file is required for resolve-conflict preset'
         )
         process.exit(1)
@@ -235,13 +227,11 @@ async function main() {
             'utf-8'
           )
         } catch (e) {
-          console.error(`Error reading task file ${taskFile}:`, e)
           process.exit(1)
         }
       }
 
       if (!finalTask) {
-        console.error(
           'Usage: npx tsx scripts/gemini-client.ts --task "task description" OR --task-file "path/to/task.txt" [--context "file1.md,file2.md"] [--output "output.md"]'
         )
         process.exit(1)
@@ -266,14 +256,12 @@ export async function generateContentWithFallback({
   let lastError: Error | null = null
 
   for (const modelName of MODEL_FALLBACKS) {
-    console.log(`Attempting to use model: ${modelName}...`)
     try {
       const model = genAI.getGenerativeModel({ model: modelName })
       const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         ...config,
       })
-      console.log(`Successfully generated content using ${modelName}.`)
       return result.response.text()
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -298,7 +286,6 @@ export async function generateContentWithFallback({
           reason = 'Invalid Request'
         }
         const details = reason === 'Unknown Error' ? `: ${errorMessage}` : ''
-        console.warn(
           `Model ${modelName} failed (${reason}${details}). Trying next model...`
         )
         continue
@@ -358,7 +345,6 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
   try {
     const parsed = JSON.parse(jsonStr)
     if (!Array.isArray(parsed)) {
-      console.warn('Warning: FAILED_CHECKS_JSON is not an array.')
       return []
     }
     // Use a type guard to filter and validate the shape of each object
@@ -370,7 +356,6 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
         typeof item.detailsUrl === 'string' &&
         (typeof logContent === 'string' || typeof logContent === 'undefined')
       if (!isValid) {
-        console.warn('Warning: Invalid item in FAILED_CHECKS_JSON:', item)
         return null
       }
       return {
@@ -381,7 +366,6 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
       }
     }).filter((item): item is FailedCheck => item !== null)
   } catch (e) {
-    console.warn(
       `Warning: Failed to parse FAILED_CHECKS_JSON: ${(e as Error).message}`,
       e
     )
@@ -519,7 +503,6 @@ async function runReviewPreset(
     context.prLabels.includes('ready-for-approval') ||
     context.prLabels.includes('abandon')
   ) {
-    console.log(
       'PR is marked as "ready-for-approval" or "abandon". Skipping review.'
     )
     await writeOutput(
@@ -531,7 +514,6 @@ async function runReviewPreset(
 
   const diffFile = process.env.PR_DIFF_FILE
   if (!diffFile) {
-    console.error('Error: PR_DIFF_FILE env var is required for review preset')
     await writeOutput(
       JSON.stringify({ reviewComment: '', labels: [] }),
       outputFile
@@ -543,12 +525,10 @@ async function runReviewPreset(
   try {
     diff = await readFile(diffFile, 'utf-8')
   } catch (e) {
-    console.error(`Error reading diff file ${diffFile}:`, e)
     process.exit(1)
   }
 
   if (!diff || diff.trim().length === 0) {
-    console.log('Diff is empty. Skipping review.')
     await writeOutput(
       JSON.stringify({ reviewComment: '', labels: [] }),
       outputFile
@@ -599,7 +579,6 @@ async function runReviewPreset(
       !reviewData.reviewComment ||
       reviewData.reviewComment.trim().length < 20
     ) {
-      console.warn(
         'Warning: Parsed JSON has an empty or short review comment. Injecting fallback.'
       )
       const fallback = {
@@ -616,7 +595,6 @@ async function runReviewPreset(
     }
   } else {
     // The response was not valid JSON. We will format the error.
-    console.error('Error: Failed to parse JSON response from the model.')
     const errorJson = {
       error: {
         category: 'Invalid JSON Response',
@@ -640,9 +618,7 @@ export async function writeOutput(
 ) {
   if (outputFile) {
     await writeFile(path.resolve(process.cwd(), outputFile), content)
-    console.log(`Output written to ${outputFile}`)
   } else {
-    console.log(content)
   }
 }
 
@@ -697,7 +673,6 @@ export async function handleError(
     verdict: 'comment',
   }
 
-  console.error(
     'Error during content generation:',
     JSON.stringify(errorOutput, null, 2)
   )
@@ -705,7 +680,6 @@ export async function handleError(
   // Always write a valid JSON structure to the output file on error.
   if (outputFile) {
     await writeOutput(JSON.stringify(errorOutput, null, 2), outputFile)
-    console.error(`Error details written to ${outputFile}:`, errorOutput)
     // Exit 0 so the next workflow step can read the JSON and post the comment
     process.exit(0)
   } else {

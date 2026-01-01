@@ -20,7 +20,6 @@ export async function GET() {
       redirectUri: getSpotifyCallbackURL(),
     })
   } catch (err) {
-    console.error('Auth check failed:', err)
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
   }
 }

@@ -11,7 +11,6 @@ export async function GET(_req: Request) {
     const session = await getServerSession(authOptions)
     return NextResponse.json({ ok: true, session: session ?? null })
   } catch (err) {
-    console.error('debug/session error:', err)
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
   }
 }

@@ -51,7 +51,6 @@ class TabataTimer {
         this.commands.stop()
         break
       default:
-        console.warn(`Unknown timer command: ${command}`)
     }
   }
 
