@@ -334,7 +334,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          if [ ${{ steps.lint.outcome }} = 'failure' ]; then
+          if [ "${{ steps.lint.outcome }}" = 'failure' ]; then
             echo "::error::Lint check failed"
             exit 1
           fi
@@ -408,7 +408,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          if [ ${{ steps.build.outcome }} = 'failure' ]; then
+          if [ "${{ steps.build.outcome }}" = 'failure' ]; then
             echo "::error::Build failed"
             exit 1
           fi
