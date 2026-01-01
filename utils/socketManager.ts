@@ -288,20 +288,6 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_INPUT': {
-        // PROTOCOL: A null value is a signal from the client (see useBluetoothHRM.ts) that the
-        // HRM device has disconnected. In this case, we remove the user's data from the
-        // repository to stop broadcasting it.
-        if (message.data.value === null) {
-          logger.info(
-            { clientId },
-            'Received HRM disconnect signal (null value). Removing client data.'
-          )
-          hrmDataRepository.deleteById(clientId)
-          clientSessionState.delete(clientId)
-          broadcastState()
-          break
-        }
-
         const existingData = hrmDataRepository.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
 
