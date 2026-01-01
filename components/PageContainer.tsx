@@ -40,7 +40,7 @@ export default function PageContainer({
     minHeight: '100vh',
     backgroundColor: 'background.default',
     py: { xs: 2, sm: 3 }, // default
-    ...sx, // consumer sx overrides defaults
+    ...(typeof sx === 'function' ? {} : sx), // Merge sx if it's an object
   }
 
   // Explicit props override everything
@@ -51,8 +51,16 @@ export default function PageContainer({
     finalSx.py = py
   }
 
+  // Handle sx as a function
+  const sxProp = (theme: Theme) => {
+    const baseStyles = typeof finalSx === 'function' ? finalSx(theme) : finalSx
+    const overrideStyles = typeof sx === 'function' ? sx(theme) : {}
+    return { ...baseStyles, ...overrideStyles }
+  }
+
+
   return (
-    <Container maxWidth={maxWidth} sx={finalSx} {...rest}>
+    <Container maxWidth={maxWidth} sx={sxProp} {...rest}>
       {children}
     </Container>
   )
