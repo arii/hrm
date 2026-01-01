@@ -353,8 +353,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const onDisconnected = useCallback(() => {
     setBatteryLevel(null)
 
-    // Signal disconnection to the server by sending a null HR value.
-    // This allows the backend to clear the stale data for this client.
+    // PROTOCOL: Signal disconnection to the server by sending a null HR value.
+    // This allows the backend (see socketManager.ts) to clear the stale data for this client.
     sendDataRef.current({
       type: 'HRM_INPUT',
       data: { value: null },

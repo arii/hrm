@@ -315,7 +315,7 @@ describe('WebSocket Manager', () => {
 
   describe('Calorie Calculation', () => {
     it('should accumulate calories correctly with small frequent updates', () => {
-      const sendHrmInput = (hr: number) => {
+      const sendHrmInput = (hr: number | null) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
           data: { value: hr, age: 30 },
@@ -348,6 +348,15 @@ describe('WebSocket Manager', () => {
       // 100 updates * 100ms = 10 seconds = 0.1667 minutes.
       // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
       expect(clientData!.calories).toBeGreaterThan(1)
+
+      // now send a null value to disconnect
+      sendHrmInput(null)
+      jest.runOnlyPendingTimers()
+      expect(mockBroadcast).toHaveBeenCalled()
+      const lastCall2 =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const finalPayload2: HrmData[] = lastCall2[1].payload
+      expect(finalPayload2).toHaveLength(0)
     })
   })
 
@@ -465,5 +474,6 @@ describe('WebSocket Manager', () => {
         'Unknown message type received'
       )
     })
+
   })
 })
