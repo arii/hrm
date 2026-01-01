@@ -100,9 +100,9 @@ If the action encounters a merge conflict during the rebase, it will fail gracef
 
 The project leverages AI-powered workflows to automate code reviews, update pull requests, and more.
 
-- **`@gemini-bot review`**: Triggers a comprehensive code review using the Gemini API. The bot will analyze the pull request, provide feedback, and suggest improvements.
-- **`@gemini-update-pr`**: This command triggers a workflow that updates the pull request with the latest changes from the base branch, ensuring that the PR is up-to-date before merging.
-- **`@jules fix` (Legacy)**: This legacy command invokes the Jules AI to perform a code review. It is recommended to use `@gemini-bot review` for more advanced and accurate reviews.
+-   **`@gemini-bot review`**: Triggers a comprehensive code review using the Gemini API. The bot will analyze the pull request, provide feedback, and suggest improvements.
+-   **`@gemini-update-pr`**: This command triggers a workflow that updates the pull request with the latest changes from the base branch, ensuring that the PR is up-to-date before merging.
+-   **`@jules fix` (Legacy)**: This legacy command invokes the Jules AI to perform a code review. It is recommended to use `@gemini-bot review` for more advanced and accurate reviews.
 
 #### Automated Technical Debt Analysis
 

@@ -16,7 +16,6 @@ Respond with a JSON object containing a list of technical debt issues. Each issu
 ```
 
 **Code Diff to Analyze:**
-
 ```diff
 {{diff}}
 ```

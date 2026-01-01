@@ -265,15 +265,7 @@ jobs:
   failure-handler:
     name: 🚨 Failure Handler
     runs-on: ubuntu-latest
-    needs:
-      [
-        lint-check,
-        build-check,
-        unit-tests,
-        infra-tests,
-        perf-tests,
-        visual-tests,
-      ]
+    needs: [lint-check, build-check, unit-tests, infra-tests, perf-tests, visual-tests]
     if: failure()
     outputs:
       failure_report_json: ${{ steps.read_report.outputs.json_content }}

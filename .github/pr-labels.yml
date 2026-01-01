@@ -3,17 +3,17 @@
 # This file provides a single source of truth for all review-related labels.
 
 - name: ready-for-approval
-  description: 'Indicates that the PR has been reviewed by Gemini and is ready for final approval.'
-  color: '28a745' # green
+  description: "Indicates that the PR has been reviewed by Gemini and is ready for final approval."
+  color: "28a745" # green
 
 - name: needs-fixes
   description: "Indicates that the PR requires changes based on Gemini's review."
-  color: 'd73a4a' # red
+  color: "d73a4a" # red
 
 - name: ci-failure
-  description: 'Indicates that one or more CI checks have failed.'
-  color: 'd73a4a' # red
+  description: "Indicates that one or more CI checks have failed."
+  color: "d73a4a" # red
 
 - name: review-failed
-  description: 'Indicates that the Gemini review process itself failed.'
-  color: 'd73a4a' # red
+  description: "Indicates that the Gemini review process itself failed."
+  color: "d73a4a" # red

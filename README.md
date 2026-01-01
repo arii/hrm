@@ -326,14 +326,14 @@ Playwright tests live in `tests/playwright/core-functionality.spec.ts`; baseline
 
 You can interact with the project's automation workflows by using the following commands in pull request or issue comments.
 
-| Command             | Description                                                                                  | Example              |
-| ------------------- | -------------------------------------------------------------------------------------------- | -------------------- |
-| `@pr-squash`        | Squashes all commits in a pull request into a single commit.                                 | `@pr-squash`         |
-| `@pr-squash-rebase` | Squashes all commits and rebases the pull request on top of the base branch.                 | `@pr-squash-rebase`  |
-| `/create-issues`    | Creates follow-up issues based on the content of a pull request review.                      | `/create-issues`     |
-| `@gemini-bot`       | Invokes the Gemini AI to perform tasks like code review or code generation.                  | `@gemini-bot review` |
-| `@jules fix`        | (Legacy) Invokes the Jules AI to perform a code review.                                      | `@jules fix`         |
-| `@gemini-update-pr` | Triggers a workflow to update the pull request with the latest changes from the base branch. | `@gemini-update-pr`  |
+| Command | Description | Example |
+|---|---|---|
+| `@pr-squash` | Squashes all commits in a pull request into a single commit. | `@pr-squash` |
+| `@pr-squash-rebase` | Squashes all commits and rebases the pull request on top of the base branch. | `@pr-squash-rebase` |
+| `/create-issues` | Creates follow-up issues based on the content of a pull request review. | `/create-issues` |
+| `@gemini-bot` | Invokes the Gemini AI to perform tasks like code review or code generation. | `@gemini-bot review` |
+| `@jules fix` | (Legacy) Invokes the Jules AI to perform a code review. | `@jules fix` |
+| `@gemini-update-pr` | Triggers a workflow to update the pull request with the latest changes from the base branch. | `@gemini-update-pr` |
 
 ## VS Code Integration
 
