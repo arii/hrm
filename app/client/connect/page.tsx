@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -58,6 +58,7 @@ export default function ConnectPage() {
 
   const {
     connectAndStream,
+    autoConnect,
     disconnect,
     forgetDevice,
     deviceStatus,
@@ -71,6 +72,14 @@ export default function ConnectPage() {
   })
 
   const { connectionStatus, hrmData } = useWebSocket()
+
+  useEffect(() => {
+    // On initial mount, try to auto-connect to a saved device if not already connected.
+    // This provides a smoother experience for returning users.
+    if (!isConnected && isSupported && connectionStatus === 'Connected') {
+      autoConnect()
+    }
+  }, [isConnected, isSupported, connectionStatus, autoConnect])
 
   let deviceStatusMessage = deviceStatus
   if (disconnectionReason === 'timeout') {
