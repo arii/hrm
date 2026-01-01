@@ -41,13 +41,19 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SCHEDULED_CONTEXT_FILES: ${{ vars.SCHEDULED_CONTEXT_FILES || 'README.md,FRONTEND_IMPROVEMENT_PLAN.md,docs/COMPONENT_INVENTORY.md' }}
+          SCHEDULED_CACHE_ENABLED: ${{ vars.SCHEDULED_CACHE_ENABLED || 'true' }}
         run: |
-          # Always attempt cache for scheduled triage as it usually involves reading full documentation
+          CACHE_FLAG=""
+          if [ "$SCHEDULED_CACHE_ENABLED" = "true" ]; then
+            echo "::notice::Scheduled caching is enabled."
+            CACHE_FLAG="--use-cache"
+          fi
+
           npx tsx scripts/gemini-client.ts \
             --task-file "task_input.txt" \
             --context "$SCHEDULED_CONTEXT_FILES" \
             --output "report.md" \
-            --use-cache
+            $CACHE_FLAG
 
       - name: Create Report Issue
         uses: actions/github-script@v7
