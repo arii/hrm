@@ -5,6 +5,9 @@ on:
   # It uses pull_request_target to have access to secrets.
   pull_request_target:
     types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - leader
   workflow_dispatch:
     inputs:
       pr_number:
@@ -37,12 +40,14 @@ jobs:
         with:
           token: ${{ secrets.ARI_PAT }}
           base: leader
-          exclude-labels: 'no-rebase,wip'
+          exclude-labels: |
+            no-rebase
+            wip
 
       # --- AI CONFLICT RESOLUTION START ---
       # This block only runs if the automatic rebase failed.
       - name: Get PR Info
-        if: steps.rebase.conclusion == 'failure'
+        if: steps.rebase.conclusion == 'failure' && github.event_name != 'push'
         id: pr_data
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
@@ -53,7 +58,7 @@ jobs:
 
       # Step 3: Checkout UNTRUSTED PR code into a separate directory for analysis.
       - name: Checkout PR Code (Untrusted)
-        if: steps.rebase.conclusion == 'failure'
+        if: steps.rebase.conclusion == 'failure' && github.event_name != 'push'
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.pr_data.outputs.HEAD_SHA }}
@@ -63,7 +68,7 @@ jobs:
 
       # Step 4: Manually reproduce the rebase failure inside the UNTRUSTED directory.
       - name: Manual Rebase to Capture Conflicts
-        if: steps.rebase.conclusion == 'failure'
+        if: steps.rebase.conclusion == 'failure' && github.event_name != 'push'
         id: manual_rebase
         continue-on-error: true
         working-directory: ./pr-code # Run commands inside the subdir
@@ -84,7 +89,7 @@ jobs:
 
       # Step 5: Run the TRUSTED script from the base checkout to analyze the UNTRUSTED files.
       - name: Run Gemini Conflict Resolver
-        if: steps.rebase.conclusion == 'failure' && steps.manual_rebase.conclusion == 'failure'
+        if: steps.rebase.conclusion == 'failure' && steps.manual_rebase.conclusion == 'failure' && github.event_name != 'push'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
@@ -99,11 +104,11 @@ jobs:
             --output "resolution-report.md"
 
       - name: Create Placeholder Report on Unexpected Rebase Success
-        if: steps.rebase.conclusion == 'failure' && steps.manual_rebase.outcome == 'success'
+        if: steps.rebase.conclusion == 'failure' && steps.manual_rebase.outcome == 'success' && github.event_name != 'push'
         run: echo "✅ Manual rebase succeeded without conflicts. No resolution needed." > resolution-report.md
 
       - name: Post Resolution Report
-        if: steps.rebase.conclusion == 'failure'
+        if: steps.rebase.conclusion == 'failure' && github.event_name != 'push'
         uses: mshick/add-pr-comment@v2
         with:
           message-path: resolution-report.md
