@@ -12,7 +12,10 @@ import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
-import { validateAgeValue, validateWeightValue } from './validation'
+import {
+  validateAgeValue,
+  validateWeightValue,
+} from '@/lib/validation/userMetrics'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
