@@ -39,6 +39,8 @@ This automated process ensures that code merged into the `leader` branch always 
 
 To optimize CI resource usage and improve developer experience, the `pr-quality.yml` workflow includes special handling for "empty" commits. An empty commit is one that does not introduce any file changes, such as a commit created by a rebase or an automated tool.
 
+The `pr-quality-standalone.yml` workflow serves as the primary quality gate, running a comprehensive suite of checks on every pull request to ensure code quality before merging.
+
 When an empty commit is pushed to a pull request, the workflow performs the following steps:
 
 1.  **Detects No Changes**: The `check-diff` job identifies that no files have been modified.
