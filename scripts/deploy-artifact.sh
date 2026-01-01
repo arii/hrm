@@ -64,11 +64,17 @@ echo "📦 Hydrating production dependencies..."
 # Suppress WARN messages about missing bin symlinks (non-fatal in production)
 $PNPM_CMD install --prod --ignore-scripts 2>&1 | grep -v "WARN.*Failed to create bin" || true
 
-echo "🔄 Reloading PM2..."
-# Use pnpm exec to ensure the project's local pm2 is used
-$PNPM_CMD exec pm2 startOrReload ecosystem.config.cjs --env production --update-env
+echo "🛑 Stopping current PM2 processes..."
+# Stop and delete all running processes to ensure a clean start.
+# Use '|| true' to prevent errors if no processes exist.
+$PNPM_CMD exec pm2 stop all || true
+$PNPM_CMD exec pm2 delete all || true
 
-echo "🕵️ Running Verification..."
+echo "🚀 Starting new application..."
+# Use pnpm exec to ensure the project's local pm2 is used
+$PNPM_CMD exec pm2 start ecosystem.config.cjs --env production
+
+# Verify the deployment
 ./scripts/verify-deployment.sh
 
 echo "✅ Deployment Complete."

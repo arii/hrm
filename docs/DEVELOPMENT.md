@@ -104,6 +104,28 @@ The project leverages AI-powered workflows to automate code reviews, update pull
 -   **`@gemini-update-pr`**: This command triggers a workflow that updates the pull request with the latest changes from the base branch, ensuring that the PR is up-to-date before merging.
 -   **`@jules fix` (Legacy)**: This legacy command invokes the Jules AI to perform a code review. It is recommended to use `@gemini-bot review` for more advanced and accurate reviews.
 
+## Deployment Strategy
+
+The project is deployed to a self-hosted production environment using a GitHub Actions workflow defined in `.github/workflows/deploy.yml`. This workflow triggers automatically on pushes to the `leader` branch.
+
+### Deployment Process
+
+The deployment follows a "hard restart" strategy rather than a zero-downtime approach. This is an intentional design choice to make deployment failures more immediately obvious and is appropriate for the application's current level of production readiness.
+
+The process is as follows:
+
+1.  **Build**: The workflow builds the Next.js application and the custom server.
+2.  **Package**: The build artifacts and necessary scripts are packaged into a `release.tar.gz` archive.
+3.  **Transfer**: The archive is securely transferred to the production server.
+4.  **Execute**: On the server, the `scripts/deploy-artifact.sh` script is executed, which performs the following steps:
+    a. Stops all currently running PM2 processes (`pm2 stop all`).
+    b. Deletes all process definitions from PM2 (`pm2 delete all`).
+    c. Starts the new version of the application using PM2 (`pm2 start ecosystem.config.cjs`).
+
+### Expected Downtime
+
+Due to this process, a brief period of downtime is expected during each deployment while the old application is stopped and the new one is started.
+
 #### Automated Technical Debt Analysis
 
 This project includes a workflow to automatically analyze pull requests for technical debt and create deduplicated GitHub issues.
