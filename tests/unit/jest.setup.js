@@ -10,16 +10,23 @@ process.env.NEXTAUTH_SECRET = 'test-nextauth-secret'
 
 const React = require('react');
 
-jest.mock('react-window', () => ({
-  FixedSizeList: jest.fn(({ children, itemCount, ...rest }) => {
+jest.mock('react-window', () => {
+  const React = require('react');
+  const FixedSizeList = React.forwardRef(({ children, itemCount, ...rest }, ref) => {
     const items = [];
     for (let i = 0; i < itemCount; i++) {
       items.push(children({ index: i, style: {} }));
     }
-    return React.createElement('div', rest, items);
-  }),
-  VariableSizeList: jest.fn(({ children, itemData, ...rest }) => {
+    return React.createElement('div', { ...rest, ref }, items);
+  });
+
+  const VariableSizeList = React.forwardRef(({ children, itemData, ...rest }, ref) => {
     const items = itemData.map((item, index) => children({ index, style: {}, data: itemData }));
-    return React.createElement('div', rest, items);
-  }),
-}))
+    return React.createElement('div', { ...rest, ref }, items);
+  });
+
+  return {
+    FixedSizeList,
+    VariableSizeList,
+  };
+});

@@ -7,6 +7,16 @@ import { Track } from '../../../../types/spotify'
 // Mock the fetch API
 global.fetch = jest.fn()
 
+jest.mock('react-window', () => ({
+  FixedSizeList: ({ children, ...props }) => {
+    const items = [];
+    for (let i = 0; i < props.itemCount; i++) {
+      items.push(children({ index: i, style: {} }));
+    }
+    return <div {...props}>{items}</div>;
+  },
+}));
+
 describe('PlaylistDetails', () => {
   const mockTracks: Track[] = [
     {
@@ -58,14 +68,14 @@ describe('PlaylistDetails', () => {
     render(<PlaylistDetails playlistId="test-playlist-id" />)
     await waitFor(() => {
       expect(screen.getByText('Track 1')).toBeInTheDocument()
+      expect(
+        screen.getByText('Artist 1 - Album 1', { exact: false })
+      ).toBeInTheDocument()
+      expect(screen.getByText('Track 2')).toBeInTheDocument()
+      expect(
+        screen.getByText('Artist 2 - Album 2', { exact: false })
+      ).toBeInTheDocument()
     })
-    expect(
-      screen.getByText('Artist 1 - Album 1', { exact: false })
-    ).toBeInTheDocument()
-    expect(screen.getByText('Track 2')).toBeInTheDocument()
-    expect(
-      screen.getByText('Artist 2 - Album 2', { exact: false })
-    ).toBeInTheDocument()
   })
 
   it('displays an error message when the API call fails', async () => {
