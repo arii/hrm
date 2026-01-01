@@ -490,6 +490,8 @@ describe('WebSocket Manager', () => {
 
     it('should handle unknown message types', () => {
       const message = JSON.stringify({ type: 'SOME_GARBAGE' })
+      // Clear any previous mock calls to logger.warn
+      ;(logger.warn as jest.Mock).mockClear()
       jest
         .spyOn(ClientCommandMessageSchema, 'parse')
         .mockReturnValue({ type: 'SOME_GARBAGE' } as unknown)
@@ -497,7 +499,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
 
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'test-client' }),
+        expect.objectContaining({ clientId: mockWs.clientId }),
         'Unknown message type received'
       )
     })

@@ -192,10 +192,13 @@ describe('ConnectionMonitor', () => {
   it('should warn if ping timeout is less than or equal to ping interval', () => {
     // Temporarily modify the mock env for this specific test
     const originalEnv = { ...env }
-    ;(env as any).WEBSOCKET_PING_TIMEOUT_MS = 3000
-    ;(env as any).WEBSOCKET_PING_INTERVAL_MS = 5000
+    ;(env as { WEBSOCKET_PING_TIMEOUT_MS: number }).WEBSOCKET_PING_TIMEOUT_MS =
+      3000
+    ;(
+      env as { WEBSOCKET_PING_INTERVAL_MS: number }
+    ).WEBSOCKET_PING_INTERVAL_MS = 5000
 
-    const misconfiguredMonitor = new ConnectionMonitor(mockWss)
+    new ConnectionMonitor(mockWss)
 
     expect(logger.warn).toHaveBeenCalledWith(
       expect.any(Object),

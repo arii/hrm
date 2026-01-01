@@ -153,10 +153,6 @@ export const WebSocketProvider = ({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
   const pendingActions = useRef<ClientCommandMessage[]>([])
-  // Refs for heartbeat mechanism
-  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
   // Configuration for exponential backoff
   const MAX_RECONNECT_ATTEMPTS = 10
   // The initial delay for the first reconnection attempt.
@@ -187,56 +183,12 @@ export const WebSocketProvider = ({
     }
   }, [])
 
-  const stopHeartbeat = useCallback(() => {
-    if (heartbeatIntervalRef.current) {
-      clearInterval(heartbeatIntervalRef.current)
-    }
-    if (pongTimeoutRef.current) {
-      clearTimeout(pongTimeoutRef.current)
-    }
-  }, [])
-
-  const startHeartbeat = useCallback(() => {
-    stopHeartbeat() // Ensure no existing timers are running
-
-    heartbeatIntervalRef.current = setInterval(() => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ type: 'PING' }))
-
-        // The pong timeout is set to 15 seconds. This is a tripling of the
-        // original 5-second timeout and provides a more generous buffer for
-        // temporary network latency or server-side processing delays. This value
-        // was chosen to be significantly longer than a typical network round-trip
-        // time, but not so long that a genuinely stale connection would persist
-        // for an excessive period.
-        pongTimeoutRef.current = setTimeout(() => {
-          console.warn(
-            '[WebSocketProvider] Pong not received in time. Connection may be stale. Forcing reconnect.'
-          )
-          wsRef.current?.close() // Triggers the onclose reconnect logic
-        }, 15000)
-      }
-    }, 30000)
-  }, [stopHeartbeat])
-
-  const connect = useCallback(() => {
-    if (
-      typeof window === 'undefined' ||
-      wsRef.current?.readyState === WebSocket.OPEN ||
-      !wsUrl // Do not connect if the URL is not ready
-    ) {
-      return
-    }
-
-    shouldReconnect.current = true
-    const ws = new WebSocket(wsUrl)
-    wsRef.current = ws
-
-    ws.onopen = () => {
+  const handleOpen = useCallback(
+    (ws: WebSocket) => {
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
-      // Set test flag for Playwright tests - use a more reliable method
+      // Set test flag for Playwright tests
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
       }
@@ -263,77 +215,60 @@ export const WebSocketProvider = ({
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
-      // Start the client-side heartbeat
-      startHeartbeat()
+    },
+    [setConnectionStatus]
+  )
+
+  const handleClose = useCallback(() => {
+    console.log('[WebSocketProvider] Disconnected from server')
+    setConnectionStatus('Disconnected')
+
+    if (typeof window !== 'undefined') {
+      window.__TEST_WEBSOCKET_READY__ = false
     }
 
-    ws.onclose = (event) => {
-      console.log(
-        '[WebSocketProvider] Disconnected from server',
-        event.code,
-        event.reason
-      )
-      setConnectionStatus('Disconnected')
+    // To prevent the UI from flashing stale data from a previous session on
+    // reconnect, we dispatch a RESET_STATE action. This clears all
+    // session-specific data and ensures the UI starts clean.
+    dispatch({ type: 'RESET_STATE' })
 
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = false
-      }
+    if (shouldReconnect.current) {
+      if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttempts.current++
+        const delay =
+          INITIAL_RECONNECT_DELAY * 2 ** (reconnectAttempts.current - 1)
+        const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
+        const reconnectDelay = delay + jitter
 
-      // Stop heartbeat on disconnect
-      stopHeartbeat()
+        console.log(
+          `[WebSocketProvider] Reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`
+        )
 
-      // To prevent the UI from flashing stale data from a previous session on
-      // reconnect, we dispatch a RESET_STATE action. This clears all
-      // session-specific data and ensures the UI starts clean.
-      dispatch({ type: 'RESET_STATE' })
-
-      if (shouldReconnect.current) {
-        if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
-          reconnectAttempts.current++
-          const delay =
-            INITIAL_RECONNECT_DELAY * 2 ** (reconnectAttempts.current - 1)
-          const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
-          const reconnectDelay = delay + jitter
-
-          console.log(
-            `[WebSocketProvider] Reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`
-          )
-
-          reconnectTimeoutRef.current = setTimeout(() => {
-            setConnectionStatus('Reconnecting...')
-            connectRef.current()
-          }, reconnectDelay)
-        } else {
-          console.error(
-            '[WebSocketProvider] Max reconnection attempts reached.'
-          )
-          setConnectionStatus(
-            'Failed to connect. Please check your connection and refresh the page.'
-          )
-        }
+        reconnectTimeoutRef.current = setTimeout(() => {
+          setConnectionStatus('Reconnecting...')
+          connectRef.current()
+        }, reconnectDelay)
+      } else {
+        console.error('[WebSocketProvider] Max reconnection attempts reached.')
+        setConnectionStatus(
+          'Failed to connect. Please check your connection and refresh the page.'
+        )
       }
     }
+  }, [setConnectionStatus, dispatch])
 
-    ws.onerror = (_err) => {
-      console.warn('[WebSocketProvider] Connection error')
-      setConnectionStatus('Error')
-    }
+  const handleError = useCallback(() => {
+    console.warn('[WebSocketProvider] Connection error')
+    setConnectionStatus('Error')
+  }, [setConnectionStatus])
 
-    ws.onmessage = (event) => {
+  const handleMessage = useCallback(
+    (event: MessageEvent) => {
       try {
         const message: ServerMessage = JSON.parse(event.data)
 
-        // Heartbeat pong check
-        if (message.type === 'PONG') {
-          if (pongTimeoutRef.current) {
-            clearTimeout(pongTimeoutRef.current)
-          }
-          return // Pong message is handled, no state dispatch needed
-        }
-
-        // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
+        // Handle EXECUTE_SPOTIFY messages specially
         if (message.type === 'EXECUTE_SPOTIFY') {
-          // Dispatch a custom event that the remote execution hook can listen to
           window.dispatchEvent(
             new CustomEvent('spotify-remote-command', {
               detail: message,
@@ -352,13 +287,31 @@ export const WebSocketProvider = ({
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
       }
+    },
+    [throttledDispatch]
+  )
+
+  const connect = useCallback(() => {
+    if (
+      typeof window === 'undefined' ||
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      !wsUrl
+    ) {
+      return
     }
-  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
+
+    shouldReconnect.current = true
+    const ws = new WebSocket(wsUrl)
+    wsRef.current = ws
+
+    ws.onopen = () => handleOpen(ws)
+    ws.onclose = handleClose
+    ws.onerror = handleError
+    ws.onmessage = handleMessage
+  }, [wsUrl, handleOpen, handleClose, handleError, handleMessage])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
-    // Stop heartbeat on manual disconnect
-    stopHeartbeat()
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
       reconnectTimeoutRef.current = null
@@ -367,7 +320,7 @@ export const WebSocketProvider = ({
       wsRef.current.close()
     }
     console.log('[useWebSocket] Manually disconnected.')
-  }, [stopHeartbeat])
+  }, [])
 
   useEffect(() => {
     connectRef.current = connect
