@@ -78,18 +78,14 @@ const ValidatedTextField: React.FC<ValidatedTextFieldProps> = ({
       error={!!error}
       helperText={error}
       color={isSuccess ? 'success' : undefined}
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      InputProps={{
-        ...rest.InputProps,
-        sx: {
-          ...rest.sx,
-          ...(isSuccess && {
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      sx={{
+        ...rest.sx,
+        ...(isSuccess && {
+          '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
+            {
               borderColor: 'success.main',
             },
-          }),
-        },
+        }),
       }}
     />
   )

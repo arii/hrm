@@ -17,7 +17,8 @@ import { cmToFeetAndInches, feetAndInchesToCm, KG_TO_LBS } from '@/utils/units'
 import WorkoutSummary from './WorkoutSummary'
 import { useDebounce } from 'use-debounce'
 import { useHrm } from '@/hooks/useHrm'
-import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import BottomNavBar from '@/components/BottomNavBar'
 
 const ConnectView: React.FC = () => {
   const {
@@ -57,7 +58,7 @@ const ConnectView: React.FC = () => {
     hasStarted,
     duration,
     caloriesBurned,
-  } = useWorkoutTimer()
+  } = useWorkoutSession()
 
   const [formState, setFormState] = useState({
     userName: { value: userName, isValid: true, issues: [] },
@@ -151,7 +152,7 @@ const ConnectView: React.FC = () => {
   const isFormValid = Object.values(formState).every((field) => field.isValid)
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 10 }}>
       <Grid container spacing={4}>
         <Grid item xs={12} md={6}>
           <Card>
@@ -221,6 +222,7 @@ const ConnectView: React.FC = () => {
           />
         </Grid>
       </Grid>
+      <BottomNavBar />
     </Container>
   )
 }
