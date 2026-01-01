@@ -1,5 +1,5 @@
 // hooks/useHrm.ts
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -7,7 +7,7 @@ const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_CHARACTERISTIC_UUID = 'battery_level'
 
 export const useHrm = () => {
-  const [isSupported, setIsSupported] = useState(() => {
+  const [isSupported] = useState(() => {
     if (typeof navigator !== 'undefined' && navigator.bluetooth) {
       return true
     }
