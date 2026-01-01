@@ -20,11 +20,6 @@ import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
 import { env } from '../lib/env.js'
 
-// This constant is defined at the top of the file to ensure it's easily accessible
-// and to avoid magic strings in the code.
-const UNEXPECTED_END_OF_JSON_INPUT_ERROR_MESSAGE =
-  'Unexpected end of JSON input'
-
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
 
@@ -69,6 +64,7 @@ export class SpotifyPolling implements SpotifyService {
           setTokenRefreshInterval: (interval: NodeJS.Timeout | null) => {
             this.tokenRefreshInterval = interval
           },
+          isEmptyResponseError: this.isEmptyResponseError.bind(this),
         }
       : undefined
 
@@ -501,9 +497,15 @@ export class SpotifyPolling implements SpotifyService {
    * @see https://developer.spotify.com/documentation/web-api/concepts/api-calls#response-status-codes
    */
   private isEmptyResponseError(error: unknown): boolean {
-    return (
-      error instanceof SyntaxError &&
-      error.message.includes(UNEXPECTED_END_OF_JSON_INPUT_ERROR_MESSAGE)
-    )
+    if (!(error instanceof SyntaxError)) {
+      return false
+    }
+    // This handles the Spotify API's 204 No Content response, which results in a SyntaxError.
+    // A 204 No Content response will cause the SDK's JSON parser to fail.
+    // We need to specifically identify these errors and treat them as success.
+    // We use a case-insensitive regex to catch variations like:
+    // "Unexpected end of JSON input" (V8/Node)
+    // "Unexpected end of input" (Safari/Old Node)
+    return /unexpected end of/i.test(error.message)
   }
 }
