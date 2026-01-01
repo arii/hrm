@@ -45,7 +45,7 @@ export default function SpotifyDebugPage() {
   }, [])
 
   return (
-    <PageContainer sx={{ px: 2 }}>
+    <PageContainer px={2} py={2}>
       <Typography variant="h4" gutterBottom>
         Spotify Debug
       </Typography>

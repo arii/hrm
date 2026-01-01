@@ -17,18 +17,23 @@ export default function PageContainer({
 }: PageContainerProps) {
   const { sx, ...rest } = props
 
+  const finalSx = {
+    minHeight: '100vh',
+    backgroundColor: 'background.default',
+    py: { xs: 2, sm: 3 }, // default
+    ...sx, // consumer sx overrides defaults
+  }
+
+  // Explicit props override everything
+  if (px !== undefined) {
+    finalSx.px = px
+  }
+  if (py !== undefined) {
+    finalSx.py = py
+  }
+
   return (
-    <Container
-      maxWidth={maxWidth}
-      sx={{
-        py: py ?? { xs: 2, sm: 3 },
-        px: px,
-        minHeight: '100vh',
-        backgroundColor: 'background.default',
-        ...sx,
-      }}
-      {...rest}
-    >
+    <Container maxWidth={maxWidth} sx={finalSx} {...rest}>
       {children}
     </Container>
   )
