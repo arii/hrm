@@ -17,9 +17,10 @@ export const useHrm = () => {
     useState<BluetoothRemoteGATTCharacteristic | null>(null)
   const [batteryCharacteristic, setBatteryCharacteristic] =
     useState<BluetoothRemoteGATTCharacteristic | null>(null)
+  const [currentHR, setCurrentHR] = useState<number | null>(null)
 
   useEffect(() => {
-    if (!navigator.bluetooth) {
+    if (typeof navigator !== 'undefined' && !navigator.bluetooth) {
       setIsSupported(false)
     }
   }, [])
@@ -29,8 +30,7 @@ export const useHrm = () => {
     const value = characteristic.value
     if (!value) return
     const heartRate = value.getUint8(1)
-    // You can dispatch this value to your state management if needed
-    console.log('Heart Rate:', heartRate)
+    setCurrentHR(heartRate)
   }, [])
 
   const handleBatteryValueChange = useCallback((event: Event) => {
@@ -63,14 +63,16 @@ export const useHrm = () => {
       const hrService = await server?.getPrimaryService(HR_SERVICE_UUID)
       const hrChar = await hrService?.getCharacteristic(HR_CHARACTERISTIC_UUID)
       setHrCharacteristic(hrChar!)
-      hrChar?.addEventListener('characteristicvaluechanged', handleHrValueChange)
+      hrChar?.addEventListener(
+        'characteristicvaluechanged',
+        handleHrValueChange
+      )
       await hrChar?.startNotifications()
 
       try {
         setDeviceStatus('Getting battery service...')
-        const batteryService = await server?.getPrimaryService(
-          BATTERY_SERVICE_UUID
-        )
+        const batteryService =
+          await server?.getPrimaryService(BATTERY_SERVICE_UUID)
         const batteryChar = await batteryService?.getCharacteristic(
           BATTERY_CHARACTERISTIC_UUID
         )
@@ -80,7 +82,7 @@ export const useHrm = () => {
           handleBatteryValueChange
         )
         await batteryChar?.startNotifications()
-      } catch (error) {
+      } catch (_error) {
         console.warn('Battery service not found, proceeding without it.')
       }
 
@@ -131,5 +133,6 @@ export const useHrm = () => {
     isSupported,
     batteryLevel,
     bluetoothConnected,
+    currentHR,
   }
 }

@@ -71,4 +71,29 @@ describe('ValidatedTextField', () => {
     const error = await findByText('Name is required')
     expect(error).toBeInTheDocument()
   })
+
+  it('updates when value prop changes', async () => {
+    const { getByLabelText, rerender } = render(
+      <ValidatedTextField
+        id="name"
+        label="Name"
+        value="Initial"
+        onStateChanged={mockOnStateChanged}
+        validationSchema={nameSchema}
+      />
+    )
+    const input = getByLabelText('Name')
+    expect(input).toHaveValue('Initial')
+
+    rerender(
+      <ValidatedTextField
+        id="name"
+        label="Name"
+        value="Updated"
+        onStateChanged={mockOnStateChanged}
+        validationSchema={nameSchema}
+      />
+    )
+    await waitFor(() => expect(input).toHaveValue('Updated'))
+  })
 })

@@ -17,6 +17,8 @@ import { useDebounce } from 'use-debounce'
 import { useHrm } from '@/hooks/useHrm'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import BottomNavBar from '@/components/BottomNavBar'
+import { useWebSocket } from '@/context/WebSocketContext'
+import { getHrZoneProps } from '@/utils/visualization'
 
 const ConnectView: React.FC = () => {
   const {
@@ -45,6 +47,7 @@ const ConnectView: React.FC = () => {
     isSupported,
     batteryLevel,
     bluetoothConnected,
+    currentHR,
   } = useHrm()
 
   const {
@@ -56,6 +59,8 @@ const ConnectView: React.FC = () => {
     workoutDuration,
     caloriesBurned,
   } = useWorkoutSession({ isConnected })
+
+  const { connectionStatus } = useWebSocket()
 
   const [formState, setFormState] = useState({
     userName: { value: userName, isValid: true, issues: [] },
@@ -147,15 +152,16 @@ const ConnectView: React.FC = () => {
   }
 
   const isFormValid = Object.values(formState).every((field) => field.isValid)
+  const hrZoneProps = getHrZoneProps(currentHR, maxHr, restingHr)
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 10 }}>
       <Grid container spacing={4}>
-        <Grid xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardHeader
               title="HRM Connection"
-              subheader="Connect your Heart Rate Monitor"
+              subheader={`WebSocket: ${connectionStatus}`}
             />
             <CardContent>
               <HrmConnectionPanel
@@ -177,7 +183,7 @@ const ConnectView: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardHeader
               title="User Settings"
@@ -198,12 +204,14 @@ const ConnectView: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12}>
+        <Grid item xs={12}>
           <WorkoutSummary
             maxHr={maxHr}
             restingHr={restingHr}
             duration={workoutDuration}
             caloriesBurned={caloriesBurned}
+            hrZoneProps={hrZoneProps}
+            currentHR={currentHR}
           />
         </Grid>
       </Grid>
