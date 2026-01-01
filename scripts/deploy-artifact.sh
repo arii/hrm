@@ -55,7 +55,7 @@ echo "📂 Extracting artifact..."
 tar -xzf release.tar.gz --overwrite
 
 echo "🔐 Setting script permissions..."
-chmod +x ./start-production.sh
+chmod +x ./scripts/start-production.sh
 chmod +x ./scripts/deploy-artifact.sh
 chmod +x ./scripts/verify-deployment.sh
 
