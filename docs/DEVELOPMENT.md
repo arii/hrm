@@ -152,18 +152,26 @@ The primary focus of ongoing development is to enhance the user experience and i
 
 ## WebSocket Management
 
-To ensure stable real-time communication and prevent disconnections due to browser tab throttling or network timeouts, the application's WebSocket server implements a heartbeat mechanism. This behavior can be fine-tuned using the following environment variables:
+To ensure stable real-time communication, the application uses a server-authoritative heartbeat mechanism that relies on the native WebSocket `ping`/`pong` frames. This approach is more efficient and reliable than a client-side, application-level heartbeat.
+
+The server's `ConnectionMonitor` handles this process automatically:
+
+1.  It periodically sends a `ping` frame to every connected client.
+2.  It waits for a corresponding `pong` frame from the client.
+3.  If a `pong` is not received within a configured timeout, the server considers the connection stale and terminates it.
+
+This behavior can be fine-tuned using the following server-side environment variables:
 
 - `WEBSOCKET_PING_INTERVAL_MS`
-  - **Purpose**: Defines how often (in milliseconds) the server sends a `ping` message to each connected client to check if the connection is still alive.
+  - **Purpose**: Defines how often (in milliseconds) the server sends a `ping` frame to each client.
   - **Default**: `30000` (30 seconds)
 
 - `WEBSOCKET_PING_TIMEOUT_MS`
-  - **Purpose**: Sets the maximum time (in milliseconds) the server will wait for a `pong` response from a client after sending a `ping`. If no `pong` is received within this period, the server considers the connection stale and terminates it.
+  - **Purpose**: Sets the maximum time (in milliseconds) the server will wait for a `pong` frame from a client. If no response is received, the connection is terminated.
   - **Default**: `65000` (65 seconds)
-  - **Note**: This value should always be greater than `WEBSOCKET_PING_INTERVAL_MS` to avoid premature disconnections. The server includes a safeguard to adjust this value at runtime if it is misconfigured, but it is best practice to set it correctly.
+  - **Note**: This value should always be greater than `WEBSOCKET_PING_INTERVAL_MS`.
 
-These settings are crucial for maintaining the stability of the real-time features of the HRM dashboard.
+This server-side mechanism is the single source of truth for connection monitoring, eliminating the need for any client-side heartbeat logic.
 
 ## GitHub Integrations
 
