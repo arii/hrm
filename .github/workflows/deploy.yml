@@ -1,8 +1,10 @@
 name: Deploy Production
 
 on:
-  push:
-    branches: ['leader']
+  workflow_run:
+    workflows: ["Continuous Integration"]
+    types:
+      - completed
 
 env:
   NODE_VERSION: '20'
@@ -10,8 +12,7 @@ env:
 jobs:
   deploy:
     runs-on: self-hosted
-    # Only run if Quality Gate passed (implied by branch protection, but good to be explicit)
-    if: github.ref == 'refs/heads/leader'
+    if: github.event.workflow_run.conclusion == 'success'
 
     steps:
       - name: 🛑 Cancel Previous Runs
