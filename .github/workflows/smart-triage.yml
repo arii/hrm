@@ -65,31 +65,25 @@ jobs:
             LABELS=$(echo "$issue" | jq -r '.labels[].name | @csv' | tr -d '"' | paste -sd',' -)
             
             echo "::notice::Processing issue #$NUM"
-            ((ISSUES_PROCESSED++))
             
             # Add missing labels based on content
             if ! echo "$BODY" | grep -iq "reproduce\|steps"; then
               if ! echo "$LABELS" | grep -q "needs-info"; then
                 gh issue edit "$NUM" --add-label "needs-info" >/dev/null 2>&1 && \
-                  echo "::notice::  ✅ Added 'needs-info' label to #$NUM" && \
-                  ((LABELS_ADDED++))
+                  echo "::notice::  ✅ Added 'needs-info' label to #$NUM"
                 
                 gh issue comment "$NUM" --body "Please provide reproduction steps for this issue." >/dev/null 2>&1 && \
-                  echo "::notice::  ✅ Posted 'needs-info' comment to #$NUM" && \
-                  ((COMMENTS_POSTED++))
+                  echo "::notice::  ✅ Posted 'needs-info' comment to #$NUM"
               fi
             fi
             
             if echo "$BODY" | grep -iqE "crash|broken|error"; then
               if ! echo "$LABELS" | grep -q "bug"; then
                 gh issue edit "$NUM" --add-label "bug" >/dev/null 2>&1 && \
-                  echo "::notice::  ✅ Added 'bug' label to #$NUM" && \
-                  ((LABELS_ADDED++))
+                  echo "::notice::  ✅ Added 'bug' label to #$NUM"
               fi
             fi
           done
-
-          echo "::notice::Triage Summary: Processed $ISSUES_PROCESSED issues, Added $LABELS_ADDED labels, Posted $COMMENTS_POSTED comments"
 
       - name: Detect Duplicates
         env:
@@ -100,27 +94,28 @@ jobs:
           DUPLICATES_FOUND=0
           COMMENTS_POSTED=0
 
-          gh issue list --state open --json number,title --limit 100 | \
-            jq -r '.[] | .title' | sort | uniq -d | while read -r title; do
-            
+          # Get unique duplicate titles first
+          DUPLICATE_TITLES=$(gh issue list --state open --json number,title --limit 100 | \
+            jq -r '.[] | .title' | sort | uniq -d)
+
+          if [ -z "$DUPLICATE_TITLES" ]; then
+            exit 0
+          fi
+
+          echo "$DUPLICATE_TITLES" | while read -r title; do
             DUPS=$(gh issue list --state open --search "\"$title\"" --json number --limit 5 | jq -r '.[].number')
             COUNT=$(echo "$DUPS" | wc -w)
             
             if [ "$COUNT" -gt 1 ]; then
-              ((DUPLICATES_FOUND++))
               FIRST=$(echo "$DUPS" | awk '{print $1}')
               OTHERS=$(echo "$DUPS" | awk '{for(i=2;i<=NF;i++)printf "#%s,",$i}' | sed 's/,$//')
               
               echo "::notice::Found $COUNT duplicate issues for: '$title'"
               
               gh issue comment "$FIRST" --body "Possible duplicates: $OTHERS" >/dev/null 2>&1 && \
-                echo "::notice::  ✅ Posted duplicate notice on #$FIRST" && \
-                ((COMMENTS_POSTED++))
+                echo "::notice::  ✅ Posted duplicate notice on #$FIRST"
             fi
           done
-
-          [ "$DUPLICATES_FOUND" -gt 0 ] && \
-            echo "::notice::Duplicate Detection: Found $DUPLICATES_FOUND duplicate titles, Posted $COMMENTS_POSTED notices"
 
       - name: Suggest Resolution
         env:
@@ -128,12 +123,15 @@ jobs:
         run: |
           set +e
 
-          RESOLUTIONS_SUGGESTED=0
-
           # Find issues with many comments that might be resolved
-          gh issue list --state open --json number,comments --limit 100 | \
-            jq -c '.[] | select(.comments | length > 5)' | while read -r issue; do
-            
+          ISSUES=$(gh issue list --state open --json number,comments --limit 100 | \
+            jq -c '.[] | select(.comments | length > 5)')
+
+          if [ -z "$ISSUES" ]; then
+            exit 0
+          fi
+
+          echo "$ISSUES" | while read -r issue; do
             NUM=$(echo "$issue" | jq -r '.number')
             RECENT=$(gh issue view "$NUM" --json comments --jq '.comments[-3:] | .[].body' 2>/dev/null)
             
@@ -141,10 +139,6 @@ jobs:
               echo "::notice::Issue #$NUM may be resolved based on recent comments"
               
               gh issue comment "$NUM" --body "This issue may be resolved based on recent comments. Feel free to close if fixed!" >/dev/null 2>&1 && \
-                echo "::notice::  ✅ Posted resolution suggestion on #$NUM" && \
-                ((RESOLUTIONS_SUGGESTED++))
+                echo "::notice::  ✅ Posted resolution suggestion on #$NUM"
             fi
           done
-
-          [ "$RESOLUTIONS_SUGGESTED" -gt 0 ] && \
-            echo "::notice::Resolution Suggestions: Suggested resolution for $RESOLUTIONS_SUGGESTED issues"
