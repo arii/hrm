@@ -1,11 +1,8 @@
 /** @jest-environment jsdom */
 import '@testing-library/jest-dom'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import PlaylistDetails from '../../../../components/Spotify/PlaylistDetails'
 import { Track } from '../../../../types/spotify'
-
-// Mock the fetch API
-global.fetch = jest.fn()
 
 describe('PlaylistDetails', () => {
   const mockTracks: Track[] = [
@@ -14,51 +11,44 @@ describe('PlaylistDetails', () => {
       name: 'Track 1',
       artists: [{ name: 'Artist 1' }],
       album: { name: 'Album 1' },
+      uri: 'spotify:track:1',
     },
     {
       id: '2',
       name: 'Track 2',
       artists: [{ name: 'Artist 2' }],
       album: { name: 'Album 2' },
+      uri: 'spotify:track:2',
     },
   ]
 
-  beforeEach(() => {
-    jest.clearAllMocks()
+  it('displays a loading message when isLoading is true', () => {
+    render(<PlaylistDetails tracks={[]} isLoading={true} />)
+    expect(screen.getByText('Loading tracks...')).toBeInTheDocument()
   })
 
-  it('displays a loading indicator while fetching data', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockImplementationOnce(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(
-            () =>
-              resolve({
-                ok: true,
-                json: () => Promise.resolve({ tracks: mockTracks }),
-              }),
-            100
-          )
-        )
+  it('displays an error message when an error is provided', () => {
+    render(
+      <PlaylistDetails
+        tracks={[]}
+        isLoading={false}
+        error="Failed to load tracks"
+      />
     )
-
-    render(<PlaylistDetails playlistId="test-playlist-id" />)
-    expect(screen.getByRole('progressbar')).toBeInTheDocument()
-    await waitFor(() => expect(screen.queryByRole('progressbar')).toBeNull())
+    expect(screen.getByText('Failed to load tracks')).toBeInTheDocument()
   })
 
-  it('displays the track list when data is fetched successfully', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ tracks: mockTracks }),
-    })
+  it('displays a message when there are no tracks', () => {
+    render(<PlaylistDetails tracks={[]} isLoading={false} />)
+    expect(
+      screen.getByText('Select a playlist to see its tracks.')
+    ).toBeInTheDocument()
+  })
 
-    render(<PlaylistDetails playlistId="test-playlist-id" />)
-    await waitFor(() => {
-      expect(screen.getByText('Track 1')).toBeInTheDocument()
-    })
+  it('displays the track list when tracks are provided', () => {
+    render(<PlaylistDetails tracks={mockTracks} isLoading={false} />)
+
+    expect(screen.getByText('Track 1')).toBeInTheDocument()
     expect(
       screen.getByText('Artist 1 - Album 1', { exact: false })
     ).toBeInTheDocument()
@@ -66,26 +56,5 @@ describe('PlaylistDetails', () => {
     expect(
       screen.getByText('Artist 2 - Album 2', { exact: false })
     ).toBeInTheDocument()
-  })
-
-  it('displays an error message when the API call fails', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValueOnce({
-      ok: false,
-    })
-
-    // Suppress console.error for this test
-    const consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {})
-
-    render(<PlaylistDetails playlistId="test-playlist-id" />)
-    await waitFor(() => {
-      expect(
-        screen.getByText('Failed to fetch playlist details')
-      ).toBeInTheDocument()
-    })
-
-    consoleErrorSpy.mockRestore()
   })
 })

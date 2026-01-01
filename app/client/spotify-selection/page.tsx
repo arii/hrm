@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { Track } from '../../../types/spotify'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -31,13 +32,41 @@ const PlaylistDetails = dynamic(
 
 const SpotifySelectionPage = () => {
   const { spotifyData, sendData } = useWebSocket()
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
-    null
-  )
+  const [tracks, setTracks] = useState<Track[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handlePlaylistSelected = (uri: string) => {
-    const playlistId = uri.split(':').pop()
-    setSelectedPlaylistId(playlistId || null)
+  const handlePlaylistSelected = async (uri: string) => {
+    const playlistId = uri.split(':').pop() || null
+
+    if (!playlistId) {
+      setTracks([])
+      setError(null)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    setTracks([])
+
+    try {
+      const response = await fetch(
+        `/api/spotify/playlists/${playlistId}/tracks`
+      )
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to fetch playlist tracks')
+      }
+      const data = await response.json()
+      setTracks(data.tracks ?? [])
+    } catch (err) {
+      console.error('Failed to fetch playlist tracks:', err)
+      setError(
+        err instanceof Error ? err.message : 'An unknown error occurred'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handlePlaylistPlay = (uri: string) => {
@@ -95,9 +124,7 @@ const SpotifySelectionPage = () => {
         </CardContent>
       </Card>
 
-      {selectedPlaylistId && (
-        <PlaylistDetails playlistId={selectedPlaylistId} />
-      )}
+      <PlaylistDetails tracks={tracks} isLoading={loading} error={error} />
     </Container>
   )
 }
