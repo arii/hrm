@@ -25,14 +25,18 @@ export const useHrm = () => {
   }, [])
 
   const handleHrValueChange = useCallback((event: Event) => {
-    const value = (event.target as any).value
+    const characteristic = event.target as BluetoothRemoteGATTCharacteristic
+    const value = characteristic.value
+    if (!value) return
     const heartRate = value.getUint8(1)
     // You can dispatch this value to your state management if needed
     console.log('Heart Rate:', heartRate)
   }, [])
 
   const handleBatteryValueChange = useCallback((event: Event) => {
-    const value = (event.target as any).value
+    const characteristic = event.target as BluetoothRemoteGATTCharacteristic
+    const value = characteristic.value
+    if (!value) return
     const battery = value.getUint8(0)
     setBatteryLevel(battery)
   }, [])

@@ -35,6 +35,10 @@ const ValidatedTextField: React.FC<ValidatedTextFieldProps> = ({
   const [error, setError] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
 
+  useEffect(() => {
+    setInputValue(value)
+  }, [value])
+
   const handleValidation = useCallback(() => {
     const { success, issues } = validate(inputValue, validationSchema)
     if (success) {
