@@ -276,11 +276,7 @@ export async function generateContentWithFallback({
       console.log(`Successfully generated content using ${modelName}.`)
       return result.response.text()
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        lastError = error
-      } else {
-        lastError = new Error(String(error))
-      }
+      lastError = error instanceof Error ? error : new Error(String(error));
       const errorMessage = (error as Error).message || ''
       const errorStatus = (error as { status?: number }).status
 
@@ -309,7 +305,12 @@ export async function generateContentWithFallback({
     }
   }
 
-  throw new Error(`All models failed. Last error: ${lastError?.message}`)
+  // If the loop completes without returning, all models have failed.
+  const finalError = new GoogleGenerativeAIError(
+    `All models failed. Last error: ${lastError?.message}`
+  )
+  finalError.cause = lastError
+  throw finalError
 }
 
 /**
@@ -667,10 +668,18 @@ export async function handleError(
   }
 
   if (error instanceof GoogleGenerativeAIError) {
-    if (error.message.includes('400') || error.message.includes('404')) {
+    // A specific check for the "All models failed" error.
+    if (error.message.startsWith('All models failed')) {
+      category = 'Service Degradation'
+      userMessage =
+        'All configured models failed to respond. This may indicate a temporary outage or a broader configuration issue.'
+      // The `cause` property of the custom error is the last real error.
+      const lastError = error.cause instanceof Error ? error.cause : error
+      technicalDetails = lastError.stack || lastError.message
+    } else if (error.message.includes('400') || error.message.includes('404')) {
       category = 'Configuration Issue'
       userMessage =
-        'All attempted generative models failed, likely due to a configuration or access problem.'
+        'A generative model failed due to a configuration or access problem.'
     } else if (error.message.includes('500') || error.message.includes('503')) {
       category = 'Infrastructure Issue'
       userMessage =

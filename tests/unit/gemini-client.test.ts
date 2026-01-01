@@ -1,7 +1,34 @@
 /**
  * @jest-environment node
  */
-import { getModelFallbacks, JsonProcessor } from '../../scripts/gemini-client'
+import * as geminiClient from '../../scripts/gemini-client'
+const {
+  generateContentWithFallback,
+  getModelFallbacks,
+  JsonProcessor,
+  handleError,
+} = geminiClient
+import {
+  GoogleGenerativeAI,
+  GoogleGenerativeAIError,
+} from '@google/generative-ai'
+import * as fs from 'fs/promises'
+
+// Mock the entire @google/generative-ai library
+jest.mock('@google/generative-ai', () => {
+  const originalModule = jest.requireActual('@google/generative-ai')
+  return {
+    ...originalModule,
+    GoogleGenerativeAI: jest.fn(),
+  }
+})
+jest.mock('fs/promises', () => ({
+  writeFile: jest.fn(),
+  readFile: jest.fn(),
+}))
+
+const mockedGoogleGenerativeAI =
+  GoogleGenerativeAI as jest.Mock<GoogleGenerativeAI>
 
 describe('JsonProcessor', () => {
   const processor = new JsonProcessor()
@@ -136,5 +163,157 @@ describe('getModelFallbacks', () => {
       'Warning: GEMINI_MODEL_FALLBACKS is empty or invalid. Using default fallbacks.'
     )
     consoleWarnSpy.mockRestore()
+  })
+})
+
+describe('generateContentWithFallback', () => {
+  let mockGenAI: GoogleGenerativeAI
+  let shouldAllModelsFail = false
+
+  beforeEach(() => {
+    // Reset mocks before each test
+    jest.clearAllMocks()
+    shouldAllModelsFail = false
+
+    // Mock the generateContent method
+    const mockGenerateContent = jest.fn()
+
+    // Mock the getGenerativeModel method to return a model that has the mockGenerateContent method
+    const mockGetGenerativeModel = jest.fn().mockImplementation((opts) => {
+      if (opts.model === 'gemini-2.5-flash-lite' && !shouldAllModelsFail) {
+        return { generateContent: mockGenerateContent }
+      }
+      // For failure cases, make all models return a retryable error.
+      const errorMessage =
+        opts.model === 'gemini-2.5-pro'
+          ? '429 Rate Limited'
+          : '404 Not Found'
+      return {
+        generateContent: jest.fn().mockRejectedValue(new Error(errorMessage)),
+      }
+    })
+
+    // Mock the GoogleGenerativeAI constructor to return an object with the mocked methods
+    mockedGoogleGenerativeAI.mockImplementation(() => ({
+      getGenerativeModel: mockGetGenerativeModel,
+    }))
+
+    // Create an instance of the mocked class
+    mockGenAI = new mockedGoogleGenerativeAI()
+  })
+
+  it('should return content from the first successful model', async () => {
+    // Arrange
+    const mockSuccessfulResponse = { response: { text: () => 'Success!' } };
+    (mockGenAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' }).generateContent as jest.Mock).mockResolvedValue(mockSuccessfulResponse);
+
+    // Act
+    const result = await generateContentWithFallback(mockGenAI, 'Test prompt');
+
+    // Assert
+    expect(result).toBe('Success!')
+    expect(mockGenAI.getGenerativeModel).toHaveBeenCalledWith({ model: 'gemini-2.5-flash' })
+    expect(mockGenAI.getGenerativeModel).toHaveBeenCalledWith({ model: 'gemini-2.5-flash-lite' })
+  })
+
+  it('should throw a GoogleGenerativeAIError if all models fail', async () => {
+    // Arrange
+    shouldAllModelsFail = true
+
+    // Act & Assert
+    await expect(
+      generateContentWithFallback(mockGenAI, 'Test prompt')
+    ).rejects.toThrow(GoogleGenerativeAIError)
+  })
+
+  it('should include the last error message when all models fail', async () => {
+    // Arrange
+    shouldAllModelsFail = true;
+    const lastError = new Error('429 Rate Limited'); // This will be the last error thrown.
+
+    // Act & Assert
+    await expect(generateContentWithFallback(mockGenAI, 'Test prompt')).rejects.toThrow(
+      `All models failed. Last error: ${lastError.message}`
+    );
+  });
+})
+
+describe('handleError', () => {
+  const consoleErrorSpy = jest
+    .spyOn(console, 'error')
+    .mockImplementation(() => {})
+  const processExitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {
+    throw new Error('process.exit() was called')
+  })
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    processExitSpy.mockClear()
+    ;(fs.writeFile as jest.Mock).mockClear()
+  })
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore()
+    processExitSpy.mockRestore()
+  })
+
+  it('should write an error to the output file and exit with 0', async () => {
+    // Arrange
+    const error = new Error('Test error')
+    const outputFile = 'error-output.json'
+
+    // Act
+    try {
+      await handleError(error, outputFile)
+    } catch (e) {
+      // Expected to throw due to process.exit mock
+    }
+
+    // Assert
+    expect(fs.writeFile).toHaveBeenCalled()
+    expect(processExitSpy).toHaveBeenCalledWith(0)
+  })
+
+  it('should handle GoogleGenerativeAIError with "All models failed" message', async () => {
+    // Arrange
+    const lastError = new Error('The actual last error')
+    const error = new GoogleGenerativeAIError(
+      'All models failed: Something went wrong'
+    )
+    error.cause = lastError
+
+    // Act
+    try {
+      await handleError(error, 'output.json')
+    } catch (e) {
+      // Expected to throw due to process.exit mock
+    }
+
+    // Assert
+    expect(fs.writeFile).toHaveBeenCalled()
+    expect(processExitSpy).toHaveBeenCalledWith(0)
+  })
+
+  it('should handle GoogleGenerativeAIError with "All models failed" message', async () => {
+    // Arrange
+    const lastError = new Error('The actual last error')
+    const error = new GoogleGenerativeAIError(
+      'All models failed: Something went wrong',
+      lastError
+    )
+
+    // Act & Assert
+    await expect(handleError(error, 'output.json')).rejects.toThrow(
+      'process.exit() was called'
+    )
+    expect(processExitSpy).toHaveBeenCalledWith(0)
+  })
+
+  it('should call process.exit(1) when no outputFile is provided', async () => {
+    const error = new Error('Test error')
+    await expect(handleError(error, null)).rejects.toThrow(
+      'process.exit() was called'
+    )
+    expect(processExitSpy).toHaveBeenCalledWith(1)
   })
 })

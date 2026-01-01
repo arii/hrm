@@ -1,8 +1,8 @@
-name: Gemini Smart Triage
+name: New Issue Triage
 
 on:
   issues:
-    types: [opened, reopened]
+    types: [opened]
 
 permissions:
   contents: read
@@ -10,14 +10,11 @@ permissions:
 
 jobs:
   triage:
-    # Prevent the workflow from triggering itself in a loop.
-    # The workflow uses a PAT owned by 'ari-party-bot', so we check for that actor.
     if: github.actor != 'ari-party-bot'
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-      # Caching is disabled for self-hosted runners to improve performance.
       - uses: actions/setup-node@v6
         with:
           node-version: '20'
@@ -28,7 +25,6 @@ jobs:
       - name: Build Triage Context
         id: context
         run: |
-          # Aggregate project documentation for the prompt
           echo "## Project Documentation" > context.txt
           if [ -f "README.md" ]; then cat README.md >> context.txt; fi
           if [ -f "CONTRIBUTING.md" ]; then cat CONTRIBUTING.md >> context.txt; fi
@@ -39,12 +35,11 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          # Create a structured prompt demanding JSON output
           cat <<EOF > task_input.txt
           You are a Senior Technical Project Manager. Analyze the following GitHub Issue.
 
           ### Project Context
-          $(cat context.txt | head -c 4000) # Limit context to 4k chars
+          $(cat context.txt | head -c 4000)
 
           ### Issue To Analyze
           **Title:** $ISSUE_TITLE
@@ -73,7 +68,6 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          # Run the client and save output to a file
           npx tsx scripts/gemini-client.ts \
             --task-file "task_input.txt" \
             --output "triage_result.json"
@@ -93,38 +87,34 @@ jobs:
                 return;
               }
               const rawData = fs.readFileSync(filePath, 'utf8');
-              // The model may return a JSON object wrapped in markdown.
-              // This is a robust way to strip the markdown and parse the JSON.
               const cleanedData = rawData.trim().replace(/^```json|```$/g, '').trim();
               const result = JSON.parse(cleanedData);
 
-              // Gracefully handle cases where the Gemini agent fails and returns a structured error.
               if (result.error) {
                 console.error('Triage failed with structured error:', result.error);
-                const errorComment = `
-                ### ❌ Smart Triage Failed: ${result.error.category || 'Unknown Error'}
+                const errorComment = \`
+                ### ❌ Smart Triage Failed: \${result.error.category || 'Unknown Error'}
 
-                **Details**: ${result.error.message || 'No message provided.'}
+                **Details**: \${result.error.message || 'No message provided.'}
 
                 <details><summary>Technical Information</summary>
 
                 \`\`\`json
-                ${JSON.stringify(result.error.details, null, 2)}
+                \${JSON.stringify(result.error.details, null, 2)}
                 \`\`\`
 
                 </details>
-                `;
+                \`;
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: context.issue.number,
                   body: errorComment.trim(),
                 });
-                core.setFailed(`Triage failed: ${result.error.message}`);
+                core.setFailed(\`Triage failed: \${result.error.message}\`);
                 return;
               }
 
-              // Proceed with standard triage actions if no error is present.
               console.log('Parsed Triage Result:', result);
 
               if (result.labels && result.labels.length > 0) {
@@ -136,19 +126,19 @@ jobs:
                 });
               }
 
-              const commentBody = `
+              const commentBody = \`
               ### 🤖 Gemini Smart Triage
 
-              **Summary:** ${result.summary}
-              **Priority:** ${result.priority} | **Score:** ${result.completeness_score}/10
+              **Summary:** \${result.summary}
+              **Priority:** \${result.priority} | **Score:** \${result.completeness_score}/10
 
               **Analysis:**
-              ${result.analysis}
+              \${result.analysis}
 
-              ${result.suggested_title && result.suggested_title !== context.payload.issue.title
-                ? `> **Suggestion:** Consider renaming this issue to: *"${result.suggested_title}"*`
+              \${result.suggested_title && result.suggested_title !== context.payload.issue.title
+                ? \`> **Suggestion:** Consider renaming this issue to: *"\${result.suggested_title}"*\`
                 : ''}
-              `;
+              \`;
 
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -180,7 +170,7 @@ jobs:
               }
             } catch (error) {
               console.error('Fatal error processing triage result:', error);
-              const fatalErrorComment = `
+              const fatalErrorComment = \`
               ### ❌ Smart Triage Failed: Unhandled Exception
 
               A critical error occurred while processing the triage result. This is likely an issue with the workflow script itself.
@@ -188,11 +178,11 @@ jobs:
               <details><summary>Error Details</summary>
 
               \`\`\`
-              ${error.stack || error.message}
+              \${error.stack || error.message}
               \`\`\`
 
               </details>
-              `;
+              \`;
               try {
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
