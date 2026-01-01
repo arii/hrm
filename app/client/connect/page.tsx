@@ -7,6 +7,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import useAutoConnect from '@/hooks/useAutoConnect'
 import { MeasurementSystem } from '../../../types'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
@@ -71,6 +72,11 @@ export default function ConnectPage() {
   })
 
   const { connectionStatus, hrmData } = useWebSocket()
+
+  useAutoConnect({
+    connectAndStream: () => connectAndStream(userName, userAge || 0),
+    isConnected,
+  })
 
   let deviceStatusMessage = deviceStatus
   if (disconnectionReason === 'timeout') {

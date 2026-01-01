@@ -2,9 +2,11 @@
  * @jest-environment jsdom
  */
 import { jest } from '@jest/globals'
+import React from 'react'
 import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { UserSettingsProvider } from '@/context/UserSettingsContext'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
@@ -22,6 +24,9 @@ Object.defineProperty(navigator, 'bluetooth', {
 })
 
 describe('useBluetoothHRM', () => {
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <UserSettingsProvider>{children}</UserSettingsProvider>
+  )
   let mockSendData: jest.Mock
   let mockCharacteristic: {
     startNotifications: jest.Mock
@@ -182,7 +187,7 @@ describe('useBluetoothHRM', () => {
   }
 
   it('should use default timeout of 10 seconds and trigger reconnect', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
+    const { result } = renderHook(() => useBluetoothHRM(), { wrapper })
 
     await simulateConnection({ result })
     expect(result.current.isConnected).toBe(true)
@@ -195,8 +200,9 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should use custom timeout from props', async () => {
-    const { result } = renderHook(() =>
-      useBluetoothHRM({ dataLivenessTimeoutMs: 5000 })
+    const { result } = renderHook(
+      () => useBluetoothHRM({ dataLivenessTimeoutMs: 5000 }),
+      { wrapper }
     )
     await simulateConnection({ result })
     expect(result.current.isConnected).toBe(true)
@@ -217,8 +223,9 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should disable watchdog if timeout is 0', async () => {
-    const { result } = renderHook(() =>
-      useBluetoothHRM({ dataLivenessTimeoutMs: 0 })
+    const { result } = renderHook(
+      () => useBluetoothHRM({ dataLivenessTimeoutMs: 0 }),
+      { wrapper }
     )
     await simulateConnection({ result })
     expect(result.current.isConnected).toBe(true)
@@ -233,7 +240,7 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should set disconnectionReason to "manual" on disconnect', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
+    const { result } = renderHook(() => useBluetoothHRM(), { wrapper })
     await simulateConnection({ result })
     expect(result.current.isConnected).toBe(true)
 
@@ -246,8 +253,9 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should reset disconnectionReason on successful reconnect', async () => {
-    const { result } = renderHook(() =>
-      useBluetoothHRM({ dataLivenessTimeoutMs: 2000 })
+    const { result } = renderHook(
+      () => useBluetoothHRM({ dataLivenessTimeoutMs: 2000 }),
+      { wrapper }
     )
     await simulateConnection({ result })
 
@@ -265,8 +273,9 @@ describe('useBluetoothHRM', () => {
 
   describe('Metadata', () => {
     it('should send metadata on initial connect, but not again if user details do not change', async () => {
-      const { result } = renderHook(() =>
-        useBluetoothHRM({ userName: 'Test User', userAge: 30 })
+      const { result } = renderHook(
+        () => useBluetoothHRM({ userName: 'Test User', userAge: 30 }),
+        { wrapper }
       )
       await simulateConnection({ result })
 
@@ -291,6 +300,7 @@ describe('useBluetoothHRM', () => {
       const { result, rerender } = renderHook(
         ({ userName, userAge }) => useBluetoothHRM({ userName, userAge }),
         {
+          wrapper,
           initialProps: { userName: 'Test User', userAge: 30 },
         }
       )
@@ -319,7 +329,9 @@ describe('useBluetoothHRM', () => {
 
   describe('Throttling', () => {
     it('should throttle heart rate updates with a configurable frequency', async () => {
-      const { result } = renderHook(() => useBluetoothHRM({ throttleMs: 500 }))
+      const { result } = renderHook(() => useBluetoothHRM({ throttleMs: 500 }), {
+        wrapper,
+      })
       await simulateConnection({ result })
 
       const characteristicCallback =

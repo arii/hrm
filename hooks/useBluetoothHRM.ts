@@ -18,6 +18,8 @@ import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
+import { useUserSettings } from '@/context/UserSettingsContext'
+import { getCookie, setCookie } from '@/utils/cookie'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -35,39 +37,6 @@ const parseHeartRate = (value: DataView): number => {
   const flags = value.getUint8(0)
   const is16Bit = flags & 0x1
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
-}
-
-/**
- * @function setCookie
- * @description Sets a browser cookie with a specified name, value, and expiration.
- * This function is a no-op in non-browser environments.
- * @param {string} name - The name of the cookie.
- * @param {string} value - The value to store in the cookie.
- * @param {number} [days=365] - The number of days until the cookie expires.
- * @sideeffect Creates or updates a cookie in `document.cookie`.
- */
-const setCookie = (name: string, value: string, days = 365) => {
-  if (typeof document !== 'undefined') {
-    const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    document.cookie = `${name}=${encodeURIComponent(
-      value
-    )}; expires=${expires}; path=/`
-  }
-}
-
-/**
- * @function getCookie
- * @description Retrieves the value of a cookie by its name.
- * Returns an empty string if the cookie is not found or in a non-browser environment.
- * @param {string} name - The name of the cookie to retrieve.
- * @returns {string} The decoded value of the cookie.
- */
-const getCookie = (name: string): string => {
-  if (typeof document === 'undefined') return ''
-  return document.cookie.split('; ').reduce((r, v) => {
-    const parts = v.split('=')
-    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
-  }, '')
 }
 
 /**
@@ -148,6 +117,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     userAge,
   } = props
   const { sendData, connectionStatus } = useWebSocket()
+  const [, setUserSettings] = useUserSettings()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
     useState<DisconnectionReason>(null)
@@ -289,6 +259,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
     setDisconnectionReason('manual')
+    setUserSettings((prev) => ({ ...prev, autoConnect: false }))
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
       abortControllerRef.current = null
@@ -300,7 +271,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setSavedDevice(null)
     setBatteryLevel(null)
     deviceRef.current = null
-  }, [])
+  }, [setUserSettings])
 
   /**
    * @function forgetDevice
@@ -312,6 +283,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
     disconnect()
+    setUserSettings((prev) => ({ ...prev, autoConnect: false }))
     try {
       setCookie('hrm_device_id', '', -1)
       if (navigator.bluetooth && navigator.bluetooth.getDevices) {
@@ -325,7 +297,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       logger.warn({ error: e }, 'Error during device forget')
       setDeviceStatus('Error clearing device permissions.')
     }
-  }, [disconnect])
+  }, [disconnect, setUserSettings])
 
   const handleConnectionError = useCallback((error: unknown) => {
     let msg = 'An unknown error occurred.'
@@ -437,6 +409,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setDeviceStatus(`Connected to: ${device.name}`)
         setSavedDevice(device)
         setCookie('hrm_device_id', device.id)
+        setUserSettings((prev) => ({ ...prev, autoConnect: true }))
         isManualDisconnect.current = false
         setDisconnectionReason(null)
         return true
@@ -445,7 +418,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw error
       }
     },
-    [onDisconnected, throttledSend]
+    [onDisconnected, throttledSend, setUserSettings]
   )
 
   useEffect(() => {
