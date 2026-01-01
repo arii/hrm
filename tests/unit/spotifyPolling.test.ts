@@ -547,5 +547,47 @@ describe('SpotifyPolling Service', () => {
         'Error executing Spotify command'
       )
     })
+
+    describe('isEmptyResponseError', () => {
+      it('should return true for "Unexpected end of JSON input"', () => {
+        const error = new SyntaxError('Unexpected end of JSON input')
+        if (spotifyService._test_) {
+          const result = spotifyService._test_.isEmptyResponseError(error)
+          expect(result).toBe(true)
+        }
+      })
+
+      it('should return true for "Unexpected end of input"', () => {
+        const error = new SyntaxError('Unexpected end of input')
+        if (spotifyService._test_) {
+          const result = spotifyService._test_.isEmptyResponseError(error)
+          expect(result).toBe(true)
+        }
+      })
+
+      it('should return true for case-insensitive variations', () => {
+        const error = new SyntaxError('Unexpected End Of JSON Input')
+        if (spotifyService._test_) {
+          const result = spotifyService._test_.isEmptyResponseError(error)
+          expect(result).toBe(true)
+        }
+      })
+
+      it('should return false for other SyntaxErrors', () => {
+        const error = new SyntaxError('Invalid token')
+        if (spotifyService._test_) {
+          const result = spotifyService._test_.isEmptyResponseError(error)
+          expect(result).toBe(false)
+        }
+      })
+
+      it('should return false for non-SyntaxErrors', () => {
+        const error = new Error('Some other error')
+        if (spotifyService._test_) {
+          const result = spotifyService._test_.isEmptyResponseError(error)
+          expect(result).toBe(false)
+        }
+      })
+    })
   })
 })
