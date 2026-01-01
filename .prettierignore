@@ -10,5 +10,9 @@
 *.log
 /logs/
 
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+
 # System Files
 .DS_Store

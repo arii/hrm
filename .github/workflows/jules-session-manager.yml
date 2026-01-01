@@ -9,7 +9,6 @@ permissions:
   contents: read
   pull-requests: read
   issues: write
-  reactions: write
 
 jobs:
   jules-command:
@@ -101,14 +100,32 @@ jobs:
           fi
           echo "JULES_SESSION_ID=$SESSION_ID" >> $GITHUB_ENV
 
-      - name: 'Validate JULES_API_URL Secret'
+      - name: 'Validate JULES Secrets'
         env:
           JULES_API_URL: ${{ secrets.JULES_API_URL }}
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
         run: |
+          set +e
+          missing_vars=""
+
           if [ -z "$JULES_API_URL" ]; then
-            echo "::error::JULES_API_URL secret is not set. Please configure it in your repository secrets."
+            missing_vars="JULES_API_URL"
+          fi
+
+          if [ -z "$JULES_API_KEY" ]; then
+            if [ -n "$missing_vars" ]; then
+              missing_vars="$missing_vars, JULES_API_KEY"
+            else
+              missing_vars="JULES_API_KEY"
+            fi
+          fi
+
+          if [ -n "$missing_vars" ]; then
+            echo "::error::The following required secrets are not set: $missing_vars. Please configure them in your repository secrets."
             exit 1
           fi
+
+          echo "✅ All required Jules secrets are configured"
       - name: 'Install Dependencies'
         run: pip install -r .github/scripts/requirements.txt
 
@@ -123,14 +140,23 @@ jobs:
           REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          ERROR_MESSAGE=$(python3 .github/scripts/jules_ops.py \
+          set +e
+          OUTPUT=$(python3 .github/scripts/jules_ops.py \
             --command "new" \
             --prompt "$PROMPT" \
             --branch "$BRANCH" \
             --title "$TITLE" \
             --owner "$REPO_OWNER" \
             --repo-name "$REPO_NAME" \
-            --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1) || echo "error_message=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
+            --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1)
+          EXIT_CODE=$?
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "error_message=$OUTPUT" >> $GITHUB_OUTPUT
+            exit $EXIT_CODE
+          fi
+
+          echo "session_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: 'Run Jules Operation: Delete'
         if: env.COMMAND == 'delete'
@@ -139,10 +165,17 @@ jobs:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
           JULES_SESSION_ID: ${{ env.JULES_SESSION_ID }}
         run: |
-          ERROR_MESSAGE=$(python3 .github/scripts/jules_ops.py \
+          set +e
+          OUTPUT=$(python3 .github/scripts/jules_ops.py \
             --command "delete" \
             --session-id "$JULES_SESSION_ID" \
-            --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1) || echo "error_message=$ERROR_MESSAGE" >> $GITHUB_OUTPUT
+            --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1)
+          EXIT_CODE=$?
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "error_message=$OUTPUT" >> $GITHUB_OUTPUT
+            exit $EXIT_CODE
+          fi
 
       - name: 'Post Session ID Comment'
         if: success() && env.COMMAND == 'new'
@@ -178,14 +211,23 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const errorMessage = `${{ steps.jules_op_new.outputs.error_message || steps.jules_op_delete.outputs.error_message }}`;
+            const errorMessageNew = `${{ steps.jules_op_new.outputs.error_message || '' }}`;
+            const errorMessageDelete = `${{ steps.jules_op_delete.outputs.error_message || '' }}`;
+            const errorMessage = errorMessageNew || errorMessageDelete || 'Unknown error occurred';
+
             const body = `Jules operation failed with the following error:\n\n\`\`\`\n${errorMessage}\n\`\`\``;
-            github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: ${{ github.event.comment.id }},
-              content: '-1'
-            })
+
+            try {
+              github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{ github.event.comment.id }},
+                content: '-1'
+              }).catch(() => {}); // Ignore if reaction fails
+            } catch (e) {
+              console.log('Could not add reaction:', e);
+            }
+
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

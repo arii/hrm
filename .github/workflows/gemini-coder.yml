@@ -380,39 +380,23 @@ jobs:
           if [ "${DISABLE_TEXT_FILTERING:-false}" != "true" ]; then
             echo "::notice::Filtering conversational text from patch..."
             
-            # Create temporary file for cleaned content
-            CLEANED_PATCH="patch.diff.cleaned"
-            
-            # Remove common preamble patterns
-            grep -v "^Here" patch.diff | \
-              grep -v "^I'll" | \
-              grep -v "^Let me" | \
-              grep -v "^This" | \
-              grep -v "^The" | \
-              grep -v "^Sure" | \
-              grep -v "^Based" | \
-              grep -v "^## " | \
-              grep -v "^# " > "$CLEANED_PATCH.tmp"
-            
-            # Find the first diff header in the cleaned content
-            DIFF_START=$(grep -n "^--- a/" "$CLEANED_PATCH.tmp" | head -1 | cut -d: -f1)
+            # Find the first diff header in the original content
+            DIFF_START=$(grep -n "^--- a/" patch.diff | head -1 | cut -d: -f1)
             
             if [ -z "$DIFF_START" ]; then
-              echo "::notice::No conversational text found to filter, using original"
-              rm "$CLEANED_PATCH.tmp"
+              echo "::notice::No diff header found. Patch may have conversational text before the diff."
             else
               echo "::notice::Found diff starting at line $DIFF_START, extracting..."
-              # Extract from first diff header to end
-              tail -n +$DIFF_START "$CLEANED_PATCH.tmp" > "$CLEANED_PATCH"
+              # Extract from first diff header to end, this removes all preamble safely
+              tail -n +$DIFF_START patch.diff > patch.diff.cleaned
               
-              if [ -s "$CLEANED_PATCH" ]; then
-                mv "$CLEANED_PATCH" patch.diff
+              if [ -s patch.diff.cleaned ]; then
+                mv patch.diff.cleaned patch.diff
                 echo "::notice::✅ Removed conversational text from patch"
               else
                 echo "::warning::Cleaned patch is empty, using original"
-                rm "$CLEANED_PATCH" 2>/dev/null
+                rm patch.diff.cleaned 2>/dev/null
               fi
-              rm "$CLEANED_PATCH.tmp" 2>/dev/null
             fi
           else
             echo "::notice::Conversational text filtering disabled (DISABLE_TEXT_FILTERING=true)"

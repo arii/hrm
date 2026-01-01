@@ -21,6 +21,7 @@ export default defineConfig([
       'ecosystem.config.cjs',
       'next-env.d.ts',
       'tests/unit/jest.setup.js',
+      'pnpm-lock.yaml',
     ],
   },
 
