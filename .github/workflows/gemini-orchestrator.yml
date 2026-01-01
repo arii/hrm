@@ -63,34 +63,28 @@ jobs:
       - name: Check for file changes and find last non-empty commit
         id: check_files
         run: |
-          # Get the total number of commits in this PR branch
-          COMMIT_COUNT=$(git rev-list --count HEAD ^origin/${{ github.base_ref }})
+          # Fetch the base branch to ensure it exists locally
+          git fetch origin ${{ github.base_ref }} --depth=100 2>/dev/null || true
 
-          # If only 1 commit, check if it has changes from the base
-          if [ "$COMMIT_COUNT" -eq 1 ]; then
-            if git diff --quiet HEAD origin/${{ github.base_ref }} -- . ; then
-              echo "has_changes=false" >> $GITHUB_OUTPUT
-            else
-              echo "has_changes=true" >> $GITHUB_OUTPUT
-              echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-            fi
-          else
-            # Multiple commits: check if HEAD has changes from HEAD~1
-            if git diff --quiet HEAD~1 HEAD -- . ; then
-              echo "has_changes=false" >> $GITHUB_OUTPUT
-              # Find the last commit with file changes
-              for sha in $(git rev-list HEAD ^origin/${{ github.base_ref }}); do
-                if git cat-file -e $sha^ &>/dev/null; then
-                  if ! git diff --quiet $sha^ $sha -- . ; then
-                    echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
-                    break
-                  fi
+          # Get merge base between current branch and base branch
+          MERGE_BASE=$(git merge-base HEAD origin/${{ github.base_ref }} 2>/dev/null || echo "$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)")
+
+          # Check if HEAD has changes from merge base
+          if git diff --quiet "$MERGE_BASE" HEAD -- . ; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            
+            # Find the last commit with file changes in the PR
+            for sha in $(git rev-list HEAD ~"$MERGE_BASE" 2>/dev/null || git log --format=%H -n 100); do
+              if git cat-file -e $sha^ &>/dev/null 2>/dev/null; then
+                if ! git diff --quiet $sha^ $sha -- . ; then
+                  echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
+                  break
                 fi
-              done
-            else
-              echo "has_changes=true" >> $GITHUB_OUTPUT
-              echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-            fi
+              fi
+            done
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           fi
   # 1. Run CI checks on every push to a PR
   pr-quality:
