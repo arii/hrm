@@ -8,6 +8,8 @@ permissions:
   contents: write
   pull-requests: write
   issues: write
+  checks: write
+  actions: read
 
 jobs:
   squash-and-rebase:
