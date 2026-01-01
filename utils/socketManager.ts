@@ -23,7 +23,7 @@ import {
   sendWebSocketMessage,
   ConnectionMonitor,
 } from './websocketUtils.js'
-import logger from './logger.js'
+import logger, { wsLogger } from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
@@ -125,11 +125,13 @@ const initSocketManager = (
     const logMeta = getLogMeta(req, clientId)
     extWs.clientId = clientId
 
+    wsLogger.info({ ...logMeta, event: 'CONNECTION_ATTEMPT' }, 'Connection Attempt')
+
     // it's a stale or "zombie" connection. Overwrite it with the new socket.
 
     if (clientSockets.has(clientId)) {
-      logger.warn(
-        logMeta,
+      wsLogger.warn(
+        { ...logMeta, event: 'CONNECTION_OVERWRITE' },
         'Existing socket found. Overwriting with new connection.'
       )
     }

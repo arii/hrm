@@ -10,7 +10,7 @@ import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
-import logger from './utils/logger.js'
+import logger, { wsLogger } from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
 
@@ -156,6 +156,16 @@ app.prepare().then(async () => {
     if (env.NODE_ENV !== 'test' && ip) {
       const count = wsConnections.get(ip) || 0
       if (count >= WS_MAX_CONNECTIONS) {
+        wsLogger.error(
+        {
+          event: 'HANDSHAKE_ERROR',
+          remoteAddress: ip,
+          origin: req.headers.origin,
+          errorCode: 429,
+          errorMessage: 'Too Many Requests',
+        },
+        'WebSocket handshake failed'
+      )
         socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
         socket.destroy()
         return

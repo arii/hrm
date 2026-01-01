@@ -61,6 +61,13 @@ jest.mock('../../utils/logger', () => ({
     warn: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
+    child: jest.fn().mockReturnThis(),
+  },
+  wsLogger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
   },
 }))
 
@@ -197,7 +204,8 @@ describe('WebSocket Manager', () => {
     })
 
     it('should log a warning when overwriting an existing socket', () => {
-      const loggerWarnSpy = jest.spyOn(logger, 'warn')
+      const { wsLogger } = require('../../utils/logger')
+      const loggerWarnSpy = jest.spyOn(wsLogger, 'warn')
       const mockReq = createMockRequest('/?clientId=test-client') // Same clientId as in beforeEach
       const newWs = new MockWebSocket()
 
@@ -211,6 +219,7 @@ describe('WebSocket Manager', () => {
           origin: 'http://localhost:3000',
           userAgent: 'jest-test',
           host: 'localhost:3000',
+          event: 'CONNECTION_OVERWRITE',
         },
         'Existing socket found. Overwriting with new connection.'
       )

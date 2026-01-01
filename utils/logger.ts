@@ -7,26 +7,34 @@ interface Logger {
   info: (msg: string | object, ...args: unknown[]) => void
   warn: (msg: string | object, ...args: unknown[]) => void
   error: (msg: string | object, ...args: unknown[]) => void
+  child(bindings: Record<string, any>): Logger
 }
 
 const createLogger = (): Logger => {
   if (typeof window !== 'undefined') {
     // Client-side logger - wrap console methods to match pino interface
-    return {
+    const logger: Logger = {
       debug: (msg: unknown, ...args: unknown[]) => console.log(msg, ...args),
       info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
       warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
       error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+      child() {
+        return this
+      },
     }
+    return logger
   }
 
   // Server-side logger - pino already matches the interface
-  return pino({
+  const serverLogger = pino({
     enabled: process.env.NODE_ENV !== 'test',
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  }) as Logger
+  })
+
+  return serverLogger as unknown as Logger
 }
 
 const logger = createLogger()
 
 export default logger
+export const wsLogger = logger.child({ tag: 'websocket' })
