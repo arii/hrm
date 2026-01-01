@@ -4,7 +4,7 @@
  * Consumes all real-time data streams and renders the unified MUI visualization.
  */
 'use client'
-import PageContainer from '../components/PageContainer'
+import Container from '@mui/material/Container'
 import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
@@ -70,7 +70,15 @@ const Dashboard = () => {
   }, [])
 
   return (
-    <PageContainer onClick={handleInteraction}>
+    <Container
+      maxWidth="xl"
+      onClick={handleInteraction}
+      sx={{
+        py: { xs: 2, sm: 3 },
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
+      }}
+    >
       <Box sx={mainGridStyles}>
         {/*
          * The extra Box with height: '100%' is necessary to ensure the TimerDisplay
@@ -102,7 +110,7 @@ const Dashboard = () => {
       </Box>
 
       <SpotifyDisplay />
-    </PageContainer>
+    </Container>
   )
 }
 
