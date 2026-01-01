@@ -37,8 +37,6 @@ const parseHeartRate = (value: DataView): number => {
   const is16Bit = flags & 0x1
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
 }
-
-
 /**
  * @interface UseBluetoothHRMProps
  * @description Props for configuring the useBluetoothHRM hook.

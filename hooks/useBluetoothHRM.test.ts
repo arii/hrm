@@ -18,9 +18,9 @@ jest.mock('@/utils/logger', () => ({
 }))
 
 describe('useBluetoothHRM', () => {
-  let mockGatt: any
-  let mockDevice: any
-  let mockBluetooth: any
+  let mockGatt: jest.Mock
+  let mockDevice: jest.Mock
+  let mockBluetooth: jest.Mock
 
   beforeEach(() => {
     // Reset mocks before each test
@@ -48,7 +48,6 @@ describe('useBluetoothHRM', () => {
     // Mock cookie functions
     jest.spyOn(cookieUtils, 'getCookie').mockReturnValue('')
     jest.spyOn(cookieUtils, 'setCookie').mockImplementation(() => {})
-
 
     // Mock Bluetooth device
     mockGatt = {
@@ -138,7 +137,7 @@ describe('useBluetoothHRM', () => {
     await act(async () => {
       try {
         await result.current.connectAndStream()
-      } catch (e) {
+      } catch (_e) {
         // ignore
       }
     })
