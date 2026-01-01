@@ -159,7 +159,7 @@ app.prepare().then(async () => {
         wsLogger.error(
           {
             event: 'HANDSHAKE_ERROR',
-            remoteAddress: ip,
+            ip: ip,
             origin: req.headers.origin,
             errorCode: 429,
             errorMessage: 'Too Many Requests',

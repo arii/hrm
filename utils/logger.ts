@@ -18,12 +18,20 @@ const createLogger = (): Logger => {
       info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
       warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
       error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
-      child() {
-        // Client-side child logger is a no-op. The primary goal of child
-        // loggers in this application is to tag server-side logs for better
-        // filterability in a production environment. Client-side logs are
-        // already scoped to the user's browser console.
-        return this
+      child(bindings: Record<string, unknown>) {
+        // Simple implementation to preserve context in console
+        return {
+          ...this,
+          info: (msg: unknown, ...args: unknown[]) =>
+            console.info(bindings, msg, ...args),
+          warn: (msg: unknown, ...args: unknown[]) =>
+            console.warn(bindings, msg, ...args),
+          error: (msg: unknown, ...args: unknown[]) =>
+            console.error(bindings, msg, ...args),
+          debug: (msg: unknown, ...args: unknown[]) =>
+            console.log(bindings, msg, ...args),
+          child: (newBindings) => this.child({ ...bindings, ...newBindings }),
+        }
       },
     }
     return logger

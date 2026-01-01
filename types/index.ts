@@ -15,6 +15,7 @@ export interface HrTileProps {
 }
 
 import { TimerMode, TimerPhase } from './core'
+import { WebSocketLogEvent } from './websocket'
 
 export interface HeartRateZonesProps {
   maxHr: number
@@ -86,4 +87,5 @@ export interface WebSocketLogMeta {
   origin?: string
   userAgent?: string
   host: string
+  event: WebSocketLogEvent
 }

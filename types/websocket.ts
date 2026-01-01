@@ -249,3 +249,8 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   ClientRegistrationMessageSchema,
   PingMessageSchema, // Add PING schema to the union
 ])
+
+export type WebSocketLogEvent =
+  | 'CONNECTION_ATTEMPT'
+  | 'CONNECTION_OVERWRITE'
+  | 'HANDSHAKE_ERROR'
