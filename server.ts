@@ -129,6 +129,10 @@ app.prepare().then(async () => {
     res.status(200).json({ status: 'ok' })
   })
 
+  expressApp.get('/health/ready', (_req, res) => {
+    res.status(200).json({ status: 'ready' })
+  })
+
   expressApp.get('/api/internal/health/services', async (_req, res) => {
     const timerCheck = checkTimerService(services.tabataService)
     const wsCheck = await checkWebSocketService()

@@ -57,6 +57,7 @@ __pycache__/
 *.tmp
 diff.txt
 .husky/_/
+last_known_good_commit.txt
 
 # Debugging Profiles (Chrome MCP)
 .config/chrome-debug-profile/
