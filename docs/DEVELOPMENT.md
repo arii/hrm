@@ -96,6 +96,14 @@ If the action encounters a merge conflict during the rebase, it will fail gracef
 
 > **Note on Protected Branches**: For this action to work on a protected branch, the repository's settings may need to be adjusted to allow the `github-actions[bot]` to push to the branch. For more information, see the [GitHub documentation on managing protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches).
 
+#### AI-Powered Workflows
+
+The project leverages AI-powered workflows to automate code reviews, update pull requests, and more.
+
+-   **`@gemini-bot review`**: Triggers a comprehensive code review using the Gemini API. The bot will analyze the pull request, provide feedback, and suggest improvements.
+-   **`@gemini-update-pr`**: This command triggers a workflow that updates the pull request with the latest changes from the base branch, ensuring that the PR is up-to-date before merging.
+-   **`@jules fix` (Legacy)**: This legacy command invokes the Jules AI to perform a code review. It is recommended to use `@gemini-bot review` for more advanced and accurate reviews.
+
 #### Automated Technical Debt Analysis
 
 This project includes a workflow to automatically analyze pull requests for technical debt and create deduplicated GitHub issues.
