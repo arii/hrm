@@ -5,6 +5,7 @@ export type MeasurementSystem = 'METRIC' | 'IMPERIAL'
 
 export interface WorkoutColumnItem {
   title: string
+  details?: string[]
 }
 
 export interface WorkoutItem {
