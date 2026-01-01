@@ -112,7 +112,10 @@ const initSocketManager = (
   wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot
   services = svcs
-  connectionMonitor = new ConnectionMonitor(wss)
+  connectionMonitor = new ConnectionMonitor(wss, {
+    pingInterval: env.WEBSOCKET_PING_INTERVAL_MS,
+    pingTimeout: env.WEBSOCKET_PING_TIMEOUT_MS,
+  })
   connectionMonitor.start()
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
@@ -136,9 +139,11 @@ const initSocketManager = (
 
     clientSockets.set(clientId, extWs)
 
-    extWs.isAlive = true
     extWs.on('pong', () => {
-      extWs.isAlive = true
+      // Clear the termination timeout set by ConnectionMonitor, indicating the client is responsive.
+      if (extWs.terminationTimeout) {
+        clearTimeout(extWs.terminationTimeout)
+      }
     })
 
     logger.info(logMeta, 'WebSocket client connected')
@@ -166,7 +171,13 @@ const initSocketManager = (
     })
 
     extWs.on('close', () => {
-      logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      logger.info(
+        {
+          clientId: extWs.clientId,
+          reason: extWs.terminationReason,
+        },
+        'WebSocket client disconnected'
+      )
 
       // CRITICAL: Do NOT immediately delete clientData.
       // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
@@ -196,6 +207,11 @@ const initSocketManager = (
           }
         }
       }, env.WEBSOCKET_GRACE_PERIOD_MS)
+
+      // Clean up the heartbeat timeout on close
+      if (extWs.terminationTimeout) {
+        clearTimeout(extWs.terminationTimeout)
+      }
     })
   })
 

@@ -9,7 +9,7 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ExtWebSocket, ServerMessage } from '../types/websocket.js'
 import logger from './logger.js'
-
+import { env } from '../lib/env.js'
 /**
  * Sends a typed WebSocket message to a single client. This is the preferred
  * method for direct-to-client communication.
@@ -80,58 +80,54 @@ export const broadcast = (
 
 /**
  * Monitors WebSocket connections, terminates stale ones, and performs periodic heartbeats.
+ * It uses `WEBSOCKET_PING_INTERVAL_MS` to send pings and `WEBSOCKET_PING_TIMEOUT_MS`
+ * to terminate connections if a pong is not received.
+ */
+/**
+ * Manages the lifecycle of WebSocket connections by periodically sending `ping`
+ * messages and expecting `pong` responses.
+ *
+ * This class implements a heartbeat mechanism to detect and terminate stale or
+ * unresponsive connections. It is particularly useful for environments where
+ * connections may be silently dropped by intermediaries (like load balancers)
+ * or where clients (like throttled browser tabs) may become unresponsive.
+ *
+ * For each client, a termination timeout is set after a ping is sent. If a
+ * `pong` is received before the timeout expires, the timeout is cleared, and the
+ * connection is considered active. If the timeout expires, the connection is
+ * terminated.
  */
 export class ConnectionMonitor {
   private wss: WebSocketServer
-  private watchdogInterval: number
+  private pingInterval: number
+  private pingTimeout: number
   private intervalId: NodeJS.Timeout | null = null
 
-  /**
-   * @param wss The WebSocketServer instance to monitor.
-   * @param watchdogInterval The interval in milliseconds to check for stale connections.
-   */
-  constructor(wss: WebSocketServer, watchdogInterval?: number) {
-    this.wss = wss
-
-    let interval = watchdogInterval
-
-    // If no interval is provided via argument, get it from the environment.
-    if (interval === undefined) {
-      const envValue = process.env.WEBSOCKET_WATCHDOG_INTERVAL
-      const parsedValue = parseInt(envValue || '30000', 10)
-
-      if (envValue && (isNaN(parsedValue) || parsedValue <= 0)) {
-        logger.warn(
-          {
-            provided: envValue,
-            fallback: 30000,
-          },
-          'Invalid WEBSOCKET_WATCHDOG_INTERVAL. Using fallback.'
-        )
-        interval = 30000
-      } else {
-        interval = parsedValue
-      }
+  constructor(
+    wss: WebSocketServer,
+    options: { pingInterval: number; pingTimeout: number } = {
+      pingInterval: env.WEBSOCKET_PING_INTERVAL_MS,
+      pingTimeout: env.WEBSOCKET_PING_TIMEOUT_MS,
     }
+  ) {
+    this.wss = wss
+    this.pingInterval = options.pingInterval
+    this.pingTimeout = options.pingTimeout
 
-    // Final validation for any source.
-    if (interval <= 0) {
+    if (this.pingTimeout <= this.pingInterval) {
+      const newPingTimeout = this.pingInterval + 5000
       logger.warn(
         {
-          provided: interval,
-          fallback: 30000,
+          pingInterval: this.pingInterval,
+          pingTimeout: this.pingTimeout,
+          adjustedTimeout: newPingTimeout,
         },
-        'Watchdog interval must be a positive integer. Using fallback.'
+        'WEBSOCKET_PING_TIMEOUT_MS should be greater than WEBSOCKET_PING_INTERVAL_MS. Adjusting timeout to safe value.'
       )
-      this.watchdogInterval = 30000
-    } else {
-      this.watchdogInterval = interval
+      this.pingTimeout = newPingTimeout
     }
   }
 
-  /**
-   * Starts the connection monitoring process.
-   */
   start(): void {
     if (this.intervalId) {
       logger.warn('ConnectionMonitor is already running.')
@@ -142,34 +138,45 @@ export class ConnectionMonitor {
       this.wss.clients.forEach((ws) => {
         const extWs = ws as ExtWebSocket
 
-        if (extWs.isAlive === false) {
+        // Set a timeout to terminate the connection if a PONG is not received.
+        // The 'pong' event listener in socketManager clears this timeout.
+        extWs.terminationTimeout = setTimeout(() => {
           logger.warn(
             { clientId: extWs.clientId },
-            'Terminating stale WebSocket connection due to missed heartbeat.'
+            'Terminating stale WebSocket connection due to ping timeout.'
           )
-          return extWs.terminate()
-        }
+          extWs.terminationReason = 'ping_timeout'
+          extWs.terminate()
+        }, this.pingTimeout)
 
-        extWs.isAlive = false
+        // Send the ping. The client's response ('pong') will clear the timeout.
         extWs.ping(() => {
           /* no-op */
         })
       })
-    }, this.watchdogInterval)
+    }, this.pingInterval)
 
     logger.info(
-      { interval: this.watchdogInterval },
+      {
+        pingInterval: this.pingInterval,
+        pingTimeout: this.pingTimeout,
+      },
       'ConnectionMonitor started.'
     )
   }
 
-  /**
-   * Stops the connection monitoring process.
-   */
   stop(): void {
     if (this.intervalId) {
       clearInterval(this.intervalId)
       this.intervalId = null
+
+      // Clean up any pending termination timeouts
+      this.wss.clients.forEach((ws) => {
+        const extWs = ws as ExtWebSocket
+        if (extWs.terminationTimeout) {
+          clearTimeout(extWs.terminationTimeout)
+        }
+      })
       logger.info('ConnectionMonitor stopped.')
     }
   }

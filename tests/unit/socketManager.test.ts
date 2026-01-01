@@ -31,6 +31,7 @@ import {
   sendWebSocketMessage,
   ConnectionMonitor,
 } from '../../utils/websocketUtils.js'
+import { env } from '../../lib/env'
 import logger from '@/utils/logger'
 import { createMockRequest } from './test-data/request-data-factory'
 
@@ -84,17 +85,42 @@ jest.mock('ws', () => ({
   WebSocket: jest.fn(),
 }))
 
-class MockWebSocket extends EventEmitter {
-  isAlive: boolean
-  clientType: string | undefined
-  clientId?: string
+import { WebSocket } from 'ws'
+
+// ... other imports
+
+class MockWebSocket extends EventEmitter implements ExtWebSocket {
+  // Properties from ExtWebSocket
+  clientId: string = 'test-client'
+  clientType?: 'dashboard' | 'controller'
+  terminationTimeout?: NodeJS.Timeout
+  terminationReason?: string
+
+  // Mocked methods from WebSocket
   terminate = jest.fn()
   ping = jest.fn()
   send = jest.fn()
+  close = jest.fn()
+
+  // Properties to satisfy the WebSocket interface for the mock
+  readyState: number = WebSocket.OPEN
+  CONNECTING = WebSocket.CONNECTING
+  OPEN = WebSocket.OPEN
+  CLOSING = WebSocket.CLOSING
+  CLOSED = WebSocket.CLOSED
+  binaryType: 'nodebuffer' | 'arraybuffer' | 'fragments' = 'nodebuffer'
+  bufferedAmount: number = 0
+  extensions: string = ''
+  protocol: string = ''
+  url: string = ''
+  addEventListener = jest.fn()
+  removeEventListener = jest.fn()
+  dispatchEvent = jest.fn()
 
   constructor() {
     super()
-    this.isAlive = true
+    // Make clientId unique for each instance to avoid collisions in tests
+    this.clientId = `test-client-${Math.random()}`
   }
 
   // Simulate receiving a pong from the client
@@ -282,27 +308,37 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Connection Monitoring', () => {
+    let clearTimeoutSpy: jest.SpyInstance
+
+    beforeEach(() => {
+      clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
+    })
+
+    afterEach(() => {
+      clearTimeoutSpy.mockRestore()
+    })
     it('should initialize and start the ConnectionMonitor', () => {
-      expect(ConnectionMonitor).toHaveBeenCalledWith(mockWss)
+      expect(ConnectionMonitor).toHaveBeenCalledWith(mockWss, {
+        pingInterval: env.WEBSOCKET_PING_INTERVAL_MS,
+        pingTimeout: env.WEBSOCKET_PING_TIMEOUT_MS,
+      })
       const monitorInstance = (ConnectionMonitor as jest.Mock).mock.results[0]
         .value
       expect(monitorInstance.start).toHaveBeenCalled()
     })
 
-    it('should set isAlive to true on new connection', () => {
+    it('should clear the termination timeout on pong', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
-      expect(newWs.isAlive).toBe(true)
-    })
 
-    it('should set isAlive to true on pong', () => {
-      const newWs = new MockWebSocket() as ExtWebSocket
-      const mockReq = createMockRequest()
-      mockWss.emit('connection', newWs, mockReq)
-      newWs.isAlive = false // Manually set to false
+      // Simulate a timeout being set by the monitor
+      const mockTimeout = setTimeout(() => {}, 5000)
+      newWs.terminationTimeout = mockTimeout
+
       newWs.emit('pong')
-      expect(newWs.isAlive).toBe(true)
+
+      expect(clearTimeoutSpy).toHaveBeenCalledWith(mockTimeout)
     })
 
     it('should stop the ConnectionMonitor when the server closes', () => {

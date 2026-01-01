@@ -24,6 +24,10 @@ const envSchema = z.object({
     .default('10000')
     .transform(Number),
   WEBSOCKET_GRACE_PERIOD_MS: z.string().default('5000').transform(Number),
+  // New: WebSocket heartbeat interval (how often to send a ping)
+  WEBSOCKET_PING_INTERVAL_MS: z.string().default('30000').transform(Number),
+  // New: WebSocket timeout (how long to wait for a pong)
+  WEBSOCKET_PING_TIMEOUT_MS: z.string().default('65000').transform(Number),
   MAX_WS_CLIENTS: z.string().default('1000').transform(Number),
 })
 
