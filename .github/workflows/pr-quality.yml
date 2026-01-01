@@ -319,7 +319,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./scripts/ci/run-linter.sh
+          mkdir -p logs
+          pnpm run lint 2>&1 | tee logs/lint-output.log
         continue-on-error: true
 
       - name: Report Lint Failure
@@ -627,7 +628,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./scripts/ci/run-unit-tests.sh
+          mkdir -p logs test-results
+          pnpm run test:unit 2>&1 | tee logs/unit-output.log
         continue-on-error: true
 
       - name: Publish Unit Tests Results
@@ -792,7 +794,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./scripts/ci/run-visual-tests.sh
+          mkdir -p logs test-results
+          pnpm run test:visual 2>&1 | tee logs/visual-output.log
         continue-on-error: true
 
       - name: Publish Visual Tests Results
