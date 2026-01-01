@@ -23,8 +23,8 @@ describe('PlaylistDetails', () => {
   ]
 
   it('displays a loading message when isLoading is true', () => {
-    render(<PlaylistDetails tracks={[]} isLoading={true} />)
-    expect(screen.getByText('Loading tracks...')).toBeInTheDocument()
+    render(<PlaylistDetails tracks={[]} isLoading={true} hasSelection={true} />)
+    expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 
   it('displays an error message when an error is provided', () => {
@@ -33,20 +33,26 @@ describe('PlaylistDetails', () => {
         tracks={[]}
         isLoading={false}
         error="Failed to load tracks"
+        hasSelection={true}
       />
     )
     expect(screen.getByText('Failed to load tracks')).toBeInTheDocument()
   })
 
-  it('displays a message when there are no tracks', () => {
-    render(<PlaylistDetails tracks={[]} isLoading={false} />)
+  it('displays a message when no playlist is selected', () => {
+    render(<PlaylistDetails tracks={[]} isLoading={false} hasSelection={false} />)
     expect(
       screen.getByText('Select a playlist to see its tracks.')
     ).toBeInTheDocument()
   })
 
+  it('displays a message when the selected playlist is empty', () => {
+    render(<PlaylistDetails tracks={[]} isLoading={false} hasSelection={true} />)
+    expect(screen.getByText('This playlist is empty.')).toBeInTheDocument()
+  })
+
   it('displays the track list when tracks are provided', () => {
-    render(<PlaylistDetails tracks={mockTracks} isLoading={false} />)
+    render(<PlaylistDetails tracks={mockTracks} isLoading={false} hasSelection={true} />)
 
     expect(screen.getByText('Track 1')).toBeInTheDocument()
     expect(

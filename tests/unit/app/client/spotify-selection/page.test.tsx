@@ -53,7 +53,9 @@ describe('SpotifySelectionPage', () => {
     fireEvent.click(await screen.findByText('Select Playlist'))
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/spotify/playlists/123/tracks')
+      expect(fetch).toHaveBeenCalledWith('/api/spotify/playlists/123/tracks', {
+        signal: expect.any(AbortSignal),
+      })
     })
 
     await waitFor(() => {
@@ -68,7 +70,7 @@ describe('SpotifySelectionPage', () => {
 
     render(<SpotifySelectionPage />)
 
-    fireEvent.click(screen.getByText('Select Playlist'))
+    fireEvent.click(await screen.findByText('Select Playlist'))
 
     expect(screen.getByText('Loading...')).toBeInTheDocument()
     await waitFor(() => {
@@ -84,7 +86,7 @@ describe('SpotifySelectionPage', () => {
 
     render(<SpotifySelectionPage />)
 
-    fireEvent.click(screen.getByText('Select Playlist'))
+    fireEvent.click(await screen.findByText('Select Playlist'))
 
     await waitFor(() => {
       expect(screen.getByText('Error: Failed to fetch')).toBeInTheDocument()

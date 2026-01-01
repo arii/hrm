@@ -8,7 +8,7 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { Track } from '../../../types/spotify'
 
@@ -35,15 +35,26 @@ const SpotifySelectionPage = () => {
   const [tracks, setTracks] = useState<Track[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasSelection, setHasSelection] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const handlePlaylistSelected = async (uri: string) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
     const playlistId = uri.split(':').pop() || null
 
     if (!playlistId) {
       setTracks([])
       setError(null)
+      setHasSelection(false)
       return
     }
+    setHasSelection(true)
+
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
     setLoading(true)
     setError(null)
@@ -51,7 +62,8 @@ const SpotifySelectionPage = () => {
 
     try {
       const response = await fetch(
-        `/api/spotify/playlists/${playlistId}/tracks`
+        `/api/spotify/playlists/${playlistId}/tracks`,
+        { signal: controller.signal }
       )
       if (!response.ok) {
         const errorData = await response.json()
@@ -60,6 +72,9 @@ const SpotifySelectionPage = () => {
       const data = await response.json()
       setTracks(data.tracks ?? [])
     } catch (err) {
+      if ((err as Error).name === 'AbortError') {
+        return
+      }
       console.error('Failed to fetch playlist tracks:', err)
       setError(
         err instanceof Error ? err.message : 'An unknown error occurred'
@@ -124,7 +139,7 @@ const SpotifySelectionPage = () => {
         </CardContent>
       </Card>
 
-      <PlaylistDetails tracks={tracks} isLoading={loading} error={error} />
+      <PlaylistDetails tracks={tracks} isLoading={loading} error={error} hasSelection={hasSelection} />
     </Container>
   )
 }

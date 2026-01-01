@@ -1,6 +1,7 @@
 // components/Spotify/PlaylistDetails.tsx
 import MusicNote from '@mui/icons-material/MusicNote'
 import Box from '@mui/material/Box'
+import CircularProgress from '@mui/material/CircularProgress'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
@@ -12,17 +13,19 @@ interface PlaylistDetailsProps {
   tracks: Track[]
   isLoading: boolean
   error?: string | null
+  hasSelection: boolean
 }
 
 const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
   tracks,
   isLoading,
   error,
+  hasSelection,
 }) => {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-        <Typography>Loading tracks...</Typography>
+        <CircularProgress />
       </Box>
     )
   }
@@ -35,10 +38,18 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
     )
   }
 
-  if (tracks.length === 0) {
+  if (!hasSelection) {
     return (
       <Typography sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
         Select a playlist to see its tracks.
+      </Typography>
+    )
+  }
+
+  if (tracks.length === 0) {
+    return (
+      <Typography sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
+        This playlist is empty.
       </Typography>
     )
   }
