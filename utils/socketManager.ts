@@ -9,7 +9,6 @@ import { TLSSocket } from 'tls'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
-  SpotifyCommandMessage,
   SpotifyExecutionMessage,
   InitialStateSnapshotPayload,
   ServerMessage,
@@ -268,6 +267,15 @@ const handleGetState = (ws: ExtWebSocket) => {
   sendWebSocketMessage(ws, initialStateMessage, 'socketManager.GET_STATE')
 }
 
+import {
+  SpotifyCommandMessage,
+  HrmInputMessage,
+  HrmMetadataUpdateMessage,
+  TimerModeCommandMessage,
+  TimerCommandMessage,
+  TimerConfigMessage,
+} from '../types/websocket'
+
 const handleHrmMetadataUpdate = (
   message: ClientCommandMessage,
   clientId: string
@@ -275,7 +283,9 @@ const handleHrmMetadataUpdate = (
   const existingData = hrmDataRepository.findById(clientId)
   if (existingData) {
     const updateData: Partial<HrmStreamData> = Object.fromEntries(
-      Object.entries(message.data).filter(([_, value]) => value !== null)
+      Object.entries((message as HrmMetadataUpdateMessage).data).filter(
+        ([_, value]) => value !== null
+      )
     )
 
     if (
@@ -302,7 +312,8 @@ const handleHrmInput = (message: ClientCommandMessage, clientId: string) => {
     sessionState.lastUpdate = now
 
     let currentAccumulated = sessionState.accumulatedCalories
-    const currentHr = message.data.value ?? existingData.value
+    const hrmInputMessage = message as HrmInputMessage
+    const currentHr = hrmInputMessage.data.value ?? existingData.value
     const currentAge = existingData.age ?? 30
 
     if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
@@ -318,7 +329,7 @@ const handleHrmInput = (message: ClientCommandMessage, clientId: string) => {
     sessionState.accumulatedCalories = currentAccumulated
     hrmDataRepository.save({
       ...existingData,
-      value: message.data.value ?? existingData.value,
+      value: hrmInputMessage.data.value ?? existingData.value,
       calories: Math.round(currentAccumulated * 10) / 10,
     })
     broadcastState()
@@ -326,17 +337,18 @@ const handleHrmInput = (message: ClientCommandMessage, clientId: string) => {
 }
 
 const handleTimerCommand = (message: ClientCommandMessage) => {
-  services.tabataService.handleCommand(message.command)
+  services.tabataService.handleCommand((message as TimerCommandMessage).command)
 }
 
 const handleSetMode = (message: ClientCommandMessage) => {
-  services.tabataService.setMode(message.mode)
+  services.tabataService.setMode((message as TimerModeCommandMessage).mode)
 }
 
 const handleTimerConfig = (message: ClientCommandMessage) => {
+  const configMessage = message as TimerConfigMessage
   services.tabataService.setConfig({
-    workDuration: message.workDuration,
-    restDuration: message.restDuration,
+    workDuration: configMessage.workDuration,
+    restDuration: configMessage.restDuration,
   })
 }
 
