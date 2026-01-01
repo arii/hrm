@@ -319,7 +319,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./scripts/ci/run-linter.sh
+          mkdir -p logs
+          pnpm run lint 2>&1 | tee logs/lint-output.log
         continue-on-error: true
 
       - name: Report Lint Failure
@@ -384,7 +385,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./scripts/ci/run-build.sh
+          mkdir -p logs
+          pnpm run build 2>&1 | tee logs/build-output.log
         continue-on-error: true
 
       - name: Verify Artifacts
@@ -556,7 +558,8 @@ jobs:
           NODE_ENV: production
         run: |
           set -o pipefail
-          ./scripts/ci/run-infra-tests.sh prod
+          mkdir -p test-results
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-results.xml pnpm run test:infra --reporter=junit 2>&1 | tee infra-tests.log
         continue-on-error: true
 
       - name: Publish Infrastructure Tests Results
@@ -564,7 +567,7 @@ jobs:
         if: always() && steps.infra-tests.outcome != 'skipped'
         with:
           name: Infrastructure (Prod)
-          path: test-results/infra-prod-results.xml
+          path: test-results/infra-results.xml
           reporter: java-junit
         continue-on-error: true
 
@@ -574,8 +577,8 @@ jobs:
         with:
           name: infra-test-logs-${{ env.SESSION_ID }}
           path: |
-            logs/infra-prod-output.log
-            test-results/infra-prod-results.xml
+            infra-tests.log
+            test-results/infra-results.xml
           if-no-files-found: ignore
           retention-days: 3
 
@@ -627,7 +630,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./scripts/ci/run-unit-tests.sh
+          mkdir -p test-results
+          pnpm run test:unit 2>&1 | tee unit-tests.log
         continue-on-error: true
 
       - name: Publish Unit Tests Results
@@ -645,7 +649,7 @@ jobs:
         with:
           name: unit-test-logs-${{ env.SESSION_ID }}
           path: |
-            logs/unit-output.log
+            unit-tests.log
             test-results/unit-results.xml
           if-no-files-found: ignore
           retention-days: 3
@@ -707,7 +711,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./scripts/ci/run-perf-tests.sh
+          mkdir -p test-results
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit 2>&1 | tee perf-tests.log
         continue-on-error: true
 
       - name: Publish Performance Test Results
@@ -733,7 +738,7 @@ jobs:
         with:
           name: perf-test-logs-${{ env.SESSION_ID }}
           path: |
-            logs/perf-output.log
+            perf-tests.log
             test-results/perf-results.xml
           if-no-files-found: ignore
           retention-days: 3
@@ -792,7 +797,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./scripts/ci/run-visual-tests.sh
+          mkdir -p test-results logs
+          pnpm run test:visual 2>&1 | tee logs/visual-output.log
         continue-on-error: true
 
       - name: Publish Visual Tests Results
