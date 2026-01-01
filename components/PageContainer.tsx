@@ -1,6 +1,11 @@
 import { Breakpoint, Container, ContainerProps } from '@mui/material'
 import { ReactNode } from 'react'
 
+/**
+ * Props for the PageContainer component.
+ * Explicit `px` and `py` props are provided to override the default padding
+ * and have higher precedence than any padding values defined in the `sx` prop.
+ */
 interface PageContainerProps extends ContainerProps {
   children: ReactNode
   maxWidth?: Breakpoint
@@ -14,10 +19,6 @@ interface PageContainerProps extends ContainerProps {
  * and minimum height.
  *
  * @param {PageContainerProps} props - The props for the component.
- * @param {ReactNode} props.children - The content to be rendered inside the container.
- * @param {Breakpoint} [props.maxWidth='xl'] - The max-width of the container.
- * @param {number|string|object} [props.px] - Explicit horizontal padding override.
- * @param {number|string|object} [props.py] - Explicit vertical padding override.
  * @returns {JSX.Element} The rendered PageContainer component.
  */
 export default function PageContainer({
