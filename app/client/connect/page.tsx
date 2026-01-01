@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -73,8 +73,15 @@ export default function ConnectPage() {
 
   const { connectionStatus, hrmData } = useWebSocket()
 
+  const autoConnect = useCallback(() => {
+    // This function is memoized, preventing the `useAutoConnect` hook's
+    // `useEffect` from running on every render of `ConnectPage`. The dependency
+    // array ensures it's recreated only if essential props change.
+    connectAndStream(userName, userAge || 0, { isAutoConnect: true })
+  }, [connectAndStream, userName, userAge])
+
   useAutoConnect({
-    connectAndStream: () => connectAndStream(userName, userAge || 0),
+    connectAndStream: autoConnect,
     isConnected,
   })
 

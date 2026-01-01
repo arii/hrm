@@ -9,11 +9,11 @@ import { useCallback, useState, useRef, useEffect, useMemo } from 'react'
 import {
   HrmInputData,
   HrmInputMessage,
-  HrmMetadataUpdateMessage,
   HrmMetadataUpdateData,
+  HrmMetadataUpdateMessage,
 } from '../types/websocket'
-import throttle from 'lodash.throttle'
 import isEqual from 'lodash.isequal'
+import throttle from 'lodash.throttle'
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -441,7 +441,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const connectAndStream = useCallback(
     async (
       userNameFromArgs?: string,
-      userAgeFromArgs?: number
+      userAgeFromArgs?: number,
+      options: { isAutoConnect?: boolean } = {}
     ): Promise<void> => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
@@ -471,17 +472,22 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const foundDevice = devices.find((d) => d.id === savedDeviceId)
 
             if (foundDevice) {
-              // Attempt to reconnect to the previously saved device
               await connectToGatt(foundDevice)
-              return
+              return // Successfully reconnected, exit the function.
             }
           }
         }
 
+        // If this is an auto-connect attempt and we haven't found a device yet,
+        // we must stop here to avoid illegally calling requestDevice().
+        if (options.isAutoConnect) {
+          logger.info('Auto-connect: No previously permitted device found.')
+          setDeviceStatus('Disconnected') // Reset status
+          return
+        }
+
         if (!device) {
           setDeviceStatus('Scanning for devices...')
-          // Note: acceptAllDevices is an alternative if filters fail,
-          // but strict filtering is better for UX to avoid showing non-HRM devices.
           device = await navigator.bluetooth.requestDevice({
             filters: [{ services: [HR_SERVICE_UUID] }],
             optionalServices: [BATTERY_SERVICE_UUID],
@@ -491,13 +497,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (device) {
           await connectToGatt(device)
         }
-        // If `requestDevice` is cancelled by the user, it throws a `NotFoundError`,
-        // which is caught and handled below. A resolved promise without a device
-        // is not an expected behavior.
       } catch (error) {
         handleConnectionError(error)
-        // Re-throw the error to ensure the promise rejects
-        throw error
+        throw error // Re-throw to allow caller to handle if needed
       }
     },
     [
