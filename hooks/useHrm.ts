@@ -4,7 +4,7 @@ import { useState } from 'react'
 export const useHrm = () => {
   const [isConnected, setIsConnected] = useState(false)
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
-  const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
+  const [batteryLevel, _setBatteryLevel] = useState<number | null>(null)
   const [bluetoothConnected, setBluetoothConnected] = useState(false)
 
   const onConnect = () => {

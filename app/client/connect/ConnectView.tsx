@@ -8,7 +8,6 @@ import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
-import Typography from '@mui/material/Typography'
 import { ZodIssue } from 'zod'
 import UserSettings from './UserSettings'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
@@ -36,7 +35,6 @@ const ConnectView: React.FC = () => {
     setUnit,
     maxHr,
     restingHr,
-    savePending,
   } = useUserSettings()
 
   const {
@@ -51,14 +49,14 @@ const ConnectView: React.FC = () => {
   } = useHrm()
 
   const {
-    onStartWorkout,
-    onEndWorkout,
-    onReset,
+    startWorkout,
+    endWorkout,
+    resetWorkout,
     workoutStatus,
     hasStarted,
-    duration,
+    workoutDuration,
     caloriesBurned,
-  } = useWorkoutSession()
+  } = useWorkoutSession({ isConnected })
 
   const [formState, setFormState] = useState({
     userName: { value: userName, isValid: true, issues: [] },
@@ -171,9 +169,9 @@ const ConnectView: React.FC = () => {
                 batteryLevel={batteryLevel}
                 isFormValid={isFormValid}
                 bluetoothConnected={bluetoothConnected}
-                onStartWorkout={onStartWorkout}
-                onEndWorkout={onEndWorkout}
-                onReset={onReset}
+                onStartWorkout={startWorkout}
+                onEndWorkout={endWorkout}
+                onReset={resetWorkout}
                 workoutStatus={workoutStatus}
                 hasStarted={hasStarted}
               />
@@ -198,18 +196,6 @@ const ConnectView: React.FC = () => {
                 onStateChanged={handleStateChanged}
                 setUnit={handleUnitChange}
               />
-              <Box sx={{ mt: 2 }}>
-                <Typography
-                  variant="caption"
-                  color={savePending ? 'text.secondary' : 'primary'}
-                  sx={{
-                    transition: 'color 0.3s ease',
-                    fontWeight: savePending ? 'normal' : 'bold',
-                  }}
-                >
-                  {savePending ? 'Saving...' : 'Settings saved'}
-                </Typography>
-              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -217,7 +203,7 @@ const ConnectView: React.FC = () => {
           <WorkoutSummary
             maxHr={maxHr}
             restingHr={restingHr}
-            duration={duration}
+            duration={workoutDuration}
             caloriesBurned={caloriesBurned}
           />
         </Grid>
