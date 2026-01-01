@@ -21,7 +21,7 @@ const app = next({
   port: env.PORT,
 })
 const handle = app.getRequestHandler()
-const expressApp = express()
+export const expressApp = express()
 
 app.prepare().then(async () => {
   const server = createServer(expressApp)

@@ -9,7 +9,8 @@ PORT="${PORT:-3000}"
 HEALTH_CHECK_URL="http://127.0.0.1:${PORT}/health/ready"
 STARTUP_TIMEOUT=60 # seconds
 LOG_FILE="/tmp/${APP_NAME}-deployment.log"
-PM2_DUMP_FILE="$HOME/.pnpm/global/5/.pnpm/pm2@6.0.14/node_modules/pm2/dump.rdb"
+# Use PM2's default dump file path for robustness.
+PM2_DUMP_FILE="$HOME/.pm2/dump.pm2"
 MAIN_BRANCH="leader" # Or your main deployment branch
 
 # --- Logging ---
@@ -47,6 +48,16 @@ update_and_build() {
 
   log "🛠️ Building the application..."
   pnpm run build
+}
+
+validate_nginx() {
+  log "🔍 Validating Nginx configuration..."
+  if sudo nginx -t; then
+    log "Nginx configuration is valid."
+  else
+    log "❌ Nginx configuration validation failed. Aborting deployment."
+    exit 1
+  fi
 }
 
 start_new_version() {
@@ -125,10 +136,13 @@ main() {
   # 2. Update code and build
   update_and_build
 
-  # 3. Start the new version
+  # 3. Validate Nginx configuration
+  validate_nginx
+
+  # 4. Start the new version
   start_new_version
 
-  # 4. Verify the new version
+  # 5. Verify the new version
   if ! verify_startup; then
     log "❌ Deployment failed. Initiating rollback..."
     rollback
