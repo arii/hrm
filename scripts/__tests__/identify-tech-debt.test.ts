@@ -26,7 +26,9 @@ describe('identify-tech-debt', () => {
 
   const mockExit = jest
     .spyOn(process, 'exit')
-    .mockImplementation((() => {}) as unknown as (code?: number) => never)
+    .mockImplementation((() => {}) as unknown as (
+      code?: string | number | null | undefined
+    ) => never)
   const mockConsoleError = jest
     .spyOn(console, 'error')
     .mockImplementation(() => {})
