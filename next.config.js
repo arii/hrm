@@ -6,8 +6,6 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enables standalone output for containerized deployments.
-  // This is required for the build to succeed in a Docker environment.
   output: 'standalone',
   distDir: process.env.NODE_ENV === 'production' ? '.next_prod' : '.next',
   images: {
