@@ -17,6 +17,7 @@ import {
   ExtWebSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
+import { WebSocketLogMeta } from '../types/index.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import {
   broadcast,
@@ -81,7 +82,7 @@ const getRequestParams = (req: IncomingMessage): URLSearchParams => {
 const getLogMeta = (
   req: IncomingMessage,
   clientId: string
-): Record<string, unknown> => {
+): WebSocketLogMeta => {
   // DEV-NOTE: Be mindful of logging sensitive data. In a real-world scenario,
   // IP addresses and user-agents might be considered PII and should be
   // handled according to privacy policies. Redacting in production is a safeguard.

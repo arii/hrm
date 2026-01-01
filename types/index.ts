@@ -68,3 +68,22 @@ export interface UserProfile {
   gender: Gender
   unitSystem: MeasurementSystem
 }
+
+/**
+ * @interface WebSocketLogMeta
+ * @description Represents the metadata for a WebSocket log entry.
+ * @property {string} clientId - The client's identifier.
+ * @property {string} [ip] - The client's IP address.
+ * @property {boolean} isSecure - Whether the connection is secure.
+ * @property {string} [origin] - The origin of the request.
+ * @property {string} [userAgent] - The client's user agent.
+ * @property {string} host - The host of the request.
+ */
+export interface WebSocketLogMeta {
+  clientId: string
+  ip?: string
+  isSecure: boolean
+  origin?: string
+  userAgent?: string
+  host: string
+}

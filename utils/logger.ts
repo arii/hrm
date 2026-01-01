@@ -19,6 +19,10 @@ const createLogger = (): Logger => {
       warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
       error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
       child() {
+        // Client-side child logger is a no-op. The primary goal of child
+        // loggers in this application is to tag server-side logs for better
+        // filterability in a production environment. Client-side logs are
+        // already scoped to the user's browser console.
         return this
       },
     }
@@ -31,6 +35,10 @@ const createLogger = (): Logger => {
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   })
 
+  // The `as unknown as Logger` assertion is used because pino's logger type
+  // is complex and not directly compatible with our simplified Logger interface.
+  // This is a pragmatic workaround to avoid having to replicate pino's extensive
+  // type definitions in our interface.
   return serverLogger as unknown as Logger
 }
 
