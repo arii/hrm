@@ -332,10 +332,26 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CONTEXT_FILES: ${{ env.FILES }}
         run: |
+          if [ -z "$CONTEXT_FILES" ]; then
+            FILE_COUNT=0
+          else
+            # Count comma-separated files by counting commas and adding 1
+            FILE_COUNT=$(echo "$CONTEXT_FILES" | tr -cd ',' | wc -c)
+            FILE_COUNT=$((FILE_COUNT + 1))
+          fi
+
+          CACHE_THRESHOLD=${GEMINI_CACHE_FILE_THRESHOLD:-5}
+          CACHE_FLAG=""
+          if [ "$FILE_COUNT" -gt "$CACHE_THRESHOLD" ]; then
+             echo "::notice::File count ($FILE_COUNT) exceeds threshold of $CACHE_THRESHOLD. Enabling Context Caching."
+             CACHE_FLAG="--use-cache"
+          fi
+
           npx tsx scripts/gemini-client.ts \
             --task-file "prompt.txt" \
             --context "$CONTEXT_FILES" \
-            --output "patch.diff"
+            --output "patch.diff" \
+            $CACHE_FLAG
 
       - name: 'Gemini: Apply Patch'
         if: env.AGENT_PROVIDER == 'gemini'
