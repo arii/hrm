@@ -8,7 +8,7 @@ on:
 
 jobs:
   fix-lint:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     permissions:
       contents: write # Required to push changes back to the PR
       pull-requests: write # Required for gh pr comment
