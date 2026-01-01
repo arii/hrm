@@ -12,6 +12,7 @@ import VolumeDown from '@mui/icons-material/VolumeDown'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
+import { motion, AnimatePresence } from 'framer-motion'
 
 import { useAudioContext } from '@/context/AudioContext'
 import PhaseBackground from './PhaseBackground'
@@ -129,66 +130,78 @@ const TimerDisplay = () => {
         />
       </Box>
       {/* Mode Indicator - Rotated on left side */}
-      {currentPhase !== 'IDLE' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(-90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#fff',
-              fontWeight: 700,
-              letterSpacing: 2,
-              whiteSpace: 'nowrap',
-              fontSize: '0.9rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
+      <AnimatePresence>
+        {currentPhase !== 'IDLE' && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.5 }}
+            style={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%) rotate(-90deg)',
+              transformOrigin: 'center',
+              zIndex: 1,
             }}
           >
-            {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
-          </Typography>
-        </Box>
-      )}
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#fff',
+                fontWeight: 700,
+                letterSpacing: 2,
+                whiteSpace: 'nowrap',
+                fontSize: '0.9rem',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+              }}
+            >
+              {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
+            </Typography>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tabata Durations - Rotated on right side */}
-      {mode === 'TABATA' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            right: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#fff',
-              fontWeight: 700,
-              letterSpacing: 1,
-              whiteSpace: 'nowrap',
-              fontSize: '0.8rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
+      <AnimatePresence>
+        {mode === 'TABATA' && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.5 }}
+            style={{
+              position: 'absolute',
+              right: 16,
+              top: '50%',
+              transform: 'translateY(-50%) rotate(90deg)',
+              transformOrigin: 'center',
+              zIndex: 1,
             }}
           >
-            WORK:{workDuration}s REST:{restDuration}s
-          </Typography>
-        </Box>
-      )}
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#fff',
+                fontWeight: 700,
+                letterSpacing: 1,
+                whiteSpace: 'nowrap',
+                fontSize: '0.8rem',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+              }}
+            >
+              WORK:{workDuration}s REST:{restDuration}s
+            </Typography>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <CardContent
         sx={{
