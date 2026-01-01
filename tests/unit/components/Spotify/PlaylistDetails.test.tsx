@@ -98,4 +98,25 @@ describe('PlaylistDetails', () => {
 
     consoleErrorSpy.mockRestore()
   })
+
+  it('should render a virtualized list with the correct props', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ tracks: mockTracks }),
+    })
+
+    render(<PlaylistDetails playlistId="test-playlist-id" />)
+    await waitFor(() => {
+      expect(screen.getByText('Track 1')).toBeInTheDocument()
+    })
+
+    // Check that the virtualized list is rendered
+    const list = await screen.findByRole('list')
+    expect(list).toBeInTheDocument()
+
+    // Check that the list has the correct number of items
+    const items = await screen.findAllByRole('listitem')
+    expect(items).toHaveLength(2)
+  })
 })

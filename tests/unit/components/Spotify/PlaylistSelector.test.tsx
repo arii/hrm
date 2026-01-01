@@ -151,4 +151,29 @@ describe('PlaylistSelector', () => {
       'Play playlist: Rock Classics'
     )
   })
+
+  it('should render a virtualized list with the correct props', async () => {
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={jest.fn()}
+        onPlaylistPlay={jest.fn()}
+      />
+    )
+    const user = userEvent.setup()
+    const input = await screen.findByRole('combobox')
+    await user.click(input)
+
+    // Wait for the playlists to be fetched and rendered
+    await waitFor(() => {
+      expect(screen.getByText('Chill Hits')).toBeInTheDocument()
+    })
+
+    // Check that the virtualized list is rendered
+    const list = await screen.findByRole('listbox')
+    expect(list).toBeInTheDocument()
+
+    // Check that the list has the correct number of items
+    const items = await screen.findAllByRole('option')
+    expect(items).toHaveLength(3)
+  })
 })
