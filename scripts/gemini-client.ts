@@ -51,6 +51,15 @@ const MODEL_FALLBACKS = getModelFallbacks()
 
 // --- Caching Logic ---
 
+/**
+ * Creates a context cache for a given set of files.
+ * This function uploads the files to the Google AI File Service, then creates a cache
+ * that can be used for subsequent model requests.
+ * @param apiKey The Google AI API key.
+ * @param files An array of file paths to include in the cache.
+ * @param tag A tag to identify the cache, used in the display name.
+ * @returns A promise that resolves to the created cache object.
+ */
 async function createCacheForContext(
   apiKey: string,
   files: string[],
@@ -271,6 +280,18 @@ export async function main() {
 
 // --- Generation Functions ---
 
+/**
+ * Generates content using the Gemini API with a fallback mechanism.
+ * It first attempts to use a cached model if one is provided. If the cached model fails,
+ * or if no cached model is provided, it falls back to the standard text-based generation
+ * using a list of fallback models.
+ * @param genAI The GoogleGenerativeAI instance.
+ * @param cachePrompt The prompt to use when generating content from a cached model.
+ * @param fullPrompt The full prompt to use when generating content without a cache.
+ * @param config Optional configuration for the content generation.
+ * @param cachedModel Optional cached model to use for generation.
+ * @returns A promise that resolves to the generated text.
+ */
 export async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
   cachePrompt: string,
