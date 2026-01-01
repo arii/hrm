@@ -21,7 +21,7 @@ const app = next({
   port: env.PORT,
 })
 const handle = app.getRequestHandler()
-export const expressApp = express()
+const expressApp = express()
 
 app.prepare().then(async () => {
   const server = createServer(expressApp)
@@ -127,10 +127,6 @@ app.prepare().then(async () => {
   // 4. Routes
   expressApp.get('/api/health', (_req, res) => {
     res.status(200).json({ status: 'ok' })
-  })
-
-  expressApp.get('/health/ready', (_req, res) => {
-    res.status(200).json({ status: 'ready' })
   })
 
   expressApp.get('/api/internal/health/services', async (_req, res) => {
