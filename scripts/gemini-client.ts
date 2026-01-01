@@ -254,11 +254,15 @@ async function main() {
   }
 }
 
-export async function generateContentWithFallback(
-  genAI: GoogleGenerativeAI,
-  prompt: string,
+export async function generateContentWithFallback({
+  genAI,
+  prompt,
+  config,
+}: {
+  genAI: GoogleGenerativeAI
+  prompt: string
   config?: Omit<GenerateContentRequest, 'contents'>
-) {
+}) {
   let lastError: Error | null = null
 
   for (const modelName of MODEL_FALLBACKS) {
@@ -345,7 +349,7 @@ ${contextContent}
 --- Task ---
 ${task}
 `
-  const text = await generateContentWithFallback(genAI, prompt)
+  const text = await generateContentWithFallback({ genAI, prompt })
   await writeOutput(text, outputFile)
 }
 
@@ -553,21 +557,25 @@ async function runReviewPreset(
   }
 
   const prompt = await buildReviewPrompt(diff, context, contextContent)
-  const text = await generateContentWithFallback(genAI, prompt, {
-    generationConfig: {
-      maxOutputTokens: 8192,
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: SchemaType.OBJECT,
-        properties: {
-          reviewComment: { type: SchemaType.STRING },
-          labels: {
-            type: SchemaType.ARRAY,
-            items: { type: SchemaType.STRING },
+  const text = await generateContentWithFallback({
+    genAI,
+    prompt,
+    config: {
+      generationConfig: {
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          properties: {
+            reviewComment: { type: SchemaType.STRING },
+            labels: {
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.STRING },
+            },
+            verdict: { type: SchemaType.STRING },
           },
-          verdict: { type: SchemaType.STRING },
+          required: ['reviewComment', 'labels'],
         },
-        required: ['reviewComment', 'labels'],
       },
     },
   })

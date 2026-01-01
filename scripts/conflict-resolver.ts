@@ -93,8 +93,12 @@ ${JSON.stringify(fileConflicts, null, 2)}
 `
 
     try {
-      const text = await generateContentWithFallback(genAI, prompt, {
-        generationConfig: { responseMimeType: 'application/json' },
+      const text = await generateContentWithFallback({
+        genAI,
+        prompt,
+        config: {
+          generationConfig: { responseMimeType: 'application/json' },
+        },
       })
 
       // Process the JSON output
