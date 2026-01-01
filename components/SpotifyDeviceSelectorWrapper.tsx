@@ -8,6 +8,7 @@ import { SpotifyDevice } from '@/types/core'
 interface SpotifyDeviceSelectorWrapperProps {
   availableDevices: SpotifyDevice[]
   deviceMenuAnchor: HTMLElement | null
+  selectedDeviceId: string
   onDeviceSelect: (deviceId: string) => void
   onMenuOpen: (event: MouseEvent<HTMLElement>) => void
   onMenuClose: () => void
@@ -16,6 +17,7 @@ interface SpotifyDeviceSelectorWrapperProps {
 const SpotifyDeviceSelectorWrapper = ({
   availableDevices,
   deviceMenuAnchor,
+  selectedDeviceId,
   onDeviceSelect,
   onMenuOpen,
   onMenuClose,
@@ -23,7 +25,10 @@ const SpotifyDeviceSelectorWrapper = ({
   const deviceMenuOpen = Boolean(deviceMenuAnchor)
 
   return (
-    <>
+    <div
+      data-testid="spotify-device-selector-wrapper"
+      data-selected-device={selectedDeviceId}
+    >
       <IconButton
         size="small"
         onClick={onMenuOpen}
@@ -62,7 +67,7 @@ const SpotifyDeviceSelectorWrapper = ({
           <MenuItem disabled>No devices available</MenuItem>
         )}
       </Menu>
-    </>
+    </div>
   )
 }
 

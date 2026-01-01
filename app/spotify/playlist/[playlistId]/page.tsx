@@ -44,6 +44,14 @@ const PlaylistPage = () => {
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
   )
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+
+  useEffect(() => {
+    const activeDevice = spotifyData.devices?.find((d) => d.is_active)
+    if (activeDevice) {
+      setSelectedDeviceId(activeDevice.id)
+    }
+  }, [spotifyData.devices])
 
   useEffect(() => {
     if (!playlistId) return
@@ -138,6 +146,7 @@ const PlaylistPage = () => {
             <SpotifyDeviceSelectorWrapper
               availableDevices={spotifyData.devices || []}
               deviceMenuAnchor={deviceMenuAnchor}
+              selectedDeviceId={selectedDeviceId}
               onDeviceSelect={handleDeviceSelect}
               onMenuOpen={(e) => setDeviceMenuAnchor(e.currentTarget)}
               onMenuClose={() => setDeviceMenuAnchor(null)}

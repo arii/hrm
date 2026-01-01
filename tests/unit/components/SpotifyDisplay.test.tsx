@@ -204,4 +204,92 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('25')
     })
   })
+  describe('device selection logic', () => {
+    let mockSendData: jest.Mock
+    let rerender: (ui: React.ReactElement) => void
+    let initialSpotifyData: SpotifyData
+
+    beforeEach(() => {
+      mockSendData = jest.fn()
+      initialSpotifyData = {
+        trackName: 'Test Track',
+        artist: 'Test Artist',
+        albumName: 'Test Album',
+        albumArtUrl: '',
+        isPlaying: true,
+        volume: 50,
+        isMuted: false,
+        devices: [],
+      }
+
+      mockedUseSession.mockReturnValue({
+        data: { accessToken: 'fake-token' },
+        status: 'authenticated',
+      })
+      mockedUseWebSocket.mockReturnValue({
+        spotifyData: initialSpotifyData,
+        sendData: mockSendData,
+        connectionStatus: 'Connected',
+        spotifyServiceInitialized: true,
+      })
+      const { rerender: rerenderComponent } = renderWithProviders(
+        <SpotifyDisplay />
+      )
+      rerender = (ui: React.ReactElement) => rerenderComponent(ui)
+    })
+    it('should select the active device on initial load', () => {
+      const devices = [
+        { id: 'mock-device-1', name: 'Test Device 1', is_active: false },
+        { id: 'mock-device-2', name: 'Test Device 2', is_active: true },
+      ]
+      const updatedSpotifyData = { ...initialSpotifyData, devices }
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: updatedSpotifyData,
+      })
+      rerender(<SpotifyDisplay />)
+      // Check that the device selector has the active device selected
+      // This is a simplified check. In a real component, you might check the state or a visual element.
+      expect(
+        screen.getByTestId('spotify-device-selector-wrapper')
+      ).toHaveAttribute('data-selected-device', 'mock-device-2')
+    })
+
+    it('should select the HRM Web Player and transfer playback when no device is active', () => {
+      const devices = [
+        { id: 'mock-device-1', name: 'Test Device 1', is_active: false },
+        { id: 'hrm-web-player', name: 'HRM Web Player', is_active: false },
+      ]
+      const updatedSpotifyData = { ...initialSpotifyData, devices }
+      mockedUseSpotifyWebPlayback.mockReturnValue({
+        ...mockedUseSpotifyWebPlayback(),
+        deviceId: 'hrm-web-player',
+      })
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: updatedSpotifyData,
+      })
+      rerender(<SpotifyDisplay />)
+      expect(
+        screen.getByTestId('spotify-device-selector-wrapper')
+      ).toHaveAttribute('data-selected-device', 'hrm-web-player')
+      expect(mockSendData).toHaveBeenCalledWith({
+        type: 'SPOTIFY_COMMAND',
+        command: 'TRANSFER_PLAYBACK',
+        deviceId: 'hrm-web-player',
+      })
+    })
+
+    it('should clear the device selection when no devices are available', () => {
+      const updatedSpotifyData = { ...initialSpotifyData, devices: [] }
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: updatedSpotifyData,
+      })
+      rerender(<SpotifyDisplay />)
+      expect(
+        screen.getByTestId('spotify-device-selector-wrapper')
+      ).toHaveAttribute('data-selected-device', '')
+    })
+  })
 })

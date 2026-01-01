@@ -214,39 +214,55 @@ const SpotifyDisplay = () => {
     sendVolumeCommand(newVolume) // Send command with the new volume
   }, [isMuted, state.lastVolume, sendVolumeCommand])
 
-  // Effect to auto-select the active device
+  const sendSpotifyCommand = useCallback(
+    (
+      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
+      targetDeviceId?: string
+    ) => {
+      const message: SpotifyCommandMessage = {
+        type: 'SPOTIFY_COMMAND',
+        command,
+        ...(targetDeviceId && { deviceId: targetDeviceId }),
+      }
+      sendData(message)
+    },
+    [sendData]
+  )
+
+  // Effect to auto-select the active device or the web player
   useEffect(() => {
     const devices = spotifyData.devices || []
-    if (devices.length === 0) {
-      if (selectedDeviceId !== '') {
-        dispatch({ type: 'SELECT_DEVICE', payload: '' })
+    const activeDevice = devices.find((device) => device.is_active)
+
+    // Priority 1: If a device is already active, make sure it's selected.
+    // This prevents overriding a user's explicit device choice.
+    if (activeDevice) {
+      if (selectedDeviceId !== activeDevice.id) {
+        dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
+      }
+      return // Exit early since we have an active device.
+    }
+
+    // Priority 2: If no device is active, check if our local web player is available.
+    const webPlayerDevice = deviceId
+      ? devices.find((d) => d.id === deviceId)
+      : undefined
+
+    if (webPlayerDevice) {
+      // If the web player is available but not selected, select it and transfer playback.
+      // This makes the dashboard the default player when nothing else is active.
+      if (selectedDeviceId !== webPlayerDevice.id) {
+        dispatch({ type: 'SELECT_DEVICE', payload: webPlayerDevice.id })
+        sendSpotifyCommand('TRANSFER_PLAYBACK', webPlayerDevice.id)
       }
       return
     }
-    const activeDevice = devices.find((device) => device.is_active)
-    if (!selectedDeviceId && activeDevice) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
-      return
-    }
-    if (
-      selectedDeviceId &&
-      !devices.some((device) => device.id === selectedDeviceId)
-    ) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
-    }
-  }, [spotifyData.devices, selectedDeviceId])
 
-  const sendSpotifyCommand = (
-    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-    targetDeviceId?: string
-  ) => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command,
-      ...(targetDeviceId && { deviceId: targetDeviceId }),
+    // Priority 3: If no active device and no web player, clear the selection.
+    if (selectedDeviceId) {
+      dispatch({ type: 'SELECT_DEVICE', payload: '' })
     }
-    sendData(message)
-  }
+  }, [spotifyData.devices, selectedDeviceId, deviceId, sendSpotifyCommand])
 
   const handlePlayPauseToggle = () => {
     const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
@@ -418,6 +434,7 @@ const SpotifyDisplay = () => {
           <SpotifyDeviceSelectorWrapper
             availableDevices={spotifyData.devices || []}
             deviceMenuAnchor={deviceMenuAnchor}
+            selectedDeviceId={selectedDeviceId}
             onDeviceSelect={handleDeviceSelect}
             onMenuOpen={(e) =>
               dispatch({ type: 'OPEN_DEVICE_MENU', payload: e.currentTarget })
