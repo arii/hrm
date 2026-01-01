@@ -72,12 +72,13 @@ export async function main() {
     const prompt = promptTemplate.replace('{{diff}}', diffContent);
 
     const rawResponse = await generateContentWithFallback(
-        genAI,
-        prompt,
-        {
-            generationConfig: { responseMimeType: 'application/json' },
-        }
-    );
+      genAI,
+      prompt, // For cache prompt
+      prompt, // For full prompt (no context files, so they are the same)
+      {
+        generationConfig: { responseMimeType: 'application/json' },
+      }
+    )
 
     const cleanedResponse = cleanJsonOutput(rawResponse || '');
     const jsonProcessor = new JsonProcessor();

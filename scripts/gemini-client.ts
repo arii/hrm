@@ -3,6 +3,7 @@ import {
   SchemaType,
   GoogleGenerativeAIError,
   GenerateContentRequest,
+  GenerativeModel,
 } from '@google/generative-ai'
 import {
   GoogleAICacheManager,
@@ -87,8 +88,10 @@ async function createCacheForContext(
   ) as { fileUri: string; mimeType: string }[]
 
   if (uploadedFiles.length === 0) {
-    console.warn('⚠️ [Cache] No files were successfully uploaded. Aborting cache creation.');
-    throw new Error('No files were successfully uploaded for caching.');
+    console.warn(
+      '⚠️ [Cache] No files were successfully uploaded. Aborting cache creation.'
+    )
+    throw new Error('No files were successfully uploaded for caching.')
   }
 
   // 2. Create Cache (TTL configurable in seconds)
@@ -180,7 +183,7 @@ export async function main() {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    let cachedModel: { model: any; name: string } | null = null
+    let cachedModel: { model: GenerativeModel; name: string } | null = null
     let contextContent = ''
 
     // 1. Attempt Caching Strategy if requested
@@ -270,20 +273,21 @@ export async function main() {
 
 export async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
-  prompt: string,
+  cachePrompt: string,
+  fullPrompt: string,
   config?: Omit<GenerateContentRequest, 'contents'>,
-  cachedModel?: { model: any; name: string } | null
+  cachedModel?: { model: GenerativeModel; name: string } | null
 ) {
   // Priority 1: Use Cached Model if available
   if (cachedModel) {
     try {
-      if (cachedModel && cachedModel.name) {
+      if (cachedModel.name) {
         console.log(
           `🚀 Using Cached Model for generation from cache: ${cachedModel.name}...`
         )
       }
       const result = await cachedModel.model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        contents: [{ role: 'user', parts: [{ text: cachePrompt }] }],
         ...config,
       })
       return result.response.text()
@@ -291,7 +295,7 @@ export async function generateContentWithFallback(
       console.warn(
         `⚠️ Cached model failed (${error.message}). Falling back to standard text-based generation.`
       )
-      // Fall through to standard loop
+      // Fall through to standard loop, but now using the fullPrompt
     }
   }
 
@@ -302,7 +306,7 @@ export async function generateContentWithFallback(
     try {
       const model = genAI.getGenerativeModel({ model: modelName })
       const result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
         ...config,
       })
       console.log(`Successfully generated content using ${modelName}.`)
@@ -310,31 +314,24 @@ export async function generateContentWithFallback(
     } catch (error: any) {
       lastError = error
       const errorMessage = error.message || ''
-      const errorStatus = error.status
+      const errorStatus = (error as any).status
 
       const isNotFound = errorMessage.includes('404') || errorStatus === 404
       const isBadRequest = errorMessage.includes('400') || errorStatus === 400
       const isRateLimited = errorMessage.includes('429') || errorStatus === 429
-      const isOverloaded = error.status === 503
+      const isOverloaded = errorStatus === 503
 
       if (isNotFound || isBadRequest || isRateLimited || isOverloaded) {
         let reason = 'Unknown Error'
-        if (isRateLimited) {
-          reason = 'Rate Limited'
-        } else if (isOverloaded) {
-          reason = 'Overloaded'
-        } else if (isNotFound) {
-          reason = 'Not Found'
-        } else if (isBadRequest) {
-          reason = 'Invalid Request'
-        }
+        if (isRateLimited) reason = 'Rate Limited'
+        else if (isOverloaded) reason = 'Overloaded'
+        else if (isNotFound) reason = 'Not Found'
+        else if (isBadRequest) reason = 'Invalid Request'
         console.warn(
           `Model ${modelName} failed (${reason}). Trying next model...`
         )
         continue
       }
-
-      // If it's another error (e.g., auth, quota), throw immediately
       throw error
     }
   }
@@ -346,13 +343,10 @@ async function runGenericTask(
   task: string,
   contextContent: string,
   outputFile: string | null | undefined,
-  cachedModel?: { model: any; name: string } | null
+  cachedModel?: { model: GenerativeModel; name: string } | null
 ) {
-  // If cachedModel exists, context is ALREADY in the model state. We only send the task.
-  // If not, we inject contextContent into the prompt.
-  const prompt = cachedModel
-    ? `Task: ${task}`
-    : `
+  const cachePrompt = `Task: ${task}`
+  const fullPrompt = `
 You are an AI assistant helping with a software project.
 Please use the provided context files to inform your response.
 
@@ -361,10 +355,12 @@ ${contextContent}
 --- Task ---
 ${task}
 `
+
   try {
     const text = await generateContentWithFallback(
       genAI,
-      prompt,
+      cachePrompt,
+      fullPrompt,
       {},
       cachedModel
     )
@@ -591,7 +587,7 @@ async function runReviewPreset(
   genAI: GoogleGenerativeAI,
   contextContent: string,
   outputFile: string | null | undefined,
-  cachedModel?: { model: any; name: string } | null
+  cachedModel?: { model: GenerativeModel; name: string } | null
 ) {
   const context = getReviewContextFromEnv()
 
@@ -628,16 +624,19 @@ async function runReviewPreset(
     return
   }
 
-  const prompt = await buildReviewPrompt(
+  const fullPrompt = await buildReviewPrompt(
     diff,
     context,
     cachedModel ? '' : contextContent
   )
 
+  const cachePrompt = await buildReviewPrompt(diff, context, '')
+
   try {
     const text = await generateContentWithFallback(
       genAI,
-      prompt,
+      cachePrompt,
+      fullPrompt,
       {
         generationConfig: {
           maxOutputTokens: 8192,
