@@ -5,26 +5,65 @@ import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useSession } from 'next-auth/react'
+import { useUserSettings } from '@/context/UserSettingsContext'
 import Link from 'next/link'
 import IconButton from '@mui/material/IconButton'
 import SettingsIcon from '@mui/icons-material/Settings'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTileWithCalories from './HrTileWithCalories'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
+  const [userSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const autoConnectAttempted = useRef(false)
-  const deviceStatus = 'Disconnected'
-  const batteryLevel = null
-  const isConnected = false
-  const isSupported = true
+  const {
+    connectAndStream,
+    disconnect,
+    deviceStatus,
+    batteryLevel,
+    isConnected,
+    isSupported,
+  } = useBluetoothHRM({
+    userName: userSettings.userName,
+    userAge: userSettings.userAge || 30,
+  })
 
   const handleConnect = useCallback(() => {
-    //
-  }, [])
+    const userName =
+      session?.user?.name || userSettings.userName || 'Unknown User'
+    const userAge = userSettings.userAge || 30
+    connectAndStream(userName, userAge).catch((error) => {
+      // It's common for the requestDevice promise to be cancelled by the user.
+      // We catch it here to prevent an unhandled rejection error in the console.
+      if (error.name !== 'NotFoundError') {
+        console.error('Failed to connect to HRM device:', error)
+      }
+    })
+  }, [session, userSettings, connectAndStream])
+
+  useEffect(() => {
+    // Auto-connect logic: Use `getDevices()` for gesture-less reconnection.
+    const autoConnect = async () => {
+      if (
+        connectionStatus === 'Connected' &&
+        deviceStatus === 'Disconnected' &&
+        !autoConnectAttempted.current
+      ) {
+        autoConnectAttempted.current = true
+        const userName =
+          session?.user?.name || userSettings.userName || 'Unknown User'
+        const userAge = userSettings.userAge || 30
+        await connectAndStream(userName, userAge)
+      }
+    }
+
+    autoConnect()
+  }, [connectionStatus, deviceStatus, connectAndStream, session, userSettings])
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity
@@ -84,7 +123,7 @@ const HrmConnectionPanel = () => {
                 alignItems: 'center',
               }}
             >
-              <Typography variant="h6">Connect Your Heart Rate Monitor</Typography>
+              <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
               <Link href="/settings" passHref>
                 <IconButton aria-label="settings">
                   <SettingsIcon />
@@ -97,7 +136,7 @@ const HrmConnectionPanel = () => {
             />
             <ConnectHRMonitorButton
               connect={handleConnect}
-              disconnect={() => {}}
+              disconnect={disconnect}
               isConnected={isConnected}
               isSupported={isSupported}
             />

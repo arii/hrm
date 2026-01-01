@@ -13,6 +13,7 @@ import VolumeUp from '@mui/icons-material/VolumeUp'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 import SideLabel from './SideLabel'
+import { useAudioContext } from '@/context/AudioContext'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -21,6 +22,7 @@ const SIDE_COLUMN_WIDTH = '40px'
 
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
+  const { volume, setVolume, muted, toggleMute } = useAudioContext()
   const {
     currentPhase,
     timeRemaining,
@@ -194,6 +196,34 @@ const TimerDisplay = () => {
           {displayTime}
         </Typography>
 
+        {/* Volume Control */}
+        <Stack
+          spacing={{ xs: 1, sm: 2 }}
+          direction="row"
+          sx={{
+            mt: 2,
+            mb: 1,
+            width: { xs: '90%', md: '80%' },
+            maxWidth: 300,
+          }}
+          alignItems="center"
+        >
+          <IconButton onClick={toggleMute} sx={{ color: 'white' }}>
+            {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
+          </IconButton>
+          <Slider
+            aria-label="Volume"
+            value={muted ? 0 : volume}
+            onChange={(_, newValue) => setVolume(newValue as number)}
+            sx={{
+              color: 'white',
+              '& .MuiSlider-thumb': {
+                color: phaseColor,
+              },
+            }}
+          />
+          <VolumeUp sx={{ color: 'white' }} />
+        </Stack>
       </CardContent>
       {/* Right Column: Tabata Durations */}
       <Box

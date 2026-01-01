@@ -16,6 +16,8 @@ import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
+import SpotifySearchInput from '@/components/SpotifySearchInput'
+import VolumeSlider from '@/components/Spotify/VolumeSlider'
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -210,6 +212,10 @@ const SpotifyControls = () => {
           <MusicNote sx={{ mr: 1 }} /> Spotify
         </Typography>
 
+        <Box sx={{ mb: 2 }}>
+          <SpotifySearchInput onTrackSelect={handleTrackSelect} />
+        </Box>
+
         {hasSpotifyData ? (
           <>
             <Box sx={{ textAlign: 'center', mb: 2 }}>
@@ -225,6 +231,13 @@ const SpotifyControls = () => {
               isPlaying={spotifyData.isPlaying}
               onCommand={handlePlaybackCommand}
               disabled={connectionStatus !== 'Connected'}
+            />
+
+            <VolumeSlider
+              volume={volume}
+              muted={muted}
+              onVolumeChange={setVolume}
+              onToggleMute={toggleMute}
             />
 
             {devices.length > 0 && (

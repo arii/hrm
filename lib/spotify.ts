@@ -17,3 +17,25 @@ export function getSpotifyBasicAuth() {
   )
 }
 
+/**
+ * Shared fetch wrapper for refreshing tokens
+ */
+export async function refreshSpotifyToken(refreshToken: string) {
+  const response = await fetch(SPOTIFY_CONSTANTS.TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: getSpotifyBasicAuth(),
+    },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    }),
+  })
+
+  if (!response.ok) {
+    throw await response.json()
+  }
+
+  return response.json()
+}
