@@ -80,7 +80,7 @@ jobs:
           fi
   # 1. Run CI checks on every push to a PR
   pr-quality:
-    if: github.event_name == 'pull_request' && needs.check-diff.outputs.has_changes == 'true'
+    if: github.event_name == 'pull_request'
     needs: [check-diff]
     permissions:
       contents: read
