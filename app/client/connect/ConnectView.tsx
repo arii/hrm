@@ -157,7 +157,7 @@ const ConnectView: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 10 }}>
       <Grid container spacing={4}>
-        <Grid xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardHeader
               title="HRM Connection"
@@ -183,7 +183,7 @@ const ConnectView: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardHeader
               title="User Settings"
@@ -204,7 +204,7 @@ const ConnectView: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12}>
+        <Grid item xs={12}>
           <WorkoutSummary
             maxHr={maxHr}
             restingHr={restingHr}
