@@ -40,7 +40,9 @@ jobs:
         with:
           token: ${{ secrets.ARI_PAT }}
           base: leader
-          exclude-labels: 'no-rebase,wip'
+          exclude-labels: |
+            no-rebase
+            wip
 
       # --- AI CONFLICT RESOLUTION START ---
       # This block only runs if the automatic rebase failed.
