@@ -7,6 +7,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
 import { getHrZoneProps } from '@/utils/visualization'
+import { formatNumber } from '@/utils/formatters'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
@@ -44,7 +45,10 @@ const HrTile = ({
     ? alertMessage
     : !isConnected
       ? 'Disconnected - Showing last known value'
-      : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
+      : // Use the formatter to ensure the tooltip also shows a consistent 2-decimal-place calorie value.
+        `Name: ${name}, BPM: ${bpm}, Kcal: ${formatNumber(
+          calories
+        )}, % Max HR: ${percentMax}%`
 
   return (
     <Tooltip title={tooltipTitle} arrow>
@@ -135,7 +139,8 @@ const HrTile = ({
 
               {/* Calorie Display */}
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {Math.floor(calories)}{' '}
+                {/* Use the formatter to ensure the main display shows a consistent 2-decimal-place calorie value. */}
+                {formatNumber(calories)}{' '}
                 <Typography
                   variant="caption"
                   component="span"
