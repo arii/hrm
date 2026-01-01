@@ -44,11 +44,15 @@ export const useUserSettings = () => {
   }, [])
 
   useEffect(() => {
-    setSavePending(true)
-    const timer = setTimeout(() => {
+    const handler = setTimeout(() => {
       setSavePending(false)
     }, 1000)
-    return () => clearTimeout(timer)
+
+    setSavePending(true)
+
+    return () => {
+      clearTimeout(handler)
+    }
   }, [userName, userAge, userGender, userHeight, userWeight, unit])
 
   return {
