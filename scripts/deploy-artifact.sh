@@ -73,6 +73,8 @@ $PNPM_CMD exec pm2 delete all || true
 echo "🚀 Starting new application..."
 # Use pnpm exec to ensure the project's local pm2 is used
 $PNPM_CMD exec pm2 start ecosystem.config.cjs --env production
+
+# Verify the deployment
 ./scripts/verify-deployment.sh
 
 echo "✅ Deployment Complete."
