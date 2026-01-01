@@ -1,8 +1,8 @@
 'use client'
 
-import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Paper from '@mui/material/Paper'
+import PageContainer from '@/components/PageContainer'
 import Typography from '@mui/material/Typography'
 import { Session } from 'next-auth'
 import { signIn, signOut, useSession } from 'next-auth/react'
@@ -45,7 +45,7 @@ export default function SpotifyDebugPage() {
   }, [])
 
   return (
-    <Box sx={{ p: 2 }}>
+    <PageContainer>
       <Typography variant="h4" gutterBottom>
         Spotify Debug
       </Typography>
@@ -71,6 +71,6 @@ export default function SpotifyDebugPage() {
         </Button>
         <pre>{JSON.stringify(serverToken, null, 2)}</pre>
       </Paper>
-    </Box>
+    </PageContainer>
   )
 }

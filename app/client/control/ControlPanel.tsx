@@ -5,7 +5,7 @@
  */
 'use client'
 import Box from '@mui/material/Box'
-import Container from '@mui/material/Container'
+import PageContainer from '@/components/PageContainer'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import Head from 'next/head'
@@ -75,12 +75,11 @@ const ControlPanel = () => {
           content="Heart Rate Monitor Control Panel - Timer and Spotify Controls"
         />
       </Head>
-      <Container
+      <PageContainer
         maxWidth="xs"
         sx={{
           py: 1,
           px: 1,
-          minHeight: '100vh',
           background: 'rgba(30, 41, 59, 0.7)',
           backdropFilter: 'blur(20px) saturate(180%)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -109,7 +108,7 @@ const ControlPanel = () => {
         <TimerControls />
         <Box sx={{ height: 8 }} />
         <SpotifyControls />
-      </Container>
+      </PageContainer>
     </>
   )
 }
