@@ -32,18 +32,20 @@ jobs:
     steps:
       - name: Route Comment
         id: router
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
-          # @gemini-bot implies both a review and an invocation
-          # @jules fix is for review only
-          COMMENT_BODY="${{ github.event.comment.body }}"
-          if [[ "$COMMENT_BODY" == '@gemini-bot'* || "$COMMENT_BODY" == '@jules fix'* ]]; then
-            echo "is_review_comment=true" >> $GITHUB_OUTPUT
+          # Use grep for robust matching.
+          # '^' matches the beginning of the string.
+          # '-x' matches the entire line exactly.
+          if echo "$COMMENT_BODY" | grep -q '^@gemini-bot' || echo "$COMMENT_BODY" | grep -q '^@jules fix'; then
+            echo "is_review_comment=true" >> "$GITHUB_OUTPUT"
           fi
-          if [[ "$COMMENT_BODY" == '@gemini-bot'* ]]; then
-            echo "is_gemini_invoke=true" >> $GITHUB_OUTPUT
+          if echo "$COMMENT_BODY" | grep -q '^@gemini-bot'; then
+            echo "is_gemini_invoke=true" >> "$GITHUB_OUTPUT"
           fi
-          if [[ "$COMMENT_BODY" == '@gemini-update-pr' ]]; then
-            echo "is_update_pr=true" >> $GITHUB_OUTPUT
+          if echo "$COMMENT_BODY" | grep -Fxq '@gemini-update-pr'; then
+            echo "is_update_pr=true" >> "$GITHUB_OUTPUT"
           fi
 
   check-diff:

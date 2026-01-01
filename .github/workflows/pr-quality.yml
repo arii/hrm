@@ -981,6 +981,9 @@ jobs:
           path: artifacts/
         continue-on-error: true
 
+      - name: Create test-results directory
+        run: mkdir -p test-results
+
       - name: Post Quality Summary with Details
         if: always()
         env:
