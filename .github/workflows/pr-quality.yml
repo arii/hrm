@@ -327,7 +327,7 @@ jobs:
         run: |
           echo "### ❌ Lint Failure Report" >> $GITHUB_STEP_SUMMARY
           echo '```text' >> $GITHUB_STEP_SUMMARY
-          tail -n 30 logs/lint-output.log >> $GITHUB_STEP_SUMMARY
+          cat logs/lint-output.log >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Check Lint Result
