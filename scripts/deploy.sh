@@ -4,7 +4,9 @@ set -euo pipefail
 
 # --- Configuration ---
 APP_NAME="hrm-server"
-HEALTH_CHECK_URL="http://127.0.0.1:3000/health/ready"
+# Use PORT from environment, fallback to 3000
+PORT="${PORT:-3000}"
+HEALTH_CHECK_URL="http://127.0.0.1:${PORT}/health/ready"
 STARTUP_TIMEOUT=60 # seconds
 LOG_FILE="/tmp/${APP_NAME}-deployment.log"
 PM2_DUMP_FILE="$HOME/.pnpm/global/5/.pnpm/pm2@6.0.14/node_modules/pm2/dump.rdb"
@@ -40,15 +42,24 @@ update_and_build() {
   log "📦 Installing dependencies..."
   pnpm install --frozen-lockfile
 
+  log "🗑️ Pruning development dependencies..."
+  pnpm prune --prod
+
   log "🛠️ Building the application..."
   pnpm run build
 }
 
 start_new_version() {
-  log "🔄 Stopping current version and starting new one..."
-  pnpm exec pm2 delete "$APP_NAME" >/dev/null 2>&1 || true # Ignore error if it doesn't exist
-  log "Starting new version from ecosystem file..."
-  pnpm exec pm2 start ecosystem.config.cjs
+  # This script uses 'reload' to attempt a zero-downtime deployment.
+  # If the app doesn't exist, it falls back to a regular 'start'.
+  # The trade-off for zero-downtime is that rollback is more complex.
+  # A full stop/start (delete/start) provides a cleaner state for verification
+  # at the cost of brief downtime. This script prioritizes minimal downtime.
+  log "🔄 Reloading application for zero-downtime update..."
+  pnpm exec pm2 reload "$APP_NAME" --update-env || {
+    log "Reload failed or app not running. Attempting to start..."
+    pnpm exec pm2 start ecosystem.config.cjs
+  }
 }
 
 verify_startup() {
@@ -86,6 +97,9 @@ rollback() {
 
   log "📦 Reinstalling dependencies for previous version..."
   pnpm install --frozen-lockfile
+
+  log "🗑️ Pruning development dependencies for previous version..."
+  pnpm prune --prod
 
   log "🛠️ Rebuilding previous version..."
   pnpm run build
