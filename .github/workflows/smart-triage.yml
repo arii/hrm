@@ -91,36 +91,14 @@ jobs:
 
           echo "::notice::Triage Summary: Processed $ISSUES_PROCESSED issues, Added $LABELS_ADDED labels, Posted $COMMENTS_POSTED comments"
 
-      - name: Detect Duplicates
+      - name: Install Dependencies for Duplicate Detection
+        run: pnpm install --frozen-lockfile
+
+      - name: Detect Duplicates with AI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set +e
-
-          DUPLICATES_FOUND=0
-          COMMENTS_POSTED=0
-
-          gh issue list --state open --json number,title --limit 100 | \
-            jq -r '.[] | .title' | sort | uniq -d | while read -r title; do
-            
-            DUPS=$(gh issue list --state open --search "\"$title\"" --json number --limit 5 | jq -r '.[].number')
-            COUNT=$(echo "$DUPS" | wc -w)
-            
-            if [ "$COUNT" -gt 1 ]; then
-              ((DUPLICATES_FOUND++))
-              FIRST=$(echo "$DUPS" | awk '{print $1}')
-              OTHERS=$(echo "$DUPS" | awk '{for(i=2;i<=NF;i++)printf "#%s,",$i}' | sed 's/,$//')
-              
-              echo "::notice::Found $COUNT duplicate issues for: '$title'"
-              
-              gh issue comment "$FIRST" --body "Possible duplicates: $OTHERS" >/dev/null 2>&1 && \
-                echo "::notice::  ✅ Posted duplicate notice on #$FIRST" && \
-                ((COMMENTS_POSTED++))
-            fi
-          done
-
-          [ "$DUPLICATES_FOUND" -gt 0 ] && \
-            echo "::notice::Duplicate Detection: Found $DUPLICATES_FOUND duplicate titles, Posted $COMMENTS_POSTED notices"
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: npx tsx scripts/detect-duplicates.ts
 
       - name: Suggest Resolution
         env:
