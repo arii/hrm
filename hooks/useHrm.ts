@@ -7,7 +7,12 @@ const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_CHARACTERISTIC_UUID = 'battery_level'
 
 export const useHrm = () => {
-  const [isSupported, setIsSupported] = useState(true)
+  const [isSupported, setIsSupported] = useState(() => {
+    if (typeof navigator !== 'undefined' && navigator.bluetooth) {
+      return true
+    }
+    return false
+  })
   const [isConnected, setIsConnected] = useState(false)
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
@@ -18,12 +23,6 @@ export const useHrm = () => {
   const [batteryCharacteristic, setBatteryCharacteristic] =
     useState<BluetoothRemoteGATTCharacteristic | null>(null)
   const [currentHR, setCurrentHR] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && !navigator.bluetooth) {
-      setIsSupported(false)
-    }
-  }, [])
 
   const handleHrValueChange = useCallback((event: Event) => {
     const characteristic = event.target as BluetoothRemoteGATTCharacteristic

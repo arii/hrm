@@ -152,7 +152,7 @@ const ConnectView: React.FC = () => {
   }
 
   const isFormValid = Object.values(formState).every((field) => field.isValid)
-  const hrZoneProps = getHrZoneProps(currentHR, maxHr, restingHr)
+  const hrZoneProps = getHrZoneProps(currentHR ?? 0, maxHr)
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 10 }}>
