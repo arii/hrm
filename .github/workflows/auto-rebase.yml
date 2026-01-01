@@ -16,6 +16,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate PAT Token
+        run: |
+          if [ -z "${{ secrets.PAT_TOKEN }}" ]; then
+            echo "::warning::PAT_TOKEN secret is not configured. Auto-rebase will not work."
+            echo "Please configure a Personal Access Token (PAT) with 'repo' scope in repository secrets."
+            exit 0
+          else
+            echo "::notice::PAT_TOKEN is configured"
+          fi
+
       - name: Rebase PRs
         uses: peter-evans/rebase@v3
         with:
@@ -25,3 +35,4 @@ jobs:
           exclude-labels: |
             no-rebase
             wip
+        continue-on-error: true
