@@ -1,6 +1,6 @@
 // hooks/useUserSettings.ts
-import { useState, useEffect } from 'react'
-import { useLocalStorage } from './useLocalStorage'
+import { useState, useEffect, useMemo } from 'react'
+import useLocalStorage from './useLocalStorage'
 
 export interface UserSettings {
   userName: string
@@ -33,19 +33,14 @@ export const useUserSettings = () => {
   )
   const [savePending, setSavePending] = useState(false)
 
-  const [maxHr, setMaxHr] = useState(0)
-  const [restingHr, setRestingHr] = useState(0)
-
-  useEffect(() => {
+  const maxHr = useMemo(() => {
     const age = parseInt(userAge, 10)
-    if (!isNaN(age)) {
-      setMaxHr(220 - age)
-    }
+    return isNaN(age) ? 0 : 220 - age
   }, [userAge])
 
-  // Placeholder for resting HR calculation
-  useEffect(() => {
-    setRestingHr(60)
+  const restingHr = useMemo(() => {
+    // Placeholder for resting HR calculation
+    return 60
   }, [])
 
   useEffect(() => {
