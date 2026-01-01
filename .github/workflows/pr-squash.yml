@@ -59,7 +59,7 @@ jobs:
             }
 
       - name: Checkout PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Using the default GITHUB_TOKEN. For this to work on protected branches,
           # the repository settings may need to be adjusted to allow the github-actions bot to push.

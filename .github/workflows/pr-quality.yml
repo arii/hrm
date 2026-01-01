@@ -59,7 +59,7 @@ jobs:
       session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Sanitize SESSION_ID
         id: sanitize_id
@@ -267,7 +267,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -307,7 +307,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -360,7 +360,7 @@ jobs:
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -516,7 +516,7 @@ jobs:
       PORT: 3006
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -589,7 +589,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -663,7 +663,7 @@ jobs:
       PORT: 3007
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -754,7 +754,7 @@ jobs:
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -836,7 +836,7 @@ jobs:
       checks: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 2
       - name: Copy checks from parent commit
@@ -973,7 +973,7 @@ jobs:
     needs: [prepare-env, knip-check, lint-check, build-check, integration-tests]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download All Artifacts
         uses: actions/download-artifact@v4

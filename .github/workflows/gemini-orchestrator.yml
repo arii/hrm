@@ -57,7 +57,7 @@ jobs:
       last_non_empty_commit: ${{ steps.check_files.outputs.last_non_empty_commit }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 100
       - name: Check for file changes and find last non-empty commit
@@ -138,7 +138,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Environment
         uses: ./.github/actions/setup-env
       - name: Run Gemini Client
@@ -151,7 +151,7 @@ jobs:
     needs: [comment-router]
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Environment
         uses: ./.github/actions/setup-env
       - name: Run Gemini Client

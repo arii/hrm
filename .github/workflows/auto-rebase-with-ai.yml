@@ -24,7 +24,7 @@ jobs:
     steps:
       # Step 1: Checkout TRUSTED base branch code (leader). This contains our trusted scripts.
       - name: Checkout Base Branch (Trusted)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: 'leader'
           token: ${{ secrets.ARI_PAT }}
@@ -59,7 +59,7 @@ jobs:
       # Step 3: Checkout UNTRUSTED PR code into a separate directory for analysis.
       - name: Checkout PR Code (Untrusted)
         if: steps.rebase.conclusion == 'failure' && github.event_name != 'push'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.pr_data.outputs.HEAD_SHA }}
           path: 'pr-code' # Checkout to a subdirectory

@@ -32,7 +32,7 @@ jobs:
     if: "contains(github.event.pull_request.labels.*.name, 'dependencies')"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
@@ -51,7 +51,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 1
@@ -75,7 +75,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 1
@@ -99,7 +99,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 1
@@ -132,7 +132,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 1
@@ -182,7 +182,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 1
@@ -228,7 +228,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 1
@@ -271,7 +271,7 @@ jobs:
       failure_report_json: ${{ steps.read_report.outputs.json_content }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Download All Logs
         uses: actions/download-artifact@v4
         with:
