@@ -1,4 +1,10 @@
-import { Breakpoint, Container, ContainerProps } from '@mui/material'
+import {
+  Breakpoint,
+  Container,
+  ContainerProps,
+  SxProps,
+  Theme,
+} from '@mui/material'
 import { ReactNode } from 'react'
 
 /**
@@ -30,7 +36,7 @@ export default function PageContainer({
 }: PageContainerProps) {
   const { sx, ...rest } = props
 
-  const finalSx = {
+  const finalSx: SxProps<Theme> = {
     minHeight: '100vh',
     backgroundColor: 'background.default',
     py: { xs: 2, sm: 3 }, // default
