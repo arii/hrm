@@ -2,19 +2,20 @@
 import { HrmStreamData } from '../../types/core'
 
 /**
- * Repository for managing HRM client data.
+ * Repository for managing HRM client data, keyed by user name.
  * Encapsulates the storage and retrieval of HrmStreamData.
  */
 export class HrmDataRepository {
+  // Keyed by user name, which is assumed to be unique for active sessions.
   private clientData = new Map<string, HrmStreamData>()
 
   /**
-   * Finds a client's data by their ID.
-   * @param id The client's unique identifier.
+   * Finds a client's data by their user name.
+   * @param name The client's user name.
    * @returns The client's data or undefined if not found.
    */
-  findById(id: string): HrmStreamData | undefined {
-    return this.clientData.get(id)
+  findByName(name: string): HrmStreamData | undefined {
+    return this.clientData.get(name)
   }
 
   /**
@@ -26,19 +27,22 @@ export class HrmDataRepository {
   }
 
   /**
-   * Saves or updates a client's data.
-   * @param data The client data to save.
+   * Saves or updates a client's data. The user's name from the data is used as the key.
+   * @param data The client data to save. It must contain a 'name' property.
    */
   save(data: HrmStreamData): void {
-    this.clientData.set(data.clientId, data)
+    if (!data.name) {
+      throw new Error('HrmStreamData must have a name to be saved.')
+    }
+    this.clientData.set(data.name, data)
   }
 
   /**
-   * Deletes a client's data by their ID.
-   * @param id The client's unique identifier.
+   * Deletes a client's data by their user name.
+   * @param name The client's user name.
    */
-  deleteById(id: string): void {
-    this.clientData.delete(id)
+  deleteByName(name: string): void {
+    this.clientData.delete(name)
   }
 
   /**

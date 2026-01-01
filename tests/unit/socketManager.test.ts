@@ -315,10 +315,10 @@ describe('WebSocket Manager', () => {
 
   describe('Calorie Calculation', () => {
     it('should accumulate calories correctly with small frequent updates', () => {
-      const sendHrmInput = (hr: number) => {
+      const sendHrmInput = (hr: number, name = 'test-user') => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
+          data: { value: hr, age: 30, name },
         })
         mockWs.emit('message', message.toString())
       }
@@ -391,17 +391,10 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should broadcast state on client disconnect', () => {
+    it('should NOT broadcast state on client disconnect', () => {
       mockWs.emit('close')
       jest.runAllTimers()
-      expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [],
-        },
-        'socketManager.broadcastState'
-      )
+      expect(broadcast).not.toHaveBeenCalled()
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {

@@ -15,8 +15,8 @@ import {
   ServerMessage,
   StateSnapshot,
   ExtWebSocket,
+  HrmInputMessage,
 } from '../types/websocket.js'
-import { HrmStreamData } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import {
   broadcast,
@@ -27,7 +27,6 @@ import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
-import { env } from '../lib/env.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -38,15 +37,15 @@ let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
 // State Management:
-// - hrmDataRepository: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
+// - hrmDataRepository: Stores the live HRM data for each user (e.g., HR value, calories), keyed by user name. This is the primary source of truth for broadcasted state.
 // - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
-// - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
+// - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation) keyed by user name, not sent to the client.
 const hrmDataRepository = new HrmDataRepository()
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
 
-// Track internal state for calculations (not sent to client)
+// Track internal state for calculations (keyed by user name)
 const clientSessionState = new Map<
   string,
   { lastUpdate: number; accumulatedCalories: number }
@@ -125,8 +124,6 @@ const initSocketManager = (
     const logMeta = getLogMeta(req, clientId)
     extWs.clientId = clientId
 
-    // it's a stale or "zombie" connection. Overwrite it with the new socket.
-
     if (clientSockets.has(clientId)) {
       logger.warn(
         logMeta,
@@ -143,59 +140,18 @@ const initSocketManager = (
 
     logger.info(logMeta, 'WebSocket client connected')
 
-    if (!hrmDataRepository.findById(clientId)) {
-      // Initialize new client
-      const newClient: HrmStreamData = {
-        clientId: extWs.clientId,
-        value: 0,
-        maxHr: 185,
-        age: 30,
-        calories: 0, // Initialize to 0
-      }
-      hrmDataRepository.save(newClient)
-      clientSessionState.set(extWs.clientId, {
-        lastUpdate: Date.now(),
-        accumulatedCalories: 0,
-      })
-    } else {
-      logger.info({ clientId }, 'Reconnected with existing session.')
-    }
-
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)
     })
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      // Clean up the socket from our map to prevent memory leaks
+      clientSockets.delete(clientId)
 
-      // CRITICAL: Do NOT immediately delete clientData.
-      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
-      // NOTE: In a high-traffic production environment, this could lead to
-      // memory pressure if many clients disconnect and don't reconnect.
-      // A more robust solution might involve a separate cleanup process
-      // or a maximum number of inactive sessions.
-      setTimeout(() => {
-        // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
-        if (clientSockets.get(clientId) === extWs) {
-          logger.info(
-            { clientId: extWs.clientId },
-            'Session expired. Deleting data.'
-          )
-          try {
-            hrmDataRepository.deleteById(extWs.clientId)
-            clientSessionState.delete(extWs.clientId)
-            broadcastState()
-          } catch (err) {
-            logger.error(
-              { clientId: extWs.clientId, error: err },
-              'Error during session cleanup'
-            )
-          } finally {
-            // Always remove the socket reference to prevent leaks
-            clientSockets.delete(extWs.clientId)
-          }
-        }
-      }, env.WEBSOCKET_GRACE_PERIOD_MS)
+      // NOTE: We no longer delete user data on disconnect. This allows a user to
+      // have multiple tabs open without their data disappearing when one tab is closed.
+      // Data for a user will persist until the server is restarted.
     })
   })
 
@@ -237,9 +193,6 @@ const handleIncomingMessage = (
 
     switch (message.type) {
       case 'PING': {
-        // This is now a no-op. The server relies on native WebSocket ping/pong
-        // frames for heartbeat. The case is retained for backward
-        // compatibility with older clients that might still send this message.
         break
       }
       case 'REGISTER_CLIENT': {
@@ -264,41 +217,60 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataRepository.findById(clientId)
-        if (existingData) {
-          const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
-
-          // Prevent overwriting a real name with a default "Unknown" name
-          if (
-            existingData.name &&
-            !/^(user|new user|unknown|bluetooth hrm)/i.test(
-              existingData.name
-            ) &&
-            updateData.name &&
-            /^(user|new user|unknown|bluetooth hrm)/i.test(updateData.name)
-          ) {
-            delete updateData.name
-          }
-
-          hrmDataRepository.save({ ...existingData, ...updateData })
-        }
-        broadcastState()
+        // This message type might be deprecated or needs rethinking in a multi-client-per-user world.
+        // For now, it's a no-op as the required 'name' might not be present.
+        // HRM_INPUT is now the primary way to update user data.
+        logger.warn(
+          { clientId },
+          'Received HRM_METADATA_UPDATE. This is currently a no-op.'
+        )
         break
       }
       case 'HRM_INPUT': {
-        const existingData = hrmDataRepository.findById(clientId)
-        const sessionState = clientSessionState.get(clientId)
+        const hrmMessage = message as HrmInputMessage
+        const { name, age, maxHr } = hrmMessage.data
+        if (!name) {
+          logger.warn(
+            { clientId },
+            'HRM_INPUT message received without a name.'
+          )
+          return // Ignore messages without a user name
+        }
 
+        let existingData = hrmDataRepository.findByName(name)
+        let sessionState = clientSessionState.get(name)
+
+        // If this is the first time we see this user, initialize their data
+        if (!existingData) {
+          existingData = {
+            clientId: clientId, // Associate with the first client that registered this user
+            name: name,
+            value: 0,
+            maxHr: maxHr ?? 185,
+            age: age ?? 30,
+            calories: 0,
+          }
+          hrmDataRepository.save(existingData)
+
+          sessionState = {
+            lastUpdate: Date.now(),
+            accumulatedCalories: 0,
+          }
+          clientSessionState.set(name, sessionState)
+          logger.info({ name, clientId }, 'New user session started.')
+        }
+
+        // Now, proceed with the update logic
         if (existingData && sessionState) {
           const now = Date.now()
           const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
           sessionState.lastUpdate = now
 
           let currentAccumulated = sessionState.accumulatedCalories
-          const currentHr = message.data.value ?? existingData.value
-          const currentAge = existingData.age ?? 30
+          const currentHr = hrmMessage.data.value ?? existingData.value
+
+          // Use the latest provided age, otherwise fall back to existing
+          const currentAge = age ?? existingData.age ?? 30
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             const caloriesBurned = estimateCaloriesBurned({
@@ -310,13 +282,15 @@ const handleIncomingMessage = (
             currentAccumulated += caloriesBurned
           }
 
-          // Update the internal state with high precision value
           sessionState.accumulatedCalories = currentAccumulated
 
-          // ONLY update the value and calories
+          // Update the repository with the latest data
           hrmDataRepository.save({
             ...existingData,
-            value: message.data.value ?? existingData.value,
+            value: currentHr,
+            // Update metadata if provided in the message
+            age: age ?? existingData.age,
+            maxHr: maxHr ?? existingData.maxHr,
             calories: Math.round(currentAccumulated * 10) / 10,
           })
         }

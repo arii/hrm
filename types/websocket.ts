@@ -173,6 +173,9 @@ import { z } from 'zod'
 
 export const HrmInputDataSchema = z.object({
   value: z.number().nullable(),
+  name: z.string().optional(),
+  age: z.number().optional(),
+  maxHr: z.number().optional(),
 })
 
 export const HrmInputMessageSchema = z.object({

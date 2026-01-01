@@ -37,9 +37,9 @@ Security and Performance: Ensure the refactored code is performant, especially f
 - **Modularity and Single Responsibility**: Avoid creating overly long scripts or components. Break down large files like `gemini-client.ts` and `page.tsx` into smaller, reusable functions or components with a single responsibility.
 - **Shared Helper Functions**: Encourage the creation and use of shared helper functions for common tasks. Place these in the `utils` or `lib` directory.
 - **Testing**:
-    - When introducing a new frontend component or backend service, it must be accompanied by a corresponding test.
-    - Use data factories or mock data generators for all tests to ensure consistency and readability.
-    - Use ARIA labels and `data-testid` attributes for easier and more reliable testing of UI components.
+  - When introducing a new frontend component or backend service, it must be accompanied by a corresponding test.
+  - Use data factories or mock data generators for all tests to ensure consistency and readability.
+  - Use ARIA labels and `data-testid` attributes for easier and more reliable testing of UI components.
 
 Output Format:
 

@@ -76,7 +76,7 @@ export interface HrmStreamData {
   clientId: string
   value: number
   maxHr: number
-  name?: string
+  name: string
   age?: number
   calories: number
 }
