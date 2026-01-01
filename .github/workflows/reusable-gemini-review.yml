@@ -90,11 +90,19 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -n "${{ inputs.last_non_empty_commit }}" ]; then
-            git diff ${{ github.event.pull_request.base.sha }}...${{ inputs.last_non_empty_commit }} > pr.diff
-          else
-            gh pr diff ${{ github.event.pull_request.number }} --patch > pr.diff
-          fi
+          # The PR's base commit SHA, for an accurate diff at the time of branching.
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          # The PR's head commit SHA. If a last_non_empty_commit is provided, use that instead.
+          HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
+
+          echo "🔍 Generating diff between base commit ($BASE_SHA) and head commit ($HEAD_SHA)..."
+
+          # Create a diff between the head and the true merge base.
+          # This ensures that the diff only contains changes from the PR,
+          # avoiding the inclusion of recent changes from the base branch (e.g., 'leader').
+          git diff ${BASE_SHA}...${HEAD_SHA} > pr.diff
+
+          echo "✅ Diff generated and saved to pr.diff"
 
       - name: Gather PR Context
         id: context
