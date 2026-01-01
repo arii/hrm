@@ -645,7 +645,7 @@ jobs:
 
       - name: 'Gemini: Create Pull Request'
         if: env.AGENT_PROVIDER == 'gemini'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.ARI_PAT }}
           commit-message: ${{ env.COMMIT_MESSAGE }}
