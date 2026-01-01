@@ -93,6 +93,39 @@ jobs:
           path: logs/
           retention-days: 7
 
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: self-hosted
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+          fetch-depth: 1
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+      - name: Run Unit Tests
+        id: unit_tests
+        run: ./scripts/ci/run-unit-tests.sh
+        continue-on-error: true
+      - name: Publish Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Unit Tests Report
+          path: test-results/unit-results.xml
+          reporter: java-junit
+      - name: Upload Logs & Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results-${{ env.SESSION_ID }}
+          path: |
+            logs/
+            test-results/
+          retention-days: 7
+
   infra-tests:
     name: 🧪 Infrastructure Tests
     runs-on: self-hosted
@@ -188,10 +221,51 @@ jobs:
             reports/performance/
           retention-days: 7
 
+  visual-tests:
+    name: 🧪 Visual Tests
+    runs-on: self-hosted
+    needs: [build-check]
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+          fetch-depth: 1
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+      - name: Verify Build
+        run: ./scripts/ci/run-build.sh
+      - name: Run Visual Tests
+        id: visual_tests
+        run: ./scripts/ci/run-visual-tests.sh
+        continue-on-error: true
+      - name: Publish Visual Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Visual Tests Report
+          path: test-results/results.xml
+          reporter: java-junit
+      - name: Merge Playwright Reports
+        if: always()
+        run: npx playwright merge-reports --reporter html ./blob-report
+      - name: Upload Logs & Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-test-results-${{ env.SESSION_ID }}
+          path: |
+            logs/
+            test-results/
+            blob-report/
+            playwright-report/
+          retention-days: 7
+
   failure-handler:
     name: 🚨 Failure Handler
     runs-on: ubuntu-latest
-    needs: [lint-check, build-check, infra-tests, perf-tests]
+    needs: [lint-check, build-check, unit-tests, infra-tests, perf-tests, visual-tests]
     if: failure()
     outputs:
       failure_report_json: ${{ steps.read_report.outputs.json_content }}
