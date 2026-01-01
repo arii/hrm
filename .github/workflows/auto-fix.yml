@@ -39,7 +39,7 @@ jobs:
 
       - name: Commit and Push Changes
         if: steps.setup.outcome == 'success'
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: 'style: auto-fix linting and formatting issues'
           file_pattern: '**/*.ts **/*.tsx'
