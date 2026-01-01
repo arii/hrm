@@ -1,7 +1,7 @@
 // components/shared/Form/ValidatedTextField.tsx
 import TextField, { TextFieldProps } from '@mui/material/TextField'
 import React, { useCallback, useEffect, useState } from 'react'
-import { ZodIssue } from 'zod'
+import { ZodIssue, ZodSchema } from 'zod'
 import { validate } from '@/utils/validation'
 
 // Exclude props that will be managed internally by the component
@@ -17,8 +17,8 @@ type ValidatedTextFieldProps = Omit<
     isValid: boolean,
     issues: ZodIssue[]
   ) => void
-  validationSchema: any
-  validationDependencies?: any[]
+  validationSchema: ZodSchema
+  validationDependencies?: unknown[]
   debounceTimeout?: number
 }
 

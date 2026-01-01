@@ -1,5 +1,5 @@
 // utils/validation.ts
-import { ZodIssue, z } from 'zod'
+import { ZodIssue, ZodSchema } from 'zod'
 
 /**
  * Validates a value against a Zod schema and returns the result.
@@ -10,7 +10,7 @@ import { ZodIssue, z } from 'zod'
  */
 export const validate = (
   value: unknown,
-  schema: z.ZodSchema<any>
+  schema: ZodSchema
 ): { success: boolean; issues: ZodIssue[] } => {
   const result = schema.safeParse(value)
   if (result.success) {

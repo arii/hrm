@@ -13,9 +13,11 @@ import { ZodIssue } from 'zod'
 import UserSettings from './UserSettings'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import { useUserSettings } from '@/hooks/useUserSettings'
-import { convertHeight, convertWeight } from '@/utils/units'
+import { cmToFeetAndInches, feetAndInchesToCm, KG_TO_LBS } from '@/utils/units'
 import WorkoutSummary from './WorkoutSummary'
 import { useDebounce } from 'use-debounce'
+import { useHrm } from '@/hooks/useHrm'
+import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
 
 const ConnectView: React.FC = () => {
   const {
@@ -23,6 +25,8 @@ const ConnectView: React.FC = () => {
     setUserName,
     userAge,
     setUserAge,
+    userGender,
+    setUserGender,
     userHeight,
     setUserHeight,
     userWeight,
@@ -33,6 +37,27 @@ const ConnectView: React.FC = () => {
     restingHr,
     savePending,
   } = useUserSettings()
+
+  const {
+    isConnected,
+    deviceStatus,
+    onConnect,
+    onDisconnect,
+    onForgetDevice,
+    isSupported,
+    batteryLevel,
+    bluetoothConnected,
+  } = useHrm()
+
+  const {
+    onStartWorkout,
+    onEndWorkout,
+    onReset,
+    workoutStatus,
+    hasStarted,
+    duration,
+    caloriesBurned,
+  } = useWorkoutTimer()
 
   const [formState, setFormState] = useState({
     userName: { value: userName, isValid: true, issues: [] },
@@ -78,18 +103,45 @@ const ConnectView: React.FC = () => {
 
   const handleUnitChange = (newUnit: 'METRIC' | 'IMPERIAL') => {
     if (newUnit !== unit) {
-      const { cm, feet, inches } = convertHeight(userHeight, newUnit)
-      const newWeight = convertWeight(userWeight, newUnit)
-      setUserHeight({ cm, feet, inches })
+      let cm = parseFloat(userHeight.cm)
+      let feet = parseFloat(userHeight.feet)
+      let inches = parseFloat(userHeight.inches)
+
+      if (newUnit === 'IMPERIAL') {
+        const converted = cmToFeetAndInches(cm)
+        feet = converted.feet
+        inches = converted.inches
+      } else {
+        cm = feetAndInchesToCm(feet, inches)
+      }
+
+      const currentWeight = parseFloat(userWeight)
+      const newWeight =
+        newUnit === 'IMPERIAL'
+          ? (currentWeight * KG_TO_LBS).toFixed(1)
+          : (currentWeight / KG_TO_LBS).toFixed(1)
+
+      setUserHeight({
+        cm: isNaN(cm) ? '' : cm.toString(),
+        feet: isNaN(feet) ? '' : feet.toString(),
+        inches: isNaN(inches) ? '' : inches.toString(),
+      })
       setUserWeight(newWeight)
       setUnit(newUnit)
+
       setFormState((prevState) => ({
         ...prevState,
-        'userHeight.cm': { ...prevState['userHeight.cm'], value: cm },
-        'userHeight.feet': { ...prevState['userHeight.feet'], value: feet },
+        'userHeight.cm': {
+          ...prevState['userHeight.cm'],
+          value: isNaN(cm) ? '' : cm.toString(),
+        },
+        'userHeight.feet': {
+          ...prevState['userHeight.feet'],
+          value: isNaN(feet) ? '' : feet.toString(),
+        },
         'userHeight.inches': {
           ...prevState['userHeight.inches'],
-          value: inches,
+          value: isNaN(inches) ? '' : inches.toString(),
         },
         userWeight: { ...prevState.userWeight, value: newWeight },
       }))
@@ -108,7 +160,22 @@ const ConnectView: React.FC = () => {
               subheader="Connect your Heart Rate Monitor"
             />
             <CardContent>
-              <HrmConnectionPanel isFormValid={isFormValid} />
+              <HrmConnectionPanel
+                isConnected={isConnected}
+                deviceStatus={deviceStatus}
+                onConnect={onConnect}
+                onDisconnect={onDisconnect}
+                onForgetDevice={onForgetDevice}
+                isSupported={isSupported}
+                batteryLevel={batteryLevel}
+                isFormValid={isFormValid}
+                bluetoothConnected={bluetoothConnected}
+                onStartWorkout={onStartWorkout}
+                onEndWorkout={onEndWorkout}
+                onReset={onReset}
+                workoutStatus={workoutStatus}
+                hasStarted={hasStarted}
+              />
             </CardContent>
           </Card>
         </Grid>
@@ -122,6 +189,8 @@ const ConnectView: React.FC = () => {
               <UserSettings
                 userName={formState.userName.value}
                 userAge={formState.userAge.value}
+                userGender={userGender}
+                setUserGender={setUserGender}
                 userHeight={formState.userHeight}
                 userWeight={formState.userWeight.value}
                 unit={unit}
@@ -144,7 +213,12 @@ const ConnectView: React.FC = () => {
           </Card>
         </Grid>
         <Grid item xs={12}>
-          <WorkoutSummary maxHr={maxHr} restingHr={restingHr} />
+          <WorkoutSummary
+            maxHr={maxHr}
+            restingHr={restingHr}
+            duration={duration}
+            caloriesBurned={caloriesBurned}
+          />
         </Grid>
       </Grid>
     </Container>

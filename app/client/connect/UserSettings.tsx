@@ -6,6 +6,13 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import { z } from 'zod'
 import ValidatedTextField from '@/components/shared/Form/ValidatedTextField'
 import { ZodIssue } from 'zod'
+import {
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
+} from '@mui/material'
 
 // Schemas
 const nameSchema = z.string().min(1, 'Name is required')
@@ -75,10 +82,11 @@ const heightInchesSchema = z
     message: 'Inches must be between 0 and 11',
   })
 
-
 interface UserSettingsProps {
   userName: string
   userAge: string
+  userGender: string
+  setUserGender: (gender: string) => void
   userHeight: { cm: string; feet: string; inches: string }
   userWeight: string
   unit: 'METRIC' | 'IMPERIAL'
@@ -94,6 +102,8 @@ interface UserSettingsProps {
 const UserSettings: React.FC<UserSettingsProps> = ({
   userName,
   userAge,
+  userGender,
+  setUserGender,
   userHeight,
   userWeight,
   unit,
@@ -122,6 +132,19 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         validationSchema={ageSchema}
         inputProps={{ min: 1, max: 120 }}
       />
+      <FormControl component="fieldset">
+        <FormLabel component="legend">Gender</FormLabel>
+        <RadioGroup
+          row
+          aria-label="gender"
+          name="gender"
+          value={userGender}
+          onChange={(e) => setUserGender(e.target.value)}
+        >
+          <FormControlLabel value="male" control={<Radio />} label="Male" />
+          <FormControlLabel value="female" control={<Radio />} label="Female" />
+        </RadioGroup>
+      </FormControl>
       <ToggleButtonGroup
         value={unit}
         exclusive
