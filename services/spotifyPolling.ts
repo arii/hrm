@@ -91,7 +91,6 @@ export class SpotifyPolling implements SpotifyService {
   }
 
   private sdk: SafeSpotifyApi | null = null
-  private targetDeviceId: string | null = null
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
@@ -392,7 +391,6 @@ export class SpotifyPolling implements SpotifyService {
     params: SpotifyCommandParameters
   ) {
     const { deviceId, volume, playlistUri, contextUri, uri } = params
-    const resolvedDeviceId = deviceId ?? this.targetDeviceId ?? undefined
     const effectiveContextUri = contextUri || playlistUri
 
     switch (command) {
@@ -404,51 +402,49 @@ export class SpotifyPolling implements SpotifyService {
               // The Spotify API requires that if a `uri` (for a specific track) is provided,
               // the `context_uri` must be omitted. The SDK handles this by accepting
               // `undefined` for the context parameter.
-              return this.sdk!.player.startResumePlayback(
-                resolvedDeviceId,
-                undefined,
-                [uri]
-              )
+              return this.sdk!.player.startResumePlayback(deviceId, undefined, [
+                uri,
+              ])
             }
             if (effectiveContextUri) {
               return this.sdk!.player.startResumePlayback(
-                resolvedDeviceId,
+                deviceId,
                 effectiveContextUri
               )
             }
             // If neither uri nor contextUri is provided, call with just deviceId.
-            return this.sdk!.player.startResumePlayback(resolvedDeviceId)
+            return this.sdk!.player.startResumePlayback(deviceId)
           },
-          { deviceId: resolvedDeviceId, contextUri: effectiveContextUri, uri }
+          { deviceId, contextUri: effectiveContextUri, uri }
         )
         break
       case 'PAUSE':
         await this.executeSdkCommand(
           command,
-          () => this.sdk!.player.pausePlayback(resolvedDeviceId),
-          { deviceId: resolvedDeviceId }
+          () => this.sdk!.player.pausePlayback(deviceId),
+          { deviceId }
         )
         break
       case 'NEXT':
         await this.executeSdkCommand(
           command,
-          () => this.sdk!.player.skipToNext(resolvedDeviceId),
-          { deviceId: resolvedDeviceId }
+          () => this.sdk!.player.skipToNext(deviceId),
+          { deviceId }
         )
         break
       case 'PREVIOUS':
         await this.executeSdkCommand(
           command,
-          () => this.sdk!.player.skipToPrevious(resolvedDeviceId),
-          { deviceId: resolvedDeviceId }
+          () => this.sdk!.player.skipToPrevious(deviceId),
+          { deviceId }
         )
         break
       case 'TRANSFER_PLAYBACK':
-        if (resolvedDeviceId) {
+        if (deviceId) {
           await this.executeSdkCommand(
             command,
-            () => this.sdk!.player.transferPlayback([resolvedDeviceId], true),
-            { deviceId: resolvedDeviceId }
+            () => this.sdk!.player.transferPlayback([deviceId], true),
+            { deviceId }
           )
         }
         break
@@ -457,9 +453,8 @@ export class SpotifyPolling implements SpotifyService {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
           await this.executeSdkCommand(
             command,
-            () =>
-              this.sdk!.player.setPlaybackVolume(clampedVolume, resolvedDeviceId),
-            { deviceId: resolvedDeviceId, volume: clampedVolume }
+            () => this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId),
+            { deviceId, volume: clampedVolume }
           )
         }
         break
@@ -468,13 +463,6 @@ export class SpotifyPolling implements SpotifyService {
         break
       default:
         logger.warn({ command }, 'Unknown Spotify command')
-    }
-
-    // If the original command included a deviceId, it implies the user's
-    // intent to target a new device. We cache this ID for subsequent
-    // commands that may not specify one.
-    if (deviceId) {
-      this.targetDeviceId = deviceId
     }
   }
 
