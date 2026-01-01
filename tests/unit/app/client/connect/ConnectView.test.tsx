@@ -19,7 +19,6 @@ jest.mock('@/hooks/useUserSettings', () => ({
     setUnit: jest.fn(),
     maxHr: 190,
     restingHr: 60,
-    savePending: false,
   }),
 }))
 
@@ -36,15 +35,21 @@ jest.mock('@/hooks/useHrm', () => ({
   }),
 }))
 
-jest.mock('@/hooks/useWorkoutTimer', () => ({
-  useWorkoutTimer: () => ({
-    onStartWorkout: jest.fn(),
-    onEndWorkout: jest.fn(),
-    onReset: jest.fn(),
+jest.mock('@/hooks/useWorkoutSession', () => ({
+  useWorkoutSession: () => ({
+    startWorkout: jest.fn(),
+    endWorkout: jest.fn(),
+    resetWorkout: jest.fn(),
     workoutStatus: 'Not Started',
     hasStarted: false,
-    duration: 0,
+    workoutDuration: 0,
     caloriesBurned: 0,
+  }),
+}))
+
+jest.mock('@/context/WebSocketContext', () => ({
+  useWebSocket: () => ({
+    connectionStatus: 'Disconnected',
   }),
 }))
 

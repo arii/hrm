@@ -13,6 +13,7 @@ import {
   Radio,
   RadioGroup,
 } from '@mui/material'
+import { Gender } from '@/types'
 
 // Schemas
 const nameSchema = z.string().min(1, 'Name is required')
@@ -85,8 +86,8 @@ const heightInchesSchema = z
 interface UserSettingsProps {
   userName: string
   userAge: string
-  userGender: string
-  setUserGender: (gender: string) => void
+  userGender: Gender
+  setUserGender: (gender: Gender) => void
   userHeight: { cm: string; feet: string; inches: string }
   userWeight: string
   unit: 'METRIC' | 'IMPERIAL'
@@ -139,7 +140,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           aria-label="gender"
           name="gender"
           value={userGender}
-          onChange={(e) => setUserGender(e.target.value)}
+          onChange={(e) => setUserGender(e.target.value as Gender)}
         >
           <FormControlLabel value="male" control={<Radio />} label="Male" />
           <FormControlLabel value="female" control={<Radio />} label="Female" />

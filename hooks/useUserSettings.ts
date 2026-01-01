@@ -1,11 +1,12 @@
 // hooks/useUserSettings.ts
 import { useMemo } from 'react'
 import useLocalStorage from './useLocalStorage'
+import { Gender } from '../types'
 
 export interface UserSettings {
   userName: string
   userAge: string
-  userGender: string
+  userGender: Gender
   userHeight: {
     cm: string
     feet: string
@@ -20,7 +21,10 @@ export interface UserSettings {
 export const useUserSettings = () => {
   const [userName, setUserName] = useLocalStorage('userName', 'Test User')
   const [userAge, setUserAge] = useLocalStorage('userAge', '30')
-  const [userGender, setUserGender] = useLocalStorage('userGender', 'male')
+  const [userGender, setUserGender] = useLocalStorage<Gender>(
+    'userGender',
+    'male'
+  )
   const [userHeight, setUserHeight] = useLocalStorage('userHeight', {
     cm: '180',
     feet: '5',
