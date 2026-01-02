@@ -41,7 +41,9 @@ let services: AppServices
 // - hrmDataRepository: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
 // - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
+// - hrmDataSourceClientId: Tracks the single, authoritative client for HRM data to prevent conflicting streams.
 const hrmDataRepository = new HrmDataRepository()
+let hrmDataSourceClientId: string | null = null
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
@@ -184,6 +186,16 @@ const initSocketManager = (
           try {
             hrmDataRepository.deleteById(extWs.clientId)
             clientSessionState.delete(extWs.clientId)
+
+            // If the disconnected client was the HRM source, release the lock.
+            if (hrmDataSourceClientId === extWs.clientId) {
+              hrmDataSourceClientId = null
+              logger.info(
+                { clientId: extWs.clientId },
+                'Authoritative HRM data source disconnected. Lock released.'
+              )
+            }
+
             broadcastState()
           } catch (err) {
             logger.error(
@@ -288,6 +300,26 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_INPUT': {
+        // Enforce a single source of truth for HRM data.
+        if (!hrmDataSourceClientId) {
+          // If no source is set, this client becomes the source.
+          hrmDataSourceClientId = clientId
+          logger.info(
+            { clientId },
+            'New HRM data source registered.'
+          )
+        } else if (hrmDataSourceClientId !== clientId) {
+          // If another client is the source, ignore this message.
+          logger.warn(
+            {
+              clientId,
+              dataSourceId: hrmDataSourceClientId,
+            },
+            'Ignoring HRM_INPUT from non-authoritative client.'
+          )
+          return // Stop processing
+        }
+
         const existingData = hrmDataRepository.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
         if (existingData && sessionState) {
