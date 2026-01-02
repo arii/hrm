@@ -1,9 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
 import useVolumePreference from '@/hooks/useVolumePreference'
@@ -83,5 +84,36 @@ describe('components/SpotifyControls', () => {
     render(<SpotifyControls />)
     const muteButton = screen.getByLabelText(/mute volume/i)
     expect(muteButton).toBeInTheDocument()
+  })
+
+  it('selects HRM Web Player by default when no device is active', async () => {
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: {
+        trackName: 'Test Track',
+        artist: 'Test Artist',
+        isPlaying: true,
+        devices: [
+          { id: '1', name: 'Device 1', is_active: false, volume_percent: 50 },
+          {
+            id: 'hrm-player',
+            name: HRM_WEB_PLAYER_NAME,
+            is_active: false,
+            volume_percent: 50,
+          },
+        ],
+      },
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    render(<SpotifyControls />)
+
+    await waitFor(() => {
+      // Check the displayed text in the select component, which is more robust
+      // for MUI components than checking the underlying value attribute.
+      const deviceSelect = screen.getByRole('combobox')
+      expect(deviceSelect).toHaveTextContent(HRM_WEB_PLAYER_NAME)
+    })
   })
 })

@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
+import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PlaybackControls from './PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
@@ -100,7 +101,7 @@ const SpotifyControls = () => {
       !selectedDeviceId &&
       !devices.some((d) => d.is_active)
     ) {
-      const hrmPlayer = devices.find((d) => d.name === 'HRM Web Player')
+      const hrmPlayer = devices.find((d) => d.name === HRM_WEB_PLAYER_NAME)
       if (hrmPlayer) {
         setSelectedDeviceId(hrmPlayer.id)
       }
