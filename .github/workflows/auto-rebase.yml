@@ -10,6 +10,8 @@ on:
 jobs:
   rebase:
     runs-on: ubuntu-latest
+    # Skip this job if the push is to leader itself (only rebase PRs targeting leader)
+    if: github.ref != 'refs/heads/leader'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

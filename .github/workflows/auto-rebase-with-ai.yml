@@ -4,7 +4,7 @@ on:
   # This workflow is triggered on PRs to the leader branch.
   # It uses pull_request_target to have access to secrets.
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, reopened]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -14,6 +14,8 @@ on:
 jobs:
   rebase-and-resolve:
     runs-on: ubuntu-latest
+    # Only run for PRs targeting the leader branch
+    if: github.event.pull_request.base.ref == 'leader' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
       pull-requests: write
