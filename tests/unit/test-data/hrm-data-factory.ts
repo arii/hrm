@@ -7,7 +7,6 @@ export const createHrmData = (overrides: Partial<HrmData> = {}): HrmData => ({
   maxHr: 190,
   name: 'Test User',
   age: 30,
-  calories: 100,
   totalCalories: 200,
   ...overrides,
 })

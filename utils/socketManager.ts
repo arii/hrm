@@ -150,7 +150,6 @@ const initSocketManager = (
         value: 0,
         maxHr: 185,
         age: 30,
-        calories: 0, // Initialize to 0
       }
       hrmDataRepository.save(newClient)
       clientSessionState.set(extWs.clientId, {
@@ -317,7 +316,7 @@ const handleIncomingMessage = (
           hrmDataRepository.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
-            calories: Math.round(currentAccumulated * 10) / 10,
+            totalCalories: Math.round(currentAccumulated * 10) / 10,
           })
         }
         broadcastState()

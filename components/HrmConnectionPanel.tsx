@@ -55,6 +55,8 @@ const HrmConnectionPanel = () => {
       session?.user?.name || userSettings.userName || 'Unknown User'
     const userAge = userSettings.userAge || 30
     connectAndStream(userName, userAge).catch((error) => {
+      // It's common for the requestDevice promise to be cancelled by the user.
+      // We catch it here to prevent an unhandled rejection error in the console.
       if (error.name !== 'NotFoundError') {
         console.error('Failed to connect to HRM device:', error)
       }
@@ -62,6 +64,7 @@ const HrmConnectionPanel = () => {
   }, [session, userSettings, connectAndStream])
 
   useEffect(() => {
+    // Auto-connect logic: Use `getDevices()` for gesture-less reconnection.
     const autoConnect = async () => {
       if (
         connectionStatus === 'Connected' &&
@@ -80,6 +83,7 @@ const HrmConnectionPanel = () => {
   }, [connectionStatus, deviceStatus, connectAndStream, session, userSettings])
 
   const tileData = useMemo(() => {
+    // Filter out users with placeholder names or no identity
     return hrmData
       .filter((user) => {
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
@@ -120,7 +124,7 @@ const HrmConnectionPanel = () => {
               display: 'flex',
               flexDirection: 'column',
               width: { xs: '100%', sm: 'calc(50% - 8px)' },
-              height: '100%',
+              height: '100%', // Ensure the container fills the grid cell
               gap: 2,
               p: 2,
               border: 1,
@@ -182,7 +186,7 @@ const HrmConnectionPanel = () => {
               sx={{
                 width: {
                   xs: '100%',
-                  sm: 'calc(50% - 8px)',
+                  sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
                 },
               }}
             >
