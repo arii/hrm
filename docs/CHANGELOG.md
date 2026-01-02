@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.0](https://github.com/arii/hrm/compare/hrm-v0.19.0...hrm-v0.20.0) (2026-01-02)
+
+
+### Features
+
+* **medium:** Enhance Mock Client and Fix Flaky Bluetooth ([#2991](https://github.com/arii/hrm/issues/2991)) ([384282b](https://github.com/arii/hrm/commit/384282be50dc6c56a12777340bf0d6afa67d8b02))
+
 ## [0.19.0](https://github.com/arii/hrm/compare/hrm-v0.18.0...hrm-v0.19.0) (2026-01-02)
 
 ### Features
