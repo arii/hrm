@@ -57,9 +57,9 @@ describe('Zod Schema Validation', () => {
 
     it('should accept a valid profile with an optional maxHr', () => {
       const profileWithMaxHr = { ...validProfile, maxHr: 190 }
-      expect(UserPhysicalProfileSchema.safeParse(profileWithMaxHr).success).toBe(
-        true
-      )
+      expect(
+        UserPhysicalProfileSchema.safeParse(profileWithMaxHr).success
+      ).toBe(true)
     })
 
     it('should reject a profile with an invalid userId', () => {
