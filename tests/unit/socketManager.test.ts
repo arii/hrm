@@ -452,6 +452,24 @@ describe('WebSocket Manager', () => {
       )
     })
 
+    it('should extract uri from SPOTIFY_COMMAND', () => {
+      const message = JSON.stringify({
+        type: 'SPOTIFY_COMMAND',
+        command: 'PLAY',
+        deviceId: 'test_device',
+        uri: 'spotify:track:12345',
+      })
+      mockWs.emit('message', message.toString())
+
+      expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
+        'PLAY',
+        {
+          deviceId: 'test_device',
+          uri: 'spotify:track:12345',
+        }
+      )
+    })
+
     it('should handle unknown message types', () => {
       const message = JSON.stringify({ type: 'SOME_GARBAGE' })
       jest
