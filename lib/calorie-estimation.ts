@@ -1,5 +1,5 @@
 // File: lib/calorie-estimation.ts
-import { Gender } from '../../types/core'
+import { Gender } from '../types/core'
 
 /**
  * Calorie Estimation Module

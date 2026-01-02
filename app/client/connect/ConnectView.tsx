@@ -1,4 +1,5 @@
 'use client'
+import { useEffect } from 'react'
 import { Container, Typography, Box, Button, Grid } from '@mui/material'
 import {
   Bluetooth as BluetoothIcon,

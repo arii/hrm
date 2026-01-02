@@ -1,6 +1,6 @@
 // File: hooks/useHrZoneTracker.ts
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { getHrZone, HR_ZONES } from '../lib/hrm/zones'
+import { calculateHrZone as getHrZone, HR_ZONE_DEFINITIONS as HR_ZONES } from '@/lib/hrm/zones'
 
 export interface HrZoneDuration {
   zone: number
