@@ -8,8 +8,11 @@
 // User and Profile
 // =================================================================================================
 
+export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
+export type Gender = 'MALE' | 'FEMALE'
+
 /**
- * Represents a user's profile information.
+ * Represents a user's identity and authentication profile.
  *
  * @property {string} id - The unique identifier for the user (UUID).
  * @property {string} username - The user's chosen username. Must be unique.
@@ -27,6 +30,18 @@ export interface UserProfile {
   lastName: string | null
   createdAt: string
   updatedAt: string
+}
+
+/**
+ * Represents a user's physical attributes for health calculations.
+ */
+export interface UserPhysicalProfile {
+  userId: string
+  age: number
+  weight: number // Stored normalized in KG
+  gender: Gender
+  unitSystem: MeasurementSystem
+  maxHr?: number // Optional override, otherwise calculated
 }
 
 // =================================================================================================
