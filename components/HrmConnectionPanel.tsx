@@ -195,7 +195,9 @@ const HrmConnectionPanel = () => {
                 alertMessage={user.alertMessage}
                 caloriesBurned={isPrimaryUser ? caloriesBurned : undefined}
                 workoutDuration={
-                  isPrimaryUser ? formatSecondsToMMSS(workoutDuration) : undefined
+                  isPrimaryUser
+                    ? formatSecondsToMMSS(workoutDuration)
+                    : undefined
                 }
                 showWorkoutData={isPrimaryUser && hasStarted}
               />

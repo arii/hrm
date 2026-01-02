@@ -1,7 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import { formatSecondsToMMSS, formatMillisecondsToMMSS } from '@/utils/formatters'
+import {
+  formatSecondsToMMSS,
+  formatMillisecondsToMMSS,
+} from '@/utils/formatters'
 
 describe('formatSecondsToMMSS', () => {
   it('should format seconds into MM:SS format', () => {

@@ -90,7 +90,9 @@ describe('PlaylistTracksDisplay', () => {
 
     expect(await screen.findByText('Track 1')).toBeInTheDocument()
     expect(screen.getByText('Artist 1')).toBeInTheDocument()
-    expect(screen.getByText(formatMillisecondsToMMSS(180000))).toBeInTheDocument()
+    expect(
+      screen.getByText(formatMillisecondsToMMSS(180000))
+    ).toBeInTheDocument()
 
     // Test pagination
     const nextButton = screen.getByRole('button', { name: /next/i })

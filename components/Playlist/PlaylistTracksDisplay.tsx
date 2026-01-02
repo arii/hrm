@@ -172,7 +172,9 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                     </Box>
                   </TableCell>
                   <TableCell>{track.artists}</TableCell>
-                  <TableCell>{formatMillisecondsToMMSS(track.duration)}</TableCell>
+                  <TableCell>
+                    {formatMillisecondsToMMSS(track.duration)}
+                  </TableCell>
                 </TableRow>
               )
             })}

@@ -73,7 +73,6 @@ describe('HrmConnectionPanel - Workout Data Integration', () => {
       connectionStatus: 'Connected',
       activeAlerts: [],
     })
-
     ;(useWorkoutSession as jest.Mock).mockReturnValue({
       caloriesBurned: 70,
       workoutDuration: 420,
