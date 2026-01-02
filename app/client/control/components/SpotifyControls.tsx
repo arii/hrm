@@ -16,6 +16,7 @@ import PlaybackControls from './PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
 import useSpotifyControls from '@/hooks/useSpotifyControls'
+import { Device } from '@spotify/web-api-ts-sdk'
 
 /**
  * @component SpotifyControls
@@ -114,7 +115,7 @@ const SpotifyControls = () => {
                 </Typography>
                 <FormControl fullWidth size="small">
                   <Select
-                    value={selectedDeviceId}
+                    value={selectedDeviceId || ''}
                     onChange={(e) => {
                       const deviceId = e.target.value
                       setSelectedDeviceId(deviceId)
@@ -133,8 +134,11 @@ const SpotifyControls = () => {
                       },
                     }}
                   >
-                    {devices.map((device) => (
-                      <MenuItem key={device.id} value={device.id}>
+                    {devices.map((device: Device) => (
+                      <MenuItem
+                        key={device.id || 'unknown-device'}
+                        value={device.id || ''}
+                      >
                         {device.name} {device.is_active && '(Active)'}
                       </MenuItem>
                     ))}

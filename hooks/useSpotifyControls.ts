@@ -64,27 +64,37 @@ const useSpotifyControls = (): UseSpotifyControlsReturn => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
 
-    if (prevActiveIdRef.current === undefined && activeId) {
-      setSelectedDeviceId(activeId)
-    } else if (activeId && activeId !== prevActiveIdRef.current) {
-      setSelectedDeviceId(activeId)
-    } else {
-      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
-      if (selectedDeviceId && !selectedStillExists) {
-        setSelectedDeviceId(activeId ?? '')
-      }
-      if (!selectedDeviceId && activeId) {
-        setSelectedDeviceId(activeId)
-      }
-    }
-    prevActiveIdRef.current = activeId
+    setSelectedDeviceId((currentSelectedId) => {
+      let nextSelectedId = currentSelectedId
+      const selectedDeviceExists = devices.some(
+        (d) => d.id === currentSelectedId
+      )
 
+      if (prevActiveIdRef.current === undefined && activeId) {
+        nextSelectedId = activeId
+      } else if (activeId && activeId !== prevActiveIdRef.current) {
+        nextSelectedId = activeId
+      } else {
+        if (currentSelectedId && !selectedDeviceExists) {
+          nextSelectedId = activeId ?? ''
+        } else if (!currentSelectedId && activeId) {
+          nextSelectedId = activeId
+        }
+      }
+      return nextSelectedId
+    })
+
+    prevActiveIdRef.current = activeId
+  }, [devices])
+
+  useEffect(() => {
+    const activeDevice = devices.find((d) => d.is_active)
     if (activeDevice && typeof activeDevice.volume_percent === 'number') {
       if (activeDevice.volume_percent !== volume) {
         setVolume(activeDevice.volume_percent)
       }
     }
-  }, [devices, selectedDeviceId, setVolume, volume])
+  }, [devices, volume, setVolume])
 
   const resolveTargetDeviceId = useCallback(() => {
     if (selectedDeviceId) {
@@ -95,10 +105,7 @@ const useSpotifyControls = (): UseSpotifyControlsReturn => {
   }, [devices, selectedDeviceId])
 
   const sendSpotifyCommand = useCallback(
-    (
-      command: SpotifyCommand,
-      overriddenDeviceId?: string
-    ) => {
+    (command: SpotifyCommand, overriddenDeviceId?: string) => {
       const targetDeviceId =
         overriddenDeviceId !== undefined
           ? overriddenDeviceId

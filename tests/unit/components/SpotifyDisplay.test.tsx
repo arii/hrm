@@ -124,9 +124,7 @@ describe('SpotifyDisplay', () => {
 
     it('renders track and artist information', () => {
       renderWithProviders(<SpotifyDisplay />)
-      expect(
-        screen.getByText(/Test Track — Test Artist/i)
-      ).toBeInTheDocument()
+      expect(screen.getByText(/Test Track — Test Artist/i)).toBeInTheDocument()
     })
 
     it('calls sendSpotifyCommand with "PAUSE" when pause button is clicked', async () => {
