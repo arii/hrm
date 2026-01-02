@@ -77,4 +77,10 @@ describe('HrTile', () => {
       `color: ${theme.palette.getContrastText(ZONE_COLORS.grey)}`
     )
   })
+
+  it('renders "---" for BPM when the value is null', () => {
+    render(<HrTile name="Test" bpm={null} percentMax={0} />)
+    const bpmValue = screen.getByTestId('bpm-value')
+    expect(bpmValue).toHaveTextContent('---')
+  })
 })
