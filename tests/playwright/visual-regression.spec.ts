@@ -17,7 +17,6 @@ import {
   getHrMasks,
   getTimerMasks,
   setupVisualRegressionTest,
-  waitForFontsLoaded,
 } from './test-helpers'
 import { takeDashboardScreenshot, takeScreenshot } from './lib/visual'
 import { WAIT_TIMEOUTS } from './lib/waits'
@@ -95,7 +94,10 @@ test.describe('Visual Regression Tests', () => {
 
     await takeScreenshot(dashboardPage, 'dashboard-with-hr-data.png', {
       maxDiffPixelRatio: 0.04,
-      mask: [...getDynamicContentMasks(dashboardPage), ...getHrMasks(dashboardPage)],
+      mask: [
+        ...getDynamicContentMasks(dashboardPage),
+        ...getHrMasks(dashboardPage),
+      ],
     })
   })
 
@@ -110,7 +112,9 @@ test.describe('Visual Regression Tests', () => {
       timeout: WAIT_TIMEOUTS.LONG,
     })
 
-    const firstTile = dashboardPage.locator('[data-testid="hr-tile-grid-item"]').first()
+    const firstTile = dashboardPage
+      .locator('[data-testid="hr-tile-grid-item"]')
+      .first()
     await takeScreenshot(firstTile, 'hr-tiles-section.png', {
       maxDiffPixelRatio: 0.05,
       mask: [
