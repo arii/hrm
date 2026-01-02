@@ -52,19 +52,9 @@ test.describe('Visual Regression Tests', () => {
     ])
 
     await Promise.all([
-      setupPageForVisualRegression(
-        dashboardPage,
-        `${BASE_URL}/`,
-        true
-      ),
-      setupPageForVisualRegression(
-        controlPage,
-        `${BASE_URL}/client/control`
-      ),
-      setupPageForVisualRegression(
-        mockPage,
-        `${BASE_URL}/client/mock`
-      ),
+      setupPageForVisualRegression(dashboardPage, `${BASE_URL}/`, true),
+      setupPageForVisualRegression(controlPage, `${BASE_URL}/client/control`),
+      setupPageForVisualRegression(mockPage, `${BASE_URL}/client/mock`),
     ])
 
     await stopTimer(controlPage, dashboardPage)
@@ -91,36 +81,25 @@ test.describe('Visual Regression Tests', () => {
       }
     )
 
-    await expectPageToHaveScreenshot(
-      dashboardPage,
-      'dashboard-viewer.png',
-      {
-        mask: [
-          ...getTimerMasks(dashboardPage),
-          ...getHrMasks(dashboardPage),
-          dashboardPage.getByTestId('calorie-count'),
-          dashboardPage.locator('.MUI-Charts-root'),
-        ],
-        maxDiffPixelRatio: 0.08,
-      }
-    )
+    await expectPageToHaveScreenshot(dashboardPage, 'dashboard-viewer.png', {
+      mask: [
+        ...getTimerMasks(dashboardPage),
+        ...getHrMasks(dashboardPage),
+        dashboardPage.getByTestId('calorie-count'),
+        dashboardPage.locator('.MUI-Charts-root'),
+      ],
+      maxDiffPixelRatio: 0.08,
+    })
   })
 
   test('Control Panel - timer and music controls', async () => {
-    await expectPageToHaveScreenshot(
-      controlPage,
-      'control-panel.png'
-    )
+    await expectPageToHaveScreenshot(controlPage, 'control-panel.png')
   })
 
   test('Mock HRM Client - test data input', async () => {
-    await expectPageToHaveScreenshot(
-      mockPage,
-      'mock-hrm-client.png',
-      {
-        maxDiffPixelRatio: 0.02,
-      }
-    )
+    await expectPageToHaveScreenshot(mockPage, 'mock-hrm-client.png', {
+      maxDiffPixelRatio: 0.02,
+    })
   })
 
   test('Dashboard with active timer', async () => {
@@ -219,16 +198,12 @@ test.describe('Visual Regression Tests', () => {
       .locator('[data-testid="hr-tile-grid-item"]')
       .first()
 
-    await expectPageToHaveScreenshot(
-      firstTile,
-      'hr-tiles-section.png',
-      {
-        mask: [
-          firstTile.locator('[data-testid="live-hr-value"]'),
-          firstTile.locator('[data-testid="live-hr-percent"]'),
-        ],
-        maxDiffPixelRatio: 0.05,
-      }
-    )
+    await expectPageToHaveScreenshot(firstTile, 'hr-tiles-section.png', {
+      mask: [
+        firstTile.locator('[data-testid="live-hr-value"]'),
+        firstTile.locator('[data-testid="live-hr-percent"]'),
+      ],
+      maxDiffPixelRatio: 0.05,
+    })
   })
 })

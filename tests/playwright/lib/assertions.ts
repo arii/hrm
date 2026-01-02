@@ -296,12 +296,7 @@ export async function expectPageToHaveScreenshot(
     fullPage?: boolean
   } = {}
 ): Promise<void> {
-  const {
-    mask = [],
-    threshold,
-    maxDiffPixelRatio,
-    fullPage = true,
-  } = options
+  const { mask = [], threshold, maxDiffPixelRatio, fullPage = true } = options
 
   await expect(target).toHaveScreenshot(screenshotName, {
     ...DEFAULT_SCREENSHOT_OPTIONS,
