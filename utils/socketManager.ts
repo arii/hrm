@@ -205,7 +205,7 @@ const initSocketManager = (
     connectionMonitor.stop()
   })
 
-  setInterval(() => {
+  const watchdogInterval = setInterval(() => {
     const now = Date.now()
     // A client is considered stale if no HRM data has been received for 10 seconds.
     // The watchdog runs every 5 seconds, so a client may be inactive for up to
@@ -224,6 +224,11 @@ const initSocketManager = (
       broadcastState()
     }
   }, 5000)
+
+  wss.on('close', () => {
+    connectionMonitor.stop()
+    clearInterval(watchdogInterval)
+  })
 }
 
 /**

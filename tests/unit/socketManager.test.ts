@@ -120,6 +120,7 @@ describe('WebSocket Manager', () => {
 
   beforeEach(() => {
     jest.useFakeTimers()
+    jest.setSystemTime(new Date('2024-01-01'))
     mockWss =
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
 
