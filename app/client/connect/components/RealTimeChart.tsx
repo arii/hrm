@@ -33,10 +33,11 @@ const RealTimeChart: React.FC<RealTimeChartProps> = ({ data }) => {
         <YAxis />
         <Tooltip
           labelFormatter={(time) => `Time: ${formatDuration(time * 1000)}`}
-          formatter={(value: number, name: string) => [
-            `${value} ${name === 'hr' ? 'bpm' : name}`,
-            name,
-          ]}
+          formatter={(value: number | undefined, name: string | undefined) => {
+            if (typeof value !== 'number' || typeof name !== 'string')
+              return ['', '']
+            return [`${value} ${name === 'hr' ? 'bpm' : name}`, name]
+          }}
         />
         <Area
           type="monotone"

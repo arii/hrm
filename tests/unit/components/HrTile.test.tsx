@@ -2,32 +2,16 @@
  * @jest-environment jsdom
  */
 // tests/unit/components/HrTile.test.tsx
-import { jest } from '@jest/globals'
-import HrTile from '@/components/HrTile'
 import { render, screen } from '@testing-library/react'
+import HrTile from '@/components/HrTile'
 import '@testing-library/jest-dom'
 import theme from '@/lib/theme'
-import { HrZoneName } from '@/lib/shared/hr-zones'
-
-jest.mock('@/utils/visualization', () => ({
-  getHrZoneColor: jest.fn((zoneName: HrZoneName) => {
-    const mockTheme = require('@/lib/theme').default
-    const colors: { [key in HrZoneName]?: string } = {
-      [HrZoneName.Max]: mockTheme.palette.error.main,
-      [HrZoneName.Cardio]: mockTheme.palette.warning.main,
-      [HrZoneName.FatBurn]: mockTheme.palette.success.main,
-      [HrZoneName.WarmUp]: mockTheme.palette.secondary.main,
-      [HrZoneName.NoData]: mockTheme.palette.grey[500],
-    }
-    return colors[zoneName] || mockTheme.palette.grey[500]
-  }),
-}))
 
 describe('HrTile', () => {
   it('renders the correct background and text color for the Peak zone', () => {
     render(<HrTile name="Test" bpm={180} percentMax={95} maxHr={190} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(`background-color: ${theme.palette.error.main}`)
+    expect(card).toHaveStyle(`background-color: ${theme.palette.error.dark}`)
   })
 
   it('renders the correct background and text color for the Cardio zone', () => {

@@ -9,14 +9,6 @@ interface WorkoutDataPoint {
   calories: number
 }
 
-interface ZoneDistribution {
-  zone: HrZoneName
-  duration: number
-  percentage: number
-  color: string
-  bpmRange: string
-}
-
 const initializeZoneCounts = (): Record<HrZoneName, number> => {
   const initialCounts = {} as Record<HrZoneName, number>
   HR_ZONE_DEFINITIONS.forEach((zone) => {
@@ -28,9 +20,8 @@ const initializeZoneCounts = (): Record<HrZoneName, number> => {
 
 const useWorkoutHistory = (maxHr: number) => {
   const [history, setHistory] = useState<WorkoutDataPoint[]>([])
-  const [zoneCounts, setZoneCounts] = useState<Record<HrZoneName, number>>(
-    initializeZoneCounts
-  )
+  const [zoneCounts, setZoneCounts] =
+    useState<Record<HrZoneName, number>>(initializeZoneCounts)
 
   const addDataPoint = useCallback(
     (hr: number, calories: number) => {

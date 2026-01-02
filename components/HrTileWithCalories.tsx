@@ -51,6 +51,7 @@ const HrTileWithCalories = ({
     calories: calories,
     isConnected,
     isAlerting: isAlerting,
+    maxHr: user.maxHr || MAX_HR_DEFAULT,
     ...(alertMessage && { alertMessage }),
   }
 

@@ -3,10 +3,35 @@
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
-import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useMemo } from 'react'
+import { useHrZone } from '@/hooks/useHrZone'
+import { HrmData } from '@/types/websocket'
+
+const MemoizedHrTile = memo(
+  ({
+    user,
+    matchingAlert,
+  }: {
+    user: HrmData
+    matchingAlert: { message: string } | undefined
+  }) => {
+    const hrZoneProps = useHrZone(user.value, user.maxHr || MAX_HR_DEFAULT)
+    return (
+      <HrTile
+        name={user.name || ''}
+        bpm={user.value}
+        percentMax={hrZoneProps.percentage}
+        calories={user.calories || 0}
+        isAlerting={!!matchingAlert}
+        maxHr={user.maxHr || MAX_HR_DEFAULT}
+        {...(matchingAlert && { alertMessage: matchingAlert.message })}
+      />
+    )
+  }
+)
+MemoizedHrTile.displayName = 'MemoizedHrTile'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -20,12 +45,6 @@ const HrmTiles = () => {
         return !(isZero || isPlaceholderName || hasNoIdentity)
       })
       .map((user) => {
-        const hrZoneProps = getHrZoneProps(
-          user.value,
-          user.maxHr || MAX_HR_DEFAULT
-        )
-
-        // Find the alert specific to this HR Monitor's clientId
         const matchingAlert = activeAlerts.find(
           (alert) =>
             alert.clientId === user.clientId &&
@@ -38,15 +57,7 @@ const HrmTiles = () => {
             key={user.clientId}
             data-testid="hr-tile-grid-item"
           >
-            <HrTile
-              name={user.name || ''}
-              bpm={user.value}
-              percentMax={hrZoneProps.percentage}
-              calories={user.calories || 0} // Pass calories
-              isAlerting={!!matchingAlert}
-              // Conditionally add alertMessage to avoid passing `undefined`
-              {...(matchingAlert && { alertMessage: matchingAlert.message })}
-            />
+            <MemoizedHrTile user={user} matchingAlert={matchingAlert} />
           </Grid>
         )
       })

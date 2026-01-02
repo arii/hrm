@@ -7,21 +7,6 @@ import { useHrZone } from '../../../hooks/useHrZone'
 import { HrZoneName } from '../../../lib/shared/hr-zones'
 import theme from '../../../lib/theme'
 
-jest.mock('../../../utils/visualization', () => ({
-  getHrZoneColor: jest.fn((zoneName: HrZoneName) => {
-    // Use require inside mock to avoid hoisting issues with undefined theme
-    const mockTheme = require('../../../lib/theme').default
-    const colors: { [key in HrZoneName]?: string } = {
-      [HrZoneName.Max]: mockTheme.palette.error.main,
-      [HrZoneName.Cardio]: mockTheme.palette.warning.main,
-      [HrZoneName.FatBurn]: mockTheme.palette.success.main,
-      [HrZoneName.WarmUp]: mockTheme.palette.secondary.main,
-      [HrZoneName.NoData]: mockTheme.palette.grey[500],
-    }
-    return colors[zoneName] || mockTheme.palette.grey[500]
-  }),
-}))
-
 describe('useHrZone', () => {
   it('should return the correct zone for a given HR', () => {
     const { result } = renderHook(() => useHrZone(180, 190))
@@ -30,7 +15,7 @@ describe('useHrZone', () => {
 
   it('should return the correct color for a given HR', () => {
     const { result } = renderHook(() => useHrZone(180, 190))
-    expect(result.current.progressColor).toBe(theme.palette.error.main)
+    expect(result.current.progressColor).toBe(theme.palette.error.dark)
   })
 
   it('should return "No Data" when currentHR is 0', () => {
