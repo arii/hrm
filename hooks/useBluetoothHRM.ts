@@ -263,6 +263,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
+    // Send a 'null' heart rate value to signal disconnection to the server
+    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
+
     setDeviceStatus('Disconnected')
     setSavedDevice(null)
     setBatteryLevel(null)
@@ -319,6 +322,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const onDisconnected = useCallback(() => {
     setBatteryLevel(null)
+
+    // Also send a null HR value to signal immediate disconnection
+    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
+
     if (!isManualDisconnect.current && deviceRef.current) {
       logger.info(
         { device: deviceRef.current.name },

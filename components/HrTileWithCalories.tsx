@@ -41,12 +41,8 @@ const HrTileWithCalories = ({
 
   const hrZoneProps = useHrZone(user.value, user.maxHr || MAX_HR_DEFAULT)
 
-  // Use a runtime check for isConnected if it exists on the object but not the type,
-  // or fall back to true. This heuristic helps until the type definition is updated.
-  const isConnected =
-    'isConnected' in user
-      ? (user as { isConnected: boolean }).isConnected
-      : true
+  // A `null` value for BPM is the definitive signal that the device is disconnected.
+  const isConnected = user.value !== null
 
   const hrTileProps = {
     name: user.name || '',

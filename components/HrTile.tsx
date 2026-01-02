@@ -123,7 +123,7 @@ const HrTile = ({
             >
               {/* BPM Display */}
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {bpm}{' '}
+                {bpm ?? '---'}{' '}
                 <Typography
                   variant="caption"
                   component="span"
