@@ -12,8 +12,20 @@ describe('PerformanceDashboard', () => {
       { time: 1622548801000, hr: 125 },
     ]
     const zoneDurations: HrZoneDuration[] = [
-      { zone: 1, name: 'Very Light', duration: 60, percentage: 10, color: 'grey.700' },
-      { zone: 2, name: 'Light', duration: 120, percentage: 20, color: 'info.main' },
+      {
+        zone: 1,
+        name: 'Very Light',
+        duration: 60,
+        percentage: 10,
+        color: 'grey.700',
+      },
+      {
+        zone: 2,
+        name: 'Light',
+        duration: 120,
+        percentage: 20,
+        color: 'info.main',
+      },
     ]
 
     const { asFragment } = render(
@@ -27,7 +39,13 @@ describe('PerformanceDashboard', () => {
 
   it('renders correctly when hrHistory is empty', () => {
     const zoneDurations: HrZoneDuration[] = [
-        { zone: 1, name: 'Very Light', duration: 0, percentage: 0, color: 'grey.700' },
+      {
+        zone: 1,
+        name: 'Very Light',
+        duration: 0,
+        percentage: 0,
+        color: 'grey.700',
+      },
     ]
 
     const { asFragment } = render(

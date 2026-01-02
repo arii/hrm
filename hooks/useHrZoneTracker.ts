@@ -39,11 +39,16 @@ export const useHrZoneTracker = (
   const activeZoneRef = useRef<number | null>(null)
 
   useEffect(() => {
-    // Do not track time if the workout is inactive or if max HR is not set.
-    if (!isActive || maxHeartRate <= 0) {
+    if (!isActive) {
       lastTickRef.current = null
       activeZoneRef.current = null
       setZoneDurations(INITIAL_ZONES)
+    }
+  }, [isActive])
+
+  useEffect(() => {
+    // Do not track time if the workout is inactive or if max HR is not set.
+    if (!isActive || maxHeartRate <= 0) {
       return
     }
 

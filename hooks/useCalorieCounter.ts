@@ -63,13 +63,16 @@ export const useCalorieCounter = (
       const sum = buffer.reduce((acc, val) => acc + val, 0)
       const average = buffer.length > 0 ? Math.round(sum / buffer.length) : 0
       setSmoothedHeartRate(average)
-    } else if (!isActive) {
+    }
+  }, [heartRate, isActive])
+
+  useEffect(() => {
+    if (!isActive) {
       // If workout becomes inactive, reset the buffer immediately
       hrBufferRef.current = []
       setSmoothedHeartRate(0)
     }
-    // Dependency on `heartRate` is key. `isActive` is also important to control buffer updates.
-  }, [heartRate, isActive])
+  }, [isActive])
 
   useEffect(() => {
     if (!isActive) {

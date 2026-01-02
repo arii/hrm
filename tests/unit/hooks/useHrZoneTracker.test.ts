@@ -16,11 +16,41 @@ describe('useHrZoneTracker', () => {
   it('should return initial zones when inactive', () => {
     const { result } = renderHook(() => useHrZoneTracker(120, 200, false))
     expect(result.current).toEqual([
-      { zone: 1, name: 'Very Light', duration: 0, percentage: 0, color: 'grey.700' },
-      { zone: 2, name: 'Light', duration: 0, percentage: 0, color: 'info.main' },
-      { zone: 3, name: 'Moderate', duration: 0, percentage: 0, color: 'success.main' },
-      { zone: 4, name: 'Hard', duration: 0, percentage: 0, color: 'warning.main' },
-      { zone: 5, name: 'Maximum', duration: 0, percentage: 0, color: 'error.main' },
+      {
+        zone: 1,
+        name: 'Very Light',
+        duration: 0,
+        percentage: 0,
+        color: 'grey.700',
+      },
+      {
+        zone: 2,
+        name: 'Light',
+        duration: 0,
+        percentage: 0,
+        color: 'info.main',
+      },
+      {
+        zone: 3,
+        name: 'Moderate',
+        duration: 0,
+        percentage: 0,
+        color: 'success.main',
+      },
+      {
+        zone: 4,
+        name: 'Hard',
+        duration: 0,
+        percentage: 0,
+        color: 'warning.main',
+      },
+      {
+        zone: 5,
+        name: 'Maximum',
+        duration: 0,
+        percentage: 0,
+        color: 'error.main',
+      },
     ])
   })
 

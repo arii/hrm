@@ -1,12 +1,5 @@
 'use client'
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  Grid,
-  Paper,
-} from '@mui/material'
+import { Container, Typography, Box, Button, Grid } from '@mui/material'
 import {
   Bluetooth as BluetoothIcon,
   BluetoothConnected as BluetoothConnectedIcon,
@@ -109,12 +102,16 @@ const ConnectView = (props: ConnectViewProps) => {
     return (
       <Container maxWidth="sm">
         <Box textAlign="center" my={4}>
-          <BluetoothDisabledIcon sx={{ fontSize: 80, color: 'text.disabled' }} />
+          <BluetoothDisabledIcon
+            sx={{ fontSize: 80, color: 'text.disabled' }}
+          />
           <Typography variant="h5" component="h1" gutterBottom>
             Web Bluetooth Not Supported
           </Typography>
           <Typography color="textSecondary">
-            Your browser does not support the Web Bluetooth API. Please use a compatible browser like Chrome, Edge, or Opera on a desktop or Android device.
+            Your browser does not support the Web Bluetooth API. Please use a
+            compatible browser like Chrome, Edge, or Opera on a desktop or
+            Android device.
           </Typography>
         </Box>
       </Container>
@@ -135,7 +132,7 @@ const ConnectView = (props: ConnectViewProps) => {
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <UserSettings
-            userName={userName}
+            userName={userName || ''}
             setUserName={setUserName}
             userAge={userAge}
             setUserAge={setUserAge}
@@ -157,18 +154,12 @@ const ConnectView = (props: ConnectViewProps) => {
         </Grid>
 
         <Grid item xs={12}>
-          <Box
-            display="flex"
-            justifyContent="space-around"
-            alignItems="center"
-          >
+          <Box display="flex" justifyContent="space-around" alignItems="center">
             <Button
               variant="contained"
               color="primary"
               onClick={onConnect}
-              disabled={
-                isConnected || !userName || !!ageError || !!weightError
-              }
+              disabled={isConnected || !userName || !!ageError || !!weightError}
               startIcon={<BluetoothIcon />}
             >
               Connect HRM

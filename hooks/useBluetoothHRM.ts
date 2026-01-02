@@ -43,6 +43,23 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  * @hook useBluetoothHRM
  * @description A comprehensive hook for managing Bluetooth Low Energy (BLE) Heart Rate Monitor (HRM) devices.
  * It handles device discovery, connection, data streaming, and automatic reconnection.
+ *
+ * @param {UseBluetoothHRMProps} props - Configuration options for the hook.
+ * @property {number} [dataLivenessTimeoutMs=10000] - Timeout in ms for stale data before forcing a reconnect.
+ * @property {number} [throttleMs=250] - Throttle interval in ms for sending HR data via WebSocket.
+ * @property {string | null} [userName] - The user's name, used for metadata updates.
+ * @property {number | null} [userAge] - The user's age, used for max HR calculation.
+ *
+ * @returns {object} An object containing the state and functions to interact with the HRM device.
+ * @property {Function} connectAndStream - Function to initiate connection to a device.
+ * @property {Function} autoConnect - Function to silently connect to a previously saved device.
+ * @property {Function} disconnect - Function to manually disconnect from the current device.
+ * @property {Function} forgetDevice - Function to disconnect and revoke permissions for a device.
+ * @property {string} deviceStatus - The current status of the Bluetooth connection.
+ * @property {number | null} batteryLevel - The last known battery level of the connected device.
+ * @property {boolean} isConnected - A boolean indicating if the device is currently connected.
+ * @property {boolean} isSupported - A boolean indicating if Web Bluetooth is supported by the browser.
+ * @property {DisconnectionReason} disconnectionReason - The reason for the last disconnection.
  */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
@@ -51,7 +68,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     userName,
     userAge,
   } = props
-  const { sendData } = useWebSocket()
+  const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
     useState<DisconnectionReason>(null)
@@ -131,6 +148,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     return () => clearInterval(interval)
   }, [dataLivenessTimeoutMs])
 
+  /**
+   * @function disconnect
+   * @description Manually disconnects the device, preventing auto-reconnection.
+   * @sideeffect Clears connection timeouts and resets device state.
+   */
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
     setDisconnectionReason('manual')
@@ -149,6 +171,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     deviceRef.current = null
   }, [])
 
+  /**
+   * @function forgetDevice
+   * @description Disconnects, clears the saved device from cookies, and revokes permissions.
+   * @async
+   * @returns {Promise<void>}
+   * @sideeffect Calls `disconnect`, deletes cookies, and may call `device.forget()`.
+   */
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
     disconnect()
@@ -268,6 +297,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     connectToGattRef.current = connectToGatt
   }, [connectToGatt])
 
+  /**
+   * @function connectAndStream
+   * @description Connects to a Bluetooth HRM device and starts streaming data.
+   * It attempts to reconnect to a saved device or prompts the user to select a new one.
+   *
+   * @param {string} [userName] - The user's name for display.
+   * @param {number} [userAge] - The user's age to calculate max heart rate.
+   * @returns {Promise<void>} A promise that resolves on successful connection, or rejects on failure.
+   * @throws {Error} If the connection fails for any reason (e.g., WebSocket disconnected,
+   * device not found, user cancellation).
+   * @sideeffect May trigger the browser's Bluetooth device picker.
+   * @sideeffect Updates component state throughout the connection process.
+   */
   const connectAndStream = useCallback(
     async (
       userNameFromArgs?: string,
@@ -281,6 +323,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         age: userAgeFromArgs || userAge || 0,
       }
       if (statusRef.current.startsWith('Connected')) return
+      if (connectionStatus !== 'Connected') {
+        throw new Error('WebSocket not connected. Cannot stream data.')
+      }
       try {
         setDeviceStatus('Checking saved devices...')
         let device = savedDevice

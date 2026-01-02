@@ -173,7 +173,9 @@ export default function ConnectPage() {
       onWeightBlur={handleWeightBlur}
       weightError={weightError}
       gender={gender}
-      setGender={(g: Gender) => setUserSettings((prev) => ({ ...prev, gender: g }))}
+      setGender={(g: Gender) =>
+        setUserSettings((prev) => ({ ...prev, gender: g }))
+      }
       unitSystem={unitSystem}
       onUnitChange={handleUnitChange}
       isConnected={isConnected}
