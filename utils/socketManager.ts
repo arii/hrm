@@ -215,7 +215,7 @@ const initSocketManager = (
     hrmDataRepository.findAll().forEach((client) => {
       if (now - client.lastUpdated > staleThreshold) {
         if (client.isConnected) {
-          client.isConnected = false
+          hrmDataRepository.save({ ...client, isConnected: false })
           changed = true
         }
       }
