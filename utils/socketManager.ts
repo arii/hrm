@@ -222,6 +222,7 @@ const initSocketManager = (
 export const resetSocketManager = () => {
   hrmDataRepository.clear()
   clientSessionState.clear()
+  hrmDataSourceClientId = null
 }
 
 const broadcastState = () => {
