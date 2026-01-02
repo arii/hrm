@@ -18,14 +18,17 @@ interface WindowWithTestFlags extends Window {
 }
 
 import {
-  BASE_URL,
+  expectPageToHaveScreenshot,
   getDynamicContentMasks,
   getHrMasks,
   getTimerMasks,
-  replaceIframeWithStableWorkout,
+} from './lib/assertions'
+import {
+  BASE_URL,
+  setupPageForVisualRegression,
+  stopTimer,
   waitForFontsLoaded,
-  waitForPageReady,
-} from './test-helpers'
+} from './lib'
 import { WAIT_TIMEOUTS } from './lib/waits'
 
 // Configure tests to run serially for better performance
@@ -40,82 +43,31 @@ let context: BrowserContext
 test.describe('Visual Regression Tests', () => {
   // Set up all pages once before all tests
   test.beforeAll(async ({ browser }) => {
-    // Increase timeout for setup to handle parallel page loads and potential server slowness
-    test.setTimeout(WAIT_TIMEOUTS.LONG * 2) // Allow extra time for visual tests
-
-    context = await browser.newContext({
-      // Start with a clean session - no cookies, cache, or storage
-      storageState: undefined,
-    })
-
-    // Create all pages in parallel
+    test.setTimeout(WAIT_TIMEOUTS.LONG * 2)
+    context = await browser.newContext({ storageState: undefined })
     ;[dashboardPage, controlPage, mockPage] = await Promise.all([
       context.newPage(),
       context.newPage(),
       context.newPage(),
     ])
 
-    // Navigate all pages in parallel
     await Promise.all([
-      dashboardPage.goto(BASE_URL),
-      controlPage.goto(`${BASE_URL}/client/control`),
-      mockPage.goto(`${BASE_URL}/client/mock`),
+      setupPageForVisualRegression(
+        dashboardPage,
+        `${BASE_URL}/`,
+        true
+      ),
+      setupPageForVisualRegression(
+        controlPage,
+        `${BASE_URL}/client/control`
+      ),
+      setupPageForVisualRegression(
+        mockPage,
+        `${BASE_URL}/client/mock`
+      ),
     ])
 
-    // Wait for all pages to be ready in parallel (includes networkidle)
-    await Promise.all([
-      waitForPageReady(dashboardPage),
-      waitForPageReady(controlPage),
-      waitForPageReady(mockPage),
-    ])
-
-    // Wait for fonts to load on all pages to eliminate font-related shifts
-    await Promise.all([
-      waitForFontsLoaded(dashboardPage),
-      waitForFontsLoaded(controlPage),
-      waitForFontsLoaded(mockPage),
-    ])
-
-    // Ensure timer is stopped before tests start
-    // Check if STOP button exists (timer is running)
-    const stopButton = controlPage.getByRole('button', {
-      name: 'STOP',
-      exact: true,
-    })
-
-    try {
-      // If timer is running, stop it
-      if (await stopButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })) {
-        await stopButton.click()
-        // Wait for START button to confirm timer stopped on control page
-        await expect(
-          controlPage.getByRole('button', { name: 'START', exact: true })
-        ).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
-
-        // Wait for dashboard to clear timer display (return to READY state)
-        await expect(dashboardPage.locator('text=00:00')).toBeVisible({
-          timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
-        })
-      }
-    } catch (error) {
-      // Timer not running or failed to stop, log and continue
-      console.warn('Timer check/stop encountered an issue (ignoring):', error)
-    }
-
-    // Replace iframe with stable content for dashboard
-    // Wait for dashboard to settle before replacing
-    try {
-      // Wait for a known stable element instead of arbitrary timeout
-      await expect(dashboardPage.locator('body')).toBeVisible({
-        timeout: WAIT_TIMEOUTS.SHORT * 2,
-      })
-      await replaceIframeWithStableWorkout(dashboardPage)
-    } catch (e) {
-      console.warn(
-        'Failed to replace iframe (it might be missing or slow to load):',
-        e
-      )
-    }
+    await stopTimer(controlPage, dashboardPage)
   })
 
   // Clean up after all tests
@@ -139,44 +91,36 @@ test.describe('Visual Regression Tests', () => {
       }
     )
 
-    // 3. Mask dynamic Heart Rate and Calorie values which shift pixels
-    await expect(dashboardPage).toHaveScreenshot('dashboard-viewer.png', {
-      fullPage: true,
-      animations: 'disabled',
-      mask: [
-        ...getTimerMasks(dashboardPage),
-        ...getHrMasks(dashboardPage),
-        dashboardPage.getByTestId('calorie-count'), // Mask dynamic energy expenditure
-        dashboardPage.locator('.MUI-Charts-root'), // Mask SVG rendering noise
-      ],
-      maxDiffPixelRatio: 0.08, // Required for cross-platform font rendering in CI
-      threshold: 0.2, // Allows for minor anti-aliasing and rendering variations
-    })
+    await expectPageToHaveScreenshot(
+      dashboardPage,
+      'dashboard-viewer.png',
+      {
+        mask: [
+          ...getTimerMasks(dashboardPage),
+          ...getHrMasks(dashboardPage),
+          dashboardPage.getByTestId('calorie-count'),
+          dashboardPage.locator('.MUI-Charts-root'),
+        ],
+        maxDiffPixelRatio: 0.08,
+      }
+    )
   })
 
   test('Control Panel - timer and music controls', async () => {
-    // Capture screenshot
-    await expect(controlPage).toHaveScreenshot('control-panel.png', {
-      fullPage: true,
-      animations: 'disabled',
-      caret: 'hide',
-    })
+    await expectPageToHaveScreenshot(
+      controlPage,
+      'control-panel.png'
+    )
   })
 
   test('Mock HRM Client - test data input', async () => {
-    // Fill in the new fields to ensure they are included in the snapshot
-    await mockPage.getByLabel('Weight (kg)').fill('75')
-    await mockPage.getByLabel('Height (cm)').fill('180')
-    await mockPage.getByLabel('Gender').fill('female')
-
-    // Capture screenshot
-    await expect(mockPage).toHaveScreenshot('mock-hrm-client.png', {
-      fullPage: true,
-      animations: 'disabled',
-      caret: 'hide',
-      threshold: 0.2,
-      maxDiffPixelRatio: 0.02,
-    })
+    await expectPageToHaveScreenshot(
+      mockPage,
+      'mock-hrm-client.png',
+      {
+        maxDiffPixelRatio: 0.02,
+      }
+    )
   })
 
   test('Dashboard with active timer', async () => {
@@ -220,18 +164,14 @@ test.describe('Visual Regression Tests', () => {
     // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
 
-    // Capture screenshot with running timer - mask dynamic timer content using data-testid selectors
-    await expect(dashboardPage).toHaveScreenshot('dashboard-active-timer.png', {
-      fullPage: true,
-      animations: 'disabled',
-      caret: 'hide',
-      threshold: 0.2,
-      maxDiffPixelRatio: 0.02,
-      mask: [
-        // Use precise data-testid selectors for timer masking
-        ...getTimerMasks(dashboardPage),
-      ],
-    })
+    await expectPageToHaveScreenshot(
+      dashboardPage,
+      'dashboard-active-timer.png',
+      {
+        mask: getTimerMasks(dashboardPage),
+        maxDiffPixelRatio: 0.02,
+      }
+    )
   })
 
   test('Dashboard with mock HR data streaming', async () => {
@@ -246,20 +186,17 @@ test.describe('Visual Regression Tests', () => {
     // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
 
-    // Capture screenshot with HR data displayed while masking dynamic content
-    await expect(dashboardPage).toHaveScreenshot('dashboard-with-hr-data.png', {
-      fullPage: true,
-      animations: 'disabled',
-      caret: 'hide',
-      threshold: 0.2,
-      maxDiffPixelRatio: 0.04, // Robustness for dynamic content
-      mask: [
-        // Use precise data-testid selectors for all dynamic content masking
-        ...getDynamicContentMasks(dashboardPage),
-        // Also mask the entire HR tiles section for complete coverage
-        ...getHrMasks(dashboardPage),
-      ],
-    })
+    await expectPageToHaveScreenshot(
+      dashboardPage,
+      'dashboard-with-hr-data.png',
+      {
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          ...getHrMasks(dashboardPage),
+        ],
+        maxDiffPixelRatio: 0.04,
+      }
+    )
   })
 
   test('HR Tiles - all zones', async () => {
@@ -278,20 +215,20 @@ test.describe('Visual Regression Tests', () => {
     // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
 
-    // Use element isolation: scope snapshot to specific component
     const firstTile = dashboardPage
       .locator('[data-testid="hr-tile-grid-item"]')
       .first()
-    await expect(firstTile).toHaveScreenshot('hr-tiles-section.png', {
-      animations: 'disabled',
-      caret: 'hide',
-      threshold: 0.2,
-      maxDiffPixelRatio: 0.05, // Increased tolerance for rendering variability
-      // Mask the dynamic HR values within the tile
-      mask: [
-        firstTile.locator('[data-testid="live-hr-value"]'),
-        firstTile.locator('[data-testid="live-hr-percent"]'),
-      ],
-    })
+
+    await expectPageToHaveScreenshot(
+      firstTile,
+      'hr-tiles-section.png',
+      {
+        mask: [
+          firstTile.locator('[data-testid="live-hr-value"]'),
+          firstTile.locator('[data-testid="live-hr-percent"]'),
+        ],
+        maxDiffPixelRatio: 0.05,
+      }
+    )
   })
 })
