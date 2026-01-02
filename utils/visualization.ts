@@ -1,6 +1,13 @@
 import { HrZoneName } from '@/lib/shared/hr-zones'
 import theme from '@/lib/theme'
 
+/**
+ * Maps an HR Zone Name to its corresponding MUI theme color.
+ * This utility centralizes the color logic for HR zones across the application.
+ *
+ * @param zoneName The name of the heart rate zone.
+ * @returns The corresponding color string from the theme.
+ */
 export const getHrZoneColor = (zoneName: HrZoneName): string => {
   switch (zoneName) {
     case HrZoneName.WarmUp:

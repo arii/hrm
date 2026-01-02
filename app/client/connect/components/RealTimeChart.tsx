@@ -12,7 +12,7 @@ import { useTheme } from '@mui/material/styles'
 import { formatDuration } from '@/utils/formatters'
 
 interface RealTimeChartProps {
-  data: { time: number; hr: number; calories: number }[]
+  data: { datapointCount: number; hr: number; calories: number }[]
 }
 
 const RealTimeChart: React.FC<RealTimeChartProps> = ({ data }) => {
@@ -27,12 +27,16 @@ const RealTimeChart: React.FC<RealTimeChartProps> = ({ data }) => {
         aria-label="Real-time heart rate chart"
       >
         <XAxis
-          dataKey="time"
-          tickFormatter={(time) => formatDuration(time * 1000)}
+          dataKey="datapointCount"
+          tickFormatter={(datapointCount) =>
+            formatDuration(datapointCount * 1000)
+          }
         />
         <YAxis />
         <Tooltip
-          labelFormatter={(time) => `Time: ${formatDuration(time * 1000)}`}
+          labelFormatter={(datapointCount) =>
+            `Time: ${formatDuration(datapointCount * 1000)}`
+          }
           formatter={(value: number | undefined, name: string | undefined) => {
             if (typeof value !== 'number' || typeof name !== 'string')
               return ['', '']

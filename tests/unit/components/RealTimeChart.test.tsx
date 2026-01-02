@@ -22,9 +22,9 @@ jest.mock('recharts', () => ({
 }))
 
 const mockData = [
-  { time: 1, hr: 100, calories: 10 },
-  { time: 2, hr: 110, calories: 20 },
-  { time: 3, hr: 120, calories: 30 },
+  { datapointCount: 1, hr: 100, calories: 10 },
+  { datapointCount: 2, hr: 110, calories: 20 },
+  { datapointCount: 3, hr: 120, calories: 30 },
 ]
 
 describe('RealTimeChart', () => {

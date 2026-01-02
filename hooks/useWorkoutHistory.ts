@@ -4,7 +4,7 @@ import { HrZoneName } from '@/lib/shared/hr-zones'
 import { getHrZoneColor } from '@/utils/visualization'
 
 interface WorkoutDataPoint {
-  time: number
+  datapointCount: number
   hr: number
   calories: number
 }
@@ -26,8 +26,12 @@ const useWorkoutHistory = (maxHr: number) => {
   const addDataPoint = useCallback(
     (hr: number, calories: number) => {
       setHistory((prevHistory) => {
-        const newTime = prevHistory.length + 1
-        const newDataPoint = { time: newTime, hr, calories }
+        const newDatapointCount = prevHistory.length + 1
+        const newDataPoint = {
+          datapointCount: newDatapointCount,
+          hr,
+          calories,
+        }
         return [...prevHistory, newDataPoint]
       })
 

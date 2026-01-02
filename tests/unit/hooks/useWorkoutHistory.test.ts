@@ -31,7 +31,7 @@ describe('useWorkoutHistory', () => {
 
     expect(result.current.history).toHaveLength(2)
     expect(result.current.history[0]).toEqual({
-      time: 1,
+      datapointCount: 1,
       hr: 100,
       calories: 50,
     })
