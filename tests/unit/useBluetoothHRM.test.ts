@@ -162,7 +162,7 @@ describe('useBluetoothHRM', () => {
 
     // 3. Advance timers to allow the reconnect logic (with its delay) to run
     act(() => {
-      jest.advanceTimersByTime(2000) // Default reconnect delay
+      jest.advanceTimersByTime(5000) // Default reconnect delay
     })
 
     // 4. Simulate a successful reconnection by resolving the connect promise

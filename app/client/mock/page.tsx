@@ -22,6 +22,9 @@ export default function MockPage() {
   const [hrValue, setHrValue] = useState(100)
   const [name, setName] = useState('Mock User')
   const [age, setAge] = useState(30)
+  const [weight, setWeight] = useState(70) // Add weight state
+  const [height, setHeight] = useState(175) // Add height state
+  const [gender, setGender] = useState('male') // Add gender state
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
 
   const isStreaming = intervalId !== null
@@ -59,10 +62,13 @@ export default function MockPage() {
         maxHr: maxHr,
         name: name,
         age: age,
+        weight: weight,
+        height: height,
+        gender: gender,
       },
     }
     sendData(message)
-  }, [sendData, name, age, maxHr])
+  }, [sendData, name, age, maxHr, weight, height, gender])
 
   // NOTE: In a real client, metadata would likely be sent once upon connection
   // or when the user explicitly saves settings. For this mock, we send it
@@ -148,6 +154,35 @@ export default function MockPage() {
                 type="number"
                 value={age}
                 onChange={(e) => setAge(parseInt(e.target.value, 10))}
+                fullWidth
+              />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <TextField
+                label="Weight (kg)"
+                placeholder="e.g., 70"
+                type="number"
+                value={weight}
+                onChange={(e) => setWeight(parseInt(e.target.value, 10))}
+                fullWidth
+              />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <TextField
+                label="Height (cm)"
+                placeholder="e.g., 175"
+                type="number"
+                value={height}
+                onChange={(e) => setHeight(parseInt(e.target.value, 10))}
+                fullWidth
+              />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <TextField
+                label="Gender"
+                placeholder="e.g., male"
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
                 fullWidth
               />
             </Grid>

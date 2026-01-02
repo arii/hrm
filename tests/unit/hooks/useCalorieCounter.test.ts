@@ -74,4 +74,30 @@ describe('useCalorieCounter', () => {
 
     expect(result.current.calories).toBe(0)
   })
+  it('should accumulate calories correctly with changing HR', () => {
+    const { result, rerender } = renderHook(
+      ({ heartRate, isActive }) => useCalorieCounter(heartRate, 35, 80, isActive),
+      {
+        initialProps: { heartRate: 150, isActive: true },
+      }
+    )
+    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockImplementation(
+      ({ heartRate, durationMinutes }) => {
+        // Simplified mock: calories per minute is roughly HR * 0.1
+        return heartRate * 0.1 * durationMinutes
+      }
+    )
+    act(() => {
+      jest.advanceTimersByTime(5000) // 5 seconds at 150 BPM
+    })
+    // After 5 seconds, about 5 * (150 * 0.1 / 60) = 1.25 calories
+    expect(result.current.calories).toBeCloseTo(1.25)
+    rerender({ heartRate: 160, isActive: true })
+    act(() => {
+      jest.advanceTimersByTime(5000) // 5 seconds at 160 BPM
+    })
+    // After 10 seconds total, 5s at 150 and 5s at 160
+    // 1.25 (from first 5s) + 5 * (160 * 0.1 / 60) = 1.25 + 1.33 = 2.58
+    expect(result.current.calories).toBeCloseTo(2.58)
+  })
 })
