@@ -107,7 +107,6 @@ app.prepare().then(async () => {
 
   // 1. Setup WebSocket Infrastructure
   const wsManager = new WebSocketManager()
-  wsManager.startHeartbeat()
 
   // 2. Setup Services with Broadcaster
   const services: AppServices = await createServices(
@@ -175,9 +174,5 @@ app.prepare().then(async () => {
 
   server.listen(env.PORT, () => {
     logger.info(`> Ready on http://${env.HOST}:${env.PORT}`)
-  })
-
-  server.on('close', () => {
-    wsManager.stopHeartbeat()
   })
 })
