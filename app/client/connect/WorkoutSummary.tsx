@@ -45,7 +45,7 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
           <Stack spacing={1} alignItems="center">
             <WhatshotIcon color="error" sx={{ fontSize: 30 }} />
             <Typography variant="h5" component="p" fontWeight="bold">
-              {caloriesBurned}
+              {caloriesBurned.toFixed(1)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Calories Burned
