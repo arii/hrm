@@ -141,7 +141,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
-    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null, calories: 0 } })
+    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
 
     setDeviceStatus('Disconnected')
     setSavedDevice(null)
@@ -179,7 +179,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const onDisconnected = useCallback(() => {
     setBatteryLevel(null)
-    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null, calories: 0 } })
+    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
 
     if (!isManualDisconnect.current && deviceRef.current) {
       logger.info(

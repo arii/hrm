@@ -39,17 +39,21 @@ export const useHrZoneTracker = (
   const activeZoneRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!isActive) {
+    // Do not track time if the workout is inactive or if max HR is not set.
+    if (!isActive || maxHeartRate <= 0) {
       lastTickRef.current = null
       activeZoneRef.current = null
       setZoneDurations(INITIAL_ZONES)
       return
     }
 
+    lastTickRef.current = Date.now() // Initialize on activation
+
     const tick = () => {
       const now = Date.now()
       const lastTick = lastTickRef.current
 
+      // We need a lastTick to calculate delta, and an active zone to accumulate into.
       if (lastTick && activeZoneRef.current !== null) {
         const deltaSeconds = (now - lastTick) / 1000
         setZoneDurations((prevDurations) => {
@@ -66,6 +70,7 @@ export const useHrZoneTracker = (
             (sum, z) => sum + z.duration,
             0
           )
+          // Avoid division by zero and unnecessary re-renders.
           if (totalDuration > 0) {
             return newDurations.map((zone) => ({
               ...zone,
@@ -75,17 +80,25 @@ export const useHrZoneTracker = (
           return newDurations
         })
       }
+      // Always update the ref for the next tick's calculation.
       lastTickRef.current = now
     }
 
+    // When this effect runs, it means we should start tracking.
+    // We call tick() once immediately to set the initial `lastTickRef.current`.
+    // This ensures that the very first interval calculates a delta and accumulates duration.
+    tick()
     const intervalId = setInterval(tick, 1000)
+
     return () => clearInterval(intervalId)
-  }, [isActive])
+  }, [isActive, maxHeartRate])
 
   useEffect(() => {
     if (isActive && currentHeartRate > 0 && maxHeartRate > 0) {
       const currentZone = getHrZone(currentHeartRate, maxHeartRate)
       activeZoneRef.current = currentZone
+    } else {
+      activeZoneRef.current = null
     }
   }, [currentHeartRate, maxHeartRate, isActive])
 

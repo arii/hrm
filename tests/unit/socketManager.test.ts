@@ -78,7 +78,7 @@ describe('WebSocket Manager', () => {
     expect(ws).toHaveProperty('clientId', 'test-client-1')
   })
 
-  it('should handle HRM_INPUT and broadcast state', (done) => {
+  it('should handle HRM_INPUT and broadcast state', async () => {
     const ws1 = createMockSocket()
     const req1 = createMockRequest('client-1')
     wss.emit('connection', ws1, req1)

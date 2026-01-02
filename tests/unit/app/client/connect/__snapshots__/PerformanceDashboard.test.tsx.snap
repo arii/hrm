@@ -1,0 +1,239 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PerformanceDashboard renders correctly when hrHistory is empty 1`] = `
+<DocumentFragment>
+  <div
+    class="MuiBox-root css-h5fkc8"
+  >
+    <h5
+      class="MuiTypography-root MuiTypography-h5 MuiTypography-gutterBottom css-1f9xtph-MuiTypography-root"
+    >
+      Performance Dashboard
+    </h5>
+    <div
+      class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-11rx91p-MuiPaper-root"
+      style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-h6 MuiTypography-gutterBottom css-1wmifpn-MuiTypography-root"
+      >
+        HR vs. Time
+      </h6>
+      <p
+        class="MuiTypography-root MuiTypography-body1 css-rizt0-MuiTypography-root"
+      >
+        No data yet. Start your workout!
+      </p>
+    </div>
+    <div
+      class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-1fdopfm-MuiPaper-root"
+      style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-h6 MuiTypography-gutterBottom css-1wmifpn-MuiTypography-root"
+      >
+        Zone Durations
+      </h6>
+      <div
+        class="MuiTableContainer-root css-70zvr5-MuiTableContainer-root"
+      >
+        <table
+          class="MuiTable-root css-1xwxv7r-MuiTable-root"
+        >
+          <thead
+            class="MuiTableHead-root css-1a7iywq-MuiTableHead-root"
+          >
+            <tr
+              class="MuiTableRow-root MuiTableRow-head css-1xtozoh-MuiTableRow-root"
+            >
+              <th
+                class="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeSmall css-g6bqb5-MuiTableCell-root"
+                scope="col"
+              >
+                Zone
+              </th>
+              <th
+                class="MuiTableCell-root MuiTableCell-head MuiTableCell-alignRight MuiTableCell-sizeSmall css-1ais0ar-MuiTableCell-root"
+                scope="col"
+              >
+                Duration
+              </th>
+              <th
+                class="MuiTableCell-root MuiTableCell-head MuiTableCell-alignRight MuiTableCell-sizeSmall css-1ais0ar-MuiTableCell-root"
+                scope="col"
+              >
+                % of Total
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            class="MuiTableBody-root css-gmh7jj-MuiTableBody-root"
+          >
+            <tr
+              class="MuiTableRow-root css-1xtozoh-MuiTableRow-root"
+            >
+              <th
+                class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeSmall css-jiabcu-MuiTableCell-root"
+                scope="row"
+              >
+                <div
+                  class="MuiBox-root css-70qvj9"
+                >
+                  <div
+                    class="MuiBox-root css-1p29v82"
+                  />
+                  Very Light
+                </div>
+              </th>
+              <td
+                class="MuiTableCell-root MuiTableCell-body MuiTableCell-alignRight MuiTableCell-sizeSmall css-17j8okc-MuiTableCell-root"
+              >
+                00:00:00
+              </td>
+              <td
+                class="MuiTableCell-root MuiTableCell-body MuiTableCell-alignRight MuiTableCell-sizeSmall css-17j8okc-MuiTableCell-root"
+              >
+                0.0%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`PerformanceDashboard renders correctly with data 1`] = `
+<DocumentFragment>
+  <div
+    class="MuiBox-root css-h5fkc8"
+  >
+    <h5
+      class="MuiTypography-root MuiTypography-h5 MuiTypography-gutterBottom css-1f9xtph-MuiTypography-root"
+    >
+      Performance Dashboard
+    </h5>
+    <div
+      class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-11rx91p-MuiPaper-root"
+      style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-h6 MuiTypography-gutterBottom css-1wmifpn-MuiTypography-root"
+      >
+        HR vs. Time
+      </h6>
+      <div
+        class="recharts-responsive-container"
+        style="width: 100%; height: 200px; min-width: 0;"
+      >
+        <div
+          style="width: 0px; overflow-x: visible;"
+        />
+      </div>
+    </div>
+    <div
+      class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation3 css-1fdopfm-MuiPaper-root"
+      style="--Paper-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12);"
+    >
+      <h6
+        class="MuiTypography-root MuiTypography-h6 MuiTypography-gutterBottom css-1wmifpn-MuiTypography-root"
+      >
+        Zone Durations
+      </h6>
+      <div
+        class="MuiTableContainer-root css-70zvr5-MuiTableContainer-root"
+      >
+        <table
+          class="MuiTable-root css-1xwxv7r-MuiTable-root"
+        >
+          <thead
+            class="MuiTableHead-root css-1a7iywq-MuiTableHead-root"
+          >
+            <tr
+              class="MuiTableRow-root MuiTableRow-head css-1xtozoh-MuiTableRow-root"
+            >
+              <th
+                class="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeSmall css-g6bqb5-MuiTableCell-root"
+                scope="col"
+              >
+                Zone
+              </th>
+              <th
+                class="MuiTableCell-root MuiTableCell-head MuiTableCell-alignRight MuiTableCell-sizeSmall css-1ais0ar-MuiTableCell-root"
+                scope="col"
+              >
+                Duration
+              </th>
+              <th
+                class="MuiTableCell-root MuiTableCell-head MuiTableCell-alignRight MuiTableCell-sizeSmall css-1ais0ar-MuiTableCell-root"
+                scope="col"
+              >
+                % of Total
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            class="MuiTableBody-root css-gmh7jj-MuiTableBody-root"
+          >
+            <tr
+              class="MuiTableRow-root css-1xtozoh-MuiTableRow-root"
+            >
+              <th
+                class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeSmall css-jiabcu-MuiTableCell-root"
+                scope="row"
+              >
+                <div
+                  class="MuiBox-root css-70qvj9"
+                >
+                  <div
+                    class="MuiBox-root css-1p29v82"
+                  />
+                  Very Light
+                </div>
+              </th>
+              <td
+                class="MuiTableCell-root MuiTableCell-body MuiTableCell-alignRight MuiTableCell-sizeSmall css-17j8okc-MuiTableCell-root"
+              >
+                00:01:00
+              </td>
+              <td
+                class="MuiTableCell-root MuiTableCell-body MuiTableCell-alignRight MuiTableCell-sizeSmall css-17j8okc-MuiTableCell-root"
+              >
+                10.0%
+              </td>
+            </tr>
+            <tr
+              class="MuiTableRow-root css-1xtozoh-MuiTableRow-root"
+            >
+              <th
+                class="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeSmall css-jiabcu-MuiTableCell-root"
+                scope="row"
+              >
+                <div
+                  class="MuiBox-root css-70qvj9"
+                >
+                  <div
+                    class="MuiBox-root css-1x9m3pd"
+                  />
+                  Light
+                </div>
+              </th>
+              <td
+                class="MuiTableCell-root MuiTableCell-body MuiTableCell-alignRight MuiTableCell-sizeSmall css-17j8okc-MuiTableCell-root"
+              >
+                00:02:00
+              </td>
+              <td
+                class="MuiTableCell-root MuiTableCell-body MuiTableCell-alignRight MuiTableCell-sizeSmall css-17j8okc-MuiTableCell-root"
+              >
+                20.0%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

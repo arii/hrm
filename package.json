@@ -84,6 +84,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.6.0",
+    "resize-observer-polyfill": "^1.5.1",
     "uuid": "^9.0.1",
     "ws": "^8.18.3",
     "zod": "^4.1.13"

@@ -13,7 +13,7 @@ import {
   BluetoothDisabled as BluetoothDisabledIcon,
 } from '@mui/icons-material'
 import UserSettings from './UserSettings'
-import { HrTileWithCalories } from '@/components/HrTileWithCalories'
+import HrTileWithCalories from '@/components/HrTileWithCalories'
 import { WorkoutStatus } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import PerformanceDashboard from './PerformanceDashboard'
