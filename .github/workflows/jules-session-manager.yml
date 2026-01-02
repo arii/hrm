@@ -100,7 +100,7 @@ jobs:
           fi
           echo "JULES_SESSION_ID=$SESSION_ID" >> $GITHUB_ENV
 
-      - name: 'Validate JULES Secrets'
+      - name: 'Validate Secrets and Install Dependencies'
         env:
           JULES_API_URL: ${{ secrets.JULES_API_URL }}
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -126,8 +126,7 @@ jobs:
           fi
 
           echo "✅ All required Jules secrets are configured"
-      - name: 'Install Dependencies'
-        run: pip install -r .github/scripts/requirements.txt
+          pip install -r .github/scripts/requirements.txt
 
       - name: 'Run Jules Operation: New'
         if: env.COMMAND == 'new'
