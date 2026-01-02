@@ -42,7 +42,7 @@ const HrTimelineChart = ({ data, maxHr }: HrTimelineChartProps) => {
     const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b)
 
     return sortedTimestamps.map((timestamp) => {
-      const entry: { [key: string]: number | string } = {
+      const entry: { [key: string]: number | string | null } = {
         time: new Date(timestamp).toLocaleTimeString(),
       }
       clientIds.forEach((clientId) => {
