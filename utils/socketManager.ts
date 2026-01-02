@@ -151,6 +151,8 @@ const initSocketManager = (
         maxHr: 185,
         age: 30,
         calories: 0, // Initialize to 0
+        lastUpdated: Date.now(),
+        isConnected: false,
       }
       hrmDataRepository.save(newClient)
       clientSessionState.set(extWs.clientId, {
@@ -202,6 +204,23 @@ const initSocketManager = (
   wss.on('close', () => {
     connectionMonitor.stop()
   })
+
+  setInterval(() => {
+    const now = Date.now()
+    const staleThreshold = 10000 // 10 seconds
+    let changed = false
+    hrmDataRepository.findAll().forEach((client) => {
+      if (now - client.lastUpdated > staleThreshold) {
+        if (client.isConnected) {
+          client.isConnected = false
+          changed = true
+        }
+      }
+    })
+    if (changed) {
+      broadcastState()
+    }
+  }, 5000)
 }
 
 /**
@@ -318,6 +337,8 @@ const handleIncomingMessage = (
             ...existingData,
             value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
+            lastUpdated: Date.now(),
+            isConnected: message.data.value !== null,
           })
         }
         broadcastState()

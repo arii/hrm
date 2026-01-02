@@ -41,15 +41,12 @@ const HrTileWithCalories = ({
 
   const hrZoneProps = useHrZone(user.value, user.maxHr || MAX_HR_DEFAULT)
 
-  // A `null` value for BPM is the definitive signal that the device is disconnected.
-  const isConnected = user.value !== null
-
   const hrTileProps = {
     name: user.name || '',
     bpm: user.value,
     percentMax: hrZoneProps.percentage,
     calories: calories,
-    isConnected,
+    isConnected: user.isConnected,
     isAlerting: isAlerting,
     ...(alertMessage && { alertMessage }),
   }

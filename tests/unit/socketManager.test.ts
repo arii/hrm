@@ -483,5 +483,33 @@ describe('WebSocket Manager', () => {
         'Unknown message type received'
       )
     })
+
+    describe('Watchdog', () => {
+      it('should mark clients as disconnected after a period of inactivity', () => {
+        // GIVEN: A client is connected and sends an initial HR value.
+        const mockBroadcast = broadcast as jest.Mock
+        mockBroadcast.mockClear()
+        const initialMessage = JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: 120 },
+        })
+        mockWs.emit('message', initialMessage)
+
+        // WHEN: A long time passes with no new messages.
+        jest.advanceTimersByTime(15000)
+
+        // THEN: The watchdog should have run and broadcast a state update
+        // marking the client as disconnected.
+        expect(mockBroadcast).toHaveBeenCalled()
+        const lastCall =
+          mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+        const payload: HrmData[] = lastCall[1].payload
+        const clientData = payload.find(
+          (c) => (mockWs as ExtWebSocket).clientId === c.clientId
+        )
+        expect(clientData).toBeDefined()
+        expect(clientData!.isConnected).toBe(false)
+      })
+    })
   })
 })
