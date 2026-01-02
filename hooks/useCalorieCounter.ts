@@ -1,7 +1,7 @@
 // File: hooks/useCalorieCounter.ts
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
-import { Gender } from '../../types/core'
+import { Gender } from '../types/core'
 
 /**
  * A hook to calculate and manage calories burned during a workout.
@@ -34,31 +34,29 @@ export const useCalorieCounter = (
 } => {
   const { smaWindow = 5 } = options
   const [calories, setCalories] = useState(0)
-  const [smoothedHeartRate, setSmoothedHeartRate] = useState(
-    isActive && heartRate > 0 ? heartRate : 0
-  )
   const lastTickRef = useRef<number | null>(null)
   const hrBufferRef = useRef<number[]>([])
 
-  // Effect to manage the heart rate buffer and calculate the smoothed value
-  useEffect(() => {
-    if (!isActive) {
-      hrBufferRef.current = []
-      setSmoothedHeartRate(0) // Reset HR when inactive
-      return
+  // Manage the heart rate buffer
+  if (isActive && heartRate > 0) {
+    const buffer = hrBufferRef.current
+    buffer.push(heartRate)
+    if (buffer.length > smaWindow) {
+      buffer.shift()
     }
+  } else {
+    hrBufferRef.current = []
+  }
 
-    if (heartRate > 0) {
-      const buffer = hrBufferRef.current
-      buffer.push(heartRate)
-      if (buffer.length > smaWindow) {
-        buffer.shift()
-      }
-      const sum = buffer.reduce((acc, val) => acc + val, 0)
-      const average = buffer.length > 0 ? Math.round(sum / buffer.length) : 0
-      setSmoothedHeartRate(average)
+  // Calculate the smoothed heart rate
+  const smoothedHeartRate = useMemo(() => {
+    const buffer = hrBufferRef.current
+    if (!isActive || buffer.length === 0) {
+      return 0
     }
-  }, [heartRate, isActive, smaWindow])
+    const sum = buffer.reduce((acc, val) => acc + val, 0)
+    return Math.round(sum / buffer.length)
+  }, [heartRate, isActive])
 
   // Effect to calculate calories based on changes in smoothed HR
   useEffect(() => {

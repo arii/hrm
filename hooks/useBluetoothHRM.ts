@@ -6,11 +6,7 @@
  * data streaming, and automatic reconnection on signal loss.
  */
 import { useCallback, useState, useRef, useEffect, useMemo } from 'react'
-import {
-  HrmInputMessage,
-  HrmMetadataUpdateMessage,
-  HrmMetadataUpdateData,
-} from '../types/websocket'
+import { HrmInputMessage } from '../types/websocket'
 import throttle from 'lodash.throttle'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -74,7 +70,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<

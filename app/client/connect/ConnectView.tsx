@@ -1,22 +1,35 @@
-'use client'
-import { useEffect } from 'react'
-import { Container, Typography, Box, Button, Grid } from '@mui/material'
-import {
-  Bluetooth as BluetoothIcon,
-  BluetoothConnected as BluetoothConnectedIcon,
-  BluetoothDisabled as BluetoothDisabledIcon,
-} from '@mui/icons-material'
+import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
+import Container from '@mui/material/Container'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
+import BatteryFullIcon from '@mui/icons-material/BatteryFull'
+import BatteryStdIcon from '@mui/icons-material/BatteryStd'
+import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
+import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
+import HrTile from '../../../components/HrTile'
+import BottomNavBar from '../../../components/BottomNavBar'
+import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
-import HrTileWithCalories from '@/components/HrTileWithCalories'
-import { SessionStatus as WorkoutStatus } from '@/hooks/useWorkoutSession'
+import { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types/core'
-import PerformanceDashboard from './PerformanceDashboard'
-import { HrZoneDuration } from '@/hooks/useHrZoneTracker'
+import {
+  ToggleButtonGroup,
+  ToggleButton,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from '@mui/material'
 
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
-  userName: string | null
+  userName: string
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
@@ -32,7 +45,7 @@ interface ConnectViewProps {
   setUserWeight: (weight: string) => void
   onWeightBlur: () => void
   weightError: string | null
-  gender: Gender | null
+  gender: Gender
   setGender: (gender: Gender) => void
   unitSystem: MeasurementSystem
   onUnitChange: (unit: MeasurementSystem) => void
@@ -44,233 +57,376 @@ interface ConnectViewProps {
   onForgetDevice: () => Promise<void>
   isSupported: boolean
   currentHR: number
-  hrZoneProps: {
-    percentage: number
-    progressColor: string
-  }
+  hrZoneProps: { percentage: number; progressColor: string }
   connectionStatus: string
   bluetoothConnected: boolean
   hasStarted: boolean
   onReset: () => void
-  workoutStatus: WorkoutStatus
+  workoutStatus: 'idle' | 'running' | 'paused'
   onStartWorkout: () => void
   onEndWorkout: () => void
-  hrHistory: { time: number; hr: number }[]
-  setHrHistory: React.Dispatch<
-    React.SetStateAction<{ time: number; hr: number }[]>
-  >
-  zoneDurations: HrZoneDuration[]
 }
 
-const ConnectView = (props: ConnectViewProps) => {
-  const {
-    caloriesBurned,
-    userName,
-    setUserName,
-    userAge,
-    setUserAge,
-    onAgeBlur,
-    ageError,
-    userHeight,
-    setUserHeight,
-    onHeightBlur,
-    heightError,
-    userWeight,
-    setUserWeight,
-    onWeightBlur,
-    weightError,
-    gender,
-    setGender,
-    unitSystem,
-    onUnitChange,
-    isConnected,
-    deviceStatus,
-    batteryLevel,
-    onConnect,
-    onDisconnect,
-    onForgetDevice,
-    isSupported,
-    currentHR,
-    connectionStatus,
-    bluetoothConnected,
-    hasStarted,
-    onReset,
-    workoutStatus,
-    onStartWorkout,
-    onEndWorkout,
-    hrHistory,
-    setHrHistory,
-    zoneDurations,
-  } = props
+export default function ConnectView({
+  duration,
+  caloriesBurned,
+  userName,
+  setUserName,
+  userAge,
+  setUserAge,
+  onAgeBlur,
+  ageError,
+  userHeight,
+  setUserHeight,
+  onHeightBlur,
+  heightError,
+  userWeight,
+  setUserWeight,
+  onWeightBlur,
+  weightError,
+  gender,
+  setGender,
+  unitSystem,
+  onUnitChange,
+  isConnected,
+  deviceStatus,
+  batteryLevel,
+  onConnect,
+  onDisconnect,
+  onForgetDevice,
+  isSupported,
+  currentHR,
+  hrZoneProps,
+  connectionStatus,
+  bluetoothConnected,
+  hasStarted,
+  onReset,
+  workoutStatus,
+  onStartWorkout,
+  onEndWorkout,
+}: ConnectViewProps) {
+  const [isResetting, setIsResetting] = useState(false)
 
-  useEffect(() => {
-    if (workoutStatus === 'running' && currentHR > 0) {
-      setHrHistory((prev) => [...prev, { time: Date.now(), hr: currentHR }])
+  const getBatteryIcon = (level: number) => {
+    if (level > 90) return <BatteryFullIcon color="success" />
+    if (level > 50) return <BatteryChargingFullIcon color="action" />
+    if (level > 20) return <BatteryStdIcon color="warning" />
+    return <BatteryAlertIcon color="error" />
+  }
+
+  const handleFullReset = async () => {
+    setIsResetting(true)
+    try {
+      await onForgetDevice()
+      onReset()
+    } catch (error) {
+      console.error('Reset failed:', error)
+    } finally {
+      setIsResetting(false)
     }
-  }, [currentHR, workoutStatus, setHrHistory])
+  }
 
   if (!isSupported) {
     return (
-      <Container maxWidth="sm">
-        <Box textAlign="center" my={4}>
-          <BluetoothDisabledIcon
-            sx={{ fontSize: 80, color: 'text.disabled' }}
-          />
-          <Typography variant="h5" component="h1" gutterBottom>
-            Web Bluetooth Not Supported
-          </Typography>
-          <Typography color="textSecondary">
-            Your browser does not support the Web Bluetooth API. Please use a
-            compatible browser like Chrome, Edge, or Opera on a desktop or
-            Android device.
-          </Typography>
-        </Box>
+      <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
+        <BluetoothDisabledIcon
+          sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }}
+        />
+        <Typography variant="h5" gutterBottom>
+          Bluetooth Not Supported
+        </Typography>
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          Your browser does not support Web Bluetooth. Please use Google Chrome,
+          Edge, or Bluefy (on iOS).
+        </Alert>
+        <BottomNavBar />
       </Container>
     )
   }
 
+  const showUserDetails = hasStarted || isConnected
+
   return (
-    <Container maxWidth="md">
-      <Box textAlign="center" my={4}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          HRM Client Connect
+    <>
+      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
+        <Typography variant="h4" component="h1" gutterBottom align="center">
+          Connect Heart Rate Monitor
         </Typography>
-        <Typography color="textSecondary">
-          Connect your heart rate monitor to start a session.
-        </Typography>
-      </Box>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <UserSettings
-            userName={userName || ''}
-            setUserName={setUserName}
-            userAge={userAge}
-            setUserAge={setUserAge}
-            onAgeBlur={onAgeBlur}
-            ageError={ageError}
-            userHeight={userHeight}
-            setUserHeight={setUserHeight}
-            onHeightBlur={onHeightBlur}
-            heightError={heightError}
-            userWeight={userWeight}
-            setUserWeight={setUserWeight}
-            onWeightBlur={onWeightBlur}
-            weightError={weightError}
-            gender={gender}
-            setGender={setGender}
-            unit={unitSystem}
-            setUnit={onUnitChange}
-          />
-        </Grid>
+        {!showUserDetails ? (
+          <Stack spacing={2} sx={{ mb: 3 }}>
+            <ToggleButtonGroup
+              value={unitSystem}
+              exclusive
+              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
+              aria-label="measurement system"
+              fullWidth
+            >
+              <ToggleButton value="IMPERIAL" aria-label="imperial">
+                Imperial (lbs)
+              </ToggleButton>
+              <ToggleButton value="METRIC" aria-label="metric">
+                Metric (kg)
+              </ToggleButton>
+            </ToggleButtonGroup>
 
-        <Grid item xs={12}>
-          <Box display="flex" justifyContent="space-around" alignItems="center">
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={onConnect}
-              disabled={isConnected || !userName || !!ageError || !!weightError}
-              startIcon={<BluetoothIcon />}
-            >
-              Connect HRM
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={onDisconnect}
-              disabled={!isConnected}
-              startIcon={<BluetoothConnectedIcon />}
-            >
-              Disconnect
-            </Button>
-            <Button
-              variant="outlined"
-              color="warning"
-              onClick={onForgetDevice}
-              disabled={!isConnected}
-            >
-              Forget Device
-            </Button>
+            <UserSettings
+              userName={userName}
+              setUserName={setUserName}
+              userAge={userAge}
+              setUserAge={setUserAge}
+              onAgeBlur={onAgeBlur}
+              ageError={ageError}
+              userHeight={userHeight}
+              setUserHeight={setUserHeight}
+              onHeightBlur={onHeightBlur}
+              heightError={heightError}
+              userWeight={userWeight}
+              setUserWeight={setUserWeight}
+              onWeightBlur={onWeightBlur}
+              weightError={weightError}
+              gender={gender}
+              setGender={setGender}
+              unit={unitSystem}
+              setUnit={onUnitChange}
+            />
+
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Gender</FormLabel>
+              <RadioGroup
+                row
+                aria-label="gender"
+                name="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value as Gender)}
+              >
+                <FormControlLabel
+                  value="MALE"
+                  control={<Radio />}
+                  label="Male"
+                />
+                <FormControlLabel
+                  value="FEMALE"
+                  control={<Radio />}
+                  label="Female"
+                />
+              </RadioGroup>
+            </FormControl>
+          </Stack>
+        ) : (
+          <Box
+            sx={{
+              mb: 3,
+              textAlign: 'center',
+              p: 2,
+              bgcolor: 'background.paper',
+              borderRadius: 1,
+              boxShadow: 1,
+            }}
+          >
+            <Typography variant="subtitle1" color="text.secondary">
+              Connected as
+            </Typography>
+            <Typography variant="h5" fontWeight="bold">
+              {userName}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Age: {userAge}
+            </Typography>
           </Box>
-          <Typography
-            variant="body2"
-            color="textSecondary"
-            textAlign="center"
-            mt={2}
-          >
-            {deviceStatus}
-            {batteryLevel !== null && ` | Battery: ${batteryLevel}%`}
-          </Typography>
-          <Typography
-            variant="body2"
-            color={connectionStatus === 'Connected' ? 'success.main' : 'error'}
-            textAlign="center"
-          >
-            WebSocket: {connectionStatus}
-          </Typography>
-        </Grid>
-
-        {bluetoothConnected && (
-          <>
-            <Grid item xs={12} sm={4}>
-              <HrTileWithCalories
-                user={{
-                  clientId: 'local',
-                  value: currentHR,
-                  calories: caloriesBurned,
-                }}
-                isAlerting={false}
-              />
-            </Grid>
-          </>
         )}
 
-        <Grid item xs={12}>
-          <Box display="flex" justifyContent="center" gap={2} mt={2}>
-            {workoutStatus !== 'running' ? (
-              <Button
-                variant="contained"
-                color="success"
-                onClick={onStartWorkout}
-                disabled={!bluetoothConnected || workoutStatus === 'paused'}
+        {deviceStatus &&
+          !isConnected &&
+          !deviceStatus.includes('Disconnected') && (
+            <Alert
+              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
+              sx={{ mb: 2 }}
+            >
+              {deviceStatus}
+            </Alert>
+          )}
+
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          {!isConnected ? (
+            <Button
+              variant="contained"
+              size="large"
+              onClick={onConnect}
+              disabled={
+                !userName.trim() ||
+                !userAge.trim() ||
+                deviceStatus.includes('Connecting')
+              }
+            >
+              {deviceStatus.includes('Connecting') ? (
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <CircularProgress size={20} color="inherit" />
+                  <span>Connecting...</span>
+                </Stack>
+              ) : (
+                'Connect Bluetooth HRM'
+              )}
+            </Button>
+          ) : (
+            <Stack spacing={2}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
               >
-                Start Workout
+                {batteryLevel !== null && (
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={0.5}
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    {getBatteryIcon(batteryLevel)}
+                    <Typography variant="body2">
+                      {batteryLevel}% Battery
+                    </Typography>
+                  </Stack>
+                )}
+              </Box>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={onDisconnect}
+                color="error"
+              >
+                Disconnect
               </Button>
-            ) : (
+              {deviceStatus !== 'Connected' && (
+                <Typography variant="caption" color="text.secondary">
+                  Status: {deviceStatus}
+                </Typography>
+              )}
+            </Stack>
+          )}
+        </Box>
+
+        {isConnected && bluetoothConnected && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Connected! Heart rate data is being streamed.
+          </Alert>
+        )}
+
+        {hasStarted && !isConnected && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Device Disconnected - Workout Paused
+          </Alert>
+        )}
+
+        {isConnected && (
+          <Box sx={{ mt: 2 }}>
+            <HrTile
+              name={userName}
+              bpm={currentHR}
+              percentMax={hrZoneProps.percentage}
+              isAlerting={false}
+            />
+          </Box>
+        )}
+
+        <Stack
+          spacing={2}
+          sx={{
+            mt: 3,
+            mb: 3,
+            alignItems: 'center',
+            minHeight: '48px', // Ensure consistent height for layout stability
+          }}
+        >
+          {workoutStatus === 'idle' && isConnected && (
+            <Button
+              variant="contained"
+              onClick={onStartWorkout}
+              size="large"
+              sx={{ minWidth: '200px' }}
+              aria-label="Start workout session"
+            >
+              Start Workout
+            </Button>
+          )}
+          {workoutStatus === 'paused' && (
+            <>
               <Button
                 variant="contained"
-                color="warning"
+                onClick={onStartWorkout}
+                size="large"
+                sx={{ minWidth: '200px' }}
+                disabled={!isConnected}
+                aria-label="Resume workout session"
+              >
+                Resume Workout
+              </Button>
+              <Button
+                variant="outlined"
                 onClick={onEndWorkout}
-                disabled={!bluetoothConnected}
+                size="large"
+                sx={{ minWidth: '200px' }}
+                aria-label="End workout session"
               >
                 End Workout
               </Button>
-            )}
-            {hasStarted && (
-              <Button
-                variant="outlined"
-                color="error"
-                onClick={onReset}
-                disabled={workoutStatus === 'running'}
-              >
-                Reset
-              </Button>
-            )}
-          </Box>
-        </Grid>
+            </>
+          )}
+          {workoutStatus === 'running' && (
+            <Button
+              variant="outlined"
+              onClick={onEndWorkout}
+              size="large"
+              sx={{ minWidth: '200px' }}
+              aria-label="End workout session"
+            >
+              End Workout
+            </Button>
+          )}
+        </Stack>
 
-        {workoutStatus !== 'idle' && (
-          <Grid item xs={12}>
-            <PerformanceDashboard
-              hrHistory={hrHistory}
-              zoneDurations={zoneDurations}
-            />
-          </Grid>
+        {hasStarted && (
+          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
         )}
-      </Grid>
-    </Container>
+
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          align="center"
+          sx={{ mt: 2 }}
+        >
+          WebSocket: {connectionStatus}
+        </Typography>
+
+        <Box
+          sx={{
+            textAlign: 'center',
+            mt: 4,
+            pt: 4,
+            borderTop: '1px solid #eee',
+          }}
+        >
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleFullReset}
+            disabled={isResetting || !hasStarted}
+          >
+            {isResetting ? 'Resetting...' : 'Reset System & Device'}
+          </Button>
+          <Typography
+            variant="caption"
+            display="block"
+            sx={{ mt: 1, color: 'text.secondary' }}
+          >
+            Resets server state AND forgets Bluetooth device connection.
+          </Typography>
+        </Box>
+      </Container>
+      <BottomNavBar />
+    </>
   )
 }
-
-export default ConnectView

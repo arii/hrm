@@ -6,7 +6,6 @@ import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 
 // Mock Date.now() to control time in tests
 let time: number
-const TIME_INCREMENT = 1000 // 1 second
 
 beforeEach(() => {
   time = Date.now()
@@ -146,9 +145,7 @@ describe('useCalorieCounter', () => {
       rerenderFemale({ heartRate: 151, isRunning: true, gender: 'FEMALE' })
     })
 
-    expect(maleResult.current.calories).not.toBe(
-      femaleResult.current.calories
-    )
+    expect(maleResult.current.calories).not.toBe(femaleResult.current.calories)
     // Male formula should result in higher calorie burn
     expect(maleResult.current.calories).toBeGreaterThan(
       femaleResult.current.calories

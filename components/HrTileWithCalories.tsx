@@ -30,6 +30,7 @@ const HrTileWithCalories = ({
     user.value || 0,
     userSettings.userAge || 30,
     weightInKg || 70,
+    userSettings.gender || 'MALE',
     timerData.isRunning
   )
 

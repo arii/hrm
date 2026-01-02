@@ -15,7 +15,6 @@ import {
   validateAgeValue,
   validateWeightValue,
 } from '@/lib/validation/userMetrics'
-import { useHrZoneTracker } from '@/hooks/useHrZoneTracker'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 
 export default function ConnectPage() {
@@ -90,15 +89,8 @@ export default function ConnectPage() {
   )
 
   const { connectionStatus } = useWebSocket()
-  const [hrHistory, setHrHistory] = useState<{ time: number; hr: number }[]>([])
 
   const maxHr = userAge ? 220 - userAge : 190
-  const zoneDurations = useHrZoneTracker(
-    smoothedHeartRate,
-    maxHr,
-    workoutStatus === 'running'
-  )
-
 
   useEffect(() => {
     if (!isConnected && isSupported && connectionStatus === 'Connected') {
@@ -135,11 +127,10 @@ export default function ConnectPage() {
   const resetWorkout = () => {
     resetWorkoutSession()
     resetCalories()
-    setHrHistory([])
   }
 
   const handleEndWorkout = () => {
-    endWorkout(calories)
+    endWorkout()
   }
 
   return (
@@ -189,9 +180,6 @@ export default function ConnectPage() {
       workoutStatus={workoutStatus}
       onStartWorkout={startWorkout}
       onEndWorkout={handleEndWorkout}
-      hrHistory={hrHistory}
-      setHrHistory={setHrHistory}
-      zoneDurations={zoneDurations}
     />
   )
 }

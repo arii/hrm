@@ -1,6 +1,9 @@
 // File: hooks/useHrZoneTracker.ts
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { calculateHrZone as getHrZone, HR_ZONE_DEFINITIONS as HR_ZONES } from '@/lib/hrm/zones'
+import {
+  calculateHrZone as getHrZone,
+  HR_ZONE_DEFINITIONS as HR_ZONES,
+} from '@/lib/hrm/zones'
 
 export interface HrZoneDuration {
   zone: number
@@ -10,13 +13,13 @@ export interface HrZoneDuration {
   color: string
 }
 
-const INITIAL_ZONES: HrZoneDuration[] = Object.values(HR_ZONES).map(
-  (zoneInfo) => ({
-    ...zoneInfo,
-    duration: 0,
-    percentage: 0,
-  })
-)
+const INITIAL_ZONES: HrZoneDuration[] = HR_ZONES.map((zoneInfo, index) => ({
+  zone: index + 1,
+  name: zoneInfo.name,
+  duration: 0,
+  percentage: 0,
+  color: '#000000', // Placeholder color
+}))
 
 /**
  * Custom hook to track the time spent in each heart rate zone during a workout.
@@ -37,7 +40,7 @@ export const useHrZoneTracker = (
   const [zoneDurations, setZoneDurations] =
     useState<HrZoneDuration[]>(INITIAL_ZONES)
   const lastTickRef = useRef<number | null>(null)
-  const activeZoneRef = useRef<number | null>(null)
+  const activeZoneRef = useRef<string | null>(null)
 
   const reset = useCallback(() => {
     setZoneDurations(INITIAL_ZONES)
@@ -69,7 +72,7 @@ export const useHrZoneTracker = (
         if (deltaSeconds > 0) {
           setZoneDurations((prevDurations) => {
             const newDurations = prevDurations.map((zone) =>
-              zone.zone === currentZone
+              zone.name === currentZone
                 ? { ...zone, duration: zone.duration + deltaSeconds }
                 : zone
             )
@@ -96,9 +99,9 @@ export const useHrZoneTracker = (
   useEffect(() => {
     if (isActive && currentHeartRate > 0 && maxHeartRate > 0) {
       const currentZone = getHrZone(currentHeartRate, maxHeartRate)
-      if (currentZone !== activeZoneRef.current) {
+      if (currentZone.zoneName !== activeZoneRef.current) {
         lastTickRef.current = Date.now() // Reset tick time on zone change
-        activeZoneRef.current = currentZone
+        activeZoneRef.current = currentZone.zoneName
       }
     } else {
       activeZoneRef.current = null
