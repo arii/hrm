@@ -2,7 +2,7 @@
 'use client'
 import React, { createContext, useContext } from 'react'
 import useLocalStorage from '../hooks/useLocalStorage'
-import { MeasurementSystem, Gender } from '../types'
+import { MeasurementSystem, Gender } from '../types/core'
 
 // Directly define the preferences interface and defaults here
 export interface UserPreferences {

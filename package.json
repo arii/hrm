@@ -69,6 +69,7 @@
     "@mui/material-nextjs": "^7.3.6",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "@testing-library/react-hooks": "^8.0.1",
+    "@types/uuid": "9",
     "cheerio": "^1.1.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
@@ -82,7 +83,7 @@
     "pino": "^10.1.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "uuid": "^13.0.0",
+    "uuid": "^9.0.1",
     "ws": "^8.18.3",
     "zod": "^4.1.13"
   },

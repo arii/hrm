@@ -1,6 +1,8 @@
 // This file is for component-specific prop types.
 // All other types should be defined in their respective files.
 
+import { TimerMode, TimerPhase } from './core'
+
 export interface HrTileProps {
   name: string
   bpm: number
@@ -13,8 +15,6 @@ export interface HrTileProps {
   // NEW: Message to display in the overlay when alerting
   alertMessage?: string
 }
-
-import { TimerMode, TimerPhase } from './core'
 
 export interface HeartRateZonesProps {
   maxHr: number
@@ -55,16 +55,4 @@ export interface DashboardSectionLoadingSkeletonProps {
   shape?: 'rectangular' | 'circular'
   count?: number
   className?: string
-}
-
-// User Profile & Measurement System
-export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
-export type Gender = 'MALE' | 'FEMALE'
-
-export interface UserProfile {
-  name: string
-  age: number
-  weight: number // Stored normalized in KG
-  gender: Gender
-  unitSystem: MeasurementSystem
 }
