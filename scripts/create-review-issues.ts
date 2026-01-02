@@ -80,7 +80,10 @@ export class GitHubClient {
       const parsed = JSON.parse(output)
       const validationResult = ExistingIssuesSchema.safeParse(parsed)
       if (!validationResult.success) {
-        console.warn(`Warning: Invalid format for existing issues.`, validationResult.error)
+        console.warn(
+          `Warning: Invalid format for existing issues.`,
+          validationResult.error
+        )
         return []
       }
       return validationResult.data
@@ -118,8 +121,8 @@ export class GitHubClient {
             context.repo
           }/pull/${context.prNumber}/commits/${context.commitHash})`
         : context.commitHash
-        ? `\`${context.commitHash.substring(0, 7)}\``
-        : 'N/A'
+          ? `\`${context.commitHash.substring(0, 7)}\``
+          : 'N/A'
 
     const branchInfo = context.branchName ? `\`${context.branchName}\`` : 'N/A'
 
@@ -168,7 +171,10 @@ export function isDuplicate(
   for (const existing of existingIssues) {
     // Strip the footer from the existing issue body before generating the signature
     const existingDescription = existing.body.split('\n\n---')[0] || ''
-    const existingSignature = getIssueSignature(existing.title, existingDescription)
+    const existingSignature = getIssueSignature(
+      existing.title,
+      existingDescription
+    )
     if (newSignature === existingSignature) {
       return true
     }
@@ -193,7 +199,10 @@ export async function main() {
     const parsedJson = JSON.parse(content)
     const validationResult = ReviewResultSchema.safeParse(parsedJson)
     if (!validationResult.success) {
-      console.error(`❌ Error validating ${CONFIG.resultFile}:`, validationResult.error)
+      console.error(
+        `❌ Error validating ${CONFIG.resultFile}:`,
+        validationResult.error
+      )
       process.exit(1)
       return // Explicit return for clarity
     }

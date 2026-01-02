@@ -315,6 +315,35 @@ describe('useBluetoothHRM', () => {
         })
       )
     })
+
+    it('should include userWeight in metadata when provided', async () => {
+      const { result } = renderHook(() =>
+        useBluetoothHRM({
+          userName: 'Weight User',
+          userAge: 35,
+          userWeight: 85,
+        })
+      )
+      await act(async () => {
+        result.current.connectAndStream()
+        await Promise.resolve()
+      })
+      Object.defineProperty(mockDevice.gatt, 'connected', {
+        value: true,
+        writable: true,
+      })
+
+      expect(mockSendData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'HRM_METADATA_UPDATE',
+          data: expect.objectContaining({
+            name: 'Weight User',
+            age: 35,
+            weight: 85,
+          }),
+        })
+      )
+    })
   })
 
   describe('Throttling', () => {

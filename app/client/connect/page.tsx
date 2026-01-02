@@ -9,7 +9,6 @@ import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
 import { toKg, toDisplay } from '../../../utils/units'
-import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
@@ -68,6 +67,7 @@ export default function ConnectPage() {
   } = useBluetoothHRM({
     userName,
     userAge: userAge || 0,
+    userWeight: userWeight || 0,
   })
 
   const { connectionStatus, hrmData } = useWebSocket()
@@ -93,18 +93,19 @@ export default function ConnectPage() {
   }
 
   const handleConnect = () => {
-    connectAndStream(userName, userAge || 0)
+    connectAndStream(userName, userAge || 0, userWeight || 0)
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
+  // Note: Calories are now calculated server-side and streamed via WebSocket.
   const totalCalories = currentUserData?.calories ?? 0
   const maxHr = userAge ? 220 - userAge : 190
   const hrZoneProps = useHrZone(currentHR, maxHr)
 
   const {
     workoutDuration,
-    resetWorkout: resetWorkoutSession,
+    resetWorkout: resetWorkout,
     hasStarted,
     startWorkout,
     endWorkout,
@@ -114,22 +115,10 @@ export default function ConnectPage() {
     totalCalories,
   })
 
-  const { calories, resetCalories } = useCalorieCounter(
-    currentHR,
-    userAge || 30,
-    userWeight || 70,
-    workoutStatus === 'running'
-  )
-
-  const resetWorkout = () => {
-    resetWorkoutSession()
-    resetCalories()
-  }
-
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
-      caloriesBurned={calories}
+      caloriesBurned={totalCalories}
       userName={userName}
       setUserName={(name) =>
         setUserSettings((prev) => ({ ...prev, userName: name }))

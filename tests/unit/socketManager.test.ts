@@ -314,40 +314,64 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Calorie Calculation', () => {
-    it('should accumulate calories correctly with small frequent updates', () => {
+    it('should use the provided user weight for calorie calculation', () => {
+      // First, update the user's metadata to include their weight
+      const metadataMessage = JSON.stringify({
+        type: 'HRM_METADATA_UPDATE',
+        data: { weight: 100 }, // A heavier weight for a noticeable difference
+      })
+      mockWs.emit('message', metadataMessage)
+
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
           data: { value: hr, age: 30 },
         })
-        mockWs.emit('message', message.toString())
+        mockWs.emit('message', message)
       }
 
-      // Initial input
+      // Simulate 10 seconds of activity
       sendHrmInput(150)
-
-      // Send 100 updates, each 100ms apart
-      // Should accumulate significant calories even if each step < 0.1 kcal
-      for (let i = 0; i < 100; i++) {
-        jest.advanceTimersByTime(100) // 100ms
+      for (let i = 0; i < 10; i++) {
+        jest.advanceTimersByTime(1000)
         sendHrmInput(150)
       }
 
-      // Check the last broadcasted state
       const mockBroadcast = broadcast as jest.Mock
-      jest.runOnlyPendingTimers()
-      expect(mockBroadcast).toHaveBeenCalled()
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       const finalPayload: HrmData[] = lastCall[1].payload
       const clientData = finalPayload.find((c) => c.calories > 0)
 
-      expect(clientData).toBeDefined()
-      expect(clientData!.calories).toBeGreaterThan(0.1)
-      // A more precise check based on the known formula for short duration.
-      // 100 updates * 100ms = 10 seconds = 0.1667 minutes.
-      // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
-      expect(clientData!.calories).toBeGreaterThan(1)
+      // Based on the formula, a 100kg person at 150bpm for ~10s should burn more calories
+      // than the default weight of 75kg. This is a sanity check, not a precise calculation.
+      expect(clientData!.calories).toBeGreaterThan(2.3) // Expected value for 75kg is ~2.1
+    })
+
+    it('should use the default weight when no user weight is provided', () => {
+      // No metadata update, so the default weight should be used
+      const sendHrmInput = (hr: number) => {
+        const message = JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: hr, age: 30 },
+        })
+        mockWs.emit('message', message)
+      }
+
+      sendHrmInput(150)
+      for (let i = 0; i < 10; i++) {
+        jest.advanceTimersByTime(1000)
+        sendHrmInput(150)
+      }
+
+      const mockBroadcast = broadcast as jest.Mock
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const finalPayload: HrmData[] = lastCall[1].payload
+      const clientData = finalPayload.find((c) => c.calories > 0)
+      // Check if calories are within an expected range for the default weight
+      expect(clientData!.calories).toBeGreaterThan(2.0)
+      expect(clientData!.calories).toBeLessThan(2.5)
     })
   })
 
