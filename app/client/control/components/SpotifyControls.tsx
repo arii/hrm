@@ -11,13 +11,14 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
+import { useSpotifyTargetDevice } from '@/hooks/useSpotifyTargetDevice'
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -27,6 +28,7 @@ const SpotifyControls = () => {
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  useSpotifyTargetDevice(selectedDeviceId, (action) => setSelectedDeviceId(action.payload))
 
   const handleTrackSelect = (uri: string) => {
     const targetDeviceId = resolveTargetDeviceId()
@@ -84,35 +86,6 @@ const SpotifyControls = () => {
     },
     [resolveTargetDeviceId, sendData]
   )
-
-  // Synchronize the selected device ID based on the available devices
-  useEffect(() => {
-    const activeDevice = devices.find((d) => d.is_active)
-    const hrmPlayerDevice = devices.find((d) => d.name === 'HRM Web Player')
-
-    setSelectedDeviceId((prevId) => {
-      // 1. If an active device exists, it takes precedence.
-      if (activeDevice) {
-        return activeDevice.id
-      }
-
-      // 2. If no active device, but HRM player is ready, select and activate it.
-      if (hrmPlayerDevice) {
-        if (prevId !== hrmPlayerDevice.id) {
-          sendSpotifyCommand('TRANSFER_PLAYBACK', hrmPlayerDevice.id)
-        }
-        return hrmPlayerDevice.id
-      }
-
-      // 3. If the previously selected device is no longer available, deselect it.
-      if (prevId && !devices.some((device) => device.id === prevId)) {
-        return ''
-      }
-
-      // 4. Otherwise, maintain the current selection.
-      return prevId
-    })
-  }, [devices, sendSpotifyCommand])
 
   // Synchronize volume with the active device
   useEffect(() => {

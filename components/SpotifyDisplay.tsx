@@ -15,10 +15,11 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { useEffect, useReducer, useRef, useState, useMemo } from 'react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
+import { useSpotifyTargetDevice } from '@/hooks/useSpotifyTargetDevice'
 
 // 1. State Shape
 interface SpotifyDisplayState {
@@ -133,6 +134,7 @@ const SpotifyDisplay = () => {
     initialStateFactory(spotifyData.volume, spotifyData.isMuted ?? false)
   )
   const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
+  useSpotifyTargetDevice(selectedDeviceId, dispatch)
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -161,29 +163,26 @@ const SpotifyDisplay = () => {
   }, [spotifyData.volume, spotifyData.isMuted, isSliding])
 
   // Centralized command sender for volume changes
-  const sendVolumeCommand = useCallback(
-    (volume: number) => {
-      if (connectionStatus !== 'Connected') return
-      const targetDeviceId =
-        selectedDeviceId ||
-        spotifyData.devices?.find((device) => device.is_active)?.id
-      if (!targetDeviceId) {
-        console.warn(
-          '[SpotifyDisplay] No target device for volume command. Aborting.'
-        )
-        return
-      }
-      const sanitized = clampVolume(volume)
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        deviceId: targetDeviceId,
-      }
-      sendData(message)
-    },
-    [connectionStatus, selectedDeviceId, sendData, spotifyData.devices]
-  )
+  const sendVolumeCommand = (volume: number) => {
+    if (connectionStatus !== 'Connected') return
+    const targetDeviceId =
+      selectedDeviceId ||
+      spotifyData.devices?.find((device) => device.is_active)?.id
+    if (!targetDeviceId) {
+      console.warn(
+        '[SpotifyDisplay] No target device for volume command. Aborting.'
+      )
+      return
+    }
+    const sanitized = clampVolume(volume)
+    const message: SpotifyCommandMessage = {
+      type: 'SPOTIFY_COMMAND',
+      command: 'SET_VOLUME',
+      volume: sanitized,
+      deviceId: targetDeviceId,
+    }
+    sendData(message)
+  }
 
   // Handler for the VolumeSlider component's onChange
   const handleVolumeChange = (newVolume: number) => {
@@ -201,7 +200,7 @@ const SpotifyDisplay = () => {
   }
 
   // Handler for the VolumeSlider's mute button
-  const handleToggleMute = useCallback(() => {
+  const handleToggleMute = () => {
     // Calculate the next state to determine the command payload
     const newMutedState = !isMuted
     const newVolume = newMutedState
@@ -212,50 +211,19 @@ const SpotifyDisplay = () => {
 
     dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
     sendVolumeCommand(newVolume) // Send command with the new volume
-  }, [isMuted, state.lastVolume, sendVolumeCommand])
+  }
 
-  const sendSpotifyCommand = useCallback(
-    (
-      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-      targetDeviceId?: string
-    ) => {
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        ...(targetDeviceId && { deviceId: targetDeviceId }),
-      }
-      sendData(message)
-    },
-    [sendData]
-  )
-
-  // Effect to auto-select the active device, including the HRM Web Player
-  useEffect(() => {
-    const devices = spotifyData.devices || []
-    const activeDevice = devices.find((device) => device.is_active)
-
-    // 1. If an active device exists, it should be the selected one.
-    if (activeDevice && selectedDeviceId !== activeDevice.id) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
-      return // Done for this render
+  const sendSpotifyCommand = (
+    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
+    targetDeviceId?: string
+  ) => {
+    const message: SpotifyCommandMessage = {
+      type: 'SPOTIFY_COMMAND',
+      command,
+      ...(targetDeviceId && { deviceId: targetDeviceId }),
     }
-
-    // 2. If NO active device, but HRM player is ready, select and activate it
-    if (!activeDevice && deviceId && devices.some((d) => d.id === deviceId)) {
-      if (selectedDeviceId !== deviceId) {
-        dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
-        // Make the HRM player the active device
-        sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
-      }
-      return // Done for this render
-    }
-
-    // 3. If the currently selected device disappears from the list, clear selection.
-    if (selectedDeviceId && !devices.some((d) => d.id === selectedDeviceId)) {
-      // Fallback to active device if available, otherwise clear
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
-    }
-  }, [spotifyData.devices, selectedDeviceId, deviceId, sendSpotifyCommand])
+    sendData(message)
+  }
 
   const handlePlayPauseToggle = () => {
     const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
