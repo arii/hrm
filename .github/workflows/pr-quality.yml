@@ -1071,11 +1071,16 @@ jobs:
           # Write the final comment to a file
           echo -e "$COMMENT_BODY" > test-results/pr-comment.md
 
-          # Post comment to PR
-          gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
-            echo "::warning::Failed to post comment to PR"
-            exit 0
-          }
+          # Only post comment to PR if some checks failed
+          if [ "$KNIP_RESULT" != "success" ] || [ "$LINT_RESULT" != "success" ] || [ "$BUILD_RESULT" != "success" ] || \
+             [ "$INFRA_TESTS_OUTCOME" != "success" ] || [ "$UNIT_TESTS_OUTCOME" != "success" ] || [ "$PERF_TESTS_OUTCOME" != "success" ] || [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
+            gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
+              echo "::warning::Failed to post comment to PR"
+              exit 0
+            }
+          else
+            echo "All checks passed. Skipping PR comment to reduce spam."
+          fi
 
           # Check if all passed
           if [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
