@@ -59,12 +59,18 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const commentBody = `${{ github.event.inputs.comment_body }}`;
-            if (commentBody.includes('@pr-squash-rebase')) {
-              core.setOutput('command', 'squash-rebase');
-            } else {
-              core.setOutput('command', 'squash');
+            try {
+              const commentBody = process.env.COMMENT_BODY;
+              if (commentBody.includes('@pr-squash-rebase')) {
+                core.setOutput('command', 'squash-rebase');
+              } else {
+                core.setOutput('command', 'squash');
+              }
+            } catch (error) {
+              core.setFailed(`Error determining command: ${error.message}`);
             }
+        env:
+          COMMENT_BODY: ${{ github.event.inputs.comment_body }}
 
       - name: Checkout PR branch
         uses: actions/checkout@v4
