@@ -55,6 +55,9 @@ interface ConnectViewProps {
   onStartWorkout: () => void
   onEndWorkout: () => void
   hrHistory: { time: number; hr: number }[]
+  setHrHistory: React.Dispatch<
+    React.SetStateAction<{ time: number; hr: number }[]>
+  >
   zoneDurations: HrZoneDuration[]
 }
 
@@ -95,8 +98,15 @@ const ConnectView = (props: ConnectViewProps) => {
     onStartWorkout,
     onEndWorkout,
     hrHistory,
+    setHrHistory,
     zoneDurations,
   } = props
+
+  useEffect(() => {
+    if (workoutStatus === 'running' && currentHR > 0) {
+      setHrHistory((prev) => [...prev, { time: Date.now(), hr: currentHR }])
+    }
+  }, [currentHR, workoutStatus, setHrHistory])
 
   if (!isSupported) {
     return (

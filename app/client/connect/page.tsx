@@ -68,10 +68,7 @@ export default function ConnectPage() {
     isSupported,
     disconnectionReason,
     rawHeartRate,
-  } = useBluetoothHRM({
-    userName,
-    userAge: userAge || 0,
-  })
+  } = useBluetoothHRM()
 
   const {
     workoutDuration,
@@ -82,7 +79,6 @@ export default function ConnectPage() {
     workoutStatus,
   } = useWorkoutSession({
     isConnected: isConnected,
-    totalCalories: 0, // This will be updated with the client-side calculated calories
   })
 
   const { calories, smoothedHeartRate, resetCalories } = useCalorieCounter(
@@ -103,14 +99,6 @@ export default function ConnectPage() {
     workoutStatus === 'running'
   )
 
-  useEffect(() => {
-    if (workoutStatus === 'running' && smoothedHeartRate > 0) {
-      setHrHistory((prev) => [
-        ...prev,
-        { time: Date.now(), hr: smoothedHeartRate },
-      ])
-    }
-  }, [smoothedHeartRate, workoutStatus])
 
   useEffect(() => {
     if (!isConnected && isSupported && connectionStatus === 'Connected') {
@@ -139,7 +127,7 @@ export default function ConnectPage() {
   }
 
   const handleConnect = () => {
-    connectAndStream(userName, userAge || 0)
+    connectAndStream()
   }
 
   const hrZoneProps = useHrZone(smoothedHeartRate, maxHr)
@@ -148,6 +136,10 @@ export default function ConnectPage() {
     resetWorkoutSession()
     resetCalories()
     setHrHistory([])
+  }
+
+  const handleEndWorkout = () => {
+    endWorkout(calories)
   }
 
   return (
@@ -196,8 +188,9 @@ export default function ConnectPage() {
       onReset={resetWorkout}
       workoutStatus={workoutStatus}
       onStartWorkout={startWorkout}
-      onEndWorkout={endWorkout}
+      onEndWorkout={handleEndWorkout}
       hrHistory={hrHistory}
+      setHrHistory={setHrHistory}
       zoneDurations={zoneDurations}
     />
   )

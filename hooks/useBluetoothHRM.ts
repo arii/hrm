@@ -12,8 +12,6 @@ import {
   HrmMetadataUpdateData,
 } from '../types/websocket'
 import throttle from 'lodash.throttle'
-import isEqual from 'lodash.isequal'
-import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
@@ -33,8 +31,6 @@ const parseHeartRate = (value: DataView): number => {
 interface UseBluetoothHRMProps {
   dataLivenessTimeoutMs?: number
   throttleMs?: number
-  userName?: string | null
-  userAge?: number | null
 }
 
 type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
@@ -62,12 +58,7 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  * @property {DisconnectionReason} disconnectionReason - The reason for the last disconnection.
  */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
-  const {
-    dataLivenessTimeoutMs = 10000,
-    throttleMs = 250,
-    userName,
-    userAge,
-  } = props
+  const { dataLivenessTimeoutMs = 10000, throttleMs = 250 } = props
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
@@ -83,7 +74,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
   const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -95,10 +85,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   useEffect(() => {
     sendDataRef.current = sendData
   }, [sendData])
-
-  useEffect(() => {
-    userDetailsRef.current = { name: userName || '', age: userAge || 0 }
-  }, [userName, userAge])
 
   useEffect(() => {
     statusRef.current = deviceStatus
@@ -311,17 +297,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    * @sideeffect Updates component state throughout the connection process.
    */
   const connectAndStream = useCallback(
-    async (
-      userNameFromArgs?: string,
-      userAgeFromArgs?: number,
-      options: { silent?: boolean } = {}
-    ): Promise<void> => {
+    async (options: { silent?: boolean } = {}): Promise<void> => {
       const { silent = false } = options
       if (abortControllerRef.current) abortControllerRef.current.abort()
-      userDetailsRef.current = {
-        name: userNameFromArgs || userName || '',
-        age: userAgeFromArgs || userAge || 0,
-      }
+
       if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {
         throw new Error('WebSocket not connected. Cannot stream data.')
@@ -354,36 +333,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (!silent) throw error
       }
     },
-    [savedDevice, connectToGatt, handleConnectionError, userName, userAge]
+    [connectionStatus, savedDevice, connectToGatt, handleConnectionError]
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    return connectAndStream(undefined, undefined, { silent: true })
+    return connectAndStream({ silent: true })
   }, [connectAndStream])
-
-  // Send metadata update when user details or connection status change
-  useEffect(() => {
-    if (deviceStatus.startsWith('Connected')) {
-      const { name, age } = userDetailsRef.current
-      const calculatedMaxHr = calculateMaxHr(age)
-      const deviceName = deviceRef.current?.name || 'Unknown'
-
-      const metadataData: HrmMetadataUpdateData = {
-        maxHr: calculatedMaxHr,
-        name: name || `Bluetooth HRM (${deviceName})`,
-      }
-      if (typeof age === 'number') metadataData.age = age
-
-      if (!isEqual(lastSentMetadataRef.current, metadataData)) {
-        const metadata: HrmMetadataUpdateMessage = {
-          type: 'HRM_METADATA_UPDATE',
-          data: metadataData,
-        }
-        sendData(metadata)
-        lastSentMetadataRef.current = metadataData
-      }
-    }
-  }, [userName, userAge, deviceStatus, sendData])
 
   return {
     connectAndStream,

@@ -9,7 +9,7 @@ import {
 
 // --- State, Actions, and Reducer for managing session state ---
 
-type SessionStatus = 'idle' | 'running' | 'paused'
+export type SessionStatus = 'idle' | 'running' | 'paused'
 
 interface SessionState {
   status: SessionStatus

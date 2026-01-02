@@ -3,9 +3,6 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 import { Gender } from '../../types/core'
 
-// Define the size of the moving average window
-const SMA_WINDOW_SIZE = 5
-
 /**
  * A hook to calculate and manage calories burned during a workout.
  * It accumulates calories using a delta-time approach and smooths the heart rate
@@ -16,6 +13,8 @@ const SMA_WINDOW_SIZE = 5
  * @param weight - The user's weight in kilograms (kg).
  * @param gender - The user's gender.
  * @param isActive - A boolean flag indicating if the workout/calculation is active.
+ * @param options - Configuration options for the hook.
+ * @param options.smaWindow - The number of samples for the Simple Moving Average.
  * @returns An object containing:
  *  - `calories`: The total accumulated calories burned (number).
  *  - `smoothedHeartRate`: The heart rate after applying the SMA filter.
@@ -26,82 +25,70 @@ export const useCalorieCounter = (
   age: number,
   weight: number,
   gender: Gender,
-  isActive: boolean
+  isActive: boolean,
+  options: { smaWindow?: number } = {}
 ): {
   calories: number
   smoothedHeartRate: number
   resetCalories: () => void
 } => {
+  const { smaWindow = 5 } = options
   const [calories, setCalories] = useState(0)
-  const [smoothedHeartRate, setSmoothedHeartRate] = useState(0)
+  const [smoothedHeartRate, setSmoothedHeartRate] = useState(
+    isActive && heartRate > 0 ? heartRate : 0
+  )
   const lastTickRef = useRef<number | null>(null)
   const hrBufferRef = useRef<number[]>([])
 
-  // Refs for props to avoid stale closures in the interval
-  const ageRef = useRef(age)
-  const weightRef = useRef(weight)
-  const genderRef = useRef(gender)
-  const smoothedHeartRateRef = useRef(smoothedHeartRate)
-
-  // Effect to keep refs updated with the latest prop/state values
-  useEffect(() => {
-    ageRef.current = age
-    weightRef.current = weight
-    genderRef.current = gender
-    smoothedHeartRateRef.current = smoothedHeartRate
-  }, [age, weight, gender, smoothedHeartRate])
-
   // Effect to manage the heart rate buffer and calculate the smoothed value
   useEffect(() => {
-    // Only update buffer if the workout is active and HR is valid
-    if (isActive && heartRate > 0) {
+    if (!isActive) {
+      hrBufferRef.current = []
+      setSmoothedHeartRate(0) // Reset HR when inactive
+      return
+    }
+
+    if (heartRate > 0) {
       const buffer = hrBufferRef.current
       buffer.push(heartRate)
-      if (buffer.length > SMA_WINDOW_SIZE) {
-        buffer.shift() // Maintain the window size
+      if (buffer.length > smaWindow) {
+        buffer.shift()
       }
       const sum = buffer.reduce((acc, val) => acc + val, 0)
       const average = buffer.length > 0 ? Math.round(sum / buffer.length) : 0
       setSmoothedHeartRate(average)
-    } else if (!isActive) {
-      // If workout becomes inactive, reset the buffer immediately
-      hrBufferRef.current = []
-      setSmoothedHeartRate(0)
     }
-    // Dependency on `heartRate` is key. `isActive` is also important to control buffer updates.
-  }, [heartRate, isActive])
+  }, [heartRate, isActive, smaWindow])
 
+  // Effect to calculate calories based on changes in smoothed HR
   useEffect(() => {
-    if (!isActive) {
-      lastTickRef.current = null
+    if (!isActive || smoothedHeartRate <= 0) {
+      lastTickRef.current = null // Stop accumulating when inactive or HR is zero
       return
     }
 
-    lastTickRef.current = Date.now()
+    const now = Date.now()
+    const lastTick = lastTickRef.current
 
-    const tick = () => {
-      const now = Date.now()
-      if (lastTickRef.current) {
-        const deltaSeconds = (now - lastTickRef.current) / 1000
-
-        // Use the ref's current value for calculation to avoid stale closure
-        if (smoothedHeartRateRef.current > 0) {
-          const caloriesBurned = estimateCaloriesBurned({
-            heartRate: smoothedHeartRateRef.current,
-            age: ageRef.current,
-            weightKg: weightRef.current,
-            gender: genderRef.current,
-            durationMinutes: deltaSeconds / 60,
-          })
-          setCalories((prev) => prev + caloriesBurned)
-        }
+    // We need a previous tick to calculate a delta
+    if (lastTick) {
+      const deltaSeconds = (now - lastTick) / 1000
+      // Avoid calculating for tiny deltas or if time goes backward
+      if (deltaSeconds > 0) {
+        const caloriesBurned = estimateCaloriesBurned({
+          heartRate: smoothedHeartRate,
+          age: age,
+          weightKg: weight,
+          gender: gender,
+          durationMinutes: deltaSeconds / 60,
+        })
+        setCalories((prev) => prev + caloriesBurned)
       }
-      lastTickRef.current = now
     }
 
-    const interval = setInterval(tick, 1000)
-    return () => clearInterval(interval)
-  }, [isActive])
+    // Always update the last tick time for the next calculation
+    lastTickRef.current = now
+  }, [smoothedHeartRate, isActive, age, weight, gender])
 
   const resetCalories = useCallback(() => {
     setCalories(0)
