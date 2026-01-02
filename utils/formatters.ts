@@ -1,12 +1,10 @@
-// File: utils/formatters.ts
-/**
- * Formats a duration in milliseconds to a MM:SS string.
- * @param ms The duration in milliseconds.
- * @returns A string in MM:SS format.
- */
-export const formatDuration = (ms: number): string => {
-  const totalSeconds = Math.floor(ms / 1000)
+export const formatDuration = (totalSeconds: number): string => {
+  if (isNaN(totalSeconds) || totalSeconds < 0) {
+    return '00:00'
+  }
   const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  const seconds = Math.floor(totalSeconds % 60)
+  const formattedMinutes = String(minutes).padStart(2, '0')
+  const formattedSeconds = String(seconds).padStart(2, '0')
+  return `${formattedMinutes}:${formattedSeconds}`
 }

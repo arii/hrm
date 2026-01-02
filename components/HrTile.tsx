@@ -11,6 +11,8 @@ import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
 import { useTheme } from '@mui/material/styles'
+import Divider from '@mui/material/Divider'
+import WorkoutDataDisplay from './WorkoutDataDisplay'
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -32,10 +34,12 @@ const HrTile = ({
   name,
   bpm,
   percentMax,
-  calories = 0, // Default to 0 to prevent NaN
-  isConnected = true, // Default to connected
+  isConnected = true,
   isAlerting = false,
   alertMessage = 'Checking signal...',
+  caloriesBurned = 0,
+  workoutDuration,
+  showWorkoutData = false,
 }: HrTileProps) => {
   const theme = useTheme()
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
@@ -43,8 +47,8 @@ const HrTile = ({
   const tooltipTitle = isAlerting
     ? alertMessage
     : !isConnected
-      ? 'Disconnected - Showing last known value'
-      : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
+    ? 'Disconnected - Showing last known value'
+    : `Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`
 
   return (
     <Tooltip title={tooltipTitle} arrow>
@@ -66,7 +70,7 @@ const HrTile = ({
           position: 'relative',
           opacity: isConnected ? 1 : 0.6,
           transition: theme.transitions.create('opacity', {
-            duration: theme.transitions.duration.short, // Approx 300ms
+            duration: theme.transitions.duration.short,
           }),
         }}
       >
@@ -97,7 +101,9 @@ const HrTile = ({
         )}
 
         <Box aria-live="polite" aria-atomic="true">
-          <CardContent sx={{ p: 0 }}>
+          <CardContent sx={{ p: 0, pb: 1 }}>
+            {' '}
+            {/* Add padding bottom */}
             <Typography
               data-testid="live-hr-percent"
               sx={{
@@ -113,7 +119,7 @@ const HrTile = ({
             <Box
               sx={{
                 display: 'flex',
-                justifyContent: 'space-around',
+                justifyContent: 'center', // Center BPM
                 alignItems: 'center',
                 mt: 1,
               }}
@@ -133,19 +139,20 @@ const HrTile = ({
                   BPM
                 </Typography>
               </Typography>
-
-              {/* Calorie Display */}
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {Math.floor(calories)}{' '}
-                <Typography
-                  variant="caption"
-                  component="span"
-                  sx={{ opacity: 0.8 }}
-                >
-                  KCAL
-                </Typography>
-              </Typography>
             </Box>
+            {/* --- Workout Data Display --- */}
+            {showWorkoutData &&
+              (caloriesBurned > 0 || workoutDuration) && (
+                <>
+                  <Divider
+                    sx={{ my: 1, borderColor: 'rgba(255, 255, 255, 0.2)' }}
+                  />
+                  <WorkoutDataDisplay
+                    calories={caloriesBurned}
+                    duration={workoutDuration || '00:00'}
+                  />
+                </>
+              )}
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography
                 variant="subtitle1"
@@ -175,10 +182,12 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
-    prevProps.calories === nextProps.calories &&
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isAlerting === nextProps.isAlerting &&
-    prevProps.alertMessage === nextProps.alertMessage
+    prevProps.alertMessage === nextProps.alertMessage &&
+    prevProps.caloriesBurned === nextProps.caloriesBurned &&
+    prevProps.workoutDuration === nextProps.workoutDuration &&
+    prevProps.showWorkoutData === nextProps.showWorkoutData
   )
 }
 

@@ -84,3 +84,52 @@ describe('HrTile', () => {
     expect(bpmValue).toHaveTextContent('---')
   })
 })
+
+describe('HrTile - Workout Data Display', () => {
+  it('shows workout data when showWorkoutData=true and calories > 0', () => {
+    render(
+      <HrTile
+        name="Test"
+        bpm={120}
+        percentMax={60}
+        isAlerting={false}
+        caloriesBurned={150}
+        workoutDuration="01:30"
+        showWorkoutData={true}
+      />
+    )
+    expect(screen.getByText('150')).toBeInTheDocument()
+    expect(screen.getByText('01:30')).toBeInTheDocument()
+  })
+
+  it('shows workout data even with 0 calories if duration exists', () => {
+    render(
+      <HrTile
+        name="Test"
+        bpm={120}
+        percentMax={60}
+        isAlerting={false}
+        caloriesBurned={0}
+        workoutDuration="00:05"
+        showWorkoutData={true}
+      />
+    )
+    // Should still render because workoutDuration > 0
+    expect(screen.getByText('00:05')).toBeInTheDocument()
+  })
+
+  it('hides workout data when showWorkoutData=false', () => {
+    render(
+      <HrTile
+        name="Test"
+        bpm={120}
+        percentMax={60}
+        isAlerting={false}
+        caloriesBurned={150}
+        workoutDuration="01:30"
+        showWorkoutData={false}
+      />
+    )
+    expect(screen.queryByText('150')).not.toBeInTheDocument()
+  })
+})

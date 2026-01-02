@@ -9,6 +9,9 @@ export interface HrTileProps {
   percentMax: number // 0-100
   calories?: number
   isConnected?: boolean
+  caloriesBurned?: number | undefined
+  workoutDuration?: string | undefined
+  showWorkoutData?: boolean | undefined
 
   // NEW: Flag to trigger the visual diagnostic state
   isAlerting?: boolean

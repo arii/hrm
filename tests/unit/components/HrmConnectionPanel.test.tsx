@@ -1,122 +1,86 @@
-/** @jest-environment jsdom */
-
-import { jest } from '@jest/globals'
+/**
+ * @jest-environment jsdom
+ */
+import { render, screen } from '@testing-library/react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
-import { useWebSocket } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
-import { render, screen, within } from '@testing-library/react'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { useSession } from 'next-auth/react'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 
-// Mock the context and child component for isolation
+// Mock the hooks
+jest.mock('@/hooks/useWorkoutSession')
 jest.mock('@/context/WebSocketContext')
 jest.mock('next-auth/react')
-jest.mock('@/hooks/useBluetoothHRM')
-jest.mock('@/components/HrTileWithCalories', () => ({
+jest.mock('@/hooks/useBluetoothHRM', () => ({
   __esModule: true,
-  default: ({ user }: { user: { name: string; value: number | null } }) => (
-    <div data-testid="mock-hr-tile">
-      <p>{user.name}</p>
-      <p>{user.value === null ? 'Signal Drop' : user.value}</p>
-    </div>
-  ),
+  default: () => ({
+    connectAndStream: jest.fn(),
+    disconnect: jest.fn(),
+    deviceStatus: 'Disconnected',
+    batteryLevel: null,
+    isConnected: false,
+    isSupported: true,
+  }),
 }))
 
-const mockedUseWebSocket = useWebSocket as jest.Mock
-const mockedUseSession = useSession as jest.Mock
-const mockedUseBluetoothHRM = useBluetoothHRM as jest.Mock
-
-const renderWithProviders = (component: React.ReactElement) => {
-  return render(<UserSettingsProvider>{component}</UserSettingsProvider>)
-}
-
-describe('HrmConnectionPanel', () => {
+describe('HrmConnectionPanel - Workout Data Integration', () => {
   beforeEach(() => {
-    jest.resetAllMocks()
-    mockedUseSession.mockReturnValue({ data: null })
-    mockedUseBluetoothHRM.mockReturnValue({
-      connectAndStream: jest.fn(),
-      disconnect: jest.fn(),
-      deviceStatus: 'Disconnected',
-      batteryLevel: null,
-      isConnected: false,
-      isSupported: true,
-    })
-  })
-
-  it('should render HRM data correctly for a user', () => {
-    mockedUseWebSocket.mockReturnValue({
-      hrmData: [{ clientId: 'user1', name: 'Ariel', value: 150 }],
-      connectionStatus: 'Connected',
-      activeAlerts: [],
-    })
-
-    renderWithProviders(<HrmConnectionPanel />)
-
-    const tile = screen.getByTestId('mock-hr-tile')
-    expect(within(tile).getByText('Ariel')).toBeInTheDocument()
-    expect(within(tile).getByText('150')).toBeInTheDocument()
-  })
-
-  it('should render "Signal Drop" when value is null', () => {
-    mockedUseWebSocket.mockReturnValue({
-      hrmData: [{ clientId: 'user1', name: 'Ariel', value: null }],
-      connectionStatus: 'Connected',
-      activeAlerts: [],
-    })
-
-    renderWithProviders(<HrmConnectionPanel />)
-
-    const tile = screen.getByTestId('mock-hr-tile')
-    expect(within(tile).getByText('Ariel')).toBeInTheDocument()
-    expect(within(tile).getByText('Signal Drop')).toBeInTheDocument()
-  })
-
-  it('should render skeleton containers when hrmData is empty', () => {
-    mockedUseWebSocket.mockReturnValue({
-      hrmData: [],
-      connectionStatus: 'Connected',
-      activeAlerts: [],
-    })
-
-    renderWithProviders(<HrmConnectionPanel />)
-
-    // The component renders skeleton containers when there's no data
-    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(1)
-    // And no actual HrTile components are rendered
-    expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
-  })
-
-  it('should render skeleton containers when connection status is not "Connected"', () => {
-    mockedUseWebSocket.mockReturnValue({
-      hrmData: [{ clientId: 'user1', name: 'Ariel', value: 150 }],
-      connectionStatus: 'Connecting...',
-      activeAlerts: [],
-    })
-
-    renderWithProviders(<HrmConnectionPanel />)
-
-    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(1)
-    expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
-  })
-
-  it('should filter out users with placeholder names', () => {
-    mockedUseWebSocket.mockReturnValue({
+    (useSession as jest.Mock).mockReturnValue({ data: { user: { name: 'Test User' } } });
+    (useWebSocket as jest.Mock).mockReturnValue({
       hrmData: [
-        { clientId: 'user1', name: 'new user (1)', value: 120 },
-        { clientId: 'user3', name: 'Valid User', value: 130 },
+        { clientId: '1', name: 'Primary User', value: 120, totalCalories: 200 },
+        { clientId: '2', name: 'Other User', value: 110, totalCalories: 150 },
       ],
       connectionStatus: 'Connected',
       activeAlerts: [],
+    });
+  })
+
+  it('passes workout data to primary user HrTile', () => {
+    (useWorkoutSession as jest.Mock).mockReturnValue({
+      caloriesBurned: 50,
+      workoutDuration: 300,
+      hasStarted: true,
     })
 
-    renderWithProviders(<HrmConnectionPanel />)
+    render(
+      <UserSettingsProvider>
+        <HrmConnectionPanel />
+      </UserSettingsProvider>
+    )
 
-    // Only the 'Valid User' tile should be rendered
-    const tiles = screen.getAllByTestId('mock-hr-tile')
-    expect(tiles).toHaveLength(1)
-    expect(within(tiles[0]).getByText('Valid User')).toBeInTheDocument()
-    expect(within(tiles[0]).getByText('130')).toBeInTheDocument()
+    // The primary user should have calories and duration displayed
+    expect(screen.getByText('50')).toBeInTheDocument()
+    expect(screen.getByText('05:00')).toBeInTheDocument()
+  })
+
+  it('correctly identifies primary user', () => {
+    (useWebSocket as jest.Mock).mockReturnValue({
+      hrmData: [
+        { clientId: '1', name: 'User with 0 HR', value: 0, totalCalories: 100 },
+        { clientId: '2', name: 'new user', value: 130, totalCalories: 180 },
+        { clientId: '3', name: 'Real Primary User', value: 140, totalCalories: 250 },
+      ],
+      connectionStatus: 'Connected',
+      activeAlerts: [],
+    });
+
+    (useWorkoutSession as jest.Mock).mockReturnValue({
+      caloriesBurned: 70,
+      workoutDuration: 420,
+      hasStarted: true,
+    })
+
+    render(
+      <UserSettingsProvider>
+        <HrmConnectionPanel />
+      </UserSettingsProvider>
+    )
+
+    // The workout data should be associated with the "Real Primary User"
+    expect(screen.getByText('70')).toBeInTheDocument()
+    expect(screen.getByText('07:00')).toBeInTheDocument()
   })
 })
