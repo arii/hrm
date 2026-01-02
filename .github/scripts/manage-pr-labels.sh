@@ -67,6 +67,15 @@ fi
 
 # Add the new labels from the Gemini review
 if [ -n "$NEW_LABELS" ]; then
+  # Before adding, ensure all new labels exist.
+  # The `gh label create` command will fail if the label already exists.
+  # We append `|| true` to ignore the error and continue the script.
+  echo "Ensuring new labels exist before applying..."
+  for label in $(echo $NEW_LABELS | tr ',' ' '); do
+    gh label create "$label" || true
+  done
+  echo "Label check complete."
+
   echo "Adding labels: $NEW_LABELS"
   gh pr edit $PR_NUMBER --add-label "$NEW_LABELS"
 fi
