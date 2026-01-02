@@ -8,6 +8,7 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSession } from 'next-auth/react'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import { createHrmData } from '../test-data/hrm-data-factory'
 
 // Mock the hooks
 jest.mock('@/hooks/useWorkoutSession')
@@ -30,17 +31,17 @@ describe('HrmConnectionPanel - Workout Data Integration', () => {
     ;(useSession as jest.Mock).mockReturnValue({
       data: { user: { name: 'Test User' } },
     })
+  })
+
+  it('passes workout data to primary user HrTile', () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       hrmData: [
-        { clientId: '1', name: 'Primary User', value: 120, totalCalories: 200 },
-        { clientId: '2', name: 'Other User', value: 110, totalCalories: 150 },
+        createHrmData({ clientId: '1', name: 'Primary User', value: 120, totalCalories: 200 }),
+        createHrmData({ clientId: '2', name: 'Other User', value: 110, totalCalories: 150 }),
       ],
       connectionStatus: 'Connected',
       activeAlerts: [],
     })
-  })
-
-  it('passes workout data to primary user HrTile', () => {
     ;(useWorkoutSession as jest.Mock).mockReturnValue({
       caloriesBurned: 50,
       workoutDuration: 300,
@@ -61,14 +62,14 @@ describe('HrmConnectionPanel - Workout Data Integration', () => {
   it('correctly identifies primary user', () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       hrmData: [
-        { clientId: '1', name: 'User with 0 HR', value: 0, totalCalories: 100 },
-        { clientId: '2', name: 'new user', value: 130, totalCalories: 180 },
-        {
+        createHrmData({ clientId: '1', name: 'User with 0 HR', value: 0, totalCalories: 100 }),
+        createHrmData({ clientId: '2', name: 'new user', value: 130, totalCalories: 180 }),
+        createHrmData({
           clientId: '3',
           name: 'Real Primary User',
           value: 140,
           totalCalories: 250,
-        },
+        }),
       ],
       connectionStatus: 'Connected',
       activeAlerts: [],
