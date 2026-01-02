@@ -642,6 +642,77 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+  component-tests:
+    name: 🧪 Component Tests
+    needs: [prepare-env, knip-check, lint-check, build-check]
+    if: inputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: ./
+        continue-on-error: true
+
+      - name: Extract Build Artifacts
+        shell: bash
+        run: |
+          echo "📦 Extracting release archive..."
+          if [ -f "release.tar.gz" ]; then
+            tar -xzf release.tar.gz
+            rm release.tar.gz
+            echo "✅ Archive extracted"
+          else
+            echo "⚠️  No release archive found"
+          fi
+
+          if [ -d ".next_prod" ] && [ -d "dist" ]; then
+            echo "✅ All build directories found"
+          else
+            echo "❌ Missing required build directories"
+            exit 1
+          fi
+
+      - name: Run Component Tests
+        id: component-tests
+        shell: bash
+        run: |
+          set -o pipefail
+          ./scripts/ci/run-component-tests.sh
+        continue-on-error: true
+
+      - name: Publish Component Tests Results
+        uses: dorny/test-reporter@v1
+        if: always() && steps.component-tests.outcome != 'skipped'
+        with:
+          name: Component Tests
+          path: test-results/component-results.xml
+          reporter: java-junit
+        continue-on-error: true
+
+      - name: Upload Component Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-test-logs-${{ env.SESSION_ID }}
+          path: |
+            logs/component-output.log
+            test-results/component-results.xml
+          if-no-files-found: ignore
+          retention-days: 3
+
   perf-tests:
     name: 🧪 Performance Tests
     needs: [prepare-env, knip-check, lint-check, build-check]
@@ -858,6 +929,7 @@ jobs:
               "🏗️ Build Check"
               "🧪 Infrastructure Tests"
               "🧪 Unit Tests"
+              "🧪 Component Tests"
               "🧪 Performance Tests"
               "🧪 Visual Tests"
               "📊 Integration Tests Summary"
@@ -931,11 +1003,12 @@ jobs:
   integration-tests:
     name: 📊 Integration Tests Summary
     if: always() && inputs.has_changes == 'true'
-    needs: [prepare-env, infra-tests, unit-tests, perf-tests, visual-tests]
+    needs: [prepare-env, infra-tests, unit-tests, component-tests, perf-tests, visual-tests]
     runs-on: ubuntu-latest
     outputs:
       infra-tests-outcome: ${{ needs.infra-tests.result }}
       unit-tests-outcome: ${{ needs.unit-tests.result }}
+      component-tests-outcome: ${{ needs.component-tests.result }}
       perf-tests-outcome: ${{ needs.perf-tests.result }}
       visual-tests-outcome: ${{ needs.visual-tests.result }}
     steps:
@@ -945,12 +1018,14 @@ jobs:
           echo "📊 All Integration Tests Summary:"
           echo "  Infra Tests: ${{ needs.infra-tests.result }}"
           echo "  Unit Tests: ${{ needs.unit-tests.result }}"
+          echo "  Component Tests: ${{ needs.component-tests.result }}"
           echo "  Perf Tests: ${{ needs.perf-tests.result }}"
           echo "  Visual Tests: ${{ needs.visual-tests.result }}"
 
           # Fail if any test failed
           if [ "${{ needs.infra-tests.result }}" = "failure" ] || \
              [ "${{ needs.unit-tests.result }}" = "failure" ] || \
+             [ "${{ needs.component-tests.result }}" = "failure" ] || \
              [ "${{ needs.perf-tests.result }}" = "failure" ] || \
              [ "${{ needs.visual-tests.result }}" = "failure" ]; then
             echo "❌ Some integration tests failed"
@@ -984,6 +1059,7 @@ jobs:
           BUILD_RESULT: ${{ needs.build-check.result }}
           INFRA_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.infra-tests-outcome }}
           UNIT_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.unit-tests-outcome }}
+          COMPONENT_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.component-tests-outcome }}
           PERF_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.perf-tests-outcome }}
           VISUAL_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.visual-tests-outcome }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -1027,6 +1103,7 @@ jobs:
           COMMENT_BODY+="| Build | $([ "$BUILD_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$BUILD_RESULT) |\n"
           COMMENT_BODY+="| Infra Tests | $([ "$INFRA_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_TESTS_OUTCOME) |\n"
           COMMENT_BODY+="| Unit Tests | $([ "$UNIT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$UNIT_TESTS_OUTCOME) |\n"
+          COMMENT_BODY+="| Component Tests | $([ "$COMPONENT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$COMPONENT_TESTS_OUTCOME) |\n"
           COMMENT_BODY+="| Perf Tests | $([ "$PERF_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$PERF_TESTS_OUTCOME) |\n"
           COMMENT_BODY+="| Visual Tests | $([ "$VISUAL_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_OUTCOME) |\n"
 
@@ -1047,6 +1124,9 @@ jobs:
           if [ "$UNIT_TESTS_OUTCOME" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Unit Test Failure Details" "artifacts/unit-test-logs-${{ needs.prepare-env.outputs.session_id }}/unit-tests.log" 50)
           fi
+          if [ "$COMPONENT_TESTS_OUTCOME" != "success" ]; then
+            LOG_DETAILS+=$(add_log_details "Component Test Failure Details" "artifacts/component-test-logs-${{ needs.prepare-env.outputs.session_id }}/component-output.log" 50)
+          fi
           if [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Visual Test Failure Details" "artifacts/visual-test-logs-${{ needs.prepare-env.outputs.session_id }}/visual-output.log" 50)
           fi
@@ -1060,7 +1140,7 @@ jobs:
           fi
 
           if [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
-             [ "$INFRA_TESTS_OUTCOME" = "success" ] && [ "$UNIT_TESTS_OUTCOME" = "success" ] && [ "$PERF_TESTS_OUTCOME" = "success" ] && [ "$VISUAL_TESTS_OUTCOME" = "success" ]; then
+             [ "$INFRA_TESTS_OUTCOME" = "success" ] && [ "$UNIT_TESTS_OUTCOME" = "success" ] && [ "$COMPONENT_TESTS_OUTCOME" = "success" ] && [ "$PERF_TESTS_OUTCOME" = "success" ] && [ "$VISUAL_TESTS_OUTCOME" = "success" ]; then
             SUMMARY_MSG="✅ **All quality checks passed!**"
           else
             SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
@@ -1073,7 +1153,7 @@ jobs:
 
           # Only post comment to PR if some checks failed
           if [ "$KNIP_RESULT" != "success" ] || [ "$LINT_RESULT" != "success" ] || [ "$BUILD_RESULT" != "success" ] || \
-             [ "$INFRA_TESTS_OUTCOME" != "success" ] || [ "$UNIT_TESTS_OUTCOME" != "success" ] || [ "$PERF_TESTS_OUTCOME" != "success" ] || [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
+             [ "$INFRA_TESTS_OUTCOME" != "success" ] || [ "$UNIT_TESTS_OUTCOME" != "success" ] || [ "$COMPONENT_TESTS_OUTCOME" != "success" ] || [ "$PERF_TESTS_OUTCOME" != "success" ] || [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
             gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
               echo "::warning::Failed to post comment to PR"
               exit 0
@@ -1084,7 +1164,7 @@ jobs:
 
           # Check if all passed
           if [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
-             [ "$INFRA_TESTS_OUTCOME" = "success" ] && [ "$UNIT_TESTS_OUTCOME" = "success" ] && [ "$PERF_TESTS_OUTCOME" = "success" ] && [ "$VISUAL_TESTS_OUTCOME" = "success" ]; then
+             [ "$INFRA_TESTS_OUTCOME" = "success" ] && [ "$UNIT_TESTS_OUTCOME" = "success" ] && [ "$COMPONENT_TESTS_OUTCOME" = "success" ] && [ "$PERF_TESTS_OUTCOME" = "success" ] && [ "$VISUAL_TESTS_OUTCOME" = "success" ]; then
             echo "✅ **All quality checks passed!**" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ **Some checks failed.** Review the workflow run logs for details." >> $GITHUB_STEP_SUMMARY
