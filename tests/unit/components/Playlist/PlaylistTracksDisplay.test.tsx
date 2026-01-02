@@ -173,10 +173,11 @@ describe('PlaylistTracksDisplay', () => {
 
     // Trigger the intersection observer
     act(() => {
-      // @ts-expect-error - mockImplementation is not typed
-      const [call] = mockIntersectionObserver.mock.calls
+      const [call] = mockIntersectionObserver.mock.calls as [
+        [(entries: IntersectionObserverEntry[]) => void, Element],
+      ]
       const [callback] = call
-      callback([{ isIntersecting: true }])
+      callback([{ isIntersecting: true } as IntersectionObserverEntry])
     })
 
     expect(await screen.findByRole('alert')).toHaveTextContent(

@@ -73,7 +73,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
         setNextPageLoading(false)
       }
     },
-    [playlistId, isNextPageLoading, hasNextPage, limit, tracks.length]
+    [playlistId, isNextPageLoading, hasNextPage, limit]
   )
 
   useEffect(() => {
