@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.21.0](https://github.com/arii/hrm/compare/hrm-v0.20.0...hrm-v0.21.0) (2026-01-02)
+
+
+### Features
+
+* **large:** Client-Side Calorie Computation & Data Synchronization ([#3036](https://github.com/arii/hrm/issues/3036)) ([90e1a15](https://github.com/arii/hrm/commit/90e1a154647888e0a156e457ad1b46bfd0386923))
+* **medium:** feat: Implement Data Transfer Objects (DTOs) for API Decoupling ([#3033](https://github.com/arii/hrm/issues/3033)) ([a8c0c9b](https://github.com/arii/hrm/commit/a8c0c9bffb00bb0de6a5c251164550d927394f25))
+* **medium:** Refactor User Types and Expand Test Data Factories ([#3020](https://github.com/arii/hrm/issues/3020)) ([ba7c91e](https://github.com/arii/hrm/commit/ba7c91e4082f6946faab14f7dc20c009fdbd33ac))
+* **small:** [UI] Remove Pulse Animation from Heart Rate Tiles ([#3019](https://github.com/arii/hrm/issues/3019)) ([177fded](https://github.com/arii/hrm/commit/177fded2df47c479b59f0642b4ae83bafc033252))
+* **small:** Default to HRM Web Player When No Active Device Is Present ([#3028](https://github.com/arii/hrm/issues/3028)) ([2fad157](https://github.com/arii/hrm/commit/2fad157081955ba3a531bdc272074dfc1b04e610))
+* **small:** Fix Excessive Decimal Precision for Calories Burned ([#3017](https://github.com/arii/hrm/issues/3017)) ([b989c0f](https://github.com/arii/hrm/commit/b989c0f483b6890210df847d53892ef4c3a82197))
+* **small:** Fix WebSocket Disconnections from Browser Throttling ([#3018](https://github.com/arii/hrm/issues/3018)) ([a4880c2](https://github.com/arii/hrm/commit/a4880c2b2b19cf104ec6e1c5eb3769c6d01f8fae))
+* **small:** Make 'Reset Permissions & Settings' button always available ([#3030](https://github.com/arii/hrm/issues/3030)) ([819d9be](https://github.com/arii/hrm/commit/819d9bec50249954b3ea14f7a2ea14dee87bc363))
+
+
+### Performance Improvements
+
+* **ci:** Migrate lightweight scope check to 'ubuntu-latest' GitHub Actions runners ([#3006](https://github.com/arii/hrm/issues/3006)) ([eadb4e6](https://github.com/arii/hrm/commit/eadb4e6b053e7e3d2ae856be6dc924a8efec25be))
+
 ## [0.20.0](https://github.com/arii/hrm/compare/hrm-v0.19.0...hrm-v0.20.0) (2026-01-02)
 
 
