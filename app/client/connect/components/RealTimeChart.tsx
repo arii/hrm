@@ -10,6 +10,7 @@ import {
   Area,
 } from 'recharts'
 import { Box, Typography, Paper, useTheme } from '@mui/material'
+import { Theme } from '@mui/material/styles'
 
 interface RealTimeChartProps {
   data: { time: number; hr: number; calories: number }[]
@@ -23,9 +24,9 @@ const formatXAxis = (tickItem: number) => {
 
 interface CustomTooltipProps {
   active?: boolean
-  payload?: { value: number }[]
+  payload?: { value: number; dataKey: string }[]
   label?: number
-  theme: any
+  theme: Theme
 }
 
 const CustomTooltip = ({
@@ -35,8 +36,8 @@ const CustomTooltip = ({
   theme,
 }: CustomTooltipProps) => {
   if (active && payload && payload.length && label) {
-    const hrPayload = payload[0]
-    const caloriesPayload = payload[1]
+    const hrPayload = payload.find((p) => p.dataKey === 'hr')
+    const caloriesPayload = payload.find((p) => p.dataKey === 'calories')
 
     return (
       <Paper sx={{ p: 1 }}>
