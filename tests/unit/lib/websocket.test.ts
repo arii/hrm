@@ -17,6 +17,7 @@ jest.mock('ws', () => ({
 
 // A helper to create a mock WebSocket client
 const createMockWebSocket = (): IWebSocket => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ws = new (WebSocket as any)() as IWebSocket
   ws.on = jest.fn()
   ws.ping = jest.fn()
@@ -76,7 +77,9 @@ describe('WebSocketManager', () => {
       const ws2 = createMockWebSocket()
       ws1.isAlive = true
       ws2.isAlive = true
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       wss.clients.add(ws1 as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       wss.clients.add(ws2 as any)
 
       wsManager.startHeartbeat()
@@ -89,6 +92,7 @@ describe('WebSocketManager', () => {
     it('should terminate an unresponsive client', () => {
       const unresponsiveClient = createMockWebSocket()
       unresponsiveClient.isAlive = true // Initially alive
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       wss.clients.add(unresponsiveClient as any)
 
       wsManager.startHeartbeat()
@@ -108,6 +112,7 @@ describe('WebSocketManager', () => {
     it('should not terminate a responsive client', () => {
       const responsiveClient = createMockWebSocket()
       responsiveClient.isAlive = true
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       wss.clients.add(responsiveClient as any)
 
       // Simulate the 'pong' event handler that the WSS connection listener sets up
