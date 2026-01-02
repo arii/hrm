@@ -79,7 +79,6 @@ To maintain a clean and linear Git history, this project provides an automated t
 1.  Open a pull request.
 2.  Ensure all checks have passed and the PR is ready for merging.
 3.  Add a comment to the PR containing one of the following commands:
-
 - `@pr-squash` or `@pr-squash-rebase`: Squashes all commits into a single commit and rebases it on top of the `leader` branch. This is the recommended way to prepare a PR for merging.
 - `/rebase-ai`: Performs a rebase of the PR on top of the `leader` branch. If conflicts are found, it uses the Gemini API to attempt to resolve them automatically. This command does **not** squash commits, making it useful for updating a PR that is still in progress without losing its commit history.
 

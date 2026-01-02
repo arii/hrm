@@ -16,6 +16,9 @@ import {
   validateAgeValue,
   validateWeightValue,
 } from '@/lib/validation/userMetrics'
+import { useWorkoutHistory } from '@/hooks/useWorkoutHistory'
+import RealTimeChart from './components/RealTimeChart'
+import ZoneDistributionTable from './components/ZoneDistributionTable'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -130,56 +133,79 @@ export default function ConnectPage() {
     workoutStatus === 'running'
   )
 
+  const {
+    history,
+    zoneDistribution,
+    addDataPoint,
+    resetHistory,
+  } = useWorkoutHistory(maxHr)
+
+  useEffect(() => {
+    if (workoutStatus === 'running' && currentHR > 0) {
+      addDataPoint(currentHR, calories)
+    }
+  }, [currentHR, calories, workoutStatus, addDataPoint])
+
   const resetWorkout = () => {
     resetWorkoutSession()
     resetCalories()
+    resetHistory()
   }
 
   return (
-    <ConnectView
-      duration={formatDuration(workoutDuration)}
-      caloriesBurned={calories}
-      userName={userName}
-      setUserName={(name) =>
-        setUserSettings((prev) => ({ ...prev, userName: name }))
-      }
-      userAge={String(userAge || '')}
-      setUserAge={(age) =>
-        setUserSettings((prev) => ({ ...prev, userAge: Number(age) }))
-      }
-      onAgeBlur={handleAgeBlur}
-      ageError={ageError}
-      userHeight={displayHeight}
-      setUserHeight={handleHeightChange}
-      onHeightBlur={handleHeightBlur}
-      heightError={heightError}
-      userWeight={displayWeight}
-      setUserWeight={handleWeightChange}
-      onWeightBlur={handleWeightBlur}
-      weightError={weightError}
-      gender={gender}
-      setGender={(g) => setUserSettings((prev) => ({ ...prev, gender: g }))}
-      unitSystem={unitSystem}
-      onUnitChange={handleUnitChange}
-      isConnected={isConnected}
-      deviceStatus={deviceStatusMessage}
-      batteryLevel={batteryLevel}
-      onConnect={handleConnect}
-      onDisconnect={disconnect}
-      onForgetDevice={forgetDevice}
-      isSupported={isSupported}
-      currentHR={currentHR}
-      hrZoneProps={{
-        percentage: hrZoneProps.percentage,
-        progressColor: hrZoneProps.progressColor,
-      }}
-      connectionStatus={connectionStatus}
-      bluetoothConnected={isConnected}
-      hasStarted={hasStarted}
-      onReset={resetWorkout}
-      workoutStatus={workoutStatus}
-      onStartWorkout={startWorkout}
-      onEndWorkout={endWorkout}
-    />
+    <>
+      <ConnectView
+        duration={formatDuration(workoutDuration)}
+        caloriesBurned={calories}
+        userName={userName}
+        setUserName={(name) =>
+          setUserSettings((prev) => ({ ...prev, userName: name }))
+        }
+        userAge={String(userAge || '')}
+        setUserAge={(age) =>
+          setUserSettings((prev) => ({ ...prev, userAge: Number(age) }))
+        }
+        onAgeBlur={handleAgeBlur}
+        ageError={ageError}
+        userHeight={displayHeight}
+        setUserHeight={handleHeightChange}
+        onHeightBlur={handleHeightBlur}
+        heightError={heightError}
+        userWeight={displayWeight}
+        setUserWeight={handleWeightChange}
+        onWeightBlur={handleWeightBlur}
+        weightError={weightError}
+        gender={gender}
+        setGender={(g) => setUserSettings((prev) => ({ ...prev, gender: g }))}
+        unitSystem={unitSystem}
+        onUnitChange={handleUnitChange}
+        isConnected={isConnected}
+        deviceStatus={deviceStatusMessage}
+        batteryLevel={batteryLevel}
+        onConnect={handleConnect}
+        onDisconnect={disconnect}
+        onForgetDevice={forgetDevice}
+        isSupported={isSupported}
+        currentHR={currentHR}
+        hrZoneProps={{
+          percentage: hrZoneProps.percentage,
+          progressColor: hrZoneProps.progressColor,
+        }}
+        connectionStatus={connectionStatus}
+        bluetoothConnected={isConnected}
+        hasStarted={hasStarted}
+        onReset={resetWorkout}
+        workoutStatus={workoutStatus}
+        onStartWorkout={startWorkout}
+        onEndWorkout={endWorkout}
+        maxHr={maxHr}
+      />
+      {hasStarted && (
+        <>
+          <RealTimeChart data={history} />
+          <ZoneDistributionTable data={zoneDistribution} />
+        </>
+      )}
+    </>
   )
 }

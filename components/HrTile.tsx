@@ -6,7 +6,8 @@ import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
-import { getHrZoneProps } from '@/utils/visualization'
+import { getHrZoneColor } from '@/utils/visualization'
+import { calculateHrZone } from '@/lib/hrm/zones'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
@@ -36,9 +37,12 @@ const HrTile = ({
   isConnected = true, // Default to connected
   isAlerting = false,
   alertMessage = 'Checking signal...',
-}: HrTileProps) => {
+  maxHr,
+}: HrTileProps & { maxHr: number }) => {
   const theme = useTheme()
-  const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
+  const zone = calculateHrZone(bpm, maxHr)
+  const backgroundColor = getHrZoneColor(zone.zoneName)
+  const textColor = theme.palette.getContrastText(backgroundColor)
 
   const tooltipTitle = isAlerting
     ? alertMessage
