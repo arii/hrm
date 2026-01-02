@@ -418,24 +418,3 @@ export async function prepareForVisualRegression(
 ): Promise<void> {
   await Promise.all(pages.map((page) => waitForFontsLoaded(page)))
 }
-
-/**
- * Navigate to a page, wait for it to be ready, and prepare it for a visual snapshot.
- * This is a higher-level utility designed for VRT setup.
- *
- * @param page The Playwright Page object.
- * @param url The full URL to navigate to.
- * @param isDashboard Whether the page is the main dashboard (to replace iframe).
- */
-export async function setupPageForVisualRegression(
-  page: Page,
-  url: string,
-  isDashboard: boolean = false
-): Promise<void> {
-  await page.goto(url)
-  await waitForPageReady(page)
-  await waitForFontsLoaded(page)
-  if (isDashboard) {
-    await replaceIframeWithStableWorkout(page)
-  }
-}
