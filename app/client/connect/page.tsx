@@ -16,6 +16,7 @@ import {
   validateWeightValue,
 } from '@/lib/validation/userMetrics'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
+import { useHrZoneTracker } from '@/hooks/useHrZoneTracker'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -56,6 +57,13 @@ export default function ConnectPage() {
     }
   }
 
+  const { calories, smoothedHeartRate, resetCalories } = useCalorieCounter(
+    rawHeartRate,
+    userAge || 0,
+    userWeight || 0,
+    gender || 'MALE',
+    workoutStatus === 'running'
+  )
   const {
     connectAndStream,
     autoConnect,
@@ -67,7 +75,10 @@ export default function ConnectPage() {
     isSupported,
     disconnectionReason,
     rawHeartRate,
-  } = useBluetoothHRM()
+  } = useBluetoothHRM({
+    smoothedHeartRate,
+    calories,
+  })
 
   const {
     workoutDuration,
@@ -89,8 +100,33 @@ export default function ConnectPage() {
   )
 
   const { connectionStatus } = useWebSocket()
+  const [hrHistory, setHrHistory] = useState<{ time: number; hr: number }[]>([])
 
   const maxHr = userAge ? 220 - userAge : 190
+  const zoneDurations = useHrZoneTracker(
+    smoothedHeartRate,
+    maxHr,
+    workoutStatus === 'running'
+  )
+
+  const { connectionStatus } = useWebSocket()
+  const [hrHistory, setHrHistory] = useState<{ time: number; hr: number }[]>([])
+
+  const maxHr = userAge ? 220 - userAge : 190
+  const zoneDurations = useHrZoneTracker(
+    smoothedHeartRate,
+    maxHr,
+    workoutStatus === 'running'
+  )
+
+  useEffect(() => {
+    if (workoutStatus === 'running' && smoothedHeartRate > 0) {
+      setHrHistory((prev) => [
+        ...prev,
+        { time: Date.now(), hr: smoothedHeartRate },
+      ])
+    }
+  }, [smoothedHeartRate, workoutStatus])
 
   useEffect(() => {
     if (!isConnected && isSupported && connectionStatus === 'Connected') {
@@ -180,6 +216,9 @@ export default function ConnectPage() {
       workoutStatus={workoutStatus}
       onStartWorkout={startWorkout}
       onEndWorkout={handleEndWorkout}
+      hrHistory={hrHistory}
+      setHrHistory={setHrHistory}
+      zoneDurations={zoneDurations}
     />
   )
 }

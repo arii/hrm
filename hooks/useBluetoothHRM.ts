@@ -27,6 +27,8 @@ const parseHeartRate = (value: DataView): number => {
 interface UseBluetoothHRMProps {
   dataLivenessTimeoutMs?: number
   throttleMs?: number
+  smoothedHeartRate: number
+  calories: number
 }
 
 type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
@@ -39,8 +41,8 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  * @param {UseBluetoothHRMProps} props - Configuration options for the hook.
  * @property {number} [dataLivenessTimeoutMs=10000] - Timeout in ms for stale data before forcing a reconnect.
  * @property {number} [throttleMs=250] - Throttle interval in ms for sending HR data via WebSocket.
- * @property {string | null} [userName] - The user's name, used for metadata updates.
- * @property {number | null} [userAge] - The user's age, used for max HR calculation.
+ * @property {number} smoothedHeartRate - The smoothed heart rate value to be sent.
+ * @property {number} calories - The total accumulated calories to be sent.
  *
  * @returns {object} An object containing the state and functions to interact with the HRM device.
  * @property {Function} connectAndStream - Function to initiate connection to a device.
@@ -53,8 +55,13 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  * @property {boolean} isSupported - A boolean indicating if Web Bluetooth is supported by the browser.
  * @property {DisconnectionReason} disconnectionReason - The reason for the last disconnection.
  */
-const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
-  const { dataLivenessTimeoutMs = 10000, throttleMs = 250 } = props
+const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
+  const {
+    dataLivenessTimeoutMs = 10000,
+    throttleMs = 250,
+    smoothedHeartRate,
+    calories,
+  } = props
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
@@ -254,7 +261,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
             setRawHeartRate(heartRate) // Update raw HR state
-            throttledSend({ type: 'HRM_INPUT', data: { value: heartRate } })
+
+            // Send the full payload with smoothed HR and calories
+            throttledSend({
+              type: 'HRM_INPUT',
+              data: { value: smoothedHeartRate, calories },
+            })
           }
         )
 

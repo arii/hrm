@@ -14,8 +14,10 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MeasurementSystem, Gender } from '../../../types/core'
+import PerformanceDashboard from './PerformanceDashboard'
+import { HrZoneDuration } from '@/hooks/useHrZoneTracker'
 import {
   ToggleButtonGroup,
   ToggleButton,
@@ -65,6 +67,11 @@ interface ConnectViewProps {
   workoutStatus: 'idle' | 'running' | 'paused'
   onStartWorkout: () => void
   onEndWorkout: () => void
+  hrHistory: { time: number; hr: number }[]
+  setHrHistory: React.Dispatch<
+    React.SetStateAction<{ time: number; hr: number }[]>
+  >
+  zoneDurations: HrZoneDuration[]
 }
 
 export default function ConnectView({
@@ -104,6 +111,9 @@ export default function ConnectView({
   workoutStatus,
   onStartWorkout,
   onEndWorkout,
+  hrHistory,
+  setHrHistory,
+  zoneDurations,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -390,6 +400,15 @@ export default function ConnectView({
 
         {hasStarted && (
           <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+        )}
+
+        {workoutStatus !== 'idle' && (
+          <Box sx={{ mt: 4 }}>
+            <PerformanceDashboard
+              hrHistory={hrHistory}
+              zoneDurations={zoneDurations}
+            />
+          </Box>
         )}
 
         <Typography

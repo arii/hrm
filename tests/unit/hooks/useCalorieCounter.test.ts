@@ -5,60 +5,62 @@ import { renderHook, act } from '@testing-library/react'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { Gender } from '@/types/core'
 
-// Mock Date.now() to control time in tests
-let time: number
-
-beforeEach(() => {
-  time = Date.now()
-  jest.spyOn(Date, 'now').mockImplementation(() => time)
-})
-
-afterEach(() => {
-  jest.restoreAllMocks()
-})
-
-const advanceTime = (seconds: number) => {
-  time += seconds * 1000
-}
-
 describe('useCalorieCounter', () => {
-  it('should not accumulate calories when not running', () => {
+  // Use Jest's fake timers to control setInterval
+  beforeEach(() => {
+    jest.useFakeTimers()
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
+  it('should not accumulate calories when isActive is false', () => {
     const { result, rerender } = renderHook(
-      ({ heartRate, isRunning }) =>
-        useCalorieCounter(heartRate, 30, 70, 'MALE', isRunning),
+      ({ heartRate, isActive }) =>
+        useCalorieCounter(heartRate, 30, 70, 'MALE', isActive),
       {
-        initialProps: { heartRate: 100, isRunning: false },
+        initialProps: { heartRate: 100, isActive: false },
       }
     )
 
     expect(result.current.calories).toBe(0)
-    act(() => advanceTime(10))
-    rerender({ heartRate: 120, isRunning: false })
+
+    // Advance time, but calories should not change
+    act(() => {
+      jest.advanceTimersByTime(10000)
+    })
+    rerender({ heartRate: 120, isActive: false })
     expect(result.current.calories).toBe(0)
   })
 
   it('should calculate and accumulate calories over time when running', () => {
     const { result, rerender } = renderHook(
-      ({ heartRate, isRunning }) =>
-        useCalorieCounter(heartRate, 30, 70, 'MALE', isRunning),
+      ({ heartRate, isActive }) =>
+        useCalorieCounter(heartRate, 30, 70, 'MALE', isActive),
       {
-        initialProps: { heartRate: 100, isRunning: true },
+        initialProps: { heartRate: 150, isActive: true },
       }
     )
 
+    // Initial calories should be 0
+    expect(result.current.calories).toBe(0)
+
+    // Advance time by 1 second
     act(() => {
-      advanceTime(1)
-      rerender({ heartRate: 150, isRunning: true })
+      jest.advanceTimersByTime(1000)
     })
 
     // After 1 second at 150bpm, calories should be > 0
     const firstValue = result.current.calories
     expect(firstValue).toBeGreaterThan(0)
 
+    // Rerender with a new heart rate to update smoothed HR
+    rerender({ heartRate: 151, isActive: true })
+
+    // Advance time by another second
     act(() => {
-      advanceTime(1)
-      // Rerender with a slightly different HR to trigger the effect
-      rerender({ heartRate: 151, isRunning: true })
+      jest.advanceTimersByTime(1000)
     })
 
     // After another second, calories should increase
@@ -66,18 +68,12 @@ describe('useCalorieCounter', () => {
   })
 
   it('should reset calories when resetCalories is called', () => {
-    const { result, rerender } = renderHook(
-      ({ heartRate, isRunning }) =>
-        useCalorieCounter(heartRate, 30, 70, 'MALE', isRunning),
-      {
-        initialProps: { heartRate: 150, isRunning: true },
-      }
+    const { result } = renderHook(() =>
+      useCalorieCounter(150, 30, 70, 'MALE', true)
     )
 
     act(() => {
-      advanceTime(5)
-      // Rerender with a slightly different HR to trigger the effect
-      rerender({ heartRate: 151, isRunning: true })
+      jest.advanceTimersByTime(5000)
     })
 
     expect(result.current.calories).toBeGreaterThan(0)
@@ -87,69 +83,66 @@ describe('useCalorieCounter', () => {
     })
 
     expect(result.current.calories).toBe(0)
+    // After reset, it should not start accumulating again without new props
+    act(() => {
+      jest.advanceTimersByTime(5000)
+    })
+    expect(result.current.calories).toBe(0)
   })
 
   it('should apply SMA to smooth heart rate', () => {
     const { result, rerender } = renderHook(
-      ({ heartRate, isRunning }) =>
-        useCalorieCounter(heartRate, 30, 70, 'MALE', isRunning, {
+      ({ heartRate, isActive }) =>
+        useCalorieCounter(heartRate, 30, 70, 'MALE', isActive, {
           smaWindow: 5,
         }),
-      { initialProps: { heartRate: 100, isRunning: true } }
+      { initialProps: { heartRate: 100, isActive: true } }
     )
 
-    // Initial HR is 100
+    // Initial HR is 100, but buffer is just [100], so smoothed is 100
     expect(result.current.smoothedHeartRate).toBe(100)
 
     // Add more readings
-    rerender({ heartRate: 102, isRunning: true })
-    rerender({ heartRate: 104, isRunning: true })
-    rerender({ heartRate: 106, isRunning: true })
-    rerender({ heartRate: 108, isRunning: true })
+    rerender({ heartRate: 102, isActive: true })
+    rerender({ heartRate: 104, isActive: true })
+    rerender({ heartRate: 106, isActive: true })
+    rerender({ heartRate: 108, isActive: true })
 
     // The smoothed value should be the average of [100, 102, 104, 106, 108] = 104
     expect(result.current.smoothedHeartRate).toBe(104)
 
     // Add another reading, pushing the first one out
-    rerender({ heartRate: 100, isRunning: true })
+    rerender({ heartRate: 100, isActive: true })
     // Now the window is [102, 104, 106, 108, 100], average is 104
     expect(result.current.smoothedHeartRate).toBe(104)
   })
 
   it('should handle different genders', () => {
-    const testInitialTime = time // Capture time from beforeEach
-
-    const { result: maleResult, rerender: rerenderMale } = renderHook(
-      ({ heartRate, isRunning, gender }) =>
-        useCalorieCounter(heartRate, 30, 70, gender, isRunning),
-      {
-        initialProps: { heartRate: 150, isRunning: true, gender: 'MALE' as Gender },
-      }
+    // Test male
+    const { result: maleResult } = renderHook(() =>
+      useCalorieCounter(150, 30, 70, 'MALE', true)
     )
     act(() => {
-      advanceTime(10)
-      rerenderMale({ heartRate: 151, isRunning: true, gender: 'MALE' as Gender })
+      jest.advanceTimersByTime(10000)
     })
+    const maleCalories = maleResult.current.calories
 
-    // Reset time for the next independent calculation
-    time = testInitialTime
+    // Reset timers and test female
+    jest.useRealTimers()
+    jest.useFakeTimers()
 
-    const { result: femaleResult, rerender: rerenderFemale } = renderHook(
-      ({ heartRate, isRunning, gender }) =>
-        useCalorieCounter(heartRate, 30, 70, gender, isRunning),
-      {
-        initialProps: { heartRate: 150, isRunning: true, gender: 'FEMALE' as Gender },
-      }
+    const { result: femaleResult } = renderHook(() =>
+      useCalorieCounter(150, 30, 70, 'FEMALE', true)
     )
     act(() => {
-      advanceTime(10)
-      rerenderFemale({ heartRate: 151, isRunning: true, gender: 'FEMALE' as Gender })
+      jest.advanceTimersByTime(10000)
     })
+    const femaleCalories = femaleResult.current.calories
 
-    expect(maleResult.current.calories).not.toBe(femaleResult.current.calories)
+    expect(maleCalories).toBeGreaterThan(0)
+    expect(femaleCalories).toBeGreaterThan(0)
+    expect(maleCalories).not.toBe(femaleCalories)
     // Male formula should result in higher calorie burn
-    expect(maleResult.current.calories).toBeGreaterThan(
-      femaleResult.current.calories
-    )
+    expect(maleCalories).toBeGreaterThan(femaleCalories)
   })
 })

@@ -75,34 +75,24 @@ export const useCalorieCounter = (
     }
   }, [heartRate, isActive, smaWindow]) // Depends on heartRate to update on new readings
 
-  // Effect to calculate calories based on changes in smoothed HR
+  // Effect to calculate calories based on a fixed interval
   useEffect(() => {
     if (!isActive || smoothedHeartRate <= 0) {
-      lastTickRef.current = null // Stop accumulating when inactive or HR is zero
       return
     }
 
-    const now = Date.now()
-    const lastTick = lastTickRef.current
+    const intervalId = setInterval(() => {
+      const caloriesBurned = estimateCaloriesBurned({
+        heartRate: smoothedHeartRate,
+        age: age,
+        weightKg: weight,
+        gender: gender,
+        durationMinutes: 1 / 60, // 1 second interval
+      })
+      setCalories((prev) => prev + caloriesBurned)
+    }, 1000)
 
-    // We need a previous tick to calculate a delta
-    if (lastTick) {
-      const deltaSeconds = (now - lastTick) / 1000
-      // Avoid calculating for tiny deltas or if time goes backward
-      if (deltaSeconds > 0) {
-        const caloriesBurned = estimateCaloriesBurned({
-          heartRate: smoothedHeartRate,
-          age: age,
-          weightKg: weight,
-          gender: gender,
-          durationMinutes: deltaSeconds / 60,
-        })
-        setCalories((prev) => prev + caloriesBurned)
-      }
-    }
-
-    // Always update the last tick time for the next calculation
-    lastTickRef.current = now
+    return () => clearInterval(intervalId)
   }, [smoothedHeartRate, isActive, age, weight, gender])
 
   const resetCalories = useCallback(() => {
