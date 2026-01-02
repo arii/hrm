@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 // tests/unit/hooks/useHrmDataHistory.test.ts
-import { renderHook, act } from '@testing-library/react'
+import { renderHook } from '@testing-library/react'
 import { useHrmDataHistory } from '@/hooks/useHrmDataHistory'
 import { HrmData } from '@/context/WebSocketContext'
 
@@ -57,7 +57,9 @@ describe('useHrmDataHistory', () => {
 
     let hrmData: HrmData[] = []
     for (let i = 0; i < 110; i++) {
-      hrmData = [{ clientId: 'client1', value: 100 + i, maxHr: 190, calories: 10 }]
+      hrmData = [
+        { clientId: 'client1', value: 100 + i, maxHr: 190, calories: 10 },
+      ]
       rerender({ hrmData })
     }
 

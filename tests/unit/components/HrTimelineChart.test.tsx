@@ -22,6 +22,8 @@ describe('HrTimelineChart', () => {
     }
     const { container } = render(<HrTimelineChart data={data} maxHr={190} />)
     expect(screen.getByText('Heart Rate Timeline')).toBeInTheDocument()
-    expect(container.querySelector('.recharts-responsive-container')).toBeInTheDocument()
+    expect(
+      container.querySelector('.recharts-responsive-container')
+    ).toBeInTheDocument()
   })
 })
