@@ -44,25 +44,37 @@ export type SuggestedIssue = z.infer<typeof SuggestedIssueSchema>
 export type ReviewResult = z.infer<typeof ReviewResultSchema>
 export type ExistingIssue = z.infer<typeof ExistingIssueSchema>
 
-// --- Configuration ---
+// --- GitHub Client Abstraction ---
 
-export const CONFIG = {
-  resultFile: 'review_result.json',
-  prNumber: process.env.PR_NUMBER,
-  repo: process.env.GITHUB_REPOSITORY,
+interface ExecExceptionWithStderr extends Error {
+  stderr?: string
 }
 
-// --- GitHub CLI Wrapper ---
+function isExecExceptionWithStderr(
+  error: unknown
+): error is ExecExceptionWithStderr {
+  return error instanceof Error && 'stderr' in error
+}
 
-export class GitHubClient {
+export interface IGitHubClient {
+  getOpenIssues(labelFilter?: string): ExistingIssue[]
+  createIssue(
+    issue: SuggestedIssue,
+    context: z.infer<typeof PRContextSchema>
+  ): void
+}
+
+export class GitHubClient implements IGitHubClient {
   private execute(command: string): string {
     try {
-      return execSync(command, { encoding: 'utf-8', stdio: 'pipe' }).trim()
+      return execSync(command, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }).trim()
     } catch (error: unknown) {
-      const stderr =
-        error instanceof Error && 'stderr' in error
-          ? String(error.stderr)
-          : 'Unknown error'
+      const stderr = isExecExceptionWithStderr(error)
+        ? error.stderr
+        : 'Unknown error'
       throw new Error(`GitHub CLI Error: ${stderr}`)
     }
   }
@@ -182,45 +194,41 @@ export function isDuplicate(
   return false
 }
 
-// --- Main Execution ---
+// --- Core Logic ---
 
-export async function main() {
-  if (!CONFIG.prNumber) {
-    console.error('❌ Error: PR_NUMBER environment variable is missing.')
-    process.exit(1)
+export async function run(
+  client: IGitHubClient,
+  prNumber: string,
+  reviewFilePath: string
+) {
+  if (!prNumber) {
+    throw new Error('❌ Error: PR_NUMBER is missing.')
   }
 
   let result: ReviewResult
   try {
     const content = readFileSync(
-      path.resolve(process.cwd(), CONFIG.resultFile),
+      path.resolve(process.cwd(), reviewFilePath),
       'utf-8'
     )
     const parsedJson = JSON.parse(content)
     const validationResult = ReviewResultSchema.safeParse(parsedJson)
     if (!validationResult.success) {
-      console.error(
-        `❌ Error validating ${CONFIG.resultFile}:`,
-        validationResult.error
+      throw new Error(
+        `❌ Error validating ${reviewFilePath}: ${validationResult.error}`
       )
-      process.exit(1)
-      return // Explicit return for clarity
     }
     result = validationResult.data
   } catch (e) {
-    console.error(
-      `❌ Error reading or parsing ${CONFIG.resultFile}: ${(e as Error).message}`
+    throw new Error(
+      `❌ Error reading or parsing ${reviewFilePath}: ${(e as Error).message}`
     )
-    process.exit(1)
-    return // Explicit return for clarity
   }
 
   if (!result.suggestedIssues || result.suggestedIssues.length === 0) {
     console.log('✨ No suggested issues found in the review result.')
-    process.exit(0)
+    return
   }
-
-  const client = new GitHubClient()
 
   const existingIssues = client.getOpenIssues('bot-generated')
 
@@ -236,8 +244,8 @@ export async function main() {
 
     // Fallback context if not present in the review file
     const context = result.prContext ?? {
-      repo: CONFIG.repo,
-      prNumber: CONFIG.prNumber,
+      repo: process.env.GITHUB_REPOSITORY,
+      prNumber: prNumber,
     }
 
     client.createIssue(issue, context)
@@ -246,12 +254,18 @@ export async function main() {
 
   console.log(`\n--- Summary ---`)
   console.log(`Created: ${createdCount}`)
-  console.log(`Skipped (Duplicate): ${skippedCount}`)
+  console.log(`Skipped: ${skippedCount}`)
 }
+
+// --- Main Execution ---
 
 // istanbul ignore next
 if (require.main === module) {
-  main().catch((err) => {
+  const client = new GitHubClient()
+  const prNumber = process.env.PR_NUMBER
+  const reviewFile = 'review_result.json'
+
+  run(client, prNumber || '', reviewFile).catch((err) => {
     console.error('Unhandled error:', err)
     process.exit(1)
   })
