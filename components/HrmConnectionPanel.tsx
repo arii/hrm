@@ -14,7 +14,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
-import HrTileWrapper from '../HrTileWrapper'
+import HrTileWrapper from '@/components/HrTileWrapper'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
