@@ -1,5 +1,5 @@
 // File: hooks/useCalorieCalculator.ts
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 
 interface CalorieCalculatorProps {
@@ -29,7 +29,7 @@ export const useCalorieCalculator = ({
   const weightKgRef = useRef(weightKg)
 
   // Keep refs updated to avoid stale closures in callbacks
-  useMemo(() => {
+  useEffect(() => {
     ageRef.current = age
     weightKgRef.current = weightKg
   }, [age, weightKg])
