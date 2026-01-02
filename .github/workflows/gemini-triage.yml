@@ -1,6 +1,18 @@
+# .github/workflows/gemini-triage.yml
+#
+# Consolidates AI-driven issue triage with scheduled maintenance tasks.
+#
+# Behavior:
+# 1. On new issues: Gemini analyzes and provides detailed triage (labels, priority, etc.).
+# 2. On schedule/manual: Rule-based checks are run to find stale issues,
+#    detect duplicates, and suggest resolutions for active discussions.
+
 name: Gemini Smart Triage
 
 on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *' # Daily at 2 AM UTC
   issues:
     types: [opened, reopened]
 
@@ -10,14 +22,13 @@ permissions:
 
 jobs:
   triage:
-    # Prevent the workflow from triggering itself in a loop.
-    # The workflow uses a PAT owned by 'ari-party-bot', so we check for that actor.
-    if: github.actor != 'ari-party-bot'
+    # This job runs for new issues.
+    # It uses a Gemini agent to analyze the issue and provide a detailed triage.
+    if: github.event_name == 'issues' && github.actor != 'ari-party-bot'
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-      # Caching is disabled for self-hosted runners to improve performance.
       - uses: actions/setup-node@v6
         with:
           node-version: '20'
@@ -205,3 +216,66 @@ jobs:
               }
               core.setFailed('Failed to apply triage actions due to a fatal error: ' + error.message);
             }
+  maintenance:
+    # This job runs on a schedule or manual trigger.
+    # It performs rule-based maintenance tasks like finding stale issues and duplicates.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Triage Stale Issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          STALE=$(gh issue list --state open --search "updated:<$(date -d '30 days ago' '+%Y-%m-%d')" --json number,body,labels --limit 50)
+          echo "$STALE" | jq -c '.[]' | while read -r issue; do
+            NUM=$(echo "$issue" | jq -r '.number')
+            BODY=$(echo "$issue" | jq -r '.body')
+            LABELS=$(echo "$issue" | jq -r '.labels[].name | @csv' | tr -d '"' | paste -sd',' -)
+            echo "::notice::Processing issue #$NUM"
+            if ! echo "$BODY" | grep -iq "reproduce\|steps"; then
+              if ! echo "$LABELS" | grep -q "needs-info"; then
+                gh issue edit "$NUM" --add-label "needs-info" && echo "::notice::  ✅ Added 'needs-info' label to #$NUM"
+                gh issue comment "$NUM" --body "Please provide reproduction steps for this issue." && echo "::notice::  ✅ Posted 'needs-info' comment to #$NUM"
+              fi
+            fi
+            if echo "$BODY" | grep -iqE "crash|broken|error"; then
+              if ! echo "$LABELS" | grep -q "bug"; then
+                gh issue edit "$NUM" --add-label "bug" && echo "::notice::  ✅ Added 'bug' label to #$NUM"
+              fi
+            fi
+          done
+
+      - name: Detect Duplicates
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          DUPLICATE_TITLES=$(gh issue list --state open --json title --limit 100 | jq -r '.[] | .title' | sort | uniq -d)
+          if [ -z "$DUPLICATE_TITLES" ]; then exit 0; fi
+          echo "$DUPLICATE_TITLES" | while read -r title; do
+            DUPS=$(gh issue list --state open --search "\"$title\"" --json number --limit 5 | jq -r '.[].number')
+            COUNT=$(echo "$DUPS" | wc -w)
+            if [ "$COUNT" -gt 1 ]; then
+              FIRST=$(echo "$DUPS" | awk '{print $1}')
+              OTHERS=$(echo "$DUPS" | awk '{for(i=2;i<=NF;i++)printf "#%s,",$i}' | sed 's/,$//')
+              echo "::notice::Found $COUNT duplicate issues for: '$title'"
+              gh issue comment "$FIRST" --body "Possible duplicates: $OTHERS" && echo "::notice::  ✅ Posted duplicate notice on #$FIRST"
+            fi
+          done
+
+      - name: Suggest Resolution
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          ISSUES=$(gh issue list --state open --json number,comments --limit 100 | jq -c '.[] | select(.comments | length > 5)')
+          if [ -z "$ISSUES" ]; then exit 0; fi
+          echo "$ISSUES" | while read -r issue; do
+            NUM=$(echo "$issue" | jq -r '.number')
+            RECENT=$(gh issue view "$NUM" --json comments --jq '.comments[-3:] | .[].body' 2>/dev/null)
+            if echo "$RECENT" | grep -iqE "fixed|resolved|merged|works"; then
+              echo "::notice::Issue #$NUM may be resolved"
+              gh issue comment "$NUM" --body "This issue may be resolved. Feel free to close if fixed!" && echo "::notice::  ✅ Posted resolution suggestion on #$NUM"
+            fi
+          done
