@@ -34,29 +34,46 @@ export const useCalorieCounter = (
 } => {
   const { smaWindow = 5 } = options
   const [calories, setCalories] = useState(0)
+  const [smoothedHeartRate, setSmoothedHeartRate] = useState(0)
   const lastTickRef = useRef<number | null>(null)
   const hrBufferRef = useRef<number[]>([])
 
-  // Manage the heart rate buffer
-  if (isActive && heartRate > 0) {
-    const buffer = hrBufferRef.current
-    buffer.push(heartRate)
-    if (buffer.length > smaWindow) {
-      buffer.shift()
+  // Effect to manage the heart rate buffer
+  useEffect(() => {
+    if (!isActive) {
+      hrBufferRef.current = []
+      return
     }
-  } else {
-    hrBufferRef.current = []
-  }
 
-  // Calculate the smoothed heart rate
-  const smoothedHeartRate = useMemo(() => {
-    const buffer = hrBufferRef.current
-    if (!isActive || buffer.length === 0) {
-      return 0
+    if (heartRate > 0) {
+      const buffer = hrBufferRef.current
+      buffer.push(heartRate)
+      if (buffer.length > smaWindow) {
+        buffer.shift()
+      }
     }
-    const sum = buffer.reduce((acc, val) => acc + val, 0)
-    return Math.round(sum / buffer.length)
+    // This effect only manages the buffer, intentionally not depending on smaWindow
+    // to avoid recalculating the buffer when smaWindow changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [heartRate, isActive])
+
+  // Effect to calculate and set the smoothed heart rate
+  useEffect(() => {
+    if (!isActive) {
+      setSmoothedHeartRate(0)
+      return
+    }
+
+    const buffer = hrBufferRef.current
+    if (buffer.length > 0) {
+      const sum = buffer.reduce((acc, val) => acc + val, 0)
+      const average = Math.round(sum / buffer.length)
+      setSmoothedHeartRate(average)
+    } else {
+      // Set to the raw heart rate if the buffer is empty but active
+      setSmoothedHeartRate(heartRate > 0 ? heartRate : 0)
+    }
+  }, [heartRate, isActive, smaWindow]) // Depends on heartRate to update on new readings
 
   // Effect to calculate calories based on changes in smoothed HR
   useEffect(() => {

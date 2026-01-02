@@ -4,7 +4,6 @@
 import { renderHook, act } from '@testing-library/react'
 import { useHrZoneTracker } from '@/hooks/useHrZoneTracker'
 
-// Mock Date.now to control time during tests
 let time: number
 beforeEach(() => {
   time = Date.now()
@@ -16,9 +15,7 @@ afterEach(() => {
 })
 
 const advanceTime = (seconds: number) => {
-  act(() => {
-    time += seconds * 1000
-  })
+  time += seconds * 1000
 }
 
 describe('useHrZoneTracker', () => {
@@ -35,15 +32,18 @@ describe('useHrZoneTracker', () => {
       ({ isActive }) => useHrZoneTracker(150, 200, isActive),
       { initialProps: { isActive: true } }
     )
+    act(() => {
+      advanceTime(5)
+      rerender({ isActive: true })
+    })
+    expect(result.current.zoneDurations[2].duration).toBeCloseTo(5)
 
-    advanceTime(5)
-    rerender({ isActive: true })
-    expect(result.current.zoneDurations[3].duration).toBeCloseTo(5)
-
-    rerender({ isActive: false })
-    advanceTime(10)
-    rerender({ isActive: false })
-    expect(result.current.zoneDurations[3].duration).toBeCloseTo(5)
+    act(() => {
+      rerender({ isActive: false })
+      advanceTime(10)
+      rerender({ isActive: false })
+    })
+    expect(result.current.zoneDurations[2].duration).toBeCloseTo(5)
   })
 
   it('should accumulate time in the correct HR zone', () => {
@@ -52,16 +52,20 @@ describe('useHrZoneTracker', () => {
       { initialProps: { heartRate: 110 } } // Zone 1
     )
 
-    advanceTime(10)
-    rerender({ heartRate: 110 })
-    expect(result.current.zoneDurations[1].duration).toBeCloseTo(10)
-    expect(result.current.zoneDurations[2].duration).toBe(0)
+    act(() => {
+      advanceTime(10)
+      rerender({ heartRate: 110 })
+    })
+    expect(result.current.zoneDurations[0].duration).toBeCloseTo(10)
+    expect(result.current.zoneDurations[1].duration).toBe(0)
 
-    rerender({ heartRate: 130 }) // Zone 2
-    advanceTime(5)
-    rerender({ heartRate: 130 })
-    expect(result.current.zoneDurations[1].duration).toBeCloseTo(10)
-    expect(result.current.zoneDurations[2].duration).toBeCloseTo(5)
+    act(() => {
+      rerender({ heartRate: 130 }) // Zone 2
+      advanceTime(5)
+      rerender({ heartRate: 130 })
+    })
+    expect(result.current.zoneDurations[0].duration).toBeCloseTo(10)
+    expect(result.current.zoneDurations[1].duration).toBeCloseTo(5)
   })
 
   it('should handle transitions between zones correctly', () => {
@@ -70,15 +74,19 @@ describe('useHrZoneTracker', () => {
       { initialProps: { heartRate: 150 } } // Zone 3
     )
 
-    advanceTime(3)
-    rerender({ heartRate: 150 })
-    expect(result.current.zoneDurations[3].duration).toBeCloseTo(3)
+    act(() => {
+      advanceTime(3)
+      rerender({ heartRate: 150 })
+    })
+    expect(result.current.zoneDurations[2].duration).toBeCloseTo(3)
 
-    rerender({ heartRate: 170 }) // Zone 4
-    advanceTime(7)
-    rerender({ heartRate: 170 })
-    expect(result.current.zoneDurations[3].duration).toBeCloseTo(3)
-    expect(result.current.zoneDurations[4].duration).toBeCloseTo(7)
+    act(() => {
+      rerender({ heartRate: 170 }) // Zone 4
+      advanceTime(7)
+      rerender({ heartRate: 170 })
+    })
+    expect(result.current.zoneDurations[2].duration).toBeCloseTo(3)
+    expect(result.current.zoneDurations[3].duration).toBeCloseTo(7)
   })
 
   it('should reset durations when reset is called', () => {
@@ -87,14 +95,17 @@ describe('useHrZoneTracker', () => {
       { initialProps: { heartRate: 160 } } // Zone 4
     )
 
-    advanceTime(10)
-    rerender({ heartRate: 160 })
-    expect(result.current.zoneDurations[4].duration).toBeGreaterThan(0)
+    act(() => {
+      advanceTime(10)
+      rerender({ heartRate: 160 })
+    })
+    expect(result.current.zoneDurations[3].duration).toBeGreaterThan(0)
 
     act(() => {
       result.current.reset()
     })
 
+    rerender({ heartRate: 160 })
     const allZeros = result.current.zoneDurations.every(
       (zone) => zone.duration === 0
     )

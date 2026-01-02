@@ -3,6 +3,7 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
+import { Gender } from '@/types/core'
 
 // Mock Date.now() to control time in tests
 let time: number
@@ -122,12 +123,12 @@ describe('useCalorieCounter', () => {
       ({ heartRate, isRunning, gender }) =>
         useCalorieCounter(heartRate, 30, 70, gender, isRunning),
       {
-        initialProps: { heartRate: 150, isRunning: true, gender: 'MALE' },
+        initialProps: { heartRate: 150, isRunning: true, gender: 'MALE' as Gender },
       }
     )
     act(() => {
       advanceTime(10)
-      rerenderMale({ heartRate: 151, isRunning: true, gender: 'MALE' })
+      rerenderMale({ heartRate: 151, isRunning: true, gender: 'MALE' as Gender })
     })
 
     // Reset time for the next independent calculation
@@ -137,12 +138,12 @@ describe('useCalorieCounter', () => {
       ({ heartRate, isRunning, gender }) =>
         useCalorieCounter(heartRate, 30, 70, gender, isRunning),
       {
-        initialProps: { heartRate: 150, isRunning: true, gender: 'FEMALE' },
+        initialProps: { heartRate: 150, isRunning: true, gender: 'FEMALE' as Gender },
       }
     )
     act(() => {
       advanceTime(10)
-      rerenderFemale({ heartRate: 151, isRunning: true, gender: 'FEMALE' })
+      rerenderFemale({ heartRate: 151, isRunning: true, gender: 'FEMALE' as Gender })
     })
 
     expect(maleResult.current.calories).not.toBe(femaleResult.current.calories)
