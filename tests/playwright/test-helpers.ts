@@ -34,6 +34,7 @@ export {
   setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
   setupCoreTest,
+  setupPageForVisualRegression,
 } from './lib'
 
 // Export BASE_URL for backward compatibility

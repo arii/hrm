@@ -60,6 +60,7 @@ export {
   // Snapshot assertions
   assertPageSnapshot,
   assertElementSnapshot,
+  expectPageToHaveScreenshot,
   // Domain-specific assertions
   assertTimerState,
   assertWebSocketConnected,
@@ -103,6 +104,7 @@ export {
   // VRT helpers
   replaceIframeWithStableWorkout,
   prepareForVisualRegression,
+  setupPageForVisualRegression,
   // Full setup functions
   setupVisualRegressionTest,
   setupMinimalVisualRegressionTest,
