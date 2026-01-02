@@ -15,7 +15,6 @@ import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { useState } from 'react'
-import { HrmStatus } from '@/hooks/useBluetoothHRM'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import {
   ToggleButtonGroup,
@@ -51,11 +50,12 @@ interface ConnectViewProps {
   unitSystem: MeasurementSystem
   onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
-  hrmStatus: HrmStatus
+  deviceStatus: string
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void
   onForgetDevice: () => Promise<void>
+  isSupported: boolean
   currentHR: number
   hrZoneProps: { percentage: number; progressColor: string }
   connectionStatus: string
@@ -89,11 +89,12 @@ export default function ConnectView({
   unitSystem,
   onUnitChange,
   isConnected,
-  hrmStatus,
+  deviceStatus,
   batteryLevel,
   onConnect,
   onDisconnect,
   onForgetDevice,
+  isSupported,
   currentHR,
   hrZoneProps,
   connectionStatus,
@@ -125,7 +126,7 @@ export default function ConnectView({
     }
   }
 
-  if (hrmStatus.status === 'UNSUPPORTED') {
+  if (!isSupported) {
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
         <BluetoothDisabledIcon
@@ -233,14 +234,14 @@ export default function ConnectView({
           </Box>
         )}
 
-        {hrmStatus.status !== 'DISCONNECTED' &&
-          hrmStatus.status !== 'CONNECTED' &&
-          hrmStatus.status !== 'REVOKED' && (
+        {deviceStatus &&
+          !isConnected &&
+          !deviceStatus.includes('Disconnected') && (
             <Alert
-              severity={hrmStatus.status === 'ERROR' ? 'error' : 'info'}
+              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
               sx={{ mb: 2 }}
             >
-              {hrmStatus.message}
+              {deviceStatus}
             </Alert>
           )}
 
@@ -253,15 +254,13 @@ export default function ConnectView({
               disabled={
                 !userName.trim() ||
                 !userAge.trim() ||
-                hrmStatus.status === 'CONNECTING' ||
-                hrmStatus.status === 'SCANNING'
+                deviceStatus.includes('Connecting')
               }
             >
-              {hrmStatus.status === 'CONNECTING' ||
-              hrmStatus.status === 'SCANNING' ? (
+              {deviceStatus.includes('Connecting') ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
-                  <span>{hrmStatus.message}</span>
+                  <span>Connecting...</span>
                 </Stack>
               ) : (
                 'Connect Bluetooth HRM'
@@ -299,9 +298,9 @@ export default function ConnectView({
               >
                 Disconnect
               </Button>
-              {hrmStatus.status !== 'CONNECTED' && (
+              {deviceStatus !== 'Connected' && (
                 <Typography variant="caption" color="text.secondary">
-                  Status: {hrmStatus.message}
+                  Status: {deviceStatus}
                 </Typography>
               )}
             </Stack>

@@ -38,9 +38,10 @@ describe('HrmConnectionPanel', () => {
     mockedUseBluetoothHRM.mockReturnValue({
       connectAndStream: jest.fn(),
       disconnect: jest.fn(),
-      hrmStatus: { status: 'DISCONNECTED', message: 'Disconnected' },
+      deviceStatus: 'Disconnected',
       batteryLevel: null,
       isConnected: false,
+      isSupported: true,
     })
   })
 
