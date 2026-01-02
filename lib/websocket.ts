@@ -23,6 +23,8 @@ export class WebSocketManager {
   public startHeartbeat() {
     this.heartbeatInterval = setInterval(() => {
       this.wss.clients.forEach((client) => {
+        // Type assertion is necessary here because `wss.clients` returns a Set<WebSocket>,
+        // but we need to access the custom `isAlive` property from our IWebSocket interface.
         const ws = client as IWebSocket
         if (!ws.isAlive) {
           return ws.terminate()
