@@ -277,32 +277,3 @@ export function assertApiResponse(
     expect(response).toHaveProperty(key, value)
   }
 }
-
-/**
- * A wrapper around Playwright's `toHaveScreenshot` that provides sensible defaults
- * for visual regression testing. This reduces boilerplate and standardizes screenshot options.
- *
- * @param target The Page or Locator to take a screenshot of.
- * @param screenshotName The name of the screenshot file.
- * @param options Custom options to override the defaults.
- */
-export async function expectPageToHaveScreenshot(
-  target: Page | Locator,
-  screenshotName: string,
-  options: {
-    mask?: Locator[]
-    threshold?: number
-    maxDiffPixelRatio?: number
-    fullPage?: boolean
-  } = {}
-): Promise<void> {
-  const { mask = [], threshold, maxDiffPixelRatio, fullPage = true } = options
-
-  await expect(target).toHaveScreenshot(screenshotName, {
-    ...DEFAULT_SCREENSHOT_OPTIONS,
-    mask,
-    fullPage,
-    ...(threshold !== undefined && { threshold }),
-    ...(maxDiffPixelRatio !== undefined && { maxDiffPixelRatio }),
-  })
-}
