@@ -36,8 +36,18 @@ describe('HrmConnectionPanel - Workout Data Integration', () => {
   it('passes workout data to primary user HrTile', () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       hrmData: [
-        createHrmData({ clientId: '1', name: 'Primary User', value: 120, totalCalories: 200 }),
-        createHrmData({ clientId: '2', name: 'Other User', value: 110, totalCalories: 150 }),
+        createHrmData({
+          clientId: '1',
+          name: 'Primary User',
+          value: 120,
+          totalCalories: 200,
+        }),
+        createHrmData({
+          clientId: '2',
+          name: 'Other User',
+          value: 110,
+          totalCalories: 150,
+        }),
       ],
       connectionStatus: 'Connected',
       activeAlerts: [],
@@ -62,8 +72,18 @@ describe('HrmConnectionPanel - Workout Data Integration', () => {
   it('correctly identifies primary user', () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       hrmData: [
-        createHrmData({ clientId: '1', name: 'User with 0 HR', value: 0, totalCalories: 100 }),
-        createHrmData({ clientId: '2', name: 'new user', value: 130, totalCalories: 180 }),
+        createHrmData({
+          clientId: '1',
+          name: 'User with 0 HR',
+          value: 0,
+          totalCalories: 100,
+        }),
+        createHrmData({
+          clientId: '2',
+          name: 'new user',
+          value: 130,
+          totalCalories: 180,
+        }),
         createHrmData({
           clientId: '3',
           name: 'Real Primary User',

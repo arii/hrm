@@ -6,21 +6,15 @@ import { ServerMessage } from '@/types/websocket'
 const RACE_SCENARIO: ServerMessage[] = [
   {
     type: 'HRM_UPDATE',
-    payload: [
-      { clientId: '1', value: 120, maxHr: 190, name: 'Runner A' },
-    ],
+    payload: [{ clientId: '1', value: 120, maxHr: 190, name: 'Runner A' }],
   },
   {
     type: 'HRM_UPDATE',
-    payload: [
-      { clientId: '1', value: 145, maxHr: 190, name: 'Runner A' },
-    ],
+    payload: [{ clientId: '1', value: 145, maxHr: 190, name: 'Runner A' }],
   },
   {
     type: 'HRM_UPDATE',
-    payload: [
-      { clientId: '1', value: 165, maxHr: 190, name: 'Runner A' },
-    ],
+    payload: [{ clientId: '1', value: 165, maxHr: 190, name: 'Runner A' }],
   },
 ]
 
