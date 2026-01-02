@@ -52,40 +52,21 @@ export const reducer = (
     }
     case 'HRM_UPDATE': {
       const payload = message.payload as ServerHrmData[]
-      // Create a new state array by merging existing and new data
-      // The previous logic used a Set of incoming client IDs to determine who was connected,
-      // but this was flawed. By using the payload as the single source of truth, we ensure
-      // that only users who are actively sending data are marked as connected.
-      const mergedHrmData = state.hrmData.map((existingUser) => {
-        const updatedUser = payload.find(
-          (newUser) => newUser.clientId === existingUser.clientId
+      // The payload is the source of truth for all connected users.
+      // We map over the incoming payload and merge it with existing user data
+      // to preserve fields that are not sent with every update (e.g., calories).
+      const newHrmData = payload.map((newUser) => {
+        // Find the corresponding user in the current state to preserve their data.
+        const existingUser = state.hrmData.find(
+          (oldUser) => oldUser.clientId === newUser.clientId
         )
-        if (updatedUser) {
-          // CRITICAL FIX: The order of spread operators is essential.
-          // By spreading existingUser first, then updatedUser, we ensure
-          // that any fields NOT present in the (potentially partial) `updatedUser`
-          // payload are preserved from the existing state.
-          return {
-            ...existingUser,
-            ...updatedUser,
-            isConnected: true,
-          }
-        }
-        return { ...existingUser, isConnected: false }
-      })
-
-      // Add any brand-new users from the payload who were not in the previous state
-      payload.forEach((newUser) => {
-        if (
-          !state.hrmData.some(
-            (existingUser) => existingUser.clientId === newUser.clientId
-          )
-        ) {
-          mergedHrmData.push({ ...newUser, isConnected: true })
+        return {
+          ...existingUser, // Preserve non-updating fields from the old state
+          ...newUser, // Overwrite with the latest data from the payload
+          isConnected: true, // Mark the user as connected
         }
       })
-
-      return { ...state, hrmData: mergedHrmData }
+      return { ...state, hrmData: newHrmData }
     }
     case 'TIMER_UPDATE':
       return {
