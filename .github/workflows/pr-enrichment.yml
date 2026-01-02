@@ -172,7 +172,20 @@ jobs:
                 rawData = jsonMatch[1].trim();
               }
               
-              const result = JSON.parse(rawData);
+              // Try to parse as JSON, handling potential control characters
+              let result;
+              try {
+                result = JSON.parse(rawData);
+              } catch (parseError) {
+                // If parsing fails, try to extract the description field manually
+                // Look for "description": "..." and extract the content
+                const descMatch = rawData.match(/"description"\s*:\s*"([\s\S]*?)(?<!\\)"/);
+                if (descMatch) {
+                  result = { description: descMatch[1].replace(/\\n/g, '\n').replace(/\\\//g, '/') };
+                } else {
+                  throw new Error(`Failed to parse JSON and extract description: ${parseError.message}`);
+                }
+              }
 
               if (result.description) {
                 let newBody = result.description;
