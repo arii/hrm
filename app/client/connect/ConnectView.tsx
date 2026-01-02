@@ -14,6 +14,8 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
+import RealTimeChart from './components/RealTimeChart'
+import ZoneDistributionTable from './components/ZoneDistributionTable'
 import { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import {
@@ -65,6 +67,12 @@ interface ConnectViewProps {
   workoutStatus: 'idle' | 'running' | 'paused'
   onStartWorkout: () => void
   onEndWorkout: () => void
+  workoutHistory: { time: number; hr: number; calories: number }[]
+  zoneDistribution: {
+    zone: string
+    duration: number
+    percentage: number
+  }[]
 }
 
 export default function ConnectView({
@@ -104,6 +112,8 @@ export default function ConnectView({
   workoutStatus,
   onStartWorkout,
   onEndWorkout,
+  workoutHistory,
+  zoneDistribution,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -387,7 +397,11 @@ export default function ConnectView({
         </Stack>
 
         {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+          <>
+            <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+            <ZoneDistributionTable zoneDistribution={zoneDistribution} />
+            <RealTimeChart data={workoutHistory} />
+          </>
         )}
 
         <Typography
