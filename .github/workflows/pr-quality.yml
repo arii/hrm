@@ -1068,14 +1068,32 @@ jobs:
 
           COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${{ github.event.pull_request.head.sha || github.sha }}\`"
 
-          # Write the final comment to a file
-          echo -e "$COMMENT_BODY" > test-results/pr-comment.md
-
-          # Post comment to PR
-          gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
-            echo "::warning::Failed to post comment to PR"
-            exit 0
-          }
+          # Only post comment if there are failures, OR if all passed but there were previous failures
+          if [ "$KNIP_RESULT" != "success" ] || [ "$LINT_RESULT" != "success" ] || [ "$BUILD_RESULT" != "success" ] || \
+             [ "$INFRA_TESTS_OUTCOME" != "success" ] || [ "$UNIT_TESTS_OUTCOME" != "success" ] || [ "$PERF_TESTS_OUTCOME" != "success" ] || [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
+            # Failures detected - always post
+            echo -e "$COMMENT_BODY" > test-results/pr-comment.md
+            gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
+              echo "::warning::Failed to post comment to PR"
+              exit 0
+            }
+          else
+            # All checks passed - only post if there's a previous failure comment to update
+            PREVIOUS_FAILURE=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments[] | select(.body | contains("Some checks failed")) | .id' | head -1)
+            
+            if [ -n "$PREVIOUS_FAILURE" ]; then
+              # Previous failures exist, post success to confirm they're fixed
+              echo -e "$COMMENT_BODY" > test-results/pr-comment.md
+              gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
+                echo "::warning::Failed to post comment to PR"
+                exit 0
+              }
+              echo "✅ Posted success report after previous failures"
+            else
+              # No previous failures detected, skip success comment
+              echo "✅ All checks passed on clean run - skipping success comment to reduce PR noise"
+            fi
+          fi
 
           # Check if all passed
           if [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
