@@ -527,6 +527,19 @@ export async function buildReviewPrompt(
     )
   }
 
+  promptTemplate += `\n## 🛠️ Issue Generation Instructions
+You are empowered to identify discrete tasks that should be addressed separately from this PR.
+If you spot Technical Debt, Refactoring opportunities, or Frontend Improvements (per the plan):
+1. **Do not** just complain about them in the review comment.
+2. **Create a 'suggestedIssue'** in the JSON output.
+3. **Criteria**:
+   - MUST be specific and actionable.
+   - MUST NOT be a trivial nitpick.
+   - **Type**: Must be one of \`technical-debt\`, \`frontend-improvement\`, \`security\`, or \`bug\`.
+   - **Priority**: Must be one of \`high\`, \`medium\`, or \`low\`.
+   - Examples: "Extract WebSocket reconnection logic to custom hook", "Implement error boundary for Spotify player".
+`
+
   return promptTemplate
 }
 
@@ -595,6 +608,32 @@ async function runReviewPreset(
               items: { type: SchemaType.STRING },
             },
             verdict: { type: SchemaType.STRING },
+            suggestedIssues: {
+              type: SchemaType.ARRAY,
+              items: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  title: { type: SchemaType.STRING },
+                  description: { type: SchemaType.STRING },
+                  type: {
+                    type: SchemaType.STRING,
+                    enum: [
+                      'technical-debt',
+                      'frontend-improvement',
+                      'security',
+                      'bug',
+                    ],
+                    format: 'enum',
+                  },
+                  priority: {
+                    type: SchemaType.STRING,
+                    enum: ['high', 'medium', 'low'],
+                    format: 'enum',
+                  },
+                },
+                required: ['title', 'description', 'type', 'priority'],
+              },
+            },
           },
           required: ['reviewComment', 'labels'],
         },

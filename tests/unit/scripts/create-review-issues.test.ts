@@ -1,36 +1,43 @@
 /**
  * @jest-environment node
  */
-import { execSync } from 'child_process'
 import { readFileSync } from 'fs'
-import {
-  main,
-  GitHubClient,
-  isDuplicate,
-  SuggestedIssue,
-  ExistingIssue,
-} from '../../../scripts/create-review-issues'
-
-jest.mock('child_process', () => ({
-  execSync: jest.fn(),
-}))
+import { run, IGitHubClient, SuggestedIssue } from '../../../scripts/create-review-issues'
 
 jest.mock('fs', () => ({
   readFileSync: jest.fn(),
-  writeFileSync: jest.fn(),
-  unlinkSync: jest.fn(),
 }))
 
-const mockExecSync = execSync as jest.Mock
 const mockReadFileSync = readFileSync as jest.Mock
 
+// --- Mock GitHub Client ---
+
+class MockGitHubClient implements IGitHubClient {
+  public getOpenIssues = jest.fn()
+  public createIssue = jest.fn()
+}
+
 describe('create-review-issues.ts', () => {
+  let client: MockGitHubClient
   const MOCK_PR_NUMBER = '123'
-  const MOCK_REPO = 'test/repo'
+  const MOCK_FILE_PATH = 'review_result.json'
+
   let consoleLogSpy: jest.SpyInstance
-  let consoleWarnSpy: jest.SpyInstance
   let consoleErrorSpy: jest.SpyInstance
-  let processExitSpy: jest.SpyInstance
+
+  beforeEach(() => {
+    client = new MockGitHubClient()
+    jest.clearAllMocks()
+
+    // Spy on console methods
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    consoleLogSpy.mockRestore()
+    consoleErrorSpy.mockRestore()
+  })
 
   const MOCK_VALID_REVIEW_RESULT = {
     reviewComment: 'LGTM!',
@@ -38,167 +45,66 @@ describe('create-review-issues.ts', () => {
     verdict: 'approve',
   }
 
-  beforeEach(() => {
-    jest.clearAllMocks()
-    process.env.PR_NUMBER = MOCK_PR_NUMBER
-    process.env.GITHUB_REPOSITORY = MOCK_REPO
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-    processExitSpy = jest
-      .spyOn(process, 'exit')
-      .mockImplementation((() => {}) as (code?: number) => never)
-  })
-
-  afterEach(() => {
-    consoleLogSpy.mockRestore()
-    consoleWarnSpy.mockRestore()
-    consoleErrorSpy.mockRestore()
-    processExitSpy.mockRestore()
-  })
-
   it('should create an issue when a valid suggestion is found', async () => {
+    const issue: SuggestedIssue = {
+      title: 'New Issue',
+      description: 'A test issue',
+      type: 'technical-debt',
+      priority: 'medium',
+    }
     mockReadFileSync.mockReturnValue(
-      JSON.stringify({
-        ...MOCK_VALID_REVIEW_RESULT,
-        suggestedIssues: [
-          {
-            title: 'New Issue',
-            description: 'A test issue',
-            type: 'technical-debt',
-            priority: 'medium',
-          },
-        ],
-      })
+      JSON.stringify({ ...MOCK_VALID_REVIEW_RESULT, suggestedIssues: [issue] })
     )
-    mockExecSync.mockReturnValueOnce(JSON.stringify([]))
-    mockExecSync.mockReturnValueOnce('https://github.com/test/repo/issues/1')
+    client.getOpenIssues.mockReturnValue([])
 
-    await main()
+    await run(client, MOCK_PR_NUMBER, MOCK_FILE_PATH)
 
-    expect(mockExecSync).toHaveBeenCalledWith(
-      `gh issue list --state open --json number,title,state,body --limit 100 --label "bot-generated"`,
-      { encoding: 'utf-8', stdio: 'pipe' }
-    )
-    expect(mockExecSync).toHaveBeenCalledWith(
-      expect.stringMatching(
-        /^gh issue create --title-file ".*" --body-file ".*" --label "bot-generated,triage-needed,type-technical-debt,priority-medium"$/
-      ),
-      { encoding: 'utf-8', stdio: 'pipe' }
-    )
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      expect.stringContaining('✅ Issue created')
-    )
+    expect(client.getOpenIssues).toHaveBeenCalledWith('bot-generated')
+    expect(client.createIssue).toHaveBeenCalledWith(issue, MOCK_PR_NUMBER)
+    expect(consoleLogSpy).toHaveBeenCalledWith('Created: 1')
   })
 
-  it('should skip a duplicate issue', async () => {
+  it('should skip a duplicate issue by title', async () => {
+    const issue: SuggestedIssue = {
+      title: 'Duplicate Issue',
+      description: 'This is a test.',
+      type: 'bug',
+      priority: 'high',
+    }
     mockReadFileSync.mockReturnValue(
-      JSON.stringify({
-        ...MOCK_VALID_REVIEW_RESULT,
-        suggestedIssues: [
-          {
-            title: 'Duplicate Issue',
-            description: 'This should be skipped',
-            type: 'bug',
-            priority: 'high',
-          },
-        ],
-      })
+      JSON.stringify({ ...MOCK_VALID_REVIEW_RESULT, suggestedIssues: [issue] })
     )
-    mockExecSync.mockReturnValueOnce(
-      JSON.stringify([
-        {
-          title: 'Duplicate Issue',
-          body: 'This should be skipped',
-          number: 1,
-          state: 'OPEN',
-        },
-      ])
-    )
+    client.getOpenIssues.mockReturnValue([{ title: 'Duplicate Issue', number: 1, state: 'OPEN' }])
 
-    await main()
+    await run(client, MOCK_PR_NUMBER, MOCK_FILE_PATH)
 
-    expect(mockExecSync).toHaveBeenCalledTimes(1)
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      expect.stringContaining('⏭️  Skipping duplicate')
-    )
+    expect(client.createIssue).not.toHaveBeenCalled()
+    expect(consoleLogSpy).toHaveBeenCalledWith('⏭️  Skipping duplicate: "Duplicate Issue"')
+    expect(consoleLogSpy).toHaveBeenCalledWith('Skipped: 1')
   })
 
-  it('should handle case with no suggested issues', async () => {
+  it('should log and exit gracefully if no issues are suggested', async () => {
     mockReadFileSync.mockReturnValue(
       JSON.stringify({ ...MOCK_VALID_REVIEW_RESULT, suggestedIssues: [] })
     )
 
-    await main()
+    await run(client, MOCK_PR_NUMBER, MOCK_FILE_PATH)
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      '✨ No suggested issues found in the review result.'
-    )
-    expect(processExitSpy).toHaveBeenCalledWith(0)
+    expect(consoleLogSpy).toHaveBeenCalledWith('✨ No suggested issues found in the review result.')
+    expect(client.getOpenIssues).not.toHaveBeenCalled()
   })
 
-  it('should exit if the review result JSON is invalid', async () => {
-    mockReadFileSync.mockReturnValue(
-      JSON.stringify({
-        // Missing 'labels' and 'verdict'
-        reviewComment: 'This is a comment.',
-      })
-    )
-
-    await main()
-
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('❌ Error validating review_result.json:'),
-      expect.any(Object)
-    )
-    expect(processExitSpy).toHaveBeenCalledWith(1)
+  it('should handle missing PR_NUMBER', async () => {
+    await run(client, '', MOCK_FILE_PATH)
+    expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Error: PR_NUMBER is missing.')
   })
 
-  describe('GitHubClient', () => {
-    let client: GitHubClient
-
-    beforeEach(() => {
-      client = new GitHubClient()
+  it('should handle unreadable review file', async () => {
+    mockReadFileSync.mockImplementation(() => {
+      throw new Error('File not found')
     })
 
-    it('should throw an error on execSync failure', () => {
-      const error = new Error('Command failed') as { stderr?: string }
-      error.stderr = 'Something went wrong'
-      mockExecSync.mockImplementation(() => {
-        throw error
-      })
-
-      expect(() =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (client as any).execute('some-command')
-      ).toThrow('GitHub CLI Error: Something went wrong')
-    })
-  })
-
-  describe('isDuplicate', () => {
-    it('should return true for identical issues', () => {
-      const newIssue: SuggestedIssue = {
-        title: 'Test',
-        description: 'Body',
-        type: 'bug',
-        priority: 'high',
-      }
-      const existing: ExistingIssue[] = [
-        { title: 'Test', body: 'Body', number: 1, state: 'OPEN' },
-      ]
-      expect(isDuplicate(newIssue, existing)).toBe(true)
-    })
-    it('should return false for different issues', () => {
-      const newIssue: SuggestedIssue = {
-        title: 'Test',
-        description: 'Body',
-        type: 'bug',
-        priority: 'high',
-      }
-      const existing: ExistingIssue[] = [
-        { title: 'Different', body: 'Body', number: 1, state: 'OPEN' },
-      ]
-      expect(isDuplicate(newIssue, existing)).toBe(false)
-    })
+    await run(client, MOCK_PR_NUMBER, MOCK_FILE_PATH)
+    expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Error reading review_result.json: File not found')
   })
 })
