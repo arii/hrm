@@ -56,14 +56,12 @@ function createSafePlayerProxy(
         ].includes(prop as string)
       ) {
         return function (...args: unknown[]) {
-          const [deviceId, ...restArgs] = args
-
-          if (!deviceId) {
-            return (originalMethod as (...args: unknown[]) => unknown).apply(
-              target,
-              restArgs
-            )
-          }
+          // REGRESSION FIX: The original proxy logic was flawed. When `deviceId` was
+          // undefined or null, it would be destructured, and `...restArgs` would
+          // shift all subsequent arguments one position to the left.
+          // This caused the `context_uri` to be incorrectly passed as the `deviceId`.
+          // The correct approach is to simply pass all arguments through to the
+          // underlying SDK method, which correctly handles optional `deviceId`.
           return (originalMethod as (...args: unknown[]) => unknown).apply(
             target,
             args

@@ -181,20 +181,29 @@ describe('SpotifyPolling Service', () => {
     it('should handle PLAY command with playlistUri', async () => {
       const playlistUri = 'spotify:playlist:123'
       await spotifyService.handleCommand('PLAY', { playlistUri })
-      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(playlistUri)
+      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
+        undefined,
+        playlistUri
+      )
     })
 
     it('should handle PLAY command with contextUri', async () => {
       const contextUri = 'spotify:album:456'
       await spotifyService.handleCommand('PLAY', { contextUri })
-      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(contextUri)
+      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
+        undefined,
+        contextUri
+      )
     })
 
     it('should prioritize contextUri over playlistUri', async () => {
       const contextUri = 'spotify:album:456'
       const playlistUri = 'spotify:playlist:123'
       await spotifyService.handleCommand('PLAY', { contextUri, playlistUri })
-      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(contextUri)
+      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
+        undefined,
+        contextUri
+      )
     })
   })
 
