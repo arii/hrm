@@ -352,76 +352,76 @@ describe('WebSocket Manager', () => {
     })
   })
 
-    describe('HRM_INPUT message handling', () => {
-      it('should mark client as connected when receiving a valid HR value', () => {
-        // GIVEN: A client is connected.
-        const mockBroadcast = broadcast as jest.Mock
-        mockBroadcast.mockClear()
+  describe('HRM_INPUT message handling', () => {
+    it('should mark client as connected when receiving a valid HR value', () => {
+      // GIVEN: A client is connected.
+      const mockBroadcast = broadcast as jest.Mock
+      mockBroadcast.mockClear()
 
-        // WHEN: The client sends a valid HR value.
-        const message = JSON.stringify({
-          type: 'HRM_INPUT',
-          data: { value: 120 },
-        })
-        mockWs.emit('message', message)
-
-        // THEN: The broadcasted state should show the client as connected.
-        const lastCall =
-          mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-        const payload: HrmData[] = lastCall[1].payload
-        const clientData = payload.find(
-          (c) => (mockWs as ExtWebSocket).clientId === c.clientId
-        )
-        expect(clientData).toBeDefined()
-        expect(clientData!.isConnected).toBe(true)
+      // WHEN: The client sends a valid HR value.
+      const message = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 120 },
       })
+      mockWs.emit('message', message)
 
-      it('should mark client as disconnected when receiving a null HR value', () => {
-        // GIVEN: A client is connected.
-        const mockBroadcast = broadcast as jest.Mock
-        mockBroadcast.mockClear()
-
-        // WHEN: The client sends a null HR value.
-        const message = JSON.stringify({
-          type: 'HRM_INPUT',
-          data: { value: null },
-        })
-        mockWs.emit('message', message)
-
-        // THEN: The broadcasted state should show the client as disconnected.
-        const lastCall =
-          mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-        const payload: HrmData[] = lastCall[1].payload
-        const clientData = payload.find(
-          (c) => (mockWs as ExtWebSocket).clientId === c.clientId
-        )
-        expect(clientData).toBeDefined()
-        expect(clientData!.isConnected).toBe(false)
-      })
-
-      it('should update the lastUpdated timestamp on every message', () => {
-        // GIVEN: A client is connected.
-        const mockBroadcast = broadcast as jest.Mock
-        mockBroadcast.mockClear()
-
-        // WHEN: The client sends a message.
-        const message = JSON.stringify({
-          type: 'HRM_INPUT',
-          data: { value: 120 },
-        })
-        mockWs.emit('message', message)
-
-        // THEN: The lastUpdated timestamp should be updated.
-        const lastCall =
-          mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-        const payload: HrmData[] = lastCall[1].payload
-        const clientData = payload.find(
-          (c) => (mockWs as ExtWebSocket).clientId === c.clientId
-        )
-        expect(clientData).toBeDefined()
-        expect(clientData!.lastUpdated).toBe(new Date('2024-01-01').getTime())
-      })
+      // THEN: The broadcasted state should show the client as connected.
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const payload: HrmData[] = lastCall[1].payload
+      const clientData = payload.find(
+        (c) => (mockWs as ExtWebSocket).clientId === c.clientId
+      )
+      expect(clientData).toBeDefined()
+      expect(clientData!.isConnected).toBe(true)
     })
+
+    it('should mark client as disconnected when receiving a null HR value', () => {
+      // GIVEN: A client is connected.
+      const mockBroadcast = broadcast as jest.Mock
+      mockBroadcast.mockClear()
+
+      // WHEN: The client sends a null HR value.
+      const message = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: null },
+      })
+      mockWs.emit('message', message)
+
+      // THEN: The broadcasted state should show the client as disconnected.
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const payload: HrmData[] = lastCall[1].payload
+      const clientData = payload.find(
+        (c) => (mockWs as ExtWebSocket).clientId === c.clientId
+      )
+      expect(clientData).toBeDefined()
+      expect(clientData!.isConnected).toBe(false)
+    })
+
+    it('should update the lastUpdated timestamp on every message', () => {
+      // GIVEN: A client is connected.
+      const mockBroadcast = broadcast as jest.Mock
+      mockBroadcast.mockClear()
+
+      // WHEN: The client sends a message.
+      const message = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 120 },
+      })
+      mockWs.emit('message', message)
+
+      // THEN: The lastUpdated timestamp should be updated.
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const payload: HrmData[] = lastCall[1].payload
+      const clientData = payload.find(
+        (c) => (mockWs as ExtWebSocket).clientId === c.clientId
+      )
+      expect(clientData).toBeDefined()
+      expect(clientData!.lastUpdated).toBe(new Date('2024-01-01').getTime())
+    })
+  })
 
   describe('Message Handling', () => {
     it('should handle REGISTER_CLIENT message', () => {

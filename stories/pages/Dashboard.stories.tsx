@@ -7,19 +7,43 @@ const RACE_SCENARIO: ServerMessage[] = [
   {
     type: 'HRM_UPDATE',
     payload: [
-      { clientId: '1', value: 120, maxHr: 190, name: 'Runner A', calories: 10, lastUpdated: Date.now(), isConnected: true },
+      {
+        clientId: '1',
+        value: 120,
+        maxHr: 190,
+        name: 'Runner A',
+        calories: 10,
+        lastUpdated: Date.now(),
+        isConnected: true,
+      },
     ],
   },
   {
     type: 'HRM_UPDATE',
     payload: [
-      { clientId: '1', value: 145, maxHr: 190, name: 'Runner A', calories: 20, lastUpdated: Date.now(), isConnected: true },
+      {
+        clientId: '1',
+        value: 145,
+        maxHr: 190,
+        name: 'Runner A',
+        calories: 20,
+        lastUpdated: Date.now(),
+        isConnected: true,
+      },
     ],
   },
   {
     type: 'HRM_UPDATE',
     payload: [
-      { clientId: '1', value: 165, maxHr: 190, name: 'Runner A', calories: 30, lastUpdated: Date.now(), isConnected: true },
+      {
+        clientId: '1',
+        value: 165,
+        maxHr: 190,
+        name: 'Runner A',
+        calories: 30,
+        lastUpdated: Date.now(),
+        isConnected: true,
+      },
     ],
   },
 ]
