@@ -294,9 +294,25 @@ const handleIncomingMessage = (
           let finalCalories = 0
           // Prioritize client-calculated calories if available
           if (typeof message.data.calories === 'number') {
-            finalCalories = message.data.calories
-            // Update internal state to match, preventing desync
-            sessionState.accumulatedCalories = finalCalories
+            const clientCalories = message.data.calories
+            const serverCalories = sessionState.accumulatedCalories
+            const diff = Math.abs(clientCalories - serverCalories)
+
+            // Sanity check: a 50-calorie jump in one second is unlikely.
+            if (diff > 50) {
+              logger.warn(
+                {
+                  clientId,
+                  clientCalories,
+                  serverCalories,
+                },
+                'Large calorie discrepancy detected. Rejecting client update.'
+              )
+              finalCalories = serverCalories
+            } else {
+              finalCalories = clientCalories
+              sessionState.accumulatedCalories = finalCalories
+            }
           } else {
             // Fallback to server-side calculation for older clients
             const now = Date.now()

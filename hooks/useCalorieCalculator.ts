@@ -57,9 +57,10 @@ export const useCalorieCalculator = ({
       // 2. Delta-time calculation and calorie accumulation
       if (lastTimestampRef.current && smoothedHr > 30) {
         const dtSeconds = (now - lastTimestampRef.current) / 1000
-        const dtMinutes = dtSeconds / 60
 
-        if (dtMinutes > 0) {
+        // Prevent calculating calories for large time gaps (e.g., tab backgrounding)
+        if (dtSeconds > 0 && dtSeconds < 10) {
+          const dtMinutes = dtSeconds / 60
           const caloriesBurned = estimateCaloriesBurned({
             heartRate: smoothedHr,
             age: ageRef.current,
