@@ -61,10 +61,9 @@ export default function ConnectPage() {
     autoConnect,
     disconnect,
     forgetDevice,
-    deviceStatus,
+    hrmStatus,
     batteryLevel,
     isConnected,
-    isSupported,
     disconnectionReason,
   } = useBluetoothHRM({
     userName,
@@ -76,17 +75,14 @@ export default function ConnectPage() {
   useEffect(() => {
     // On initial mount, try to auto-connect to a saved device if not already connected.
     // This provides a smoother experience for returning users.
-    if (!isConnected && isSupported && connectionStatus === 'Connected') {
+    if (
+      !isConnected &&
+      hrmStatus.status !== 'UNSUPPORTED' &&
+      connectionStatus === 'Connected'
+    ) {
       autoConnect()
     }
-  }, [isConnected, isSupported, connectionStatus, autoConnect])
-
-  let deviceStatusMessage = deviceStatus
-  if (disconnectionReason === 'timeout') {
-    deviceStatusMessage = 'Connection unstable. Trying to reconnect...'
-  } else if (disconnectionReason === 'signal_loss') {
-    deviceStatusMessage = 'Signal lost. Trying to reconnect...'
-  }
+  }, [isConnected, hrmStatus.status, connectionStatus, autoConnect])
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
@@ -162,12 +158,11 @@ export default function ConnectPage() {
       unitSystem={unitSystem}
       onUnitChange={handleUnitChange}
       isConnected={isConnected}
-      deviceStatus={deviceStatusMessage}
+      hrmStatus={hrmStatus}
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}
       onForgetDevice={forgetDevice}
-      isSupported={isSupported}
       currentHR={currentHR}
       hrZoneProps={{
         percentage: hrZoneProps.percentage,

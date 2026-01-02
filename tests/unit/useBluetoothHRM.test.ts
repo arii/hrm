@@ -189,7 +189,8 @@ describe('useBluetoothHRM', () => {
 
     triggerTimeout(10000)
 
-    expect(result.current.deviceStatus).toContain('Connection unstable')
+    expect(result.current.hrmStatus.message).toContain('Connection unstable')
+    expect(result.current.hrmStatus.status).toBe('STALE')
     expect(result.current.disconnectionReason).toBe('timeout')
     expect(mockDevice.gatt.disconnect).toHaveBeenCalled()
   })
@@ -205,14 +206,16 @@ describe('useBluetoothHRM', () => {
     act(() => {
       jest.advanceTimersByTime(4000)
     })
-    expect(result.current.deviceStatus).not.toContain('Connection unstable')
+    expect(result.current.hrmStatus.message).not.toContain(
+      'Connection unstable'
+    )
 
     // Advance time by another 2 seconds (total 6s, more than timeout)
     act(() => {
       jest.advanceTimersByTime(2000)
     })
 
-    expect(result.current.deviceStatus).toContain('Connection unstable')
+    expect(result.current.hrmStatus.message).toContain('Connection unstable')
     expect(result.current.disconnectionReason).toBe('timeout')
   })
 
@@ -228,7 +231,9 @@ describe('useBluetoothHRM', () => {
       jest.advanceTimersByTime(20000)
     })
 
-    expect(result.current.deviceStatus).not.toContain('Connection unstable')
+    expect(result.current.hrmStatus.message).not.toContain(
+      'Connection unstable'
+    )
     expect(result.current.disconnectionReason).toBe(null)
   })
 

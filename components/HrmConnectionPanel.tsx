@@ -24,10 +24,9 @@ const HrmConnectionPanel = () => {
   const {
     connectAndStream,
     disconnect,
-    deviceStatus,
+    hrmStatus,
     batteryLevel,
     isConnected,
-    isSupported,
   } = useBluetoothHRM({
     userName: userSettings.userName,
     userAge: userSettings.userAge || 30,
@@ -51,7 +50,7 @@ const HrmConnectionPanel = () => {
     const autoConnect = async () => {
       if (
         connectionStatus === 'Connected' &&
-        deviceStatus === 'Disconnected' &&
+        hrmStatus.status === 'DISCONNECTED' &&
         !autoConnectAttempted.current
       ) {
         autoConnectAttempted.current = true
@@ -63,7 +62,7 @@ const HrmConnectionPanel = () => {
     }
 
     autoConnect()
-  }, [connectionStatus, deviceStatus, connectAndStream, session, userSettings])
+  }, [connectionStatus, hrmStatus, connectAndStream, session, userSettings])
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity
@@ -131,14 +130,14 @@ const HrmConnectionPanel = () => {
               </Link>
             </Box>
             <HRMonitorStatusIndicator
-              deviceStatus={deviceStatus}
+              deviceStatus={hrmStatus.message}
               batteryLevel={batteryLevel}
             />
             <ConnectHRMonitorButton
               connect={handleConnect}
               disconnect={disconnect}
               isConnected={isConnected}
-              isSupported={isSupported}
+              isSupported={hrmStatus.status !== 'UNSUPPORTED'}
             />
           </Box>
           <Box
