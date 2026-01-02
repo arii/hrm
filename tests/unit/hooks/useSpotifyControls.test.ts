@@ -114,14 +114,13 @@ describe('useSpotifyControls', () => {
 
   it('should send a SET_VOLUME command with the correct volume', () => {
     jest.useFakeTimers()
-    const { result } = renderHook(() => useSpotifyControls())
+    const { result, rerender } = renderHook(() => useSpotifyControls())
 
     act(() => {
       result.current.setSelectedDeviceId('123')
     })
 
     act(() => {
-      // This will be a no-op since the volume is already 70
       result.current.setVolume(70)
     })
 
@@ -129,13 +128,14 @@ describe('useSpotifyControls', () => {
       jest.advanceTimersByTime(300)
     })
 
-    // setVolume is mocked, so we need to update the value manually
     mockedUseVolumePreference.mockReturnValue({
       volume: 50,
       setVolume: mockSetVolume,
       muted: false,
       toggleMute: mockToggleMute,
     })
+
+    rerender()
 
     act(() => {
       result.current.setVolume(50)
