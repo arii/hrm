@@ -5,5 +5,8 @@
       "release-type": "node",
       "package-name": "hrm"
     }
-  }
+  },
+  "pull-request-title-pattern": "chore(${branch}): release ${version}",
+  "pull-request-header": "## Release PR\n\nThis PR contains the latest release.",
+  "auto-merge": true
 }
