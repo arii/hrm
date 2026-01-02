@@ -214,39 +214,48 @@ const SpotifyDisplay = () => {
     sendVolumeCommand(newVolume) // Send command with the new volume
   }, [isMuted, state.lastVolume, sendVolumeCommand])
 
-  // Effect to auto-select the active device
+  const sendSpotifyCommand = useCallback(
+    (
+      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
+      targetDeviceId?: string
+    ) => {
+      const message: SpotifyCommandMessage = {
+        type: 'SPOTIFY_COMMAND',
+        command,
+        ...(targetDeviceId && { deviceId: targetDeviceId }),
+      }
+      sendData(message)
+    },
+    [sendData]
+  )
+
+  // Effect to auto-select the active device, including the HRM Web Player
   useEffect(() => {
     const devices = spotifyData.devices || []
-    if (devices.length === 0) {
-      if (selectedDeviceId !== '') {
-        dispatch({ type: 'SELECT_DEVICE', payload: '' })
-      }
-      return
-    }
     const activeDevice = devices.find((device) => device.is_active)
-    if (!selectedDeviceId && activeDevice) {
+
+    // 1. If an active device exists, it should be the selected one.
+    if (activeDevice && selectedDeviceId !== activeDevice.id) {
       dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
-      return
+      return // Done for this render
     }
-    if (
-      selectedDeviceId &&
-      !devices.some((device) => device.id === selectedDeviceId)
-    ) {
+
+    // 2. If NO active device, but HRM player is ready, select and activate it
+    if (!activeDevice && deviceId && devices.some((d) => d.id === deviceId)) {
+      if (selectedDeviceId !== deviceId) {
+        dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
+        // Make the HRM player the active device
+        sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
+      }
+      return // Done for this render
+    }
+
+    // 3. If the currently selected device disappears from the list, clear selection.
+    if (selectedDeviceId && !devices.some((d) => d.id === selectedDeviceId)) {
+      // Fallback to active device if available, otherwise clear
       dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
     }
-  }, [spotifyData.devices, selectedDeviceId])
-
-  const sendSpotifyCommand = (
-    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-    targetDeviceId?: string
-  ) => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command,
-      ...(targetDeviceId && { deviceId: targetDeviceId }),
-    }
-    sendData(message)
-  }
+  }, [spotifyData.devices, selectedDeviceId, deviceId, sendSpotifyCommand])
 
   const handlePlayPauseToggle = () => {
     const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'

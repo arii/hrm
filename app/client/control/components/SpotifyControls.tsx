@@ -59,40 +59,6 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  // 4. Update selection logic and volume sync
-  useEffect(() => {
-    const activeDevice = devices.find((d) => d.is_active)
-    const activeId = activeDevice?.id
-
-    // Sync Selected Device
-    if (prevActiveIdRef.current === undefined && activeId) {
-      // Initial sync
-      setSelectedDeviceId(activeId)
-    } else if (activeId && activeId !== prevActiveIdRef.current) {
-      // Active device changed externally, update selection
-      setSelectedDeviceId(activeId)
-    } else {
-      // Check if selected device is still valid
-      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
-      if (selectedDeviceId && !selectedStillExists) {
-        setSelectedDeviceId(activeId ?? '')
-      }
-      if (!selectedDeviceId && activeId) {
-        setSelectedDeviceId(activeId)
-      }
-    }
-    prevActiveIdRef.current = activeId
-
-    // Sync Volume (if not dragging)
-    if (activeDevice && typeof activeDevice.volume_percent === 'number') {
-      if (activeDevice.volume_percent !== volume) {
-        setVolume(activeDevice.volume_percent)
-      }
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]) // Rely on devices update to trigger sync
-
   const resolveTargetDeviceId = useCallback(() => {
     if (selectedDeviceId) {
       return selectedDeviceId
@@ -119,6 +85,41 @@ const SpotifyControls = () => {
     },
     [resolveTargetDeviceId, sendData]
   )
+
+  // 4. Update selection logic to sync with active device and default to HRM player
+  useEffect(() => {
+    const activeDevice = devices.find((d) => d.is_active)
+    const hrmPlayerDevice = devices.find((d) => d.name === 'HRM Web Player')
+
+    // 1. If there's an active device, ensure it's selected
+    if (activeDevice) {
+      if (selectedDeviceId !== activeDevice.id) {
+        setSelectedDeviceId(activeDevice.id)
+      }
+      // Sync volume with the active device
+      if (typeof activeDevice.volume_percent === 'number') {
+        if (activeDevice.volume_percent !== volume) {
+          setVolume(activeDevice.volume_percent)
+        }
+      }
+      return // Selection is synced, exit
+    }
+
+    // 2. If no active device, but HRM player exists, select and activate it
+    if (hrmPlayerDevice) {
+      if (selectedDeviceId !== hrmPlayerDevice.id) {
+        setSelectedDeviceId(hrmPlayerDevice.id)
+        // Send the command to make the HRM player the active device
+        sendSpotifyCommand('TRANSFER_PLAYBACK', hrmPlayerDevice.id)
+      }
+      return // Defaulting logic complete, exit
+    }
+
+    // 3. Fallback: if a device is selected that is no longer in the list, clear it.
+    if (selectedDeviceId && !devices.some((d) => d.id === selectedDeviceId)) {
+      setSelectedDeviceId('') // Or select the first available device
+    }
+  }, [devices, selectedDeviceId, volume, setVolume, sendSpotifyCommand])
 
   const handlePlaybackCommand = useCallback(
     (command: SpotifyCommand) => {
