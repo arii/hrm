@@ -15,11 +15,14 @@ import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTileWithCalories from './HrTileWithCalories'
+import HrTimelineChart from './HrTimelineChart'
+import { useHrmDataHistory } from '@/hooks/useHrmDataHistory'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
   const [userSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const hrmHistory = useHrmDataHistory(hrmData)
   const autoConnectAttempted = useRef(false)
   const {
     connectAndStream,
@@ -175,6 +178,14 @@ const HrmConnectionPanel = () => {
           </Box>
         ))
       )}
+  {Object.keys(hrmHistory).length > 0 && (
+    <Box sx={{ width: '100%', mt: 2 }}>
+      <HrTimelineChart
+        data={hrmHistory}
+        maxHr={userSettings.maxHr || 220 - (userSettings.userAge || 30)}
+      />
+    </Box>
+  )}
     </Box>
   )
 }
