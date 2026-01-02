@@ -65,37 +65,3 @@ jobs:
         run: |
           # Extract tarball and run deploy script (which it contains)
           ssh $PROD_USER@$PROD_HOST "bash -l -c 'cd $PROD_PATH && tar -xzf release.tar.gz --overwrite && ./scripts/deploy-artifact.sh'"
-
-  create-revert-issue:
-    name: Create Revert Issue
-    runs-on: ubuntu-latest
-    needs: [deploy]
-    if: failure()
-    permissions:
-      issues: write
-    steps:
-      - name: Create Revert Issue on Failure
-        uses: ./.github/workflows/reusable-create-issue.yml
-        secrets: inherit
-        with:
-          title: '[DEPLOYMENT FAILED] Revert Required: Production Deployment for Commit ${{ github.sha }}'
-          body: |
-            **Commit Details:**
-            - **Commit SHA:** `${{ github.sha }}`
-            - **Commit Message:** `${{ github.event.head_commit.message }}`
-            - **Author:** `${{ github.event.head_commit.author.name }}`
-
-            **Workflow Link:**
-            - [View Failed Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-            **Environment:**
-            - `production`
-
-            **Failure Summary:**
-            The deployment to the production environment failed. Please review the workflow logs for details.
-
-            **Actionable Next Steps:**
-            1. **Assess the failure:** Review the workflow logs to understand the root cause.
-            2. **Initiate Revert:** If the failure is critical and cannot be immediately resolved, revert the commit to restore the production environment to a stable state.
-            3. **Create a Hotfix:** If a fix is identified, create a hotfix branch and deploy it as soon as possible.
-          labels: 'deployment,rollback,ci/cd,incident,priority: high'
