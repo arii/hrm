@@ -1,6 +1,9 @@
 name: Auto Rebase
 
 on:
+  push:
+    branches:
+      - leader
   # Allows manual triggering from the Actions tab
   workflow_dispatch:
 
