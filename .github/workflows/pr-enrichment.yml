@@ -164,7 +164,14 @@ jobs:
             const fs = require('fs');
 
             try {
-              const rawData = fs.readFileSync('pr_description.json', 'utf8');
+              let rawData = fs.readFileSync('pr_description.json', 'utf8');
+              
+              // Extract JSON from markdown code blocks if present
+              const jsonMatch = rawData.match(/```(?:json)?\s*([\s\S]*?)```/);
+              if (jsonMatch) {
+                rawData = jsonMatch[1].trim();
+              }
+              
               const result = JSON.parse(rawData);
 
               if (result.description) {
@@ -192,6 +199,7 @@ jobs:
 
             } catch (error) {
               console.error('Error processing description result:', error);
+              console.error('Raw data:', fs.readFileSync('pr_description.json', 'utf8'));
               core.setFailed('Failed to update PR description: ' + error.message);
             }
 
