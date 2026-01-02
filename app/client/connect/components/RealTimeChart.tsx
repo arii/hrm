@@ -38,13 +38,13 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
         {hrPayload && (
           <Typography
             variant="body2"
-            sx={{ color: '#8884d8' }}
+            sx={{ color: theme.palette.primary.main }}
           >{`HR: ${hrPayload.value} bpm`}</Typography>
         )}
         {caloriesPayload && (
           <Typography
             variant="body2"
-            sx={{ color: '#82ca9d' }}
+            sx={{ color: theme.palette.secondary.main }}
           >{`Calories: ${caloriesPayload.value.toFixed(0)}`}</Typography>
         )}
       </Paper>
@@ -58,20 +58,24 @@ const RealTimeChart: React.FC<RealTimeChartProps> = ({ data }) => {
   const theme = useTheme()
 
   return (
-    <Box sx={{ width: '100%', height: 300, mt: 4 }}>
-      <Typography variant="h6" align="center" gutterBottom>
+    <Box
+      sx={{ width: '100%', height: 300, mt: 4 }}
+      role="img"
+      aria-label="Real-time chart of heart rate and calories burned"
+    >
+      <Typography variant="h6" align="center" gutterBottom id="chart-heading">
         Workout Analysis
       </Typography>
       <ResponsiveContainer>
-        <AreaChart data={data}>
+        <AreaChart data={data} aria-labelledby="chart-heading">
           <XAxis
             dataKey="time"
             type="number"
             domain={['dataMin', 'dataMax']}
             tickFormatter={formatXAxis}
           />
-          <YAxis yAxisId="left" domain={[60, 200]} />
-          <YAxis yAxisId="right" orientation="right" />
+          <YAxis yAxisId="left" domain={['dataMin - 10', 'dataMax + 10']} />
+          <YAxis yAxisId="right" orientation="right" domain={['dataMin - 50', 'dataMax + 50']} />
           <Tooltip content={<CustomTooltip />} />
           <Area
             yAxisId="left"
