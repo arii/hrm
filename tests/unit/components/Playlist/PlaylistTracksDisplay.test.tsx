@@ -43,7 +43,7 @@ describe('PlaylistTracksDisplay', () => {
       </WebSocketContext.Provider>
     )
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Failed to fetch'
+      'An unknown error occurred'
     )
   })
 
