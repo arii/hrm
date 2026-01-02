@@ -11,10 +11,12 @@ import IconButton from '@mui/material/IconButton'
 import SettingsIcon from '@mui/icons-material/Settings'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
+import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
-import HrTileWithCalories from './HrTileWithCalories'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { formatSecondsToMMSS } from '@/utils/formatters'
+import HrTile from '@/components/HrTile'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
@@ -33,13 +35,26 @@ const HrmConnectionPanel = () => {
     userAge: userSettings.userAge || 30,
   })
 
+  // Identify the primary user who is actively being tracked.
+  const primaryUser = useMemo(
+    () =>
+      hrmData.find(
+        (u) => u.value && u.value > 0 && u.name && !/new user/i.test(u.name)
+      ),
+    [hrmData]
+  )
+
+  // Use the workout session hook to get duration and calories.
+  const { caloriesBurned, workoutDuration, hasStarted } = useWorkoutSession({
+    isConnected,
+    totalCalories: primaryUser?.totalCalories,
+  })
+
   const handleConnect = useCallback(() => {
     const userName =
       session?.user?.name || userSettings.userName || 'Unknown User'
     const userAge = userSettings.userAge || 30
     connectAndStream(userName, userAge).catch((error) => {
-      // It's common for the requestDevice promise to be cancelled by the user.
-      // We catch it here to prevent an unhandled rejection error in the console.
       if (error.name !== 'NotFoundError') {
         console.error('Failed to connect to HRM device:', error)
       }
@@ -47,7 +62,6 @@ const HrmConnectionPanel = () => {
   }, [session, userSettings, connectAndStream])
 
   useEffect(() => {
-    // Auto-connect logic: Use `getDevices()` for gesture-less reconnection.
     const autoConnect = async () => {
       if (
         connectionStatus === 'Connected' &&
@@ -66,7 +80,6 @@ const HrmConnectionPanel = () => {
   }, [connectionStatus, deviceStatus, connectAndStream, session, userSettings])
 
   const tileData = useMemo(() => {
-    // Filter out users with placeholder names or no identity
     return hrmData
       .filter((user) => {
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
@@ -79,7 +92,6 @@ const HrmConnectionPanel = () => {
             alert.clientId === user.clientId &&
             (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
         )
-
         return {
           ...user,
           isAlerting: !!matchingAlert,
@@ -108,7 +120,7 @@ const HrmConnectionPanel = () => {
               display: 'flex',
               flexDirection: 'column',
               width: { xs: '100%', sm: 'calc(50% - 8px)' },
-              height: '100%', // Ensure the container fills the grid cell
+              height: '100%',
               gap: 2,
               p: 2,
               border: 1,
@@ -156,24 +168,40 @@ const HrmConnectionPanel = () => {
           </Box>
         </>
       ) : (
-        tileData.map((user) => (
-          <Box
-            key={user.clientId}
-            data-testid="hr-tile-grid-item"
-            sx={{
-              width: {
-                xs: '100%',
-                sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-              },
-            }}
-          >
-            <HrTileWithCalories
-              user={user}
-              isAlerting={user.isAlerting}
-              {...(user.alertMessage && { alertMessage: user.alertMessage })}
-            />
-          </Box>
-        ))
+        tileData.map((user) => {
+          const isPrimaryUser = user.clientId === primaryUser?.clientId
+          const percentMax =
+            user.value && user.maxHr
+              ? Math.round((user.value / (user.maxHr || MAX_HR_DEFAULT)) * 100)
+              : 0
+
+          return (
+            <Box
+              key={user.clientId}
+              data-testid="hr-tile-grid-item"
+              sx={{
+                width: {
+                  xs: '100%',
+                  sm: 'calc(50% - 8px)',
+                },
+              }}
+            >
+              <HrTile
+                name={user.name || ''}
+                bpm={user.value}
+                percentMax={percentMax}
+                isConnected={user.value !== null}
+                isAlerting={user.isAlerting}
+                alertMessage={user.alertMessage}
+                caloriesBurned={isPrimaryUser ? caloriesBurned : undefined}
+                workoutDuration={
+                  isPrimaryUser ? formatSecondsToMMSS(workoutDuration) : undefined
+                }
+                showWorkoutData={isPrimaryUser && hasStarted}
+              />
+            </Box>
+          )
+        })
       )}
     </Box>
   )

@@ -18,7 +18,7 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
-import { formatDuration } from '@/utils/formatters'
+import { formatMillisecondsToMMSS } from '@/utils/formatters'
 import Image from 'next/image'
 
 interface Track {
@@ -172,7 +172,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                     </Box>
                   </TableCell>
                   <TableCell>{track.artists}</TableCell>
-                  <TableCell>{formatDuration(track.duration)}</TableCell>
+                  <TableCell>{formatMillisecondsToMMSS(track.duration)}</TableCell>
                 </TableRow>
               )
             })}

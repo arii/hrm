@@ -47,8 +47,8 @@ const HrTile = ({
   const tooltipTitle = isAlerting
     ? alertMessage
     : !isConnected
-    ? 'Disconnected - Showing last known value'
-    : `Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`
+      ? 'Disconnected - Showing last known value'
+      : `Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`
 
   return (
     <Tooltip title={tooltipTitle} arrow>
@@ -101,7 +101,7 @@ const HrTile = ({
         )}
 
         <Box aria-live="polite" aria-atomic="true">
-          <CardContent sx={{ p: 0, pb: 1 }}>
+          <CardContent sx={{ p: 0, pb: 2 }}>
             {' '}
             {/* Add padding bottom */}
             <Typography
@@ -141,18 +141,17 @@ const HrTile = ({
               </Typography>
             </Box>
             {/* --- Workout Data Display --- */}
-            {showWorkoutData &&
-              (caloriesBurned > 0 || workoutDuration) && (
-                <>
-                  <Divider
-                    sx={{ my: 1, borderColor: 'rgba(255, 255, 255, 0.2)' }}
-                  />
-                  <WorkoutDataDisplay
-                    calories={caloriesBurned}
-                    duration={workoutDuration || '00:00'}
-                  />
-                </>
-              )}
+            {showWorkoutData && (caloriesBurned > 0 || workoutDuration) && (
+              <>
+                <Divider
+                  sx={{ my: 1, borderColor: 'rgba(255, 255, 255, 0.2)' }}
+                />
+                <WorkoutDataDisplay
+                  calories={caloriesBurned}
+                  duration={workoutDuration || '00:00'}
+                />
+              </>
+            )}
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography
                 variant="subtitle1"
