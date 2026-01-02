@@ -164,6 +164,11 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Mock HRM Client - test data input', async () => {
+    // Fill in the new fields to ensure they are included in the snapshot
+    await mockPage.getByLabel('Weight (kg)').fill('75')
+    await mockPage.getByLabel('Height (cm)').fill('180')
+    await mockPage.getByLabel('Gender').fill('female')
+
     // Capture screenshot
     await expect(mockPage).toHaveScreenshot('mock-hrm-client.png', {
       fullPage: true,

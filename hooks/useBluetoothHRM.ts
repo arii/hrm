@@ -327,10 +327,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       setDisconnectionReason('signal_loss')
       setDeviceStatus('Signal Lost. Retrying...')
       const deviceToReconnect = deviceRef.current
+      // Randomized backoff: 2-5 seconds
+      const randomDelay = Math.random() * 3000 + 2000
       reconnectTimeoutRef.current = setTimeout(() => {
         if (connectToGattRef.current)
           connectToGattRef.current(deviceToReconnect)
-      }, 2000)
+      }, randomDelay)
     } else {
       logger.info('Device disconnected manually.')
       setDeviceStatus('Disconnected')
@@ -345,7 +347,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         abortControllerRef.current = new AbortController()
         const server = await cancellablePromise(device.gatt!.connect(), {
-          timeoutMs: 10000,
+          timeoutMs: 20000, // Increased timeout for stability
           errorMessage: 'GATT connection timeout',
           signal: abortControllerRef.current.signal,
         })
