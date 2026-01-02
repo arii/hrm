@@ -12,6 +12,13 @@ jest.mock('recharts', () => {
   }
 })
 
+const createWorkoutHistory = (points: { hr: number; calories: number }[]) => {
+  return points.map((point, index) => ({
+    time: index * 60,
+    ...point,
+  }))
+}
+
 describe('RealTimeChart', () => {
   it('should render the chart with the correct title', () => {
     render(<RealTimeChart data={[]} />)
@@ -19,10 +26,10 @@ describe('RealTimeChart', () => {
   })
 
   it('should render the chart with data', () => {
-    const data = [
-      { time: 0, hr: 80, calories: 10 },
-      { time: 60, hr: 120, calories: 50 },
-    ]
+    const data = createWorkoutHistory([
+      { hr: 80, calories: 10 },
+      { hr: 120, calories: 50 },
+    ])
     const { container } = render(<RealTimeChart data={data} />)
     expect(container.querySelector('.recharts-surface')).toBeInTheDocument()
   })

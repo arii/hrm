@@ -1,6 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import ZoneDistributionTable from '@/app/client/connect/components/ZoneDistributionTable'
 
+const createZoneDistributionData = (zones: {
+  zone: string
+  range: string
+  duration: number
+  percentage: number
+}[]) => zones
+
 describe('ZoneDistributionTable', () => {
   it('should render the table with the correct title', () => {
     render(<ZoneDistributionTable zoneDistribution={[]} />)
@@ -8,7 +15,7 @@ describe('ZoneDistributionTable', () => {
   })
 
   it('should render the table with data', () => {
-    const data = [
+    const data = createZoneDistributionData([
       {
         zone: 'WarmUp',
         range: '95 - 114',
@@ -21,7 +28,7 @@ describe('ZoneDistributionTable', () => {
         duration: 120,
         percentage: 40,
       },
-    ]
+    ])
     render(<ZoneDistributionTable zoneDistribution={data} />)
     expect(screen.getByText('WarmUp')).toBeInTheDocument()
     expect(screen.getByText('95 - 114')).toBeInTheDocument()
