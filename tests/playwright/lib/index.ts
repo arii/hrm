@@ -50,13 +50,6 @@ export {
 // Custom Assertions
 // ============================================================================
 export {
-  // Constants
-  VRT_MASK_SELECTORS,
-  DEFAULT_SCREENSHOT_OPTIONS,
-  // Mask helpers
-  getDynamicContentMasks,
-  getHrMasks,
-  getTimerMasks,
   // Snapshot assertions
   assertPageSnapshot,
   assertElementSnapshot,
@@ -69,6 +62,19 @@ export {
   assertApiStatus,
   assertApiResponse,
 } from './assertions'
+
+// ============================================================================
+// Masking Utilities
+// ============================================================================
+export {
+  // Constants
+  MASK_SELECTORS,
+  VRT_MASK_SELECTORS,
+  // Mask helpers
+  getDynamicContentMasks,
+  getHrMasks,
+  getTimerMasks,
+} from './masks'
 
 // ============================================================================
 // Authentication Utilities
@@ -102,7 +108,6 @@ export {
   navigateAndWait,
   // VRT helpers
   replaceIframeWithStableWorkout,
-  prepareForVisualRegression,
   // Full setup functions
   setupVisualRegressionTest,
   setupMinimalVisualRegressionTest,
@@ -116,6 +121,18 @@ export {
   setupMockHrStreaming,
   startMockHrStreaming,
 } from './setup'
+
+// ============================================================================
+// Visual Testing Utilities
+// ============================================================================
+export {
+  // Constants
+  SCREENSHOT_OPTIONS,
+  // Screenshot helpers
+  takeScreenshot,
+  takeDashboardScreenshot,
+  prepareForVisualRegression,
+} from './visual'
 
 // ============================================================================
 // Re-export Playwright test utilities for convenience
