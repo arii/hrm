@@ -263,40 +263,40 @@ describe('useBluetoothHRM', () => {
     expect(result.current.disconnectionReason).toBe(null)
   })
 
-    it('should send a null value on manual disconnect', async () => {
-        const { result } = renderHook(() => useBluetoothHRM())
-        await simulateConnection({ result })
+  it('should send a null value on manual disconnect', async () => {
+    const { result } = renderHook(() => useBluetoothHRM())
+    await simulateConnection({ result })
 
-        act(() => {
-            result.current.disconnect()
-        })
-
-        expect(mockSendData).toHaveBeenCalledWith({
-            type: 'HRM_INPUT',
-            data: { value: null },
-        })
+    act(() => {
+      result.current.disconnect()
     })
 
-    it('should send a null value on unexpected disconnection', async () => {
-        const { result } = renderHook(() => useBluetoothHRM())
-        await simulateConnection({ result })
-
-        // Simulate the 'gattserverdisconnected' event
-        const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
-            (call) => call[0] === 'gattserverdisconnected'
-        )?.[1]
-
-        if (onDisconnectedCallback) {
-            act(() => {
-                onDisconnectedCallback()
-            })
-        }
-
-        expect(mockSendData).toHaveBeenCalledWith({
-            type: 'HRM_INPUT',
-            data: { value: null },
-        })
+    expect(mockSendData).toHaveBeenCalledWith({
+      type: 'HRM_INPUT',
+      data: { value: null },
     })
+  })
+
+  it('should send a null value on unexpected disconnection', async () => {
+    const { result } = renderHook(() => useBluetoothHRM())
+    await simulateConnection({ result })
+
+    // Simulate the 'gattserverdisconnected' event
+    const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
+      (call) => call[0] === 'gattserverdisconnected'
+    )?.[1]
+
+    if (onDisconnectedCallback) {
+      act(() => {
+        onDisconnectedCallback()
+      })
+    }
+
+    expect(mockSendData).toHaveBeenCalledWith({
+      type: 'HRM_INPUT',
+      data: { value: null },
+    })
+  })
 
   describe('Metadata', () => {
     it('should send metadata on initial connect, but not again if user details do not change', async () => {
