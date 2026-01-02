@@ -53,65 +53,60 @@ jobs:
           fi
 
   check-diff:
-    name: 📝 Check for file changes
+    name: 📝 Check for meaningful changes
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
-      has_changes: ${{ steps.check_files.outputs.has_changes }}
-      last_non_empty_commit: ${{ steps.check_files.outputs.last_non_empty_commit }}
+      has_changes: ${{ steps.set_outputs.outputs.has_changes }}
+      last_non_empty_commit: ${{ steps.set_outputs.outputs.last_non_empty_commit }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 100
-      - name: Check for file changes and find last non-empty commit
-        id: check_files
+
+      - name: Check for meaningful changes
+        id: check_meaningful_changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          set +e
+          chmod +x ./scripts/ci/has-meaningful-changes.sh
+          ./scripts/ci/has-meaningful-changes.sh
 
-          # Fetch the base branch to ensure it exists locally
-          git fetch origin ${{ github.base_ref }} --depth=100 2>/dev/null || true
+      - name: Set final outputs
+        id: set_outputs
+        env:
+          HAS_CHANGES: ${{ steps.check_meaningful_changes.outputs.has_changes }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -e
+          echo "has_changes=${HAS_CHANGES}" >> $GITHUB_OUTPUT
 
-          # Get merge base between current branch and base branch
-          MERGE_BASE=$(git merge-base HEAD origin/${{ github.base_ref }} 2>/dev/null)
+          if [ "${HAS_CHANGES}" == "false" ]; then
+            echo "::notice::No meaningful changes detected. Searching for last relevant commit."
+            git fetch origin ${BASE_REF} --depth=100 2>/dev/null || true
+            MERGE_BASE=$(git merge-base HEAD origin/${BASE_REF} 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
 
-          if [ -z "$MERGE_BASE" ]; then
-            # Fallback: use previous commit if merge-base fails
-            MERGE_BASE=$(git rev-parse HEAD~1 2>/dev/null)
-          fi
-
-          if [ -z "$MERGE_BASE" ]; then
-            # Last resort: compare HEAD against itself (will show no changes)
-            MERGE_BASE=$(git rev-parse HEAD)
-          fi
-
-          # Check if there are actual file changes between merge base and HEAD
-          HAS_DIFF=0
-          git diff --quiet "$MERGE_BASE" HEAD -- .
-          HAS_DIFF=$?
-
-          if [ $HAS_DIFF -eq 0 ]; then
-            # No changes found
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "::notice::No file changes detected between $MERGE_BASE and HEAD"
-
-            # Find the last commit with file changes in the PR
+            LAST_COMMIT=""
             for sha in $(git rev-list "$MERGE_BASE"..HEAD 2>/dev/null | head -100); do
-              if git cat-file -e $sha^ &>/dev/null 2>/dev/null; then
-                if ! git diff --quiet $sha^ $sha -- . ; then
-                  echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
+              if git cat-file -e $sha^ &>/dev/null; then
+                if ! git diff --quiet $sha^ $sha -- .; then
+                  LAST_COMMIT=$sha
                   break
                 fi
               fi
             done
-          else
-            # Changes found
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-            echo "::notice::File changes detected between $MERGE_BASE and HEAD"
-          fi
 
-          exit 0
+            if [ -z "$LAST_COMMIT" ]; then
+                LAST_COMMIT=$HEAD_SHA
+            fi
+            echo "last_non_empty_commit=${LAST_COMMIT}" >> $GITHUB_OUTPUT
+          else
+            echo "::notice::Meaningful changes detected."
+            echo "last_non_empty_commit=${HEAD_SHA}" >> $GITHUB_OUTPUT
+          fi
   # 1. Run CI checks on every push to a PR
   pr-quality:
     if: github.event_name == 'pull_request' && needs.check-diff.outputs.has_changes == 'true'
