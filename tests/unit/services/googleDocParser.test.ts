@@ -42,6 +42,8 @@ describe('parseGoogleDocTable', () => {
 
   it('should throw an error if no table is found', () => {
     const html = '<html><body><p>No table here</p></body></html>'
-    expect(() => parseGoogleDocTable(html)).toThrow('No table found in the Google Doc')
+    expect(() => parseGoogleDocTable(html)).toThrow(
+      'No table found in the Google Doc'
+    )
   })
 })
