@@ -1,16 +1,12 @@
 // services/googleDocParser.ts
 import * as cheerio from 'cheerio'
-
-export interface WorkoutTableData {
-  headers: string[]
-  rows: string[][]
-}
+import { WorkoutTableDto } from '@/lib/dto/workout.dto'
 
 /**
  * Parses raw HTML from a Google Doc export and extracts the first table.
  * Enforces a 10-line limit per cell.
  */
-export const parseGoogleDocTable = (html: string): WorkoutTableData => {
+export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
   const $ = cheerio.load(html)
   const table = $('table').first()
 
