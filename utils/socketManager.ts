@@ -346,7 +346,7 @@ const handleIncomingMessage = (
             value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
             lastUpdated: Date.now(),
-            isConnected: message.data.value !== null,
+            isConnected: typeof message.data.value === 'number',
           })
         }
         broadcastState()
