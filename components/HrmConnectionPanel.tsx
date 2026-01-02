@@ -14,7 +14,8 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
-import HrTileWithCalories from './HrTileWithCalories'
+import HrTile from '@/components/HrTile'
+import { useHrZone } from '@/hooks/useHrZone'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
@@ -156,24 +157,31 @@ const HrmConnectionPanel = () => {
           </Box>
         </>
       ) : (
-        tileData.map((user) => (
-          <Box
-            key={user.clientId}
-            data-testid="hr-tile-grid-item"
-            sx={{
-              width: {
-                xs: '100%',
-                sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-              },
-            }}
-          >
-            <HrTileWithCalories
-              user={user}
-              isAlerting={user.isAlerting}
-              {...(user.alertMessage && { alertMessage: user.alertMessage })}
-            />
-          </Box>
-        ))
+        tileData.map((user) => {
+          const hrZoneProps = useHrZone(user.value, user.maxHr)
+          return (
+            <Box
+              key={user.clientId}
+              data-testid="hr-tile-grid-item"
+              sx={{
+                width: {
+                  xs: '100%',
+                  sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
+                },
+              }}
+            >
+              <HrTile
+                name={user.name || ''}
+                bpm={user.value}
+                percentMax={hrZoneProps.percentage}
+                calories={user.calories}
+                isConnected={user.value !== null}
+                isAlerting={user.isAlerting}
+                {...(user.alertMessage && { alertMessage: user.alertMessage })}
+              />
+            </Box>
+          )
+        })
       )}
     </Box>
   )

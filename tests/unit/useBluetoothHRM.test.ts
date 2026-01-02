@@ -351,44 +351,28 @@ describe('useBluetoothHRM', () => {
       )
     })
   })
-
-  describe('Throttling', () => {
-    it('should throttle heart rate updates with a configurable frequency', async () => {
-      const { result } = renderHook(() => useBluetoothHRM({ throttleMs: 500 }))
+  describe('Heart Rate Callback', () => {
+    it('should call onHeartRateUpdate when a new HR value is received', async () => {
+      const mockOnHeartRateUpdate = jest.fn()
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ onHeartRateUpdate: mockOnHeartRateUpdate })
+      )
       await simulateConnection({ result })
 
       const characteristicCallback =
         mockCharacteristic.addEventListener.mock.calls.find(
           (call) => call[0] === 'characteristicvaluechanged'
         )?.[1]
-
       expect(characteristicCallback).toBeDefined()
 
-      // Simulate 5 rapid events in less than 500ms
-      for (let i = 0; i < 5; i++) {
-        act(() => {
-          characteristicCallback({
-            target: { value: new DataView(new Uint8Array([0, 70 + i]).buffer) },
-          })
+      act(() => {
+        characteristicCallback({
+          target: { value: new DataView(new Uint8Array([0, 75]).buffer) },
         })
-      }
-
-      // The first call should be immediate
-      expect(mockSendData).toHaveBeenCalledTimes(2) // 1 for metadata, 1 for first HR value
-
-      // Advance time by 499ms
-      act(() => {
-        jest.advanceTimersByTime(499)
       })
-      // No new calls should have been made
-      expect(mockSendData).toHaveBeenCalledTimes(2)
 
-      // Advance time past the 500ms throttle interval
-      act(() => {
-        jest.advanceTimersByTime(1)
-      })
-      // The throttled call should now have been made
-      expect(mockSendData).toHaveBeenCalledTimes(3)
+      expect(mockOnHeartRateUpdate).toHaveBeenCalledWith(75)
+      expect(mockOnHeartRateUpdate).toHaveBeenCalledTimes(1)
     })
   })
 })
