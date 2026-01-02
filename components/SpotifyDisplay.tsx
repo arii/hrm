@@ -23,11 +23,9 @@ const SpotifyDisplay = () => {
   const { addError } = useError()
   const { spotifyData } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
-  const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
-    null
-  )
+  const [deviceMenuAnchor, setDeviceMenuAnchor] =
+    useState<null | HTMLElement>(null)
   const {
-    selectedDeviceId,
     setSelectedDeviceId,
     volume,
     setVolume,
@@ -205,7 +203,6 @@ const SpotifyDisplay = () => {
         />
         <SpotifyDeviceSelectorWrapper
           availableDevices={spotifyData.devices || []}
-          selectedDeviceId={selectedDeviceId}
           deviceMenuAnchor={deviceMenuAnchor}
           onDeviceSelect={handleDeviceSelect}
           onMenuOpen={(e) => setDeviceMenuAnchor(e.currentTarget)}
