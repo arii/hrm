@@ -106,9 +106,6 @@ const HrTile = ({
                 fontWeight: 900,
                 lineHeight: 0.85,
                 my: 0.5,
-                animation: 'subtle-pulse 2s infinite ease-in-out',
-                animationPlayState:
-                  bpm > 0 && !isAlerting && isConnected ? 'running' : 'paused',
               }}
             >
               {percentMax}%
