@@ -64,7 +64,8 @@ export const useWorkoutHistory = (maxHr: number) => {
           zone,
           range: `${minBpm} - ${maxBpm}`,
           duration: data.duration,
-          percentage: totalDuration > 0 ? (data.duration / totalDuration) * 100 : 0,
+          percentage:
+            totalDuration > 0 ? (data.duration / totalDuration) * 100 : 0,
         }
       })
       .sort((a, b) => {

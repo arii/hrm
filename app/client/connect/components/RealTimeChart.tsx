@@ -21,17 +21,22 @@ const formatXAxis = (tickItem: number) => {
   return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: { value: number }[]
+  label?: number
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  if (active && payload && payload.length && label) {
     return (
       <Paper sx={{ p: 1 }}>
         <Typography variant="body2">{`Time: ${formatXAxis(label)}`}</Typography>
-        <Typography variant="body2" sx={{ color: '#8884d8' }}>{`HR: ${
-          payload[0].value
-        } bpm`}</Typography>
-        <Typography variant="body2" sx={{ color: '#82ca9d' }}>{`Calories: ${payload[1].value.toFixed(
-          0
-        )}`}</Typography>
+        <Typography variant="body2" sx={{ color: '#8884d8' }}>{`HR: ${payload[0].value} bpm`}</Typography>
+        <Typography
+          variant="body2"
+          sx={{ color: '#82ca9d' }}
+        >{`Calories: ${payload[1].value.toFixed(0)}`}</Typography>
       </Paper>
     )
   }

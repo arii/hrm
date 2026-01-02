@@ -70,6 +70,7 @@ interface ConnectViewProps {
   workoutHistory: { time: number; hr: number; calories: number }[]
   zoneDistribution: {
     zone: string
+    range: string
     duration: number
     percentage: number
   }[]
@@ -398,7 +399,10 @@ export default function ConnectView({
 
         {hasStarted && (
           <>
-            <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+            <WorkoutSummary
+              duration={duration}
+              caloriesBurned={caloriesBurned}
+            />
             <ZoneDistributionTable zoneDistribution={zoneDistribution} />
             <RealTimeChart data={workoutHistory} />
           </>

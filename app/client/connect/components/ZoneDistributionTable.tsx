@@ -46,7 +46,9 @@ const ZoneDistributionTable: React.FC<ZoneDistributionTableProps> = ({
                 {row.zone}
               </TableCell>
               <TableCell align="right">{row.range}</TableCell>
-              <TableCell align="right">{formatDuration(row.duration)}</TableCell>
+              <TableCell align="right">
+                {formatDuration(row.duration)}
+              </TableCell>
               <TableCell align="right">{`${row.percentage.toFixed(
                 1
               )}%`}</TableCell>
