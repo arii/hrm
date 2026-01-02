@@ -99,6 +99,7 @@ jobs:
               const result = JSON.parse(cleanedData);
 
               // ---- Start of Validation Block ----
+              const requiredKeys = ['summary', 'priority', 'analysis', 'labels'];
               const expectedSchema = {
                 labels: (val) => Array.isArray(val) && val.every(item => typeof item === 'string'),
                 priority: (val) => typeof val === 'string' && ['High', 'Medium', 'Low'].includes(val),
@@ -115,7 +116,7 @@ jobs:
                     if (!validator(result[key])) {
                       return `\`${key}\` is present but has an invalid type or value. (Actual: \`${JSON.stringify(result[key])}\`)`;
                     }
-                  } else if (['summary', 'priority', 'analysis', 'labels'].includes(key)) {
+                  } else if (requiredKeys.includes(key)) {
                     // Check for required keys
                     return `Required key \`${key}\` is missing.`;
                   }
