@@ -61,8 +61,11 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
         const data = await response.json()
         setTracks((prevTracks) => [...prevTracks, ...data.tracks])
         setHasNextPage(tracks.length + data.tracks.length < data.total)
+        setError(null) // Clear previous errors on success
       } catch (err) {
-        console.error('Failed to load more tracks', err)
+        setError(
+          err instanceof Error ? err.message : 'An unknown error occurred'
+        )
       } finally {
         setNextPageLoading(false)
       }
