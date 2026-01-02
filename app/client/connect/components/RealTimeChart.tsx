@@ -29,14 +29,24 @@ interface CustomTooltipProps {
 
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload && payload.length && label) {
+    const hrPayload = payload[0]
+    const caloriesPayload = payload[1]
+
     return (
       <Paper sx={{ p: 1 }}>
         <Typography variant="body2">{`Time: ${formatXAxis(label)}`}</Typography>
-        <Typography variant="body2" sx={{ color: '#8884d8' }}>{`HR: ${payload[0].value} bpm`}</Typography>
-        <Typography
-          variant="body2"
-          sx={{ color: '#82ca9d' }}
-        >{`Calories: ${payload[1].value.toFixed(0)}`}</Typography>
+        {hrPayload && (
+          <Typography
+            variant="body2"
+            sx={{ color: '#8884d8' }}
+          >{`HR: ${hrPayload.value} bpm`}</Typography>
+        )}
+        {caloriesPayload && (
+          <Typography
+            variant="body2"
+            sx={{ color: '#82ca9d' }}
+          >{`Calories: ${caloriesPayload.value.toFixed(0)}`}</Typography>
+        )}
       </Paper>
     )
   }

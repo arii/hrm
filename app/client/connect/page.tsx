@@ -12,7 +12,6 @@ import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
-import { useWorkoutHistory } from '@/hooks/useWorkoutHistory'
 import {
   validateAgeValue,
   validateWeightValue,
@@ -131,23 +130,9 @@ export default function ConnectPage() {
     workoutStatus === 'running'
   )
 
-  const {
-    history: workoutHistory,
-    zoneDistribution,
-    addDataPoint,
-    resetHistory,
-  } = useWorkoutHistory(maxHr)
-
-  useEffect(() => {
-    if (workoutStatus === 'running' && currentHR > 0) {
-      addDataPoint(currentHR, calories)
-    }
-  }, [workoutStatus, currentHR, calories, addDataPoint])
-
   const resetWorkout = () => {
     resetWorkoutSession()
     resetCalories()
-    resetHistory()
   }
 
   return (
@@ -195,8 +180,6 @@ export default function ConnectPage() {
       workoutStatus={workoutStatus}
       onStartWorkout={startWorkout}
       onEndWorkout={endWorkout}
-      workoutHistory={workoutHistory}
-      zoneDistribution={zoneDistribution}
     />
   )
 }

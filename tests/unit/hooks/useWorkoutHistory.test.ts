@@ -23,6 +23,7 @@ describe('useWorkoutHistory', () => {
       calories: 50,
     })
     expect(result.current.zoneDistribution).not.toEqual([])
+    expect(result.current.zoneDistribution[0].zone).toBe('WarmUp')
   })
 
   it('should reset the history and zone distribution', () => {
@@ -35,5 +36,35 @@ describe('useWorkoutHistory', () => {
     })
     expect(result.current.history).toEqual([])
     expect(result.current.zoneDistribution).toEqual([])
+  })
+
+  it('should correctly calculate zone percentages', () => {
+    const { result } = renderHook(() => useWorkoutHistory(190))
+    act(() => {
+      result.current.addDataPoint(100, 50) // WarmUp
+    })
+    act(() => {
+      result.current.addDataPoint(130, 60) // FatBurn
+    })
+    act(() => {
+      result.current.addDataPoint(130, 70) // FatBurn
+    })
+    act(() => {
+      result.current.addDataPoint(160, 80) // Cardio
+    })
+
+    const warmUpZone = result.current.zoneDistribution.find(
+      (z) => z.zone === 'WarmUp'
+    )
+    const fatBurnZone = result.current.zoneDistribution.find(
+      (z) => z.zone === 'FatBurn'
+    )
+    const cardioZone = result.current.zoneDistribution.find(
+      (z) => z.zone === 'Cardio'
+    )
+
+    expect(warmUpZone?.percentage).toBe(25)
+    expect(fatBurnZone?.percentage).toBe(50)
+    expect(cardioZone?.percentage).toBe(25)
   })
 })

@@ -16,14 +16,6 @@ export const HR_ZONE_DEFINITIONS = [
   { name: HrZoneName.Max, min: 0.95 },
 ]
 
-export const HR_ZONE_RANGES: { [key: string]: { min: number; max: number } } = {
-  [HrZoneName.WarmUp]: { min: 0.5, max: 0.6 },
-  [HrZoneName.FatBurn]: { min: 0.6, max: 0.7 },
-  [HrZoneName.Cardio]: { min: 0.7, max: 0.85 },
-  [HrZoneName.Peak]: { min: 0.85, max: 0.95 },
-  [HrZoneName.Max]: { min: 0.95, max: 1.0 },
-}
-
 export interface HrZone {
   zoneName: HrZoneName
   percentage: number
