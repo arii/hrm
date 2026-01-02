@@ -9,7 +9,7 @@ import {
   AreaChart,
   Area,
 } from 'recharts'
-import { Box, Typography, Paper } from '@mui/material'
+import { Box, Typography, Paper, useTheme } from '@mui/material'
 
 interface RealTimeChartProps {
   data: { time: number; hr: number; calories: number }[]
@@ -55,6 +55,8 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 }
 
 const RealTimeChart: React.FC<RealTimeChartProps> = ({ data }) => {
+  const theme = useTheme()
+
   return (
     <Box sx={{ width: '100%', height: 300, mt: 4 }}>
       <Typography variant="h6" align="center" gutterBottom>
@@ -75,16 +77,16 @@ const RealTimeChart: React.FC<RealTimeChartProps> = ({ data }) => {
             yAxisId="left"
             type="monotone"
             dataKey="hr"
-            stroke="#8884d8"
-            fill="#8884d8"
+            stroke={theme.palette.primary.main}
+            fill={theme.palette.primary.main}
             fillOpacity={0.6}
           />
           <Area
             yAxisId="right"
             type="monotone"
             dataKey="calories"
-            stroke="#82ca9d"
-            fill="#82ca9d"
+            stroke={theme.palette.secondary.main}
+            fill={theme.palette.secondary.main}
             fillOpacity={0.6}
           />
         </AreaChart>
