@@ -14,7 +14,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
-import HrTileWithCalories from './HrTileWithCalories'
+import HrTileWrapper from '@/components/HrTileWrapper'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
@@ -167,11 +167,7 @@ const HrmConnectionPanel = () => {
               },
             }}
           >
-            <HrTileWithCalories
-              user={user}
-              isAlerting={user.isAlerting}
-              {...(user.alertMessage && { alertMessage: user.alertMessage })}
-            />
+            <HrTileWrapper user={user} />
           </Box>
         ))
       )}

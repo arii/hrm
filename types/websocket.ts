@@ -92,6 +92,7 @@ export type HrmInputData = {
   maxHr?: number
   name?: string
   age?: number
+  calories?: number
 }
 
 export interface HrmInputMessage {
@@ -177,6 +178,7 @@ import { z } from 'zod'
 
 export const HrmInputDataSchema = z.object({
   value: z.number().nullable(),
+  calories: z.number().optional(),
 })
 
 export const HrmInputMessageSchema = z.object({

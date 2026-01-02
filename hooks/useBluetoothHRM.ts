@@ -5,14 +5,11 @@
  * It encapsulates the logic for device discovery, connection, disconnection,
  * data streaming, and automatic reconnection on signal loss.
  */
-import { useCallback, useState, useRef, useEffect, useMemo } from 'react'
+import { useCallback, useState, useRef, useEffect } from 'react'
 import {
-  HrmInputData,
-  HrmInputMessage,
   HrmMetadataUpdateMessage,
   HrmMetadataUpdateData,
 } from '../types/websocket'
-import throttle from 'lodash.throttle'
 import isEqual from 'lodash.isequal'
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
@@ -57,6 +54,7 @@ interface UseBluetoothHRMProps {
   throttleMs?: number
   userName?: string | null
   userAge?: number | null
+  onHeartRateUpdate?: (heartRate: number) => void
 }
 
 /**
@@ -110,9 +108,9 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
     dataLivenessTimeoutMs = 10000,
-    throttleMs = 250,
     userName,
     userAge,
+    onHeartRateUpdate,
   } = props
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
@@ -135,6 +133,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
   >(null)
+  const onHeartRateUpdateRef = useRef(onHeartRateUpdate)
+
+  useEffect(() => {
+    onHeartRateUpdateRef.current = onHeartRateUpdate
+  }, [onHeartRateUpdate])
 
   // Keep track of the latest sendData function to avoid stale closures
   const sendDataRef = useRef(sendData)
@@ -182,47 +185,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     statusRef.current = deviceStatus
   }, [deviceStatus])
 
-  // Throttling is used to limit the frequency of heart rate updates sent over the WebSocket.
-  // Bluetooth devices can broadcast at very high rates (e.g., 60Hz), which can flood the
-  // server and client with unnecessary updates. A frequency of 4Hz (250ms) is sufficient
-  // for a smooth UI experience without causing network congestion.
-  /* eslint-disable react-hooks/refs */
-  // This is a safe exception. The `throttle` function is memoized and created only
-  // once, so the `sendDataRef.current` call inside it will always access the
-  // latest `sendData` function from the WebSocket context without causing a
-  // re-render or stale closure. Disabling the rule is a pragmatic choice to
-  // avoid a complex and likely unnecessary refactoring of this hook. A more
-  // "correct" solution would involve passing `sendData` as a dependency to
-  // `useMemo` and `throttle`, but this would create a new throttled function
-  // every time `sendData` changes, which would defeat the purpose of throttling.
-  const throttledSend = useMemo(
-    () =>
-      throttle((message: HrmInputMessage) => {
-        try {
-          // Always call the current sendData via the ref
-          sendDataRef.current(message)
-        } catch (error) {
-          logger.error({ error, message }, 'Error sending throttled HRM data.')
-        }
-      }, throttleMs),
-    // The empty dependency array `[]` ensures that the throttled function is created only
-    // once when the component mounts and is reused on subsequent renders. This is critical
-    // for `throttle` to work correctly as it needs to maintain its internal state (like the
-    // last invocation time) across renders.
-    [throttleMs]
-  )
-  /* eslint-enable react-hooks/refs */
-
   // Cleanup
   useEffect(() => {
     return () => {
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
       if (deviceRef.current?.gatt?.connected)
         deviceRef.current.gatt.disconnect()
-      // Also cancel any pending throttled calls to prevent memory leaks
-      throttledSend.cancel()
     }
-  }, [throttledSend])
+  }, [])
 
   // Watchdog for stale data
   useEffect(() => {
@@ -395,16 +365,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const target = e.target as BluetoothRemoteGATTCharacteristic
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
-
-            const data: HrmInputData = {
-              value: heartRate,
-            }
-
-            // Use the throttled sender for HR updates to avoid overwhelming the WebSocket.
-            throttledSend({
-              type: 'HRM_INPUT',
-              data,
-            })
+            onHeartRateUpdateRef.current?.(heartRate)
           }
         )
 
@@ -421,7 +382,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw error
       }
     },
-    [onDisconnected, throttledSend]
+    [onDisconnected]
   )
 
   useEffect(() => {
