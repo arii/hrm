@@ -8,6 +8,7 @@
 - **medium:** Enhance Mock Client and Fix Flaky Bluetooth ([#2991](https://github.com/arii/hrm/issues/2991)) ([384282b](https://github.com/arii/hrm/commit/384282be50dc6c56a12777340bf0d6afa67d8b02))
 - **small:** Fix HRM Dashboard Tile Stale Data on Disconnection ([#2984](https://github.com/arii/hrm/issues/2984)) ([389b42b](https://github.com/arii/hrm/commit/389b42bb3195ea67badcc375b25be4cc6130e471))
 - **small:** Fix: Corrects Excessive Decimal Precision on 'Calories Burned' Display ([#2974](https://github.com/arii/hrm/issues/2974)) ([afda350](https://github.com/arii/hrm/commit/afda35008d156735535a26e1725372f0e3909a0e))
+- **feat:** Add Real-Time Analytics Dashboard ([#2992](https://github.com/arii/hrm/issues/2992)) ([a509e0e](https://github.com/arii/hrm/commit/a509e0e816fb50c6e5e26cb5d29092434599ab18))
 
 ## [0.19.0](https://github.com/arii/hrm/compare/hrm-v0.18.0...hrm-v0.19.0) (2026-01-02)
 
