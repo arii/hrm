@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -73,14 +73,15 @@ export default function ConnectPage() {
   })
 
   // Throttled sender for WebSocket messages
-  const throttledSend = useCallback(
-    throttle((message: HrmInputMessage) => {
-      try {
-        sendData(message)
-      } catch (error) {
-        logger.error({ error, message }, 'Error sending throttled HRM data.')
-      }
-    }, 250),
+  const throttledSend = useMemo(
+    () =>
+      throttle((message: HrmInputMessage) => {
+        try {
+          sendData(message)
+        } catch (error) {
+          logger.error({ error, message }, 'Error sending throttled HRM data.')
+        }
+      }, 250),
     [sendData]
   )
 
