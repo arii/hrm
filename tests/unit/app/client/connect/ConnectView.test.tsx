@@ -1,9 +1,9 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import ConnectView from '@/app/client/connect/ConnectView';
-import '@testing-library/jest-dom';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import ConnectView from '@/app/client/connect/ConnectView'
+import '@testing-library/jest-dom'
 
 describe('ConnectView', () => {
   const mockProps = {
@@ -43,28 +43,34 @@ describe('ConnectView', () => {
     workoutStatus: 'idle' as const,
     onStartWorkout: jest.fn(),
     onEndWorkout: jest.fn(),
-  };
+  }
 
   it('renders the reset button when bluetooth is not supported', () => {
-    render(<ConnectView {...mockProps} isSupported={false} />);
-    const resetButton = screen.getByRole('button', { name: /Reset Permissions & Settings/i });
-    expect(resetButton).toBeInTheDocument();
-  });
+    render(<ConnectView {...mockProps} isSupported={false} />)
+    const resetButton = screen.getByRole('button', {
+      name: /Reset Permissions & Settings/i,
+    })
+    expect(resetButton).toBeInTheDocument()
+  })
 
   it('renders the reset button as enabled by default', () => {
-    render(<ConnectView {...mockProps} />);
-    const resetButton = screen.getByRole('button', { name: /Reset Permissions & Settings/i });
-    expect(resetButton).toBeEnabled();
-  });
+    render(<ConnectView {...mockProps} />)
+    const resetButton = screen.getByRole('button', {
+      name: /Reset Permissions & Settings/i,
+    })
+    expect(resetButton).toBeEnabled()
+  })
 
   it('calls onForgetDevice and onReset when the reset button is clicked', async () => {
-    render(<ConnectView {...mockProps} />);
-    const resetButton = screen.getByRole('button', { name: /Reset Permissions & Settings/i });
-    fireEvent.click(resetButton);
+    render(<ConnectView {...mockProps} />)
+    const resetButton = screen.getByRole('button', {
+      name: /Reset Permissions & Settings/i,
+    })
+    fireEvent.click(resetButton)
 
     await waitFor(() => {
-      expect(mockProps.onForgetDevice).toHaveBeenCalled();
-      expect(mockProps.onReset).toHaveBeenCalled();
-    });
-  });
-});
+      expect(mockProps.onForgetDevice).toHaveBeenCalled()
+      expect(mockProps.onReset).toHaveBeenCalled()
+    })
+  })
+})
