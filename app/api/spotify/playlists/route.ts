@@ -5,10 +5,7 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
-import {
-  PresetPlaylistDto,
-  UserPlaylistDto,
-} from '@/lib/dto/spotify.dto'
+import { PresetPlaylistDto, UserPlaylistDto } from '@/lib/dto/spotify.dto'
 
 /**
  * API route to fetch preset and user Spotify playlists.
