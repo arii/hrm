@@ -8,7 +8,11 @@ export class WebSocketManager {
   public wss: WebSocketServer
 
   constructor() {
-    this.wss = new WebSocketServer({ noServer: true })
+    this.wss = new WebSocketServer({
+      noServer: true,
+      pingTimeout: 61000, // 61 seconds.
+      pingInterval: 30000, // 30 seconds.
+    })
   }
 
   public handleUpgrade(req: IncomingMessage, socket: Socket, head: Buffer) {
