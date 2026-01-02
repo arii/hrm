@@ -8,6 +8,10 @@ import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
 import useVolumePreference from '@/hooks/useVolumePreference'
+import {
+  createMockSpotifyData,
+  createMockSpotifyDevice,
+} from '@/tests/unit/test-data/spotify-data-factory'
 import '@testing-library/jest-dom'
 
 // Mock the router
@@ -31,14 +35,19 @@ describe('components/SpotifyControls', () => {
     ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
-      spotifyData: {
+      spotifyData: createMockSpotifyData({
         trackName: 'Test Track',
         artist: 'Test Artist',
         isPlaying: true,
         devices: [
-          { id: '1', name: 'Device 1', is_active: true, volume_percent: 50 },
+          createMockSpotifyDevice({
+            id: '1',
+            name: 'Device 1',
+            is_active: true,
+            volume_percent: 50,
+          }),
         ],
-      },
+      }),
       sendData: mockSendData,
       spotifyServiceInitialized: true,
     })
@@ -89,20 +98,20 @@ describe('components/SpotifyControls', () => {
   it('selects HRM Web Player by default when no device is active', async () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
-      spotifyData: {
-        trackName: 'Test Track',
-        artist: 'Test Artist',
-        isPlaying: true,
+      spotifyData: createMockSpotifyData({
         devices: [
-          { id: '1', name: 'Device 1', is_active: false, volume_percent: 50 },
-          {
+          createMockSpotifyDevice({
+            id: '1',
+            name: 'Device 1',
+            is_active: false,
+          }),
+          createMockSpotifyDevice({
             id: 'hrm-player',
             name: HRM_WEB_PLAYER_NAME,
             is_active: false,
-            volume_percent: 50,
-          },
+          }),
         ],
-      },
+      }),
       sendData: mockSendData,
       spotifyServiceInitialized: true,
     })
