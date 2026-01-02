@@ -112,7 +112,10 @@ const initSocketManager = (
   wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot
   services = svcs
-  connectionMonitor = new ConnectionMonitor(wss)
+  connectionMonitor = new ConnectionMonitor(wss, {
+    pingInterval: env.WEBSOCKET_PING_INTERVAL_MS,
+    pingTimeout: env.WEBSOCKET_PING_TIMEOUT_MS,
+  })
   connectionMonitor.start()
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
@@ -136,9 +139,11 @@ const initSocketManager = (
 
     clientSockets.set(clientId, extWs)
 
-    extWs.isAlive = true
     extWs.on('pong', () => {
-      extWs.isAlive = true
+      // Clear the termination timeout set by ConnectionMonitor, indicating the client is responsive.
+      if (extWs.terminationTimeout) {
+        clearTimeout(extWs.terminationTimeout)
+      }
     })
 
     logger.info(logMeta, 'WebSocket client connected')
@@ -166,7 +171,13 @@ const initSocketManager = (
     })
 
     extWs.on('close', () => {
-      logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      logger.info(
+        {
+          clientId: extWs.clientId,
+          reason: extWs.terminationReason,
+        },
+        'WebSocket client disconnected'
+      )
 
       // CRITICAL: Do NOT immediately delete clientData.
       // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
@@ -196,6 +207,11 @@ const initSocketManager = (
           }
         }
       }, env.WEBSOCKET_GRACE_PERIOD_MS)
+
+      // Clean up the heartbeat timeout on close
+      if (extWs.terminationTimeout) {
+        clearTimeout(extWs.terminationTimeout)
+      }
     })
   })
 
@@ -223,6 +239,148 @@ const broadcastState = () => {
   )
 }
 
+// --- Message Handlers ---
+
+const handleRegistration = (ws: ExtWebSocket, message: ClientCommandMessage) => {
+  const registrationMessage = message as ClientRegistrationMessage
+  ws.clientType = registrationMessage.role
+  logger.info(
+    { clientId: ws.clientId, clientType: ws.clientType },
+    'Client registered'
+  )
+}
+
+const handleGetState = (ws: ExtWebSocket) => {
+  const stateSnapshot = getUnifiedStateSnapshot()
+  const payload: InitialStateSnapshotPayload = {
+    ...stateSnapshot,
+    hrmData: hrmDataRepository.findAll(),
+  }
+  const initialStateMessage: ServerMessage = {
+    type: 'INITIAL_STATE',
+    payload: payload,
+  }
+  sendWebSocketMessage(ws, initialStateMessage, 'socketManager.GET_STATE')
+}
+
+const handleHrmMetadataUpdate = (
+  message: ClientCommandMessage,
+  clientId: string
+) => {
+  const existingData = hrmDataRepository.findById(clientId)
+  if (existingData) {
+    const updateData: Partial<HrmStreamData> = Object.fromEntries(
+      Object.entries(message.data).filter(([_, value]) => value !== null)
+    )
+
+    if (
+      existingData.name &&
+      !/^(user|new user|unknown|bluetooth hrm)/i.test(existingData.name) &&
+      updateData.name &&
+      /^(user|new user|unknown|bluetooth hrm)/i.test(updateData.name)
+    ) {
+      delete updateData.name
+    }
+
+    hrmDataRepository.save({ ...existingData, ...updateData })
+    broadcastState()
+  }
+}
+
+const handleHrmInput = (message: ClientCommandMessage, clientId: string) => {
+  const existingData = hrmDataRepository.findById(clientId)
+  const sessionState = clientSessionState.get(clientId)
+
+  if (existingData && sessionState) {
+    const now = Date.now()
+    const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
+    sessionState.lastUpdate = now
+
+    let currentAccumulated = sessionState.accumulatedCalories
+    const currentHr = message.data.value ?? existingData.value
+    const currentAge = existingData.age ?? 30
+
+    if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
+      const caloriesBurned = estimateCaloriesBurned({
+        heartRate: currentHr,
+        age: currentAge,
+        weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
+        durationMinutes: dtMinutes,
+      })
+      currentAccumulated += caloriesBurned
+    }
+
+    sessionState.accumulatedCalories = currentAccumulated
+    hrmDataRepository.save({
+      ...existingData,
+      value: message.data.value ?? existingData.value,
+      calories: Math.round(currentAccumulated * 10) / 10,
+    })
+    broadcastState()
+  }
+}
+
+const handleTimerCommand = (message: ClientCommandMessage) => {
+  services.tabataService.handleCommand(message.command)
+}
+
+const handleSetMode = (message: ClientCommandMessage) => {
+  services.tabataService.setMode(message.mode)
+}
+
+const handleTimerConfig = (message: ClientCommandMessage) => {
+  services.tabataService.setConfig({
+    workDuration: message.workDuration,
+    restDuration: message.restDuration,
+  })
+}
+
+const handleSpotifyCommand = (
+  message: ClientCommandMessage,
+  clientId: string
+) => {
+  const commandMsg = message as SpotifyCommandMessage
+  logger.info(
+    { clientId, command: commandMsg.command },
+    'Forwarding Spotify command'
+  )
+
+  wsServerInstance.clients.forEach((client: WebSocket) => {
+    const target = client as ExtWebSocket
+    if (
+      target.readyState === WebSocket.OPEN &&
+      target.clientType === 'dashboard'
+    ) {
+      const executionMessage: SpotifyExecutionMessage = {
+        type: 'EXECUTE_SPOTIFY',
+        payload: commandMsg,
+      }
+      sendWebSocketMessage(
+        target,
+        executionMessage,
+        'socketManager.SPOTIFY_COMMAND'
+      )
+    }
+  })
+
+  const spotifyService = services.spotifyService
+  const spotifyCommandParams: {
+    deviceId?: string
+    volume?: number
+    playlistUri?: string
+    contextUri?: string
+  } = {}
+  if (commandMsg.deviceId) spotifyCommandParams.deviceId = commandMsg.deviceId
+  if (commandMsg.volume !== undefined)
+    spotifyCommandParams.volume = commandMsg.volume
+  if (commandMsg.playlistUri)
+    spotifyCommandParams.playlistUri = commandMsg.playlistUri
+  if (commandMsg.contextUri)
+    spotifyCommandParams.contextUri = commandMsg.contextUri
+
+  spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
+}
+
 /**
  * Handles incoming JSON messages from client applications.
  */
@@ -235,162 +393,38 @@ const handleIncomingMessage = (
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
 
-    switch (message.type) {
-      case 'PING': {
-        // This is now a no-op. The server relies on native WebSocket ping/pong
-        // frames for heartbeat. The case is retained for backward
-        // compatibility with older clients that might still send this message.
-        break
-      }
-      case 'REGISTER_CLIENT': {
-        ws.clientType = (message as ClientRegistrationMessage).role
-        logger.info(
-          { clientId, clientType: ws.clientType },
-          'Client registered'
-        )
-        break
-      }
-      case 'GET_STATE': {
-        const stateSnapshot = getUnifiedStateSnapshot()
-        const payload: InitialStateSnapshotPayload = {
-          ...stateSnapshot,
-          hrmData: hrmDataRepository.findAll(),
-        }
-        const initialStateMessage: ServerMessage = {
-          type: 'INITIAL_STATE',
-          payload: payload,
-        }
-        sendWebSocketMessage(ws, initialStateMessage, 'socketManager.GET_STATE')
-        break
-      }
-      case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataRepository.findById(clientId)
-        if (existingData) {
-          const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
+    // A mapping of message types to their corresponding handler functions.
+    // This approach replaces a verbose switch statement, making the code more
+    // modular and easier to maintain. Each handler is responsible for a
+    // specific message type.
+    const messageHandlers: Record<
+      string,
+      (ws: ExtWebSocket, message: ClientCommandMessage, clientId: string) => void
+    > = {
+      REGISTER_CLIENT: handleRegistration,
+      GET_STATE: handleGetState,
+      HRM_METADATA_UPDATE: (ws, msg, id) => handleHrmMetadataUpdate(msg, id),
+      HRM_INPUT: (ws, msg, id) => handleHrmInput(msg, id),
+      TIMER_COMMAND: (ws, msg) => handleTimerCommand(msg),
+      SET_MODE: (ws, msg) => handleSetMode(msg),
+      TIMER_CONFIG: (ws, msg) => handleTimerConfig(msg),
+      SPOTIFY_COMMAND: (ws, msg, id) => handleSpotifyCommand(msg, id),
+    }
 
-          // Prevent overwriting a real name with a default "Unknown" name
-          if (
-            existingData.name &&
-            !/^(user|new user|unknown|bluetooth hrm)/i.test(
-              existingData.name
-            ) &&
-            updateData.name &&
-            /^(user|new user|unknown|bluetooth hrm)/i.test(updateData.name)
-          ) {
-            delete updateData.name
-          }
+    // PING is a no-op for backward compatibility and is handled separately.
+    if (message.type === 'PING') {
+      return
+    }
 
-          hrmDataRepository.save({ ...existingData, ...updateData })
-        }
-        broadcastState()
-        break
-      }
-      case 'HRM_INPUT': {
-        const existingData = hrmDataRepository.findById(clientId)
-        const sessionState = clientSessionState.get(clientId)
+    const handler = messageHandlers[message.type]
 
-        if (existingData && sessionState) {
-          const now = Date.now()
-          const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
-          sessionState.lastUpdate = now
-
-          let currentAccumulated = sessionState.accumulatedCalories
-          const currentHr = message.data.value ?? existingData.value
-          const currentAge = existingData.age ?? 30
-
-          if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            const caloriesBurned = estimateCaloriesBurned({
-              heartRate: currentHr,
-              age: currentAge,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
-              durationMinutes: dtMinutes,
-            })
-            currentAccumulated += caloriesBurned
-          }
-
-          // Update the internal state with high precision value
-          sessionState.accumulatedCalories = currentAccumulated
-
-          // ONLY update the value and calories
-          hrmDataRepository.save({
-            ...existingData,
-            value: message.data.value ?? existingData.value,
-            calories: Math.round(currentAccumulated * 10) / 10,
-          })
-        }
-        broadcastState()
-        break
-      }
-
-      case 'TIMER_COMMAND':
-        services.tabataService.handleCommand(message.command)
-        break
-
-      case 'SET_MODE':
-        services.tabataService.setMode(message.mode)
-        break
-
-      case 'TIMER_CONFIG':
-        services.tabataService.setConfig({
-          workDuration: message.workDuration,
-          restDuration: message.restDuration,
-        })
-        break
-
-      case 'SPOTIFY_COMMAND': {
-        const commandMsg = message as SpotifyCommandMessage
-        logger.info(
-          { clientId, command: commandMsg.command },
-          'Forwarding Spotify command'
-        )
-
-        wsServerInstance.clients.forEach((client: WebSocket) => {
-          const target = client as ExtWebSocket
-          if (
-            target.readyState === WebSocket.OPEN &&
-            target.clientType === 'dashboard'
-          ) {
-            const executionMessage: SpotifyExecutionMessage = {
-              type: 'EXECUTE_SPOTIFY',
-              payload: commandMsg,
-            }
-            sendWebSocketMessage(
-              target,
-              executionMessage,
-              'socketManager.SPOTIFY_COMMAND'
-            )
-          }
-        })
-
-        const spotifyService = services.spotifyService
-        const spotifyCommandParams: {
-          deviceId?: string
-          volume?: number
-          playlistUri?: string
-          contextUri?: string
-        } = {}
-        if (commandMsg.deviceId)
-          spotifyCommandParams.deviceId = commandMsg.deviceId
-        if (commandMsg.volume !== undefined)
-          spotifyCommandParams.volume = commandMsg.volume
-        if (commandMsg.playlistUri)
-          spotifyCommandParams.playlistUri = commandMsg.playlistUri
-        if (commandMsg.contextUri)
-          spotifyCommandParams.contextUri = commandMsg.contextUri
-
-        spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
-        break
-      }
-      default: {
-        const unknownMessage = message as { type: unknown }
-        logger.warn(
-          { clientId, type: unknownMessage.type },
-          'Unknown message type received'
-        )
-        break
-      }
+    if (handler) {
+      handler(ws, message, clientId)
+    } else {
+      logger.warn(
+        { clientId, type: message.type },
+        'Unknown message type received'
+      )
     }
   } catch (e) {
     if (e instanceof z.ZodError) {

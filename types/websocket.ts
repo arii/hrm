@@ -20,8 +20,14 @@ import type {
  */
 export interface ExtWebSocket extends WebSocket {
   clientId: string
-  isAlive: boolean
   clientType?: 'dashboard' | 'controller'
+  /** @property terminationTimeout - A NodeJS.Timeout used by ConnectionMonitor to track if a client has responded to a ping. Cleared on pong. */
+  terminationTimeout?: NodeJS.Timeout
+  /**
+   * @property {string} terminationReason - An optional string providing the reason for a WebSocket's termination,
+   * set by the `ConnectionMonitor` or other server-side logic.
+   */
+  terminationReason?: string
 }
 
 // --- Server Broadcast State Interfaces ---

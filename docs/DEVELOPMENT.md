@@ -172,6 +172,21 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Spotify Controls Overhaul**: The Spotify controls were redesigned and implemented, including volume control, device selection, and improved UI feedback.
 - **Bluetooth Connection Flow**: The Bluetooth HRM connection page (`client/connect`) was stabilized and now includes auto-connect functionality.
 
+## WebSocket Management
+
+To ensure stable real-time communication and prevent disconnections due to browser tab throttling or network timeouts, the application's WebSocket server implements a heartbeat mechanism. This behavior can be fine-tuned using the following environment variables:
+
+-   `WEBSOCKET_PING_INTERVAL_MS`
+    -   **Purpose**: Defines how often (in milliseconds) the server sends a `ping` message to each connected client to check if the connection is still alive.
+    -   **Default**: `30000` (30 seconds)
+
+-   `WEBSOCKET_PING_TIMEOUT_MS`
+    -   **Purpose**: Sets the maximum time (in milliseconds) the server will wait for a `pong` response from a client after sending a `ping`. If no `pong` is received within this period, the server considers the connection stale and terminates it.
+    -   **Default**: `65000` (65 seconds)
+    -   **Note**: This value should always be greater than `WEBSOCKET_PING_INTERVAL_MS` to avoid premature disconnections. The server includes a safeguard to adjust this value at runtime if it is misconfigured, but it is best practice to set it correctly.
+
+These settings are crucial for maintaining the stability of the real-time features of the HRM dashboard.
+
 ## GitHub Integrations
 
 ### Jules AI Session Management
