@@ -416,8 +416,8 @@ jobs:
           echo "::notice::✅ Patch validation passed. Validating patch can be applied..."
 
           # Check if patch can be applied cleanly without actually applying it
-          if ! git apply --check patch.diff 2>&1; then
-            APPLY_ERROR=$(git apply --check patch.diff 2>&1)
+          if ! git apply --ignore-whitespace --check patch.diff 2>&1; then
+            APPLY_ERROR=$(git apply --ignore-whitespace --check patch.diff 2>&1)
             echo "::error::Patch cannot be applied cleanly."
             echo "::notice::Git apply validation failed:"
             echo "$APPLY_ERROR" | sed 's/^/::notice::  /'
@@ -425,14 +425,14 @@ jobs:
             # Try 3-way merge attempt (might work even if strict check fails)
             echo ""
             echo "::notice::Attempting 3-way merge..."
-            if git apply --3way patch.diff 2>&1; then
+            if git apply --ignore-whitespace --3way patch.diff 2>&1; then
               echo "::notice::✅ 3-way merge succeeded!"
             else
               echo "::notice::3-way merge also failed. Attempting detailed diagnostics..."
               
               # Attempt to apply with --reject to show which hunks failed
               echo "::notice::Applying with --reject to identify failing hunks..."
-              git apply --reject patch.diff 2>&1 || true
+              git apply --ignore-whitespace --reject patch.diff 2>&1 || true
               
               # Collect rejected hunks for artifact upload
               if find . -name "*.rej" -type f | grep -q .; then
