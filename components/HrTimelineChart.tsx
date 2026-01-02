@@ -34,7 +34,9 @@ const HrTimelineChart = ({ data, maxHr }: HrTimelineChartProps) => {
 
     const allTimestamps = new Set<number>()
     clientIds.forEach((clientId) => {
-      data[clientId].forEach((d) => allTimestamps.add(d.timestamp))
+      if (data[clientId]) {
+        data[clientId].forEach((d) => allTimestamps.add(d.timestamp))
+      }
     })
 
     const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b)
@@ -44,8 +46,11 @@ const HrTimelineChart = ({ data, maxHr }: HrTimelineChartProps) => {
         time: new Date(timestamp).toLocaleTimeString(),
       }
       clientIds.forEach((clientId) => {
-        const point = data[clientId].find((d) => d.timestamp === timestamp)
-        entry[clientId] = point ? point.value : 0
+        const clientData = data[clientId]
+        if (clientData) {
+          const point = clientData.find((d) => d.timestamp === timestamp)
+          entry[clientId] = point ? point.value : 0
+        }
       })
       return entry
     })
@@ -65,9 +70,7 @@ const HrTimelineChart = ({ data, maxHr }: HrTimelineChartProps) => {
         }}
       >
         <Typography variant="h6">Heart Rate Timeline</Typography>
-        <Typography variant="body1">
-          Waiting for heart rate data...
-        </Typography>
+        <Typography variant="body1">Waiting for heart rate data...</Typography>
       </Paper>
     )
   }
@@ -90,7 +93,10 @@ const HrTimelineChart = ({ data, maxHr }: HrTimelineChartProps) => {
         >
           <CartesianGrid stroke={theme.palette.divider} />
           <XAxis dataKey="time" tick={{ fill: theme.palette.text.secondary }} />
-          <YAxis domain={[0, maxHr]} tick={{ fill: theme.palette.text.secondary }} />
+          <YAxis
+            domain={[0, maxHr]}
+            tick={{ fill: theme.palette.text.secondary }}
+          />
           <Tooltip
             contentStyle={{
               backgroundColor: theme.palette.background.paper,
@@ -98,11 +104,41 @@ const HrTimelineChart = ({ data, maxHr }: HrTimelineChartProps) => {
             }}
           />
           <Legend wrapperStyle={{ color: theme.palette.text.primary }} />
-          <ReferenceArea y1={0} y2={maxHr * 0.6} fill={ZONE_COLORS.blue} fillOpacity={0.2} label="Warm Up" />
-          <ReferenceArea y1={maxHr * 0.6} y2={maxHr * 0.7} fill={ZONE_COLORS.green} fillOpacity={0.2} label="Fat Burn" />
-          <ReferenceArea y1={maxHr * 0.7} y2={maxHr * 0.8} fill={ZONE_COLORS.yellow} fillOpacity={0.2} label="Cardio" />
-          <ReferenceArea y1={maxHr * 0.8} y2={maxHr * 0.9} fill={ZONE_COLORS.red} fillOpacity={0.2} label="Peak" />
-          <ReferenceArea y1={maxHr * 0.9} y2={maxHr} fill={ZONE_COLORS.purple} fillOpacity={0.2} label="Max" />
+          <ReferenceArea
+            y1={0}
+            y2={maxHr * 0.6}
+            fill={ZONE_COLORS.blue}
+            fillOpacity={0.2}
+            label="Warm Up"
+          />
+          <ReferenceArea
+            y1={maxHr * 0.6}
+            y2={maxHr * 0.7}
+            fill={ZONE_COLORS.green}
+            fillOpacity={0.2}
+            label="Fat Burn"
+          />
+          <ReferenceArea
+            y1={maxHr * 0.7}
+            y2={maxHr * 0.8}
+            fill={ZONE_COLORS.yellow}
+            fillOpacity={0.2}
+            label="Cardio"
+          />
+          <ReferenceArea
+            y1={maxHr * 0.8}
+            y2={maxHr * 0.9}
+            fill={ZONE_COLORS.red}
+            fillOpacity={0.2}
+            label="Peak"
+          />
+          <ReferenceArea
+            y1={maxHr * 0.9}
+            y2={maxHr}
+            fill={ZONE_COLORS.purple}
+            fillOpacity={0.2}
+            label="Max"
+          />
           {clientIds.map((clientId, index) => (
             <Line
               key={clientId}

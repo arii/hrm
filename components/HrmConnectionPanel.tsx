@@ -178,14 +178,14 @@ const HrmConnectionPanel = () => {
           </Box>
         ))
       )}
-  {Object.keys(hrmHistory).length > 0 && (
-    <Box sx={{ width: '100%', mt: 2 }}>
-      <HrTimelineChart
-        data={hrmHistory}
-        maxHr={userSettings.maxHr || 220 - (userSettings.userAge || 30)}
-      />
-    </Box>
-  )}
+      {Object.keys(hrmHistory).length > 0 && (
+        <Box sx={{ width: '100%', mt: 2 }}>
+          <HrTimelineChart
+            data={hrmHistory}
+            maxHr={userSettings.maxHr || 220 - (userSettings.userAge || 30)}
+          />
+        </Box>
+      )}
     </Box>
   )
 }

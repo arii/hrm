@@ -17,6 +17,8 @@ export interface UserPreferences {
   autoConnect: boolean
   gender: Gender
   unitSystem: MeasurementSystem
+  maxHr: number | null
+  restingHr: number | null
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -31,6 +33,8 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   autoConnect: false,
   gender: 'MALE',
   unitSystem: 'IMPERIAL',
+  maxHr: null,
+  restingHr: null,
 }
 
 type UserSettingsContextType = readonly [
