@@ -5,6 +5,10 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
+import {
+  PresetPlaylistDto,
+  UserPlaylistDto,
+} from '@/lib/dto/spotify.dto'
 
 /**
  * API route to fetch preset and user Spotify playlists.
@@ -24,26 +28,28 @@ async function getPlaylists(_req: NextRequest) {
   const playlistsResponse = await spotify.currentUser.playlists.playlists(50)
 
   // 5. Preset playlists for the standalone page
-  const presetPlaylists = [
+  const presetPlaylists: PresetPlaylistDto[] = [
     { name: 'HIIT', uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5' },
     { name: 'Rock', uri: 'spotify:playlist:37i9dQZF1DX1spT6G94GFC' },
     { name: 'Pop', uri: 'spotify:playlist:37i9dQZF1DXcBWfL3ps8cR' },
   ]
 
   // 6. Map user playlists to include full data (images, descriptions, track counts, etc.)
-  const userPlaylists = playlistsResponse.items.map((playlist) => ({
-    id: playlist.id,
-    name: playlist.name,
-    uri: playlist.uri,
-    description: playlist.description || null,
-    imageUrl:
-      playlist.images && playlist.images.length > 0 && playlist.images[0]
-        ? playlist.images[0].url
-        : null,
-    trackCount: playlist.tracks?.total || 0,
-    owner: playlist.owner?.display_name || playlist.owner?.id || 'Unknown',
-    public: playlist.public || false,
-  }))
+  const userPlaylists: UserPlaylistDto[] = playlistsResponse.items.map(
+    (playlist) => ({
+      id: playlist.id,
+      name: playlist.name,
+      uri: playlist.uri,
+      description: playlist.description || null,
+      imageUrl:
+        playlist.images && playlist.images.length > 0 && playlist.images[0]
+          ? playlist.images[0].url
+          : null,
+      trackCount: playlist.tracks?.total || 0,
+      owner: playlist.owner?.display_name || playlist.owner?.id || 'Unknown',
+      public: playlist.public || false,
+    })
+  )
 
   return NextResponse.json({ presetPlaylists, userPlaylists })
 }
