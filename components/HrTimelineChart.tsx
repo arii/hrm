@@ -49,7 +49,7 @@ const HrTimelineChart = ({ data, maxHr }: HrTimelineChartProps) => {
         const clientData = data[clientId]
         if (clientData) {
           const point = clientData.find((d) => d.timestamp === timestamp)
-          entry[clientId] = point ? point.value : 0
+          entry[clientId] = point ? point.value : null
         }
       })
       return entry
@@ -147,6 +147,7 @@ const HrTimelineChart = ({ data, maxHr }: HrTimelineChartProps) => {
               stroke={lineColors[index % lineColors.length]}
               activeDot={{ r: 8 }}
               dot={false}
+              connectNulls={true}
             />
           ))}
         </LineChart>
