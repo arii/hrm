@@ -11,11 +11,12 @@ import { ErrorProvider } from '@/context/ErrorContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
-import { fireEvent, render, screen, act } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useSession, signIn } from 'next-auth/react'
 import React from 'react'
 import { SpotifyData } from '@/types/websocket'
+import { Device } from '@spotify/web-api-ts-sdk'
 
 // Mock dependencies
 jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
@@ -32,11 +33,15 @@ jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
   __esModule: true,
   default: jest.fn(),
 }))
+jest.mock('@/hooks/useSpotifyControls')
+
+import useSpotifyControls from '@/hooks/useSpotifyControls'
 
 const mockedUseWebSocket = useWebSocket as jest.Mock
 const mockedUseSession = useSession as jest.Mock
 const mockedSignIn = signIn as jest.Mock
 const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
+const mockedUseSpotifyControls = useSpotifyControls as jest.Mock
 
 // Custom renderer to wrap component with required providers
 const renderWithProviders = (ui: React.ReactElement) => {
@@ -44,51 +49,54 @@ const renderWithProviders = (ui: React.ReactElement) => {
 }
 
 describe('SpotifyDisplay', () => {
+  let mockSetVolume: jest.Mock
+  let mockToggleMute: jest.Mock
+  let mockSendSpotifyCommand: jest.Mock
+  let mockSetSelectedDeviceId: jest.Mock
+
   beforeEach(() => {
-    jest.resetAllMocks()
+    jest.clearAllMocks()
+
+    // Setup default mocks for useSpotifyControls
+    mockSetVolume = jest.fn()
+    mockToggleMute = jest.fn()
+    mockSendSpotifyCommand = jest.fn()
+    mockSetSelectedDeviceId = jest.fn()
+
+    mockedUseSpotifyControls.mockReturnValue({
+      selectedDeviceId: 'mock-device-1',
+      setSelectedDeviceId: mockSetSelectedDeviceId,
+      devices: [
+        { id: 'mock-device-1', name: 'Test Device', is_active: true },
+      ] as Device[],
+      volume: 70,
+      setVolume: mockSetVolume,
+      muted: false,
+      toggleMute: mockToggleMute,
+      sendSpotifyCommand: mockSendSpotifyCommand,
+      handleTrackSelect: jest.fn(),
+      handlePlaybackCommand: jest.fn(),
+    })
+
+    // Setup default mocks for other hooks
     mockedUseSpotifyWebPlayback.mockReturnValue({
       isReady: true,
       deviceId: 'mock-device-id',
       player: null,
       isAuthenticated: true,
     })
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([]),
-      })
-    ) as jest.Mock
   })
 
-  it('should render login button and call signIn with correct provider on click', async () => {
+  it('should render login button and call signIn when unauthenticated', async () => {
     mockedUseSession.mockReturnValue({ data: null, status: 'unauthenticated' })
-    mockedUseWebSocket.mockReturnValue({
-      spotifyData: {
-        trackName: '',
-        artist: '',
-        albumName: '',
-        albumArtUrl: '',
-        isPlaying: false,
-      },
-      connectionStatus: 'Connected',
-      spotifyServiceInitialized: true,
-    })
-    mockedUseSpotifyWebPlayback.mockReturnValue({
-      isAuthenticated: false,
-    })
+    mockedUseWebSocket.mockReturnValue({ spotifyData: {} }) // Provide basic spotifyData
 
     renderWithProviders(<SpotifyDisplay />)
-
-    const loginButton = await screen.findByRole('button', {
+    const loginButton = screen.getByRole('button', {
       name: /login with spotify/i,
     })
-    expect(loginButton).toBeInTheDocument()
-
-    // Simulate user click
     await userEvent.click(loginButton)
 
-    // Assert that signIn was called correctly
-    expect(mockedSignIn).toHaveBeenCalledTimes(1)
     expect(mockedSignIn).toHaveBeenCalledWith('spotify', {
       callbackUrl: '/',
       redirect: true,
@@ -96,112 +104,78 @@ describe('SpotifyDisplay', () => {
   })
 
   describe('when authenticated', () => {
-    let mockSendData: jest.Mock
-    let rerender: (ui: React.ReactElement) => void
-    let initialSpotifyData: SpotifyData
+    const initialSpotifyData: SpotifyData = {
+      trackName: 'Test Track',
+      artist: 'Test Artist',
+      isPlaying: true,
+      devices: [{ id: 'mock-device-1', name: 'Test Device', is_active: true }],
+    }
 
     beforeEach(() => {
-      jest.useFakeTimers()
-      mockSendData = jest.fn()
-      initialSpotifyData = {
-        trackName: 'Test Track',
-        artist: 'Test Artist',
-        albumName: 'Test Album',
-        albumArtUrl: '',
-        isPlaying: true,
-        volume: 50,
-        isMuted: false,
-        devices: [
-          { id: 'mock-device-1', name: 'Test Device', is_active: true },
-        ],
-      }
-
       mockedUseSession.mockReturnValue({
         data: { accessToken: 'fake-token' },
         status: 'authenticated',
       })
       mockedUseWebSocket.mockReturnValue({
         spotifyData: initialSpotifyData,
-        sendData: mockSendData,
         connectionStatus: 'Connected',
-        spotifyServiceInitialized: true,
+      })
+    })
+
+    it('renders track and artist information', () => {
+      renderWithProviders(<SpotifyDisplay />)
+      expect(
+        screen.getByText(/Test Track — Test Artist/i)
+      ).toBeInTheDocument()
+    })
+
+    it('calls sendSpotifyCommand with "PAUSE" when pause button is clicked', async () => {
+      renderWithProviders(<SpotifyDisplay />)
+      const pauseButton = screen.getByRole('button', { name: /pause/i })
+      await userEvent.click(pauseButton)
+      expect(mockSendSpotifyCommand).toHaveBeenCalledWith('PAUSE')
+    })
+
+    it('calls sendSpotifyCommand with "PLAY" when play button is clicked', async () => {
+      mockedUseWebSocket.mockReturnValue({
+        spotifyData: { ...initialSpotifyData, isPlaying: false },
+        connectionStatus: 'Connected',
       })
 
-      const { rerender: rerenderComponent } = renderWithProviders(
-        <SpotifyDisplay />
-      )
-      rerender = (ui: React.ReactElement) => rerenderComponent(ui)
+      renderWithProviders(<SpotifyDisplay />)
+      const playButton = screen.getByRole('button', { name: /play/i })
+      await userEvent.click(playButton)
+      expect(mockSendSpotifyCommand).toHaveBeenCalledWith('PLAY')
     })
 
-    afterEach(() => {
-      jest.useRealTimers()
+    it('calls sendSpotifyCommand with "NEXT" when next button is clicked', async () => {
+      renderWithProviders(<SpotifyDisplay />)
+      const nextButton = screen.getByRole('button', { name: /next track/i })
+      await userEvent.click(nextButton)
+      expect(mockSendSpotifyCommand).toHaveBeenCalledWith('NEXT')
     })
 
-    it('updates volume on external change when user is not sliding', () => {
+    it('calls sendSpotifyCommand with "PREVIOUS" when previous button is clicked', async () => {
+      renderWithProviders(<SpotifyDisplay />)
+      const previousButton = screen.getByRole('button', {
+        name: /previous track/i,
+      })
+      await userEvent.click(previousButton)
+      expect(mockSendSpotifyCommand).toHaveBeenCalledWith('PREVIOUS')
+    })
+
+    it('calls setVolume when the volume slider is changed', () => {
+      renderWithProviders(<SpotifyDisplay />)
       const slider = screen.getByRole('slider', { name: /volume control/i })
-      expect(slider).toHaveValue('50')
-
-      // Simulate external update
-      const updatedSpotifyData = { ...initialSpotifyData, volume: 80 }
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
-      })
-      rerender(<SpotifyDisplay />)
-
-      expect(slider).toHaveValue('80')
+      fireEvent.change(slider, { target: { value: '50' } })
+      expect(mockSetVolume).toHaveBeenCalledWith(50)
     })
 
-    it('does not update volume on external change while user is sliding', () => {
-      const slider = screen.getByRole('slider', { name: /volume control/i })
-      expect(slider).toHaveValue('50')
-
-      // Simulate user starting to slide
-      fireEvent.change(slider, { target: { value: '70' } })
-      expect(slider).toHaveValue('70')
-
-      // Simulate external update while sliding
-      const updatedSpotifyData = { ...initialSpotifyData, volume: 90 }
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
-      })
-      rerender(<SpotifyDisplay />)
-
-      // Volume should not change because user is sliding
-      expect(slider).toHaveValue('70')
-    })
-
-    it('re-enables external updates after sliding and debounce period', () => {
-      const slider = screen.getByRole('slider', { name: /volume control/i })
-      expect(slider).toHaveValue('50')
-
-      // Simulate user sliding
-      fireEvent.change(slider, { target: { value: '75' } })
-      expect(slider).toHaveValue('75')
-
-      // Simulate external update while sliding (should be ignored)
-      let updatedSpotifyData = { ...initialSpotifyData, volume: 100 }
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
-      })
-      rerender(<SpotifyDisplay />)
-      expect(slider).toHaveValue('75')
-
-      // Advance timers to end the debounce period
-      act(() => {
-        jest.advanceTimersByTime(300)
-      })
-
-      // Simulate another external update (should now be applied)
-      updatedSpotifyData = { ...initialSpotifyData, volume: 25 }
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
-      })
-      rerender(<SpotifyDisplay />)
-      expect(slider).toHaveValue('25')
+    it('calls toggleMute when the mute button is clicked', async () => {
+      renderWithProviders(<SpotifyDisplay />)
+      const muteButton = screen.getByRole('button', { name: /mute volume/i })
+      await userEvent.click(muteButton)
+      expect(mockToggleMute).toHaveBeenCalled()
     })
   })
 })

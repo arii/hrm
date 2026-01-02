@@ -11,35 +11,38 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
+import useSpotifyControls from '@/hooks/useSpotifyControls'
 
+/**
+ * @component SpotifyControls
+ * @description A component that provides a UI for controlling Spotify playback,
+ * including track search, playback controls, volume adjustment, and device selection.
+ * This component utilizes the `useSpotifyControls` hook to manage its state and logic.
+ */
 const SpotifyControls = () => {
   const router = useRouter()
-  const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
-    useWebSocket()
-  const { devices = [] } = spotifyData // Default to empty array if undefined
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
-  const lastSentVolumeRef = useRef<string | null>(null)
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const prevActiveIdRef = useRef<string | undefined>(undefined)
+  const { spotifyData, connectionStatus } = useWebSocket()
+  const {
+    selectedDeviceId,
+    setSelectedDeviceId,
+    devices,
+    volume,
+    setVolume,
+    muted,
+    toggleMute,
+    sendSpotifyCommand,
+    handleTrackSelect,
+    handlePlaybackCommand,
+  } = useSpotifyControls()
 
-  const handleTrackSelect = (uri: string) => {
-    const targetDeviceId = resolveTargetDeviceId()
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command: 'PLAY',
-      uri: uri,
-      ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-    }
-    sendData(message)
-  }
-
+  /**
+   * @function handleBrowseClick
+   * @description Navigates to the Spotify selection page.
+   */
   const handleBrowseClick = () => {
     router.push('/client/spotify-selection')
   }
@@ -48,142 +51,6 @@ const SpotifyControls = () => {
     spotifyData.trackName !== 'Awaiting Login...' &&
     spotifyData.trackName !== '' &&
     spotifyData.trackName !== 'No Track Playing'
-
-  // 3. Request devices on mount or connection
-  useEffect(() => {
-    if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
-      sendData({
-        type: 'SPOTIFY_COMMAND',
-        command: 'GET_DEVICES',
-      })
-    }
-  }, [connectionStatus, sendData, spotifyServiceInitialized])
-
-  // 4. Update selection logic and volume sync
-  useEffect(() => {
-    const activeDevice = devices.find((d) => d.is_active)
-    const activeId = activeDevice?.id
-
-    // Sync Selected Device
-    if (prevActiveIdRef.current === undefined && activeId) {
-      // Initial sync
-      setSelectedDeviceId(activeId)
-    } else if (activeId && activeId !== prevActiveIdRef.current) {
-      // Active device changed externally, update selection
-      setSelectedDeviceId(activeId)
-    } else {
-      // Check if selected device is still valid
-      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
-      if (selectedDeviceId && !selectedStillExists) {
-        setSelectedDeviceId(activeId ?? '')
-      }
-      if (!selectedDeviceId && activeId) {
-        setSelectedDeviceId(activeId)
-      }
-    }
-    prevActiveIdRef.current = activeId
-
-    // Sync Volume (if not dragging)
-    if (activeDevice && typeof activeDevice.volume_percent === 'number') {
-      if (activeDevice.volume_percent !== volume) {
-        setVolume(activeDevice.volume_percent)
-      }
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]) // Rely on devices update to trigger sync
-
-  const resolveTargetDeviceId = useCallback(() => {
-    if (selectedDeviceId) {
-      return selectedDeviceId
-    }
-    const activeDevice = devices.find((device) => device.is_active)
-    return activeDevice?.id
-  }, [devices, selectedDeviceId])
-
-  const sendSpotifyCommand = useCallback(
-    (
-      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-      overriddenDeviceId?: string
-    ) => {
-      const targetDeviceId =
-        overriddenDeviceId !== undefined
-          ? overriddenDeviceId
-          : resolveTargetDeviceId()
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      }
-      sendData(message)
-    },
-    [resolveTargetDeviceId, sendData]
-  )
-
-  const handlePlaybackCommand = useCallback(
-    (command: SpotifyCommand) => {
-      if (
-        command === 'PLAY' ||
-        command === 'PAUSE' ||
-        command === 'NEXT' ||
-        command === 'PREVIOUS'
-      ) {
-        sendSpotifyCommand(command)
-      }
-    },
-    [sendSpotifyCommand]
-  )
-
-  const sendVolumeCommand = useCallback(
-    (value: number) => {
-      if (connectionStatus !== 'Connected') return
-      const targetDeviceId = resolveTargetDeviceId()
-
-      // Prevent sending volume command if no device is targeted
-      if (!targetDeviceId) return
-
-      const sanitized = clampVolume(value)
-      const messageKey = `${targetDeviceId}:${sanitized}`
-      if (lastSentVolumeRef.current === messageKey) return
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      }
-      sendData(message)
-      lastSentVolumeRef.current = messageKey
-    },
-    [connectionStatus, resolveTargetDeviceId, sendData]
-  )
-
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
-    if (connectionStatus !== 'Connected') {
-      lastSentVolumeRef.current = null
-    }
-  }, [connectionStatus])
-
-  useEffect(() => {
-    // Clear any existing timer
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current)
-    }
-
-    // Set a new timer to send the volume command after 300ms
-    debounceTimeoutRef.current = setTimeout(() => {
-      sendVolumeCommand(volume)
-    }, 300)
-
-    // Cleanup function to clear the timeout if the component unmounts
-    // or if the volume changes again before the timeout has passed
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current)
-      }
-    }
-  }, [volume, sendVolumeCommand])
 
   return (
     <Card
