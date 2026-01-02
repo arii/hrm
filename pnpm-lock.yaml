@@ -89,7 +89,7 @@ importers:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
       react-virtualized-auto-sizer:
-        specifier: ^1.0.2
+        specifier: ^1.0.26
         version: 1.0.26(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-window:
         specifier: ^1.8.10
@@ -189,7 +189,7 @@ importers:
         specifier: ^19.2.2
         version: 19.2.3(@types/react@19.2.7)
       '@types/react-virtualized-auto-sizer':
-        specifier: ^1.0.1
+        specifier: ^1.0.8
         version: 1.0.8(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@types/react-window':
         specifier: ^1.8.8

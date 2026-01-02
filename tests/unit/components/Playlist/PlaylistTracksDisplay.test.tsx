@@ -34,7 +34,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
 
 describe('PlaylistTracksDisplay', () => {
   beforeEach(() => {
-    jest.clearAllMMocks()
+    jest.clearAllMocks()
   })
 
   const mockContextValue = {
@@ -130,10 +130,11 @@ describe('PlaylistTracksDisplay', () => {
 
     // Trigger the intersection observer
     act(() => {
-      // @ts-expect-error - mockImplementation is not typed
-      const [call] = mockIntersectionObserver.mock.calls
-      const [callback] = call
-      callback([{ isIntersecting: true }])
+      const call = mockIntersectionObserver.mock.calls[0]
+      if (call) {
+        const [callback] = call
+        callback([{ isIntersecting: true }])
+      }
     })
 
     await screen.findByText('Track 51')

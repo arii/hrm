@@ -59,8 +59,11 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
           throw new Error(errorData.message || 'Failed to fetch tracks')
         }
         const data = await response.json()
-        setTracks((prevTracks) => [...prevTracks, ...data.tracks])
-        setHasNextPage(tracks.length + data.tracks.length < data.total)
+        setTracks((prevTracks) => {
+          const newTracks = [...prevTracks, ...data.tracks]
+          setHasNextPage(newTracks.length < data.total)
+          return newTracks
+        })
         setError(null) // Clear previous errors on success
       } catch (err) {
         setError(
