@@ -133,12 +133,8 @@ export default function ConnectPage() {
     workoutStatus === 'running'
   )
 
-  const {
-    history,
-    zoneDistribution,
-    addDataPoint,
-    resetHistory,
-  } = useWorkoutHistory(maxHr)
+  const { history, zoneDistribution, addDataPoint, resetHistory } =
+    useWorkoutHistory(maxHr)
 
   useEffect(() => {
     if (workoutStatus === 'running' && currentHR > 0) {

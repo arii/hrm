@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { calculateHrZone, HR_ZONE_DEFINITIONS } from '@/lib/hrm/zones'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 import { getHrZoneColor } from '@/utils/visualization'
@@ -31,9 +31,6 @@ const useWorkoutHistory = (maxHr: number) => {
   const [zoneCounts, setZoneCounts] = useState<Record<HrZoneName, number>>(
     initializeZoneCounts
   )
-  const [zoneDistribution, setZoneDistribution] = useState<ZoneDistribution[]>(
-    []
-  )
 
   const addDataPoint = useCallback(
     (hr: number, calories: number) => {
@@ -52,14 +49,13 @@ const useWorkoutHistory = (maxHr: number) => {
     [maxHr]
   )
 
-  useEffect(() => {
+  const zoneDistribution = useMemo(() => {
     const totalDataPoints = history.length
     if (totalDataPoints === 0) {
-      setZoneDistribution([])
-      return
+      return []
     }
 
-    const newZoneDistribution = HR_ZONE_DEFINITIONS.map((zone, index) => {
+    return HR_ZONE_DEFINITIONS.map((zone, index) => {
       const count = zoneCounts[zone.name] || 0
       const percentage = (count / totalDataPoints) * 100
       const nextZone = HR_ZONE_DEFINITIONS[index + 1]
@@ -75,7 +71,6 @@ const useWorkoutHistory = (maxHr: number) => {
         )}`,
       }
     })
-    setZoneDistribution(newZoneDistribution)
   }, [zoneCounts, history.length, maxHr])
 
   const resetHistory = useCallback(() => {

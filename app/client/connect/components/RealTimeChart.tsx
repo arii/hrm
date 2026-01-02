@@ -28,11 +28,11 @@ const RealTimeChart: React.FC<RealTimeChartProps> = ({ data }) => {
       >
         <XAxis
           dataKey="time"
-          tickFormatter={(time) => formatDuration(time * 1000, 'm:ss')}
+          tickFormatter={(time) => formatDuration(time * 1000)}
         />
         <YAxis />
         <Tooltip
-          labelFormatter={(time) => `Time: ${formatDuration(time * 1000, 'm:ss')}`}
+          labelFormatter={(time) => `Time: ${formatDuration(time * 1000)}`}
           formatter={(value: number, name: string) => [
             `${value} ${name === 'hr' ? 'bpm' : name}`,
             name,

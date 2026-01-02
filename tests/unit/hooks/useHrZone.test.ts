@@ -1,60 +1,50 @@
-/** @jest-environment jsdom */
+/**
+ * @jest-environment jsdom
+ */
+// tests/unit/hooks/useHrZone.test.ts
 import { renderHook } from '@testing-library/react'
-import { useHrZone } from '@/hooks/useHrZone'
-import { getHrZoneProps } from '@/utils/visualization'
+import { useHrZone } from '../../../hooks/useHrZone'
+import { HrZoneName } from '../../../lib/shared/hr-zones'
+import theme from '../../../lib/theme'
 
-// Mock visualization utility
-jest.mock('@/utils/visualization', () => ({
-  getHrZoneProps: jest.fn(),
+jest.mock('../../../utils/visualization', () => ({
+  getHrZoneColor: jest.fn((zoneName: HrZoneName) => {
+    // Use require inside mock to avoid hoisting issues with undefined theme
+    const mockTheme = require('../../../lib/theme').default
+    const colors: { [key in HrZoneName]?: string } = {
+      [HrZoneName.Max]: mockTheme.palette.error.main,
+      [HrZoneName.Cardio]: mockTheme.palette.warning.main,
+      [HrZoneName.FatBurn]: mockTheme.palette.success.main,
+      [HrZoneName.WarmUp]: mockTheme.palette.secondary.main,
+      [HrZoneName.NoData]: mockTheme.palette.grey[500],
+    }
+    return colors[zoneName] || mockTheme.palette.grey[500]
+  }),
 }))
 
 describe('useHrZone', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
+  it('should return the correct zone for a given HR', () => {
+    const { result } = renderHook(() => useHrZone(180, 190))
+    expect(result.current.label).toBe(HrZoneName.Max)
   })
 
-  it('should call getHrZoneProps with correct arguments', () => {
-    const mockProps = {
-      percentage: 50,
-      color: 'primary',
-      progressColor: '#fff',
-      label: 'Zone 1',
-    }
-    ;(getHrZoneProps as jest.Mock).mockReturnValue(mockProps)
+  it('should return the correct color for a given HR', () => {
+    const { result } = renderHook(() => useHrZone(180, 190))
+    expect(result.current.progressColor).toBe(theme.palette.error.main)
+  })
 
-    const currentHR = 100
-    const maxHr = 200
-    const { result } = renderHook(() => useHrZone(currentHR, maxHr))
-
-    expect(getHrZoneProps).toHaveBeenCalledWith(currentHR, maxHr)
-    expect(result.current).toEqual(mockProps)
+  it('should return "No Data" when currentHR is 0', () => {
+    const { result } = renderHook(() => useHrZone(0, 190))
+    expect(result.current.label).toBe(HrZoneName.NoData)
   })
 
   it('should memoize the result', () => {
-    const mockProps = {
-      percentage: 50,
-      color: 'primary',
-      progressColor: '#fff',
-      label: 'Zone 1',
-    }
-    ;(getHrZoneProps as jest.Mock).mockReturnValue(mockProps)
-
     const { result, rerender } = renderHook(
-      ({ hr, max }) => useHrZone(hr, max),
-      {
-        initialProps: { hr: 100, max: 200 },
-      }
+      ({ hr, maxHr }) => useHrZone(hr, maxHr),
+      { initialProps: { hr: 180, maxHr: 190 } }
     )
-
     const firstResult = result.current
-
-    // Rerender with same props
-    rerender({ hr: 100, max: 200 })
-    expect(result.current).toBe(firstResult) // Reference equality check
-    expect(getHrZoneProps).toHaveBeenCalledTimes(1) // Should still be 1
-
-    // Rerender with new props
-    rerender({ hr: 110, max: 200 })
-    expect(getHrZoneProps).toHaveBeenCalledTimes(2)
+    rerender({ hr: 180, maxHr: 190 })
+    expect(result.current).toBe(firstResult)
   })
 })

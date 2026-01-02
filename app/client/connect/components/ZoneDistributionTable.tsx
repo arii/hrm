@@ -52,7 +52,7 @@ const ZoneDistributionTable: React.FC<ZoneDistributionTableProps> = ({
                 {row.zone}
               </TableCell>
               <TableCell>{row.bpmRange}</TableCell>
-              <TableCell>{formatDuration(row.duration * 1000, 'mm:ss')}</TableCell>
+              <TableCell>{formatDuration(row.duration * 1000)}</TableCell>
               <TableCell>{row.percentage.toFixed(1)}%</TableCell>
             </TableRow>
           ))}

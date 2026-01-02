@@ -1003,7 +1003,15 @@ jobs:
   integration-tests:
     name: 📊 Integration Tests Summary
     if: always() && inputs.has_changes == 'true'
-    needs: [prepare-env, infra-tests, unit-tests, component-tests, perf-tests, visual-tests]
+    needs:
+      [
+        prepare-env,
+        infra-tests,
+        unit-tests,
+        component-tests,
+        perf-tests,
+        visual-tests,
+      ]
     runs-on: ubuntu-latest
     outputs:
       infra-tests-outcome: ${{ needs.infra-tests.result }}
