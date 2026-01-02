@@ -24,13 +24,10 @@ const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
-const WorkoutTableViewer = dynamic(
-  () => import('../components/WorkoutTableViewer'),
-  {
-    ssr: false,
-    loading: () => <DashboardSectionLoadingSkeleton height={500} />,
-  }
-)
+const WorkoutGrid = dynamic(() => import('../components/WorkoutGrid'), {
+  ssr: false,
+  loading: () => <DashboardSectionLoadingSkeleton height={500} />,
+})
 
 const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
   ssr: false,
@@ -96,19 +93,17 @@ const Dashboard = () => {
         <HrmConnectionPanel />
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
-        {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
-          <WorkoutTableViewer docId={DOC_ID} />
-        ) : (
-          <GoogleDocViewer
-            title="Today's Training Regimen"
-            embedUrl={DOC_URL}
-            height={500}
-            isShrunk={docIsManuallyShrunk}
-            onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
-          />
-        )}
+        <WorkoutGrid docId={DOC_ID} />
       </Box>
-
+      <Box sx={{ width: '100%', mt: 2 }}>
+        <GoogleDocViewer
+          title="Reference Document"
+          embedUrl={DOC_URL}
+          height={500}
+          isShrunk={docIsManuallyShrunk}
+          onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
+        />
+      </Box>
       <SpotifyDisplay />
     </Container>
   )
