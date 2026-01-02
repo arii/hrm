@@ -42,6 +42,7 @@ export const useHrZoneTracker = (
     if (!isActive) {
       lastTickRef.current = null
       activeZoneRef.current = null
+      setZoneDurations(INITIAL_ZONES)
       return
     }
 
@@ -87,13 +88,6 @@ export const useHrZoneTracker = (
       activeZoneRef.current = currentZone
     }
   }, [currentHeartRate, maxHeartRate, isActive])
-
-  // Reset durations when workout becomes inactive
-  useEffect(() => {
-    if (!isActive) {
-      setZoneDurations(INITIAL_ZONES)
-    }
-  }, [isActive])
 
   return zoneDurations
 }

@@ -58,15 +58,20 @@ export const getHrZone = (
 ): number => {
   if (maxHeartRate <= 0 || currentHeartRate <= 0) return 0
   const percentage = (currentHeartRate / maxHeartRate) * 100
-  if (percentage < HR_ZONES[1].lower) return 0
+  const zone1 = HR_ZONES[1]
+  if (zone1 && percentage < zone1.lower) return 0
   for (const zoneInfo of Object.values(HR_ZONES)) {
-    if (percentage >= zoneInfo.lower && percentage < zoneInfo.upper) {
+    if (
+      zoneInfo &&
+      percentage >= zoneInfo.lower &&
+      percentage < zoneInfo.upper
+    ) {
       return zoneInfo.zone
     }
   }
-  // If percentage is 100% or slightly over due to estimation, cap at Zone 5
-  if (percentage >= HR_ZONES[5].lower) {
-    return HR_ZONES[5].zone
+  const zone5 = HR_ZONES[5]
+  if (zone5 && percentage >= zone5.lower) {
+    return zone5.zone
   }
   return 0 // Default case
 }

@@ -5,19 +5,15 @@ import {
   Box,
   Button,
   Grid,
-  CircularProgress,
   Paper,
 } from '@mui/material'
 import {
   Bluetooth as BluetoothIcon,
   BluetoothConnected as BluetoothConnectedIcon,
-  Timer as TimerIcon,
-  LocalFireDepartment as LocalFireDepartmentIcon,
-  Favorite as FavoriteIcon,
+  BluetoothDisabled as BluetoothDisabledIcon,
 } from '@mui/icons-material'
 import UserSettings from './UserSettings'
-import HeartRateZones from '@/components/HeartRateZones'
-import HrTileWithCalories from '@/components/HrTileWithCalories'
+import { HrTileWithCalories } from '@/components/HrTileWithCalories'
 import { WorkoutStatus } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types/core'
 import PerformanceDashboard from './PerformanceDashboard'
@@ -40,8 +36,6 @@ interface ConnectViewProps {
   setUserWeight: (weight: string) => void
   onWeightBlur: () => void
   weightError: string | null
-  gender: 'male' | 'female' | 'other' | null
-  setGender: (gender: 'male' | 'female' | 'other') => void
   unitSystem: MeasurementSystem
   onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
@@ -49,7 +43,7 @@ interface ConnectViewProps {
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void
-  onForgetDevice: () => void
+  onForgetDevice: () => Promise<void>
   isSupported: boolean
   currentHR: number
   hrZoneProps: {
@@ -69,7 +63,6 @@ interface ConnectViewProps {
 
 const ConnectView = (props: ConnectViewProps) => {
   const {
-    duration,
     caloriesBurned,
     userName,
     setUserName,
@@ -85,8 +78,6 @@ const ConnectView = (props: ConnectViewProps) => {
     setUserWeight,
     onWeightBlur,
     weightError,
-    gender,
-    setGender,
     unitSystem,
     onUnitChange,
     isConnected,
@@ -97,7 +88,6 @@ const ConnectView = (props: ConnectViewProps) => {
     onForgetDevice,
     isSupported,
     currentHR,
-    hrZoneProps,
     connectionStatus,
     bluetoothConnected,
     hasStarted,
@@ -109,6 +99,22 @@ const ConnectView = (props: ConnectViewProps) => {
     zoneDurations,
   } = props
 
+  if (!isSupported) {
+    return (
+      <Container maxWidth="sm">
+        <Box textAlign="center" my={4}>
+          <BluetoothDisabledIcon sx={{ fontSize: 80, color: 'text.disabled' }} />
+          <Typography variant="h5" component="h1" gutterBottom>
+            Web Bluetooth Not Supported
+          </Typography>
+          <Typography color="textSecondary">
+            Your browser does not support the Web Bluetooth API. Please use a compatible browser like Chrome, Edge, or Opera on a desktop or Android device.
+          </Typography>
+        </Box>
+      </Container>
+    )
+  }
+
   return (
     <Container maxWidth="md">
       <Box textAlign="center" my={4}>
@@ -119,15 +125,6 @@ const ConnectView = (props: ConnectViewProps) => {
           Connect your heart rate monitor to start a session.
         </Typography>
       </Box>
-
-      {!isSupported && (
-        <Paper elevation={3} sx={{ p: 2, mb: 3, bgcolor: 'warning.light' }}>
-          <Typography>
-            Web Bluetooth API is not supported on this browser. Please use
-            Chrome, Edge, or Opera on a compatible device.
-          </Typography>
-        </Paper>
-      )}
 
       <Grid container spacing={3}>
         <Grid item xs={12}>
@@ -146,11 +143,8 @@ const ConnectView = (props: ConnectViewProps) => {
             setUserWeight={setUserWeight}
             onWeightBlur={onWeightBlur}
             weightError={weightError}
-            gender={gender}
-            setGender={setGender}
-            unitSystem={unitSystem}
-            onUnitChange={onUnitChange}
-            isEditing={!bluetoothConnected}
+            unit={unitSystem}
+            setUnit={onUnitChange}
           />
         </Grid>
 
@@ -177,7 +171,7 @@ const ConnectView = (props: ConnectViewProps) => {
               onClick={onDisconnect}
               disabled={!isConnected}
               startIcon={<BluetoothConnectedIcon />}
->
+            >
               Disconnect
             </Button>
             <Button
@@ -211,7 +205,11 @@ const ConnectView = (props: ConnectViewProps) => {
           <>
             <Grid item xs={12} sm={4}>
               <HrTileWithCalories
-                user={{clientId: 'local', value: currentHR, calories: caloriesBurned}}
+                user={{
+                  clientId: 'local',
+                  value: currentHR,
+                  calories: caloriesBurned,
+                }}
                 isAlerting={false}
               />
             </Grid>
@@ -265,4 +263,4 @@ const ConnectView = (props: ConnectViewProps) => {
   )
 }
 
-export default ConnectView;
+export default ConnectView

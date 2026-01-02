@@ -2,8 +2,6 @@
 'use client'
 
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -34,7 +32,7 @@ const PerformanceDashboard = ({
   hrHistory,
   zoneDurations,
 }: PerformanceDashboardProps) => {
-  const startTime = hrHistory.length > 0 ? hrHistory[0].time : Date.now()
+  const startTime = hrHistory.length > 0 && hrHistory[0] ? hrHistory[0].time : 0
   const chartData = hrHistory.map((d) => ({
     time: (d.time - startTime) / 1000, // Convert to seconds from start
     hr: d.hr,

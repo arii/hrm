@@ -26,7 +26,10 @@ describe('useCalorieCounter', () => {
   beforeEach(() => {
     jest.useFakeTimers()
     // Clear mock history before each test
-    ;(require('@/lib/calorie-estimation').estimateCaloriesBurned as jest.Mock).mockClear()
+    ;(
+      require('@/lib/calorie-estimation')
+        .estimateCaloriesBurned as jest.Mock
+    ).mockClear()
   })
 
   afterEach(() => {

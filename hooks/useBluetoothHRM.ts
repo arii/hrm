@@ -170,7 +170,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
-    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
+    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null, calories: 0 } })
 
     setDeviceStatus('Disconnected')
     setSavedDevice(null)
@@ -209,7 +209,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const onDisconnected = useCallback(() => {
     setBatteryLevel(null)
-    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
+    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null, calories: 0 } })
 
     if (!isManualDisconnect.current && deviceRef.current) {
       logger.info(
@@ -255,14 +255,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           const value = await batteryChar.readValue()
           setBatteryLevel(value.getUint8(0))
           await batteryChar.startNotifications()
-          batteryChar.addEventListener(
-            'characteristicvaluechanged',
-            (e: unknown) => {
-              const target =
-                (e as Event).target as BluetoothRemoteGATTCharacteristic
-              setBatteryLevel(target.value!.getUint8(0))
-            }
-          )
+          batteryChar.addEventListener('characteristicvaluechanged', (e) => {
+            const target = e.target as BluetoothRemoteGATTCharacteristic
+            setBatteryLevel(target.value!.getUint8(0))
+          })
         } catch (_err) {
           /* Battery service optional */
         }

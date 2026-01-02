@@ -19,7 +19,7 @@ import { useHrZoneTracker } from '@/hooks/useHrZoneTracker'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
-  const { userName, userAge, userWeight, gender, unitSystem } = userSettings
+  const { userName, userAge, userWeight, unitSystem } = userSettings
 
   const [displayWeight, setDisplayWeight] = useState(() => {
     const kg = userWeight || 0
@@ -57,18 +57,6 @@ export default function ConnectPage() {
   }
 
   const {
-    workoutDuration,
-    resetWorkout: resetWorkoutSession,
-    hasStarted,
-    startWorkout,
-    endWorkout,
-    workoutStatus,
-  } = useWorkoutSession({
-    isConnected: false,
-    totalCalories: 0,
-  })
-
-  const {
     connectAndStream,
     autoConnect,
     disconnect,
@@ -88,6 +76,18 @@ export default function ConnectPage() {
     workoutIsActive: workoutStatus === 'running',
   })
 
+  const {
+    workoutDuration,
+    resetWorkout: resetWorkoutSession,
+    hasStarted,
+    startWorkout,
+    endWorkout,
+    workoutStatus,
+  } = useWorkoutSession({
+    isConnected: isConnected,
+    totalCalories: calories,
+  })
+
   const { connectionStatus } = useWebSocket()
   const [hrHistory, setHrHistory] = useState<{ time: number; hr: number }[]>([])
 
@@ -100,8 +100,10 @@ export default function ConnectPage() {
 
   useEffect(() => {
     if (workoutStatus === 'running' && smoothedHeartRate > 0) {
-      const now = Date.now()
-      setHrHistory((prev) => [...prev, { time: now, hr: smoothedHeartRate }])
+      setHrHistory((prev) => [
+        ...prev,
+        { time: Date.now(), hr: smoothedHeartRate },
+      ])
     }
   }, [smoothedHeartRate, workoutStatus])
 
@@ -165,8 +167,6 @@ export default function ConnectPage() {
       setUserWeight={handleWeightChange}
       onWeightBlur={handleWeightBlur}
       weightError={weightError}
-      gender={gender}
-      setGender={(g) => setUserSettings((prev) => ({ ...prev, gender: g }))}
       unitSystem={unitSystem}
       onUnitChange={handleUnitChange}
       isConnected={isConnected}

@@ -2,7 +2,7 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { IncomingMessage } from 'http'
 import { initSocketManager } from '../../utils/socketManager'
-import { HrmInputMessage } from '../../types/websocket'
+import { HrmInputMessage, HrmData } from '../../types/websocket'
 import { Socket } from 'net'
 
 // Increase timeout for this test file due to async nature of WebSocket tests
@@ -24,7 +24,16 @@ jest.mock('../../lib/env', () => ({
 describe('WebSocket Manager', () => {
   let wss: WebSocketServer
   let mockGetSnapshot: jest.Mock
-  let mockServices: any
+  let mockServices: {
+    tabataService: {
+      handleCommand: jest.Mock
+      setMode: jest.Mock
+      setConfig: jest.Mock
+    }
+    spotifyService: {
+      handleCommand: jest.Mock
+    }
+  }
 
   beforeEach(() => {
     wss = new WebSocketServer({ noServer: true })
@@ -48,31 +57,34 @@ describe('WebSocket Manager', () => {
 
   const createMockSocket = (): WebSocket => {
     const ws = new WebSocket('ws://localhost:8080')
-    Object.defineProperty(ws, 'readyState', { value: WebSocket.OPEN, writable: true });
+    Object.defineProperty(ws, 'readyState', {
+      value: WebSocket.OPEN,
+      writable: true,
+    })
     return ws as WebSocket
   }
 
   const createMockRequest = (clientId: string): IncomingMessage => {
-    const req = new IncomingMessage(new Socket());
-    req.headers = { host: 'localhost' };
-    req.url = `/?clientId=${clientId}`;
-    return req;
+    const req = new IncomingMessage(new Socket())
+    req.headers = { host: 'localhost' }
+    req.url = `/?clientId=${clientId}`
+    return req
   }
 
   it('should handle a new connection', () => {
     const ws = createMockSocket()
-    const req = createMockRequest('test-client-1');
+    const req = createMockRequest('test-client-1')
     wss.emit('connection', ws, req)
     expect(ws).toHaveProperty('clientId', 'test-client-1')
   })
 
   it('should handle HRM_INPUT and broadcast state', (done) => {
     const ws1 = createMockSocket()
-    const req1 = createMockRequest('client-1');
+    const req1 = createMockRequest('client-1')
     wss.emit('connection', ws1, req1)
 
     const ws2 = createMockSocket()
-    const req2 = createMockRequest('client-2');
+    const req2 = createMockRequest('client-2')
     wss.emit('connection', ws2, req2)
 
     const hrmMessage: HrmInputMessage = {
@@ -84,7 +96,7 @@ describe('WebSocket Manager', () => {
       const message = JSON.parse(data.toString())
       if (message.type === 'HRM_UPDATE') {
         const client1Data = message.payload.find(
-          (d: any) => d.clientId === 'client-1'
+          (d: HrmData) => d.clientId === 'client-1'
         )
         expect(client1Data.value).toBe(150)
         expect(client1Data.calories).toBe(123.4)

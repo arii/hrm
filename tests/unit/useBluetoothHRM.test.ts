@@ -137,34 +137,38 @@ describe('useBluetoothHRM', () => {
 
   describe('Throttling', () => {
     it('should throttle heart rate updates with a configurable frequency', async () => {
-        const { rerender } = renderHook(
-            ({ workoutIsActive }) => useBluetoothHRM({ throttleMs: 500, workoutIsActive }),
-            { initialProps: { workoutIsActive: false } }
-        );
+      const { rerender } = renderHook(
+        ({ workoutIsActive }) =>
+          useBluetoothHRM({ throttleMs: 500, workoutIsActive }),
+        { initialProps: { workoutIsActive: false } }
+      )
 
-        // Start the workout
-        rerender({ workoutIsActive: true });
+      rerender({ workoutIsActive: true })
 
-        // Advance time to allow the throttled function to send data
-        act(() => {
-            jest.advanceTimersByTime(500);
-        });
+      act(() => {
+        jest.advanceTimersByTime(500)
+      })
 
-        // Now check if the data has been sent
-        const hrmInputCalls = mockSendData.mock.calls.filter(call => call[0].type === 'HRM_INPUT').length;
-        expect(hrmInputCalls).toBe(1);
+      const hrmInputCalls = mockSendData.mock.calls.filter(
+        (call) => call[0].type === 'HRM_INPUT'
+      ).length
+      expect(hrmInputCalls).toBe(1)
 
-        // Advance time, but not enough to trigger another send
-        act(() => {
-            jest.advanceTimersByTime(499);
-        });
-        expect(mockSendData.mock.calls.filter(call => call[0].type === 'HRM_INPUT').length).toBe(1);
+      act(() => {
+        jest.advanceTimersByTime(499)
+      })
+      expect(
+        mockSendData.mock.calls.filter((call) => call[0].type === 'HRM_INPUT')
+          .length
+      ).toBe(1)
 
-        // Advance past the throttle threshold
-        act(() => {
-            jest.advanceTimersByTime(1);
-        });
-        expect(mockSendData.mock.calls.filter(call => call[0].type === 'HRM_INPUT').length).toBe(2);
-    });
-})
+      act(() => {
+        jest.advanceTimersByTime(1)
+      })
+      expect(
+        mockSendData.mock.calls.filter((call) => call[0].type === 'HRM_INPUT')
+          .length
+      ).toBe(2)
+    })
+  })
 })
