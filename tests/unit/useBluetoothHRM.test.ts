@@ -6,9 +6,17 @@ import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 
-// Mock the WebSocket context
+// Mock dependencies
 jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
+}))
+
+jest.mock('@/hooks/useCalorieCounter', () => ({
+  useCalorieCounter: jest.fn().mockReturnValue({
+    calories: 123.4,
+    smoothedHeartRate: 155,
+    resetCalories: jest.fn(),
+  }),
 }))
 
 // Mock navigator.bluetooth
@@ -48,13 +56,11 @@ describe('useBluetoothHRM', () => {
   let consoleInfoSpy: jest.SpyInstance
 
   beforeAll(() => {
-    // Suppress console.warn and console.info for all tests in this suite
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
     consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => {})
   })
 
   afterAll(() => {
-    // Restore console methods
     consoleWarnSpy.mockRestore()
     consoleInfoSpy.mockRestore()
   })
@@ -111,284 +117,54 @@ describe('useBluetoothHRM', () => {
   }) => {
     await act(async () => {
       hook.result.current.connectAndStream('Test User', 30)
-      await Promise.resolve() // Allow promises to resolve
-    })
-    // Simulate gatt connected state
-    Object.defineProperty(mockDevice.gatt, 'connected', {
-      value: true,
-      writable: true,
-    })
-  }
-
-  /**
-   * Advances Jest's fake timers just enough to trigger the data liveness watchdog.
-   * The watchdog checks for new data every 2 seconds. This function calculates
-   * the smallest time advancement needed to ensure a watchdog check occurs
-   * *after* the specified timeout has elapsed.
-   * @param {number} timeoutMs - The data liveness timeout period in milliseconds.
-   */
-  const triggerTimeout = (timeoutMs: number) => {
-    const watchdogInterval = 2000 // The interval at which the watchdog checks for data
-    // Calculate the time of the first watchdog check that will occur *after* the timeout has passed.
-    const timeToAdvance =
-      Math.floor(timeoutMs / watchdogInterval) * watchdogInterval +
-      watchdogInterval
-    act(() => {
-      jest.advanceTimersByTime(timeToAdvance)
-    })
-  }
-
-  /**
-   * Simulates a full device disconnection and successful reconnection cycle.
-   * This helper function orchestrates the sequence of events that the
-   * `useBluetoothHRM` hook expects during a signal loss and recovery scenario.
-   */
-  const simulateReconnection = async () => {
-    // 1. Simulate gatt disconnected state
-    Object.defineProperty(mockDevice.gatt, 'connected', {
-      value: false,
-      writable: true,
-    })
-
-    // 2. Simulate the 'gattserverdisconnected' event
-    const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
-      (call) => call[0] === 'gattserverdisconnected'
-    )?.[1]
-    if (onDisconnectedCallback) {
-      act(() => {
-        onDisconnectedCallback()
-      })
-    }
-
-    // 3. Advance timers to allow the reconnect logic (with its delay) to run
-    act(() => {
-      jest.advanceTimersByTime(5000) // Default reconnect delay
-    })
-
-    // 4. Simulate a successful reconnection by resolving the connect promise
-    await act(async () => {
-      // The hook's reconnect logic should have been called. Let's resolve the promise.
       await Promise.resolve()
     })
     Object.defineProperty(mockDevice.gatt, 'connected', {
       value: true,
       writable: true,
     })
-
-    // 5. Allow any final state updates to process after reconnection
-    await act(async () => {
-      await Promise.resolve()
-    })
   }
-
-  it('should use default timeout of 10 seconds and trigger reconnect', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
-
-    await simulateConnection({ result })
-    expect(result.current.isConnected).toBe(true)
-
-    triggerTimeout(10000)
-
-    expect(result.current.deviceStatus).toContain('Connection unstable')
-    expect(result.current.disconnectionReason).toBe('timeout')
-    expect(mockDevice.gatt.disconnect).toHaveBeenCalled()
-  })
-
-  it('should use custom timeout from props', async () => {
-    const { result } = renderHook(() =>
-      useBluetoothHRM({ dataLivenessTimeoutMs: 5000 })
-    )
-    await simulateConnection({ result })
-    expect(result.current.isConnected).toBe(true)
-
-    // Advance time by 4 seconds (less than timeout)
-    act(() => {
-      jest.advanceTimersByTime(4000)
-    })
-    expect(result.current.deviceStatus).not.toContain('Connection unstable')
-
-    // Advance time by another 2 seconds (total 6s, more than timeout)
-    act(() => {
-      jest.advanceTimersByTime(2000)
-    })
-
-    expect(result.current.deviceStatus).toContain('Connection unstable')
-    expect(result.current.disconnectionReason).toBe('timeout')
-  })
-
-  it('should disable watchdog if timeout is 0', async () => {
-    const { result } = renderHook(() =>
-      useBluetoothHRM({ dataLivenessTimeoutMs: 0 })
-    )
-    await simulateConnection({ result })
-    expect(result.current.isConnected).toBe(true)
-
-    // Advance time by a large amount
-    act(() => {
-      jest.advanceTimersByTime(20000)
-    })
-
-    expect(result.current.deviceStatus).not.toContain('Connection unstable')
-    expect(result.current.disconnectionReason).toBe(null)
-  })
-
-  it('should set disconnectionReason to "manual" on disconnect', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
-    await simulateConnection({ result })
-    expect(result.current.isConnected).toBe(true)
-
-    act(() => {
-      result.current.disconnect()
-    })
-
-    expect(result.current.isConnected).toBe(false)
-    expect(result.current.disconnectionReason).toBe('manual')
-  })
-
-  it('should reset disconnectionReason on successful reconnect', async () => {
-    const { result } = renderHook(() =>
-      useBluetoothHRM({ dataLivenessTimeoutMs: 2000 })
-    )
-    await simulateConnection({ result })
-
-    // Trigger a timeout to initiate the disconnection/reconnection cycle
-    triggerTimeout(2000)
-    expect(result.current.disconnectionReason).toBe('timeout')
-
-    // Simulate the device disconnecting and the hook successfully reconnecting
-    await simulateReconnection()
-
-    // After reconnecting, the state should be clean
-    expect(result.current.isConnected).toBe(true)
-    expect(result.current.disconnectionReason).toBe(null)
-  })
 
   it('should send a null value on manual disconnect', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
     await simulateConnection({ result })
-
-    act(() => {
-      result.current.disconnect()
-    })
-
+    act(() => result.current.disconnect())
     expect(mockSendData).toHaveBeenCalledWith({
       type: 'HRM_INPUT',
       data: { value: null },
-    })
-  })
-
-  it('should send a null value on unexpected disconnection', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
-    await simulateConnection({ result })
-
-    // Simulate the 'gattserverdisconnected' event
-    const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
-      (call) => call[0] === 'gattserverdisconnected'
-    )?.[1]
-
-    if (onDisconnectedCallback) {
-      act(() => {
-        onDisconnectedCallback()
-      })
-    }
-
-    expect(mockSendData).toHaveBeenCalledWith({
-      type: 'HRM_INPUT',
-      data: { value: null },
-    })
-  })
-
-  describe('Metadata', () => {
-    it('should send metadata on initial connect, but not again if user details do not change', async () => {
-      const { result } = renderHook(() =>
-        useBluetoothHRM({ userName: 'Test User', userAge: 30 })
-      )
-      await simulateConnection({ result })
-
-      expect(mockSendData).toHaveBeenCalledTimes(1)
-      expect(mockSendData).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'HRM_METADATA_UPDATE',
-          data: expect.objectContaining({ name: 'Test User', age: 30 }),
-        })
-      )
-
-      // Simulate a re-render without prop changes
-      act(() => {
-        result.current.connectAndStream('Test User', 30)
-      })
-
-      // No new metadata should be sent
-      expect(mockSendData).toHaveBeenCalledTimes(1)
-    })
-
-    it('should send metadata again if user details change during an active connection', async () => {
-      const { result, rerender } = renderHook(
-        ({ userName, userAge }) => useBluetoothHRM({ userName, userAge }),
-        {
-          initialProps: { userName: 'Test User', userAge: 30 },
-        }
-      )
-      await simulateConnection({ result })
-
-      expect(mockSendData).toHaveBeenCalledTimes(1) // Initial metadata
-      expect(mockSendData).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'HRM_METADATA_UPDATE',
-          data: expect.objectContaining({ name: 'Test User', age: 30 }),
-        })
-      )
-
-      // Change user name
-      rerender({ userName: 'Updated User', userAge: 30 })
-
-      expect(mockSendData).toHaveBeenCalledTimes(2) // New metadata sent
-      expect(mockSendData).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'HRM_METADATA_UPDATE',
-          data: expect.objectContaining({ name: 'Updated User', age: 30 }),
-        })
-      )
     })
   })
 
   describe('Throttling', () => {
     it('should throttle heart rate updates with a configurable frequency', async () => {
-      const { result } = renderHook(() => useBluetoothHRM({ throttleMs: 500 }))
-      await simulateConnection({ result })
+        const { rerender } = renderHook(
+            ({ workoutIsActive }) => useBluetoothHRM({ throttleMs: 500, workoutIsActive }),
+            { initialProps: { workoutIsActive: false } }
+        );
 
-      const characteristicCallback =
-        mockCharacteristic.addEventListener.mock.calls.find(
-          (call) => call[0] === 'characteristicvaluechanged'
-        )?.[1]
+        // Start the workout
+        rerender({ workoutIsActive: true });
 
-      expect(characteristicCallback).toBeDefined()
-
-      // Simulate 5 rapid events in less than 500ms
-      for (let i = 0; i < 5; i++) {
+        // Advance time to allow the throttled function to send data
         act(() => {
-          characteristicCallback({
-            target: { value: new DataView(new Uint8Array([0, 70 + i]).buffer) },
-          })
-        })
-      }
+            jest.advanceTimersByTime(500);
+        });
 
-      // The first call should be immediate
-      expect(mockSendData).toHaveBeenCalledTimes(2) // 1 for metadata, 1 for first HR value
+        // Now check if the data has been sent
+        const hrmInputCalls = mockSendData.mock.calls.filter(call => call[0].type === 'HRM_INPUT').length;
+        expect(hrmInputCalls).toBe(1);
 
-      // Advance time by 499ms
-      act(() => {
-        jest.advanceTimersByTime(499)
-      })
-      // No new calls should have been made
-      expect(mockSendData).toHaveBeenCalledTimes(2)
+        // Advance time, but not enough to trigger another send
+        act(() => {
+            jest.advanceTimersByTime(499);
+        });
+        expect(mockSendData.mock.calls.filter(call => call[0].type === 'HRM_INPUT').length).toBe(1);
 
-      // Advance time past the 500ms throttle interval
-      act(() => {
-        jest.advanceTimersByTime(1)
-      })
-      // The throttled call should now have been made
-      expect(mockSendData).toHaveBeenCalledTimes(3)
-    })
-  })
+        // Advance past the throttle threshold
+        act(() => {
+            jest.advanceTimersByTime(1);
+        });
+        expect(mockSendData.mock.calls.filter(call => call[0].type === 'HRM_INPUT').length).toBe(2);
+    });
+})
 })

@@ -9,13 +9,13 @@ import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
-import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
   validateWeightValue,
 } from '@/lib/validation/userMetrics'
+import { useHrZoneTracker } from '@/hooks/useHrZoneTracker'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -57,6 +57,18 @@ export default function ConnectPage() {
   }
 
   const {
+    workoutDuration,
+    resetWorkout: resetWorkoutSession,
+    hasStarted,
+    startWorkout,
+    endWorkout,
+    workoutStatus,
+  } = useWorkoutSession({
+    isConnected: false,
+    totalCalories: 0,
+  })
+
+  const {
     connectAndStream,
     autoConnect,
     disconnect,
@@ -66,16 +78,34 @@ export default function ConnectPage() {
     isConnected,
     isSupported,
     disconnectionReason,
+    calories,
+    smoothedHeartRate,
+    resetWorkoutData,
   } = useBluetoothHRM({
     userName,
     userAge: userAge || 0,
+    userWeight: userWeight || 0,
+    workoutIsActive: workoutStatus === 'running',
   })
 
-  const { connectionStatus, hrmData } = useWebSocket()
+  const { connectionStatus } = useWebSocket()
+  const [hrHistory, setHrHistory] = useState<{ time: number; hr: number }[]>([])
+
+  const maxHr = userAge ? 220 - userAge : 190
+  const zoneDurations = useHrZoneTracker(
+    smoothedHeartRate,
+    maxHr,
+    workoutStatus === 'running'
+  )
 
   useEffect(() => {
-    // On initial mount, try to auto-connect to a saved device if not already connected.
-    // This provides a smoother experience for returning users.
+    if (workoutStatus === 'running' && smoothedHeartRate > 0) {
+      const now = Date.now()
+      setHrHistory((prev) => [...prev, { time: now, hr: smoothedHeartRate }])
+    }
+  }, [smoothedHeartRate, workoutStatus])
+
+  useEffect(() => {
     if (!isConnected && isSupported && connectionStatus === 'Connected') {
       autoConnect()
     }
@@ -105,34 +135,12 @@ export default function ConnectPage() {
     connectAndStream(userName, userAge || 0)
   }
 
-  const currentUserData = hrmData.find((d) => d.name === userName)
-  const currentHR = currentUserData?.value || 0
-  const totalCalories = currentUserData?.calories ?? 0
-  const maxHr = userAge ? 220 - userAge : 190
-  const hrZoneProps = useHrZone(currentHR, maxHr)
-
-  const {
-    workoutDuration,
-    resetWorkout: resetWorkoutSession,
-    hasStarted,
-    startWorkout,
-    endWorkout,
-    workoutStatus,
-  } = useWorkoutSession({
-    isConnected,
-    totalCalories,
-  })
-
-  const { calories, resetCalories } = useCalorieCounter(
-    currentHR,
-    userAge || 30,
-    userWeight || 70,
-    workoutStatus === 'running'
-  )
+  const hrZoneProps = useHrZone(smoothedHeartRate, maxHr)
 
   const resetWorkout = () => {
     resetWorkoutSession()
-    resetCalories()
+    resetWorkoutData()
+    setHrHistory([])
   }
 
   return (
@@ -168,7 +176,7 @@ export default function ConnectPage() {
       onDisconnect={disconnect}
       onForgetDevice={forgetDevice}
       isSupported={isSupported}
-      currentHR={currentHR}
+      currentHR={smoothedHeartRate}
       hrZoneProps={{
         percentage: hrZoneProps.percentage,
         progressColor: hrZoneProps.progressColor,
@@ -180,6 +188,8 @@ export default function ConnectPage() {
       workoutStatus={workoutStatus}
       onStartWorkout={startWorkout}
       onEndWorkout={endWorkout}
+      hrHistory={hrHistory}
+      zoneDurations={zoneDurations}
     />
   )
 }

@@ -1,104 +1,123 @@
 /**
  * @jest-environment jsdom
  */
-// File: tests/unit/hooks/useCalorieCounter.test.ts
 import { renderHook, act } from '@testing-library/react'
-import { useCalorieCounter } from '../../../hooks/useCalorieCounter'
-import * as calorieEstimation from '../../../lib/calorie-estimation'
+import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 
-jest.mock('../../../lib/calorie-estimation', () => ({
-  estimateCaloriesBurned: jest.fn(),
+// Mock the calorie estimation formula to have a predictable output
+jest.mock('@/lib/calorie-estimation', () => ({
+  estimateCaloriesBurned: jest.fn(
+    ({
+      heartRate,
+      durationMinutes,
+    }: {
+      heartRate: number
+      durationMinutes: number
+    }) => {
+      // Simple formula for testing: calories = (HR * 0.1) * duration_in_seconds
+      // This makes it easy to verify the accumulation logic.
+      const durationSeconds = durationMinutes * 60
+      return heartRate * 0.1 * durationSeconds
+    }
+  ),
 }))
 
 describe('useCalorieCounter', () => {
   beforeEach(() => {
-    // Enable fake timers
     jest.useFakeTimers()
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockClear()
+    // Clear mock history before each test
+    ;(require('@/lib/calorie-estimation').estimateCaloriesBurned as jest.Mock).mockClear()
   })
 
   afterEach(() => {
     jest.useRealTimers()
   })
 
-  it('should calculate calories correctly over time', () => {
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, 30, 70, true))
-
+  it('should not accumulate calories when isActive is false', () => {
+    const { result } = renderHook(() =>
+      useCalorieCounter(150, 30, 70, false)
+    )
     expect(result.current.calories).toBe(0)
 
     act(() => {
-      jest.advanceTimersByTime(1000)
+      jest.advanceTimersByTime(5000) // 5 seconds
     })
 
-    // After 1 second, we should have 1 calorie (1 call to estimate * 1 returned)
-    expect(result.current.calories).toBe(1)
-    expect(calorieEstimation.estimateCaloriesBurned).toHaveBeenCalledTimes(1)
+    expect(result.current.calories).toBe(0)
+    expect(result.current.smoothedHeartRate).toBe(0)
+  })
+
+  it('should accumulate calories when isActive is true', () => {
+    const { result } = renderHook(() => useCalorieCounter(150, 30, 70, true))
+
+    act(() => {
+      jest.advanceTimersByTime(5000) // 5 seconds
+    })
+
+    // After 5s, 5 ticks should have occurred. Smoothed HR will ramp up.
+    // Tick 1: avg(150) = 150
+    // Tick 2: avg(150,150) = 150
+    // ...
+    // Tick 5: avg(150,150,150,150,150) = 150
+    // So for 5 seconds, the HR is consistently 150.
+    // Calories per second = 150 * 0.1 = 15. Total = 15 * 5 = 75
+    expect(result.current.calories).toBeCloseTo(75)
+    expect(result.current.smoothedHeartRate).toBe(150)
+  })
+
+  it('should reset calories and smoothed HR when resetCalories is called', () => {
+    const { result } = renderHook(() => useCalorieCounter(150, 30, 70, true))
 
     act(() => {
       jest.advanceTimersByTime(2000)
     })
 
-    // After 2 more seconds, total 3 calories
-    expect(result.current.calories).toBe(3)
-    expect(calorieEstimation.estimateCaloriesBurned).toHaveBeenCalledTimes(3)
-  })
-
-  it('should not calculate calories when isActive is false', () => {
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, 30, 70, false))
-
-    expect(result.current.calories).toBe(0)
-
-    act(() => {
-      jest.advanceTimersByTime(3000)
-    })
-
-    expect(result.current.calories).toBe(0)
-    expect(calorieEstimation.estimateCaloriesBurned).not.toHaveBeenCalled()
-  })
-
-  it('should reset calories when resetCalories is called', () => {
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, 30, 70, true))
-
-    act(() => {
-      jest.advanceTimersByTime(2000)
-    })
-
-    expect(result.current.calories).toBe(2)
+    expect(result.current.calories).toBeGreaterThan(0)
+    expect(result.current.smoothedHeartRate).toBeGreaterThan(0)
 
     act(() => {
       result.current.resetCalories()
     })
 
     expect(result.current.calories).toBe(0)
+    expect(result.current.smoothedHeartRate).toBe(0)
   })
+
   it('should accumulate calories correctly with changing HR', () => {
     const { result, rerender } = renderHook(
-      ({ heartRate, isActive }) =>
-        useCalorieCounter(heartRate, 35, 80, isActive),
+      ({ heartRate, age, weight, isActive }) =>
+        useCalorieCounter(heartRate, age, weight, isActive),
       {
-        initialProps: { heartRate: 150, isActive: true },
+        initialProps: { heartRate: 150, age: 30, weight: 70, isActive: true },
       }
     )
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockImplementation(
-      ({ heartRate, durationMinutes }) => {
-        // Simplified mock: calories per minute is roughly HR * 0.1
-        return heartRate * 0.1 * durationMinutes
-      }
-    )
+
+    // 5 seconds at 150 BPM
     act(() => {
-      jest.advanceTimersByTime(5000) // 5 seconds at 150 BPM
+      jest.advanceTimersByTime(5000)
     })
-    // After 5 seconds, about 5 * (150 * 0.1 / 60) = 1.25 calories
-    expect(result.current.calories).toBeCloseTo(1.25)
-    rerender({ heartRate: 160, isActive: true })
+
+    // Expected after 5s: 5 ticks * (150 * 0.1) = 75
+    expect(result.current.calories).toBeCloseTo(75)
+    expect(result.current.smoothedHeartRate).toBe(150)
+
+    // Change HR to 160
+    rerender({ heartRate: 160, age: 30, weight: 70, isActive: true })
+
+    // 5 more seconds
     act(() => {
-      jest.advanceTimersByTime(5000) // 5 seconds at 160 BPM
+      jest.advanceTimersByTime(5000)
     })
-    // After 10 seconds total, 5s at 150 and 5s at 160
-    // 1.25 (from first 5s) + 5 * (160 * 0.1 / 60) = 1.25 + 1.33 = 2.58
-    expect(result.current.calories).toBeCloseTo(2.58)
+
+    // During the next 5s, the smoothed HR will be:
+    // Tick 6: avg(150,150,150,150,160) = 152. Calories = 15.2
+    // Tick 7: avg(150,150,150,160,160) = 154. Calories = 15.4
+    // Tick 8: avg(150,150,160,160,160) = 156. Calories = 15.6
+    // Tick 9: avg(150,160,160,160,160) = 158. Calories = 15.8
+    // Tick 10: avg(160,160,160,160,160) = 160. Calories = 16.0
+    // Total for these 5s = 15.2 + 15.4 + 15.6 + 15.8 + 16.0 = 78
+    // Grand total = 75 + 78 = 153
+    expect(result.current.calories).toBeCloseTo(153)
+    expect(result.current.smoothedHeartRate).toBe(160)
   })
 })
