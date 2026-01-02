@@ -452,14 +452,6 @@ graph TD
 - **`spotifyPolling.ts`**: Polls the Spotify API every 3 seconds for the "Now Playing" status and handles playback commands. It loads tokens from `logs/spotify_tokens.json` for persistence.
 - **`spotifyTokenManager.ts`**: Automatically refreshes the Spotify access token every 55 minutes and saves it to the file system, ensuring the server can survive restarts without requiring re-authentication.
 
-### WebSocket Connection Management
-
-To ensure stable real-time communication, the server implements a heartbeat mechanism to prevent premature disconnections by proxies or due to browser tab throttling.
-
--   **Ping/Pong Heartbeat**: The server sends a `ping` to every connected client every 60 seconds.
--   **Liveness Check**: If a client does not respond with a `pong` message before the next ping, it is considered unresponsive, and its connection is terminated.
--   This ensures that the server does not retain stale connections and that clients can maintain a connection even when the browser tab is in the background.
-
 ## Development Guidelines
 
 1. **Run the custom server**: Always use `pnpm run dev` for development to ensure all background services are running.
