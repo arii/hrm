@@ -4,23 +4,20 @@
  * interactions with Bluetooth Low Energy (BLE) Heart Rate Monitor (HRM) devices.
  * It encapsulates the logic for device discovery, connection, disconnection,
  * data streaming, and automatic reconnection on signal loss.
- * It now also handles client-side calorie calculation and heart rate smoothing.
  */
 import { useCallback, useState, useRef, useEffect, useMemo } from 'react'
 import {
-  HrmInputData,
   HrmInputMessage,
   HrmMetadataUpdateMessage,
   HrmMetadataUpdateData,
 } from '../types/websocket'
 import throttle from 'lodash.throttle'
 import isEqual from 'lodash.isequal'
-import { calculateMaxHr, CALORIE_DEFAULTS } from '../utils/constants'
+import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
-import { useCalorieCounter } from './useCalorieCounter'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -38,8 +35,6 @@ interface UseBluetoothHRMProps {
   throttleMs?: number
   userName?: string | null
   userAge?: number | null
-  userWeight?: number | null
-  workoutIsActive?: boolean
 }
 
 type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
@@ -47,8 +42,7 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
 /**
  * @hook useBluetoothHRM
  * @description A comprehensive hook for managing Bluetooth Low Energy (BLE) Heart Rate Monitor (HRM) devices.
- * It handles device discovery, connection, data streaming, client-side calorie calculation,
- * heart rate smoothing, and automatic reconnection.
+ * It handles device discovery, connection, data streaming, and automatic reconnection.
  */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
@@ -56,8 +50,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     throttleMs = 250,
     userName,
     userAge,
-    userWeight,
-    workoutIsActive,
   } = props
   const { sendData } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
@@ -81,13 +73,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
   >(null)
-
-  const { calories, smoothedHeartRate, resetCalories } = useCalorieCounter(
-    rawHeartRate,
-    userAge || 0,
-    userWeight || CALORIE_DEFAULTS.WEIGHT_KG,
-    workoutIsActive || false
-  )
 
   const sendDataRef = useRef(sendData)
   useEffect(() => {
@@ -115,20 +100,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     [throttleMs]
   )
   /* eslint-enable react-hooks/refs */
-
-  // Effect to send smoothed HR and calories data when active
-  useEffect(() => {
-    if (workoutIsActive && smoothedHeartRate > 0) {
-      const data: HrmInputData = {
-        value: smoothedHeartRate,
-        calories: Math.round(calories * 10) / 10,
-      }
-      throttledSend({
-        type: 'HRM_INPUT',
-        data,
-      })
-    }
-  }, [workoutIsActive, smoothedHeartRate, calories, throttledSend])
 
   // Cleanup
   useEffect(() => {
@@ -176,8 +147,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setSavedDevice(null)
     setBatteryLevel(null)
     deviceRef.current = null
-    resetCalories() // Reset calorie counter on disconnect
-  }, [resetCalories])
+  }, [])
 
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
@@ -274,6 +244,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
             setRawHeartRate(heartRate) // Update raw HR state
+            throttledSend({ type: 'HRM_INPUT', data: { value: heartRate } })
           }
         )
 
@@ -290,7 +261,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw error
       }
     },
-    [onDisconnected]
+    [onDisconnected, throttledSend]
   )
 
   useEffect(() => {
@@ -379,9 +350,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isConnected: deviceStatus.startsWith('Connected'),
     isSupported,
     disconnectionReason,
-    calories,
-    smoothedHeartRate,
-    resetWorkoutData: resetCalories, // Expose reset function for workout session
+    rawHeartRate,
   }
 }
 

@@ -131,7 +131,7 @@ describe('useBluetoothHRM', () => {
     act(() => result.current.disconnect())
     expect(mockSendData).toHaveBeenCalledWith({
       type: 'HRM_INPUT',
-      data: { value: null },
+      data: { value: null, calories: 0 },
     })
   })
 

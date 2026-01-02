@@ -15,7 +15,7 @@ import {
 import UserSettings from './UserSettings'
 import { HrTileWithCalories } from '@/components/HrTileWithCalories'
 import { WorkoutStatus } from '@/hooks/useWorkoutSession'
-import { MeasurementSystem } from '../../../types/core'
+import { MeasurementSystem, Gender } from '../../../types/core'
 import PerformanceDashboard from './PerformanceDashboard'
 import { HrZoneDuration } from '@/hooks/useHrZoneTracker'
 
@@ -28,14 +28,18 @@ interface ConnectViewProps {
   setUserAge: (age: string) => void
   onAgeBlur: () => void
   ageError: string | null
-  userHeight: string
-  setUserHeight: (height: string) => void
+  userHeight: { cm: string; feet: string; inches: string }
+  setUserHeight: (
+    height: Partial<{ cm: string; feet: string; inches: string }>
+  ) => void
   onHeightBlur: () => void
   heightError: string | null
   userWeight: string
   setUserWeight: (weight: string) => void
   onWeightBlur: () => void
   weightError: string | null
+  gender: Gender | null
+  setGender: (gender: Gender) => void
   unitSystem: MeasurementSystem
   onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
@@ -78,6 +82,8 @@ const ConnectView = (props: ConnectViewProps) => {
     setUserWeight,
     onWeightBlur,
     weightError,
+    gender,
+    setGender,
     unitSystem,
     onUnitChange,
     isConnected,
@@ -143,6 +149,8 @@ const ConnectView = (props: ConnectViewProps) => {
             setUserWeight={setUserWeight}
             onWeightBlur={onWeightBlur}
             weightError={weightError}
+            gender={gender}
+            setGender={setGender}
             unit={unitSystem}
             setUnit={onUnitChange}
           />
@@ -175,7 +183,7 @@ const ConnectView = (props: ConnectViewProps) => {
               Disconnect
             </Button>
             <Button
-              variant="text"
+              variant="outlined"
               color="warning"
               onClick={onForgetDevice}
               disabled={!isConnected}

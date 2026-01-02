@@ -48,25 +48,29 @@ const PerformanceDashboard = ({
         <Typography variant="h6" gutterBottom>
           HR vs. Time
         </Typography>
-        <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={chartData}>
-            <XAxis
-              dataKey="time"
-              tickFormatter={(tick) => formatDuration(tick)}
-            />
-            <YAxis domain={['dataMin - 10', 'dataMax + 10']} />
-            <Tooltip
-              labelFormatter={(label) => `Time: ${formatDuration(label)}`}
-              formatter={(value) => [`${value} BPM`, 'HR']}
-            />
-            <Area
-              type="monotone"
-              dataKey="hr"
-              stroke="#8884d8"
-              fill="#8884d8"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {hrHistory.length === 0 ? (
+          <Typography>No data yet. Start your workout!</Typography>
+        ) : (
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={chartData}>
+              <XAxis
+                dataKey="time"
+                tickFormatter={(tick) => formatDuration(tick)}
+              />
+              <YAxis domain={['dataMin - 10', 'dataMax + 10']} />
+              <Tooltip
+                labelFormatter={(label) => `Time: ${formatDuration(label)}`}
+                formatter={(value) => [`${value} BPM`, 'HR']}
+              />
+              <Area
+                type="monotone"
+                dataKey="hr"
+                stroke="#8884d8"
+                fill="#8884d8"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </Paper>
 
       <Paper elevation={3} sx={{ p: 2 }}>

@@ -7,7 +7,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { MeasurementSystem } from '../../../types/core'
+import { MeasurementSystem, Gender } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
@@ -16,10 +16,11 @@ import {
   validateWeightValue,
 } from '@/lib/validation/userMetrics'
 import { useHrZoneTracker } from '@/hooks/useHrZoneTracker'
+import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
-  const { userName, userAge, userWeight, unitSystem } = userSettings
+  const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
   const [displayWeight, setDisplayWeight] = useState(() => {
     const kg = userWeight || 0
@@ -66,14 +67,10 @@ export default function ConnectPage() {
     isConnected,
     isSupported,
     disconnectionReason,
-    calories,
-    smoothedHeartRate,
-    resetWorkoutData,
+    rawHeartRate,
   } = useBluetoothHRM({
     userName,
     userAge: userAge || 0,
-    userWeight: userWeight || 0,
-    workoutIsActive: workoutStatus === 'running',
   })
 
   const {
@@ -85,8 +82,16 @@ export default function ConnectPage() {
     workoutStatus,
   } = useWorkoutSession({
     isConnected: isConnected,
-    totalCalories: calories,
+    totalCalories: 0, // This will be updated with the client-side calculated calories
   })
+
+  const { calories, smoothedHeartRate, resetCalories } = useCalorieCounter(
+    rawHeartRate,
+    userAge || 0,
+    userWeight || 0,
+    gender || 'MALE',
+    workoutStatus === 'running'
+  )
 
   const { connectionStatus } = useWebSocket()
   const [hrHistory, setHrHistory] = useState<{ time: number; hr: number }[]>([])
@@ -141,7 +146,7 @@ export default function ConnectPage() {
 
   const resetWorkout = () => {
     resetWorkoutSession()
-    resetWorkoutData()
+    resetCalories()
     setHrHistory([])
   }
 
@@ -167,6 +172,8 @@ export default function ConnectPage() {
       setUserWeight={handleWeightChange}
       onWeightBlur={handleWeightBlur}
       weightError={weightError}
+      gender={gender}
+      setGender={(g: Gender) => setUserSettings((prev) => ({ ...prev, gender: g }))}
       unitSystem={unitSystem}
       onUnitChange={handleUnitChange}
       isConnected={isConnected}

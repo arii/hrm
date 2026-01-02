@@ -123,4 +123,26 @@ describe('useCalorieCounter', () => {
     expect(result.current.calories).toBeCloseTo(153)
     expect(result.current.smoothedHeartRate).toBe(160)
   })
+
+  it('should correctly calculate smoothed heart rate', () => {
+    const { result, rerender } = renderHook(
+      ({ heartRate }) => useCalorieCounter(heartRate, 30, 70, true),
+      { initialProps: { heartRate: 150 } }
+    );
+
+    // Initial render, HR is 150. Smoothed HR should be 150 after the first tick.
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    expect(result.current.smoothedHeartRate).toBe(150);
+
+    // Rerender with a new HR value
+    rerender({ heartRate: 160 });
+
+    // After another tick, the smoothed HR should be the average of [150, 160]
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    expect(result.current.smoothedHeartRate).toBe(155);
+  });
 })

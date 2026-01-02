@@ -4,6 +4,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import { Gender } from '../../../types/core'
 
 interface UserSettingsProps {
   userName: string
@@ -22,6 +23,8 @@ interface UserSettingsProps {
   setUserWeight: (weight: string) => void
   onWeightBlur: () => void
   weightError: string | null
+  gender: Gender | null
+  setGender: (gender: Gender) => void
   unit: 'METRIC' | 'IMPERIAL'
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
 }
@@ -41,6 +44,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   setUserWeight,
   onWeightBlur,
   weightError,
+  gender,
+  setGender,
   unit,
   setUnit,
 }) => {
@@ -69,6 +74,23 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         helperText={ageError}
         inputProps={{ min: 1, max: 120 }}
       />
+      <ToggleButtonGroup
+        value={gender}
+        exclusive
+        onChange={(_, newGender) => {
+          if (newGender) {
+            setGender(newGender)
+          }
+        }}
+        aria-label="Gender"
+      >
+        <ToggleButton value="MALE" aria-label="male">
+          Male
+        </ToggleButton>
+        <ToggleButton value="FEMALE" aria-label="female">
+          Female
+        </ToggleButton>
+      </ToggleButtonGroup>
       <ToggleButtonGroup
         value={unit}
         exclusive
