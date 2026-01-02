@@ -25,9 +25,15 @@ interface CustomTooltipProps {
   active?: boolean
   payload?: { value: number }[]
   label?: number
+  theme: any
 }
 
-const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+  theme,
+}: CustomTooltipProps) => {
   if (active && payload && payload.length && label) {
     const hrPayload = payload[0]
     const caloriesPayload = payload[1]
@@ -75,8 +81,12 @@ const RealTimeChart: React.FC<RealTimeChartProps> = ({ data }) => {
             tickFormatter={formatXAxis}
           />
           <YAxis yAxisId="left" domain={['dataMin - 10', 'dataMax + 10']} />
-          <YAxis yAxisId="right" orientation="right" domain={['dataMin - 50', 'dataMax + 50']} />
-          <Tooltip content={<CustomTooltip />} />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            domain={['dataMin - 50', 'dataMax + 50']}
+          />
+          <Tooltip content={<CustomTooltip theme={theme} />} />
           <Area
             yAxisId="left"
             type="monotone"
