@@ -36,9 +36,24 @@ jobs:
       - name: Setup Node & PNPM
         uses: ./.github/actions/setup-env
 
+      - name: Check for exclusion labels
+        id: check_labels
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ steps.get_pr_number.outputs.PR_NUMBER }}
+        run: |
+          LABELS=$(gh pr view $PR_NUMBER --json labels -q '.labels[].name')
+          SHOULD_SKIP="false"
+          if echo "$LABELS" | grep -q -w "no-rebase" || echo "$LABELS" | grep -q -w "wip"; then
+            SHOULD_SKIP="true"
+            echo "PR has 'no-rebase' or 'wip' label. Skipping rebase."
+          fi
+          echo "should_skip=$SHOULD_SKIP" >> $GITHUB_OUTPUT
+
       # Step 2: Attempt the standard rebase action.
       - name: Attempt Automatic Rebase
         id: rebase
+        if: steps.check_labels.outputs.should_skip == 'false'
         uses: cirrus-actions/rebase@v1.8
         continue-on-error: true
         env:
