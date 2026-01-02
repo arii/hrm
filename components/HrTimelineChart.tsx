@@ -43,7 +43,7 @@ const HrTimelineChart = ({ data, maxHr }: HrTimelineChartProps) => {
 
     return sortedTimestamps.map((timestamp) => {
       const entry: { [key: string]: number | string | null } = {
-        time: new Date(timestamp).toLocaleTimeString(),
+        time: timestamp,
       }
       clientIds.forEach((clientId) => {
         const clientData = data[clientId]
@@ -92,7 +92,13 @@ const HrTimelineChart = ({ data, maxHr }: HrTimelineChartProps) => {
           }}
         >
           <CartesianGrid stroke={theme.palette.divider} />
-          <XAxis dataKey="time" tick={{ fill: theme.palette.text.secondary }} />
+          <XAxis
+            dataKey="time"
+            type="number"
+            domain={['dataMin', 'dataMax']}
+            tickFormatter={(unixTime) => new Date(unixTime).toLocaleTimeString()}
+            tick={{ fill: theme.palette.text.secondary }}
+          />
           <YAxis
             domain={[0, maxHr]}
             tick={{ fill: theme.palette.text.secondary }}

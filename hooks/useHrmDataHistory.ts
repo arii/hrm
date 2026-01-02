@@ -1,8 +1,10 @@
 // File: hooks/useHrmDataHistory.ts
 import { useEffect, useReducer, useRef } from 'react'
 import { HrmData } from '@/context/WebSocketContext'
+import throttle from 'lodash.throttle'
 
 const MAX_HISTORY_LENGTH = 100 // Keep the last 100 data points
+const THROTTLE_INTERVAL = 1000 // Update the chart every 1 second
 
 type HistoryState = {
   [clientId: string]: { value: number; timestamp: number }[]
@@ -47,15 +49,21 @@ export const useHrmDataHistory = (hrmData: HrmData[]) => {
   const [history, dispatch] = useReducer(historyReducer, {})
   const lastDataRef = useRef<HrmData[]>(hrmData)
 
+  const throttledDispatch = useRef(
+    throttle((entries: HrmData[]) => {
+      dispatch({ type: 'ADD_ENTRIES', payload: entries })
+    }, THROTTLE_INTERVAL)
+  ).current
+
   useEffect(() => {
     if (hrmData !== lastDataRef.current) {
       const newEntries = hrmData.filter((d) => d.value > 0)
       if (newEntries.length > 0) {
-        dispatch({ type: 'ADD_ENTRIES', payload: newEntries })
+        throttledDispatch(newEntries)
       }
       lastDataRef.current = hrmData
     }
-  }, [hrmData])
+  }, [hrmData, throttledDispatch])
 
   return history
 }
