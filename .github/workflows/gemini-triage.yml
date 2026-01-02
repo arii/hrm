@@ -98,6 +98,60 @@ jobs:
               const cleanedData = rawData.trim().replace(/^```json|```$/g, '').trim();
               const result = JSON.parse(cleanedData);
 
+              // ---- Start of Validation Block ----
+              const requiredKeys = ['summary', 'priority', 'analysis', 'labels'];
+              const expectedSchema = {
+                labels: (val) => Array.isArray(val) && val.every(item => typeof item === 'string'),
+                priority: (val) => typeof val === 'string' && ['High', 'Medium', 'Low'].includes(val),
+                summary: (val) => typeof val === 'string' && val.length > 0,
+                analysis: (val) => typeof val === 'string',
+                suggested_title: (val) => typeof val === 'string',
+                suggested_body: (val) => typeof val === 'string',
+                completeness_score: (val) => typeof val === 'number' && val >= 0 && val <= 10,
+              };
+
+              const validationErrors = Object.entries(expectedSchema)
+                .map(([key, validator]) => {
+                  if (result.hasOwnProperty(key)) {
+                    if (!validator(result[key])) {
+                      return `\`${key}\` is present but has an invalid type or value. (Actual: \`${JSON.stringify(result[key])}\`)`;
+                    }
+                  } else if (requiredKeys.includes(key)) {
+                    // Check for required keys
+                    return `Required key \`${key}\` is missing.`;
+                  }
+                  return null;
+                })
+                .filter(Boolean);
+
+
+              if (validationErrors.length > 0) {
+                const errorList = validationErrors.map(e => `- ${e}`).join('\n');
+                const validationComment = `
+                ### ❌ Smart Triage Failed: Invalid JSON Schema
+
+                The AI returned a structurally invalid response. The following errors were found:
+                ${errorList}
+
+                <details><summary>Raw AI Output</summary>
+
+                \`\`\`json
+                ${JSON.stringify(result, null, 2)}
+                \`\`\`
+
+                </details>
+                `;
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: validationComment.trim(),
+                });
+                core.setFailed('The AI response failed schema validation.');
+                return;
+              }
+              // ---- End of Validation Block ----
+
               // Gracefully handle cases where the Gemini agent fails and returns a structured error.
               if (result.error) {
                 console.error('Triage failed with structured error:', result.error);
