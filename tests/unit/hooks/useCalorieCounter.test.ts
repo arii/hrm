@@ -76,7 +76,8 @@ describe('useCalorieCounter', () => {
   })
   it('should accumulate calories correctly with changing HR', () => {
     const { result, rerender } = renderHook(
-      ({ heartRate, isActive }) => useCalorieCounter(heartRate, 35, 80, isActive),
+      ({ heartRate, isActive }) =>
+        useCalorieCounter(heartRate, 35, 80, isActive),
       {
         initialProps: { heartRate: 150, isActive: true },
       }
