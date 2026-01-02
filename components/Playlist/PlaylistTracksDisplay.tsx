@@ -70,13 +70,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
         setNextPageLoading(false)
       }
     },
-    [
-      playlistId,
-      isNextPageLoading,
-      hasNextPage,
-      limit,
-      tracks.length,
-    ]
+    [playlistId, isNextPageLoading, hasNextPage, limit, tracks.length]
   )
 
   useEffect(() => {
@@ -157,13 +151,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   const itemCount = hasNextPage ? tracks.length + 1 : tracks.length
   const isItemLoaded = (index: number) => !hasNextPage || index < tracks.length
 
-  const Row = ({
-    index,
-    style,
-  }: {
-    index: number
-    style: CSSProperties
-  }) => {
+  const Row = ({ index, style }: { index: number; style: CSSProperties }) => {
     if (!isItemLoaded(index)) {
       return (
         <TableRow
@@ -187,8 +175,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     if (!track) {
       return null
     }
-    const isPlaying =
-      spotifyData.isPlaying && spotifyData.trackId === track.id
+    const isPlaying = spotifyData.isPlaying && spotifyData.trackId === track.id
 
     return (
       <TableRow
@@ -249,12 +236,12 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   return (
     <Box sx={{ flex: 1, minHeight: 0 }}>
       <TableContainer component={Paper} sx={{ height: '100%' }}>
-        <Table component="div" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Table
+          component="div"
+          sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+        >
           <TableHead component="div">
-            <TableRow
-              sx={{ display: 'flex', width: '100%' }}
-              component="div"
-            >
+            <TableRow sx={{ display: 'flex', width: '100%' }} component="div">
               <TableCell sx={{ flex: '0 0 72px' }} component="div">
                 Play
               </TableCell>

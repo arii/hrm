@@ -22,15 +22,19 @@ window.IntersectionObserver = mockIntersectionObserver
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
-    default: ({ children }: { children: (size: { height: number; width: number }) => React.ReactElement }) => {
-      return children({ height: 600, width: 800 });
+    default: ({
+      children,
+    }: {
+      children: (size: { height: number; width: number }) => React.ReactElement
+    }) => {
+      return children({ height: 600, width: 800 })
     },
-  };
-});
+  }
+})
 
 describe('PlaylistTracksDisplay', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    jest.clearAllMMocks()
   })
 
   const mockContextValue = {
@@ -126,12 +130,10 @@ describe('PlaylistTracksDisplay', () => {
 
     // Trigger the intersection observer
     act(() => {
-      // @ts-ignore
-      const call = mockIntersectionObserver.mock.calls[0]
-      if (call) {
-        const [callback] = call
-        callback([{ isIntersecting: true }])
-      }
+      // @ts-expect-error - mockImplementation is not typed
+      const [call] = mockIntersectionObserver.mock.calls
+      const [callback] = call
+      callback([{ isIntersecting: true }])
     })
 
     await screen.findByText('Track 51')
@@ -170,7 +172,7 @@ describe('PlaylistTracksDisplay', () => {
 
     // Trigger the intersection observer
     act(() => {
-      // @ts-ignore
+      // @ts-expect-error - mockImplementation is not typed
       const [call] = mockIntersectionObserver.mock.calls
       const [callback] = call
       callback([{ isIntersecting: true }])
