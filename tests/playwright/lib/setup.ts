@@ -7,7 +7,7 @@
  * - Stable content injection for VRT
  * - Test environment configuration
  */
-import type { BrowserContext, Page } from '@playwright/test'
+import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
 import { waitForFontsLoaded, waitForPageReady } from './waits'
@@ -170,40 +170,60 @@ export async function replaceIframeWithStableWorkout(
 }
 
 /**
- * Setup function for visual regression tests.
- * Navigates to all pages and waits for ready signals.
+ * Comprehensive setup for visual regression tests.
+ * Creates a clean browser context, initializes all required pages,
+ * and prepares them for snapshot testing.
  *
- * @param pages - Object containing all page instances
+ * @param browser - The Playwright Browser fixture
+ * @returns An object containing the context and all created pages.
  */
-export async function setupVisualRegressionTest(pages: {
+export async function setupVisualRegressionTest(browser: Browser): Promise<{
+  context: BrowserContext
   dashboardPage: Page
   controlPage: Page
   mockPage: Page
-  connectPage: Page
-}): Promise<void> {
-  const { dashboardPage, controlPage, mockPage, connectPage } = pages
-  const baseUrl = getBaseURL()
+}> {
+  // Create a new isolated browser context for the test suite
+  const context = await browser.newContext({
+    storageState: undefined, // Ensure no cookies or storage state from previous tests
+  })
 
-  // Navigate all pages in parallel
-  // Note: Uses LEGACY_ROUTES for control/mock/connect for backward compatibility with existing tests.
-  // Dashboard uses HRM_ROUTES.DASHBOARD since it's just '/'.
-  await Promise.all([
-    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
-    controlPage.goto(`${baseUrl}${LEGACY_ROUTES.PHONE}`),
-    mockPage.goto(`${baseUrl}${LEGACY_ROUTES.MOCK}`),
-    connectPage.goto(`${baseUrl}${LEGACY_ROUTES.CONNECT}`),
+  // Create all pages in parallel for efficiency
+  const [dashboardPage, controlPage, mockPage] = await Promise.all([
+    context.newPage(),
+    context.newPage(),
+    context.newPage(),
   ])
 
-  // Wait for all pages to signal ready
+  // Navigate all pages to their respective routes in parallel
+  const baseUrl = getBaseURL()
+  await Promise.all([
+    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
+    controlPage.goto(`${baseUrl}${HRM_ROUTES.CONTROL}`),
+    mockPage.goto(`${baseUrl}${HRM_ROUTES.MOCK}`),
+  ])
+
+  // Wait for all pages to be fully loaded and idle
   await Promise.all([
     waitForPageReady(dashboardPage),
     waitForPageReady(controlPage),
     waitForPageReady(mockPage),
-    waitForPageReady(connectPage),
   ])
 
-  // Replace iframe with stable content for dashboard
+  // Ensure all custom fonts are loaded to prevent visual shifts
+  await Promise.all([
+    waitForFontsLoaded(dashboardPage),
+    waitForFontsLoaded(controlPage),
+    waitForFontsLoaded(mockPage),
+  ])
+
+  // Stop any running timers to ensure a consistent initial state
+  await stopTimer(controlPage, dashboardPage)
+
+  // Replace the dynamic Google Doc iframe with static, stable content
   await replaceIframeWithStableWorkout(dashboardPage)
+
+  return { context, dashboardPage, controlPage, mockPage }
 }
 
 /**
