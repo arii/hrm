@@ -304,10 +304,7 @@ const handleIncomingMessage = (
         if (!hrmDataSourceClientId) {
           // If no source is set, this client becomes the source.
           hrmDataSourceClientId = clientId
-          logger.info(
-            { clientId },
-            'New HRM data source registered.'
-          )
+          logger.info({ clientId }, 'New HRM data source registered.')
         } else if (hrmDataSourceClientId !== clientId) {
           // If another client is the source, ignore this message.
           logger.warn(
