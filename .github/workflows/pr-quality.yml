@@ -257,6 +257,46 @@ jobs:
           echo "✅ Test Passed: Leading/Trailing Invalid Chars"
         continue-on-error: true
 
+  knip-check:
+    name: 🎒 Knip Check
+    needs: [prepare-env]
+    if: inputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+
+      - name: Run Knip
+        id: knip
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm run knip 2>&1 | tee knip-output.txt
+        continue-on-error: true
+
+      - name: Upload Knip Report
+        if: always() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: knip-report
+          path: knip-output.txt
+          retention-days: 3
+
+      - name: Fail on Knip Errors
+        if: steps.knip.outcome == 'failure'
+        continue-on-error: true
+        run: |
+          echo "::warning::Knip check failed but continuing workflow for now. Knip validation is under review."
+          exit 0
+
   lint-check:
     name: 🔍 Lint Check
     needs: [prepare-env]
@@ -457,7 +497,7 @@ jobs:
 
   infra-tests:
     name: 🧪 Infrastructure Tests
-    needs: [prepare-env, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, build-check]
     if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -533,7 +573,7 @@ jobs:
 
   unit-tests:
     name: 🧪 Unit Tests
-    needs: [prepare-env, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, build-check]
     if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -604,7 +644,7 @@ jobs:
 
   perf-tests:
     name: 🧪 Performance Tests
-    needs: [prepare-env, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, build-check]
     if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -696,7 +736,7 @@ jobs:
 
   visual-tests:
     name: 🧪 Visual Tests
-    needs: [prepare-env, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, build-check]
     if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -921,8 +961,8 @@ jobs:
 
   quality-report:
     name: 📊 Quality Report
-    if: always() && inputs.has_changes == 'true' && needs.lint-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
-    needs: [prepare-env, lint-check, build-check, integration-tests]
+    if: always() && inputs.has_changes == 'true' && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
+    needs: [prepare-env, knip-check, lint-check, build-check, integration-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
