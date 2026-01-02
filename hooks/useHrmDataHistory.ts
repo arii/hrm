@@ -1,5 +1,5 @@
 // File: hooks/useHrmDataHistory.ts
-import { useEffect, useReducer, useRef } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { HrmData } from '@/context/WebSocketContext'
 import throttle from 'lodash.throttle'
 
@@ -49,11 +49,11 @@ export const useHrmDataHistory = (hrmData: HrmData[]) => {
   const [history, dispatch] = useReducer(historyReducer, {})
   const lastDataRef = useRef<HrmData[]>(hrmData)
 
-  const throttledDispatch = useRef(
+  const [throttledDispatch] = useState(() =>
     throttle((entries: HrmData[]) => {
       dispatch({ type: 'ADD_ENTRIES', payload: entries })
     }, THROTTLE_INTERVAL)
-  ).current
+  )
 
   useEffect(() => {
     if (hrmData !== lastDataRef.current) {

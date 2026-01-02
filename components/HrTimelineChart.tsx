@@ -96,7 +96,9 @@ const HrTimelineChart = ({ data, maxHr }: HrTimelineChartProps) => {
             dataKey="time"
             type="number"
             domain={['dataMin', 'dataMax']}
-            tickFormatter={(unixTime) => new Date(unixTime).toLocaleTimeString()}
+            tickFormatter={(unixTime) =>
+              new Date(unixTime).toLocaleTimeString()
+            }
             tick={{ fill: theme.palette.text.secondary }}
           />
           <YAxis
