@@ -56,6 +56,9 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Mock HRM Client - test data input', async () => {
+    await mockPage.getByLabel('Weight (kg)').fill('75')
+    await mockPage.getByLabel('Height (cm)').fill('180')
+    await mockPage.getByLabel('Gender').fill('female')
     await takeScreenshot(mockPage, 'mock-hrm-client.png')
   })
 
@@ -84,13 +87,10 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with mock HR data streaming', async () => {
-    // Set user count to 1 for a single user stream
-    await mockPage.locator('[data-testid="user-count-input"]').fill('1')
-    await mockPage.locator('[data-testid="streaming-start-button"]').click()
-    // Wait for at least one HR tile to be rendered
-    await expect(
-      dashboardPage.locator('[data-testid^="hr-tile-"]')
-    ).toHaveCount(1, { timeout: 15000 })
+    await mockPage.getByLabel('Current BPM').fill('155')
+    await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+
+    await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
 
     await takeScreenshot(dashboardPage, 'dashboard-with-hr-data.png', {
       maxDiffPixelRatio: 0.04,
@@ -102,11 +102,11 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('HR Tiles - all zones', async () => {
-    // Stop any previous stream
-    await mockPage.locator('[data-testid="streaming-stop-button"]').click()
-    // Start a new single-user stream
-    await mockPage.locator('[data-testid="user-count-input"]').fill('1')
-    await mockPage.locator('[data-testid="streaming-start-button"]').click()
+    await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+    await mockPage.click('button:has-text("START")')
+    await expect(
+      mockPage.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
 
     await dashboardPage.waitForSelector('[data-testid="hr-tile-grid-item"]', {
       timeout: WAIT_TIMEOUTS.LONG,
