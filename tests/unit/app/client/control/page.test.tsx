@@ -20,6 +20,8 @@ jest.mock('@/app/client/control/components/SpotifyControls', () => ({
   ),
 }))
 
+jest.mock('@/lib/storageManager')
+
 describe('ControlPage Integration', () => {
   it('should render all child components within the providers', async () => {
     ;(storageManager.get as jest.Mock).mockImplementation((key: string) => {

@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import StorageManager from '../../../lib/storageManager'
+import storageManager from '../../../lib/storageManager'
 import Cookies from 'js-cookie'
 
 // Mocking js-cookie
@@ -24,32 +24,32 @@ describe('StorageManager', () => {
 
   describe('localStorage', () => {
     it('should set and get an object from localStorage', () => {
-      StorageManager.set(testKey, testValue)
-      const result = StorageManager.get(testKey)
+      storageManager.set(testKey, testValue)
+      const result = storageManager.get(testKey)
       expect(result).toEqual(testValue)
     })
 
     it('should set and get a string from localStorage', () => {
-      StorageManager.set(testKey, testStringValue)
-      const result = StorageManager.get(testKey)
+      storageManager.set(testKey, testStringValue)
+      const result = storageManager.get(testKey)
       expect(result).toEqual(testStringValue)
     })
 
     it('should return null for a non-existent key from localStorage', () => {
-      const result = StorageManager.get('non-existent-key')
+      const result = storageManager.get('non-existent-key')
       expect(result).toBeNull()
     })
 
     it('should remove a key from localStorage', () => {
-      StorageManager.set(testKey, testValue)
-      StorageManager.remove(testKey)
-      const result = StorageManager.get(testKey)
+      storageManager.set(testKey, testValue)
+      storageManager.remove(testKey)
+      const result = storageManager.get(testKey)
       expect(result).toBeNull()
     })
 
     it('should handle errors when parsing invalid JSON from localStorage', () => {
       localStorage.setItem(testKey, '{invalid-json')
-      const result = StorageManager.get(testKey)
+      const result = storageManager.get(testKey)
       expect(result).toBeNull()
     })
   })
@@ -57,8 +57,8 @@ describe('StorageManager', () => {
   describe('cookies', () => {
     it('should set and get an object from cookies', () => {
       ;(Cookies.get as jest.Mock).mockReturnValue(JSON.stringify(testValue))
-      StorageManager.setCookie(testKey, testValue)
-      const result = StorageManager.getCookie(testKey)
+      storageManager.setCookie(testKey, testValue)
+      const result = storageManager.getCookie(testKey)
       expect(Cookies.set).toHaveBeenCalledWith(
         testKey,
         JSON.stringify(testValue),
@@ -71,8 +71,8 @@ describe('StorageManager', () => {
       ;(Cookies.get as jest.Mock).mockReturnValue(
         JSON.stringify(testStringValue)
       )
-      StorageManager.setCookie(testKey, testStringValue)
-      const result = StorageManager.getCookie(testKey)
+      storageManager.setCookie(testKey, testStringValue)
+      const result = storageManager.getCookie(testKey)
       expect(Cookies.set).toHaveBeenCalledWith(
         testKey,
         JSON.stringify(testStringValue),
@@ -83,18 +83,18 @@ describe('StorageManager', () => {
 
     it('should return null for a non-existent key from cookies', () => {
       ;(Cookies.get as jest.Mock).mockReturnValue(undefined)
-      const result = StorageManager.getCookie('non-existent-key')
+      const result = storageManager.getCookie('non-existent-key')
       expect(result).toBeNull()
     })
 
     it('should remove a key from cookies', () => {
-      StorageManager.removeCookie(testKey)
+      storageManager.removeCookie(testKey)
       expect(Cookies.remove).toHaveBeenCalledWith(testKey, undefined)
     })
 
     it('should handle errors when parsing invalid JSON from cookies', () => {
       ;(Cookies.get as jest.Mock).mockReturnValue('{invalid-json')
-      const result = StorageManager.getCookie(testKey)
+      const result = storageManager.getCookie(testKey)
       expect(result).toBeNull()
     })
   })

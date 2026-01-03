@@ -8,7 +8,7 @@ import Cookies from 'js-cookie'
 /**
  * A unified interface for handling localStorage and cookies.
  */
-class StorageManager {
+export class StorageManager {
   private isLocalStorageAvailable: boolean
 
   constructor() {
