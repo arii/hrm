@@ -375,4 +375,20 @@ describe('useBluetoothHRM', () => {
       expect(mockOnHeartRateUpdate).toHaveBeenCalledTimes(1)
     })
   })
+
+  describe('onConnect Callback', () => {
+    it('should call onConnect when a successful connection is made', async () => {
+      const mockOnConnect = jest.fn()
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ onConnect: mockOnConnect })
+      )
+
+      await act(async () => {
+        result.current.connectAndStream('Test User', 30)
+        await Promise.resolve() // Allow promises to resolve
+      })
+
+      expect(mockOnConnect).toHaveBeenCalledTimes(1)
+    })
+  })
 })
