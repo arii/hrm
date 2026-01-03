@@ -132,4 +132,20 @@ describe('useWorkoutSession calorie logic', () => {
     rerender({ isConnected: true, totalCalories: 125 })
     expect(result.current.caloriesBurned).toBe(25)
   })
+
+  it('should pause the workout when pauseWorkout is called', () => {
+    const { result } = renderHook(() =>
+      useWorkoutSession({ isConnected: true })
+    )
+
+    act(() => {
+      result.current.startWorkout()
+    })
+    expect(result.current.workoutStatus).toBe('running')
+
+    act(() => {
+      result.current.pauseWorkout()
+    })
+    expect(result.current.workoutStatus).toBe('paused')
+  })
 })
