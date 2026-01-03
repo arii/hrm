@@ -141,12 +141,13 @@ jobs:
           # OPTION 2: Fallback to fetching checks live if no report is provided
           else
             echo "::notice::No pre-compiled report found. Fetching live PR checks."
-            FAILED_CHECKS_RAW_JSON=$(gh pr checks ${{ github.event.pull_request.number }} --json name,conclusion,detailsUrl | jq -c 'map(select(.conclusion == "failure" or .conclusion == "cancelled"))')
+            # Correctly handle different check states by querying the `state` field and providing a default for `conclusion`.
+            FAILED_CHECKS_RAW_JSON=$(gh pr checks ${{ github.event.pull_request.number }} --json name,conclusion,detailsUrl,state | jq -c 'map(select(.state == "completed" and (.conclusion == "failure" or .conclusion == "cancelled")))')
 
             mapfile -t NAMES < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].name')
-            mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion')
+            mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion // "unknown"')
             mapfile -t URLS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl')
-            mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl | split("/")[-1]')
+            mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl | split("/")[-1]? // ""')
 
             LOG_DIR=$(mktemp -d)
             # Define the processing function for a single job
