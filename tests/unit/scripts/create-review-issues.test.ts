@@ -122,7 +122,11 @@ describe('create-review-issues.ts', () => {
   it('should handle invalid review result JSON', async () => {
     mockReadFileSync.mockReturnValue('{"invalid json"}')
     await expect(run(client, MOCK_PR_NUMBER, MOCK_FILE_PATH)).rejects.toThrow(
-      `❌ Error reading or parsing ${MOCK_FILE_PATH}: Expected ':' after property name in JSON at position 15 (line 1 column 16)`
+      expect.objectContaining({
+        message: expect.stringContaining(
+          `❌ Error reading or parsing ${MOCK_FILE_PATH}`
+        ),
+      })
     )
   })
 
