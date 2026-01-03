@@ -44,11 +44,11 @@ export const useHeartRateHistory = (maxHr: number) => {
         const dtSeconds = (now - lastTimestampRef.current) / 1000
         if (dtSeconds > 0 && dtSeconds < 10) {
           // Check for reasonable delta
-          const { label } = getHrZoneProps(hr, maxHr)
-          if (label) {
+          const { zone } = getHrZoneProps(hr, maxHr)
+          if (zone) {
             setZoneDistribution((prevZones) => ({
               ...prevZones,
-              [label]: (prevZones[label] || 0) + dtSeconds,
+              [zone]: (prevZones[zone] || 0) + dtSeconds,
             }))
           }
         }

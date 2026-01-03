@@ -1147,12 +1147,7 @@ jobs:
             fi
           done
 
-          # Use a block to safely append to GITHUB_OUTPUT
-          {
-            echo "failure_report_json<<EOF"
-            echo "$FAILURE_REPORT_JSON"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          echo "failure_report_json=$FAILURE_REPORT_JSON" >> $GITHUB_OUTPUT
 
       - name: Post Quality Summary with Details
         if: always()
