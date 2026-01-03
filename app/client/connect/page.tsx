@@ -9,6 +9,7 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
+import { useHeartRateHistory } from '@/hooks/useHeartRateHistory'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
@@ -107,9 +108,10 @@ export default function ConnectPage() {
       setCurrentHR(heartRate)
       if (workoutStatus === 'running') {
         processHeartRate(heartRate)
+        addHeartRateSample(heartRate)
       }
     },
-    [processHeartRate, workoutStatus, setCurrentHR]
+    [processHeartRate, workoutStatus, setCurrentHR, addHeartRateSample]
   )
   const {
     connectAndStream,
@@ -181,14 +183,25 @@ export default function ConnectPage() {
   }
   const maxHr = userAge ? 220 - userAge : 190
   const hrZoneProps = useHrZone(currentHR, maxHr)
+  const {
+    history: hrHistory,
+    zoneDistribution,
+    addHeartRateSample,
+    resetHistory,
+  } = useHeartRateHistory(maxHr)
+
   const resetWorkout = () => {
     resetWorkoutSession()
     resetCalculator()
+    resetHistory()
   }
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
       caloriesBurned={calories}
+      hrHistory={hrHistory}
+      zoneDistribution={zoneDistribution}
+      maxHr={maxHr}
       userName={userName}
       setUserName={(name) =>
         setUserSettings((prev) => ({ ...prev, userName: name }))

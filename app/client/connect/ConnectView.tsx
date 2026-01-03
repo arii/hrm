@@ -14,9 +14,12 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
+import HrHistoryChart from './charts/HrHistoryChart'
+import HrZoneDistributionChart from './charts/HrZoneDistributionChart'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
+import { HeartRateSample, ZoneData } from '@/hooks/useHeartRateHistory'
 import {
   ToggleButtonGroup,
   ToggleButton,
@@ -30,6 +33,9 @@ import {
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
+  hrHistory: HeartRateSample[]
+  zoneDistribution: ZoneData
+  maxHr: number
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -72,6 +78,9 @@ interface ConnectViewProps {
 export default function ConnectView({
   duration,
   caloriesBurned,
+  hrHistory,
+  zoneDistribution,
+  maxHr,
   userName,
   setUserName,
   userAge,
@@ -427,7 +436,14 @@ export default function ConnectView({
         </Stack>
 
         {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+          <>
+            <WorkoutSummary
+              duration={duration}
+              caloriesBurned={caloriesBurned}
+            />
+            <HrHistoryChart history={hrHistory} maxHr={maxHr} />
+            <HrZoneDistributionChart zoneDistribution={zoneDistribution} />
+          </>
         )}
 
         <Typography
