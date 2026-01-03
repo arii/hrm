@@ -99,18 +99,14 @@ If the action encounters a merge conflict during the rebase, it will fail gracef
 
 #### Automated Conflict Resolution
 
-To streamline the process of handling common merge conflicts, the repository includes an automated conflict resolver workflow, which can be triggered in two ways.
+To streamline the process of handling common merge conflicts, the repository includes an automated conflict resolver workflow.
 
-##### Manual Workflow Invocation
+**Usage**:
 
 1.  Navigate to the **Actions** tab of the repository.
 2.  Select the **Auto Conflict Resolver** workflow from the list.
 3.  Click **Run workflow**.
 4.  Specify the `target_branch` (the branch to merge into, e.g., `leader`) and the `source_branch` (the branch to merge from).
-
-##### Comment-based Invocation
-
-Add a comment containing the command `@conflict-resolve` to a pull request.
 
 **What it does**:
 
@@ -121,8 +117,8 @@ Add a comment containing the command `@conflict-resolve` to a pull request.
 
 **Distinction from `/rebase-ai`**:
 
--   **@conflict-resolve**: Uses a **rules-based approach**. It's deterministic and designed for predictable conflicts (like lockfiles). It creates a **new pull request** with the merged result.
--   **/rebase-ai**: Uses an **AI-powered approach** (Gemini). It's designed for more complex code conflicts and attempts to resolve them semantically. It updates the ***existing*** pull request by rebasing and force-pushing.
+-   **Auto Conflict Resolver**: Uses a **rules-based approach**. It's deterministic and designed for predictable conflicts (like lockfiles). It creates a new pull request with the merged result.
+-   **/rebase-ai**: Uses an **AI-powered approach** (Gemini). It's designed for more complex code conflicts and attempts to resolve them semantically. It updates the *existing* pull request by rebasing and force-pushing.
 
 #### AI-Powered Workflows
 
