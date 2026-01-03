@@ -43,6 +43,7 @@ let services: AppServices
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
 // - hrmDataSourceClientId: Tracks the single, authoritative client for HRM data to prevent conflicting streams.
 const hrmDataRepository = new HrmDataRepository()
+// - hrmDataSourceClientId: The clientId of the WebSocket that is the current authoritative source for HRM data.
 let hrmDataSourceClientId: string | null = null
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
@@ -54,7 +55,8 @@ const clientSessionState = new Map<
   { lastUpdate: number; accumulatedCalories: number }
 >()
 
-// Rate limit logging for non-authoritative clients to prevent log spam
+// Rate limit logging for non-authoritative clients to prevent log spam.
+// Tracks the last time a warning was sent to a client to avoid flooding logs/client.
 const lastWarningTimes = new Map<string, number>()
 
 /**
