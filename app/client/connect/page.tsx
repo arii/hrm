@@ -98,6 +98,14 @@ export default function ConnectPage() {
     totalCalories: calories,
   })
 
+  const maxHr = userAge ? 220 - userAge : 190
+  const {
+    history: hrHistory,
+    zoneDistribution,
+    addHeartRateSample,
+    resetHistory,
+  } = useHeartRateHistory(maxHr)
+
   // Callback for raw heart rate updates from the Bluetooth hook
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
@@ -181,14 +189,7 @@ export default function ConnectPage() {
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
-  const maxHr = userAge ? 220 - userAge : 190
   const hrZoneProps = useHrZone(currentHR, maxHr)
-  const {
-    history: hrHistory,
-    zoneDistribution,
-    addHeartRateSample,
-    resetHistory,
-  } = useHeartRateHistory(maxHr)
 
   const resetWorkout = () => {
     resetWorkoutSession()
