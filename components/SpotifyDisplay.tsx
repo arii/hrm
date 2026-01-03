@@ -240,8 +240,13 @@ const SpotifyDisplay = () => {
   const sendSpotifyCommand = useCallback(
     (
       command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-      targetDeviceId?: string
+      targetDeviceIdOverride?: string
     ) => {
+      const targetDeviceId =
+        targetDeviceIdOverride ||
+        selectedDeviceId ||
+        spotifyData.devices?.find((device) => device.is_active)?.id
+
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,
@@ -249,7 +254,7 @@ const SpotifyDisplay = () => {
       }
       sendData(message)
     },
-    [sendData]
+    [sendData, selectedDeviceId, spotifyData.devices]
   )
 
   const handlePlayPauseToggle = () => {

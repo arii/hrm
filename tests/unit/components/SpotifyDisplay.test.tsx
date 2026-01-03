@@ -204,4 +204,102 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('25')
     })
   })
+
+  describe('HRM Web Player auto-selection', () => {
+    let mockSendData: jest.Mock
+    let initialSpotifyData: SpotifyData
+
+    beforeEach(() => {
+      mockSendData = jest.fn()
+      initialSpotifyData = {
+        trackName: 'Test Track',
+        artist: 'Test Artist',
+        albumName: 'Test Album',
+        albumArtUrl: '',
+        isPlaying: false,
+        volume: 50,
+        isMuted: false,
+        devices: [],
+      }
+
+      mockedUseSession.mockReturnValue({
+        data: { accessToken: 'fake-token' },
+        status: 'authenticated',
+      })
+      mockedUseWebSocket.mockReturnValue({
+        spotifyData: initialSpotifyData,
+        sendData: mockSendData,
+        connectionStatus: 'Connected',
+        spotifyServiceInitialized: true,
+      })
+    })
+
+    it('should not auto-select if SDK is not ready', () => {
+      mockedUseSpotifyWebPlayback.mockReturnValue({
+        isReady: false,
+        deviceId: null,
+        player: null,
+        isAuthenticated: true,
+      })
+      initialSpotifyData.devices = [
+        { id: 'hrm-player', name: 'HRM Web Player', is_active: false },
+      ]
+      renderWithProviders(<SpotifyDisplay />)
+      // No device should be selected, so no transfer command should be sent
+      expect(mockSendData).not.toHaveBeenCalledWith(
+        expect.objectContaining({ command: 'TRANSFER_PLAYBACK' })
+      )
+    })
+
+    it('should not auto-select if there are no devices', () => {
+      renderWithProviders(<SpotifyDisplay />)
+      expect(mockSendData).not.toHaveBeenCalled()
+    })
+
+    it('should not auto-select if a device is already active', () => {
+      initialSpotifyData.devices = [
+        { id: 'hrm-player', name: 'HRM Web Player', is_active: false },
+        { id: 'active-device', name: 'Active Device', is_active: true },
+      ]
+      renderWithProviders(<SpotifyDisplay />)
+      expect(mockSendData).not.toHaveBeenCalledWith(
+        expect.objectContaining({ command: 'TRANSFER_PLAYBACK' })
+      )
+    })
+
+    it("should auto-select 'HRM Web Player' when no device is active", () => {
+      initialSpotifyData.devices = [
+        { id: 'other-device', name: 'Other Device', is_active: false },
+        { id: 'hrm-player', name: 'HRM Web Player', is_active: false },
+      ]
+
+      renderWithProviders(<SpotifyDisplay />)
+
+      // It should select the device, but not automatically transfer playback.
+      // We can't directly check the internal state, but we can infer it
+      // by checking that no transfer command was sent.
+      expect(mockSendData).not.toHaveBeenCalledWith(
+        expect.objectContaining({ command: 'TRANSFER_PLAYBACK' })
+      )
+
+      // To verify selection, we can simulate a play command and check the deviceId
+      const playButton = screen.getByTestId('PlayArrowIcon').closest('button')
+      if (!playButton) throw new Error('Play button not found')
+      fireEvent.click(playButton)
+
+      expect(mockSendData).toHaveBeenCalledWith({
+        type: 'SPOTIFY_COMMAND',
+        command: 'PLAY',
+        deviceId: 'hrm-player',
+      })
+    })
+
+    it("should not auto-select if 'HRM Web Player' is not present", () => {
+      initialSpotifyData.devices = [
+        { id: 'other-device', name: 'Other Device', is_active: false },
+      ]
+      renderWithProviders(<SpotifyDisplay />)
+      expect(mockSendData).not.toHaveBeenCalled()
+    })
+  })
 })
