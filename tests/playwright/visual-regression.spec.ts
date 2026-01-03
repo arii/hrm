@@ -85,10 +85,12 @@ test.describe('Visual Regression Tests', () => {
 
   test('Dashboard with mock HR data streaming', async () => {
     // Set user count to 1 for a single user stream
-    await mockPage.locator('[data-testid="user-count-input"]').fill('1');
-    await mockPage.locator('[data-testid="streaming-start-button"]').click();
+    await mockPage.locator('[data-testid="user-count-input"]').fill('1')
+    await mockPage.locator('[data-testid="streaming-start-button"]').click()
     // Wait for at least one HR tile to be rendered
-    await expect(dashboardPage.locator('[data-testid^="hr-tile-"]')).toHaveCount(1, { timeout: 15000 });
+    await expect(
+      dashboardPage.locator('[data-testid^="hr-tile-"]')
+    ).toHaveCount(1, { timeout: 15000 })
 
     await takeScreenshot(dashboardPage, 'dashboard-with-hr-data.png', {
       maxDiffPixelRatio: 0.04,
@@ -96,20 +98,19 @@ test.describe('Visual Regression Tests', () => {
         ...getDynamicContentMasks(dashboardPage),
         ...getHrMasks(dashboardPage),
       ],
-    });
-  });
+    })
+  })
 
   test('HR Tiles - all zones', async () => {
     // Stop any previous stream
-    await mockPage.locator('[data-testid="streaming-stop-button"]').click();
+    await mockPage.locator('[data-testid="streaming-stop-button"]').click()
     // Start a new single-user stream
-    await mockPage.locator('[data-testid="user-count-input"]').fill('1');
-    await mockPage.locator('[data-testid="streaming-start-button"]').click();
-
+    await mockPage.locator('[data-testid="user-count-input"]').fill('1')
+    await mockPage.locator('[data-testid="streaming-start-button"]').click()
 
     await dashboardPage.waitForSelector('[data-testid="hr-tile-grid-item"]', {
       timeout: WAIT_TIMEOUTS.LONG,
-    });
+    })
 
     const firstTile = dashboardPage
       .locator('[data-testid="hr-tile-grid-item"]')

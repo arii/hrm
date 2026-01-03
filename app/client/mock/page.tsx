@@ -36,7 +36,6 @@ export default function MockPage() {
     }
   }, [])
 
-
   const startStreaming = () => {
     if (connectionStatus !== 'Connected') return
     workerRef.current?.postMessage({ command: 'start', count: userCount })
