@@ -47,16 +47,20 @@ describe('UserSettingsSchema', () => {
   })
 
   it('should invalidate a non-numeric age', () => {
+    // @ts-expect-error - Intentionally passing invalid type for testing
     const result = UserSettingsSchema.safeParse({
       ...validData,
-      userAge: 'abc' as any,
+      userAge: 'abc',
     })
     expect(result.success).toBe(false)
   })
 
   // Test cases for userWeight
   it('should validate a valid user weight', () => {
-    const result = UserSettingsSchema.safeParse({ ...validData, userWeight: 70 })
+    const result = UserSettingsSchema.safeParse({
+      ...validData,
+      userWeight: 70,
+    })
     expect(result.success).toBe(true)
   })
 
@@ -71,9 +75,10 @@ describe('UserSettingsSchema', () => {
   })
 
   it('should invalidate a non-numeric weight', () => {
+    // @ts-expect-error - Intentionally passing invalid type for testing
     const result = UserSettingsSchema.safeParse({
       ...validData,
-      userWeight: 'abc' as any,
+      userWeight: 'abc',
     })
     expect(result.success).toBe(false)
   })
