@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
 import TextField, { TextFieldProps } from '@mui/material/TextField'
-import { ZodIssue, ZodObject } from 'zod'
+import { ZodIssue, ZodObject, ZodRawShape } from 'zod'
 
 // Define the props for the ValidatedTextField component
 export type ValidatedTextFieldProps = TextFieldProps & {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  schema: ZodObject<any, any, any>
+  schema: ZodObject<ZodRawShape>
   fieldName: string
 }
 
