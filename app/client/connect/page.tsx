@@ -100,6 +100,10 @@ export default function ConnectPage() {
   // Callback for raw heart rate updates from the Bluetooth hook
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
+      logger.info(
+        { heartRate },
+        'handleHeartRateUpdate called, updating local state'
+      )
       setCurrentHR(heartRate)
       if (workoutStatus === 'running') {
         processHeartRate(heartRate)
@@ -115,6 +119,7 @@ export default function ConnectPage() {
     deviceStatus,
     batteryLevel,
     isConnected,
+    isDataStale,
     isSupported,
     disconnectionReason,
   } = useBluetoothHRM({
@@ -124,12 +129,20 @@ export default function ConnectPage() {
   })
 
   useEffect(() => {
-    // On initial mount, try to auto-connect to a saved device if not already connected.
-    // This provides a smoother experience for returning users.
+    // Try to auto-connect when WebSocket is ready and we're not already connected.
+    // Wait a tick to ensure the component is fully initialized before attempting connection.
     if (!isConnected && isSupported && connectionStatus === 'Connected') {
-      autoConnect()
+      logger.info('WebSocket ready, attempting auto-connect...')
+      // Small delay to ensure component is fully mounted
+      const timeout = setTimeout(() => {
+        autoConnect().catch(() => {
+          logger.info('Auto-connect failed, user can connect manually')
+        })
+      }, 100)
+      return () => clearTimeout(timeout)
     }
-  }, [isConnected, isSupported, connectionStatus, autoConnect])
+    return undefined
+  }, [connectionStatus, isConnected, isSupported, autoConnect])
 
   useEffect(() => {
     // This effect synchronizes the local HR and calorie state with the server.
@@ -199,6 +212,7 @@ export default function ConnectPage() {
       unitSystem={unitSystem}
       onUnitChange={handleUnitChange}
       isConnected={isConnected}
+      isDataStale={isDataStale}
       deviceStatus={deviceStatusMessage}
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
