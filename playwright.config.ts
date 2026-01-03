@@ -3,10 +3,7 @@
  * Optimized for performance and parallel execution
  */
 import { defineConfig, devices } from '@playwright/test'
-
-// Define the port for the test server
-const port = process.env.PORT || 3000
-const baseURL = `http://127.0.0.1:${port}`
+import { getBaseURL } from './utils/urls'
 
 // Check if Spotify/NextAuth credentials are available
 const hasSpotifyCredentials = !!(
@@ -67,7 +64,7 @@ export default defineConfig({
   // Shared settings for all tests
   use: {
     // Base URL for all tests
-    baseURL,
+    baseURL: getBaseURL(),
     actionTimeout: 10000, // Fails clicks/fills after 10s if element isn't found
     navigationTimeout: 15000, // Navigation timeout
     headless: true,
@@ -129,22 +126,6 @@ export default defineConfig({
         ]
       : []),
   ],
-
-  // Web Server Configuration
-  webServer: {
-    command: 'bash scripts/start-production.sh',
-    url: `${baseURL}/api/debug/ping`,
-    timeout: 120 * 1000, // 2 minutes
-    reuseExistingServer: !process.env.CI,
-    env: {
-      PORT: port.toString(),
-      TESTING: 'true',
-      NEXTAUTH_SECRET: 'test-secret-for-ci',
-      NEXTAUTH_URL: baseURL,
-      SPOTIFY_CLIENT_ID: 'test_client_id',
-      SPOTIFY_CLIENT_SECRET: 'test_client_secret',
-    },
-  },
 
   // Output configuration
   outputDir: 'test-results/',

@@ -12,8 +12,6 @@ import { SpotifyTokenResponse } from './spotifyPolling.js'
 const writeTokenFileSafe = (filePath: string, data: TokenRecord) => {
   const tempPath = `${filePath}.tmp`
   try {
-    // Ensure the directory exists before writing.
-    fs.mkdirSync(path.dirname(filePath), { recursive: true })
     fs.writeFileSync(tempPath, JSON.stringify(data, null, 2))
     fs.renameSync(tempPath, filePath) // Atomic rename
   } catch (error) {
