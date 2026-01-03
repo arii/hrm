@@ -1,6 +1,6 @@
 module.exports = {
-  ResponsiveContainer: ({ _children }) => <div />,
-  LineChart: ({ _children }) => <div />,
+  ResponsiveContainer: () => <div />,
+  LineChart: () => <div />,
   Line: () => <div />,
   XAxis: () => <div />,
   YAxis: () => <div />,
