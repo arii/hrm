@@ -1,5 +1,4 @@
-// app/client/connect/UserSettings.tsx
-import React from 'react'
+import { memo } from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
@@ -26,7 +25,7 @@ interface UserSettingsProps {
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
 }
 
-const UserSettings: React.FC<UserSettingsProps> = ({
+const UserSettings = ({
   userName,
   setUserName,
   userAge,
@@ -43,7 +42,25 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   weightError,
   unit,
   setUnit,
-}) => {
+}: UserSettingsProps) => {
+  /**
+   * Validates that the input is an integer and updates the state.
+   * @param value The value from the input event.
+   * @param setter The state setter function.
+   * @param field The field to update.
+   */
+  const handleIntegerChange = (
+    value: string,
+    setter: (
+      height: Partial<{ cm: string; feet: string; inches: string }>
+    ) => void,
+    field: 'feet' | 'inches'
+  ) => {
+    if (/^\d*$/.test(value)) {
+      setter({ [field]: value })
+    }
+  }
+
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <TextField
@@ -60,8 +77,12 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         type="number"
         value={userAge}
         onChange={(e) => {
-          if (/^\d*$/.test(e.target.value)) {
-            setUserAge(e.target.value)
+          // Use valueAsNumber for direct number retrieval, falling back to string value
+          const numericValue = e.target.valueAsNumber
+          if (!isNaN(numericValue) && numericValue >= 0) {
+            setUserAge(String(numericValue))
+          } else if (e.target.value === '') {
+            setUserAge('')
           }
         }}
         onBlur={onAgeBlur}
@@ -114,11 +135,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             placeholder="e.g., 5"
             type="number"
             value={userHeight.feet}
-            onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setUserHeight({ feet: e.target.value })
-              }
-            }}
+            onChange={(e) =>
+              handleIntegerChange(e.target.value, setUserHeight, 'feet')
+            }
             onBlur={onHeightBlur}
           />
           <TextField
@@ -127,11 +146,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             placeholder="e.g., 9"
             type="number"
             value={userHeight.inches}
-            onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setUserHeight({ inches: e.target.value })
-              }
-            }}
+            onChange={(e) =>
+              handleIntegerChange(e.target.value, setUserHeight, 'inches')
+            }
             onBlur={onHeightBlur}
           />
         </Stack>
@@ -155,4 +172,4 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   )
 }
 
-export default UserSettings
+export default memo(UserSettings)
