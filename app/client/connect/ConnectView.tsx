@@ -121,10 +121,7 @@ export default function ConnectView({
 
   useEffect(() => {
     if (isConnected) {
-      logger.info(
-        { currentHR, isDataStale },
-        'HrTile rendering with currentHR'
-      )
+      logger.info({ currentHR, isDataStale }, 'HrTile rendering with currentHR')
     }
   }, [currentHR, isConnected, isDataStale])
 

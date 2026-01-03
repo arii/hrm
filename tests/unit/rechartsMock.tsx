@@ -1,7 +1,6 @@
-import React from 'react';
 module.exports = {
-  ResponsiveContainer: ({ children }) => <div>{children}</div>,
-  LineChart: ({ children }) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }) => <div />,
+  LineChart: ({ children }) => <div />,
   Line: () => <div />,
   XAxis: () => <div />,
   YAxis: () => <div />,
@@ -10,4 +9,4 @@ module.exports = {
   PieChart: ({ children }) => <div>{children}</div>,
   Pie: () => <div />,
   Cell: () => <div />,
-};
+}
