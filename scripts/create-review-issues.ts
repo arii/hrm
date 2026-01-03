@@ -57,9 +57,15 @@ export interface IGitHubClient {
 export class GitHubClient implements IGitHubClient {
   private execute(command: string): string {
     try {
-      return execSync(command, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim()
-    } catch (error: any) {
-      const stderr = error.stderr ? error.stderr.toString() : 'Unknown error'
+      return execSync(command, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }).trim()
+    } catch (error: unknown) {
+      const stderr =
+        error instanceof Error && 'stderr' in error
+          ? String((error as any).stderr)
+          : 'Unknown error'
       throw new Error(`GitHub CLI Error: ${stderr}`)
     }
   }
@@ -181,30 +187,33 @@ export function isDuplicate(
 
 // --- Core Logic ---
 
-export async function run(client: IGitHubClient, prNumber: string, reviewFilePath: string) {
+export async function run(
+  client: IGitHubClient,
+  prNumber: string,
+  reviewFilePath: string
+) {
   if (!prNumber) {
-    console.error('❌ Error: PR_NUMBER is missing.')
-    return
+    throw new Error('❌ Error: PR_NUMBER is missing.')
   }
 
   let result: ReviewResult
   try {
-    const content = readFileSync(path.resolve(process.cwd(), reviewFilePath), 'utf-8')
+    const content = readFileSync(
+      path.resolve(process.cwd(), reviewFilePath),
+      'utf-8'
+    )
     const parsedJson = JSON.parse(content)
     const validationResult = ReviewResultSchema.safeParse(parsedJson)
     if (!validationResult.success) {
-      console.error(
-        `❌ Error validating ${reviewFilePath}:`,
-        validationResult.error
+      throw new Error(
+        `❌ Error validating ${reviewFilePath}: ${validationResult.error}`
       )
-      return
     }
     result = validationResult.data
   } catch (e) {
-    console.error(
+    throw new Error(
       `❌ Error reading or parsing ${reviewFilePath}: ${(e as Error).message}`
     )
-    return
   }
 
   if (!result.suggestedIssues || result.suggestedIssues.length === 0) {

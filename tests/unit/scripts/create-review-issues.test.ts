@@ -8,6 +8,7 @@ import {
   SuggestedIssue,
   isDuplicate,
   ExistingIssue,
+  GitHubClient, // Import the concrete class for testing
 } from '../../../scripts/create-review-issues'
 import { execSync } from 'child_process'
 
@@ -120,8 +121,9 @@ describe('create-review-issues.ts', () => {
 
   it('should handle invalid review result JSON', async () => {
     mockReadFileSync.mockReturnValue('{"invalid json"}')
-    await run(client, MOCK_PR_NUMBER, MOCK_FILE_PATH)
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
+    await expect(
+      run(client, MOCK_PR_NUMBER, MOCK_FILE_PATH)
+    ).rejects.toThrow(
       `❌ Error reading or parsing ${MOCK_FILE_PATH}: Expected ':' after property name in JSON at position 15 (line 1 column 16)`
     )
   })
@@ -144,5 +146,46 @@ describe('create-review-issues.ts', () => {
       ]
       expect(isDuplicate(newIssue, existing)).toBe(true)
     })
+  })
+})
+
+describe('GitHubClient', () => {
+  let client: GitHubClient
+
+  beforeEach(() => {
+    client = new GitHubClient()
+    jest.clearAllMocks()
+  })
+
+  it('getOpenIssues should call gh cli with correct label filter', () => {
+    mockExecSync.mockReturnValue('[]')
+    client.getOpenIssues('bot-generated')
+    expect(mockExecSync.mock.calls[0][0]).toContain('--label "bot-generated"')
+  })
+
+  it('createIssue should call gh cli with file paths', () => {
+    const issue: SuggestedIssue = {
+      title: 'File Path Test',
+      description: 'Body here',
+      type: 'bug',
+      priority: 'low',
+    }
+    const context = { repo: 'a/b', prNumber: '1' }
+    mockExecSync.mockReturnValue('https://github.com/a/b/issues/2')
+
+    client.createIssue(issue, context)
+
+    expect(mockExecSync.mock.calls[0][0]).toMatch(
+      /gh issue create --title-file ".*" --body-file ".*" --label ".*"/
+    )
+  })
+
+  it('getOpenIssues should handle invalid JSON from gh cli', () => {
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
+    mockExecSync.mockReturnValue('invalid json')
+    const issues = client.getOpenIssues()
+    expect(issues).toEqual([])
+    expect(consoleWarnSpy).toHaveBeenCalled()
+    consoleWarnSpy.mockRestore()
   })
 })
