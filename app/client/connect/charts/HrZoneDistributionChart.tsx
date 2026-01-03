@@ -51,10 +51,13 @@ const HrZoneDistributionChart: React.FC<HrZoneDistributionChartProps> = ({
             ))}
           </Pie>
           <Tooltip
-            formatter={(value: number) => {
-              const minutes = Math.floor(value / 60)
-              const seconds = Math.round(value % 60)
-              return `${minutes}m ${seconds}s`
+            formatter={(value) => {
+              if (typeof value === 'number') {
+                const minutes = Math.floor(value / 60)
+                const seconds = Math.round(value % 60)
+                return `${minutes}m ${seconds}s`
+              }
+              return ''
             }}
           />
         </PieChart>
