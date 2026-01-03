@@ -124,35 +124,61 @@ jobs:
           PR_TEMPLATE_PATH: .github/PULL_REQUEST_TEMPLATE.md
         run: |
           PROMPT_FILE=$(mktemp)
-          node -e '
-            const fs = require("fs");
-            const template = fs.readFileSync(process.env.PR_TEMPLATE_PATH, "utf8");
+          SCRIPT_FILE=$(mktemp)
 
-            const prompt = `You are an AI assistant. Your task is to generate a pull request description based on the provided template and PR data.
+          # Use a here-document to write the Node.js script to a temporary file.
+          # This prevents shell injection issues with special characters in env vars.
+          cat <<'EOF' > "$SCRIPT_FILE"
+          const fs = require("fs");
 
-            ### PR Template
-            ${template}
+          // Read environment variables inside the Node.js script
+          const templatePath = process.env.PR_TEMPLATE_PATH;
+          const prTitle = process.env.PR_TITLE;
+          const prAuthor = process.env.PR_AUTHOR;
+          const prBody = process.env.PR_BODY;
+          const fileCount = process.env.FILE_COUNT;
+          const additions = process.env.ADDITIONS;
+          const deletions = process.env.DELETIONS;
+          const categories = process.env.CATEGORIES;
 
-            ### PR Data
-            PR Title: ${process.env.PR_TITLE}
-            PR Author: ${process.env.PR_AUTHOR}
-            PR Body: ${process.env.PR_BODY}
-            Files Changed: ${process.env.FILE_COUNT}
-            Lines Added: ${process.env.ADDITIONS}
-            Lines Deleted: ${process.env.DELETIONS}
-            Impact Areas: ${process.env.CATEGORIES}
+          const template = fs.readFileSync(templatePath, "utf8");
 
-            ### Instructions
-            Generate a JSON object with a single key "description", which contains the populated pull request description as a markdown string.
+          const prompt = `You are an AI assistant. Your task is to generate a pull request description based on the provided template and PR data.
 
-            ### Output Format
-            You MUST return a valid JSON object. Do not include markdown formatting like \`\`\`json.
-            {
-              "description": "The full, populated pull request description as a markdown string."
-            }
-            `;
-            fs.writeFileSync(process.argv[1], prompt);
-          ' "$PROMPT_FILE"
+          ### PR Template
+          ${template}
+
+          ### PR Data
+          PR Title: ${prTitle}
+          PR Author: ${prAuthor}
+          PR Body: ${prBody}
+          Files Changed: ${fileCount}
+          Lines Added: ${additions}
+          Lines Deleted: ${deletions}
+          Impact Areas: ${categories}
+
+          ### Instructions
+          Your primary task is to populate the provided pull request template using the PR data.
+          The final output MUST be a valid JSON object containing a single key, "description".
+          The value of "description" should be a complete markdown string based on the template.
+
+          **Crucial Formatting Rule for 'Change Type':**
+          Inside the markdown string you generate for the "description" field, you MUST format the "Change Type" section as a single line.
+          - **Correct format:** \`## Change Type: 🐛 Bug fix (non-breaking change fixing an issue)\`
+          - **Incorrect format:** Do NOT include the list of other options or checkboxes (\`- [ ] ...\`).
+
+          ### Output Format
+          You MUST return a valid JSON object. Do not include markdown formatting like \`\`\`json.
+          {
+            "description": "The full, populated pull request description as a markdown string."
+          }
+          `;
+          // The first argument to the script is the output file path.
+          fs.writeFileSync(process.argv[2], prompt);
+          EOF
+
+          # Execute the script, passing the prompt file path as an argument.
+          node "$SCRIPT_FILE" "$PROMPT_FILE"
 
           npx tsx scripts/gemini-client.ts --task-file "$PROMPT_FILE" --output "pr_description.json"
 
@@ -188,23 +214,43 @@ jobs:
               }
 
               if (result.description) {
-                let newBody = result.description;
-                let originalBody = context.payload.pull_request.body || '';
+                const newBody = result.description;
+                const currentBody = context.payload.pull_request.body || '';
 
-                // Make the process idempotent
-                const detailsRegex = /<details>\n<summary>Original PR Body<\/summary>\n\n([\s\S]*?)\n<\/details>\n\n/;
-                const match = originalBody.match(detailsRegex);
-                if (match) {
-                  originalBody = match[1];
+                // 1. Find the Jules task line anywhere in the current body to ensure it's always found.
+                const julesTaskRegex = /^PR created automatically by Jules for task .*$/m;
+                const julesTaskMatch = currentBody.match(julesTaskRegex);
+                const julesTaskLine = julesTaskMatch ? julesTaskMatch[0] : '';
+
+                // 2. Determine the "true" original body content for the details block.
+                let trueOriginalBody = '';
+                const detailsRegex = /<details>\n<summary>Original PR Body<\/summary>\n\n([\s\S]*?)\n<\/details>/;
+                const detailsMatch = currentBody.match(detailsRegex);
+
+                if (detailsMatch) {
+                  // On a re-run, the true original body is inside the existing details block.
+                  trueOriginalBody = detailsMatch[1];
+                } else {
+                  // On the first run, the entire body is the original body.
+                  trueOriginalBody = currentBody;
                 }
 
-                newBody = '<details>\n<summary>Original PR Body</summary>\n\n' + originalBody + '\n</details>\n\n' + newBody;
+                // 3. Clean the original body by removing the Jules task line from it, so it's not duplicated in the details block.
+                const cleanedOriginalBody = trueOriginalBody.replace(julesTaskRegex, '').trim();
+
+                // 4. Build the final body.
+                let finalBody = '';
+                if (julesTaskLine) {
+                  finalBody += julesTaskLine + '\n\n'; // Ensure the task line is at the top.
+                }
+                finalBody += newBody; // Add the new AI-generated content.
+                finalBody += '\n\n<details>\n<summary>Original PR Body</summary>\n\n' + cleanedOriginalBody + '\n</details>';
 
                 await github.rest.pulls.update({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   pull_number: context.issue.number,
-                  body: newBody,
+                  body: finalBody.trim(),
                 });
               } else {
                 core.setFailed('Generated description is empty or missing from the JSON output.');
