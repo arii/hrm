@@ -71,8 +71,13 @@ if [ -n "$NEW_LABELS" ]; then
   # The `gh label create` command will fail if the label already exists.
   # We append `|| true` to ignore the error and continue the script.
   echo "Ensuring new labels exist before applying..."
-  for label in $(echo $NEW_LABELS | tr ',' ' '); do
-    gh label create "$label" || true
+  IFS=',' read -ra LABELS <<< "$NEW_LABELS"
+  for label in "${LABELS[@]}"; do
+    # Trim leading/trailing whitespace
+    clean_label=$(echo "$label" | xargs)
+    if [ -n "$clean_label" ]; then
+      gh label create "$clean_label" || true
+    fi
   done
   echo "Label check complete."
 
