@@ -62,7 +62,7 @@ jobs:
         run: |
           git add .
           git commit -m "Auto-resolve merge conflicts from ${{ github.event.inputs.source_branch }}"
-          git push -u origin feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
+          git push --force -u origin feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
           NEW_PR_URL=$(gh pr create \
             --title "Merge ${{ github.event.inputs.source_branch }} with auto-resolved conflicts" \
             --body "This PR was automatically generated after resolving merge conflicts." \
@@ -83,13 +83,15 @@ jobs:
       - name: Update comment on failure
         if: failure() || (success() && steps.resolve.outputs.unresolved-files != '')
         uses: peter-evans/create-or-update-comment@v4
+        env:
+          UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
             ❌ **Error: Unable to automatically resolve all conflicts.**
             The following files have unresolved conflicts:
             ```
-            ${{ steps.resolve.outputs.unresolved-files }}
+            ${{ env.UNRESOLVED_FILES }}
             ```
             Please resolve these conflicts manually.
             <!-- id: conflict-resolver-bot -->

@@ -141,11 +141,15 @@ jobs:
           # OPTION 2: Fallback to fetching checks live if no report is provided
           else
             echo "::notice::No pre-compiled report found. Fetching live PR checks."
-            # Correctly handle different check states by querying the `state` field and providing a default for `conclusion`.
-            FAILED_CHECKS_RAW_JSON=$(gh pr checks ${{ github.event.pull_request.number }} --json name,conclusion,detailsUrl,state | jq -c 'map(select(.state == "completed" and (.conclusion == "failure" or .conclusion == "cancelled")))')
+            # Use gh api to get raw check-runs data, which is more flexible than gh pr checks
+            # This avoids the "Unknown JSON field" error by not pre-defining fields and letting jq handle the parsing.
+            RAW_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}/check-runs" --jq '.check_runs')
+
+            # Now, safely filter and process the checks with jq
+            FAILED_CHECKS_RAW_JSON=$(echo "$RAW_CHECKS_JSON" | jq -c 'map(select(.status == "completed" and (.conclusion == "failure" or .conclusion == "cancelled")))')
 
             mapfile -t NAMES < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].name')
-            mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion // "unknown"')
+            mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion // "failure"')
             mapfile -t URLS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl')
             mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl | split("/")[-1]? // ""')
 
