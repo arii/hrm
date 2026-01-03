@@ -214,33 +214,37 @@ jobs:
               }
 
               if (result.description) {
-                let newBody = result.description;
-                let originalBody = context.payload.pull_request.body || '';
+                const newBody = result.description;
+                const currentBody = context.payload.pull_request.body || '';
 
-                // Extract the Jules task line from the original body.
+                // 1. Find the Jules task line anywhere in the current body to ensure it's always found.
                 const julesTaskRegex = /^PR created automatically by Jules for task .*$/m;
-                const julesTaskMatch = originalBody.match(julesTaskRegex);
+                const julesTaskMatch = currentBody.match(julesTaskRegex);
                 const julesTaskLine = julesTaskMatch ? julesTaskMatch[0] : '';
 
-                // Remove the Jules task line from the original body to prevent duplication.
-                if (julesTaskLine) {
-                  originalBody = originalBody.replace(julesTaskLine, '').trim();
-                }
-
-                // Make the process idempotent
+                // 2. Determine the "true" original body content for the details block.
+                let trueOriginalBody = '';
                 const detailsRegex = /<details>\n<summary>Original PR Body<\/summary>\n\n([\s\S]*?)\n<\/details>/;
-                const match = originalBody.match(detailsRegex);
-                if (match) {
-                  originalBody = match[1];
+                const detailsMatch = currentBody.match(detailsRegex);
+
+                if (detailsMatch) {
+                  // On a re-run, the true original body is inside the existing details block.
+                  trueOriginalBody = detailsMatch[1];
+                } else {
+                  // On the first run, the entire body is the original body.
+                  trueOriginalBody = currentBody;
                 }
 
-                // Build the final body
+                // 3. Clean the original body by removing the Jules task line from it, so it's not duplicated in the details block.
+                const cleanedOriginalBody = trueOriginalBody.replace(julesTaskRegex, '').trim();
+
+                // 4. Build the final body.
                 let finalBody = '';
                 if (julesTaskLine) {
-                  finalBody += julesTaskLine + '\n\n';
+                  finalBody += julesTaskLine + '\n\n'; // Ensure the task line is at the top.
                 }
-
-                finalBody += newBody + '\n\n<details>\n<summary>Original PR Body</summary>\n\n' + originalBody.trim() + '\n</details>';
+                finalBody += newBody; // Add the new AI-generated content.
+                finalBody += '\n\n<details>\n<summary>Original PR Body</summary>\n\n' + cleanedOriginalBody + '\n</details>';
 
                 await github.rest.pulls.update({
                   owner: context.repo.owner,
