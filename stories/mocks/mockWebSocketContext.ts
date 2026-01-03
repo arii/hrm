@@ -45,6 +45,7 @@ export const mockHrmData: HrmData = {
   name: 'Test HRM',
   age: 30,
   calories: 100,
+  duration: 0,
   isConnected: true,
 }
 
