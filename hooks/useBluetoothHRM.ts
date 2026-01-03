@@ -127,6 +127,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
+  const isTimeoutDisconnect = useRef(false)
   const reconnectAttempts = useRef(0)
   const maxReconnectAttempts = 5
   const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
@@ -211,14 +212,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
   }, [])
 
-  // Watchdog for stale data - marks data as stale but only reconnects after 30s
+  // Watchdog for stale data - marks data as stale and triggers reconnection based on timeout
   useEffect(() => {
     // A timeout of 0 disables the watchdog
     if (!dataLivenessTimeoutMs) return
 
     // This interval periodically checks if new data has been received.
-    // If no data for 10s, mark as stale (visual feedback)
-    // If no data for 30s, trigger reconnection
     const interval = setInterval(() => {
       if (
         statusRef.current.startsWith('Connected') &&
@@ -226,22 +225,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       ) {
         const timeSinceLastData = Date.now() - lastDataTime.current
 
-        // Mark as stale after 10 seconds
-        if (timeSinceLastData > 10000 && !isDataStale) {
+        // Mark as stale and show visual feedback when timeout is reached
+        if (timeSinceLastData > dataLivenessTimeoutMs && !isDataStale) {
           setIsDataStale(true)
-        } else if (timeSinceLastData <= 10000 && isDataStale) {
-          setIsDataStale(false)
-        }
-
-        // Only trigger reconnection after 30 seconds of no data
-        if (timeSinceLastData > 30000) {
-          logger.warn(
-            'Bluetooth data stale for 30s. Triggering reconnection...'
-          )
+          setDeviceStatus('Connection unstable. Reconnecting...')
           setDisconnectionReason('timeout')
-          setDeviceStatus('No data for 30s. Reconnecting...')
+          isTimeoutDisconnect.current = true
           if (deviceRef.current?.gatt?.connected)
             deviceRef.current.gatt.disconnect()
+        } else if (timeSinceLastData <= dataLivenessTimeoutMs && isDataStale) {
+          setIsDataStale(false)
         }
       }
     }, 2000) // Check every 2s
@@ -255,6 +248,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    */
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
+    isTimeoutDisconnect.current = false
     setDisconnectionReason('manual')
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
@@ -339,9 +333,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       )
 
       if (attemptNum <= maxReconnectAttempts) {
-        setDisconnectionReason('signal_loss')
+        // Only set signal_loss if this wasn't a timeout disconnect
+        if (!isTimeoutDisconnect.current) {
+          setDisconnectionReason('signal_loss')
+        }
+        const reasonText = isTimeoutDisconnect.current
+          ? 'Timeout'
+          : 'Signal Lost'
         setDeviceStatus(
-          `Signal Lost. Reconnecting... (Attempt ${attemptNum}/${maxReconnectAttempts})`
+          `${reasonText}. Reconnecting... (Attempt ${attemptNum}/${maxReconnectAttempts})`
         )
 
         // Randomized backoff: increases with attempts
@@ -373,6 +373,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         // Trigger device reset after a brief delay to show the message
         reconnectTimeoutRef.current = setTimeout(async () => {
           isManualDisconnect.current = true
+          isTimeoutDisconnect.current = false
           setDisconnectionReason('manual')
           if (abortControllerRef.current) {
             abortControllerRef.current.abort()
@@ -469,6 +470,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setSavedDevice(device)
         setCookie('hrm_device_id', device.id)
         isManualDisconnect.current = false
+        isTimeoutDisconnect.current = false
         setDisconnectionReason(null)
         // Reset reconnection attempts on successful connection
         reconnectAttempts.current = 0
@@ -498,6 +500,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             clearTimeout(reconnectTimeoutRef.current)
           reconnectTimeoutRef.current = setTimeout(() => {
             isManualDisconnect.current = true
+            isTimeoutDisconnect.current = false
             setDisconnectionReason('manual')
             if (abortControllerRef.current) {
               abortControllerRef.current.abort()

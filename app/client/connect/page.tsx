@@ -109,7 +109,7 @@ export default function ConnectPage() {
         processHeartRate(heartRate)
       }
     },
-    [processHeartRate, workoutStatus]
+    [processHeartRate, workoutStatus, setCurrentHR]
   )
   const {
     connectAndStream,
