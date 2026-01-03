@@ -34,8 +34,6 @@ interface ConnectViewProps {
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
   userHeight: { cm: string; feet: string; inches: string }
   setUserHeight: (
     height: Partial<{ cm: string; feet: string; inches: string }>
@@ -45,7 +43,6 @@ interface ConnectViewProps {
   userWeight: string
   setUserWeight: (weight: string) => void
   onWeightBlur: () => void
-  weightError: string | null
   gender: Gender
   setGender: (gender: Gender) => void
   unitSystem: MeasurementSystem
@@ -76,8 +73,6 @@ export default function ConnectView({
   setUserName,
   userAge,
   setUserAge,
-  onAgeBlur,
-  ageError,
   userHeight,
   setUserHeight,
   onHeightBlur,
@@ -85,7 +80,6 @@ export default function ConnectView({
   userWeight,
   setUserWeight,
   onWeightBlur,
-  weightError,
   gender,
   setGender,
   unitSystem,
@@ -117,7 +111,7 @@ export default function ConnectView({
         'HrTile rendering with currentHR'
       )
     }
-  }, [currentHR, isConnected])
+  }, [currentHR, isConnected, isDataStale, userName])
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -215,8 +209,6 @@ export default function ConnectView({
               setUserName={setUserName}
               userAge={userAge}
               setUserAge={setUserAge}
-              onAgeBlur={onAgeBlur}
-              ageError={ageError}
               userHeight={userHeight}
               setUserHeight={setUserHeight}
               onHeightBlur={onHeightBlur}
@@ -224,7 +216,6 @@ export default function ConnectView({
               userWeight={userWeight}
               setUserWeight={setUserWeight}
               onWeightBlur={onWeightBlur}
-              weightError={weightError}
               unit={unitSystem}
               setUnit={onUnitChange}
             />

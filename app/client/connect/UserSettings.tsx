@@ -4,24 +4,23 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import ValidatedTextField from '../../../components/forms/ValidatedTextField' // Updated import
+import { UserSettingsSchema } from '../../../lib/validation/userSettingsValidation' // Updated import
 
 interface UserSettingsProps {
   userName: string
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
   userHeight: { cm: string; feet: string; inches: string }
   setUserHeight: (
     height: Partial<{ cm: string; feet: string; inches: string }>
   ) => void
-  onHeightBlur: () => void
-  heightError: string | null
+  onHeightBlur: () => void // Kept for height
+  heightError: string | null // Kept for height
   userWeight: string
   setUserWeight: (weight: string) => void
   onWeightBlur: () => void
-  weightError: string | null
   unit: 'METRIC' | 'IMPERIAL'
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
 }
@@ -31,8 +30,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   setUserName,
   userAge,
   setUserAge,
-  onAgeBlur,
-  ageError,
   userHeight,
   setUserHeight,
   onHeightBlur,
@@ -40,20 +37,21 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   userWeight,
   setUserWeight,
   onWeightBlur,
-  weightError,
   unit,
   setUnit,
 }) => {
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
-      <TextField
+      <ValidatedTextField
         fullWidth
         label="Your Name"
         placeholder="e.g., Jane Doe"
         value={userName}
         onChange={(e) => setUserName(e.target.value)}
+        schema={UserSettingsSchema}
+        fieldName="userName"
       />
-      <TextField
+      <ValidatedTextField
         fullWidth
         label="Your Age"
         placeholder="e.g., 30"
@@ -64,9 +62,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             setUserAge(e.target.value)
           }
         }}
-        onBlur={onAgeBlur}
-        error={!!ageError}
-        helperText={ageError}
+        schema={UserSettingsSchema}
+        fieldName="userAge"
         inputProps={{ min: 1, max: 120 }}
       />
       <ToggleButtonGroup
@@ -136,7 +133,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           />
         </Stack>
       )}
-      <TextField
+      <ValidatedTextField
         fullWidth
         label={`Your Weight (${unit === 'METRIC' ? 'kg' : 'lbs'})`}
         placeholder={unit === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
@@ -148,8 +145,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           }
         }}
         onBlur={onWeightBlur}
-        error={!!weightError}
-        helperText={weightError}
+        schema={UserSettingsSchema}
+        fieldName="userWeight"
       />
     </Stack>
   )

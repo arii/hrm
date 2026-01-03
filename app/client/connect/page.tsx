@@ -11,13 +11,10 @@ import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
-import {
-  validateAgeValue,
-  validateWeightValue,
-} from '@/lib/validation/userMetrics'
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
+import { UserSettingsSchema } from '@/lib/validation/userSettingsValidation'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -25,13 +22,11 @@ export default function ConnectPage() {
 
   const [currentHR, setCurrentHR] = useState(0)
 
+  // Display weight is managed separately to handle unit conversions
   const [displayWeight, setDisplayWeight] = useState(() => {
     const kg = userWeight || 0
     return toDisplay(kg, unitSystem).toString()
   })
-
-  const [ageError, setAgeError] = useState<string | null>(null)
-  const [weightError, setWeightError] = useState<string | null>(null)
 
   const {
     displayHeight,
@@ -40,23 +35,19 @@ export default function ConnectPage() {
     error: heightError,
   } = useHeightInput('175', unitSystem)
 
-  const handleAgeBlur = () => {
-    const error = validateAgeValue(String(userAge || ''))
-    setAgeError(error)
-  }
+  // This function now only handles the conversion and context update,
+  // as validation is done by the ValidatedTextField.
+  const commitWeightToContext = () => {
+    const validationResult = UserSettingsSchema.pick({
+      userWeight: true,
+    }).safeParse({ userWeight: displayWeight })
 
-  const handleWeightChange = (newDisplayValue: string) => {
-    setDisplayWeight(newDisplayValue)
-  }
-
-  const handleWeightBlur = () => {
-    const error = validateWeightValue(displayWeight, unitSystem)
-    setWeightError(error)
-
-    const numericValue = parseFloat(displayWeight)
-    if (!error && !isNaN(numericValue) && numericValue > 0) {
-      const newKgValue = toKg(numericValue, unitSystem)
-      setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
+    if (validationResult.success) {
+      const numericValue = parseFloat(displayWeight)
+      if (!isNaN(numericValue) && numericValue > 0) {
+        const newKgValue = toKg(numericValue, unitSystem)
+        setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
+      }
     }
   }
 
@@ -129,11 +120,9 @@ export default function ConnectPage() {
   })
 
   useEffect(() => {
-    // Try to auto-connect when WebSocket is ready and we're not already connected.
-    // Wait a tick to ensure the component is fully initialized before attempting connection.
+    // Try to auto-connect when WebSocket is ready
     if (!isConnected && isSupported && connectionStatus === 'Connected') {
       logger.info('WebSocket ready, attempting auto-connect...')
-      // Small delay to ensure component is fully mounted
       const timeout = setTimeout(() => {
         autoConnect().catch(() => {
           logger.info('Auto-connect failed, user can connect manually')
@@ -145,8 +134,7 @@ export default function ConnectPage() {
   }, [connectionStatus, isConnected, isSupported, autoConnect])
 
   useEffect(() => {
-    // This effect synchronizes the local HR and calorie state with the server.
-    // It triggers whenever the local `currentHR` or `calories` state changes.
+    // Synchronize local HR and calorie state with the server.
     throttledSend({
       type: 'HRM_INPUT',
       data: {
@@ -185,6 +173,7 @@ export default function ConnectPage() {
     resetWorkoutSession()
     resetCalculator()
   }
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
@@ -197,16 +186,13 @@ export default function ConnectPage() {
       setUserAge={(age) =>
         setUserSettings((prev) => ({ ...prev, userAge: Number(age) }))
       }
-      onAgeBlur={handleAgeBlur}
-      ageError={ageError}
       userHeight={displayHeight}
       setUserHeight={handleHeightChange}
       onHeightBlur={handleHeightBlur}
       heightError={heightError}
       userWeight={displayWeight}
-      setUserWeight={handleWeightChange}
-      onWeightBlur={handleWeightBlur}
-      weightError={weightError}
+      setUserWeight={setDisplayWeight}
+      onWeightBlur={commitWeightToContext}
       gender={gender}
       setGender={(g) => setUserSettings((prev) => ({ ...prev, gender: g }))}
       unitSystem={unitSystem}
