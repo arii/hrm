@@ -54,12 +54,11 @@ jobs:
       - name: Attempt Automatic Rebase
         id: rebase
         if: steps.check_labels.outputs.should_skip == 'false'
-        uses: cirrus-actions/rebase@v1.8
+        uses: peter-evans/rebase@v3
         continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
         with:
-          pr: ${{ steps.get_pr_number.outputs.PR_NUMBER }}
+          token: ${{ secrets.ARI_PAT }}
+          issue-number: ${{ steps.get_pr_number.outputs.PR_NUMBER }}
 
       # --- AI CONFLICT RESOLUTION START ---
       # This block only runs if the automatic rebase failed.
