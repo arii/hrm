@@ -129,6 +129,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
   const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  /**
+   * @ref abortControllerRef
+   * @description Manages the cancellation of in-flight Bluetooth connection attempts.
+   * This is crucial for handling timeouts and preventing race conditions where multiple
+   * connection attempts (e.g., auto-reconnect vs. manual) might overlap.
+   * - It is created and assigned in `connectToGatt`.
+   * - It is aborted in `disconnect` to stop any ongoing connection attempts.
+   * - It is also aborted at the start of `connectToGatt` to cancel any previous,
+   *   still-pending connection attempts before starting a new one.
+   */
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
@@ -318,6 +328,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice) => {
+      // Abort any existing connection attempts before starting a new one.
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
       try {
         deviceRef.current = device
         setDeviceStatus(`Connecting to: ${device.name || 'Device'}...`)
@@ -409,10 +423,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       options: { silent?: boolean } = {}
     ): Promise<void> => {
       const { silent = false } = options
-
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
 
       // Prioritize args, but fall back to props.
       userDetailsRef.current = {
