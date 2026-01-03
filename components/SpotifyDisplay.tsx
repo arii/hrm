@@ -16,6 +16,7 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
@@ -236,27 +237,56 @@ const SpotifyDisplay = () => {
     }
   }, [spotifyData.devices, selectedDeviceId])
 
-  const sendSpotifyCommand = (
-    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-    targetDeviceId?: string
-  ) => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command,
-      ...(targetDeviceId && { deviceId: targetDeviceId }),
-    }
-    sendData(message)
-  }
+  const sendSpotifyCommand = useCallback(
+    (
+      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
+      targetDeviceId?: string
+    ) => {
+      const message: SpotifyCommandMessage = {
+        type: 'SPOTIFY_COMMAND',
+        command,
+        ...(targetDeviceId && { deviceId: targetDeviceId }),
+      }
+      sendData(message)
+    },
+    [sendData]
+  )
 
   const handlePlayPauseToggle = () => {
     const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
     sendSpotifyCommand(command)
   }
 
-  const handleDeviceSelect = (deviceId: string) => {
-    dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
-    sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
-  }
+  const handleDeviceSelect = useCallback(
+    (deviceId: string) => {
+      dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
+      sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
+    },
+    [sendSpotifyCommand]
+  )
+
+  // Auto-select HRM Web Player if SDK is ready and no active device is found
+  useEffect(() => {
+    if (
+      isReady &&
+      spotifyData.devices &&
+      spotifyData.devices.length > 0 &&
+      !selectedDeviceId &&
+      !spotifyData.devices.some((d) => d.is_active)
+    ) {
+      const hrmPlayer = spotifyData.devices.find(
+        (d) => d.name === HRM_WEB_PLAYER_NAME
+      )
+      if (hrmPlayer) {
+        console.log(
+          '[SpotifyDisplay] No active device, defaulting to HRM Web Player'
+        )
+        // Note: Do not automatically transfer playback, just select it.
+        // The user can choose to start playing on this device.
+        dispatch({ type: 'SELECT_DEVICE', payload: hrmPlayer.id })
+      }
+    }
+  }, [isReady, spotifyData.devices, selectedDeviceId])
 
   if (!isLoggedIn) {
     return (
@@ -416,6 +446,7 @@ const SpotifyDisplay = () => {
             onToggleMute={handleToggleMute}
           />
           <SpotifyDeviceSelectorWrapper
+            disabled={!isReady}
             availableDevices={spotifyData.devices || []}
             deviceMenuAnchor={deviceMenuAnchor}
             onDeviceSelect={handleDeviceSelect}

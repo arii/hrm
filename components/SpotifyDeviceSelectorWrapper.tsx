@@ -11,6 +11,7 @@ interface SpotifyDeviceSelectorWrapperProps {
   onDeviceSelect: (deviceId: string) => void
   onMenuOpen: (event: MouseEvent<HTMLElement>) => void
   onMenuClose: () => void
+  disabled?: boolean
 }
 
 const SpotifyDeviceSelectorWrapper = ({
