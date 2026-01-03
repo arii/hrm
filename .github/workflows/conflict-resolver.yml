@@ -10,6 +10,9 @@ on:
       source_branch:
         description: 'The branch to merge from'
         required: true
+      pr_number:
+        description: 'The PR number to comment on'
+        required: false
 
 jobs:
   merge_and_resolve:
@@ -17,7 +20,16 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      issues: write
     steps:
+      - name: Post initial comment
+        if: github.event.inputs.pr_number
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+        run: |
+          gh pr comment $PR_NUMBER --body "⏳ Attempting to automatically resolve conflicts for branch \`${{ github.event.inputs.source_branch }}\`..."
+
       - name: Checkout target branch
         uses: actions/checkout@v4
         with:
@@ -45,6 +57,7 @@ jobs:
       - name: Handle resolution results
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
           UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
         run: |
           if [ -z "$UNRESOLVED_FILES" ]; then
@@ -53,14 +66,33 @@ jobs:
             git commit -m "Auto-resolve merge conflicts from ${{ github.event.inputs.source_branch }}"
             git push -u origin feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
 
-            gh pr create \
+            NEW_PR_URL=$(gh pr create \
               --title "Merge ${{ github.event.inputs.source_branch }} with auto-resolved conflicts" \
               --body "This PR was automatically generated after resolving merge conflicts." \
               --base ${{ github.event.inputs.target_branch }} \
-              --head feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
+              --head feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }})
+
+            echo "Created new PR: $NEW_PR_URL"
+
+            if [ -n "$PR_NUMBER" ]; then
+              gh pr comment $PR_NUMBER --body "✅ Successfully resolved all conflicts. A new pull request has been created: $NEW_PR_URL"
+            fi
           else
             echo "❌ Error: Unable to automatically resolve all conflicts."
             echo "Unresolved files:"
             echo "$UNRESOLVED_FILES"
+
+            if [ -n "$PR_NUMBER" ]; then
+              # Use a heredoc for a multi-line comment body
+              gh pr comment $PR_NUMBER --body "$(cat <<EOF
+              ❌ **Error: Unable to automatically resolve all conflicts.**
+              The following files have unresolved conflicts:
+              \`\`\`
+              ${UNRESOLVED_FILES}
+              \`\`\`
+              Please resolve these conflicts manually.
+              EOF
+              )"
+            fi
             exit 1
           fi
