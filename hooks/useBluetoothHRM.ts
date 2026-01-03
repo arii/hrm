@@ -238,7 +238,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setDisconnectionReason('manual')
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
-      abortControllerRef.current = null
     }
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
@@ -318,7 +317,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       const randomDelay = Math.random() * 3000 + 2000
       reconnectTimeoutRef.current = setTimeout(() => {
         if (connectToGattRef.current)
-          connectToGattRef.current(deviceToReconnect)
+          connectToGattRef.current(deviceToReconnect).catch((error) => {
+            // This catch is crucial. If a user action interrupts the auto-reconnect
+            // (e.g., by clicking "connect" again), the AbortError would otherwise
+            // cause an unhandled promise rejection. We can safely ignore it here,
+            // as a new connection flow has taken over.
+            if (error.name !== 'AbortError') {
+              logger.error(
+                { error },
+                'Auto-reconnect attempt failed unexpectedly'
+              )
+            }
+          })
       }, randomDelay)
     } else {
       logger.info('Device disconnected manually.')
