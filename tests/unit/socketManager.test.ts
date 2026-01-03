@@ -351,6 +351,74 @@ describe('WebSocket Manager', () => {
     })
   })
 
+  describe('Duration Calculation', () => {
+    it('should correctly calculate and broadcast duration over time', () => {
+      // Mock Date.now() to control time flow
+      let currentTime = 1000000
+      const dateNowSpy = jest
+        .spyOn(Date, 'now')
+        .mockImplementation(() => currentTime)
+
+      // --- 1. Client Connection ---
+      // This happens in the global beforeEach, but we need to control the time.
+      // We must remove the old connection listener and clients before setting up our own.
+      mockWss.removeAllListeners('connection')
+      ;(mockWss.clients as Set<MockWebSocket>).clear()
+      resetSocketManager()
+      initSocketManager(mockWss, getSnapshot, mockServices)
+
+      const mockReq = createMockRequest()
+      const newWs = new MockWebSocket()
+      ;(mockWss.clients as Set<MockWebSocket>).add(newWs)
+      mockWss.emit('connection', newWs, mockReq)
+
+      // --- 2. First HRM_INPUT message ---
+      // This establishes the baseline duration.
+      currentTime += 5000 // 5 seconds pass
+      const firstMessage = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 120 },
+      })
+      newWs.emit('message', firstMessage)
+      jest.runOnlyPendingTimers()
+
+      const mockBroadcast = broadcast as jest.Mock
+      expect(mockBroadcast).toHaveBeenCalledTimes(1)
+      const firstPayload: HrmData[] = mockBroadcast.mock.calls[0][1].payload
+      expect(firstPayload[0].duration).toBe(5000)
+
+      // --- 3. Second HRM_INPUT message ---
+      // This verifies the duration increases correctly.
+      currentTime += 10000 // 10 more seconds pass
+      const secondMessage = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 125 },
+      })
+      newWs.emit('message', secondMessage)
+      jest.runOnlyPendingTimers()
+
+      expect(mockBroadcast).toHaveBeenCalledTimes(2)
+      const secondPayload: HrmData[] = mockBroadcast.mock.calls[1][1].payload
+      expect(secondPayload[0].duration).toBe(15000) // 5s + 10s
+
+      // --- 4. Third HRM_INPUT message ---
+      currentTime += 3000 // 3 more seconds pass
+      const thirdMessage = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 130 },
+      })
+      newWs.emit('message', thirdMessage)
+      jest.runOnlyPendingTimers()
+
+      expect(mockBroadcast).toHaveBeenCalledTimes(3)
+      const thirdPayload: HrmData[] = mockBroadcast.mock.calls[2][1].payload
+      expect(thirdPayload[0].duration).toBe(18000) // 15s + 3s
+
+      // Restore the original Date.now()
+      dateNowSpy.mockRestore()
+    })
+  })
+
   describe('Message Handling', () => {
     it('should handle REGISTER_CLIENT message', () => {
       const message = JSON.stringify({
