@@ -33,9 +33,14 @@ export const validateWeightValue = (
   unit: MeasurementSystem
 ) => {
   if (!weight || weight.trim() === '') return null
-  const num = Number(weight)
+  const num = parseFloat(weight)
   const range = WEIGHT_VALIDATION[unit]
-  if (isNaN(num) || num < range.min || num > range.max) {
+  if (
+    isNaN(num) ||
+    !/^\d*\.?\d*$/.test(weight) ||
+    num < range.min ||
+    num > range.max
+  ) {
     return `Please enter a valid weight (${range.min}-${range.max})`
   }
   return null
