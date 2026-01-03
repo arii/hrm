@@ -1,0 +1,18 @@
+# .github/conflict-resolver.yml
+
+rules:
+  # Always use 'theirs' for pnpm-lock.yaml to accept incoming dependency updates
+  - paths: 'pnpm-lock.yaml'
+    strategy: 'theirs'
+
+  # For build output, always prefer the local version ('ours')
+  - paths: 'dist/**/*'
+    strategy: 'ours'
+  - paths: 'build/**/*'
+    strategy: 'ours'
+
+  # For auto-generated files, always keep the local version
+  - paths: '*.generated.ts'
+    strategy: 'ours'
+  - paths: '*.generated.js'
+    strategy: 'ours'
