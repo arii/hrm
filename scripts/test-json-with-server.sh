@@ -1,6 +1,6 @@
 #!/bin/bash
 # scripts/test-json-with-server.sh
-# Runs targeted Playwright tests with server startup and report merging support
+# Runs targeted Playwright tests with blob reporter for report merging.
 
 set -e
 
@@ -14,8 +14,8 @@ fi
 echo "🧪 Running Playwright tests with blob reporter for merging..."
 echo "📋 Test files/args: $TEST_ARGS"
 
-# Run the tests with blob reporter for report merging
-scripts/test-with-server.sh npx playwright test $TEST_ARGS --reporter=blob
+# Run the tests directly with playwright
+pnpm run build && npx playwright test $TEST_ARGS --reporter=blob
 TEST_EXIT_CODE=$?
 
 if [ $TEST_EXIT_CODE -eq 0 ]; then
