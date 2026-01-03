@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.22.0](https://github.com/arii/hrm/compare/hrm-v0.21.0...hrm-v0.22.0) (2026-01-03)
+
+
+### Features
+
+* **small:** Refactor: Remove HR Monitor Connection UI from Dashboard ([#3072](https://github.com/arii/hrm/issues/3072)) ([6d52d9e](https://github.com/arii/hrm/commit/6d52d9e8697dc319444d2735222d1138cda33dfe))
+
+
+### Bug Fixes
+
+* **ci:** Ensure labels exist and use PAT for sufficient permissions ([#3063](https://github.com/arii/hrm/issues/3063)) ([b7edcac](https://github.com/arii/hrm/commit/b7edcacf701f6c6279196ae1fd9edcb4556af9c0))
+* **ci:** revise AI prompt in pr-enrichment.yml to prevent CI failures ([ce3e73b](https://github.com/arii/hrm/commit/ce3e73b474f946517cb3ecd21a8c11e528cf0649))
+
 ## [0.21.0](https://github.com/arii/hrm/compare/hrm-v0.20.0...hrm-v0.21.0) (2026-01-02)
 
 ### Features
