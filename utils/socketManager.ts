@@ -210,6 +210,7 @@ const initSocketManager = (
           } finally {
             // Always remove the socket reference to prevent leaks
             clientSockets.delete(extWs.clientId)
+            lastWarningTimes.delete(extWs.clientId)
           }
         }
       }, env.WEBSOCKET_GRACE_PERIOD_MS)
@@ -306,35 +307,13 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_INPUT': {
-        // Enforce a single source of truth for HRM data.
-        if (!hrmDataSourceClientId) {
-          // If no source is set, this client becomes the source.
+        // Enforce a "last-in-wins" policy for the HRM data source.
+        if (hrmDataSourceClientId !== clientId) {
+          logger.info(
+            { oldSource: hrmDataSourceClientId, newSource: clientId },
+            'HRM data source has changed.'
+          )
           hrmDataSourceClientId = clientId
-          logger.info({ clientId }, 'New HRM data source registered.')
-        } else if (hrmDataSourceClientId !== clientId) {
-          const now = Date.now()
-          const lastWarning = lastWarningTimes.get(clientId) || 0
-          if (now - lastWarning > 5000) {
-            // Log and notify only once every 5 seconds
-            lastWarningTimes.set(clientId, now)
-            logger.warn(
-              {
-                clientId,
-                dataSourceId: hrmDataSourceClientId,
-              },
-              'Ignoring HRM_INPUT from non-authoritative client.'
-            )
-            // Notify the client that their data is being ignored
-            sendWebSocketMessage(
-              ws,
-              {
-                type: 'SOURCE_LOCKED',
-                payload: { clientId: hrmDataSourceClientId },
-              },
-              'socketManager.SOURCE_LOCKED'
-            )
-          }
-          return // Stop processing
         }
 
         const existingData = hrmDataRepository.findById(clientId)

@@ -109,7 +109,6 @@ const HrmConnectionPanel = () => {
               flexDirection: 'column',
               width: { xs: '100%', sm: 'calc(50% - 8px)' },
               height: '100%', // Ensure the container fills the grid cell
-              gap: 2,
               p: 2,
               border: 1,
               borderColor: 'divider',
