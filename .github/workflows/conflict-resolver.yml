@@ -83,13 +83,15 @@ jobs:
       - name: Update comment on failure
         if: failure() || (success() && steps.resolve.outputs.unresolved-files != '')
         uses: peter-evans/create-or-update-comment@v4
+        env:
+          UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
             ❌ **Error: Unable to automatically resolve all conflicts.**
             The following files have unresolved conflicts:
             ```
-            ${{ steps.resolve.outputs.unresolved-files }}
+            ${{ env.UNRESOLVED_FILES }}
             ```
             Please resolve these conflicts manually.
             <!-- id: conflict-resolver-bot -->
