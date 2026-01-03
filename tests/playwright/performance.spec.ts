@@ -23,7 +23,7 @@ test.describe('Frontend Performance', () => {
     await page.goto('/client/mock')
 
     // Start the mock HRM data stream
-    await page.getByRole('button', { name: 'START Continuous Stream' }).click()
+    await page.getByTestId('streaming-start-button').click()
 
     // Open a new tab for the dashboard
     const newPage = await page.context().newPage()
@@ -64,7 +64,7 @@ test.describe('Frontend Performance', () => {
     clearInterval(interval)
 
     // Stop the mock HRM data stream
-    await page.getByRole('button', { name: /STOP Streaming HR/ }).click()
+    await page.getByTestId('streaming-stop-button').click()
 
     // --- Analysis ---
     console.log('--- Collected Performance Metrics ---')
