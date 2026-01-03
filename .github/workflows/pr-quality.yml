@@ -1117,7 +1117,7 @@ jobs:
 
           # Check standalone jobs
           for job in "knip-check" "lint-check" "build-check"; do
-            result=$(echo "$NEEDS_CONTEXT" | jq -r ".${job}.result")
+            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result')
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               log_file=""
               case $job in
