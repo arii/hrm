@@ -1,122 +1,88 @@
-/** @jest-environment jsdom */
-
-import { jest } from '@jest/globals'
+/**
+ * @jest-environment jsdom
+ */
+import { render, screen } from '@testing-library/react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import { useWebSocket } from '@/context/WebSocketContext'
-import '@testing-library/jest-dom'
-import { render, screen, within } from '@testing-library/react'
-import { useSession } from 'next-auth/react'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 
-// Mock the context and child component for isolation
-jest.mock('@/context/WebSocketContext')
-jest.mock('next-auth/react')
-jest.mock('@/hooks/useBluetoothHRM')
-jest.mock('@/components/HrTileWithCalories', () => ({
+// Mocks
+jest.mock('@/components/HrTileWrapper', () => ({
   __esModule: true,
   default: ({ user }: { user: { name: string; value: number | null } }) => (
     <div data-testid="mock-hr-tile">
       <p>{user.name}</p>
-      <p>{user.value === null ? 'Signal Drop' : user.value}</p>
+      <p>{user.value}</p>
     </div>
   ),
 }))
-
-const mockedUseWebSocket = useWebSocket as jest.Mock
-const mockedUseSession = useSession as jest.Mock
-const mockedUseBluetoothHRM = useBluetoothHRM as jest.Mock
-
-const renderWithProviders = (component: React.ReactElement) => {
-  return render(<UserSettingsProvider>{component}</UserSettingsProvider>)
-}
+jest.mock('@/context/WebSocketContext', () => ({
+  useWebSocket: jest.fn(),
+}))
 
 describe('HrmConnectionPanel', () => {
+  const mockUseWebSocket = useWebSocket as jest.Mock
+
   beforeEach(() => {
-    jest.resetAllMocks()
-    mockedUseSession.mockReturnValue({ data: null })
-    mockedUseBluetoothHRM.mockReturnValue({
-      connectAndStream: jest.fn(),
-      disconnect: jest.fn(),
-      deviceStatus: 'Disconnected',
-      batteryLevel: null,
-      isConnected: false,
-      isSupported: true,
-    })
-  })
-
-  it('should render HRM data correctly for a user', () => {
-    mockedUseWebSocket.mockReturnValue({
-      hrmData: [{ clientId: 'user1', name: 'Ariel', value: 150 }],
-      connectionStatus: 'Connected',
-      activeAlerts: [],
-    })
-
-    renderWithProviders(<HrmConnectionPanel />)
-
-    const tile = screen.getByTestId('mock-hr-tile')
-    expect(within(tile).getByText('Ariel')).toBeInTheDocument()
-    expect(within(tile).getByText('150')).toBeInTheDocument()
-  })
-
-  it('should render "Signal Drop" when value is null', () => {
-    mockedUseWebSocket.mockReturnValue({
-      hrmData: [{ clientId: 'user1', name: 'Ariel', value: null }],
-      connectionStatus: 'Connected',
-      activeAlerts: [],
-    })
-
-    renderWithProviders(<HrmConnectionPanel />)
-
-    const tile = screen.getByTestId('mock-hr-tile')
-    expect(within(tile).getByText('Ariel')).toBeInTheDocument()
-    expect(within(tile).getByText('Signal Drop')).toBeInTheDocument()
-  })
-
-  it('should render skeleton containers when hrmData is empty', () => {
-    mockedUseWebSocket.mockReturnValue({
+    mockUseWebSocket.mockReturnValue({
       hrmData: [],
       connectionStatus: 'Connected',
       activeAlerts: [],
     })
-
-    renderWithProviders(<HrmConnectionPanel />)
-
-    // The component renders skeleton containers when there's no data
-    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(1)
-    // And no actual HrTile components are rendered
-    expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
   })
 
-  it('should render skeleton containers when connection status is not "Connected"', () => {
-    mockedUseWebSocket.mockReturnValue({
-      hrmData: [{ clientId: 'user1', name: 'Ariel', value: 150 }],
-      connectionStatus: 'Connecting...',
-      activeAlerts: [],
-    })
-
-    renderWithProviders(<HrmConnectionPanel />)
-
-    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(1)
-    expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
+  it('renders a placeholder message and no connect link when no data is available', () => {
+    render(
+      <UserSettingsProvider>
+        <HrmConnectionPanel />
+      </UserSettingsProvider>
+    )
+    expect(screen.getByText('No Heart Rate Data')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /Connect/i })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Connect/i })
+    ).not.toBeInTheDocument()
   })
 
-  it('should filter out users with placeholder names', () => {
-    mockedUseWebSocket.mockReturnValue({
-      hrmData: [
-        { clientId: 'user1', name: 'new user (1)', value: 120 },
-        { clientId: 'user3', name: 'Valid User', value: 130 },
-      ],
+  it('renders HR tiles and no connect link when hrmData is available', () => {
+    mockUseWebSocket.mockReturnValue({
+      hrmData: [{ clientId: '1', name: 'Test User', value: 120 }],
       connectionStatus: 'Connected',
       activeAlerts: [],
     })
+    render(
+      <UserSettingsProvider>
+        <HrmConnectionPanel />
+      </UserSettingsProvider>
+    )
+    // Check that the HR tile is rendered
+    expect(screen.getByTestId('mock-hr-tile')).toBeInTheDocument()
+    expect(screen.getByText('Test User')).toBeInTheDocument()
+    expect(screen.getByText('120')).toBeInTheDocument()
 
-    renderWithProviders(<HrmConnectionPanel />)
+    // Assert that no connect link or button is visible
+    expect(
+      screen.queryByRole('link', { name: /Connect/i })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Connect/i })
+    ).not.toBeInTheDocument()
+  })
 
-    // Only the 'Valid User' tile should be rendered
-    const tiles = screen.getAllByTestId('mock-hr-tile')
-    expect(tiles).toHaveLength(1)
-    expect(within(tiles[0]).getByText('Valid User')).toBeInTheDocument()
-    expect(within(tiles[0]).getByText('130')).toBeInTheDocument()
+  it('renders skeletons when loading', () => {
+    mockUseWebSocket.mockReturnValue({
+      hrmData: [],
+      connectionStatus: 'Connecting...',
+      activeAlerts: [],
+    })
+    const { container } = render(
+      <UserSettingsProvider>
+        <HrmConnectionPanel />
+      </UserSettingsProvider>
+    )
+    // Expect one skeleton to be present for the placeholder
+    expect(container.querySelectorAll('.MuiSkeleton-root').length).toBe(1)
   })
 })

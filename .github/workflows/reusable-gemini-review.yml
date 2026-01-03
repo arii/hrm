@@ -30,6 +30,8 @@ on:
     secrets:
       GEMINI_API_KEY:
         required: true
+      ARI_PAT:
+        required: true
     outputs:
       needs-review:
         description: 'Whether a re-review is needed'
@@ -260,7 +262,7 @@ jobs:
 
       - name: Manage Labels
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: ./.github/scripts/manage-pr-labels.sh
 

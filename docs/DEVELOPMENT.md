@@ -79,6 +79,7 @@ To maintain a clean and linear Git history, this project provides an automated t
 1.  Open a pull request.
 2.  Ensure all checks have passed and the PR is ready for merging.
 3.  Add a comment to the PR containing one of the following commands:
+
 - `@pr-squash` or `@pr-squash-rebase`: Squashes all commits into a single commit and rebases it on top of the `leader` branch. This is the recommended way to prepare a PR for merging.
 - `/rebase-ai`: Performs a rebase of the PR on top of the `leader` branch. If conflicts are found, it uses the Gemini API to attempt to resolve them automatically. This command does **not** squash commits, making it useful for updating a PR that is still in progress without losing its commit history.
 
@@ -96,6 +97,33 @@ If the action encounters a merge conflict during the rebase, it will fail gracef
 
 > **Note on Protected Branches**: For this action to work on a protected branch, the repository's settings may need to be adjusted to allow the `github-actions[bot]` to push to the branch. For more information, see the [GitHub documentation on managing protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches).
 
+#### Automated Conflict Resolution
+
+To streamline the process of handling common merge conflicts, the repository includes an automated conflict resolver workflow, which can be triggered in two ways.
+
+##### Manual Workflow Invocation
+
+1.  Navigate to the **Actions** tab of the repository.
+2.  Select the **Auto Conflict Resolver** workflow from the list.
+3.  Click **Run workflow**.
+4.  Specify the `target_branch` (the branch to merge into, e.g., `leader`) and the `source_branch` (the branch to merge from).
+
+##### Comment-based Invocation
+
+Add a comment containing the command `@conflict-resolve` to a pull request.
+
+**What it does**:
+
+-   The workflow attempts to merge the `source_branch` into the `target_branch` on a temporary branch.
+-   It uses a predefined set of rules in `.github/conflict-resolver.yml` to automatically resolve conflicts for specific files (e.g., `pnpm-lock.yaml`, build artifacts).
+-   If all conflicts are resolved successfully, it creates a new pull request with the merged changes.
+-   If any conflicts cannot be resolved automatically, the workflow will fail, and manual intervention will be required.
+
+**Distinction from `/rebase-ai`**:
+
+-   **@conflict-resolve**: Uses a **rules-based approach**. It's deterministic and designed for predictable conflicts (like lockfiles). It creates a **new pull request** with the merged result.
+-   **/rebase-ai**: Uses an **AI-powered approach** (Gemini). It's designed for more complex code conflicts and attempts to resolve them semantically. It updates the ***existing*** pull request by rebasing and force-pushing.
+
 #### AI-Powered Workflows
 
 The project leverages AI-powered workflows to automate code reviews, update pull requests, and more.
@@ -103,6 +131,16 @@ The project leverages AI-powered workflows to automate code reviews, update pull
 - **`@gemini-bot review`**: Triggers a comprehensive code review using the Gemini API. The bot will analyze the pull request, provide feedback, and suggest improvements.
 - **`@gemini-update-pr`**: This command triggers a workflow that updates the pull request with the latest changes from the base branch, ensuring that the PR is up-to-date before merging.
 - **`@jules fix` (Legacy)**: This legacy command invokes the Jules AI to perform a code review. It is recommended to use `@gemini-bot review` for more advanced and accurate reviews.
+
+#### Automatic Branch Updates
+
+To ensure pull requests are always synchronized with the `leader` branch, this project uses an automated workflow that updates PRs whenever new commits are pushed to `leader`.
+
+**What it does**:
+
+- A GitHub Action (`auto-update.yml`) listens for `push` events on the `leader` branch.
+- When a push is detected, it automatically updates all open pull requests that are based on `leader`.
+- This helps prevent merge conflicts and ensures that CI checks are always run against the latest version of the base branch.
 
 ## Deployment Strategy
 

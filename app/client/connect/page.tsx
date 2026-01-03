@@ -1,6 +1,5 @@
 'use client'
-
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -9,17 +8,22 @@ import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
-import { useCalorieCounter } from '@/hooks/useCalorieCounter'
+import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
   validateWeightValue,
 } from '@/lib/validation/userMetrics'
+import throttle from 'lodash.throttle'
+import { HrmInputMessage } from '@/types/websocket'
+import logger from '@/utils/logger'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
   const { userName, userAge, userWeight, gender, unitSystem } = userSettings
+
+  const [currentHR, setCurrentHR] = useState(0)
 
   const [displayWeight, setDisplayWeight] = useState(() => {
     const kg = userWeight || 0
@@ -56,6 +60,53 @@ export default function ConnectPage() {
     }
   }
 
+  const { connectionStatus, sendData } = useWebSocket()
+
+  // Centralized calorie calculation engine
+  const {
+    calories,
+    processHeartRate,
+    reset: resetCalculator,
+  } = useCalorieCalculator({
+    age: userAge || 30,
+    weightKg: userWeight || 70,
+  })
+
+  // Throttled sender for WebSocket messages
+  const throttledSend = useMemo(
+    () =>
+      throttle((message: HrmInputMessage) => {
+        try {
+          sendData(message)
+        } catch (error) {
+          logger.error({ error, message }, 'Error sending throttled HRM data.')
+        }
+      }, 250),
+    [sendData]
+  )
+
+  const {
+    workoutDuration,
+    resetWorkout: resetWorkoutSession,
+    hasStarted,
+    startWorkout,
+    endWorkout,
+    workoutStatus,
+  } = useWorkoutSession({
+    isConnected: false, // This will be updated by the useBluetoothHRM hook
+    totalCalories: calories,
+  })
+
+  // Callback for raw heart rate updates from the Bluetooth hook
+  const handleHeartRateUpdate = useCallback(
+    (heartRate: number) => {
+      setCurrentHR(heartRate)
+      if (workoutStatus === 'running') {
+        processHeartRate(heartRate)
+      }
+    },
+    [processHeartRate, workoutStatus]
+  )
   const {
     connectAndStream,
     autoConnect,
@@ -69,9 +120,8 @@ export default function ConnectPage() {
   } = useBluetoothHRM({
     userName,
     userAge: userAge || 0,
+    onHeartRateUpdate: handleHeartRateUpdate,
   })
-
-  const { connectionStatus, hrmData } = useWebSocket()
 
   useEffect(() => {
     // On initial mount, try to auto-connect to a saved device if not already connected.
@@ -80,6 +130,18 @@ export default function ConnectPage() {
       autoConnect()
     }
   }, [isConnected, isSupported, connectionStatus, autoConnect])
+
+  useEffect(() => {
+    // This effect synchronizes the local HR and calorie state with the server.
+    // It triggers whenever the local `currentHR` or `calories` state changes.
+    throttledSend({
+      type: 'HRM_INPUT',
+      data: {
+        value: currentHR,
+        calories: calories,
+      },
+    })
+  }, [currentHR, calories, throttledSend])
 
   let deviceStatusMessage = deviceStatus
   if (disconnectionReason === 'timeout') {
@@ -104,37 +166,12 @@ export default function ConnectPage() {
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
-
-  const currentUserData = hrmData.find((d) => d.name === userName)
-  const currentHR = currentUserData?.value || 0
-  const totalCalories = currentUserData?.calories ?? 0
   const maxHr = userAge ? 220 - userAge : 190
   const hrZoneProps = useHrZone(currentHR, maxHr)
-
-  const {
-    workoutDuration,
-    resetWorkout: resetWorkoutSession,
-    hasStarted,
-    startWorkout,
-    endWorkout,
-    workoutStatus,
-  } = useWorkoutSession({
-    isConnected,
-    totalCalories,
-  })
-
-  const { calories, resetCalories } = useCalorieCounter(
-    currentHR,
-    userAge || 30,
-    userWeight || 70,
-    workoutStatus === 'running'
-  )
-
   const resetWorkout = () => {
     resetWorkoutSession()
-    resetCalories()
+    resetCalculator()
   }
-
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}

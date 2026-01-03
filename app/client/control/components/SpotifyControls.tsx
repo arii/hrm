@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
+import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PlaybackControls from './PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
@@ -92,6 +93,22 @@ const SpotifyControls = () => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [devices]) // Rely on devices update to trigger sync
+
+  // Auto-select HRM Web Player if no active device is available
+  useEffect(() => {
+    if (
+      devices.length > 0 &&
+      !selectedDeviceId &&
+      !devices.some((d) => d.is_active)
+    ) {
+      const hrmPlayer = devices.find(
+        (d) => d.name.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
+      )
+      if (hrmPlayer) {
+        setSelectedDeviceId(hrmPlayer.id)
+      }
+    }
+  }, [devices, selectedDeviceId])
 
   const resolveTargetDeviceId = useCallback(() => {
     if (selectedDeviceId) {
