@@ -89,14 +89,22 @@ const Dashboard = () => {
         }}
       >
         <Box sx={{ flex: '1 1 60%' }}>
-          <motion.div initial="hidden" animate="visible" variants={sectionVariants}>
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={sectionVariants}
+          >
             <Paper sx={{ height: '100%', p: { xs: 2, sm: 3 } }}>
               <TimerDisplay />
             </Paper>
           </motion.div>
         </Box>
         <Box sx={{ flex: '1 1 40%' }}>
-          <motion.div initial="hidden" animate="visible" variants={sectionVariants}>
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={sectionVariants}
+          >
             <Paper sx={{ height: '100%', p: { xs: 2, sm: 3 } }}>
               <HrmConnectionPanel />
             </Paper>
@@ -105,7 +113,11 @@ const Dashboard = () => {
       </Box>
 
       <Box sx={{ mt: 3 }}>
-        <motion.div initial="hidden" animate="visible" variants={sectionVariants}>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={sectionVariants}
+        >
           <Paper sx={{ p: { xs: 2, sm: 3 } }}>
             {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
               <WorkoutTableViewer docId={DOC_ID} />
@@ -123,7 +135,11 @@ const Dashboard = () => {
       </Box>
 
       <Box sx={{ mt: 3 }}>
-        <motion.div initial="hidden" animate="visible" variants={sectionVariants}>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={sectionVariants}
+        >
           <SpotifyDisplay />
         </motion.div>
       </Box>
