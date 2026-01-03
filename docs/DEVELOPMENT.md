@@ -104,6 +104,16 @@ The project leverages AI-powered workflows to automate code reviews, update pull
 - **`@gemini-update-pr`**: This command triggers a workflow that updates the pull request with the latest changes from the base branch, ensuring that the PR is up-to-date before merging.
 - **`@jules fix` (Legacy)**: This legacy command invokes the Jules AI to perform a code review. It is recommended to use `@gemini-bot review` for more advanced and accurate reviews.
 
+#### Automatic Branch Updates
+
+To ensure pull requests are always synchronized with the `leader` branch, this project uses an automated workflow that updates PRs whenever new commits are pushed to `leader`.
+
+**What it does**:
+
+- A GitHub Action (`auto-update.yml`) listens for `push` events on the `leader` branch.
+- When a push is detected, it automatically updates all open pull requests that are based on `leader`.
+- This helps prevent merge conflicts and ensures that CI checks are always run against the latest version of the base branch.
+
 ## Deployment Strategy
 
 The project is deployed to a self-hosted production environment using a GitHub Actions workflow defined in `.github/workflows/deploy.yml`. This workflow triggers automatically on pushes to the `leader` branch.
