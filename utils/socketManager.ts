@@ -54,6 +54,9 @@ const clientSessionState = new Map<
   { lastUpdate: number; accumulatedCalories: number }
 >()
 
+// Rate limit logging for non-authoritative clients to prevent log spam
+const lastWarningTimes = new Map<string, number>()
+
 /**
  * Safely parses the WebSocket request URL to extract search parameters.
  * Handles cases where headers or URL might be malformed.
@@ -307,14 +310,28 @@ const handleIncomingMessage = (
           hrmDataSourceClientId = clientId
           logger.info({ clientId }, 'New HRM data source registered.')
         } else if (hrmDataSourceClientId !== clientId) {
-          // If another client is the source, ignore this message.
-          logger.warn(
-            {
-              clientId,
-              dataSourceId: hrmDataSourceClientId,
-            },
-            'Ignoring HRM_INPUT from non-authoritative client.'
-          )
+          const now = Date.now()
+          const lastWarning = lastWarningTimes.get(clientId) || 0
+          if (now - lastWarning > 5000) {
+            // Log and notify only once every 5 seconds
+            lastWarningTimes.set(clientId, now)
+            logger.warn(
+              {
+                clientId,
+                dataSourceId: hrmDataSourceClientId,
+              },
+              'Ignoring HRM_INPUT from non-authoritative client.'
+            )
+            // Notify the client that their data is being ignored
+            sendWebSocketMessage(
+              ws,
+              {
+                type: 'SOURCE_LOCKED',
+                payload: { clientId: hrmDataSourceClientId },
+              },
+              'socketManager.SOURCE_LOCKED'
+            )
+          }
           return // Stop processing
         }
 

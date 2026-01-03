@@ -77,6 +77,7 @@ export type ServerMessage =
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
   | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
+  | { type: 'SOURCE_LOCKED'; payload: { clientId: string } }
   | SpotifyExecutionMessage
 
 /**
