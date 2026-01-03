@@ -283,9 +283,6 @@ const SpotifyDisplay = () => {
         (d) => d.name === HRM_WEB_PLAYER_NAME
       )
       if (hrmPlayer) {
-        console.log(
-          '[SpotifyDisplay] No active device, defaulting to HRM Web Player'
-        )
         // Note: Do not automatically transfer playback, just select it.
         // The user can choose to start playing on this device.
         dispatch({ type: 'SELECT_DEVICE', payload: hrmPlayer.id })
