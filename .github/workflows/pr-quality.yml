@@ -1075,7 +1075,7 @@ jobs:
               continue
             fi
 
-            result=$(echo "$NEEDS_CONTEXT" | jq -r ".${job_name}.result")
+            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job_name" '.[$jname].result')
 
             if [[ "$result" == "failure" ]]; then
               HAS_FAILURE=true
