@@ -4,7 +4,7 @@ import { z, ZodIssue } from 'zod'
 
 // Define the props for the ValidatedTextField component
 export type ValidatedTextFieldProps = TextFieldProps & {
-  schema: z.ZodType<unknown> // Use a more specific Zod type
+  schema: z.AnyZodObject
   fieldName: string
 }
 
