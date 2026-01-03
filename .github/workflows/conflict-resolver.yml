@@ -10,6 +10,9 @@ on:
       source_branch:
         description: 'The branch to merge from'
         required: true
+      pr_number:
+        description: 'The PR number to comment on'
+        required: false
 
 jobs:
   merge_and_resolve:
@@ -18,6 +21,16 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: Create or update comment
+        if: github.event.inputs.pr_number
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            ⏳ Attempting to automatically resolve conflicts for branch `${{ github.event.inputs.source_branch }}`...
+            <!-- id: conflict-resolver-bot -->
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Checkout target branch
         uses: actions/checkout@v4
         with:
@@ -42,25 +55,48 @@ jobs:
         with:
           config-path: .github/conflict-resolver.yml
 
-      - name: Handle resolution results
+      - name: Handle successful resolution
+        if: steps.resolve.outputs.unresolved-files == ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
         run: |
-          if [ -z "$UNRESOLVED_FILES" ]; then
-            echo "✅ No unresolved conflicts. Committing and creating PR."
-            git add .
-            git commit -m "Auto-resolve merge conflicts from ${{ github.event.inputs.source_branch }}"
-            git push -u origin feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
+          git add .
+          git commit -m "Auto-resolve merge conflicts from ${{ github.event.inputs.source_branch }}"
+          git push -u origin feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
+          NEW_PR_URL=$(gh pr create \
+            --title "Merge ${{ github.event.inputs.source_branch }} with auto-resolved conflicts" \
+            --body "This PR was automatically generated after resolving merge conflicts." \
+            --base ${{ github.event.inputs.target_branch }} \
+            --head feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }})
+          echo "NEW_PR_URL=$NEW_PR_URL" >> $GITHUB_ENV
 
-            gh pr create \
-              --title "Merge ${{ github.event.inputs.source_branch }} with auto-resolved conflicts" \
-              --body "This PR was automatically generated after resolving merge conflicts." \
-              --base ${{ github.event.inputs.target_branch }} \
-              --head feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
-          else
-            echo "❌ Error: Unable to automatically resolve all conflicts."
-            echo "Unresolved files:"
-            echo "$UNRESOLVED_FILES"
-            exit 1
-          fi
+      - name: Update comment on success
+        if: success() && steps.resolve.outputs.unresolved-files == '' && github.event.inputs.pr_number
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            ✅ Successfully resolved all conflicts. A new pull request has been created: ${{ env.NEW_PR_URL }}
+            <!-- id: conflict-resolver-bot -->
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update comment on failure
+        if: failure() || (success() && steps.resolve.outputs.unresolved-files != '')
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            ❌ **Error: Unable to automatically resolve all conflicts.**
+            The following files have unresolved conflicts:
+            ```
+            ${{ steps.resolve.outputs.unresolved-files }}
+            ```
+            Please resolve these conflicts manually.
+            <!-- id: conflict-resolver-bot -->
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fail the workflow if conflicts were not resolved
+        if: steps.resolve.outputs.unresolved-files != ''
+        run: |
+          echo "Workflow failed because unresolved conflicts remain."
+          exit 1
