@@ -14,6 +14,9 @@ on:
 jobs:
   merge_and_resolve:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout target branch
         uses: actions/checkout@v4
@@ -35,7 +38,7 @@ jobs:
 
       - name: Resolve conflicts
         id: resolve
-        uses: VeyronSakai/conflict-resolver@v0.4.0
+        uses: VeyronSakai/conflict-resolver@bf5816eeef0c15149d7288aef1a9c94a5218ee6f # pin to v0.4.0
         with:
           config-path: .github/conflict-resolver.yml
 

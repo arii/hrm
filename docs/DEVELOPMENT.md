@@ -96,6 +96,29 @@ If the action encounters a merge conflict during the rebase, it will fail gracef
 
 > **Note on Protected Branches**: For this action to work on a protected branch, the repository's settings may need to be adjusted to allow the `github-actions[bot]` to push to the branch. For more information, see the [GitHub documentation on managing protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches).
 
+#### Automated Conflict Resolution
+
+To streamline the process of handling common merge conflicts, the repository includes an automated conflict resolver workflow.
+
+**Usage**:
+
+1.  Navigate to the **Actions** tab of the repository.
+2.  Select the **Auto Conflict Resolver** workflow from the list.
+3.  Click **Run workflow**.
+4.  Specify the `target_branch` (the branch to merge into, e.g., `leader`) and the `source_branch` (the branch to merge from).
+
+**What it does**:
+
+-   The workflow attempts to merge the `source_branch` into the `target_branch` on a temporary branch.
+-   It uses a predefined set of rules in `.github/conflict-resolver.yml` to automatically resolve conflicts for specific files (e.g., `pnpm-lock.yaml`, build artifacts).
+-   If all conflicts are resolved successfully, it creates a new pull request with the merged changes.
+-   If any conflicts cannot be resolved automatically, the workflow will fail, and manual intervention will be required.
+
+**Distinction from `/rebase-ai`**:
+
+-   **Auto Conflict Resolver**: Uses a **rules-based approach**. It's deterministic and designed for predictable conflicts (like lockfiles). It creates a new pull request with the merged result.
+-   **/rebase-ai**: Uses an **AI-powered approach** (Gemini). It's designed for more complex code conflicts and attempts to resolve them semantically. It updates the *existing* pull request by rebasing and force-pushing.
+
 #### AI-Powered Workflows
 
 The project leverages AI-powered workflows to automate code reviews, update pull requests, and more.
