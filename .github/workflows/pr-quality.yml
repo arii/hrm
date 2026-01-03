@@ -893,7 +893,7 @@ jobs:
 
   copy-checks:
     name: 📝 Copy checks from parent commit
-    if: inputs.has_changes != 'true'
+    if: inputs.has_changes == 'false'
     runs-on: ubuntu-latest
     permissions:
       checks: write
@@ -981,22 +981,19 @@ jobs:
           for JOB_NAME in "${JOBS_TO_COPY[@]}"; do
             CHECK=$(echo "${CHECKS_JSON}" | jq --arg name "${JOB_NAME}" '.[] | select(.name == $name)')
             if [ -n "$CHECK" ]; then
-              CONCLUSION=$(echo "${CHECK}" | jq -r '.conclusion')
-              OUTPUT=$(echo "${CHECK}" | jq -c '.output')
-
-              if [ "$CONCLUSION" = "null" ]; then
-                  CONCLUSION="skipped"
-                  OUTPUT=$(jq -n '{title: "Check Skipped", summary: "The parent check conclusion was indeterminate."}')
-              fi
+              # Use jq's // operator to provide a default value if .conclusion is null or not present
+              CONCLUSION=$(echo "${CHECK}" | jq -r '.conclusion // "skipped"')
+              # Also provide a default for the output object
+              OUTPUT=$(echo "${CHECK}" | jq -c '.output // {title: "Check Skipped", summary: "The parent check conclusion was indeterminate."}')
 
               BODY=$(jq -n --arg name "$JOB_NAME" --arg head_sha "$CURRENT_SHA" --arg status "completed" --arg conclusion "$CONCLUSION" --argjson output "$OUTPUT" '{name: $name, head_sha: $head_sha, status: $status, conclusion: $conclusion, output: $output}')
               echo "Creating check: $JOB_NAME -> $CONCLUSION"
-              gh api "repos/${{ github.repository }}/check-runs" --input - <<< "$BODY"
+              gh api "repos/${{ github.repository }}/check-runs" --method POST --input - <<< "$BODY"
             else
               echo "Did not find check '${JOB_NAME}' on parent. Creating a skipped check."
               OUTPUT=$(jq -n '{title: "Check Skipped", summary: "This check was not found on the parent commit."}')
               BODY=$(jq -n --arg name "$JOB_NAME" --arg head_sha "$CURRENT_SHA" --arg status "completed" --arg conclusion "skipped" --argjson output "$OUTPUT" '{name: $name, head_sha: $head_sha, status: $status, conclusion: $conclusion, output: $output}')
-              gh api "repos/${{ github.repository }}/check-runs" --input - <<< "$BODY"
+              gh api "repos/${{ github.repository }}/check-runs" --method POST --input - <<< "$BODY"
             fi
           done
           echo "🎉 All checks copied."
@@ -1047,6 +1044,8 @@ jobs:
     if: always() && inputs.has_changes == 'true' && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
     needs: [prepare-env, knip-check, lint-check, build-check, integration-tests]
     runs-on: ubuntu-latest
+    outputs:
+      failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
     steps:
       - uses: actions/checkout@v4
 
@@ -1059,6 +1058,61 @@ jobs:
       - name: Create test-results directory
         run: mkdir -p test-results
 
+      - name: Aggregate Check Results
+        id: aggregate-results
+        shell: bash
+        run: |
+          if [[ "${{ needs.knip-check.result }}" == "success" && \
+                "${{ needs.lint-check.result }}" == "success" && \
+                "${{ needs.build-check.result }}" == "success" && \
+                "${{ needs.integration-tests.outputs.infra-tests-outcome }}" == "success" && \
+                "${{ needs.integration-tests.outputs.unit-tests-outcome }}" == "success" && \
+                "${{ needs.integration-tests.outputs.component-tests-outcome }}" == "success" && \
+                "${{ needs.integration-tests.outputs.perf-tests-outcome }}" == "success" && \
+                "${{ needs.integration-tests.outputs.visual-tests-outcome }}" == "success" ]]; then
+            echo "final_result=success" >> $GITHUB_OUTPUT
+          else
+            echo "final_result=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Failure Report
+        id: generate-failure-report
+        if: always()
+        env:
+          NEEDS_CONTEXT: ${{ toJSON(needs) }}
+        run: |
+          FAILURE_REPORT_JSON="[]"
+          # Check individual jobs
+          for job in knip-check lint-check build-check; do
+            if [[ $(echo "$NEEDS_CONTEXT" | jq -r ".${job}.result") == "failure" ]]; then
+              LOG_FILE=""
+              case $job in
+                "knip-check") LOG_FILE="artifacts/knip-report/knip-output.txt" ;;
+                "lint-check") LOG_FILE="artifacts/lint-report/lint-output.log" ;;
+                "build-check") LOG_FILE="artifacts/build-report/build-output.log" ;;
+              esac
+              LOG_CONTENT=$(tail -n 50 "$LOG_FILE" 2>/dev/null | jq -s -R .)
+              FAILURE_REPORT_JSON=$(echo "$FAILURE_REPORT_JSON" | jq --arg name "$job" --argjson logs "$LOG_CONTENT" '. + [{name: $name, conclusion: "failure", logs: $logs}]')
+            fi
+          done
+          # Check integration tests outputs
+          INTEGRATION_TESTS_OUTPUTS=$(echo "$NEEDS_CONTEXT" | jq -r '.["integration-tests"].outputs')
+          for test_suite in infra-tests-outcome unit-tests-outcome component-tests-outcome perf-tests-outcome visual-tests-outcome; do
+            if [[ $(echo "$INTEGRATION_TESTS_OUTPUTS" | jq -r ".${test_suite}") == "failure" ]]; then
+              LOG_FILE=""
+              case $test_suite in
+                "infra-tests-outcome") LOG_FILE="artifacts/infra-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/infra-prod-output.log" ;;
+                "unit-tests-outcome") LOG_FILE="artifacts/unit-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/unit-output.log" ;;
+                "component-tests-outcome") LOG_FILE="artifacts/component-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/component-output.log" ;;
+                "perf-tests-outcome") LOG_FILE="artifacts/perf-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/perf-output.log" ;;
+                "visual-tests-outcome") LOG_FILE="artifacts/visual-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/visual-output.log" ;;
+              esac
+              LOG_CONTENT=$(tail -n 50 "$LOG_FILE" 2>/dev/null | jq -s -R .)
+              FAILURE_REPORT_JSON=$(echo "$FAILURE_REPORT_JSON" | jq --arg name "${test_suite%-outcome}" --argjson logs "$LOG_CONTENT" '. + [{name: $name, conclusion: "failure", logs: $logs}]')
+            fi
+          done
+          echo "failure_report_json=$FAILURE_REPORT_JSON" >> $GITHUB_OUTPUT
+
       - name: Post Quality Summary with Details
         if: always()
         env:
@@ -1070,6 +1124,7 @@ jobs:
           COMPONENT_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.component-tests-outcome }}
           PERF_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.perf-tests-outcome }}
           VISUAL_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.visual-tests-outcome }}
+          FINAL_RESULT: ${{ steps.aggregate-results.outputs.final_result }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           set +e
@@ -1127,19 +1182,19 @@ jobs:
             LOG_DETAILS+=$(add_log_details "Build Failure Details" "artifacts/build-report/build-output.log" 50)
           fi
           if [ "$INFRA_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Infrastructure Test Failure Details" "artifacts/infra-test-logs-${{ needs.prepare-env.outputs.session_id }}/infra-tests.log" 50)
+            LOG_DETAILS+=$(add_log_details "Infrastructure Test Failure Details" "artifacts/infra-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/infra-prod-output.log" 50)
           fi
           if [ "$UNIT_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Unit Test Failure Details" "artifacts/unit-test-logs-${{ needs.prepare-env.outputs.session_id }}/unit-tests.log" 50)
+            LOG_DETAILS+=$(add_log_details "Unit Test Failure Details" "artifacts/unit-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/unit-output.log" 50)
           fi
           if [ "$COMPONENT_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Component Test Failure Details" "artifacts/component-test-logs-${{ needs.prepare-env.outputs.session_id }}/component-output.log" 50)
+            LOG_DETAILS+=$(add_log_details "Component Test Failure Details" "artifacts/component-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/component-output.log" 50)
           fi
           if [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Visual Test Failure Details" "artifacts/visual-test-logs-${{ needs.prepare-env.outputs.session_id }}/visual-output.log" 50)
+            LOG_DETAILS+=$(add_log_details "Visual Test Failure Details" "artifacts/visual-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/visual-output.log" 50)
           fi
           if [ "$PERF_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Performance Test Failure Details" "artifacts/perf-test-logs-${{ needs.prepare-env.outputs.session_id }}/perf-tests.log" 50)
+            LOG_DETAILS+=$(add_log_details "Performance Test Failure Details" "artifacts/perf-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/perf-output.log" 50)
           fi
 
           # Combine main body and log details
@@ -1147,8 +1202,8 @@ jobs:
             COMMENT_BODY+="\n${LOG_DETAILS}"
           fi
 
-          if [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
-             [ "$INFRA_TESTS_OUTCOME" = "success" ] && [ "$UNIT_TESTS_OUTCOME" = "success" ] && [ "$COMPONENT_TESTS_OUTCOME" = "success" ] && [ "$PERF_TESTS_OUTCOME" = "success" ] && [ "$VISUAL_TESTS_OUTCOME" = "success" ]; then
+          # Determine summary message
+          if [ "$FINAL_RESULT" = "success" ]; then
             SUMMARY_MSG="✅ **All quality checks passed!**"
           else
             SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
@@ -1160,8 +1215,7 @@ jobs:
           echo -e "$COMMENT_BODY" > test-results/pr-comment.md
 
           # Only post comment to PR if some checks failed
-          if [ "$KNIP_RESULT" != "success" ] || [ "$LINT_RESULT" != "success" ] || [ "$BUILD_RESULT" != "success" ] || \
-             [ "$INFRA_TESTS_OUTCOME" != "success" ] || [ "$UNIT_TESTS_OUTCOME" != "success" ] || [ "$COMPONENT_TESTS_OUTCOME" != "success" ] || [ "$PERF_TESTS_OUTCOME" != "success" ] || [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
+          if [ "$FINAL_RESULT" != "success" ]; then
             gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
               echo "::warning::Failed to post comment to PR"
               exit 0
@@ -1171,8 +1225,7 @@ jobs:
           fi
 
           # Check if all passed
-          if [ "$KNIP_RESULT" = "success" ] && [ "$LINT_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ] && \
-             [ "$INFRA_TESTS_OUTCOME" = "success" ] && [ "$UNIT_TESTS_OUTCOME" = "success" ] && [ "$COMPONENT_TESTS_OUTCOME" = "success" ] && [ "$PERF_TESTS_OUTCOME" = "success" ] && [ "$VISUAL_TESTS_OUTCOME" = "success" ]; then
+          if [ "$FINAL_RESULT" = "success" ]; then
             echo "✅ **All quality checks passed!**" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ **Some checks failed.** Review the workflow run logs for details." >> $GITHUB_STEP_SUMMARY
