@@ -129,6 +129,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
   const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isConnecting = useRef(false)
   /**
    * @ref abortControllerRef
    * @description Manages the cancellation of in-flight Bluetooth connection attempts.
@@ -305,7 +306,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     // Also send a null HR value to signal immediate disconnection
     sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
 
-    if (!isManualDisconnect.current && deviceRef.current) {
+    if (!isManualDisconnect.current && deviceRef.current && !isConnecting.current) {
       logger.info(
         { device: deviceRef.current.name },
         'Device disconnected, attempting auto-reconnect...'
@@ -343,6 +344,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current.abort()
       }
       try {
+        isConnecting.current = true
         deviceRef.current = device
         setDeviceStatus(`Connecting to: ${device.name || 'Device'}...`)
 
@@ -404,6 +406,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       } catch (error) {
         logger.error({ error, device: device.name }, 'GATT Connection failed')
         throw error
+      } finally {
+        isConnecting.current = false
       }
     },
     [onDisconnected]

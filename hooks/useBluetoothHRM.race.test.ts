@@ -24,7 +24,9 @@ describe('useBluetoothHRM Race Conditions', () => {
     mockGattConnect = jest.fn().mockImplementation(() => {
       // Simulate a connection that can be aborted
       return new Promise((resolve, reject) => {
-        const signal = (global as unknown as { mockAbortControllerSignal: AbortSignal }).mockAbortControllerSignal
+        const signal = (
+          global as unknown as { mockAbortControllerSignal: AbortSignal }
+        ).mockAbortControllerSignal
         if (signal?.aborted) {
           const error = new DOMException('Connection cancelled', 'AbortError')
           reject(error)
@@ -71,7 +73,9 @@ describe('useBluetoothHRM Race Conditions', () => {
         throwIfAborted: jest.fn(),
         onabort: null,
       }
-      ;(global as unknown as { mockAbortControllerSignal: AbortSignal }).mockAbortControllerSignal = signal
+      ;(
+        global as unknown as { mockAbortControllerSignal: AbortSignal }
+      ).mockAbortControllerSignal = signal
       return {
         signal,
         abort: () => {
@@ -85,7 +89,8 @@ describe('useBluetoothHRM Race Conditions', () => {
 
   afterEach(() => {
     jest.clearAllMocks()
-    delete (global as unknown as { mockAbortControllerSignal: AbortSignal }).mockAbortControllerSignal
+    delete (global as unknown as { mockAbortControllerSignal: AbortSignal })
+      .mockAbortControllerSignal
   })
 
   it('should abort the previous connection attempt when a new one starts', async () => {
