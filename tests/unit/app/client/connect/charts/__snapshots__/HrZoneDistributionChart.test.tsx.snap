@@ -13,7 +13,13 @@ exports[`HrZoneDistributionChart should render correctly with data 1`] = `
     </h6>
     <div>
       <div>
-        <div />
+        <div>
+          <div />
+          <div />
+          <div />
+          <div />
+          <div />
+        </div>
         <div />
       </div>
     </div>
