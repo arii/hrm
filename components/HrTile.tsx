@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
 import { useTheme } from '@mui/material/styles'
+import { formatDuration } from '@/utils/formatters'
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -33,6 +34,7 @@ const HrTile = ({
   bpm,
   percentMax,
   calories = 0, // Default to 0 to prevent NaN
+  duration = 0,
   isConnected = true, // Default to connected
   isDataStale = false,
   isAlerting = false,
@@ -148,6 +150,18 @@ const HrTile = ({
                   KCAL
                 </Typography>
               </Typography>
+
+              {/* Duration Display */}
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {formatDuration(duration)}{' '}
+                <Typography
+                  variant="caption"
+                  component="span"
+                  sx={{ opacity: 0.8 }}
+                >
+                  TIME
+                </Typography>
+              </Typography>
             </Box>
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography
@@ -179,6 +193,7 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
     prevProps.calories === nextProps.calories &&
+    prevProps.duration === nextProps.duration &&
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isDataStale === nextProps.isDataStale &&
     prevProps.isAlerting === nextProps.isAlerting &&

@@ -49,7 +49,7 @@ const clientSockets = new Map<string, WebSocket>()
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
-  { lastUpdate: number; accumulatedCalories: number }
+  { lastUpdate: number; accumulatedCalories: number; startTime: number }
 >()
 
 /**
@@ -151,11 +151,13 @@ const initSocketManager = (
         maxHr: 185,
         age: 30,
         calories: 0, // Initialize to 0
+        duration: 0,
       }
       hrmDataRepository.save(newClient)
       clientSessionState.set(extWs.clientId, {
         lastUpdate: Date.now(),
         accumulatedCalories: 0,
+        startTime: Date.now(),
       })
     } else {
       logger.info({ clientId }, 'Reconnected with existing session.')
@@ -335,11 +337,13 @@ const handleIncomingMessage = (
             sessionState.accumulatedCalories = currentAccumulated
             finalCalories = currentAccumulated
           }
+          const duration = Date.now() - sessionState.startTime
           // Update the repository with the latest data
           hrmDataRepository.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
             calories: Math.round(finalCalories * 10) / 10,
+            duration,
           })
         }
         broadcastState()
