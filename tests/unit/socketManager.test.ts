@@ -502,7 +502,7 @@ describe('WebSocket Manager', () => {
       expect(broadcast).toHaveBeenCalled()
     })
 
-    it('should ignore HRM_INPUT from a second client when one is already active', () => {
+    it('should switch to a new client if it sends HRM_INPUT', () => {
       // First client connects and sends data
       const message1 = JSON.stringify({
         type: 'HRM_INPUT',
@@ -522,12 +522,8 @@ describe('WebSocket Manager', () => {
       })
       mockWs2.emit('message', message2)
 
-      // Broadcast should not be called again
-      expect(broadcast).toHaveBeenCalledTimes(1)
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'client-2' }),
-        'Ignoring HRM_INPUT from non-authoritative client.'
-      )
+      // Broadcast should be called again
+      expect(broadcast).toHaveBeenCalledTimes(2)
     })
 
     it('should release the lock when the authoritative client disconnects', () => {
