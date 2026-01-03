@@ -1,8 +1,5 @@
 /** @jest-environment jsdom */
-import {
-  cmToFeetAndInches,
-  feetAndInchesToCm,
-} from './units'
+import { cmToFeetAndInches, feetAndInchesToCm } from './units'
 
 describe('cmToFeetAndInches', () => {
   it('should correctly convert centimeters to feet and inches', () => {

@@ -78,7 +78,7 @@ const UserSettings = ({
         value={userAge}
         onChange={(e) => {
           // Use valueAsNumber for direct number retrieval, falling back to string value
-          const numericValue = e.target.valueAsNumber
+          const numericValue = (e.target as HTMLInputElement).valueAsNumber
           if (!isNaN(numericValue) && numericValue >= 0) {
             setUserAge(String(numericValue))
           } else if (e.target.value === '') {
