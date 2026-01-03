@@ -269,5 +269,6 @@ jobs:
               inputs: {
                 target_branch: baseBranch,
                 source_branch: headBranch,
+                pr_number: String(context.issue.number),
               },
             });
