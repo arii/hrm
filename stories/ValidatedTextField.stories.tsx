@@ -1,5 +1,7 @@
-import { Story, Meta } from '@storybook/react'
-import ValidatedTextField from '../components/forms/ValidatedTextField'
+import { StoryFn, Meta } from '@storybook/react'
+import ValidatedTextField, {
+  ValidatedTextFieldProps,
+} from '../components/forms/ValidatedTextField'
 import { UserSettingsSchema } from '../lib/validation/userSettingsValidation'
 
 export default {
@@ -7,7 +9,9 @@ export default {
   component: ValidatedTextField,
 } as Meta
 
-const Template: Story = (args) => <ValidatedTextField {...args} />
+const Template: StoryFn<ValidatedTextFieldProps> = (args) => (
+  <ValidatedTextField {...args} />
+)
 
 export const Default = Template.bind({})
 Default.args = {

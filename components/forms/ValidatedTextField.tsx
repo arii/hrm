@@ -3,7 +3,7 @@ import TextField, { TextFieldProps } from '@mui/material/TextField'
 import { z, ZodIssue } from 'zod'
 
 // Define the props for the ValidatedTextField component
-type ValidatedTextFieldProps = TextFieldProps & {
+export type ValidatedTextFieldProps = TextFieldProps & {
   schema: z.ZodType<unknown> // Use a more specific Zod type
   fieldName: string
 }
