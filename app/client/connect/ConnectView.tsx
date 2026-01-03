@@ -122,11 +122,11 @@ export default function ConnectView({
   useEffect(() => {
     if (isConnected) {
       logger.info(
-        { currentHR, isDataStale, userName },
+        { currentHR, isDataStale },
         'HrTile rendering with currentHR'
       )
     }
-  }, [currentHR, isConnected, isDataStale, userName])
+  }, [currentHR, isConnected, isDataStale])
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />

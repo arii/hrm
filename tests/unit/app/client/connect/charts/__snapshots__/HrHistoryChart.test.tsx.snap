@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HrHistoryChart should render correctly with data 1`] = `
+<DocumentFragment>
+  <div
+    class="MuiBox-root css-135z8y5"
+  >
+    <h6
+      class="MuiTypography-root MuiTypography-h6 MuiTypography-alignCenter MuiTypography-gutterBottom css-14c8fru-MuiTypography-root"
+      style="--Typography-textAlign: center;"
+    >
+      HR Trend
+    </h6>
+    <div>
+      <div>
+        <div />
+        <div />
+        <div />
+        <div />
+        <div />
+        <div />
+        <div />
+        <div />
+        <div />
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
