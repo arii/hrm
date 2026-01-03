@@ -397,12 +397,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice) => {
-      // Only abort an existing connection attempt if it's for a different device
-      if (
-        abortControllerRef.current &&
-        deviceRef.current?.id !== device.id &&
-        isConnecting.current
-      ) {
+      if (abortControllerRef.current && isConnecting.current) {
         abortControllerRef.current.abort()
       }
       try {
