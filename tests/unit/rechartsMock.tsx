@@ -1,12 +1,14 @@
 module.exports = {
-  ResponsiveContainer: () => <div />,
-  LineChart: () => <div />,
+  ResponsiveContainer: ({ children }: { children: any }) => (
+    <div>{children}</div>
+  ),
+  LineChart: ({ children }: { children: any }) => <div>{children}</div>,
   Line: () => <div />,
   XAxis: () => <div />,
   YAxis: () => <div />,
   Tooltip: () => <div />,
   ReferenceLine: () => <div />,
-  PieChart: ({ children }) => <div>{children}</div>,
-  Pie: () => <div />,
+  PieChart: ({ children }: { children: any }) => <div>{children}</div>,
+  Pie: ({ children }: { children: any }) => <div>{children}</div>,
   Cell: () => <div />,
 }
