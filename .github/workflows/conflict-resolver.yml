@@ -1,0 +1,63 @@
+name: 'Auto Conflict Resolver'
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'The branch to merge into'
+        required: true
+        default: 'leader'
+      source_branch:
+        description: 'The branch to merge from'
+        required: true
+
+jobs:
+  merge_and_resolve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.target_branch }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create temporary branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch -c feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
+
+      - name: Merge source branch
+        run: |
+          git fetch origin ${{ github.event.inputs.source_branch }}
+          git merge origin/${{ github.event.inputs.source_branch }} --no-commit --no-ff || true
+
+      - name: Resolve conflicts
+        id: resolve
+        uses: VeyronSakai/conflict-resolver@v0.4.0
+        with:
+          config-path: .github/conflict-resolver.yml
+
+      - name: Handle resolution results
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
+        run: |
+          if [ -z "$UNRESOLVED_FILES" ]; then
+            echo "✅ No unresolved conflicts. Committing and creating PR."
+            git add .
+            git commit -m "Auto-resolve merge conflicts from ${{ github.event.inputs.source_branch }}"
+            git push -u origin feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
+
+            gh pr create \
+              --title "Merge ${{ github.event.inputs.source_branch }} with auto-resolved conflicts" \
+              --body "This PR was automatically generated after resolving merge conflicts." \
+              --base ${{ github.event.inputs.target_branch }} \
+              --head feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
+          else
+            echo "❌ Error: Unable to automatically resolve all conflicts."
+            echo "Unresolved files:"
+            echo "$UNRESOLVED_FILES"
+            exit 1
+          fi
