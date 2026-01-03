@@ -306,7 +306,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     // Also send a null HR value to signal immediate disconnection
     sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
 
-    if (!isManualDisconnect.current && deviceRef.current && !isConnecting.current) {
+    if (
+      !isManualDisconnect.current &&
+      deviceRef.current &&
+      !isConnecting.current
+    ) {
       logger.info(
         { device: deviceRef.current.name },
         'Device disconnected, attempting auto-reconnect...'
