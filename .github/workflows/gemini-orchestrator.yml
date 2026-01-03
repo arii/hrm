@@ -30,7 +30,6 @@ jobs:
       is_gemini_invoke: ${{ steps.router.outputs.is_gemini_invoke }}
       is_update_pr: ${{ steps.router.outputs.is_update_pr }}
       is_squash_comment: ${{ steps.router.outputs.is_squash_comment }}
-      is_conflict_resolve_comment: ${{ steps.router.outputs.is_conflict_resolve_comment }}
     steps:
       - name: Route Comment
         id: router
@@ -51,9 +50,6 @@ jobs:
           fi
           if echo "$COMMENT_BODY" | grep -q '@pr-squash'; then
             echo "is_squash_comment=true" >> "$GITHUB_OUTPUT"
-          fi
-          if echo "$COMMENT_BODY" | grep -q '@conflict-resolve'; then
-            echo "is_conflict_resolve_comment=true" >> "$GITHUB_OUTPUT"
           fi
 
   check-diff:
@@ -149,7 +145,6 @@ jobs:
       pr_quality_result: ${{ needs.pr-quality.result }}
       trigger_event: 'pull_request'
       last_non_empty_commit: ${{ needs.check-diff.outputs.last_non_empty_commit }}
-      failure_report_json: ${{ needs.pr-quality.outputs.failure-report-json }}
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       ARI_PAT: ${{ secrets.ARI_PAT }}
