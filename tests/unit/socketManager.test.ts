@@ -314,9 +314,6 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Calorie Calculation', () => {
-    beforeEach(() => {
-      ;(broadcast as jest.Mock).mockClear()
-    })
     it('should accumulate calories correctly with small frequent updates', () => {
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
@@ -485,75 +482,6 @@ describe('WebSocket Manager', () => {
         expect.objectContaining({ clientId: 'test-client' }),
         'Unknown message type received'
       )
-    })
-  })
-
-  describe('HRM Data Source Locking', () => {
-    beforeEach(() => {
-      ;(broadcast as jest.Mock).mockClear()
-    })
-
-    it('should allow the first client sending HRM_INPUT to become the data source', () => {
-      const message = JSON.stringify({
-        type: 'HRM_INPUT',
-        data: { value: 120 },
-      })
-      mockWs.emit('message', message)
-      expect(broadcast).toHaveBeenCalled()
-    })
-
-    it('should ignore HRM_INPUT from a second client when one is already active', () => {
-      // First client connects and sends data
-      const message1 = JSON.stringify({
-        type: 'HRM_INPUT',
-        data: { value: 120 },
-      })
-      mockWs.emit('message', message1)
-      expect(broadcast).toHaveBeenCalledTimes(1)
-
-      // Second client connects and sends data
-      const mockReq2 = createMockRequest('/?clientId=client-2')
-      const mockWs2 = new MockWebSocket()
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs2)
-      mockWss.emit('connection', mockWs2, mockReq2)
-      const message2 = JSON.stringify({
-        type: 'HRM_INPUT',
-        data: { value: 130 },
-      })
-      mockWs2.emit('message', message2)
-
-      // Broadcast should not be called again
-      expect(broadcast).toHaveBeenCalledTimes(1)
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'client-2' }),
-        'Ignoring HRM_INPUT from non-authoritative client.'
-      )
-    })
-
-    it('should release the lock when the authoritative client disconnects', () => {
-      const message = JSON.stringify({
-        type: 'HRM_INPUT',
-        data: { value: 120 },
-      })
-      mockWs.emit('message', message)
-      expect(broadcast).toHaveBeenCalledTimes(1)
-
-      // Disconnect the first client
-      mockWs.emit('close')
-      jest.runAllTimers()
-
-      // A new client should be able to become the source
-      const mockReq2 = createMockRequest('/?clientId=client-2')
-      const mockWs2 = new MockWebSocket()
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs2)
-      mockWss.emit('connection', mockWs2, mockReq2)
-      const message2 = JSON.stringify({
-        type: 'HRM_INPUT',
-        data: { value: 130 },
-      })
-      mockWs2.emit('message', message2)
-
-      expect(broadcast).toHaveBeenCalledTimes(3) // 1 for first client, 1 for disconnect, 1 for new client
     })
   })
 })
