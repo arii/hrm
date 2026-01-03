@@ -1,5 +1,6 @@
 // hooks/useLocalStorage.ts
 import { useState, useEffect, useCallback } from 'react'
+import StorageManager from '../lib/storageManager'
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null) return false
@@ -19,38 +20,34 @@ function useLocalStorage<T>(key: string, initialValue: T) {
       return
     }
 
-    try {
-      const item = window.localStorage.getItem(key)
-      if (item) {
-        const parsed = JSON.parse(item)
+    const item = StorageManager.get<T>(key)
+    if (item) {
+      const parsed = item // No need for JSON.parse, StorageManager handles it.
 
-        // Handle object migration by merging stored data with initial defaults.
-        if (isPlainObject(parsed) && isPlainObject(initialValue)) {
-          const schemaKeys = Object.keys(initialValue)
-          const filteredParsed = Object.keys(parsed).reduce(
-            (acc, k) => {
-              if (schemaKeys.includes(k)) {
-                acc[k] = parsed[k]
-              }
-              return acc
-            },
-            {} as Record<string, unknown>
-          )
+      // Handle object migration by merging stored data with initial defaults.
+      if (isPlainObject(parsed) && isPlainObject(initialValue)) {
+        const schemaKeys = Object.keys(initialValue)
+        const filteredParsed = Object.keys(parsed).reduce(
+          (acc, k) => {
+            if (schemaKeys.includes(k)) {
+              acc[k] = parsed[k]
+            }
+            return acc
+          },
+          {} as Record<string, unknown>
+        )
 
-          // Merge: Defaults -> Filtered Storage
-          const merged = { ...initialValue, ...filteredParsed } as T
-          // This is the core of the SSR-safe logic. We initialize state to `initialValue`
-          // and then update it with the value from localStorage on the client.
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setStoredValue(merged)
-          // Also, update localStorage to remove zombie keys.
-          window.localStorage.setItem(key, JSON.stringify(merged))
-        } else {
-          setStoredValue(parsed)
-        }
+        // Merge: Defaults -> Filtered Storage
+        const merged = { ...initialValue, ...filteredParsed } as T
+        // This is the core of the SSR-safe logic. We initialize state to `initialValue`
+        // and then update it with the value from localStorage on the client.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStoredValue(merged)
+        // Also, update localStorage to remove zombie keys.
+        StorageManager.set(key, merged)
+      } else {
+        setStoredValue(parsed as T)
       }
-    } catch (error) {
-      console.error(`Error reading or parsing localStorage key “${key}”`, error)
     }
   }, [key, initialValue])
 
@@ -64,16 +61,12 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         )
         return
       }
-      try {
-        setStoredValue((currentStoredValue) => {
-          const valueToStore =
-            value instanceof Function ? value(currentStoredValue) : value
-          window.localStorage.setItem(key, JSON.stringify(valueToStore))
-          return valueToStore
-        })
-      } catch (error) {
-        console.error(`Error setting localStorage key “${key}”:`, error)
-      }
+      setStoredValue((currentStoredValue) => {
+        const valueToStore =
+          value instanceof Function ? value(currentStoredValue) : value
+        StorageManager.set(key, valueToStore)
+        return valueToStore
+      })
     },
     [key]
   )

@@ -122,10 +122,10 @@ export const WebSocketProvider = ({
       return null
     }
     try {
-      let id = localStorage.getItem('clientId')
+      let id = StorageManager.get<string>('clientId')
       if (!id) {
         id = window.crypto.randomUUID()
-        localStorage.setItem('clientId', id)
+        StorageManager.set('clientId', id)
       }
       return id
     } catch (error) {
@@ -180,9 +180,11 @@ export const WebSocketProvider = ({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedActions = localStorage.getItem('pendingActions')
+      const savedActions = StorageManager.get<ClientCommandMessage[]>(
+        'pendingActions'
+      )
       if (savedActions) {
-        pendingActions.current = JSON.parse(savedActions)
+        pendingActions.current = savedActions
       }
     }
   }, [])
@@ -252,7 +254,7 @@ export const WebSocketProvider = ({
           ws.send(JSON.stringify(action))
         })
         pendingActions.current = []
-        localStorage.setItem('pendingActions', '[]')
+        StorageManager.set('pendingActions', [])
       }
 
       // Reset reconnect attempts on successful connection
@@ -392,10 +394,7 @@ export const WebSocketProvider = ({
         data
       )
       pendingActions.current.push(data)
-      localStorage.setItem(
-        'pendingActions',
-        JSON.stringify(pendingActions.current)
-      )
+      StorageManager.set('pendingActions', pendingActions.current)
     }
   }, [])
 

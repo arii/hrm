@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { audioManager } from '../utils/audioManager'
+import StorageManager from '../lib/storageManager'
 
 const STORAGE_KEY_VOL = 'hrm-preferred-volume' // Stores the user's last chosen volume
 const STORAGE_KEY_MUTE = 'hrm-muted'
@@ -21,21 +22,16 @@ const useVolumePreference = (defaultVolume = 70) => {
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    try {
-      const storedMute = window.localStorage.getItem(STORAGE_KEY_MUTE)
-      const storedVol = window.localStorage.getItem(STORAGE_KEY_VOL)
+    const storedMute = StorageManager.get<boolean>(STORAGE_KEY_MUTE)
+    const storedVol = StorageManager.get<number>(STORAGE_KEY_VOL)
 
-      const isMuted = storedMute === 'true'
-      const preferredVolume =
-        storedVol !== null ? clampVolume(Number(storedVol)) : sanitizedDefault
-      lastVolumeRef.current = preferredVolume
-      setMutedState(isMuted)
-      setVolumeState(isMuted ? 0 : preferredVolume)
-    } catch (error) {
-      console.warn('Failed to read audio preferences from localStorage:', error)
-    } finally {
-      setIsLoaded(true)
-    }
+    const isMuted = storedMute === true
+    const preferredVolume =
+      storedVol !== null ? clampVolume(storedVol) : sanitizedDefault
+    lastVolumeRef.current = preferredVolume
+    setMutedState(isMuted)
+    setVolumeState(isMuted ? 0 : preferredVolume)
+    setIsLoaded(true)
   }, [sanitizedDefault])
 
   useEffect(() => {
@@ -65,23 +61,19 @@ const useVolumePreference = (defaultVolume = 70) => {
   const toggleMute = useCallback(() => {
     const isMuting = !muted
     setMutedState(isMuting)
-    try {
-      window.localStorage.setItem(STORAGE_KEY_MUTE, String(isMuting))
-      if (isMuting) {
-        if (volume > 0) {
-          lastVolumeRef.current = volume
-          window.localStorage.setItem(STORAGE_KEY_VOL, String(volume))
-        }
-        setVolumeState(0)
-      } else {
-        setVolumeState(lastVolumeRef.current)
+    StorageManager.set(STORAGE_KEY_MUTE, isMuting)
+    if (isMuting) {
+      if (volume > 0) {
+        lastVolumeRef.current = volume
+        StorageManager.set(STORAGE_KEY_VOL, volume)
       }
-      window.dispatchEvent(
-        new CustomEvent('hrm:muteChange', { detail: isMuting })
-      )
-    } catch (error) {
-      console.warn('Could not persist mute preference:', error)
+      setVolumeState(0)
+    } else {
+      setVolumeState(lastVolumeRef.current)
     }
+    window.dispatchEvent(
+      new CustomEvent('hrm:muteChange', { detail: isMuting })
+    )
   }, [muted, volume])
 
   useEffect(() => {
