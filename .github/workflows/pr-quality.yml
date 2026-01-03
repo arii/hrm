@@ -1061,56 +1061,92 @@ jobs:
       - name: Aggregate Check Results
         id: aggregate-results
         shell: bash
+        env:
+          NEEDS_CONTEXT: ${{ toJSON(needs) }}
         run: |
-          if [[ "${{ needs.knip-check.result }}" == "success" && \
-                "${{ needs.lint-check.result }}" == "success" && \
-                "${{ needs.build-check.result }}" == "success" && \
-                "${{ needs.integration-tests.outputs.infra-tests-outcome }}" == "success" && \
-                "${{ needs.integration-tests.outputs.unit-tests-outcome }}" == "success" && \
-                "${{ needs.integration-tests.outputs.component-tests-outcome }}" == "success" && \
-                "${{ needs.integration-tests.outputs.perf-tests-outcome }}" == "success" && \
-                "${{ needs.integration-tests.outputs.visual-tests-outcome }}" == "success" ]]; then
-            echo "final_result=success" >> $GITHUB_OUTPUT
-          else
-            echo "final_result=failure" >> $GITHUB_OUTPUT
+          FINAL_RESULT="success" # Default to success
+          HAS_FAILURE=false
+          HAS_CANCELLATION=false
+
+          # Check all job results from the `needs` context
+          for job_name in $(echo "$NEEDS_CONTEXT" | jq -r 'keys[]'); do
+            # Skip the prepare-env job as it's just setup
+            if [[ "$job_name" == "prepare-env" ]]; then
+              continue
+            fi
+
+            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job_name" '.[$jname].result')
+
+            if [[ "$result" == "failure" ]]; then
+              HAS_FAILURE=true
+            elif [[ "$result" == "cancelled" ]]; then
+              HAS_CANCELLATION=true
+            fi
+          done
+
+          if [[ "$HAS_FAILURE" == true ]]; then
+            FINAL_RESULT="failure"
+          elif [[ "$HAS_CANCELLATION" == true ]]; then
+            FINAL_RESULT="cancelled"
           fi
+
+          echo "final_result=${FINAL_RESULT}" >> $GITHUB_OUTPUT
 
       - name: Generate Failure Report
         id: generate-failure-report
         if: always()
         env:
           NEEDS_CONTEXT: ${{ toJSON(needs) }}
+          SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
         run: |
           FAILURE_REPORT_JSON="[]"
-          # Check individual jobs
-          for job in knip-check lint-check build-check; do
-            if [[ $(echo "$NEEDS_CONTEXT" | jq -r ".${job}.result") == "failure" ]]; then
-              LOG_FILE=""
+
+          # Function to add a failure to the JSON report
+          add_failure() {
+            local name=$1
+            local conclusion=$2
+            local log_file=$3
+            local log_content
+            log_content=$(tail -n 50 "$log_file" 2>/dev/null | jq -s -R .)
+            FAILURE_REPORT_JSON=$(echo "$FAILURE_REPORT_JSON" | jq \
+              --arg name "$name" \
+              --arg conclusion "$conclusion" \
+              --argjson logs "$log_content" \
+              '. + [{ "name": $name, "conclusion": $conclusion, "logs": $logs }]')
+          }
+
+          # Check standalone jobs
+          for job in "knip-check" "lint-check" "build-check"; do
+            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result')
+            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
+              log_file=""
               case $job in
-                "knip-check") LOG_FILE="artifacts/knip-report/knip-output.txt" ;;
-                "lint-check") LOG_FILE="artifacts/lint-report/lint-output.log" ;;
-                "build-check") LOG_FILE="artifacts/build-report/build-output.log" ;;
+                "knip-check") log_file="artifacts/knip-report/knip-output.txt" ;;
+                "lint-check") log_file="artifacts/lint-report/lint-output.log" ;;
+                "build-check") log_file="artifacts/build-report/build-output.log" ;;
               esac
-              LOG_CONTENT=$(tail -n 50 "$LOG_FILE" 2>/dev/null | jq -s -R .)
-              FAILURE_REPORT_JSON=$(echo "$FAILURE_REPORT_JSON" | jq --arg name "$job" --argjson logs "$LOG_CONTENT" '. + [{name: $name, conclusion: "failure", logs: $logs}]')
+              add_failure "$job" "$result" "$log_file"
             fi
           done
-          # Check integration tests outputs
-          INTEGRATION_TESTS_OUTPUTS=$(echo "$NEEDS_CONTEXT" | jq -r '.["integration-tests"].outputs')
-          for test_suite in infra-tests-outcome unit-tests-outcome component-tests-outcome perf-tests-outcome visual-tests-outcome; do
-            if [[ $(echo "$INTEGRATION_TESTS_OUTPUTS" | jq -r ".${test_suite}") == "failure" ]]; then
-              LOG_FILE=""
-              case $test_suite in
-                "infra-tests-outcome") LOG_FILE="artifacts/infra-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/infra-prod-output.log" ;;
-                "unit-tests-outcome") LOG_FILE="artifacts/unit-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/unit-output.log" ;;
-                "component-tests-outcome") LOG_FILE="artifacts/component-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/component-output.log" ;;
-                "perf-tests-outcome") LOG_FILE="artifacts/perf-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/perf-output.log" ;;
-                "visual-tests-outcome") LOG_FILE="artifacts/visual-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/visual-output.log" ;;
+
+          # Check integration test suites from the outputs
+          INTEGRATION_TESTS_OUTPUTS=$(echo "$NEEDS_CONTEXT" | jq -r '."integration-tests".outputs')
+          for test_suite_outcome in "infra-tests-outcome" "unit-tests-outcome" "component-tests-outcome" "perf-tests-outcome" "visual-tests-outcome"; do
+            result=$(echo "$INTEGRATION_TESTS_OUTPUTS" | jq -r --arg tname "$test_suite_outcome" '.[$tname]')
+            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
+              test_suite_name=${test_suite_outcome%-outcome}
+              log_file=""
+              case $test_suite_name in
+                "infra-tests") log_file="artifacts/infra-test-logs-${SESSION_ID}/logs/infra-prod-output.log" ;;
+                "unit-tests") log_file="artifacts/unit-test-logs-${SESSION_ID}/logs/unit-output.log" ;;
+                "component-tests") log_file="artifacts/component-test-logs-${SESSION_ID}/logs/component-output.log" ;;
+                "perf-tests") log_file="artifacts/perf-test-logs-${SESSION_ID}/logs/perf-output.log" ;;
+                "visual-tests") log_file="artifacts/visual-test-logs-${SESSION_ID}/logs/visual-output.log" ;;
               esac
-              LOG_CONTENT=$(tail -n 50 "$LOG_FILE" 2>/dev/null | jq -s -R .)
-              FAILURE_REPORT_JSON=$(echo "$FAILURE_REPORT_JSON" | jq --arg name "${test_suite%-outcome}" --argjson logs "$LOG_CONTENT" '. + [{name: $name, conclusion: "failure", logs: $logs}]')
+              add_failure "$test_suite_name" "$result" "$log_file"
             fi
           done
+
           echo "failure_report_json=$FAILURE_REPORT_JSON" >> $GITHUB_OUTPUT
 
       - name: Post Quality Summary with Details
@@ -1214,14 +1250,13 @@ jobs:
           # Write the final comment to a file
           echo -e "$COMMENT_BODY" > test-results/pr-comment.md
 
-          # Only post comment to PR if some checks failed
-          if [ "$FINAL_RESULT" != "success" ]; then
+          # Only post comment to PR if there are genuine failures
+          if [ "$FINAL_RESULT" == "failure" ]; then
             gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
-              echo "::warning::Failed to post comment to PR"
-              exit 0
+              echo "::warning::Failed to post PR comment."
             }
           else
-            echo "All checks passed. Skipping PR comment to reduce spam."
+            echo "Skipping PR comment because all checks passed or were cancelled."
           fi
 
           # Check if all passed
