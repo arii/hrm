@@ -240,6 +240,18 @@ jobs:
               }
             });
 
+  react-to-conflict-resolve-comment:
+    if: needs.comment-router.outputs.is_conflict_resolve_comment == 'true'
+    needs: [comment-router]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add reaction to comment
+        uses: peter-evans/create-reaction@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ github.event.comment.id }}
+          reaction: eyes
+
   resolve-conflicts-on-comment:
     if: needs.comment-router.outputs.is_conflict_resolve_comment == 'true'
     needs: [comment-router]
@@ -269,5 +281,6 @@ jobs:
               inputs: {
                 target_branch: baseBranch,
                 source_branch: headBranch,
+                pr_number: String(context.issue.number),
               },
             });
