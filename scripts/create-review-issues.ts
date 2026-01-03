@@ -46,6 +46,16 @@ export type ExistingIssue = z.infer<typeof ExistingIssueSchema>
 
 // --- GitHub Client Abstraction ---
 
+interface ExecExceptionWithStderr extends Error {
+  stderr?: string
+}
+
+function isExecExceptionWithStderr(
+  error: unknown
+): error is ExecExceptionWithStderr {
+  return error instanceof Error && 'stderr' in error
+}
+
 export interface IGitHubClient {
   getOpenIssues(labelFilter?: string): ExistingIssue[]
   createIssue(
@@ -62,10 +72,9 @@ export class GitHubClient implements IGitHubClient {
         stdio: ['pipe', 'pipe', 'pipe'],
       }).trim()
     } catch (error: unknown) {
-      const stderr =
-        error instanceof Error && 'stderr' in error
-          ? String((error as any).stderr)
-          : 'Unknown error'
+      const stderr = isExecExceptionWithStderr(error)
+        ? error.stderr
+        : 'Unknown error'
       throw new Error(`GitHub CLI Error: ${stderr}`)
     }
   }
@@ -248,7 +257,6 @@ export async function run(
   console.log(`Skipped: ${skippedCount}`)
 }
 
-
 // --- Main Execution ---
 
 // istanbul ignore next
@@ -257,7 +265,7 @@ if (require.main === module) {
   const prNumber = process.env.PR_NUMBER
   const reviewFile = 'review_result.json'
 
-  run(client, prNumber || '', reviewFile).catch(err => {
+  run(client, prNumber || '', reviewFile).catch((err) => {
     console.error('Unhandled error:', err)
     process.exit(1)
   })
