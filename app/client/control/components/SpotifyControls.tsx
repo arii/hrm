@@ -29,6 +29,7 @@ const SpotifyControls = () => {
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const prevActiveIdRef = useRef<string | undefined>(undefined)
+  const isProgrammaticVolumeChange = useRef(false)
 
   const handleTrackSelect = (uri: string) => {
     const targetDeviceId = resolveTargetDeviceId()
@@ -87,6 +88,7 @@ const SpotifyControls = () => {
     // Sync Volume (if not dragging)
     if (activeDevice && typeof activeDevice.volume_percent === 'number') {
       if (activeDevice.volume_percent !== volume) {
+        isProgrammaticVolumeChange.current = true
         setVolume(activeDevice.volume_percent)
       }
     }
@@ -183,6 +185,11 @@ const SpotifyControls = () => {
   }, [connectionStatus])
 
   useEffect(() => {
+    if (isProgrammaticVolumeChange.current) {
+      isProgrammaticVolumeChange.current = false
+      return
+    }
+
     // Clear any existing timer
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current)
