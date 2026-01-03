@@ -1,5 +1,5 @@
 // lib/__mocks__/storageManager.ts
-export default {
+const storageManager = {
   get: jest.fn(),
   set: jest.fn(),
   remove: jest.fn(),
@@ -7,3 +7,5 @@ export default {
   setCookie: jest.fn(),
   removeCookie: jest.fn(),
 }
+
+export default storageManager

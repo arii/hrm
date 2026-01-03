@@ -15,6 +15,7 @@ import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
 import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
+import storageManager from '../lib/storageManager'
 
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
@@ -122,10 +123,10 @@ export const WebSocketProvider = ({
       return null
     }
     try {
-      let id = StorageManager.get<string>('clientId')
+      let id = storageManager.get<string>('clientId')
       if (!id) {
         id = window.crypto.randomUUID()
-        StorageManager.set('clientId', id)
+        storageManager.set('clientId', id)
       }
       return id
     } catch (error) {
@@ -180,9 +181,8 @@ export const WebSocketProvider = ({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedActions = StorageManager.get<ClientCommandMessage[]>(
-        'pendingActions'
-      )
+      const savedActions =
+        storageManager.get<ClientCommandMessage[]>('pendingActions')
       if (savedActions) {
         pendingActions.current = savedActions
       }
@@ -254,7 +254,7 @@ export const WebSocketProvider = ({
           ws.send(JSON.stringify(action))
         })
         pendingActions.current = []
-        StorageManager.set('pendingActions', [])
+        storageManager.set('pendingActions', [])
       }
 
       // Reset reconnect attempts on successful connection
@@ -394,7 +394,7 @@ export const WebSocketProvider = ({
         data
       )
       pendingActions.current.push(data)
-      StorageManager.set('pendingActions', pendingActions.current)
+      storageManager.set('pendingActions', pendingActions.current)
     }
   }, [])
 

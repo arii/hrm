@@ -25,7 +25,7 @@ class StorageManager {
       localStorage.setItem(testKey, testKey)
       localStorage.removeItem(testKey)
       return true
-    } catch (e) {
+    } catch (_e) {
       return false
     }
   }
@@ -99,7 +99,11 @@ class StorageManager {
    * @param {T} value - The value to write. It will be JSON-stringified.
    * @param {Cookies.CookieAttributes} [options] - Optional cookie attributes.
    */
-  setCookie<T>(key: string, value: T, options?: Cookies.CookieAttributes): void {
+  setCookie<T>(
+    key: string,
+    value: T,
+    options?: Cookies.CookieAttributes
+  ): void {
     try {
       const item = JSON.stringify(value)
       Cookies.set(key, item, options)
@@ -118,4 +122,5 @@ class StorageManager {
   }
 }
 
-export default new StorageManager()
+const storageManager = new StorageManager()
+export default storageManager

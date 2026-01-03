@@ -68,7 +68,9 @@ describe('StorageManager', () => {
     })
 
     it('should set and get a string from cookies', () => {
-      ;(Cookies.get as jest.Mock).mockReturnValue(JSON.stringify(testStringValue))
+      ;(Cookies.get as jest.Mock).mockReturnValue(
+        JSON.stringify(testStringValue)
+      )
       StorageManager.setCookie(testKey, testStringValue)
       const result = StorageManager.getCookie(testKey)
       expect(Cookies.set).toHaveBeenCalledWith(

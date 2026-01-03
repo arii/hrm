@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import StorageManager from '@/lib/storageManager'
+import storageManager from '@/lib/storageManager'
 import ControlPage from '@/app/client/control/page'
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import { SessionProvider } from 'next-auth/react'
@@ -20,13 +20,9 @@ jest.mock('@/app/client/control/components/SpotifyControls', () => ({
   ),
 }))
 
-jest.mock('@/lib/storageManager')
-
 describe('ControlPage Integration', () => {
-  beforeEach(() => {
-    // Reset mocks before each test
-    jest.clearAllMocks()
-    ;(StorageManager.get as jest.Mock).mockImplementation((key: string) => {
+  it('should render all child components within the providers', async () => {
+    ;(storageManager.get as jest.Mock).mockImplementation((key: string) => {
       if (key === 'clientId') {
         return 'test-client-id'
       }
@@ -35,8 +31,6 @@ describe('ControlPage Integration', () => {
       }
       return null
     })
-  })
-  it('should render all child components within the providers', async () => {
     render(
       <SessionProvider session={null}>
         <WebSocketProvider>

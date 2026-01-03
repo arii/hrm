@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { audioManager } from '../utils/audioManager'
-import StorageManager from '../lib/storageManager'
+import storageManager from '../lib/storageManager'
 
 const STORAGE_KEY_VOL = 'hrm-preferred-volume' // Stores the user's last chosen volume
 const STORAGE_KEY_MUTE = 'hrm-muted'
@@ -17,21 +17,23 @@ const useVolumePreference = (defaultVolume = 70) => {
   const sanitizedDefault = clampVolume(defaultVolume)
   const lastVolumeRef = useRef(sanitizedDefault)
 
-  const [volume, setVolumeState] = useState(sanitizedDefault) // Effective volume
-  const [muted, setMutedState] = useState(false)
-  const [isLoaded, setIsLoaded] = useState(false)
+  const [volume, setVolumeState] = useState(() => {
+    const storedVol = storageManager.get<number>(STORAGE_KEY_VOL)
+    const preferredVolume =
+      storedVol !== null ? clampVolume(storedVol) : sanitizedDefault
+    const storedMute = storageManager.get<boolean>(STORAGE_KEY_MUTE)
+    return storedMute ? 0 : preferredVolume
+  })
+  const [muted, setMutedState] = useState(
+    () => storageManager.get<boolean>(STORAGE_KEY_MUTE) || false
+  )
+  const [isLoaded] = useState(true)
 
   useEffect(() => {
-    const storedMute = StorageManager.get<boolean>(STORAGE_KEY_MUTE)
-    const storedVol = StorageManager.get<number>(STORAGE_KEY_VOL)
-
-    const isMuted = storedMute === true
+    const storedVol = storageManager.get<number>(STORAGE_KEY_VOL)
     const preferredVolume =
       storedVol !== null ? clampVolume(storedVol) : sanitizedDefault
     lastVolumeRef.current = preferredVolume
-    setMutedState(isMuted)
-    setVolumeState(isMuted ? 0 : preferredVolume)
-    setIsLoaded(true)
   }, [sanitizedDefault])
 
   useEffect(() => {
@@ -61,11 +63,11 @@ const useVolumePreference = (defaultVolume = 70) => {
   const toggleMute = useCallback(() => {
     const isMuting = !muted
     setMutedState(isMuting)
-    StorageManager.set(STORAGE_KEY_MUTE, isMuting)
+    storageManager.set(STORAGE_KEY_MUTE, isMuting)
     if (isMuting) {
       if (volume > 0) {
         lastVolumeRef.current = volume
-        StorageManager.set(STORAGE_KEY_VOL, volume)
+        storageManager.set(STORAGE_KEY_VOL, volume)
       }
       setVolumeState(0)
     } else {

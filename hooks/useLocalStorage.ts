@@ -1,6 +1,6 @@
 // hooks/useLocalStorage.ts
 import { useState, useEffect, useCallback } from 'react'
-import StorageManager from '../lib/storageManager'
+import storageManager from '../lib/storageManager'
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null) return false
@@ -20,9 +20,9 @@ function useLocalStorage<T>(key: string, initialValue: T) {
       return
     }
 
-    const item = StorageManager.get<T>(key)
+    const item = storageManager.get<T>(key)
     if (item) {
-      const parsed = item // No need for JSON.parse, StorageManager handles it.
+      const parsed = item // No need for JSON.parse, storageManager handles it.
 
       // Handle object migration by merging stored data with initial defaults.
       if (isPlainObject(parsed) && isPlainObject(initialValue)) {
@@ -44,7 +44,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setStoredValue(merged)
         // Also, update localStorage to remove zombie keys.
-        StorageManager.set(key, merged)
+        storageManager.set(key, merged)
       } else {
         setStoredValue(parsed as T)
       }
@@ -64,7 +64,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
       setStoredValue((currentStoredValue) => {
         const valueToStore =
           value instanceof Function ? value(currentStoredValue) : value
-        StorageManager.set(key, valueToStore)
+        storageManager.set(key, valueToStore)
         return valueToStore
       })
     },
