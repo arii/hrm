@@ -139,7 +139,6 @@ const initSocketManager = (
     extWs.isAlive = true
     extWs.on('pong', () => {
       extWs.isAlive = true
-      logger.info({ clientId }, 'Received PONG.')
     })
 
     logger.info(logMeta, 'WebSocket client connected')
@@ -238,7 +237,6 @@ const handleIncomingMessage = (
 
     switch (message.type) {
       case 'PING': {
-        logger.info({ clientId }, 'Received PING, sending PONG.')
         // Respond to client heartbeat pings to keep the connection alive
         const pongMessage: ServerMessage = { type: 'PONG' }
         sendWebSocketMessage(ws, pongMessage, 'socketManager.PING')
