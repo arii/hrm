@@ -145,7 +145,6 @@ jobs:
       pr_quality_result: ${{ needs.pr-quality.result }}
       trigger_event: 'pull_request'
       last_non_empty_commit: ${{ needs.check-diff.outputs.last_non_empty_commit }}
-      failure_report_json: ${{ needs.pr-quality.outputs.failure-report-json }}
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       ARI_PAT: ${{ secrets.ARI_PAT }}
