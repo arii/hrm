@@ -318,6 +318,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice) => {
+      // Abort any existing connection attempts before starting a new one.
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
       try {
         deviceRef.current = device
         setDeviceStatus(`Connecting to: ${device.name || 'Device'}...`)
@@ -409,10 +413,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       options: { silent?: boolean } = {}
     ): Promise<void> => {
       const { silent = false } = options
-
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
 
       // Prioritize args, but fall back to props.
       userDetailsRef.current = {
