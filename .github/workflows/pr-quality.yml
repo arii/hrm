@@ -1131,7 +1131,7 @@ jobs:
 
           # Check integration test suites from the outputs
           INTEGRATION_TESTS_OUTPUTS=$(echo "$NEEDS_CONTEXT" | jq -r '."integration-tests".outputs')
-          for test_suite_outcome in "infra-tests-outcome" "unit-tests-outcome" "component-tests-outcome" "perf-tests-outcome" "visual-tests-outcome"; do
+          for test_suite_outcome in $(echo "$INTEGRATION_TESTS_OUTPUTS" | jq -r 'keys_unsorted[]'); do
             result=$(echo "$INTEGRATION_TESTS_OUTPUTS" | jq -r --arg tname "$test_suite_outcome" '.[$tname]')
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               test_suite_name=${test_suite_outcome%-outcome}

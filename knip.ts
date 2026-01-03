@@ -49,7 +49,11 @@ const config: KnipConfig = {
     'eslint-plugin-storybook',
     'dotenv',
   ],
-  ignoreBinaries: ['scripts/test-json-with-server.sh', 'python3'],
+  ignoreBinaries: [
+    'scripts/test-json-with-server.sh',
+    'scripts/test-with-server.sh',
+    'python3',
+  ],
 }
 
 export default config
