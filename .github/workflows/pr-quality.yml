@@ -571,6 +571,15 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+      - name: Check Infra Tests Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.infra-tests.outcome }}" = 'failure' ]; then
+            echo "::error::Infrastructure tests failed"
+            exit 1
+          fi
+
   unit-tests:
     name: 🧪 Unit Tests
     needs: [prepare-env, knip-check, lint-check, build-check]
@@ -642,6 +651,15 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+      - name: Check Unit Tests Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.unit-tests.outcome }}" = 'failure' ]; then
+            echo "::error::Unit tests failed"
+            exit 1
+          fi
+
   component-tests:
     name: 🧪 Component Tests
     needs: [prepare-env, knip-check, lint-check, build-check]
@@ -712,6 +730,15 @@ jobs:
             test-results/component-results.xml
           if-no-files-found: ignore
           retention-days: 3
+
+      - name: Check Component Tests Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.component-tests.outcome }}" = 'failure' ]; then
+            echo "::error::Component tests failed"
+            exit 1
+          fi
 
   perf-tests:
     name: 🧪 Performance Tests
@@ -800,6 +827,15 @@ jobs:
             test-results/perf-results.xml
           if-no-files-found: ignore
           retention-days: 3
+
+      - name: Check Performance Tests Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.perf-tests.outcome }}" = 'failure' ]; then
+            echo "::error::Performance tests failed"
+            exit 1
+          fi
 
       - name: Stop Application
         if: always()
@@ -890,6 +926,15 @@ jobs:
             playwright-report/
           if-no-files-found: ignore
           retention-days: 5
+
+      - name: Check Visual Tests Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.visual-tests.outcome }}" = 'failure' ]; then
+            echo "::error::Visual tests failed"
+            exit 1
+          fi
 
   copy-checks:
     name: 📝 Copy checks from parent commit
