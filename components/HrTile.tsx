@@ -34,6 +34,7 @@ const HrTile = ({
   percentMax,
   calories = 0, // Default to 0 to prevent NaN
   isConnected = true, // Default to connected
+  isDataStale = false,
   isAlerting = false,
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
@@ -44,7 +45,9 @@ const HrTile = ({
     ? alertMessage
     : !isConnected
       ? 'Disconnected - Showing last known value'
-      : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
+      : isDataStale
+        ? 'Waiting for data...'
+        : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
 
   return (
     <Tooltip title={tooltipTitle} arrow>
@@ -64,7 +67,7 @@ const HrTile = ({
           flexDirection: 'column',
           justifyContent: 'center',
           position: 'relative',
-          opacity: isConnected ? 1 : 0.6,
+          opacity: isConnected && !isDataStale ? 1 : 0.6,
           transition: theme.transitions.create('opacity', {
             duration: theme.transitions.duration.short, // Approx 300ms
           }),
@@ -177,6 +180,7 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.percentMax === nextProps.percentMax &&
     prevProps.calories === nextProps.calories &&
     prevProps.isConnected === nextProps.isConnected &&
+    prevProps.isDataStale === nextProps.isDataStale &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage
   )

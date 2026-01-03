@@ -14,7 +14,8 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import {
   ToggleButtonGroup,
@@ -50,6 +51,7 @@ interface ConnectViewProps {
   unitSystem: MeasurementSystem
   onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
+  isDataStale?: boolean
   deviceStatus: string
   batteryLevel: number | null
   onConnect: () => void
@@ -89,6 +91,7 @@ export default function ConnectView({
   unitSystem,
   onUnitChange,
   isConnected,
+  isDataStale = false,
   deviceStatus,
   batteryLevel,
   onConnect,
@@ -106,6 +109,15 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
+
+  useEffect(() => {
+    if (isConnected) {
+      logger.info(
+        { currentHR, isDataStale, userName },
+        'HrTile rendering with currentHR'
+      )
+    }
+  }, [currentHR, isConnected])
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -353,7 +365,7 @@ export default function ConnectView({
               name={userName}
               bpm={currentHR}
               percentMax={hrZoneProps.percentage}
-              isAlerting={false}
+              isDataStale={isDataStale}
             />
           </Box>
         )}
