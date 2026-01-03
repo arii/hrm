@@ -13,6 +13,7 @@ jest.mock('fs', () => ({
   writeFileSync: jest.fn(),
   unlinkSync: jest.fn(),
   renameSync: jest.fn(),
+  mkdirSync: jest.fn(),
 }))
 
 describe('SpotifyTokenManager', () => {
@@ -260,5 +261,14 @@ describe('SpotifyTokenManager', () => {
     expect(console.log).toHaveBeenCalledWith(
       'Spotify access token expired, but no refresh token available. Cannot refresh.'
     )
+  })
+
+  it('should create the log directory recursively when writing a token', () => {
+    ;(fs.existsSync as jest.Mock).mockReturnValue(false)
+    const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
+    tokenManager.setAccessToken('new_token')
+
+    expect(fs.mkdirSync).toHaveBeenCalledWith(logDir, { recursive: true })
+    expect(fs.writeFileSync).toHaveBeenCalled()
   })
 })
