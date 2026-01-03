@@ -1116,8 +1116,8 @@ jobs:
           }
 
           # Check standalone jobs
-          for job in knip-check lint-check build-check; do
-            result=$(echo "$NEEDS_CONTEXT" | jq -r ".[\"${job}\"].result")
+          for job in "knip-check" "lint-check" "build-check"; do
+            result=$(echo "$NEEDS_CONTEXT" | jq -r ".${job}.result")
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               log_file=""
               case $job in
@@ -1130,9 +1130,9 @@ jobs:
           done
 
           # Check integration test suites from the outputs
-          INTEGRATION_TESTS_OUTPUTS=$(echo "$NEEDS_CONTEXT" | jq -r '.["integration-tests"].outputs')
-          for test_suite_outcome in infra-tests-outcome unit-tests-outcome component-tests-outcome perf-tests-outcome visual-tests-outcome; do
-            result=$(echo "$INTEGRATION_TESTS_OUTPUTS" | jq -r ".[\"${test_suite_outcome}\"]")
+          INTEGRATION_TESTS_OUTPUTS=$(echo "$NEEDS_CONTEXT" | jq -r '."integration-tests".outputs')
+          for test_suite_outcome in "infra-tests-outcome" "unit-tests-outcome" "component-tests-outcome" "perf-tests-outcome" "visual-tests-outcome"; do
+            result=$(echo "$INTEGRATION_TESTS_OUTPUTS" | jq -r ".${test_suite_outcome}")
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               test_suite_name=${test_suite_outcome%-outcome}
               log_file=""
