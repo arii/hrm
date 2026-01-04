@@ -3,13 +3,7 @@ import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
 import { WorkoutHistoryService } from '../services/workoutHistoryService.js'
 import { SpotifyService } from '../types/interfaces.js'
-
-export interface AppServices {
-  spotifyService: SpotifyService
-  tabataService: TabataTimer
-  workoutHistoryService: WorkoutHistoryService
-  isSpotifyInitialized: boolean
-}
+import { AppServices } from '../types/service.js'
 
 export async function createServices(
   broadcast: (data: Partial<ServerMessage>) => void

@@ -4,16 +4,7 @@
  * This allows services to be decoupled from their instantiation and from each other,
  * making them easier to test in isolation.
  */
-import type { SpotifyService } from '../types/interfaces'
-import type TabataTimer from '../services/tabataTimer'
-import type { WorkoutHistoryService } from '../services/workoutHistoryService'
-
-// Define a type for the service registry
-export interface ServiceRegistry {
-  spotifyService: SpotifyService
-  tabataService: TabataTimer
-  workoutHistoryService: WorkoutHistoryService
-}
+import type { ServiceRegistry } from '../types/service'
 
 class ServiceContainer {
   private services: Partial<ServiceRegistry> = {}
