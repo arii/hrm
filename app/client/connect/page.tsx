@@ -25,16 +25,19 @@ export default function ConnectPage() {
 
   const [currentHR, setCurrentHR] = useState(0)
 
-  const [displayWeight, setDisplayWeight] = useState(() => {
-    const kg = userWeight || 0
-    return toDisplay(kg, unitSystem).toString()
-  })
+  const [localDisplayWeight, setLocalDisplayWeight] = useState<string | null>(
+    null
+  )
 
-  useEffect(() => {
-    if (userWeight) {
-      setDisplayWeight(toDisplay(userWeight, unitSystem).toString())
+  const displayWeight = useMemo(() => {
+    if (localDisplayWeight !== null) {
+      return localDisplayWeight
     }
-  }, [userWeight, unitSystem])
+    if (userWeight) {
+      return toDisplay(userWeight, unitSystem).toString()
+    }
+    return ''
+  }, [localDisplayWeight, userWeight, unitSystem])
 
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
@@ -52,18 +55,23 @@ export default function ConnectPage() {
   }
 
   const handleWeightChange = (newDisplayValue: string) => {
-    setDisplayWeight(newDisplayValue)
+    setLocalDisplayWeight(newDisplayValue)
   }
 
   const handleWeightBlur = () => {
-    const error = validateWeightValue(displayWeight, unitSystem)
+    const valueToValidate = localDisplayWeight ?? displayWeight
+    const error = validateWeightValue(valueToValidate, unitSystem)
     setWeightError(error)
 
-    const numericValue = parseFloat(displayWeight)
-    if (!error && !isNaN(numericValue) && numericValue > 0) {
-      const newKgValue = toKg(numericValue, unitSystem)
-      setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
+    if (!error) {
+      const numericValue = parseFloat(valueToValidate)
+      if (!isNaN(numericValue) && numericValue > 0) {
+        const newKgValue = toKg(numericValue, unitSystem)
+        setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
+      }
     }
+    // Reset local state to show the canonical value from context
+    setLocalDisplayWeight(null)
   }
 
   const { connectionStatus, sendData } = useWebSocket()
@@ -174,13 +182,10 @@ export default function ConnectPage() {
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
       setUserSettings((prev) => ({ ...prev, unitSystem: newUnit }))
-      const currentKg = userWeight || 0
-      if (!isNaN(currentKg)) {
-        const newDisplay = toDisplay(currentKg, newUnit)
-        setDisplayWeight(newDisplay.toString())
-      } else {
-        setDisplayWeight('')
-      }
+      // When the unit changes, the displayed weight needs to be re-calculated.
+      // Resetting localDisplayWeight will cause the useMemo to re-calculate
+      // based on the new unit system.
+      setLocalDisplayWeight(null)
     }
   }
 
@@ -211,7 +216,7 @@ export default function ConnectPage() {
       setUserHeight={handleHeightChange}
       onHeightBlur={handleHeightBlur}
       heightError={heightError}
-      userWeight={displayWeight}
+      userWeight={displayWeight || ''}
       setUserWeight={handleWeightChange}
       onWeightBlur={handleWeightBlur}
       weightError={weightError}
