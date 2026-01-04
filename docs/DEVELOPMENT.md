@@ -185,11 +185,15 @@ This project includes a workflow to automatically analyze pull requests for tech
 
 #### Creating Issues from PR Reviews
 
-The repository provides an automated workflow to create issues from the suggestions in a Gemini code review. This can be triggered in two ways:
+The repository provides a workflow to create GitHub issues from the suggestions in a Gemini code review. This process is now largely automated.
 
-1.  **PR Comment**: Add a comment containing the command `/create-issues` to a pull request. The workflow will find the latest successful CI run for the PR, download the review artifact, and create issues for each suggestion.
+1.  **Automated Creation (Default)**: After a pull request is opened or updated, the `gemini-orchestrator.yml` workflow runs. If the Gemini review job completes successfully, it will **automatically** trigger a subsequent job to create technical debt issues from the review's findings. This is the primary and recommended method.
 
-2.  **Manual Trigger**: Navigate to the "Actions" tab in the GitHub repository, select the "Create Issues from Command" workflow, and run it manually. You will be prompted to enter the Pull Request number you wish to source the review artifacts from.
+2.  **Manual Trigger (Fallback)**: If you need to re-run the issue creation for a specific pull request without pushing a new commit, you can use one of the following manual triggers:
+    *   **PR Comment**: Add a comment containing the command `/create-issues` to the pull request.
+    *   **Actions Tab**: Navigate to the "Actions" tab, select the "Create Issues from Command" workflow, and run it manually, providing the pull request number.
+
+    When triggered manually, the workflow will find the latest successful `gemini-orchestrator.yml` run for the PR's head commit, download its review artifact, and create the issues.
 
 ### Legacy Pre-commit Hooks
 
