@@ -297,6 +297,20 @@ const handleIncomingMessage = (
           }
 
           hrmDataRepository.save({ ...existingData, ...updateData })
+        } else {
+          // Ensure we initialize all necessary fields for HrmStreamData.
+          hrmDataRepository.save({
+            clientId, // Explicitly add clientId as it's required for HrmStreamData
+            value: 0, // No HR value yet
+            calories: 0, // Start with 0 calories
+            // Provide default values for all required fields in HrmStreamData
+            // Any corresponding fields in message.data will override these defaults.
+            name: 'Unknown',
+            age: 30,
+            weightKg: 70,
+            maxHr: 185,
+            ...message.data, // Assuming message.data provides necessary initial fields
+          })
         }
         broadcastState()
         break
