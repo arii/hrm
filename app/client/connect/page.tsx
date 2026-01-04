@@ -30,6 +30,12 @@ export default function ConnectPage() {
     return toDisplay(kg, unitSystem).toString()
   })
 
+  useEffect(() => {
+    if (userWeight) {
+      setDisplayWeight(toDisplay(userWeight, unitSystem).toString())
+    }
+  }, [userWeight, unitSystem])
+
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
 
