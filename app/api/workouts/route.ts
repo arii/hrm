@@ -4,6 +4,8 @@ import { serviceContainer } from '../../../lib/serviceContainer'
 import { WorkoutHistoryService } from '../../../services/workoutHistoryService'
 import { workoutSchema } from '../../../types/workout'
 import { z } from 'zod'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '../../../lib/auth'
 
 const getService = (): WorkoutHistoryService => {
   const service = serviceContainer.get('workoutHistoryService')
@@ -18,6 +20,11 @@ const getService = (): WorkoutHistoryService => {
 }
 
 export async function GET(request: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+  }
+
   const service = getService()
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
@@ -35,6 +42,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+  }
+
   const service = getService()
   try {
     const body = await request.json()
@@ -56,6 +68,11 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+  }
+
   const service = getService()
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
@@ -91,6 +108,11 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+  }
+
   const service = getService()
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')

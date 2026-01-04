@@ -10,6 +10,7 @@ import type {
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
 } from './core'
+import { Session } from 'next-auth'
 
 // --- WebSocket Connection & Augmentation ---
 
@@ -22,6 +23,7 @@ export interface ExtWebSocket extends WebSocket {
   clientId: string
   isAlive: boolean
   clientType?: 'dashboard' | 'controller'
+  session?: Session | null
 }
 
 // --- Server Broadcast State Interfaces ---
@@ -164,6 +166,11 @@ export interface PingMessage {
   type: 'PING'
 }
 
+export interface AuthMessage {
+  type: 'AUTH'
+  token: string
+}
+
 export interface WorkoutHistoryMessage {
   type: 'WORKOUT_HISTORY'
   command: 'GET_ALL' | 'GET_BY_ID' | 'ADD' | 'UPDATE' | 'DELETE'
@@ -180,6 +187,7 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
+  | AuthMessage
   | WorkoutHistoryMessage
 
 import { z } from 'zod'
@@ -257,6 +265,11 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
+export const AuthMessageSchema = z.object({
+  type: z.literal('AUTH'),
+  token: z.string(),
+})
+
 import { workoutSchema } from './workout.js'
 
 export const WorkoutHistoryMessageSchema = z.object({
@@ -286,5 +299,6 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
   PingMessageSchema,
+  AuthMessageSchema,
   WorkoutHistoryMessageSchema,
 ])

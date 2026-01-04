@@ -28,6 +28,7 @@ import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
+import { getToken } from 'next-auth/jwt'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -243,6 +244,21 @@ const handleIncomingMessage = (
         sendWebSocketMessage(ws, pongMessage, 'socketManager.PING')
         break
       }
+      case 'AUTH': {
+        const token = message.token
+        getToken({
+          req: { headers: { cookie: `next-auth.session-token=${token}` } } as any,
+          secret: process.env.NEXTAUTH_SECRET,
+        }).then((decodedToken) => {
+          if (decodedToken) {
+            ws.session = { user: decodedToken, expires: '' }
+            logger.info({ clientId }, 'WebSocket client authenticated')
+          } else {
+            logger.warn({ clientId }, 'WebSocket client failed to authenticate')
+          }
+        })
+        break
+      }
       case 'REGISTER_CLIENT': {
         ws.clientType = (message as ClientRegistrationMessage).role
         logger.info(
@@ -408,6 +424,11 @@ const handleIncomingMessage = (
         break
       }
       case 'WORKOUT_HISTORY': {
+        if (!ws.session) {
+          logger.warn({ clientId }, 'Unauthenticated client tried to access workout history')
+          return
+        }
+
         const { command, payload } = message
         const { workoutHistoryService } = services
         if (!workoutHistoryService) {
