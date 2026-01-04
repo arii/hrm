@@ -125,6 +125,13 @@ describe('WebSocket Manager', () => {
       handleCommand: jest.fn(),
       setMode: jest.fn(),
       setConfig: jest.fn(),
+      on: jest.fn(),
+      off: jest.fn(),
+      start: jest.fn(),
+      stop: jest.fn(),
+      pause: jest.fn(),
+      resume: jest.fn(),
+      getState: jest.fn(),
       getSnapshot: jest.fn().mockReturnValue({
         // Mock the return value of getSnapshot
         phase: 'idle',
@@ -134,10 +141,19 @@ describe('WebSocket Manager', () => {
         totalRounds: 0,
         currentRound: 0,
       }),
+      cleanup: jest.fn(),
     } as unknown as jest.Mocked<TabataTimer>
 
     const mockSpotifyPolling = {
       handleCommand: jest.fn(),
+      forcePollAndBroadcast: jest.fn(),
+      getState: jest.fn(),
+      isReady: jest.fn(),
+      handleTokenUpdate: jest.fn(),
+      startPolling: jest.fn(),
+      stopPolling: jest.fn(),
+      cleanup: jest.fn(),
+      refreshDevices: jest.fn(),
       getSnapshot: jest.fn().mockReturnValue({
         // Mock the return value of getSnapshot
         isPlaying: false,
