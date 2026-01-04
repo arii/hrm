@@ -276,10 +276,17 @@ describe('WebSocket Manager', () => {
   })
   describe('Calorie Calculation', () => {
     it('should accumulate calories correctly with small frequent updates', () => {
+      // Setup: Send metadata first, which is required for calorie calculation
+      const metadataMessage = {
+        type: 'HRM_METADATA_UPDATE',
+        data: { age: 30, weightKg: 70 }, // weightKg is a new addition based on potential needs
+      }
+      mockWs.emit('message', JSON.stringify(metadataMessage))
+
       const sendHrmInput = (hr: number) => {
         const message = {
           type: 'HRM_INPUT',
-          data: { value: hr, age: 30, source: 'mock' },
+          data: { value: hr, source: 'mock' }, // age is now sourced from metadata
         }
         mockWs.emit('message', JSON.stringify(message))
       }
