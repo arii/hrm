@@ -1,4 +1,3 @@
-
 /**
  * @jest-environment jsdom
  */
@@ -104,13 +103,15 @@ describe('useLocalStorage', () => {
 
   it('should handle malformed JSON in localStorage gracefully', () => {
     localStorage.setItem(KEY, 'not-a-json')
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
 
     const { result } = renderHook(() => useLocalStorage(KEY, 'default'))
 
-    expect(result.current[0]).toBe('default');
-    expect(consoleErrorSpy).toHaveBeenCalled();
+    expect(result.current[0]).toBe('default')
+    expect(consoleErrorSpy).toHaveBeenCalled()
 
-    consoleErrorSpy.mockRestore();
-  });
+    consoleErrorSpy.mockRestore()
+  })
 })
