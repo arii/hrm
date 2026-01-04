@@ -93,6 +93,7 @@ export type HrmInputData = {
   name?: string
   age?: number
   calories?: number
+  source?: 'bluetooth' | 'mock'
 }
 
 export interface HrmInputMessage {
@@ -161,6 +162,11 @@ export interface PingMessage {
   type: 'PING'
 }
 
+export interface SetMockModeMessage {
+  type: 'SET_MOCK_MODE'
+  enabled: boolean
+}
+
 export type ClientCommandMessage =
   | HrmInputMessage
   | HrmMetadataUpdateMessage
@@ -171,6 +177,7 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
+  | SetMockModeMessage
 
 import { z } from 'zod'
 
@@ -179,6 +186,7 @@ import { z } from 'zod'
 export const HrmInputDataSchema = z.object({
   value: z.number().nullable(),
   calories: z.number().optional(),
+  source: z.enum(['bluetooth', 'mock']).optional(),
 })
 
 export const HrmInputMessageSchema = z.object({
@@ -247,6 +255,11 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
+export const SetMockModeMessageSchema = z.object({
+  type: z.literal('SET_MOCK_MODE'),
+  enabled: z.boolean(),
+})
+
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
   HrmMetadataUpdateMessageSchema,
@@ -257,4 +270,5 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
   PingMessageSchema, // Add PING schema to the union
+  SetMockModeMessageSchema,
 ])

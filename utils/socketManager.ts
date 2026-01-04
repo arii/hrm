@@ -49,7 +49,7 @@ const clientSockets = new Map<string, WebSocket>()
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
-  { lastUpdate: number; accumulatedCalories: number }
+  { lastUpdate: number; accumulatedCalories: number; isMocking: boolean }
 >()
 
 /**
@@ -156,6 +156,7 @@ const initSocketManager = (
       clientSessionState.set(extWs.clientId, {
         lastUpdate: Date.now(),
         accumulatedCalories: 0,
+        isMocking: false,
       })
     } else {
       logger.info({ clientId }, 'Reconnected with existing session.')
@@ -264,6 +265,17 @@ const handleIncomingMessage = (
         sendWebSocketMessage(ws, initialStateMessage, 'socketManager.GET_STATE')
         break
       }
+      case 'SET_MOCK_MODE': {
+        const session = clientSessionState.get(clientId)
+        if (session) {
+          session.isMocking = message.enabled
+          logger.info(
+            { clientId, mockMode: message.enabled },
+            'Mock mode updated'
+          )
+        }
+        break
+      }
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
@@ -292,6 +304,13 @@ const handleIncomingMessage = (
         const existingData = hrmDataRepository.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
         if (existingData && sessionState) {
+          if (sessionState.isMocking && message.data.source === 'bluetooth') {
+            logger.info(
+              { clientId },
+              'Mock mode is active. Ignoring Bluetooth HRM data.'
+            )
+            return // Exit without processing or broadcasting
+          }
           let finalCalories = 0
           // Prioritize client-calculated calories if available
           if (typeof message.data.calories === 'number') {
@@ -341,8 +360,8 @@ const handleIncomingMessage = (
             value: message.data.value ?? existingData.value,
             calories: Math.round(finalCalories * 10) / 10,
           })
+          broadcastState()
         }
-        broadcastState()
         break
       }
 

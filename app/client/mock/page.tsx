@@ -15,6 +15,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
+  SetMockModeMessage,
 } from '../../../types/websocket'
 
 export default function MockPage() {
@@ -48,6 +49,7 @@ export default function MockPage() {
         type: 'HRM_INPUT',
         data: {
           value: hr,
+          source: 'mock',
         },
       }
       sendData(message)
@@ -70,6 +72,24 @@ export default function MockPage() {
     sendData(message)
   }, [sendData, name, age, maxHr, weight, height, gender])
 
+  const sendMockModePacket = useCallback(
+    (enabled: boolean) => {
+      const message: SetMockModeMessage = {
+        type: 'SET_MOCK_MODE',
+        enabled,
+      }
+      sendData(message)
+    },
+    [sendData]
+  )
+
+  // Cleanup: ensure mock mode is disabled when the user navigates away
+  useEffect(() => {
+    return () => {
+      sendMockModePacket(false)
+    }
+  }, [sendMockModePacket])
+
   // NOTE: In a real client, metadata would likely be sent once upon connection
   // or when the user explicitly saves settings. For this mock, we send it
   // on every change to the local state for simplicity and immediate feedback.
@@ -79,6 +99,7 @@ export default function MockPage() {
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return
+    sendMockModePacket(true)
     sendHrPacket(hrValue)
     const id = setInterval(() => {
       const fluctuatedHr = Math.max(
@@ -95,6 +116,7 @@ export default function MockPage() {
     if (intervalId) {
       clearInterval(intervalId)
       setIntervalId(null)
+      sendMockModePacket(false)
     }
   }
 

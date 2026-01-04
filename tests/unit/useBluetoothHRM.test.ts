@@ -273,7 +273,7 @@ describe('useBluetoothHRM', () => {
 
     expect(mockSendData).toHaveBeenCalledWith({
       type: 'HRM_INPUT',
-      data: { value: null },
+      data: { value: null, source: 'bluetooth' },
     })
   })
 
@@ -294,7 +294,7 @@ describe('useBluetoothHRM', () => {
 
     expect(mockSendData).toHaveBeenCalledWith({
       type: 'HRM_INPUT',
-      data: { value: null },
+      data: { value: null, source: 'bluetooth' },
     })
   })
 
@@ -373,6 +373,12 @@ describe('useBluetoothHRM', () => {
 
       expect(mockOnHeartRateUpdate).toHaveBeenCalledWith(75)
       expect(mockOnHeartRateUpdate).toHaveBeenCalledTimes(1)
+
+      // It should also send the data to the WebSocket
+      expect(mockSendData).toHaveBeenCalledWith({
+        type: 'HRM_INPUT',
+        data: { value: 75, source: 'bluetooth' },
+      })
     })
   })
 
