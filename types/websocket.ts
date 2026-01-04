@@ -257,7 +257,7 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
-import { workoutSchema } from './workout'
+import { workoutSchema } from './workout.js'
 
 export const WorkoutHistoryMessageSchema = z.object({
   type: z.literal('WORKOUT_HISTORY'),
