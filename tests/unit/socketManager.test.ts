@@ -355,11 +355,9 @@ describe('WebSocket Manager', () => {
     })
     it('should handle unknown message types', () => {
       const message = JSON.stringify({ type: 'SOME_GARBAGE' })
-      jest
-        .spyOn(ClientCommandMessageSchema, 'parse')
-        .mockImplementation(() => {
-          throw new Error('Invalid')
-        })
+      jest.spyOn(ClientCommandMessageSchema, 'parse').mockImplementation(() => {
+        throw new Error('Invalid')
+      })
       mockWs.emit('message', message.toString())
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({ clientId: 'test-client' }),
