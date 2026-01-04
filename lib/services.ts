@@ -5,6 +5,8 @@ import { WorkoutHistoryService } from '../services/workoutHistoryService.js'
 import { SpotifyService } from '../types/interfaces.js'
 import { AppServices } from '../types/service.js'
 
+export type { AppServices } from '../types/service.js'
+
 export async function createServices(
   broadcast: (data: Partial<ServerMessage>) => void
 ): Promise<AppServices> {
