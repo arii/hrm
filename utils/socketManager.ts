@@ -279,9 +279,13 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
-          const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { weight, ...restOfData } = message.data
+          const updateData: Partial<HrmStreamData> = restOfData
+
+          if (typeof message.data.weight === 'number') {
+            updateData.weightKg = message.data.weight
+          }
 
           // Prevent overwriting a real name with a default "Unknown" name
           if (
