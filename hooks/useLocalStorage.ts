@@ -36,15 +36,21 @@ function useLocalStorage<T>(key: string, initialValue: T) {
           // Merge the defaults with the cleaned data from localStorage.
           const merged = { ...initialValue, ...filteredParsed } as T
           // eslint-disable-next-line react-hooks/set-state-in-effect
-          setStoredValue(merged)
-          // Also, update localStorage to remove zombie keys immediately.
-          window.localStorage.setItem(key, JSON.stringify(merged))
+          setStoredValue(merged) // State change will trigger the write useEffect.
         } else {
           setStoredValue(parsed)
         }
       }
     } catch (error) {
       console.error(`Error reading localStorage key “${key}”:`, error)
+      // If an error occurs (e.g., malformed JSON), revert to initialValue
+      // and clear the corrupted item from localStorage to prevent future issues.
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(key)
+      }
+      // Ensure the hook's state is reset to the initial value.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStoredValue(initialValue)
     }
   }, [key, initialValue]) // initialValue is a dependency for object merging
 
