@@ -279,12 +279,29 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
-          const { weight, ...restOfData } = message.data
-          const updateData: Partial<HrmStreamData> = restOfData
+          const { weight, name, ...restOfData } = message.data
+          // Filter out nullish values to prevent overwriting good data
+          const filteredUpdate = Object.entries(restOfData).reduce(
+            (acc, [key, value]) => {
+              if (value !== null && value !== undefined) {
+                acc[key as keyof typeof restOfData] = value
+              }
+              return acc
+            },
+            {} as Partial<HrmStreamData>
+          )
+
+          // Handle weight mapping separately
           if (typeof weight === 'number') {
-            updateData.weightKg = weight
+            filteredUpdate.weightKg = weight
           }
-          hrmDataRepository.save({ ...existingData, ...updateData })
+
+          // Protect the user's name from being overwritten by a generic name
+          if (name && name !== 'Unknown') {
+            filteredUpdate.name = name
+          }
+
+          hrmDataRepository.save({ ...existingData, ...filteredUpdate })
         } else {
           const { weight, ...restOfData } = message.data
           const newClientData: HrmStreamData = {
