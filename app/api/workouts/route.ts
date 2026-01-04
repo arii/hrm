@@ -5,9 +5,14 @@ import { WorkoutHistoryService } from '../../../services/workoutHistoryService'
 import { workoutSchema } from '../../../types/workout'
 import { z } from 'zod'
 
-const getService = () => {
-  // TODO: Fix this type assertion.
-  return serviceContainer.get('workoutHistoryService') as WorkoutHistoryService
+const getService = (): WorkoutHistoryService => {
+  const service = serviceContainer.get('workoutHistoryService')
+  if (!service) {
+    // This indicates a critical application setup error.
+    // In a production environment, this should ideally be caught during application startup.
+    throw new Error('WorkoutHistoryService is not registered in the service container.')
+  }
+  return service
 }
 
 export async function GET(request: Request) {
@@ -37,7 +42,7 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { message: 'Invalid workout data', errors: error.errors },
+        { message: 'Invalid workout data', errors: error.issues },
         { status: 400 }
       )
     }
@@ -72,7 +77,7 @@ export async function PUT(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { message: 'Invalid workout data', errors: error.errors },
+        { message: 'Invalid workout data', errors: error.issues },
         { status: 400 }
       )
     }
