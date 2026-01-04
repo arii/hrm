@@ -288,8 +288,8 @@ describe('WebSocket Manager', () => {
         jest.advanceTimersByTime(100)
         sendHrmInput(150)
       }
-      const mockBroadcast = broadcast as jest.Mock
       jest.runOnlyPendingTimers()
+      const mockBroadcast = broadcast as jest.Mock
       expect(mockBroadcast).toHaveBeenCalled()
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
@@ -437,6 +437,7 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', disableMessage)
       mockWs.emit('message', hrmMessage)
+      jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalled()
     })
     it('should ignore bluetooth data when mock mode is active', () => {
@@ -463,6 +464,7 @@ describe('WebSocket Manager', () => {
         data: { value: 130, source: 'mock' },
       })
       mockWs.emit('message', hrmMessage)
+      jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalled()
       const lastCall = (broadcast as jest.Mock).mock.calls.pop()
       const payload: HrmData[] = lastCall[1].payload
@@ -474,6 +476,7 @@ describe('WebSocket Manager', () => {
         data: { value: 140, source: 'bluetooth' },
       })
       mockWs.emit('message', hrmMessage)
+      jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalled()
       const lastCall = (broadcast as jest.Mock).mock.calls.pop()
       const payload: HrmData[] = lastCall[1].payload
