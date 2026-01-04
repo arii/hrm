@@ -3,27 +3,29 @@ import fs from 'fs/promises'
 import path from 'path'
 import { Workout, WorkoutHistory } from '../types/workout'
 
-const HISTORY_FILE_PATH = path.join(
-  process.cwd(),
-  'logs',
-  'workout-history.json'
-)
+const LOGS_DIR = path.join(process.cwd(), 'logs')
+const HISTORY_FILE_PATH = path.join(LOGS_DIR, 'workout-history.json')
 
 export class WorkoutHistoryService {
   private workoutHistory: WorkoutHistory = []
 
   constructor() {
-    this.loadHistory().catch((err) =>
-      console.error('Failed to load workout history:', err)
+    this.initializeHistory().catch((err) =>
+      console.error('Failed to initialize workout history:', err)
     )
   }
 
-  private async loadHistory(): Promise<void> {
+  private async initializeHistory(): Promise<void> {
+    await fs.mkdir(LOGS_DIR, { recursive: true }) // Ensure logs directory exists
     try {
       const data = await fs.readFile(HISTORY_FILE_PATH, 'utf-8')
       this.workoutHistory = JSON.parse(data)
     } catch (error) {
-      if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      if (
+        error instanceof Error &&
+        'code' in error &&
+        error.code === 'ENOENT'
+      ) {
         this.workoutHistory = []
         await this.saveHistory()
       } else {
@@ -65,7 +67,10 @@ export class WorkoutHistoryService {
       return undefined
     }
 
-    const updatedWorkoutWithId = { ...this.workoutHistory[workoutIndex], ...updatedWorkout }
+    const updatedWorkoutWithId = {
+      ...this.workoutHistory[workoutIndex],
+      ...updatedWorkout,
+    } as Workout
     this.workoutHistory[workoutIndex] = updatedWorkoutWithId
     await this.saveHistory()
     return updatedWorkoutWithId
@@ -76,7 +81,7 @@ export class WorkoutHistoryService {
     this.workoutHistory = this.workoutHistory.filter(
       (workout) => workout.id !== id
     )
-    if (this.workoutHistory.length < initialLength) {
+    if (this.workoutHistory.length < initial.length) {
       await this.saveHistory()
       return true
     }
