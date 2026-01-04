@@ -6,7 +6,8 @@ import { workoutSchema } from '../../../types/workout'
 import { z } from 'zod'
 
 const getService = () => {
-  return serviceContainer.get<WorkoutHistoryService>('workoutHistoryService')
+  // TODO: Fix this type assertion.
+  return serviceContainer.get('workoutHistoryService') as WorkoutHistoryService
 }
 
 export async function GET(request: Request) {
