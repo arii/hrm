@@ -279,22 +279,19 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { weight, ...restOfData } = message.data
-          const updateData: Partial<HrmStreamData> = restOfData
-
-          if (typeof message.data.weight === 'number') {
-            updateData.weightKg = message.data.weight
-          }
+          // Create updateData from message.data, filtering out null/undefined values
+          // and ensuring 'weight' is correctly mapped to the HrmStreamData 'weight' property.
+          const updateData: Partial<HrmStreamData> = Object.fromEntries(
+            Object.entries(message.data).filter(
+              ([, value]) => value !== null && value !== undefined
+            )
+          )
 
           // Prevent overwriting a real name with a default "Unknown" name
           if (
             existingData.name &&
-            !/^(user|new user|unknown|bluetooth hrm)/i.test(
-              existingData.name
-            ) &&
-            updateData.name &&
-            /^(user|new user|unknown|bluetooth hrm)/i.test(updateData.name)
+            message.data.name === 'Unknown' &&
+            existingData.name !== 'Unknown'
           ) {
             delete updateData.name
           }
