@@ -30,6 +30,7 @@ import {
 import logger from '@/utils/logger'
 import { createMockRequest } from './test-data/request-data-factory'
 import { AppServices } from '@/lib/services'
+import { act } from '@testing-library/react'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -366,61 +367,85 @@ describe('WebSocket Manager', () => {
     })
   })
   describe('Mock Mode', () => {
-    it('should enable and disable mock mode', () => {
+    it('should enable and disable mock mode', async () => {
       const enableMessage = JSON.stringify({
         type: 'SET_MOCK_MODE',
         enabled: true,
       })
-      mockWs.emit('message', enableMessage)
+      act(() => {
+        mockWs.emit('message', enableMessage)
+        jest.runAllTimers()
+      })
       const hrmMessage = JSON.stringify({
         type: 'HRM_INPUT',
         data: { value: 120, source: 'bluetooth' },
       })
-      mockWs.emit('message', hrmMessage)
+      act(() => {
+        mockWs.emit('message', hrmMessage)
+        jest.runAllTimers()
+      })
       expect(broadcast).not.toHaveBeenCalled()
       const disableMessage = JSON.stringify({
         type: 'SET_MOCK_MODE',
         enabled: false,
       })
-      mockWs.emit('message', disableMessage)
-      mockWs.emit('message', hrmMessage)
+      act(() => {
+        mockWs.emit('message', disableMessage)
+        mockWs.emit('message', hrmMessage)
+        jest.runAllTimers()
+      })
       expect(broadcast).toHaveBeenCalled()
     })
-    it('should ignore bluetooth data when mock mode is active', () => {
+    it('should ignore bluetooth data when mock mode is active', async () => {
       const enableMessage = JSON.stringify({
         type: 'SET_MOCK_MODE',
         enabled: true,
       })
-      mockWs.emit('message', enableMessage)
+      act(() => {
+        mockWs.emit('message', enableMessage)
+        jest.runAllTimers()
+      })
       const hrmMessage = JSON.stringify({
         type: 'HRM_INPUT',
         data: { value: 120, source: 'bluetooth' },
       })
-      mockWs.emit('message', hrmMessage)
+      act(() => {
+        mockWs.emit('message', hrmMessage)
+        jest.runAllTimers()
+      })
       expect(broadcast).not.toHaveBeenCalled()
     })
-    it('should process mock data when mock mode is active', () => {
+    it('should process mock data when mock mode is active', async () => {
       const enableMessage = JSON.stringify({
         type: 'SET_MOCK_MODE',
         enabled: true,
       })
-      mockWs.emit('message', enableMessage)
+      act(() => {
+        mockWs.emit('message', enableMessage)
+        jest.runAllTimers()
+      })
       const hrmMessage = JSON.stringify({
         type: 'HRM_INPUT',
         data: { value: 130, source: 'mock' },
       })
-      mockWs.emit('message', hrmMessage)
+      act(() => {
+        mockWs.emit('message', hrmMessage)
+        jest.runAllTimers()
+      })
       expect(broadcast).toHaveBeenCalled()
       const lastCall = (broadcast as jest.Mock).mock.calls.pop()
       const payload: HrmData[] = lastCall[1].payload
       expect(payload[0].value).toBe(130)
     })
-    it('should process bluetooth data when mock mode is inactive', () => {
+    it('should process bluetooth data when mock mode is inactive', async () => {
       const hrmMessage = JSON.stringify({
         type: 'HRM_INPUT',
         data: { value: 140, source: 'bluetooth' },
       })
-      mockWs.emit('message', hrmMessage)
+      act(() => {
+        mockWs.emit('message', hrmMessage)
+        jest.runAllTimers()
+      })
       expect(broadcast).toHaveBeenCalled()
       const lastCall = (broadcast as jest.Mock).mock.calls.pop()
       const payload: HrmData[] = lastCall[1].payload
