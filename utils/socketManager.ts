@@ -279,17 +279,14 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
-          const { weight, name, ...restOfData } = message.data
+          const { weight, name, maxHr, age, height, gender } = message.data
+          const filteredUpdate: Partial<HrmStreamData> = {}
+
           // Filter out nullish values to prevent overwriting good data
-          const filteredUpdate = Object.entries(restOfData).reduce(
-            (acc, [key, value]) => {
-              if (value !== null && value !== undefined) {
-                acc[key as keyof typeof restOfData] = value
-              }
-              return acc
-            },
-            {} as Partial<HrmStreamData>
-          )
+          if (maxHr != null) filteredUpdate.maxHr = maxHr
+          if (age != null) filteredUpdate.age = age
+          if (height != null) filteredUpdate.height = height
+          if (gender != null) filteredUpdate.gender = gender
 
           // Handle weight mapping separately
           if (typeof weight === 'number') {
