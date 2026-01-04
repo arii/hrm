@@ -251,7 +251,7 @@ const handleIncomingMessage = (
         const mockReq = {
           ...req,
           cookies: { 'next-auth.session-token': token },
-        } as NextApiRequest
+        } as unknown as NextApiRequest
         getToken({
           req: mockReq,
           secret: process.env.NEXTAUTH_SECRET,
