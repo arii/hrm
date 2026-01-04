@@ -151,7 +151,7 @@ jobs:
             mapfile -t NAMES < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].name')
             mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion // "failure"')
             mapfile -t URLS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl')
-            mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl | if type == "string" then split("/")[-1] else "" end')
+            mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl | split("/")[-1]? // ""')
 
             LOG_DIR=$(mktemp -d)
             # Define the processing function for a single job
@@ -174,7 +174,7 @@ jobs:
             export LOG_DIR
             export -a JOB_IDS
             # Run the processing in parallel
-            seq 0 $((${#JOB_IDS[@]} - 1)) | xargs -P 4 -I {} bash -c 'process_job "{}"'
+            seq 0 $((${#JOB_IDS[@]} - 1)) | xargs -n 1 -P 4 -I {} bash -c 'process_job "{}"'
 
             # Combine results into the final JSON
             for i in $(seq 0 $((${#NAMES[@]} - 1))); do

@@ -571,15 +571,6 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-      - name: Check Infra Tests Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.infra-tests.outcome }}" = 'failure' ]; then
-            echo "::error::Infrastructure tests failed"
-            exit 1
-          fi
-
   unit-tests:
     name: 🧪 Unit Tests
     needs: [prepare-env, knip-check, lint-check, build-check]
@@ -650,15 +641,6 @@ jobs:
             test-results/unit-results.xml
           if-no-files-found: ignore
           retention-days: 3
-
-      - name: Check Unit Tests Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.unit-tests.outcome }}" = 'failure' ]; then
-            echo "::error::Unit tests failed"
-            exit 1
-          fi
 
   component-tests:
     name: 🧪 Component Tests
@@ -731,15 +713,6 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-      - name: Check Component Tests Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.component-tests.outcome }}" = 'failure' ]; then
-            echo "::error::Component tests failed"
-            exit 1
-          fi
-
   perf-tests:
     name: 🧪 Performance Tests
     needs: [prepare-env, knip-check, lint-check, build-check]
@@ -786,6 +759,10 @@ jobs:
             exit 1
           fi
 
+      - name: Stop Application (Pre-emptive)
+        if: always()
+        run: pnpm run kill-all || true
+
       - name: Start Application for Performance Test
         # Note: The `if: always()` condition was intentionally removed along with the `retry` action.
         # Performance tests are not run if the build or other preceding steps fail, as the results would not be meaningful.
@@ -827,15 +804,6 @@ jobs:
             test-results/perf-results.xml
           if-no-files-found: ignore
           retention-days: 3
-
-      - name: Check Performance Tests Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.perf-tests.outcome }}" = 'failure' ]; then
-            echo "::error::Performance tests failed"
-            exit 1
-          fi
 
       - name: Stop Application
         if: always()
@@ -926,15 +894,6 @@ jobs:
             playwright-report/
           if-no-files-found: ignore
           retention-days: 5
-
-      - name: Check Visual Tests Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.visual-tests.outcome }}" = 'failure' ]; then
-            echo "::error::Visual tests failed"
-            exit 1
-          fi
 
   copy-checks:
     name: 📝 Copy checks from parent commit
@@ -1090,7 +1049,7 @@ jobs:
     needs: [prepare-env, knip-check, lint-check, build-check, integration-tests]
     runs-on: ubuntu-latest
     outputs:
-      failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
+      failure-report-json: ${{ steps.prepare-failure-report.outputs.failure_report_json }}
     steps:
       - uses: actions/checkout@v4
 
@@ -1137,60 +1096,26 @@ jobs:
 
           echo "final_result=${FINAL_RESULT}" >> $GITHUB_OUTPUT
 
-      - name: Generate Failure Report
-        id: generate-failure-report
+      - name: Prepare Failure Report JSON
+        id: prepare-failure-report
         if: always()
-        env:
-          NEEDS_CONTEXT: ${{ toJSON(needs) }}
-          SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
+        shell: bash
         run: |
-          FAILURE_REPORT_JSON="[]"
+          # Attempt to extract failed jobs JSON.
+          # Default to an empty JSON array if the script produces no output or fails.
+          FAILURE_REPORT_JSON_RAW=$(
+            python3 ./.github/scripts/extract-failed-jobs.py \
+              --pr-number ${{ github.event.pull_request.number }} \
+              --gh-token ${{ secrets.GITHUB_TOKEN }}
+          ) || echo "[]" # If python script fails or produces no output, fallback to empty array
 
-          # Function to add a failure to the JSON report
-          add_failure() {
-            local name=$1
-            local conclusion=$2
-            local log_file=$3
-            local log_content
-            log_content=$(tail -n 50 "$log_file" 2>/dev/null | jq -s -R .)
-            FAILURE_REPORT_JSON=$(echo "$FAILURE_REPORT_JSON" | jq \
-              --arg name "$name" \
-              --arg conclusion "$conclusion" \
-              --argjson logs "$log_content" \
-              '. + [{ "name": $name, "conclusion": $conclusion, "logs": $logs }]')
-          }
-
-          # Check standalone jobs
-          for job in "knip-check" "lint-check" "build-check"; do
-            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result')
-            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
-              log_file=""
-              case $job in
-                "knip-check") log_file="artifacts/knip-report/knip-output.txt" ;;
-                "lint-check") log_file="artifacts/lint-report/lint-output.log" ;;
-                "build-check") log_file="artifacts/build-report/build-output.log" ;;
-              esac
-              add_failure "$job" "$result" "$log_file"
-            fi
-          done
-
-          # Check integration test suites from the outputs
-          INTEGRATION_TESTS_OUTPUTS=$(echo "$NEEDS_CONTEXT" | jq -r '."integration-tests".outputs')
-          for test_suite_outcome in $(echo "$INTEGRATION_TESTS_OUTPUTS" | jq -r 'keys_unsorted[]'); do
-            result=$(echo "$INTEGRATION_TESTS_OUTPUTS" | jq -r --arg tname "$test_suite_outcome" '.[$tname]')
-            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
-              test_suite_name=${test_suite_outcome%-outcome}
-              log_file=""
-              case $test_suite_name in
-                "infra-tests") log_file="artifacts/infra-test-logs-${SESSION_ID}/logs/infra-prod-output.log" ;;
-                "unit-tests") log_file="artifacts/unit-test-logs-${SESSION_ID}/logs/unit-output.log" ;;
-                "component-tests") log_file="artifacts/component-test-logs-${SESSION_ID}/logs/component-output.log" ;;
-                "perf-tests") log_file="artifacts/perf-test-logs-${SESSION_ID}/logs/perf-output.log" ;;
-                "visual-tests") log_file="artifacts/visual-test-logs-${SESSION_ID}/logs/visual-output.log" ;;
-              esac
-              add_failure "$test_suite_name" "$result" "$log_file"
-            fi
-          done
+          # Validate if the output is valid JSON, fallback to empty array if not.
+          if [ -z "$FAILURE_REPORT_JSON_RAW" ] || ! echo "$FAILURE_REPORT_JSON_RAW" | python3 -m json.tool > /dev/null 2>&1; then
+              FAILURE_REPORT_JSON="[]"
+              echo "::warning::FAILURE_REPORT_JSON was invalid or empty, defaulting to '[]'."
+          else
+              FAILURE_REPORT_JSON="$FAILURE_REPORT_JSON_RAW"
+          fi
 
           # Use a block to safely append to GITHUB_OUTPUT
           {
