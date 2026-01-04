@@ -201,17 +201,23 @@ export async function run(
   prNumber: string,
   reviewFilePath: string
 ) {
+  console.log('Starting issue creation process...')
+  console.log(`PR Number: ${prNumber}`)
+  console.log(`Review file path: ${reviewFilePath}`)
+
   if (!prNumber) {
     throw new Error('❌ Error: PR_NUMBER is missing.')
   }
 
   let result: ReviewResult
   try {
+    console.log(`Reading and parsing ${reviewFilePath}...`)
     const content = readFileSync(
       path.resolve(process.cwd(), reviewFilePath),
       'utf-8'
     )
     const parsedJson = JSON.parse(content)
+    console.log('Successfully parsed JSON.')
     const validationResult = ReviewResultSchema.safeParse(parsedJson)
     if (!validationResult.success) {
       throw new Error(
@@ -219,6 +225,7 @@ export async function run(
       )
     }
     result = validationResult.data
+    console.log('Successfully validated schema.')
   } catch (e) {
     throw new Error(
       `❌ Error reading or parsing ${reviewFilePath}: ${(e as Error).message}`
@@ -260,7 +267,7 @@ export async function run(
 // --- Main Execution ---
 
 // istanbul ignore next
-if (require.main === module) {
+if (import.meta.url.startsWith('file://') && process.argv[1] === new URL(import.meta.url).pathname) {
   const client = new GitHubClient()
   const prNumber = process.env.PR_NUMBER
   const reviewFile = 'review_result.json'

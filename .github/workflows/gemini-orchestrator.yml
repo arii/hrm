@@ -154,19 +154,6 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       ARI_PAT: ${{ secrets.ARI_PAT }}
 
-  create-tech-debt-issues:
-    name: 💎 Create Tech Debt Issues
-    # This job runs only if the preceding review job was successful
-    if: github.event_name == 'pull_request' && needs.review-on-pr-update.result == 'success'
-    needs: [review-on-pr-update]
-    uses: ./.github/workflows/reusable-create-review-issues.yml
-    with:
-      pr_number: ${{ github.event.pull_request.number }}
-      # Pass the current run ID to source the artifact directly
-      run_id: ${{ github.run_id }}
-    secrets:
-      gh_token: ${{ secrets.ARI_PAT }}
-
   # 3. Trigger review immediately for a comment command (e.g., @jules fix or @gemini-bot)
   review-on-comment:
     if: needs.comment-router.outputs.is_review_comment == 'true'

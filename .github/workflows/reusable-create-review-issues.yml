@@ -11,10 +11,6 @@ on:
         description: 'The PR number to source review artifacts from'
         required: true
         type: string
-      run_id:
-        description: 'The explicit workflow run ID to source artifacts from'
-        required: false
-        type: string
     secrets:
       gh_token:
         required: true
@@ -36,30 +32,22 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      - name: Determine Source Workflow Run
+      - name: Find Latest Review Workflow Run
         id: find_run
         env:
           GH_TOKEN: ${{ secrets.gh_token }}
           PR_NUMBER: ${{ inputs.pr_number }}
-          EXPLICIT_RUN_ID: ${{ inputs.run_id }}
         run: |
-          # Option 1: Use the explicitly provided run_id if available
-          if [ -n "$EXPLICIT_RUN_ID" ]; then
-            echo "::notice::Using explicitly provided run ID: $EXPLICIT_RUN_ID"
-            echo "run_id=$EXPLICIT_RUN_ID" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Option 2: Fallback to finding the latest successful Gemini Orchestrator run for the PR's head SHA
-          echo "::info::No explicit run ID provided. Searching for the latest successful 'gemini-orchestrator.yml' run..."
+          # Get the head SHA of the PR
           HEAD_SHA=$(gh pr view $PR_NUMBER --json headRefOid --jq .headRefOid)
-          echo "::info::Found head SHA for PR #$PR_NUMBER: $HEAD_SHA"
+          echo "::info::Found head SHA: $HEAD_SHA"
 
-          RUN_ID=$(gh run list --commit "$HEAD_SHA" --workflow gemini-orchestrator.yml --status "success" --json databaseId --limit 1 | jq -r '.[0].databaseId')
+          # Find the most recent successful workflow run for that commit SHA
+          RUN_ID=$(gh run list --commit "$HEAD_SHA" --workflow ci.yml --status "success" --json databaseId --limit 1 | jq -r '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
             echo "run_id=not_found" >> $GITHUB_OUTPUT
-            echo "::warning::No successful Gemini Orchestrator workflow run found for commit $HEAD_SHA."
+            echo "::warning::No successful CI workflow run found for branch '$BRANCH_NAME'."
           else
             echo "::info::Found latest successful run ID: $RUN_ID"
             echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
@@ -71,7 +59,7 @@ jobs:
           GH_TOKEN: ${{ secrets.gh_token }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          gh pr comment $PR_NUMBER --body "Could not find a successful Gemini Orchestrator workflow run to source review artifacts. Please ensure the 'gemini-orchestrator.yml' workflow has completed successfully for this branch."
+          gh pr comment $PR_NUMBER --body "Could not find a successful CI workflow run to source review artifacts. Please ensure the 'ci.yml' workflow has completed successfully for this branch."
           exit 1
 
       - name: Download Review Artifact
