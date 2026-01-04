@@ -18,6 +18,14 @@ interface HrHistoryChartProps {
   maxHr: number
 }
 
+/**
+ * @component HrHistoryChart
+ * @description A chart that displays the user's heart rate history as a line chart.
+ * @param {HrHistoryChartProps} props The component props.
+ * @param {HeartRateSample[]} props.history The user's heart rate history.
+ * @param {number} props.maxHr The user's maximum heart rate.
+ * @returns {React.ReactElement | null} The chart component or null if there is no history.
+ */
 const HrHistoryChart: React.FC<HrHistoryChartProps> = ({ history, maxHr }) => {
   if (history.length === 0) {
     return null

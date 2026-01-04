@@ -14,10 +14,17 @@ export interface ZoneData {
 const ZONE_NAMES = Object.keys(ZONE_COLORS)
 
 /**
- * A hook to manage and store a time-series history of heart rate data
+ * @hook useHeartRateHistory
+ * @description A hook to manage and store a time-series history of heart rate data
  * and the distribution of time spent in each heart rate zone.
  *
- * @param maxHr The user's maximum heart rate, used for zone calculation.
+ * @param {number} maxHr - The user's maximum heart rate, used for zone calculation.
+ * @returns {{
+ *   history: HeartRateSample[],
+ *   zoneDistribution: ZoneData,
+ *   addHeartRateSample: (hr: number) => void,
+ *   resetHistory: () => void
+ * }} An object containing the heart rate history, zone distribution, and functions to manage them.
  */
 export const useHeartRateHistory = (maxHr: number) => {
   const [history, setHistory] = useState<HeartRateSample[]>([])

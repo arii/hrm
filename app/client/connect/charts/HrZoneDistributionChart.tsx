@@ -9,6 +9,13 @@ interface HrZoneDistributionChartProps {
   zoneDistribution: ZoneData
 }
 
+/**
+ * @component HrZoneDistributionChart
+ * @description A chart that displays the distribution of time spent in each heart rate zone as a pie chart.
+ * @param {HrZoneDistributionChartProps} props The component props.
+ * @param {ZoneData} props.zoneDistribution The distribution of time spent in each heart rate zone.
+ * @returns {React.ReactElement | null} The chart component or null if there is no zone distribution data.
+ */
 const HrZoneDistributionChart: React.FC<HrZoneDistributionChartProps> = ({
   zoneDistribution,
 }) => {
