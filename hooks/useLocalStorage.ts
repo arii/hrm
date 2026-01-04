@@ -1,5 +1,5 @@
 // hooks/useLocalStorage.ts
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null) return false
@@ -7,78 +7,63 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return proto === null || proto === Object.prototype
 }
 
-// Hook
+// A custom hook for persisting state to localStorage.
 function useLocalStorage<T>(key: string, initialValue: T) {
-  // 1. Initialize state with initialValue to match Server Side rendering.
   const [storedValue, setStoredValue] = useState<T>(initialValue)
 
-  // 2. Sync with localStorage inside useEffect (Client-side only).
+  // Effect to read from localStorage on component mount (client-side only).
   useEffect(() => {
-    // Prevent execution on server.
     if (typeof window === 'undefined') {
       return
     }
-
     try {
       const item = window.localStorage.getItem(key)
       if (item) {
         const parsed = JSON.parse(item)
-
-        // Handle object migration by merging stored data with initial defaults.
         if (isPlainObject(parsed) && isPlainObject(initialValue)) {
-          const schemaKeys = Object.keys(initialValue)
+          // Filter out keys from localStorage that are not in the initialValue schema.
+          const initialValueKeys = Object.keys(initialValue)
           const filteredParsed = Object.keys(parsed).reduce(
-            (acc, k) => {
-              if (schemaKeys.includes(k)) {
-                acc[k] = parsed[k]
+            (acc, currentKey) => {
+              if (initialValueKeys.includes(currentKey)) {
+                acc[currentKey] = parsed[currentKey]
               }
               return acc
             },
             {} as Record<string, unknown>
           )
 
-          // Merge: Defaults -> Filtered Storage
+          // Merge the defaults with the cleaned data from localStorage.
           const merged = { ...initialValue, ...filteredParsed } as T
-          // This is the core of the SSR-safe logic. We initialize state to `initialValue`
-          // and then update it with the value from localStorage on the client.
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setStoredValue(merged)
-          // Also, update localStorage to remove zombie keys.
-          window.localStorage.setItem(key, JSON.stringify(merged))
         } else {
           setStoredValue(parsed)
         }
       }
     } catch (error) {
-      console.error(`Error reading or parsing localStorage key “${key}”`, error)
+      console.error(`Error reading localStorage key “${key}”:`, error)
     }
-  }, [key, initialValue])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]) // Run only once on mount
 
-  // Return a wrapped version of useState's setter function that ...
-  // ... persists the new value to localStorage.
-  const setValue = useCallback(
-    (value: T | ((val: T) => T)) => {
-      if (typeof window === 'undefined') {
-        console.warn(
-          `Attempted to set localStorage key “${key}” on the server.`
-        )
-        return
-      }
-      try {
-        setStoredValue((currentStoredValue) => {
-          const valueToStore =
-            value instanceof Function ? value(currentStoredValue) : value
-          window.localStorage.setItem(key, JSON.stringify(valueToStore))
-          return valueToStore
-        })
-      } catch (error) {
-        console.error(`Error setting localStorage key “${key}”:`, error)
-      }
-    },
-    [key]
-  )
-
+  // Effect to write to localStorage whenever the state changes.
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+    try {
+      window.localStorage.setItem(key, JSON.stringify(storedValue))
+    } catch (error) {
+      console.error(`Error setting localStorage key “${key}”:`, error)
+    }
+  }, [key, storedValue])
+
+  // Effect to listen for changes in other tabs.
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key && e.newValue) {
         try {
@@ -88,13 +73,14 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         }
       }
     }
+
     window.addEventListener('storage', handleStorageChange)
     return () => {
       window.removeEventListener('storage', handleStorageChange)
     }
   }, [key])
 
-  return [storedValue, setValue] as const
+  return [storedValue, setStoredValue] as const
 }
 
 export default useLocalStorage
