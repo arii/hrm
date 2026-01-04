@@ -90,6 +90,7 @@ export default function ConnectPage() {
     resetWorkout: resetWorkoutSession,
     hasStarted,
     startWorkout,
+    pauseWorkout,
     endWorkout,
     workoutStatus,
   } = useWorkoutSession({
@@ -126,6 +127,7 @@ export default function ConnectPage() {
     userName,
     userAge: userAge || 0,
     onHeartRateUpdate: handleHeartRateUpdate,
+    onConnect: startWorkout,
   })
 
   useEffect(() => {
@@ -230,6 +232,7 @@ export default function ConnectPage() {
       onReset={resetWorkout}
       workoutStatus={workoutStatus}
       onStartWorkout={startWorkout}
+      onPauseWorkout={pauseWorkout}
       onEndWorkout={endWorkout}
     />
   )

@@ -238,7 +238,6 @@ const handleIncomingMessage = (
     switch (message.type) {
       case 'PING': {
         // Respond to client heartbeat pings to keep the connection alive
-        logger.info({ clientId }, 'Received PING, sending PONG.')
         const pongMessage: ServerMessage = { type: 'PONG' }
         sendWebSocketMessage(ws, pongMessage, 'socketManager.PING')
         break
