@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.0](https://github.com/arii/hrm/compare/hrm-v0.22.0...hrm-v0.23.0) (2026-01-04)
+
+
+### Features
+
+* **medium:** feat: Auto-start workout and integrate session controls (originally  [#3121](https://github.com/arii/hrm/issues/3121)) ([#3141](https://github.com/arii/hrm/issues/3141)) ([3da4abf](https://github.com/arii/hrm/commit/3da4abf971d61ee24ab2e06664db99ca3c5880ef))
+
 ## [0.22.0](https://github.com/arii/hrm/compare/hrm-v0.21.0...hrm-v0.22.0) (2026-01-04)
 
 
