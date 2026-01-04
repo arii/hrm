@@ -1,4 +1,3 @@
-
 import {
   afterEach,
   beforeEach,
@@ -75,8 +74,15 @@ class MockWebSocket extends EventEmitter {
 
 describe('WebSocket Manager Inactivity', () => {
   let mockWss: jest.Mocked<WebSocketServer>
-  let mockServices: any
-  let getSnapshot: any
+  let mockServices: {
+    tabataService: {
+      getState: jest.Mock
+    }
+    spotifyService: {
+      getState: jest.Mock
+    }
+  }
+  let getSnapshot: jest.Mock
   let mockWs: MockWebSocket
 
   beforeEach(() => {

@@ -78,9 +78,12 @@ const HrTile = ({
           justifyContent: 'center',
           position: 'relative',
           opacity: isEffectivelyDisconnected ? 0.6 : 1,
-          transition: theme.transitions.create(['opacity', 'background-color'], {
-            duration: theme.transitions.duration.short,
-          }),
+          transition: theme.transitions.create(
+            ['opacity', 'background-color'],
+            {
+              duration: theme.transitions.duration.short,
+            }
+          ),
         }}
       >
         {/* --- Disconnected Icon --- */}

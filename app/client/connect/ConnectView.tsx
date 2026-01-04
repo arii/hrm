@@ -121,7 +121,7 @@ export default function ConnectView({
         'HrTile rendering with currentHR'
       )
     }
-  }, [currentHR, isConnected])
+  }, [currentHR, isConnected, isStale, userName])
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
