@@ -29,6 +29,7 @@ import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
 import { getToken } from 'next-auth/jwt'
+import { NextApiRequest } from 'next'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -163,7 +164,7 @@ const initSocketManager = (
     }
 
     extWs.on('message', (message) => {
-      handleIncomingMessage(extWs, message.toString(), extWs.clientId)
+      handleIncomingMessage(extWs, message.toString(), extWs.clientId, req)
     })
 
     extWs.on('close', () => {
@@ -230,7 +231,8 @@ const broadcastState = () => {
 const handleIncomingMessage = (
   ws: ExtWebSocket,
   messageString: string,
-  clientId: string
+  clientId: string,
+  req: IncomingMessage
 ) => {
   try {
     const parsedJson = JSON.parse(messageString)
@@ -246,10 +248,12 @@ const handleIncomingMessage = (
       }
       case 'AUTH': {
         const token = message.token
+        const mockReq = {
+          ...req,
+          cookies: { 'next-auth.session-token': token },
+        } as NextApiRequest
         getToken({
-          req: {
-            headers: { cookie: `next-auth.session-token=${token}` },
-          } as IncomingMessage,
+          req: mockReq,
           secret: process.env.NEXTAUTH_SECRET,
         }).then((decodedToken) => {
           if (decodedToken) {
