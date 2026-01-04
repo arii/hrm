@@ -288,7 +288,7 @@ jobs:
         with:
           name: knip-report
           path: knip-output.txt
-          retention-days: 3
+          retention-days: 2
 
       - name: Fail on Knip Errors
         if: steps.knip.outcome == 'failure'
@@ -345,7 +345,7 @@ jobs:
         with:
           name: lint-report
           path: logs/lint-output.log
-          retention-days: 3
+          retention-days: 2
           if-no-files-found: ignore
 
   build-check:
@@ -411,7 +411,7 @@ jobs:
         with:
           name: build-report
           path: logs/build-output.log
-          retention-days: 3
+          retention-days: 2
           if-no-files-found: ignore
 
       - name: 🔍 Pre-archive Inspection
@@ -493,7 +493,7 @@ jobs:
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: release.tar.gz
-          retention-days: 1
+          retention-days: 2
 
   infra-tests:
     name: 🧪 Infrastructure Tests
@@ -569,7 +569,7 @@ jobs:
             logs/infra-prod-output.log
             test-results/infra-prod-results.xml
           if-no-files-found: ignore
-          retention-days: 3
+          retention-days: 2
 
       - name: Check Infra Tests Result
         if: always()
@@ -649,7 +649,7 @@ jobs:
             logs/unit-output.log
             test-results/unit-results.xml
           if-no-files-found: ignore
-          retention-days: 3
+          retention-days: 2
 
       - name: Check Unit Tests Result
         if: always()
@@ -729,7 +729,7 @@ jobs:
             logs/component-output.log
             test-results/component-results.xml
           if-no-files-found: ignore
-          retention-days: 3
+          retention-days: 2
 
       - name: Check Component Tests Result
         if: always()
@@ -820,7 +820,7 @@ jobs:
             logs/perf-output.log
             test-results/perf-results.xml
           if-no-files-found: ignore
-          retention-days: 3
+          retention-days: 2
 
       - name: Check Performance Tests Result
         if: always()
@@ -919,7 +919,7 @@ jobs:
             test-results/results.xml
             playwright-report/
           if-no-files-found: ignore
-          retention-days: 5
+          retention-days: 2
 
       - name: Check Visual Tests Result
         if: always()

@@ -484,7 +484,7 @@ jobs:
             task_desc.txt
             *.rej
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 2
           compression-level: 6
 
       - name: Generate Patch Debug Report
@@ -552,7 +552,7 @@ jobs:
         with:
           name: patch-debug-report-run-${{ github.run_id }}
           path: patch-debug-report.md
-          retention-days: 30
+          retention-days: 2
 
       - name: 'Gemini: Generate Build-Time Secrets'
         if: env.AGENT_PROVIDER == 'gemini'
