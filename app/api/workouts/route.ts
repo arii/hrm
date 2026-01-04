@@ -2,24 +2,23 @@
 import { NextResponse } from 'next/server';
 import { serviceContainer } from '../../../lib/serviceContainer';
 import { WorkoutHistoryService } from '../../../services/workoutHistoryService';
-import { Workout } from '../../../types/workout';
 import { z } from 'zod';
 
 const workoutSchema = z.object({
-  id: z.string().uuid(),
-  userId: z.string(),
-  timestamp: z.string().datetime(),
-  duration: z.number().positive(),
-  averageHeartRate: z.number().positive(),
-  maxHeartRate: z.number().positive(),
-  caloriesBurned: z.number().positive(),
+  id: z.string().uuid({ message: "Invalid workout ID format" }),
+  userId: z.string().min(1, { message: "User ID cannot be empty" }),
+  timestamp: z.string().datetime({ message: "Invalid timestamp format" }),
+  duration: z.number().positive({ message: "Duration must be positive" }),
+  averageHeartRate: z.number().int().gt(0, { message: "Average heart rate must be greater than 0" }),
+  maxHeartRate: z.number().int().gt(0, { message: "Max heart rate must be greater than 0" }),
+  caloriesBurned: z.number().positive({ message: "Calories burned must be positive" }),
   trainingLoad: z.number(),
   zoneDistribution: z.object({
-    zone1: z.number(),
-    zone2: z.number(),
-    zone3: z.number(),
-    zone4: z.number(),
-    zone5: z.number(),
+    zone1: z.number().int().nonnegative(),
+    zone2: z.number().int().nonnegative(),
+    zone3: z.number().int().nonnegative(),
+    zone4: z.number().int().nonnegative(),
+    zone5: z.number().int().nonnegative(),
   }),
 });
 
@@ -49,7 +48,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const newWorkoutData = workoutSchema.parse(body);
-    const newWorkout = await service.addWorkout(newWorkoutData as Workout);
+    const newWorkout = await service.addWorkout(newWorkoutData);
     return NextResponse.json(newWorkout, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
