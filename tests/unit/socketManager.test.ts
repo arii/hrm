@@ -261,11 +261,11 @@ describe('WebSocket Manager', () => {
   describe('Calorie Calculation', () => {
     it('should accumulate calories correctly with small frequent updates', () => {
       const sendHrmInput = (hr: number) => {
-        const message = JSON.stringify({
+        const message = {
           type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
-        })
-        mockWs.emit('message', message.toString())
+          data: { value: hr, age: 30, source: 'mock' },
+        }
+        mockWs.emit('message', JSON.stringify(message))
       }
       sendHrmInput(150)
       for (let i = 0; i < 100; i++) {
