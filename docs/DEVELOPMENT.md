@@ -114,15 +114,15 @@ Add a comment containing the command `@conflict-resolve` to a pull request.
 
 **What it does**:
 
--   The workflow attempts to merge the `source_branch` into the `target_branch` on a temporary branch.
--   It uses a predefined set of rules in `.github/conflict-resolver.yml` to automatically resolve conflicts for specific files (e.g., `pnpm-lock.yaml`, build artifacts).
--   If all conflicts are resolved successfully, it creates a new pull request with the merged changes.
--   If any conflicts cannot be resolved automatically, the workflow will fail, and manual intervention will be required.
+- The workflow attempts to merge the `source_branch` into the `target_branch` on a temporary branch.
+- It uses a predefined set of rules in `.github/conflict-resolver.yml` to automatically resolve conflicts for specific files (e.g., `pnpm-lock.yaml`, build artifacts).
+- If all conflicts are resolved successfully, it creates a new pull request with the merged changes.
+- If any conflicts cannot be resolved automatically, the workflow will fail, and manual intervention will be required.
 
 **Distinction from `/rebase-ai`**:
 
--   **@conflict-resolve**: Uses a **rules-based approach**. It's deterministic and designed for predictable conflicts (like lockfiles). It creates a **new pull request** with the merged result.
--   **/rebase-ai**: Uses an **AI-powered approach** (Gemini). It's designed for more complex code conflicts and attempts to resolve them semantically. It updates the ***existing*** pull request by rebasing and force-pushing.
+- **@conflict-resolve**: Uses a **rules-based approach**. It's deterministic and designed for predictable conflicts (like lockfiles). It creates a **new pull request** with the merged result.
+- **/rebase-ai**: Uses an **AI-powered approach** (Gemini). It's designed for more complex code conflicts and attempts to resolve them semantically. It updates the **_existing_** pull request by rebasing and force-pushing.
 
 #### AI-Powered Workflows
 
