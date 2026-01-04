@@ -1107,7 +1107,8 @@ jobs:
             local conclusion=$2
             local log_file=$3
             local log_content
-            log_content=$(tail -n 50 "$log_file" 2>/dev/null | jq -s -R .)
+            # Ensure log_content is a valid JSON string even if log file is missing or empty
+            log_content=$(tail -n 50 "$log_file" 2>/dev/null | jq -s -R . || echo '""')
             FAILURE_REPORT_JSON=$(echo "$FAILURE_REPORT_JSON" | jq \
               --arg name "$name" \
               --arg conclusion "$conclusion" \
@@ -1117,7 +1118,8 @@ jobs:
 
           # Check standalone jobs
           for job in "knip-check" "lint-check" "build-check"; do
-            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result')
+            # Safely get job result, default to "skipped" if not found
+            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result // "skipped"')
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               log_file=""
               case $job in
@@ -1130,9 +1132,9 @@ jobs:
           done
 
           # Check integration test suites from the outputs
-          INTEGRATION_TESTS_OUTPUTS=$(echo "$NEEDS_CONTEXT" | jq -r '."integration-tests".outputs')
           for test_suite_outcome in "infra-tests-outcome" "unit-tests-outcome" "component-tests-outcome" "perf-tests-outcome" "visual-tests-outcome"; do
-            result=$(echo "$INTEGRATION_TESTS_OUTPUTS" | jq -r --arg tname "$test_suite_outcome" '.[$tname]')
+            # Safely get test suite result from nested object, default to "skipped"
+            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg tname "$test_suite_outcome" '."integration-tests".outputs.[$tname] // "skipped"')
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               test_suite_name=${test_suite_outcome%-outcome}
               log_file=""
