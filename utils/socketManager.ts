@@ -280,11 +280,12 @@ const handleIncomingMessage = (
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
           // Create updateData from message.data, filtering out null/undefined values
-          const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(
-              ([, value]) => value !== null && value !== undefined
-            )
-          )
+          const { weight, ...restOfData } = message.data
+          const updateData: Partial<HrmStreamData> = restOfData
+
+          if (typeof weight === 'number') {
+            updateData.weightKg = weight
+          }
 
           // Prevent overwriting a real name with a default "Unknown" name
           if (
@@ -298,7 +299,8 @@ const handleIncomingMessage = (
           hrmDataRepository.save({ ...existingData, ...updateData })
         } else {
           // Ensure we initialize all necessary fields for HrmStreamData.
-          hrmDataRepository.save({
+          const { weight, ...restOfData } = message.data
+          const newClientData: HrmStreamData = {
             clientId, // Explicitly add clientId as it's required for HrmStreamData
             value: 0, // No HR value yet
             calories: 0, // Start with 0 calories
@@ -308,8 +310,12 @@ const handleIncomingMessage = (
             age: 30,
             weightKg: 70,
             maxHr: 185,
-            ...message.data, // Assuming message.data provides necessary initial fields
-          })
+            ...restOfData,
+          }
+          if (typeof weight === 'number') {
+            newClientData.weightKg = weight
+          }
+          hrmDataRepository.save(newClientData)
         }
         broadcastState()
         break
