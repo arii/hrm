@@ -8,8 +8,8 @@ export interface HrTileProps {
   bpm: number
   percentMax: number
   calories?: number
+  isConnected?: boolean
   isStale?: boolean
-  isDisconnected?: boolean
   isAlerting?: boolean
   alertMessage?: string
 }

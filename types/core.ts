@@ -96,7 +96,6 @@ export interface HrmStreamData {
   calories: number
   weightKg?: number
   isStale?: boolean
-  isDisconnected?: boolean
 }
 
 /**

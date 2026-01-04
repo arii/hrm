@@ -33,29 +33,21 @@ const HrTile = ({
   bpm,
   percentMax,
   calories = 0,
+  isConnected = true,
   isStale = false,
-  isDisconnected = false,
   isAlerting = false,
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
 
-  // Combined disconnected state for rendering logic
-  const isEffectivelyDisconnected = isStale || isDisconnected
-
   const tooltipTitle = isAlerting
     ? alertMessage
-    : isDisconnected
-      ? 'Client disconnected'
+    : !isConnected
+      ? 'Disconnected - Showing last known value'
       : isStale
-        ? 'Signal lost. Waiting for data...'
+        ? 'Waiting for data...'
         : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
-
-  // Render nothing if the component is marked as disconnected
-  if (isDisconnected) {
-    return null
-  }
 
   return (
     <Tooltip title={tooltipTitle} arrow>
@@ -63,13 +55,12 @@ const HrTile = ({
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
-          !isEffectivelyDisconnected
-            ? `${bpm} beats per minute`
-            : 'Disconnected'
+          isConnected ? `${bpm} beats per minute` : 'Disconnected'
         }, ${percentMax}% of maximum`}
         sx={{
-          backgroundColor: isStale ? theme.palette.grey[800] : backgroundColor,
-          color: isStale ? theme.palette.grey[400] : textColor,
+          backgroundColor:
+            !isConnected || isStale ? theme.palette.grey[800] : backgroundColor,
+          color: !isConnected || isStale ? theme.palette.grey[400] : textColor,
           textAlign: 'center',
           minHeight: 180,
           height: '100%',
@@ -77,7 +68,7 @@ const HrTile = ({
           flexDirection: 'column',
           justifyContent: 'center',
           position: 'relative',
-          opacity: isEffectivelyDisconnected ? 0.6 : 1,
+          opacity: isConnected && !isStale ? 1 : 0.6,
           transition: theme.transitions.create(
             ['opacity', 'background-color'],
             {
@@ -87,7 +78,7 @@ const HrTile = ({
         }}
       >
         {/* --- Disconnected Icon --- */}
-        {isEffectivelyDisconnected && (
+        {!isConnected && (
           <WifiOffIcon
             sx={{
               position: 'absolute',
@@ -192,8 +183,8 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
     prevProps.calories === nextProps.calories &&
+    prevProps.isConnected === nextProps.isConnected &&
     prevProps.isStale === nextProps.isStale &&
-    prevProps.isDisconnected === nextProps.isDisconnected &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage
   )

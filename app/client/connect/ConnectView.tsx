@@ -52,7 +52,6 @@ interface ConnectViewProps {
   onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
   isStale?: boolean
-  isDisconnected?: boolean
   deviceStatus: string
   batteryLevel: number | null
   onConnect: () => void
@@ -94,7 +93,6 @@ export default function ConnectView({
   onUnitChange,
   isConnected,
   isStale = false,
-  isDisconnected = false,
   deviceStatus,
   batteryLevel,
   onConnect,
@@ -369,8 +367,8 @@ export default function ConnectView({
               name={userName}
               bpm={currentHR}
               percentMax={hrZoneProps.percentage}
+              isConnected={isConnected}
               isStale={isStale}
-              isDisconnected={isDisconnected}
             />
           </Box>
         )}
