@@ -36,6 +36,8 @@ function useLocalStorage<T>(key: string, initialValue: T) {
           // Merge the defaults with the cleaned data from localStorage.
           const merged = { ...initialValue, ...filteredParsed } as T
           setStoredValue(merged)
+          // Also, update localStorage to remove zombie keys immediately.
+          window.localStorage.setItem(key, JSON.stringify(merged))
         } else {
           setStoredValue(parsed)
         }
