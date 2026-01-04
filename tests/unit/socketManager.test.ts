@@ -442,7 +442,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', enableMessage)
       const hrmMessage = JSON.stringify({
         type: 'HRM_INPUT',
-        data: { value: 120, source: 'bluetooth' },
+        data: { value: 120, source: 'bluetooth', calories: 5 },
       })
       mockWs.emit('message', hrmMessage)
       expect(broadcast).not.toHaveBeenCalled()
@@ -451,9 +451,7 @@ describe('WebSocket Manager', () => {
         enabled: false,
       })
       mockWs.emit('message', disableMessage)
-      jest.advanceTimersByTime(1000) // Advance time to ensure dt > 0 for calorie calculation
       mockWs.emit('message', hrmMessage)
-      jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalled()
     })
     it('should ignore bluetooth data when mock mode is active', () => {
@@ -464,7 +462,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', enableMessage)
       const hrmMessage = JSON.stringify({
         type: 'HRM_INPUT',
-        data: { value: 120, source: 'bluetooth' },
+        data: { value: 120, source: 'bluetooth', calories: 5 },
       })
       mockWs.emit('message', hrmMessage)
       expect(broadcast).not.toHaveBeenCalled()
@@ -477,28 +475,26 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', enableMessage)
       const hrmMessage = JSON.stringify({
         type: 'HRM_INPUT',
-        data: { value: 130, source: 'mock' },
+        data: { value: 130, source: 'mock', calories: 10 },
       })
-      jest.advanceTimersByTime(1000) // Advance time to ensure dt > 0 for calorie calculation
       mockWs.emit('message', hrmMessage)
-      jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalled()
       const lastCall = (broadcast as jest.Mock).mock.calls.pop()
       const payload: HrmData[] = lastCall[1].payload
       expect(payload[0].value).toBe(130)
+      expect(payload[0].calories).toBe(10)
     })
     it('should process bluetooth data when mock mode is inactive', () => {
       const hrmMessage = JSON.stringify({
         type: 'HRM_INPUT',
-        data: { value: 140, source: 'bluetooth' },
+        data: { value: 140, source: 'bluetooth', calories: 15 },
       })
-      jest.advanceTimersByTime(1000) // Advance time to ensure dt > 0 for calorie calculation
       mockWs.emit('message', hrmMessage)
-      jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalled()
       const lastCall = (broadcast as jest.Mock).mock.calls.pop()
       const payload: HrmData[] = lastCall[1].payload
       expect(payload[0].value).toBe(140)
+      expect(payload[0].calories).toBe(15)
     })
   })
 })

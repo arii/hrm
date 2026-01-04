@@ -279,33 +279,18 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
-          // Create updateData from message.data, filtering out null/undefined values
           const { weight, ...restOfData } = message.data
           const updateData: Partial<HrmStreamData> = restOfData
-
           if (typeof weight === 'number') {
             updateData.weightKg = weight
           }
-
-          // Prevent overwriting a real name with a default "Unknown" name
-          if (
-            existingData.name &&
-            message.data.name === 'Unknown' &&
-            existingData.name !== 'Unknown'
-          ) {
-            delete updateData.name
-          }
-
           hrmDataRepository.save({ ...existingData, ...updateData })
         } else {
-          // Ensure we initialize all necessary fields for HrmStreamData.
           const { weight, ...restOfData } = message.data
           const newClientData: HrmStreamData = {
-            clientId, // Explicitly add clientId as it's required for HrmStreamData
-            value: 0, // No HR value yet
-            calories: 0, // Start with 0 calories
-            // Provide default values for all required fields in HrmStreamData
-            // Any corresponding fields in message.data will override these defaults.
+            clientId,
+            value: 0,
+            calories: 0,
             name: 'Unknown',
             age: 30,
             weightKg: 70,
@@ -329,37 +314,16 @@ const handleIncomingMessage = (
               { clientId, source: message.data.source },
               'Mock mode is active. Ignoring non-mock HRM data.'
             )
-            return // Exit without processing or broadcasting
+            return
           }
           let finalCalories = 0
-          // Prioritize client-calculated calories if available
           if (typeof message.data.calories === 'number') {
-            const clientCalories = message.data.calories
-            const serverCalories = sessionState.accumulatedCalories
-            const diff = Math.abs(clientCalories - serverCalories)
-
-            // Sanity check: a 50-calorie jump in one second is unlikely.
-            if (diff > 50) {
-              logger.warn(
-                {
-                  clientId,
-                  clientCalories,
-                  serverCalories,
-                },
-                'Large calorie discrepancy detected. Rejecting client update.'
-              )
-              finalCalories = serverCalories
-            } else {
-              finalCalories = clientCalories
-              sessionState.accumulatedCalories = finalCalories
-            }
+            finalCalories = message.data.calories
+            sessionState.accumulatedCalories = finalCalories
           } else {
-            // Fallback to server-side calculation for older clients
             const now = Date.now()
             const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
             sessionState.lastUpdate = now
-
-            let currentAccumulated = sessionState.accumulatedCalories
             const currentHr = message.data.value ?? existingData.value
             const currentAge = existingData.age ?? 30
             if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
@@ -369,12 +333,10 @@ const handleIncomingMessage = (
                 weightKg: existingData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG,
                 durationMinutes: dtMinutes,
               })
-              currentAccumulated += caloriesBurned
+              sessionState.accumulatedCalories += caloriesBurned
             }
-            sessionState.accumulatedCalories = currentAccumulated
-            finalCalories = currentAccumulated
+            finalCalories = sessionState.accumulatedCalories
           }
-          // Update the repository with the latest data
           hrmDataRepository.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
@@ -415,7 +377,7 @@ const handleIncomingMessage = (
           ) {
             const executionMessage: SpotifyExecutionMessage = {
               type: 'EXECUTE_SPOTIFY',
-              payload: commandMsg,
+_              payload: commandMsg,
             }
             sendWebSocketMessage(
               target,
