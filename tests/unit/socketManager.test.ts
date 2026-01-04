@@ -426,6 +426,14 @@ describe('WebSocket Manager', () => {
     })
   })
   describe('Mock Mode', () => {
+    beforeEach(() => {
+      // All mock mode tests require metadata to be set for calorie calculation to work
+      const metadataMessage = {
+        type: 'HRM_METADATA_UPDATE',
+        data: { age: 30, weight: 70 },
+      }
+      mockWs.emit('message', JSON.stringify(metadataMessage))
+    })
     it('should enable and disable mock mode', () => {
       const enableMessage = JSON.stringify({
         type: 'SET_MOCK_MODE',
