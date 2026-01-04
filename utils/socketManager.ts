@@ -280,7 +280,6 @@ const handleIncomingMessage = (
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
           // Create updateData from message.data, filtering out null/undefined values
-          // and ensuring 'weight' is correctly mapped to the HrmStreamData 'weight' property.
           const updateData: Partial<HrmStreamData> = Object.fromEntries(
             Object.entries(message.data).filter(
               ([, value]) => value !== null && value !== undefined
