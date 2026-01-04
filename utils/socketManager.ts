@@ -304,10 +304,10 @@ const handleIncomingMessage = (
         const existingData = hrmDataRepository.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
         if (existingData && sessionState) {
-          if (sessionState.isMocking && message.data.source === 'bluetooth') {
+          if (sessionState.isMocking && message.data.source !== 'mock') {
             logger.info(
-              { clientId },
-              'Mock mode is active. Ignoring Bluetooth HRM data.'
+              { clientId, source: message.data.source },
+              'Mock mode is active. Ignoring non-mock HRM data.'
             )
             return // Exit without processing or broadcasting
           }
