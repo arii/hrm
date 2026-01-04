@@ -14,6 +14,7 @@ jest.mock('@/context/WebSocketContext', () => ({
 }))
 
 describe('useBluetoothHRM Race Conditions', () => {
+  const originalNavigator = global.navigator
   let mockRequestDevice: jest.Mock
   let mockGattConnect: jest.Mock
   let mockAbort: jest.Mock
@@ -49,13 +50,17 @@ describe('useBluetoothHRM Race Conditions', () => {
       },
     })
 
-    // Apply the mock Bluetooth environment
-    Object.assign(global.navigator, {
-      bluetooth: {
-        ...mockBluetooth,
-        requestDevice: mockRequestDevice,
-        getDevices: jest.fn().mockResolvedValue([]),
+    // Safe mocking
+    Object.defineProperty(global, 'navigator', {
+      value: {
+        ...originalNavigator,
+        bluetooth: {
+          ...mockBluetooth,
+          requestDevice: mockRequestDevice,
+          getDevices: jest.fn().mockResolvedValue([]),
+        },
       },
+      writable: true,
     })
 
     // Mock AbortController
@@ -88,6 +93,11 @@ describe('useBluetoothHRM Race Conditions', () => {
   })
 
   afterEach(() => {
+    // Restore original
+    Object.defineProperty(global, 'navigator', {
+      value: originalNavigator,
+      writable: true,
+    })
     jest.clearAllMocks()
     delete (global as unknown as { mockAbortControllerSignal: AbortSignal })
       .mockAbortControllerSignal
