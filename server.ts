@@ -114,6 +114,10 @@ app.prepare().then(async () => {
   )
   serviceContainer.register('spotifyService', services.spotifyService)
   serviceContainer.register('tabataService', services.tabataService)
+  serviceContainer.register(
+    'workoutHistoryService',
+    services.workoutHistoryService
+  )
 
   // 3. Initialize Socket Logic (Controllers)
   const getUnifiedStateSnapshot = (): StateSnapshot => ({

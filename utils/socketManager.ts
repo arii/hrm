@@ -407,6 +407,122 @@ const handleIncomingMessage = (
         spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
         break
       }
+      case 'WORKOUT_HISTORY': {
+        const { command, payload } = message
+        const { workoutHistoryService } = services
+        if (!workoutHistoryService) {
+          logger.error({ clientId }, 'WorkoutHistoryService not available')
+          return
+        }
+        ;(async () => {
+          try {
+            switch (command) {
+              case 'GET_ALL': {
+                const history = await workoutHistoryService.getHistory()
+                const response: ServerMessage = {
+                  type: 'WORKOUT_HISTORY_DATA',
+                  payload: history,
+                }
+                sendWebSocketMessage(
+                  ws,
+                  response,
+                  'socketManager.WORKOUT_HISTORY.GET_ALL'
+                )
+                break
+              }
+              case 'GET_BY_ID': {
+                if ('id' in payload) {
+                  const workout = await workoutHistoryService.getWorkoutById(
+                    payload.id
+                  )
+                  const response: ServerMessage = {
+                    type: 'WORKOUT_HISTORY_DATA',
+                    payload: workout ? [workout] : [],
+                  }
+                  sendWebSocketMessage(
+                    ws,
+                    response,
+                    'socketManager.WORKOUT_HISTORY.GET_BY_ID'
+                  )
+                }
+                break
+              }
+              case 'ADD': {
+                if ('workout' in payload) {
+                  const newWorkout = await workoutHistoryService.addWorkout(
+                    payload.workout
+                  )
+                  const response: ServerMessage = {
+                    type: 'WORKOUT_HISTORY_DATA',
+                    payload: [newWorkout],
+                  }
+                  // Optionally, you might want to broadcast this to all clients
+                  broadcast(
+                    wsServerInstance,
+                    response,
+                    'socketManager.WORKOUT_HISTORY.ADD'
+                  )
+                }
+                break
+              }
+              case 'UPDATE': {
+                if ('id' in payload && 'workout' in payload) {
+                  const updatedWorkout =
+                    await workoutHistoryService.updateWorkout(
+                      payload.id,
+                      payload.workout
+                    )
+                  if (updatedWorkout) {
+                    const response: ServerMessage = {
+                      type: 'WORKOUT_HISTORY_DATA',
+                      payload: [updatedWorkout],
+                    }
+                    broadcast(
+                      wsServerInstance,
+                      response,
+                      'socketManager.WORKOUT_HISTORY.UPDATE'
+                    )
+                  }
+                }
+                break
+              }
+              case 'DELETE': {
+                if ('id' in payload) {
+                  const success = await workoutHistoryService.deleteWorkout(
+                    payload.id
+                  )
+                  if (success) {
+                    // Send a confirmation or broadcast the updated list
+                    const history = await workoutHistoryService.getHistory()
+                    const response: ServerMessage = {
+                      type: 'WORKOUT_HISTORY_DATA',
+                      payload: history,
+                    }
+                    broadcast(
+                      wsServerInstance,
+                      response,
+                      'socketManager.WORKOUT_HISTORY.DELETE'
+                    )
+                  }
+                }
+                break
+              }
+              default:
+                logger.warn(
+                  { clientId, command },
+                  'Unknown workout history command'
+                )
+            }
+          } catch (error) {
+            logger.error(
+              { clientId, error },
+              'Error processing workout history command'
+            )
+          }
+        })()
+        break
+      }
+
       default: {
         const unknownMessage = message as { type: unknown }
         logger.warn(
