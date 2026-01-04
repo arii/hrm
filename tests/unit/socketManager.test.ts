@@ -279,7 +279,7 @@ describe('WebSocket Manager', () => {
       // Setup: Send metadata first, which is required for calorie calculation
       const metadataMessage = {
         type: 'HRM_METADATA_UPDATE',
-        data: { age: 30, weightKg: 70 }, // weightKg is a new addition based on potential needs
+        data: { age: 30, weight: 70 },
       }
       mockWs.emit('message', JSON.stringify(metadataMessage))
 
