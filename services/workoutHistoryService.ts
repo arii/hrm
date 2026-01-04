@@ -77,11 +77,11 @@ export class WorkoutHistoryService {
   }
 
   public async deleteWorkout(id: string): Promise<boolean> {
-    const initialLength = this.workoutHistory.length
+    const originalLength = this.workoutHistory.length
     this.workoutHistory = this.workoutHistory.filter(
       (workout) => workout.id !== id
     )
-    if (this.workoutHistory.length < initial.length) {
+    if (this.workoutHistory.length < originalLength) {
       await this.saveHistory()
       return true
     }
