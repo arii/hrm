@@ -30,6 +30,8 @@ import {
 import logger from '@/utils/logger'
 import { createMockRequest } from './test-data/request-data-factory'
 import { AppServices } from '@/lib/services'
+import TabataTimer from '@/services/tabataTimer'
+import { SpotifyPolling } from '@/services/spotifyPolling'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -117,13 +119,48 @@ describe('WebSocket Manager', () => {
     jest.useFakeTimers()
     mockWss =
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
+
+    // Create fully typed mocks for the services.
+    const mockTabataTimer = {
+      handleCommand: jest.fn(),
+      setMode: jest.fn(),
+      setConfig: jest.fn(),
+      getSnapshot: jest.fn().mockReturnValue({
+        // Mock the return value of getSnapshot
+        phase: 'idle',
+        remainingTime: 0,
+        workDuration: 0,
+        restDuration: 0,
+        totalRounds: 0,
+        currentRound: 0,
+      }),
+    } as unknown as jest.Mocked<TabataTimer>
+
+    const mockSpotifyPolling = {
+      handleCommand: jest.fn(),
+      getSnapshot: jest.fn().mockReturnValue({
+        // Mock the return value of getSnapshot
+        isPlaying: false,
+        track: null,
+        artist: null,
+        album: null,
+        albumArtUrl: null,
+        progressMs: 0,
+        durationMs: 0,
+        devices: [],
+        volume: 0,
+        isAuthorized: false,
+      }),
+    } as unknown as jest.Mocked<SpotifyPolling>
+
     mockServices = {
-      tabataService: { handleCommand: jest.fn(), setMode: jest.fn() },
-      spotifyService: { handleCommand: jest.fn() },
-    } as unknown as jest.Mocked<AppServices>
+      tabataService: mockTabataTimer,
+      spotifyService: mockSpotifyPolling,
+    } as jest.Mocked<AppServices>
+
     getSnapshot = jest.fn().mockReturnValue({
-      timerData: {},
-      spotifyData: {},
+      timerData: mockServices.tabataService.getSnapshot(),
+      spotifyData: mockServices.spotifyService.getSnapshot(),
     })
 
     initSocketManager(mockWss, getSnapshot, mockServices)
