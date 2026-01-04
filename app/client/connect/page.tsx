@@ -214,7 +214,8 @@ export default function ConnectPage() {
       unitSystem={unitSystem}
       onUnitChange={handleUnitChange}
       isConnected={isConnected}
-      isDataStale={isDataStale}
+      isStale={isDataStale}
+      isDisconnected={!isConnected}
       deviceStatus={deviceStatusMessage}
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
