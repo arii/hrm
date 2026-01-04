@@ -458,7 +458,7 @@ export async function buildReviewPrompt(
 
   const failureList = context.failedChecks
     .map((c) => {
-      const maxLogSnippetLength = 15000
+      const maxLogSnippetLength = 2000
       const truncatedLog =
         c.logSnippet && c.logSnippet.length > maxLogSnippetLength
           ? c.logSnippet.substring(0, maxLogSnippetLength) +
