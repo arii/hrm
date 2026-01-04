@@ -260,17 +260,13 @@ export async function run(
 // --- Main Execution ---
 
 // istanbul ignore next
-const isMainModule = (url: string, argv: string[]) => new URL(url).pathname === argv[1]
-
-if (typeof import.meta.url !== 'undefined' && isMainModule(import.meta.url, process.argv)) {
+if (require.main === module) {
   const client = new GitHubClient()
   const prNumber = process.env.PR_NUMBER
   const reviewFile = 'review_result.json'
 
   run(client, prNumber || '', reviewFile).catch((err) => {
     console.error('Unhandled error:', err)
-    if (process.env.NODE_ENV !== 'test') {
-      process.exit(1)
-    }
+    process.exit(1)
   })
 }

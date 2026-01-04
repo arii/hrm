@@ -11,6 +11,10 @@ on:
         description: 'The PR number to source review artifacts from'
         required: true
         type: string
+      run_id:
+        description: 'The explicit workflow run ID to source artifacts from'
+        required: false
+        type: string
     secrets:
       gh_token:
         required: true
