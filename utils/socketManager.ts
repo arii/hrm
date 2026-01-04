@@ -377,7 +377,7 @@ const handleIncomingMessage = (
           ) {
             const executionMessage: SpotifyExecutionMessage = {
               type: 'EXECUTE_SPOTIFY',
-_              payload: commandMsg,
+              payload: commandMsg,
             }
             sendWebSocketMessage(
               target,
