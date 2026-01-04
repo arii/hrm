@@ -8,14 +8,14 @@ const HISTORY_FILE_PATH = path.join(LOGS_DIR, 'workout-history.json')
 
 export class WorkoutHistoryService {
   private workoutHistory: WorkoutHistory = []
+  private initialized: Promise<void> // To track initialization status
 
   constructor() {
-    this.initializeHistory().catch((err) =>
-      console.error('Failed to initialize workout history:', err)
-    )
+    this.initialized = this._initializeHistory() // Start initialization, store the promise
   }
 
-  private async initializeHistory(): Promise<void> {
+  // Private method to handle the actual async initialization
+  private async _initializeHistory(): Promise<void> {
     await fs.mkdir(LOGS_DIR, { recursive: true }) // Ensure logs directory exists
     try {
       const data = await fs.readFile(HISTORY_FILE_PATH, 'utf-8')
@@ -34,6 +34,11 @@ export class WorkoutHistoryService {
     }
   }
 
+  // Public method to await initialization completion
+  public async ensureInitialized(): Promise<void> {
+    await this.initialized
+  }
+
   private async saveHistory(): Promise<void> {
     await fs.writeFile(
       HISTORY_FILE_PATH,
@@ -43,14 +48,17 @@ export class WorkoutHistoryService {
   }
 
   public async getHistory(): Promise<WorkoutHistory> {
+    await this.ensureInitialized() // Ensure service is ready
     return this.workoutHistory
   }
 
   public async getWorkoutById(id: string): Promise<Workout | undefined> {
+    await this.ensureInitialized() // Ensure service is ready
     return this.workoutHistory.find((workout) => workout.id === id)
   }
 
   public async addWorkout(workout: Workout): Promise<Workout> {
+    await this.ensureInitialized() // Ensure service is ready
     this.workoutHistory.push(workout)
     await this.saveHistory()
     return workout
@@ -60,6 +68,7 @@ export class WorkoutHistoryService {
     id: string,
     updatedWorkout: Partial<Workout>
   ): Promise<Workout | undefined> {
+    await this.ensureInitialized() // Ensure service is ready
     const workoutIndex = this.workoutHistory.findIndex(
       (workout) => workout.id === id
     )
@@ -77,6 +86,7 @@ export class WorkoutHistoryService {
   }
 
   public async deleteWorkout(id: string): Promise<boolean> {
+    await this.ensureInitialized() // Ensure service is ready
     const originalLength = this.workoutHistory.length
     this.workoutHistory = this.workoutHistory.filter(
       (workout) => workout.id !== id

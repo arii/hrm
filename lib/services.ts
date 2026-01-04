@@ -10,6 +10,7 @@ export async function createServices(
 ): Promise<AppServices> {
   const tabataService = new TabataTimer(broadcast)
   const workoutHistoryService = new WorkoutHistoryService()
+  await workoutHistoryService.ensureInitialized() // Await initialization
   let spotifyService: SpotifyService
   let isSpotifyInitialized = true
 
