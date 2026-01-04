@@ -571,6 +571,15 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+      - name: Check Infra Tests Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.infra-tests.outcome }}" = 'failure' ]; then
+            echo "::error::Infrastructure tests failed"
+            exit 1
+          fi
+
   unit-tests:
     name: 🧪 Unit Tests
     needs: [prepare-env, knip-check, lint-check, build-check]
@@ -641,6 +650,15 @@ jobs:
             test-results/unit-results.xml
           if-no-files-found: ignore
           retention-days: 3
+
+      - name: Check Unit Tests Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.unit-tests.outcome }}" = 'failure' ]; then
+            echo "::error::Unit tests failed"
+            exit 1
+          fi
 
   component-tests:
     name: 🧪 Component Tests
@@ -713,6 +731,15 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+      - name: Check Component Tests Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.component-tests.outcome }}" = 'failure' ]; then
+            echo "::error::Component tests failed"
+            exit 1
+          fi
+
   perf-tests:
     name: 🧪 Performance Tests
     needs: [prepare-env, knip-check, lint-check, build-check]
@@ -759,12 +786,6 @@ jobs:
             exit 1
           fi
 
-      - name: Start Application for Performance Test
-        # Note: The `if: always()` condition was intentionally removed along with the `retry` action.
-        # Performance tests are not run if the build or other preceding steps fail, as the results would not be meaningful.
-        if: always()
-        run: pnpm run start
-
       - name: Run Performance Test
         id: perf-tests
         shell: bash
@@ -800,6 +821,15 @@ jobs:
             test-results/perf-results.xml
           if-no-files-found: ignore
           retention-days: 3
+
+      - name: Check Performance Tests Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.perf-tests.outcome }}" = 'failure' ]; then
+            echo "::error::Performance tests failed"
+            exit 1
+          fi
 
       - name: Stop Application
         if: always()
@@ -890,6 +920,15 @@ jobs:
             playwright-report/
           if-no-files-found: ignore
           retention-days: 5
+
+      - name: Check Visual Tests Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.visual-tests.outcome }}" = 'failure' ]; then
+            echo "::error::Visual tests failed"
+            exit 1
+          fi
 
   copy-checks:
     name: 📝 Copy checks from parent commit
@@ -1107,7 +1146,8 @@ jobs:
             local conclusion=$2
             local log_file=$3
             local log_content
-            log_content=$(tail -n 50 "$log_file" 2>/dev/null | jq -s -R .)
+            # Ensure log_content is a valid JSON string even if log file is missing or empty
+            log_content=$(tail -n 50 "$log_file" 2>/dev/null | jq -s -R . || echo '""')
             FAILURE_REPORT_JSON=$(echo "$FAILURE_REPORT_JSON" | jq \
               --arg name "$name" \
               --arg conclusion "$conclusion" \
@@ -1117,7 +1157,8 @@ jobs:
 
           # Check standalone jobs
           for job in "knip-check" "lint-check" "build-check"; do
-            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result')
+            # Safely get job result, default to "skipped" if not found
+            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result // "skipped"')
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               log_file=""
               case $job in
@@ -1130,9 +1171,9 @@ jobs:
           done
 
           # Check integration test suites from the outputs
-          INTEGRATION_TESTS_OUTPUTS=$(echo "$NEEDS_CONTEXT" | jq -r '."integration-tests".outputs')
           for test_suite_outcome in "infra-tests-outcome" "unit-tests-outcome" "component-tests-outcome" "perf-tests-outcome" "visual-tests-outcome"; do
-            result=$(echo "$INTEGRATION_TESTS_OUTPUTS" | jq -r --arg tname "$test_suite_outcome" '.[$tname]')
+            # Safely get test suite result from nested object, default to "skipped"
+            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg tname "$test_suite_outcome" '."integration-tests".outputs.[$tname] // "skipped"')
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               test_suite_name=${test_suite_outcome%-outcome}
               log_file=""

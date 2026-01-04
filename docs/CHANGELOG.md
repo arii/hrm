@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.22.0](https://github.com/arii/hrm/compare/hrm-v0.21.0...hrm-v0.22.0) (2026-01-04)
+
+
+### Features
+
+* Add interactive feedback and fix push errors in conflict resolver ([#3096](https://github.com/arii/hrm/issues/3096)) ([8d8fd41](https://github.com/arii/hrm/commit/8d8fd410bec084a5873a1a141cb1867b2cb2c757))
+* **large:** Bluetooth fixes live ([#3104](https://github.com/arii/hrm/issues/3104)) ([eb0683c](https://github.com/arii/hrm/commit/eb0683c02c21dd35303e1cd1e532b3cfd5fbdd90))
+* **small:** Refactor: Remove HR Monitor Connection UI from Dashboard ([#3072](https://github.com/arii/hrm/issues/3072)) ([6d52d9e](https://github.com/arii/hrm/commit/6d52d9e8697dc319444d2735222d1138cda33dfe))
+
+
+### Bug Fixes
+
+* **ci:** Correct PR quality gate reporting and publishing ([#3089](https://github.com/arii/hrm/issues/3089)) ([990602f](https://github.com/arii/hrm/commit/990602f7bd894cc69fd5a90a05267fde0482d49e))
+* **ci:** correctly handle jules task id on workflow re-runs ([#3091](https://github.com/arii/hrm/issues/3091)) ([876cd34](https://github.com/arii/hrm/commit/876cd3488268978a7099f00e976b6e1fdaf428ed))
+* **ci:** Ensure labels exist and use PAT for sufficient permissions ([#3063](https://github.com/arii/hrm/issues/3063)) ([b7edcac](https://github.com/arii/hrm/commit/b7edcacf701f6c6279196ae1fd9edcb4556af9c0))
+* **ci:** revise AI prompt in pr-enrichment.yml to prevent CI failures ([ce3e73b](https://github.com/arii/hrm/commit/ce3e73b474f946517cb3ecd21a8c11e528cf0649))
+* Correctly propagate test failures in pr-quality.yml ([27d2fe2](https://github.com/arii/hrm/commit/27d2fe2ab63119f502fcca79d2235ea84b6cc8d3))
+
 ## [0.21.0](https://github.com/arii/hrm/compare/hrm-v0.20.0...hrm-v0.21.0) (2026-01-02)
 
 ### Features

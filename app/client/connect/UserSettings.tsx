@@ -1,4 +1,5 @@
-import { memo } from 'react'
+// app/client/connect/UserSettings.tsx
+import React from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
@@ -25,7 +26,7 @@ interface UserSettingsProps {
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
 }
 
-const UserSettings = ({
+const UserSettings: React.FC<UserSettingsProps> = ({
   userName,
   setUserName,
   userAge,
@@ -42,25 +43,7 @@ const UserSettings = ({
   weightError,
   unit,
   setUnit,
-}: UserSettingsProps) => {
-  /**
-   * Validates that the input is an integer and updates the state.
-   * @param value The value from the input event.
-   * @param setter The state setter function.
-   * @param field The field to update.
-   */
-  const handleIntegerChange = (
-    value: string,
-    setter: (
-      height: Partial<{ cm: string; feet: string; inches: string }>
-    ) => void,
-    field: 'feet' | 'inches'
-  ) => {
-    if (/^\d*$/.test(value)) {
-      setter({ [field]: value })
-    }
-  }
-
+}) => {
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <TextField
@@ -77,12 +60,8 @@ const UserSettings = ({
         type="number"
         value={userAge}
         onChange={(e) => {
-          // Use valueAsNumber for direct number retrieval, falling back to string value
-          const numericValue = (e.target as HTMLInputElement).valueAsNumber
-          if (!isNaN(numericValue) && numericValue >= 0) {
-            setUserAge(String(numericValue))
-          } else if (e.target.value === '') {
-            setUserAge('')
+          if (/^\d*$/.test(e.target.value)) {
+            setUserAge(e.target.value)
           }
         }}
         onBlur={onAgeBlur}
@@ -135,9 +114,11 @@ const UserSettings = ({
             placeholder="e.g., 5"
             type="number"
             value={userHeight.feet}
-            onChange={(e) =>
-              handleIntegerChange(e.target.value, setUserHeight, 'feet')
-            }
+            onChange={(e) => {
+              if (/^\d*$/.test(e.target.value)) {
+                setUserHeight({ feet: e.target.value })
+              }
+            }}
             onBlur={onHeightBlur}
           />
           <TextField
@@ -146,9 +127,11 @@ const UserSettings = ({
             placeholder="e.g., 9"
             type="number"
             value={userHeight.inches}
-            onChange={(e) =>
-              handleIntegerChange(e.target.value, setUserHeight, 'inches')
-            }
+            onChange={(e) => {
+              if (/^\d*$/.test(e.target.value)) {
+                setUserHeight({ inches: e.target.value })
+              }
+            }}
             onBlur={onHeightBlur}
           />
         </Stack>
@@ -172,4 +155,4 @@ const UserSettings = ({
   )
 }
 
-export default memo(UserSettings)
+export default UserSettings
