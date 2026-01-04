@@ -9,33 +9,25 @@ interface HrZoneDistributionChartProps {
   zoneDistribution: ZoneData
 }
 
-/**
- * @component HrZoneDistributionChart
- * @description A chart that displays the distribution of time spent in each heart rate zone as a pie chart.
- * @param {HrZoneDistributionChartProps} props The component props.
- * @param {ZoneData} props.zoneDistribution The distribution of time spent in each heart rate zone.
- * @returns {React.ReactElement | null} The chart component or null if there is no zone distribution data.
- */
 const HrZoneDistributionChart: React.FC<HrZoneDistributionChartProps> = ({
   zoneDistribution,
 }) => {
   const chartData = Object.entries(zoneDistribution)
-    .map(([zone, seconds]) => ({
-      name: zone,
-      value: seconds,
-    }))
-    .filter((d) => d.value > 0)
+    .map(([name, value]) => ({ name, value }))
+    .filter((entry) => entry.value > 0)
 
   if (chartData.length === 0) {
     return null
   }
 
+  const colors = Object.values(ZONE_COLORS)
+
   return (
-    <Box sx={{ width: '100%', height: 300, mt: 4 }}>
-      <Typography variant="h6" align="center" gutterBottom>
+    <Box sx={{ mt: 4 }}>
+      <Typography variant="h6" gutterBottom>
         HR Zone Distribution
       </Typography>
-      <ResponsiveContainer>
+      <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
             data={chartData}
@@ -47,25 +39,23 @@ const HrZoneDistributionChart: React.FC<HrZoneDistributionChartProps> = ({
             dataKey="value"
             nameKey="name"
             label={({ name, percent }) =>
-              `${name}: ${((percent || 0) * 100).toFixed(0)}%`
+              `${name}: ${(percent * 100).toFixed(0)}%`
             }
           >
-            {chartData.map((entry) => (
+            {chartData.map((_entry, index) => (
               <Cell
-                key={`cell-${entry.name}`}
-                fill={ZONE_COLORS[entry.name as keyof typeof ZONE_COLORS]}
+                key={`cell-${index}`}
+                fill={colors[index % colors.length]}
               />
             ))}
           </Pie>
           <Tooltip
-            formatter={(value) => {
-              if (typeof value === 'number') {
-                const minutes = Math.floor(value / 60)
-                const seconds = Math.round(value % 60)
-                return `${minutes}m ${seconds}s`
-              }
-              return ''
-            }}
+            contentStyle={{ backgroundColor: '#333', border: 'none' }}
+            labelStyle={{ color: '#fff' }}
+            formatter={(value: number) => [
+              `${Math.round(value)} seconds`,
+              'Time in Zone',
+            ]}
           />
         </PieChart>
       </ResponsiveContainer>

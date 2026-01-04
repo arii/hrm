@@ -6,6 +6,9 @@ import CssBaseline from '@mui/material/CssBaseline'
 import theme from '../theme/theme'
 import Main from './main'
 import './globals.css'
+import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import { WebSocketProvider } from '@/context/WebSocketContext'
+
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
@@ -58,7 +61,11 @@ export default function RootLayout({
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Main>{children}</Main>
+            <UserSettingsProvider>
+              <WebSocketProvider>
+                <Main>{children}</Main>
+              </WebSocketProvider>
+            </UserSettingsProvider>
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>

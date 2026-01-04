@@ -18,55 +18,65 @@ interface HrHistoryChartProps {
   maxHr: number
 }
 
-/**
- * @component HrHistoryChart
- * @description A chart that displays the user's heart rate history as a line chart.
- * @param {HrHistoryChartProps} props The component props.
- * @param {HeartRateSample[]} props.history The user's heart rate history.
- * @param {number} props.maxHr The user's maximum heart rate.
- * @returns {React.ReactElement | null} The chart component or null if there is no history.
- */
 const HrHistoryChart: React.FC<HrHistoryChartProps> = ({ history, maxHr }) => {
   if (history.length === 0) {
     return null
   }
 
-  const chartData = history.map((sample) => ({
-    time: new Date(sample.timestamp).toLocaleTimeString(),
-    hr: sample.hr,
-  }))
+  // Limit to the last 60 seconds of data for relevance
+  const sixtySecondsAgo = Date.now() - 60000
+  const chartData = history.filter((sample) => sample.timestamp > sixtySecondsAgo)
+
+  if (chartData.length < 2) {
+    return (
+      <Box sx={{ mt: 4, textAlign: 'center' }}>
+        <Typography variant="subtitle1" color="text.secondary">
+          Waiting for more heart rate data...
+        </Typography>
+      </Box>
+    )
+  }
 
   const zones = [
-    { percent: 0.5, label: 'Zone 1' },
-    { percent: 0.6, label: 'Zone 2' },
-    { percent: 0.7, label: 'Zone 3' },
-    { percent: 0.8, label: 'Zone 4' },
-    { percent: 0.9, label: 'Zone 5' },
+    { percent: 50, color: '#9E9E9E' },
+    { percent: 60, color: '#2196F3' },
+    { percent: 70, color: '#4CAF50' },
+    { percent: 85, color: '#FFC107' },
+    { percent: 95, color: '#F44336' },
   ]
 
   return (
-    <Box sx={{ width: '100%', height: 300, mt: 4 }}>
-      <Typography variant="h6" align="center" gutterBottom>
-        HR Trend
+    <Box sx={{ mt: 4 }}>
+      <Typography variant="h6" gutterBottom>
+        HR History (Last 60s)
       </Typography>
-      <ResponsiveContainer>
+      <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData}>
-          <XAxis dataKey="time" hide />
-          <YAxis domain={['dataMin - 10', 'dataMax + 10']} />
-          <Tooltip />
-          {zones.map((zone) => {
-            const zoneBpm = maxHr * zone.percent
-            const { progressColor } = getHrZoneProps(zoneBpm, maxHr)
-            return (
-              <ReferenceLine
-                key={zone.label}
-                y={zoneBpm}
-                label={{ value: zone.label, position: 'insideTopLeft' }}
-                stroke={progressColor}
-                strokeDasharray="3 3"
-              />
-            )
-          })}
+          <XAxis
+            dataKey="timestamp"
+            type="number"
+            domain={['dataMin', 'dataMax']}
+            tickFormatter={(unixTime) => new Date(unixTime).toLocaleTimeString()}
+            stroke="#9E9E9E"
+          />
+          <YAxis
+            domain={[60, Math.max(200, maxHr)]}
+            stroke="#9E9E9E"
+            label={{
+              value: 'BPM',
+              angle: -90,
+              position: 'insideLeft',
+              fill: '#9E9E9E',
+            }}
+          />
+          <Tooltip
+            contentStyle={{ backgroundColor: '#333', border: 'none' }}
+            labelStyle={{ color: '#fff' }}
+            formatter={(value: number, name, props) => {
+              const { zone } = getHrZoneProps(props.payload.hr, maxHr)
+              return [`${value} BPM`, `Zone: ${zone}`]
+            }}
+          />
           <Line
             type="monotone"
             dataKey="hr"
@@ -74,6 +84,14 @@ const HrHistoryChart: React.FC<HrHistoryChartProps> = ({ history, maxHr }) => {
             strokeWidth={2}
             dot={false}
           />
+          {zones.map((zone) => (
+            <ReferenceLine
+              key={zone.percent}
+              y={(maxHr * zone.percent) / 100}
+              stroke={zone.color}
+              strokeDasharray="3 3"
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
     </Box>

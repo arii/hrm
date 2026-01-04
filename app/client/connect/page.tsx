@@ -19,9 +19,10 @@ import {
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
+import { CircularProgress, Box, Typography } from '@mui/material'
 
 export default function ConnectPage() {
-  const [userSettings, setUserSettings] = useUserSettings()
+  const [userSettings, setUserSettings, isHydrated] = useUserSettings()
   const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
   const [currentHR, setCurrentHR] = useState(0)
@@ -141,7 +142,12 @@ export default function ConnectPage() {
   useEffect(() => {
     // Try to auto-connect when WebSocket is ready and we're not already connected.
     // Wait a tick to ensure the component is fully initialized before attempting connection.
-    if (!isConnected && isSupported && connectionStatus === 'Connected') {
+    if (
+      isHydrated &&
+      !isConnected &&
+      isSupported &&
+      connectionStatus === 'Connected'
+    ) {
       logger.info('WebSocket ready, attempting auto-connect...')
       // Small delay to ensure component is fully mounted
       const timeout = setTimeout(() => {
@@ -152,7 +158,7 @@ export default function ConnectPage() {
       return () => clearTimeout(timeout)
     }
     return undefined
-  }, [connectionStatus, isConnected, isSupported, autoConnect])
+  }, [connectionStatus, isConnected, isSupported, autoConnect, isHydrated])
 
   useEffect(() => {
     // This effect synchronizes the local HR and calorie state with the server.
@@ -196,6 +202,24 @@ export default function ConnectPage() {
     resetCalculator()
     resetHistory()
   }
+
+  if (!isHydrated) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+        }}
+      >
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Loading User Settings...</Typography>
+      </Box>
+    )
+  }
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
