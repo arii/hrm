@@ -6,11 +6,13 @@
  */
 import { SpotifyService } from '../types/interfaces'
 import TabataTimer from '../services/tabataTimer'
+import { WorkoutHistoryService } from '../services/workoutHistoryService'
 
 // Define a type for the service registry
 export interface ServiceRegistry {
   spotifyService: SpotifyService
   tabataService: TabataTimer
+  workoutHistoryService: WorkoutHistoryService
 }
 
 class ServiceContainer {

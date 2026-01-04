@@ -66,6 +66,8 @@ export interface ActiveAlert {
   timestamp: number
 }
 
+import { Workout } from './workout'
+
 export type ServerMessage =
   | {
       type: 'INITIAL_STATE'
@@ -76,7 +78,8 @@ export type ServerMessage =
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
-  | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
+  | { type: 'PONG' }
+  | { type: 'WORKOUT_HISTORY_DATA'; payload: Workout[] }
   | SpotifyExecutionMessage
 
 /**
@@ -161,6 +164,12 @@ export interface PingMessage {
   type: 'PING'
 }
 
+export interface WorkoutHistoryMessage {
+  type: 'WORKOUT_HISTORY'
+  command: 'GET_ALL' | 'GET_BY_ID' | 'ADD' | 'UPDATE' | 'DELETE'
+  payload?: { id?: string; workout?: Workout }
+}
+
 export type ClientCommandMessage =
   | HrmInputMessage
   | HrmMetadataUpdateMessage
@@ -171,6 +180,7 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
+  | WorkoutHistoryMessage
 
 import { z } from 'zod'
 
@@ -247,6 +257,25 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
+import { workoutSchema } from './workout'
+
+export const WorkoutHistoryMessageSchema = z.object({
+  type: z.literal('WORKOUT_HISTORY'),
+  command: z.union([
+    z.literal('GET_ALL'),
+    z.literal('GET_BY_ID'),
+    z.literal('ADD'),
+    z.literal('UPDATE'),
+    z.literal('DELETE'),
+  ]),
+  payload: z
+    .object({
+      id: z.string().optional(),
+      workout: workoutSchema.optional(),
+    })
+    .optional(),
+})
+
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
   HrmMetadataUpdateMessageSchema,
@@ -256,5 +285,6 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   TimerConfigMessageSchema,
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
-  PingMessageSchema, // Add PING schema to the union
+  PingMessageSchema,
+  WorkoutHistoryMessageSchema,
 ])

@@ -431,7 +431,7 @@ const handleIncomingMessage = (
                 break
               }
               case 'GET_BY_ID': {
-                if ('id' in payload) {
+                if (payload && payload.id) {
                   const workout = await workoutHistoryService.getWorkoutById(
                     payload.id
                   )
@@ -448,7 +448,7 @@ const handleIncomingMessage = (
                 break
               }
               case 'ADD': {
-                if ('workout' in payload) {
+                if (payload && payload.workout) {
                   const newWorkout = await workoutHistoryService.addWorkout(
                     payload.workout
                   )
@@ -466,7 +466,7 @@ const handleIncomingMessage = (
                 break
               }
               case 'UPDATE': {
-                if ('id' in payload && 'workout' in payload) {
+                if (payload && payload.id && payload.workout) {
                   const updatedWorkout =
                     await workoutHistoryService.updateWorkout(
                       payload.id,
@@ -487,7 +487,7 @@ const handleIncomingMessage = (
                 break
               }
               case 'DELETE': {
-                if ('id' in payload) {
+                if (payload && payload.id) {
                   const success = await workoutHistoryService.deleteWorkout(
                     payload.id
                   )
