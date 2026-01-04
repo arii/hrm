@@ -146,63 +146,48 @@ jobs:
             RAW_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}/check-runs" --jq '.check_runs')
 
             # Now, safely filter and process the checks with jq
-            # FIX: Filter checks to ensure detailsUrl is not null and not empty.
-            # This prevents errors when trying to parse the job ID from the URL.
-            FAILED_CHECKS_RAW_JSON=$(echo "$RAW_CHECKS_JSON" | jq -c 'map(select(.status == "completed" and (.conclusion == "failure" or .conclusion == "cancelled") and .details_url != null and .details_url != ""))')
+            FAILED_CHECKS_RAW_JSON=$(echo "$RAW_CHECKS_JSON" | jq -c 'map(select(.status == "completed" and (.conclusion == "failure" or .conclusion == "cancelled")))')
 
             mapfile -t NAMES < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].name')
             mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion // "failure"')
-            mapfile -t URLS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url')
-            # FIX: Improved parsing of job ID from URL to be more robust.
-            mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url | split("/")[-1]? // ""')
+            mapfile -t URLS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl')
+            mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].detailsUrl | split("/")[-1]? // ""')
 
             LOG_DIR=$(mktemp -d)
-            trap 'rm -rf "$LOG_DIR"' EXIT # Ensure cleanup on script exit
-
             # Define the processing function for a single job
             process_job() {
               local i=$1
               local job_id=${JOB_IDS[i]}
               local raw_log_file="$LOG_DIR/raw_log_${i}.txt"
               local redacted_log_file="$LOG_DIR/redacted_log_${i}.txt"
-
-              # Ensure the log file is created before attempting to write to it
-              touch "$redacted_log_file"
-
               if ! [[ "$job_id" =~ ^[0-9]+$ ]]; then
-                echo "Error: Could not parse Job ID from URL: ${URLS[i]}" > "$redacted_log_file"
+                echo "Error: Could not parse Job ID from URL." > "$redacted_log_file"
               else
                 gh job view "$job_id" --log > "$raw_log_file" 2>&1 || echo "Error: Failed to fetch logs for job ${job_id}." > "$raw_log_file"
                 tail -c 15K "$raw_log_file" > "$raw_log_file.tmp" && mv "$raw_log_file.tmp" "$raw_log_file"
                 if ! pnpm tsx scripts/redact-secrets.ts "$raw_log_file" "$redacted_log_file"; then
                   echo "Error: The redaction script failed for job ${job_id}." > "$redacted_log_file"
                 fi
-                rm -f "$raw_log_file" # Clean up raw log file immediately after use
               fi
             }
             export -f process_job
             export LOG_DIR
             export -a JOB_IDS
-            export -a URLS
             # Run the processing in parallel
-            # FIX: Removed redundant '-n 1' from xargs. '-I' implies one item per command.
-            if [ ${#JOB_IDS[@]} -gt 0 ]; then
-                seq 0 $((${#JOB_IDS[@]} - 1)) | xargs -P 4 -I {} bash -c 'process_job "{}"'
-            fi
+            seq 0 $((${#JOB_IDS[@]} - 1)) | xargs -n 1 -P 4 -I {} bash -c 'process_job "{}"'
 
             # Combine results into the final JSON
-            if [ ${#NAMES[@]} -gt 0 ]; then
-                for i in $(seq 0 $((${#NAMES[@]} - 1))); do
-                  LOGS=$(<"$LOG_DIR/redacted_log_${i}.txt")
-                  CHECK_JSON=$(jq -n \
-                    --arg name "${NAMES[i]}" \
-                    --arg conclusion "${CONCLUSIONS[i]}" \
-                    --arg url "${URLS[i]}" \
-                    --arg logs "$LOGS" \
-                    '{name: $name, conclusion: $conclusion, detailsUrl: $url, logs: $logs}')
-                  FINAL_CHECKS_JSON=$(echo "$FINAL_CHECKS_JSON" | jq --argjson item "$CHECK_JSON" '. + [$item]')
-                done
-            fi
+            for i in $(seq 0 $((${#NAMES[@]} - 1))); do
+              LOGS=$(<"$LOG_DIR/redacted_log_${i}.txt")
+              CHECK_JSON=$(jq -n \
+                --arg name "${NAMES[i]}" \
+                --arg conclusion "${CONCLUSIONS[i]}" \
+                --arg url "${URLS[i]}" \
+                --arg logs "$LOGS" \
+                '{name: $name, conclusion: $conclusion, detailsUrl: $url, logs: $logs}')
+              FINAL_CHECKS_JSON=$(echo "$FINAL_CHECKS_JSON" | jq --argjson item "$CHECK_JSON" '. + [$item]')
+            done
+            rm -rf "$LOG_DIR"
           fi
 
           # Use heredoc syntax to safely set the multiline JSON as an environment variable
