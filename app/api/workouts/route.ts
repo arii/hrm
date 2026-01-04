@@ -10,7 +10,9 @@ const getService = (): WorkoutHistoryService => {
   if (!service) {
     // This indicates a critical application setup error.
     // In a production environment, this should ideally be caught during application startup.
-    throw new Error('WorkoutHistoryService is not registered in the service container.')
+    throw new Error(
+      'WorkoutHistoryService is not registered in the service container.'
+    )
   }
   return service
 }
