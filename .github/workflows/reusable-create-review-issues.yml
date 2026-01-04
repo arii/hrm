@@ -11,6 +11,10 @@ on:
         description: 'The PR number to source review artifacts from'
         required: true
         type: string
+      run_id:
+        description: 'The explicit workflow run ID to source artifacts from'
+        required: false
+        type: string
     secrets:
       gh_token:
         required: true
@@ -32,22 +36,30 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      - name: Find Latest Review Workflow Run
+      - name: Determine Source Workflow Run
         id: find_run
         env:
           GH_TOKEN: ${{ secrets.gh_token }}
           PR_NUMBER: ${{ inputs.pr_number }}
+          EXPLICIT_RUN_ID: ${{ inputs.run_id }}
         run: |
-          # Get the head SHA of the PR
-          HEAD_SHA=$(gh pr view $PR_NUMBER --json headRefOid --jq .headRefOid)
-          echo "::info::Found head SHA: $HEAD_SHA"
+          # Option 1: Use the explicitly provided run_id if available
+          if [ -n "$EXPLICIT_RUN_ID" ]; then
+            echo "::notice::Using explicitly provided run ID: $EXPLICIT_RUN_ID"
+            echo "run_id=$EXPLICIT_RUN_ID" >> $GITHUB_OUTPUT
+            exit 0
+          fi
 
-          # Find the most recent successful workflow run for that commit SHA
+          # Option 2: Fallback to finding the latest successful CI run for the PR's head SHA
+          echo "::info::No explicit run ID provided. Searching for the latest successful 'ci.yml' run..."
+          HEAD_SHA=$(gh pr view $PR_NUMBER --json headRefOid --jq .headRefOid)
+          echo "::info::Found head SHA for PR #$PR_NUMBER: $HEAD_SHA"
+
           RUN_ID=$(gh run list --commit "$HEAD_SHA" --workflow ci.yml --status "success" --json databaseId --limit 1 | jq -r '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
             echo "run_id=not_found" >> $GITHUB_OUTPUT
-            echo "::warning::No successful CI workflow run found for branch '$BRANCH_NAME'."
+            echo "::warning::No successful CI workflow run found for commit $HEAD_SHA."
           else
             echo "::info::Found latest successful run ID: $RUN_ID"
             echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
