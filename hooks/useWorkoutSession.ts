@@ -23,6 +23,7 @@ type SessionAction =
   | { type: 'TICK'; payload: { duration: number } }
   | { type: 'RESET' }
   | { type: 'START_WORKOUT' }
+  | { type: 'PAUSE_WORKOUT' }
   | { type: 'END_WORKOUT' }
   | { type: 'UPDATE_CALORIES'; payload: number }
 
@@ -48,6 +49,7 @@ function sessionReducer(
         return { ...state, status: 'running', duration: 0 }
       }
       return state
+    case 'PAUSE_WORKOUT':
     case 'DISCONNECT':
       if (state.status === 'running') {
         return { ...state, status: 'paused' }
@@ -180,6 +182,10 @@ export const useWorkoutSession = ({
     dispatch({ type: 'START_WORKOUT' })
   }, [totalCalories])
 
+  const pauseWorkout = useCallback(() => {
+    dispatch({ type: 'PAUSE_WORKOUT' })
+  }, [])
+
   const endWorkout = useCallback(() => {
     dispatch({ type: 'END_WORKOUT' })
   }, [])
@@ -198,6 +204,7 @@ export const useWorkoutSession = ({
     caloriesBurned,
     resetWorkout,
     startWorkout,
+    pauseWorkout,
     endWorkout,
     workoutStatus: state.status,
     hasStarted: state.status !== 'idle',

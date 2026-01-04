@@ -55,6 +55,7 @@ interface UseBluetoothHRMProps {
   userName?: string | null
   userAge?: number | null
   onHeartRateUpdate?: (heartRate: number) => void
+  onConnect?: () => void
 }
 
 /**
@@ -111,6 +112,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     userName,
     userAge,
     onHeartRateUpdate,
+    onConnect,
   } = props
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
@@ -149,10 +151,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     ((device: BluetoothDevice) => Promise<boolean>) | null
   >(null)
   const onHeartRateUpdateRef = useRef(onHeartRateUpdate)
+  const onConnectRef = useRef(onConnect)
 
   useEffect(() => {
     onHeartRateUpdateRef.current = onHeartRateUpdate
   }, [onHeartRateUpdate])
+
+  useEffect(() => {
+    onConnectRef.current = onConnect
+  }, [onConnect])
 
   // Keep track of the latest sendData function to avoid stale closures
   const sendDataRef = useRef(sendData)
@@ -474,6 +481,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setDisconnectionReason(null)
         // Reset reconnection attempts on successful connection
         reconnectAttempts.current = 0
+        onConnectRef.current?.()
         return true
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)

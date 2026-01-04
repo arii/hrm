@@ -66,6 +66,7 @@ interface ConnectViewProps {
   onReset: () => void
   workoutStatus: 'idle' | 'running' | 'paused'
   onStartWorkout: () => void
+  onPauseWorkout: () => void
   onEndWorkout: () => void
 }
 
@@ -106,6 +107,7 @@ export default function ConnectView({
   onReset,
   workoutStatus,
   onStartWorkout,
+  onPauseWorkout,
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
@@ -414,15 +416,26 @@ export default function ConnectView({
             </>
           )}
           {workoutStatus === 'running' && (
-            <Button
-              variant="outlined"
-              onClick={onEndWorkout}
-              size="large"
-              sx={{ minWidth: '200px' }}
-              aria-label="End workout session"
-            >
-              End Workout
-            </Button>
+            <>
+              <Button
+                variant="contained"
+                onClick={onPauseWorkout}
+                size="large"
+                sx={{ minWidth: '200px' }}
+                aria-label="Pause workout session"
+              >
+                Pause Workout
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={onEndWorkout}
+                size="large"
+                sx={{ minWidth: '200px' }}
+                aria-label="End workout session"
+              >
+                End Workout
+              </Button>
+            </>
           )}
         </Stack>
 
