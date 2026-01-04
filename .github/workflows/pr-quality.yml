@@ -786,16 +786,6 @@ jobs:
             exit 1
           fi
 
-      - name: Stop Application (Pre-emptive)
-        if: always()
-        run: pnpm run kill-all || true
-
-      - name: Start Application for Performance Test
-        # Note: The `if: always()` condition was intentionally removed along with the `retry` action.
-        # Performance tests are not run if the build or other preceding steps fail, as the results would not be meaningful.
-        if: always()
-        run: pnpm run start
-
       - name: Run Performance Test
         id: perf-tests
         shell: bash
