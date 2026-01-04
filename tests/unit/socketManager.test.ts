@@ -443,6 +443,7 @@ describe('WebSocket Manager', () => {
         enabled: false,
       })
       mockWs.emit('message', disableMessage)
+      jest.advanceTimersByTime(1000) // Advance time to ensure dt > 0 for calorie calculation
       mockWs.emit('message', hrmMessage)
       jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalled()
@@ -470,6 +471,7 @@ describe('WebSocket Manager', () => {
         type: 'HRM_INPUT',
         data: { value: 130, source: 'mock' },
       })
+      jest.advanceTimersByTime(1000) // Advance time to ensure dt > 0 for calorie calculation
       mockWs.emit('message', hrmMessage)
       jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalled()
@@ -482,6 +484,7 @@ describe('WebSocket Manager', () => {
         type: 'HRM_INPUT',
         data: { value: 140, source: 'bluetooth' },
       })
+      jest.advanceTimersByTime(1000) // Advance time to ensure dt > 0 for calorie calculation
       mockWs.emit('message', hrmMessage)
       jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalled()
