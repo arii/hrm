@@ -32,7 +32,9 @@ describe('/api/workouts', () => {
     service = new WorkoutHistoryService()
     await service.ensureInitialized()
     serviceContainer.register('workoutHistoryService', service)
-    ;(getServerSession as jest.Mock).mockResolvedValue({ user: { id: 'test-user' } })
+    ;(getServerSession as jest.Mock).mockResolvedValue({
+      user: { id: 'test-user' },
+    })
   })
 
   it('should reject unauthenticated requests', async () => {

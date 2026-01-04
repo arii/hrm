@@ -247,7 +247,9 @@ const handleIncomingMessage = (
       case 'AUTH': {
         const token = message.token
         getToken({
-          req: { headers: { cookie: `next-auth.session-token=${token}` } } as any,
+          req: {
+            headers: { cookie: `next-auth.session-token=${token}` },
+          } as IncomingMessage,
           secret: process.env.NEXTAUTH_SECRET,
         }).then((decodedToken) => {
           if (decodedToken) {
@@ -425,7 +427,10 @@ const handleIncomingMessage = (
       }
       case 'WORKOUT_HISTORY': {
         if (!ws.session) {
-          logger.warn({ clientId }, 'Unauthenticated client tried to access workout history')
+          logger.warn(
+            { clientId },
+            'Unauthenticated client tried to access workout history'
+          )
           return
         }
 
