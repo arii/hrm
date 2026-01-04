@@ -156,8 +156,11 @@ jobs:
 
   create-tech-debt-issues:
     name: 💎 Create Tech Debt Issues
-    # This job runs only if the preceding review job was successful
-    if: github.event_name == 'pull_request' && needs.review-on-pr-update.result == 'success'
+    # This job runs only if the preceding review job was successful AND a review was actually performed.
+    if: >
+      github.event_name == 'pull_request' &&
+      needs.review-on-pr-update.result == 'success' &&
+      needs.review-on-pr-update.outputs.review_performed == 'true'
     needs: [review-on-pr-update]
     uses: ./.github/workflows/reusable-create-review-issues.yml
     with:
