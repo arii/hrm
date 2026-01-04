@@ -411,7 +411,6 @@ const handleIncomingMessage = (
             value: message.data.value ?? existingData.value,
             calories: Math.round(finalCalories * 10) / 10,
             isStale: false,
-            isDisconnected: false,
           })
         }
         broadcastState()
