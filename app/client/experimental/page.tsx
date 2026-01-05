@@ -132,7 +132,9 @@ const ExperimentalWorkoutPage = () => {
           variant="contained"
           onClick={handleExport}
           disabled={
-            state.workoutBuffer.length === 0 || !timerData || timerData.isRunning
+            state.workoutBuffer.length === 0 ||
+            !timerData ||
+            timerData.isRunning
           }
           sx={{ mt: 2 }}
         >
