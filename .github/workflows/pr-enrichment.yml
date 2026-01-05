@@ -274,8 +274,13 @@ jobs:
         run: |
           CURRENT_TITLE="${{ github.event.pull_request.title }}"
 
-          # Only enhance if title doesn't have scope prefix already
-          if [[ ! "$CURRENT_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore|ci)\\( ]]; then
+          # Define Regex Patterns for Conventional Commits
+          # Using readonly variables improves readability and avoids complex escaping in the `if` conditions.
+          readonly CONVENTIONAL_REGEX='^(feat|fix|docs|style|refactor|test|chore|ci)\('
+          readonly GENERIC_SCOPE_REGEX='^[a-zA-Z]+\('
+
+          # Only enhance if title doesn't have a conventional commit prefix
+          if [[ ! "$CURRENT_TITLE" =~ $CONVENTIONAL_REGEX ]]; then
             
             # Determine prefix based on categories
             CATEGORIES="${{ env.CATEGORIES }}"
@@ -297,8 +302,8 @@ jobs:
             # Determine scope
             SCOPE="${{ env.SCOPE }}"
             
-            # Create enhanced title (only if it doesn't already have conventional commit format)
-            if [[ ! "$CURRENT_TITLE" =~ ^[a-z]+\\( ]]; then
+            # Create enhanced title only if it doesn't already have a generic scope format
+            if [[ ! "$CURRENT_TITLE" =~ $GENERIC_SCOPE_REGEX ]]; then
               NEW_TITLE="$PREFIX($SCOPE): $CURRENT_TITLE"
               echo "Updating title from: $CURRENT_TITLE"
               echo "Updating title to: $NEW_TITLE"
