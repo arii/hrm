@@ -96,7 +96,7 @@ const Dashboard = () => {
         <HrmConnectionPanel />
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
-        {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
+        {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ? (
           <WorkoutTableViewer docId={DOC_ID} />
         ) : (
           <GoogleDocViewer
