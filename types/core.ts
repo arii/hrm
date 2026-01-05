@@ -95,7 +95,6 @@ export interface HrmStreamData {
   age?: number
   calories: number
   weightKg?: number
-  isStale?: boolean
 }
 
 /**

@@ -52,74 +52,6 @@ const clientSessionState = new Map<
   { lastUpdate: number; accumulatedCalories: number }
 >()
 
-const INACTIVITY_CHECK_INTERVAL_MS = 5000 // 5 seconds
-const STALE_THRESHOLD_MS = 10 * 1000 // 10 seconds
-const DISCONNECT_THRESHOLD_MS = 60 * 1000 // 60 seconds
-let inactivityInterval: NodeJS.Timeout | null = null
-
-/**
- * Starts a monitor to periodically check for inactive clients.
- */
-const startInactivityMonitor = () => {
-  if (inactivityInterval) {
-    clearInterval(inactivityInterval)
-  }
-
-  inactivityInterval = setInterval(() => {
-    const now = Date.now()
-    let stateChanged = false
-
-    const clientsToRemove: string[] = []
-
-    clientSessionState.forEach((session, clientId) => {
-      const inactiveDuration = now - session.lastUpdate
-      const clientData = hrmDataRepository.findById(clientId)
-
-      if (!clientData) return
-
-      if (inactiveDuration > DISCONNECT_THRESHOLD_MS) {
-        clientsToRemove.push(clientId)
-        stateChanged = true
-      } else if (inactiveDuration > STALE_THRESHOLD_MS) {
-        if (!clientData.isStale) {
-          hrmDataRepository.save({ ...clientData, isStale: true })
-          stateChanged = true
-        }
-      } else {
-        if (clientData.isStale) {
-          hrmDataRepository.save({ ...clientData, isStale: false })
-          stateChanged = true
-        }
-      }
-    })
-
-    if (clientsToRemove.length > 0) {
-      clientsToRemove.forEach((clientId) => {
-        logger.info(
-          { clientId },
-          'Removing disconnected client due to inactivity.'
-        )
-        hrmDataRepository.deleteById(clientId)
-        clientSessionState.delete(clientId)
-      })
-    }
-
-    if (stateChanged) {
-      broadcastState()
-    }
-  }, INACTIVITY_CHECK_INTERVAL_MS)
-}
-
-/**
- * Stops the inactivity monitor.
- */
-const stopInactivityMonitor = () => {
-  if (inactivityInterval) {
-    clearInterval(inactivityInterval)
-    inactivityInterval = null
-  }
-}
-
 /**
  * Safely parses the WebSocket request URL to extract search parameters.
  * Handles cases where headers or URL might be malformed.
@@ -182,7 +114,6 @@ const initSocketManager = (
   services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
-  startInactivityMonitor()
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket
@@ -270,7 +201,6 @@ const initSocketManager = (
 
   wss.on('close', () => {
     connectionMonitor.stop()
-    stopInactivityMonitor()
   })
 }
 
@@ -410,7 +340,6 @@ const handleIncomingMessage = (
             ...existingData,
             value: message.data.value ?? existingData.value,
             calories: Math.round(finalCalories * 10) / 10,
-            isStale: false,
           })
         }
         broadcastState()
