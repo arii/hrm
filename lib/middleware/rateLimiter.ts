@@ -1,7 +1,7 @@
 // File: lib/middleware/rateLimiter.ts
 import rateLimit from 'express-rate-limit'
 import { Express } from 'express'
-import { env } from '../env'
+import { env } from '../env.js'
 
 export const setupRateLimiter = (expressApp: Express) => {
   if (env.NODE_ENV !== 'test') {

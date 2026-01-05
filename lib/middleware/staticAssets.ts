@@ -1,7 +1,7 @@
 // File: lib/middleware/staticAssets.ts
 import express, { Express } from 'express'
 import path from 'path'
-import { env } from '../env'
+import { env } from '../env.js'
 
 export const setupStaticAssets = (expressApp: Express) => {
   if (env.NODE_ENV === 'production') {
