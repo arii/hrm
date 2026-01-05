@@ -261,7 +261,10 @@ export async function run(
 // --- Main Execution ---
 
 // istanbul ignore next
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+const isRunningDirectly = process.argv[1] === path.resolve(process.argv[1])
+
+// istanbul ignore next
+if (isRunningDirectly) {
   const client = new GitHubClient()
   const prNumber = process.env.PR_NUMBER
   const reviewFile = 'review_result.json'
