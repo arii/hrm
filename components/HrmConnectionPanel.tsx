@@ -10,6 +10,13 @@ import HrTileWrapper from '@/components/HrTileWrapper'
 import WorkoutExport from '@/components/WorkoutExport'
 import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
 
+// Define the type for HrmData structure to ensure type safety
+interface HrmUser {
+  clientId: string;
+  hr?: number;
+  name?: string | null;
+}
+
 const HrmConnectionPanel = () => {
   const { hrmData, timerData, connectionStatus, activeAlerts } = useWebSocket()
   const [userSettings] = useUserSettings()
@@ -22,12 +29,25 @@ const HrmConnectionPanel = () => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setSessionStartTime(Date.now());
       }
-      const latestRecord = hrmData.find(user => user.clientId === localStorage.getItem('clientId'));
+      const latestRecord = hrmData.find(user => user.clientId === myClientId);
       if (latestRecord && latestRecord.hr) {
         setWorkoutRecords(prevRecords => [...prevRecords, { time: Date.now(), hr: latestRecord.hr! }]);
       }
+    } else if (timerData.phase === 'IDLE' && sessionStartTime !== null) {
+      setSessionStartTime(null);
+      setWorkoutRecords([]);
     }
   }, [timerData.timeRemaining, hrmData, timerData.phase, sessionStartTime]);
+
+  // State to hold the client ID, ensuring localStorage is accessed client-side
+  const [myClientId, setMyClientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Only access localStorage on the client side after the component mounts
+    if (typeof window !== 'undefined') {
+      setMyClientId(localStorage.getItem('clientId'));
+    }
+  }, []);
 
   const totalCalories = useMemo(() => {
     if (!userSettings.userAge || !userSettings.userWeight || workoutRecords.length === 0) {
@@ -45,27 +65,30 @@ const HrmConnectionPanel = () => {
   }, [userSettings.userAge, userSettings.userWeight, userSettings.gender, timerData.totalDuration, workoutRecords]);
 
   const tileData = useMemo(() => {
-    // Filter out users with placeholder names or no identity
-    return hrmData
-      .filter((user) => {
-        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-        const hasNoIdentity = user.name == null
-        return !(isPlaceholderName || hasNoIdentity)
-      })
-      .map((user) => {
-        const matchingAlert = activeAlerts.find(
-          (alert) =>
-            alert.clientId === user.clientId &&
-            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
-        )
+    // Use the client ID from state, which is safely initialized client-side
+    const currentUserHr = hrmData.find(
+      (user: HrmUser) => user.clientId === myClientId && user.hr !== undefined,
+    )?.hr;
 
-        return {
-          ...user,
-          isAlerting: !!matchingAlert,
-          alertMessage: matchingAlert?.message,
-        }
-      })
-  }, [hrmData, activeAlerts])
+    const otherUsers = hrmData.filter(
+      (user) =>
+        user.clientId !== myClientId &&
+        user.name &&
+        !/new user/i.test(user.name)
+    );
+
+    // Combine and sort
+    return [
+      ...(currentUserHr !== undefined
+        ? [{ clientId: myClientId || 'unknown', name: 'You', value: currentUserHr, isActive: true }]
+        : []),
+      ...otherUsers,
+    ].sort((a, b) => {
+      if (a.name === 'You') return -1;
+      if (b.name === 'You') return 1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  }, [hrmData, myClientId]);
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
@@ -143,7 +166,7 @@ const HrmConnectionPanel = () => {
               },
             }}
           >
-            <HrTileWrapper user={user} />
+            <HrTileWrapper user={user as any} />
           </Box>
         ))
       )}
