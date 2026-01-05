@@ -37,7 +37,8 @@ const HrmConnectionPanel = () => {
     } else if (timerData.phase !== 'RUNNING' && isRecording) {
       setIsRecording(false)
     }
-  }, [timerData.phase, isRecording])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timerData.phase])
 
   // Ref to hold the latest hrmData to avoid dependency issues in the recording effect
   const hrmDataRef = useRef(hrmData)
