@@ -66,9 +66,9 @@ export class HrmService {
     if (existingData && sessionState) {
       let finalCalories = 0
       if (typeof data.calories === 'number') {
-        const clientCalories = data.calories;
-        const serverCalories = sessionState.accumulatedCalories;
-        const diff = Math.abs(clientCalories - serverCalories);
+        const clientCalories = data.calories
+        const serverCalories = sessionState.accumulatedCalories
+        const diff = Math.abs(clientCalories - serverCalories)
 
         if (serverCalories > 0 && diff > 50) {
           logger.warn(
@@ -78,11 +78,11 @@ export class HrmService {
               serverCalories,
             },
             'Large calorie discrepancy detected. Rejecting client update.'
-          );
-          finalCalories = serverCalories;
+          )
+          finalCalories = serverCalories
         } else {
-          finalCalories = clientCalories;
-          sessionState.accumulatedCalories = finalCalories;
+          finalCalories = clientCalories
+          sessionState.accumulatedCalories = finalCalories
         }
       } else {
         const now = Date.now()
