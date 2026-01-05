@@ -1,7 +1,7 @@
 name: PR Review Labeler
 on:
-  # pull_request_review:
-  #   types: [submitted, edited, dismissed]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
 permissions:
   pull-requests: write
 jobs:
@@ -17,42 +17,56 @@ jobs:
             const review = context.payload.review;
             const approvedLabel = "approved";
             const changesRequestedLabel = "changes-requested";
+
+            console.log(`Review submitted for PR #${prNumber} with state: ${review.state}`);
+            console.log(`Current labels on PR #${prNumber}: ${context.payload.pull_request.labels.map(label => label.name).join(', ')}`);
+
             if (review.state === "approved") {
+              console.log(`Attempting to add label: ${approvedLabel}`);
               await github.rest.issues.addLabels({
                 owner,
                 repo,
                 issue_number: prNumber,
                 labels: [approvedLabel],
               });
+              console.log(`Label ${approvedLabel} added.`);
               try {
+                console.log(`Attempting to remove label: ${changesRequestedLabel}`);
                 await github.rest.issues.removeLabel({
                   owner,
                   repo,
                   issue_number: prNumber,
                   name: changesRequestedLabel,
                 });
+                console.log(`Label ${changesRequestedLabel} removed.`);
               } catch (error) {
                 if (!error.message.includes("Label does not exist")) {
                   throw error;
                 }
+                console.log(`Label ${changesRequestedLabel} not present, no removal needed.`);
               }
             } else if (review.state === "changes_requested") {
+              console.log(`Attempting to add label: ${changesRequestedLabel}`);
               await github.rest.issues.addLabels({
                 owner,
                 repo,
                 issue_number: prNumber,
                 labels: [changesRequestedLabel],
               });
+              console.log(`Label ${changesRequestedLabel} added.`);
               try {
+                console.log(`Attempting to remove label: ${approvedLabel}`);
                 await github.rest.issues.removeLabel({
                   owner,
                   repo,
                   issue_number: prNumber,
                   name: approvedLabel,
                 });
+                console.log(`Label ${approvedLabel} removed.`);
               } catch (error) {
                 if (!error.message.includes("Label does not exist")) {
                   throw error;
                 }
+                console.log(`Label ${approvedLabel} not present, no removal needed.`);
               }
             }
