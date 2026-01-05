@@ -8,21 +8,22 @@ const config = {
   reporters: [
     'default',
     [
-      'jest-junit',
+      'jest-github-reporter',
       {
-        outputDirectory: './test-results', // The directory where the XML file will be saved
-        outputName: 'unit-results.xml', // The name of the JUnit XML file
-        suiteNameTemplate: '{filepath}', // Optional: customize the suite name
-        classNameTemplate: '{classname}', // Optional: customize the class name
-        titleTemplate: '{title}', // Optional: customize the test title
+        repository: process.env.GITHUB_REPOSITORY,
+        runId: process.env.GITHUB_RUN_ID,
+        githubToken: process.env.GITHUB_TOKEN,
       },
     ],
   ],
-
   collectCoverageFrom: [
-    'services/**/*.ts',
-    'utils/socketManager.ts',
-    '!**/*.d.ts',
+    '**/src/**/*.{js,ts,tsx}',
+    '**/services/**/*.{js,ts,tsx}',
+    '**/utils/**/*.{js,ts,tsx}',
+    '**/lib/**/*.{js,ts,tsx}',
+    '**/hooks/**/*.{js,ts,tsx}',
+    '**/app/**/*.{js,ts,tsx}',
+    '**/components/**/*.{js,ts,tsx}',
     '!**/node_modules/**',
   ],
   transform: {
