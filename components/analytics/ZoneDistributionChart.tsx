@@ -1,6 +1,6 @@
 // components/analytics/ZoneDistributionChart.tsx
 'use client';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -24,18 +24,20 @@ interface ZoneDistributionChartProps {
 const ZoneDistributionChart: React.FC<ZoneDistributionChartProps> = ({
   data,
 }) => {
-  const zoneDistribution = data.reduce(
-    (acc, point) => {
-      acc[point.zone] = (acc[point.zone] || 0) + 1;
-      return acc;
-    },
-    {} as Record<HrZoneName, number>
-  );
+  const chartData = useMemo(() => {
+    const zoneDistribution = data.reduce(
+      (acc, point) => {
+        acc[point.zone] = (acc[point.zone] || 0) + 1;
+        return acc;
+      },
+      {} as Record<HrZoneName, number>
+    );
 
-  const chartData = Object.entries(zoneDistribution).map(([zone, time]) => ({
-    zone,
-    time,
-  }));
+    return Object.entries(zoneDistribution).map(([zone, time]) => ({
+      zone,
+      time,
+    }));
+  }, [data]);
 
   return (
     <Paper elevation={3} sx={{ p: 3 }}>

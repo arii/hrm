@@ -1,33 +1,26 @@
 // app/client/experimental/page.tsx
-'use client'
-import { Container, Box, Typography, Button } from '@mui/material'
-import { useLocalWorkoutBuffer } from '@/hooks/useLocalWorkoutBuffer'
-import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { useWebSocket } from '@/context/WebSocketContext'
-import WorkoutMetricGrid from '@/components/analytics/WorkoutMetricGrid'
-import HeartRateTimeSeries from '@/components/analytics/HeartRateTimeSeries'
-import ZoneDistributionChart from '@/components/analytics/ZoneDistributionChart'
+'use client';
+import { Container, Box, Typography, Button } from '@mui/material';
+import { useLocalWorkoutBuffer } from '@/hooks/useLocalWorkoutBuffer';
+import { useWorkoutSession } from '@/hooks/useWorkoutSession';
+import { useWebSocket } from '@/context/WebSocketContext';
+import WorkoutMetricGrid from '@/components/analytics/WorkoutMetricGrid';
+import HeartRateTimeSeries from '@/components/analytics/HeartRateTimeSeries';
+import ZoneDistributionChart from '@/components/analytics/ZoneDistributionChart';
 
 const ExperimentalAnalyticsPage = () => {
-  const { hrmData, connectionStatus } = useWebSocket()
-  const {
-    workoutStatus,
-    startWorkout,
-    endWorkout,
-    workoutDuration,
-    caloriesBurned,
-  } = useWorkoutSession({
-    isConnected: connectionStatus === 'Connected',
-    totalCalories: hrmData
-      ? hrmData.reduce((acc, user) => acc + (user.calories || 0), 0)
-      : 0,
-  })
+  const { hrmData, connectionStatus } = useWebSocket();
 
-  const currentHr = hrmData?.[0]?.value || 0
-  const { buffer, clearBuffer } = useLocalWorkoutBuffer(
-    currentHr,
-    workoutStatus
-  )
+  // TODO: Replace this with a user-selected device
+  const selectedDevice = hrmData?.[0];
+
+  const { workoutStatus, startWorkout, endWorkout, workoutDuration, caloriesBurned } = useWorkoutSession({
+    isConnected: connectionStatus === 'Connected',
+    totalCalories: selectedDevice?.calories || 0,
+  });
+
+  const currentHr = selectedDevice?.value || 0;
+  const { buffer, clearBuffer } = useLocalWorkoutBuffer(currentHr, workoutStatus);
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -72,7 +65,7 @@ const ExperimentalAnalyticsPage = () => {
         </Box>
       </Box>
     </Container>
-  )
-}
+  );
+};
 
-export default ExperimentalAnalyticsPage
+export default ExperimentalAnalyticsPage;

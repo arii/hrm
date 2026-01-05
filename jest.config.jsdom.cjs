@@ -1,8 +1,7 @@
 /** @type {import('jest').Config} */
 const config = {
   preset: 'ts-jest',
-  testEnvironment: 'jsdom',
-  roots: ['<rootDir>/tests/unit'],
+  testEnvironment: 'jest-environment-jsdom-global',
   testMatch: ['**/*.test.tsx', '**/useLocalWorkoutBuffer.test.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   coverageDirectory: 'coverage',
@@ -48,6 +47,7 @@ const config = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
+    '^recharts$': '<rootDir>/tests/unit/__mocks__/recharts.js',
   },
   testTimeout: 10000,
   setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.jsdom.js'],
