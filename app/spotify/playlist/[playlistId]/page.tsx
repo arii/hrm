@@ -13,7 +13,7 @@ import { SpotifyCommandMessage } from '@/types/websocket'
 import Image from 'next/image'
 
 const PlaylistTracksDisplay = dynamic(
-  () => import('../../../../components/Playlist/PlaylistTracksDisplay'),
+  () => import('@/components/Playlist/PlaylistTracksDisplay'),
   {
     ssr: false,
     loading: () => <CircularProgress />,
@@ -21,7 +21,7 @@ const PlaylistTracksDisplay = dynamic(
 )
 
 const SpotifyDeviceSelectorWrapper = dynamic(
-  () => import('../../../../components/SpotifyDeviceSelectorWrapper'),
+  () => import('@/components/SpotifyDeviceSelectorWrapper'),
   { ssr: false }
 )
 
