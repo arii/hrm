@@ -60,7 +60,9 @@ jobs:
           echo "Searching for successful workflow runs for 'gemini-orchestrator.yml' on branch '${BRANCH}' with commit '${SHA}'..."
           # The orchestrator is the parent workflow that triggers the review and artifact generation.
           # We need its run_id to reliably find the artifact.
-          RUN_ID=$(gh run list --workflow "gemini-orchestrator.yml" --commit "$SHA" --status success --limit 1 --json databaseId -q '.[0].databaseId' || echo "")
+          # Ensure that if `jq` returns 'null', it's treated as an empty string.
+          RUN_ID=$(gh run list --workflow "gemini-orchestrator.yml" --commit "$SHA" --status success --limit 1 --json databaseId -q '.[0].databaseId' | { grep -v '^null$' || true; } )
+
           if [[ -z "$RUN_ID" ]]; then
              echo "::error::Could not find a successful run for 'gemini-orchestrator.yml' on branch '$BRANCH' with commit '$SHA'."
              exit 1
