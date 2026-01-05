@@ -603,10 +603,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               await connectToGatt(foundDevice)
               return
             } else {
-              logger.info(
+              logger.warn(
                 { savedDeviceId },
-                'Saved device not found in available devices'
+                'Saved device not found in available devices list. Clearing cookie.'
               )
+              setCookie('hrm_device_id', '', -1)
+              throw new Error('Saved device not found')
             }
           } else {
             logger.info(
@@ -658,24 +660,27 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    // Try to auto-connect to a saved device. This is a critical function for user experience.
-    // We want it to succeed silently if possible, but still provide feedback if it fails.
     try {
       logger.info('Starting auto-connect to saved device...')
       setDeviceStatus('Connecting to saved device...')
       await connectAndStream(undefined, undefined, { silent: true })
       logger.info('Auto-connect succeeded')
     } catch (error) {
-      // Silent failure is OK - user can manually connect if needed
       const errorMsg = error instanceof Error ? error.message : String(error)
       logger.info(
         { errorMsg },
         'Auto-connect failed, user can connect manually'
       )
-      // Set status back to allow manual connection
-      setDeviceStatus(
-        'Auto-connect failed. Use Connect button to select device.'
-      )
+
+      if (errorMsg.includes('Saved device not found')) {
+        setDeviceStatus(
+          'Saved device not found. Please re-select from the list.'
+        )
+      } else {
+        setDeviceStatus(
+          'Auto-connect failed. Use Connect button to select device.'
+        )
+      }
     }
   }, [connectAndStream])
 
