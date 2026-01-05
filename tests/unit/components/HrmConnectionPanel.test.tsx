@@ -4,7 +4,7 @@
 import { render, screen } from '@testing-library/react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import { useUserSettings } from '@/context/UserSettingsContext'
 
 // Mocks
 jest.mock('@/components/HrTileWrapper', () => ({
@@ -20,10 +20,18 @@ jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
 }))
 
+// Mock the UserSettings context
+jest.mock('@/context/UserSettingsContext', () => ({
+  useUserSettings: jest.fn(),
+}))
+
 describe('HrmConnectionPanel', () => {
   const mockUseWebSocket = useWebSocket as jest.Mock
+  const mockUseUserSettings = useUserSettings as jest.Mock
 
   beforeEach(() => {
+    // Default mock for useUserSettings
+    mockUseUserSettings.mockReturnValue([{}, jest.fn()]);
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
       timerData: {
@@ -34,13 +42,17 @@ describe('HrmConnectionPanel', () => {
       connectionStatus: 'Connected',
       activeAlerts: [],
     })
+    jest.clearAllMocks()
+    // Mock localStorage before each test as it's accessed in useEffect
+    Object.defineProperty(window, 'localStorage', {
+      value: { getItem: jest.fn(() => 'test-client-id') },
+      writable: true,
+    });
   })
 
   it('renders a placeholder message and no connect link when no data is available', () => {
     render(
-      <UserSettingsProvider>
         <HrmConnectionPanel />
-      </UserSettingsProvider>
     )
     expect(screen.getByText('No Heart Rate Data')).toBeInTheDocument()
     expect(
@@ -63,9 +75,7 @@ describe('HrmConnectionPanel', () => {
       activeAlerts: [],
     })
     render(
-      <UserSettingsProvider>
         <HrmConnectionPanel />
-      </UserSettingsProvider>
     )
     // Check that the HR tile is rendered
     expect(screen.getByTestId('mock-hr-tile')).toBeInTheDocument()
@@ -93,9 +103,7 @@ describe('HrmConnectionPanel', () => {
       activeAlerts: [],
     })
     const { container } = render(
-      <UserSettingsProvider>
         <HrmConnectionPanel />
-      </UserSettingsProvider>
     )
     // Expect one skeleton to be present for the placeholder
     expect(container.querySelectorAll('.MuiSkeleton-root').length).toBe(1)
