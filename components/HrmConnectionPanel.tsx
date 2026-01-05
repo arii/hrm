@@ -11,117 +11,79 @@ import WorkoutExport from '@/components/WorkoutExport'
 import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
 import { HrmData } from '@/context/WebSocketContext'
 
-// Define the type for HrmData structure to ensure type safety
-interface HrmUser {
-  clientId: string
-  hr?: number
-  name?: string | null
-}
-
 const HrmConnectionPanel = () => {
-  const { hrmData, timerData, connectionStatus, activeAlerts } = useWebSocket()
+  const { hrmData, timerData, connectionStatus } = useWebSocket()
   const [userSettings] = useUserSettings()
-  const [workoutRecords, setWorkoutRecords] = useState<
-    { time: number; hr: number }[]
-  >([])
+  const [workoutRecords, setWorkoutRecords] = useState<{ time: number; hr: number }[]>([])
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
-  // State to hold the client ID, ensuring localStorage is accessed client-side
-  const [myClientId, setMyClientId] = useState<string | null>(null)
+    // State to hold the client ID, ensuring localStorage is accessed client-side
+  const [myClientId, setMyClientId] = useState<string | null>(null);
 
   useEffect(() => {
     // Only access localStorage on the client side after the component mounts
     if (typeof window !== 'undefined' && myClientId === null) {
-      setMyClientId(localStorage.getItem('clientId'))
+      setMyClientId(localStorage.getItem('clientId'));
     }
-  }, [myClientId])
+  }, [myClientId]);
 
   useEffect(() => {
     if (timerData.phase === 'RUNNING' && timerData.timeRemaining > 0) {
       if (sessionStartTime === null) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSessionStartTime(Date.now())
+        setSessionStartTime(Date.now());
       }
-      const latestRecord = hrmData.find((user) => user.clientId === myClientId)
+      const latestRecord = hrmData.find(user => user.clientId === myClientId);
       if (latestRecord && latestRecord.hr) {
-        setWorkoutRecords((prevRecords) => [
-          ...prevRecords,
-          { time: Date.now(), hr: latestRecord.hr! },
-        ])
+        setWorkoutRecords(prevRecords => [...prevRecords, { time: Date.now(), hr: latestRecord.hr! }]);
       }
     } else if (timerData.phase === 'IDLE' && sessionStartTime !== null) {
-      setSessionStartTime(null)
-      setWorkoutRecords([])
+      setSessionStartTime(null);
+      setWorkoutRecords([]);
     }
-  }, [
-    timerData.timeRemaining,
-    hrmData,
-    timerData.phase,
-    sessionStartTime,
-    myClientId,
-  ])
+  }, [timerData.timeRemaining, hrmData, timerData.phase, sessionStartTime, myClientId]);
+
+
 
   const totalCalories = useMemo(() => {
-    if (
-      !userSettings.userAge ||
-      !userSettings.userWeight ||
-      workoutRecords.length === 0
-    ) {
-      return 0
+    if (!userSettings.userAge || !userSettings.userWeight || workoutRecords.length === 0) {
+      return 0;
     }
     return estimateCaloriesBurned({
       age: userSettings.userAge,
       weight: userSettings.userWeight,
       gender:
-        userSettings.gender === 'MALE'
-          ? 'male'
-          : userSettings.gender === 'FEMALE'
-            ? 'female'
-            : undefined,
+        userSettings.gender === 'MALE' ? 'male' :
+        (userSettings.gender === 'FEMALE' ? 'female' : undefined),
       workoutDuration: timerData.totalDuration,
-      avgHr:
-        workoutRecords.reduce((acc, rec) => acc + rec.hr, 0) /
-        workoutRecords.length,
-    })
-  }, [
-    userSettings.userAge,
-    userSettings.userWeight,
-    userSettings.gender,
-    timerData.totalDuration,
-    workoutRecords,
-  ])
+      avgHr: workoutRecords.reduce((acc, rec) => acc + rec.hr, 0) / workoutRecords.length
+    });
+  }, [userSettings.userAge, userSettings.userWeight, userSettings.gender, timerData.totalDuration, workoutRecords]);
 
   const tileData = useMemo(() => {
     // Use the client ID from state, which is safely initialized client-side
     const currentUserHr = hrmData.find(
-      (user: HrmUser) => user.clientId === myClientId && user.hr !== undefined
-    )?.hr
+      (user) => user.clientId === myClientId && user.hr !== undefined,
+    )?.hr;
 
     const otherUsers = hrmData.filter(
       (user) =>
         user.clientId !== myClientId &&
         user.name &&
         !/new user/i.test(user.name)
-    )
+    );
 
     // Combine and sort
     return [
       ...(currentUserHr !== undefined
-        ? [
-            {
-              clientId: myClientId || 'unknown',
-              name: 'You',
-              value: currentUserHr,
-              isActive: true,
-            },
-          ]
+        ? [{ clientId: myClientId || 'unknown', name: 'You', hr: currentUserHr, isActive: true }]
         : []),
       ...otherUsers,
     ].sort((a, b) => {
-      if (a.name === 'You') return -1
-      if (b.name === 'You') return 1
-      return (a.name || '').localeCompare(b.name || '')
-    })
-  }, [hrmData, myClientId])
+      if (a.name === 'You') return -1;
+      if (b.name === 'You') return 1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  }, [hrmData, myClientId]);
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
@@ -134,14 +96,10 @@ const HrmConnectionPanel = () => {
     records: workoutRecords,
     userAge: userSettings.userAge || undefined,
     userWeight: userSettings.userWeight || undefined,
-    // Ensure gender is 'male', 'female', or undefined
-    gender:
-      userSettings.gender === 'MALE'
-        ? 'male'
-        : userSettings.gender === 'FEMALE'
-          ? 'female'
-          : undefined,
-  }
+    gender: // Ensure gender is 'male', 'female', or undefined
+      userSettings.gender === 'MALE' ? 'male' :
+      (userSettings.gender === 'FEMALE' ? 'female' : undefined),
+  };
 
   return (
     <Box
