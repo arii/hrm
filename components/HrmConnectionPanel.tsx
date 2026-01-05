@@ -10,6 +10,7 @@ import { useUserSettings } from '@/context/UserSettingsContext'
 import HrTileWrapper from '@/components/HrTileWrapper'
 import { calculateTotalWorkoutCalories } from '@/lib/calorie-estimation'
 import { HrmData } from '@/context/WebSocketContext'
+import { EnhancedHrmDataForTile } from '@/types'
 
 // Dynamically import WorkoutExport with SSR disabled
 const WorkoutExport = dynamic(() => import('@/components/WorkoutExport'), {
@@ -214,7 +215,7 @@ const HrmConnectionPanel = () => {
               },
             }}
           >
-            <HrTileWrapper user={user as HrmData} />
+            <HrTileWrapper user={user} />
           </Box>
         ))
       )}

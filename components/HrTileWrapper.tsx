@@ -2,10 +2,10 @@
 'use client'
 import { useHrZone } from '@/hooks/useHrZone'
 import HrTile from '@/components/HrTile'
-import { HrmData } from '@/types/websocket'
+import { EnhancedHrmDataForTile } from '@/types'
 
 interface HrTileWrapperProps {
-  user: HrmData & { isAlerting: boolean; alertMessage?: string }
+  user: EnhancedHrmDataForTile
 }
 
 const HrTileWrapper = ({ user }: HrTileWrapperProps) => {
