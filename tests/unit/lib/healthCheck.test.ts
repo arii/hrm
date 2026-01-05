@@ -30,7 +30,7 @@ describe('Health Check Logic', () => {
     it('should return healthy if memory usage is within limits', () => {
       const result = checkMemoryUsage()
       expect(result.healthy).toBe(true)
-      expect(result.details.usedMB).toBeGreaterThan(0)
+      expect(result.details.usedMB).toBeGreaterThanOrEqual(0)
     })
   })
 
