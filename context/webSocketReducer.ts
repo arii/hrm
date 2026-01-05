@@ -65,14 +65,19 @@ export const reducer = (
       }
     }
     case 'HRM_UPDATE': {
-      // The HRM_UPDATE payload is now the single source of truth for who is connected.
-      // Instead of merging, we replace the old list with the new one,
-      // ensuring that any clients who have disconnected are removed from the state.
       const payload = message.payload as ServerHrmData[]
-      const newHrmData = payload.map((user) => ({
-        ...user,
-        isConnected: true,
-      }))
+      const activeClientIds = new Set(payload.map(u => u.clientId))
+
+      // Filter out disconnected clients and merge new data for active ones.
+      const newHrmData = payload.map(newUser => {
+        const existingUser = state.hrmData.find(u => u.clientId === newUser.clientId);
+        return {
+          ...(existingUser || {}), // Preserve existing data if any
+          ...newUser,             // Overwrite with the new data
+          isConnected: true,
+        };
+      });
+
       return { ...state, hrmData: newHrmData }
     }
     case 'TIMER_UPDATE':

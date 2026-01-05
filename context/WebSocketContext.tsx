@@ -30,59 +30,7 @@ export interface WebSocketContextType extends WebSocketState {
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
-// Unified State Object managed by a reducer
-export const reducer = (
-  state: WebSocketState,
-  message: ServerMessage | { type: 'RESET_STATE' }
-): WebSocketState => {
-  switch (message.type) {
-    case 'RESET_STATE':
-      return INITIAL_STATE
-    case 'INITIAL_STATE': {
-      // When the initial state is loaded, all users present in the hrmData have their
-      // connection status explicitly set to true. This ensures that the UI correctly
-      // reflects their status.
-      const hrmDataWithConnection =
-        message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) || []
-      return {
-        ...state,
-        ...message.payload,
-        hrmData: hrmDataWithConnection,
-      }
-    }
-    case 'HRM_UPDATE': {
-      // The HRM_UPDATE payload is now the single source of truth for who is connected.
-      // Instead of merging, we replace the old list with the new one,
-      // ensuring that any clients who have disconnected are removed from the state.
-      const payload = message.payload as ServerHrmData[]
-      const newHrmData = payload.map((user) => ({
-        ...user,
-        isConnected: true,
-      }))
-      return { ...state, hrmData: newHrmData }
-    }
-    case 'TIMER_UPDATE':
-      return {
-        ...state,
-        timerData: { ...state.timerData, ...message.payload },
-      }
-    case 'SPOTIFY_UPDATE':
-      return {
-        ...state,
-        spotifyData: { ...state.spotifyData, ...message.payload },
-      }
-    case 'ACTIVE_ALERTS_UPDATE':
-      return { ...state, activeAlerts: message.payload }
-    case 'SPOTIFY_SERVICE_INIT_UPDATE':
-      return { ...state, spotifyServiceInitialized: message.payload }
-    case 'EXECUTE_SPOTIFY':
-      // This message type is handled by useSpotifyRemoteExecution hook
-      // We don't need to update state here, just pass it through
-      return state
-    default:
-      return state
-  }
-}
+import { reducer } from './webSocketReducer'
 
 export const WebSocketProvider = ({
   children,
