@@ -11,9 +11,7 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import {
-  initSocketManager,
-} from '../../utils/socketManager'
+import { initSocketManager } from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import { TLSSocket } from 'tls'
@@ -147,10 +145,10 @@ describe('WebSocket Manager', () => {
       refreshDevices: jest.fn(),
     }
 
-    const hrmDataStore: HrmData[] = [];
+    const hrmDataStore: HrmData[] = []
     const mockHrmService = {
       initializeClient: jest.fn((clientId) => {
-        const existing = hrmDataStore.find(d => d.clientId === clientId);
+        const existing = hrmDataStore.find((d) => d.clientId === clientId)
         if (!existing) {
           hrmDataStore.push({
             clientId,
@@ -159,25 +157,25 @@ describe('WebSocket Manager', () => {
             calories: 0,
             age: 30,
             maxHr: 185,
-          });
+          })
         }
       }),
       updateMetadata: jest.fn(),
       processHrmInput: jest.fn((clientId, data) => {
-        const clientData = hrmDataStore.find(d => d.clientId === clientId);
+        const clientData = hrmDataStore.find((d) => d.clientId === clientId)
         if (clientData) {
-          clientData.value = data.value ?? clientData.value;
-          clientData.calories = (clientData.calories || 0) + 0.1; // Simulate calorie increase
+          clientData.value = data.value ?? clientData.value
+          clientData.calories = (clientData.calories || 0) + 0.1 // Simulate calorie increase
         }
       }),
       cleanupClient: jest.fn((clientId) => {
-        const index = hrmDataStore.findIndex(d => d.clientId === clientId);
+        const index = hrmDataStore.findIndex((d) => d.clientId === clientId)
         if (index > -1) {
-          hrmDataStore.splice(index, 1);
+          hrmDataStore.splice(index, 1)
         }
       }),
       getHrmData: jest.fn().mockImplementation(() => hrmDataStore),
-    };
+    }
 
     mockServices = {
       tabataService: mockTabataTimer,
