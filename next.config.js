@@ -66,13 +66,7 @@ const nextConfig = {
       },
     ]
   },
-  serverExternalPackages: [
-    'pino',
-    'pino-pretty',
-    'thread-stream',
-    'ws',
-    '@markw65/fit-file-writer',
-  ],
+  serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
 }
 
 export default withBundleAnalyzer(nextConfig)
