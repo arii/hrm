@@ -2,7 +2,7 @@
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
-import { httpLogger } from './utils/logger'
+import { httpLogger } from './utils/logger.js'
 import { env } from './lib/env.js' // New import
 import { serviceContainer } from './lib/serviceContainer.js'
 import { AppServices, createServices } from './lib/services.js' // New import
