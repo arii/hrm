@@ -8,6 +8,10 @@ declare module 'express' {
     user?: {
       id?: string
     }
-    session?: Session
+    session?: Session & {
+      user?: {
+        id?: string
+      }
+    }
   }
 }

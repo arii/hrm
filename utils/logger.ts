@@ -97,8 +97,7 @@ if (typeof window === 'undefined') {
     customProps: function (req: Request) {
       return {
         // Add user context if available
-        userId: req.user?.id,
-        sessionId: req.session?.id,
+        userId: req.user?.id ?? req.session?.user?.id,
       }
     },
     // Modify the log message
