@@ -34,6 +34,9 @@ importers:
       '@google/genai':
         specifier: 1.33.0
         version: 1.33.0
+      '@markw65/fit-file-writer':
+        specifier: ^0.1.7
+        version: 0.1.7
       '@mui/icons-material':
         specifier: ^7.3.6
         version: 7.3.6(@mui/material@7.3.6(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.3))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.3))(@types/react@19.2.7)(react@19.2.3))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(@types/react@19.2.7)(react@19.2.3)
@@ -61,6 +64,9 @@ importers:
       express-rate-limit:
         specifier: ^8.2.1
         version: 8.2.1(express@5.2.1)
+      fit-file-parser:
+        specifier: ^2.1.0
+        version: 2.1.0
       framer-motion:
         specifier: ^12.23.26
         version: 12.23.26(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1928,6 +1934,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
+
+  '@markw65/fit-file-writer@0.1.7':
+    resolution: {integrity: sha512-EVs8LZJcN+4VAZ5V7hGdUkhZV3mGhtLvY4XNS7zIybPQxfmrWv0UEzTY8Zry0t20xJtcHFXOgsCIb8p74pzwew==}
 
   '@mdx-js/react@3.1.1':
     resolution: {integrity: sha512-f++rKLQgUVYDAtECQ6fn/is15GkEH9+nZPM3MS0RcxVqoTfawHvDlSCH7JbMhAM6uJ32v3eXLvLmLvjGu7PTQw==}
@@ -4460,6 +4469,9 @@ packages:
   find-up@7.0.0:
     resolution: {integrity: sha512-YyZM99iHrqLKjmt4LJDj58KI+fYyufRLBSYcqycxf//KpBk9FoewoGX0450m9nB44qrZnovzC2oeP5hUibxc/g==}
     engines: {node: '>=18'}
+
+  fit-file-parser@2.1.0:
+    resolution: {integrity: sha512-PICERthpGtbEkrBm9lDj/oGJ1gCkFUWmkaGg2wW5idyuVEsAGuz977gbl7J1j6WJj7TiwrohxKQXjrG6Xb1i2Q==}
 
   flat-cache@3.2.0:
     resolution: {integrity: sha512-CYcENa+FtcUKLmhhqyctpclsq7QF38pKjZHsGNiSQF5r4FtoKDWabFDl3hzaEQMvT1LHEysw5twgLvpYYb4vbw==}
@@ -9236,6 +9248,8 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@markw65/fit-file-writer@0.1.7': {}
+
   '@mdx-js/react@3.1.1(@types/react@19.2.7)(react@19.2.3)':
     dependencies:
       '@types/mdx': 2.0.13
@@ -12277,6 +12291,10 @@ snapshots:
       locate-path: 7.2.0
       path-exists: 5.0.0
       unicorn-magic: 0.1.0
+
+  fit-file-parser@2.1.0:
+    dependencies:
+      buffer: 6.0.3
 
   flat-cache@3.2.0:
     dependencies:
