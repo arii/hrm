@@ -1,5 +1,4 @@
 // utils/logger.ts
-import { randomUUID } from 'crypto'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
 import { Request, Response } from 'express'
@@ -68,6 +67,8 @@ let httpLogger: any
 
 if (typeof window === 'undefined') {
   // We are on the server
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { randomUUID } = require('crypto')
   httpLogger = pinoHttp({
     logger: logger as pino.Logger, // Cast to pino.Logger for pinoHttp
     genReqId: function (req: Request, res: Response) {
