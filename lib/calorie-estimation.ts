@@ -1,10 +1,10 @@
 interface CalorieEstimationParams {
-  age: number;
-  weight: number;
-  gender?: 'male' | 'female';
-  workoutDuration: number;
-  avgHr: number;
-  heartRate?: number;
+  age: number
+  weight: number
+  gender?: 'male' | 'female'
+  workoutDuration: number
+  avgHr: number
+  heartRate?: number
 }
 
 export const estimateCaloriesBurned = ({
@@ -28,4 +28,4 @@ export const estimateCaloriesBurned = ({
     )
   }
   return 0
-};
+}

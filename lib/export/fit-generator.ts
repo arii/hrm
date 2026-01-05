@@ -60,5 +60,8 @@ export const generateFitFile = (data: FitExportData): Blob => {
   })
 
   const bytes = fitWriter.finish()
-  return new Blob([bytes.buffer], { type: 'application/octet-stream' })
+  // Create a new Uint8Array from the DataView to ensure compatibility.
+  // This copies the data into a new buffer that is not a SharedArrayBuffer.
+  const byteArray = new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  return new Blob([byteArray], { type: 'application/octet-stream' })
 }
