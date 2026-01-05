@@ -1,4 +1,4 @@
-import { exec, ChildProcess } from 'child_process'
+import { spawn, ChildProcess } from 'child_process'
 import http from 'http'
 import kill from 'tree-kill'
 
@@ -10,19 +10,25 @@ export interface ServerProcess {
 export function startServer(port: number): Promise<ServerProcess> {
   return new Promise((resolve, reject) => {
     // Note: The server should be built by the test script `pnpm run build` before this is called.
-    const serverProcess = exec(
-      `node dist/server.js > server.log 2>&1`,
-      {
-        env: {
-          ...process.env,
-          PORT: `${port}`,
-          NODE_ENV: 'production',
-          WS_MAX_CONNECTIONS: '2',
-          RATE_LIMIT_WINDOW_MS: '1000',
-          GENERAL_API_MAX_REQUESTS: '5',
-        },
-      }
-    )
+    const serverProcess = spawn('node', ['dist/server.js'], {
+      env: {
+        ...process.env,
+        PORT: `${port}`,
+        NODE_ENV: 'production',
+        WS_MAX_CONNECTIONS: '2',
+        RATE_LIMIT_WINDOW_MS: '1000',
+        GENERAL_API_MAX_REQUESTS: '5',
+      },
+      detached: true, // Run in a new process group
+    })
+
+    serverProcess.stdout?.on('data', (data: Buffer) => {
+      console.log(`[Server STDOUT]: ${data.toString().trim()}`)
+    })
+
+    serverProcess.stderr?.on('data', (data: Buffer) => {
+      console.error(`[Server STDERR]: ${data.toString().trim()}`)
+    })
 
     // Allow the test runner to exit independently of the server process
     serverProcess.unref()
@@ -68,7 +74,7 @@ export function startServer(port: number): Promise<ServerProcess> {
         try {
           // Kill the entire process group
           kill(serverProcess.pid)
-        } catch (e) {
+        } catch (_e) {
           // Ignore errors if the process is already gone
         }
       }

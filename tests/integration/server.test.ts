@@ -19,7 +19,6 @@ describe('Server Integration Test', () => {
   it('should enforce WebSocket connection limit', (done) => {
     const sockets: WebSocket[] = []
     const connectionLimit = 2
-    let connections = 0
     let errors = 0
 
     for (let i = 0; i < connectionLimit + 1; i++) {
@@ -27,7 +26,7 @@ describe('Server Integration Test', () => {
       sockets.push(ws)
 
       ws.on('open', () => {
-        connections++
+        // Do nothing
       })
 
       ws.on('error', (err) => {
@@ -41,28 +40,22 @@ describe('Server Integration Test', () => {
     }
   })
 
-  it(
-    'should enforce rate limiting',
-    async () => {
-      const promises = []
-      for (let i = 0; i < 10; i++) {
-        promises.push(
-          fetch(`http://127.0.0.1:${PORT}/api/health`).then((res) => res.status)
-        )
-        await new Promise((resolve) => setTimeout(resolve, 100))
-      }
+  it('should enforce rate limiting', async () => {
+    const promises = []
+    for (let i = 0; i < 10; i++) {
+      promises.push(
+        fetch(`http://127.0.0.1:${PORT}/api/health`).then((res) => res.status)
+      )
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
 
-      const results = await Promise.all(promises)
-      const successfulRequests = results.filter(
-        (status) => status === 200
-      ).length
-      const rateLimitedRequests = results.filter(
-        (status) => status === 429
-      ).length
+    const results = await Promise.all(promises)
+    const successfulRequests = results.filter((status) => status === 200).length
+    const rateLimitedRequests = results.filter(
+      (status) => status === 429
+    ).length
 
-      expect(successfulRequests).toBe(5)
-      expect(rateLimitedRequests).toBe(5)
-    },
-    10000
-  )
+    expect(successfulRequests).toBe(5)
+    expect(rateLimitedRequests).toBe(5)
+  }, 10000)
 })
