@@ -267,7 +267,7 @@ export async function run(
  * @param {ImportMeta} meta - The import.meta object from the module.
  * @returns {boolean} - True if the script is the main module, false otherwise.
  */
-function isMainModule(meta) {
+function isMainModule(meta: ImportMeta) {
   if (!meta || !meta.url) {
     return false
   }
