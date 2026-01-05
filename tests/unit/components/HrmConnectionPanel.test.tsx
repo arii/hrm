@@ -31,7 +31,7 @@ describe('HrmConnectionPanel', () => {
 
   beforeEach(() => {
     // Default mock for useUserSettings
-    mockUseUserSettings.mockReturnValue([{}, jest.fn()]);
+    mockUseUserSettings.mockReturnValue([{}, jest.fn()])
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
       timerData: {
@@ -47,13 +47,11 @@ describe('HrmConnectionPanel', () => {
     Object.defineProperty(window, 'localStorage', {
       value: { getItem: jest.fn(() => 'test-client-id') },
       writable: true,
-    });
+    })
   })
 
   it('renders a placeholder message and no connect link when no data is available', () => {
-    render(
-        <HrmConnectionPanel />
-    )
+    render(<HrmConnectionPanel />)
     expect(screen.getByText('No Heart Rate Data')).toBeInTheDocument()
     expect(
       screen.queryByRole('link', { name: /Connect/i })
@@ -74,9 +72,7 @@ describe('HrmConnectionPanel', () => {
       connectionStatus: 'Connected',
       activeAlerts: [],
     })
-    render(
-        <HrmConnectionPanel />
-    )
+    render(<HrmConnectionPanel />)
     // Check that the HR tile is rendered
     expect(screen.getByTestId('mock-hr-tile')).toBeInTheDocument()
     expect(screen.getByText('Test User')).toBeInTheDocument()
@@ -102,9 +98,7 @@ describe('HrmConnectionPanel', () => {
       connectionStatus: 'Connecting...',
       activeAlerts: [],
     })
-    const { container } = render(
-        <HrmConnectionPanel />
-    )
+    const { container } = render(<HrmConnectionPanel />)
     // Expect one skeleton to be present for the placeholder
     expect(container.querySelectorAll('.MuiSkeleton-root').length).toBe(1)
   })
