@@ -2,77 +2,58 @@
 // All other types should be defined in their respective files.
 
 import { TimerMode, TimerPhase } from './core'
-import { HrmData } from '@/types/websocket'
 
 export interface HrTileProps {
   name: string
-  bpm: number | null
+  bpm: number
   percentMax: number // 0-100
-  calories: number
-  isConnected: boolean
+  calories?: number
+  isConnected?: boolean
+  isDataStale?: boolean
+
+  // NEW: Flag to trigger the visual diagnostic state
   isAlerting?: boolean
+  // NEW: Message to display in the overlay when alerting
   alertMessage?: string
+}
+
+export interface HeartRateZonesProps {
+  maxHr: number
 }
 
 export interface TimerDisplayProps {
   phase: TimerPhase
   timeRemaining: number
-  workDuration: number
-  restDuration: number
-  totalDuration: number
-}
-
-export interface TimerControlsProps {
-  phase: TimerPhase
+  timeElapsed: number
+  cycle: number
+  totalCycles: number
   mode: TimerMode
-  setMode: (mode: TimerMode) => void
-  onStart: () => void
-  onStop: () => void
-  onReset: () => void
-  isWebSocketConnected: boolean
+  workDuration?: number
+  restDuration?: number
 }
 
-export interface WorkoutAnalysisProps {
-  workoutRecords: { time: number; hr: number }[]
-  userAge: number | null
-  userWeight: number | null
-  gender: 'MALE' | 'FEMALE' | null
-  totalDuration: number
-}
-
-export interface EnhancedHrmDataForTile extends HrmData {
-  isAlerting: boolean
-  alertMessage?: string
-  isActive?: boolean
-}
-
+// Renamed to avoid conflict
 export interface WorkoutColumnItem {
-  label: string
-  value: string | number
-  unit?: string
-  title?: string
+  title: string
   details?: string
 }
 
+export interface WorkoutColumnsProps {
+  columns: Array<{ title: string; items: WorkoutColumnItem[] }>
+}
+
+// Correct WorkoutItem for the parser and WebSocket
 export interface WorkoutItem {
-  time: number
-  [key: string]: number
+  category: string
+  exercises: string[]
 }
 
-export interface WorkoutData {
-  items: WorkoutItem[]
-  duration: number
-}
+export type WorkoutData = WorkoutItem[]
 
-// NOTE: We are intentionally not using the UserSettings from the context here,
-// as the context itself handles persistence. This type is for component props
-// where only the settings values are needed.
-export type UserSettings = {
-  userName: string | null
-  userAge: number | null
-  userWeight: number | null
-  gender: 'MALE' | 'FEMALE' | null
-  restingHr: number | null
-  maxHr: number | null
-  deviceId: string | null
+export interface DashboardSectionLoadingSkeletonProps {
+  width?: string | number
+  height?: string | number
+  shape?: 'rectangular' | 'circular'
+  count?: number
+  className?: string
 }
