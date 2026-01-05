@@ -62,8 +62,8 @@ const createLogger = (): Logger => {
 const logger = createLogger()
 
 // Conditionally create httpLogger
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Reason: The `pino-http` middleware function needs to accept an Express Request object which might be dynamically augmented with custom properties (e.g., `req.user`).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let httpLogger: any
 
 if (typeof window === 'undefined') {
