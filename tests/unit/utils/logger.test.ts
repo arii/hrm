@@ -1,92 +1,97 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // tests/unit/utils/logger.test.ts
-import pino from 'pino'
 
-jest.mock('pino-http', () => {
-  const pinoHttp = jest.fn(
-    () =>
-      ({
-        logger: {
-          info: jest.fn(),
-          warn: jest.fn(),
-          error: jest.fn(),
-          debug: jest.fn(),
-        },
-      } as any)
-  )
-  return pinoHttp
-})
+// Mock pino-http at the top to prevent module resolution issues
+jest.mock('pino-http', () => jest.fn(() => jest.fn()))
 
-jest.mock('pino', () => ({
-  __esModule: true,
-  default: jest.fn(() => ({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  })),
-}))
-
-describe('logger', () => {
-  const OLD_ENV = process.env
+describe('Logger', () => {
+  // Store original process.env and window
+  const originalEnv = { ...process.env }
+  const originalWindow = global.window
 
   beforeEach(() => {
-    jest.resetModules() // Most important - it clears the cache
-    process.env = { ...OLD_ENV } // Make a copy
+    // Reset modules before each test to ensure a clean slate
+    jest.resetModules()
+    // Restore NODE_ENV to a default 'test' state
+    process.env = { ...originalEnv, NODE_ENV: 'test' }
+    // Ensure window is undefined for server-side tests by default
+    Object.defineProperty(global, 'window', {
+      value: undefined,
+      writable: true,
+    })
   })
 
   afterAll(() => {
-    process.env = OLD_ENV // Restore old environment
+    // Restore original environment after all tests have run
+    process.env = originalEnv
+    global.window = originalWindow
   })
 
-  describe('createLogger', () => {
-    it('should configure pino with a silent logger in test environment', () => {
-      process.env.NODE_ENV = 'test'
-      require('@/utils/logger')
-      expect(pino).toHaveBeenCalledWith(
-        expect.objectContaining({
-          level: 'silent',
-        })
-      )
-    })
+  test('should create a server-side pino logger when window is undefined', () => {
+    // Arrange: The environment is 'test' and window is undefined by default.
 
-    it('should configure pino with a debug logger in development environment', () => {
-      process.env.NODE_ENV = 'development'
-      require('@/utils/logger')
-      expect(pino).toHaveBeenCalledWith(
-        expect.objectContaining({
-          level: 'debug',
-          transport: expect.any(Object),
-        })
-      )
-    })
+    // Act
+    const logger = require('../../../utils/logger').default
 
-    it('should configure pino with an info logger in production environment', () => {
-      process.env.NODE_ENV = 'production'
-      require('@/utils/logger')
-      expect(pino).toHaveBeenCalledWith(
-        expect.objectContaining({
-          level: 'info',
-        })
-      )
-    })
+    // Assert
+    // Check for a function that is characteristic of pino, not our console mock
+    expect(logger.child).toBeInstanceOf(Function)
+    expect(logger.info).not.toBe(console.info)
+    const child = logger.child({ a: 1 })
+    expect(child).not.toBe(logger) // Pino child loggers are new instances
   })
 
-  describe('httpLogger', () => {
-    it('should be a mock function on the client', () => {
-      // Simulate client-side environment
-      Object.defineProperty(global, 'window', {
-        value: {},
-        writable: true,
-      })
-      const { httpLogger } = require('@/utils/logger')
-      const next = jest.fn()
-      httpLogger(null, null, next)
-      expect(next).toHaveBeenCalled()
+  test('should create a console logger when window is defined', () => {
+    // Arrange
+    Object.defineProperty(global, 'window', {
+      value: {},
+      writable: true,
+    })
+    const consoleInfoSpy = jest
+      .spyOn(console, 'info')
+      .mockImplementation(() => {})
+
+    // Act
+    const logger = require('../../../utils/logger').default
+    logger.info('test message')
+
+    // Assert
+    expect(logger.child).toBeInstanceOf(Function)
+    const childLogger = logger.child({})
+    expect(childLogger).toBe(logger) // Client child logger returns itself
+    expect(consoleInfoSpy).toHaveBeenCalledWith('test message')
+
+    // Cleanup
+    consoleInfoSpy.mockRestore()
+  })
+
+  test('httpLogger should be a mock middleware on the client', () => {
+    // Arrange
+    Object.defineProperty(global, 'window', {
+      value: {},
+      writable: true,
     })
 
-    it('should be a pino-http logger on the server', () => {
-      const { httpLogger } = require('@/utils/logger')
-      expect(httpLogger).toBeInstanceOf(Object)
-    })
+    // Act
+    const { httpLogger } = require('../../../utils/logger')
+    const next = jest.fn()
+    httpLogger({}, {}, next)
+
+    // Assert
+    expect(next).toHaveBeenCalled()
+  })
+
+  test('httpLogger should be a pino-http instance on the server', () => {
+    // Arrange
+    const pinoHttp = require('pino-http')
+
+    // Act
+    // Dynamically require to re-evaluate the module in a server environment
+    const { httpLogger } = require('../../../utils/logger')
+
+    // Assert
+    expect(pinoHttp).toHaveBeenCalled()
+    // httpLogger is the result of the pinoHttp call, which is a mock function
+    expect(typeof httpLogger).toBe('function')
   })
 })

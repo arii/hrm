@@ -2,16 +2,16 @@
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
-import { httpLogger } from './utils/logger'
-import { env } from './lib/env' // New import
-import { serviceContainer } from './lib/serviceContainer'
-import { AppServices, createServices } from './lib/services' // New import
-import { WebSocketManager } from './lib/websocket' // New import
-import { initSocketManager } from './utils/socketManager'
-import { StateSnapshot } from './types/websocket'
+import { env } from './lib/env.js' // New import
+import { httpLogger } from './utils/logger.js'
+import { serviceContainer } from './lib/serviceContainer.js'
+import { AppServices, createServices } from './lib/services.js' // New import
+import { WebSocketManager } from './lib/websocket.js' // New import
+import { initSocketManager } from './utils/socketManager.js'
+import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
-import { checkTimerService, checkWebSocketService } from './lib/healthCheck'
-import logger from './utils/logger'
+import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
+import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
 
@@ -26,16 +26,10 @@ const expressApp = express()
 
 app.prepare().then(async () => {
   const server = createServer(expressApp)
-  expressApp.use(httpLogger)
 
-  expressApp.use((req, _res, next) => {
-    // Simulate a user being authenticated
-    // You would replace this with your actual user authentication logic
-    if (req.headers['x-user-id']) {
-      req.user = { id: req.headers['x-user-id'] as string }
-    }
-    next()
-  })
+  // --- Logger Setup ---
+  // Must be the first middleware to capture all requests
+  expressApp.use(httpLogger)
 
   // Global body parsing is intentionally omitted here.
   // Next.js API routes handle their own body parsing, and adding a global

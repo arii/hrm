@@ -1,16 +1,13 @@
 // types/express.d.ts
 import 'express'
+import { Session } from 'next-auth'
 
-declare global {
-  namespace Express {
-    export interface Request {
+declare module 'express' {
+  interface Request {
+    id?: string
+    user?: {
       id?: string
-      user?: {
-        id?: string
-      }
-      session?: {
-        id?: string
-      }
     }
+    session?: Session
   }
 }
