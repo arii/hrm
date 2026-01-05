@@ -1,15 +1,21 @@
 // File: app/components/dashboard/HrmConnectionPanel.tsx
 'use client'
 import { useMemo, useState, useEffect, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import HrTileWrapper from '@/components/HrTileWrapper'
-import WorkoutExport from '@/components/WorkoutExport'
 import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
 import { HrmData } from '@/context/WebSocketContext'
+
+// Dynamically import WorkoutExport with SSR disabled
+const WorkoutExport = dynamic(() => import('@/components/WorkoutExport'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" width={100} height={36} />,
+})
 
 const HrmConnectionPanel = () => {
   const { hrmData, timerData, connectionStatus, activeAlerts } = useWebSocket()
