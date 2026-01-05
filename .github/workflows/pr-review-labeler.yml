@@ -21,6 +21,21 @@ jobs:
             const approvedLabel = process.env.APPROVED_LABEL;
             const changesRequestedLabel = process.env.CHANGES_REQUESTED_LABEL;
 
+            async function removeLabelIfExists(labelName) {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  name: labelName,
+                });
+              } catch (error) {
+                if (!error.message.includes("Label does not exist")) {
+                  throw error;
+                }
+              }
+            }
+
             if (review.state === "approved") {
               await github.rest.issues.addLabels({
                 owner,
@@ -28,18 +43,7 @@ jobs:
                 issue_number: prNumber,
                 labels: [approvedLabel],
               });
-              try {
-                await github.rest.issues.removeLabel({
-                  owner,
-                  repo,
-                  issue_number: prNumber,
-                  name: changesRequestedLabel,
-                });
-              } catch (error) {
-                if (!error.message.includes("Label does not exist")) {
-                  throw error;
-                }
-              }
+              await removeLabelIfExists(changesRequestedLabel);
             } else if (review.state === "changes_requested") {
               await github.rest.issues.addLabels({
                 owner,
@@ -47,41 +51,8 @@ jobs:
                 issue_number: prNumber,
                 labels: [changesRequestedLabel],
               });
-              try {
-                await github.rest.issues.removeLabel({
-                  owner,
-                  repo,
-                  issue_number: prNumber,
-                  name: approvedLabel,
-                });
-              } catch (error) {
-                if (!error.message.includes("Label does not exist")) {
-                  throw error;
-                }
-              }
+              await removeLabelIfExists(approvedLabel);
             } else if (review.state === "dismissed") {
-              try {
-                await github.rest.issues.removeLabel({
-                  owner,
-                  repo,
-                  issue_number: prNumber,
-                  name: approvedLabel,
-                });
-              } catch (error) {
-                if (!error.message.includes("Label does not exist")) {
-                  throw error;
-                }
-              }
-              try {
-                await github.rest.issues.removeLabel({
-                  owner,
-                  repo,
-                  issue_number: prNumber,
-                  name: changesRequestedLabel,
-                });
-              } catch (error) {
-                if (!error.message.includes("Label does not exist")) {
-                  throw error;
-                }
-              }
+              await removeLabelIfExists(approvedLabel);
+              await removeLabelIfExists(changesRequestedLabel);
             }
