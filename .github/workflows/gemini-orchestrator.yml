@@ -4,11 +4,6 @@ name: Gemini Orchestrator
 on:
   pull_request:
     types: [opened, synchronize]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.gitignore'
   workflow_dispatch:
     inputs:
       command:
@@ -61,70 +56,87 @@ jobs:
             echo "is_conflict_resolve_comment=true" >> "$GITHUB_OUTPUT"
           fi
 
-  check-diff:
-    name: 📝 Check for file changes
+  check-paths:
+    name: 📝 Check for relevant file changes
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       has_changes: ${{ steps.check_files.outputs.has_changes }}
       last_non_empty_commit: ${{ steps.check_files.outputs.last_non_empty_commit }}
+      should_run_tests: ${{ steps.check_files.outputs.should_run_tests }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 100
-      - name: Check for file changes and find last non-empty commit
+          fetch-depth: 100 # Fetch enough history to find the merge base
+
+      - name: Check for file changes and relevant paths
         id: check_files
         run: |
-          set +e
+          set -e # Exit script on any error
 
-          # Fetch the base branch to ensure it exists locally
-          git fetch origin ${{ github.base_ref }} --depth=100 2>/dev/null || true
+          # 1. Determine the correct base for comparison
+          echo "Fetching base ref: ${{ github.base_ref }}"
+          git fetch origin ${{ github.base_ref }} --depth=100
 
-          # Get merge base between current branch and base branch
-          MERGE_BASE=$(git merge-base HEAD origin/${{ github.base_ref }} 2>/dev/null)
+          MERGE_BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
+          echo "Merge base identified as: $MERGE_BASE"
 
-          if [ -z "$MERGE_BASE" ]; then
-            # Fallback: use previous commit if merge-base fails
-            MERGE_BASE=$(git rev-parse HEAD~1 2>/dev/null)
-          fi
-
-          if [ -z "$MERGE_BASE" ]; then
-            # Last resort: compare HEAD against itself (will show no changes)
-            MERGE_BASE=$(git rev-parse HEAD)
-          fi
-
-          # Check if there are actual file changes between merge base and HEAD
-          HAS_DIFF=0
-          git diff --quiet "$MERGE_BASE" HEAD -- .
-          HAS_DIFF=$?
-
-          if [ $HAS_DIFF -eq 0 ]; then
-            # No changes found
+          # 2. Check if there are any file changes at all
+          if git diff --quiet "$MERGE_BASE" HEAD -- .; then
+            echo "::notice::No file changes detected between $MERGE_BASE and HEAD."
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "::notice::No file changes detected between $MERGE_BASE and HEAD"
-
-            # Find the last commit with file changes in the PR
-            for sha in $(git rev-list "$MERGE_BASE"..HEAD 2>/dev/null | head -100); do
-              if git cat-file -e $sha^ &>/dev/null 2>/dev/null; then
-                if ! git diff --quiet $sha^ $sha -- . ; then
-                  echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
-                  break
-                fi
-              fi
-            done
-          else
-            # Changes found
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-            echo "::notice::File changes detected between $MERGE_BASE and HEAD"
+            echo "should_run_tests=false" >> $GITHUB_OUTPUT
+            LAST_NON_EMPTY_COMMIT=$(git log -1 --pretty=format:%H "$MERGE_BASE"..HEAD -- . || git rev-parse HEAD)
+            echo "last_non_empty_commit=${LAST_NON_EMPTY_COMMIT}" >> $GITHUB_OUTPUT
+            exit 0
           fi
 
-          exit 0
+          # 3. If there are changes, determine if they are critical
+          echo "::notice::File changes detected. Checking for critical paths..."
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+          CHANGED_FILES=$(git diff --name-only "$MERGE_BASE" HEAD)
+          echo "--- Changed Files ---"
+          echo "$CHANGED_FILES"
+          echo "---------------------"
+
+          # Define patterns for critical files that require running the full test suite
+          CRITICAL_PATTERNS=(
+            "^app/"
+            "^components/"
+            "^lib/"
+            "^services/"
+            "^tests/"
+            "^types/"
+            "^utils/"
+            "^server\\.ts$"
+            "pnpm-lock.yaml$"
+            "package.json$"
+            "next.config.js$"
+            "tsconfig.*\\.json$"
+            "jest.config.cjs$"
+            "eslint.config.mjs$"
+            "\\.github/workflows/"
+            "\\.github/actions/"
+          )
+
+          # Join patterns with | for grep
+          GREP_PATTERN=$(printf "%s|" "${CRITICAL_PATTERNS[@]}")
+          GREP_PATTERN=${GREP_PATTERN%|} # Remove trailing pipe
+
+          if echo "$CHANGED_FILES" | grep -E -q "$GREP_PATTERN"; then
+            echo "::notice::✅ Critical file changes detected. Full CI suite will run."
+            echo "should_run_tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "::notice::📝 Docs-only or non-critical changes detected. Skipping test suite."
+            echo "should_run_tests=false" >> $GITHUB_OUTPUT
+          fi
   # 1. Run CI checks on every push to a PR
   pr-quality:
-    if: github.event_name == 'pull_request' && needs.check-diff.outputs.has_changes == 'true'
-    needs: [check-diff]
+    if: github.event_name == 'pull_request' && needs.check-paths.outputs.should_run_tests == 'true'
+    needs: [check-paths]
     permissions:
       contents: read
       pull-requests: write
@@ -133,14 +145,14 @@ jobs:
       issues: write
     uses: ./.github/workflows/pr-quality.yml
     with:
-      has_changes: ${{ needs.check-diff.outputs.has_changes }}
+      has_changes: ${{ needs.check-paths.outputs.has_changes }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
 
   # 2. Trigger review AFTER CI checks are done for a PR event
   review-on-pr-update:
-    if: always() && github.event_name == 'pull_request' && needs.check-diff.outputs.has_changes == 'true'
-    needs: [check-diff, pr-quality]
+    if: always() && github.event_name == 'pull_request' && needs.check-paths.outputs.has_changes == 'true'
+    needs: [check-paths, pr-quality]
     permissions:
       contents: read
       pull-requests: write
@@ -153,7 +165,7 @@ jobs:
       # to know if the tests passed or failed. `always()` is implied by `needs`.
       pr_quality_result: ${{ needs.pr-quality.result }}
       trigger_event: 'pull_request'
-      last_non_empty_commit: ${{ needs.check-diff.outputs.last_non_empty_commit }}
+      last_non_empty_commit: ${{ needs.check-paths.outputs.last_non_empty_commit }}
       failure_report_json: ${{ needs.pr-quality.outputs.failure-report-json }}
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
