@@ -1,82 +1,25 @@
 // tests/integration/socketManager.test.ts
-import { spawn, ChildProcess, execSync } from 'child_process'
 import WebSocket from 'ws'
-import http from 'http'
 import {
   UnifiedStateMessage,
   TimerCommandMessage,
   HrmInputMessage,
 } from '../../types/websocket'
+import { startServer, ServerProcess } from './test-helpers'
 
 jest.setTimeout(60000) // 60s timeout for server start and tests
 
 describe('WebSocket Full Integration Test', () => {
-  let serverProcess: ChildProcess
+  let server: ServerProcess
   const PORT = 3005 // Use a fresh port
   const wsUrl = `ws://127.0.0.1:${PORT}/ws`
-  const healthCheckUrl = `http://127.0.0.1:${PORT}/health/ready`
 
-  beforeAll((done) => {
-    try {
-      execSync('pnpm run build:server', { stdio: 'inherit' })
-    } catch (error) {
-      return done(error as Error)
-    }
-
-    serverProcess = spawn('node', ['dist/server.mjs'], {
-      env: { ...process.env, PORT: `${PORT}`, NODE_ENV: 'production' },
-      detached: true,
-    })
-
-    // Silence verbose server output in tests, but log errors
-    serverProcess.stdout?.on('data', (_data: Buffer) => {})
-    serverProcess.stderr?.on('data', (data: Buffer) =>
-      console.error(`[Server ERR]: ${data.toString().trim()}`)
-    )
-    serverProcess.on('error', (err) => done(err))
-
-    const checkHealth = () => {
-      const req = http.get(healthCheckUrl, (res) => {
-        if (res.statusCode === 200) {
-          console.log('Server is ready.')
-          clearInterval(interval)
-          clearTimeout(timeout)
-          done()
-        } else {
-          // It can be unhealthy if Spotify isn't configured, but we check for 503 as a valid "running" state.
-          if (res.statusCode === 503) {
-            console.log(
-              'Server is running but unhealthy (as expected without Spotify).'
-            )
-            clearInterval(interval)
-            clearTimeout(timeout)
-            done()
-          }
-        }
-      })
-      req.on('error', () => {})
-    }
-
-    const interval = setInterval(checkHealth, 1000)
-    const timeout = setTimeout(() => {
-      clearInterval(interval)
-      done(
-        new Error(
-          `Server failed to start or respond to health check in 50 seconds.`
-        )
-      )
-    }, 50000)
+  beforeAll(async () => {
+    server = await startServer(PORT)
   })
 
-  afterAll((done) => {
-    if (serverProcess && serverProcess.pid) {
-      try {
-        process.kill(-serverProcess.pid, 'SIGKILL')
-      } catch (_e) {
-        /* ignore */
-      }
-    }
-    setTimeout(done, 500)
+  afterAll(async () => {
+    await server.kill()
   })
 
   it('should handle a full user workflow: connect, send HR, start timer, receive updates, stop timer', (done) => {
