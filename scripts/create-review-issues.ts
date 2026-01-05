@@ -258,15 +258,3 @@ export async function run(
 }
 
 // --- Main Execution ---
-
-// istanbul ignore next
-if (require.main === module) {
-  const client = new GitHubClient()
-  const prNumber = process.env.PR_NUMBER
-  const reviewFile = 'review_result.json'
-
-  run(client, prNumber || '', reviewFile).catch((err) => {
-    console.error('Unhandled error:', err)
-    process.exit(1)
-  })
-}

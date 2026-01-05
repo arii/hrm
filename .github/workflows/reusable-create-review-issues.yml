@@ -62,4 +62,4 @@ jobs:
           GH_TOKEN: ${{ secrets.gh_token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          pnpm tsx scripts/create-review-issues.ts
+          pnpm tsx scripts/ci/run-create-review-issues.ts
