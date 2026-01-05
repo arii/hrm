@@ -4,7 +4,6 @@ import path from 'path'
 import os from 'os'
 import crypto from 'crypto'
 import { z } from 'zod'
-import { fileURLToPath } from 'url'
 
 // --- Zod Schemas for Validation ---
 
@@ -261,7 +260,8 @@ export async function run(
 // --- Main Execution ---
 
 // istanbul ignore next
-const isRunningDirectly = process.argv[1] === path.resolve(process.argv[1])
+const isRunningDirectly =
+  process.argv[1] && process.argv[1] === path.resolve(process.argv[1])
 
 // istanbul ignore next
 if (isRunningDirectly) {
