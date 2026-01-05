@@ -10,10 +10,16 @@ import { useUserSettings } from '@/context/UserSettingsContext'
 import HrTileWrapper from '@/components/HrTileWrapper'
 import { calculateTotalWorkoutCalories } from '@/lib/calorie-estimation'
 // Dynamically import WorkoutExport with SSR disabled
-const WorkoutExport = dynamic(() => import('@/components/WorkoutExport'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" width={100} height={36} />,
-})
+const WorkoutExport = dynamic(
+  () =>
+    import(
+      /* webpackChunkName: "WorkoutExport" */ '@/components/WorkoutExport'
+    ),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" width={100} height={36} />,
+  }
+)
 
 const HrmConnectionPanel = () => {
   const { hrmData, timerData, connectionStatus, activeAlerts } = useWebSocket()
