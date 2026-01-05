@@ -260,7 +260,7 @@ export async function run(
 // --- Main Execution ---
 
 // istanbul ignore next
-if (require.main === module) {
+if (import.meta.url.endsWith(process.argv[1])) {
   const client = new GitHubClient()
   const prNumber = process.env.PR_NUMBER
   const reviewFile = 'review_result.json'

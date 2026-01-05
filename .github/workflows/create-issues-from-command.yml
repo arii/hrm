@@ -14,20 +14,71 @@ permissions:
   contents: read
   issues: write
   pull-requests: read
+  actions: read # Needed for `gh run list`
 
 jobs:
+  # This job's purpose is to find the latest successful workflow run ID
+  # for the PR that triggered this workflow.
+  find-run-id:
+    name: Find successful workflow run
+    runs-on: ubuntu-latest
+    outputs:
+      run_id: ${{ steps.get_run_id.outputs.run_id }}
+      pr_number: ${{ steps.get_pr_number.outputs.pr_number }}
+
+    steps:
+      - name: Get PR Number
+        id: get_pr_number
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "pr_number=${{ github.event.inputs.pr_number }}" >> $GITHUB_OUTPUT
+          else
+            echo "pr_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get PR branch name
+        id: get_branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use GITHUB_TOKEN for read operations
+          PR_NUMBER: ${{ steps.get_pr_number.outputs.pr_number }}
+        run: |
+          BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName --jq .headRefName)
+          echo "branch=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          echo "Found branch name: ${BRANCH_NAME} for PR #${PR_NUMBER}"
+
+      - name: Find latest successful 'Gemini Review' workflow run
+        id: get_run_id
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use GITHUB_TOKEN for read operations
+          BRANCH: ${{ steps.get_branch.outputs.branch }}
+        run: |
+          echo "Searching for successful workflow runs for 'gemini-orchestrator.yml' on branch '${BRANCH}'..."
+          # The orchestrator is the parent workflow that triggers the review and artifact generation.
+          # We need its run_id to reliably find the artifact.
+          RUN_ID=$(gh run list --workflow "gemini-orchestrator.yml" --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId' || echo "")
+          if [[ -z "$RUN_ID" ]]; then
+             echo "::error::Could not find a successful run for 'gemini-orchestrator.yml' on branch '$BRANCH'."
+             exit 1
+          fi
+          echo "Found run ID: $RUN_ID"
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+
   create-issues-from-dispatch:
+    needs: find-run-id
     if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/reusable-create-review-issues.yml
     with:
-      pr_number: ${{ github.event.inputs.pr_number }}
+      pr_number: ${{ needs.find-run-id.outputs.pr_number }}
+      run_id: ${{ needs.find-run-id.outputs.run_id }}
     secrets:
       gh_token: ${{ secrets.ARI_PAT }}
 
   create-issues-from-comment:
+    needs: find-run-id
     if: github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '/create-issues')
     uses: ./.github/workflows/reusable-create-review-issues.yml
     with:
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ needs.find-run-id.outputs.pr_number }}
+      run_id: ${{ needs.find-run-id.outputs.run_id }}
     secrets:
       gh_token: ${{ secrets.ARI_PAT }}
