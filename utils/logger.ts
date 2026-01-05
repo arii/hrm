@@ -57,7 +57,7 @@ const createLogger = (): Logger => {
     }
   }
 
-  return pino(pinoOptions) as unknown as Logger // Casting to unknown first to avoid type errors
+  return pino(pinoOptions) as Logger
 }
 
 const logger = createLogger()
