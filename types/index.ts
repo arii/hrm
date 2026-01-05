@@ -50,6 +50,8 @@ export interface WorkoutColumnItem {
   label: string
   value: string | number
   unit?: string
+  title?: string
+  details?: string
 }
 
 export interface WorkoutItem {
