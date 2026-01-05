@@ -1,6 +1,6 @@
 // components/analytics/ZoneDistributionChart.tsx
-'use client'
-import React from 'react'
+'use client';
+import React from 'react';
 import {
   BarChart,
   Bar,
@@ -11,14 +11,14 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
-} from 'recharts'
-import { Paper, Typography } from '@mui/material'
-import { WorkoutDataPoint } from '@/hooks/useLocalWorkoutBuffer'
-import { HrZoneName } from '@/lib/shared/hr-zones'
-import { HR_ZONE_UI_PROPS_MAP } from '@/utils/visualization'
+} from 'recharts';
+import { Paper, Typography } from '@mui/material';
+import { WorkoutDataPoint } from '@/hooks/useLocalWorkoutBuffer';
+import { HrZoneName } from '@/lib/shared/hr-zones';
+import { HR_ZONE_UI_PROPS_MAP } from '@/utils/visualization';
 
 interface ZoneDistributionChartProps {
-  data: WorkoutDataPoint[]
+  data: WorkoutDataPoint[];
 }
 
 const ZoneDistributionChart: React.FC<ZoneDistributionChartProps> = ({
@@ -26,16 +26,16 @@ const ZoneDistributionChart: React.FC<ZoneDistributionChartProps> = ({
 }) => {
   const zoneDistribution = data.reduce(
     (acc, point) => {
-      acc[point.zone] = (acc[point.zone] || 0) + 1
-      return acc
+      acc[point.zone] = (acc[point.zone] || 0) + 1;
+      return acc;
     },
     {} as Record<HrZoneName, number>
-  )
+  );
 
   const chartData = Object.entries(zoneDistribution).map(([zone, time]) => ({
     zone,
     time,
-  }))
+  }));
 
   return (
     <Paper elevation={3} sx={{ p: 3 }}>
@@ -53,17 +53,14 @@ const ZoneDistributionChart: React.FC<ZoneDistributionChartProps> = ({
             {chartData.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
-                fill={
-                  HR_ZONE_UI_PROPS_MAP[entry.zone as HrZoneName]
-                    ?.progressColor || '#82ca9d'
-                }
+                fill={HR_ZONE_UI_PROPS_MAP[entry.zone as HrZoneName]?.progressColor}
               />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
     </Paper>
-  )
-}
+  );
+};
 
-export default ZoneDistributionChart
+export default ZoneDistributionChart;
