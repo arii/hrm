@@ -14,6 +14,7 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
+import WorkoutControls from './WorkoutControls'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
@@ -373,72 +374,14 @@ export default function ConnectView({
           </Box>
         )}
 
-        <Stack
-          spacing={2}
-          sx={{
-            mt: 3,
-            mb: 3,
-            alignItems: 'center',
-            minHeight: '48px', // Ensure consistent height for layout stability
-          }}
-        >
-          {workoutStatus === 'idle' && isConnected && (
-            <Button
-              variant="contained"
-              onClick={onStartWorkout}
-              size="large"
-              sx={{ minWidth: '200px' }}
-              aria-label="Start workout session"
-            >
-              Start Workout
-            </Button>
-          )}
-          {workoutStatus === 'paused' && (
-            <>
-              <Button
-                variant="contained"
-                onClick={onStartWorkout}
-                size="large"
-                sx={{ minWidth: '200px' }}
-                disabled={!isConnected}
-                aria-label="Resume workout session"
-              >
-                Resume Workout
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={onEndWorkout}
-                size="large"
-                sx={{ minWidth: '200px' }}
-                aria-label="End workout session"
-              >
-                End Workout
-              </Button>
-            </>
-          )}
-          {workoutStatus === 'running' && (
-            <>
-              <Button
-                variant="contained"
-                onClick={onPauseWorkout}
-                size="large"
-                sx={{ minWidth: '200px' }}
-                aria-label="Pause workout session"
-              >
-                Pause Workout
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={onEndWorkout}
-                size="large"
-                sx={{ minWidth: '200px' }}
-                aria-label="End workout session"
-              >
-                End Workout
-              </Button>
-            </>
-          )}
-        </Stack>
+        <WorkoutControls
+          workoutStatus={workoutStatus}
+          isConnected={isConnected}
+          onStart={onStartWorkout}
+          onPause={onPauseWorkout}
+          onEnd={onEndWorkout}
+          onResume={onStartWorkout}
+        />
 
         {hasStarted && (
           <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
