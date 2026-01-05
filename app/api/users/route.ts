@@ -1,7 +1,7 @@
 // app/api/users/route.ts
-import { withValidation } from '../src/lib/middleware/validation'
-import { CreateUserProfileSchema } from '../src/lib/validation/schemas'
-import { UserProfile } from '../src/types/core'
+import { withValidation } from '@/lib/middleware/validation'
+import { CreateUserProfileSchema } from '@/lib/validation/schemas'
+import { UserProfile } from '@/types/core'
 import { NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 

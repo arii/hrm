@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getBaseURL, getSpotifyCallbackURL } from '../src/utils/urls'
+import { getBaseURL, getSpotifyCallbackURL } from '@/utils/urls'
 
 /**
  * Debug endpoint to verify Spotify OAuth configuration is loaded correctly.

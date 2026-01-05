@@ -9,7 +9,7 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
-import { useWebSocket } from '../src/context/WebSocketContext'
+import { useWebSocket } from '@/context/WebSocketContext'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),

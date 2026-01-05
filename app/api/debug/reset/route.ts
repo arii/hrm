@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
-import logger from '../src/utils/logger'
+import logger from '@/utils/logger'
 
 export async function POST() {
   if (process.env.NODE_ENV !== 'development') {

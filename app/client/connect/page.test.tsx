@@ -3,14 +3,14 @@
  */
 import { render } from '@testing-library/react'
 import ConnectPage from './page'
-import * as BluetoothHRMHook from '../src/hooks/useBluetoothHRM'
-import * as WebSocketContext from '../src/context/WebSocketContext'
-import { UserSettingsProvider } from '../src/context/UserSettingsContext'
+import * as BluetoothHRMHook from '@/hooks/useBluetoothHRM'
+import * as WebSocketContext from '@/context/WebSocketContext'
+import { UserSettingsProvider } from '@/context/UserSettingsContext'
 
 // Mock the BluetoothHRM hook
-jest.mock('../src/hooks/useBluetoothHRM')
+jest.mock('@/hooks/useBluetoothHRM')
 // Mock the WebSocket context
-jest.mock('../src/context/WebSocketContext')
+jest.mock('@/context/WebSocketContext')
 
 const mockAutoConnect = jest.fn()
 const mockConnectAndStream = jest.fn()

@@ -10,13 +10,13 @@ import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
-import HrTile from '../src/components/HrTile'
-import BottomNavBar from '../src/components/BottomNavBar'
+import HrTile from '@/components/HrTile'
+import BottomNavBar from '@/components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { useState, useEffect } from 'react'
-import logger from '../src/utils/logger'
-import { MeasurementSystem, Gender } from '../src/types/core'
+import logger from '@/utils/logger'
+import { MeasurementSystem, Gender } from '@/types/core'
 import {
   ToggleButtonGroup,
   ToggleButton,

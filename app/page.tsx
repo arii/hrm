@@ -8,11 +8,11 @@ import Container from '@mui/material/Container'
 import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
-import DashboardSectionLoadingSkeleton from '../src/components/DashboardSectionLoadingSkeleton'
+import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
-import HrmConnectionPanel from '../src/components/HrmConnectionPanel'
-import TimerDisplay from '../src/components/TimerDisplay'
-import { useAudio } from '../src/hooks/useAudio'
+import HrmConnectionPanel from '@/components/HrmConnectionPanel'
+import TimerDisplay from '@/components/TimerDisplay'
+import { useAudio } from '@/hooks/useAudio'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.

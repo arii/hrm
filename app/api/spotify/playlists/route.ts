@@ -3,9 +3,9 @@
 // This endpoint is only used by app/client/spotify-selection/page.tsx
 
 import { NextResponse, NextRequest } from 'next/server'
-import { withErrorHandler } from '../src/lib/middleware/errorHandler'
-import { getAuthenticatedSpotifyApi } from '../src/lib/spotify/sdk'
-import { PresetPlaylistDto, UserPlaylistDto } from '../src/lib/dto/spotify.dto'
+import { withErrorHandler } from '@/lib/middleware/errorHandler'
+import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
+import { PresetPlaylistDto, UserPlaylistDto } from '@/lib/dto/spotify.dto'
 
 /**
  * API route to fetch preset and user Spotify playlists.

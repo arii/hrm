@@ -1,8 +1,8 @@
-import { ApiError } from '../src/lib/errors'
+import { ApiError } from '@/lib/errors'
 import * as fs from 'fs'
 import { NextResponse } from 'next/server'
 import * as path from 'path'
-import logger from '../src/utils/logger'
+import logger from '@/utils/logger'
 
 /**
  * API route to clear the persisted Spotify token file.

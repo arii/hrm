@@ -1,23 +1,23 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useUserSettings } from '../src/context/UserSettingsContext'
-import useBluetoothHRM from '../src/hooks/useBluetoothHRM'
-import { useWebSocket } from '../src/context/WebSocketContext'
-import { formatDuration } from '../src/lib/utils'
+import { useUserSettings } from '@/context/UserSettingsContext'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { useWebSocket } from '@/context/WebSocketContext'
+import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
-import { useWorkoutSession } from '../src/hooks/useWorkoutSession'
-import { MeasurementSystem } from '../src/types/core'
-import { toKg, toDisplay } from '../src/utils/units'
-import { useCalorieCalculator } from '../src/hooks/useCalorieCalculator'
-import { useHrZone } from '../src/hooks/useHrZone'
-import { useHeightInput } from '../src/hooks/useHeightInput'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { MeasurementSystem } from '@/types/core'
+import { toKg, toDisplay } from '@/utils/units'
+import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
+import { useHrZone } from '@/hooks/useHrZone'
+import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
   validateWeightValue,
-} from '../src/lib/validation/userMetrics'
+} from '@/lib/validation/userMetrics'
 import throttle from 'lodash.throttle'
-import { HrmInputMessage } from '../src/types/websocket'
-import logger from '../src/utils/logger'
+import { HrmInputMessage } from '@/types/websocket'
+import logger from '@/utils/logger'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
