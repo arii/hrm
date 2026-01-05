@@ -59,4 +59,29 @@ jobs:
                   throw error;
                 }
               }
+            } else if (review.state === "dismissed") {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  name: approvedLabel,
+                });
+              } catch (error) {
+                if (!error.message.includes("Label does not exist")) {
+                  throw error;
+                }
+              }
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  name: changesRequestedLabel,
+                });
+              } catch (error) {
+                if (!error.message.includes("Label does not exist")) {
+                  throw error;
+                }
+              }
             }
