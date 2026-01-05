@@ -2,4 +2,4 @@
 module.exports = {
   ...jest.requireActual('recharts'),
   ResponsiveContainer: ({ children }) => children,
-};
+}
