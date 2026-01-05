@@ -5,17 +5,16 @@ import { CALORIE_DEFAULTS } from '../utils/constants.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import logger from '../utils/logger.js'
 
-// Track internal state for calculations (not sent to client)
-const clientSessionState = new Map<
-  string,
-  { lastUpdate: number; accumulatedCalories: number }
->()
-
 export class HrmService {
   private hrmDataRepository: HrmDataRepository
+  private clientSessionState: Map<
+    string,
+    { lastUpdate: number; accumulatedCalories: number }
+  >
 
   constructor() {
     this.hrmDataRepository = new HrmDataRepository()
+    this.clientSessionState = new Map()
   }
 
   public initializeClient(clientId: string) {
@@ -28,7 +27,7 @@ export class HrmService {
         calories: 0,
       }
       this.hrmDataRepository.save(newClient)
-      clientSessionState.set(clientId, {
+      this.clientSessionState.set(clientId, {
         lastUpdate: Date.now(),
         accumulatedCalories: 0,
       })
@@ -63,15 +62,15 @@ export class HrmService {
     data: { value: number | null; calories?: number | null }
   ) {
     const existingData = this.hrmDataRepository.findById(clientId)
-    const sessionState = clientSessionState.get(clientId)
+    const sessionState = this.clientSessionState.get(clientId)
     if (existingData && sessionState) {
       let finalCalories = 0
       if (typeof data.calories === 'number') {
-        const clientCalories = data.calories
-        const serverCalories = sessionState.accumulatedCalories
-        const diff = Math.abs(clientCalories - serverCalories)
+        const clientCalories = data.calories;
+        const serverCalories = sessionState.accumulatedCalories;
+        const diff = Math.abs(clientCalories - serverCalories);
 
-        if (diff > 50) {
+        if (serverCalories > 0 && diff > 50) {
           logger.warn(
             {
               clientId,
@@ -79,11 +78,11 @@ export class HrmService {
               serverCalories,
             },
             'Large calorie discrepancy detected. Rejecting client update.'
-          )
-          finalCalories = serverCalories
+          );
+          finalCalories = serverCalories;
         } else {
-          finalCalories = clientCalories
-          sessionState.accumulatedCalories = finalCalories
+          finalCalories = clientCalories;
+          sessionState.accumulatedCalories = finalCalories;
         }
       } else {
         const now = Date.now()
@@ -115,7 +114,12 @@ export class HrmService {
 
   public cleanupClient(clientId: string) {
     this.hrmDataRepository.deleteById(clientId)
-    clientSessionState.delete(clientId)
+    this.clientSessionState.delete(clientId)
+  }
+
+  public clear() {
+    this.hrmDataRepository.clear()
+    this.clientSessionState.clear()
   }
 
   public getHrmData() {
