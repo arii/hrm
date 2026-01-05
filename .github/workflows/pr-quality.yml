@@ -546,6 +546,7 @@ jobs:
         shell: bash
         env:
           NODE_ENV: production
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure token is available for the reporter
         run: |
           set -o pipefail
           ./scripts/ci/run-infra-tests.sh prod
@@ -627,6 +628,9 @@ jobs:
         id: unit-tests
         shell: bash
         env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure token is available for the reporter
           GITHUB_JOB: ${{ github.job.name }}
         run: |
           set -o pipefail
