@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.24.0](https://github.com/arii/hrm/compare/hrm-v0.23.0...hrm-v0.24.0) (2026-01-05)
+
+
+### Features
+
+* **small:** fix: Correctly check NEXT_PUBLIC_USE_NATIVE_TABLE env var ([#3197](https://github.com/arii/hrm/issues/3197)) ([b3a8fe2](https://github.com/arii/hrm/commit/b3a8fe2dddf40810db5c5afbc361997c5688990b))
+* **small:** Manage Configuration via Environment Variables ([#3186](https://github.com/arii/hrm/issues/3186)) ([3b61cc0](https://github.com/arii/hrm/commit/3b61cc026d93ad1d1b4e5e60b8678cb78d78771e))
+* **small:** Refactor: Extract WorkoutControls component ([#3199](https://github.com/arii/hrm/issues/3199)) ([c7b079f](https://github.com/arii/hrm/commit/c7b079f79eead4844afa7ae584d973f52b5b910d))
+
+
+### Bug Fixes
+
+* Correct Regex Syntax in PR Enrichment Workflow ([#3187](https://github.com/arii/hrm/issues/3187)) ([536d570](https://github.com/arii/hrm/commit/536d570b2f87399929462d1df46bffdb9a69a232))
+
 ## [0.23.0](https://github.com/arii/hrm/compare/hrm-v0.22.0...hrm-v0.23.0) (2026-01-05)
 
 

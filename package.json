@@ -1,6 +1,6 @@
 {
   "name": "hrm",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -82,7 +82,6 @@
     "next-auth": "^4.24.13",
     "notistack": "^3.0.2",
     "pino": "^10.1.0",
-    "pino-http": "^11.0.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "uuid": "^9.0.1",
