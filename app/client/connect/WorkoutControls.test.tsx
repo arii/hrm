@@ -3,6 +3,7 @@
  */
 import { render, screen, fireEvent } from '@testing-library/react'
 import WorkoutControls from './WorkoutControls'
+import { WorkoutStatus } from '../../../types/workout'
 
 describe('WorkoutControls', () => {
   const mockOnStart = jest.fn()
@@ -17,7 +18,7 @@ describe('WorkoutControls', () => {
   it('renders Start Workout button when idle and connected', () => {
     render(
       <WorkoutControls
-        workoutStatus="idle"
+        workoutStatus={'idle' as WorkoutStatus}
         isConnected={true}
         onStart={mockOnStart}
         onPause={mockOnPause}
@@ -36,7 +37,7 @@ describe('WorkoutControls', () => {
   it('does not render Start Workout button when not connected', () => {
     render(
       <WorkoutControls
-        workoutStatus="idle"
+        workoutStatus={'idle' as WorkoutStatus}
         isConnected={false}
         onStart={mockOnStart}
         onPause={mockOnPause}
@@ -52,7 +53,7 @@ describe('WorkoutControls', () => {
   it('renders Pause and End buttons when running', () => {
     render(
       <WorkoutControls
-        workoutStatus="running"
+        workoutStatus={'running' as WorkoutStatus}
         isConnected={true}
         onStart={mockOnStart}
         onPause={mockOnPause}
@@ -77,7 +78,7 @@ describe('WorkoutControls', () => {
   it('renders Resume and End buttons when paused', () => {
     render(
       <WorkoutControls
-        workoutStatus="paused"
+        workoutStatus={'paused' as WorkoutStatus}
         isConnected={true}
         onStart={mockOnStart}
         onPause={mockOnPause}
@@ -102,7 +103,7 @@ describe('WorkoutControls', () => {
   it('disables Resume button when paused and not connected', () => {
     render(
       <WorkoutControls
-        workoutStatus="paused"
+        workoutStatus={'paused' as WorkoutStatus}
         isConnected={false}
         onStart={mockOnStart}
         onPause={mockOnPause}

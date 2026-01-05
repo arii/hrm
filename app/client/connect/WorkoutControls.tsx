@@ -1,8 +1,10 @@
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 
+import { WorkoutStatus } from '../../../types/workout'
+
 interface WorkoutControlsProps {
-  workoutStatus: 'idle' | 'running' | 'paused'
+  workoutStatus: WorkoutStatus
   isConnected: boolean
   onStart: () => void
   onPause: () => void

@@ -18,6 +18,7 @@ import WorkoutControls from './WorkoutControls'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
+import { WorkoutStatus } from '../../../types/workout'
 import {
   ToggleButtonGroup,
   ToggleButton,
@@ -65,7 +66,7 @@ interface ConnectViewProps {
   bluetoothConnected: boolean
   hasStarted: boolean
   onReset: () => void
-  workoutStatus: 'idle' | 'running' | 'paused'
+  workoutStatus: WorkoutStatus
   onStartWorkout: () => void
   onPauseWorkout: () => void
   onEndWorkout: () => void
