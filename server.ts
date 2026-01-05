@@ -1,8 +1,9 @@
 // server.ts (Refactored)
-import express from 'express'
+import express, { type RequestHandler } from 'express'
 import { createServer } from 'http'
 import next from 'next'
 import { env } from './lib/env.js' // New import
+import { httpLogger } from './utils/logger.server.js'
 import { serviceContainer } from './lib/serviceContainer.js'
 import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
@@ -10,7 +11,7 @@ import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
-import logger from './utils/logger.js'
+import logger from './utils/logger.server.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
 
@@ -25,6 +26,10 @@ const expressApp = express()
 
 app.prepare().then(async () => {
   const server = createServer(expressApp)
+
+  // --- Logger Setup ---
+  // Must be the first middleware to capture all requests
+  expressApp.use(httpLogger as RequestHandler)
 
   // Global body parsing is intentionally omitted here.
   // Next.js API routes handle their own body parsing, and adding a global
