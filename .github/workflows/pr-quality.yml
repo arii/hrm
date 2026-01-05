@@ -1015,8 +1015,7 @@ jobs:
             exit 1
           fi
 
-          # Ensure that if `jq` returns 'null', it's treated as an empty string.
-          PARENT_COMMIT_RUN_ID=$(gh run list --workflow "pr-quality.yml" --commit "${{ github.event.pull_request.base.sha }}" --status success --limit 1 --json databaseId -q '.[0].databaseId' | { grep -v '^null$' || true; } )
+          PARENT_COMMIT_RUN_ID=$(gh run list --workflow "pr-quality.yml" --commit "${{ github.event.pull_request.base.sha }}" --status success --limit 1 --json databaseId -q '.[0].databaseId' | grep -v '^null' )
 
           if [ -z "$PARENT_COMMIT_RUN_ID" ]; then
             echo "::error::Could not find a successful run for the parent commit."
