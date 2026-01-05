@@ -1,8 +1,9 @@
 // File: lib/middleware/rateLimiter.ts
 import rateLimit from 'express-rate-limit'
+import { Express } from 'express'
 import { env } from '../env'
 
-export const setupRateLimiter = (expressApp: any) => {
+export const setupRateLimiter = (expressApp: Express) => {
   if (env.NODE_ENV !== 'test') {
     const spotifyApiLimiter = rateLimit({
       windowMs: 1 * 60 * 1000, // 1 minute

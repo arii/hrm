@@ -1,9 +1,9 @@
 // File: lib/middleware/staticAssets.ts
-import express from 'express'
+import express, { Express } from 'express'
 import path from 'path'
 import { env } from '../env'
 
-export const setupStaticAssets = (expressApp: any) => {
+export const setupStaticAssets = (expressApp: Express) => {
   if (env.NODE_ENV === 'production') {
     const isDeployment = process.env.IS_DEPLOYMENT === 'true'
     const nextDir = isDeployment ? '.next_prod' : '.next'

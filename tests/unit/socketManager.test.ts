@@ -106,9 +106,17 @@ class MockWebSocket extends EventEmitter {
   }
 }
 
+import { HrmService } from '../../services/hrmService'
+
+type MockServices = {
+  tabataService: jest.Mocked<TabataTimer>
+  spotifyService: jest.Mocked<SpotifyPolling>
+  hrmService: jest.Mocked<HrmService>
+}
+
 describe('WebSocket Manager', () => {
   let mockWss: jest.Mocked<WebSocketServer>
-  let mockServices: any
+  let mockServices: MockServices
   let getSnapshot: () => StateSnapshot
   let mockWs: MockWebSocket
 
