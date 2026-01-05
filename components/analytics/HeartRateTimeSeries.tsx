@@ -1,6 +1,6 @@
 // components/analytics/HeartRateTimeSeries.tsx
-'use client';
-import React from 'react';
+'use client'
+import React from 'react'
 import {
   LineChart,
   Line,
@@ -10,12 +10,12 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
-import { Paper, Typography } from '@mui/material';
-import { WorkoutDataPoint } from '@/hooks/useLocalWorkoutBuffer';
+} from 'recharts'
+import { Paper, Typography } from '@mui/material'
+import { WorkoutDataPoint } from '@/hooks/useLocalWorkoutBuffer'
 
 interface HeartRateTimeSeriesProps {
-  data: WorkoutDataPoint[];
+  data: WorkoutDataPoint[]
 }
 
 const HeartRateTimeSeries: React.FC<HeartRateTimeSeriesProps> = ({ data }) => {
@@ -43,7 +43,7 @@ const HeartRateTimeSeries: React.FC<HeartRateTimeSeriesProps> = ({ data }) => {
         </LineChart>
       </ResponsiveContainer>
     </Paper>
-  );
-};
+  )
+}
 
-export default HeartRateTimeSeries;
+export default HeartRateTimeSeries
