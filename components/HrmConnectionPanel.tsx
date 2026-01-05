@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import HrTileWrapper from '@/components/HrTileWrapper'
-import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
+import { calculateTotalWorkoutCalories } from '@/lib/calorie-estimation'
 import { HrmData } from '@/context/WebSocketContext'
 
 // Dynamically import WorkoutExport with SSR disabled
@@ -68,16 +68,15 @@ const HrmConnectionPanel = () => {
   }, [timerData.timeRemaining, isRecording, myClientId]) // Re-run on each timer tick
 
   const totalCalories = useMemo(() => {
-    if (
-      !userSettings.userAge ||
-      !userSettings.userWeight ||
-      workoutRecords.length === 0
-    ) {
+    if (workoutRecords.length === 0) {
       return 0
     }
-    return estimateCaloriesBurned({
-      age: userSettings.userAge,
-      weight: userSettings.userWeight,
+    // Provide default values if user settings are not yet available or are undefined
+    const safeUserAge = userSettings.userAge ?? 30 // Default age if not set
+    const safeUserWeight = userSettings.userWeight ?? 70 // Default weight in kg if not set
+    return calculateTotalWorkoutCalories({
+      age: safeUserAge,
+      weight: safeUserWeight,
       gender:
         userSettings.gender === 'MALE'
           ? 'male'
