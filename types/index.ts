@@ -46,6 +46,22 @@ export interface EnhancedHrmDataForTile extends HrmData {
   isActive?: boolean
 }
 
+export interface WorkoutColumnItem {
+  label: string
+  value: string | number
+  unit?: string
+}
+
+export interface WorkoutItem {
+  time: number
+  [key: string]: number
+}
+
+export interface WorkoutData {
+  items: WorkoutItem[]
+  duration: number
+}
+
 // NOTE: We are intentionally not using the UserSettings from the context here,
 // as the context itself handles persistence. This type is for component props
 // where only the settings values are needed.
