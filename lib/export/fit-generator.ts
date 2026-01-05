@@ -27,15 +27,7 @@ export const generateFitFile = (data: FitExportData): Blob => {
     time_created: startFitTime,
   })
 
-  // 2. User Profile Message (Optional)
-  if (data.age && data.weightKg) {
-    fitWriter.writeMessage('user_profile', {
-      weight: data.weightKg,
-      age: data.age,
-    })
-  }
-
-  // 3. Session Message (Summary)
+  // 2. Session Message (Summary)
   fitWriter.writeMessage('session', {
     start_time: startFitTime,
     total_elapsed_time: data.durationSeconds,
@@ -47,6 +39,14 @@ export const generateFitFile = (data: FitExportData): Blob => {
       new Date(data.startTime + data.durationSeconds * 1000)
     ),
   })
+
+  // 3. User Profile Message (Optional)
+  if (data.age && data.weightKg) {
+    fitWriter.writeMessage('user_profile', {
+      weight: data.weightKg,
+      age: data.age,
+    })
+  }
 
   // 4. Record Messages (Time Series)
   data.records.forEach((record) => {
