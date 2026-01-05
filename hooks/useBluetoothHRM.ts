@@ -105,6 +105,14 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  * );
  * ```
  */
+// Define a custom error class for specific error handling
+class SavedDeviceNotFoundError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'SavedDeviceNotFoundError'
+  }
+}
+
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
     dataLivenessTimeoutMs = 10000,
@@ -285,7 +293,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     disconnect()
     try {
       localStorage.removeItem('hrm_device_id')
-      localStorage.removeItem('hrm_device_id')
       setDeviceStatus('Saved device cleared. Ready for new connection.')
     } catch (e) {
       logger.warn({ error: e }, 'Error during device forget')
@@ -387,7 +394,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           if (abortControllerRef.current) {
             abortControllerRef.current.abort()
           }
-          setCookie('hrm_device_id', '', -1)
+          localStorage.removeItem('hrm_device_id')
           setDeviceStatus('Saved device cleared. Ready for new connection.')
           setSavedDevice(null)
           setBatteryLevel(null)
@@ -513,7 +520,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (abortControllerRef.current) {
               abortControllerRef.current.abort()
             }
-            setCookie('hrm_device_id', '', -1)
+            localStorage.removeItem('hrm_device_id')
             setDeviceStatus('Saved device cleared. Ready for new connection.')
             setSavedDevice(null)
             setBatteryLevel(null)
@@ -606,7 +613,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 'Saved device not found in available devices list. Clearing cookie.'
               )
               localStorage.removeItem('hrm_device_id')
-              throw new Error('Saved device not found')
+              throw new SavedDeviceNotFoundError('Saved device not found')
             }
           } else if (silent) {
             // If in silent mode and no saved device, just stop and reset status.
@@ -635,9 +642,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           handleConnectionError(error)
         } else {
           logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
+          // Only reset status on failure for silent mode
+        setDeviceStatus('Disconnected')
         }
-          // Always reset status on failure for silent mode
-          setDeviceStatus('Disconnected')
 
         if (!silent) {
           throw error
@@ -659,15 +666,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       logger.info('Starting auto-connect to saved device...')
       setDeviceStatus('Connecting to saved device...')
       await connectAndStream(undefined, undefined, { silent: true })
-      logger.info('Auto-connect succeeded')
+      // If connectAndStream was successful, the status will be 'Connected...'.
+      // If it failed silently, it will be 'Disconnected'. We only need to handle the success message.
+      if (statusRef.current.startsWith('Connected')) {
+        logger.info('Auto-connect succeeded')
+      }
     } catch (error) {
+      // This catch block might be redundant if connectAndStream's silent mode handles all errors.
+      // However, it's a good failsafe.
       const errorMsg = error instanceof Error ? error.message : String(error)
       logger.info(
         { errorMsg },
-        'Auto-connect failed, user can connect manually'
+        'Auto-connect failed unexpectedly, user can connect manually'
       )
-
-      if (errorMsg.includes('Saved device not found')) {
+      if (error instanceof SavedDeviceNotFoundError) {
         setDeviceStatus(
           'Saved device not found. Please re-select from the list.'
         )
