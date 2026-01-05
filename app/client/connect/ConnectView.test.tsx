@@ -3,6 +3,7 @@
  */
 import { render, screen, fireEvent } from '@testing-library/react'
 import ConnectView from './ConnectView'
+import { Gender, MeasurementSystem } from '../../../types/core'
 
 describe('ConnectView', () => {
   const defaultProps = {
@@ -12,19 +13,22 @@ describe('ConnectView', () => {
     setUserName: jest.fn(),
     userAge: '30',
     setUserAge: jest.fn(),
-    userHeight: '5.9',
+    onAgeBlur: jest.fn(),
+    ageError: null,
+    userHeight: { cm: '175', feet: '5', inches: '9' },
     setUserHeight: jest.fn(),
+    onHeightBlur: jest.fn(),
+    heightError: null,
     userWeight: '154',
     setUserWeight: jest.fn(),
-    unit: 'imperial' as 'metric' | 'imperial',
-    setUnit: jest.fn(),
-    ageError: null,
-    heightError: null,
+    onWeightBlur: jest.fn(),
     weightError: null,
-    validateAge: jest.fn(),
-    validateHeight: jest.fn(),
-    validateWeight: jest.fn(),
+    gender: 'MALE' as Gender,
+    setGender: jest.fn(),
+    unitSystem: 'IMPERIAL' as MeasurementSystem,
+    onUnitChange: jest.fn(),
     isConnected: false,
+    isDataStale: false,
     deviceStatus: 'Disconnected',
     batteryLevel: null,
     onConnect: jest.fn(),
@@ -39,6 +43,7 @@ describe('ConnectView', () => {
     onReset: jest.fn(),
     workoutStatus: 'idle' as 'idle' | 'running' | 'paused',
     onStartWorkout: jest.fn(),
+    onPauseWorkout: jest.fn(),
     onEndWorkout: jest.fn(),
   }
 
@@ -60,24 +65,33 @@ describe('ConnectView', () => {
     expect(screen.getByText('Invalid weight')).toBeInTheDocument()
   })
 
-  it('calls setUnit when the unit toggle is clicked', () => {
+  it('calls onUnitChange when the unit toggle is clicked', () => {
     render(<ConnectView {...defaultProps} />)
-    const metricButton = screen.getByText('Metric (kg, cm)')
+    const metricButton = screen.getByText('Metric (kg)')
     fireEvent.click(metricButton)
-    expect(defaultProps.setUnit).toHaveBeenCalledWith('metric')
+    expect(defaultProps.onUnitChange).toHaveBeenCalledWith('METRIC')
   })
 
   it('renders metric inputs when unit is metric', () => {
-    const props = { ...defaultProps, unit: 'metric' as 'metric' | 'imperial' }
+    const props = { ...defaultProps, unitSystem: 'METRIC' as MeasurementSystem }
     render(<ConnectView {...props} />)
+    // These labels are inside the UserSettings component
     expect(screen.getByLabelText('Your Height (cm)')).toBeInTheDocument()
     expect(screen.getByLabelText('Your Weight (kg)')).toBeInTheDocument()
   })
 
   it('renders imperial inputs when unit is imperial', () => {
     render(<ConnectView {...defaultProps} />)
+    // These labels are inside the UserSettings component
     expect(screen.getByLabelText('Feet')).toBeInTheDocument()
     expect(screen.getByLabelText('Inches')).toBeInTheDocument()
     expect(screen.getByLabelText('Your Weight (lbs)')).toBeInTheDocument()
+  })
+
+  it('calls setGender when a gender radio button is clicked', () => {
+    render(<ConnectView {...defaultProps} />)
+    const femaleRadio = screen.getByLabelText('Female')
+    fireEvent.click(femaleRadio)
+    expect(defaultProps.setGender).toHaveBeenCalledWith('FEMALE')
   })
 })
