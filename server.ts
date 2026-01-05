@@ -2,6 +2,7 @@
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
+import { httpLogger } from './utils/logger'
 import { env } from './lib/env.js' // New import
 import { serviceContainer } from './lib/serviceContainer.js'
 import { AppServices, createServices } from './lib/services.js' // New import
@@ -25,6 +26,18 @@ const expressApp = express()
 
 app.prepare().then(async () => {
   const server = createServer(expressApp)
+  expressApp.use(httpLogger)
+
+  // Add a simple middleware to attach user context to the request
+  // In a real application, this would be your authentication middleware
+  expressApp.use((req: any, res, next) => {
+    // Simulate a user being authenticated
+    // You would replace this with your actual user authentication logic
+    if (req.headers['x-user-id']) {
+      req.user = { id: req.headers['x-user-id'] }
+    }
+    next()
+  })
 
   // Global body parsing is intentionally omitted here.
   // Next.js API routes handle their own body parsing, and adding a global
