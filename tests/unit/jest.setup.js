@@ -1,5 +1,9 @@
 // tests/unit/jest.setup.js
 /* eslint-disable @typescript-eslint/no-var-requires */
+
+// Polyfill for fetch API - must be imported before other modules that use fetch
+import 'whatwg-fetch'
+
 require('@testing-library/jest-dom')
 
 // Set up environment variables for tests

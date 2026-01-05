@@ -1,57 +1,42 @@
-/** @type {import('jest').Config} */
-const config = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/tests/unit'],
-  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-  coverageDirectory: 'coverage',
-  reporters: [
-    'default',
-    [
-      'jest-junit',
-      {
-        outputDirectory: './test-results', // The directory where the XML file will be saved
-        outputName: 'unit-results.xml', // The name of the JUnit XML file
-        suiteNameTemplate: '{filepath}', // Optional: customize the suite name
-        classNameTemplate: '{classname}', // Optional: customize the class name
-        titleTemplate: '{title}', // Optional: customize the test title
-      },
-    ],
-  ],
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const nextJest = require('next/jest')
 
-  collectCoverageFrom: [
-    'src/services/**/*.ts',
-    'src/utils/socketManager.ts',
-    '!**/*.d.ts',
-    '!**/node_modules/**',
-  ],
-  transform: {
-    '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
-    '^.+\\.(ts|tsx)$': [
-      'ts-jest',
-      {
-        useESM: true,
-        tsconfig: {
-          module: 'ES2022',
-          moduleResolution: 'bundler', // bundler is a better choice for modern apps
-          esModuleInterop: true,
-          allowSyntheticDefaultImports: true,
-        },
-      },
-    ],
-  },
-  transformIgnorePatterns: [
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
-  ],
-  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+const createJestConfig = nextJest({
+  dir: './',
+})
+
+const customJestConfig = {
+  moduleDirectories: ['node_modules', '<rootDir>/'],
+  testEnvironment: 'jest-environment-jsdom',
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '<rootDir>/$1',
     '^@/app/(.*)$': '<rootDir>/app/$1',
+    '^@/scripts/(.*)$': '<rootDir>/scripts/$1',
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testTimeout: 10000,
-  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
+  testPathIgnorePatterns: [
+    '<rootDir>/tests/playwright/',
+    '<rootDir>/.next/',
+    '<rootDir>/node_modules/',
+  ],
+  transformIgnorePatterns: [
+    '/node_modules/(?!jose|openid-client|cheerio)',
+    '\\.pnp\\.[^\\/]+$',
+  ],
+  coverageDirectory: '<rootDir>/coverage',
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/types/**/*.ts',
+    '!src/app/api-examples/**/*.{ts,tsx}',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
 }
 
-module.exports = config
+module.exports = createJestConfig(customJestConfig)

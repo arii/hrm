@@ -1,123 +1,183 @@
+import { jest } from '@jest/globals'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { parseConflicts } from '../../../scripts/utils/git-conflicts'
-import { readFile } from 'fs/promises'
-import { mocked } from 'jest-mock'
-import * as geminiClient from '../../../scripts/gemini-client'
+import * as conflictResolver from '@/scripts/conflict-resolver'
+import * as gitConflicts from '@/scripts/utils/git-conflicts'
+import * as fs from 'fs/promises'
 
+// Mock dependencies
 jest.mock('@google/generative-ai')
-jest.mock('@/scripts/utils/git-conflicts')
 jest.mock('fs/promises', () => ({
   readFile: jest.fn(),
   writeFile: jest.fn(),
 }))
-
-const mockedJsonProcessorProcess = jest.fn()
-jest.mock('@/scripts/gemini-client', () => ({
-  generateContentWithFallback: jest.fn(),
-  handleError: jest.fn(),
-  writeOutput: jest.fn(),
-  JsonProcessor: jest.fn().mockImplementation(() => {
-    return { process: mockedJsonProcessorProcess }
-  }),
+jest.mock('@/scripts/utils/git-conflicts', () => ({
+  getConflictDetails: jest.fn(),
 }))
 
-const mockedParseConflicts = mocked(parseConflicts)
-const mockedGoogleGenerativeAI = mocked(GoogleGenerativeAI)
-const mockedReadFile = mocked(readFile)
+describe('Conflict Resolver Script', () => {
+  let mockGenerateContent: jest.Mock
+  let consoleLogSpy: jest.SpyInstance
+  let consoleErrorSpy: jest.SpyInstance
 
-// It's important to use the mocked namespace to get the typed mock functions
-const mockedGenerateContentWithFallback = mocked(
-  geminiClient.generateContentWithFallback
-)
-const mockedHandleError = mocked(geminiClient.handleError)
-const mockedWriteOutput = mocked(geminiClient.writeOutput)
-
-describe('runConflictResolution', () => {
   beforeEach(() => {
+    // Mock the AI model
+    mockGenerateContent = jest.fn()
+    const mockGetGenerativeModel = jest.fn(() => ({
+      generateContent: mockGenerateContent,
+    }))
+    ;(GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
+      getGenerativeModel: mockGetGenerativeModel,
+    }))
+
+    // Spy on console outputs
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
     jest.clearAllMocks()
-    mockedGoogleGenerativeAI.mockImplementation(
-      () =>
-        ({
-          getGenerativeModel: () => ({
-            generateContent: jest.fn(),
-          }),
-        }) as jest.Mock
-    )
+    consoleLogSpy.mockRestore()
+    consoleErrorSpy.mockRestore()
   })
 
-  it('should generate a report for valid conflicts', async () => {
-    const { runConflictResolution } =
-      await import('../../../scripts/conflict-resolver')
-    mockedReadFile.mockResolvedValue('file1.ts\0file2.ts\0')
-    mockedParseConflicts
-      .mockResolvedValueOnce([
-        {
-          id: 'conflict-1',
-          file: 'pr-code/file1.ts',
-          startLine: 1,
-          endLine: 3,
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          id: 'conflict-2',
-          file: 'pr-code/file2.ts',
-          startLine: 10,
-          endLine: 12,
-        },
-      ])
-    mockedGenerateContentWithFallback.mockResolvedValue('some generated text')
-    mockedJsonProcessorProcess
-      .mockReturnValueOnce({
-        success: true,
-        data: [{ id: 'conflict-1', resolution: 'ab' }],
+  describe('resolveConflicts', () => {
+    it('should process a single conflict file successfully', async () => {
+      // Arrange
+      const mockConflictDetails = {
+        filePath: 'test.js',
+        fileName: 'test.js',
+        originalContent: '<<<<<<< HEAD\n// old code\n=======\n// new code\n>>>>>>> feature',
+        conflictMarker: '<<<<<<< HEAD',
+      }
+      const mockResolvedContent = '// resolved code'
+      ;(gitConflicts.getConflictDetails as jest.Mock).mockResolvedValue(
+        mockConflictDetails
+      )
+      mockGenerateContent.mockResolvedValue({
+        response: { text: () => mockResolvedContent },
       })
-      .mockReturnValueOnce({
-        success: true,
-        data: [{ id: 'conflict-2', resolution: 'cd' }],
-      })
+      ;(fs.writeFile as jest.Mock).mockResolvedValue(undefined)
 
-    await runConflictResolution(
-      new GoogleGenerativeAI(''),
-      'conflicts.txt',
-      'report.md'
-    )
+      // Act
+      await conflictResolver.resolveConflicts(['test.js'])
 
-    expect(mockedWriteOutput).toHaveBeenCalledTimes(1)
-    const writtenContent = mockedWriteOutput.mock.calls[0][0] as string
-    expect(writtenContent).toContain('### 📂 `pr-code/file1.ts` (Lines 1-3)')
-    expect(writtenContent).toContain('### 📂 `pr-code/file2.ts` (Lines 10-12)')
-    expect(mockedHandleError).not.toHaveBeenCalled()
-  })
-
-  it('should handle malformed AI response', async () => {
-    const { runConflictResolution } =
-      await import('../../../scripts/conflict-resolver')
-    mockedReadFile.mockResolvedValue('file1.ts\0')
-    mockedParseConflicts.mockResolvedValueOnce([
-      {
-        id: 'conflict-1',
-        file: 'file1.ts',
-        startLine: 1,
-        endLine: 3,
-      },
-    ])
-    mockedGenerateContentWithFallback.mockResolvedValue('not json')
-    mockedJsonProcessorProcess.mockReturnValue({
-      success: false,
-      data: { error: 'test error' },
+      // Assert
+      expect(gitConflicts.getConflictDetails).toHaveBeenCalledWith('test.js')
+      expect(mockGenerateContent).toHaveBeenCalledWith(
+        expect.stringContaining(mockConflictDetails.originalContent)
+      )
+      expect(fs.writeFile).toHaveBeenCalledWith('test.js', mockResolvedContent)
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Successfully resolved conflict in test.js')
+      )
     })
 
-    await runConflictResolution(
-      new GoogleGenerativeAI(''),
-      'conflicts.txt',
-      'report.md'
-    )
+    it('should handle cases where conflict details cannot be retrieved', async () => {
+      // Arrange
+      ;(gitConflicts.getConflictDetails as jest.Mock).mockResolvedValue(null)
 
-    expect(mockedHandleError).not.toHaveBeenCalled()
-    expect(mockedWriteOutput).toHaveBeenCalledTimes(1)
-    const writtenContent = mockedWriteOutput.mock.calls[0][0] as string
-    expect(writtenContent).toContain('### ⚠️ Unprocessed Files')
-    expect(writtenContent).toContain('Failed to parse AI resolution JSON')
+      // Act
+      await conflictResolver.resolveConflicts(['test.js'])
+
+      // Assert
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Could not get conflict details for test.js, skipping.'
+      )
+      expect(mockGenerateContent).not.toHaveBeenCalled()
+      expect(fs.writeFile).not.toHaveBeenCalled()
+    })
+
+    it('should handle AI model failure gracefully', async () => {
+      // Arrange
+      const mockConflictDetails = {
+        filePath: 'test.js',
+        fileName: 'test.js',
+        originalContent: 'conflict content',
+        conflictMarker: '<<<<<<< HEAD',
+      }
+      ;(gitConflicts.getConflictDetails as jest.Mock).mockResolvedValue(
+        mockConflictDetails
+      )
+      mockGenerateContent.mockRejectedValue(new Error('AI model failed'))
+
+      // Act
+      await conflictResolver.resolveConflicts(['test.js'])
+
+      // Assert
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to resolve conflict in test.js'),
+        expect.any(Error)
+      )
+      expect(fs.writeFile).not.toHaveBeenCalled()
+    })
+
+    it('should handle file writing failure gracefully', async () => {
+      // Arrange
+      const mockConflictDetails = {
+        filePath: 'test.js',
+        fileName: 'test.js',
+        originalContent: 'conflict content',
+        conflictMarker: '<<<<<<< HEAD',
+      }
+      ;(gitConflicts.getConflictDetails as jest.Mock).mockResolvedValue(
+        mockConflictDetails
+      )
+      mockGenerateContent.mockResolvedValue({
+        response: { text: () => 'resolved content' },
+      })
+      ;(fs.writeFile as jest.Mock).mockRejectedValue(
+        new Error('Failed to write file')
+      )
+
+      // Act
+      await conflictResolver.resolveConflicts(['test.js'])
+
+      // Assert
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to write resolved file for test.js'),
+        expect.any(Error)
+      )
+    })
+  })
+
+  describe('main execution', () => {
+    it('should call resolveConflicts with file paths from command line arguments', async () => {
+      // This is a simplified test for the main execution logic.
+      // We are not testing the argument parsing itself, but that the main function
+      // correctly passes the arguments to the core logic.
+      const resolveConflictsSpy = jest
+        .spyOn(conflictResolver, 'resolveConflicts')
+        .mockResolvedValue()
+
+      // To test the main function, we need to simulate command line arguments
+      const originalArgv = process.argv
+      process.argv = ['node', 'script.js', 'file1.js', 'file2.js']
+
+      await conflictResolver.main()
+
+      expect(resolveConflictsSpy).toHaveBeenCalledWith(['file1.js', 'file2.js'])
+
+      // Clean up
+      process.argv = originalArgv
+      resolveConflictsSpy.mockRestore()
+    })
+
+    it('should log an error if no file paths are provided', async () => {
+      const resolveConflictsSpy = jest
+        .spyOn(conflictResolver, 'resolveConflicts')
+        .mockResolvedValue()
+      const originalArgv = process.argv
+      process.argv = ['node', 'script.js'] // No files
+
+      await conflictResolver.main()
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'No conflict files provided. Usage: ts-node scripts/conflict-resolver.ts <file1> <file2> ...'
+      )
+      expect(resolveConflictsSpy).not.toHaveBeenCalled()
+
+      process.argv = originalArgv
+      resolveConflictsSpy.mockRestore()
+    })
   })
 })

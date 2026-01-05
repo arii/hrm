@@ -7,8 +7,8 @@
  * internal server use only.
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
-import { ExtWebSocket, ServerMessage } from '@/types/websocket.js'
-import logger from './logger.js'
+import { ExtWebSocket, ServerMessage } from '@/types/websocket'
+import logger from './logger'
 
 /**
  * Sends a typed WebSocket message to a single client. This is the preferred

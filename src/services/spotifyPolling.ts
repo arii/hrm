@@ -10,15 +10,15 @@ import { SpotifyDevice, SpotifyCommandParameters } from '@/types/core'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
-} from './spotifyTokenManager.js'
-import logger from '@/utils/logger.js'
+} from './spotifyTokenManager'
+import logger from '@/utils/logger'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyApiErrorHandling.js'
-import { SpotifyCommand, SpotifyService } from '@/types/interfaces.js'
-import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
-import { env } from '@/lib/env.js'
+} from './spotifyApiErrorHandling'
+import { SpotifyCommand, SpotifyService } from '@/types/interfaces'
+import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi'
+import { env } from '@/lib/env'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.

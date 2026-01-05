@@ -10,9 +10,9 @@ import { TimerData, TimerMode } from '@/types/core'
 import {
   createInitialTimerState,
   DualModeTimerState,
-} from './timer/timerState.js'
-import { TimerQueries } from './timer/timerQueries.js'
-import { TimerCommands } from './timer/timerCommands.js'
+} from './timer/timerState'
+import { TimerQueries } from './timer/timerQueries'
+import { TimerCommands } from './timer/timerCommands'
 
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'
 
