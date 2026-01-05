@@ -1015,6 +1015,12 @@ jobs:
             exit 1
           fi
 
+          PARENT_COMMIT_RUN_ID=$(gh run list --workflow "parent-workflow-name.yml" --commit "${{ github.event.pull_request.base.sha }}" --status success --limit 1 --json databaseId -q '.[0].databaseId')
+          if [ -z "$PARENT_COMMIT_RUN_ID" ]; then
+            echo "::error::Could not find a successful run for the parent commit."
+            exit 1
+          fi
+
           # --- Create new checks for the current commit ---
           echo "✒️ Copying final check statuses to current commit ($CURRENT_SHA)..."
           for JOB_NAME in "${JOBS_TO_COPY[@]}"; do
