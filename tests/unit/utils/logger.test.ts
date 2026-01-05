@@ -78,14 +78,14 @@ describe('logger', () => {
         value: {},
         writable: true,
       })
-      const httpLogger = require('@/utils/logger').httpLogger
+      const { httpLogger } = require('@/utils/logger')
       const next = jest.fn()
       httpLogger(null, null, next)
       expect(next).toHaveBeenCalled()
     })
 
     it('should be a pino-http logger on the server', () => {
-      const httpLogger = require('@/utils/logger').httpLogger
+      const { httpLogger } = require('@/utils/logger')
       expect(httpLogger).toBeInstanceOf(Object)
     })
   })
