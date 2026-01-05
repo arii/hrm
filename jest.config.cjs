@@ -30,7 +30,10 @@ const config = {
       'babel-jest',
       {
         presets: [
-          ['@babel/preset-env', { targets: { node: 'current' } }],
+          [
+            '@babel/preset-env',
+            { targets: { node: 'current' }, modules: 'commonjs' },
+          ],
           '@babel/preset-typescript',
           ['@babel/preset-react', { runtime: 'automatic' }],
         ],
