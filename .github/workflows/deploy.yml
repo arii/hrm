@@ -8,9 +8,8 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  deploy:
-    runs-on: self-hosted
-    # Only run if Quality Gate passed (implied by branch protection, but good to be explicit)
+  build:
+    runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/leader'
 
     steps:
@@ -24,11 +23,11 @@ jobs:
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4
 
-      # Caching is disabled for self-hosted runners to improve performance.
       - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
 
       - name: 📥 Install Dependencies
         run: pnpm install
@@ -41,12 +40,27 @@ jobs:
         run: |
           # 1. Use production config with standalone output
           cp deploy/next.config.js next.config.js
-
           # 2. Build Next.js
           pnpm run build
-
           # 3. Package Artifact (Hybrid Strategy)
           ./scripts/package.sh
+
+      - name: 📤 Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifact
+          path: release.tar.gz
+
+  deploy:
+    runs-on: self-hosted
+    needs: build
+    if: github.ref == 'refs/heads/leader'
+
+    steps:
+      - name: 📥 Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifact
 
       - name: 🚚 Transfer Artifact
         env:
