@@ -198,7 +198,7 @@ export function isDuplicate(
 
 export async function run(
   client: IGitHubClient,
-  prNumber: string,
+  prNumber: string | undefined,
   reviewFilePath: string
 ) {
   if (!prNumber) {
@@ -264,11 +264,6 @@ if (import.meta.url.endsWith(process.argv[1])) {
   const client = new GitHubClient()
   const prNumber = process.env.PR_NUMBER
   const reviewFile = 'review_result.json'
-
-  if (!prNumber) {
-    console.error('Error: PR_NUMBER environment variable is not set.')
-    process.exit(1)
-  }
 
   run(client, prNumber, reviewFile).catch((err) => {
     console.error('Unhandled error:', err)
