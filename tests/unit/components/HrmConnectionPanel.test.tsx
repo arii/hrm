@@ -26,6 +26,11 @@ describe('HrmConnectionPanel', () => {
   beforeEach(() => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
+      timerData: {
+        phase: 'IDLE',
+        timeRemaining: 0,
+        totalDuration: 0,
+      },
       connectionStatus: 'Connected',
       activeAlerts: [],
     })
@@ -49,6 +54,11 @@ describe('HrmConnectionPanel', () => {
   it('renders HR tiles and no connect link when hrmData is available', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [{ clientId: '1', name: 'Test User', value: 120 }],
+      timerData: {
+        phase: 'IDLE',
+        timeRemaining: 0,
+        totalDuration: 0,
+      },
       connectionStatus: 'Connected',
       activeAlerts: [],
     })
@@ -74,6 +84,11 @@ describe('HrmConnectionPanel', () => {
   it('renders skeletons when loading', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
+      timerData: {
+        phase: 'IDLE',
+        timeRemaining: 0,
+        totalDuration: 0,
+      },
       connectionStatus: 'Connecting...',
       activeAlerts: [],
     })

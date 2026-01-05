@@ -1,14 +1,45 @@
 // File: app/components/dashboard/HrmConnectionPanel.tsx
 'use client'
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useUserSettings } from '@/context/UserSettingsContext'
 import HrTileWrapper from '@/components/HrTileWrapper'
+import WorkoutExport from '@/components/WorkoutExport'
+import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
 
 const HrmConnectionPanel = () => {
-  const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const { hrmData, timerData, connectionStatus, activeAlerts } = useWebSocket()
+  const [userSettings] = useUserSettings()
+  const [workoutRecords, setWorkoutRecords] = useState<{ time: number; hr: number }[]>([])
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (timerData.phase === 'RUNNING' && timerData.timeRemaining > 0) {
+      if (sessionStartTime === null) {
+        setSessionStartTime(Date.now());
+      }
+      const latestRecord = hrmData.find(user => user.clientId === localStorage.getItem('clientId'));
+      if (latestRecord && latestRecord.hr) {
+        setWorkoutRecords(prevRecords => [...prevRecords, { time: Date.now(), hr: latestRecord.hr! }]);
+      }
+    }
+  }, [timerData.timeRemaining, hrmData, timerData.phase, sessionStartTime]);
+
+  const totalCalories = useMemo(() => {
+    if (!userSettings.userAge || !userSettings.userWeight || workoutRecords.length === 0) {
+      return 0;
+    }
+    return estimateCaloriesBurned({
+      age: userSettings.userAge,
+      weight: userSettings.userWeight,
+      gender: userSettings.gender === 'MALE' ? 'male' : 'female',
+      workoutDuration: timerData.totalDuration,
+      avgHr: workoutRecords.reduce((acc, rec) => acc + rec.hr, 0) / workoutRecords.length
+    });
+  }, [userSettings.userAge, userSettings.userWeight, userSettings.gender, timerData.totalDuration, workoutRecords]);
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity
@@ -36,6 +67,15 @@ const HrmConnectionPanel = () => {
   const isLoading =
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
+
+  const workoutData = {
+    startTime: sessionStartTime || 0,
+    durationSeconds: timerData.totalDuration,
+    totalCalories: totalCalories,
+    records: workoutRecords,
+    userAge: userSettings.userAge || undefined,
+    userWeight: userSettings.userWeight || undefined,
+  };
 
   return (
     <Box
@@ -100,6 +140,9 @@ const HrmConnectionPanel = () => {
             <HrTileWrapper user={user} />
           </Box>
         ))
+      )}
+      {timerData.phase === 'IDLE' && workoutRecords.length > 0 && (
+        <WorkoutExport workoutData={workoutData} />
       )}
     </Box>
   )
