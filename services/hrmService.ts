@@ -1,9 +1,9 @@
 // File: services/hrmService.ts
-import { HrmDataRepository } from '../lib/repositories/HrmDataRepository'
-import { HrmStreamData } from '../types/core'
-import { CALORIE_DEFAULTS } from '../utils/constants'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation'
-import logger from '../utils/logger'
+import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
+import { HrmStreamData } from '../types/core.js'
+import { CALORIE_DEFAULTS } from '../utils/constants.js'
+import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
+import logger from '../utils/logger.js'
 
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<

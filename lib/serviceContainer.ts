@@ -4,9 +4,9 @@
  * This allows services to be decoupled from their instantiation and from each other,
  * making them easier to test in isolation.
  */
-import { SpotifyService } from '../types/interfaces'
-import TabataTimer from '../services/tabataTimer'
-import { HrmService } from '../services/hrmService'
+import { SpotifyService } from '../types/interfaces.js'
+import TabataTimer from '../services/tabataTimer.js'
+import { HrmService } from '../services/hrmService.js'
 
 // Define a type for the service registry
 export interface ServiceRegistry {
