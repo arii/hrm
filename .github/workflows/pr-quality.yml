@@ -367,21 +367,6 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      - name: 'Debug: Display script content before build'
-        run: |
-          echo "--- Content of scripts/create-review-issues.ts ---"
-          cat scripts/create-review-issues.ts
-          echo "----------------------------------------------------"
-
-      - name: 'Debug: Aggressive Diagnostics'
-        run: |
-          echo "--- Grepping for correct function signature ---"
-          grep "prNumber: string | undefined" scripts/create-review-issues.ts
-          echo "----------------------------------------------------"
-          echo "--- Running tsc on the script directly ---"
-          npx tsc --noEmit scripts/create-review-issues.ts || echo "tsc failed as expected"
-          echo "----------------------------------------------------"
-
       - name: Verify Build
         id: build
         env:
