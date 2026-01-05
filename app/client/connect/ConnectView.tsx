@@ -367,6 +367,7 @@ export default function ConnectView({
               name={userName}
               bpm={currentHR}
               percentMax={hrZoneProps.percentage}
+              calories={caloriesBurned}
               isDataStale={isDataStale}
             />
           </Box>

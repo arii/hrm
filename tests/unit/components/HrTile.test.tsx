@@ -83,4 +83,26 @@ describe('HrTile', () => {
     const bpmValue = screen.getByTestId('bpm-value')
     expect(bpmValue).toHaveTextContent('---')
   })
+
+  it('displays the correct calorie value', () => {
+    render(<HrTile name="Test" bpm={120} percentMax={65} calories={123} />)
+    const calorieDisplay = screen.getByText('123')
+    expect(calorieDisplay).toBeInTheDocument()
+  })
+
+  it('displays 0 calories when the value is 0', () => {
+    render(<HrTile name="Test" bpm={120} percentMax={65} calories={0} />)
+    const calorieDisplay = screen.getByText('0')
+    expect(calorieDisplay).toBeInTheDocument()
+  })
+
+  it('updates the calorie display when the prop changes', () => {
+    const { rerender } = render(
+      <HrTile name="Test" bpm={120} percentMax={65} calories={100} />
+    )
+    expect(screen.getByText('100')).toBeInTheDocument()
+
+    rerender(<HrTile name="Test" bpm={120} percentMax={65} calories={150} />)
+    expect(screen.getByText('150')).toBeInTheDocument()
+  })
 })
