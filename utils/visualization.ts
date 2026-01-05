@@ -182,15 +182,15 @@ export const getTimerProps = (
   }
 }
 
-// export const transformWorkoutDataToColumns = (
-//   data: WorkoutData
-// ): WorkoutColumnsProps['columns'] => {
-//   if (!data) return []
-//
-//   return data.map((category: WorkoutItem) => ({
-//     title: category.category,
-//     items: category.exercises.map((ex: string) => ({
-//       title: ex,
-//     })),
-//   }))
-// }
+export const transformWorkoutDataToColumns = (
+  data: WorkoutData
+): WorkoutColumnsProps['columns'] => {
+  if (!data) return []
+
+  return data.map((category: WorkoutItem) => ({
+    title: category.category,
+    items: category.exercises.map((ex: string) => ({
+      title: ex,
+    })),
+  }))
+}

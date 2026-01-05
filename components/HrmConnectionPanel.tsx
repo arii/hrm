@@ -171,7 +171,7 @@ const HrmConnectionPanel = () => {
 
   const workoutData = {
     startTime: sessionStartTime || 0,
-    durationSeconds: timerData.totalDuration,
+    durationSeconds: timerData.timeElapsed,
     totalCalories: totalCalories,
     records: workoutRecords,
     userAge: userSettings.userAge || undefined,
