@@ -1,7 +1,7 @@
 name: PR Review Labeler
 on:
   pull_request_review:
-    types: [submitted, edited, dismissed]
+    types: [submitted, dismissed]
 permissions:
   issues: write
 jobs:
@@ -17,7 +17,6 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const prNumber = context.payload.pull_request.number;
-            const review = context.payload.review;
             const approvedLabel = process.env.APPROVED_LABEL;
             const changesRequestedLabel = process.env.CHANGES_REQUESTED_LABEL;
 
@@ -36,23 +35,38 @@ jobs:
               }
             }
 
-            if (review.state === "approved") {
+            async function addLabel(labelName) {
               await github.rest.issues.addLabels({
                 owner,
                 repo,
                 issue_number: prNumber,
-                labels: [approvedLabel],
+                labels: [labelName],
               });
-              await removeLabelIfExists(changesRequestedLabel);
-            } else if (review.state === "changes_requested") {
-              await github.rest.issues.addLabels({
-                owner,
-                repo,
-                issue_number: prNumber,
-                labels: [changesRequestedLabel],
-              });
+            }
+
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner,
+              repo,
+              pull_number: prNumber,
+            });
+
+            const latestReviewsByUser = reviews
+              .filter(review => review.state === 'APPROVED' || review.state === 'CHANGES_REQUESTED')
+              .reduce((acc, review) => {
+                acc[review.user.id] = review;
+                return acc;
+              }, {});
+
+            const hasChangesRequested = Object.values(latestReviewsByUser).some(review => review.state === 'CHANGES_REQUESTED');
+            const hasApproval = Object.values(latestReviewsByUser).some(review => review.state === 'APPROVED');
+
+            if (hasChangesRequested) {
+              await addLabel(changesRequestedLabel);
               await removeLabelIfExists(approvedLabel);
-            } else if (review.state === "dismissed") {
+            } else if (hasApproval) {
+              await addLabel(approvedLabel);
+              await removeLabelIfExists(changesRequestedLabel);
+            } else {
               await removeLabelIfExists(approvedLabel);
               await removeLabelIfExists(changesRequestedLabel);
             }
