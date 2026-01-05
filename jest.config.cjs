@@ -26,9 +26,16 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': 'babel-jest',
-    '^.+\\.(js|jsx)$': 'babel-jest',
-    '^(?!.*\\.(ts|tsx|js|jsx)$)': '<rootDir>/jest-file-transformer.cjs',
+    '^.+\\.(ts|tsx|js|jsx)$': [
+      'babel-jest',
+      {
+        presets: [
+          ['@babel/preset-env', { targets: { node: 'current' } }],
+          '@babel/preset-typescript',
+          ['@babel/preset-react', { runtime: 'automatic' }],
+        ],
+      },
+    ],
   },
   transformIgnorePatterns: [
     '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
