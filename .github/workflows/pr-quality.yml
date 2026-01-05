@@ -348,30 +348,27 @@ jobs:
           retention-days: 2
           if-no-files-found: ignore
 
-  build-once:
-    name: 🏗️ Build & Cache
+  build-check:
+    name: 🏗️ Build Check
     needs: [prepare-env]
     if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
     steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-env
-
-      - name: Cache Build Output
-        id: cache
-        uses: actions/cache@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
-          path: |
-            .next_prod
-            dist
-          key: build-${{ runner.os }}-${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
 
       - name: Verify Build
         id: build
-        if: steps.cache.outputs.cache-hit != 'true'
         env:
           NODE_ENV: production
           NEXTAUTH_URL: http://localhost:3000
@@ -382,17 +379,23 @@ jobs:
           ./scripts/ci/run-build.sh
         continue-on-error: true
 
-      - name: Debug Workspace
-        if: always()
-        run: ls -la
       - name: Verify Artifacts
-        if: (steps.cache.outputs.cache-hit == 'true') || (steps.build.outcome == 'success')
+        if: always() && steps.build.outcome == 'success'
         run: |
           if [ ! -d ".next_prod" ] || [ ! -d "dist" ]; then
             echo "::error::Build artifacts were not created successfully."
             exit 1
           fi
           echo "Build artifacts verified."
+
+      - name: Report Build Failure
+        if: failure() && steps.build.outcome == 'failure'
+        run: |
+          echo "### ❌ Build Failure Report" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          tail -n 50 logs/build-output.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
       - name: Check Build Result
         if: always()
         shell: bash
@@ -401,24 +404,6 @@ jobs:
             echo "::error::Build failed"
             exit 1
           fi
-      - name: 📦 Create Release Archive
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: ./scripts/package.sh
-
-      - name: Upload Build Artifacts
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts-${{ env.SESSION_ID }}
-          path: release.tar.gz
-          retention-days: 2
-      - name: Report Build Failure
-        if: failure() && steps.build.outcome == 'failure'
-        run: |
-          echo "### ❌ Build Failure Report" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          tail -n 50 logs/build-output.log >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Build Report
         if: always()
@@ -428,6 +413,7 @@ jobs:
           path: logs/build-output.log
           retention-days: 2
           if-no-files-found: ignore
+
       - name: 🔍 Pre-archive Inspection
         if: always() && steps.build.outcome == 'success'
         shell: bash
@@ -468,9 +454,50 @@ jobs:
           echo ""
           echo "📋 Directory structure (truncated):"
           (ls -R .next_prod/ || true) | head -50
+
+      - name: 📦 Create Release Archive
+        if: always() && steps.build.outcome == 'success'
+        shell: bash
+        run: |
+          echo "📦 Creating release archive with complete .next_prod directory..."
+
+          # Use explicit directory names (not wildcards) to preserve all files
+          # tar -c: create archive
+          # -z: gzip compression
+          # -f: output file
+          tar -czf release.tar.gz \
+            .next_prod \
+            dist \
+            scripts/start-production.sh \
+            scripts/deploy-artifact.sh \
+            scripts/verify-deployment.sh \
+            ecosystem.config.cjs \
+            package.json \
+            pnpm-lock.yaml \
+            .env.local \
+            server.ts \
+            proxy.ts \
+            public \
+            next.config.js
+
+          echo "✅ Release archive created:"
+          ls -lh release.tar.gz
+
+          echo ""
+          echo "📊 Archive contents verification:"
+          (tar -tzf release.tar.gz | grep -E "BUILD_ID|\.next_prod/server" || true) | head -10
+
+      - name: Upload Build Artifacts
+        if: always() && steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: release.tar.gz
+          retention-days: 2
+
   infra-tests:
     name: 🧪 Infrastructure Tests
-    needs: [prepare-env, knip-check, lint-check, build-once]
+    needs: [prepare-env, knip-check, lint-check, build-check]
     if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -488,13 +515,31 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      - name: Restore Build Cache
-        uses: actions/cache@v4
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            .next_prod
-            dist
-          key: build-${{ runner.os }}-${{ github.sha }}
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: ./
+        continue-on-error: true
+
+      - name: Extract Build Artifacts
+        shell: bash
+        run: |
+          echo "📦 Extracting release archive..."
+          if [ -f "release.tar.gz" ]; then
+            tar -xzf release.tar.gz
+            rm release.tar.gz
+            echo "✅ Archive extracted"
+          else
+            echo "⚠️  No release archive found"
+          fi
+
+          if [ -d ".next_prod" ] && [ -d "dist" ]; then
+            echo "✅ All build directories found"
+          else
+            echo "❌ Missing required build directories"
+            exit 1
+          fi
 
       - name: Run Infra Tests
         id: infra-tests
@@ -537,7 +582,7 @@ jobs:
 
   unit-tests:
     name: 🧪 Unit Tests
-    needs: [prepare-env, knip-check, lint-check, build-once]
+    needs: [prepare-env, knip-check, lint-check, build-check]
     if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -552,13 +597,31 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      - name: Restore Build Cache
-        uses: actions/cache@v4
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            .next_prod
-            dist
-          key: build-${{ runner.os }}-${{ github.sha }}
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: ./
+        continue-on-error: true
+
+      - name: Extract Build Artifacts
+        shell: bash
+        run: |
+          echo "📦 Extracting release archive..."
+          if [ -f "release.tar.gz" ]; then
+            tar -xzf release.tar.gz
+            rm release.tar.gz
+            echo "✅ Archive extracted"
+          else
+            echo "⚠️  No release archive found"
+          fi
+
+          if [ -d ".next_prod" ] && [ -d "dist" ]; then
+            echo "✅ All build directories found"
+          else
+            echo "❌ Missing required build directories"
+            exit 1
+          fi
 
       - name: Run Unit Tests
         id: unit-tests
@@ -599,7 +662,7 @@ jobs:
 
   component-tests:
     name: 🧪 Component Tests
-    needs: [prepare-env, knip-check, lint-check, build-once]
+    needs: [prepare-env, knip-check, lint-check, build-check]
     if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -614,13 +677,31 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      - name: Restore Build Cache
-        uses: actions/cache@v4
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            .next_prod
-            dist
-          key: build-${{ runner.os }}-${{ github.sha }}
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: ./
+        continue-on-error: true
+
+      - name: Extract Build Artifacts
+        shell: bash
+        run: |
+          echo "📦 Extracting release archive..."
+          if [ -f "release.tar.gz" ]; then
+            tar -xzf release.tar.gz
+            rm release.tar.gz
+            echo "✅ Archive extracted"
+          else
+            echo "⚠️  No release archive found"
+          fi
+
+          if [ -d ".next_prod" ] && [ -d "dist" ]; then
+            echo "✅ All build directories found"
+          else
+            echo "❌ Missing required build directories"
+            exit 1
+          fi
 
       - name: Run Component Tests
         id: component-tests
@@ -661,7 +742,7 @@ jobs:
 
   perf-tests:
     name: 🧪 Performance Tests
-    needs: [prepare-env, knip-check, lint-check, build-once]
+    needs: [prepare-env, knip-check, lint-check, build-check]
     if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -679,13 +760,31 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      - name: Restore Build Cache
-        uses: actions/cache@v4
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            .next_prod
-            dist
-          key: build-${{ runner.os }}-${{ github.sha }}
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: ./
+        continue-on-error: true
+
+      - name: Extract Build Artifacts
+        shell: bash
+        run: |
+          echo "📦 Extracting release archive..."
+          if [ -f "release.tar.gz" ]; then
+            tar -xzf release.tar.gz
+            rm release.tar.gz
+            echo "✅ Archive extracted"
+          else
+            echo "⚠️  No release archive found"
+          fi
+
+          if [ -d ".next_prod" ] && [ -d "dist" ]; then
+            echo "✅ All build directories found"
+          else
+            echo "❌ Missing required build directories"
+            exit 1
+          fi
 
       - name: Run Performance Test
         id: perf-tests
@@ -738,12 +837,9 @@ jobs:
 
   visual-tests:
     name: 🧪 Visual Tests
-    needs: [prepare-env, knip-check, lint-check, build-once]
+    needs: [prepare-env, knip-check, lint-check, build-check]
     if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        shard: [1, 2, 3, 4]
     timeout-minutes: 30
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -758,20 +854,38 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      - name: Restore Build Cache
-        uses: actions/cache@v4
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            .next_prod
-            dist
-          key: build-${{ runner.os }}-${{ github.sha }}
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: ./
+        continue-on-error: true
+
+      - name: Extract Build Artifacts
+        shell: bash
+        run: |
+          echo "📦 Extracting release archive..."
+          if [ -f "release.tar.gz" ]; then
+            tar -xzf release.tar.gz
+            rm release.tar.gz
+            echo "✅ Archive extracted"
+          else
+            echo "⚠️  No release archive found"
+          fi
+
+          if [ -d ".next_prod" ] && [ -d "dist" ]; then
+            echo "✅ All build directories found"
+          else
+            echo "❌ Missing required build directories"
+            exit 1
+          fi
 
       - name: Run Visual Tests (Playwright)
         id: visual-tests
         shell: bash
         run: |
           set -o pipefail
-          npx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+          ./scripts/ci/run-visual-tests.sh
         continue-on-error: true
 
       - name: Publish Visual Tests Results
@@ -966,8 +1080,8 @@ jobs:
 
   quality-report:
     name: 📊 Quality Report
-    if: always() && inputs.has_changes == 'true' && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.build-once.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
-    needs: [prepare-env, knip-check, lint-check, build-once, integration-tests]
+    if: always() && inputs.has_changes == 'true' && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
+    needs: [prepare-env, knip-check, lint-check, build-check, integration-tests]
     runs-on: ubuntu-latest
     outputs:
       failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
@@ -1042,7 +1156,7 @@ jobs:
           }
 
           # Check standalone jobs
-          for job in "knip-check" "lint-check" "build-once"; do
+          for job in "knip-check" "lint-check" "build-check"; do
             # Safely get job result, default to "skipped" if not found
             result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result // "skipped"')
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
@@ -1050,7 +1164,7 @@ jobs:
               case $job in
                 "knip-check") log_file="artifacts/knip-report/knip-output.txt" ;;
                 "lint-check") log_file="artifacts/lint-report/lint-output.log" ;;
-                "build-once") log_file="artifacts/build-report/build-output.log" ;;
+                "build-check") log_file="artifacts/build-report/build-output.log" ;;
               esac
               add_failure "$job" "$result" "$log_file"
             fi
@@ -1086,7 +1200,7 @@ jobs:
         env:
           KNIP_RESULT: ${{ needs.knip-check.result }}
           LINT_RESULT: ${{ needs.lint-check.result }}
-          BUILD_RESULT: ${{ needs.build-once.result }}
+          BUILD_RESULT: ${{ needs.build-check.result }}
           INFRA_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.infra-tests-outcome }}
           UNIT_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.unit-tests-outcome }}
           COMPONENT_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.component-tests-outcome }}
