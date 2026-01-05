@@ -26,8 +26,32 @@ jobs:
 
   create-issues-from-comment:
     if: github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '/create-issues')
-    uses: ./.github/workflows/reusable-create-review-issues.yml
-    with:
-      pr_number: ${{ github.event.issue.number }}
-    secrets:
-      gh_token: ${{ secrets.ARI_PAT }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Get PR branch name'
+        id: get_pr
+        run: |
+          gh pr view ${{ github.event.issue.number }} --json headRefName -q '.headRefName' > pr_branch.txt
+          echo "branch=$(cat pr_branch.txt)" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+
+      - name: 'Find successful workflow run'
+        id: find_run
+        run: |
+          run_id=$(gh run list --workflow="pr-quality.yml" --branch=${{ steps.get_pr.outputs.branch }} --status=success --json databaseId -q '.[0].databaseId' || echo "")
+          if [[ -z "$run_id" ]]; then
+            echo "::error::Could not find a successful workflow run for ${{ steps.get_pr.outputs.branch }}."
+            exit 1
+          fi
+          echo "run_id=$run_id" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+
+      - name: 'Create issues from review'
+        uses: ./.github/workflows/reusable-create-review-issues.yml
+        with:
+          pr_number: ${{ github.event.issue.number }}
+          run_id: ${{ steps.find_run.outputs.run_id }}
+        secrets:
+          gh_token: ${{ secrets.ARI_PAT }}
