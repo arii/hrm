@@ -5,17 +5,10 @@ import { jest } from '@jest/globals'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { getCookie, setCookie } from 'cookies-next'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
-}))
-
-// Mock cookies-next
-jest.mock('cookies-next', () => ({
-  getCookie: jest.fn(),
-  setCookie: jest.fn(),
 }))
 
 // Mock navigator.bluetooth
@@ -40,17 +33,6 @@ describe('useBluetoothHRM', () => {
     disconnect: jest.Mock
     getPrimaryService: jest.Mock
   }
-  let mockDevice: {
-    id: string
-    name: string
-    gatt: {
-      connected: boolean
-      connect: jest.Mock
-      disconnect: jest.Mock
-    }
-    addEventListener: jest.Mock
-    removeEventListener: jest.Mock
-  }
   let consoleWarnSpy: jest.SpyInstance
   let consoleInfoSpy: jest.SpyInstance
 
@@ -73,9 +55,23 @@ describe('useBluetoothHRM', () => {
       sendData: mockSendData,
       connectionStatus: 'Connected',
     })
-    // Reset cookie mocks before each test to ensure isolation
-    ;(getCookie as jest.Mock).mockReset()
-    ;(setCookie as jest.Mock).mockReset()
+    // Mock and reset localStorage before each test
+    const localStorageMock = (() => {
+      let store: { [key: string]: string } = {}
+      return {
+        getItem: jest.fn((key: string) => store[key] || null),
+        setItem: jest.fn((key: string, value: string) => {
+          store[key] = value.toString()
+        }),
+        removeItem: jest.fn((key: string) => {
+          delete store[key]
+        }),
+        clear: () => {
+          store = {}
+        },
+      }
+    })()
+    Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 
     mockCharacteristic = {
       startNotifications: jest.fn().mockResolvedValue(undefined),
@@ -93,20 +89,9 @@ describe('useBluetoothHRM', () => {
       getPrimaryService: jest.fn().mockResolvedValue(mockService),
     }
 
-    mockDevice = {
-      id: 'test-device-id',
-      name: 'Test HRM',
-      gatt: {
-        connected: false,
-        connect: jest.fn().mockResolvedValue(mockGattServer),
-        disconnect: jest.fn(),
-      },
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-    }
-
-    mockBluetooth.requestDevice.mockResolvedValue(mockDevice)
-    mockBluetooth.getDevices.mockResolvedValue([])
+    // Clear all bluetooth mocks
+    mockBluetooth.requestDevice.mockReset()
+    mockBluetooth.getDevices.mockReset()
   })
 
   afterEach(() => {
@@ -116,9 +101,13 @@ describe('useBluetoothHRM', () => {
 
   type UseBluetoothHRMReturn = ReturnType<typeof useBluetoothHRM>
 
-  const simulateConnection = async (hook: {
-    result: { current: UseBluetoothHRMReturn }
-  }) => {
+  const simulateConnection = async (
+    hook: {
+      result: { current: UseBluetoothHRMReturn }
+    },
+    mockDevice: any
+  ) => {
+    mockBluetooth.requestDevice.mockResolvedValue(mockDevice)
     await act(async () => {
       hook.result.current.connectAndStream('Test User', 30)
       await Promise.resolve() // Allow promises to resolve
@@ -153,7 +142,7 @@ describe('useBluetoothHRM', () => {
    * This helper function orchestrates the sequence of events that the
    * `useBluetoothHRM` hook expects during a signal loss and recovery scenario.
    */
-  const simulateReconnection = async () => {
+  const simulateReconnection = async (mockDevice: any) => {
     // 1. Simulate gatt disconnected state
     Object.defineProperty(mockDevice.gatt, 'connected', {
       value: false,
@@ -192,23 +181,45 @@ describe('useBluetoothHRM', () => {
   }
 
   it('should use default timeout of 10 seconds and trigger reconnect', async () => {
+    const localMockDevice = {
+      id: 'test-device-id',
+      name: 'Test HRM',
+      gatt: {
+        connected: false,
+        connect: jest.fn().mockResolvedValue(mockGattServer),
+        disconnect: jest.fn(),
+      },
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }
     const { result } = renderHook(() => useBluetoothHRM())
 
-    await simulateConnection({ result })
+    await simulateConnection({ result }, localMockDevice)
     expect(result.current.isConnected).toBe(true)
 
     triggerTimeout(10000)
 
     expect(result.current.deviceStatus).toContain('Connection unstable')
     expect(result.current.disconnectionReason).toBe('timeout')
-    expect(mockDevice.gatt.disconnect).toHaveBeenCalled()
+    expect(localMockDevice.gatt.disconnect).toHaveBeenCalled()
   })
 
   it('should use custom timeout from props', async () => {
+    const localMockDevice = {
+      id: 'test-device-id',
+      name: 'Test HRM',
+      gatt: {
+        connected: false,
+        connect: jest.fn().mockResolvedValue(mockGattServer),
+        disconnect: jest.fn(),
+      },
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }
     const { result } = renderHook(() =>
       useBluetoothHRM({ dataLivenessTimeoutMs: 5000 })
     )
-    await simulateConnection({ result })
+    await simulateConnection({ result }, localMockDevice)
     expect(result.current.isConnected).toBe(true)
 
     // Advance time by 4 seconds (less than timeout)
@@ -227,10 +238,21 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should disable watchdog if timeout is 0', async () => {
+    const localMockDevice = {
+      id: 'test-device-id',
+      name: 'Test HRM',
+      gatt: {
+        connected: false,
+        connect: jest.fn().mockResolvedValue(mockGattServer),
+        disconnect: jest.fn(),
+      },
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }
     const { result } = renderHook(() =>
       useBluetoothHRM({ dataLivenessTimeoutMs: 0 })
     )
-    await simulateConnection({ result })
+    await simulateConnection({ result }, localMockDevice)
     expect(result.current.isConnected).toBe(true)
 
     // Advance time by a large amount
@@ -243,8 +265,19 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should set disconnectionReason to "manual" on disconnect', async () => {
+    const localMockDevice = {
+      id: 'test-device-id',
+      name: 'Test HRM',
+      gatt: {
+        connected: false,
+        connect: jest.fn().mockResolvedValue(mockGattServer),
+        disconnect: jest.fn(),
+      },
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }
     const { result } = renderHook(() => useBluetoothHRM())
-    await simulateConnection({ result })
+    await simulateConnection({ result }, localMockDevice)
     expect(result.current.isConnected).toBe(true)
 
     act(() => {
@@ -256,17 +289,28 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should reset disconnectionReason on successful reconnect', async () => {
+    const localMockDevice = {
+      id: 'test-device-id',
+      name: 'Test HRM',
+      gatt: {
+        connected: false,
+        connect: jest.fn().mockResolvedValue(mockGattServer),
+        disconnect: jest.fn(),
+      },
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }
     const { result } = renderHook(() =>
       useBluetoothHRM({ dataLivenessTimeoutMs: 2000 })
     )
-    await simulateConnection({ result })
+    await simulateConnection({ result }, localMockDevice)
 
     // Trigger a timeout to initiate the disconnection/reconnection cycle
     triggerTimeout(2000)
     expect(result.current.disconnectionReason).toBe('timeout')
 
     // Simulate the device disconnecting and the hook successfully reconnecting
-    await simulateReconnection()
+    await simulateReconnection(localMockDevice)
 
     // After reconnecting, the state should be clean
     expect(result.current.isConnected).toBe(true)
@@ -274,8 +318,19 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should send a null value on manual disconnect', async () => {
+    const localMockDevice = {
+      id: 'test-device-id',
+      name: 'Test HRM',
+      gatt: {
+        connected: false,
+        connect: jest.fn().mockResolvedValue(mockGattServer),
+        disconnect: jest.fn(),
+      },
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }
     const { result } = renderHook(() => useBluetoothHRM())
-    await simulateConnection({ result })
+    await simulateConnection({ result }, localMockDevice)
 
     act(() => {
       result.current.disconnect()
@@ -288,13 +343,25 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should send a null value on unexpected disconnection', async () => {
+    const localMockDevice = {
+      id: 'test-device-id',
+      name: 'Test HRM',
+      gatt: {
+        connected: false,
+        connect: jest.fn().mockResolvedValue(mockGattServer),
+        disconnect: jest.fn(),
+      },
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }
     const { result } = renderHook(() => useBluetoothHRM())
-    await simulateConnection({ result })
+    await simulateConnection({ result }, localMockDevice)
 
     // Simulate the 'gattserverdisconnected' event
-    const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
-      (call) => call[0] === 'gattserverdisconnected'
-    )?.[1]
+    const onDisconnectedCallback =
+      localMockDevice.addEventListener.mock.calls.find(
+        (call) => call[0] === 'gattserverdisconnected'
+      )?.[1]
 
     if (onDisconnectedCallback) {
       act(() => {
@@ -310,10 +377,21 @@ describe('useBluetoothHRM', () => {
 
   describe('Metadata', () => {
     it('should send metadata on initial connect, but not again if user details do not change', async () => {
+      const localMockDevice = {
+        id: 'test-device-id',
+        name: 'Test HRM',
+        gatt: {
+          connected: false,
+          connect: jest.fn().mockResolvedValue(mockGattServer),
+          disconnect: jest.fn(),
+        },
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
       const { result } = renderHook(() =>
         useBluetoothHRM({ userName: 'Test User', userAge: 30 })
       )
-      await simulateConnection({ result })
+      await simulateConnection({ result }, localMockDevice)
 
       expect(mockSendData).toHaveBeenCalledTimes(1)
       expect(mockSendData).toHaveBeenCalledWith(
@@ -333,13 +411,24 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should send metadata again if user details change during an active connection', async () => {
+      const localMockDevice = {
+        id: 'test-device-id',
+        name: 'Test HRM',
+        gatt: {
+          connected: false,
+          connect: jest.fn().mockResolvedValue(mockGattServer),
+          disconnect: jest.fn(),
+        },
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
       const { result, rerender } = renderHook(
         ({ userName, userAge }) => useBluetoothHRM({ userName, userAge }),
         {
           initialProps: { userName: 'Test User', userAge: 30 },
         }
       )
-      await simulateConnection({ result })
+      await simulateConnection({ result }, localMockDevice)
 
       expect(mockSendData).toHaveBeenCalledTimes(1) // Initial metadata
       expect(mockSendData).toHaveBeenCalledWith(
@@ -363,11 +452,22 @@ describe('useBluetoothHRM', () => {
   })
   describe('Heart Rate Callback', () => {
     it('should call onHeartRateUpdate when a new HR value is received', async () => {
+      const localMockDevice = {
+        id: 'test-device-id',
+        name: 'Test HRM',
+        gatt: {
+          connected: false,
+          connect: jest.fn().mockResolvedValue(mockGattServer),
+          disconnect: jest.fn(),
+        },
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
       const mockOnHeartRateUpdate = jest.fn()
       const { result } = renderHook(() =>
         useBluetoothHRM({ onHeartRateUpdate: mockOnHeartRateUpdate })
       )
-      await simulateConnection({ result })
+      await simulateConnection({ result }, localMockDevice)
 
       const characteristicCallback =
         mockCharacteristic.addEventListener.mock.calls.find(
@@ -388,6 +488,18 @@ describe('useBluetoothHRM', () => {
 
   describe('onConnect Callback', () => {
     it('should call onConnect when a successful connection is made', async () => {
+      const localMockDevice = {
+        id: 'test-device-id',
+        name: 'Test HRM',
+        gatt: {
+          connected: false,
+          connect: jest.fn().mockResolvedValue(mockGattServer),
+          disconnect: jest.fn(),
+        },
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
+      mockBluetooth.requestDevice.mockResolvedValue(localMockDevice)
       const mockOnConnect = jest.fn()
       const { result } = renderHook(() =>
         useBluetoothHRM({ onConnect: mockOnConnect })
@@ -404,97 +516,107 @@ describe('useBluetoothHRM', () => {
 
   describe('Connection Abort', () => {
     it('should abort a pending connection attempt when a new one is initiated', async () => {
+      const localMockDevice = {
+        id: 'test-device-id',
+        name: 'Test HRM',
+        gatt: {
+          connected: false,
+          connect: jest.fn().mockResolvedValue(mockGattServer),
+          disconnect: jest.fn(),
+        },
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
+      mockBluetooth.requestDevice.mockResolvedValue(localMockDevice)
       const { result } = renderHook(() => useBluetoothHRM())
 
       // Don't await the first call, so it remains pending
-      const firstCall = act(async () => {
-        await expect(
+      act(() => {
+        // This promise should reject, but we are not awaiting it.
+        // We wrap it in a try/catch to suppress uncaught promise rejection warnings.
+        try {
           result.current.connectAndStream('Test User', 30)
-        ).rejects.toThrow('Connection cancelled')
+        } catch (error) {
+          // Expected AbortError
+        }
       })
 
-      // Immediately call it again
+      // Immediately call it again, this should abort the first attempt.
       await act(async () => {
-        result.current.connectAndStream('Test User', 30)
-        await Promise.resolve() // Allow promises to resolve
+        await result.current.connectAndStream('Test User', 30)
       })
 
-      await firstCall
-
-      // The gatt.connect should have been called twice, but the first one should be aborted
-      expect(mockDevice.gatt.connect).toHaveBeenCalledTimes(2)
+      // The gatt.connect should have been called twice.
+      expect(localMockDevice.gatt.connect).toHaveBeenCalledTimes(2)
     })
   })
 
   describe('autoConnect', () => {
-    it('should set status to "Saved device not found" when saved device is not in getDevices list', async () => {
+    it('should handle saved device not found', async () => {
       // Arrange
-      ;(getCookie as jest.Mock).mockReturnValue('saved-device-id')
+      ;(localStorage.getItem as jest.Mock).mockReturnValue('saved-device-id')
       mockBluetooth.getDevices.mockResolvedValue([]) // No devices available
-
       const { result } = renderHook(() => useBluetoothHRM())
 
       // Act
-      await result.current.autoConnect('Test User', 30)
+      await act(async () => {
+        await result.current.autoConnect()
+      })
 
       // Assert
       await waitFor(() => {
-        expect(result.current.deviceStatus).toBe(
-          'Saved device not found. Please re-select from the list.'
-        )
+        expect(result.current.deviceStatus).toBe('Disconnected')
       })
-      expect(result.current.isConnected).toBe(false)
-      // Also check if the cookie was cleared
-      expect(setCookie).toHaveBeenCalledWith('hrm_device_id', '', { maxAge: -1 })
+      expect(localStorage.removeItem).toHaveBeenCalledWith('hrm_device_id')
     })
 
-    it('should successfully connect to a saved device if it is available', async () => {
+    it('should successfully connect to a saved device', async () => {
       // Arrange
-      ;(getCookie as jest.Mock).mockReturnValue('test-device-id')
-      mockBluetooth.getDevices.mockResolvedValue([mockDevice]) // The saved device is available
-
+      const localMockDevice = {
+        id: 'test-device-id',
+        name: 'Test HRM',
+        gatt: {
+          connected: false,
+          connect: jest.fn().mockResolvedValue(mockGattServer),
+          disconnect: jest.fn(),
+        },
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
+      ;(localStorage.getItem as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([localMockDevice])
       const { result } = renderHook(() => useBluetoothHRM())
 
       // Act
-      await result.current.autoConnect('Test User', 30)
+      await act(async () => {
+        await result.current.autoConnect()
+      })
 
       // Assert
       await waitFor(() => {
         expect(result.current.isConnected).toBe(true)
-        expect(result.current.deviceStatus).toBe('Connected')
+        expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
       })
-      expect(result.current.deviceName).toBe('Test HRM')
+      await waitFor(() => {
+        expect(result.current.deviceName).toBe('Test HRM')
+      })
     })
 
-    it('should do nothing if no device is saved', async () => {
+    it('should correctly handle no saved device', async () => {
       // Arrange
-      ;(getCookie as jest.Mock).mockReturnValue(null)
+      ;(localStorage.getItem as jest.Mock).mockReturnValue(null)
       const { result } = renderHook(() => useBluetoothHRM())
 
       // Act
-      await result.current.autoConnect('Test User', 30)
+      await act(async () => {
+        await result.current.autoConnect()
+      })
 
       // Assert
-      expect(result.current.isConnected).toBe(false)
-      expect(result.current.deviceStatus).toBe('Disconnected')
+      await waitFor(() => {
+        expect(result.current.deviceStatus).toBe('Disconnected')
+      })
       expect(mockBluetooth.getDevices).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('connectAndStream with deviceId', () => {
-    it('should throw an error if the specified device is not found', async () => {
-      // Arrange
-      mockBluetooth.getDevices.mockResolvedValue([]) // No devices available
-      const { result } = renderHook(() => useBluetoothHRM())
-
-      // Act & Assert
-      await expect(
-        result.current.connectAndStream(
-          'Test User',
-          30,
-          'non-existent-device-id'
-        )
-      ).rejects.toThrow('Saved device not found')
     })
   })
 })

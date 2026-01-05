@@ -15,7 +15,6 @@ import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
-import { getCookie, setCookie } from '@/utils/cookies'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -285,7 +284,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     logger.info('Initiating device forget sequence...')
     disconnect()
     try {
-      setCookie('hrm_device_id', '', -1)
+      localStorage.removeItem('hrm_device_id')
+      localStorage.removeItem('hrm_device_id')
       setDeviceStatus('Saved device cleared. Ready for new connection.')
     } catch (e) {
       logger.warn({ error: e }, 'Error during device forget')
@@ -475,7 +475,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         setDeviceStatus(`Connected to: ${device.name}`)
         setSavedDevice(device)
-        setCookie('hrm_device_id', device.id)
+        localStorage.setItem('hrm_device_id', device.id)
         isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
         setDisconnectionReason(null)
@@ -514,9 +514,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               abortControllerRef.current.abort()
             }
             setCookie('hrm_device_id', '', -1)
-            setDeviceStatus(
-              'Saved device cleared. Ready for new connection.'
-            )
+            setDeviceStatus('Saved device cleared. Ready for new connection.')
             setSavedDevice(null)
             setBatteryLevel(null)
             deviceRef.current = null
@@ -582,7 +580,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         let device = savedDevice
 
         if (!device) {
-          const savedDeviceId = getCookie('hrm_device_id')
+          const savedDeviceId = localStorage.getItem('hrm_device_id')
           logger.info(
             { savedDeviceId, hasGetDevices: !!navigator.bluetooth?.getDevices },
             'Looking for saved device'
@@ -607,17 +605,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 { savedDeviceId },
                 'Saved device not found in available devices list. Clearing cookie.'
               )
-              setCookie('hrm_device_id', '', -1)
+              localStorage.removeItem('hrm_device_id')
               throw new Error('Saved device not found')
             }
-          } else {
-            logger.info(
-              {
-                savedDeviceId,
-                hasGetDevices: !!navigator.bluetooth?.getDevices,
-              },
-              'Cannot get saved device'
-            )
+          } else if (silent) {
+            // If in silent mode and no saved device, just stop and reset status.
+            setDeviceStatus('Disconnected')
+            return
           }
         }
 
@@ -641,9 +635,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           handleConnectionError(error)
         } else {
           logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
-          // Reset the status to allow for a manual connection attempt.
-          setDeviceStatus('Disconnected')
         }
+          // Always reset status on failure for silent mode
+          setDeviceStatus('Disconnected')
+
         if (!silent) {
           throw error
         }
@@ -676,10 +671,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setDeviceStatus(
           'Saved device not found. Please re-select from the list.'
         )
+        // Revert to disconnected after a short delay to allow the user to read the message
+        setTimeout(() => setDeviceStatus('Disconnected'), 2000)
       } else {
         setDeviceStatus(
           'Auto-connect failed. Use Connect button to select device.'
         )
+        // Revert to disconnected after a short delay
+        setTimeout(() => setDeviceStatus('Disconnected'), 2000)
       }
     }
   }, [connectAndStream])
