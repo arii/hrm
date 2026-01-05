@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.23.0](https://github.com/arii/hrm/compare/hrm-v0.22.0...hrm-v0.23.0) (2026-01-05)
+
+
+### Features
+
+* **medium:** feat: Auto-start workout and integrate session controls (originally  [#3121](https://github.com/arii/hrm/issues/3121)) ([#3141](https://github.com/arii/hrm/issues/3141)) ([3da4abf](https://github.com/arii/hrm/commit/3da4abf971d61ee24ab2e06664db99ca3c5880ef))
+* **medium:** feat: Implement inactivity handling for client tiles ([#3159](https://github.com/arii/hrm/issues/3159)) ([0403c20](https://github.com/arii/hrm/commit/0403c2020e978f5567c5bb9905aa60d19747d32d))
+* **small:** [BUG] Main Dashboard: Default to 'HRM Web Player' when no active device ([#3160](https://github.com/arii/hrm/issues/3160)) ([9e3395e](https://github.com/arii/hrm/commit/9e3395eff0cd0273741797bf2858908cf68a4f85))
+* **small:** Fix Mock Client UI Bugs ([#3154](https://github.com/arii/hrm/issues/3154)) ([2fcae81](https://github.com/arii/hrm/commit/2fcae81a3ea218d109fcf93d4f55868231a59e57))
+* **small:** Fix: 'Weight' field not persisting in user cookies on /client/connect page ([#3164](https://github.com/arii/hrm/issues/3164)) ([ff5854b](https://github.com/arii/hrm/commit/ff5854b5f1f14e53c7ab84487cd3b391cf0c8f6c))
+
+
+### Bug Fixes
+
+* **ci:** resolve workflow artifact retention warning ([#3165](https://github.com/arii/hrm/issues/3165)) ([278051e](https://github.com/arii/hrm/commit/278051e1f6be6a50ac42363ec90088d17e04b7b0))
+* **connect:** Display accumulated calories on HrTile ([#3158](https://github.com/arii/hrm/issues/3158)) ([26866ed](https://github.com/arii/hrm/commit/26866ed3e94b084ae19ce1b1de3c1d4dd2e083ad))
+
 ## [0.22.0](https://github.com/arii/hrm/compare/hrm-v0.21.0...hrm-v0.22.0) (2026-01-04)
 
 ### Features
