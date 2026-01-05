@@ -22,6 +22,15 @@ const HrmConnectionPanel = () => {
   const [userSettings] = useUserSettings()
   const [workoutRecords, setWorkoutRecords] = useState<{ time: number; hr: number }[]>([])
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
+    // State to hold the client ID, ensuring localStorage is accessed client-side
+  const [myClientId, setMyClientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Only access localStorage on the client side after the component mounts
+    if (typeof window !== 'undefined') {
+      setMyClientId(localStorage.getItem('clientId'));
+    }
+  }, []);
 
   useEffect(() => {
     if (timerData.phase === 'RUNNING' && timerData.timeRemaining > 0) {
@@ -37,17 +46,9 @@ const HrmConnectionPanel = () => {
       setSessionStartTime(null);
       setWorkoutRecords([]);
     }
-  }, [timerData.timeRemaining, hrmData, timerData.phase, sessionStartTime]);
+  }, [timerData.timeRemaining, hrmData, timerData.phase, sessionStartTime, myClientId]);
 
-  // State to hold the client ID, ensuring localStorage is accessed client-side
-  const [myClientId, setMyClientId] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Only access localStorage on the client side after the component mounts
-    if (typeof window !== 'undefined') {
-      setMyClientId(localStorage.getItem('clientId'));
-    }
-  }, []);
 
   const totalCalories = useMemo(() => {
     if (!userSettings.userAge || !userSettings.userWeight || workoutRecords.length === 0) {
