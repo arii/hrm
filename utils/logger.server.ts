@@ -1,4 +1,5 @@
 // utils/logger.server.ts
+/// <reference path="../types/express.d.ts" />
 import pino from 'pino'
 import { Request, Response } from 'express'
 import pinoHttp from 'pino-http'
