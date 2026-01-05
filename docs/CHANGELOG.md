@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.23.0](https://github.com/arii/hrm/compare/hrm-v0.22.0...hrm-v0.23.0) (2026-01-05)
+
+
+### Features
+
+* **medium:** feat: Auto-start workout and integrate session controls (originally  [#3121](https://github.com/arii/hrm/issues/3121)) ([#3141](https://github.com/arii/hrm/issues/3141)) ([3da4abf](https://github.com/arii/hrm/commit/3da4abf971d61ee24ab2e06664db99ca3c5880ef))
+* **small:** Fix: 'Weight' field not persisting in user cookies on /client/connect page ([#3164](https://github.com/arii/hrm/issues/3164)) ([ff5854b](https://github.com/arii/hrm/commit/ff5854b5f1f14e53c7ab84487cd3b391cf0c8f6c))
+
+
+### Bug Fixes
+
+* **ci:** resolve workflow artifact retention warning ([#3165](https://github.com/arii/hrm/issues/3165)) ([278051e](https://github.com/arii/hrm/commit/278051e1f6be6a50ac42363ec90088d17e04b7b0))
+
 ## [0.22.0](https://github.com/arii/hrm/compare/hrm-v0.21.0...hrm-v0.22.0) (2026-01-04)
 
 ### Features
