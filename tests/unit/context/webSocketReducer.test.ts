@@ -115,7 +115,7 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0].isConnected).toBe(true)
     })
 
-    it('should mark a user as disconnected if not in payload', () => {
+    it('should remove a user if they are not in the payload', () => {
       const user2 = { ...baseUser, clientId: '2', userName: 'User B' }
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
@@ -129,11 +129,12 @@ describe('webSocketReducer', () => {
         payload: [baseUser], // Only user 1 is in the update
       }
       const state = reducer(initialState, action)
-      expect(state.hrmData).toHaveLength(2)
+      expect(state.hrmData).toHaveLength(1)
       const updatedUser1 = state.hrmData.find((u) => u.clientId === '1')
       const updatedUser2 = state.hrmData.find((u) => u.clientId === '2')
+      expect(updatedUser1).toBeDefined()
       expect(updatedUser1?.isConnected).toBe(true)
-      expect(updatedUser2?.isConnected).toBe(false)
+      expect(updatedUser2).toBeUndefined()
     })
   })
 

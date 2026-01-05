@@ -66,42 +66,20 @@ export const reducer = (
     }
     case 'HRM_UPDATE': {
       const payload = message.payload as ServerHrmData[]
-      // Create a map of incoming clientIds for efficient lookup
-      const incomingClients = new Set(payload.map((user) => user.clientId))
 
-      // Create a new state array by merging existing and new data
-      const mergedHrmData = state.hrmData.map((existingUser) => {
-        if (incomingClients.has(existingUser.clientId)) {
-          const updatedUser = payload.find(
-            (newUser) => newUser.clientId === existingUser.clientId
-          )
-          // CRITICAL FIX: The order of spread operators is essential.
-          // By spreading existingUser first, then updatedUser, we ensure
-          // that any fields NOT present in the (potentially partial) `updatedUser`
-          // payload are preserved from the existing state.
-          return updatedUser
-            ? {
-                ...existingUser,
-                ...updatedUser,
-                isConnected: true,
-              }
-            : { ...existingUser, isConnected: true }
-        }
-        return { ...existingUser, isConnected: false }
-      })
-
-      // Add any brand-new users from the payload who were not in the previous state
-      payload.forEach((newUser) => {
-        if (
-          !state.hrmData.some(
-            (existingUser) => existingUser.clientId === newUser.clientId
-          )
-        ) {
-          mergedHrmData.push({ ...newUser, isConnected: true })
+      // Filter out disconnected clients and merge new data for active ones.
+      const newHrmData = payload.map((newUser) => {
+        const existingUser = state.hrmData.find(
+          (u) => u.clientId === newUser.clientId
+        )
+        return {
+          ...(existingUser || {}), // Preserve existing data if any
+          ...newUser, // Overwrite with the new data
+          isConnected: true,
         }
       })
 
-      return { ...state, hrmData: mergedHrmData }
+      return { ...state, hrmData: newHrmData }
     }
     case 'TIMER_UPDATE':
       return {
