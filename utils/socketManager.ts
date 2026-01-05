@@ -327,8 +327,9 @@ const handleIncomingMessage = (
               const caloriesBurned = estimateCaloriesBurned({
                 heartRate: currentHr,
                 age: currentAge,
-                weightKg: existingData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG,
-                durationMinutes: dtMinutes,
+                weight: existingData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG,
+                workoutDuration: dtMinutes * 60, // Convert minutes to seconds
+                avgHr: currentHr, // Use current HR as a proxy for average HR in this real-time calculation
               })
               currentAccumulated += caloriesBurned
             }

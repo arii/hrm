@@ -60,12 +60,5 @@ export const generateFitFile = (data: FitExportData): Blob => {
   })
 
   const bytes = fitWriter.finish()
-  const buffer =
-    bytes.buffer.byteLength === bytes.byteLength
-      ? bytes.buffer
-      : bytes.buffer.slice(
-          bytes.byteOffset,
-          bytes.byteOffset + bytes.byteLength
-        )
-  return new Blob([buffer], { type: 'application/octet-stream' })
+  return new Blob([bytes.buffer], { type: 'application/octet-stream' })
 }
