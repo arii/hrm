@@ -1,4 +1,4 @@
-// tests/unit/jest.setup.js
+// tests/unit/jest.setup.jsdom.js
 require('@testing-library/jest-dom');
 
 process.env.NEXTAUTH_URL = 'http://localhost:3000';
