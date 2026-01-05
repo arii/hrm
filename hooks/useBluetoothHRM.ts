@@ -643,7 +643,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         } else {
           logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
           // Only reset status on failure for silent mode
-        setDeviceStatus('Disconnected')
+          setDeviceStatus('Disconnected')
         }
 
         if (!silent) {

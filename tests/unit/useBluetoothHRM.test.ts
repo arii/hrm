@@ -2,7 +2,6 @@
  * @jest-environment jsdom
  */
 import { jest } from '@jest/globals'
-import React from 'react'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
