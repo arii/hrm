@@ -1,5 +1,5 @@
 // server.ts (Refactored)
-import express from 'express'
+import express, { type RequestHandler } from 'express'
 import { createServer } from 'http'
 import next from 'next'
 import { env } from './lib/env.js' // New import
@@ -29,7 +29,7 @@ app.prepare().then(async () => {
 
   // --- Logger Setup ---
   // Must be the first middleware to capture all requests
-  expressApp.use(httpLogger)
+  expressApp.use(httpLogger as RequestHandler)
 
   // Global body parsing is intentionally omitted here.
   // Next.js API routes handle their own body parsing, and adding a global

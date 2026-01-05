@@ -26,12 +26,6 @@ if (process.env.NODE_ENV === 'development') {
     target: 'pino-pretty',
     options: {
       colorize: true,
-      messageFormat: (log: Record<string, unknown>, messageKey: string) => {
-        if (log.req) {
-          return `\n ${log[messageKey]}`
-        }
-        return ` ${log[messageKey]}`
-      },
       ignore: 'pid,hostname,req,res,responseTime',
     },
   }
