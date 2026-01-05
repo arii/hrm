@@ -4,7 +4,8 @@
     "noEmit": false,
     "outDir": "./dist",
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
+    "target": "esnext",
     "esModuleInterop": true,
     "traceResolution": false
   },
