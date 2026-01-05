@@ -9,10 +9,10 @@ import {
   ServerMessage,
   StateSnapshot,
   ExtWebSocket,
-} from '../types/websocket'
-import { AppServices } from './services'
-import logger from '../utils/logger'
-import { sendWebSocketMessage } from '../utils/websocketUtils'
+} from '../types/websocket.js'
+import { AppServices } from './services.js'
+import logger from '../utils/logger.js'
+import { sendWebSocketMessage } from '../utils/websocketUtils.js'
 import { WebSocket, WebSocketServer } from 'ws'
 
 export function handleIncomingMessage(
