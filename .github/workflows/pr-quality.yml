@@ -39,7 +39,7 @@ on:
 permissions:
   contents: read
   checks: write
-  actions: read
+  actions: read # Needed for `gh run list` to find parent commit runs
   pull-requests: write
   issues: write
 
