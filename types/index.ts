@@ -27,7 +27,7 @@ export interface TimerControlsProps {
   mode: TimerMode
   setMode: (mode: TimerMode) => void
   onStart: () => void
-  onStop: ()-> void
+  onStop: () => void
   onReset: () => void
   isWebSocketConnected: boolean
 }
