@@ -45,7 +45,7 @@ const createLogger = (): Logger => {
         // HACK: On a TTY, pino-pretty seems to swallow the first log message.
         // Prepending a newline seems to fix this.
         // A potential cause is that the TTY is not yet ready when the first log message is written.
-        messageFormat: (log: any, messageKey: any) => {
+        messageFormat: (log: Record<string, unknown>, messageKey: string) => {
           if (log.req) {
             return `\n ${log[messageKey]}`
           }
@@ -63,6 +63,7 @@ const logger = createLogger()
 
 // Conditionally create httpLogger
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Reason: The `pino-http` middleware function needs to accept an Express Request object which might be dynamically augmented with custom properties (e.g., `req.user`).
 let httpLogger: any
 
 if (typeof window === 'undefined') {
@@ -77,7 +78,7 @@ if (typeof window === 'undefined') {
       return id
     },
 
-    customLogLevel: function (req, res, err) {
+    customLogLevel: function (_req, res, err) {
       if (res.statusCode >= 400 && res.statusCode < 500) {
         return 'warn'
       } else if (res.statusCode >= 500 || err) {
@@ -91,7 +92,9 @@ if (typeof window === 'undefined') {
       return 'info'
     },
     // Add custom properties to the log
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     customProps: function (req: any) {
+      // Reason: Accessing custom 'user' and 'session' properties added by other middleware which are not part of the standard http.IncomingMessage type.
       return {
         // Add user context if available
         userId: req.user?.id,
@@ -105,18 +108,17 @@ if (typeof window === 'undefined') {
       }
       return `${req.method} ${req.url} completed`
     },
-    customErrorMessage: function (req, res, err) {
-      return `${req.method} ${req.url} errored with status code ${
-        res.statusCode
-      }`
+    customErrorMessage: function (req, res, _err) {
+      return `${req.method} ${req.url} errored with status code ${res.statusCode}`
     },
   })
 } else {
   // We are on the client, provide a mock middleware
   httpLogger = (
-    req: any,
-    res: any,
+    _req: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    _res: any, // eslint-disable-line @typescript-eslint/no-explicit-any
     next: any // eslint-disable-line @typescript-eslint/no-explicit-any
+    // Reason: This is a client-side mock for server-only middleware; strict typing is not critical for this stub.
   ) => {
     if (next) {
       next()

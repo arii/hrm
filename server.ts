@@ -30,14 +30,18 @@ app.prepare().then(async () => {
 
   // Add a simple middleware to attach user context to the request
   // In a real application, this would be your authentication middleware
-  expressApp.use((req: any, res, next) => {
-    // Simulate a user being authenticated
-    // You would replace this with your actual user authentication logic
-    if (req.headers['x-user-id']) {
-      req.user = { id: req.headers['x-user-id'] }
+  expressApp.use(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (req: any, _res, next) => {
+      // Reason: Simulating authentication by adding 'user' property to the Express request object for demonstration purposes. This requires 'any' or global type augmentation which is outside the scope of this quick fix.
+      // Simulate a user being authenticated
+      // You would replace this with your actual user authentication logic
+      if (req.headers['x-user-id']) {
+        req.user = { id: req.headers['x-user-id'] }
+      }
+      next()
     }
-    next()
-  })
+  )
 
   // Global body parsing is intentionally omitted here.
   // Next.js API routes handle their own body parsing, and adding a global
