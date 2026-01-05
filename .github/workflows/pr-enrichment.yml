@@ -275,7 +275,7 @@ jobs:
           CURRENT_TITLE="${{ github.event.pull_request.title }}"
 
           # Only enhance if title doesn't have scope prefix already
-          if [[ ! "$CURRENT_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore|ci)\\( ]]; then
+          if [[ ! "$CURRENT_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore|ci)\( ]]; then
             
             # Determine prefix based on categories
             CATEGORIES="${{ env.CATEGORIES }}"
@@ -298,7 +298,7 @@ jobs:
             SCOPE="${{ env.SCOPE }}"
             
             # Create enhanced title (only if it doesn't already have conventional commit format)
-            if [[ ! "$CURRENT_TITLE" =~ ^[a-z]+\\( ]]; then
+            if [[ ! "$CURRENT_TITLE" =~ ^[a-z]+\( ]]; then
               NEW_TITLE="$PREFIX($SCOPE): $CURRENT_TITLE"
               echo "Updating title from: $CURRENT_TITLE"
               echo "Updating title to: $NEW_TITLE"
