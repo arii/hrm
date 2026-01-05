@@ -26,7 +26,7 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': [
+    '^.+\\.(ts|tsx|js|jsx|mjs)$': [
       'babel-jest',
       {
         presets: [
