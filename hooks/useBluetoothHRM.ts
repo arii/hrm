@@ -274,20 +274,22 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   /**
    * @function forgetDevice
-   * @description Disconnects, clears the saved device from cookies, and revokes permissions.
+   * @description Disconnects and clears the saved device ID from application storage (cookies).
+   * This does NOT revoke browser-level Bluetooth permissions. The user must do that manually
+   * in their browser settings if required.
    * @async
    * @returns {Promise<void>}
-   * @sideeffect Calls `disconnect`, deletes cookies, and may call `device.forget()`.
+   * @sideeffect Calls `disconnect` and deletes the `hrm_device_id` cookie.
    */
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
     disconnect()
     try {
       setCookie('hrm_device_id', '', -1)
-      setDeviceStatus('Device permissions revoked. Ready for new connection.')
+      setDeviceStatus('Saved device cleared. Ready for new connection.')
     } catch (e) {
       logger.warn({ error: e }, 'Error during device forget')
-      setDeviceStatus('Error clearing device permissions.')
+      setDeviceStatus('Error clearing saved device.')
     }
   }, [disconnect])
 
@@ -386,9 +388,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             abortControllerRef.current.abort()
           }
           setCookie('hrm_device_id', '', -1)
-          setDeviceStatus(
-            'Device permissions revoked. Ready for new connection.'
-          )
+          setDeviceStatus('Saved device cleared. Ready for new connection.')
           setSavedDevice(null)
           setBatteryLevel(null)
           deviceRef.current = null
@@ -515,7 +515,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             }
             setCookie('hrm_device_id', '', -1)
             setDeviceStatus(
-              'Device permissions revoked. Ready for new connection.'
+              'Saved device cleared. Ready for new connection.'
             )
             setSavedDevice(null)
             setBatteryLevel(null)
