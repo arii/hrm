@@ -66,17 +66,18 @@ export const reducer = (
     }
     case 'HRM_UPDATE': {
       const payload = message.payload as ServerHrmData[]
-      const activeClientIds = new Set(payload.map(u => u.clientId))
 
       // Filter out disconnected clients and merge new data for active ones.
-      const newHrmData = payload.map(newUser => {
-        const existingUser = state.hrmData.find(u => u.clientId === newUser.clientId);
+      const newHrmData = payload.map((newUser) => {
+        const existingUser = state.hrmData.find(
+          (u) => u.clientId === newUser.clientId
+        )
         return {
           ...(existingUser || {}), // Preserve existing data if any
-          ...newUser,             // Overwrite with the new data
+          ...newUser, // Overwrite with the new data
           isConnected: true,
-        };
-      });
+        }
+      })
 
       return { ...state, hrmData: newHrmData }
     }
