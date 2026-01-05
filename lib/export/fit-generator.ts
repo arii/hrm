@@ -8,6 +8,8 @@ interface FitExportData {
     time: number // ms timestamp
     hr: number
   }>
+  age?: number
+  weightKg?: number
 }
 
 export const generateFitFile = (data: FitExportData): Blob => {
@@ -25,7 +27,15 @@ export const generateFitFile = (data: FitExportData): Blob => {
     time_created: startFitTime,
   })
 
-  // 2. Session Message (Summary)
+  // 2. User Profile Message (Optional)
+  if (data.age && data.weightKg) {
+    fitWriter.writeMessage('user_profile', {
+      weight: data.weightKg,
+      age: data.age,
+    })
+  }
+
+  // 3. Session Message (Summary)
   fitWriter.writeMessage('session', {
     start_time: startFitTime,
     total_elapsed_time: data.durationSeconds,
@@ -38,7 +48,7 @@ export const generateFitFile = (data: FitExportData): Blob => {
     ),
   })
 
-  // 3. Record Messages (Time Series)
+  // 4. Record Messages (Time Series)
   data.records.forEach((record) => {
     fitWriter.writeMessage('record', {
       timestamp: fitWriter.time(new Date(record.time)),
