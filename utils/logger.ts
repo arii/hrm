@@ -1,7 +1,7 @@
 // utils/logger.ts
 import { randomUUID } from 'crypto'
 import pino from 'pino'
-import pinoHttp from 'pino-http'
+import { Request, Response } from 'express'
 
 // Define a consistent logger interface
 interface Logger {
@@ -62,15 +62,16 @@ const createLogger = (): Logger => {
 const logger = createLogger()
 
 // Conditionally create httpLogger
-// Reason: The `pino-http` middleware function needs to accept an Express Request object which might be dynamically augmented with custom properties (e.g., `req.user`).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let httpLogger: any
 
 if (typeof window === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const pinoHttp = require('pino-http')
   // We are on the server
   httpLogger = pinoHttp({
     logger: logger as pino.Logger, // Cast to pino.Logger for pinoHttp
-    genReqId: function (req, res) {
+    genReqId: function (req: Request, res: Response) {
       const existingID = req.id ?? req.headers['x-request-id']
       if (existingID) return existingID
       const id = randomUUID()
@@ -78,7 +79,7 @@ if (typeof window === 'undefined') {
       return id
     },
 
-    customLogLevel: function (_req, res, err) {
+    customLogLevel: function (_req: Request, res: Response, err?: Error) {
       if (res.statusCode >= 400 && res.statusCode < 500) {
         return 'warn'
       } else if (res.statusCode >= 500 || err) {
@@ -92,9 +93,7 @@ if (typeof window === 'undefined') {
       return 'info'
     },
     // Add custom properties to the log
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    customProps: function (req: any) {
-      // Reason: Accessing custom 'user' and 'session' properties added by other middleware which are not part of the standard http.IncomingMessage type.
+    customProps: function (req: Request) {
       return {
         // Add user context if available
         userId: req.user?.id,
@@ -102,13 +101,13 @@ if (typeof window === 'undefined') {
       }
     },
     // Modify the log message
-    customSuccessMessage: function (req, res) {
+    customSuccessMessage: function (req: Request, res: Response) {
       if (res.statusCode === 404) {
         return `Resource not found`
       }
       return `${req.method} ${req.url} completed`
     },
-    customErrorMessage: function (req, res, _err) {
+    customErrorMessage: function (req: Request, res: Response, _err: Error) {
       return `${req.method} ${req.url} errored with status code ${res.statusCode}`
     },
   })
