@@ -86,7 +86,8 @@ export const estimateIncrementalCaloriesBurned = ({
 }: IncrementalCalorieParams): number => {
   // A simplified, gender-neutral formula for real-time estimation.
   // This is a placeholder and can be replaced with a more accurate model if needed.
-  const caloriesPerMinute = (heartRate * 0.6309 - age * 0.2017 + weight * 0.1988 - 55.0969) / 4.184
+  const caloriesPerMinute =
+    (heartRate * 0.6309 - age * 0.2017 + weight * 0.1988 - 55.0969) / 4.184
   const estimatedCalories = caloriesPerMinute * durationMinutes
   return Math.max(0, estimatedCalories) // Ensure calories are not negative
 }
