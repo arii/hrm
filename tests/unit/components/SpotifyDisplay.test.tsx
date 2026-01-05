@@ -22,6 +22,21 @@ jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
   __esModule: true,
   default: () => <div data-testid="current-spotify-item-display" />,
 }))
+jest.mock('@/components/SpotifyDeviceSelectorWrapper', () => ({
+  __esModule: true,
+  default: ({
+    onDeviceSelect,
+  }: {
+    onDeviceSelect: (deviceId: string) => void
+  }) => (
+    <button
+      data-testid="spotify-device-selector"
+      onClick={() => onDeviceSelect('mock-device-id')}
+    >
+      Select Device
+    </button>
+  ),
+}))
 jest.mock('@/context/WebSocketContext')
 jest.mock('next-auth/react', () => ({
   ...jest.requireActual('next-auth/react'), // Keep original functionality
@@ -202,6 +217,106 @@ describe('SpotifyDisplay', () => {
       })
       rerender(<SpotifyDisplay />)
       expect(slider).toHaveValue('25')
+    })
+  })
+
+  describe('Auto-selection and Command Sending', () => {
+    let mockSendData: jest.Mock
+    let initialSpotifyData: SpotifyData
+    const hrmWebPlayerDeviceId = 'hrm-web-player-device-id'
+
+    beforeEach(() => {
+      jest.useFakeTimers()
+      mockSendData = jest.fn()
+      initialSpotifyData = {
+        trackName: 'Test Track',
+        artist: 'Test Artist',
+        albumName: 'Test Album',
+        albumArtUrl: '',
+        isPlaying: true,
+        volume: 50,
+        isMuted: false,
+        devices: [
+          {
+            id: 'some-other-device',
+            name: 'Some Other Device',
+            is_active: false,
+          },
+        ],
+      }
+
+      mockedUseSession.mockReturnValue({
+        data: { accessToken: 'fake-token' },
+        status: 'authenticated',
+      })
+
+      mockedUseWebSocket.mockReturnValue({
+        spotifyData: initialSpotifyData,
+        sendData: mockSendData,
+        connectionStatus: 'Connected',
+        spotifyServiceInitialized: true,
+      })
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
+    it('defaults to HRM Web Player when SDK is ready and no active device', async () => {
+      mockedUseSpotifyWebPlayback.mockReturnValue({
+        isReady: true,
+        deviceId: hrmWebPlayerDeviceId,
+        player: null,
+        isAuthenticated: true,
+      })
+
+      // Ensure the web player device is part of the mocked devices for correct display logic
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: {
+          ...initialSpotifyData,
+          devices: [
+            ...initialSpotifyData.devices,
+            {
+              id: hrmWebPlayerDeviceId,
+              name: 'HRM Web Player',
+              is_active: false,
+            },
+          ],
+        },
+      })
+
+      await act(async () => {
+        renderWithProviders(<SpotifyDisplay />)
+      })
+
+      expect(
+        await screen.findByText('🎵 Browser Player Active')
+      ).toBeInTheDocument()
+    })
+
+    it('sends command to the active device when no device is explicitly selected', () => {
+      // Set the device to active in the mock data
+      const updatedSpotifyData = {
+        ...initialSpotifyData,
+        devices: [{ ...initialSpotifyData.devices[0], is_active: true }],
+      }
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: updatedSpotifyData,
+      })
+
+      renderWithProviders(<SpotifyDisplay />)
+      const nextButton = screen.getByRole('button', { name: /next track/i })
+      act(() => {
+        fireEvent.click(nextButton)
+      })
+      expect(mockSendData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'NEXT',
+          deviceId: 'some-other-device',
+        })
+      )
     })
   })
 })
