@@ -1,109 +1,95 @@
-'use client'
+'use client';
 
-import { useEffect, useReducer } from 'react'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { useUserSettings } from '@/context/UserSettingsContext'
-import { Button, Typography, Paper, Box, Container } from '@mui/material'
-import { generateFitFile } from '@/lib/export/fit-generator'
-import Main from '@/app/main'
+import { useEffect, useReducer } from 'react';
+import { useWebSocket } from '@/context/WebSocketContext';
+import { Button, Typography, Paper, Box, Container } from '@mui/material';
+import { generateFitFile } from '@/lib/export/fit-generator';
+import Main from '@/app/main';
 
 interface State {
-  workoutBuffer: Array<{ time: number; hr: number }>
-  sessionStartTime: number | null
-  workoutDuration: number
-  caloriesBurned: number
+  workoutBuffer: Array<{ time: number; hr: number }>;
+  sessionStartTime: number | null;
+  workoutDuration: number;
+  caloriesBurned: number;
 }
 
 type Action =
   | { type: 'START_SESSION' }
   | { type: 'ADD_HR_DATA'; payload: number }
-  | { type: 'END_SESSION'; payload: { duration: number; calories: number } }
+  | { type: 'END_SESSION'; payload: { duration: number; calories: number } };
 
 const initialState: State = {
   workoutBuffer: [],
   sessionStartTime: null,
   workoutDuration: 0,
   caloriesBurned: 0,
-}
+};
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'START_SESSION':
-      return { ...state, sessionStartTime: Date.now(), workoutBuffer: [] }
+      return { ...state, sessionStartTime: Date.now(), workoutBuffer: [] };
     case 'ADD_HR_DATA':
       return {
         ...state,
-        workoutBuffer: [
-          ...state.workoutBuffer,
-          { time: Date.now(), hr: action.payload },
-        ],
-      }
+        workoutBuffer: [...state.workoutBuffer, { time: Date.now(), hr: action.payload }],
+      };
     case 'END_SESSION':
       return {
         ...state,
         workoutDuration: action.payload.duration,
         caloriesBurned: action.payload.calories,
-      }
+      };
     default:
-      return state
+      return state;
   }
 }
 
+
 const ExperimentalWorkoutPage = () => {
-  const webSocketContext = useWebSocket()
-  const { userSettings } = useUserSettings()
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const webSocketContext = useWebSocket();
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    if (!webSocketContext) return
-    const { hrmData, timerData } = webSocketContext
+    if (!webSocketContext) {
+      return;
+    }
+    const { hrmData, timerData } = webSocketContext;
 
     if (timerData.isRunning && state.sessionStartTime === null) {
-      dispatch({ type: 'START_SESSION' })
+      dispatch({ type: 'START_SESSION' });
     }
 
-    if (
-      timerData.isRunning &&
-      hrmData.length > 0 &&
-      hrmData[0].lastKnownHr !== null
-    ) {
-      dispatch({ type: 'ADD_HR_DATA', payload: hrmData[0].lastKnownHr })
+    if (timerData.isRunning && hrmData && hrmData.length > 0 && hrmData[0].lastKnownHr !== null) {
+      dispatch({ type: 'ADD_HR_DATA', payload: hrmData[0].lastKnownHr });
     }
 
     if (!timerData.isRunning && state.sessionStartTime !== null) {
-      dispatch({
-        type: 'END_SESSION',
-        payload: {
-          duration: timerData.timeElapsed,
-          calories: timerData.caloriesBurned,
-        },
-      })
+      dispatch({ type: 'END_SESSION', payload: { duration: timerData.timeElapsed, calories: timerData.caloriesBurned } });
     }
-  }, [webSocketContext, state.sessionStartTime])
+  }, [webSocketContext, state.sessionStartTime]);
 
   const handleExport = () => {
-    if (state.workoutBuffer.length === 0 || !state.sessionStartTime) return
+    if (state.workoutBuffer.length === 0 || !state.sessionStartTime) return;
 
     const blob = generateFitFile({
       startTime: state.sessionStartTime,
       durationSeconds: state.workoutDuration,
       totalCalories: state.caloriesBurned,
       records: state.workoutBuffer,
-      userWeight: userSettings.weight,
-      userAge: userSettings.age,
-    })
+    });
 
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `workout-${new Date().toISOString()}.fit`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `workout-${new Date().toISOString()}.fit`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
-  const timerData = webSocketContext?.timerData
+  const timerData = webSocketContext?.timerData;
 
   return (
     <Main>
@@ -116,25 +102,15 @@ const ExperimentalWorkoutPage = () => {
             <Typography>Loading...</Typography>
           ) : (
             <Box>
-              <Typography>
-                Duration: {state.workoutDuration.toFixed(2)} seconds
-              </Typography>
-              <Typography>
-                Calories Burned: {state.caloriesBurned.toFixed(2)}
-              </Typography>
-              <Typography>
-                Data Points Recorded: {state.workoutBuffer.length}
-              </Typography>
+              <Typography>Duration: {state.workoutDuration.toFixed(2)} seconds</Typography>
+              <Typography>Calories Burned: {state.caloriesBurned.toFixed(2)}</Typography>
+              <Typography>Data Points Recorded: {state.workoutBuffer.length}</Typography>
             </Box>
           )}
           <Button
             variant="contained"
             onClick={handleExport}
-            disabled={
-              state.workoutBuffer.length === 0 ||
-              !timerData ||
-              timerData.isRunning
-            }
+            disabled={state.workoutBuffer.length === 0 || !timerData || timerData.isRunning}
             sx={{ mt: 2 }}
           >
             Download FIT File
@@ -142,7 +118,7 @@ const ExperimentalWorkoutPage = () => {
         </Paper>
       </Container>
     </Main>
-  )
-}
+  );
+};
 
-export default ExperimentalWorkoutPage
+export default ExperimentalWorkoutPage;
