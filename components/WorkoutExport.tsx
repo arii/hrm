@@ -13,6 +13,7 @@ interface WorkoutExportProps {
     }>
     userAge?: number
     userWeight?: number
+    gender?: 'male' | 'female'
   }
 }
 
