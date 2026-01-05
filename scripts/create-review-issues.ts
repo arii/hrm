@@ -4,7 +4,6 @@ import path from 'path'
 import os from 'os'
 import crypto from 'crypto'
 import { z } from 'zod'
-import { fileURLToPath } from 'url'
 
 // --- Zod Schemas for Validation ---
 
@@ -259,31 +258,3 @@ export async function run(
 }
 
 // --- Main Execution ---
-
-/**
- * Determines if the script is being run directly.
- * In ESM, `require.main === module` is not available.
- * This check compares the script's file path with the entry point process.
- * @param {ImportMeta} meta - The import.meta object from the module.
- * @returns {boolean} - True if the script is the main module, false otherwise.
- */
-function isMainModule(meta: ImportMeta) {
-  if (!meta || !meta.url) {
-    return false
-  }
-  const modulePath = fileURLToPath(meta.url)
-  const mainScriptPath = process.argv[1]
-  return modulePath === mainScriptPath
-}
-
-// istanbul ignore next
-if (isMainModule(import.meta)) {
-  const client = new GitHubClient()
-  const prNumber = process.env.PR_NUMBER
-  const reviewFile = 'review_result.json'
-
-  run(client, prNumber || '', reviewFile).catch((err) => {
-    console.error('Unhandled error:', err)
-    process.exit(1)
-  })
-}
