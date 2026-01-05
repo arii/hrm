@@ -8,12 +8,13 @@ const config = {
   reporters: [
     'default',
     [
-      'jest-github-reporter',
+      'jest-junit',
       {
-        repository: process.env.GITHUB_REPOSITORY,
-        runId: process.env.GITHUB_RUN_ID,
-        githubToken: process.env.GITHUB_TOKEN,
-        jobName: process.env.GITHUB_JOB,
+        outputDirectory: './test-results', // The directory where the XML file will be saved
+        outputName: 'unit-results.xml', // The name of the JUnit XML file
+        suiteNameTemplate: '{filepath}', // Optional: customize the suite name
+        classNameTemplate: '{classname}', // Optional: customize the class name
+        titleTemplate: '{title}', // Optional: customize the test title
       },
     ],
   ],
