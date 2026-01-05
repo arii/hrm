@@ -2,13 +2,20 @@
  * @jest-environment jsdom
  */
 import { jest } from '@jest/globals'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { getCookie, setCookie } from 'cookies-next'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
+}))
+
+// Mock cookies-next
+jest.mock('cookies-next', () => ({
+  getCookie: jest.fn(),
+  setCookie: jest.fn(),
 }))
 
 // Mock navigator.bluetooth
@@ -66,6 +73,9 @@ describe('useBluetoothHRM', () => {
       sendData: mockSendData,
       connectionStatus: 'Connected',
     })
+    // Reset cookie mocks before each test to ensure isolation
+    ;(getCookie as jest.Mock).mockReset()
+    ;(setCookie as jest.Mock).mockReset()
 
     mockCharacteristic = {
       startNotifications: jest.fn().mockResolvedValue(undefined),
@@ -413,6 +423,78 @@ describe('useBluetoothHRM', () => {
 
       // The gatt.connect should have been called twice, but the first one should be aborted
       expect(mockDevice.gatt.connect).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('autoConnect', () => {
+    it('should set status to "Saved device not found" when saved device is not in getDevices list', async () => {
+      // Arrange
+      ;(getCookie as jest.Mock).mockReturnValue('saved-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([]) // No devices available
+
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // Act
+      await result.current.autoConnect('Test User', 30)
+
+      // Assert
+      await waitFor(() => {
+        expect(result.current.deviceStatus).toBe(
+          'Saved device not found. Please re-select from the list.'
+        )
+      })
+      expect(result.current.isConnected).toBe(false)
+      // Also check if the cookie was cleared
+      expect(setCookie).toHaveBeenCalledWith('hrm_device_id', '', { maxAge: -1 })
+    })
+
+    it('should successfully connect to a saved device if it is available', async () => {
+      // Arrange
+      ;(getCookie as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice]) // The saved device is available
+
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // Act
+      await result.current.autoConnect('Test User', 30)
+
+      // Assert
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(true)
+        expect(result.current.deviceStatus).toBe('Connected')
+      })
+      expect(result.current.deviceName).toBe('Test HRM')
+    })
+
+    it('should do nothing if no device is saved', async () => {
+      // Arrange
+      ;(getCookie as jest.Mock).mockReturnValue(null)
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // Act
+      await result.current.autoConnect('Test User', 30)
+
+      // Assert
+      expect(result.current.isConnected).toBe(false)
+      expect(result.current.deviceStatus).toBe('Disconnected')
+      expect(mockBluetooth.getDevices).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('connectAndStream with deviceId', () => {
+    it('should throw an error if the specified device is not found', async () => {
+      // Arrange
+      mockBluetooth.getDevices.mockResolvedValue([]) // No devices available
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // Act & Assert
+      await expect(
+        result.current.connectAndStream(
+          'Test User',
+          30,
+          'non-existent-device-id'
+        )
+      ).rejects.toThrow('Saved device not found')
     })
   })
 })
