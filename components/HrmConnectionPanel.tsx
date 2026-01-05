@@ -62,20 +62,20 @@ const HrmConnectionPanel = () => {
 
   // Effect to control recording state based on timer phase
   useEffect(() => {
-    if (timerData.phase === 'RUNNING' && !isRecording) {
+    if (timerData.currentPhase === 'RUNNING' && !isRecording) {
       const startTime = Date.now()
       setSessionStartTime(startTime)
       setWorkoutRecords([]) // Clear previous records
       setIsRecording(true)
       localStorage.setItem('workoutRecords', '[]')
       localStorage.setItem('sessionStartTime', JSON.stringify(startTime))
-    } else if (timerData.phase !== 'RUNNING' && isRecording) {
+    } else if (timerData.currentPhase !== 'RUNNING' && isRecording) {
       setIsRecording(false)
       // Persist final records to localStorage
       localStorage.setItem('workoutRecords', JSON.stringify(workoutRecords))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerData.phase, isRecording])
+  }, [timerData.currentPhase, isRecording])
 
   // Ref to hold the latest hrmData to avoid dependency issues in the recording effect
   const hrmDataRef = useRef(hrmData)
