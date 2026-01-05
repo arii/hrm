@@ -65,43 +65,15 @@ export const reducer = (
       }
     }
     case 'HRM_UPDATE': {
+      // The HRM_UPDATE payload is now the single source of truth for who is connected.
+      // Instead of merging, we replace the old list with the new one,
+      // ensuring that any clients who have disconnected are removed from the state.
       const payload = message.payload as ServerHrmData[]
-      // Create a map of incoming clientIds for efficient lookup
-      const incomingClients = new Set(payload.map((user) => user.clientId))
-
-      // Create a new state array by merging existing and new data
-      const mergedHrmData = state.hrmData.map((existingUser) => {
-        if (incomingClients.has(existingUser.clientId)) {
-          const updatedUser = payload.find(
-            (newUser) => newUser.clientId === existingUser.clientId
-          )
-          // CRITICAL FIX: The order of spread operators is essential.
-          // By spreading existingUser first, then updatedUser, we ensure
-          // that any fields NOT present in the (potentially partial) `updatedUser`
-          // payload are preserved from the existing state.
-          return updatedUser
-            ? {
-                ...existingUser,
-                ...updatedUser,
-                isConnected: true,
-              }
-            : { ...existingUser, isConnected: true }
-        }
-        return { ...existingUser, isConnected: false }
-      })
-
-      // Add any brand-new users from the payload who were not in the previous state
-      payload.forEach((newUser) => {
-        if (
-          !state.hrmData.some(
-            (existingUser) => existingUser.clientId === newUser.clientId
-          )
-        ) {
-          mergedHrmData.push({ ...newUser, isConnected: true })
-        }
-      })
-
-      return { ...state, hrmData: mergedHrmData }
+      const newHrmData = payload.map((user) => ({
+        ...user,
+        isConnected: true,
+      }))
+      return { ...state, hrmData: newHrmData }
     }
     case 'TIMER_UPDATE':
       return {

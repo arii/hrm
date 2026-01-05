@@ -51,41 +51,15 @@ export const reducer = (
       }
     }
     case 'HRM_UPDATE': {
+      // The HRM_UPDATE payload is now the single source of truth for who is connected.
+      // Instead of merging, we replace the old list with the new one,
+      // ensuring that any clients who have disconnected are removed from the state.
       const payload = message.payload as ServerHrmData[]
-      // Create a new state array by merging existing and new data
-      // The previous logic used a Set of incoming client IDs to determine who was connected,
-      // but this was flawed. By using the payload as the single source of truth, we ensure
-      // that only users who are actively sending data are marked as connected.
-      const mergedHrmData = state.hrmData.map((existingUser) => {
-        const updatedUser = payload.find(
-          (newUser) => newUser.clientId === existingUser.clientId
-        )
-        if (updatedUser) {
-          // CRITICAL FIX: The order of spread operators is essential.
-          // By spreading existingUser first, then updatedUser, we ensure
-          // that any fields NOT present in the (potentially partial) `updatedUser`
-          // payload are preserved from the existing state.
-          return {
-            ...existingUser,
-            ...updatedUser,
-            isConnected: true,
-          }
-        }
-        return { ...existingUser, isConnected: false }
-      })
-
-      // Add any brand-new users from the payload who were not in the previous state
-      payload.forEach((newUser) => {
-        if (
-          !state.hrmData.some(
-            (existingUser) => existingUser.clientId === newUser.clientId
-          )
-        ) {
-          mergedHrmData.push({ ...newUser, isConnected: true })
-        }
-      })
-
-      return { ...state, hrmData: mergedHrmData }
+      const newHrmData = payload.map((user) => ({
+        ...user,
+        isConnected: true,
+      }))
+      return { ...state, hrmData: newHrmData }
     }
     case 'TIMER_UPDATE':
       return {
