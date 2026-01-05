@@ -4,6 +4,16 @@ name: Gemini Orchestrator
 on:
   pull_request:
     types: [opened, synchronize]
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'lib/**'
+      - 'server.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      # Exclude docs-only changes
+      - '!**/*.md'
+      - '!docs/**'
   workflow_dispatch:
     inputs:
       command:
