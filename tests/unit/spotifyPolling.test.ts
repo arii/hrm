@@ -3,7 +3,6 @@ import { jest } from '@jest/globals'
 import { SpotifyPolling } from '@/services/spotifyPolling'
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
 import { ServerMessage } from '@/types/websocket'
-import logger from '@/utils/logger'
 
 // Mock the logger
 jest.mock('@/utils/logger', () => ({
@@ -40,13 +39,17 @@ describe('SpotifyPolling', () => {
         setVolume: jest.fn(),
       },
       // Add other necessary mocked methods
-    } as any
+    } as unknown as jest.Mocked<SpotifyApi>
     spotifyPolling = new SpotifyPolling(broadcastUpdate)
     // Manually set the mocked spotifyApi instance
-    ;(spotifyPolling as any).spotifyApi = mockSpotifyApi
+    ;(
+      spotifyPolling as unknown as { spotifyApi: jest.Mocked<SpotifyApi> }
+    ).spotifyApi = mockSpotifyApi
 
     // Mock Date.now
-    jest.spyOn(Date, 'now').mockReturnValue(new Date('2023-01-01T00:00:00Z').getTime())
+    jest
+      .spyOn(Date, 'now')
+      .mockReturnValue(new Date('2023-01-01T00:00:00Z').getTime())
   })
 
   afterEach(() => {

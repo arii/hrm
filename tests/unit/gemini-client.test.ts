@@ -1,7 +1,10 @@
 /**
  * @jest-environment node
  */
-import { getModelFallbacks, JsonProcessor } from '../../../scripts/gemini-client'
+import {
+  getModelFallbacks,
+  JsonProcessor,
+} from '../../../scripts/gemini-client'
 
 describe('JsonProcessor', () => {
   const processor = new JsonProcessor()
