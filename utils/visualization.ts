@@ -101,10 +101,15 @@ export const getHrZoneProps = (
   // 2. Look up the UI properties from the map
   const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
 
-  // 3. Determine text color - force white for grey zones for better contrast
+  // 3. Determine text color - force white for specific zones for better contrast
   let textColor = theme.palette.getContrastText(zoneUiProps.bgColor)
-  if (zoneName === HrZoneName.NoData || zoneName === HrZoneName.Unknown) {
-    textColor = '#FFFFFF' // Force white text for grey zones
+  if (
+    zoneName === HrZoneName.NoData ||
+    zoneName === HrZoneName.Unknown ||
+    zoneName === HrZoneName.FatBurn ||
+    zoneName === HrZoneName.Cardio
+  ) {
+    textColor = '#FFFFFF' // Force white text for grey, green, and yellow zones
   }
 
   // 4. Combine domain data with UI properties
