@@ -234,49 +234,19 @@ const SpotifyDisplay = () => {
     ) {
       dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
     }
-  }, [spotifyData.devices, selectedDeviceId, dispatch])
+  }, [spotifyData.devices, selectedDeviceId])
 
-  // Effect to auto-select the Web Player if available and no other device is active
-  useEffect(() => {
-    const devices = spotifyData.devices || []
-    const hasActiveDevice = devices.some((d) => d.is_active)
-
-    // If the SDK is ready, we have its deviceId, there's no selected device yet,
-    // and no other device is active, then select the web player.
-    if (isReady && deviceId && !selectedDeviceId && !hasActiveDevice) {
-      dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
+  const sendSpotifyCommand = (
+    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
+    targetDeviceId?: string
+  ) => {
+    const message: SpotifyCommandMessage = {
+      type: 'SPOTIFY_COMMAND',
+      command,
+      ...(targetDeviceId && { deviceId: targetDeviceId }),
     }
-  }, [spotifyData.devices, selectedDeviceId, isReady, deviceId, dispatch]) // Re-run when devices or SDK status changes
-
-  const sendSpotifyCommand = useCallback(
-    (
-      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-      // Allow overriding the device ID, e.g., for transferring playback
-      overriddenDeviceId?: string
-    ) => {
-      const targetDeviceId =
-        overriddenDeviceId ??
-        selectedDeviceId ??
-        spotifyData.devices?.find((device) => device.is_active)?.id
-
-      // For transfer, a deviceId is mandatory.
-      if (command === 'TRANSFER_PLAYBACK' && !targetDeviceId) {
-        console.error(
-          '[SpotifyDisplay] Transfer playback requires a target device.'
-        )
-        return
-      }
-
-      const finalDeviceId = targetDeviceId || undefined
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        ...(finalDeviceId && { deviceId: finalDeviceId }),
-      }
-      sendData(message)
-    },
-    [sendData, selectedDeviceId, spotifyData.devices]
-  )
+    sendData(message)
+  }
 
   const handlePlayPauseToggle = () => {
     const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
