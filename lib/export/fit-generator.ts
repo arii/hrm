@@ -62,11 +62,12 @@ export const generateFitFile = (data: FitExportData): Blob => {
   const bytes = fitWriter.finish()
   // The finish() method returns a DataView. To ensure full compatibility
   // with the Blob constructor and avoid potential issues with SharedArrayBuffer,
-  // we slice the underlying buffer to get a new ArrayBuffer of the correct size.
-  const buffer = bytes.buffer.slice(
-    bytes.byteOffset,
-    bytes.byteOffset + bytes.byteLength
-  )
+  // we manually create a new ArrayBuffer and copy the data.
+  const buffer = new ArrayBuffer(bytes.byteLength)
+  const view = new Uint8Array(buffer)
+  for (let i = 0; i < bytes.byteLength; i++) {
+    view[i] = bytes.getUint8(i)
+  }
   return new Blob([buffer], {
     type: 'application/octet-stream',
   })
