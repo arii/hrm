@@ -1,6 +1,5 @@
 /** @type {import('jest').Config} */
 const config = {
-  preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/tests/unit'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
@@ -27,16 +26,9 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': [
-      'ts-jest',
-      {
-        useESM: true,
-        tsconfig: {
-          module: 'ES2022',
-          moduleResolution: 'bundler',
-        },
-      },
-    ],
+    '^.+\\.(ts|tsx)$': 'babel-jest',
+    '^.+\\.(js|jsx)$': 'babel-jest',
+    '^(?!.*\\.(ts|tsx|js|jsx)$)': '<rootDir>/jest-file-transformer.cjs',
   },
   transformIgnorePatterns: [
     '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',

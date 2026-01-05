@@ -27,14 +27,18 @@ jest.mock('../../utils/logger', () => ({
 }))
 
 // Mock the 'ws' module to control the WebSocket server and clients
-jest.mock('ws', () => ({
-  Server: jest.fn().mockImplementation(() => {
-    const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
-    wss.clients = new Set<MockWebSocket>()
-    return wss
-  }),
-  WebSocket: jest.fn(),
-}))
+jest.mock('ws', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const EventEmitter = require('events')
+  return {
+    Server: jest.fn().mockImplementation(() => {
+      const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
+      wss.clients = new Set<MockWebSocket>()
+      return wss
+    }),
+    WebSocket: jest.fn(),
+  }
+})
 
 class MockWebSocket extends EventEmitter implements Partial<ExtWebSocket> {
   isAlive = true

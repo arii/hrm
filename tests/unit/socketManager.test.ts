@@ -65,24 +65,28 @@ jest.mock('../../utils/logger', () => ({
 }))
 
 // Manual mock for the 'ws' module
-jest.mock('ws', () => ({
-  Server: jest.fn().mockImplementation(() => {
-    const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
-    wss.clients = new Set<MockWebSocket>()
-    const originalOn = wss.on.bind(wss)
-    const originalEmit = wss.emit.bind(wss)
-    wss.on = jest.fn(
-      (event: string, listener: (...args: unknown[]) => void) => {
-        return originalOn(event, listener)
-      }
-    )
-    wss.emit = jest.fn((event: string, ...args: unknown[]) => {
-      return originalEmit(event, ...args)
-    })
-    return wss
-  }),
-  WebSocket: jest.fn(),
-}))
+jest.mock('ws', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const EventEmitter = require('events')
+  return {
+    Server: jest.fn().mockImplementation(() => {
+      const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
+      wss.clients = new Set<MockWebSocket>()
+      const originalOn = wss.on.bind(wss)
+      const originalEmit = wss.emit.bind(wss)
+      wss.on = jest.fn(
+        (event: string, listener: (...args: unknown[]) => void) => {
+          return originalOn(event, listener)
+        }
+      )
+      wss.emit = jest.fn((event: string, ...args: unknown[]) => {
+        return originalEmit(event, ...args)
+      })
+      return wss
+    }),
+    WebSocket: jest.fn(),
+  }
+})
 
 class MockWebSocket extends EventEmitter {
   isAlive: boolean

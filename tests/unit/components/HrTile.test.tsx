@@ -10,27 +10,31 @@ import { ZONE_COLORS } from '@/utils/visualization'
 import theme from '@/lib/theme'
 
 // Mock the getHrZoneProps function to control the test cases
-jest.mock('@/utils/visualization', () => ({
-  ...jest.requireActual('@/utils/visualization'),
-  getHrZoneProps: (percentMax: number) => {
-    let backgroundColor = ZONE_COLORS.grey
-    if (percentMax >= 90) {
-      backgroundColor = ZONE_COLORS.red
-    } else if (percentMax >= 80) {
-      backgroundColor = ZONE_COLORS.yellow
-    } else if (percentMax >= 70) {
-      backgroundColor = ZONE_COLORS.green
-    } else if (percentMax >= 60) {
-      backgroundColor = ZONE_COLORS.blue
-    }
-    const textColor = theme.palette.getContrastText(backgroundColor)
-    return {
-      backgroundColor,
-      textColor,
-      percentage: percentMax,
-    }
-  },
-}))
+jest.mock('@/utils/visualization', () => {
+  const originalModule = jest.requireActual('@/utils/visualization')
+  const theme = jest.requireActual('@/lib/theme').default
+  return {
+    ...originalModule,
+    getHrZoneProps: (percentMax: number) => {
+      let backgroundColor = originalModule.ZONE_COLORS.grey
+      if (percentMax >= 90) {
+        backgroundColor = originalModule.ZONE_COLORS.red
+      } else if (percentMax >= 80) {
+        backgroundColor = originalModule.ZONE_COLORS.yellow
+      } else if (percentMax >= 70) {
+        backgroundColor = originalModule.ZONE_COLORS.green
+      } else if (percentMax >= 60) {
+        backgroundColor = originalModule.ZONE_COLORS.blue
+      }
+      const textColor = theme.palette.getContrastText(backgroundColor)
+      return {
+        backgroundColor,
+        textColor,
+        percentage: percentMax,
+      }
+    },
+  }
+})
 
 describe('HrTile', () => {
   it('renders the correct background and text color for the Peak zone', () => {
