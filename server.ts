@@ -2,16 +2,16 @@
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
-import { httpLogger } from './utils/logger.js'
-import { env } from './lib/env.js' // New import
-import { serviceContainer } from './lib/serviceContainer.js'
-import { AppServices, createServices } from './lib/services.js' // New import
-import { WebSocketManager } from './lib/websocket.js' // New import
-import { initSocketManager } from './utils/socketManager.js'
-import { StateSnapshot } from './types/websocket.js'
+import { httpLogger } from './utils/logger'
+import { env } from './lib/env' // New import
+import { serviceContainer } from './lib/serviceContainer'
+import { AppServices, createServices } from './lib/services' // New import
+import { WebSocketManager } from './lib/websocket' // New import
+import { initSocketManager } from './utils/socketManager'
+import { StateSnapshot } from './types/websocket'
 import { Socket } from 'net'
-import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
-import logger from './utils/logger.js'
+import { checkTimerService, checkWebSocketService } from './lib/healthCheck'
+import logger from './utils/logger'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
 
@@ -28,8 +28,6 @@ app.prepare().then(async () => {
   const server = createServer(expressApp)
   expressApp.use(httpLogger)
 
-  // Add a simple middleware to attach user context to the request
-  // In a real application, this would be your authentication middleware
   expressApp.use((req, _res, next) => {
     // Simulate a user being authenticated
     // You would replace this with your actual user authentication logic
