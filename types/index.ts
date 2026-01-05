@@ -6,14 +6,11 @@ import { TimerMode, TimerPhase } from './core'
 export interface HrTileProps {
   name: string
   bpm: number
-  percentMax: number // 0-100
+  percentMax: number
   calories?: number
   isConnected?: boolean
-  isDataStale?: boolean
-
-  // NEW: Flag to trigger the visual diagnostic state
+  isStale?: boolean
   isAlerting?: boolean
-  // NEW: Message to display in the overlay when alerting
   alertMessage?: string
 }
 

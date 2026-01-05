@@ -32,9 +32,9 @@ const HrTile = ({
   name,
   bpm,
   percentMax,
-  calories = 0, // Default to 0 to prevent NaN
-  isConnected = true, // Default to connected
-  isDataStale = false,
+  calories = 0,
+  isConnected = true,
+  isStale = false,
   isAlerting = false,
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
@@ -45,7 +45,7 @@ const HrTile = ({
     ? alertMessage
     : !isConnected
       ? 'Disconnected - Showing last known value'
-      : isDataStale
+      : isStale
         ? 'Waiting for data...'
         : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
 
@@ -58,8 +58,9 @@ const HrTile = ({
           isConnected ? `${bpm} beats per minute` : 'Disconnected'
         }, ${percentMax}% of maximum`}
         sx={{
-          backgroundColor: backgroundColor,
-          color: textColor,
+          backgroundColor:
+            !isConnected || isStale ? theme.palette.grey[800] : backgroundColor,
+          color: !isConnected || isStale ? theme.palette.grey[400] : textColor,
           textAlign: 'center',
           minHeight: 180,
           height: '100%',
@@ -67,10 +68,13 @@ const HrTile = ({
           flexDirection: 'column',
           justifyContent: 'center',
           position: 'relative',
-          opacity: isConnected && !isDataStale ? 1 : 0.6,
-          transition: theme.transitions.create('opacity', {
-            duration: theme.transitions.duration.short, // Approx 300ms
-          }),
+          opacity: isConnected && !isStale ? 1 : 0.6,
+          transition: theme.transitions.create(
+            ['opacity', 'background-color'],
+            {
+              duration: theme.transitions.duration.short,
+            }
+          ),
         }}
       >
         {/* --- Disconnected Icon --- */}
@@ -180,7 +184,7 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.percentMax === nextProps.percentMax &&
     prevProps.calories === nextProps.calories &&
     prevProps.isConnected === nextProps.isConnected &&
-    prevProps.isDataStale === nextProps.isDataStale &&
+    prevProps.isStale === nextProps.isStale &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage
   )

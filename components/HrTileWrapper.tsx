@@ -17,6 +17,7 @@ const HrTileWrapper = ({ user }: HrTileWrapperProps) => {
       percentMax={hrZoneProps.percentage}
       calories={user.calories}
       isConnected={user.value !== null}
+      isStale={user.isStale}
       isAlerting={user.isAlerting}
       {...(user.alertMessage && { alertMessage: user.alertMessage })}
     />
