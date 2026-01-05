@@ -367,6 +367,12 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
+      - name: 'Debug: Display script content before build'
+        run: |
+          echo "--- Content of scripts/create-review-issues.ts ---"
+          cat scripts/create-review-issues.ts
+          echo "----------------------------------------------------"
+
       - name: Verify Build
         id: build
         env:
