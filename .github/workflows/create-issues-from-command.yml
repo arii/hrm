@@ -36,28 +36,33 @@ jobs:
             echo "pr_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Get PR branch name
-        id: get_branch
+      - name: Get PR Details
+        id: get_pr_details
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use GITHUB_TOKEN for read operations
           PR_NUMBER: ${{ steps.get_pr_number.outputs.pr_number }}
         run: |
-          BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName --jq .headRefName)
-          echo "branch=${BRANCH_NAME}" >> $GITHUB_OUTPUT
-          echo "Found branch name: ${BRANCH_NAME} for PR #${PR_NUMBER}"
+          JSON=$(gh pr view $PR_NUMBER --json headRefName,headRefOid)
+          BRANCH=$(echo "$JSON" | jq -r .headRefName)
+          SHA=$(echo "$JSON" | jq -r .headRefOid)
+          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
+          echo "sha=${SHA}" >> $GITHUB_OUTPUT
+          echo "Found branch name: ${BRANCH} for PR #${PR_NUMBER}"
+          echo "Found commit SHA: ${SHA}"
 
       - name: Find latest successful 'Gemini Review' workflow run
         id: get_run_id
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use GITHUB_TOKEN for read operations
-          BRANCH: ${{ steps.get_branch.outputs.branch }}
+          BRANCH: ${{ steps.get_pr_details.outputs.branch }}
+          SHA: ${{ steps.get_pr_details.outputs.sha }}
         run: |
-          echo "Searching for successful workflow runs for 'gemini-orchestrator.yml' on branch '${BRANCH}'..."
+          echo "Searching for successful workflow runs for 'gemini-orchestrator.yml' on branch '${BRANCH}' with commit '${SHA}'..."
           # The orchestrator is the parent workflow that triggers the review and artifact generation.
           # We need its run_id to reliably find the artifact.
-          RUN_ID=$(gh run list --workflow "gemini-orchestrator.yml" --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId' || echo "")
+          RUN_ID=$(gh run list --workflow "gemini-orchestrator.yml" --commit "$SHA" --status success --limit 1 --json databaseId -q '.[0].databaseId' || echo "")
           if [[ -z "$RUN_ID" ]]; then
-             echo "::error::Could not find a successful run for 'gemini-orchestrator.yml' on branch '$BRANCH'."
+             echo "::error::Could not find a successful run for 'gemini-orchestrator.yml' on branch '$BRANCH' with commit '$SHA'."
              exit 1
           fi
           echo "Found run ID: $RUN_ID"

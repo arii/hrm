@@ -4,6 +4,7 @@ import path from 'path'
 import os from 'os'
 import crypto from 'crypto'
 import { z } from 'zod'
+import { fileURLToPath } from 'url'
 
 // --- Zod Schemas for Validation ---
 
@@ -260,7 +261,7 @@ export async function run(
 // --- Main Execution ---
 
 // istanbul ignore next
-if (import.meta.url.endsWith(process.argv[1])) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const client = new GitHubClient()
   const prNumber = process.env.PR_NUMBER
   const reviewFile = 'review_result.json'
