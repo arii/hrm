@@ -626,6 +626,8 @@ jobs:
       - name: Run Unit Tests
         id: unit-tests
         shell: bash
+        env:
+          GITHUB_JOB: ${{ github.job }}
         run: |
           set -o pipefail
           ./scripts/ci/run-unit-tests.sh
@@ -1065,6 +1067,8 @@ jobs:
     steps:
       - name: Determine Tests Status
         shell: bash
+        env:
+          GITHUB_JOB: ${{ github.job }}
         run: |
           echo "📊 All Integration Tests Summary:"
           echo "  Infra Tests: ${{ needs.infra-tests.result }}"

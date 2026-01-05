@@ -13,6 +13,7 @@ const config = {
         repository: process.env.GITHUB_REPOSITORY,
         runId: process.env.GITHUB_RUN_ID,
         githubToken: process.env.GITHUB_TOKEN,
+        jobName: process.env.GITHUB_JOB,
       },
     ],
   ],
