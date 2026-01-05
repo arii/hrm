@@ -13,7 +13,6 @@ import {
 } from '@jest/globals'
 import {
   initSocketManager,
-  resetSocketManager,
 } from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
@@ -111,10 +110,7 @@ class MockWebSocket extends EventEmitter {
 
 describe('WebSocket Manager', () => {
   let mockWss: jest.Mocked<WebSocketServer>
-  let mockServices: {
-    tabataService: jest.Mocked<TabataTimer>
-    spotifyService: jest.Mocked<SpotifyPolling>
-  }
+  let mockServices: any
   let getSnapshot: () => StateSnapshot
   let mockWs: MockWebSocket
 
@@ -151,9 +147,42 @@ describe('WebSocket Manager', () => {
       refreshDevices: jest.fn(),
     }
 
+    const hrmDataStore: HrmData[] = [];
+    const mockHrmService = {
+      initializeClient: jest.fn((clientId) => {
+        const existing = hrmDataStore.find(d => d.clientId === clientId);
+        if (!existing) {
+          hrmDataStore.push({
+            clientId,
+            value: 0,
+            name: 'test-client',
+            calories: 0,
+            age: 30,
+            maxHr: 185,
+          });
+        }
+      }),
+      updateMetadata: jest.fn(),
+      processHrmInput: jest.fn((clientId, data) => {
+        const clientData = hrmDataStore.find(d => d.clientId === clientId);
+        if (clientData) {
+          clientData.value = data.value ?? clientData.value;
+          clientData.calories = (clientData.calories || 0) + 0.1; // Simulate calorie increase
+        }
+      }),
+      cleanupClient: jest.fn((clientId) => {
+        const index = hrmDataStore.findIndex(d => d.clientId === clientId);
+        if (index > -1) {
+          hrmDataStore.splice(index, 1);
+        }
+      }),
+      getHrmData: jest.fn().mockImplementation(() => hrmDataStore),
+    };
+
     mockServices = {
       tabataService: mockTabataTimer,
       spotifyService: mockSpotifyPolling,
+      hrmService: mockHrmService,
     }
 
     getSnapshot = jest.fn().mockReturnValue({
@@ -172,7 +201,6 @@ describe('WebSocket Manager', () => {
     jest.useRealTimers()
     jest.clearAllMocks()
     ;(mockWss.clients as Set<MockWebSocket>).clear()
-    resetSocketManager()
   })
 
   describe('Connection Logging', () => {
@@ -422,7 +450,7 @@ describe('WebSocket Manager', () => {
       expect(sendWebSocketMessage).toHaveBeenCalledWith(
         dashboardWs,
         expect.objectContaining({ type: 'EXECUTE_SPOTIFY' }),
-        'socketManager.SPOTIFY_COMMAND'
+        'messageHandler.SPOTIFY_COMMAND'
       )
       expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
         'PLAY',

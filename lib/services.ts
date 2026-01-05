@@ -1,11 +1,13 @@
 import { ServerMessage } from '../types/websocket.js'
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
+import { HrmService } from '../services/hrmService.js' // New import
 import { SpotifyService } from '../types/interfaces.js'
 
 export interface AppServices {
   spotifyService: SpotifyService
   tabataService: TabataTimer
+  hrmService: HrmService // New service
   isSpotifyInitialized: boolean
 }
 
@@ -13,6 +15,7 @@ export async function createServices(
   broadcast: (data: Partial<ServerMessage>) => void
 ): Promise<AppServices> {
   const tabataService = new TabataTimer(broadcast)
+  const hrmService = new HrmService() // New instantiation
   let spotifyService: SpotifyService
   let isSpotifyInitialized = true
 
@@ -44,5 +47,5 @@ export async function createServices(
     }
   }
 
-  return { tabataService, spotifyService, isSpotifyInitialized }
+  return { tabataService, spotifyService, hrmService, isSpotifyInitialized }
 }
