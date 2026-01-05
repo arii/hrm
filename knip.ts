@@ -1,55 +1,20 @@
-import type { KnipConfig } from 'knip'
+// knip.ts
+import { type KnipConfig } from 'knip'
 
 const config: KnipConfig = {
   entry: [
-    'app/**/*.ts',
-    'app/**/*.tsx',
-    'components/**/*.ts',
-    'components/**/*.tsx',
-    'constants/**/*.ts',
-    'context/**/*.tsx',
-    'hooks/**/*.ts',
-    'lib/**/*.ts',
-    'scripts/**/*.ts',
-    'services/**/*.ts',
-    'tests/**/*.ts',
-    'types/**/*.ts',
-    'utils/**/*.ts',
-    'stories/**/*.ts',
-    'stories/**/*.tsx',
-    '.storybook/**/*.ts',
-    '.storybook/**/*.tsx',
     'server.ts',
     'proxy.ts',
-  ],
-  project: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs', '**/*.mjs'],
-  ignore: [
-    '.github',
-    'node_modules',
-    'dist',
-    '.next',
-    'coverage',
-    'playwright-report',
-    'test-results',
-    'storybook-static',
-    'ecosystem.config.cjs',
-    'scripts/get-available-port.mjs',
-    'public/mockServiceWorker.js',
+    'scripts/setup.sh',
     'next.config.js',
-    'jest.config.cjs',
-    'commitlint.config.cjs',
-    'playwright.config.ts',
+    'tests/playwright/playwright.config.ts',
     'eslint.config.mjs',
+    'commitlint.config.cjs',
+    'jest.config.cjs',
+    'jest.config.components.cjs',
+    'postcss.config.mjs',
   ],
-  ignoreDependencies: [
-    // types for web bluetooth api
-    '@types/web-bluetooth',
-    // Eslint plugin
-    'eslint-plugin-react',
-    'eslint-plugin-storybook',
-    'dotenv',
-  ],
-  ignoreBinaries: ['scripts/test-json-with-server.sh', 'python3'],
+  project: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.mjs', '**/*.cjs'],
 }
 
 export default config
