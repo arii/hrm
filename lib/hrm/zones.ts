@@ -6,6 +6,20 @@
 
 import { HrZoneName } from '../shared/hr-zones'
 
+/**
+ * Estimates maximum heart rate based on age using the Tanaka formula.
+ * This is more accurate for a wider age range than the classic "220 - age".
+ * https://www.inchcalculator.com/tanaka-heart-rate-calculator/
+ * @param {number} age - The user's age in years.
+ * @returns {number} The estimated maximum heart rate.
+ */
+export const calculateMaxHr = (age: number): number => {
+  if (age <= 0) {
+    return 208 // Return a default for invalid age
+  }
+  return 208 - 0.7 * age
+}
+
 // --- Constants ---
 // Heart Rate Zone Boundaries (as percentage of Max HR)
 export const HR_ZONE_DEFINITIONS = [

@@ -19,6 +19,7 @@ import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
+  totalCalories?: number;
 }
 
 export interface WebSocketContextType extends WebSocketState {
