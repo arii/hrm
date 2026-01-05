@@ -65,52 +65,53 @@ const logger = createLogger()
 let httpLogger: any
 
 if (typeof window === 'undefined') {
-  // We are on the server
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pinoHttp = require('pino-http')
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { randomUUID } = require('crypto')
-  httpLogger = pinoHttp({
-    logger: logger as pino.Logger, // Cast to pino.Logger for pinoHttp
-    genReqId: function (req: Request, res: Response) {
-      const existingID = req.id ?? req.headers['x-request-id']
-      if (existingID) return existingID
-      const id = randomUUID()
-      res.setHeader('X-Request-Id', id)
-      return id
-    },
+  // Dynamically import server-only modules
+  Promise.all([
+    import('pino-http'),
+    import('crypto'),
+  ]).then(([pinoHttp, crypto]) => {
+    httpLogger = pinoHttp.default({
+      logger: logger as pino.Logger, // Cast to pino.Logger for pinoHttp
+      genReqId: function (req: Request, res: Response) {
+        const existingID = req.id ?? req.headers['x-request-id']
+        if (existingID) return existingID
+        const id = crypto.randomUUID()
+        res.setHeader('X-Request-Id', id)
+        return id
+      },
 
-    customLogLevel: function (_req: Request, res: Response, err?: Error) {
-      if (res.statusCode >= 400 && res.statusCode < 500) {
-        return 'warn'
-      } else if (res.statusCode >= 500 || err) {
-        return 'error'
-      }
-      // pino-http logs redirects as 'silent'
-      // but we want to see them in development
-      if (res.statusCode >= 300 && res.statusCode < 400) {
-        return process.env.NODE_ENV === 'production' ? 'silent' : 'info'
-      }
-      return 'info'
-    },
-    // Add custom properties to the log
-    customProps: function (req: Request) {
-      return {
-        // Add user context if available
-        userId: req.user?.id ?? req.session?.user?.id,
-      }
-    },
-    // Modify the log message
-    customSuccessMessage: function (req: Request, res: Response) {
-      if (res.statusCode === 404) {
-        return `Resource not found`
-      }
-      return `${req.method} ${req.url} completed`
-    },
-    customErrorMessage: function (req: Request, res: Response, _err: Error) {
-      return `${req.method} ${req.url} errored with status code ${res.statusCode}`
-    },
-  })
+      customLogLevel: function (_req: Request, res: Response, err?: Error) {
+        if (res.statusCode >= 400 && res.statusCode < 500) {
+          return 'warn'
+        } else if (res.statusCode >= 500 || err) {
+          return 'error'
+        }
+        // pino-http logs redirects as 'silent'
+        // but we want to see them in development
+        if (res.statusCode >= 300 && res.statusCode < 400) {
+          return process.env.NODE_ENV === 'production' ? 'silent' : 'info'
+        }
+        return 'info'
+      },
+      // Add custom properties to the log
+      customProps: function (req: Request) {
+        return {
+          // Add user context if available
+          userId: req.user?.id ?? req.session?.user?.id,
+        }
+      },
+      // Modify the log message
+      customSuccessMessage: function (req: Request, res: Response) {
+        if (res.statusCode === 404) {
+          return `Resource not found`
+        }
+        return `${req.method} ${req.url} completed`
+      },
+      customErrorMessage: function (req: Request, res: Response, _err: Error) {
+        return `${req.method} ${req.url} errored with status code ${res.statusCode}`
+      },
+    })
+  });
 } else {
   // We are on the client, provide a mock middleware
   httpLogger = (
