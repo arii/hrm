@@ -1,22 +1,23 @@
-import { FitWriter } from '@markw65/fit-file-writer';
+import { FitWriter } from '@markw65/fit-file-writer'
 
 interface FitExportData {
-  startTime: number; // ms timestamp
-  durationSeconds: number;
-  totalCalories: number;
+  startTime: number // ms timestamp
+  durationSeconds: number
+  totalCalories: number
   records: Array<{
-    time: number; // ms timestamp
-    hr: number;
-  }>;
-  userAge?: number;
-  userWeight?: number;
+    time: number // ms timestamp
+    hr: number
+  }>
+  userAge?: number
+  userWeight?: number
+  gender?: 'male' | 'female'
 }
 
 export const generateFitFile = (data: FitExportData): Blob => {
-  const fitWriter = new FitWriter();
+  const fitWriter = new FitWriter()
 
-  const startDate = new Date(data.startTime);
-  const startFitTime = fitWriter.time(startDate);
+  const startDate = new Date(data.startTime)
+  const startFitTime = fitWriter.time(startDate)
 
   // File ID Message (Required)
   fitWriter.writeMessage('file_id', {
@@ -25,16 +26,16 @@ export const generateFitFile = (data: FitExportData): Blob => {
     product: 0,
     serial_number: 0x12345678,
     time_created: startFitTime,
-  });
+  })
 
   // User Profile Message (Optional)
   if (data.userAge || data.userWeight) {
     fitWriter.writeMessage('user_profile', {
-      gender: 2, // 0: male, 1: female, 2: unspecified
+      gender: data.gender,
       age: data.userAge,
       weight: data.userWeight,
-      message_index: 0,
-    });
+      message_index: { value: 0 },
+    })
   }
 
   // Session Message (Summary)
@@ -45,17 +46,19 @@ export const generateFitFile = (data: FitExportData): Blob => {
     total_calories: Math.round(data.totalCalories),
     sport: 'generic',
     sub_sport: 'generic',
-    timestamp: fitWriter.time(new Date(data.startTime + data.durationSeconds * 1000)),
-  });
+    timestamp: fitWriter.time(
+      new Date(data.startTime + data.durationSeconds * 1000)
+    ),
+  })
 
   // Record Messages (Time Series)
   data.records.forEach((record) => {
     fitWriter.writeMessage('record', {
       timestamp: fitWriter.time(new Date(record.time)),
       heart_rate: record.hr,
-    });
-  });
+    })
+  })
 
-  const bytes = fitWriter.finish();
-  return new Blob([bytes], { type: 'application/octet-stream' });
-};
+  const bytes = fitWriter.finish()
+  return new Blob([bytes.buffer], { type: 'application/octet-stream' })
+}

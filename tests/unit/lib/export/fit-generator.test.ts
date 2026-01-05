@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { generateFitFile } from '@/lib/export/fit-generator';
+import { generateFitFile } from '@/lib/export/fit-generator'
 
 describe('fit-generator', () => {
   it('should generate a FIT file blob with user data', () => {
@@ -15,13 +15,14 @@ describe('fit-generator', () => {
       ],
       userAge: 30,
       userWeight: 80,
-    };
+      gender: 'male' as 'male' | 'female' | undefined,
+    }
 
-    const blob = generateFitFile(data);
-    expect(blob).toBeInstanceOf(Blob);
-    expect(blob.type).toBe('application/octet-stream');
-    expect(blob.size).toBeGreaterThan(0);
-  });
+    const blob = generateFitFile(data)
+    expect(blob).toBeInstanceOf(Blob)
+    expect(blob.type).toBe('application/octet-stream')
+    expect(blob.size).toBeGreaterThan(0)
+  })
 
   it('should generate a FIT file blob without user data', () => {
     const data = {
@@ -32,11 +33,11 @@ describe('fit-generator', () => {
         { time: new Date().getTime(), hr: 120 },
         { time: new Date().getTime() + 1000, hr: 122 },
       ],
-    };
+    }
 
-    const blob = generateFitFile(data);
-    expect(blob).toBeInstanceOf(Blob);
-    expect(blob.type).toBe('application/octet-stream');
-    expect(blob.size).toBeGreaterThan(0);
-  });
-});
+    const blob = generateFitFile(data)
+    expect(blob).toBeInstanceOf(Blob)
+    expect(blob.type).toBe('application/octet-stream')
+    expect(blob.size).toBeGreaterThan(0)
+  })
+})
