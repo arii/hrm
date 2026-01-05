@@ -3,7 +3,7 @@ on:
   pull_request_review:
     types: [submitted, edited, dismissed]
 permissions:
-  pull-requests: write
+  issues: write
 jobs:
   label:
     runs-on: ubuntu-latest
