@@ -35,8 +35,8 @@ app.prepare().then(async () => {
   // --- Rate Limiting Setup ---
   if (env.NODE_ENV !== 'test') {
     const spotifyApiLimiter = rateLimit({
-      windowMs: 1 * 60 * 1000, // 1 minute
-      max: 30,
+      windowMs: env.RATE_LIMIT_WINDOW_MS,
+      max: env.SPOTIFY_API_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
       keyGenerator: (req) => {
@@ -52,8 +52,8 @@ app.prepare().then(async () => {
     })
 
     const internalApiLimiter = rateLimit({
-      windowMs: 1 * 60 * 1000, // 1 minute
-      max: 100,
+      windowMs: env.RATE_LIMIT_WINDOW_MS,
+      max: env.INTERNAL_API_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
       keyGenerator: (req) => {
@@ -68,8 +68,8 @@ app.prepare().then(async () => {
       },
     })
     const generalApiLimiter = rateLimit({
-      windowMs: 1 * 60 * 1000, // 1 minute
-      max: 200, // General limit for all other routes
+      windowMs: env.RATE_LIMIT_WINDOW_MS,
+      max: env.GENERAL_API_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
       keyGenerator: (req) => {
@@ -146,7 +146,6 @@ app.prepare().then(async () => {
 
   // 5. Upgrade Handling
   const wsConnections = new Map<string, number>()
-  const WS_MAX_CONNECTIONS = 5
 
   server.on('upgrade', (req, socket, head) => {
     const ip =
@@ -155,7 +154,7 @@ app.prepare().then(async () => {
 
     if (env.NODE_ENV !== 'test' && ip) {
       const count = wsConnections.get(ip) || 0
-      if (count >= WS_MAX_CONNECTIONS) {
+      if (count >= env.WS_MAX_CONNECTIONS) {
         socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
         socket.destroy()
         return

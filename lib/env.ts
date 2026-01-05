@@ -25,6 +25,11 @@ const envSchema = z.object({
     .transform(Number),
   WEBSOCKET_GRACE_PERIOD_MS: z.string().default('5000').transform(Number),
   MAX_WS_CLIENTS: z.string().default('1000').transform(Number),
+  RATE_LIMIT_WINDOW_MS: z.string().default('60000').transform(Number),
+  SPOTIFY_API_MAX_REQUESTS: z.string().default('30').transform(Number),
+  INTERNAL_API_MAX_REQUESTS: z.string().default('100').transform(Number),
+  GENERAL_API_MAX_REQUESTS: z.string().default('200').transform(Number),
+  WS_MAX_CONNECTIONS: z.string().default('5').transform(Number),
 })
 
 export const env = envSchema.parse(process.env)
