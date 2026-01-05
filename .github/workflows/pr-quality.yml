@@ -631,7 +631,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure token is available for the reporter
-          GITHUB_JOB: ${{ github.job.name }}
+          GITHUB_JOB: ${{ github.job }} # Use job ID instead of job name
         run: |
           set -o pipefail
           ./scripts/ci/run-unit-tests.sh
@@ -1072,7 +1072,7 @@ jobs:
       - name: Determine Tests Status
         shell: bash
         env:
-          GITHUB_JOB: ${{ github.job.name }}
+          GITHUB_JOB: ${{ github.job }} # Use job ID instead of job name
         run: |
           echo "📊 All Integration Tests Summary:"
           echo "  Infra Tests: ${{ needs.infra-tests.result }}"
