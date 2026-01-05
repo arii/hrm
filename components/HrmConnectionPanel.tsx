@@ -114,7 +114,7 @@ const HrmConnectionPanel = () => {
           : userSettings.gender === 'FEMALE'
             ? 'female'
             : undefined,
-      workoutDuration: timerData.totalDuration,
+      workoutDuration: timerData.timeElapsed,
       avgHr:
         workoutRecords.reduce((acc, rec) => acc + rec.hr, 0) /
         workoutRecords.length,
