@@ -13,53 +13,36 @@ import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
 const HrmConnectionPanel = () => {
   const { hrmData, timerData, connectionStatus, activeAlerts } = useWebSocket()
   const [userSettings] = useUserSettings()
-  const [workoutRecords, setWorkoutRecords] = useState<
-    { time: number; hr: number }[]
-  >([])
+  const [workoutRecords, setWorkoutRecords] = useState<{ time: number; hr: number }[]>([])
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
 
   useEffect(() => {
     if (timerData.phase === 'RUNNING' && timerData.timeRemaining > 0) {
       if (sessionStartTime === null) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSessionStartTime(Date.now())
+        setSessionStartTime(Date.now());
       }
-      const latestRecord = hrmData.find(
-        (user) => user.clientId === localStorage.getItem('clientId')
-      )
+      const latestRecord = hrmData.find(user => user.clientId === localStorage.getItem('clientId'));
       if (latestRecord && latestRecord.hr) {
-        setWorkoutRecords((prevRecords) => [
-          ...prevRecords,
-          { time: Date.now(), hr: latestRecord.hr! },
-        ])
+        setWorkoutRecords(prevRecords => [...prevRecords, { time: Date.now(), hr: latestRecord.hr! }]);
       }
     }
-  }, [timerData.timeRemaining, hrmData, timerData.phase, sessionStartTime])
+  }, [timerData.timeRemaining, hrmData, timerData.phase, sessionStartTime]);
 
   const totalCalories = useMemo(() => {
-    if (
-      !userSettings.userAge ||
-      !userSettings.userWeight ||
-      workoutRecords.length === 0
-    ) {
-      return 0
+    if (!userSettings.userAge || !userSettings.userWeight || workoutRecords.length === 0) {
+      return 0;
     }
     return estimateCaloriesBurned({
       age: userSettings.userAge,
       weight: userSettings.userWeight,
-      gender: userSettings.gender === 'MALE' ? 'male' : 'female',
+      gender:
+        userSettings.gender === 'MALE' ? 'male' :
+        (userSettings.gender === 'FEMALE' ? 'female' : undefined),
       workoutDuration: timerData.totalDuration,
-      avgHr:
-        workoutRecords.reduce((acc, rec) => acc + rec.hr, 0) /
-        workoutRecords.length,
-    })
-  }, [
-    userSettings.userAge,
-    userSettings.userWeight,
-    userSettings.gender,
-    timerData.totalDuration,
-    workoutRecords,
-  ])
+      avgHr: workoutRecords.reduce((acc, rec) => acc + rec.hr, 0) / workoutRecords.length
+    });
+  }, [userSettings.userAge, userSettings.userWeight, userSettings.gender, timerData.totalDuration, workoutRecords]);
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity
@@ -95,11 +78,10 @@ const HrmConnectionPanel = () => {
     records: workoutRecords,
     userAge: userSettings.userAge || undefined,
     userWeight: userSettings.userWeight || undefined,
-    gender:
-      userSettings.gender === 'MALE'
-        ? 'male'
-        : ('female' as 'male' | 'female' | undefined),
-  }
+    gender: // Ensure gender is 'male', 'female', or undefined
+      userSettings.gender === 'MALE' ? 'male' :
+      (userSettings.gender === 'FEMALE' ? 'female' : undefined),
+  };
 
   return (
     <Box
