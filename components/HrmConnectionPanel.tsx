@@ -123,7 +123,7 @@ const HrmConnectionPanel = () => {
     userSettings.userAge,
     userSettings.userWeight,
     userSettings.gender,
-    timerData.totalDuration,
+    timerData.timeElapsed,
     workoutRecords,
   ])
 
