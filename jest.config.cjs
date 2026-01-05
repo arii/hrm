@@ -48,6 +48,7 @@ const config = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
+    'pino-http': '<rootDir>/tests/unit/__mocks__/pino-http.ts',
   },
   testTimeout: 10000,
   setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],

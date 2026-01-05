@@ -1,3 +1,4 @@
+/// <reference path="./types/express.d.ts" />
 // server.ts (Refactored)
 import express from 'express'
 import { createServer } from 'http'
