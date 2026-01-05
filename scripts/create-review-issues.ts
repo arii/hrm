@@ -265,7 +265,12 @@ if (import.meta.url.endsWith(process.argv[1])) {
   const prNumber = process.env.PR_NUMBER
   const reviewFile = 'review_result.json'
 
-  run(client, prNumber || '', reviewFile).catch((err) => {
+  if (!prNumber) {
+    console.error('Error: PR_NUMBER environment variable is not set.')
+    process.exit(1)
+  }
+
+  run(client, prNumber, reviewFile).catch((err) => {
     console.error('Unhandled error:', err)
     process.exit(1)
   })
