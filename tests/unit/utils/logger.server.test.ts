@@ -1,11 +1,12 @@
 // tests/unit/utils/logger.server.test.ts
 import pino from 'pino'
 import { PassThrough } from 'stream'
+import { Logger } from 'pino'
 
 describe('Server Logger', () => {
-  let logger: any
+  let logger: Logger
   let stream: PassThrough
-  let dest: any
+  let dest: pino.DestinationStream
 
   beforeEach(() => {
     stream = new PassThrough()
@@ -42,7 +43,7 @@ describe('Server Logger', () => {
     process.env.NODE_ENV = 'development'
     import('../../../utils/logger.server').then((module) => {
       logger = module.default
-      expect((logger as any).transport).toBeDefined()
+      expect((logger as pino.Logger).transport).toBeDefined()
     })
   })
 })
