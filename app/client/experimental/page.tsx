@@ -6,7 +6,7 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWebSocket } from '@/context/WebSocketContext'
 import WorkoutMetricGrid from '@/components/analytics/WorkoutMetricGrid'
 import HeartRateTimeSeries from '@/components/analytics/HeartRateTimeSeries'
-import ZoneDistributionChart from '@/components/analytics/ZoneDistributionChart'
+// import ZoneDistributionChart from '@/components/analytics/ZoneDistributionChart'
 
 const ExperimentalAnalyticsPage = () => {
   const { hrmData, connectionStatus } = useWebSocket()
@@ -34,7 +34,7 @@ const ExperimentalAnalyticsPage = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Experimental Workout Analytics
+        Workout Analytics
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
@@ -69,9 +69,9 @@ const ExperimentalAnalyticsPage = () => {
         <Box>
           <HeartRateTimeSeries data={buffer} />
         </Box>
-        <Box>
+        {/* <Box>
           <ZoneDistributionChart data={buffer} />
-        </Box>
+        </Box> */}
       </Box>
     </Container>
   )
