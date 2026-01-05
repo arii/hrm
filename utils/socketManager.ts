@@ -24,7 +24,7 @@ import {
   ConnectionMonitor,
 } from './websocketUtils.js'
 import logger from './logger.js'
-import { estimateIncrementalCaloriesBurned } from '../lib/calorie-estimation.js'
+import { estimateIncrementalCaloriesBurned } from '../lib/calorie-estimation'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'

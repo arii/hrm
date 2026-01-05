@@ -1,6 +1,6 @@
 // File: hooks/useCalorieCalculator.ts
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation'
+import { estimateIncrementalCaloriesBurned } from '../lib/calorie-estimation'
 
 interface CalorieCalculatorProps {
   age: number
@@ -61,10 +61,10 @@ export const useCalorieCalculator = ({
         // Prevent calculating calories for large time gaps (e.g., tab backgrounding)
         if (dtSeconds > 0 && dtSeconds < 10) {
           const dtMinutes = dtSeconds / 60
-          const caloriesBurned = estimateCaloriesBurned({
+          const caloriesBurned = estimateIncrementalCaloriesBurned({
             heartRate: smoothedHr,
             age: ageRef.current,
-            weightKg: weightKgRef.current,
+            weight: weightKgRef.current,
             durationMinutes: dtMinutes,
           })
           setCalories((prev) => prev + caloriesBurned)

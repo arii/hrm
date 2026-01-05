@@ -13,12 +13,14 @@ describe('useCalorieCalculator', () => {
   beforeEach(() => {
     estimateCaloriesBurnedSpy = jest.spyOn(
       CalorieEstimation,
-      'estimateCaloriesBurned'
+      'estimateIncrementalCaloriesBurned'
     )
   })
 
   afterEach(() => {
-    estimateCaloriesBurnedSpy.mockRestore()
+    if (estimateCaloriesBurnedSpy) {
+      estimateCaloriesBurnedSpy.mockRestore()
+    }
     jest.clearAllTimers()
   })
 

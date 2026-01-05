@@ -1,19 +1,7 @@
 import { FitWriter } from '@markw65/fit-file-writer'
+import { WorkoutExportData } from '@/types'
 
-interface FitExportData {
-  startTime: number // ms timestamp
-  durationSeconds: number
-  totalCalories: number
-  records: Array<{
-    time: number // ms timestamp
-    hr: number
-  }>
-  userAge?: number
-  userWeight?: number
-  gender?: 'male' | 'female'
-}
-
-export const generateFitFile = (data: FitExportData): Blob => {
+export const generateFitFile = (data: WorkoutExportData): Blob => {
   const fitWriter = new FitWriter()
 
   const startDate = new Date(data.startTime)

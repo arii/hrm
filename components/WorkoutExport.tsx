@@ -1,20 +1,10 @@
 'use client'
 import { Button } from '@mui/material'
 import { generateFitFile } from '@/lib/export/fit-generator'
+import { WorkoutExportData } from '@/types'
 
 interface WorkoutExportProps {
-  workoutData: {
-    startTime: number
-    durationSeconds: number
-    totalCalories: number
-    records: Array<{
-      time: number
-      hr: number
-    }>
-    userAge?: number
-    userWeight?: number
-    gender?: 'male' | 'female'
-  }
+  workoutData: WorkoutExportData
 }
 
 const WorkoutExport = ({ workoutData }: WorkoutExportProps) => {

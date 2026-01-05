@@ -30,6 +30,28 @@ const HrmConnectionPanel = () => {
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
   const [isRecording, setIsRecording] = useState(false)
 
+  // Load from localStorage on mount (client-side only)
+  useEffect(() => {
+    try {
+      const storedRecords = localStorage.getItem('workoutRecords')
+      if (storedRecords) {
+        setWorkoutRecords(JSON.parse(storedRecords))
+      }
+      const storedStartTime = localStorage.getItem('sessionStartTime')
+      if (storedStartTime) {
+        setSessionStartTime(JSON.parse(storedStartTime))
+      }
+    } catch (error) {
+      console.error('Failed to load workout data from localStorage', error)
+    }
+
+    // Cleanup on unmount
+    return () => {
+      localStorage.removeItem('workoutRecords')
+      localStorage.removeItem('sessionStartTime')
+    }
+  }, [])
+
   // Lazy initializer for clientId to ensure it's only called on the client
   const [myClientId] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -41,14 +63,19 @@ const HrmConnectionPanel = () => {
   // Effect to control recording state based on timer phase
   useEffect(() => {
     if (timerData.phase === 'RUNNING' && !isRecording) {
-      setSessionStartTime(Date.now())
+      const startTime = Date.now()
+      setSessionStartTime(startTime)
       setWorkoutRecords([]) // Clear previous records
       setIsRecording(true)
+      localStorage.setItem('workoutRecords', '[]')
+      localStorage.setItem('sessionStartTime', JSON.stringify(startTime))
     } else if (timerData.phase !== 'RUNNING' && isRecording) {
       setIsRecording(false)
+      // Persist final records to localStorage
+      localStorage.setItem('workoutRecords', JSON.stringify(workoutRecords))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerData.phase])
+  }, [timerData.phase, isRecording])
 
   // Ref to hold the latest hrmData to avoid dependency issues in the recording effect
   const hrmDataRef = useRef(hrmData)
@@ -62,10 +89,10 @@ const HrmConnectionPanel = () => {
       const latestRecord = hrmDataRef.current.find(
         (user) => user.clientId === myClientId
       )
-      if (latestRecord && latestRecord.hr) {
+      if (latestRecord && latestRecord.value) {
         setWorkoutRecords((prevRecords) => [
           ...prevRecords,
-          { time: Date.now(), hr: latestRecord.hr! },
+          { time: Date.now(), hr: latestRecord.value! },
         ])
       }
     }
@@ -160,6 +187,7 @@ const HrmConnectionPanel = () => {
 
   return (
     <Box
+      data-testid="hrm-connection-panel"
       sx={{
         display: 'flex',
         flexWrap: 'wrap',
