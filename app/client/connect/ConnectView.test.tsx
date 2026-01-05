@@ -3,6 +3,7 @@
  */
 import { render, screen, fireEvent } from '@testing-library/react'
 import ConnectView from './ConnectView'
+import { WorkoutStatus } from '../../../types/workout'
 
 describe('ConnectView', () => {
   const defaultProps = {
@@ -37,8 +38,9 @@ describe('ConnectView', () => {
     bluetoothConnected: false,
     hasStarted: false,
     onReset: jest.fn(),
-    workoutStatus: 'idle' as 'idle' | 'running' | 'paused',
+    workoutStatus: 'idle' as WorkoutStatus,
     onStartWorkout: jest.fn(),
+    onPauseWorkout: jest.fn(),
     onEndWorkout: jest.fn(),
   }
 
