@@ -5,9 +5,9 @@ import {
   reducer,
   INITIAL_STATE,
   WebSocketState,
-} from '../../../context/webSocketReducer'
-import { ServerMessage } from '../../../types/websocket'
-import { HrmStreamData } from '../../../types/core'
+} from '@/context/webSocketReducer'
+import { ServerMessage } from '@/types/websocket'
+import { HrmStreamData } from '@/types/core'
 
 describe('webSocketReducer', () => {
   it('should return the initial state if no action is matched', () => {

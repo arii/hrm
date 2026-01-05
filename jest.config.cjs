@@ -21,8 +21,8 @@ const config = {
   ],
 
   collectCoverageFrom: [
-    'services/**/*.ts',
-    'utils/socketManager.ts',
+    'src/services/**/*.ts',
+    'src/utils/socketManager.ts',
     '!**/*.d.ts',
     '!**/node_modules/**',
   ],
@@ -47,7 +47,7 @@ const config = {
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^@/(.*)$': '<rootDir>/$1',
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
   testTimeout: 10000,
   setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],

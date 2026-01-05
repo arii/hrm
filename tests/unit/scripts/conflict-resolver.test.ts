@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { parseConflicts } from '@/scripts/utils/git-conflicts'
+import { parseConflicts } from '../../../scripts/utils/git-conflicts'
 import { readFile } from 'fs/promises'
 import { mocked } from 'jest-mock'
-import * as geminiClient from '@/scripts/gemini-client'
+import * as geminiClient from '../../../scripts/gemini-client'
 
 jest.mock('@google/generative-ai')
 jest.mock('@/scripts/utils/git-conflicts')
@@ -47,7 +47,7 @@ describe('runConflictResolution', () => {
 
   it('should generate a report for valid conflicts', async () => {
     const { runConflictResolution } =
-      await import('@/scripts/conflict-resolver')
+      await import('../../../scripts/conflict-resolver')
     mockedReadFile.mockResolvedValue('file1.ts\0file2.ts\0')
     mockedParseConflicts
       .mockResolvedValueOnce([
@@ -92,7 +92,7 @@ describe('runConflictResolution', () => {
 
   it('should handle malformed AI response', async () => {
     const { runConflictResolution } =
-      await import('@/scripts/conflict-resolver')
+      await import('../../../scripts/conflict-resolver')
     mockedReadFile.mockResolvedValue('file1.ts\0')
     mockedParseConflicts.mockResolvedValueOnce([
       {

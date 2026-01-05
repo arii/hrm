@@ -3,7 +3,7 @@ import { jest } from '@jest/globals'
 import {
   SpotifyTokenManager,
   TokenRecord,
-} from '../../../services/spotifyTokenManager'
+} from '@/services/spotifyTokenManager'
 import fs from 'fs'
 import path from 'path'
 

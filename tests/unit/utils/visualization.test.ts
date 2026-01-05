@@ -1,10 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import { getHrZoneProps } from '../../../utils/visualization'
-import { HrZoneName } from '../../../lib/shared/hr-zones'
-import theme from '../../../lib/theme'
-import { HR_ZONE_UI_PROPS_MAP } from '../../../utils/visualization'
+import { getHrZoneProps } from '@/utils/visualization'
+import { HrZoneName } from '@/lib/shared/hr-zones'
+import theme from '@/lib/theme'
+import { HR_ZONE_UI_PROPS_MAP } from '@/utils/visualization'
 
 describe('getHrZoneProps', () => {
   const maxHr = 200

@@ -3,9 +3,9 @@ import { jest } from '@jest/globals'
 import {
   getPresetPlaylists,
   getUserPlaylists,
-} from '../../../services/spotifyPlaylistService'
+} from '@/services/spotifyPlaylistService'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { presetPlaylists } from '../../../services/seedData'
+import { presetPlaylists } from '@/services/seedData'
 
 jest.mock('@spotify/web-api-ts-sdk')
 

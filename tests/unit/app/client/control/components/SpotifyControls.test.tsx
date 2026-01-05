@@ -11,7 +11,7 @@ import useVolumePreference from '@/hooks/useVolumePreference'
 import {
   createMockSpotifyData,
   createMockSpotifyDevice,
-} from '@/tests/unit/test-data/spotify-data-factory'
+} from '../unit/test-data/spotify-data-factory'
 import '@testing-library/jest-dom'
 
 // Mock the router

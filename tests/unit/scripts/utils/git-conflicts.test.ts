@@ -1,4 +1,4 @@
-import { parseConflicts } from '@/scripts/utils/git-conflicts'
+import { parseConflicts } from '../../../../scripts/utils/git-conflicts'
 import { readFile, stat } from 'fs/promises'
 import { mocked } from 'jest-mock'
 

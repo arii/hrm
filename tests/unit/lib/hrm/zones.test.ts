@@ -1,6 +1,6 @@
 // File: tests/unit/lib/hrm/zones.test.ts
-import { calculateHrZone } from '../../../../lib/hrm/zones'
-import { HrZoneName } from '../../../../lib/shared/hr-zones'
+import { calculateHrZone } from '@/lib/hrm/zones'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 describe('lib/hrm/zones', () => {
   describe('calculateHrZone', () => {

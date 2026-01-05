@@ -1,11 +1,11 @@
 /**
  * @jest-environment node
  */
-import { GET } from '../../../../../../app/api/health/detailed/route'
-import * as healthCheck from '../../../../../../lib/healthCheck'
+import { GET } from '@/app/api/health/detailed/route'
+import * as healthCheck from '@/lib/healthCheck'
 
 // Mock the healthCheck module
-jest.mock('../../../../../../lib/healthCheck')
+jest.mock('@/lib/healthCheck')
 
 global.fetch = jest.fn()
 

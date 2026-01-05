@@ -1,13 +1,11 @@
 {
   "extends": "./tsconfig.json",
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.js",
-    "**/*.jsx",
-    "**/*.mts",
-    "playwright.config.ts",
-    "tests/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "src/**/*.jsx",
+    "proxy.ts"
   ],
   "exclude": ["node_modules", ".next", "out", "build", "dist"]
 }

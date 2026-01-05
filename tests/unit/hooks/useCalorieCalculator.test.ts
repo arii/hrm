@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react'
-import { useCalorieCalculator } from '../../../hooks/useCalorieCalculator'
-import * as CalorieEstimation from '../../../lib/calorie-estimation'
+import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
+import * as CalorieEstimation from '@/lib/calorie-estimation'
 
 jest.useFakeTimers()
 

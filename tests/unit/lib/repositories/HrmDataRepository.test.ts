@@ -1,6 +1,6 @@
 // tests/unit/lib/repositories/HrmDataRepository.test.ts
-import { HrmDataRepository } from '../../../../lib/repositories/HrmDataRepository'
-import { HrmStreamData } from '../../../../types/core'
+import { HrmDataRepository } from '@/lib/repositories/HrmDataRepository'
+import { HrmStreamData } from '@/types/core'
 
 describe('HrmDataRepository', () => {
   let repository: HrmDataRepository

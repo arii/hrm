@@ -135,7 +135,7 @@ export default defineConfig([
 
   // 8. Services Override (Specific Ignores)
   {
-    files: ['services/**/*.ts'],
+    files: ['src/services/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',

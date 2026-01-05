@@ -9,11 +9,10 @@
     "traceResolution": false
   },
   "include": [
-    "server.ts",
-    "services/**/*.ts",
-    "utils/**/*.ts",
-    "types/**/*.ts",
-    "lib/**/*.ts",
-    "scripts/**/*.ts"
+    "src/server.ts",
+    "src/services/**/*.ts",
+    "src/utils/**/*.ts",
+    "src/types/**/*.ts",
+    "src/lib/**/*.ts"
   ]
 }

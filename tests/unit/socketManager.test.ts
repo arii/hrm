@@ -14,28 +14,28 @@ import {
 import {
   initSocketManager,
   resetSocketManager,
-} from '../../utils/socketManager'
+} from '@/utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import { TLSSocket } from 'tls'
-import TabataTimer from '../../services/tabataTimer'
-import { SpotifyPolling } from '../../services/spotifyPolling'
+import TabataTimer from '@/services/tabataTimer'
+import { SpotifyPolling } from '@/services/spotifyPolling'
 import {
   HrmData,
   StateSnapshot,
   ClientCommandMessageSchema,
   ExtWebSocket,
-} from '../../types/websocket'
+} from '@/types/websocket'
 import {
   broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
-} from '../../utils/websocketUtils.js'
+} from '@/utils/websocketUtils.js'
 import logger from '@/utils/logger'
 import { createMockRequest } from './test-data/request-data-factory'
 
 // Mock dependencies
-jest.mock('../../services/spotifyTokenManager')
+jest.mock('@/services/spotifyTokenManager')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: jest.fn(),
@@ -44,7 +44,7 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 }))
 
 // Mock ConnectionMonitor and other utils
-jest.mock('../../utils/websocketUtils.js', () => ({
+jest.mock('@/utils/websocketUtils.js', () => ({
   sendWebSocketMessage: jest.fn(),
   broadcast: jest.fn(),
   ConnectionMonitor: jest.fn().mockImplementation(() => ({
@@ -54,7 +54,7 @@ jest.mock('../../utils/websocketUtils.js', () => ({
 }))
 
 // Mock logger globally for the test file
-jest.mock('../../utils/logger', () => ({
+jest.mock('@/utils/logger', () => ({
   __esModule: true,
   default: {
     info: jest.fn(),

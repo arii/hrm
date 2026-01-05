@@ -1,6 +1,6 @@
 // tests/unit/utils/units.test.ts
 
-import { toKg, toDisplay } from '../../../utils/units'
+import { toKg, toDisplay } from '@/utils/units'
 
 describe('Unit Conversion Utilities', () => {
   describe('toKg', () => {
