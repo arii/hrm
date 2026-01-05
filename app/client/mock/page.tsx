@@ -106,13 +106,16 @@ export default function MockPage() {
     }
   }
 
-  const setHrByZone = (zone: 'grey' | 'blue' | 'green' | 'yellow' | 'red') => {
+  const setHrByZone = (
+    zone: 'grey' | 'blue' | 'green' | 'yellow' | 'red' | 'purple'
+  ) => {
     const zones = {
       grey: 95,
       blue: 115,
       green: 135,
       yellow: 155,
       red: 175,
+      purple: 195, // Representative HR for Zone 6
     }
     const newHr = zones[zone]
     setHrValue(newHr)
@@ -248,7 +251,7 @@ export default function MockPage() {
               <Button
                 fullWidth
                 variant="contained"
-                sx={{ backgroundColor: '#FFEB3B', color: 'black' }}
+                sx={{ backgroundColor: '#FFEB3B' }}
                 onClick={() => setHrByZone('yellow')}
                 data-testid="zone-4-button"
               >
@@ -264,6 +267,17 @@ export default function MockPage() {
                 data-testid="zone-5-button"
               >
                 Zone 5
+              </Button>
+            </Grid>
+            <Grid size={{ xs: 'auto' }}>
+              <Button
+                fullWidth
+                variant="contained"
+                sx={{ backgroundColor: '#9C27B0' }}
+                onClick={() => setHrByZone('purple')}
+                data-testid="zone-6-button"
+              >
+                Zone 6
               </Button>
             </Grid>
           </Grid>
