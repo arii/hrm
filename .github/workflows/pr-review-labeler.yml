@@ -1,0 +1,58 @@
+name: PR Review Labeler
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+permissions:
+  pull-requests: write
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label PR based on review
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const review = context.payload.review;
+            const approvedLabel = "approved";
+            const changesRequestedLabel = "changes-requested";
+            if (review.state === "approved") {
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: prNumber,
+                labels: [approvedLabel],
+              });
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  name: changesRequestedLabel,
+                });
+              } catch (error) {
+                if (!error.message.includes("Label does not exist")) {
+                  throw error;
+                }
+              }
+            } else if (review.state === "changes_requested") {
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: prNumber,
+                labels: [changesRequestedLabel],
+              });
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  name: approvedLabel,
+                });
+              } catch (error) {
+                if (!error.message.includes("Label does not exist")) {
+                  throw error;
+                }
+              }
+            }
