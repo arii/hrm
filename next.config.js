@@ -68,6 +68,18 @@ const nextConfig = {
     ]
   },
   turbopack: {},
+  webpack: (config, { isServer, require }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        buffer: require.resolve('buffer/'),
+        stream: require.resolve('stream-browserify'),
+        util: require.resolve('util/'),
+        path: require.resolve('path-browserify'),
+      };
+    }
+    return config;
+  },
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
 }
 
