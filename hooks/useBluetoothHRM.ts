@@ -15,7 +15,6 @@ import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
-import { getCookie, setCookie } from '@/utils/cookies'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -106,6 +105,14 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  * );
  * ```
  */
+// Define a custom error class for specific error handling
+class SavedDeviceNotFoundError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'SavedDeviceNotFoundError'
+  }
+}
+
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
     dataLivenessTimeoutMs = 10000,
@@ -207,6 +214,26 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     statusRef.current = deviceStatus
   }, [deviceStatus])
 
+  useEffect(() => {
+    if (savedDevice) {
+      savedDevice.addEventListener('gattserverdisconnected', onDisconnected)
+      logger.info(
+        { device: savedDevice.name },
+        'Attached disconnection listener.'
+      )
+    }
+
+    return () => {
+      if (savedDevice) {
+        savedDevice.removeEventListener('gattserverdisconnected', onDisconnected)
+        logger.info(
+          { device: savedDevice.name },
+          'Removed disconnection listener.'
+        )
+      }
+    }
+  }, [savedDevice, onDisconnected])
+
   // Cleanup
   useEffect(() => {
     // Reset the manual disconnect flag on mount to allow auto-reconnect after page refresh
@@ -274,20 +301,22 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   /**
    * @function forgetDevice
-   * @description Disconnects, clears the saved device from cookies, and revokes permissions.
+   * @description Disconnects and clears the saved device ID from application storage (cookies).
+   * This does NOT revoke browser-level Bluetooth permissions. The user must do that manually
+   * in their browser settings if required.
    * @async
    * @returns {Promise<void>}
-   * @sideeffect Calls `disconnect`, deletes cookies, and may call `device.forget()`.
+   * @sideeffect Calls `disconnect` and deletes the `hrm_device_id` cookie.
    */
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
     disconnect()
     try {
-      setCookie('hrm_device_id', '', -1)
-      setDeviceStatus('Device permissions revoked. Ready for new connection.')
+      localStorage.removeItem('hrm_device_id')
+      setDeviceStatus('Saved device cleared. Ready for new connection.')
     } catch (e) {
       logger.warn({ error: e }, 'Error during device forget')
-      setDeviceStatus('Error clearing device permissions.')
+      setDeviceStatus('Error clearing saved device.')
     }
   }, [disconnect])
 
@@ -385,10 +414,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           if (abortControllerRef.current) {
             abortControllerRef.current.abort()
           }
-          setCookie('hrm_device_id', '', -1)
-          setDeviceStatus(
-            'Device permissions revoked. Ready for new connection.'
-          )
+          localStorage.removeItem('hrm_device_id')
+          setDeviceStatus('Saved device cleared. Ready for new connection.')
           setSavedDevice(null)
           setBatteryLevel(null)
           deviceRef.current = null
@@ -423,10 +450,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           errorMessage: 'GATT connection timeout',
           signal: abortControllerRef.current.signal,
         })
-
-        // Attach disconnect listener immediately after successful GATT connection
-        // This ensures we catch disconnections that might occur during service discovery
-        device.addEventListener('gattserverdisconnected', onDisconnected)
 
         const service = await server.getPrimaryService(HR_SERVICE_UUID)
         const characteristic = await service.getCharacteristic(
@@ -475,7 +498,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         setDeviceStatus(`Connected to: ${device.name}`)
         setSavedDevice(device)
-        setCookie('hrm_device_id', device.id)
+        localStorage.setItem('hrm_device_id', device.id)
         isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
         setDisconnectionReason(null)
@@ -513,10 +536,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (abortControllerRef.current) {
               abortControllerRef.current.abort()
             }
-            setCookie('hrm_device_id', '', -1)
-            setDeviceStatus(
-              'Device permissions revoked. Ready for new connection.'
-            )
+            localStorage.removeItem('hrm_device_id')
+            setDeviceStatus('Saved device cleared. Ready for new connection.')
             setSavedDevice(null)
             setBatteryLevel(null)
             deviceRef.current = null
@@ -582,7 +603,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         let device = savedDevice
 
         if (!device) {
-          const savedDeviceId = getCookie('hrm_device_id')
+          const savedDeviceId = localStorage.getItem('hrm_device_id')
           logger.info(
             { savedDeviceId, hasGetDevices: !!navigator.bluetooth?.getDevices },
             'Looking for saved device'
@@ -603,19 +624,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               await connectToGatt(foundDevice)
               return
             } else {
-              logger.info(
+              logger.warn(
                 { savedDeviceId },
-                'Saved device not found in available devices'
+                'Saved device not found in available devices list. Clearing cookie.'
               )
+              localStorage.removeItem('hrm_device_id')
+              throw new SavedDeviceNotFoundError('Saved device not found')
             }
-          } else {
-            logger.info(
-              {
-                savedDeviceId,
-                hasGetDevices: !!navigator.bluetooth?.getDevices,
-              },
-              'Cannot get saved device'
-            )
+          } else if (silent) {
+            // If in silent mode and no saved device, just stop and reset status.
+            setDeviceStatus('Disconnected')
+            return
           }
         }
 
@@ -639,9 +658,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           handleConnectionError(error)
         } else {
           logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
-          // Reset the status to allow for a manual connection attempt.
+          // Only reset status on failure for silent mode
           setDeviceStatus('Disconnected')
         }
+
         if (!silent) {
           throw error
         }
@@ -658,24 +678,36 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    // Try to auto-connect to a saved device. This is a critical function for user experience.
-    // We want it to succeed silently if possible, but still provide feedback if it fails.
     try {
       logger.info('Starting auto-connect to saved device...')
       setDeviceStatus('Connecting to saved device...')
       await connectAndStream(undefined, undefined, { silent: true })
-      logger.info('Auto-connect succeeded')
+      // If connectAndStream was successful, the status will be 'Connected...'.
+      // If it failed silently, it will be 'Disconnected'. We only need to handle the success message.
+      if (statusRef.current.startsWith('Connected')) {
+        logger.info('Auto-connect succeeded')
+      }
     } catch (error) {
-      // Silent failure is OK - user can manually connect if needed
+      // This catch block might be redundant if connectAndStream's silent mode handles all errors.
+      // However, it's a good failsafe.
       const errorMsg = error instanceof Error ? error.message : String(error)
       logger.info(
         { errorMsg },
-        'Auto-connect failed, user can connect manually'
+        'Auto-connect failed unexpectedly, user can connect manually'
       )
-      // Set status back to allow manual connection
-      setDeviceStatus(
-        'Auto-connect failed. Use Connect button to select device.'
-      )
+      if (error instanceof SavedDeviceNotFoundError) {
+        setDeviceStatus(
+          'Saved device not found. Please re-select from the list.'
+        )
+        // Revert to disconnected after a short delay to allow the user to read the message
+        setTimeout(() => setDeviceStatus('Disconnected'), 2000)
+      } else {
+        setDeviceStatus(
+          'Auto-connect failed. Use Connect button to select device.'
+        )
+        // Revert to disconnected after a short delay
+        setTimeout(() => setDeviceStatus('Disconnected'), 2000)
+      }
     }
   }, [connectAndStream])
 

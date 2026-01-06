@@ -157,14 +157,15 @@ export default function ConnectView({
         onClick={handleFullReset}
         disabled={isResetting}
       >
-        {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
+        {isResetting ? 'Resetting...' : 'Clear Saved Device & Reset'}
       </Button>
       <Typography
         variant="caption"
         display="block"
         sx={{ mt: 1, color: 'text.secondary' }}
       >
-        Resets server state AND forgets Bluetooth device connection.
+        Clears the saved Bluetooth device from this app and resets workout
+        state.
       </Typography>
     </Box>
   )
