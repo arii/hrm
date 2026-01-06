@@ -221,9 +221,6 @@ importers:
       eslint-plugin-storybook:
         specifier: ^10.1.11
         version: 10.1.11(eslint@9.39.2(jiti@2.6.1))(storybook@8.6.15(prettier@3.7.4))(typescript@5.9.3)
-      fit-file-parser:
-        specifier: ^2.1.0
-        version: 2.1.0
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -4469,9 +4466,6 @@ packages:
   find-up@7.0.0:
     resolution: {integrity: sha512-YyZM99iHrqLKjmt4LJDj58KI+fYyufRLBSYcqycxf//KpBk9FoewoGX0450m9nB44qrZnovzC2oeP5hUibxc/g==}
     engines: {node: '>=18'}
-
-  fit-file-parser@2.1.0:
-    resolution: {integrity: sha512-PICERthpGtbEkrBm9lDj/oGJ1gCkFUWmkaGg2wW5idyuVEsAGuz977gbl7J1j6WJj7TiwrohxKQXjrG6Xb1i2Q==}
 
   flat-cache@3.2.0:
     resolution: {integrity: sha512-CYcENa+FtcUKLmhhqyctpclsq7QF38pKjZHsGNiSQF5r4FtoKDWabFDl3hzaEQMvT1LHEysw5twgLvpYYb4vbw==}
@@ -12291,10 +12285,6 @@ snapshots:
       locate-path: 7.2.0
       path-exists: 5.0.0
       unicorn-magic: 0.1.0
-
-  fit-file-parser@2.1.0:
-    dependencies:
-      buffer: 6.0.3
 
   flat-cache@3.2.0:
     dependencies:
