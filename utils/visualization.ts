@@ -190,7 +190,7 @@ export const transformWorkoutDataToColumns = (
 
   return data.map((category: WorkoutItem) => ({
     title: category.category,
-    items: category.exercises..map((ex: string) => ({
+    items: category.exercises.map((ex: string) => ({
       title: ex,
     })),
   }))
