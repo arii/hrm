@@ -67,6 +67,18 @@ const nextConfig = {
       },
     ]
   },
+  webpack: (config, { isServer }) => {
+    // Polyfill Node.js Buffer for client-side bundles
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback, // Preserve existing fallbacks
+        buffer: require.resolve('buffer/'),
+      };
+    }
+
+    // Important: return the modified config
+    return config;
+  },
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
 }
 
