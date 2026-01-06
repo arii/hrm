@@ -80,7 +80,12 @@ const nextConfig = {
     }
     return config;
   },
-  serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
+  serverExternalPackages: [
+    'pino',
+    'pino-pretty',
+    'thread-stream',
+    'ws',
+  ],
 }
 
 export default withBundleAnalyzer(nextConfig)
