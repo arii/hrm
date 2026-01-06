@@ -6,6 +6,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['@markw65/fit-file-writer'],
   distDir: process.env.NODE_ENV === 'production' ? '.next_prod' : '.next',
   images: {
     remotePatterns: [
