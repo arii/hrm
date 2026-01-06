@@ -56,6 +56,7 @@ export const generateFitFile = (data: WorkoutExportData): Blob => {
   for (let i = 0; i < bytes.byteLength; i++) {
     view[i] = bytes.getUint8(i)
   }
+  // eslint-disable-next-line no-undef
   return new Blob([buffer], {
     type: 'application/octet-stream',
   })
