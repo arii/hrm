@@ -151,18 +151,18 @@ export class GitHubClient implements IGitHubClient {
     console.log(`🚀 Creating issue: "${title}"...`)
 
     const tempDir = os.tmpdir()
-    const titleFile = path.join(tempDir, `issue_title_${Date.now()}.txt`)
     const bodyFile = path.join(tempDir, `issue_body_${Date.now()}.md`)
 
     try {
-      writeFileSync(titleFile, title, 'utf-8')
       writeFileSync(bodyFile, body, 'utf-8')
 
-      const cmd = `gh issue create --title-file "${titleFile}" --body-file "${bodyFile}" --label "${labels}"`
+      // FIX: The --title-file flag is not valid. Use --title with the title string directly.
+      // To prevent shell injection issues with complex titles, escape double quotes.
+      const escapedTitle = title.replace(/"/g, '\\"')
+      const cmd = `gh issue create --title "${escapedTitle}" --body-file "${bodyFile}" --label "${labels}"`
       const url = this.execute(cmd)
       console.log(`✅ Issue created: ${url}`)
     } finally {
-      unlinkSync(titleFile)
       unlinkSync(bodyFile)
     }
   }
