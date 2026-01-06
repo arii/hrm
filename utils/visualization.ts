@@ -4,6 +4,11 @@
  * This ensures clean separation of business logic from React component rendering.
  */
 import { TimerData } from '../types/websocket'
+import {
+  WorkoutData,
+  WorkoutItem,
+  WorkoutColumnsProps,
+} from '../types/index'
 import theme from '../lib/theme'
 import { calculateHrZone } from '../lib/hrm/zones'
 import { HrZoneName } from '../lib/shared/hr-zones'
