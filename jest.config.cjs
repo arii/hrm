@@ -48,8 +48,6 @@ const config = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
-    '@markw65/fit-file-writer':
-      '<rootDir>/node_modules/@markw65/fit-file-writer/dist/fit-file-writer.js',
   },
   testTimeout: 10000,
   setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],

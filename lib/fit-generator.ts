@@ -57,9 +57,10 @@ export const generateFitFile = (data: FitExportData): Blob => {
   })
 
   const dataView = fitWriter.finish()
-  // Force a copy to a new Uint8Array with a standard ArrayBuffer
   const uint8Array = new Uint8Array(
-    new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength)
+    dataView.buffer,
+    dataView.byteOffset,
+    dataView.byteLength
   )
   return new Blob([uint8Array], { type: 'application/octet-stream' })
 }
