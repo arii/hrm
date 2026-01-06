@@ -1,5 +1,5 @@
-const bundleAnalyzer = require('@next/bundle-analyzer')
-const webpack = require('webpack')
+import bundleAnalyzer from '@next/bundle-analyzer'
+import webpack from 'webpack'
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -92,4 +92,4 @@ const nextConfig = {
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
 }
 
-module.exports = withBundleAnalyzer(nextConfig)
+export default withBundleAnalyzer(nextConfig)
