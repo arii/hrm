@@ -4,11 +4,7 @@
  * This ensures clean separation of business logic from React component rendering.
  */
 import { TimerData } from '../types/websocket'
-import {
-  WorkoutData,
-  WorkoutItem,
-  WorkoutColumnsProps,
-} from '../types/index'
+import { WorkoutData, WorkoutItem, WorkoutColumnsProps } from '../types/index'
 import theme from '../lib/theme'
 import { calculateHrZone } from '../lib/hrm/zones'
 import { HrZoneName } from '../lib/shared/hr-zones'
@@ -194,7 +190,7 @@ export const transformWorkoutDataToColumns = (
 
   return data.map((category: WorkoutItem) => ({
     title: category.category,
-    items: category.exercises.map((ex: string) => ({
+    items: category.exercises..map((ex: string) => ({
       title: ex,
     })),
   }))

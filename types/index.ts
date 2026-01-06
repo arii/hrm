@@ -13,7 +13,6 @@ export interface HrTileProps {
   alertMessage?: string
 }
 export interface EnhancedHrmDataForTile extends HrmData {
-  calories?: number
   isAlerting: boolean
   alertMessage?: string
 }
