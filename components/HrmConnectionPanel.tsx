@@ -9,6 +9,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import HrTileWrapper from '@/components/HrTileWrapper'
 import { calculateTotalWorkoutCalories } from '@/lib/calorie-estimation'
+import { WorkoutExportData } from '@/types'
 // Dynamically import WorkoutExport with SSR disabled
 const WorkoutExport = dynamic(
   () =>
@@ -74,7 +75,6 @@ const HrmConnectionPanel = () => {
       // Persist final records to localStorage
       localStorage.setItem('workoutRecords', JSON.stringify(workoutRecords))
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timerData.currentPhase, isRecording, workoutRecords])
 
   // Ref to hold the latest hrmData to avoid dependency issues in the recording effect
@@ -112,8 +112,8 @@ const HrmConnectionPanel = () => {
         userSettings.gender === 'MALE'
           ? 'male'
           : userSettings.gender === 'FEMALE'
-            ? 'female'
-            : undefined,
+          ? 'female'
+          : undefined,
       workoutDuration: timerData.timeElapsed,
       avgHr:
         workoutRecords.reduce((acc, rec) => acc + rec.hr, 0) /
@@ -169,7 +169,7 @@ const HrmConnectionPanel = () => {
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 
-  const workoutData = {
+  const workoutData: WorkoutExportData = {
     startTime: sessionStartTime || 0,
     durationSeconds: timerData.timeElapsed,
     totalCalories: totalCalories,
