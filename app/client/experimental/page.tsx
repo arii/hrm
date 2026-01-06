@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useReducer } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { Button, Typography, Paper, Box, Container } from '@mui/material'
@@ -53,6 +53,7 @@ const ExperimentalWorkoutPage = () => {
   const webSocketContext = useWebSocket()
   const [userSettings] = useUserSettings()
   const [state, dispatch] = useReducer(reducer, initialState)
+  const [fitGenerator, setFitGenerator] = useState<typeof generateFitFile | null>(null)
   const timerData = webSocketContext?.timerData
   const hrmData = webSocketContext?.hrmData
 
@@ -85,10 +86,16 @@ const ExperimentalWorkoutPage = () => {
     }
   }, [timerData, hrmData, state.sessionStartTime])
 
-  const handleExport = () => {
-    if (state.workoutBuffer.length === 0 || !state.sessionStartTime) return
+  useEffect(() => {
+    import('@/lib/fit-generator').then(module => {
+      setFitGenerator(() => module.generateFitFile)
+    }).catch(error => console.error("Failed to load FIT file generator:", error))
+  }, [])
 
-    const blob = generateFitFile({
+  const handleExport = () => {
+    if (state.workoutBuffer.length === 0 || !state.sessionStartTime || !fitGenerator) return
+
+    const blob = fitGenerator({
       startTime: state.sessionStartTime,
       durationSeconds: state.workoutDuration,
       totalCalories: state.caloriesBurned,
