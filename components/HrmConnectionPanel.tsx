@@ -10,7 +10,8 @@ import { useUserSettings } from '@/context/UserSettingsContext'
 import HrTileWrapper from '@/components/HrTileWrapper'
 import { calculateTotalWorkoutCalories } from '@/lib/calorie-estimation'
 import { WorkoutExportData } from '@/types'
-// Dynamically import WorkoutExport with SSR disabled
+
+// Dynamically import WorkoutExport with SSR disabled to avoid hydration errors
 const WorkoutExport = dynamic(
   () =>
     import(
@@ -22,31 +23,56 @@ const WorkoutExport = dynamic(
   }
 )
 
+/**
+ * Custom hook to get the previous value of a prop or state.
+ * @param value The value to track.
+ * @returns The value from the previous render.
+ */
+function usePrevious<T>(value: T) {
+  const ref = useRef<T>()
+  useEffect(() => {
+    ref.current = value
+  })
+  return ref.current
+}
+
 const HrmConnectionPanel = () => {
   const { hrmData, timerData, connectionStatus, activeAlerts } = useWebSocket()
   const [userSettings] = useUserSettings()
+
+  // Lazy initialize state from localStorage to avoid setting state in an effect
   const [workoutRecords, setWorkoutRecords] = useState<
     { time: number; hr: number }[]
-  >([])
-  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
-  const [isRecording, setIsRecording] = useState(false)
-
-  // Load from localStorage on mount (client-side only)
-  useEffect(() => {
+  >(() => {
+    if (typeof window === 'undefined') {
+      return []
+    }
     try {
       const storedRecords = localStorage.getItem('workoutRecords')
-      if (storedRecords) {
-        setWorkoutRecords(JSON.parse(storedRecords))
-      }
-      const storedStartTime = localStorage.getItem('sessionStartTime')
-      if (storedStartTime) {
-        setSessionStartTime(JSON.parse(storedStartTime))
-      }
+      return storedRecords ? JSON.parse(storedRecords) : []
     } catch (error) {
-      console.error('Failed to load workout data from localStorage', error)
+      console.error('Failed to load workout records from localStorage', error)
+      return []
     }
+  })
 
-    // Cleanup on unmount
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(
+    () => {
+      if (typeof window === 'undefined') {
+        return null
+      }
+      try {
+        const storedStartTime = localStorage.getItem('sessionStartTime')
+        return storedStartTime ? JSON.parse(storedStartTime) : null
+      } catch (error) {
+        console.error('Failed to load start time from localStorage', error)
+        return null
+      }
+    }
+  )
+
+  // This effect now only handles cleanup on component unmount
+  useEffect(() => {
     return () => {
       localStorage.removeItem('workoutRecords')
       localStorage.removeItem('sessionStartTime')
@@ -61,50 +87,55 @@ const HrmConnectionPanel = () => {
     return null
   })
 
-  // Effect to control recording state based on timer phase
+  // Derive recording state directly from timer phase
+  const isRecording = timerData.currentPhase === 'RUNNING'
+  const prevIsRecording = usePrevious(isRecording)
+
+  // Use a ref to get the latest workoutRecords in the effect without adding it as a dependency
+  const workoutRecordsRef = useRef(workoutRecords)
   useEffect(() => {
-    if (timerData.currentPhase === 'RUNNING' && !isRecording) {
+    workoutRecordsRef.current = workoutRecords
+  }, [workoutRecords])
+
+  // Effect to manage the start and stop of a workout session
+  useEffect(() => {
+    // Transitioned from not recording to recording
+    if (isRecording && !prevIsRecording) {
       const startTime = Date.now()
       setSessionStartTime(startTime)
       setWorkoutRecords([]) // Clear previous records
-      setIsRecording(true)
       localStorage.setItem('workoutRecords', '[]')
       localStorage.setItem('sessionStartTime', JSON.stringify(startTime))
-    } else if (timerData.currentPhase !== 'RUNNING' && isRecording) {
-      setIsRecording(false)
-      // Persist final records to localStorage
-      localStorage.setItem('workoutRecords', JSON.stringify(workoutRecords))
     }
-  }, [timerData.currentPhase, isRecording, workoutRecords])
+    // Transitioned from recording to not recording
+    else if (!isRecording && prevIsRecording) {
+      // Persist final records to localStorage using the ref
+      localStorage.setItem(
+        'workoutRecords',
+        JSON.stringify(workoutRecordsRef.current)
+      )
+    }
+  }, [isRecording, prevIsRecording])
 
-  // Ref to hold the latest hrmData to avoid dependency issues in the recording effect
-  const hrmDataRef = useRef(hrmData)
-  useEffect(() => {
-    hrmDataRef.current = hrmData
-  }, [hrmData])
-
-  // Effect for recording data points
+  // Effect for recording data points every second during a workout
   useEffect(() => {
     if (isRecording) {
-      const latestRecord = hrmDataRef.current.find(
-        (user) => user.clientId === myClientId
-      )
-      if (latestRecord && latestRecord.value) {
+      const latestRecord = hrmData.find((user) => user.clientId === myClientId)
+      if (latestRecord?.value) {
         setWorkoutRecords((prevRecords) => [
           ...prevRecords,
-          { time: Date.now(), hr: latestRecord.value! },
+          { time: Date.now(), hr: latestRecord.value as number },
         ])
       }
     }
-  }, [timerData.timeRemaining, isRecording, myClientId]) // Re-run on each timer tick
+  }, [timerData.timeRemaining, isRecording, myClientId, hrmData])
 
   const totalCalories = useMemo(() => {
     if (workoutRecords.length === 0) {
       return 0
     }
-    // Provide default values if user settings are not yet available or are undefined
-    const safeUserAge = userSettings.userAge ?? 30 // Default age if not set
-    const safeUserWeight = userSettings.userWeight ?? 70 // Default weight in kg if not set
+    const safeUserAge = userSettings.userAge ?? 30
+    const safeUserWeight = userSettings.userWeight ?? 70
     return calculateTotalWorkoutCalories({
       age: safeUserAge,
       weight: safeUserWeight,
@@ -128,17 +159,13 @@ const HrmConnectionPanel = () => {
   ])
 
   const tileData = useMemo(() => {
-    // Use the client ID from state, which is safely initialized client-side
     const currentUserData = hrmData.find((user) => user.clientId === myClientId)
-
     const otherUsers = hrmData.filter(
       (user) =>
         user.clientId !== myClientId &&
         user.name &&
         !/new user/i.test(user.name)
     )
-
-    // Combine and sort
     const combinedUsers = [
       ...(currentUserData
         ? [{ ...currentUserData, name: 'You', isActive: true }]
@@ -149,14 +176,12 @@ const HrmConnectionPanel = () => {
       if (b.name === 'You') return 1
       return (a.name || '').localeCompare(b.name || '')
     })
-
     return combinedUsers.map((user) => {
       const matchingAlert = activeAlerts.find(
         (alert) =>
           alert.clientId === user.clientId &&
           (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
       )
-
       return {
         ...user,
         isAlerting: !!matchingAlert,
@@ -174,8 +199,8 @@ const HrmConnectionPanel = () => {
     durationSeconds: timerData.timeElapsed,
     totalCalories: totalCalories,
     records: workoutRecords,
-    userAge: userSettings.userAge || undefined,
-    userWeight: userSettings.userWeight || undefined,
+    userAge: userSettings.userAge,
+    userWeight: userSettings.userWeight,
     gender:
       userSettings.gender === 'MALE'
         ? 'male'
@@ -203,7 +228,7 @@ const HrmConnectionPanel = () => {
               justifyContent: 'center',
               alignItems: 'center',
               width: { xs: '100%', sm: 'calc(50% - 8px)' },
-              height: '100%', // Ensure the container fills the grid cell
+              height: '100%',
               gap: 2,
               p: 2,
               border: 1,
@@ -241,7 +266,7 @@ const HrmConnectionPanel = () => {
             sx={{
               width: {
                 xs: '100%',
-                sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
+                sm: 'calc(50% - 8px)',
               },
             }}
           >

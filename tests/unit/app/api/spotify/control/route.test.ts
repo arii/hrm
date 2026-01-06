@@ -1,5 +1,4 @@
 // tests/unit/app/api/spotify/control/route.test.ts
-/** @jest-environment node */
 
 import { POST } from '@/app/api/spotify/control/route'
 import { getServerSession } from 'next-auth/next'

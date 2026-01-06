@@ -1,5 +1,4 @@
 // tests/unit/app/api/spotify/playlists/route.test.ts
-/** @jest-environment node */
 
 import { GET } from '@/app/api/spotify/playlists/route'
 import { authOptions } from '@/lib/auth'
