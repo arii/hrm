@@ -2,7 +2,7 @@
 module.exports = {
   preset: 'ts-jest',
   roots: ['<rootDir>/tests/unit'],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'mjs'],
   coverageDirectory: 'coverage',
   reporters: [
     'default',
@@ -24,6 +24,7 @@ module.exports = {
     '!**/node_modules/**',
   ],
   transform: {
+    '^.+\\.mjs$': 'babel-jest',
     '^.+\\.(ts|tsx)$': [
       'ts-jest',
       {
@@ -38,7 +39,7 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi|cheerio|@markw6s/fit-file-writer)',
+    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi|cheerio|@markw65/fit-file-writer)',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
