@@ -29,7 +29,7 @@ const WorkoutExport = dynamic(
  * @returns The value from the previous render.
  */
 function usePrevious<T>(value: T) {
-  const ref = useRef<T>()
+  const ref = useRef<T | undefined>(undefined)
   useEffect(() => {
     ref.current = value
   })
@@ -99,17 +99,13 @@ const HrmConnectionPanel = () => {
 
   // Effect to manage the start and stop of a workout session
   useEffect(() => {
-    // Transitioned from not recording to recording
     if (isRecording && !prevIsRecording) {
       const startTime = Date.now()
       setSessionStartTime(startTime)
       setWorkoutRecords([]) // Clear previous records
       localStorage.setItem('workoutRecords', '[]')
       localStorage.setItem('sessionStartTime', JSON.stringify(startTime))
-    }
-    // Transitioned from recording to not recording
-    else if (!isRecording && prevIsRecording) {
-      // Persist final records to localStorage using the ref
+    } else if (!isRecording && prevIsRecording) {
       localStorage.setItem(
         'workoutRecords',
         JSON.stringify(workoutRecordsRef.current)
@@ -119,16 +115,24 @@ const HrmConnectionPanel = () => {
 
   // Effect for recording data points every second during a workout
   useEffect(() => {
-    if (isRecording) {
-      const latestRecord = hrmData.find((user) => user.clientId === myClientId)
-      if (latestRecord?.value) {
-        setWorkoutRecords((prevRecords) => [
-          ...prevRecords,
-          { time: Date.now(), hr: latestRecord.value as number },
-        ])
+    let animationFrameId: number
+    const record = () => {
+      if (isRecording) {
+        const latestRecord = hrmData.find(
+          (user) => user.clientId === myClientId
+        )
+        if (latestRecord?.value) {
+          setWorkoutRecords((prevRecords) => [
+            ...prevRecords,
+            { time: Date.now(), hr: latestRecord.value as number },
+          ])
+        }
+        animationFrameId = requestAnimationFrame(record)
       }
     }
-  }, [timerData.timeRemaining, isRecording, myClientId, hrmData])
+    animationFrameId = requestAnimationFrame(record)
+    return () => cancelAnimationFrame(animationFrameId)
+  }, [isRecording, myClientId, hrmData])
 
   const totalCalories = useMemo(() => {
     if (workoutRecords.length === 0) {

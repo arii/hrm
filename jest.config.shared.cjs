@@ -38,7 +38,7 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi|cheerio)',
+    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi|cheerio|@markw65/fit-file-writer)',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {

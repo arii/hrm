@@ -43,11 +43,8 @@ describe('HrmConnectionPanel', () => {
       activeAlerts: [],
     })
     jest.clearAllMocks()
-    // Mock localStorage before each test as it's accessed in useEffect
-    Object.defineProperty(window, 'localStorage', {
-      value: { getItem: jest.fn(() => 'test-client-id') },
-      writable: true,
-    })
+    // Clear localStorage mock before each test as it's set up globally
+    window.localStorage.clear()
   })
 
   it('renders a placeholder message and no connect link when no data is available', () => {
@@ -59,6 +56,13 @@ describe('HrmConnectionPanel', () => {
     expect(
       screen.queryByRole('button', { name: /Connect/i })
     ).not.toBeInTheDocument()
+  })
+
+  it('loads client ID from localStorage on mount', () => {
+    window.localStorage.setItem('clientId', 'my-test-client')
+    render(<HrmConnectionPanel />)
+    // No explicit assertion here, but this ensures the component's useEffect
+    // can read from the mocked localStorage without error.
   })
 
   it('renders HR tiles and no connect link when hrmData is available', () => {
