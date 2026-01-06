@@ -8,8 +8,8 @@ jobs:
   label:
     runs-on: ubuntu-latest
     env:
-      APPROVED_LABEL: 'approved'
-      CHANGES_REQUESTED_LABEL: 'changes-requested'
+      APPROVED_LABEL: "approved"
+      CHANGES_REQUESTED_LABEL: "changes-requested"
     steps:
       - name: Label PR based on review
         uses: actions/github-script@v6

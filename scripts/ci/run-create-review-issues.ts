@@ -1,5 +1,8 @@
 #!/usr/bin/env ts-node
-import { run, GitHubClient } from '../create-review-issues'
+import {
+  run,
+  GitHubClient,
+} from '../create-review-issues'
 
 const client = new GitHubClient()
 const prNumber = process.env.PR_NUMBER
