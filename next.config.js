@@ -1,5 +1,5 @@
 import bundleAnalyzer from '@next/bundle-analyzer'
-const webpack = require('webpack');
+import webpack from 'webpack'
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
