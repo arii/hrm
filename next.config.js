@@ -67,7 +67,6 @@ const nextConfig = {
       },
     ]
   },
-  turbopack: {},
   webpack: (config, { isServer, require }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -76,6 +75,9 @@ const nextConfig = {
         stream: require.resolve('stream-browserify'),
         util: require.resolve('util/'),
         path: require.resolve('path-browserify'),
+        fs: false,
+        os: require.resolve('os-browserify/browser'),
+        crypto: require.resolve('crypto-browserify'),
       };
     }
     return config;
