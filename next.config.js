@@ -6,7 +6,6 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@markw65/fit-file-writer'],
   distDir: process.env.NODE_ENV === 'production' ? '.next_prod' : '.next',
   images: {
     remotePatterns: [
@@ -67,27 +66,7 @@ const nextConfig = {
       },
     ]
   },
-  webpack: (config, { isServer, require }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        buffer: require.resolve('buffer/'),
-        stream: require.resolve('stream-browserify'),
-        util: require.resolve('util/'),
-        path: require.resolve('path-browserify'),
-        fs: false,
-        os: require.resolve('os-browserify/browser'),
-        crypto: require.resolve('crypto-browserify'),
-      };
-    }
-    return config;
-  },
-  serverExternalPackages: [
-    'pino',
-    'pino-pretty',
-    'thread-stream',
-    'ws',
-  ],
+  serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
 }
 
 export default withBundleAnalyzer(nextConfig)

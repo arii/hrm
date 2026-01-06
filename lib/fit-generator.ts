@@ -12,9 +12,9 @@ interface FitExportData {
   weightKg?: number
 }
 
-const MANUFACTURER_ID = 'development' // Or a proper ID if registered with Garmin/ANT+
-const PRODUCT_ID = 0 // Or a specific product ID
-const SERIAL_NUMBER = 0x12345678 // Unique serial number for the device
+const MANUFACTURER_ID = 'development'
+const PRODUCT_ID = 0
+const SERIAL_NUMBER = 0x12345678
 
 export const generateFitFile = (data: FitExportData): Blob => {
   const fitWriter = new FitWriter()
@@ -22,7 +22,6 @@ export const generateFitFile = (data: FitExportData): Blob => {
   const startDate = new Date(data.startTime)
   const startFitTime = fitWriter.time(startDate)
 
-  // 1. File ID Message (Required for all FIT files)
   fitWriter.writeMessage('file_id', {
     type: 'activity',
     manufacturer: MANUFACTURER_ID,
@@ -31,7 +30,6 @@ export const generateFitFile = (data: FitExportData): Blob => {
     time_created: startFitTime,
   })
 
-  // 2. Session Message (Summary)
   fitWriter.writeMessage('session', {
     start_time: startFitTime,
     total_elapsed_time: data.durationSeconds,
@@ -44,7 +42,6 @@ export const generateFitFile = (data: FitExportData): Blob => {
     ),
   })
 
-  // 3. User Profile Message (Optional)
   if (data.age && data.weightKg) {
     fitWriter.writeMessage('user_profile', {
       weight: data.weightKg,
@@ -52,7 +49,6 @@ export const generateFitFile = (data: FitExportData): Blob => {
     })
   }
 
-  // 4. Record Messages (Time Series)
   data.records.forEach((record) => {
     fitWriter.writeMessage('record', {
       timestamp: fitWriter.time(new Date(record.time)),
