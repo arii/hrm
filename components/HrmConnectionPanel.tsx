@@ -75,7 +75,7 @@ const HrmConnectionPanel = () => {
       localStorage.setItem('workoutRecords', JSON.stringify(workoutRecords))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerData.currentPhase, isRecording])
+  }, [timerData.currentPhase, isRecording, workoutRecords])
 
   // Ref to hold the latest hrmData to avoid dependency issues in the recording effect
   const hrmDataRef = useRef(hrmData)
@@ -250,7 +250,7 @@ const HrmConnectionPanel = () => {
           </Box>
         ))
       )}
-      {timerData.phase === 'IDLE' && workoutRecords.length > 0 && (
+      {timerData.currentPhase === 'IDLE' && workoutRecords.length > 0 && (
         <WorkoutExport workoutData={workoutData} />
       )}
     </Box>
