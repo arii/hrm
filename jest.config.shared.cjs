@@ -29,7 +29,7 @@ module.exports = {
       {
         useESM: true,
         tsconfig: {
-          module: 'ES2022',
+          module: 'CommonJS',
           moduleResolution: 'bundler',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,

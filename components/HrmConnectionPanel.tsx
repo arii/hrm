@@ -29,7 +29,7 @@ const WorkoutExport = dynamic(
  * @returns The value from the previous render.
  */
 function usePrevious<T>(value: T) {
-  const ref = useRef<T | undefined>(undefined)
+  const ref = useRef<T>()
   useEffect(() => {
     ref.current = value
   })
@@ -203,7 +203,7 @@ const HrmConnectionPanel = () => {
     durationSeconds: timerData.timeElapsed,
     totalCalories: totalCalories,
     records: workoutRecords,
-    userAge: userSettings.userAge,
+    userAge: userSettings.userAge ?? undefined,
     userWeight: userSettings.userWeight,
     gender:
       userSettings.gender === 'MALE'
