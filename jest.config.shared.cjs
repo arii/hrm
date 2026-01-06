@@ -3,6 +3,26 @@ module.exports = {
   preset: 'ts-jest',
   roots: ['<rootDir>/tests/unit'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'mjs'],
+  coverageDirectory: 'coverage',
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputDirectory: './test-results',
+        outputName: 'unit-results.xml',
+        suiteNameTemplate: '{filepath}',
+        classNameTemplate: '{classname}',
+        titleTemplate: '{title}',
+      },
+    ],
+  ],
+  collectCoverageFrom: [
+    'services/**/*.ts',
+    'utils/socketManager.ts',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+  ],
   transform: {
     '^.+\\.mjs$': 'babel-jest',
     '^.+\\.(ts|tsx)$': [
