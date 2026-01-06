@@ -29,7 +29,7 @@ module.exports = {
       {
         useESM: true,
         tsconfig: {
-          module: 'CommonJS',
+          module: 'ES2022',
           moduleResolution: 'bundler',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
@@ -38,7 +38,7 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi|cheerio|@markw65/fit-file-writer)',
+    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi|cheerio|@markw6s/fit-file-writer)',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
