@@ -17,5 +17,5 @@
     "lib/**/*.ts",
     "scripts/**/*.ts"
   ],
-  "exclude": ["lib/fit-generator.ts", "lib/export/fit-generator.ts"]
+  "exclude": ["lib/fit-generator.ts"]
 }
