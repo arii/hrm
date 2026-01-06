@@ -176,13 +176,12 @@ const HrmConnectionPanel = () => {
     records: workoutRecords,
     userAge: userSettings.userAge || undefined,
     userWeight: userSettings.userWeight || undefined,
-    // Ensure gender is 'male', 'female', or undefined
     gender:
       userSettings.gender === 'MALE'
         ? 'male'
         : userSettings.gender === 'FEMALE'
-          ? 'female'
-          : undefined,
+        ? 'female'
+        : undefined,
   }
 
   return (
