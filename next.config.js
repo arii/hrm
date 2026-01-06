@@ -69,10 +69,13 @@ const nextConfig = {
     ]
   },
   webpack: (config, { isServer }) => {
-    // Polyfill Node.js Buffer for client-side bundles
+    // Polyfill Node.js modules for client-side bundles
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback, // Preserve existing fallbacks
+        stream: require.resolve('stream-browserify'), // Polyfill for 'stream' module
+        path: require.resolve('path-browserify'),     // Polyfill for 'path' module
+        util: require.resolve('util/'),               // Polyfill for 'util' module
         buffer: require.resolve('buffer/'),
       };
       // Ensure Buffer is globally available for modules that expect it
