@@ -1,4 +1,5 @@
 import bundleAnalyzer from '@next/bundle-analyzer'
+import webpack from 'webpack'
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -74,6 +75,12 @@ const nextConfig = {
         ...config.resolve.fallback, // Preserve existing fallbacks
         buffer: require.resolve('buffer/'),
       };
+      // Ensure Buffer is globally available for modules that expect it
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          Buffer: ['buffer', 'Buffer'],
+        })
+      );
     }
 
     // Important: return the modified config
