@@ -1,8 +1,8 @@
-import { FitWriter } from '@markw65/fit-file-writer'
+import * as FitFile from '@markw65/fit-file-writer'
 import { WorkoutExportData } from '@/types'
 
 export const generateFitFile = (data: WorkoutExportData): Blob => {
-  const fitWriter = new FitWriter()
+  const fitWriter = new FitFile.FitWriter()
 
   const startDate = new Date(data.startTime)
   const startFitTime = fitWriter.time(startDate)

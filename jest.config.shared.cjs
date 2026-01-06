@@ -26,7 +26,7 @@ module.exports = {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
     '^@markw65/fit-file-writer$':
-      '<rootDir>/node_modules/@markw65/fit-file-writer/dist/fit-file-writer.mjs',
+      '<rootDir>/tests/unit/mocks/fit-file-writer.ts',
   },
   testTimeout: 10000,
 }
