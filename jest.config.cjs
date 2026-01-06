@@ -46,8 +46,8 @@ const config = {
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@/(.*)$': '<rootDir>/$1',
     '@markw65/fit-file-writer':
       '<rootDir>/node_modules/@markw65/fit-file-writer/dist/fit-file-writer.js',
   },
