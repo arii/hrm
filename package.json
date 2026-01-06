@@ -9,7 +9,7 @@
     "dev": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm server.ts | pnpm exec pino-pretty",
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
     "deploy": "bash scripts/deploy.sh",
-    "build": "pnpm run build:server && next build",
+    "build": "pnpm run build:server && next build --webpack",
     "build:server": "pnpm exec tsc -p tsconfig.build.json",
     "analyze": "cross-env ANALYZE=true pnpm run build:server && cross-env ANALYZE=true next build --webpack",
     "start": "pm2 start ecosystem.config.cjs --env production",
@@ -153,7 +153,8 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0",
     "util": "^0.12.5",
-    "wait-on": "^9.0.3"
+    "wait-on": "^9.0.3",
+    "webpack": "^5.104.1"
   },
   "engines": {
     "node": ">=20.0.0",

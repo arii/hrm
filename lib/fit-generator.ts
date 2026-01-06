@@ -12,9 +12,9 @@ interface FitExportData {
   weightKg?: number
 }
 
-const MANUFACTURER_ID = 'development'; // Or a proper ID if registered with Garmin/ANT+
-const PRODUCT_ID = 0; // Or a specific product ID
-const SERIAL_NUMBER = 0x12345678; // Unique serial number for the device
+const MANUFACTURER_ID = 'development' // Or a proper ID if registered with Garmin/ANT+
+const PRODUCT_ID = 0 // Or a specific product ID
+const SERIAL_NUMBER = 0x12345678 // Unique serial number for the device
 
 export const generateFitFile = (data: FitExportData): Blob => {
   const fitWriter = new FitWriter()

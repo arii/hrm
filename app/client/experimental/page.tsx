@@ -53,7 +53,9 @@ const ExperimentalWorkoutPage = () => {
   const webSocketContext = useWebSocket()
   const [userSettings] = useUserSettings()
   const [state, dispatch] = useReducer(reducer, initialState)
-  const [fitGenerator, setFitGenerator] = useState<typeof generateFitFile | null>(null)
+  const [fitGenerator, setFitGenerator] = useState<
+    typeof generateFitFile | null
+  >(null)
   const timerData = webSocketContext?.timerData
   const hrmData = webSocketContext?.hrmData
 
@@ -87,13 +89,22 @@ const ExperimentalWorkoutPage = () => {
   }, [timerData, hrmData, state.sessionStartTime])
 
   useEffect(() => {
-    import('@/lib/fit-generator').then(module => {
-      setFitGenerator(() => module.generateFitFile)
-    }).catch(error => console.error("Failed to load FIT file generator:", error))
+    import('@/lib/fit-generator')
+      .then((module) => {
+        setFitGenerator(() => module.generateFitFile)
+      })
+      .catch((error) =>
+        console.error('Failed to load FIT file generator:', error)
+      )
   }, [])
 
   const handleExport = () => {
-    if (state.workoutBuffer.length === 0 || !state.sessionStartTime || !fitGenerator) return
+    if (
+      state.workoutBuffer.length === 0 ||
+      !state.sessionStartTime ||
+      !fitGenerator
+    )
+      return
 
     const blob = fitGenerator({
       startTime: state.sessionStartTime,
