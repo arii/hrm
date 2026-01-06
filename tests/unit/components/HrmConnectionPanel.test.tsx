@@ -35,9 +35,10 @@ describe('HrmConnectionPanel', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
       timerData: {
-        phase: 'IDLE',
+        currentPhase: 'IDLE',
         timeRemaining: 0,
         totalDuration: 0,
+        timeElapsed: 0,
       },
       connectionStatus: 'Connected',
       activeAlerts: [],
@@ -69,9 +70,10 @@ describe('HrmConnectionPanel', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [{ clientId: '1', name: 'Test User', value: 120 }],
       timerData: {
-        phase: 'IDLE',
+        currentPhase: 'IDLE',
         timeRemaining: 0,
         totalDuration: 0,
+        timeElapsed: 0,
       },
       connectionStatus: 'Connected',
       activeAlerts: [],
@@ -95,9 +97,10 @@ describe('HrmConnectionPanel', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
       timerData: {
-        phase: 'IDLE',
+        currentPhase: 'IDLE',
         timeRemaining: 0,
         totalDuration: 0,
+        timeElapsed: 0,
       },
       connectionStatus: 'Connecting...',
       activeAlerts: [],
