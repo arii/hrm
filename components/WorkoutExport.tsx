@@ -19,7 +19,11 @@ const WorkoutExport = ({ workoutData }: WorkoutExportProps) => {
       .then((module) => {
         setGenerateFitFileFunction(() => module.generateFitFile)
       })
-      .catch(console.error) // Basic error logging
+      .catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to load FIT generator module:', error)
+        }
+      })
   }, []) // Run once on client mount
 
   const handleExport = () => {
