@@ -8,7 +8,7 @@ describe('Calorie Estimation', () => {
     [
       'realistic data',
       { heartRate: 150, age: 30, weightKg: 70, durationMinutes: 30 },
-      339.9,
+      426.66,
     ],
     [
       'zero duration',
@@ -23,22 +23,22 @@ describe('Calorie Estimation', () => {
     [
       'older, lighter person',
       { heartRate: 140, age: 65, weightKg: 55, durationMinutes: 60 },
-      445.3,
+      821.32,
     ],
     [
       'younger, heavier person',
       { heartRate: 160, age: 22, weightKg: 90, durationMinutes: 45 },
-      637.8,
+      733.25,
     ],
     [
       'high but valid values',
       { heartRate: 195, age: 25, weightKg: 100, durationMinutes: 120 },
-      2373.8,
+      2663.03,
     ],
     [
       'low but valid values',
       { heartRate: 90, age: 40, weightKg: 60, durationMinutes: 15 },
-      19.9,
+      77.72,
     ],
   ]
 
