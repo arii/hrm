@@ -15,6 +15,9 @@ module.exports = {
       {
         outputDirectory: './test-results',
         outputName: 'unit-results.xml',
+        suiteNameTemplate: '{filepath}',
+        classNameTemplate: '{classname}',
+        titleTemplate: '{title}',
       },
     ],
   ],

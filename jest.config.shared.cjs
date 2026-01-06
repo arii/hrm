@@ -25,6 +25,7 @@ module.exports = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
+    '\\.(css|less|scss)$': 'identity-obj-proxy',
     '^@markw65/fit-file-writer$':
       '<rootDir>/tests/unit/mocks/fit-file-writer.ts',
   },
