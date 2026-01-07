@@ -58,8 +58,11 @@ export const generateFitFile = (data: FitExportData): Blob => {
   })
 
   const dataView = fitWriter.finish()
+  if (typeof Blob === 'undefined') {
+    // Return an empty Blob or null in a non-browser environment
+    return new Blob()
+  }
   // Create a Uint8Array from the buffer. This is a TypedArray and a valid BlobPart.
-  // This approach is more robust than conditionally handling SharedArrayBuffer.
   const blob = new Blob([new Uint8Array(dataView.buffer)], {
     type: 'application/octet-stream',
   })
