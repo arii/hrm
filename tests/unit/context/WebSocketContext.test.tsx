@@ -21,9 +21,13 @@ class MockWebSocketImplementation implements WebSocket {
   readyState = WebSocket.OPEN
   url = 'ws://mockserver'
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onopen: ((this: WebSocket, ev: Event) => any) | null = null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onclose: ((this: WebSocket, ev: CloseEvent) => any) | null = null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onerror: ((this: WebSocket, ev: Event) => any) | null = null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onmessage: ((this: WebSocket, ev: MessageEvent) => any) | null = null
 
   close = jest.fn()
