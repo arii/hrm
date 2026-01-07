@@ -57,6 +57,11 @@ export const generateFitFile = (data: FitExportData): Blob => {
     })
   })
 
-  const bytes = fitWriter.finish()
+  const dataView = fitWriter.finish()
+  const bytes = new Uint8Array(
+    dataView.buffer,
+    dataView.byteOffset,
+    dataView.byteLength
+  )
   return new Blob([bytes], { type: 'application/octet-stream' })
 }

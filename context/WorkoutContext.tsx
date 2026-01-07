@@ -91,11 +91,11 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
     if (primaryUser && state.sessionStartTime) {
       const now = Date.now()
       const lastRecordTime =
-        state.buffer.length > 0
-          ? state.buffer[state.buffer.length - 1].time
-          : 0
+        state.buffer.length > 0 ? state.buffer[state.buffer.length - 1].time : 0
       if (now - lastRecordTime >= 1000) {
-        const durationSeconds = Math.floor((now - state.sessionStartTime) / 1000)
+        const durationSeconds = Math.floor(
+          (now - state.sessionStartTime) / 1000
+        )
         const newRecord = { time: now, hr: primaryUser.hr }
         const newBuffer = [...state.buffer, newRecord]
         const durationMinutes = durationSeconds / 60
