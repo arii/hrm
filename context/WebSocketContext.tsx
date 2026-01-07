@@ -16,6 +16,8 @@ import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
 import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
 
+const HRM_SESSION_ID_KEY = 'hrm_session_id'
+
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
@@ -122,10 +124,10 @@ export const WebSocketProvider = ({
       return null
     }
     try {
-      let id = localStorage.getItem('hrm_session_id')
+      let id = localStorage.getItem(HRM_SESSION_ID_KEY)
       if (!id) {
         id = window.crypto.randomUUID()
-        localStorage.setItem('hrm_session_id', id)
+        localStorage.setItem(HRM_SESSION_ID_KEY, id)
       }
       return id
     } catch (error) {
