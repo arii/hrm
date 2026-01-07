@@ -58,11 +58,9 @@ export const generateFitFile = (data: FitExportData): Blob => {
   })
 
   const dataView = fitWriter.finish()
-  const buffer =
-    dataView.buffer instanceof SharedArrayBuffer
-      ? dataView.buffer.slice(0)
-      : dataView.buffer
-  const blob = new Blob([buffer], {
+  // Create a Uint8Array from the buffer. This is a TypedArray and a valid BlobPart.
+  // This approach is more robust than conditionally handling SharedArrayBuffer.
+  const blob = new Blob([new Uint8Array(dataView.buffer)], {
     type: 'application/octet-stream',
   })
   return blob
