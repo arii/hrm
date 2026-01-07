@@ -54,7 +54,11 @@ describe('useLocalStorage', () => {
   })
 
   it('should load and parse a valid value from localStorage', () => {
-    const storedPrefs = { ...DEFAULT_PREFERENCES, userName: 'Jane Doe', userAge: 35 }
+    const storedPrefs = {
+      ...DEFAULT_PREFERENCES,
+      userName: 'Jane Doe',
+      userAge: 35,
+    }
     window.localStorage.setItem(TEST_KEY, JSON.stringify(storedPrefs))
 
     const { result } = renderHook(() =>
@@ -67,7 +71,11 @@ describe('useLocalStorage', () => {
 
   it('should sanitize corrupted userAge from localStorage', () => {
     // Simulate the bug: userAge is incorrectly stored as a string (the user's name)
-    const corruptedPrefs = { ...DEFAULT_PREFERENCES, userName: 'Jane Doe', userAge: 'Jane Doe' }
+    const corruptedPrefs = {
+      ...DEFAULT_PREFERENCES,
+      userName: 'Jane Doe',
+      userAge: 'Jane Doe',
+    }
     window.localStorage.setItem(TEST_KEY, JSON.stringify(corruptedPrefs))
 
     const { result } = renderHook(() =>
@@ -82,10 +90,14 @@ describe('useLocalStorage', () => {
 
   it('should sanitize corrupted userName from localStorage', () => {
     // Simulate a case where userName is not a string
-    const corruptedPrefs = { ...DEFAULT_PREFERENCES, userName: 12345, userAge: 30 }
+    const corruptedPrefs = {
+      ...DEFAULT_PREFERENCES,
+      userName: 12345,
+      userAge: 30,
+    }
     window.localStorage.setItem(TEST_KEY, JSON.stringify(corruptedPrefs))
 
-     const { result } = renderHook(() =>
+    const { result } = renderHook(() =>
       useLocalStorage(TEST_KEY, DEFAULT_PREFERENCES)
     )
 
@@ -102,7 +114,7 @@ describe('useLocalStorage', () => {
 
     act(() => {
       const [, setValue] = result.current
-      setValue(prev => ({...prev, userName: 'John Doe'}))
+      setValue((prev) => ({ ...prev, userName: 'John Doe' }))
     })
 
     expect(result.current[0].userName).toBe('John Doe')

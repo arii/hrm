@@ -34,10 +34,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
           ) {
             parsed.userAge = null // Reset if it's not a number or null
           }
-          if (
-            'userName' in parsed &&
-            typeof parsed.userName !== 'string'
-          ) {
+          if ('userName' in parsed && typeof parsed.userName !== 'string') {
             parsed.userName = '' // Reset if it's not a string
           }
 
