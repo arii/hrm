@@ -24,9 +24,12 @@ jobs:
     secrets:
       gh_token: ${{ secrets.ARI_PAT }}
 
-  create-issues-from-comment:
+  prepare-comment-run:
     if: github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '/create-issues')
     runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ github.event.issue.number }}
+      run_id: ${{ steps.find_run.outputs.run_id }}
     steps:
       - name: 'Get PR branch name'
         id: get_pr
@@ -48,10 +51,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
 
-      - name: 'Create issues from review'
-        uses: ./.github/workflows/reusable-create-review-issues.yml
-        with:
-          pr_number: ${{ github.event.issue.number }}
-          run_id: ${{ steps.find_run.outputs.run_id }}
-        secrets:
-          gh_token: ${{ secrets.ARI_PAT }}
+  create-issues-from-comment:
+    if: github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '/create-issues')
+    needs: prepare-comment-run
+    uses: ./.github/workflows/reusable-create-review-issues.yml
+    with:
+      pr_number: ${{ needs.prepare-comment-run.outputs.pr_number }}
+      run_id: ${{ needs.prepare-comment-run.outputs.run_id }}
+    secrets:
+      gh_token: ${{ secrets.ARI_PAT }}

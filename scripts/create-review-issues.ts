@@ -5,6 +5,20 @@ import os from 'os'
 import crypto from 'crypto'
 import { z } from 'zod'
 
+// --- Label Configuration ---
+
+const LABEL_CONFIG: { [key: string]: { color: string; description: string } } = {
+  'bot-generated': { color: 'cfd3d7', description: 'Issue generated automatically by a bot.' },
+  'triage-needed': { color: 'fef2c0', description: 'This issue needs to be reviewed and prioritized.' },
+  'type-technical-debt': { color: 'a2eeef', description: 'Technical debt that needs to be addressed.' },
+  'type-frontend-improvement': { color: 'd4c5f9', description: 'Improvement to the user interface or user experience.' },
+  'type-security': { color: 'd73a4a', description: 'Security vulnerability or concern.' },
+  'type-bug': { color: 'd73a4a', description: 'A bug or unexpected behavior.' },
+  'priority-high': { color: 'd73a4a', description: 'High priority issue.' },
+  'priority-medium': { color: 'fbca04', description: 'Medium priority issue.' },
+  'priority-low': { color: '0e8a16', description: 'Low priority issue.' },
+};
+
 // --- Zod Schemas for Validation ---
 
 const SuggestedIssueSchema = z.object({
@@ -65,6 +79,8 @@ export interface IGitHubClient {
 }
 
 export class GitHubClient implements IGitHubClient {
+  private labelsEnsured = false;
+
   private execute(command: string): string {
     try {
       return execSync(command, {
@@ -115,12 +131,14 @@ export class GitHubClient implements IGitHubClient {
     issue: SuggestedIssue,
     context: z.infer<typeof PRContextSchema>
   ): void {
-    const labels = [
+    const requiredLabels = [
       'bot-generated',
       'triage-needed',
       `type-${issue.type}`,
       `priority-${issue.priority}`,
-    ].join(',')
+    ];
+    this.ensureLabelsExist(requiredLabels);
+    const labels = requiredLabels.join(',');
 
     // PR Link Construction
     const prLink = context.repo
@@ -151,20 +169,54 @@ export class GitHubClient implements IGitHubClient {
     console.log(`🚀 Creating issue: "${title}"...`)
 
     const tempDir = os.tmpdir()
-    const titleFile = path.join(tempDir, `issue_title_${Date.now()}.txt`)
     const bodyFile = path.join(tempDir, `issue_body_${Date.now()}.md`)
 
     try {
-      writeFileSync(titleFile, title, 'utf-8')
       writeFileSync(bodyFile, body, 'utf-8')
 
-      const cmd = `gh issue create --title-file "${titleFile}" --body-file "${bodyFile}" --label "${labels}"`
+      // FIX: The --title-file flag is not valid. Use --title with the title string directly.
+      // To prevent shell injection issues with complex titles, escape double quotes.
+      const escapedTitle = title.replace(/"/g, '\\"')
+      const cmd = `gh issue create --title "${escapedTitle}" --body-file "${bodyFile}" --label "${labels}"`
       const url = this.execute(cmd)
       console.log(`✅ Issue created: ${url}`)
     } finally {
-      unlinkSync(titleFile)
       unlinkSync(bodyFile)
     }
+  }
+
+  private ensureLabelsExist(requiredLabels: string[]): void {
+    if (this.labelsEnsured) {
+      return;
+    }
+
+    console.log('🛡️ Verifying required labels exist...');
+    const existingLabelsRaw = this.execute('gh label list --json name');
+    const existingLabels = JSON.parse(existingLabelsRaw).map((label: { name: string }) => label.name);
+    const missingLabels = requiredLabels.filter(label => !existingLabels.includes(label));
+
+    if (missingLabels.length > 0) {
+      console.log(`✨ Found missing labels: ${missingLabels.join(', ')}. Creating them...`);
+      for (const label of missingLabels) {
+        const config = LABEL_CONFIG[label];
+        if (config) {
+          try {
+            this.execute(`gh label create "${label}" --color "${config.color}" --description "${config.description}"`);
+            console.log(`   - Created label: "${label}"`);
+          } catch (e) {
+            // Ignore errors if the label already exists (race condition)
+            if (e instanceof Error && e.message.includes('already exists')) {
+              console.log(`   - Label "${label}" already exists (likely created by a parallel process).`);
+            } else {
+              throw e; // Re-throw other errors
+            }
+          }
+        }
+      }
+    } else {
+      console.log('✅ All required labels are present.');
+    }
+    this.labelsEnsured = true;
   }
 }
 
