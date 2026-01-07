@@ -19,11 +19,7 @@ const config = {
       },
     ],
   ],
-  collectCoverageFrom: [
-    'server.ts',
-    '!**/*.d.ts',
-    '!**/node_modules/**',
-  ],
+  collectCoverageFrom: ['server.ts', '!**/*.d.ts', '!**/node_modules/**'],
   transform: {
     '^.+\\.mjs$': 'babel-jest',
     '^.+\\.(ts|tsx)$': [

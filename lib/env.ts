@@ -1,7 +1,9 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
   PORT: z.coerce.number().default(3000),
   HOST: z.string().default('127.0.0.1'),
   NEXTAUTH_SECRET: z.string().min(1),
@@ -22,19 +24,22 @@ const envSchema = z.object({
   INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
   GENERAL_API_MAX_REQUESTS: z.coerce.number().default(200),
   WS_MAX_CONNECTIONS: z.coerce.number().default(5),
+  SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(2000),
+  SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(5000),
+  WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().default(1000),
   WEBSOCKET_WATCHDOG_INTERVAL: z.coerce.number().optional(),
   GEMINI_MODEL_FALLBACKS: z.string().optional(),
   ANALYZE: z.string().optional(),
   TESTING: z.string().optional(),
   IS_DEPLOYMENT: z.string().optional(),
   WS_URL: z.string().url().optional(),
-});
+})
 
-const parsedEnv = envSchema.safeParse(process.env);
+const parsedEnv = envSchema.safeParse(process.env)
 
 if (!parsedEnv.success) {
-  console.error('❌ Invalid environment variables:', parsedEnv.error.format());
-  throw parsedEnv.error;
+  console.error('❌ Invalid environment variables:', parsedEnv.error.format())
+  throw parsedEnv.error
 }
 
-export const env = parsedEnv.data;
+export const env = parsedEnv.data
