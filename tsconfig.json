@@ -13,7 +13,6 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "baseUrl": ".",
     "plugins": [
       {
         "name": "next"
@@ -33,16 +32,14 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "**/*.d.ts",
     ".next/types/**/*.ts",
-    "types/index.ts"
+    ".next/dev/types/**/*.ts",
+    "**/*.mts",
+    ".next/dev/dev/types/**/*.ts",
+    ".next_prod/types/**/*.ts",
+    ".next_prod/dev/types/**/*.ts",
+    "types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "tests",
-    "playwright.config.ts",
-    "dist",
-    "coverage",
-    "jest.config.cjs",
-    "next.config.js"
-  ]
+  "exclude": ["node_modules", "tests/playwright", "playwright.config.ts"]
 }
