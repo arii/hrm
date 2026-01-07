@@ -172,6 +172,7 @@ describe('WebSocket Manager', () => {
     jest.useRealTimers()
     jest.clearAllMocks()
     ;(mockWss.clients as Set<MockWebSocket>).clear()
+    resetSocketManager() // Restore this line
   })
 
   beforeEach(() => {
