@@ -12,6 +12,11 @@ updates:
     # LIMIT NOISE: Don't open more than 10 PRs at a time
     open-pull-requests-limit: 10
 
+    # Custom labels
+    labels:
+      - "dependencies"
+      - "automerge"
+
     # STRATEGIC GROUPING (Crucial for React/MUI apps)
     groups:
       # Update React and Next.js together to avoid peer dependency warnings
@@ -21,6 +26,9 @@ updates:
           - 'react'
           - 'react-dom'
           - 'eslint-config-next'
+        update-types:
+          - 'minor'
+          - 'patch'
 
       # Update all MUI and Emotion packages together to ensure styling consistency
       mui:
