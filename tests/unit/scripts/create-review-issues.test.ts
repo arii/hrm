@@ -150,9 +150,19 @@ describe('create-review-issues script', () => {
         branchName: 'test-branch',
       }
 
-      ;(execSync as jest.Mock).mockReturnValue(
-        'https://github.com/test/repo/issues/1'
-      )
+      // Create a more sophisticated mock for execSync
+      ;(execSync as jest.Mock).mockImplementation((command: string) => {
+        if (command.startsWith('gh label list')) {
+          // Return an empty array for the label list to simulate no existing labels
+          return '[]';
+        }
+        if (command.startsWith('gh issue create')) {
+          // Return a URL for the issue creation
+          return 'https://github.com/test/repo/issues/1';
+        }
+        // Return an empty string for any other command to avoid unexpected behavior
+        return '';
+      });
 
       ghClient.createIssue(issue, context)
 
