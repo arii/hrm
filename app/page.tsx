@@ -10,9 +10,13 @@ import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
-import HrmConnectionPanel from '../components/HrmConnectionPanel'
-import TimerDisplay from '../components/TimerDisplay'
-import { useAudio } from '../hooks/useAudio'
+import HrmConnectionPanel from '@/components/HrmConnectionPanel'
+import TimerDisplay from '@/components/TimerDisplay'
+import { useAudio } from '@/hooks/useAudio'
+import { WorkoutProvider, useWorkout } from '@/context/WorkoutContext'
+import { useUserSettings } from '@/context/UserSettingsContext'
+import { generateFitFile } from '@/lib/export/fit-generator'
+import Button from '@mui/material/Button'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -49,16 +53,42 @@ const mainGridStyles: SxProps = {
   gap: 2,
 }
 
-const Dashboard = () => {
+const DashboardContent = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   const { initializeAudio } = useAudio()
+  const workout = useWorkout()
+  const { userAge, userWeight } = useUserSettings()
 
   const handleInteraction = () => {
     if (!audioInitialized) {
       initializeAudio()
       setAudioInitialized(true)
     }
+  }
+
+  const handleExport = () => {
+    if (!workout || workout.buffer.length === 0 || !workout.sessionStartTime) {
+      return
+    }
+
+    const blob = generateFitFile({
+      startTime: workout.sessionStartTime,
+      durationSeconds: workout.workoutDuration,
+      totalCalories: workout.caloriesBurned,
+      records: workout.buffer,
+      userAge,
+      userWeight,
+    })
+
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `workout-${new Date().toISOString()}.fit`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   // Signal when page is ready for testing
@@ -110,8 +140,21 @@ const Dashboard = () => {
       </Box>
 
       <SpotifyDisplay />
+      <Button
+        variant="contained"
+        onClick={handleExport}
+        disabled={!workout || workout.buffer.length === 0}
+      >
+        Download FIT File
+      </Button>
     </Container>
   )
 }
+
+const Dashboard = () => (
+  <WorkoutProvider>
+    <DashboardContent />
+  </WorkoutProvider>
+)
 
 export default Dashboard
