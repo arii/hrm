@@ -172,8 +172,11 @@ describe('WebSocket Manager', () => {
     jest.useRealTimers()
     jest.clearAllMocks()
     ;(mockWss.clients as Set<MockWebSocket>).clear()
-    resetSocketManager()
   })
+
+  beforeEach(() => {
+    resetSocketManager()
+    // ... rest of the beforeEach block
 
   describe('Connection Logging', () => {
     it('should log connection metadata on new connection', () => {
