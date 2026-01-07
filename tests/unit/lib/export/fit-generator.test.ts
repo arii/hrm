@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { generateFitFile } from '@/lib/export/fit-generator'
+import { generateFitFile } from '@/utils/export/fit-generator'
 
 describe('fit-generator', () => {
   it('should generate a FIT file blob with user data', () => {

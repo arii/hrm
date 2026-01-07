@@ -15,7 +15,7 @@ const WorkoutExport = ({ workoutData }: WorkoutExportProps) => {
 
   useEffect(() => {
     // Dynamically import the fit-generator on the client side only
-    import('@/lib/export/fit-generator')
+    import('@/utils/export/fit-generator')
       .then((module) => {
         setGenerateFitFileFunction(() => module.generateFitFile)
       })
