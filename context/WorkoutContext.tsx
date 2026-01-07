@@ -6,9 +6,9 @@ import {
   useEffect,
   useReducer,
 } from 'react'
-import { useWebSocket } from './WebSocketContext'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
-import { useUserSettings } from './UserSettingsContext'
+import { useUserSettings } from '@/context/UserSettingsContext'
 
 // Define the shape of a single record in the workout buffer
 interface WorkoutRecord {
