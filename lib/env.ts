@@ -23,6 +23,8 @@ const envSchema = z.object({
   SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
   INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
   GENERAL_API_MAX_REQUESTS: z.coerce.number().default(200),
+  // The default of 1000 provides a generous limit for concurrent WebSocket connections,
+  // suitable for a moderate-scale deployment. This can be adjusted based on expected user load.
   WS_MAX_CONNECTIONS: z.coerce.number().default(1000),
   SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(5000),
   SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
