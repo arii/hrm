@@ -67,6 +67,20 @@ const nextConfig = {
     ]
   },
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
+  webpack: (config, { isServer, webpack }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        buffer: require.resolve('buffer/'),
+      }
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          Buffer: ['buffer', 'Buffer'],
+        })
+      )
+    }
+    return config
+  },
 }
 
 export default withBundleAnalyzer(nextConfig)
