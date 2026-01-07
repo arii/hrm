@@ -72,3 +72,34 @@ export const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
   timestamp: true,
   heartRate: true,
 })
+
+// =================================================================
+// Spotify Schemas
+// =================================================================
+
+const SpotifyImageSchema = z.object({
+  url: z.string().url(),
+  height: z.number().nullable(),
+  width: z.number().nullable(),
+})
+
+const SpotifyOwnerSchema = z.object({
+  display_name: z.string().optional(),
+  id: z.string(),
+})
+
+const SpotifyTracksSchema = z.object({
+  total: z.number(),
+})
+
+export const SpotifyUserPlaylistSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  public: z.boolean(),
+  description: z.string(),
+  images: z.array(SpotifyImageSchema),
+  tracks: SpotifyTracksSchema,
+  owner: SpotifyOwnerSchema,
+})
+
+export const SpotifyPresetPlaylistSchema = SpotifyUserPlaylistSchema.extend({})

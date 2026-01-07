@@ -69,6 +69,7 @@
     "@mui/material-nextjs": "^7.3.6",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "@types/uuid": "9",
+    "cheerio": "^1.1.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.23.26",
@@ -76,12 +77,14 @@
     "lodash.throttle": "^4.1.1",
     "next": "16.0.10",
     "next-auth": "^4.24.13",
+    "notistack": "^3.0.2",
     "pino": "^10.1.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "uuid": "^9.0.1",
     "ws": "^8.18.3",
-    "zod": "^4.1.13"
+    "zod": "^4.1.13",
+    "zod-validation-error": "^5.0.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
