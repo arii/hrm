@@ -7,37 +7,37 @@ describe('Calorie Estimation', () => {
   const testCases = [
     [
       'realistic data',
-      { heartRate: 150, age: 30, weightKg: 70, durationMinutes: 30 },
+      { heartRate: 150, age: 30, weight: 70, durationMinutes: 30 },
       426.66,
     ],
     [
       'zero duration',
-      { heartRate: 150, age: 30, weightKg: 70, durationMinutes: 0 },
+      { heartRate: 150, age: 30, weight: 70, durationMinutes: 0 },
       0,
     ],
     [
       'very low heart rate',
-      { heartRate: 29, age: 30, weightKg: 70, durationMinutes: 30 },
+      { heartRate: 29, age: 30, weight: 70, durationMinutes: 30 },
       0,
     ],
     [
       'older, lighter person',
-      { heartRate: 140, age: 65, weightKg: 55, durationMinutes: 60 },
+      { heartRate: 140, age: 65, weight: 55, durationMinutes: 60 },
       821.32,
     ],
     [
       'younger, heavier person',
-      { heartRate: 160, age: 22, weightKg: 90, durationMinutes: 45 },
+      { heartRate: 160, age: 22, weight: 90, durationMinutes: 45 },
       733.25,
     ],
     [
       'high but valid values',
-      { heartRate: 195, age: 25, weightKg: 100, durationMinutes: 120 },
+      { heartRate: 195, age: 25, weight: 100, durationMinutes: 120 },
       2663.03,
     ],
     [
       'low but valid values',
-      { heartRate: 90, age: 40, weightKg: 60, durationMinutes: 15 },
+      { heartRate: 90, age: 40, weight: 60, durationMinutes: 15 },
       77.72,
     ],
   ]
@@ -48,7 +48,7 @@ describe('Calorie Estimation', () => {
       const calories = estimateIncrementalCaloriesBurned({
         heartRate: params.heartRate,
         age: params.age,
-        weight: params.weightKg,
+        weight: params.weight,
         durationMinutes: params.durationMinutes,
       })
       if (expected === 0) {
