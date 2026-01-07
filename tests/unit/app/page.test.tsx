@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import Dashboard from '../../../app/page'
 import { WebSocketProvider } from '../../../context/WebSocketContext'
 import { UserSettingsProvider } from '../../../context/UserSettingsContext'
+import { WorkoutProvider } from '../../../context/WorkoutContext'
 
 // Mock child components to isolate the Dashboard component
 jest.mock('../../../components/WorkoutTableViewer', () => {
@@ -50,7 +51,9 @@ describe('Dashboard', () => {
   const renderWithProvider = (ui: React.ReactElement) => {
     return render(
       <UserSettingsProvider>
-        <WebSocketProvider>{ui}</WebSocketProvider>
+        <WebSocketProvider>
+          <WorkoutProvider>{ui}</WorkoutProvider>
+        </WebSocketProvider>
       </UserSettingsProvider>
     )
   }

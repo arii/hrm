@@ -3,7 +3,7 @@
  */
 import { renderHook, waitFor } from '@testing-library/react'
 import { WorkoutProvider, useWorkout } from '@/context/WorkoutContext'
-import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import { useUserSettings } from '@/context/UserSettingsContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import React from 'react'
 
@@ -11,10 +11,12 @@ import React from 'react'
 jest.mock('@/context/WebSocketContext')
 const mockedUseWebSocket = useWebSocket as jest.Mock
 
+// Mock the UserSettingsContext module
+jest.mock('@/context/UserSettingsContext')
+const mockedUseUserSettings = useUserSettings as jest.Mock
+
 const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <UserSettingsProvider>
-    <WorkoutProvider>{children}</WorkoutProvider>
-  </UserSettingsProvider>
+  <WorkoutProvider>{children}</WorkoutProvider>
 )
 
 describe('context/WorkoutContext', () => {
@@ -29,6 +31,15 @@ describe('context/WorkoutContext', () => {
     Date.now = jest.fn(() => timestamp)
   }
 
+  beforeEach(() => {
+    // Provide default mocks for all tests
+    mockedUseWebSocket.mockReturnValue({ hrmData: [] })
+    mockedUseUserSettings.mockReturnValue({
+      userAge: 30,
+      userWeight: 70,
+    })
+  })
+
   // Restore mocks after each test
   afterEach(() => {
     jest.restoreAllMocks()
@@ -37,7 +48,6 @@ describe('context/WorkoutContext', () => {
   })
 
   it('should initialize with default values', () => {
-    mockedUseWebSocket.mockReturnValue({ hrmData: [] })
     const { result } = renderHook(() => useWorkout(), { wrapper })
 
     expect(result.current.sessionStartTime).toBeNull()
@@ -84,33 +94,37 @@ describe('context/WorkoutContext', () => {
   })
 
   it('should buffer hr data and calculate calories over time', async () => {
-    // 1. Initial render with first HR data point
+    // Initial render with first HR data point
     mockDateNow(1700000000000)
     mockedUseWebSocket.mockReturnValue({
       hrmData: [{ clientId: '1', hr: 120, name: 'Test User' }],
     })
     const { result, rerender } = renderHook(() => useWorkout(), { wrapper })
 
-    // 2. Wait for the first data point to be buffered
+    // 3. Wait for the first data point to be buffered
     await waitFor(() => {
       expect(result.current.buffer).toHaveLength(1)
     })
     expect(result.current.buffer[0].hr).toBe(120)
     expect(result.current.workoutDuration).toBe(0)
 
-    // 3. Mock time passing and a new HR data point arriving
+    // 4. Mock time passing and a new HR data point arriving
     mockDateNow(1700000001000) // 1 second later
     mockedUseWebSocket.mockReturnValue({
       hrmData: [{ clientId: '1', hr: 125, name: 'Test User' }],
     })
     rerender()
 
-    // 4. Wait for the buffer and calculations to update
+    // 5. Wait for the calorie calculation to complete
     await waitFor(() => {
-      expect(result.current.buffer).toHaveLength(2)
-      expect(result.current.workoutDuration).toBe(1)
-      expect(result.current.caloriesBurned).toBeCloseTo(0.12, 2)
+      // This is a more robust way to wait for the async calculation to finish
+      expect(result.current.caloriesBurned).toBeGreaterThan(0)
     })
+
+    // 6. Assert final state
+    expect(result.current.buffer).toHaveLength(2)
+    expect(result.current.workoutDuration).toBe(1)
+    expect(result.current.caloriesBurned).toBeCloseTo(0.17, 2)
     expect(result.current.buffer[1].hr).toBe(125)
   })
 })

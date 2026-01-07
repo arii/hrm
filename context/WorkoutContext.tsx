@@ -99,16 +99,15 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
         const newRecord = { time: now, hr: primaryUser.hr }
         const newBuffer = [...state.buffer, newRecord]
         const durationMinutes = durationSeconds / 60
-        const avgHr =
-          newBuffer.reduce((acc, record) => acc + record.hr, 0) /
-          newBuffer.length
+        const totalHr = newBuffer.reduce((acc, record) => acc + record.hr, 0)
+        const avgHr = totalHr / newBuffer.length
         const calories =
-          durationMinutes > 0
+          durationMinutes > 0 && !isNaN(avgHr)
             ? estimateCaloriesBurned({
                 age: userAge,
-                weight: userWeight,
+                weightKg: userWeight,
                 durationMinutes,
-                avgHr,
+                heartRate: avgHr,
               })
             : 0
         dispatch({
