@@ -1,4 +1,5 @@
 import { FitWriter } from '@markw65/fit-file-writer'
+import { Buffer } from 'buffer'
 
 interface FitExportData {
   startTime: number // ms timestamp
