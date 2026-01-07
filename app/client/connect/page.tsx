@@ -115,7 +115,7 @@ export default function ConnectPage() {
   // Callback for raw heart rate updates from the Bluetooth hook
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
-      logger.info(
+      logger.debug(
         { heartRate },
         'handleHeartRateUpdate called, updating local state'
       )
