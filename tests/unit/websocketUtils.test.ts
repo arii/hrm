@@ -38,7 +38,7 @@ jest.mock('ws', () => ({
 
 class MockWebSocket extends EventEmitter implements Partial<ExtWebSocket> {
   isAlive = true
-  clientId = `test-client-${Math.random()}`
+  sessionId = `test-session-${Math.random()}`
   terminate = jest.fn()
   ping = jest.fn()
   pong = (): void => {}
@@ -111,7 +111,7 @@ describe('ConnectionMonitor', () => {
 
     expect(unresponsiveClient.terminate).toHaveBeenCalledTimes(1)
     expect(logger.warn).toHaveBeenCalledWith(
-      { clientId: unresponsiveClient.clientId },
+      { sessionId: unresponsiveClient.sessionId },
       'Terminating stale WebSocket connection due to missed heartbeat.'
     )
   })

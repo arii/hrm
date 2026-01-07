@@ -315,6 +315,7 @@ describe('WebSocket Manager', () => {
       // Check the last broadcasted state
       const mockBroadcast = broadcast as jest.Mock
       jest.runOnlyPendingTimers()
+      expect(mockBroadcast).toHaveBeenCalled()
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       const finalPayload: HrmData[] = lastCall[1].payload
@@ -331,19 +332,22 @@ describe('WebSocket Manager', () => {
 
   describe('Session Management', () => {
     it('should retain session on disconnect', () => {
-      mockWs.emit('close')
-      jest.runAllTimers()
+      const ws = mockWss.clients.values().next().value as ExtWebSocket
+      ws.emit('close')
+
+      // Disconnecting should immediately trigger a broadcast, no timers needed.
       expect(broadcast).toHaveBeenCalledWith(
         mockWss,
         {
           type: 'HRM_UPDATE',
           payload: [
             {
-              clientId: 'test-session',
-              value: 0,
+              clientId: ws.sessionId,
+              value: 0, // value is reset on disconnect
               maxHr: 185,
               age: 30,
               calories: 0,
+              name: undefined, // name is cleared on disconnect
             },
           ],
         },
