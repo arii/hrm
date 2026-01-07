@@ -198,6 +198,10 @@ const initSocketManager = (
         // Don't delete the session immediately.
         // Clear the socket to indicate disconnection.
         session.socket = undefined
+        // Reset the HRM data to reflect the disconnected state.
+        session.hrmData.value = 0
+        session.hrmData.name = undefined
+        session.hrmData.calories = 0
         logger.info({ sessionId }, 'Socket cleared, session retained.')
         broadcastState()
       }

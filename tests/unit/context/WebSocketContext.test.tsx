@@ -45,16 +45,18 @@ class MockWebSocketImplementation implements WebSocket {
 }
 
 // Mock the WebSocket object globally
-let mockWebSocketInstance: MockWebSocketImplementation
+let mockWebSocketInstances: MockWebSocketImplementation[] = []
 global.WebSocket = jest.fn(() => {
-  mockWebSocketInstance = new MockWebSocketImplementation()
-  return mockWebSocketInstance
+  const instance = new MockWebSocketImplementation()
+  mockWebSocketInstances.push(instance)
+  return instance
 })
 
 describe('WebSocketProvider', () => {
   beforeEach(() => {
     localStorage.clear()
     ;(global.WebSocket as jest.Mock).mockClear()
+    mockWebSocketInstances = [] // Clear instances for each test
   })
 
   it('should create and store a sessionId in localStorage', () => {
@@ -66,20 +68,21 @@ describe('WebSocketProvider', () => {
   })
 
   it('should send a RECOVER_SESSION message on connection', async () => {
-    const { result } = renderHook(() => useWebSocket(), {
+    // Render the hook, which will cause WebSocketProvider to mount and try to connect
+    renderHook(() => useWebSocket(), {
       wrapper: WebSocketProvider,
     })
 
-    // Manually trigger the connection and the open event
-    result.current.connect()
-    mockWebSocketInstance.triggerOpen()
+    // Expect exactly one WebSocket instance to have been created
+    expect(mockWebSocketInstances.length).toBe(1)
+    const wsInstance = mockWebSocketInstances[0]
+    wsInstance.triggerOpen()
 
     await waitFor(() => {
-      expect(global.WebSocket).toHaveBeenCalledTimes(1)
-      expect(mockWebSocketInstance.send).toHaveBeenCalledWith(
+      expect(wsInstance.send).toHaveBeenCalledWith(
         expect.stringContaining('"type":"RECOVER_SESSION"')
       )
-      expect(mockWebSocketInstance.send).toHaveBeenCalledWith(
+      expect(wsInstance.send).toHaveBeenCalledWith(
         expect.stringContaining('"type":"GET_STATE"')
       )
     })
