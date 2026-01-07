@@ -197,6 +197,7 @@ const initSocketManager = (
         // Clear the socket to indicate disconnection.
         session.socket = undefined
         logger.info({ sessionId }, 'Socket cleared, session retained.')
+        broadcastState()
       }
     })
   })
