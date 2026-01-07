@@ -1,60 +1,24 @@
-// context/UserSettingsContext.tsx
 'use client'
-import React, { createContext, useContext } from 'react'
-import useLocalStorage from '../hooks/useLocalStorage'
-import { MeasurementSystem, Gender } from '../types/core'
+import { createContext, ReactNode, useContext, useState } from 'react'
 
-// Directly define the preferences interface and defaults here
-export interface UserPreferences {
-  theme: 'dark' | 'light'
-  volumeLevel: number
-  defaultWorkDuration: number
-  defaultRestDuration: number
-  favoritePlaylist: string
-  userName: string
-  userAge: number | null
-  userWeight: number | null // Note: userWeight is always stored in KG
-  autoConnect: boolean
-  gender: Gender
-  unitSystem: MeasurementSystem
+interface UserSettings {
+  userAge: number
+  userWeight: number // in kg
+  setUserAge: (age: number) => void
+  setUserWeight: (weight: number) => void
 }
 
-const DEFAULT_PREFERENCES: UserPreferences = {
-  theme: 'dark',
-  volumeLevel: 70,
-  defaultWorkDuration: 20,
-  defaultRestDuration: 10,
-  favoritePlaylist: '',
-  userName: '',
-  userAge: null,
-  userWeight: null,
-  autoConnect: false,
-  gender: 'MALE',
-  unitSystem: 'IMPERIAL',
-}
+const UserSettingsContext = createContext<UserSettings | undefined>(undefined)
 
-type UserSettingsContextType = readonly [
-  UserPreferences,
-  (
-    value: UserPreferences | ((val: UserPreferences) => UserPreferences)
-  ) => void,
-]
+export const UserSettingsProvider = ({ children }: { children: ReactNode }) => {
+  // Default values. In a full implementation, these might come from user profiles or local storage.
+  const [userAge, setUserAge] = useState(30)
+  const [userWeight, setUserWeight] = useState(70) // kg
 
-export const UserSettingsContext = createContext<
-  UserSettingsContextType | undefined
->(undefined)
-
-export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  // Use the useLocalStorage hook directly within the provider
-  const userPreferences = useLocalStorage<UserPreferences>(
-    'user-prefs',
-    DEFAULT_PREFERENCES
-  )
+  const value = { userAge, userWeight, setUserAge, setUserWeight }
 
   return (
-    <UserSettingsContext.Provider value={userPreferences}>
+    <UserSettingsContext.Provider value={value}>
       {children}
     </UserSettingsContext.Provider>
   )
@@ -63,9 +27,7 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useUserSettings = () => {
   const context = useContext(UserSettingsContext)
   if (context === undefined) {
-    throw new Error(
-      'useUserSettings must be used within a UserSettingsProvider'
-    )
+    throw new Error('useUserSettings must be used within a UserSettingsProvider')
   }
   return context
 }
