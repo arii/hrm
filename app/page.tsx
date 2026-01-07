@@ -15,7 +15,6 @@ import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
 import { useWorkout } from '@/context/WorkoutContext'
 import { useUserSettings } from '@/context/UserSettingsContext'
-import { generateFitFile } from '@/lib/export/fit-generator'
 import Button from '@mui/material/Button'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
@@ -67,11 +66,13 @@ const DashboardContent = () => {
     }
   }
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!workout || workout.buffer.length === 0 || !workout.sessionStartTime) {
       return
     }
 
+    // Dynamically import the client-side utility
+    const { generateFitFile } = await import('@/lib/export/fit-generator')
     const blob = generateFitFile({
       startTime: workout.sessionStartTime,
       durationSeconds: workout.workoutDuration,
