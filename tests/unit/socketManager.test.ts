@@ -218,7 +218,6 @@ describe('WebSocket Manager', () => {
         'WebSocket client connected'
       )
     })
-
     describe('Production Redaction', () => {
       let originalNodeEnv: string | undefined
 
