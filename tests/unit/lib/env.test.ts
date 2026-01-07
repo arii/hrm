@@ -23,7 +23,7 @@ describe('Environment Variables', () => {
     expect(env.SPOTIFY_API_MAX_REQUESTS).toBe(30)
     expect(env.INTERNAL_API_MAX_REQUESTS).toBe(100)
     expect(env.GENERAL_API_MAX_REQUESTS).toBe(200)
-    expect(env.WS_MAX_CONNECTIONS).toBe(5)
+    expect(env.WS_MAX_CONNECTIONS).toBe(1000)
   })
 
   it('should parse environment variables correctly', async () => {
