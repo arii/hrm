@@ -361,7 +361,6 @@ describe('WebSocket Manager', () => {
         'Error processing incoming message'
       )
     })
-
     it('should handle Zod validation errors gracefully', () => {
       const message = JSON.stringify({ type: 'INVALID_TYPE' })
       mockWs.emit('message', message.toString())

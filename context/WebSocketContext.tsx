@@ -361,7 +361,7 @@ export const WebSocketProvider = ({
         console.error('Failed to parse WebSocket message:', e)
       }
     }
-  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
+  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat, sessionId])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
