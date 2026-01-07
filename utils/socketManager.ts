@@ -110,6 +110,21 @@ const initSocketManager = (
   services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
+  const cleanupInterval = setInterval(() => {
+    const now = Date.now()
+    sessionStore.forEach((session, sessionId) => {
+      if (!session.socket) {
+        // Disconnected
+        const timeSinceLastUpdate = now - session.internalState.lastUpdate
+        if (timeSinceLastUpdate > 30000) {
+          // 30 seconds
+          sessionStore.delete(sessionId)
+          logger.info({ sessionId }, 'Stale session cleaned up.')
+          broadcastState()
+        }
+      }
+    })
+  }, 10000) // Run every 10 seconds
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket
@@ -120,7 +135,7 @@ const initSocketManager = (
       `[GENERATED]-session-${Math.random().toString(36).substring(2, 9)}`
     const logMeta = getLogMeta(req, sessionId)
 
-    extWs.clientId = sessionId // Use sessionId as the primary identifier
+    extWs.sessionId = sessionId // Use sessionId as the primary identifier
     extWs.isAlive = true
     extWs.on('pong', () => {
       extWs.isAlive = true
@@ -188,6 +203,7 @@ const initSocketManager = (
 
   wss.on('close', () => {
     connectionMonitor.stop()
+    clearInterval(cleanupInterval)
   })
 }
 

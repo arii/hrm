@@ -329,6 +329,29 @@ describe('WebSocket Manager', () => {
     })
   })
 
+  describe('Session Management', () => {
+    it('should retain session on disconnect', () => {
+      mockWs.emit('close')
+      jest.runAllTimers()
+      expect(broadcast).toHaveBeenCalledWith(
+        mockWss,
+        {
+          type: 'HRM_UPDATE',
+          payload: [
+            {
+              clientId: 'test-session',
+              value: 0,
+              maxHr: 185,
+              age: 30,
+              calories: 0,
+            },
+          ],
+        },
+        'socketManager.broadcastState'
+      )
+    })
+  })
+
   describe('Message Handling', () => {
     it('should handle REGISTER_CLIENT message', () => {
       const message = JSON.stringify({

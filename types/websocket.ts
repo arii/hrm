@@ -19,7 +19,7 @@ import type {
  * unique identifier and the last ping time for watchdog monitoring.
  */
 export interface ExtWebSocket extends WebSocket {
-  clientId: string
+  sessionId: string
   isAlive: boolean
   clientType?: 'dashboard' | 'controller'
 }
