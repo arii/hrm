@@ -68,6 +68,12 @@ const nextConfig = {
   },
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
   transpilePackages: ['@markw65/fit-file-writer'],
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.alias['@markw65/fit-file-writer'] = false
+    }
+    return config
+  },
 }
 
 export default withBundleAnalyzer(nextConfig)
