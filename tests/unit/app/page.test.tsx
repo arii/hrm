@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import { render, screen } from '@testing-library/react'
-import Dashboard from '../../../app/page'
+import DashboardContent from '../../../app/page'
 import { WebSocketProvider } from '../../../context/WebSocketContext'
 import { UserSettingsProvider } from '../../../context/UserSettingsContext'
 
