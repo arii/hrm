@@ -36,7 +36,7 @@ let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
 // State Management:
-let sessionCleanupIntervalId: NodeJS.Timeout | undefined; // Make interval ID accessible
+let sessionCleanupIntervalId: NodeJS.Timeout | undefined // Make interval ID accessible
 // - sessionStore: Maps a sessionId to the complete state for that client's session.
 //   This includes their HRM data, internal calculation state, and the active WebSocket connection.
 interface SessionState {
@@ -111,7 +111,8 @@ const initSocketManager = (
   services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
-  sessionCleanupIntervalId = setInterval(() => { // Assign to module-scoped variable
+  sessionCleanupIntervalId = setInterval(() => {
+    // Assign to module-scoped variable
     const now = Date.now()
     sessionStore.forEach((session, sessionId) => {
       if (!session.socket) {
@@ -205,7 +206,8 @@ const initSocketManager = (
 
   wss.on('close', () => {
     connectionMonitor.stop()
-    if (sessionCleanupIntervalId) { // Clear the interval on WSS close
+    if (sessionCleanupIntervalId) {
+      // Clear the interval on WSS close
       clearInterval(sessionCleanupIntervalId)
       sessionCleanupIntervalId = undefined
     }
@@ -217,8 +219,8 @@ const initSocketManager = (
  */
 export const resetSocketManager = () => {
   if (sessionCleanupIntervalId) {
-    clearInterval(sessionCleanupIntervalId);
-    sessionCleanupIntervalId = undefined;
+    clearInterval(sessionCleanupIntervalId)
+    sessionCleanupIntervalId = undefined
   }
   sessionStore.clear()
 }
