@@ -117,15 +117,15 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
-  const [clientId] = useState(() => {
+  const [sessionId] = useState(() => {
     if (typeof window === 'undefined') {
       return null
     }
     try {
-      let id = localStorage.getItem('clientId')
+      let id = localStorage.getItem('hrm_session_id')
       if (!id) {
         id = window.crypto.randomUUID()
-        localStorage.setItem('clientId', id)
+        localStorage.setItem('hrm_session_id', id)
       }
       return id
     } catch (error) {
@@ -137,17 +137,17 @@ export const WebSocketProvider = ({
   // Memoize the WebSocket URL to prevent re-computation on every render
   const wsUrl = useMemo(() => {
     const url = serverUrl || getWebSocketURL()
-    if (!clientId) return url // Return base URL if clientId isn't generated yet (SSR)
+    if (!sessionId) return url // Return base URL if sessionId isn't generated yet (SSR)
 
     try {
       const urlObject = new URL(url)
-      urlObject.searchParams.set('clientId', clientId)
+      urlObject.searchParams.set('sessionId', sessionId)
       return urlObject.toString()
     } catch (_error) {
       console.error('Invalid WebSocket URL:', url)
       return url // Fallback to the original URL on error
     }
-  }, [serverUrl, clientId])
+  }, [serverUrl, sessionId])
 
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -239,6 +239,14 @@ export const WebSocketProvider = ({
       // Set test flag for Playwright tests - use a more reliable method
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
+      }
+      if (sessionId) {
+        ws.send(
+          JSON.stringify({
+            type: 'RECOVER_SESSION',
+            sessionId: sessionId,
+          })
+        )
       }
 
       // Explicitly request initial state from the server

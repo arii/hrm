@@ -178,14 +178,14 @@ describe('WebSocket Manager', () => {
   describe('Connection Logging', () => {
     it('should log connection metadata on new connection', () => {
       const loggerInfoSpy = jest.spyOn(logger, 'info')
-      const mockReq = createMockRequest('/?clientId=new-client-123')
+      const mockReq = createMockRequest('/?sessionId=new-session-123')
       const newWs = new MockWebSocket()
 
       mockWss.emit('connection', newWs, mockReq)
 
       expect(loggerInfoSpy).toHaveBeenCalledWith(
         {
-          clientId: 'new-client-123',
+          sessionId: 'new-session-123',
           ip: '127.0.0.1',
           isSecure: false,
           origin: 'http://localhost:3000',
@@ -196,32 +196,13 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should log a warning when overwriting an existing socket', () => {
-      const loggerWarnSpy = jest.spyOn(logger, 'warn')
-      const mockReq = createMockRequest('/?clientId=test-client') // Same clientId as in beforeEach
-      const newWs = new MockWebSocket()
-
-      mockWss.emit('connection', newWs, mockReq)
-
-      expect(loggerWarnSpy).toHaveBeenCalledWith(
-        {
-          clientId: 'test-client',
-          ip: '127.0.0.1',
-          isSecure: false,
-          origin: 'http://localhost:3000',
-          userAgent: 'jest-test',
-          host: 'localhost:3000',
-        },
-        'Existing socket found. Overwriting with new connection.'
-      )
-    })
 
     it('should correctly identify a secure TLSSocket connection', () => {
       const loggerInfoSpy = jest.spyOn(logger, 'info')
       // Simulate a TLSSocket by creating an object with the correct prototype chain
       const mockTlsSocket = Object.create(TLSSocket.prototype)
       const mockReq = createMockRequest(
-        '/?clientId=secure-client',
+        '/?sessionId=secure-session',
         {},
         mockTlsSocket
       )
@@ -231,7 +212,7 @@ describe('WebSocket Manager', () => {
 
       expect(loggerInfoSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          clientId: 'secure-client',
+          sessionId: 'secure-session',
           isSecure: true,
         }),
         'WebSocket client connected'
@@ -253,7 +234,7 @@ describe('WebSocket Manager', () => {
         process.env.NODE_ENV = 'production'
 
         const loggerInfoSpy = jest.spyOn(logger, 'info')
-        const mockReq = createMockRequest('/?clientId=prod-client')
+        const mockReq = createMockRequest('/?sessionId=prod-session')
         const newWs = new MockWebSocket()
 
         // Re-import the module to get the version with the updated process.env
@@ -267,7 +248,7 @@ describe('WebSocket Manager', () => {
 
           expect(loggerInfoSpy).toHaveBeenCalledWith(
             {
-              clientId: 'prod-client',
+              sessionId: 'prod-session',
               ip: '[REDACTED]',
               isSecure: false,
               origin: '[REDACTED]',
@@ -336,7 +317,6 @@ describe('WebSocket Manager', () => {
       // Check the last broadcasted state
       const mockBroadcast = broadcast as jest.Mock
       jest.runOnlyPendingTimers()
-      expect(mockBroadcast).toHaveBeenCalled()
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       const finalPayload: HrmData[] = lastCall[1].payload
@@ -377,7 +357,7 @@ describe('WebSocket Manager', () => {
     it('should handle invalid JSON gracefully', () => {
       mockWs.emit('message', 'invalid json')
       expect(logger.error).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'test-client' }),
+        expect.objectContaining({ sessionId: 'test-session' }),
         'Error processing incoming message'
       )
     })
@@ -386,23 +366,11 @@ describe('WebSocket Manager', () => {
       const message = JSON.stringify({ type: 'INVALID_TYPE' })
       mockWs.emit('message', message.toString())
       expect(logger.error).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'test-client' }),
+        expect.objectContaining({ sessionId: 'test-session' }),
         'WebSocket message validation failed'
       )
     })
 
-    it('should broadcast state on client disconnect', () => {
-      mockWs.emit('close')
-      jest.runAllTimers()
-      expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [],
-        },
-        'socketManager.broadcastState'
-      )
-    })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
       const dashboardWs = new MockWebSocket() as ExtWebSocket
@@ -479,7 +447,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
 
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'test-client' }),
+        expect.objectContaining({ sessionId: 'test-session' }),
         'Unknown message type received'
       )
     })

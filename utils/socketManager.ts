@@ -38,19 +38,17 @@ let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
 // State Management:
-// - hrmDataRepository: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
-// - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
-// - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
-const hrmDataRepository = new HrmDataRepository()
-
-// Track active sockets separately so we can handle "zombie" sockets during reconnects
-const clientSockets = new Map<string, WebSocket>()
-
-// Track internal state for calculations (not sent to client)
-const clientSessionState = new Map<
-  string,
-  { lastUpdate: number; accumulatedCalories: number }
->()
+// - sessionStore: Maps a sessionId to the complete state for that client's session.
+//   This includes their HRM data, internal calculation state, and the active WebSocket connection.
+interface SessionState {
+  hrmData: HrmStreamData
+  internalState: {
+    lastUpdate: number
+    accumulatedCalories: number
+  }
+  socket?: ExtWebSocket // The current active socket
+}
+const sessionStore = new Map<string, SessionState>()
 
 /**
  * Safely parses the WebSocket request URL to extract search parameters.
@@ -80,7 +78,7 @@ const getRequestParams = (req: IncomingMessage): URLSearchParams => {
  */
 const getLogMeta = (
   req: IncomingMessage,
-  clientId: string
+  sessionId: string
 ): Record<string, unknown> => {
   // DEV-NOTE: Be mindful of logging sensitive data. In a real-world scenario,
   // IP addresses and user-agents might be considered PII and should be
@@ -92,7 +90,7 @@ const getLogMeta = (
   const origin = req.headers.origin
 
   return {
-    clientId,
+    sessionId,
     ip: isProduction ? '[REDACTED]' : ip,
     isSecure: req.socket instanceof TLSSocket,
     origin: isProduction ? '[REDACTED]' : origin,
@@ -119,23 +117,12 @@ const initSocketManager = (
     const extWs = ws as ExtWebSocket
 
     const params = getRequestParams(req)
-    const clientId =
-      params.get('clientId') ||
-      `[GENERATED]-user-${Math.random().toString(36).substring(2, 9)}`
-    const logMeta = getLogMeta(req, clientId)
-    extWs.clientId = clientId
+    const sessionId =
+      params.get('sessionId') ||
+      `[GENERATED]-session-${Math.random().toString(36).substring(2, 9)}`
+    const logMeta = getLogMeta(req, sessionId)
 
-    // it's a stale or "zombie" connection. Overwrite it with the new socket.
-
-    if (clientSockets.has(clientId)) {
-      logger.warn(
-        logMeta,
-        'Existing socket found. Overwriting with new connection.'
-      )
-    }
-
-    clientSockets.set(clientId, extWs)
-
+    extWs.clientId = sessionId // Use sessionId as the primary identifier
     extWs.isAlive = true
     extWs.on('pong', () => {
       extWs.isAlive = true
@@ -143,59 +130,61 @@ const initSocketManager = (
 
     logger.info(logMeta, 'WebSocket client connected')
 
-    if (!hrmDataRepository.findById(clientId)) {
-      // Initialize new client
-      const newClient: HrmStreamData = {
-        clientId: extWs.clientId,
-        value: 0,
-        maxHr: 185,
-        age: 30,
-        calories: 0, // Initialize to 0
+    const existingSession = sessionStore.get(sessionId)
+
+    if (existingSession) {
+      // This is a reconnection.
+      logger.info({ sessionId }, 'Reconnected with existing session.')
+      existingSession.socket = extWs // Update the socket to the new connection
+      // Immediately send the latest state to the reconnected client
+      const stateSnapshot = getUnifiedStateSnapshot()
+      const payload: InitialStateSnapshotPayload = {
+        ...stateSnapshot,
+        hrmData: Array.from(sessionStore.values()).map((s) => s.hrmData),
       }
-      hrmDataRepository.save(newClient)
-      clientSessionState.set(extWs.clientId, {
-        lastUpdate: Date.now(),
-        accumulatedCalories: 0,
-      })
+      const initialStateMessage: ServerMessage = {
+        type: 'INITIAL_STATE',
+        payload: payload,
+      }
+      sendWebSocketMessage(
+        extWs,
+        initialStateMessage,
+        'socketManager.reconnect'
+      )
     } else {
-      logger.info({ clientId }, 'Reconnected with existing session.')
+      // This is a new session.
+      logger.info({ sessionId }, 'New session started.')
+      const newSession: SessionState = {
+        hrmData: {
+          clientId: sessionId,
+          value: 0,
+          maxHr: 185,
+          age: 30,
+          calories: 0,
+        },
+        internalState: {
+          lastUpdate: Date.now(),
+          accumulatedCalories: 0,
+        },
+        socket: extWs,
+      }
+      sessionStore.set(sessionId, newSession)
     }
 
     extWs.on('message', (message) => {
-      handleIncomingMessage(extWs, message.toString(), extWs.clientId)
+      handleIncomingMessage(extWs, message.toString(), sessionId)
     })
 
     extWs.on('close', () => {
-      logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      logger.info({ sessionId }, 'WebSocket client disconnected')
 
-      // CRITICAL: Do NOT immediately delete clientData.
-      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
-      // NOTE: In a high-traffic production environment, this could lead to
-      // memory pressure if many clients disconnect and don't reconnect.
-      // A more robust solution might involve a separate cleanup process
-      // or a maximum number of inactive sessions.
-      setTimeout(() => {
-        // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
-        if (clientSockets.get(clientId) === extWs) {
-          logger.info(
-            { clientId: extWs.clientId },
-            'Session expired. Deleting data.'
-          )
-          try {
-            hrmDataRepository.deleteById(extWs.clientId)
-            clientSessionState.delete(extWs.clientId)
-            broadcastState()
-          } catch (err) {
-            logger.error(
-              { clientId: extWs.clientId, error: err },
-              'Error during session cleanup'
-            )
-          } finally {
-            // Always remove the socket reference to prevent leaks
-            clientSockets.delete(extWs.clientId)
-          }
-        }
-      }, env.WEBSOCKET_GRACE_PERIOD_MS)
+      const session = sessionStore.get(sessionId)
+      if (session) {
+        // Don't delete the session immediately.
+        // Clear the socket to indicate disconnection.
+        session.socket = undefined
+        logger.info({ sessionId }, 'Socket cleared, session retained.')
+      }
     })
   })
 
@@ -208,16 +197,18 @@ const initSocketManager = (
  * Resets the socket manager state. Use this for testing purposes only.
  */
 export const resetSocketManager = () => {
-  hrmDataRepository.clear()
-  clientSessionState.clear()
+  sessionStore.clear()
 }
 
 const broadcastState = () => {
+  const hrmDataPayload = Array.from(sessionStore.values()).map(
+    (session) => session.hrmData
+  )
   broadcast(
     wsServerInstance,
     {
       type: 'HRM_UPDATE',
-      payload: hrmDataRepository.findAll(),
+      payload: hrmDataPayload,
     },
     'socketManager.broadcastState'
   )
@@ -229,7 +220,7 @@ const broadcastState = () => {
 const handleIncomingMessage = (
   ws: ExtWebSocket,
   messageString: string,
-  clientId: string
+  sessionId: string
 ) => {
   try {
     const parsedJson = JSON.parse(messageString)
@@ -238,7 +229,7 @@ const handleIncomingMessage = (
     switch (message.type) {
       case 'PING': {
         // Respond to client heartbeat pings to keep the connection alive
-        logger.info({ clientId }, 'Received PING, sending PONG.')
+        logger.info({ sessionId }, 'Received PING, sending PONG.')
         const pongMessage: ServerMessage = { type: 'PONG' }
         sendWebSocketMessage(ws, pongMessage, 'socketManager.PING')
         break
@@ -246,16 +237,39 @@ const handleIncomingMessage = (
       case 'REGISTER_CLIENT': {
         ws.clientType = (message as ClientRegistrationMessage).role
         logger.info(
-          { clientId, clientType: ws.clientType },
+          { sessionId, clientType: ws.clientType },
           'Client registered'
         )
+        break
+      }
+      case 'RECOVER_SESSION': {
+        const session = sessionStore.get(sessionId)
+        if (session) {
+          logger.info({ sessionId }, 'Session recovery requested.')
+          const stateSnapshot = getUnifiedStateSnapshot()
+          const payload: InitialStateSnapshotPayload = {
+            ...stateSnapshot,
+            hrmData: Array.from(sessionStore.values()).map((s) => s.hrmData),
+          }
+          const initialStateMessage: ServerMessage = {
+            type: 'INITIAL_STATE',
+            payload: payload,
+          }
+          sendWebSocketMessage(
+            ws,
+            initialStateMessage,
+            'socketManager.recoverSession'
+          )
+        } else {
+          logger.warn({ sessionId }, 'Recovery requested for non-existent session.')
+        }
         break
       }
       case 'GET_STATE': {
         const stateSnapshot = getUnifiedStateSnapshot()
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: hrmDataRepository.findAll(),
+          hrmData: Array.from(sessionStore.values()).map((s) => s.hrmData),
         }
         const initialStateMessage: ServerMessage = {
           type: 'INITIAL_STATE',
@@ -265,17 +279,16 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataRepository.findById(clientId)
-        if (existingData) {
+        const session = sessionStore.get(sessionId)
+        if (session) {
           const updateData: Partial<HrmStreamData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
-
           // Prevent overwriting a real name with a default "Unknown" name
           if (
-            existingData.name &&
+            session.hrmData.name &&
             !/^(user|new user|unknown|bluetooth hrm)/i.test(
-              existingData.name
+              session.hrmData.name
             ) &&
             updateData.name &&
             /^(user|new user|unknown|bluetooth hrm)/i.test(updateData.name)
@@ -283,64 +296,59 @@ const handleIncomingMessage = (
             delete updateData.name
           }
 
-          hrmDataRepository.save({ ...existingData, ...updateData })
+          session.hrmData = { ...session.hrmData, ...updateData }
         }
         broadcastState()
         break
       }
       case 'HRM_INPUT': {
-        const existingData = hrmDataRepository.findById(clientId)
-        const sessionState = clientSessionState.get(clientId)
-        if (existingData && sessionState) {
+        const session = sessionStore.get(sessionId)
+        if (session) {
           let finalCalories = 0
-          // Prioritize client-calculated calories if available
           if (typeof message.data.calories === 'number') {
             const clientCalories = message.data.calories
-            const serverCalories = sessionState.accumulatedCalories
+            const serverCalories = session.internalState.accumulatedCalories
             const diff = Math.abs(clientCalories - serverCalories)
 
-            // Sanity check: a 50-calorie jump in one second is unlikely.
             if (diff > 50) {
               logger.warn(
                 {
-                  clientId,
+                  sessionId,
                   clientCalories,
                   serverCalories,
                 },
-                'Large calorie discrepancy detected. Rejecting client update.'
+                'Large calorie discrepancy. Rejecting update.'
               )
               finalCalories = serverCalories
             } else {
               finalCalories = clientCalories
-              sessionState.accumulatedCalories = finalCalories
+              session.internalState.accumulatedCalories = finalCalories
             }
           } else {
-            // Fallback to server-side calculation for older clients
             const now = Date.now()
-            const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
-            sessionState.lastUpdate = now
-
-            let currentAccumulated = sessionState.accumulatedCalories
-            const currentHr = message.data.value ?? existingData.value
-            const currentAge = existingData.age ?? 30
+            const dtMinutes =
+              (now - session.internalState.lastUpdate) / 1000 / 60
+            session.internalState.lastUpdate = now
+            let currentAccumulated = session.internalState.accumulatedCalories
+            const currentHr = message.data.value ?? session.hrmData.value
+            const currentAge = session.hrmData.age ?? 30
             if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
               const caloriesBurned = estimateCaloriesBurned({
                 heartRate: currentHr,
                 age: currentAge,
-                weightKg: existingData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG,
+                weightKg:
+                  session.hrmData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG,
                 durationMinutes: dtMinutes,
               })
               currentAccumulated += caloriesBurned
             }
-            sessionState.accumulatedCalories = currentAccumulated
+            session.internalState.accumulatedCalories = currentAccumulated
             finalCalories = currentAccumulated
           }
-          // Update the repository with the latest data
-          hrmDataRepository.save({
-            ...existingData,
-            value: message.data.value ?? existingData.value,
-            calories: Math.round(finalCalories * 10) / 10,
-          })
+
+          session.hrmData.value = message.data.value ?? session.hrmData.value
+          session.hrmData.calories = Math.round(finalCalories * 10) / 10
+          session.hrmData.clientId = sessionId
         }
         broadcastState()
         break
@@ -364,7 +372,7 @@ const handleIncomingMessage = (
       case 'SPOTIFY_COMMAND': {
         const commandMsg = message as SpotifyCommandMessage
         logger.info(
-          { clientId, command: commandMsg.command },
+          { sessionId, command: commandMsg.command },
           'Forwarding Spotify command'
         )
 
@@ -410,7 +418,7 @@ const handleIncomingMessage = (
       default: {
         const unknownMessage = message as { type: unknown }
         logger.warn(
-          { clientId, type: unknownMessage.type },
+          { sessionId, type: unknownMessage.type },
           'Unknown message type received'
         )
         break
@@ -419,11 +427,11 @@ const handleIncomingMessage = (
   } catch (e) {
     if (e instanceof z.ZodError) {
       logger.error(
-        { clientId, errors: e.issues },
+        { sessionId, errors: e.issues },
         'WebSocket message validation failed'
       )
     } else {
-      logger.error({ clientId, error: e }, 'Error processing incoming message')
+      logger.error({ sessionId, error: e }, 'Error processing incoming message')
     }
   }
 }

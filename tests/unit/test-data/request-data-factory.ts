@@ -9,7 +9,7 @@ import { TLSSocket } from 'tls'
  * @returns A mock IncomingMessage.
  */
 export const createMockRequest = (
-  url = '/?clientId=test-client',
+  url = '/?sessionId=test-session',
   headers: Record<string, string> = {},
   socket: Record<string, unknown> = {}
 ): IncomingMessage => {
