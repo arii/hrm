@@ -196,7 +196,6 @@ describe('WebSocket Manager', () => {
       )
     })
 
-
     it('should correctly identify a secure TLSSocket connection', () => {
       const loggerInfoSpy = jest.spyOn(logger, 'info')
       // Simulate a TLSSocket by creating an object with the correct prototype chain
@@ -368,7 +367,6 @@ describe('WebSocket Manager', () => {
         'WebSocket message validation failed'
       )
     })
-
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
       const dashboardWs = new MockWebSocket() as ExtWebSocket
