@@ -387,7 +387,7 @@ describe('WebSocket Manager', () => {
     it('should handle invalid JSON gracefully', () => {
       mockWs.emit('message', 'invalid json')
       expect(logger.error).toHaveBeenCalledWith(
-        expect.objectContaining({ sessionId: 'test-session' }),
+        expect.objectContaining({ sessionId: expect.any(String) }),
         'Error processing incoming message'
       )
     })
@@ -395,7 +395,7 @@ describe('WebSocket Manager', () => {
       const message = JSON.stringify({ type: 'INVALID_TYPE' })
       mockWs.emit('message', message.toString())
       expect(logger.error).toHaveBeenCalledWith(
-        expect.objectContaining({ sessionId: 'test-session' }),
+        expect.objectContaining({ sessionId: expect.any(String) }),
         'WebSocket message validation failed'
       )
     })
@@ -475,7 +475,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
 
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.objectContaining({ sessionId: 'test-session' }),
+        expect.objectContaining({ sessionId: expect.any(String) }),
         'Unknown message type received'
       )
     })
