@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import { render, screen } from '@testing-library/react'
-import Dashboard from '../../../app/page'
+import DashboardContent from '../../../app/page'
 import { WebSocketProvider } from '../../../context/WebSocketContext'
 import { UserSettingsProvider } from '../../../context/UserSettingsContext'
 import { WorkoutProvider } from '../../../context/WorkoutContext'
@@ -60,21 +60,21 @@ describe('Dashboard', () => {
 
   it('renders GoogleDocViewer when NEXT_PUBLIC_USE_NATIVE_TABLE is "false"', async () => {
     process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'false'
-    renderWithProvider(<Dashboard />)
+    renderWithProvider(<DashboardContent />)
     expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
     expect(screen.queryByTestId('workout-table-viewer')).not.toBeInTheDocument()
   })
 
   it('renders GoogleDocViewer when NEXT_PUBLIC_USE_NATIVE_TABLE is not set', async () => {
     delete process.env.NEXT_PUBLIC_USE_NATIVE_TABLE
-    renderWithProvider(<Dashboard />)
+    renderWithProvider(<DashboardContent />)
     expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
     expect(screen.queryByTestId('workout-table-viewer')).not.toBeInTheDocument()
   })
 
   it('renders WorkoutTableViewer when NEXT_PUBLIC_USE_NATIVE_TABLE is "true"', async () => {
     process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'true'
-    renderWithProvider(<Dashboard />)
+    renderWithProvider(<DashboardContent />)
     expect(
       await screen.findByTestId('workout-table-viewer')
     ).toBeInTheDocument()
