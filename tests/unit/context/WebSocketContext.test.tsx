@@ -71,10 +71,8 @@ describe('WebSocketProvider', () => {
     })
 
     // Manually trigger the connection and the open event
-    act(() => {
-      result.current.connect()
-      mockWebSocketInstance.triggerOpen()
-    })
+    result.current.connect()
+    mockWebSocketInstance.triggerOpen()
 
     await waitFor(() => {
       expect(global.WebSocket).toHaveBeenCalledTimes(1)
