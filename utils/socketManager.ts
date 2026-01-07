@@ -207,7 +207,7 @@ const initSocketManager = (
     connectionMonitor.stop()
     if (sessionCleanupIntervalId) { // Clear the interval on WSS close
       clearInterval(sessionCleanupIntervalId)
-      sessionCleanup"
+      sessionCleanupIntervalId = undefined
     }
   })
 }
