@@ -44,12 +44,6 @@ PNPM_CMD="${PNPM_CMD:-pnpm}"
 # 2. DEPLOYMENT LOGIC
 # ==============================================================================
 
-# Safety Check
-if [ ! -f ".env.production" ]; then
-    echo "❌ Error: .env.production is missing! Deployment aborted."
-    exit 1
-fi
-
 echo "📂 Extracting artifact..."
 # Use --overwrite to ensure clean state
 tar -xzf release.tar.gz --overwrite
