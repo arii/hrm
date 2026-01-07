@@ -175,7 +175,8 @@ describe('WebSocket Manager', () => {
   })
 
   beforeEach(() => {
-    resetSocketManager()
+    resetSocketManager() // Clears state and the cleanup interval
+    initSocketManager(mockWss, getSnapshot, mockServices) // Initialize a fresh manager for each test
     // ... rest of the beforeEach block
   })
 
