@@ -2,8 +2,10 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react-hooks'
-import { WebSocketProvider, useWebSocket } from '../../../context/WebSocketContext'
-import { w3cwebsocket as W3CWebSocket } from 'websocket'
+import {
+  WebSocketProvider,
+  useWebSocket,
+} from '../../../context/WebSocketContext'
 
 // Mock the WebSocket object
 global.WebSocket = jest.fn(() => ({
@@ -13,11 +15,12 @@ global.WebSocket = jest.fn(() => ({
   onmessage: jest.fn(),
   close: jest.fn(),
   send: jest.fn(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 })) as any
 
 describe('WebSocketProvider', () => {
   it('should create and store a sessionId in localStorage', () => {
-    const { result } = renderHook(() => useWebSocket(), {
+    renderHook(() => useWebSocket(), {
       wrapper: WebSocketProvider,
     })
 

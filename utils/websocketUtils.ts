@@ -26,7 +26,7 @@ export const sendWebSocketMessage = (
   const extWs = ws as ExtWebSocket
   if (extWs.readyState !== WebSocket.OPEN) {
     logger.warn(
-      { clientId: extWs.clientId, origin }, // Assuming clientId is attached
+      { sessionId: extWs.sessionId, origin }, // Assuming sessionId is attached
       'Attempted to send message to a non-open WebSocket.'
     )
     return
@@ -36,7 +36,7 @@ export const sendWebSocketMessage = (
   } catch (error) {
     logger.error(
       {
-        clientId: extWs.clientId,
+        sessionId: extWs.sessionId,
         error,
         origin,
       },
@@ -67,7 +67,7 @@ export const broadcast = (
       } catch (error) {
         logger.error(
           {
-            clientId: extClient.clientId,
+            sessionId: extClient.sessionId,
             error,
             origin,
           },
@@ -144,7 +144,7 @@ export class ConnectionMonitor {
 
         if (extWs.isAlive === false) {
           logger.warn(
-            { clientId: extWs.clientId },
+            { sessionId: extWs.sessionId },
             'Terminating stale WebSocket connection due to missed heartbeat.'
           )
           return extWs.terminate()
