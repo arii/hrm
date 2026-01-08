@@ -1,6 +1,4 @@
 // lib/errors.ts
-import logger from '../utils/logger'
-
 /**
  * Custom error class for API-related errors.
  * This allows for specific error handling and consistent response formatting.
