@@ -61,6 +61,9 @@ const mockWebSocket = jest.fn((url) => {
   return ws
 })
 
+// Mocks the global WebSocket constructor. The `any` assertion is necessary as the mock
+// does not fully implement the WebSocket interface, which is acceptable for test purposes.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 global.WebSocket = mockWebSocket as any
 Object.assign(global.WebSocket, {
   CONNECTING: 0,

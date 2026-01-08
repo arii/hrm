@@ -5,6 +5,8 @@ import { reducer, INITIAL_STATE } from '../../../context/webSocketReducer'
 
 describe('webSocketReducer', () => {
   it('should return the initial state', () => {
+    // The action here is intentionally an unknown type to test the default case of the reducer.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(reducer(INITIAL_STATE, { type: 'UNKNOWN_ACTION' } as any)).toEqual(
       INITIAL_STATE
     )
