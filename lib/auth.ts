@@ -43,7 +43,7 @@ async function syncTokenWithBackend(token: JWT) {
     // Only sync if we have valid data
     if (!tokenPayload.access_token || !tokenPayload.refresh_token) return
 
-    await fetch(getAPIURL('internal/token-delivery'), {
+    const response = await fetch(getAPIURL('internal/token-delivery'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -51,6 +51,18 @@ async function syncTokenWithBackend(token: JWT) {
       },
       body: JSON.stringify(tokenPayload),
     })
+
+    if (response.ok) {
+      logger.debug('Token successfully synced with the backend.')
+    } else {
+      logger.warn(
+        {
+          status: response.status,
+          body: await response.text(),
+        },
+        'Failed to sync token with the backend.'
+      )
+    }
   } catch (e) {
     logger.error({ error: e }, 'Failed to sync refreshed token with backend')
   }
