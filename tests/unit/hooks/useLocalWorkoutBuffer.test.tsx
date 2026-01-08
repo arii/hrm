@@ -2,13 +2,29 @@
  * @jest-environment jsdom
  */
 // tests/unit/hooks/useLocalWorkoutBuffer.test.tsx
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { useLocalWorkoutBuffer } from '@/app/client/experimental/useLocalWorkoutBuffer'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { HrZoneName } from '@/utils/hr-zones'
+import { useState } from 'react'
 
 // Mock the useUserSettings hook
 jest.mock('@/context/UserSettingsContext')
+
+// Mock useLocalStorage to behave like useState for testing logic
+jest.mock('@/hooks/useLocalStorage', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { useState } = require('react')
+  return {
+    __esModule: true,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    default: (_key: string, initialValue: any) => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const [state, setState] = useState(initialValue)
+      return [state, setState]
+    },
+  }
+})
 
 describe('useLocalWorkoutBuffer', () => {
   const mockUseUserSettings = useUserSettings as jest.Mock
@@ -38,7 +54,7 @@ describe('useLocalWorkoutBuffer', () => {
     expect(result.current.workoutData.startTime).not.toBeNull()
   })
 
-  it('should record HR data when running', () => {
+  it('should record HR data when running', async () => {
     jest.useFakeTimers()
     const { result, rerender } = renderHook(
       ({ hr, status }) => useLocalWorkoutBuffer(hr, status),
@@ -49,9 +65,16 @@ describe('useLocalWorkoutBuffer', () => {
       rerender({ hr: 120, status: 'running' })
     })
 
-    act(() => {
-      jest.advanceTimersByTime(3000)
+    await waitFor(() => {
+      expect(result.current.workoutData.status).toBe('running')
     })
+
+    // Advance time in steps to allow state updates to settle
+    for (let i = 0; i < 3; i++) {
+      await act(async () => {
+        jest.advanceTimersByTime(1000)
+      })
+    }
 
     expect(result.current.workoutData.hrHistory).toHaveLength(3)
     expect(result.current.workoutData.hrHistory[0]?.hr).toBe(120)
