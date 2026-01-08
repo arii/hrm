@@ -14,8 +14,8 @@ updates:
 
     # Custom labels
     labels:
-      - 'dependencies'
-      - 'automerge'
+      - "dependencies"
+      - "automerge"
 
     # STRATEGIC GROUPING (Crucial for React/MUI apps)
     groups:

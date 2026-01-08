@@ -1,6 +1,7 @@
 // services/googleDocParser.ts
 import * as cheerio from 'cheerio'
 import { WorkoutTableDto } from '@/lib/dto/workout.dto'
+import { ERROR_MESSAGES } from '../lib/errors'
 
 /**
  * Parses raw HTML from a Google Doc export and extracts the first table.
@@ -11,7 +12,7 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
   const table = $('table').first()
 
   if (!table.length) {
-    throw new Error('No table found in the Google Doc')
+    throw new Error(ERROR_MESSAGES.GOOGLE_DOC_NO_TABLE)
   }
 
   const parsedRows: string[][] = []

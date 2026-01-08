@@ -1,4 +1,5 @@
 // utils/network.ts
+import { ERROR_MESSAGES } from '../lib/errors'
 
 /**
  * Standardized error schema for the application.
@@ -40,7 +41,7 @@ export const fetchWithRetry = async (
   for (let attempt = 1; attempt <= retries; attempt++) {
     const timeoutController = new AbortController()
     const timeoutId = setTimeout(
-      () => timeoutController.abort(new TimeoutError(`Request timed out`)),
+      () => timeoutController.abort(new TimeoutError('Request timed out')),
       timeout
     )
 
@@ -54,7 +55,7 @@ export const fetchWithRetry = async (
     try {
       // Exit early if the caller's signal is already aborted
       if (options.signal?.aborted) {
-        throw options.signal.reason || new Error('Request aborted by caller')
+        throw options.signal.reason || new Error(ERROR_MESSAGES.FETCH_ABORTED)
       }
 
       const response = await fetch(url, {
@@ -71,7 +72,7 @@ export const fetchWithRetry = async (
           statusText: response.statusText,
           body: await response.text().catch(() => 'Could not read body'),
         }
-        throw new Error(`HTTP Error: ${response.status}`, {
+        throw new Error(ERROR_MESSAGES.HTTP_ERROR(response.status), {
           cause: errorPayload,
         })
       }
@@ -84,7 +85,7 @@ export const fetchWithRetry = async (
       if (options.signal?.aborted) {
         lastError = {
           code: 'FETCH_ABORTED',
-          message: 'Request was aborted by the caller.',
+          message: ERROR_MESSAGES.FETCH_ABORTED,
           retryable: false,
           originalError: error,
         }
@@ -95,7 +96,7 @@ export const fetchWithRetry = async (
       if (error instanceof TimeoutError) {
         lastError = {
           code: 'NETWORK_TIMEOUT',
-          message: 'The request timed out.',
+          message: ERROR_MESSAGES.NETWORK_TIMEOUT,
           retryable: true,
           originalError: error,
         }
@@ -103,12 +104,12 @@ export const fetchWithRetry = async (
       // Check for HTTP errors
       else if (
         error instanceof Error &&
-        error.message.startsWith('HTTP Error:')
+        error.message.startsWith('Request failed with status')
       ) {
         const status = (error.cause as { status: number }).status
         lastError = {
           code: `HTTP_ERROR_${status}`,
-          message: `Request failed with status ${status}.`,
+          message: ERROR_MESSAGES.HTTP_ERROR(status),
           retryable: status >= 500, // Only retry on 5xx server errors
           originalError: error,
         }
@@ -120,7 +121,7 @@ export const fetchWithRetry = async (
           message:
             error instanceof Error
               ? error.message
-              : 'An unknown network error occurred.',
+              : ERROR_MESSAGES.NETWORK_ERROR,
           retryable: true,
           originalError: error,
         }
@@ -141,7 +142,7 @@ export const fetchWithRetry = async (
   throw (
     lastError ?? {
       code: 'UNKNOWN_FAILURE',
-      message: 'The request failed for an unknown reason.',
+      message: ERROR_MESSAGES.UNKNOWN_FETCH_FAILURE,
       retryable: false,
     }
   )
