@@ -1,6 +1,5 @@
 import { spawn, ChildProcess } from 'child_process'
 import http from 'http'
-import kill from 'tree-kill'
 
 export interface ServerProcess {
   process: ChildProcess
@@ -44,18 +43,11 @@ export function startServer(port: number): Promise<ServerProcess> {
           resolve({
             process: serverProcess,
             kill: () =>
-              new Promise((resolve, reject) => {
+              new Promise((resolve) => {
                 if (serverProcess.pid) {
-                  kill(serverProcess.pid, 'SIGKILL', (err) => {
-                    if (err) {
-                      reject(err)
-                    } else {
-                      resolve()
-                    }
-                  })
-                } else {
-                  resolve()
+                  process.kill(-serverProcess.pid, 'SIGKILL')
                 }
+                resolve()
               }),
           })
         }
@@ -73,7 +65,7 @@ export function startServer(port: number): Promise<ServerProcess> {
       if (serverProcess.pid) {
         try {
           // Kill the entire process group
-          kill(serverProcess.pid)
+          process.kill(-serverProcess.pid, 'SIGKILL')
         } catch (_e) {
           // Ignore errors if the process is already gone
         }

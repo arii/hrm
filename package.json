@@ -87,7 +87,7 @@
     "react-dom": "19.2.3",
     "uuid": "^9.0.1",
     "ws": "^8.18.3",
-    "zod": "^4.1.13"
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
@@ -144,7 +144,6 @@
     "storybook": "^8.6.15",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
-    "tree-kill": "^1.2.2",
     "tsx": "4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0",
