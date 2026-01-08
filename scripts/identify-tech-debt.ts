@@ -77,11 +77,11 @@ export function filterDiff(diffContent: string): string {
     // Extract the file path from the diff header
     // Each chunk starts with ' a/path/to/file b/path/to/file'
     const match = d.match(/^ a\/[^\s]+ b\/([^\s]+)/)
-    if (!match) {
+    if (!match || !match[1]) {
       // This shouldn't happen for valid diff chunks after splitting, but as a safeguard...
       return false
     }
-    const filePath = match[1]
+    const filePath: string = match[1]
     // Check if the file path matches any exclusion pattern
     return !exclusionPatterns.some((pattern) => pattern.test(filePath))
   })
