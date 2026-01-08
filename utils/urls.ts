@@ -25,32 +25,18 @@ export const getBaseURL = (): string => {
 }
 
 export const getWebSocketURL = (): string => {
-  // 1. Prioritize the explicit environment variable if it's a non-empty string.
-  const envWsUrl = process.env.NEXT_PUBLIC_WS_URL
-  if (envWsUrl && envWsUrl.length > 0) {
-    return buildWebSocketUrl(envWsUrl)
-  }
-
-  // 2. Fallback for client-side execution, deriving from the browser's location.
+  // 1. Fallback for client-side execution, deriving from the browser's location.
   if (typeof window !== 'undefined') {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     return `${protocol}//${window.location.host}/ws`
   }
 
-  // 3. Fallback for server-side execution, deriving from the base application URL.
+  // 2. Fallback for server-side execution, deriving from the base application URL.
   return buildWebSocketUrl(getBaseURL())
 }
 
 export const getAPIURL = (endpoint: string): string => {
-  // 1. Prioritize the explicit environment variable if it's a non-empty string.
-  const envApiUrl = process.env.NEXT_PUBLIC_API_URL
-  if (envApiUrl && envApiUrl.length > 0) {
-    const cleanedUrl = envApiUrl.replace(/\/$/, '') // Remove trailing slash
-    // Strictly adhere to docs: assume no '/api' in the env var.
-    return `${cleanedUrl}/api/${endpoint.replace(/^\//, '')}`
-  }
-
-  // 2. Fallback for client-side execution, deriving from the browser's origin.
+  // 1. Fallback for client-side execution, deriving from the browser's origin.
   if (typeof window !== 'undefined') {
     return `${window.location.origin}/api/${endpoint.replace(/^\//, '')}`
   }
