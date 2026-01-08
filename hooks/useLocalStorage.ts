@@ -26,6 +26,18 @@ function useLocalStorage<T>(key: string, initialValue: T) {
 
         // Handle object migration by merging stored data with initial defaults.
         if (isPlainObject(parsed) && isPlainObject(initialValue)) {
+          // Validate and sanitize data types to prevent corruption from localStorage
+          if (
+            'userAge' in parsed &&
+            typeof parsed.userAge !== 'number' &&
+            parsed.userAge !== null
+          ) {
+            parsed.userAge = null // Reset if it's not a number or null
+          }
+          if ('userName' in parsed && typeof parsed.userName !== 'string') {
+            parsed.userName = '' // Reset if it's not a string
+          }
+
           const schemaKeys = Object.keys(initialValue)
           const filteredParsed = Object.keys(parsed).reduce(
             (acc, k) => {
