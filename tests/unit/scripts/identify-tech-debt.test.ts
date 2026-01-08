@@ -57,8 +57,12 @@ index 1234567..890abcd 100644
 +new content
 `
     const filteredDiff = filterDiff(diffContent)
-    expect(filteredDiff).toContain('diff --git a/src/production-code.ts b/src/production-code.ts')
-    expect(filteredDiff).toContain('diff --git a/src/another-file.js b/src/another-file.js')
+    expect(filteredDiff).toContain(
+      'diff --git a/src/production-code.ts b/src/production-code.ts'
+    )
+    expect(filteredDiff).toContain(
+      'diff --git a/src/another-file.js b/src/another-file.js'
+    )
   })
 
   it('should handle a mix of production and non-production code', () => {
@@ -79,8 +83,12 @@ index 1234567..890abcd 100644
 +new content
 `
     const filteredDiff = filterDiff(diffContent)
-    expect(filteredDiff).toContain('diff --git a/src/production-code.ts b/src/production-code.ts')
-    expect(filteredDiff).not.toContain('diff --git a/src/feature.test.ts b/src/feature.test.ts')
+    expect(filteredDiff).toContain(
+      'diff --git a/src/production-code.ts b/src/production-code.ts'
+    )
+    expect(filteredDiff).not.toContain(
+      'diff --git a/src/feature.test.ts b/src/feature.test.ts'
+    )
   })
 
   it('should handle an empty diff', () => {
@@ -104,6 +112,8 @@ index 1234567..890abcd 100644
 `
     const filteredDiff = filterDiff(diffContent)
     expect(filteredDiff).not.toContain('This is a preamble.')
-    expect(filteredDiff).toContain('diff --git a/src/production-code.ts b/src/production-code.ts')
+    expect(filteredDiff).toContain(
+      'diff --git a/src/production-code.ts b/src/production-code.ts'
+    )
   })
 })
