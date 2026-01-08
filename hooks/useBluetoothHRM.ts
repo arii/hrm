@@ -5,7 +5,7 @@
  * It encapsulates the logic for device discovery, connection, disconnection,
  * data streaming, and automatic reconnection on signal loss.
  */
-import { useCallback, useState, useRef, useEffect } from 'react'
+import { useCallback, useState, useRef, useEffect, useMemo } from 'react'
 import {
   HrmMetadataUpdateMessage,
   HrmMetadataUpdateData,
@@ -69,11 +69,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const onConnectRef = useRef(onConnect)
   const sendDataRef = useRef(sendData)
 
-  const sendThrottledHeartRate = useCallback(
-    throttle((heartRate: number) => {
-      sendDataRef.current({ type: 'HRM_INPUT', data: { value: heartRate } })
-      onHeartRateUpdate?.(heartRate)
-    }, throttleMs),
+  const sendThrottledHeartRate = useMemo(
+    () =>
+      throttle((heartRate: number) => {
+        sendDataRef.current({ type: 'HRM_INPUT', data: { value: heartRate } })
+        onHeartRateUpdate?.(heartRate)
+      }, throttleMs),
     [onHeartRateUpdate, sendDataRef, throttleMs]
   )
 
@@ -186,12 +187,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const onDisconnected = useCallback(() => {
     if (!isManualDisconnect.current && deviceRef.current) {
-        const reason = disconnectionReasonRef.current
-        if (reason === 'timeout' || reason === 'signal_loss') {
-            startReconnecting(reason)
-        } else {
-            startReconnecting('signal_loss')
-        }
+      const reason = disconnectionReasonRef.current
+      if (reason === 'timeout' || reason === 'signal_loss') {
+        startReconnecting(reason)
+      } else {
+        startReconnecting('signal_loss')
+      }
     } else {
       setDeviceStatus('Disconnected')
     }

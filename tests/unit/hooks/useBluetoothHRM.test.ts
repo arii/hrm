@@ -20,7 +20,7 @@ describe('useBluetoothHRM', () => {
   const mockSetupCharacteristics = jest.fn()
   const mockStartReconnecting = jest.fn()
 
-  let mockGattConnectionState: any
+  let mockGattConnectionState: ReturnType<typeof useGattConnection.useGattConnection>
   let onHeartRateUpdateCallback: (hr: number) => void
 
   beforeEach(() => {
@@ -28,14 +28,15 @@ describe('useBluetoothHRM', () => {
 
     mockGattConnectionState = {
       status: 'disconnected',
-      server: {},
+      server: {} as BluetoothRemoteGATTServer,
       connect: mockConnect.mockImplementation(async () => {
         mockGattConnectionState.status = 'connected'
-        return {}
+        return {} as BluetoothRemoteGATTServer
       }),
       disconnect: mockDisconnect.mockImplementation(() => {
         mockGattConnectionState.status = 'disconnected'
       }),
+      error: null,
     }
 
     jest
@@ -49,17 +50,24 @@ describe('useBluetoothHRM', () => {
         return {
           setupCharacteristics: mockSetupCharacteristics,
           batteryLevel: 75,
-        } as any
+        }
       })
 
     jest.spyOn(useReconnection, 'useReconnection').mockReturnValue({
       startReconnecting: mockStartReconnecting,
       stopReconnecting: jest.fn(),
       isReconnecting: false,
-    } as any)
-    ;(WebSocketContext as any).useWebSocket.mockReturnValue({
+      reconnectionStatus: null,
+      reconnectionReason: null,
+    })
+    ;(WebSocketContext as jest.Mocked<typeof WebSocketContext>).useWebSocket.mockReturnValue({
       sendData: jest.fn(),
       connectionStatus: 'Connected',
+      lastJsonMessage: null,
+      hrmData: [],
+      timerData: { phase: 'idle', timeRemaining: 0, currentRound: 0, totalRounds: 0 },
+      spotifyData: null,
+      workoutData: null,
     })
 
     Object.defineProperty(navigator, 'bluetooth', {

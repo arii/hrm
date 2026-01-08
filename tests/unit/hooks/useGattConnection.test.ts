@@ -60,7 +60,7 @@ describe('useGattConnection', () => {
 
     const { result } = renderHook(() => useGattConnection())
 
-    let connectPromise: Promise<any>
+    let connectPromise: Promise<BluetoothRemoteGATTServer>
     act(() => {
       connectPromise = result.current.connect(mockDevice)
     })
@@ -79,7 +79,7 @@ describe('useGattConnection', () => {
 
   it('should abort a pending connection attempt when a new one is initiated', async () => {
     const mockAbort = jest.fn()
-    let abortSignal: AbortSignal = new AbortController().signal
+    const abortSignal: AbortSignal = new AbortController().signal
 
     const OriginalAbortController = global.AbortController
     global.AbortController = jest.fn(

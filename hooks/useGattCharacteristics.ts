@@ -81,7 +81,7 @@ export const useGattCharacteristics = ({
           'characteristicvaluechanged',
           handleBatteryLevelChanged
         )
-      } catch (err) {
+      } catch (_err) {
         logger.warn('Battery service not found. This is optional.')
       }
     } catch (err) {
