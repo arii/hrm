@@ -191,9 +191,6 @@ The repository provides an automated workflow to create issues from the suggesti
 
 2.  **Manual Trigger**: Navigate to the "Actions" tab in the GitHub repository, select the "Create Issues from Command" workflow, and run it manually. You will be prompted to enter the Pull Request number you wish to source the review artifacts from.
 
-### Legacy Pre-commit Hooks
-
-The project contains legacy Python-based pre-commit hooks (`.pre-commit-config.yaml`). These are now considered **deprecated** in favor of the Husky-based Node.js tooling. The Python hooks will be removed in a future pull request to eliminate redundancy.
 
 ## Current Focus
 
