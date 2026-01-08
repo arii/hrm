@@ -427,6 +427,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           signal: abortControllerRef.current.signal,
         })
 
+        if (abortControllerRef.current?.signal.aborted) {
+          server.disconnect()
+          throw new DOMException('Connection aborted', 'AbortError')
+        }
+
         // Attach disconnect listener immediately after successful GATT connection
         // This ensures we catch disconnections that might occur during service discovery
         device.addEventListener('gattserverdisconnected', onDisconnected)
@@ -658,6 +663,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          throw error
+        }
         if (!silent) {
           handleConnectionError(error)
         } else {

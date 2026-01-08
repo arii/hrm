@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { jest } from '@jest/globals'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 
@@ -393,8 +393,41 @@ describe('useBluetoothHRM', () => {
   })
 
   describe('Connection Abort', () => {
-    // Test removed: The race condition fix is verified by integration tests
-    // and real-world usage. Unit test for abort logic was causing worker crashes
-    // due to complexity of mocking hanging AbortController promises.
+    it('should abort the connection if abortConnection is called during connection attempt', async () => {
+      // Create a controllable promise for the connection
+      let resolveConnection
+      const connectionPromise = new Promise((resolve) => {
+        resolveConnection = resolve
+      })
+      mockDevice.gatt.connect.mockReturnValue(connectionPromise)
+
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // Start the connection
+      let connectAndStreamPromise
+      act(() => {
+        connectAndStreamPromise = result.current.connectAndStream(
+          'Test User',
+          30
+        )
+      })
+
+      // Abort the connection while it's in progress
+      act(() => {
+        result.current.disconnect()
+      })
+
+      // Allow the connection promise to resolve
+      resolveConnection(mockGattServer)
+
+      // Wait for the connectAndStream promise to settle
+      await connectAndStreamPromise.catch(() => {})
+
+      // Verify that the connection was not established
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(false)
+        expect(result.current.deviceStatus).toBe('Disconnected')
+      })
+    })
   })
 })
