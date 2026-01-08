@@ -36,9 +36,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       <Slider
         value={muted ? 0 : volume}
         onChange={(_, val) => onVolumeChange(val as number)}
-        onChangeCommitted={(_, val) =>
-          onVolumeChangeCommitted?.(val as number)
-        }
+        onChangeCommitted={(_, val) => onVolumeChangeCommitted?.(val as number)}
         min={0}
         max={100}
         size="small"
