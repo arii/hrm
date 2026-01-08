@@ -124,7 +124,6 @@ const SpotifyDisplay = () => {
 
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [isSliding, setIsSliding] = useState(false)
 
   // 5. Integrate useReducer
@@ -185,19 +184,16 @@ const SpotifyDisplay = () => {
     [connectionStatus, selectedDeviceId, sendData, spotifyData.devices]
   )
 
-  // Handler for the VolumeSlider component's onChange
+  // Handler for immediate UI update while sliding
   const handleVolumeChange = (newVolume: number) => {
-    setIsSliding(true)
+    if (!isSliding) setIsSliding(true) // Set sliding state on first interaction
     dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
+  }
 
-    // Debounce sending the command to avoid API flooding
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current)
-    }
-    debounceTimeoutRef.current = setTimeout(() => {
-      sendVolumeCommand(newVolume)
-      setIsSliding(false)
-    }, 300)
+  // Handler for sending the final volume value after sliding stops
+  const handleVolumeChangeCommitted = (newVolume: number) => {
+    sendVolumeCommand(newVolume)
+    setIsSliding(false) // Reset sliding state
   }
 
   // Handler for the VolumeSlider's mute button
@@ -413,6 +409,7 @@ const SpotifyDisplay = () => {
             volume={displayVolume}
             muted={isMuted}
             onVolumeChange={handleVolumeChange}
+            onVolumeChangeCommitted={handleVolumeChangeCommitted}
             onToggleMute={handleToggleMute}
           />
           <SpotifyDeviceSelectorWrapper
