@@ -1,6 +1,6 @@
 // File: hooks/useCalorieCalculator.ts
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
+import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 
 interface CalorieCalculatorProps {
   age: number

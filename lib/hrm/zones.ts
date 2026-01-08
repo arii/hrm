@@ -4,7 +4,7 @@
  * This module is independent of any specific UI framework or theme.
  */
 
-import { HrZoneName } from '../shared/hr-zones.js'
+import { HrZoneName } from '../shared/hr-zones'
 
 // --- Constants ---
 // Heart Rate Zone Boundaries (as percentage of Max HR)

@@ -1,6 +1,6 @@
 // lib/middleware/errorHandler.ts
 import { NextResponse, NextRequest } from 'next/server'
-import { ApiError, ERROR_MESSAGES } from '@/lib/errors'
+import { ApiError } from '@/lib/errors'
 import logger from '@/utils/logger'
 
 // This handler type now supports both static routes (context is undefined)
@@ -38,12 +38,10 @@ export function withErrorHandler<T = unknown>(
       }
 
       const message =
-        error instanceof Error
-          ? error.message
-          : ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+        error instanceof Error ? error.message : 'An unknown error occurred.'
       logger.error({ err: error }, `Internal Server Error: ${message}`)
       return NextResponse.json(
-        { error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR },
+        { error: 'Internal Server Error' },
         { status: 500 }
       )
     }

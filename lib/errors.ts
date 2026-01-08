@@ -31,7 +31,8 @@ export const ERROR_MESSAGES = {
     'Spotify token expired during polling. Attempting refresh.',
   SPOTIFY_POLLING_NETWORK_ERROR:
     'Temporary network connectivity issue during Spotify polling (suppressed)',
-  SPOTIFY_POLLING_UNHANDLED_ERROR: 'Unhandled Spotify API error during polling',
+  SPOTIFY_POLLING_UNHANDLED_ERROR:
+    'Unhandled Spotify API error during polling',
   SPOTIFY_FETCH_TRACK_ERROR: 'Error fetching currently playing track',
 
   // Google Docs Errors
