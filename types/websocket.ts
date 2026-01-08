@@ -87,7 +87,6 @@ export type ServerMessage =
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
-  | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
   | SpotifyExecutionMessage
 
 /**
@@ -168,10 +167,6 @@ export interface SpotifyExecutionMessage {
   payload: SpotifyCommandMessage
 }
 
-export interface PingMessage {
-  type: 'PING'
-}
-
 export type ClientCommandMessage =
   | HrmInputMessage
   | HrmMetadataUpdateMessage
@@ -181,7 +176,6 @@ export type ClientCommandMessage =
   | TimerConfigMessage
   | GetStateMessage
   | ClientRegistrationMessage
-  | PingMessage
 
 import { z } from 'zod'
 
@@ -254,10 +248,6 @@ export const ClientRegistrationMessageSchema = z.object({
   role: z.union([z.literal('dashboard'), z.literal('controller')]),
 })
 
-export const PingMessageSchema = z.object({
-  type: z.literal('PING'),
-})
-
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
   HrmMetadataUpdateMessageSchema,
@@ -267,5 +257,4 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   TimerConfigMessageSchema,
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
-  PingMessageSchema, // Add PING schema to the union
 ])
