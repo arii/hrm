@@ -15,9 +15,7 @@ import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
  */
 async function getPlaylistDetails(
   _req: Request,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  context: any
-  // context: RouteContext<{ playlistId: string }>
+  context: { params: { playlistId: string } }
 ) {
   const { playlistId } = context.params
 
