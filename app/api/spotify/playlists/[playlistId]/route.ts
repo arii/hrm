@@ -6,7 +6,6 @@ import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
-import { RouteContext } from '@/lib/types/index'
 
 /**
  * GET handler for fetching single playlist details.
@@ -16,6 +15,7 @@ import { RouteContext } from '@/lib/types/index'
  */
 async function getPlaylistDetails(
   _req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   context: any
   // context: RouteContext<{ playlistId: string }>
 ) {
