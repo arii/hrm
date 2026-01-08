@@ -42,12 +42,14 @@ const config = {
     ],
   },
   transformIgnorePatterns: [
+    // recharts is mocked, so it doesn't need to be explicitly transformed or ignored from transformation.
     '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
+    '^recharts$': '<rootDir>/tests/__mocks__/recharts.tsx',
   },
   testTimeout: 10000,
   setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],

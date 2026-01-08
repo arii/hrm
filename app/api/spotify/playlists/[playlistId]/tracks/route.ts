@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
+import { RouteContext } from '@/lib/types/index'
 
 type SpotifyPagingParams =
   | 0
@@ -64,12 +65,14 @@ type SpotifyPagingParams =
 /**
  * GET handler for fetching playlist tracks.
  * @param req The incoming NextRequest.
- * @param params The route parameters, containing the playlistId.
+ * @param context The route context, containing the playlistId.
  * @returns A NextResponse with the paginated list of tracks or an error.
  */
-async function getPlaylistTracks(req: Request, ...args: unknown[]) {
-  const { params } = args[0] as { params: { playlistId: string } }
-  const { playlistId } = params
+async function getPlaylistTracks(
+  req: Request,
+  context: RouteContext<{ playlistId: string }>
+) {
+  const { playlistId } = await context.params
   const { searchParams } = new URL(req.url)
   const limit = parseInt(searchParams.get('limit') || '20', 10)
   const offset = parseInt(searchParams.get('offset') || '0', 10)
