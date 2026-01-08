@@ -1,7 +1,7 @@
 // components/WorkoutTableViewer.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Table,
   TableBody,
@@ -15,6 +15,7 @@ import {
   Alert,
   Box,
 } from '@mui/material'
+import DataFetchError from './shared/DataFetchError'
 
 interface WorkoutData {
   headers: string[]
@@ -30,25 +31,28 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        const res = await fetch(`/api/workout?docId=${docId}`)
-        if (!res.ok) throw new Error('Failed to load workout data')
-        const json = await res.json()
-        setData(json)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
-      } finally {
-        setLoading(false)
-      }
+  const fetchData = useCallback(async () => {
+    if (!docId) {
+      setLoading(false)
+      return
     }
-
-    if (docId) {
-      fetchData()
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/workout?docId=${docId}`)
+      if (!res.ok) throw new Error('Failed to load workout data')
+      const json = await res.json()
+      setData(json)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
     }
   }, [docId])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   if (loading) {
     return (
@@ -59,7 +63,7 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
   }
 
   if (error) {
-    return <Alert severity="error">{error}</Alert>
+    return <DataFetchError errorMessage={error} onRetry={fetchData} />
   }
 
   if (!data || (data.headers.length === 0 && data.rows.length === 0)) {
