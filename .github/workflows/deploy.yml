@@ -86,6 +86,7 @@ jobs:
           NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
           SPOTIFY_CLIENT_ID=${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          INTERNAL_TOKEN_DELIVERY_SECRET=${{ secrets.INTERNAL_TOKEN_DELIVERY_SECRET }}
           ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
           GOOGLE_DOC_WORKOUT_URL="${{ secrets.GOOGLE_DOC_WORKOUT_URL }}"
           SPOTIFY_DEBUG=false

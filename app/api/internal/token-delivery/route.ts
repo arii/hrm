@@ -12,7 +12,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
  * This replaces the previous fragile, timing-based middleware interception in `server.ts`.
  *
  * @protection This endpoint is protected by a secret header (`x-internal-token-secret`)
- * defined in the `NEXTAUTH_SECRET` environment variable.
+ * defined in the `INTERNAL_TOKEN_DELIVERY_SECRET` environment variable.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -24,9 +24,9 @@ export async function POST(req: NextRequest) {
 
     // 2. Authenticate the request from our internal callback
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
-    const expected = process.env.NEXTAUTH_SECRET
+    const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET
     if (!expected) {
-      throw new ApiError(500, 'NEXTAUTH_SECRET is not set.')
+      throw new ApiError(500, 'INTERNAL_TOKEN_DELIVERY_SECRET is not set.')
     }
     if (secretHeader !== expected) {
       throw new ApiError(401, 'Unauthorized: Missing or invalid secret.')

@@ -79,6 +79,7 @@ setup_env_file() {
   check_and_set_var "NEXTAUTH_SECRET"
   check_and_set_var "SPOTIFY_CLIENT_ID"
   check_and_set_var "SPOTIFY_CLIENT_SECRET"
+  check_and_set_var "INTERNAL_TOKEN_DELIVERY_SECRET"
 
   echo "SUCCESS: .env file setup is complete."
   echo "----------------------------------------"
