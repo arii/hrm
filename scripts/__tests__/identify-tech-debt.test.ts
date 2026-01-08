@@ -74,16 +74,78 @@ describe('identify-tech-debt', () => {
         },
       ],
     }
-    mockReadFile.mockResolvedValue('diff content')
+    mockReadFile.mockImplementation((filePath: string) => {
+      if (filePath.includes('diff.txt')) {
+        return Promise.resolve('diff content')
+      }
+      if (filePath.includes('prompts/tech-debt-analysis.md')) {
+        return Promise.resolve('Prompt: {{diff}}')
+      }
+      return Promise.reject(new Error(`Unexpected file read: ${filePath}`))
+    })
     mockGenerateContent.mockResolvedValue(JSON.stringify(validResponse))
     mockCleanJson.mockReturnValue(JSON.stringify(validResponse))
 
     await main()
 
+    expect(mockGenerateContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: 'Prompt: diff content',
+      })
+    )
     expect(mockWriteFile).toHaveBeenCalledWith(
       expect.any(String),
       JSON.stringify(validResponse, null, 2)
     )
+  })
+
+  it('should truncate the diff content if it exceeds the maximum length', async () => {
+    const MAX_DIFF_LENGTH = 100000
+    const oversizedDiffContent = 'a'.repeat(MAX_DIFF_LENGTH + 1)
+    const mockPromptTemplate = 'Analyze this: {{diff}}'
+    const validResponse = { issues: [] }
+
+    mockReadFile.mockImplementation((filePath: string) => {
+      if (filePath.includes('diff.txt')) {
+        return Promise.resolve(oversizedDiffContent)
+      }
+      if (filePath.includes('prompts/tech-debt-analysis.md')) {
+        return Promise.resolve(mockPromptTemplate)
+      }
+      return Promise.reject(new Error(`Unexpected file read: ${filePath}`))
+    })
+
+    mockGenerateContent.mockResolvedValue(JSON.stringify(validResponse))
+    mockCleanJson.mockReturnValue(JSON.stringify(validResponse))
+    const mockConsoleWarn = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {})
+
+    await main()
+
+    expect(mockConsoleWarn).toHaveBeenCalledWith(
+      `Warning: Diff content is very large (${oversizedDiffContent.length} characters) and will be truncated to ${MAX_DIFF_LENGTH} characters.`
+    )
+
+    const expectedTruncatedDiff =
+      oversizedDiffContent.substring(0, MAX_DIFF_LENGTH) +
+      '\n\n...[DIFF TRUNCATED DUE TO SIZE]...'
+    const expectedPrompt = mockPromptTemplate.replace(
+      '{{diff}}',
+      expectedTruncatedDiff
+    )
+
+    expect(mockGenerateContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: expectedPrompt,
+      })
+    )
+
+    expect(mockWriteFile).toHaveBeenCalledWith(
+      expect.any(String),
+      JSON.stringify(validResponse, null, 2)
+    )
+    expect(mockExit).not.toHaveBeenCalled()
   })
 
   it('should handle a malformed JSON response from the AI', async () => {
