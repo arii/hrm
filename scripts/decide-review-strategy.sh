@@ -18,6 +18,7 @@ set -e
 : "${MAX_COMMENTS:=60}"
 : "${REVIEW_THROTTLE_MINUTES:=30}"
 : "${BOT_USERNAME:=gemini-bot}"
+: "${QUALITY_GATE_BOT_USERNAME:=github-actions[bot]}"
 # This variable is optional and may not be present for all event types.
 : "${COMMENT_BODY:=}"
 
@@ -70,9 +71,8 @@ echo "::info::Passed initial checks (manual override, comment limit, throttling)
 # Check 4: Quality Check Failures
 # The first priority is to review PRs that have failed CI checks.
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
-  # Corrected: Pipe the output of 'gh' to 'jq' to use --arg safely.
-  # Added '(.body // "")' to handle comments with null bodies.
-  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""')
+  # Use the dedicated QUALITY_GATE_BOT_USERNAME to find the correct report.
+  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments | jq -r --arg bot_user "$QUALITY_GATE_BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""')
   
   if [ -z "$QUALITY_REPORT" ]; then
     NEEDS_REVIEW="false"
@@ -103,8 +103,7 @@ else
   # This handles subsequent pushes to an already-open PR.
   echo "::info::Analyzing for re-review..."
 
-  # Corrected: Pipe the output of 'gh' to 'jq' to use --arg safely.
-  # Added '(.body // "")' to handle comments with null bodies.
+  # Use the AI review bot's username to find the last review comment.
   LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""')
 
   if [ -z "$LAST_COMMENT_BODY" ]; then

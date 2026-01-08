@@ -68,7 +68,8 @@ export -f gh
 # Resets all environment variables to a clean state before each test to ensure isolation.
 reset_env() {
     unset TRIGGER_EVENT ACTION_TYPE COMMENT_BODY PR_NUMBER BASE_SHA HEAD_SHA \
-          PR_QUALITY_RESULT MAX_COMMENTS REVIEW_THROTTLE_MINUTES BOT_USERNAME MOCK_GH_COMMENTS_JSON
+          PR_QUALITY_RESULT MAX_COMMENTS REVIEW_THROTTLE_MINUTES BOT_USERNAME \
+          QUALITY_GATE_BOT_USERNAME MOCK_GH_COMMENTS_JSON
 }
 
 # Executes the script under test with the environment variables set by the test case.
@@ -88,6 +89,8 @@ run_test() {
     export MAX_COMMENTS="${MAX_COMMENTS:-60}"
     export REVIEW_THROTTLE_MINUTES="${REVIEW_THROTTLE_MINUTES:-30}"
     export BOT_USERNAME="${BOT_USERNAME:-test-bot}"
+    # Default this to the production value to ensure tests are realistic.
+    export QUALITY_GATE_BOT_USERNAME="${QUALITY_GATE_BOT_USERNAME:-github-actions[bot]}"
     export MOCK_GH_COMMENTS_JSON="${MOCK_GH_COMMENTS_JSON:-[]}"
 
     bash "$SCRIPT_UNDER_TEST"
@@ -181,11 +184,12 @@ test_quality_check_failure_triggers_review() {
     echo -e "\n--- Running Test: Quality check failure triggers review ---"
     reset_env
     PR_QUALITY_RESULT="failure"
-    # Mock a quality report comment indicating a test failure.
-    MOCK_GH_COMMENTS_JSON='[{"author":{"login":"test-bot"}, "body": "Quality Gate Results... Unit Tests ❌"}]'
+    # This mock simulates the real-world scenario where the quality report is posted
+    # by the `github-actions[bot]`, not the AI review bot.
+    MOCK_GH_COMMENTS_JSON='[{"author":{"login":"github-actions[bot]"}, "body": "Quality Gate Results... Unit Tests ❌"}]'
 
     run_test
-    assert_output "true" "" "Should trigger review on test failures."
+    assert_output "true" "" "Should trigger review on test failures from the correct bot."
 }
 
 # --- Main Execution ---
