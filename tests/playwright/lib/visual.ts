@@ -7,7 +7,12 @@
  * boilerplate and ensure consistency across visual tests.
  */
 
-import { expect, type Page, type Locator, type ScreenshotOptions } from '@playwright/test'
+import {
+  expect,
+  type Page,
+  type Locator,
+  type ScreenshotOptions,
+} from '@playwright/test'
 import { getHrMasks, getTimerMasks, waitForFontsLoaded } from '.'
 
 /**
