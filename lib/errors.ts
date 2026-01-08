@@ -1,5 +1,5 @@
 // lib/errors.ts
-import { logger } from '../utils/logger.js'
+import logger from '../utils/logger.js'
 
 /**
  * Custom error class for API-related errors.
