@@ -37,7 +37,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Review Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: review-result
           run-id: ${{ inputs.run_id }}
