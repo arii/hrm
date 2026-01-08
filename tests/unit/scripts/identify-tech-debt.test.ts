@@ -115,7 +115,6 @@ describe('identify-tech-debt', () => {
         'file1.ts',
         'file2.ts',
       ]
-
       ;(readFile as jest.Mock)
         // prompt template
         .mockResolvedValueOnce('template')
