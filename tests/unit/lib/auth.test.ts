@@ -3,6 +3,7 @@
  */
 import { authOptions } from '@/lib/auth'
 import * as spotify from '@/lib/spotify'
+import { Account } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 
 // Mock the spotify module
@@ -54,7 +55,7 @@ describe('authOptions.callbacks.jwt', () => {
       ok: true,
     })
 
-    const result = await jwtCallback({ token, account: account as any })
+    const result = await jwtCallback({ token, account: account as Account })
 
     expect(result.accessToken).toBe(account.access_token)
     expect(result.refreshToken).toBe(account.refresh_token)
@@ -111,9 +112,7 @@ describe('authOptions.callbacks.jwt', () => {
       expect.stringContaining('internal/token-delivery'),
       expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining(
-          refreshedTokens.access_token
-        ),
+        body: expect.stringContaining(refreshedTokens.access_token),
       })
     )
   })
