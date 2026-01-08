@@ -37,9 +37,7 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
         const res = await fetch(`/api/workout?docId=${docId}`)
         if (!res.ok) {
           const errorJson = await res.json()
-          throw new Error(
-            errorJson.error || 'Failed to load workout data'
-          )
+          throw new Error(errorJson.error || 'Failed to load workout data')
         }
         const json = await res.json()
         setData(json)
