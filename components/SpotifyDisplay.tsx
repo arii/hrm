@@ -15,7 +15,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useState } from 'react'
+import { useCallback, useEffect, useReducer } from 'react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
@@ -24,6 +24,7 @@ import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
 interface SpotifyDisplayState {
   displayVolume: number
   isMuted: boolean
+  isSliding: boolean
   lastVolume: number // Last non-zero volume
   selectedDeviceId: string
   deviceMenuAnchor: null | HTMLElement
@@ -32,6 +33,7 @@ interface SpotifyDisplayState {
 // 2. Actions
 type SpotifyDisplayAction =
   | { type: 'SET_VOLUME'; payload: number }
+  | { type: 'SET_SLIDING'; payload: boolean }
   | { type: 'TOGGLE_MUTE' }
   | { type: 'SELECT_DEVICE'; payload: string }
   | { type: 'OPEN_DEVICE_MENU'; payload: HTMLElement }
@@ -48,6 +50,7 @@ const initialStateFactory = (
 ): SpotifyDisplayState => ({
   displayVolume: volume ?? 70,
   isMuted: isMuted,
+  isSliding: false,
   lastVolume: volume && volume > 0 ? volume : 70, // Store last non-zero volume
   selectedDeviceId: '',
   deviceMenuAnchor: null,
@@ -60,6 +63,7 @@ const spotifyDisplayReducer = (
 ): SpotifyDisplayState => {
   switch (action.type) {
     case 'SYNC_WITH_WEBSOCKET': {
+      if (state.isSliding) return state
       const { volume, isMuted } = action.payload
       const newVolume = volume ?? state.displayVolume
       return {
@@ -69,9 +73,12 @@ const spotifyDisplayReducer = (
         lastVolume: newVolume > 0 ? newVolume : state.lastVolume,
       }
     }
+    case 'SET_SLIDING':
+      return { ...state, isSliding: action.payload }
     case 'SET_VOLUME':
       return {
         ...state,
+        isSliding: true,
         displayVolume: action.payload,
         isMuted: action.payload === 0,
         lastVolume: action.payload > 0 ? action.payload : state.lastVolume,
@@ -124,7 +131,6 @@ const SpotifyDisplay = () => {
 
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
-  const [isSliding, setIsSliding] = useState(false)
 
   // 5. Integrate useReducer
   const [state, dispatch] = useReducer(
@@ -148,16 +154,13 @@ const SpotifyDisplay = () => {
   // Enable remote Spotify control from controllers
   useSpotifyRemoteExecution(player)
 
-  // Synchronize local UI state with WebSocket data (the source of truth)
+  // Synchronize with WebSocket data whenever it changes
   useEffect(() => {
-    if (isSliding) {
-      return
-    }
     dispatch({
       type: 'SYNC_WITH_WEBSOCKET',
       payload: { volume: spotifyData.volume, isMuted: spotifyData.isMuted },
     })
-  }, [spotifyData.volume, spotifyData.isMuted, isSliding])
+  }, [spotifyData.volume, spotifyData.isMuted])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
@@ -186,14 +189,13 @@ const SpotifyDisplay = () => {
 
   // Handler for immediate UI update while sliding
   const handleVolumeChange = (newVolume: number) => {
-    if (!isSliding) setIsSliding(true) // Set sliding state on first interaction
     dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
   }
 
   // Handler for sending the final volume value after sliding stops
   const handleVolumeChangeCommitted = (newVolume: number) => {
     sendVolumeCommand(newVolume)
-    setIsSliding(false) // Reset sliding state
+    dispatch({ type: 'SET_SLIDING', payload: false }) // Reset sliding state
   }
 
   // Handler for the VolumeSlider's mute button

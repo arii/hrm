@@ -11,7 +11,7 @@ import { ErrorProvider } from '@/context/ErrorContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
-import { fireEvent, render, screen, act } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useSession, signIn } from 'next-auth/react'
 import React from 'react'
@@ -157,9 +157,7 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('50')
 
       // Simulate user starting to slide
-      act(() => {
-        fireEvent.change(slider, { target: { value: '70' } })
-      })
+      fireEvent.change(slider, { target: { value: '70' } })
       expect(slider).toHaveValue('70')
 
       // Simulate external update while sliding
@@ -179,9 +177,7 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('50')
 
       // Simulate user sliding
-      act(() => {
-        fireEvent.change(slider, { target: { value: '75' } })
-      })
+      fireEvent.change(slider, { target: { value: '75' } })
       expect(slider).toHaveValue('75')
 
       // Simulate external update while sliding (should be ignored)
@@ -194,9 +190,7 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('75')
 
       // Simulate user releasing the slider
-      act(() => {
-        fireEvent.mouseUp(slider)
-      })
+      fireEvent.mouseUp(slider)
 
       // Simulate another external update (should now be applied)
       updatedSpotifyData = { ...initialSpotifyData, volume: 25 }
