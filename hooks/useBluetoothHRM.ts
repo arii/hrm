@@ -421,14 +421,63 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         // Create a new AbortController for this connection attempt
         abortControllerRef.current = new AbortController()
-        const server = await cancellablePromise(device.gatt!.connect(), {
-          timeoutMs: 30000, // 30s timeout - some devices are slow to respond
-          errorMessage: 'GATT connection timeout',
-          signal: abortControllerRef.current.signal,
-        })
+
+        // --- START NEW RETRY LOGIC ---
+        let server: BluetoothRemoteGATTServer | undefined
+        let attempt = 0
+        const maxRetries = 3
+
+        while (true) {
+          try {
+            // Attempt the connection
+            server = await cancellablePromise(device.gatt!.connect(), {
+              timeoutMs: 30000,
+              errorMessage: 'GATT connection timeout',
+              signal: abortControllerRef.current.signal,
+            })
+            // If we get here, connection succeeded!
+            break
+          } catch (error) {
+            const err = error as DOMException | Error
+            const errorName = 'name' in err ? err.name : 'Error'
+            const errorMsg = err.message || ''
+
+            // Check if this is the "Zombie" error (NetworkError or "out of range")
+            // This is the specific error Android throws when the device is busy with the old page
+            const isZombieError =
+              errorName === 'NetworkError' ||
+              errorMsg.includes('range') ||
+              errorMsg.includes('busy')
+
+            // If it's a zombie error and we haven't given up yet...
+            if (
+              isZombieError &&
+              attempt < maxRetries &&
+              !abortControllerRef.current.signal.aborted
+            ) {
+              attempt++
+              const delayMs = Math.pow(2, attempt) * 1000
+              logger.warn(
+                { device: device.name, attempt, delayMs, errorMsg },
+                'Device likely busy (Zombie connection). Retrying with exponential backoff...'
+              )
+              setDeviceStatus(
+                `Device busy (Zombie). Retrying in ${delayMs / 1000}s... (${attempt}/${maxRetries})`
+              )
+
+              // Exponential backoff: 2s, 4s, 8s to let the Android Bluetooth stack clear the connection
+              await new Promise((resolve) => setTimeout(resolve, delayMs))
+              continue // Try again
+            } else {
+              // If it's a different error, or we ran out of retries, fail for real
+              throw error
+            }
+          }
+        }
+        // --- END NEW RETRY LOGIC ---
 
         if (abortControllerRef.current?.signal.aborted) {
-          server.disconnect()
+          server?.disconnect()
           throw new DOMException('Connection aborted', 'AbortError')
         }
 
@@ -436,14 +485,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         // This ensures we catch disconnections that might occur during service discovery
         device.addEventListener('gattserverdisconnected', onDisconnected)
 
-        const service = await server.getPrimaryService(HR_SERVICE_UUID)
+        const service = await server!.getPrimaryService(HR_SERVICE_UUID)
         const characteristic = await service.getCharacteristic(
           HR_CHARACTERISTIC_UUID
         )
 
         try {
           const batteryService =
-            await server.getPrimaryService(BATTERY_SERVICE_UUID)
+            await server!.getPrimaryService(BATTERY_SERVICE_UUID)
           const batteryChar = await batteryService.getCharacteristic(
             BATTERY_LEVEL_CHARACTERISTIC_UUID
           )
@@ -487,7 +536,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
         setDisconnectionReason(null)
-        // Reset reconnection attempts on successful connection
         reconnectAttempts.current = 0
         onConnectRef.current?.()
         return true
@@ -495,35 +543,30 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         const errorMsg = error instanceof Error ? error.message : String(error)
         const errorName = error instanceof DOMException ? error.name : 'Error'
 
-        // Ignore AbortError if it was intentional (signal.aborted will be true)
         const isIntentionalAbort =
           errorName === 'AbortError' &&
           abortControllerRef.current?.signal.aborted
 
-        // Check if this is a GATT disconnection error during service discovery
         const isGattDisconnected =
           errorMsg.includes('GATT Server is disconnected') ||
           errorMsg.includes('GATT operation failed')
 
         if (!isIntentionalAbort) {
-          // Log to console for debugging only - don't show popups
           logger.error(
             { errorName, errorMsg, device: device.name },
             'GATT Connection failed'
           )
         }
 
-        // Timeout errors indicate device is not responding - reset immediately
         if (errorMsg.includes('timeout')) {
           logger.error(
             { device: device.name },
             'Connection timeout detected. Resetting device and permissions.'
           )
           setDeviceStatus('Connection timeout. Resetting device...')
-          reconnectAttempts.current = maxReconnectAttempts // Force immediate reset
+          reconnectAttempts.current = maxReconnectAttempts
           deviceRef.current = null
 
-          // Trigger device reset after brief delay to show message
           if (reconnectTimeoutRef.current)
             clearTimeout(reconnectTimeoutRef.current)
           reconnectTimeoutRef.current = setTimeout(() => {
@@ -543,15 +586,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             reconnectAttempts.current = 0
           }, 2000)
         } else if (isGattDisconnected) {
-          // GATT disconnection during service discovery - try reconnect but with backoff
           logger.warn(
             { device: device.name },
             'Device disconnected during connection. Will attempt auto-reconnect.'
           )
           deviceRef.current = null
-          // Let the onDisconnected handler manage the reconnection logic
         } else if (!isIntentionalAbort) {
-          // Clear the failed device reference so we don't try to reconnect to it
           deviceRef.current = null
         }
 
