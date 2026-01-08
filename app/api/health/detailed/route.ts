@@ -1,9 +1,6 @@
 // app/api/health/detailed/route.ts
 import { NextResponse } from 'next/server'
-import {
-  checkMemoryUsage,
-  checkSpotifyAPI,
-} from '../../../../lib/healthCheck'
+import { checkMemoryUsage, checkSpotifyAPI } from '../../../../lib/healthCheck'
 
 async function checkStatefulServices(): Promise<{
   healthy: boolean
