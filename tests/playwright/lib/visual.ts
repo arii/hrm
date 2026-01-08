@@ -57,13 +57,17 @@ export async function takeDashboardScreenshot(
   snapshotName: string,
   options: object = {}
 ) {
-  // Target the main layout container for a consistent screenshot area.
-  // Ensure the element is visible before attempting to take a screenshot.
-  const mainContent = page.getByTestId('main-content-layout')
-  await mainContent.waitFor({ state: 'visible' })
+  const mainContentLocator = page.getByTestId('main-content-layout');
+  await mainContentLocator.waitFor({ state: 'visible' });
 
-  await takeScreenshot(mainContent, snapshotName, {
+  const clippingRegion = await mainContentLocator.boundingBox();
+  if (!clippingRegion) {
+    throw new Error('Main content layout element not found or visible for screenshot.');
+  }
+
+  await takeScreenshot(page, snapshotName, {
     ...options,
+    clip: clippingRegion,
     mask: [
       ...getTimerMasks(page),
       ...getHrMasks(page),
