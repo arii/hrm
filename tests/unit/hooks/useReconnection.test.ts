@@ -10,9 +10,7 @@ describe('useReconnection', () => {
   it('should attempt to reconnect', async () => {
     const onReconnect = jest.fn().mockResolvedValue(undefined)
     const setDeviceStatus = jest.fn()
-    const { result } = renderHook(() =>
-      useReconnection({ onReconnect, setDeviceStatus })
-    )
+    const { result } = renderHook(() => useReconnection({ onReconnect, setDeviceStatus }))
 
     act(() => {
       result.current.startReconnecting('signal_loss')

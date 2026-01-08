@@ -3,7 +3,10 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useGattCharacteristics } from '@/hooks/useGattCharacteristics'
-import { HR_SERVICE_UUID, HR_CHARACTERISTIC_UUID } from '@/lib/bluetoothUtils'
+import {
+  HR_SERVICE_UUID,
+  HR_CHARACTERISTIC_UUID,
+} from '@/lib/bluetoothUtils'
 
 describe('useGattCharacteristics', () => {
   let mockServer: BluetoothRemoteGATTServer
@@ -17,7 +20,9 @@ describe('useGattCharacteristics', () => {
     }
 
     const mockService = {
-      getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+      getCharacteristic: jest
+        .fn()
+        .mockResolvedValue(mockCharacteristic),
     }
 
     mockServer = {
