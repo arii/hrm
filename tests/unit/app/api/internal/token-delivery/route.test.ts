@@ -5,7 +5,7 @@ import { POST } from '@/app/api/internal/token-delivery/route'
 import { serviceContainer } from '@/lib/serviceContainer'
 import { SpotifyPolling } from '@/services/spotifyPolling'
 import { NextRequest } from 'next/server'
-import { AccessToken } from '@spotify/web-api-ts-sdk'
+import { SpotifyTokenPayload } from '@/services/spotifyTokenManager'
 
 // Mock the service container
 jest.mock('@/lib/serviceContainer', () => ({
@@ -17,11 +17,14 @@ jest.mock('@/lib/serviceContainer', () => ({
 describe('POST /api/internal/token-delivery', () => {
   let mockSpotifyService: jest.Mocked<SpotifyPolling>
   const MOCK_TOKEN_SECRET = 'my-super-secret-internal-token'
-  const MOCK_ACCESS_TOKEN: AccessToken = {
+  const MOCK_TOKEN_PAYLOAD: SpotifyTokenPayload = {
+    provider: 'spotify',
+    sub: 'test-user',
+    scope: 'test-scope',
+    obtainedAt: Date.now(),
     access_token: 'test-access-token',
     refresh_token: 'test-refresh-token',
     expires_in: 3600,
-    token_type: 'Bearer',
   }
 
   beforeEach(() => {
@@ -48,7 +51,7 @@ describe('POST /api/internal/token-delivery', () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(MOCK_ACCESS_TOKEN),
+        body: JSON.stringify(MOCK_TOKEN_PAYLOAD),
       }
     )
 
@@ -67,7 +70,7 @@ describe('POST /api/internal/token-delivery', () => {
           'Content-Type': 'application/json',
           'x-internal-token-secret': 'invalid-secret',
         },
-        body: JSON.stringify(MOCK_ACCESS_TOKEN),
+        body: JSON.stringify(MOCK_TOKEN_PAYLOAD),
       }
     )
 
@@ -105,17 +108,14 @@ describe('POST /api/internal/token-delivery', () => {
           'Content-Type': 'application/json',
           'x-internal-token-secret': MOCK_TOKEN_SECRET,
         },
-        body: JSON.stringify(MOCK_ACCESS_TOKEN),
+        body: JSON.stringify(MOCK_TOKEN_PAYLOAD),
       }
     )
 
     await POST(request)
 
     expect(mockSpotifyService.handleTokenUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        access_token: 'test-access-token',
-        refresh_token: 'test-refresh-token',
-      })
+      MOCK_TOKEN_PAYLOAD
     )
   })
 
@@ -128,7 +128,7 @@ describe('POST /api/internal/token-delivery', () => {
           'Content-Type': 'application/json',
           'x-internal-token-secret': MOCK_TOKEN_SECRET,
         },
-        body: JSON.stringify(MOCK_ACCESS_TOKEN),
+        body: JSON.stringify(MOCK_TOKEN_PAYLOAD),
       }
     )
 

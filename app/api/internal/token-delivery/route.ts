@@ -2,7 +2,7 @@ import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
 import { serviceContainer } from '@/lib/serviceContainer'
-import { AccessToken } from '@spotify/web-api-ts-sdk'
+import { SpotifyTokenPayload } from '@/services/spotifyTokenManager'
 
 /**
  * @route POST /api/internal/token-delivery
@@ -17,7 +17,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 export async function POST(req: NextRequest) {
   try {
     // 1. Parse the token from the request body
-    const tokenData = (await req.json()) as AccessToken
+    const tokenData = (await req.json()) as SpotifyTokenPayload
     if (!tokenData || !tokenData.refresh_token) {
       throw new ApiError(400, 'Bad Request: Missing token data.')
     }
@@ -43,13 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Directly and reliably update the service with the new token
-    await spotifyService.handleTokenUpdate({
-      ...tokenData,
-      provider: 'spotify',
-      sub: '',
-      scope: '',
-      obtainedAt: Date.now(),
-    })
+    await spotifyService.handleTokenUpdate(tokenData)
     logger.info('Spotify token delivered and processed successfully.')
 
     return NextResponse.json({
