@@ -12,7 +12,8 @@ const getArg = (key: string): string | null => {
   const args = process.argv.slice(2);
   const index = args.indexOf(key);
   if (index !== -1 && index + 1 < args.length) {
-    return args[index + 1];
+    // Coalesce to null to satisfy TypeScript's strict null checks
+    return args[index + 1] ?? null;
   }
   return null;
 };
