@@ -318,9 +318,7 @@ export const WebSocketProvider = ({
             connectRef.current()
           }, reconnectDelay)
         } else {
-          logger.error(
-            '[WebSocketProvider] Max reconnection attempts reached.'
-          )
+          logger.error('[WebSocketProvider] Max reconnection attempts reached.')
           setConnectionStatus(
             'Failed to connect. Please check your connection and refresh the page.'
           )
