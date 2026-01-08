@@ -1,4 +1,6 @@
 // lib/errors.ts
+import logger from '../utils/logger'
+
 /**
  * Custom error class for API-related errors.
  * This allows for specific error handling and consistent response formatting.
@@ -31,7 +33,8 @@ export const ERROR_MESSAGES = {
     'Spotify token expired during polling. Attempting refresh.',
   SPOTIFY_POLLING_NETWORK_ERROR:
     'Temporary network connectivity issue during Spotify polling (suppressed)',
-  SPOTIFY_POLLING_UNHANDLED_ERROR: 'Unhandled Spotify API error during polling',
+  SPOTIFY_POLLING_UNHANDLED_ERROR:
+    'Unhandled Spotify API error during polling',
   SPOTIFY_FETCH_TRACK_ERROR: 'Error fetching currently playing track',
 
   // Google Docs Errors
@@ -63,6 +66,5 @@ export const logApiError = (
   message: string,
   error: unknown
 ) => {
-  // In a real application, this would integrate with a logging service (e.g., Sentry, Datadog)
-  console.error(`[${service} API Error]: ${message}`, error)
+  logger.error(`[${service} API Error]: ${message}`, error)
 }
