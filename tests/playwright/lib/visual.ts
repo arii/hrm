@@ -57,7 +57,10 @@ export async function takeDashboardScreenshot(
   snapshotName: string,
   options: object = {}
 ) {
-  await takeScreenshot(page, snapshotName, {
+  // Target the main layout container for a consistent screenshot area
+  const mainContent = page.getByTestId('main-content-layout')
+
+  await takeScreenshot(mainContent, snapshotName, {
     ...options,
     mask: [
       ...getTimerMasks(page),
