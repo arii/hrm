@@ -177,6 +177,7 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('50')
 
       // Simulate user sliding
+      fireEvent.mouseDown(slider)
       fireEvent.change(slider, { target: { value: '75' } })
       expect(slider).toHaveValue('75')
 
