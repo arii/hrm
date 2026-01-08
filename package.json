@@ -87,7 +87,7 @@
     "react-dom": "19.2.3",
     "uuid": "^9.0.1",
     "ws": "^8.19.0",
-    "zod": "^4.2.1"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.3.0",
