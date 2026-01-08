@@ -11,44 +11,37 @@ import { ErrorProvider } from '@/context/ErrorContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
-import { fireEvent, render, screen, act } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useSession, signIn } from 'next-auth/react'
 import React from 'react'
 import { SpotifyData } from '@/types/websocket'
 
 // Mock dependencies
-jest.mock('@/components/Spotify/VolumeSlider', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const React = require('react')
-  // This is a custom mock for the VolumeSlider component
-  return {
-    __esModule: true,
-    default: ({
-      volume,
-      onVolumeChange,
-      onVolumeChangeCommitted,
-    }: {
-      volume: number
-      onVolumeChange: (value: number) => void
-      onVolumeChangeCommitted: (value: number) => void
-    }) => {
-      return (
-        <input
-          type="range"
-          aria-label="Volume control"
-          value={volume}
-          onChange={(e) => onVolumeChange(parseInt(e.target.value, 10))}
-          onMouseUp={(e) =>
-            onVolumeChangeCommitted(
-              parseInt((e.target as HTMLInputElement).value, 10)
-            )
-          }
-        />
-      )
-    },
-  }
-})
+jest.mock('@/components/Spotify/VolumeSlider', () => ({
+  __esModule: true,
+  default: ({
+    volume,
+    onVolumeChange,
+    onVolumeChangeCommitted,
+  }: {
+    volume: number
+    onVolumeChange: (value: number) => void
+    onVolumeChangeCommitted: (value: number) => void
+  }) => (
+    <input
+      type="range"
+      aria-label="Volume control"
+      value={volume}
+      onChange={(e) => onVolumeChange(parseInt(e.target.value, 10))}
+      onMouseUp={(e) =>
+        onVolumeChangeCommitted(
+          parseInt((e.target as HTMLInputElement).value, 10)
+        )
+      }
+    />
+  ),
+}))
 jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
   __esModule: true,
   default: () => <div data-testid="current-spotify-item-display" />,
