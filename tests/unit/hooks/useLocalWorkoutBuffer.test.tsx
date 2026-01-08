@@ -16,8 +16,7 @@ jest.mock('@/hooks/useLocalStorage', () => {
   const { useState } = require('react')
   return {
     __esModule: true,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    default: (_key: string, initialValue: any) => {
+    default: <T,>(_key: string, initialValue: T) => {
       // eslint-disable-next-line react-hooks/rules-of-hooks
       const [state, setState] = useState(initialValue)
       return [state, setState]
