@@ -15,6 +15,7 @@ import {
   ServerMessage,
   StateSnapshot,
   ExtWebSocket,
+  SessionState,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
@@ -35,6 +36,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
+export let sessionManager: SessionManager
 let services: AppServices
 
 // State Management:
@@ -47,10 +49,137 @@ const hrmDataRepository = new HrmDataRepository()
 const clientSockets = new Map<string, WebSocket>()
 
 // Track internal state for calculations (not sent to client)
-const clientSessionState = new Map<
-  string,
-  { lastUpdate: number; accumulatedCalories: number }
->()
+const clientSessionState = new Map<string, SessionState>()
+
+/**
+ * Manages the lifecycle of WebSocket sessions, including periodic cleanup of inactive sessions.
+ * @internal
+ */
+export class SessionManager {
+  private readonly sessionStore: Map<string, SessionState>
+  private readonly gracePeriodMs: number
+  private readonly cleanupIntervalMs: number
+  private cleanupTimer?: NodeJS.Timeout
+
+  constructor(
+    gracePeriodMs: number,
+    cleanupIntervalMs: number = 60000 // Default to 60 seconds
+  ) {
+    this.sessionStore = new Map<string, SessionState>()
+    this.gracePeriodMs = gracePeriodMs
+    this.cleanupIntervalMs = cleanupIntervalMs
+  }
+
+  /**
+   * Starts the periodic cleanup of stale sessions.
+   */
+  public start(): void {
+    if (this.cleanupTimer) {
+      logger.warn('SessionManager cleanup is already running.')
+      return
+    }
+    this.cleanupTimer = setInterval(
+      () => this.cleanupStaleSessions(),
+      this.cleanupIntervalMs
+    )
+    logger.info(
+      {
+        gracePeriodMs: this.gracePeriodMs,
+        cleanupIntervalMs: this.cleanupIntervalMs,
+      },
+      'SessionManager started.'
+    )
+  }
+
+  /**
+   * Stops the periodic cleanup timer.
+   */
+  public stop(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer)
+      this.cleanupTimer = undefined
+      logger.info('SessionManager stopped.')
+    }
+  }
+
+  /**
+   * Retrieves a session by its client ID.
+   * @param clientId The ID of the client.
+   * @returns The session state or undefined if not found.
+   */
+  public get(clientId: string): SessionState | undefined {
+    return this.sessionStore.get(clientId)
+  }
+
+  /**
+   * Creates or updates a session for a client.
+   * @param clientId The ID of the client.
+   * @param initialState The initial state for a new session.
+   * @returns The existing or newly created session state.
+   */
+  public getOrCreate(
+    clientId: string,
+    initialState: Omit<SessionState, 'disconnectedAt'>
+  ): SessionState {
+    let session = this.sessionStore.get(clientId)
+    if (session) {
+      // If client reconnects, clear the disconnectedAt timestamp
+      delete session.disconnectedAt
+      return session
+    }
+    session = { ...initialState }
+    this.sessionStore.set(clientId, session)
+    return session
+  }
+
+  /**
+   * Deletes a session by its client ID.
+   * @param clientId The ID of the client.
+   */
+  public delete(clientId: string): void {
+    this.sessionStore.delete(clientId)
+  }
+
+  /**
+   * Marks a session as disconnected, adding a timestamp.
+   * @param clientId The ID of the client.
+   */
+  public markAsDisconnected(clientId: string): void {
+    const session = this.sessionStore.get(clientId)
+    if (session) {
+      session.disconnectedAt = Date.now()
+    }
+  }
+
+  /**
+   * Iterates through the session store and removes sessions that are disconnected
+   * and have exceeded the grace period.
+   */
+  private cleanupStaleSessions(): void {
+    const now = Date.now()
+    let cleanedCount = 0
+    for (const [clientId, session] of this.sessionStore.entries()) {
+      // A session is stale if it's marked as disconnected and the grace period has passed.
+      if (session.disconnectedAt && now - session.disconnectedAt > this.gracePeriodMs) {
+        try {
+          // Additional cleanup logic (e.g., broadcasting state) should be handled
+          // by the caller after deleting the session.
+          hrmDataRepository.deleteById(clientId)
+          this.sessionStore.delete(clientId)
+          cleanedCount++
+          logger.info({ clientId }, 'Cleaned up stale session.')
+        } catch (err) {
+          logger.error({ clientId, error: err }, 'Error during session cleanup')
+        }
+      }
+    }
+    if (cleanedCount > 0) {
+      logger.info({ count: cleanedCount }, 'Session cleanup complete.')
+      // After cleanup, broadcast the new state to all clients.
+      broadcastState()
+    }
+  }
+}
 
 /**
  * Safely parses the WebSocket request URL to extract search parameters.
@@ -113,7 +242,9 @@ const initSocketManager = (
   getUnifiedStateSnapshot = getSnapshot
   services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
+  sessionManager = new SessionManager(env.WEBSOCKET_GRACE_PERIOD_MS)
   connectionMonitor.start()
+  sessionManager.start()
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket
@@ -143,6 +274,11 @@ const initSocketManager = (
 
     logger.info(logMeta, 'WebSocket client connected')
 
+    sessionManager.getOrCreate(clientId, {
+      lastUpdate: Date.now(),
+      accumulatedCalories: 0,
+    })
+
     if (!hrmDataRepository.findById(clientId)) {
       // Initialize new client
       const newClient: HrmStreamData = {
@@ -153,10 +289,6 @@ const initSocketManager = (
         calories: 0, // Initialize to 0
       }
       hrmDataRepository.save(newClient)
-      clientSessionState.set(extWs.clientId, {
-        lastUpdate: Date.now(),
-        accumulatedCalories: 0,
-      })
     } else {
       logger.info({ clientId }, 'Reconnected with existing session.')
     }
@@ -168,39 +300,26 @@ const initSocketManager = (
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
 
-      // CRITICAL: Do NOT immediately delete clientData.
-      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
-      // NOTE: In a high-traffic production environment, this could lead to
-      // memory pressure if many clients disconnect and don't reconnect.
-      // A more robust solution might involve a separate cleanup process
-      // or a maximum number of inactive sessions.
-      setTimeout(() => {
-        // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
-        if (clientSockets.get(clientId) === extWs) {
-          logger.info(
-            { clientId: extWs.clientId },
-            'Session expired. Deleting data.'
-          )
-          try {
-            hrmDataRepository.deleteById(extWs.clientId)
-            clientSessionState.delete(extWs.clientId)
-            broadcastState()
-          } catch (err) {
-            logger.error(
-              { clientId: extWs.clientId, error: err },
-              'Error during session cleanup'
-            )
-          } finally {
-            // Always remove the socket reference to prevent leaks
-            clientSockets.delete(extWs.clientId)
-          }
-        }
-      }, env.WEBSOCKET_GRACE_PERIOD_MS)
+      // If this was the most recent socket for the client, mark them as disconnected.
+      if (clientSockets.get(clientId) === extWs) {
+        sessionManager.markAsDisconnected(clientId)
+        clientSockets.delete(clientId) // Remove the stale socket reference
+        logger.info(
+          { clientId: extWs.clientId, gracePeriod: env.WEBSOCKET_GRACE_PERIOD_MS },
+          'Session marked for cleanup.'
+        )
+      } else {
+        logger.info(
+          { clientId: extWs.clientId },
+          'Stale socket closed, active session retained.'
+        )
+      }
     })
   })
 
   wss.on('close', () => {
     connectionMonitor.stop()
+    sessionManager.stop()
   })
 }
 
@@ -209,10 +328,16 @@ const initSocketManager = (
  */
 export const resetSocketManager = () => {
   hrmDataRepository.clear()
-  clientSessionState.clear()
+  clientSockets.clear() // Also clear active sockets
+  // Assuming sessionManager is accessible in this scope and has a 'stop' and 'clear' method
+  if (sessionManager) {
+    sessionManager.stop() // Stop the cleanup timer
+    // Re-initialize to clear internal state, mirroring constructor logic
+    sessionManager = new SessionManager(env.WEBSOCKET_GRACE_PERIOD_MS)
+  }
 }
 
-const broadcastState = () => {
+export const broadcastState = () => {
   broadcast(
     wsServerInstance,
     {
@@ -290,7 +415,10 @@ const handleIncomingMessage = (
       }
       case 'HRM_INPUT': {
         const existingData = hrmDataRepository.findById(clientId)
-        const sessionState = clientSessionState.get(clientId)
+        const sessionState = sessionManager.getOrCreate(clientId, {
+          lastUpdate: Date.now(),
+          accumulatedCalories: 0,
+        })
         if (existingData && sessionState) {
           let finalCalories = 0
           // Prioritize client-calculated calories if available

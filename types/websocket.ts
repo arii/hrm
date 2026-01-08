@@ -28,6 +28,17 @@ export interface ExtWebSocket extends WebSocket {
 
 export type { HrmData, TimerData, SpotifyData, TimerMode }
 
+/**
+ * @internal
+ * Holds internal server state for calculations (e.g., calorie accumulation) and
+ * session management. This data is NOT sent to the client.
+ */
+export interface SessionState {
+  lastUpdate: number
+  accumulatedCalories: number
+  disconnectedAt?: number // Timestamp of disconnection
+}
+
 export type SpotifyCommand =
   | 'PLAY'
   | 'PAUSE'

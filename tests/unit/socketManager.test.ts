@@ -391,19 +391,6 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should broadcast state on client disconnect', () => {
-      mockWs.emit('close')
-      jest.runAllTimers()
-      expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [],
-        },
-        'socketManager.broadcastState'
-      )
-    })
-
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
       const dashboardWs = new MockWebSocket() as ExtWebSocket
       dashboardWs.clientType = 'dashboard'
@@ -481,6 +468,54 @@ describe('WebSocket Manager', () => {
       expect(logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({ clientId: 'test-client' }),
         'Unknown message type received'
+      )
+    })
+  })
+
+  describe('SessionManager Integration', () => {
+    // These tests rely on the SessionManager being integrated within initSocketManager
+    it('should mark a session as disconnected on client close', () => {
+      const clientId = (mockWs as ExtWebSocket).clientId
+      mockWs.emit('close')
+      // This doesn't immediately trigger cleanup, but marks the session.
+      // Verification of cleanup is in the next test.
+      // We'd need to inspect sessionManager's internal state, which is tricky.
+      // Instead, we'll rely on the log message as an indicator.
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.objectContaining({ clientId }),
+        'Session marked for cleanup.'
+      )
+    })
+
+    it('should cleanup stale sessions periodically', () => {
+      const clientId = (mockWs as ExtWebSocket).clientId
+      mockWs.emit('close')
+
+      // Fast-forward time past the grace period (assuming default env values)
+      const gracePeriod = process.env.WEBSOCKET_GRACE_PERIOD_MS
+        ? parseInt(process.env.WEBSOCKET_GRACE_PERIOD_MS)
+        : 5000
+      jest.advanceTimersByTime(gracePeriod + 1000)
+
+      // The cleanup runs on an interval, so we need to advance past that too.
+      // The mock setup doesn't expose the interval, so we'll just run all timers.
+      jest.runOnlyPendingTimers() // This should trigger the setInterval in SessionManager
+
+      // After cleanup, the broadcast should be called to update clients
+      // And the session data should be gone.
+      expect(broadcast).toHaveBeenCalledWith(
+        mockWss,
+        {
+          type: 'HRM_UPDATE',
+          payload: [], // Empty because the user's data was deleted
+        },
+        'socketManager.broadcastState'
+      )
+
+      // Verify logger message for cleanup
+      expect(logger.info).toHaveBeenCalledWith(
+        { clientId },
+        'Cleaned up stale session.'
       )
     })
   })
