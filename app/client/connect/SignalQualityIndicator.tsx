@@ -1,4 +1,3 @@
-import React from 'react'
 import { Box, Tooltip, Typography, useTheme } from '@mui/material'
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt'
 import SignalCellularAlt2BarIcon from '@mui/icons-material/SignalCellularAlt2Bar'
