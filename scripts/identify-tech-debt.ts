@@ -7,6 +7,10 @@ import {
   cleanJsonOutput,
 } from './gemini-client'
 
+// Define a maximum length for the diff to avoid exceeding API token limits.
+// This is a generous limit that can be tuned in the future.
+const MAX_DIFF_LENGTH = 100000
+
 // Simple arg parsing
 const getArg = (key: string) => {
   const args = process.argv.slice(2)
@@ -76,7 +80,18 @@ export async function main() {
       'utf-8'
     )
 
-    const prompt = promptTemplate.replace('{{diff}}', diffContent)
+    let processedDiff = diffContent
+
+    if (diffContent.length > MAX_DIFF_LENGTH) {
+      console.warn(
+        `Warning: Diff content is very large (${diffContent.length} characters) and will be truncated to ${MAX_DIFF_LENGTH} characters.`
+      )
+      processedDiff =
+        diffContent.substring(0, MAX_DIFF_LENGTH) +
+        '\n\n...[DIFF TRUNCATED DUE TO SIZE]...'
+    }
+
+    const prompt = promptTemplate.replace('{{diff}}', processedDiff)
 
     const rawResponse = await generateContentWithFallback({
       genAI,
