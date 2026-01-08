@@ -137,6 +137,7 @@ export default function ConnectPage() {
     isDataStale,
     isSupported,
     disconnectionReason,
+    signalPeriodMs,
   } = useBluetoothHRM({
     userName,
     userAge: userAge || 0,
@@ -232,6 +233,7 @@ export default function ConnectPage() {
       onDisconnect={disconnect}
       onForgetDevice={forgetDevice}
       isSupported={isSupported}
+      signalPeriodMs={signalPeriodMs}
       currentHR={currentHR}
       hrZoneProps={{
         percentage: hrZoneProps.percentage,
