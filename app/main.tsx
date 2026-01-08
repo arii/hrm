@@ -31,6 +31,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
                     initial="initial"
                     animate="in"
                     exit="out"
+                    data-testid="main-content-layout"
                   >
                     {children}
                   </motion.div>
