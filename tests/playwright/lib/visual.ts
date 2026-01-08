@@ -59,8 +59,8 @@ export async function takeDashboardScreenshot(
 ) {
   // Target the main layout container for a consistent screenshot area.
   // Ensure the element is visible before attempting to take a screenshot.
-  const mainContent = page.getByTestId('main-content-layout');
-  await mainContent.waitFor({ state: 'visible' });
+  const mainContent = page.getByTestId('main-content-layout')
+  await mainContent.waitFor({ state: 'visible' })
 
   await takeScreenshot(mainContent, snapshotName, {
     ...options,
