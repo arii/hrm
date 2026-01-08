@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.24.0](https://github.com/arii/hrm/compare/hrm-v0.23.0...hrm-v0.24.0) (2026-01-08)
+
+
+### Features
+
+* **medium:** fix: bluetooth race conditions ([#3274](https://github.com/arii/hrm/issues/3274)) ([63370df](https://github.com/arii/hrm/commit/63370df9e500249efb85099f24a3deb7e15deb35))
+* **medium:** fix: Reduce excessive console logging for real-time HRM data flow ([#3228](https://github.com/arii/hrm/issues/3228)) ([ce69e2e](https://github.com/arii/hrm/commit/ce69e2e653e4a636e5977b989795cb1fb932ec06))
+* **medium:** Implement Runtime Environment Variable Validation ([#3234](https://github.com/arii/hrm/issues/3234)) ([0b2f807](https://github.com/arii/hrm/commit/0b2f80773664fb8a5aec81a59f122f2c8b00f2db))
+* **small:** fix: Correctly check NEXT_PUBLIC_USE_NATIVE_TABLE env var ([#3197](https://github.com/arii/hrm/issues/3197)) ([b3a8fe2](https://github.com/arii/hrm/commit/b3a8fe2dddf40810db5c5afbc361997c5688990b))
+* **small:** Improve Bluetooth Auto-connection Robustness ([#3216](https://github.com/arii/hrm/issues/3216)) ([ec6d78c](https://github.com/arii/hrm/commit/ec6d78cf0c2e8a2839726991c95da7c4da10b948))
+* **small:** Manage Configuration via Environment Variables ([#3186](https://github.com/arii/hrm/issues/3186)) ([3b61cc0](https://github.com/arii/hrm/commit/3b61cc026d93ad1d1b4e5e60b8678cb78d78771e))
+* **small:** Refactor: Extract WorkoutControls component ([#3199](https://github.com/arii/hrm/issues/3199)) ([c7b079f](https://github.com/arii/hrm/commit/c7b079f79eead4844afa7ae584d973f52b5b910d))
+
+
+### Bug Fixes
+
+* **ci:** correct job id parsing and issue creation scripts ([4dabd5c](https://github.com/arii/hrm/commit/4dabd5c0c42d90102e42553a02866fff4ac7c803))
+* **ci:** improve job id parsing in gemini review workflow ([#3213](https://github.com/arii/hrm/issues/3213)) ([bb7900c](https://github.com/arii/hrm/commit/bb7900c4f261e431302a62e93926e0cb908eae11))
+* **connect:** Sanitize localStorage data to prevent incorrect age pre-fill ([#3227](https://github.com/arii/hrm/issues/3227)) ([b3398cb](https://github.com/arii/hrm/commit/b3398cb801ec3ce9fdebc27b409bfba7ae185056))
+* Correct Regex Syntax in PR Enrichment Workflow ([#3187](https://github.com/arii/hrm/issues/3187)) ([536d570](https://github.com/arii/hrm/commit/536d570b2f87399929462d1df46bffdb9a69a232))
+* **tech-debt:** Implement file size management for Gemini API token limits ([#3281](https://github.com/arii/hrm/issues/3281)) ([862313f](https://github.com/arii/hrm/commit/862313f060fe8d4882bc5bb73e3ea311b6de110b))
+
 ## [0.23.0](https://github.com/arii/hrm/compare/hrm-v0.22.0...hrm-v0.23.0) (2026-01-05)
 
 
