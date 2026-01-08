@@ -121,7 +121,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isDataStale, setIsDataStale] = useState(false)
-  const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
+  const [heartRate, setHeartRate] = useState<number>(0)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
@@ -129,7 +129,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const statusRef = useRef(deviceStatus)
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
-  const periodHistory = useRef<number[]>([])
   const isManualDisconnect = useRef(false)
   const isTimeoutDisconnect = useRef(false)
   const reconnectAttempts = useRef(0)
@@ -520,35 +519,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         characteristic.addEventListener(
           'characteristicvaluechanged',
           (event: unknown) => {
-            const now = Date.now()
-
-            // Calculate Delta (Period) for Signal Quality
-            if (lastDataTime.current > 0) {
-              const delta = now - lastDataTime.current
-              // Update Rolling History
-              periodHistory.current.push(delta)
-              if (periodHistory.current.length > 5) {
-                periodHistory.current.shift()
-              }
-              // Calculate Average
-              const total = periodHistory.current.reduce(
-                (sum, val) => sum + val,
-                0
-              )
-              const average = total / periodHistory.current.length
-              // Update State
-              setSignalPeriodMs(Math.round(average))
-            }
-
             const e = event as Event
             const target = e.target as BluetoothRemoteGATTCharacteristic
-            const heartRate = parseHeartRate(target.value!)
-            lastDataTime.current = now // Update timestamp for next delta
+            const newHeartRate = parseHeartRate(target.value!)
+            setHeartRate(newHeartRate)
+            lastDataTime.current = Date.now()
             logger.debug(
-              { heartRate },
+              { heartRate: newHeartRate },
               'Heart rate data received from Bluetooth'
             )
-            onHeartRateUpdateRef.current?.(heartRate)
+            onHeartRateUpdateRef.current?.(newHeartRate)
           }
         )
 
@@ -773,6 +753,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [connectAndStream])
 
   return {
+    heartRate,
     connectAndStream,
     autoConnect,
     disconnect,
@@ -783,7 +764,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isDataStale,
     isSupported, // Export this flag
     disconnectionReason,
-    signalPeriodMs,
   }
 }
 
