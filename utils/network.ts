@@ -1,5 +1,5 @@
 // utils/network.ts
-import { ERROR_MESSAGES } from '../lib/errors'
+import { ERROR_MESSAGES } from '../lib/errors.js'
 
 /**
  * Standardized error schema for the application.
