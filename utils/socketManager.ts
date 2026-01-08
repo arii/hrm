@@ -48,9 +48,6 @@ const hrmDataRepository = new HrmDataRepository()
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
 
-// Track internal state for calculations (not sent to client)
-const clientSessionState = new Map<string, SessionState>()
-
 /**
  * Manages the lifecycle of WebSocket sessions, including periodic cleanup of inactive sessions.
  * @internal
@@ -160,7 +157,10 @@ export class SessionManager {
     let cleanedCount = 0
     for (const [clientId, session] of this.sessionStore.entries()) {
       // A session is stale if it's marked as disconnected and the grace period has passed.
-      if (session.disconnectedAt && now - session.disconnectedAt > this.gracePeriodMs) {
+      if (
+        session.disconnectedAt &&
+        now - session.disconnectedAt > this.gracePeriodMs
+      ) {
         try {
           // Additional cleanup logic (e.g., broadcasting state) should be handled
           // by the caller after deleting the session.
@@ -305,7 +305,10 @@ const initSocketManager = (
         sessionManager.markAsDisconnected(clientId)
         clientSockets.delete(clientId) // Remove the stale socket reference
         logger.info(
-          { clientId: extWs.clientId, gracePeriod: env.WEBSOCKET_GRACE_PERIOD_MS },
+          {
+            clientId: extWs.clientId,
+            gracePeriod: env.WEBSOCKET_GRACE_PERIOD_MS,
+          },
           'Session marked for cleanup.'
         )
       } else {
