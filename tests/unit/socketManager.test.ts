@@ -382,8 +382,7 @@ describe('WebSocket Manager', () => {
       expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith(
         'STOP'
       )
-      lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       payload = lastCall[1].payload
       expect(payload[0].calories).toBe(0)
     })

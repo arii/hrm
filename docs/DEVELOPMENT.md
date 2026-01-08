@@ -191,7 +191,6 @@ The repository provides an automated workflow to create issues from the suggesti
 
 2.  **Manual Trigger**: Navigate to the "Actions" tab in the GitHub repository, select the "Create Issues from Command" workflow, and run it manually. You will be prompted to enter the Pull Request number you wish to source the review artifacts from.
 
-
 ## Current Focus
 
 The primary focus of ongoing development is to enhance the user experience and improve the long-term maintainability of the application. Key priorities include:
