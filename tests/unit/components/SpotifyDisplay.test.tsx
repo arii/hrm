@@ -193,13 +193,13 @@ describe('SpotifyDisplay', () => {
       fireEvent.mouseUp(slider)
 
       // Simulate another external update (should now be applied)
-      updatedSpotifyData = { ...initialSpotifyData, volume: 25 }
+      updatedSpotifyData = { ...initialSpotifyData, volume: 10 } // Ensure new volume to trigger effect
       mockedUseWebSocket.mockReturnValue({
         ...mockedUseWebSocket(),
         spotifyData: updatedSpotifyData,
       })
       rerender(<SpotifyDisplay />)
-      expect(slider).toHaveValue('25')
+      expect(slider).toHaveValue('10')
     })
   })
 })
