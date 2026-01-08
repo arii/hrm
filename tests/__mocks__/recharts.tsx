@@ -1,28 +1,11 @@
-// tests/__mocks__/recharts.tsx
+import React from 'react';
 
-import React from 'react'
-
-// A generic stub component for recharts components
-const RechartsStub = (props: {
-  'data-testid'?: string
-  children?: React.ReactNode
-}) => {
-  return (
-    <div data-testid={props['data-testid'] || 'recharts-stub'}>
-      {props.children}
-    </div>
-  )
-}
-
-// Export all used recharts components as the stub
-export const LineChart = RechartsStub
-export const Line = RechartsStub
-export const XAxis = RechartsStub
-export const YAxis = RechartsStub
-export const CartesianGrid = RechartsStub
-export const Tooltip = RechartsStub
-export const Legend = RechartsStub
-export const ResponsiveContainer = RechartsStub
-
-// If there's a default export in recharts that's used, add:
-// export default RechartsStub;
+export const LineChart = ({ children }: any) => <div data-testid="mock-LineChart">{children}</div>;
+export const Line = () => <div data-testid="mock-Line" />;
+export const XAxis = () => <div data-testid="mock-XAxis" />;
+export const YAxis = () => <div data-testid="mock-YAxis" />;
+export const CartesianGrid = () => <div data-testid="mock-CartesianGrid" />;
+export const Tooltip = () => <div data-testid="mock-Tooltip" />;
+export const Legend = () => <div data-testid="mock-Legend" />;
+export const ResponsiveContainer = ({ children }: any) => <div data-testid="mock-ResponsiveContainer">{children}</div>;
+// Add other recharts components as needed, e.g., AreaChart, BarChart, PieChart
