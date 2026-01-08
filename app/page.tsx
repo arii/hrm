@@ -8,16 +8,16 @@ import Container from '@mui/material/Container'
 import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
-import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton.js'
+import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
-import HrmConnectionPanel from '../components/HrmConnectionPanel.js'
-import TimerDisplay from '../components/TimerDisplay.js'
-import { useAudio } from '../hooks/useAudio.js'
+import HrmConnectionPanel from '../components/HrmConnectionPanel'
+import TimerDisplay from '../components/TimerDisplay'
+import { useAudio } from '../hooks/useAudio'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
 const SpotifyDisplay = dynamic(
-  () => import('../components/SpotifyDisplay.js'),
+  () => import('../components/SpotifyDisplay'),
   {
     ssr: false,
     loading: () => <DashboardSectionLoadingSkeleton height={80} />, // Optional: Render nothing while loading to avoid layout shift
@@ -28,7 +28,7 @@ const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 const WorkoutTableViewer = dynamic(
-  () => import('../components/WorkoutTableViewer.js'),
+  () => import('../components/WorkoutTableViewer'),
   {
     ssr: false,
     loading: () => <DashboardSectionLoadingSkeleton height={500} />,
@@ -36,7 +36,7 @@ const WorkoutTableViewer = dynamic(
 )
 
 const GoogleDocViewer = dynamic(
-  () => import('../components/GoogleDocViewer.js'),
+  () => import('../components/GoogleDocViewer'),
   {
     ssr: false,
     loading: () => <DashboardSectionLoadingSkeleton height={500} />,

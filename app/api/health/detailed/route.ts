@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import {
   checkMemoryUsage,
   checkSpotifyAPI,
-} from '../../../../lib/healthCheck.js'
+} from '../../../../lib/healthCheck'
 
 async function checkStatefulServices(): Promise<{
   healthy: boolean
