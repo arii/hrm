@@ -1,7 +1,7 @@
 // components/shared/DataFetchError.tsx
 'use client'
 
-import { Alert, Button, Stack } from '@mui/material'
+import { Alert, Button } from '@mui/material'
 
 interface DataFetchErrorProps {
   errorMessage: string
