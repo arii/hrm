@@ -61,10 +61,7 @@ export const getAPIURL = (endpoint: string): string => {
 }
 
 export const getSpotifyCallbackURL = (): string => {
-  return (
-    process.env.SPOTIFY_CALLBACK_URL ||
-    `${getBaseURL()}/api/auth/callback/spotify`
-  )
+  return `${getBaseURL()}/api/auth/callback/spotify`
 }
 
 export const getGoogleDocWorkoutUrl = (): string | undefined => {

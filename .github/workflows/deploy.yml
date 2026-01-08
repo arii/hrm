@@ -84,11 +84,8 @@ jobs:
           HOST=127.0.0.1
           NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
           NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
-          BASE_URL=${{ secrets.BASE_URL }}
           SPOTIFY_CLIENT_ID=${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          SPOTIFY_CALLBACK_URL=${{ secrets.SPOTIFY_CALLBACK_URL }}
-          INTERNAL_TOKEN_DELIVERY_SECRET=${{ secrets.INTERNAL_TOKEN_DELIVERY_SECRET }}
           ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
           GOOGLE_DOC_WORKOUT_URL="${{ secrets.GOOGLE_DOC_WORKOUT_URL }}"
           SPOTIFY_DEBUG=false

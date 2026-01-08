@@ -12,7 +12,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
  * This replaces the previous fragile, timing-based middleware interception in `server.ts`.
  *
  * @protection This endpoint is protected by a secret header (`x-internal-token-secret`)
- * defined in the `INTERNAL_TOKEN_DELIVERY_SECRET` environment variable.
+ * defined in the `NEXTAUTH_SECRET` environment variable.
  */
 export async function POST(req: NextRequest) {
   try {
