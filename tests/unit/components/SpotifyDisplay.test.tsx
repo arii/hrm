@@ -18,6 +18,37 @@ import React from 'react'
 import { SpotifyData } from '@/types/websocket'
 
 // Mock dependencies
+jest.mock('@/components/Spotify/VolumeSlider', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const React = require('react')
+  // This is a custom mock for the VolumeSlider component
+  return {
+    __esModule: true,
+    default: ({
+      volume,
+      onVolumeChange,
+      onVolumeChangeCommitted,
+    }: {
+      volume: number
+      onVolumeChange: (value: number) => void
+      onVolumeChangeCommitted: (value: number) => void
+    }) => {
+      return (
+        <input
+          type="range"
+          aria-label="Volume control"
+          value={volume}
+          onChange={(e) => onVolumeChange(parseInt(e.target.value, 10))}
+          onMouseUp={(e) =>
+            onVolumeChangeCommitted(
+              parseInt((e.target as HTMLInputElement).value, 10)
+            )
+          }
+        />
+      )
+    },
+  }
+})
 jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
   __esModule: true,
   default: () => <div data-testid="current-spotify-item-display" />,
@@ -172,12 +203,11 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('70')
     })
 
-    it('re-enables external updates after sliding is committed', async () => {
+    it('re-enables external updates after sliding is committed', () => {
       const slider = screen.getByRole('slider', { name: /volume control/i })
       expect(slider).toHaveValue('50')
 
       // Simulate user sliding
-      fireEvent.mouseDown(slider)
       fireEvent.change(slider, { target: { value: '75' } })
       expect(slider).toHaveValue('75')
 
@@ -191,9 +221,7 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('75')
 
       // Simulate user releasing the slider
-      await act(async () => {
-        fireEvent.mouseUp(slider)
-      })
+      fireEvent.mouseUp(slider)
 
       // Simulate another external update (should now be applied)
       updatedSpotifyData = { ...initialSpotifyData, volume: 10 } // Ensure new volume to trigger effect
