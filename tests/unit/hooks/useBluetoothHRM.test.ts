@@ -20,7 +20,7 @@ describe('useBluetoothHRM', () => {
   const mockSetupCharacteristics = jest.fn()
   const mockStartReconnecting = jest.fn()
 
-  let mockGattConnectionState: any;
+  let mockGattConnectionState: any
   let onHeartRateUpdateCallback: (hr: number) => void
 
   beforeEach(() => {
@@ -30,47 +30,52 @@ describe('useBluetoothHRM', () => {
       status: 'disconnected',
       server: {},
       connect: mockConnect.mockImplementation(async () => {
-        mockGattConnectionState.status = 'connected';
+        mockGattConnectionState.status = 'connected'
         return {}
       }),
       disconnect: mockDisconnect.mockImplementation(() => {
-        mockGattConnectionState.status = 'disconnected';
+        mockGattConnectionState.status = 'disconnected'
       }),
-    };
+    }
 
-    jest.spyOn(useGattConnection, 'useGattConnection').mockImplementation(() => mockGattConnectionState)
+    jest
+      .spyOn(useGattConnection, 'useGattConnection')
+      .mockImplementation(() => mockGattConnectionState)
 
-    jest.spyOn(useGattCharacteristics, 'useGattCharacteristics').mockImplementation(({ onHeartRateUpdate }) => {
+    jest
+      .spyOn(useGattCharacteristics, 'useGattCharacteristics')
+      .mockImplementation(({ onHeartRateUpdate }) => {
         onHeartRateUpdateCallback = onHeartRateUpdate!
         return {
-            setupCharacteristics: mockSetupCharacteristics,
-            batteryLevel: 75,
+          setupCharacteristics: mockSetupCharacteristics,
+          batteryLevel: 75,
         } as any
-    })
+      })
 
     jest.spyOn(useReconnection, 'useReconnection').mockReturnValue({
       startReconnecting: mockStartReconnecting,
       stopReconnecting: jest.fn(),
       isReconnecting: false,
     } as any)
-
     ;(WebSocketContext as any).useWebSocket.mockReturnValue({
-        sendData: jest.fn(),
-        connectionStatus: 'Connected',
+      sendData: jest.fn(),
+      connectionStatus: 'Connected',
     })
 
     Object.defineProperty(navigator, 'bluetooth', {
-        value: { requestDevice: jest.fn() },
-        configurable: true,
-    });
+      value: { requestDevice: jest.fn() },
+      configurable: true,
+    })
   })
 
   it('should connect and stream', async () => {
     const mockDevice = {
-        name: 'Test Device',
-        addEventListener: jest.fn(),
+      name: 'Test Device',
+      addEventListener: jest.fn(),
     }
-    ;(navigator.bluetooth.requestDevice as jest.Mock).mockResolvedValue(mockDevice);
+    ;(navigator.bluetooth.requestDevice as jest.Mock).mockResolvedValue(
+      mockDevice
+    )
 
     const { result, rerender } = renderHook(() => useBluetoothHRM({}))
 
@@ -84,15 +89,19 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should trigger reconnect on data liveness timeout', async () => {
-    const mockDevice = { addEventListener: jest.fn() };
-    (navigator.bluetooth.requestDevice as jest.Mock).mockResolvedValue(mockDevice);
-    const { result, rerender } = renderHook(() => useBluetoothHRM({ dataLivenessTimeoutMs: 5000 }))
+    const mockDevice = { addEventListener: jest.fn() }
+    ;(navigator.bluetooth.requestDevice as jest.Mock).mockResolvedValue(
+      mockDevice
+    )
+    const { result, rerender } = renderHook(() =>
+      useBluetoothHRM({ dataLivenessTimeoutMs: 5000 })
+    )
 
     // Simulate connection and first HR update
     await act(async () => {
-        await result.current.connectAndStream()
-        rerender()
-        onHeartRateUpdateCallback(70)
+      await result.current.connectAndStream()
+      rerender()
+      onHeartRateUpdateCallback(70)
     })
 
     await act(async () => {
@@ -104,22 +113,24 @@ describe('useBluetoothHRM', () => {
 
   it('should call startReconnecting with the correct reason on unexpected disconnect', async () => {
     const mockDevice = {
-        name: 'Test Device',
-        addEventListener: jest.fn(),
+      name: 'Test Device',
+      addEventListener: jest.fn(),
     }
-    ;(navigator.bluetooth.requestDevice as jest.Mock).mockResolvedValue(mockDevice)
+    ;(navigator.bluetooth.requestDevice as jest.Mock).mockResolvedValue(
+      mockDevice
+    )
 
     const { result, rerender } = renderHook(() => useBluetoothHRM({}))
 
     await act(async () => {
-        await result.current.connectAndStream()
-        rerender()
+      await result.current.connectAndStream()
+      rerender()
     })
 
     const onDisconnected = mockDevice.addEventListener.mock.calls[0][1]
 
     act(() => {
-        onDisconnected()
+      onDisconnected()
     })
 
     expect(mockStartReconnecting).toHaveBeenCalledWith('signal_loss')

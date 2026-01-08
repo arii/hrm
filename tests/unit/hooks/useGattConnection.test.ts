@@ -53,7 +53,9 @@ describe('useGattConnection', () => {
   it('should retry on "zombie" connection error and eventually succeed', async () => {
     const connectMock = mockDevice.gatt!.connect as jest.Mock
     connectMock
-      .mockRejectedValueOnce(new DOMException('GATT operation already in progress.', 'NetworkError'))
+      .mockRejectedValueOnce(
+        new DOMException('GATT operation already in progress.', 'NetworkError')
+      )
       .mockResolvedValueOnce({})
 
     const { result } = renderHook(() => useGattConnection())
@@ -71,7 +73,6 @@ describe('useGattConnection', () => {
       await connectPromise
     })
 
-
     expect(connectMock).toHaveBeenCalledTimes(2)
     expect(result.current.status).toBe('connected')
   })
@@ -82,10 +83,10 @@ describe('useGattConnection', () => {
 
     const OriginalAbortController = global.AbortController
     global.AbortController = jest.fn(
-        () =>
+      () =>
         ({
-            abort: mockAbort,
-            signal: abortSignal,
+          abort: mockAbort,
+          signal: abortSignal,
         }) as unknown as AbortController
     )
 
@@ -108,8 +109,8 @@ describe('useGattConnection', () => {
     expect(mockAbort).toHaveBeenCalledTimes(1)
 
     await act(async () => {
-        connectResolver!({})
-    });
+      connectResolver!({})
+    })
 
     global.AbortController = OriginalAbortController
   })

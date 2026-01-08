@@ -69,9 +69,8 @@ export const useGattCharacteristics = ({
       )
 
       try {
-        const batteryService = await server.getPrimaryService(
-          BATTERY_SERVICE_UUID
-        )
+        const batteryService =
+          await server.getPrimaryService(BATTERY_SERVICE_UUID)
         const batteryChar = await batteryService.getCharacteristic(
           BATTERY_LEVEL_CHARACTERISTIC_UUID
         )

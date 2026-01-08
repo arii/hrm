@@ -11,14 +11,12 @@ import {
   HrmMetadataUpdateData,
 } from '../types/websocket'
 import isEqual from 'lodash.isequal'
+import throttle from 'lodash.throttle'
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getCookie, setCookie } from '@/utils/cookies'
-import {
-  HR_SERVICE_UUID,
-  BATTERY_SERVICE_UUID,
-} from '@/lib/bluetoothUtils'
+import { HR_SERVICE_UUID, BATTERY_SERVICE_UUID } from '@/lib/bluetoothUtils'
 import { useGattConnection } from './useGattConnection'
 import { useGattCharacteristics } from './useGattCharacteristics'
 import { useReconnection } from './useReconnection'
@@ -45,6 +43,7 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
     dataLivenessTimeoutMs = 10000,
+    throttleMs = 250,
     userName,
     userAge,
     onHeartRateUpdate,
@@ -70,6 +69,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const onConnectRef = useRef(onConnect)
   const sendDataRef = useRef(sendData)
 
+  const sendThrottledHeartRate = useCallback(
+    throttle((heartRate: number) => {
+      sendDataRef.current({ type: 'HRM_INPUT', data: { value: heartRate } })
+      onHeartRateUpdate?.(heartRate)
+    }, throttleMs),
+    [onHeartRateUpdate, sendDataRef, throttleMs]
+  )
+
   const {
     connect: gattConnect,
     disconnect: gattDisconnect,
@@ -81,7 +88,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     server: gattServer,
     onHeartRateUpdate: (heartRate) => {
       lastDataTime.current = Date.now()
-      onHeartRateUpdate?.(heartRate)
+      sendThrottledHeartRate(heartRate)
     },
   })
 
@@ -179,7 +186,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const onDisconnected = useCallback(() => {
     if (!isManualDisconnect.current && deviceRef.current) {
-      startReconnecting(disconnectionReasonRef.current || 'signal_loss')
+        const reason = disconnectionReasonRef.current
+        if (reason === 'timeout' || reason === 'signal_loss') {
+            startReconnecting(reason)
+        } else {
+            startReconnecting('signal_loss')
+        }
     } else {
       setDeviceStatus('Disconnected')
     }
