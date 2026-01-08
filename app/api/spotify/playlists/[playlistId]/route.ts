@@ -10,15 +10,12 @@ import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 /**
  * GET handler for fetching single playlist details.
  * @param req The incoming NextRequest.
- * @param context The route context, containing the playlistId.
+ * @param params The route parameters, containing the playlistId.
  * @returns A NextResponse with the playlist details or an error.
  */
-async function getPlaylistDetails(
-  _req: Request,
-  // prettier-ignore
-  context: { params: { playlistId: string } }
-) {
-  const { playlistId } = context.params
+async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
+  const { params } = args[0] as { params: { playlistId: string } }
+  const { playlistId } = params
 
   if (!playlistId) {
     throw new ApiError(400, 'Playlist ID is required.')
