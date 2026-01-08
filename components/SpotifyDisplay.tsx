@@ -15,7 +15,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
@@ -124,7 +124,7 @@ const SpotifyDisplay = () => {
 
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
-  const isSliding = useRef(false)
+  const [isSliding, setIsSliding] = useState(false)
 
   // 5. Integrate useReducer
   const [state, dispatch] = useReducer(
@@ -150,14 +150,14 @@ const SpotifyDisplay = () => {
 
   // Synchronize local UI state with WebSocket data (the source of truth)
   useEffect(() => {
-    if (isSliding.current) {
+    if (isSliding) {
       return
     }
     dispatch({
       type: 'SYNC_WITH_WEBSOCKET',
       payload: { volume: spotifyData.volume, isMuted: spotifyData.isMuted },
     })
-  }, [spotifyData.volume, spotifyData.isMuted])
+  }, [spotifyData.volume, spotifyData.isMuted, isSliding])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
@@ -186,14 +186,14 @@ const SpotifyDisplay = () => {
 
   // Handler for immediate UI update while sliding
   const handleVolumeChange = (newVolume: number) => {
-    if (!isSliding.current) isSliding.current = true // Set sliding state on first interaction
+    if (!isSliding) setIsSliding(true) // Set sliding state on first interaction
     dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
   }
 
   // Handler for sending the final volume value after sliding stops
   const handleVolumeChangeCommitted = (newVolume: number) => {
     sendVolumeCommand(newVolume)
-    isSliding.current = false // Reset sliding state
+    setIsSliding(false) // Reset sliding state
   }
 
   // Handler for the VolumeSlider's mute button
