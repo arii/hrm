@@ -130,7 +130,7 @@ export const WebSocketProvider = ({
       }
       return id
     } catch (error) {
-      logger.error({ message: 'Failed to access localStorage', error })
+      logger.error('Failed to access localStorage', error)
       return window.crypto.randomUUID() // Fallback to in-memory UUID
     }
   })
@@ -145,7 +145,7 @@ export const WebSocketProvider = ({
       urlObject.searchParams.set('clientId', clientId)
       return urlObject.toString()
     } catch (_error) {
-      logger.error({ message: 'Invalid WebSocket URL', url, error: _error })
+      logger.error('Invalid WebSocket URL', { url, error: _error })
       return url // Fallback to the original URL on error
     }
   }, [serverUrl, clientId])
@@ -329,10 +329,7 @@ export const WebSocketProvider = ({
     }
 
     ws.onerror = (err) => {
-      logger.warn({
-        message: '[WebSocketProvider] Connection error',
-        error: err,
-      })
+      logger.warn('[WebSocketProvider] Connection error', err)
       setConnectionStatus('Error')
     }
 
@@ -367,8 +364,7 @@ export const WebSocketProvider = ({
           dispatch(message)
         }
       } catch (e) {
-        logger.error({
-          message: 'Failed to parse WebSocket message',
+        logger.error('Failed to parse WebSocket message', {
           error: e,
           data: event.data,
         })
