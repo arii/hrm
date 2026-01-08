@@ -1,5 +1,6 @@
 'use client'
 import throttle from 'lodash.throttle'
+import logger from '../utils/logger'
 import {
   createContext,
   ReactNode,
@@ -129,7 +130,7 @@ export const WebSocketProvider = ({
       }
       return id
     } catch (error) {
-      console.error('Failed to access localStorage:', error)
+      logger.error('Failed to access localStorage', error)
       return window.crypto.randomUUID() // Fallback to in-memory UUID
     }
   })
@@ -144,7 +145,7 @@ export const WebSocketProvider = ({
       urlObject.searchParams.set('clientId', clientId)
       return urlObject.toString()
     } catch (_error) {
-      console.error('Invalid WebSocket URL:', url)
+      logger.error('Invalid WebSocket URL', { url, error: _error })
       return url // Fallback to the original URL on error
     }
   }, [serverUrl, clientId])
@@ -187,6 +188,21 @@ export const WebSocketProvider = ({
     }
   }, [])
 
+  // Throttled warning for connection issues
+  const throttledConnectionWarning = useMemo(
+    () =>
+      throttle(
+        () => {
+          logger.warn(
+            '[WebSocketProvider] Connection not open. Queuing action.'
+          )
+        },
+        5000, // Prevent log spam by throttling to once every 5 seconds
+        { leading: true, trailing: false } // Important: issue the warning on the first failed attempt
+      ),
+    []
+  )
+
   const stopHeartbeat = useCallback(() => {
     if (heartbeatIntervalRef.current) {
       clearInterval(heartbeatIntervalRef.current)
@@ -210,8 +226,8 @@ export const WebSocketProvider = ({
         // time, but not so long that a genuinely stale connection would persist
         // for an excessive period.
         pongTimeoutRef.current = setTimeout(() => {
-          console.warn(
-            '[WebSocketProvider] Pong not received in time. Connection may be stale. Forcing reconnect.'
+          logger.warn(
+            '[WebSocketProvider] Pong not received in time. Forcing reconnect.'
           )
           wsRef.current?.close() // Triggers the onclose reconnect logic
         }, 15000)
@@ -233,7 +249,7 @@ export const WebSocketProvider = ({
     wsRef.current = ws
 
     ws.onopen = () => {
-      console.log('[WebSocketProvider] Connected to server')
+      logger.info('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
       // Set test flag for Playwright tests - use a more reliable method
@@ -245,7 +261,7 @@ export const WebSocketProvider = ({
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
 
       if (pendingActions.current.length > 0) {
-        console.log(
+        logger.info(
           `[useWebSocket] Sending ${pendingActions.current.length} pending actions.`
         )
         pendingActions.current.forEach((action) => {
@@ -268,10 +284,8 @@ export const WebSocketProvider = ({
     }
 
     ws.onclose = (event) => {
-      console.log(
-        '[WebSocketProvider] Disconnected from server',
-        event.code,
-        event.reason
+      logger.info(
+        `[WebSocketProvider] Disconnected from server. Code: ${event.code}, Reason: ${event.reason}`
       )
       setConnectionStatus('Disconnected')
 
@@ -295,7 +309,7 @@ export const WebSocketProvider = ({
           const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
           const reconnectDelay = delay + jitter
 
-          console.log(
+          logger.info(
             `[WebSocketProvider] Reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`
           )
 
@@ -304,9 +318,7 @@ export const WebSocketProvider = ({
             connectRef.current()
           }, reconnectDelay)
         } else {
-          console.error(
-            '[WebSocketProvider] Max reconnection attempts reached.'
-          )
+          logger.error('[WebSocketProvider] Max reconnection attempts reached.')
           setConnectionStatus(
             'Failed to connect. Please check your connection and refresh the page.'
           )
@@ -314,8 +326,8 @@ export const WebSocketProvider = ({
       }
     }
 
-    ws.onerror = (_err) => {
-      console.warn('[WebSocketProvider] Connection error')
+    ws.onerror = (err) => {
+      logger.warn('[WebSocketProvider] Connection error', err)
       setConnectionStatus('Error')
     }
 
@@ -350,7 +362,10 @@ export const WebSocketProvider = ({
           dispatch(message)
         }
       } catch (e) {
-        console.error('Failed to parse WebSocket message:', e)
+        logger.error('Failed to parse WebSocket message', {
+          error: e,
+          data: event.data,
+        })
       }
     }
   }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
@@ -366,7 +381,7 @@ export const WebSocketProvider = ({
     if (wsRef.current) {
       wsRef.current.close()
     }
-    console.log('[useWebSocket] Manually disconnected.')
+    logger.info('[useWebSocket] Manually disconnected.')
   }, [stopHeartbeat])
 
   useEffect(() => {
@@ -378,21 +393,24 @@ export const WebSocketProvider = ({
     }
   }, [connect, disconnect])
 
-  const sendData = useCallback((data: ClientCommandMessage) => {
-    const ws = wsRef.current
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      const jsonStr = JSON.stringify(data)
-      ws.send(jsonStr)
-    } else {
-      // Queue the action for when connection is restored. This is expected behavior
-      // during navigation or initial connection, so we don't warn unless explicitly needed for debugging.
-      pendingActions.current.push(data)
-      localStorage.setItem(
-        'pendingActions',
-        JSON.stringify(pendingActions.current)
-      )
-    }
-  }, [])
+  const sendData = useCallback(
+    (data: ClientCommandMessage) => {
+      const ws = wsRef.current
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const jsonStr = JSON.stringify(data)
+        ws.send(jsonStr)
+      } else {
+        throttledConnectionWarning() // Use the throttled warning
+        // Queue the action for when connection is restored
+        pendingActions.current.push(data)
+        localStorage.setItem(
+          'pendingActions',
+          JSON.stringify(pendingActions.current)
+        )
+      }
+    },
+    [throttledConnectionWarning]
+  )
 
   const contextValue = {
     ...appState,
