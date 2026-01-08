@@ -14,15 +14,53 @@ PR_NUMBER="${PR_NUMBER}"
 BASE_SHA="${BASE_SHA}"
 HEAD_SHA="${HEAD_SHA}"
 PR_QUALITY_RESULT="${PR_QUALITY_RESULT}"
+MAX_COMMENTS="${MAX_COMMENTS:-60}"
+REVIEW_THROTTLE_MINUTES="${REVIEW_THROTTLE_MINUTES:-30}"
+BOT_USERNAME="${BOT_USERNAME:-gemini-bot}"
 
 # Set default outputs
 NEEDS_REVIEW="false"
 SKIP_REASON="no criteria met"
 
+# --- Always review on manual comment triggers, bypassing other checks ---
+if [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ) ]]; then
+  echo "::info::Manual review triggered by comment. Bypassing throttle and comment limits."
+  echo "needs-review=true" >> $GITHUB_OUTPUT
+  echo "skip-reason=" >> $GITHUB_OUTPUT
+  exit 0
+fi
+
+# --- Check comment count limit ---
+COMMENT_COUNT=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | length')
+if [[ "$COMMENT_COUNT" -gt "$MAX_COMMENTS" ]]; then
+  echo "::warning::PR has $COMMENT_COUNT comments, which exceeds the limit of $MAX_COMMENTS. Skipping review."
+  echo "needs-review=false" >> $GITHUB_OUTPUT
+  echo "skip-reason=Exceeded comment limit of $MAX_COMMENTS comments" >> $GITHUB_OUTPUT
+  exit 0
+fi
+
+# --- Check for time-based throttling ---
+# Find the timestamp of the last review comment from the bot
+LAST_REVIEW_TIMESTAMP=$(gh pr view "$PR_NUMBER" --json comments -q ".comments | map(select(.author.login? == \"$BOT_USERNAME\")) | .[-1].createdAt // \"\"")
+
+if [ -n "$LAST_REVIEW_TIMESTAMP" ]; then
+  # Convert the timestamp to seconds since the epoch
+  LAST_REVIEW_SECONDS=$(date -d "$LAST_REVIEW_TIMESTAMP" +%s)
+  CURRENT_SECONDS=$(date +%s)
+  MINUTES_SINCE_LAST_REVIEW=$(( (CURRENT_SECONDS - LAST_REVIEW_SECONDS) / 60 ))
+
+  if [[ "$MINUTES_SINCE_LAST_REVIEW" -lt "$REVIEW_THROTTLE_MINUTES" ]]; then
+    echo "::warning::Last review was $MINUTES_SINCE_LAST_REVIEW minutes ago. Throttling."
+    echo "needs-review=false" >> $GITHUB_OUTPUT
+    echo "skip-reason=Last review was less than $REVIEW_THROTTLE_MINUTES minutes ago" >> $GITHUB_OUTPUT
+    exit 0
+  fi
+fi
+
 # --- Check for quality check failures first ---
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
   # Fetch the quality report to determine the type of failure
-  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments -q '.comments | map(select(.author.login? == "arii" and (.body | contains("Quality Gate Results")))) | .[-1].body // ""')
+  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments -q ".comments | map(select(.author.login? == \"$BOT_USERNAME\" and (.body | contains(\"Quality Gate Results\")))) | .[-1].body // \"\"")
   
   if [ -z "$QUALITY_REPORT" ]; then
     echo "::info::Quality checks failed but no report found. Skipping review."
@@ -55,11 +93,6 @@ elif [[ "$TRIGGER_EVENT" == "pull_request" && "$ACTION_TYPE" == "opened" ]]; the
   echo "::info::PR opened. Triggering initial review."
   NEEDS_REVIEW="true"
   SKIP_REASON=""
-# --- Always review on manual comment triggers ---
-elif [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ) ]]; then
-  echo "::info::Manual review triggered by comment."
-  NEEDS_REVIEW="true"
-  SKIP_REASON=""
 else
   # --- This is a re-review or a CI failure trigger ---
   echo "::info::Analyzing for re-review..."
@@ -67,7 +100,7 @@ else
   # 1. Find the last relevant comment from the bot
   # It can be a review summary, code suggestion, or CI failure report
   # Look for common patterns: commit hashes or review-related keywords
-  LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments -q '.comments | map(select(.author.login? == "arii" and (.body | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""')
+  LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments -q ".comments | map(select(.author.login? == \"$BOT_USERNAME\" and (.body | test(\"[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis\"; \"i\")))) | .[-1].body // \"\"")
 
   if [ -z "$LAST_COMMENT_BODY" ]; then
     echo "::info::No previous review or failure comment found. Triggering review."
