@@ -48,6 +48,51 @@ export function isTechDebtResponse(data: unknown): data is TechDebtResponse {
   )
 }
 
+/**
+ * Filters a git diff to exclude non-production code.
+ * @param diffContent The full diff content.
+ * @returns A filtered diff content as a string.
+ */
+export function filterDiff(diffContent: string): string {
+  const exclusionPatterns = [
+    /\.test\.ts$/,
+    /\.spec\.ts$/,
+    /\.stories\.tsx$/,
+    /^.github\//,
+    /^tests\//,
+  ]
+
+  // Split the diff into individual file sections.
+  // The first element of the array will be the content before the first "diff --git" (preamble).
+  const diffs = diffContent.split('diff --git')
+
+  // The first element is the preamble, so we slice it off.
+  // The rest are the actual diff chunks.
+  const fileDiffs = diffs.slice(1)
+
+  const filteredFileDiffs = fileDiffs.filter((d) => {
+    if (!d.trim()) {
+      return false
+    }
+    // Extract the file path from the diff header
+    // Each chunk starts with ' a/path/to/file b/path/to/file'
+    const match = d.match(/^ a\/[^\s]+ b\/([^\s]+)/)
+    if (!match) {
+      // This shouldn't happen for valid diff chunks after splitting, but as a safeguard...
+      return false
+    }
+    const filePath = match[1]
+    // Check if the file path matches any exclusion pattern
+    return !exclusionPatterns.some((pattern) => pattern.test(filePath))
+  })
+
+  // Rejoin the filtered diffs, prepending "diff --git" to each one.
+  if (filteredFileDiffs.length > 0) {
+    return filteredFileDiffs.map((d) => `diff --git${d}`).join('')
+  }
+  return ''
+}
+
 export async function main() {
   const diffFile = getArg('--diff-file')
   const outputFile = getArg('--output')
@@ -71,12 +116,26 @@ export async function main() {
       path.resolve(process.cwd(), diffFile),
       'utf-8'
     )
+
+    // Filter the diff content
+    const filteredDiffContent = filterDiff(diffContent)
+
+    // If the filtered diff is empty, exit early.
+    if (!filteredDiffContent.trim()) {
+      console.log('No production code changes detected. Skipping analysis.')
+      await writeFile(
+        path.resolve(process.cwd(), outputFile),
+        JSON.stringify({ issues: [] }, null, 2)
+      )
+      return
+    }
+
     const promptTemplate = await readFile(
       path.resolve(process.cwd(), 'prompts/tech-debt-analysis.md'),
       'utf-8'
     )
 
-    const prompt = promptTemplate.replace('{{diff}}', diffContent)
+    const prompt = promptTemplate.replace('{{diff}}', filteredDiffContent)
 
     const rawResponse = await generateContentWithFallback({
       genAI,
