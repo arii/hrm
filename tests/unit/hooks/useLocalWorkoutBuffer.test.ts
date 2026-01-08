@@ -2,8 +2,11 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react'
-import { useLocalWorkoutBuffer } from '@/app/client/experimental/useLocalWorkoutBuffer'
+import { renderHook } from '@testing-library/react'
+import {
+  useLocalWorkoutBuffer,
+  WorkoutSessionData,
+} from '@/app/client/experimental/useLocalWorkoutBuffer'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useLocalStorage from '@/hooks/useLocalStorage'
 
@@ -16,7 +19,7 @@ const mockUseLocalStorage = useLocalStorage as jest.Mock
 
 describe('useLocalWorkoutBuffer', () => {
   let mockSetWorkoutData: jest.Mock
-  let mockWorkoutData: any
+  let mockWorkoutData: WorkoutSessionData
 
   beforeEach(() => {
     mockSetWorkoutData = jest.fn()
@@ -94,7 +97,7 @@ describe('useLocalWorkoutBuffer', () => {
     expect(mockSetWorkoutData).toHaveBeenCalled()
 
     // Simulate the state update
-    const updater = mockSet-workoutData.mock.calls[0][0]
+    const updater = mockSetWorkoutData.mock.calls[0][0]
     const newState = updater(mockWorkoutData)
 
     // Check that the status is running and data is not reset

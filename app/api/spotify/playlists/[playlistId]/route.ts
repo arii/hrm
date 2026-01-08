@@ -16,7 +16,8 @@ import { RouteContext } from '@/lib/types/index'
  */
 async function getPlaylistDetails(
   _req: Request,
-  context: RouteContext<{ playlistId: string }>
+  context: any
+  // context: RouteContext<{ playlistId: string }>
 ) {
   const { playlistId } = context.params
 
