@@ -9,7 +9,7 @@ import Typography from '@mui/material/Typography'
 interface DataPoint {
   timestamp: number
   bpm: number
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface HeartRateGradientChartProps {

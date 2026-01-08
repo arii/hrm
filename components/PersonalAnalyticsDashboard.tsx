@@ -38,35 +38,45 @@ export default function PersonalAnalyticsDashboard() {
   const { connectionStatus: wsStatus } = useWebSocket()
 
   // 2. Local State for Visualization
-  const [history, setHistory] = useState<{ timestamp: number; bpm: number }[]>([])
+  const [history, setHistory] = useState<{ timestamp: number; bpm: number }[]>(
+    []
+  )
   const lastUpdateRef = useRef<number>(0)
 
   // 3. Data Buffering Logic (Throttled to 1Hz for UI performance)
   useEffect(() => {
-    if (!heartRate || heartRate <= 0) return
+    const updateHistory = () => {
+      if (!heartRate || heartRate <= 0) return
 
-    const now = Date.now()
-    // Limit UI updates to approx 1000ms to save resources,
-    // even if device sends data faster (e.g. 4Hz)
-    if (now - lastUpdateRef.current < 1000) return
+      const now = Date.now()
+      // Limit UI updates to approx 1000ms to save resources,
+      // even if device sends data faster (e.g. 4Hz)
+      if (now - lastUpdateRef.current < 1000) return
 
-    setHistory((prev) => {
-      const newData = [...prev, { timestamp: now, bpm: heartRate }]
-      // Maintain sliding window
-      if (newData.length > HISTORY_WINDOW_SIZE) {
-        return newData.slice(newData.length - HISTORY_WINDOW_SIZE)
-      }
-      return newData
-    })
+      setHistory((prev) => {
+        const newData = [...prev, { timestamp: now, bpm: heartRate }]
+        // Maintain sliding window
+        if (newData.length > HISTORY_WINDOW_SIZE) {
+          return newData.slice(newData.length - HISTORY_WINDOW_SIZE)
+        }
+        return newData
+      })
 
-    lastUpdateRef.current = now
+      lastUpdateRef.current = now
+    }
+
+    updateHistory()
   }, [heartRate])
 
   // Clear history on disconnect
   useEffect(() => {
-    if (!isConnected) {
-      setHistory([])
+    const clearHistory = () => {
+      if (!isConnected) {
+        setHistory([])
+      }
     }
+
+    clearHistory()
   }, [isConnected])
 
   // 4. Loading State
