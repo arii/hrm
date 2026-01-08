@@ -44,6 +44,7 @@ export default function BottomNavBar() {
         component={Link}
         href="/"
         sx={{
+          color: value === 0 ? 'primary.main' : '#9CA3AF',
           '&:hover, &.Mui-focusVisible': {
             backgroundColor: 'action.hover',
           },
@@ -56,6 +57,7 @@ export default function BottomNavBar() {
         component={Link}
         href="/client/control"
         sx={{
+          color: value === 1 ? 'primary.main' : '#9CA3AF',
           '&:hover, &.Mui-focusVisible': {
             backgroundColor: 'action.hover',
           },
@@ -68,6 +70,7 @@ export default function BottomNavBar() {
         component={Link}
         href="/client/connect"
         sx={{
+          color: value === 2 ? 'primary.main' : '#9CA3AF',
           '&:hover, &.Mui-focusVisible': {
             backgroundColor: 'action.hover',
           },

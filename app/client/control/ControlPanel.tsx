@@ -93,13 +93,16 @@ const ControlPanel = () => {
           <Typography
             variant="caption"
             sx={{
-              color: connectionStatus === 'Connected' ? 'green' : 'orange',
-              fontWeight: 'bold',
-              backgroundColor: 'rgba(0,0,0,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
               display: 'inline-block',
+              fontWeight: 'bold',
+              borderRadius: '9999px',
+              px: 2,
+              py: 0.5,
+              color: connectionStatus === 'Connected' ? '#6EE7B7' : '#FBBF24',
+              backgroundColor:
+                connectionStatus === 'Connected'
+                  ? 'rgba(16, 185, 129, 0.2)'
+                  : 'rgba(245, 158, 11, 0.2)',
             }}
           >
             Server: {connectionStatus}
