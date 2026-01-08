@@ -19,6 +19,10 @@ const pinoOptions: pino.LoggerOptions = {
       ? 'silent'
       : process.env.LOG_LEVEL ||
         (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+  redact: {
+    paths: ['req.headers.cookie', 'req.headers.authorization', 'res.headers'],
+    remove: true,
+  },
 }
 
 if (process.env.NODE_ENV === 'development') {
