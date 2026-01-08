@@ -1,14 +1,13 @@
 /**
  * @jest-environment jsdom
  */
-/**
- * @jest-environment jsdom
- */
 import { WebSocketProvider, useWebSocket } from '@/context/WebSocketContext'
 import React from 'react'
-import HrmConnectionPanel from '../HrmConnectionPanel'
-import { assertNoA11yViolations } from '../../tests/utils/a11y'
+import HrmConnectionPanel from '@/components/HrmConnectionPanel'
+import { assertNoA11yViolations } from '@/tests/utils/a11y'
 import { AudioProvider } from '@/context/AudioContext'
+import { ThemeProvider } from '@mui/material/styles'
+import theme from '@/lib/theme'
 
 // Mock the useAudio hook
 jest.mock('@/hooks/useAudio', () => ({
@@ -25,7 +24,7 @@ jest.mock('@/hooks/useAudio', () => ({
 
 // Mock the useWebSocket hook
 jest.mock('@/context/WebSocketContext', () => ({
-  __esModule: true, // This is important for mocking modules with default exports
+  __esModule: true,
   WebSocketProvider: ({ children }: { children: React.ReactNode }) => children,
   useWebSocket: () => ({
     sendMessage: jest.fn(),
@@ -46,11 +45,13 @@ jest.mock('@/context/WebSocketContext', () => ({
 describe('<HrmConnectionPanel /> Accessibility', () => {
   it('should have no accessibility violations in default state', async () => {
     await assertNoA11yViolations(
-      <WebSocketProvider>
-        <AudioProvider>
-          <HrmConnectionPanel />
-        </AudioProvider>
-      </WebSocketProvider>
+      <ThemeProvider theme={theme}>
+        <WebSocketProvider>
+          <AudioProvider>
+            <HrmConnectionPanel />
+          </AudioProvider>
+        </WebSocketProvider>
+      </ThemeProvider>
     )
   })
 })

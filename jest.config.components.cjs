@@ -1,8 +1,11 @@
+const { pathsToModuleNameMapper } = require('ts-jest')
+const { compilerOptions } = require('./tsconfig.json')
+
 /** @type {import('jest').Config} */
 const config = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  roots: ['<rootDir>/components', '<rootDir>/tests/unit/components'],
+  roots: ['<rootDir>/tests/unit/components'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   transform: {
@@ -19,10 +22,9 @@ const config = {
       },
     ],
   },
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^@/(.*)$': '<rootDir>/$1',
-  },
+  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
+    prefix: '<rootDir>/',
+  }),
   setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
 }
 

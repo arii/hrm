@@ -1,14 +1,13 @@
 /**
  * @jest-environment jsdom
  */
-/**
- * @jest-environment jsdom
- */
 import { WebSocketProvider, useWebSocket } from '@/context/WebSocketContext'
 import React from 'react'
-import TimerDisplay from '../TimerDisplay'
-import { assertNoA11yViolations } from '../../tests/utils/a11y'
+import TimerDisplay from '@/components/TimerDisplay'
+import { assertNoA11yViolations } from '@/tests/utils/a11y'
 import { AudioProvider } from '@/context/AudioContext'
+import { ThemeProvider } from '@mui/material/styles'
+import theme from '@/lib/theme'
 
 // Mock the useAudio hook
 jest.mock('@/hooks/useAudio', () => ({
@@ -46,11 +45,13 @@ jest.mock('@/context/WebSocketContext', () => ({
 describe('<TimerDisplay /> Accessibility', () => {
   it('should have no accessibility violations in default state', async () => {
     await assertNoA11yViolations(
-      <WebSocketProvider>
-        <AudioProvider>
-          <TimerDisplay />
-        </AudioProvider>
-      </WebSocketProvider>
+      <ThemeProvider theme={theme}>
+        <WebSocketProvider>
+          <AudioProvider>
+            <TimerDisplay />
+          </AudioProvider>
+        </WebSocketProvider>
+      </ThemeProvider>
     )
   })
 })

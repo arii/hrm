@@ -1,10 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import { WebSocketProvider } from '@/context/WebSocketContext'
+import { WebSocketProvider, useWebSocket } from '@/context/WebSocketContext'
 import React from 'react'
-import SpotifyDisplay from '../SpotifyDisplay'
-import { assertNoA11yViolations } from '../../tests/utils/a11y'
+import SpotifyDisplay from '@/components/SpotifyDisplay'
+import { assertNoA11yViolations } from '@/tests/utils/a11y'
 import { AudioProvider } from '@/context/AudioContext'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { SessionProvider, useSession } from 'next-auth/react'
