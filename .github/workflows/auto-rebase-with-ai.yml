@@ -54,7 +54,7 @@ jobs:
       - name: Attempt Automatic Rebase
         id: rebase
         if: steps.check_labels.outputs.should_skip == 'false'
-        uses: peter-evans/rebase@v3
+        uses: peter-evans/rebase@v4
         continue-on-error: true
         with:
           token: ${{ secrets.ARI_PAT }}

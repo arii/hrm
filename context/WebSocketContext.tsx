@@ -392,7 +392,6 @@ export const WebSocketProvider = ({
     const ws = wsRef.current
     if (ws && ws.readyState === WebSocket.OPEN) {
       const jsonStr = JSON.stringify(data)
-      console.log('[WebSocketProvider] Sending:', data)
       ws.send(jsonStr)
     } else {
       console.warn(

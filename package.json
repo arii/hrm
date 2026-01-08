@@ -60,7 +60,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^8.2.0",
+    "@asteasolutions/zod-to-openapi": "^8.4.0",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -74,7 +74,7 @@
     "cheerio": "^1.1.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
-    "framer-motion": "^12.23.26",
+    "framer-motion": "^12.24.10",
     "lodash": "^4.17.21",
     "lodash.isequal": "^4.5.0",
     "lodash.throttle": "^4.1.1",
@@ -86,11 +86,11 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "uuid": "^9.0.1",
-    "ws": "^8.18.3",
-    "zod": "^4.1.13"
+    "ws": "^8.19.0",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.2.0",
+    "@commitlint/cli": "^20.3.0",
     "@commitlint/config-conventional": "^20.2.0",
     "@eslint/js": "^9.39.2",
     "@google/generative-ai": "0.24.1",
@@ -133,7 +133,7 @@
     "jest-environment-jsdom": "^30.2.0",
     "jest-junit": "^16.0.0",
     "jsdom": "^27.4.0",
-    "knip": "^5.78.0",
+    "knip": "^5.80.0",
     "lint-staged": "^16.2.7",
     "msw": "^2.12.7",
     "msw-storybook-addon": "^2.0.6",
@@ -144,10 +144,9 @@
     "storybook": "^8.6.15",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
-    "tree-kill": "^1.2.2",
     "tsx": "4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.51.0",
+    "typescript-eslint": "^8.52.0",
     "wait-on": "^9.0.3"
   },
   "engines": {

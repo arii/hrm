@@ -465,7 +465,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const target = e.target as BluetoothRemoteGATTCharacteristic
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
-            logger.info(
+            logger.debug(
               { heartRate },
               'Heart rate data received from Bluetooth'
             )
