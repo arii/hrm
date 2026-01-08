@@ -6,8 +6,8 @@ const envSchema = z.object({
     .default('development'),
   PORT: z.coerce.number().default(3000),
   HOST: z.string().default('0.0.0.0'),
-  NEXTAUTH_URL: z.string().url().min(1),
-  NEXTAUTH_SECRET: z.string().min(1),
+  NEXTAUTH_URL: z.string().url().min(1).optional(),
+  NEXTAUTH_SECRET: z.string().min(1).optional(),
   SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
   SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
   SPOTIFY_DEBUG: z
