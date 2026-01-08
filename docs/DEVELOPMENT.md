@@ -132,6 +132,22 @@ The project leverages AI-powered workflows to automate code reviews, update pull
 - **`@gemini-update-pr`**: This command triggers a workflow that updates the pull request with the latest changes from the base branch, ensuring that the PR is up-to-date before merging.
 - **`@jules fix` (Legacy)**: This legacy command invokes the Jules AI to perform a code review. It is recommended to use `@gemini-bot review` for more advanced and accurate reviews.
 
+##### Throttling and Comment Limits for AI Reviews
+
+To optimize resource usage and prevent excessive notifications, the AI code review workflow (`@gemini-bot review`) includes the following automated limits:
+
+- **Time-Based Throttling**: An automated review will be skipped if the bot has already posted a review within the last **30 minutes**. This prevents redundant reviews on rapid, successive commits.
+- **Comment Count Limit**: A review will be skipped if the pull request already has more than **60 comments**. This avoids adding to already long and complex discussions.
+
+**Manual Override**:
+
+You can bypass these limits at any time by manually triggering a review. To do this, add a comment to the pull request with one of the following commands:
+
+- `@gemini-bot review`
+- `@jules fix`
+
+This ensures you can always get an on-demand review from the AI when needed.
+
 #### Automatic Branch Updates
 
 To ensure pull requests are always synchronized with the `leader` branch, this project uses an automated workflow that updates PRs whenever new commits are pushed to `leader`.

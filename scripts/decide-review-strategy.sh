@@ -31,7 +31,11 @@ if [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$C
 fi
 
 # --- Check comment count limit ---
-COMMENT_COUNT=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | length')
+if [[ "$TEST_MODE" == "true" ]]; then
+  COMMENT_COUNT=$(echo "$MOCK_GH_COMMENTS_JSON" | jq '.comments | length')
+else
+  COMMENT_COUNT=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | length')
+fi
 if [[ "$COMMENT_COUNT" -gt "$MAX_COMMENTS" ]]; then
   echo "::warning::PR has $COMMENT_COUNT comments, which exceeds the limit of $MAX_COMMENTS. Skipping review."
   echo "needs-review=false" >> $GITHUB_OUTPUT
@@ -41,7 +45,12 @@ fi
 
 # --- Check for time-based throttling ---
 # Find the timestamp of the last review comment from the bot
-LAST_REVIEW_TIMESTAMP=$(gh pr view "$PR_NUMBER" --json comments -q ".comments | map(select(.author.login? == \"$BOT_USERNAME\")) | .[-1].createdAt // \"\"")
+if [[ "$TEST_MODE" == "true" ]]; then
+  ALL_COMMENTS=$MOCK_GH_COMMENTS_JSON
+else
+  ALL_COMMENTS=$(gh pr view "$PR_NUMBER" --json comments)
+fi
+LAST_REVIEW_TIMESTAMP=$(echo "$ALL_COMMENTS" | jq -r ".comments | map(select(.author.login? == \"$BOT_USERNAME\")) | .[-1].createdAt // \"\"")
 
 if [ -n "$LAST_REVIEW_TIMESTAMP" ]; then
   # Convert the timestamp to seconds since the epoch
@@ -60,7 +69,11 @@ fi
 # --- Check for quality check failures first ---
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
   # Fetch the quality report to determine the type of failure
-  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments -q ".comments | map(select(.author.login? == \"$BOT_USERNAME\" and (.body | contains(\"Quality Gate Results\")))) | .[-1].body // \"\"")
+    if [[ "$TEST_MODE" == "true" ]]; then
+        QUALITY_REPORT=$(echo "$MOCK_GH_COMMENTS_JSON" | jq -r ".comments | map(select(.author.login? == \"$BOT_USERNAME\" and (.body | contains(\"Quality Gate Results\")))) | .[-1].body // \"\"")
+    else
+        QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments -q ".comments | map(select(.author.login? == \"$BOT_USERNAME\" and (.body | contains(\"Quality Gate Results\")))) | .[-1].body // \"\"")
+    fi
   
   if [ -z "$QUALITY_REPORT" ]; then
     echo "::info::Quality checks failed but no report found. Skipping review."
@@ -100,7 +113,11 @@ else
   # 1. Find the last relevant comment from the bot
   # It can be a review summary, code suggestion, or CI failure report
   # Look for common patterns: commit hashes or review-related keywords
-  LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments -q ".comments | map(select(.author.login? == \"$BOT_USERNAME\" and (.body | test(\"[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis\"; \"i\")))) | .[-1].body // \"\"")
+    if [[ "$TEST_MODE" == "true" ]]; then
+        LAST_COMMENT_BODY=$(echo "$MOCK_GH_COMMENTS_JSON" | jq -r ".comments | map(select(.author.login? == \"$BOT_USERNAME\" and (.body | test(\"[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis\"; \"i\")))) | .[-1].body // \"\"")
+    else
+        LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments -q ".comments | map(select(.author.login? == \"$BOT_USERNAME\" and (.body | test(\"[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis\"; \"i\")))) | .[-1].body // \"\"")
+    fi
 
   if [ -z "$LAST_COMMENT_BODY" ]; then
     echo "::info::No previous review or failure comment found. Triggering review."
