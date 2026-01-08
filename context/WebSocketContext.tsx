@@ -15,6 +15,7 @@ import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
 import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
+import logger from '@/utils/logger'
 
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
@@ -384,7 +385,9 @@ export const WebSocketProvider = ({
       const jsonStr = JSON.stringify(data)
       ws.send(jsonStr)
     } else {
-      console.warn(
+      // Queue the action for when connection is restored. This is expected behavior
+      // during navigation or initial connection, so we don't warn unless explicitly needed for debugging.
+      logger.warn(
         '[WebSocketProvider] WebSocket not open, queueing action. State:',
         ws?.readyState,
         'Data:',

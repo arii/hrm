@@ -68,6 +68,6 @@ const nextConfig = {
   },
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
   transpilePackages: ['recharts'], // Add recharts to be transpiled by Next.js
-};
+}
 
 export default withBundleAnalyzer(nextConfig)

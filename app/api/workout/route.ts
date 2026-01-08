@@ -24,7 +24,8 @@ export async function GET(request: Request) {
     })
 
     if (!response.ok) {
-      if (response.status === 404) { // Restore 404 handling
+      if (response.status === 404) {
+        // Restore 404 handling
         logger.warn(
           { docId, status: response.status },
           'Google Doc not found. Ensure the document is publicly accessible.'
@@ -45,7 +46,8 @@ export async function GET(request: Request) {
         )
         return NextResponse.json(
           {
-            error: 'Google Docs service is temporarily unavailable. Please try again later.',
+            error:
+              'Google Docs service is temporarily unavailable. Please try again later.',
           },
           { status: 503 }
         )
