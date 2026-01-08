@@ -6,14 +6,13 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { useLocalWorkoutBuffer } from '@/app/client/experimental/useLocalWorkoutBuffer'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { HrZoneName } from '@/utils/hr-zones'
-import { useState } from 'react'
 
 // Mock the useUserSettings hook
 jest.mock('@/context/UserSettingsContext')
 
 // Mock useLocalStorage to behave like useState for testing logic
 jest.mock('@/hooks/useLocalStorage', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { useState } = require('react')
   return {
     __esModule: true,
