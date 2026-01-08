@@ -232,7 +232,7 @@ export const authOptions: AuthOptions = {
         )
 
         // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
-        if (account.refresh_token) {
+        if (account.refresh_token && env.INTERNAL_TOKEN_DELIVERY_SECRET) {
           try {
             const tokenPayload = {
               provider: account.provider,

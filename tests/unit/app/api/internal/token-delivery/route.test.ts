@@ -31,7 +31,7 @@ describe('POST /api/internal/token-delivery', () => {
     // Mock the SpotifyPolling service
     mockSpotifyService = {
       handleTokenUpdate: jest.fn().mockResolvedValue(undefined),
-    } as any
+    } as jest.Mocked<SpotifyPolling>
 
     // Configure the service container mock
     ;(serviceContainer.get as jest.Mock).mockReturnValue(mockSpotifyService)
@@ -41,13 +41,16 @@ describe('POST /api/internal/token-delivery', () => {
   })
 
   it('should return 401 Unauthorized if the secret is missing', async () => {
-    const request = new NextRequest('http://localhost/api/internal/token-delivery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(MOCK_ACCESS_TOKEN),
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(MOCK_ACCESS_TOKEN),
+      }
+    )
 
     const response = await POST(request)
     expect(response.status).toBe(401)
@@ -56,14 +59,17 @@ describe('POST /api/internal/token-delivery', () => {
   })
 
   it('should return 401 Unauthorized if the secret is invalid', async () => {
-    const request = new NextRequest('http://localhost/api/internal/token-delivery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-token-secret': 'invalid-secret',
-      },
-      body: JSON.stringify(MOCK_ACCESS_TOKEN),
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token-secret': 'invalid-secret',
+        },
+        body: JSON.stringify(MOCK_ACCESS_TOKEN),
+      }
+    )
 
     const response = await POST(request)
     expect(response.status).toBe(401)
@@ -72,14 +78,17 @@ describe('POST /api/internal/token-delivery', () => {
   })
 
   it('should return 400 Bad Request if the token data is missing', async () => {
-    const request = new NextRequest('http://localhost/api/internal/token-delivery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-token-secret': MOCK_TOKEN_SECRET,
-      },
-      body: JSON.stringify({}),
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token-secret': MOCK_TOKEN_SECRET,
+        },
+        body: JSON.stringify({}),
+      }
+    )
 
     const response = await POST(request)
     expect(response.status).toBe(400)
@@ -88,14 +97,17 @@ describe('POST /api/internal/token-delivery', () => {
   })
 
   it('should call the spotifyService.handleTokenUpdate with the correct token data on success', async () => {
-    const request = new NextRequest('http://localhost/api/internal/token-delivery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-token-secret': MOCK_TOKEN_SECRET,
-      },
-      body: JSON.stringify(MOCK_ACCESS_TOKEN),
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token-secret': MOCK_TOKEN_SECRET,
+        },
+        body: JSON.stringify(MOCK_ACCESS_TOKEN),
+      }
+    )
 
     await POST(request)
 
@@ -108,14 +120,17 @@ describe('POST /api/internal/token-delivery', () => {
   })
 
   it('should return 200 OK on successful token delivery', async () => {
-    const request = new NextRequest('http://localhost/api/internal/token-delivery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-token-secret': MOCK_TOKEN_SECRET,
-      },
-      body: JSON.stringify(MOCK_ACCESS_TOKEN),
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token-secret': MOCK_TOKEN_SECRET,
+        },
+        body: JSON.stringify(MOCK_ACCESS_TOKEN),
+      }
+    )
 
     const response = await POST(request)
     expect(response.status).toBe(200)
