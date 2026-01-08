@@ -17,7 +17,7 @@ const hasNextAuthSecret = !!process.env.NEXTAUTH_SECRET
 // Optimized ignore list - run more tests by default
 const testIgnoreList = [
   // Hardware-dependent tests (require Web Bluetooth, specific hardware)
-  'bluetooth-flow.spec.ts',
+  // 'bluetooth-flow.spec.ts',
 
   // Environment-sensitive tests (fail on CI runners due to network/CPU throttling)
   'realtime-resilience.spec.ts',
@@ -132,7 +132,7 @@ export default defineConfig({
 
   // Web Server Configuration
   webServer: {
-    command: 'bash scripts/start-production.sh',
+    command: 'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
     url: `${baseURL}/api/debug/ping`,
     timeout: 120 * 1000, // 2 minutes
     reuseExistingServer: !process.env.CI,
