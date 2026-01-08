@@ -85,7 +85,7 @@ fi
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
   # Fetch the quality report to determine the type of failure
     ALL_COMMENTS=$(get_pr_comments_json)
-    QUALITY_REPORT=$(echo "$ALL_COMMENTS" | jq -r ".comments | map(select(.author.login? == \"$BOT_USERNAME\" and (.body | contains(\"Quality Gate Results\")))) | .[-1].body // \"\"")
+    QUALITY_REPORT=$(echo "$ALL_COMMENTS" | jq -r --arg bot_username "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_username and (.body | contains("Quality Gate Results")))) | .[-1].body // ""')
   
   if [ -z "$QUALITY_REPORT" ]; then
     echo "::info::Quality checks failed but no report found. Skipping review."
@@ -126,7 +126,7 @@ else
   # It can be a review summary, code suggestion, or CI failure report
   # Look for common patterns: commit hashes or review-related keywords
     ALL_COMMENTS=$(get_pr_comments_json)
-    LAST_COMMENT_BODY=$(echo "$ALL_COMMENTS" | jq -r ".comments | map(select(.author.login? == \"$BOT_USERNAME\" and (.body | test(\"[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis\"; \"i\")))) | .[-1].body // \"\"")
+    LAST_COMMENT_BODY=$(echo "$ALL_COMMENTS" | jq -r --arg bot_username "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_username and (.body | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""')
 
   if [ -z "$LAST_COMMENT_BODY" ]; then
     echo "::info::No previous review or failure comment found. Triggering review."
