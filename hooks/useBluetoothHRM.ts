@@ -404,19 +404,22 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice) => {
-      // Abort ANY existing connection attempt, even if it is the same device
-      if (abortControllerRef.current && isConnecting.current) {
+      // If a connection is already in progress, abort it before starting a new one
+      if (isConnecting.current) {
         logger.warn(
           { device: device.name },
           'Aborting previous pending connection attempt'
         )
-        abortControllerRef.current.abort()
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort()
+        }
       }
       try {
         isConnecting.current = true
         deviceRef.current = device
         setDeviceStatus(`Connecting to: ${device.name || 'Device'}...`)
 
+        // Create a new AbortController for this connection attempt
         abortControllerRef.current = new AbortController()
         const server = await cancellablePromise(device.gatt!.connect(), {
           timeoutMs: 30000, // 30s timeout - some devices are slow to respond
@@ -487,11 +490,23 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         const errorMsg = error instanceof Error ? error.message : String(error)
         const errorName = error instanceof DOMException ? error.name : 'Error'
 
-        // Log to console for debugging only - don't show popups
-        logger.error(
-          { errorName, errorMsg, device: device.name },
-          'GATT Connection failed'
-        )
+        // Ignore AbortError if it was intentional (signal.aborted will be true)
+        const isIntentionalAbort =
+          errorName === 'AbortError' &&
+          abortControllerRef.current?.signal.aborted
+
+        // Check if this is a GATT disconnection error during service discovery
+        const isGattDisconnected =
+          errorMsg.includes('GATT Server is disconnected') ||
+          errorMsg.includes('GATT operation failed')
+
+        if (!isIntentionalAbort) {
+          // Log to console for debugging only - don't show popups
+          logger.error(
+            { errorName, errorMsg, device: device.name },
+            'GATT Connection failed'
+          )
+        }
 
         // Timeout errors indicate device is not responding - reset immediately
         if (errorMsg.includes('timeout')) {
@@ -522,7 +537,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             deviceRef.current = null
             reconnectAttempts.current = 0
           }, 2000)
-        } else {
+        } else if (isGattDisconnected) {
+          // GATT disconnection during service discovery - try reconnect but with backoff
+          logger.warn(
+            { device: device.name },
+            'Device disconnected during connection. Will attempt auto-reconnect.'
+          )
+          deviceRef.current = null
+          // Let the onDisconnected handler manage the reconnection logic
+        } else if (!isIntentionalAbort) {
           // Clear the failed device reference so we don't try to reconnect to it
           deviceRef.current = null
         }

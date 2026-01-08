@@ -384,12 +384,8 @@ export const WebSocketProvider = ({
       const jsonStr = JSON.stringify(data)
       ws.send(jsonStr)
     } else {
-      console.warn(
-        '[WebSocketProvider] WebSocket not open, queueing action. State:',
-        ws?.readyState,
-        'Data:',
-        data
-      )
+      // Queue the action for when connection is restored. This is expected behavior
+      // during navigation or initial connection, so we don't warn unless explicitly needed for debugging.
       pendingActions.current.push(data)
       localStorage.setItem(
         'pendingActions',
