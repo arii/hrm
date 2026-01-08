@@ -6,7 +6,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { audioManager } from '../utils/audioManager'
+import { audioManager } from '../utils/audioManager.js'
 
 interface TimerSoundProviderProps {
   children: React.ReactNode

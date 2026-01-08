@@ -4,7 +4,7 @@
  * @author Jules
  */
 
-import { GenericTimerState, TimerMode } from '../types/genericTimer'
+import { GenericTimerState, TimerMode } from '../types/genericTimer.js'
 
 /**
  * @callback TimerUpdateCallback

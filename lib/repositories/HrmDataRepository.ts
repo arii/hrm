@@ -1,5 +1,5 @@
 // lib/repositories/HrmDataRepository.ts
-import { HrmStreamData } from '../../types/core'
+import { HrmStreamData } from '../../types/core.js'
 
 /**
  * Repository for managing HRM client data.

@@ -9,9 +9,9 @@ import { useCallback, useState, useRef, useEffect } from 'react'
 import {
   HrmMetadataUpdateMessage,
   HrmMetadataUpdateData,
-} from '../types/websocket'
+} from '../types/websocket.js'
 import isEqual from 'lodash.isequal'
-import { calculateMaxHr } from '../utils/constants'
+import { calculateMaxHr } from '../utils/constants.js'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'

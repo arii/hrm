@@ -8,34 +8,40 @@ import Container from '@mui/material/Container'
 import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
-import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
+import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton.js'
 import { useEffect, useState } from 'react'
-import HrmConnectionPanel from '../components/HrmConnectionPanel'
-import TimerDisplay from '../components/TimerDisplay'
-import { useAudio } from '../hooks/useAudio'
+import HrmConnectionPanel from '../components/HrmConnectionPanel.js'
+import TimerDisplay from '../components/TimerDisplay.js'
+import { useAudio } from '../hooks/useAudio.js'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
-const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
-  ssr: false,
-  loading: () => <DashboardSectionLoadingSkeleton height={80} />, // Optional: Render nothing while loading to avoid layout shift
-})
+const SpotifyDisplay = dynamic(
+  () => import('../components/SpotifyDisplay.js'),
+  {
+    ssr: false,
+    loading: () => <DashboardSectionLoadingSkeleton height={80} />, // Optional: Render nothing while loading to avoid layout shift
+  }
+)
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 const WorkoutTableViewer = dynamic(
-  () => import('../components/WorkoutTableViewer'),
+  () => import('../components/WorkoutTableViewer.js'),
   {
     ssr: false,
     loading: () => <DashboardSectionLoadingSkeleton height={500} />,
   }
 )
 
-const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
-  ssr: false,
-  loading: () => <DashboardSectionLoadingSkeleton height={500} />,
-})
+const GoogleDocViewer = dynamic(
+  () => import('../components/GoogleDocViewer.js'),
+  {
+    ssr: false,
+    loading: () => <DashboardSectionLoadingSkeleton height={500} />,
+  }
+)
 
 const DOC_ID =
   '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'

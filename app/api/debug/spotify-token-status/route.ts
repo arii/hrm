@@ -1,6 +1,6 @@
 // File: app/api/debug/spotify-token-status/route.ts
 import { NextResponse } from 'next/server'
-import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
+import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager.js'
 
 export async function GET() {
   try {

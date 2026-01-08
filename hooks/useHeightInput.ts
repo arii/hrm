@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { MeasurementSystem } from '../types/core'
-import { cmToFeetAndInches, feetAndInchesToCm } from '../utils/units'
+import { MeasurementSystem } from '../types/core.js'
+import { cmToFeetAndInches, feetAndInchesToCm } from '../utils/units.js'
 import { validateHeightValue } from '@/lib/validation/userMetrics'
 import useLocalStorage from './useLocalStorage'
 

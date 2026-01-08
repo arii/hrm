@@ -8,7 +8,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import { useEffect, useState } from 'react'
-import { Track } from '../../types/spotify'
+import { Track } from '../../types/spotify.js'
 
 interface PlaylistDetailsProps {
   playlistId: string

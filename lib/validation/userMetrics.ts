@@ -1,4 +1,4 @@
-import { MeasurementSystem } from '../../types/core'
+import { MeasurementSystem } from '../../types/core.js'
 
 export const WEIGHT_VALIDATION = {
   IMPERIAL: { min: 66, max: 440 }, // lbs

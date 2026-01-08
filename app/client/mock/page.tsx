@@ -10,12 +10,12 @@ import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
-import BottomNavBar from '../../../components/BottomNavBar'
+import BottomNavBar from '../../../components/BottomNavBar.js'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
-} from '../../../types/websocket'
+} from '../../../types/websocket.js'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()

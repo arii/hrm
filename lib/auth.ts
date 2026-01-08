@@ -3,7 +3,7 @@ import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '@/utils/logger'
-import { getAPIURL } from '../utils/urls'
+import { getAPIURL } from '../utils/urls.js'
 import { env } from './env'
 import { refreshSpotifyToken } from './spotify'
 
