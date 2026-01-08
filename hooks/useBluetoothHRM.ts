@@ -521,14 +521,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           (event: unknown) => {
             const e = event as Event
             const target = e.target as BluetoothRemoteGATTCharacteristic
-            const newHeartRate = parseHeartRate(target.value!)
-            setHeartRate(newHeartRate)
-            lastDataTime.current = Date.now()
-            logger.debug(
-              { heartRate: newHeartRate },
-              'Heart rate data received from Bluetooth'
-            )
-            onHeartRateUpdateRef.current?.(newHeartRate)
+            if (target.value) { // Ensure target.value is not null before processing
+              const newHeartRate = parseHeartRate(target.value)
+              setHeartRate(newHeartRate)
+              lastDataTime.current = Date.now()
+              logger.debug(
+                { heartRate: newHeartRate },
+                'Heart rate data received from Bluetooth'
+              )
+              onHeartRateUpdateRef.current?.(newHeartRate)
+            }
           }
         )
 
