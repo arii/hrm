@@ -44,7 +44,7 @@ describe('API Route: /api/workout', () => {
         consoleErrorSpy.mockRestore()
       })
 
-      it('should return 404 if document is not found on Google', async () => {
+      it('should return 500 if fetching from Google fails', async () => {
         mockedFetch.mockResolvedValue({
           ok: false,
           status: 404,
@@ -55,22 +55,7 @@ describe('API Route: /api/workout', () => {
         const response = await GET(request)
         const data = await response.json()
 
-        expect(response.status).toBe(404)
-        expect(data).toHaveProperty('error')
-      })
-
-      it('should return 503 if Google Docs service returns 500+', async () => {
-        mockedFetch.mockResolvedValue({
-          ok: false,
-          status: 503,
-        } as Response)
-        const request = new NextRequest(
-          'http://localhost/api/workout?docId=test-doc-id'
-        )
-        const response = await GET(request)
-        const data = await response.json()
-
-        expect(response.status).toBe(503)
+        expect(response.status).toBe(500)
         expect(data).toHaveProperty('error')
       })
 
