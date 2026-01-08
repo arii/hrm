@@ -1,0 +1,35 @@
+name: Auto-merge Dependencies
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  auto-merge:
+    if: github.actor == 'dependabot[bot]'
+    permissions:
+      pull-requests: write
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR Labels
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            return labels.includes('automerge');
+
+      - name: Auto-approve
+        if: steps.check.outputs.result == 'true'
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable Auto-merge
+        if: steps.check.outputs.result == 'true'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
