@@ -313,8 +313,8 @@ export const WebSocketProvider = ({
             `[WebSocketProvider] Reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`
           )
 
+          setConnectionStatus('Reconnecting...')
           reconnectTimeoutRef.current = setTimeout(() => {
-            setConnectionStatus('Reconnecting...')
             connectRef.current()
           }, reconnectDelay)
         } else {
