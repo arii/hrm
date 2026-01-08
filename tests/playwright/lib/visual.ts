@@ -57,6 +57,7 @@ export async function takeDashboardScreenshot(
   snapshotName: string,
   options: object = {}
 ) {
+  await page.waitForLoadState('networkidle') // Ensure page is fully loaded and stable
   const mainContentLocator = page.getByTestId('main-content-layout')
   await mainContentLocator.waitFor({ state: 'visible' })
 
