@@ -54,8 +54,8 @@ export function isTechDebtResponse(data: unknown): data is TechDebtResponse {
 
 export async function main() {
   const outputFile = getArg('--output');
-  // Stop parsing after '--files' to treat all subsequent args as file paths
-  const fileArgs = process.argv.slice(process.argv.indexOf('--files') + 1);
+  const filesIndex = process.argv.indexOf('--files');
+  const fileArgs = filesIndex === -1 ? [] : process.argv.slice(filesIndex + 1);
 
   if (!outputFile || fileArgs.length === 0) {
     console.error(

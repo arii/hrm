@@ -166,30 +166,15 @@ Due to this process, a brief period of downtime is expected during each deployme
 
 #### Automated Technical Debt Analysis
 
-This project includes a workflow to automatically analyze pull requests for technical debt and create deduplicated GitHub issues.
-
-**Usage**:
-
-1.  Navigate to the "Actions" tab of the repository.
-2.  Select the "Technical Debt Analysis" workflow.
-3.  Click "Run workflow".
-4.  Enter the pull request number you wish to analyze.
+This project includes a workflow to automatically analyze the codebase for technical debt and create deduplicated GitHub issues. The workflow runs on a weekly schedule, scanning the entire `leader` branch.
 
 **What it does**:
 
-- The workflow retrieves the diff of the specified pull request.
-- It uses the Gemini API to analyze the diff for potential technical debt.
+- The workflow finds all source code files in the repository.
+- It iterates through each file, using the Gemini API to analyze its content for potential technical debt.
 - For each piece of identified debt, it generates a unique "fingerprint".
 - It searches for open issues with the same fingerprint to prevent duplicates.
 - If no duplicate is found, it creates a new issue with the "tech-debt" and "ai-generated" labels.
-
-#### Creating Issues from PR Reviews
-
-The repository provides an automated workflow to create issues from the suggestions in a Gemini code review. This can be triggered in two ways:
-
-1.  **PR Comment**: Add a comment containing the command `/create-issues` to a pull request. The workflow will find the latest successful CI run for the PR, download the review artifact, and create issues for each suggestion.
-
-2.  **Manual Trigger**: Navigate to the "Actions" tab in the GitHub repository, select the "Create Issues from Command" workflow, and run it manually. You will be prompted to enter the Pull Request number you wish to source the review artifacts from.
 
 ### Legacy Pre-commit Hooks
 
