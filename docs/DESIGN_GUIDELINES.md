@@ -68,7 +68,15 @@ The dashboard layout has been improved with consistent proportions, rotated side
 
 ### Accessibility (WCAG 2.1 AA Compliance)
 
-Some ARIA labels and improved color contrast have been implemented. Further work is in progress to improve keyboard navigation and screen reader support.
+The application has been updated to meet WCAG 2.1 AA standards for keyboard navigation and screen reader support. An automated accessibility testing process has been integrated into the development workflow using `axe-core` and `jest-axe`.
+
+The following core components have been audited and remediated to ensure compliance:
+
+-   `TimerDisplay`
+-   `HrmConnectionPanel`
+-   `SpotifyDisplay`
+
+Further work is in progress to audit and remediate the remaining components of the application.
 
 ## Usage Guide for Developers
 
