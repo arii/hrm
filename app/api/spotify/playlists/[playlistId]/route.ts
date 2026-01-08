@@ -15,7 +15,8 @@ import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
  */
 async function getPlaylistDetails(
   _req: Request,
-  context
+  // prettier-ignore
+  context: { params: { playlistId: string } }
 ) {
   const { playlistId } = context.params
 
