@@ -72,10 +72,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const sendThrottledHeartRate = useMemo(
     () =>
       throttle((heartRate: number) => {
-        sendDataRef.current({ type: 'HRM_INPUT', data: { value: heartRate } })
         onHeartRateUpdate?.(heartRate)
       }, throttleMs),
-    [onHeartRateUpdate, sendDataRef, throttleMs]
+    [onHeartRateUpdate, throttleMs]
   )
 
   const {
@@ -89,6 +88,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     server: gattServer,
     onHeartRateUpdate: (heartRate) => {
       lastDataTime.current = Date.now()
+      sendDataRef.current({ type: 'HRM_INPUT', data: { value: heartRate } })
       sendThrottledHeartRate(heartRate)
     },
   })
@@ -106,9 +106,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     startReconnecting,
     stopReconnecting,
     isReconnecting,
-    reconnectionStatus,
     reconnectionReason,
-  } = useReconnection({ onReconnect: reconnect })
+  } = useReconnection({ onReconnect: reconnect, setDeviceStatus })
 
   useEffect(() => {
     disconnectionReasonRef.current = disconnectionReason
@@ -150,12 +149,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
     }
   }, [userName, userAge, deviceStatus, sendData])
-
-  useEffect(() => {
-    if (isReconnecting && reconnectionStatus) {
-      setDeviceStatus(reconnectionStatus)
-    }
-  }, [isReconnecting, reconnectionStatus])
 
   useEffect(() => {
     const interval = setInterval(() => {

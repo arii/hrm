@@ -9,6 +9,7 @@ import logger from '@/utils/logger'
 
 interface UseReconnectionProps {
   onReconnect: () => Promise<void>
+  setDeviceStatus: (status: string) => void
   maxAttempts?: number
 }
 
@@ -16,7 +17,6 @@ interface UseReconnectionReturn {
   startReconnecting: (reason: 'signal_loss' | 'timeout') => void
   stopReconnecting: () => void
   isReconnecting: boolean
-  reconnectionStatus: string | null
   reconnectionReason: 'signal_loss' | 'timeout' | null
 }
 
@@ -30,12 +30,10 @@ interface UseReconnectionReturn {
  */
 export const useReconnection = ({
   onReconnect,
+  setDeviceStatus,
   maxAttempts = 5,
 }: UseReconnectionProps): UseReconnectionReturn => {
   const [isReconnecting, setIsReconnecting] = useState(false)
-  const [reconnectionStatus, setReconnectionStatus] = useState<string | null>(
-    null
-  )
   const [reconnectionReason, setReconnectionReason] = useState<
     'signal_loss' | 'timeout' | null
   >(null)
@@ -52,7 +50,6 @@ export const useReconnection = ({
       clearTimeout(reconnectTimeoutRef.current)
     }
     setIsReconnecting(false)
-    setReconnectionStatus(null)
     setReconnectionReason(null)
     attempts.current = 0
   }, [])
@@ -71,15 +68,13 @@ export const useReconnection = ({
             { maxAttempts },
             'Max reconnection attempts reached. Giving up.'
           )
-          setReconnectionStatus(
-            `Failed to reconnect after ${maxAttempts} attempts.`
-          )
+          setDeviceStatus(`Failed to reconnect after ${maxAttempts} attempts.`)
           stopReconnecting()
           return
         }
 
         const reasonText = reason === 'timeout' ? 'Timeout' : 'Signal Lost'
-        setReconnectionStatus(
+        setDeviceStatus(
           `${reasonText}. Reconnecting... (Attempt ${attempts.current}/${maxAttempts})`
         )
 
@@ -106,7 +101,7 @@ export const useReconnection = ({
       }
       attemptReconnect()
     },
-    [isReconnecting, maxAttempts, stopReconnecting]
+    [isReconnecting, maxAttempts, stopReconnecting, setDeviceStatus]
   )
 
   useEffect(() => {
@@ -121,7 +116,6 @@ export const useReconnection = ({
     startReconnecting,
     stopReconnecting,
     isReconnecting,
-    reconnectionStatus,
     reconnectionReason,
   }
 }

@@ -20,7 +20,9 @@ describe('useBluetoothHRM', () => {
   const mockSetupCharacteristics = jest.fn()
   const mockStartReconnecting = jest.fn()
 
-  let mockGattConnectionState: ReturnType<typeof useGattConnection.useGattConnection>
+  let mockGattConnectionState: ReturnType<
+    typeof useGattConnection.useGattConnection
+  >
   let onHeartRateUpdateCallback: (hr: number) => void
 
   beforeEach(() => {
@@ -60,12 +62,19 @@ describe('useBluetoothHRM', () => {
       reconnectionStatus: null,
       reconnectionReason: null,
     })
-    ;(WebSocketContext as jest.Mocked<typeof WebSocketContext>).useWebSocket.mockReturnValue({
+    ;(
+      WebSocketContext as jest.Mocked<typeof WebSocketContext>
+    ).useWebSocket.mockReturnValue({
       sendData: jest.fn(),
       connectionStatus: 'Connected',
       lastJsonMessage: null,
       hrmData: [],
-      timerData: { phase: 'idle', timeRemaining: 0, currentRound: 0, totalRounds: 0 },
+      timerData: {
+        phase: 'idle',
+        timeRemaining: 0,
+        currentRound: 0,
+        totalRounds: 0,
+      },
       spotifyData: null,
       workoutData: null,
     })
