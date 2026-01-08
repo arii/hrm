@@ -7,7 +7,7 @@
  * boilerplate and ensure consistency across visual tests.
  */
 
-import { expect, type Page, type Locator } from '@playwright/test'
+import { expect, type Page, type Locator, type ScreenshotOptions } from '@playwright/test'
 import { getHrMasks, getTimerMasks, waitForFontsLoaded } from '.'
 
 /**
@@ -55,19 +55,21 @@ export async function takeScreenshot(
 export async function takeDashboardScreenshot(
   page: Page,
   snapshotName: string,
-  options: object = {}
+  options: ScreenshotOptions = {}
 ) {
-  await page.waitForLoadState('networkidle'); // Ensure page is fully loaded and stable
+  await page.waitForLoadState('networkidle') // Ensure page is fully loaded and stable
   const mainContentLocator = page.getByTestId('main-content-layout')
-  await mainContentLocator.waitFor({ state: 'visible' });
+  await mainContentLocator.waitFor({ state: 'visible' })
 
   const clippingRegion = await mainContentLocator.boundingBox()
-  let clipOption = (options as any).clip; // Preserve existing clip option if any
+  let clipOption: ScreenshotOptions['clip'] = options.clip // Preserve existing clip option if any
 
   if (clippingRegion) {
-    clipOption = clippingRegion;
+    clipOption = clippingRegion
   } else {
-    console.warn(`Warning: Main content layout element not found or visible for clipping in ${snapshotName}. Taking full page screenshot without specific clipping.`);
+    console.warn(
+      `Warning: Main content layout element not found or visible for clipping in ${snapshotName}. Taking full page screenshot without specific clipping.`
+    )
   }
 
   await takeScreenshot(page, snapshotName, {
