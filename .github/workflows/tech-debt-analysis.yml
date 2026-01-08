@@ -3,15 +3,12 @@ name: Technical Debt Analysis
 
 on:
   workflow_dispatch:
-    inputs:
-      pr_number:
-        description: 'The pull request number to analyze.'
-        required: true
-        type: string
+  schedule:
+    # Run once a week on Sunday at midnight UTC
+    - cron: '0 0 * * 0'
 
 permissions:
   contents: read
-  pull-requests: read
   issues: write
 
 jobs:
@@ -45,14 +42,28 @@ jobs:
           gh pr diff "$PR_NUMBER" --patch > pr.diff
           echo "Diff for PR #${PR_NUMBER} saved to pr.diff"
 
+      - name: Find Code Files
+        id: files
+        run: |
+          files=$(find . -type f \( \
+            -name "*.ts" -o \
+            -name "*.tsx" -o \
+            -name "*.js" -o \
+            -name "*.jsx" \
+          \) -not -path "./node_modules/*" \
+             -not -path "./dist/*" \
+             -not -path "./.next/*" \
+             -not -path "./coverage/*")
+          echo "file_list=${files}" >> $GITHUB_OUTPUT
+
       - name: Run Technical Debt Analysis
         id: analysis
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           npx tsx scripts/identify-tech-debt.ts \
-            --diff-file pr.diff \
-            --output tech-debt-issues.json
+            --output tech-debt-issues.json \
+            --files ${{ steps.files.outputs.file_list }}
 
       - name: Deduplicate and Create Issues
         env:

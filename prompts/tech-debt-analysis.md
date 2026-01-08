@@ -1,4 +1,4 @@
-You are an expert at identifying technical debt in code. Analyze the following code diff and identify any technical debt.
+You are an expert at identifying technical debt in code. Analyze the following code and identify any technical debt.
 
 **Output Format (JSON only):**
 Respond with a JSON object containing a list of technical debt issues. Each issue should have the following structure:
@@ -15,8 +15,8 @@ Respond with a JSON object containing a list of technical debt issues. Each issu
 }
 ```
 
-**Code Diff to Analyze:**
+**Code to Analyze:**
 
-```diff
-{{diff}}
+```
+{{code}}
 ```
