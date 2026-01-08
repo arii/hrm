@@ -4,8 +4,9 @@
  */
 import { Writable } from 'stream'
 import pino from 'pino'
+import { pinoOptions } from '../../../utils/logger.server'
 
-describe('Pino Redaction', () => {
+describe('Server Logger Redaction using pinoOptions', () => {
   let stream: Writable
   let output: string
   let logger: pino.Logger
@@ -18,24 +19,13 @@ describe('Pino Redaction', () => {
         callback()
       },
     })
+    // The imported pinoOptions has level: 'silent' in the test env.
+    // We override it here to ensure logs are written to our test stream.
+    const testPinoOptions = { ...pinoOptions, level: 'info' }
+    logger = pino(testPinoOptions, stream)
   })
 
-  it('should redact sensitive paths from a log object', () => {
-    // Create a logger instance with the redaction options directly in the test
-    logger = pino(
-      {
-        redact: {
-          paths: [
-            'req.headers.cookie',
-            'req.headers.authorization',
-            'res.headers',
-          ],
-          remove: true,
-        },
-      },
-      stream
-    )
-
+  it('should redact sensitive information from logs using the application configuration', () => {
     const mockReq = {
       headers: {
         cookie: 'session-id=12345; theme=dark',
@@ -44,7 +34,7 @@ describe('Pino Redaction', () => {
       },
     }
 
-    // Log an object that contains the sensitive paths
+    // Log an object with sensitive properties
     logger.info({ req: mockReq })
 
     const logObject = JSON.parse(output)
