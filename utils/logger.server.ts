@@ -13,7 +13,7 @@ interface Logger {
   child: (bindings: pino.Bindings) => Logger
 }
 
-const pinoOptions: pino.LoggerOptions = {
+export const pinoOptions: pino.LoggerOptions = {
   level:
     process.env.NODE_ENV === 'test'
       ? 'silent'
