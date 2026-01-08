@@ -9,7 +9,8 @@ jest.useFakeTimers()
 describe('useReconnection', () => {
   it('should attempt to reconnect', async () => {
     const onReconnect = jest.fn().mockResolvedValue(undefined)
-    const { result } = renderHook(() => useReconnection({ onReconnect }))
+    const setDeviceStatus = jest.fn()
+    const { result } = renderHook(() => useReconnection({ onReconnect, setDeviceStatus }))
 
     act(() => {
       result.current.startReconnecting('signal_loss')
@@ -24,8 +25,9 @@ describe('useReconnection', () => {
 
   it('should stop reconnecting after max attempts', async () => {
     const onReconnect = jest.fn().mockRejectedValue(new Error('Failed'))
+    const setDeviceStatus = jest.fn()
     const { result } = renderHook(() =>
-      useReconnection({ onReconnect, maxAttempts: 2 })
+      useReconnection({ onReconnect, setDeviceStatus, maxAttempts: 2 })
     )
 
     act(() => {
