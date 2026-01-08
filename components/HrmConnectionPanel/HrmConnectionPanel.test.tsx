@@ -1,7 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import { WebSocketProvider } from '@/context/WebSocketContext'
+/**
+ * @jest-environment jsdom
+ */
+import { WebSocketProvider, useWebSocket } from '@/context/WebSocketContext'
 import React from 'react'
 import HrmConnectionPanel from '../HrmConnectionPanel'
 import { assertNoA11yViolations } from '../../tests/utils/a11y'
@@ -17,6 +20,26 @@ jest.mock('@/hooks/useAudio', () => ({
     setVolume: jest.fn(),
     muted: false,
     toggleMute: jest.fn(),
+  }),
+}))
+
+// Mock the useWebSocket hook
+jest.mock('@/context/WebSocketContext', () => ({
+  __esModule: true, // This is important for mocking modules with default exports
+  WebSocketProvider: ({ children }: { children: React.ReactNode }) => children,
+  useWebSocket: () => ({
+    sendMessage: jest.fn(),
+    lastMessage: null,
+    readyState: 1, // Represents OPEN
+    isConnected: true,
+    error: null,
+    closeConnection: jest.fn(),
+    hrmData: [],
+    timerData: {},
+    spotifyData: {},
+    activeAlerts: [],
+    sendData: jest.fn(),
+    connectionStatus: 'Connected',
   }),
 }))
 

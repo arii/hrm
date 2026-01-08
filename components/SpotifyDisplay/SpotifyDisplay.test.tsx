@@ -24,6 +24,26 @@ jest.mock('@/hooks/useAudio', () => ({
   }),
 }))
 
+// Mock the useWebSocket hook
+jest.mock('@/context/WebSocketContext', () => ({
+  __esModule: true,
+  WebSocketProvider: ({ children }: { children: React.ReactNode }) => children,
+  useWebSocket: () => ({
+    sendMessage: jest.fn(),
+    lastMessage: null,
+    readyState: 1, // Represents OPEN
+    isConnected: true,
+    error: null,
+    closeConnection: jest.fn(),
+    hrmData: [],
+    timerData: {},
+    spotifyData: {},
+    activeAlerts: [],
+    sendData: jest.fn(),
+    connectionStatus: 'Connected',
+  }),
+}))
+
 jest.mock('next-auth/react')
 const mockedUseSession = useSession as jest.Mock
 
