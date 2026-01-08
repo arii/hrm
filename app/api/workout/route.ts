@@ -62,6 +62,14 @@ export async function GET(request: Request) {
 
     return NextResponse.json(data)
   } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes('No table found')) {
+      logger.warn({ docId }, 'No table found in Google Doc')
+      return NextResponse.json(
+        { error: 'No table found in the provided document.' },
+        { status: 404 }
+      )
+    }
+
     logger.error(
       { error, docId: searchParams.get('docId') },
       'Workout API error'
