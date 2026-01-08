@@ -15,6 +15,17 @@ declare module 'next-auth' {
   }
 }
 
+// Extend the JWT type to include custom properties
+declare module 'next-auth/jwt' {
+  interface JWT {
+    accessToken?: string
+    accessTokenExpires?: number
+    refreshToken?: string
+    error?: string
+    providerAccountId?: string
+  }
+}
+
 // Helper to sync token with backend
 async function syncTokenWithBackend(token: JWT) {
   try {
@@ -248,7 +259,7 @@ export const authOptions: AuthOptions = {
      * @param {Account | null} params.account - The account object from the provider.
      * @returns {Promise<JWT>} The updated JWT.
      */
-    async jwt({ token, account }) {
+    async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
       if (account) {
         // ... [Existing initial sign-in logic] ...
