@@ -196,4 +196,97 @@ describe('useBluetoothHRM', () => {
     // Restore original AbortController
     global.AbortController = OriginalAbortController
   })
+
+  describe('Signal Quality Calculation', () => {
+    it('should calculate the rolling average of signal period', async () => {
+      const { result } = renderHook(() => useBluetoothHRM())
+      let characteristicValueChangedCallback: (
+        event: unknown
+      ) => void = () => {}
+
+      // Mock the characteristic and capture the event listener
+      const mockCharacteristic = {
+        startNotifications: jest.fn().mockResolvedValue(undefined),
+        addEventListener: jest.fn((_event, callback) => {
+          characteristicValueChangedCallback = callback
+        }),
+      }
+
+      // @ts-expect-error Gatt is a mock
+      mockGatt.connect.mockResolvedValue({
+        getPrimaryService: jest.fn().mockResolvedValue({
+          getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+        }),
+      })
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+
+      // Simulate packet arrivals
+      const now = Date.now()
+
+      // First packet
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+
+      // Second packet after 1000ms
+      jest.spyOn(Date, 'now').mockReturnValue(now + 1000)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+
+      expect(result.current.signalPeriodMs).toBe(1000)
+
+      // Third packet after 1050ms
+      jest.spyOn(Date, 'now').mockReturnValue(now + 2050)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      // Average of 1000 and 1050 is 1025
+      expect(result.current.signalPeriodMs).toBe(1025)
+
+      // Simulate a few more packets to test the rolling average
+      jest.spyOn(Date, 'now').mockReturnValue(now + 3050) // 1000ms delta
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      jest.spyOn(Date, 'now').mockReturnValue(now + 4050) // 1000ms delta
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      jest.spyOn(Date, 'now').mockReturnValue(now + 5050) // 1000ms delta
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      // At this point, the history should be [1000, 1050, 1000, 1000, 1000]
+      // Average is (1000 + 1050 + 1000 + 1000 + 1000) / 5 = 1010
+      expect(result.current.signalPeriodMs).toBe(1010)
+
+      // Sixth packet, the first one should be removed from history
+      jest.spyOn(Date, 'now').mockReturnValue(now + 6100) // 1050ms delta
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+
+      // Now the history should be [1050, 1000, 1000, 1000, 1050]
+      // Average is (1050 + 1000 + 1000 + 1000 + 1050) / 5 = 1020
+      expect(result.current.signalPeriodMs).toBe(1020)
+    })
+  })
 })
