@@ -183,7 +183,7 @@ jobs:
           npx tsx scripts/gemini-client.ts --task-file "$PROMPT_FILE" --output "pr_description.json"
 
       - name: Update PR Description
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
