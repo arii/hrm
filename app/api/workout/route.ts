@@ -1,6 +1,7 @@
 // app/api/workout/route.ts
 import { NextResponse } from 'next/server'
 import { parseGoogleDocTable } from '@/services/googleDocParser'
+import logger from '@/utils/logger' // Restore logger import
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -23,8 +24,35 @@ export async function GET(request: Request) {
     })
 
     if (!response.ok) {
+      if (response.status === 404) { // Restore 404 handling
+        logger.warn(
+          { docId, status: response.status },
+          'Google Doc not found. Ensure the document is publicly accessible.'
+        )
+        return NextResponse.json(
+          {
+            error:
+              'Document not found. Verify the document ID and sharing settings.',
+          },
+          { status: 404 }
+        )
+      }
+      // Restore 5xx handling
+      if (response.status >= 500) {
+        logger.warn(
+          { docId, status: response.status },
+          'Google Docs service temporarily unavailable.'
+        )
+        return NextResponse.json(
+          {
+            error: 'Google Docs service is temporarily unavailable. Please try again later.',
+          },
+          { status: 503 }
+        )
+      }
+
       throw new Error(
-        `Failed to fetch doc from Google (Status: ${response.status})`
+        `Failed to fetch document from Google (Status: ${response.status})` // Keep original generic error for other statuses
       )
     }
 
@@ -33,9 +61,14 @@ export async function GET(request: Request) {
 
     return NextResponse.json(data)
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Internal Server Error'
-    console.error('Workout API Error:', error)
-    return NextResponse.json({ error: errorMessage }, { status: 500 })
+    // Restore original error logging and response for catch-all
+    logger.error(
+      { error, docId: searchParams.get('docId') },
+      'Workout API error'
+    )
+    return NextResponse.json(
+      { error: 'Failed to retrieve workout data. Please try again later.' },
+      { status: 500 }
+    )
   }
 }
