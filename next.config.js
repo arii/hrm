@@ -67,6 +67,7 @@ const nextConfig = {
     ]
   },
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
+  transpilePackages: ['recharts'], // Add recharts to be transpiled by Next.js
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals.push('recharts');
