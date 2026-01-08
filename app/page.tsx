@@ -5,12 +5,11 @@
  */
 'use client'
 import Container from '@mui/material/Container'
-import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
-import PersonalAnalyticsDashboard from '../components/PersonalAnalyticsDashboard'
+import PersonalAnalyticsDashboard from '@/components/PersonalAnalyticsDashboard'
 import { useAudio } from '../hooks/useAudio'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
@@ -38,15 +37,6 @@ const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
 
 const DOC_ID =
   '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
-
-const mainGridStyles: SxProps = {
-  display: 'grid',
-  gridTemplateColumns: {
-    xs: '1fr',
-    lg: '1fr 1fr',
-  },
-  gap: 2,
-}
 
 const Dashboard = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)

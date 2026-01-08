@@ -1,16 +1,15 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import { useTheme } from '@mui/material/styles'
-import { LineChart } from '@mui/x-charts/LineChart'
-import { ChartsReferenceLine } from '@mui/x-charts/ChartsReferenceLine'
+import { LineChart, ChartsReferenceLine } from '@mui/x-charts'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { alpha } from '@mui/material/styles'
 
 interface DataPoint {
   timestamp: number
   bpm: number
+  [key: string]: any
 }
 
 interface HeartRateGradientChartProps {
@@ -54,18 +53,41 @@ export const HeartRateGradientChart = ({
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
             {/* Peak / Red Zone */}
-            <stop offset="5%" stopColor={theme.palette.error.main} stopOpacity={0.8} />
+            <stop
+              offset="5%"
+              stopColor={theme.palette.error.main}
+              stopOpacity={0.8}
+            />
             {/* Cardio / Orange Zone */}
-            <stop offset="30%" stopColor={theme.palette.warning.main} stopOpacity={0.6} />
+            <stop
+              offset="30%"
+              stopColor={theme.palette.warning.main}
+              stopOpacity={0.6}
+            />
             {/* Fat Burn / Green Zone */}
-            <stop offset="60%" stopColor={theme.palette.success.main} stopOpacity={0.4} />
+            <stop
+              offset="60%"
+              stopColor={theme.palette.success.main}
+              stopOpacity={0.4}
+            />
             {/* Rest / Blue Zone */}
-            <stop offset="95%" stopColor={theme.palette.info.main} stopOpacity={0.1} />
+            <stop
+              offset="95%"
+              stopColor={theme.palette.info.main}
+              stopOpacity={0.1}
+            />
           </linearGradient>
         </defs>
       </svg>
 
-      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box
+        sx={{
+          mb: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <Typography variant="h6" component="h2">
           Live Heart Rate
         </Typography>
@@ -106,9 +128,6 @@ export const HeartRateGradientChart = ({
             },
           ]}
           grid={{ horizontal: true }}
-          slotProps={{
-            legend: { hidden: true },
-          }}
           sx={{
             // Apply the gradient to the area
             '.MuiAreaElement-root': {
@@ -126,7 +145,10 @@ export const HeartRateGradientChart = ({
           <ChartsReferenceLine
             y={maxHr}
             label="Max HR"
-            lineStyle={{ stroke: theme.palette.error.main, strokeDasharray: '3 3' }}
+            lineStyle={{
+              stroke: theme.palette.error.main,
+              strokeDasharray: '3 3',
+            }}
             labelStyle={{ fill: theme.palette.error.main, fontSize: 10 }}
           />
         </LineChart>
