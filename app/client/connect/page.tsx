@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -24,7 +24,7 @@ export default function ConnectPage() {
   const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
   const [currentHR, setCurrentHR] = useState(0)
-
+  const autoConnectAttempted = useRef(false)
   const [localDisplayWeight, setLocalDisplayWeight] = useState<string | null>(
     null
   )
@@ -146,19 +146,19 @@ export default function ConnectPage() {
   })
 
   useEffect(() => {
-    // Try to auto-connect when WebSocket is ready and we're not already connected.
-    // Wait a tick to ensure the component is fully initialized before attempting connection.
-    if (!isConnected && isSupported && connectionStatus === 'Connected') {
+    // This effect now ensures auto-connect is attempted only once when the WebSocket is ready.
+    if (
+      !isConnected &&
+      isSupported &&
+      connectionStatus === 'Connected' &&
+      !autoConnectAttempted.current
+    ) {
+      autoConnectAttempted.current = true // Mark that we've started the attempt
       logger.info('WebSocket ready, attempting auto-connect...')
-      // Small delay to ensure component is fully mounted
-      const timeout = setTimeout(() => {
-        autoConnect().catch(() => {
-          logger.info('Auto-connect failed, user can connect manually')
-        })
-      }, 100)
-      return () => clearTimeout(timeout)
+      autoConnect().catch(() => {
+        logger.info('Auto-connect failed, user can connect manually')
+      })
     }
-    return undefined
   }, [connectionStatus, isConnected, isSupported, autoConnect])
 
   useEffect(() => {
