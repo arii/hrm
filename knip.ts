@@ -19,8 +19,6 @@ const config: KnipConfig = {
     'stories/**/*.tsx',
     '.storybook/**/*.ts',
     '.storybook/**/*.tsx',
-    'server.ts',
-    'proxy.ts',
   ],
   project: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs', '**/*.mjs'],
   ignore: [
@@ -34,18 +32,18 @@ const config: KnipConfig = {
     'storybook-static',
     'ecosystem.config.cjs',
     'scripts/get-available-port.mjs',
-    'public/mockServiceWorker.js',
+    'public',
     'next.config.js',
     'jest.config.cjs',
     'commitlint.config.cjs',
     'playwright.config.ts',
     'eslint.config.mjs',
+    'tests/unit/mocks/webBluetooth.ts',
   ],
   ignoreDependencies: [
     // types for web bluetooth api
     '@types/web-bluetooth',
     // Eslint plugin
-    'eslint-plugin-react',
     'eslint-plugin-storybook',
     'dotenv',
   ],
