@@ -1,22 +1,17 @@
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
-import BatteryFullIcon from '@mui/icons-material/BatteryFull'
-import BatteryStdIcon from '@mui/icons-material/BatteryStd'
-import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
-import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
 import { useState, useEffect } from 'react'
+import { DeviceConnection } from './DeviceConnection'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
@@ -125,13 +120,6 @@ export default function ConnectView({
       )
     }
   }, [currentHR, isConnected, isDataStale, userName])
-
-  const getBatteryIcon = (level: number) => {
-    if (level > 90) return <BatteryFullIcon color="success" />
-    if (level > 50) return <BatteryChargingFullIcon color="action" />
-    if (level > 20) return <BatteryStdIcon color="warning" />
-    return <BatteryAlertIcon color="error" />
-  }
 
   const handleFullReset = async () => {
     setIsResetting(true)
@@ -281,82 +269,16 @@ export default function ConnectView({
           </Box>
         )}
 
-        {deviceStatus &&
-          !isConnected &&
-          !deviceStatus.includes('Disconnected') && (
-            <Alert
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
-              sx={{ mb: 2 }}
-            >
-              {deviceStatus}
-            </Alert>
-          )}
-
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          {!isConnected ? (
-            <Button
-              variant="contained"
-              size="large"
-              onClick={onConnect}
-              disabled={
-                !userName.trim() ||
-                !userAge.trim() ||
-                deviceStatus.includes('Connecting')
-              }
-            >
-              {deviceStatus.includes('Connecting') ? (
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <CircularProgress size={20} color="inherit" />
-                  <span>Connecting...</span>
-                </Stack>
-              ) : (
-                'Connect Bluetooth HRM'
-              )}
-            </Button>
-          ) : (
-            <Stack spacing={2}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                {batteryLevel !== null && (
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={0.5}
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    {getBatteryIcon(batteryLevel)}
-                    <Typography variant="body2">
-                      {batteryLevel}% Battery
-                    </Typography>
-                  </Stack>
-                )}
-                <SignalQualityIndicator
-                  periodMs={signalPeriodMs}
-                  isConnected={isConnected}
-                />
-              </Box>
-              <Button
-                variant="outlined"
-                size="large"
-                onClick={onDisconnect}
-                color="error"
-              >
-                Disconnect
-              </Button>
-              {deviceStatus !== 'Connected' && (
-                <Typography variant="caption" color="text.secondary">
-                  Status: {deviceStatus}
-                </Typography>
-              )}
-            </Stack>
-          )}
-        </Box>
+        <DeviceConnection
+          deviceStatus={deviceStatus}
+          isConnected={isConnected}
+          userName={userName}
+          userAge={userAge}
+          onConnect={onConnect}
+          onDisconnect={onDisconnect}
+          batteryLevel={batteryLevel}
+          signalPeriodMs={signalPeriodMs}
+        />
 
         {isConnected && bluetoothConnected && (
           <Alert severity="success" sx={{ mb: 2 }}>

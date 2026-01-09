@@ -1,53 +1,31 @@
-import { useState, useEffect, useRef } from 'react'
 
-const MAX_DELAY = 30000 // 30 seconds
-const INITIAL_DELAY = 1000 // 1 second
+import { useEffect } from 'react'
+import logger from '@/utils/logger'
+import { useWebSocket } from '@/context/WebSocketContext'
 
-type ConnectFn = () => Promise<boolean>
-
-const useAutoConnect = (connectFn: ConnectFn, start: boolean) => {
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [attempts, setAttempts] = useState(0)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
-    let isMounted = true
-    const tryConnect = async (delay: number) => {
-      if (!start || !isMounted) {
-        return
-      }
-
-      setIsConnecting(true)
-      setAttempts((prev) => prev + 1)
-
-      const success = await connectFn()
-
-      if (isMounted) {
-        if (success) {
-          setIsConnecting(false)
-          setAttempts(0)
-        } else {
-          const newDelay = Math.min(delay * 2, MAX_DELAY)
-          timeoutRef.current = setTimeout(() => tryConnect(newDelay), newDelay)
-        }
-      }
-    }
-
-    if (start) {
-      tryConnect(INITIAL_DELAY)
-    }
-
-    return () => {
-      isMounted = false
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-      setIsConnecting(false)
-      setAttempts(0)
-    }
-  }, [start, connectFn])
-
-  return { isConnecting, attempts }
+interface UseAutoConnectProps {
+  autoConnect: () => Promise<void>
+  isConnected: boolean
+  isSupported: boolean
 }
 
-export default useAutoConnect
+export const useAutoConnect = ({
+  autoConnect,
+  isConnected,
+  isSupported,
+}: UseAutoConnectProps) => {
+  const { connectionStatus } = useWebSocket()
+
+  useEffect(() => {
+    if (!isConnected && isSupported && connectionStatus === 'Connected') {
+      logger.info('WebSocket ready, attempting auto-connect...')
+      const timeout = setTimeout(() => {
+        autoConnect().catch(() => {
+          logger.info('Auto-connect failed, user can connect manually')
+        })
+      }, 100)
+      return () => clearTimeout(timeout)
+    }
+    return undefined
+  }, [connectionStatus, isConnected, isSupported, autoConnect])
+}

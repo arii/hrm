@@ -5,6 +5,26 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ConnectView from '@/app/client/connect/ConnectView'
 import '@testing-library/jest-dom'
 
+jest.mock('@/components/HrTile', () => () => (
+  <div data-testid="mock-hrtile" />
+))
+jest.mock('@/components/BottomNavBar', () => () => (
+  <div data-testid="mock-bottomnavbar" />
+))
+jest.mock('@/app/client/connect/WorkoutSummary', () => () => (
+  <div data-testid="mock-workoutsummary" />
+))
+jest.mock('@/app/client/connect/UserSettings', () => () => (
+  <div data-testid="mock-usersettings" />
+))
+jest.mock('@/app/client/connect/WorkoutControls', () => () => (
+  <div data-testid="mock-workoutcontrols" />
+))
+jest.mock('@/app/client/connect/DeviceConnection', () => ({
+  __esModule: true,
+  DeviceConnection: () => <div data-testid="mock-deviceconnection" />,
+}))
+
 describe('ConnectView', () => {
   const mockProps = {
     duration: '00:00',
