@@ -1,12 +1,5 @@
 # Changelog
 
-## [0.24.1](https://github.com/arii/hrm/compare/hrm-v0.24.0...hrm-v0.24.1) (2026-01-09)
-
-
-### Bug Fixes
-
-* **ci:** improve resilience of gemini-review workflow ([#3350](https://github.com/arii/hrm/issues/3350)) ([7bc0b67](https://github.com/arii/hrm/commit/7bc0b67123ba98a80c546a6f780d14ccae2c1483))
-
 ## [0.24.0](https://github.com/arii/hrm/compare/hrm-v0.23.0...hrm-v0.24.0) (2026-01-09)
 
 
