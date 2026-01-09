@@ -149,52 +149,87 @@ jobs:
           # OPTION 2: Fallback to fetching checks live if no report is provided
           else
             echo "::notice::No pre-compiled report found. Fetching live PR checks."
-            # Use gh api to get raw check-runs data, which is more flexible than gh pr checks
-            # This avoids the "Unknown JSON field" error by not pre-defining fields and letting jq handle the parsing.
-            RAW_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}/check-runs" --jq '.check_runs')
 
-            # Now, safely filter and process the checks with jq
+            # Retry logic for fetching checks
+            MAX_RETRIES=3
+            RETRY_DELAY=5
+            for ((i=1; i<=MAX_RETRIES; i++)); do
+              RAW_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}/check-runs" --jq '.check_runs' 2>/dev/null)
+              if [ -n "$RAW_CHECKS_JSON" ]; then
+                echo "::notice::Successfully fetched check runs on attempt $i."
+                break
+              else
+                echo "::warning::Attempt $i of $MAX_RETRIES to fetch check runs failed. Retrying in ${RETRY_DELAY}s..."
+                sleep $RETRY_DELAY
+              fi
+            done
+
+            if [ -z "$RAW_CHECKS_JSON" ]; then
+              echo "::error::Failed to fetch check runs after $MAX_RETRIES attempts."
+              # Fallback to an empty JSON array to avoid script failure
+              RAW_CHECKS_JSON="[]"
+            fi
+
+            # For debugging, output the raw JSON to the step summary
+            echo "### Raw Checks JSON" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            echo "$RAW_CHECKS_JSON" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+
             # FIX: Filter checks to ensure details_url is not null and not empty.
-            # This prevents errors when trying to parse the job ID from the URL.
             FAILED_CHECKS_RAW_JSON=$(echo "$RAW_CHECKS_JSON" | jq -c 'map(select(.status == "completed" and (.conclusion == "failure" or .conclusion == "cancelled") and .details_url != null and .details_url != ""))')
 
             mapfile -t NAMES < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].name')
             mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion // "failure"')
             mapfile -t URLS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url')
-            # FIX: Use a robust regex with a named capture group for explicit extraction.
-            # This avoids failures if the URL structure changes unexpectedly.
+            # FIX: Use a robust regex to extract job ID.
             mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url | capture("(?<job_id>\\d+)$").job_id // ""')
 
             LOG_DIR=$(mktemp -d)
-            trap 'rm -rf "$LOG_DIR"' EXIT # Ensure cleanup on script exit
+            trap 'rm -rf "$LOG_DIR"' EXIT
 
-            # Define the processing function for a single job
             process_job() {
               local i=$1
               local job_id=${JOB_IDS[i]}
               local raw_log_file="$LOG_DIR/raw_log_${i}.txt"
               local redacted_log_file="$LOG_DIR/redacted_log_${i}.txt"
 
-              # Ensure the log file is created before attempting to write to it
               touch "$redacted_log_file"
 
+              # FIX: Improved error handling for Job ID parsing
               if ! [[ "$job_id" =~ ^[0-9]+$ ]]; then
                 echo "Error: Could not parse Job ID from URL: ${URLS[i]}" > "$redacted_log_file"
               else
-                gh job view "$job_id" --log > "$raw_log_file" 2>&1 || echo "Error: Failed to fetch logs for job ${job_id}." > "$raw_log_file"
+                 # Retry logic for fetching job logs
+                for ((j=1; j<=MAX_RETRIES; j++)); do
+                  gh job view "$job_id" --log > "$raw_log_file" 2>&1
+                  if [ $? -eq 0 ]; then
+                    echo "::notice::Successfully fetched logs for job ${job_id} on attempt $j."
+                    break
+                  else
+                    echo "::warning::Attempt $j of $MAX_RETRIES to fetch logs for job ${job_id} failed. Retrying in ${RETRY_DELAY}s..."
+                    sleep $RETRY_DELAY
+                  fi
+                done
+
+                if ! [ -f "$raw_log_file" ]; then
+                    echo "Error: Failed to fetch logs for job ${job_id} after $MAX_RETRIES attempts." > "$raw_log_file"
+                fi
+
                 tail -c 15K "$raw_log_file" > "$raw_log_file.tmp" && mv "$raw_log_file.tmp" "$raw_log_file"
                 if ! pnpm tsx scripts/redact-secrets.ts "$raw_log_file" "$redacted_log_file"; then
                   echo "Error: The redaction script failed for job ${job_id}." > "$redacted_log_file"
                 fi
-                rm -f "$raw_log_file" # Clean up raw log file immediately after use
+                rm -f "$raw_log_file"
               fi
             }
             export -f process_job
             export LOG_DIR
             export -a JOB_IDS
             export -a URLS
-            # Run the processing in parallel
-            # FIX: Removed redundant '-n 1' from xargs. '-I' implies one item per command.
+            export MAX_RETRIES
+            export RETRY_DELAY
+
             if [ ${#JOB_IDS[@]} -gt 0 ]; then
                 seq 0 $((${#JOB_IDS[@]} - 1)) | xargs -P 4 -I {} bash -c 'process_job "{}"'
             fi
