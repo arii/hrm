@@ -303,8 +303,8 @@ const TimerControls = () => {
                   disabled={controlsDisabled}
                   sx={{
                     flex: 1,
-                    backgroundColor: '#374151',
-                    '&:hover': { backgroundColor: '#4B5563' },
+                    backgroundColor: 'secondary.dark',
+                    '&:hover': { backgroundColor: 'secondary.main' },
                   }}
                 >
                   Tabata (20/10)
@@ -318,8 +318,8 @@ const TimerControls = () => {
                   disabled={controlsDisabled}
                   sx={{
                     flex: 1,
-                    backgroundColor: '#374151',
-                    '&:hover': { backgroundColor: '#4B5563' },
+                    backgroundColor: 'secondary.dark',
+                    '&:hover': { backgroundColor: 'secondary.main' },
                   }}
                 >
                   EMOM (60/60)
