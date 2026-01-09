@@ -23,6 +23,7 @@ declare module 'next-auth/jwt' {
     refreshToken?: string
     error?: string
     providerAccountId?: string
+    scope?: string
   }
 }
 
@@ -128,6 +129,7 @@ async function refreshAccessToken(token: JWT) {
       // Note: Spotify might or might not send a new refresh token.
       // If it does, use it. If not, keep the old one.
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+      scope: refreshedTokens.scope ?? token.scope, // Persist the scope
     }
   } catch (error) {
     logger.error({ error }, 'Failed to refresh access token')
@@ -283,6 +285,7 @@ export const authOptions: AuthOptions = {
             Date.now() + (Number(account.expires_in) || 3600) * 1000,
           refreshToken: account.refresh_token,
           providerAccountId: account.providerAccountId, // Store ID for reference
+          scope: account.scope, // <-- ADD THIS LINE
         }
 
         // Sync on initial login
