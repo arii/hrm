@@ -13,15 +13,12 @@ jest.mock('../../../components/GoogleDocViewer', () => {
   GoogleDocViewer.displayName = 'GoogleDocViewer'
   return GoogleDocViewer
 })
-jest.mock('../../../components/HrmConnectionPanel', () => {
-  const HrmConnectionPanel = () => <div data-testid="hrm-connection-panel" />
-  HrmConnectionPanel.displayName = 'HrmConnectionPanel'
-  return HrmConnectionPanel
-})
-jest.mock('../../../components/TimerDisplay', () => {
-  const TimerDisplay = () => <div data-testid="timer-display" />
-  TimerDisplay.displayName = 'TimerDisplay'
-  return TimerDisplay
+jest.mock('../../../components/PersonalAnalyticsDashboard', () => {
+  const PersonalAnalyticsDashboard = () => (
+    <div data-testid="personal-analytics-dashboard" />
+  )
+  PersonalAnalyticsDashboard.displayName = 'PersonalAnalyticsDashboard'
+  return PersonalAnalyticsDashboard
 })
 jest.mock('../../../components/SpotifyDisplay', () => {
   const SpotifyDisplay = () => <div data-testid="spotify-display" />

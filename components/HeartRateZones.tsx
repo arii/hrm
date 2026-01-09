@@ -4,10 +4,14 @@ import { Box, Typography, Paper } from '@mui/material'
 import { HEART_RATE_ZONES, HeartRateZoneConfig } from '../utils/constants'
 
 interface HeartRateZonesProps {
-  maxHr: number
+  maxHr?: number
+  currentHr: number
 }
 
-const HeartRateZones: React.FC<HeartRateZonesProps> = ({ maxHr }) => {
+const HeartRateZones: React.FC<HeartRateZonesProps> = ({
+  maxHr = 190,
+  currentHr,
+}) => {
   const calculateBpmRange = (zone: HeartRateZoneConfig) => {
     const minBpm = Math.round((zone.minPercent / 100) * maxHr)
     const maxBpm = Math.round((zone.maxPercent / 100) * maxHr)
@@ -23,7 +27,15 @@ const HeartRateZones: React.FC<HeartRateZonesProps> = ({ maxHr }) => {
         <Box
           key={zone.name}
           className="flex items-center justify-between p-2 mb-2 rounded-lg"
-          style={{ backgroundColor: zone.color }}
+          style={{
+            backgroundColor: zone.color,
+            opacity:
+              currentHr > 0 &&
+              currentHr >= (zone.minPercent / 100) * maxHr &&
+              currentHr <= (zone.maxPercent / 100) * maxHr
+                ? 1
+                : 0.3,
+          }}
         >
           <Typography variant="body1" className="font-semibold text-white">
             {zone.name}

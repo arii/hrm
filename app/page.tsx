@@ -5,13 +5,11 @@
  */
 'use client'
 import Container from '@mui/material/Container'
-import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
-import HrmConnectionPanel from '../components/HrmConnectionPanel'
-import TimerDisplay from '../components/TimerDisplay'
+import PersonalAnalyticsDashboard from '@/components/PersonalAnalyticsDashboard'
 import { useAudio } from '../hooks/useAudio'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
@@ -39,15 +37,6 @@ const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
 
 const DOC_ID =
   '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
-
-const mainGridStyles: SxProps = {
-  display: 'grid',
-  gridTemplateColumns: {
-    xs: '1fr',
-    lg: '1fr 1fr',
-  },
-  gap: 2,
-}
 
 const Dashboard = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
@@ -79,22 +68,7 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <Box sx={mainGridStyles}>
-        {/*
-         * The extra Box with height: '100%' is necessary to ensure the TimerDisplay
-         * component stretches to fill the full height of the grid cell. The grid
-         * itself defines the cell's height, but the child needs to explicitly
-         * be told to occupy that full height.
-         */}
-        <Box sx={{ height: '100%' }}>
-          <TimerDisplay />
-        </Box>
-        {/*
-         * HrmConnectionPanel does not need a height wrapper because
-         * it's internally structured to fill the height of its container.
-         */}
-        <HrmConnectionPanel />
-      </Box>
+      <PersonalAnalyticsDashboard />
       <Box sx={{ width: '100%', mt: 2 }}>
         {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ? (
           <WorkoutTableViewer docId={DOC_ID} />
