@@ -32,12 +32,13 @@ const config: KnipConfig = {
     'storybook-static',
     'ecosystem.config.cjs',
     'scripts/get-available-port.mjs',
-    'public',
+    'public/mockServiceWorker.js',
     'next.config.js',
     'jest.config.cjs',
     'commitlint.config.cjs',
     'playwright.config.ts',
     'eslint.config.mjs',
+    // This mock is dynamically imported in tests, so Knip cannot detect its usage.
     'tests/unit/mocks/webBluetooth.ts',
   ],
   ignoreDependencies: [
