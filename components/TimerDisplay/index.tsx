@@ -30,12 +30,12 @@ type PhaseProps = {
 }
 
 const phaseProps: PhaseProps = {
-  PREPARE: { color: '#f59e0b', label: 'GET READY' },
-  WORK: { color: '#ef4444', label: 'WORK' },
-  REST: { color: '#22c55e', label: 'REST' },
-  RUNNING: { color: '#3b82f6', label: 'RUNNING' },
-  IDLE: { color: '#6b7280', label: 'IDLE' },
-  COOLDOWN: { color: '#6b7280', label: 'COOLDOWN' },
+  PREPARE: { color: 'warning.main', label: 'GET READY' },
+  WORK: { color: 'error.main', label: 'WORK' },
+  REST: { color: 'success.main', label: 'REST' },
+  RUNNING: { color: 'info.main', label: 'RUNNING' },
+  IDLE: { color: 'grey.600', label: 'IDLE' },
+  COOLDOWN: { color: 'grey.600', label: 'COOLDOWN' },
 }
 
 const getPhaseProps = (phase: TimerData['currentPhase']) => {
@@ -82,14 +82,14 @@ const TimerDisplay = () => {
     <Card
       elevation={6}
       data-testid="timer-display-container"
-      sx={{
+      sx={(theme) => ({
         height: '100%',
         display: 'flex',
         borderRadius: 2,
         position: 'relative',
         overflow: 'hidden',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-      }}
+        border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+      })}
     >
       <PhaseBackground phase={currentPhase} />
 
@@ -107,25 +107,25 @@ const TimerDisplay = () => {
       >
         <Typography
           variant="caption"
-          sx={{ color: '#fff' }}
+          sx={{ color: 'common.white' }}
           data-testid="ws-status-indicator"
         >
           {connectionStatus}
         </Typography>
         <Box
-          sx={{
+          sx={(theme) => ({
             width: 12,
             height: 12,
             borderRadius: '50%',
             backgroundColor:
               connectionStatus === 'Connected'
-                ? '#10B981'
+                ? theme.palette.success.main
                 : connectionStatus === 'Reconnecting...'
-                  ? '#F59E0B'
-                  : '#EF4444',
+                ? theme.palette.warning.main
+                : theme.palette.error.main,
             animation:
               connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
-          }}
+          })}
         />
       </Box>
       {/* Mode Indicator - Rotated on left side */}
@@ -142,17 +142,17 @@ const TimerDisplay = () => {
         >
           <Typography
             variant="body2"
-            sx={{
-              color: '#fff',
+            sx={(theme) => ({
+              color: 'common.white',
               fontWeight: 700,
               letterSpacing: 2,
               whiteSpace: 'nowrap',
               fontSize: '0.9rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
+              backgroundColor: alpha(theme.palette.common.white, 0.1),
               px: 1,
               py: 0.5,
               borderRadius: 1,
-            }}
+            })}
           >
             {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
           </Typography>
@@ -173,17 +173,17 @@ const TimerDisplay = () => {
         >
           <Typography
             variant="body2"
-            sx={{
-              color: '#fff',
+            sx={(theme) => ({
+              color: 'common.white',
               fontWeight: 700,
               letterSpacing: 1,
               whiteSpace: 'nowrap',
               fontSize: '0.8rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
+              backgroundColor: alpha(theme.palette.common.white, 0.1),
               px: 1,
               py: 0.5,
               borderRadius: 1,
-            }}
+            })}
           >
             WORK:{workDuration}s REST:{restDuration}s
           </Typography>
@@ -191,7 +191,7 @@ const TimerDisplay = () => {
       )}
 
       <CardContent
-        sx={{
+        sx={(theme) => ({
           p: { xs: 2, md: 3 },
           textAlign: 'center',
           flex: 1,
@@ -201,22 +201,22 @@ const TimerDisplay = () => {
           justifyContent: 'center',
           position: 'relative',
           zIndex: 1,
-          backgroundColor: 'rgba(0,0,0,0.5)',
+          backgroundColor: alpha(theme.palette.common.black, 0.5),
           backdropFilter: 'blur(10px)',
-        }}
+        })}
       >
         <ProgressRing percentage={progressPercentage} phaseColor={phaseColor} />
         <Typography
           data-testid="timer-phase"
           variant="h6"
           aria-live="polite"
-          sx={{
+          sx={(theme) => ({
             mb: 1,
             color: phaseColor,
             fontWeight: 700,
             letterSpacing: 2,
-            textShadow: '0 0 10px rgba(0,0,0,0.5)',
-          }}
+            textShadow: `0 0 10px ${alpha(theme.palette.common.black, 0.5)}`,
+          })}
         >
           {phaseLabel}
         </Typography>
@@ -235,7 +235,7 @@ const TimerDisplay = () => {
           }}
           alignItems="center"
         >
-          <IconButton onClick={toggleMute} sx={{ color: 'white' }}>
+          <IconButton onClick={toggleMute} sx={{ color: 'common.white' }}>
             {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
           </IconButton>
           <Slider
@@ -243,13 +243,13 @@ const TimerDisplay = () => {
             value={muted ? 0 : volume}
             onChange={(_, newValue) => setVolume(newValue as number)}
             sx={{
-              color: 'white',
+              color: 'common.white',
               '& .MuiSlider-thumb': {
                 color: phaseColor,
               },
             }}
           />
-          <VolumeUp sx={{ color: 'white' }} />
+          <VolumeUp sx={{ color: 'common.white' }} />
         </Stack>
       </CardContent>
     </Card>

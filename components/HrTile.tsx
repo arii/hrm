@@ -10,16 +10,16 @@ import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
-import { useTheme } from '@mui/material/styles'
+import { useTheme, alpha } from '@mui/material/styles'
 
 // Define the style for the centered overlay
-const overlayStyles = {
+const overlayStyles = (theme) => ({
   position: 'absolute',
   top: 0,
   left: 0,
   width: '100%',
   height: '100%',
-  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
+  backgroundColor: alpha(theme.palette.common.black, 0.7), // Dark, semi-transparent overlay
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',

@@ -147,12 +147,12 @@ export default function ConnectView({
 
   const ResetSection = () => (
     <Box
-      sx={{
+      sx={(theme) => ({
         textAlign: 'center',
         mt: 4,
         pt: 4,
-        borderTop: '1px solid #eee',
-      }}
+        borderTop: `1px solid ${theme.palette.divider}`,
+      })}
     >
       <Button
         variant="contained"

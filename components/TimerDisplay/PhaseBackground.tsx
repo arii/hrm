@@ -5,20 +5,21 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Box, useTheme } from '@mui/material'
 import { TimerData } from '@/types/core'
 import { keyframes } from '@emotion/react'
+import { Theme } from '@mui/material/styles'
 
-const getPhaseGradient = (phase: TimerData['currentPhase']) => {
+const getPhaseGradient = (phase: TimerData['currentPhase'], theme: Theme) => {
   switch (phase) {
     case 'PREPARE':
-      return 'linear-gradient(135deg, #fde047 0%, #f59e0b 100%)' // Yellow
+      return `linear-gradient(135deg, ${theme.palette.warning.light} 0%, ${theme.palette.warning.main} 100%)`
     case 'WORK':
-      return 'linear-gradient(135deg, #f87171 0%, #dc2626 100%)' // Red
+      return `linear-gradient(135deg, ${theme.palette.error.light} 0%, ${theme.palette.error.main} 100%)`
     case 'REST':
-      return 'linear-gradient(135deg, #86efac 0%, #22c55e 100%)' // Green
+      return `linear-gradient(135deg, ${theme.palette.success.light} 0%, ${theme.palette.success.main} 100%)`
     case 'RUNNING':
-      return 'linear-gradient(135deg, #93c5fd 0%, #3b82f6 100%)' // Blue
+      return `linear-gradient(135deg, ${theme.palette.info.light} 0%, ${theme.palette.info.main} 100%)`
     case 'IDLE':
     default:
-      return 'linear-gradient(135deg, #4b5563 0%, #1f2937 100%)' // Gray
+      return `linear-gradient(135deg, ${theme.palette.grey[600]} 0%, ${theme.palette.grey[800]} 100%)`
   }
 }
 
@@ -54,7 +55,7 @@ const PhaseBackground = ({ phase }: { phase: TimerData['currentPhase'] }) => {
           width: '100%',
           height: '100%',
           overflow: 'hidden',
-          background: getPhaseGradient(phase),
+          background: getPhaseGradient(phase, theme),
           zIndex: 0,
         }}
       >
@@ -67,9 +68,10 @@ const PhaseBackground = ({ phase }: { phase: TimerData['currentPhase'] }) => {
               left: style.left,
               width: style.width,
               height: style.height,
-              background: `radial-gradient(circle, ${
-                theme.palette.background.default
-              }20 0%, transparent 70%)`,
+              background: `radial-gradient(circle, ${alpha(
+                theme.palette.background.default,
+                0.1
+              )} 0%, transparent 70%)`,
               borderRadius: '50%',
               animation: `${move} ${style.animationDuration} alternate infinite`,
               opacity: 0.5,

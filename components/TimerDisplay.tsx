@@ -14,6 +14,7 @@ import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 import SideLabel from './SideLabel'
 import { useAudioContext } from '@/context/AudioContext'
+import { alpha } from '@mui/material/styles'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -40,14 +41,14 @@ const TimerDisplay = () => {
   if (currentPhase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B' // Yellow/Warning
+    phaseColor = 'warning.main'
     phaseLabel = 'GET READY'
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
-    phaseColor = '#2563EB' // Blue/Primary
+    phaseColor = 'primary.main'
     phaseLabel = 'RUNNING'
   } else if (
     mode === 'TABATA' &&
@@ -61,19 +62,19 @@ const TimerDisplay = () => {
     displayTime = `${pad(mm)}:${pad(ss)}`
 
     if (currentPhase === 'WORK') {
-      phaseColor = '#EF4444' // Red
+      phaseColor = 'error.main'
       phaseLabel = 'WORK'
     } else if (currentPhase === 'REST') {
-      phaseColor = '#22C55E' // Green
+      phaseColor = 'success.main'
       phaseLabel = 'REST'
     } else {
-      phaseColor = '#3B82F6' // Blue
+      phaseColor = 'info.main'
       phaseLabel = 'COOLDOWN'
     }
   } else {
     // IDLE or default
     displayTime = '00:00'
-    phaseColor = '#6B7280' // Gray
+    phaseColor = 'grey.600'
     phaseLabel = 'READY'
   }
 
@@ -81,19 +82,19 @@ const TimerDisplay = () => {
     <Card
       elevation={6}
       data-testid="timer-display-container"
-      sx={{
-        backgroundColor: '#000000', // Pure black for high energy
+      sx={(theme) => ({
+        backgroundColor: theme.palette.common.black,
         color: phaseColor, // Dynamic color based on phase
         height: '100%',
         display: 'flex',
         borderRadius: 2,
-        border: '2px solid #1a1a1a', // Subtle border for definition
+        border: `2px solid ${alpha(theme.palette.common.white, 0.1)}`,
         position: 'relative',
         animation:
           currentPhase === 'WORK' || currentPhase === 'REST'
             ? 'pulse-opacity 1.5s infinite'
             : 'none',
-      }}
+      })}
     >
       {/* Status Indicator */}
       <Box
@@ -109,25 +110,25 @@ const TimerDisplay = () => {
       >
         <Typography
           variant="caption"
-          sx={{ color: '#fff' }}
+          sx={{ color: 'common.white' }}
           data-testid="ws-status-indicator"
         >
           {connectionStatus}
         </Typography>
         <Box
-          sx={{
+          sx={(theme) => ({
             width: 12,
             height: 12,
             borderRadius: '50%',
             backgroundColor:
               connectionStatus === 'Connected'
-                ? '#10B981'
+                ? theme.palette.success.main
                 : connectionStatus === 'Reconnecting...'
-                  ? '#F59E0B'
-                  : '#EF4444',
+                ? theme.palette.warning.main
+                : theme.palette.error.main,
             animation:
               connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
-          }}
+          })}
         />
       </Box>
       {/* Left Column: Mode Indicator */}
@@ -208,7 +209,7 @@ const TimerDisplay = () => {
           }}
           alignItems="center"
         >
-          <IconButton onClick={toggleMute} sx={{ color: 'white' }}>
+          <IconButton onClick={toggleMute} sx={{ color: 'common.white' }}>
             {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
           </IconButton>
           <Slider
@@ -216,13 +217,13 @@ const TimerDisplay = () => {
             value={muted ? 0 : volume}
             onChange={(_, newValue) => setVolume(newValue as number)}
             sx={{
-              color: 'white',
+              color: 'common.white',
               '& .MuiSlider-thumb': {
                 color: phaseColor,
               },
             }}
           />
-          <VolumeUp sx={{ color: 'white' }} />
+          <VolumeUp sx={{ color: 'common.white' }} />
         </Stack>
       </CardContent>
       {/* Right Column: Tabata Durations */}

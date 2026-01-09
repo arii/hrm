@@ -78,16 +78,16 @@ const ControlPanel = () => {
       </Head>
       <Container
         maxWidth="xs"
-        sx={{
+        sx={(theme) => ({
           py: 1,
           px: 1,
           minHeight: '100vh',
-          background: 'rgba(30, 41, 59, 0.7)',
+          background: alpha(theme.palette.grey[800], 0.7),
           backdropFilter: 'blur(20px) saturate(180%)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
           borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-        }}
+          boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.4)}`,
+        })}
       >
         {/* Connection Status */}
         <Box sx={{ mb: 1, textAlign: 'center' }}>

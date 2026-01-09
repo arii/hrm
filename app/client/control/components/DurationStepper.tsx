@@ -7,6 +7,7 @@ import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
+import { alpha } from '@mui/material/styles'
 
 interface DurationStepperProps {
   label: string
@@ -19,17 +20,17 @@ interface DurationStepperProps {
   color?: string
 }
 
-const stepperButtonSx = {
-  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  color: 'white',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
+const stepperButtonSx = (theme) => ({
+  backgroundColor: alpha(theme.palette.common.white, 0.1),
+  color: 'common.white',
+  border: `1px solid ${alpha(theme.palette.common.white, 0.2)}`,
   '&:hover': {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    border: '1px solid rgba(255, 255, 255, 0.3)',
+    backgroundColor: alpha(theme.palette.common.white, 0.2),
+    border: `1px solid ${alpha(theme.palette.common.white, 0.3)}`,
   },
   width: 56,
   height: 56,
-}
+})
 
 const DurationStepper: React.FC<DurationStepperProps> = ({
   label,
@@ -38,7 +39,7 @@ const DurationStepper: React.FC<DurationStepperProps> = ({
   min = 0,
   step = 5,
   disabled = false,
-  color = '#FFFFFF',
+  color = 'common.white',
 }) => {
   const handleIncrement = () => {
     onChange(value + step)
@@ -52,7 +53,7 @@ const DurationStepper: React.FC<DurationStepperProps> = ({
     <Box>
       <Typography
         sx={{
-          color: 'white',
+          color: 'common.white',
           fontWeight: 'medium',
           mb: 0.5,
           fontSize: '0.9rem',

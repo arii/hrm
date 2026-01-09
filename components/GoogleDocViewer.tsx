@@ -11,6 +11,7 @@ import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useEffect, useState } from 'react'
+import { alpha } from '@mui/material/styles'
 
 interface GoogleDocViewerProps {
   title: string
@@ -88,16 +89,16 @@ const GoogleDocViewer = ({
         {onToggleShrink && (
           <IconButton
             onClick={onToggleShrink}
-            sx={{
+            sx={(theme) => ({
               position: 'absolute',
               bottom: 16,
               right: 16,
-              backgroundColor: 'rgba(255,255,255,0.9)',
+              backgroundColor: alpha(theme.palette.common.white, 0.9),
               '&:hover': {
-                backgroundColor: 'rgba(255,255,255,1)',
+                backgroundColor: theme.palette.common.white,
               },
               zIndex: 10,
-            }}
+            })}
             aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
           >
             {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}

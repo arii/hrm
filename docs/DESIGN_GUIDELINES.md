@@ -101,3 +101,19 @@ const primaryColor = theme.palette.primary.main // #F44336
 // Typography
 <Typography variant="h1" /> // Uses theme h1 styles
 ```
+
+### Color Manipulation with `alpha`
+
+For applying transparency to theme colors, use the `alpha` helper from `@mui/material/styles`. This ensures that colors are derived from the theme and avoids hardcoded `rgba` values.
+
+```tsx
+import { alpha } from '@mui/material/styles'
+
+// In sx prop
+<Box sx={{ backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.1) }} />
+
+// In styled-components or emotion
+const StyledComponent = styled('div')(({ theme }) => ({
+  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+}))
+```

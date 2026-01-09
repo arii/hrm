@@ -8,6 +8,7 @@ import BottomNavigationAction from '@mui/material/BottomNavigationAction'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { alpha } from '@mui/material/styles'
 
 export default function BottomNavBar() {
   const pathname = usePathname()
@@ -27,15 +28,15 @@ export default function BottomNavBar() {
         setValue(newValue)
       }}
       showLabels
-      sx={{
+      sx={(theme) => ({
         width: '100%',
         position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
         zIndex: 1000,
-        boxShadow: '0px -2px 4px rgba(0, 0, 0, 0.1)',
-      }}
+        boxShadow: `0px -2px 4px ${alpha(theme.palette.common.black, 0.1)}`,
+      })}
     >
       <BottomNavigationAction
         label="Dashboard"
@@ -44,7 +45,7 @@ export default function BottomNavBar() {
         component={Link}
         href="/"
         sx={{
-          color: value === 0 ? 'primary.main' : '#9CA3AF',
+          color: value === 0 ? 'primary.main' : 'grey.500',
           '&:hover, &.Mui-focusVisible': {
             backgroundColor: 'action.hover',
           },
@@ -57,7 +58,7 @@ export default function BottomNavBar() {
         component={Link}
         href="/client/control"
         sx={{
-          color: value === 1 ? 'primary.main' : '#9CA3AF',
+          color: value === 1 ? 'primary.main' : 'grey.500',
           '&:hover, &.Mui-focusVisible': {
             backgroundColor: 'action.hover',
           },
@@ -70,7 +71,7 @@ export default function BottomNavBar() {
         component={Link}
         href="/client/connect"
         sx={{
-          color: value === 2 ? 'primary.main' : '#9CA3AF',
+          color: value === 2 ? 'primary.main' : 'grey.500',
           '&:hover, &.Mui-focusVisible': {
             backgroundColor: 'action.hover',
           },

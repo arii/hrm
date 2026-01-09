@@ -19,6 +19,7 @@ import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PlaybackControls from './PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
+import { alpha } from '@mui/material/styles'
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -205,26 +206,26 @@ const SpotifyControls = () => {
   return (
     <Card
       data-testid="spotify-controls-card"
-      sx={{
+      sx={(theme) => ({
         mb: 3,
-        color: 'white',
-        background: 'rgba(30, 41, 59, 0.7)',
+        color: theme.palette.common.white,
+        background: alpha(theme.palette.grey[800], 0.7),
         backdropFilter: 'blur(20px) saturate(180%)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
         borderRadius: 3,
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-      }}
+        boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.4)}`,
+      })}
     >
       <CardContent sx={{ p: 2 }}>
         <Typography
           variant="h6"
-          sx={{
+          sx={(theme) => ({
             mb: 2,
-            color: '#1DB954',
+            color: theme.palette.success.main,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-          }}
+          })}
         >
           <MusicNote sx={{ mr: 1 }} /> Spotify
         </Typography>
@@ -274,12 +275,12 @@ const SpotifyControls = () => {
                     }}
                     disabled={connectionStatus !== 'Connected'}
                     sx={{
-                      color: 'white',
+                      color: 'common.white',
                       '& .MuiOutlinedInput-notchedOutline': {
                         borderColor: 'grey.600',
                       },
                       '& .MuiSvgIcon-root': {
-                        color: 'white',
+                        color: 'common.white',
                       },
                     }}
                   >

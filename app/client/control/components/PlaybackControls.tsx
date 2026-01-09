@@ -11,6 +11,7 @@ import SkipPrevious from '@mui/icons-material/SkipPrevious'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
 import { SpotifyCommand } from '@/types/websocket'
+import { alpha } from '@mui/material/styles'
 
 interface PlaybackControlsProps {
   isPlaying: boolean
@@ -35,12 +36,14 @@ const PlaybackControls = ({
         onClick={() => onCommand('PREVIOUS')}
         data-testid="spotify-prev"
         disabled={disabled}
-        sx={{
-          color: 'white',
+        sx={(theme) => ({
+          color: 'common.white',
           width: 48,
           height: 48,
-          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
-        }}
+          '&:hover': {
+            backgroundColor: alpha(theme.palette.common.white, 0.1),
+          },
+        })}
         aria-label="Previous Track"
       >
         <SkipPrevious sx={{ fontSize: 30 }} />
@@ -49,13 +52,15 @@ const PlaybackControls = ({
         onClick={() => onCommand(isPlaying ? 'PAUSE' : 'PLAY')}
         data-testid="spotify-play-pause"
         disabled={disabled}
-        sx={{
-          color: 'black',
-          backgroundColor: 'white',
+        sx={(theme) => ({
+          color: 'common.black',
+          backgroundColor: 'common.white',
           width: 64,
           height: 64,
-          '&:hover': { backgroundColor: '#f0f0f0' },
-        }}
+          '&:hover': {
+            backgroundColor: alpha(theme.palette.common.white, 0.9),
+          },
+        })}
         aria-label={isPlaying ? 'Pause' : 'Play'}
       >
         {isPlaying ? (
@@ -68,12 +73,14 @@ const PlaybackControls = ({
         onClick={() => onCommand('NEXT')}
         data-testid="spotify-next"
         disabled={disabled}
-        sx={{
-          color: 'white',
+        sx={(theme) => ({
+          color: 'common.white',
           width: 48,
           height: 48,
-          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
-        }}
+          '&:hover': {
+            backgroundColor: alpha(theme.palette.common.white, 0.1),
+          },
+        })}
         aria-label="Next Track"
       >
         <SkipNext sx={{ fontSize: 30 }} />
