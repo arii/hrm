@@ -27,8 +27,8 @@ const stepperButtonSx = {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     border: '1px solid rgba(255, 255, 255, 0.3)',
   },
-  width: 48,
-  height: 48,
+  width: 56,
+  height: 56,
 }
 
 const DurationStepper: React.FC<DurationStepperProps> = ({

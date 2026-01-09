@@ -92,15 +92,21 @@ const ControlPanel = () => {
         <Box sx={{ mb: 1, textAlign: 'center' }}>
           <Typography
             variant="caption"
-            sx={{
-              color: connectionStatus === 'Connected' ? 'green' : 'orange',
-              fontWeight: 'bold',
-              backgroundColor: 'rgba(0,0,0,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
+            sx={(theme) => ({
               display: 'inline-block',
-            }}
+              fontWeight: 'bold',
+              borderRadius: '9999px',
+              px: 2,
+              py: 0.5,
+              color:
+                connectionStatus === 'Connected'
+                  ? theme.palette.success.main
+                  : theme.palette.warning.main,
+              backgroundColor:
+                connectionStatus === 'Connected'
+                  ? theme.palette.success.main + '33'
+                  : theme.palette.warning.main + '33',
+            })}
           >
             Server: {connectionStatus}
           </Typography>

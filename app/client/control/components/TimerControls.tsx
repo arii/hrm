@@ -280,7 +280,7 @@ const TimerControls = () => {
         </Box>
 
         {timerData.mode === 'TABATA' && (
-          <Stack spacing={2} sx={{ mb: 2 }}>
+          <Stack spacing={3} sx={{ mb: 2 }}>
             <Box>
               <Typography
                 sx={{
@@ -293,45 +293,65 @@ const TimerControls = () => {
               >
                 Timer Presets
               </Typography>
-              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+              <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   onClick={() => {
                     setWorkTime(20)
                     setRestTime(10)
                   }}
                   disabled={controlsDisabled}
-                  sx={{ flex: 1, color: '#EF4444', borderColor: '#EF4444' }}
+                  sx={{
+                    flex: 1,
+                    backgroundColor: '#374151',
+                    '&:hover': { backgroundColor: '#4B5563' },
+                  }}
                 >
                   Tabata (20/10)
                 </Button>
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   onClick={() => {
                     setWorkTime(60)
                     setRestTime(60)
                   }}
                   disabled={controlsDisabled}
-                  sx={{ flex: 1, color: '#22C55E', borderColor: '#22C55E' }}
+                  sx={{
+                    flex: 1,
+                    backgroundColor: '#374151',
+                    '&:hover': { backgroundColor: '#4B5563' },
+                  }}
                 >
                   EMOM (60/60)
                 </Button>
               </Stack>
             </Box>
-            <DurationStepper
-              label="Work Duration (s)"
-              value={workTime}
-              onChange={setWorkTime}
-              disabled={controlsDisabled}
-              color="#EF4444"
-            />
-            <DurationStepper
-              label="Rest Duration (s)"
-              value={restTime}
-              onChange={setRestTime}
-              disabled={controlsDisabled}
-              color="#22C55E"
-            />
+            <Card
+              variant="outlined"
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                background: 'rgba(255, 255, 255, 0.05)',
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+              }}
+            >
+              <Stack spacing={2}>
+                <DurationStepper
+                  label="Work Duration (s)"
+                  value={workTime}
+                  onChange={setWorkTime}
+                  disabled={controlsDisabled}
+                  color="#EF4444"
+                />
+                <DurationStepper
+                  label="Rest Duration (s)"
+                  value={restTime}
+                  onChange={setRestTime}
+                  disabled={controlsDisabled}
+                  color="#22C55E"
+                />
+              </Stack>
+            </Card>
           </Stack>
         )}
 
