@@ -15,6 +15,16 @@ jest.mock('next/dynamic', () => () => {
   return MockComponent
 })
 
+// Mock the ZoneDistributionChart component
+jest.mock(
+  '@/app/client/experimental/components/ZoneDistributionChart',
+  () => {
+    const MockComponent = () => <div>Zone Distribution Chart</div>
+    MockComponent.displayName = 'ZoneDistributionChart'
+    return MockComponent
+  }
+)
+
 // Mock hooks
 jest.mock('@/context/UserSettingsContext')
 jest.mock('@/context/WebSocketContext')
