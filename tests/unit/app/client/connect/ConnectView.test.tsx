@@ -1,76 +1,84 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import ConnectView from '@/app/client/connect/ConnectView'
+import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import { WebSocketProvider } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
 
+// Mock child components and hooks that are not the focus of this test.
+jest.mock('@/hooks/useBluetoothHRM', () => ({
+  __esModule: true,
+  default: () => ({
+    status: 'DISCONNECTED',
+    hrData: { heartRate: 0, rrIntervals: [] },
+    error: null,
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    deviceName: null,
+  }),
+}))
+
+jest.mock('@/hooks/useHrmBroadcaster', () => ({
+  useHrmBroadcaster: jest.fn(),
+}))
+
+jest.mock('@/hooks/useAutoConnect', () => ({
+  useAutoConnect: jest.fn(),
+}))
+
+jest.mock('@/app/client/connect/DeviceConnection', () => ({
+  __esModule: true,
+  DeviceConnection: () => <div data-testid="mock-device-connection" />,
+}))
+
+jest.mock('@/app/client/connect/WorkoutControls', () => ({
+  __esModule: true,
+  default: () => <div data-testid="mock-workout-controls" />,
+}))
+
 describe('ConnectView', () => {
-  const mockProps = {
-    duration: '00:00',
-    caloriesBurned: 0,
-    userName: 'Test User',
-    setUserName: jest.fn(),
-    userAge: '30',
-    setUserAge: jest.fn(),
-    onAgeBlur: jest.fn(),
-    ageError: null,
-    userHeight: { cm: '175', feet: '5', inches: '9' },
-    setUserHeight: jest.fn(),
-    onHeightBlur: jest.fn(),
-    heightError: null,
-    userWeight: '70',
-    setUserWeight: jest.fn(),
-    onWeightBlur: jest.fn(),
-    weightError: null,
-    gender: 'MALE' as const,
-    setGender: jest.fn(),
-    unitSystem: 'METRIC' as const,
-    onUnitChange: jest.fn(),
-    isConnected: false,
-    deviceStatus: 'Disconnected',
-    batteryLevel: null,
-    onConnect: jest.fn(),
-    onDisconnect: jest.fn(),
-    onForgetDevice: jest.fn().mockResolvedValue(undefined),
-    isSupported: true,
-    currentHR: 0,
-    hrZoneProps: { percentage: 0, progressColor: 'grey' },
-    connectionStatus: 'Connected',
-    bluetoothConnected: false,
-    hasStarted: false,
-    onReset: jest.fn(),
-    workoutStatus: 'idle' as const,
-    onStartWorkout: jest.fn(),
-    onEndWorkout: jest.fn(),
+  // A helper function to render the component with all necessary providers
+  const renderWithProviders = (ui: React.ReactElement) => {
+    return render(
+      <WebSocketProvider>
+        <UserSettingsProvider>{ui}</UserSettingsProvider>
+      </WebSocketProvider>
+    )
   }
 
-  it('renders the reset button when bluetooth is not supported', () => {
-    render(<ConnectView {...mockProps} isSupported={false} />)
-    const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
-    })
-    expect(resetButton).toBeInTheDocument()
+  it('renders the main heading', () => {
+    renderWithProviders(<ConnectView />)
+    expect(
+      screen.getByRole('heading', { name: /Connect & Settings/i })
+    ).toBeInTheDocument()
   })
 
-  it('renders the reset button as enabled by default', () => {
-    render(<ConnectView {...mockProps} />)
-    const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
-    })
-    expect(resetButton).toBeEnabled()
+  it('renders the DeviceConnection component', () => {
+    renderWithProviders(<ConnectView />)
+    expect(screen.getByTestId('mock-device-connection')).toBeInTheDocument()
   })
 
-  it('calls onForgetDevice and onReset when the reset button is clicked', async () => {
-    render(<ConnectView {...mockProps} />)
-    const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
-    })
-    fireEvent.click(resetButton)
+  it('renders the user settings form fields', () => {
+    renderWithProviders(<ConnectView />)
+    expect(screen.getByLabelText(/Name/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Age/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Weight/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Height/i)).toBeInTheDocument()
+    expect(screen.getByText(/Measurement System/i)).toBeInTheDocument()
+    expect(screen.getByText(/Gender/i)).toBeInTheDocument()
+  })
 
-    await waitFor(() => {
-      expect(mockProps.onForgetDevice).toHaveBeenCalled()
-      expect(mockProps.onReset).toHaveBeenCalled()
-    })
+  it('renders the WorkoutControls component', () => {
+    renderWithProviders(<ConnectView />)
+    expect(screen.getByTestId('mock-workout-controls')).toBeInTheDocument()
+  })
+
+  it('allows user to input their name', () => {
+    renderWithProviders(<ConnectView />)
+    const nameInput = screen.getByLabelText(/Name/i)
+    fireEvent.change(nameInput, { target: { value: 'John Doe' } })
+    expect(nameInput).toHaveValue('John Doe')
   })
 })
