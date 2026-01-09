@@ -181,7 +181,7 @@ export class SpotifyPolling implements SpotifyService {
    */
   public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
     logger.info(
-      { tokens },
+      { sub: tokens.sub, provider: tokens.provider },
       'Spotify token payload received. Updating SDK and forcing poll.'
     )
     this.tokenManager.updateToken(tokens)
