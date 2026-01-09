@@ -348,17 +348,6 @@ const handleIncomingMessage = (
 
       case 'TIMER_COMMAND':
         services.tabataService.handleCommand(message.command)
-        if (message.command === 'STOP') {
-          logger.info('Resetting calorie count for all clients.')
-          clientSessionState.forEach((session) => {
-            session.accumulatedCalories = 0
-          })
-          const allClients = hrmDataRepository.findAll()
-          allClients.forEach((client) => {
-            hrmDataRepository.save({ ...client, calories: 0 })
-          })
-          broadcastState() // Ensure clients are updated immediately
-        }
         break
 
       case 'SET_MODE':
