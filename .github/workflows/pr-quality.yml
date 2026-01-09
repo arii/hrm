@@ -257,6 +257,50 @@ jobs:
           echo "✅ Test Passed: Leading/Trailing Invalid Chars"
         continue-on-error: true
 
+  script-tests:
+    name: 🧪 Script Tests
+    needs: [prepare-env]
+    if: inputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Throttling Logic Integration Test
+        id: script-tests
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          chmod +x ./tests/integration/test-decide-review-strategy.sh
+          # Pipe stderr to stdout to capture all output in the log
+          ./tests/integration/test-decide-review-strategy.sh > >(tee -a logs/script-output.log) 2> >(tee -a logs/script-output.log >&2)
+        continue-on-error: true
+
+      - name: Upload Script Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: script-test-logs-${{ env.SESSION_ID }}
+          path: |
+            logs/script-output.log
+          if-no-files-found: ignore
+          retention-days: 2
+
+      - name: Check Script Tests Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.script-tests.outcome }}" = 'failure' ]; then
+            echo "::error::Script tests failed"
+            exit 1
+          fi
+
   knip-check:
     name: 🎒 Knip Check
     needs: [prepare-env]
@@ -1042,6 +1086,7 @@ jobs:
     needs:
       [
         prepare-env,
+        script-tests,
         infra-tests,
         unit-tests,
         component-tests,
@@ -1050,6 +1095,7 @@ jobs:
       ]
     runs-on: ubuntu-latest
     outputs:
+      script-tests-outcome: ${{ needs.script-tests.result }}
       infra-tests-outcome: ${{ needs.infra-tests.result }}
       unit-tests-outcome: ${{ needs.unit-tests.result }}
       component-tests-outcome: ${{ needs.component-tests.result }}
@@ -1060,6 +1106,7 @@ jobs:
         shell: bash
         run: |
           echo "📊 All Integration Tests Summary:"
+          echo "  Script Tests: ${{ needs.script-tests.result }}"
           echo "  Infra Tests: ${{ needs.infra-tests.result }}"
           echo "  Unit Tests: ${{ needs.unit-tests.result }}"
           echo "  Component Tests: ${{ needs.component-tests.result }}"
@@ -1067,7 +1114,8 @@ jobs:
           echo "  Visual Tests: ${{ needs.visual-tests.result }}"
 
           # Fail if any test failed
-          if [ "${{ needs.infra-tests.result }}" = "failure" ] || \
+          if [ "${{ needs.script-tests.result }}" = "failure" ] || \
+             [ "${{ needs.infra-tests.result }}" = "failure" ] || \
              [ "${{ needs.unit-tests.result }}" = "failure" ] || \
              [ "${{ needs.component-tests.result }}" = "failure" ] || \
              [ "${{ needs.perf-tests.result }}" = "failure" ] || \
@@ -1081,7 +1129,7 @@ jobs:
   quality-report:
     name: 📊 Quality Report
     if: always() && inputs.has_changes == 'true' && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
-    needs: [prepare-env, knip-check, lint-check, build-check, integration-tests]
+    needs: [prepare-env, knip-check, lint-check, build-check, script-tests, integration-tests]
     runs-on: ubuntu-latest
     outputs:
       failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
