@@ -266,7 +266,7 @@ function getSignatureFromContent(title: string, description: string): string {
 
 function extractFingerprint(body: string): string | null {
   const match = body.match(/<!-- fingerprint: ([\w-]+) -->/)
-  return match ? match[1] : null
+  return match?.[1] ?? null
 }
 
 export function isDuplicate(
