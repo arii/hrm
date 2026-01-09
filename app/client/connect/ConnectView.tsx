@@ -23,7 +23,7 @@ import WorkoutControls from './WorkoutControls'
 import { useEffect } from 'react'
 
 const ConnectView = () => {
-  const { userSettings, setUserSettings } = useUserSettings()
+  const [userSettings, setUserSettings] = useUserSettings()
   const { status, hrData, error, connect, disconnect, deviceName } =
     useBluetoothHRM()
   const { state, handleChange, handleSave, setSettings } = useUserSettingsForm(
