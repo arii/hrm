@@ -14,6 +14,7 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
+import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
@@ -60,6 +61,7 @@ interface ConnectViewProps {
   onDisconnect: () => void
   onForgetDevice: () => Promise<void>
   isSupported: boolean
+  signalPeriodMs: number
   currentHR: number
   hrZoneProps: { percentage: number; progressColor: string }
   connectionStatus: string
@@ -101,6 +103,7 @@ export default function ConnectView({
   onDisconnect,
   onForgetDevice,
   isSupported,
+  signalPeriodMs,
   currentHR,
   hrZoneProps,
   connectionStatus,
@@ -333,6 +336,10 @@ export default function ConnectView({
                     </Typography>
                   </Stack>
                 )}
+                <SignalQualityIndicator
+                  periodMs={signalPeriodMs}
+                  isConnected={isConnected}
+                />
               </Box>
               <Button
                 variant="outlined"
