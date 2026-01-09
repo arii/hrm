@@ -40,12 +40,13 @@ const config: KnipConfig = {
     'commitlint.config.cjs',
     'playwright.config.ts',
     'eslint.config.mjs',
+    // This mock is dynamically imported in tests, so Knip cannot detect its usage.
+    'tests/unit/mocks/webBluetooth.ts',
   ],
   ignoreDependencies: [
     // types for web bluetooth api
     '@types/web-bluetooth',
     // Eslint plugin
-    'eslint-plugin-react',
     'eslint-plugin-storybook',
     'dotenv',
   ],
