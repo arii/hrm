@@ -1,0 +1,140 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ControlPanel Component should match snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="MuiContainer-root MuiContainer-maxWidthXs css-n697ne-MuiContainer-root"
+  >
+    <div
+      class="MuiBox-root css-146i0gf"
+    >
+      <span
+        class="MuiTypography-root MuiTypography-caption css-mmb54v-MuiTypography-root"
+      >
+        Server: Connected
+      </span>
+    </div>
+    <div
+      class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-18of7au-MuiPaper-root-MuiCard-root"
+      style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
+    >
+      <div
+        class="MuiCardContent-root css-1vfyqek-MuiCardContent-root"
+      >
+        <div
+          class="MuiBox-root css-1upilqn"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-subtitle1 css-1ae9acm-MuiTypography-root"
+            data-testid="timer-mode-heading"
+          >
+            Timer Mode
+          </h6>
+          <div
+            class="MuiBox-root css-gtkpha"
+          >
+            <button
+              class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary css-g1hdod-MuiButtonBase-root-MuiButton-root"
+              tabindex="0"
+              type="button"
+            >
+              <span
+                class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1sh91j5-MuiButton-startIcon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1umw9bq-MuiSvgIcon-root"
+                  data-testid="FitnessCenterIcon"
+                  focusable="false"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M20.57 14.86 22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"
+                  />
+                </svg>
+              </span>
+              Tabata
+            </button>
+            <button
+              class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary css-g1hdod-MuiButtonBase-root-MuiButton-root"
+              tabindex="0"
+              type="button"
+            >
+              <span
+                class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1sh91j5-MuiButton-startIcon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1umw9bq-MuiSvgIcon-root"
+                  data-testid="TimerIcon"
+                  focusable="false"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M9 1h6v2H9zm10.03 6.39 1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61M13 14h-2V8h2z"
+                  />
+                </svg>
+              </span>
+              Stopwatch
+            </button>
+            <div
+              style="position: absolute; top: 4px; left: calc(50% - 4px); width: calc(50% - 4px); height: calc(100% - 8px); background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); z-index: 0; border-radius: 20px;"
+            />
+          </div>
+        </div>
+        <div
+          class="MuiBox-root css-16zxwo7"
+        >
+          <h6
+            class="MuiTypography-root MuiTypography-h6 css-11qh6jo-MuiTypography-root"
+            data-testid="timer-stopped"
+          >
+            Timer Stopped
+          </h6>
+          <p
+            class="MuiTypography-root MuiTypography-body2 css-134g84n-MuiTypography-root"
+          />
+        </div>
+        <div
+          class="MuiStack-root css-18y360j-MuiStack-root"
+        >
+          <div
+            style="flex: 1 1 0%;"
+            tabindex="0"
+          >
+            <button
+              class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary css-1hv9f66-MuiButtonBase-root-MuiButton-root"
+              data-testid="start-timer-button"
+              tabindex="0"
+              type="button"
+            >
+              <span
+                class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1sh91j5-MuiButton-startIcon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="MuiSvgIcon-root MuiSvgIcon-fontSizeLarge css-uks7c6-MuiSvgIcon-root"
+                  data-testid="PlayArrowIcon"
+                  focusable="false"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M8 5v14l11-7z"
+                  />
+                </svg>
+              </span>
+              START
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="MuiBox-root css-1ymfup1"
+    />
+    <div
+      data-testid="mocked-dynamic-component"
+    />
+  </div>
+</DocumentFragment>
+`;

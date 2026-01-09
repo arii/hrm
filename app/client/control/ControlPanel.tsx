@@ -4,6 +4,7 @@
  * and send Spotify playback commands. Simulates a mobile interface.
  */
 'use client'
+import { alpha } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
@@ -104,8 +105,8 @@ const ControlPanel = () => {
                   : theme.palette.warning.main,
               backgroundColor:
                 connectionStatus === 'Connected'
-                  ? theme.palette.success.main + '33'
-                  : theme.palette.warning.main + '33',
+                  ? alpha(theme.palette.success.main, 0.2)
+                  : alpha(theme.palette.warning.main, 0.2),
             })}
           >
             Server: {connectionStatus}
