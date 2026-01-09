@@ -8,12 +8,12 @@ export const useAutoConnect = (
   setUserSettings: (settings: Partial<UserSettings>) => void
 ) => {
   const { isConnected: isSocketConnected } = useWebSocket()
-  const { connectWithDevice, status } = useBluetoothHRM()
+  const { connectWithDevice, deviceStatus } = useBluetoothHRM()
 
   const autoConnect = useCallback(async () => {
     if (
       userSettings.deviceId &&
-      status === 'DISCONNECTED' &&
+      deviceStatus === 'Disconnected' &&
       isSocketConnected
     ) {
       try {

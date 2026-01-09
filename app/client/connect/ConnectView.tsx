@@ -24,8 +24,14 @@ import { useEffect } from 'react'
 
 const ConnectView = () => {
   const [userSettings, setUserSettings] = useUserSettings()
-  const { status, hrData, error, connect, disconnect, deviceName } =
-    useBluetoothHRM()
+  const {
+    deviceStatus: status,
+    hrData,
+    connect,
+    disconnect,
+    deviceName,
+    error,
+  } = useBluetoothHRM()
   const { state, handleChange, handleSave, setSettings } = useUserSettingsForm(
     userSettings,
     setUserSettings
