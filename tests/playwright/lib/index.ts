@@ -68,7 +68,6 @@ export {
 // ============================================================================
 export {
   // Constants
-  MASK_SELECTORS,
   VRT_MASK_SELECTORS,
   // Mask helpers
   getDynamicContentMasks,
