@@ -7,9 +7,9 @@
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
-import Typography from '@mui/material/Typography'
 import Head from 'next/head'
 import { useEffect } from 'react'
+import StatusChip from '@/components/StatusChip'
 import { useWebSocket } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
 
@@ -90,26 +90,10 @@ const ControlPanel = () => {
       >
         {/* Connection Status */}
         <Box sx={{ mb: 1, textAlign: 'center' }}>
-          <Typography
-            variant="caption"
-            sx={(theme) => ({
-              display: 'inline-block',
-              fontWeight: 'bold',
-              borderRadius: '9999px',
-              px: 2,
-              py: 0.5,
-              color:
-                connectionStatus === 'Connected'
-                  ? theme.palette.success.main
-                  : theme.palette.warning.main,
-              backgroundColor:
-                connectionStatus === 'Connected'
-                  ? theme.palette.success.main + '33'
-                  : theme.palette.warning.main + '33',
-            })}
-          >
-            Server: {connectionStatus}
-          </Typography>
+          <StatusChip
+            label={`Server: ${connectionStatus}`}
+            variant={connectionStatus === 'Connected' ? 'success' : 'warning'}
+          />
         </Box>
 
         <TimerControls />
