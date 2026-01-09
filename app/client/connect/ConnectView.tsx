@@ -14,7 +14,7 @@ import {
 } from '@mui/material'
 import { Save } from '@mui/icons-material'
 import { useUserSettings } from '@/context/UserSettingsContext'
-import { useBluetoothHRM } from '@/hooks/useBluetoothHRM'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useUserSettingsForm } from '@/hooks/useUserSettingsForm'
 import { useHrmBroadcaster } from '@/hooks/useHrmBroadcaster'
 import { useAutoConnect } from '@/hooks/useAutoConnect'
@@ -63,7 +63,9 @@ const ConnectView = () => {
           label="Age"
           type="number"
           value={state.userAge}
-          onChange={(e) => handleChange('userAge', parseInt(e.target.value, 10))}
+          onChange={(e) =>
+            handleChange('userAge', parseInt(e.target.value, 10))
+          }
           fullWidth
         />
         <TextField

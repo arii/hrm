@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react'
-import { useBluetoothHRM } from '@/hooks/useBluetoothHRM'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { UserSettings } from '@/types'
 
@@ -18,7 +18,7 @@ export const useAutoConnect = (
     ) {
       try {
         await connectWithDevice(userSettings.deviceId)
-      } catch (error) {
+      } catch (_error) {
         // Clear the device ID if auto-connect fails
         setUserSettings({ deviceId: undefined })
       }

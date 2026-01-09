@@ -1,18 +1,17 @@
+import { Box, Button, CircularProgress, Link, Typography } from '@mui/material'
 import {
-  Box,
-  Button,
-  CircularProgress,
-  Link,
-  Typography,
-} from '@mui/material'
-import { Bluetooth, CheckCircle, Error, Link as LinkIcon } from '@mui/icons-material'
+  Bluetooth,
+  CheckCircle,
+  Error,
+  Link as LinkIcon,
+} from '@mui/icons-material'
 
 interface DeviceConnectionProps {
   status: string
   deviceName: string | null
   error: string | null
-  connect: () => void;
-  disconnect: () => void;
+  connect: () => void
+  disconnect: () => void
 }
 
 export const DeviceConnection: React.FC<DeviceConnectionProps> = ({
