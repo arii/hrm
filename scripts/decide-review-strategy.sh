@@ -18,6 +18,7 @@ set -e
 : "${MAX_COMMENTS:=60}"
 : "${REVIEW_THROTTLE_MINUTES:=30}"
 : "${BOT_USERNAME:=gemini-bot}"
+# Can be a single username or a space-separated list of usernames.
 : "${QUALITY_GATE_BOT_USERNAMES:=github-actions[bot]}"
 # This variable is optional and may not be present for all event types.
 : "${COMMENT_BODY:=}"
