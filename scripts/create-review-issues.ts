@@ -48,6 +48,7 @@ const SuggestedIssueSchema = z.object({
   description: z.string(),
   type: z.enum(['technical-debt', 'frontend-improvement', 'security', 'bug']),
   priority: z.enum(['high', 'medium', 'low']),
+  fingerprint: z.string().optional(),
 })
 
 const PRContextSchema = z.object({
@@ -185,7 +186,11 @@ export class GitHubClient implements IGitHubClient {
 - **Branch:** ${branchInfo}
 - **Commit:** ${commitLink}`
 
-    const body = `${issue.description}${footer}`
+    const fingerprintComment = issue.fingerprint
+      ? `\n\n<!-- fingerprint: ${issue.fingerprint} -->`
+      : ''
+
+    const body = `${issue.description}${footer}${fingerprintComment}`
     const title = issue.title
 
     console.log(`🚀 Creating issue: "${title}"...`)
@@ -254,20 +259,39 @@ export class GitHubClient implements IGitHubClient {
 
 // --- Deduplication ---
 
-function getIssueSignature(title: string, description: string): string {
+function getSignatureFromContent(title: string, description: string): string {
   const content = `${title.trim()}${description.trim()}`
   return crypto.createHash('sha256').update(content).digest('hex')
+}
+
+function extractFingerprint(body: string): string | null {
+  const match = body.match(/<!-- fingerprint: ([\w-]+) -->/)
+  return match ? match[1] : null
 }
 
 export function isDuplicate(
   newIssue: SuggestedIssue,
   existingIssues: ExistingIssue[]
 ): boolean {
-  const newSignature = getIssueSignature(newIssue.title, newIssue.description)
+  // Use fingerprint for deduplication if available
+  if (newIssue.fingerprint) {
+    for (const existing of existingIssues) {
+      const existingFingerprint = extractFingerprint(existing.body)
+      if (existingFingerprint && existingFingerprint === newIssue.fingerprint) {
+        return true
+      }
+    }
+  }
+
+  // Fallback to signature-based deduplication for older or non-fingerprinted issues
+  const newSignature = getSignatureFromContent(
+    newIssue.title,
+    newIssue.description
+  )
   for (const existing of existingIssues) {
     // Strip the footer from the existing issue body before generating the signature
     const existingDescription = existing.body.split('\n\n---')[0] || ''
-    const existingSignature = getIssueSignature(
+    const existingSignature = getSignatureFromContent(
       existing.title,
       existingDescription
     )
@@ -275,6 +299,7 @@ export function isDuplicate(
       return true
     }
   }
+
   return false
 }
 
