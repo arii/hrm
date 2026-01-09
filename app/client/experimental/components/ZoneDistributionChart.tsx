@@ -32,9 +32,10 @@ const ZoneDistributionChart = ({
         timeInZones[zone as HrZoneName] > 0
     )
     .map(([zone, time]) => {
-      const zoneKey = (
-        zone.charAt(0).toLowerCase() + zone.slice(1)
-      ).replace(/\s+/g, '') as keyof typeof zones
+      const zoneKey = (zone.charAt(0).toLowerCase() + zone.slice(1)).replace(
+        /\s+/g,
+        ''
+      ) as keyof typeof zones
       const minHr = zones[zoneKey]?.min || 0
       const zoneProps = getHrZoneProps(minHr, maxHr)
       return {
@@ -53,7 +54,12 @@ const ZoneDistributionChart = ({
         <XAxis dataKey="name" />
         <YAxis />
         <Tooltip
-          formatter={(value: number) => [`${value}s`, 'Time']}
+          formatter={(value) => {
+            if (typeof value === 'number') {
+              return [`${value}s`, 'Time']
+            }
+            return [String(value), 'Time']
+          }}
           cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
         />
         <Bar dataKey="time">
