@@ -8,6 +8,8 @@ import {
   IGitHubClient,
   SuggestedIssue,
   GitHubClient,
+  isDuplicate,
+  ExistingIssue,
 } from '../../../scripts/create-review-issues'
 import { execSync } from 'child_process'
 
@@ -176,6 +178,114 @@ describe('create-review-issues script', () => {
         ),
         expect.any(Object)
       )
+    })
+  })
+
+  describe('isDuplicate logic', () => {
+    const newIssueBase: SuggestedIssue = {
+      title: 'Test Issue',
+      description: 'Test Description',
+      type: 'technical-debt',
+      priority: 'medium',
+    }
+
+    const existingIssueBase: ExistingIssue = {
+      number: 1,
+      title: 'Test Issue',
+      state: 'open',
+      body: 'Test Description',
+    }
+
+    it('should return true if fingerprints match', () => {
+      const newIssue: SuggestedIssue = {
+        ...newIssueBase,
+        fingerprint: 'fingerprint-123',
+      }
+      const existingIssues: ExistingIssue[] = [
+        {
+          ...existingIssueBase,
+          body: 'Some other description <!-- fingerprint: fingerprint-123 -->',
+        },
+      ]
+      expect(isDuplicate(newIssue, existingIssues)).toBe(true)
+    })
+
+    it('should return false if fingerprints do not match and content is different', () => {
+      const newIssue: SuggestedIssue = {
+        ...newIssueBase,
+        fingerprint: 'fingerprint-123',
+      }
+      const existingIssues: ExistingIssue[] = [
+        {
+          ...existingIssueBase,
+          title: 'Different Title',
+          body: 'Different Body <!-- fingerprint: fingerprint-456 -->',
+        },
+      ]
+      expect(isDuplicate(newIssue, existingIssues)).toBe(false)
+    })
+
+    it('should return true if fingerprints mismatch but content signature matches', () => {
+      const newIssue: SuggestedIssue = {
+        ...newIssueBase,
+        fingerprint: 'fingerprint-123',
+      }
+      const existingIssues: ExistingIssue[] = [
+        {
+          ...existingIssueBase,
+          body: 'Test Description <!-- fingerprint: fingerprint-456 -->',
+        },
+      ]
+      expect(isDuplicate(newIssue, existingIssues)).toBe(true)
+    })
+
+    it('should return true based on content signature when new issue has no fingerprint', () => {
+      const newIssue: SuggestedIssue = { ...newIssueBase }
+      const existingIssues: ExistingIssue[] = [
+        {
+          ...existingIssueBase,
+          body: 'Test Description <!-- fingerprint: fingerprint-123 -->',
+        },
+      ]
+      expect(isDuplicate(newIssue, existingIssues)).toBe(true)
+    })
+
+    it('should return true based on content signature when existing issue has no fingerprint', () => {
+      const newIssue: SuggestedIssue = {
+        ...newIssueBase,
+        fingerprint: 'fingerprint-123',
+      }
+      const existingIssues: ExistingIssue[] = [{ ...existingIssueBase }]
+      expect(isDuplicate(newIssue, existingIssues)).toBe(true)
+    })
+
+    it('should return true based on content signature when neither issue has a fingerprint', () => {
+      const newIssue: SuggestedIssue = { ...newIssueBase }
+      const existingIssues: ExistingIssue[] = [{ ...existingIssueBase }]
+      expect(isDuplicate(newIssue, existingIssues)).toBe(true)
+    })
+
+    it('should return false when no fingerprint or signature matches', () => {
+      const newIssue: SuggestedIssue = { ...newIssueBase }
+      const existingIssues: ExistingIssue[] = [
+        { ...existingIssueBase, title: 'A completely different title' },
+      ]
+      expect(isDuplicate(newIssue, existingIssues)).toBe(false)
+    })
+
+    it('should handle malformed fingerprint comments gracefully', () => {
+      const newIssue: SuggestedIssue = {
+        ...newIssueBase,
+        fingerprint: 'fingerprint-123',
+      }
+      const existingIssues: ExistingIssue[] = [
+        {
+          ...existingIssueBase,
+          title: 'A different title so signature fails',
+          body: 'Test Description <!-- fingerprint:fingerprint-123 -->', // malformed
+        },
+      ]
+      expect(isDuplicate(newIssue, existingIssues)).toBe(false)
     })
   })
 })
