@@ -1,61 +1,60 @@
-import { useReducer, useCallback } from 'react'
-import { UserSettings } from '@/types/index'
-import { MeasurementSystem, Gender } from '@/types/core'
+'use client'
 
-type State = UserSettings
-type Action =
-  | { type: 'SET_FIELD'; field: keyof State; value: string | number }
-  | { type: 'SET_GENDER'; value: Gender }
-  | { type: 'SET_MEASUREMENT_SYSTEM'; value: MeasurementSystem }
-  | { type: 'SET_SETTINGS'; settings: UserSettings }
+import { useState, useEffect, useCallback } from 'react'
+import {
+  useUserSettings,
+  UserPreferences,
+} from '@/context/UserSettingsContext'
 
-const reducer = (state: State, action: Action): State => {
-  switch (action.type) {
-    case 'SET_FIELD':
-      return { ...state, [action.field]: action.value }
-    case 'SET_GENDER':
-      return { ...state, gender: action.value }
-    case 'SET_MEASUREMENT_SYSTEM':
-      return { ...state, measurementSystem: action.value }
-    case 'SET_SETTINGS':
-      return action.settings
-    default:
-      return state
-  }
-}
+export function useUserSettingsForm() {
+  const [settings, saveSettings] = useUserSettings()
+  const [formData, setFormData] = useState<UserPreferences>(settings)
+  const [isEditing, setIsEditing] = useState(false)
 
-export const useUserSettingsForm = (
-  initialState: UserSettings,
-  onSave: (settings: UserSettings) => void
-) => {
-  const [state, dispatch] = useReducer(reducer, initialState)
+  useEffect(() => {
+    // Sync form data if settings from context change
+    if (JSON.stringify(settings) !== JSON.stringify(formData)) {
+      setFormData(settings)
+      setIsEditing(false) // Reset editing state if context changes externally
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings])
 
-  const handleChange = useCallback(
-    (
-      field: keyof UserSettings,
-      value: string | number | Gender | MeasurementSystem
-    ) => {
-      if (field === 'gender') {
-        dispatch({ type: 'SET_GENDER', value: value as Gender })
-      } else if (field === 'measurementSystem') {
-        dispatch({
-          type: 'SET_MEASUREMENT_SYSTEM',
-          value: value as MeasurementSystem,
-        })
-      } else {
-        dispatch({ type: 'SET_FIELD', field, value: value as string | number })
-      }
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value, type, checked } = e.target
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      }))
+      if (!isEditing) setIsEditing(true)
     },
-    []
+    [isEditing]
   )
 
-  const handleSave = useCallback(() => {
-    onSave(state)
-  }, [state, onSave])
+  const handleSelectChange = useCallback(
+    (name: keyof UserPreferences, value: any) => {
+      setFormData((prev) => ({ ...prev, [name]: value }))
+      if (!isEditing) setIsEditing(true)
+    },
+    [isEditing]
+  )
 
-  const setSettings = useCallback((settings: UserSettings) => {
-    dispatch({ type: 'SET_SETTINGS', settings })
-  }, [])
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      saveSettings(formData)
+      setIsEditing(false) // Exit editing mode on save
+    },
+    [formData, saveSettings]
+  )
 
-  return { state, handleChange, handleSave, setSettings }
+  return {
+    formData,
+    handleInputChange,
+    handleSelectChange,
+    handleSubmit,
+    isEditing,
+    setIsEditing,
+  }
 }

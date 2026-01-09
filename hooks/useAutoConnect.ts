@@ -1,37 +1,46 @@
-import { useEffect, useCallback } from 'react'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+'use client'
+import { useState, useEffect, useCallback } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { UserSettings } from '@/types'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { useUserSettings } from '@/context/UserSettingsContext'
 
-export const useAutoConnect = (
-  userSettings: UserSettings,
-  setUserSettings: (settings: Partial<UserSettings>) => void
-) => {
-  const { isConnected: isSocketConnected } = useWebSocket()
-  const { connectWithDevice, deviceStatus } = useBluetoothHRM()
+type AutoConnectStatus = 'default' | 'connecting' | 'success' | 'error'
 
-  const autoConnect = useCallback(async () => {
+export function useAutoConnect() {
+  const { isConnected } = useWebSocket()
+  const [settings] = useUserSettings()
+  const { connect, status } = useBluetoothHRM()
+  const [autoConnectStatus, setAutoConnectStatus] =
+    useState<AutoConnectStatus>('default')
+
+  const triggerAutoConnect = useCallback(async () => {
     if (
-      userSettings.deviceId &&
-      deviceStatus === 'Disconnected' &&
-      isSocketConnected
+      settings.autoConnect && // Use the new autoConnect setting
+      isConnected &&
+      status === 'DISCONNECTED' &&
+      autoConnectStatus === 'default'
     ) {
+      setAutoConnectStatus('connecting')
       try {
-        await connectWithDevice(userSettings.deviceId)
-      } catch (_error) {
-        // Clear the device ID if auto-connect fails
-        setUserSettings({ deviceId: undefined })
+        // Auto-connect does not need a deviceId, as the browser remembers the last device
+        await connect()
+        setAutoConnectStatus('success')
+      } catch (error) {
+        console.error('Auto-connect failed:', error)
+        setAutoConnectStatus('error')
       }
     }
   }, [
-    userSettings.deviceId,
+    settings.autoConnect,
+    isConnected,
     status,
-    isSocketConnected,
-    connectWithDevice,
-    setUserSettings,
+    autoConnectStatus,
+    connect,
   ])
 
   useEffect(() => {
-    autoConnect()
-  }, [autoConnect])
+    triggerAutoConnect()
+  }, [triggerAutoConnect])
+
+  return { autoConnectStatus, setAutoConnectStatus }
 }

@@ -3,111 +3,66 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useUserSettingsForm } from '@/hooks/useUserSettingsForm'
-import { UserSettings } from '@/types'
-import { MeasurementSystem, Gender } from '@/types/core'
+import {
+  UserSettingsProvider,
+  DEFAULT_PREFERENCES,
+} from '@/context/UserSettingsContext'
+import { ReactNode } from 'react'
 
-const initialSettings: UserSettings = {
-  userName: 'Test User',
-  userAge: 30,
-  maxHr: 190,
-  restingHr: 60,
-  gender: Gender.FEMALE,
-  measurementSystem: MeasurementSystem.METRIC,
-  userWeight: 70,
-  userHeight: 170,
-}
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <UserSettingsProvider>{children}</UserSettingsProvider>
+)
 
 describe('useUserSettingsForm', () => {
-  it('should initialize with the provided initial state', () => {
-    const onSave = jest.fn()
-    const { result } = renderHook(() =>
-      useUserSettingsForm(initialSettings, onSave)
-    )
-    expect(result.current.state).toEqual(initialSettings)
+  it('should initialize with default values', () => {
+    const { result } = renderHook(() => useUserSettingsForm(), { wrapper })
+    expect(result.current.formData).toEqual(DEFAULT_PREFERENCES)
   })
 
-  it('should handle field changes correctly', () => {
-    const onSave = jest.fn()
-    const { result } = renderHook(() =>
-      useUserSettingsForm(initialSettings, onSave)
-    )
+  it('should update formData on input change', () => {
+    const { result } = renderHook(() => useUserSettingsForm(), { wrapper })
 
     act(() => {
-      result.current.handleChange('userName', 'New Name')
+      result.current.handleInputChange({
+        target: { name: 'userName', value: 'Test User' },
+      } as React.ChangeEvent<HTMLInputElement>)
     })
 
-    expect(result.current.state.userName).toBe('New Name')
+    expect(result.current.formData.userName).toBe('Test User')
   })
 
-  it('should handle gender changes', () => {
-    const onSave = jest.fn()
-    const { result } = renderHook(() =>
-      useUserSettingsForm(initialSettings, onSave)
-    )
+  it('should update formData on select change', () => {
+    const { result } = renderHook(() => useUserSettingsForm(), { wrapper })
 
     act(() => {
-      result.current.handleChange('gender', Gender.MALE)
+      result.current.handleSelectChange('gender', 'FEMALE')
     })
 
-    expect(result.current.state.gender).toBe(Gender.MALE)
+    expect(result.current.formData.gender).toBe('FEMALE')
   })
 
-  it('should handle measurement system changes', () => {
-    const onSave = jest.fn()
-    const { result } = renderHook(() =>
-      useUserSettingsForm(initialSettings, onSave)
-    )
+  it('should call saveSettings on form submit', () => {
+    const { result } = renderHook(() => useUserSettingsForm(), { wrapper })
 
     act(() => {
-      result.current.handleChange(
-        'measurementSystem',
-        MeasurementSystem.IMPERIAL
-      )
+      result.current.handleInputChange({
+        target: { name: 'userName', value: 'New Name' },
+      } as React.ChangeEvent<HTMLInputElement>)
+      result.current.handleSelectChange('gender', 'MALE')
+      result.current.handleSelectChange('unitSystem', 'METRIC')
     })
 
-    expect(result.current.state.measurementSystem).toBe(
-      MeasurementSystem.IMPERIAL
-    )
-  })
-
-  it('should call onSave with the current state when handleSave is called', () => {
-    const onSave = jest.fn()
-    const { result } = renderHook(() =>
-      useUserSettingsForm(initialSettings, onSave)
-    )
+    const mockEvent = {
+      preventDefault: jest.fn(),
+    } as unknown as React.FormEvent<HTMLFormElement>
 
     act(() => {
-      result.current.handleChange('userAge', 35)
+      result.current.handleSubmit(mockEvent)
     })
 
-    act(() => {
-      result.current.handleSave()
-    })
-
-    expect(onSave).toHaveBeenCalledWith({ ...initialSettings, userAge: 35 })
-  })
-
-  it('should update the state when setSettings is called', () => {
-    const onSave = jest.fn()
-    const { result } = renderHook(() =>
-      useUserSettingsForm(initialSettings, onSave)
-    )
-
-    const newSettings: UserSettings = {
-      userName: 'Updated User',
-      userAge: 40,
-      maxHr: 180,
-      restingHr: 55,
-      gender: Gender.MALE,
-      measurementSystem: MeasurementSystem.IMPERIAL,
-      userWeight: 180,
-      userHeight: 72,
-    }
-
-    act(() => {
-      result.current.setSettings(newSettings)
-    })
-
-    expect(result.current.state).toEqual(newSettings)
+    expect(result.current.formData.userName).toBe('New Name')
+    expect(result.current.formData.gender).toBe('MALE')
+    expect(result.current.formData.unitSystem).toBe('METRIC')
+    expect(mockEvent.preventDefault).toHaveBeenCalled()
   })
 })

@@ -74,7 +74,7 @@ jobs:
           PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
           MAX_COMMENTS: 60
           REVIEW_THROTTLE_MINUTES: 30
-          BOT_USERNAME: 'gemini-bot'
+          BOT_USERNAME: "gemini-bot"
         run: |
           chmod +x ./scripts/decide-review-strategy.sh
           ./scripts/decide-review-strategy.sh

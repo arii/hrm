@@ -1,16 +1,28 @@
-import { useEffect } from 'react'
+'use client'
+import { useState, useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { HrmData } from '@/types/hrm'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 
-export const useHrmBroadcaster = (hrmData: HrmData) => {
+export function useHrmBroadcaster() {
   const { sendMessage } = useWebSocket()
+  const { hrData, device } = useBluetoothHRM()
+  const [isBroadcasting, setIsBroadcasting] = useState(false)
 
   useEffect(() => {
-    if (hrmData.heartRate !== null) {
-      sendMessage({
+    if (hrData.heartRate && device) {
+      const message = {
         type: 'HRM_INPUT',
-        payload: { value: hrmData.heartRate },
-      })
+        payload: {
+          deviceId: device.id,
+          value: hrData.heartRate,
+        },
+      }
+      sendMessage(message)
+      setIsBroadcasting(true)
+    } else {
+      setIsBroadcasting(false)
     }
-  }, [hrmData.heartRate, sendMessage])
+  }, [hrData, device, sendMessage])
+
+  return { isBroadcasting }
 }

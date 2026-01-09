@@ -23,6 +23,11 @@ export const VRT_MASK_SELECTORS = {
 } as const
 
 /**
+ * @deprecated Use `VRT_MASK_SELECTORS` instead.
+ */
+export const MASK_SELECTORS = VRT_MASK_SELECTORS
+
+/**
  * Returns an array of locators for all known dynamic elements on the page.
  * This is a comprehensive function to mask all content that changes frequently.
  *
