@@ -1,334 +1,149 @@
-import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Container from '@mui/material/Container'
-import Stack from '@mui/material/Stack'
-import Typography from '@mui/material/Typography'
-import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
-import HrTile from '../../../components/HrTile'
-import BottomNavBar from '../../../components/BottomNavBar'
-import WorkoutSummary from './WorkoutSummary'
-import UserSettings from './UserSettings'
-import WorkoutControls from './WorkoutControls'
-import { useState, useEffect } from 'react'
-import { DeviceConnection } from './DeviceConnection'
-import logger from '@/utils/logger'
-import { MeasurementSystem, Gender } from '../../../types/core'
-import { WorkoutStatus } from '../../../types/workout'
+'use client'
+
 import {
-  ToggleButtonGroup,
-  ToggleButton,
+  Box,
+  Button,
+  Container,
   FormControl,
-  FormLabel,
-  RadioGroup,
   FormControlLabel,
+  FormLabel,
   Radio,
+  RadioGroup,
+  TextField,
+  Typography,
 } from '@mui/material'
+import { Save } from '@mui/icons-material'
+import { useUserSettings } from '@/context/UserSettingsContext'
+import { useBluetoothHRM } from '@/hooks/useBluetoothHRM'
+import { useUserSettingsForm } from '@/hooks/useUserSettingsForm'
+import { useHrmBroadcaster } from '@/hooks/useHrmBroadcaster'
+import { useAutoConnect } from '@/hooks/useAutoConnect'
+import { DeviceConnection } from './DeviceConnection'
+import WorkoutControls from './WorkoutControls'
+import { useEffect } from 'react'
 
-interface ConnectViewProps {
-  duration: string
-  caloriesBurned: number
-  userName: string
-  setUserName: (name: string) => void
-  userAge: string
-  setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
-  userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (
-    height: Partial<{ cm: string; feet: string; inches: string }>
-  ) => void
-  onHeightBlur: () => void
-  heightError: string | null
-  userWeight: string
-  setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
-  weightError: string | null
-  gender: Gender
-  setGender: (gender: Gender) => void
-  unitSystem: MeasurementSystem
-  onUnitChange: (unit: MeasurementSystem) => void
-  isConnected: boolean
-  isDataStale?: boolean
-  deviceStatus: string
-  batteryLevel: number | null
-  onConnect: () => void
-  onDisconnect: () => void
-  onForgetDevice: () => Promise<void>
-  isSupported: boolean
-  signalPeriodMs: number
-  currentHR: number
-  hrZoneProps: { percentage: number; progressColor: string }
-  connectionStatus: string
-  bluetoothConnected: boolean
-  hasStarted: boolean
-  onReset: () => void
-  workoutStatus: WorkoutStatus
-  onStartWorkout: () => void
-  onPauseWorkout: () => void
-  onEndWorkout: () => void
-}
-
-export default function ConnectView({
-  duration,
-  caloriesBurned,
-  userName,
-  setUserName,
-  userAge,
-  setUserAge,
-  onAgeBlur,
-  ageError,
-  userHeight,
-  setUserHeight,
-  onHeightBlur,
-  heightError,
-  userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
-  gender,
-  setGender,
-  unitSystem,
-  onUnitChange,
-  isConnected,
-  isDataStale = false,
-  deviceStatus,
-  batteryLevel,
-  onConnect,
-  onDisconnect,
-  onForgetDevice,
-  isSupported,
-  signalPeriodMs,
-  currentHR,
-  hrZoneProps,
-  connectionStatus,
-  bluetoothConnected,
-  hasStarted,
-  onReset,
-  workoutStatus,
-  onStartWorkout,
-  onPauseWorkout,
-  onEndWorkout,
-}: ConnectViewProps) {
-  const [isResetting, setIsResetting] = useState(false)
+const ConnectView = () => {
+  const { userSettings, setUserSettings } = useUserSettings()
+  const { status, hrData, error, connect, disconnect, deviceName } =
+    useBluetoothHRM()
+  const { state, handleChange, handleSave, setSettings } = useUserSettingsForm(
+    userSettings,
+    setUserSettings
+  )
 
   useEffect(() => {
-    if (isConnected) {
-      logger.debug(
-        { currentHR, isDataStale, userName },
-        'HrTile rendering with currentHR'
-      )
-    }
-  }, [currentHR, isConnected, isDataStale, userName])
+    setSettings(userSettings)
+  }, [userSettings, setSettings])
 
-  const handleFullReset = async () => {
-    setIsResetting(true)
-    try {
-      await onForgetDevice()
-      onReset()
-    } catch (error) {
-      console.error('Reset failed:', error)
-    } finally {
-      setIsResetting(false)
-    }
-  }
-
-  const ResetSection = () => (
-    <Box
-      sx={{
-        textAlign: 'center',
-        mt: 4,
-        pt: 4,
-        borderTop: '1px solid #eee',
-      }}
-    >
-      <Button
-        variant="contained"
-        color="error"
-        onClick={handleFullReset}
-        disabled={isResetting}
-      >
-        {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
-      </Button>
-      <Typography
-        variant="caption"
-        display="block"
-        sx={{ mt: 1, color: 'text.secondary' }}
-      >
-        Resets server state AND forgets Bluetooth device connection.
-      </Typography>
-    </Box>
-  )
-
-  if (!isSupported) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
-        <BluetoothDisabledIcon
-          sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }}
-        />
-        <Typography variant="h5" gutterBottom>
-          Bluetooth Not Supported
-        </Typography>
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          Your browser does not support Web Bluetooth. Please use Google Chrome,
-          Edge, or Bluefy (on iOS).
-        </Alert>
-        <ResetSection />
-        <BottomNavBar />
-      </Container>
-    )
-  }
-
-  const showUserDetails = hasStarted || isConnected
+  useHrmBroadcaster(hrData)
+  useAutoConnect(userSettings, setUserSettings)
 
   return (
-    <>
-      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Connect Heart Rate Monitor
-        </Typography>
+    <Container maxWidth="sm">
+      <Typography variant="h4" gutterBottom>
+        Connect & Settings
+      </Typography>
 
-        {!showUserDetails ? (
-          <Stack spacing={2} sx={{ mb: 3 }}>
-            <ToggleButtonGroup
-              value={unitSystem}
-              exclusive
-              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
-              aria-label="measurement system"
-              fullWidth
-            >
-              <ToggleButton value="IMPERIAL" aria-label="imperial">
-                Imperial (lbs)
-              </ToggleButton>
-              <ToggleButton value="METRIC" aria-label="metric">
-                Metric (kg)
-              </ToggleButton>
-            </ToggleButtonGroup>
+      <DeviceConnection
+        status={status}
+        deviceName={deviceName}
+        error={error}
+        connect={connect}
+        disconnect={disconnect}
+      />
 
-            <UserSettings
-              userName={userName}
-              setUserName={setUserName}
-              userAge={userAge}
-              setUserAge={setUserAge}
-              onAgeBlur={onAgeBlur}
-              ageError={ageError}
-              userHeight={userHeight}
-              setUserHeight={setUserHeight}
-              onHeightBlur={onHeightBlur}
-              heightError={heightError}
-              userWeight={userWeight}
-              setUserWeight={setUserWeight}
-              onWeightBlur={onWeightBlur}
-              weightError={weightError}
-              unit={unitSystem}
-              setUnit={onUnitChange}
-            />
-
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Gender</FormLabel>
-              <RadioGroup
-                row
-                aria-label="gender"
-                name="gender"
-                value={gender}
-                onChange={(e) => setGender(e.target.value as Gender)}
-              >
-                <FormControlLabel
-                  value="MALE"
-                  control={<Radio />}
-                  label="Male"
-                />
-                <FormControlLabel
-                  value="FEMALE"
-                  control={<Radio />}
-                  label="Female"
-                />
-              </RadioGroup>
-            </FormControl>
-          </Stack>
-        ) : (
-          <Box
-            sx={{
-              mb: 3,
-              textAlign: 'center',
-              p: 2,
-              bgcolor: 'background.paper',
-              borderRadius: 1,
-              boxShadow: 1,
-            }}
+      <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <TextField
+          label="Name"
+          value={state.userName}
+          onChange={(e) => handleChange('userName', e.target.value)}
+          fullWidth
+        />
+        <TextField
+          label="Age"
+          type="number"
+          value={state.userAge}
+          onChange={(e) => handleChange('userAge', parseInt(e.target.value, 10))}
+          fullWidth
+        />
+        <TextField
+          label="Weight"
+          type="number"
+          value={state.userWeight}
+          onChange={(e) =>
+            handleChange('userWeight', parseInt(e.target.value, 10))
+          }
+          InputProps={{
+            endAdornment: (
+              <Typography variant="body2">
+                {state.measurementSystem === 'metric' ? 'kg' : 'lbs'}
+              </Typography>
+            ),
+          }}
+          fullWidth
+        />
+        <TextField
+          label="Height"
+          type="number"
+          value={state.userHeight}
+          onChange={(e) =>
+            handleChange('userHeight', parseInt(e.target.value, 10))
+          }
+          InputProps={{
+            endAdornment: (
+              <Typography variant="body2">
+                {state.measurementSystem === 'metric' ? 'cm' : 'in'}
+              </Typography>
+            ),
+          }}
+          fullWidth
+        />
+        <FormControl component="fieldset">
+          <FormLabel component="legend">Measurement System</FormLabel>
+          <RadioGroup
+            row
+            value={state.measurementSystem}
+            onChange={(e) => handleChange('measurementSystem', e.target.value)}
           >
-            <Typography variant="subtitle1" color="text.secondary">
-              Connected as
-            </Typography>
-            <Typography variant="h5" fontWeight="bold">
-              {userName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Age: {userAge}
-            </Typography>
-          </Box>
-        )}
-
-        <DeviceConnection
-          deviceStatus={deviceStatus}
-          isConnected={isConnected}
-          userName={userName}
-          userAge={userAge}
-          onConnect={onConnect}
-          onDisconnect={onDisconnect}
-          batteryLevel={batteryLevel}
-          signalPeriodMs={signalPeriodMs}
-        />
-
-        {isConnected && bluetoothConnected && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Connected! Heart rate data is being streamed.
-          </Alert>
-        )}
-
-        {hasStarted && !isConnected && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            Device Disconnected - Workout Paused
-          </Alert>
-        )}
-
-        {isConnected && (
-          <Box sx={{ mt: 2 }}>
-            <HrTile
-              name={userName}
-              bpm={currentHR}
-              percentMax={hrZoneProps.percentage}
-              calories={caloriesBurned}
-              isDataStale={isDataStale}
+            <FormControlLabel
+              value="metric"
+              control={<Radio />}
+              label="Metric"
             />
-          </Box>
-        )}
-
-        <WorkoutControls
-          workoutStatus={workoutStatus}
-          isConnected={isConnected}
-          onStart={onStartWorkout}
-          onPause={onPauseWorkout}
-          onEnd={onEndWorkout}
-          onResume={onStartWorkout}
-        />
-
-        {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
-        )}
-
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
-          sx={{ mt: 2 }}
+            <FormControlLabel
+              value="imperial"
+              control={<Radio />}
+              label="Imperial"
+            />
+          </RadioGroup>
+        </FormControl>
+        <FormControl component="fieldset">
+          <FormLabel component="legend">Gender</FormLabel>
+          <RadioGroup
+            row
+            value={state.gender}
+            onChange={(e) => handleChange('gender', e.target.value)}
+          >
+            <FormControlLabel value="male" control={<Radio />} label="Male" />
+            <FormControlLabel
+              value="female"
+              control={<Radio />}
+              label="Female"
+            />
+          </RadioGroup>
+        </FormControl>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSave}
+          startIcon={<Save />}
         >
-          WebSocket: {connectionStatus}
-        </Typography>
-
-        <ResetSection />
-      </Container>
-      <BottomNavBar />
-    </>
+          Save Settings
+        </Button>
+      </Box>
+      <WorkoutControls />
+    </Container>
   )
 }
+
+export default ConnectView

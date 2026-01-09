@@ -1,31 +1,37 @@
-
-import { useEffect } from 'react'
-import logger from '@/utils/logger'
+import { useEffect, useCallback } from 'react'
+import { useBluetoothHRM } from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { UserSettings } from '@/types'
 
-interface UseAutoConnectProps {
-  autoConnect: () => Promise<void>
-  isConnected: boolean
-  isSupported: boolean
-}
+export const useAutoConnect = (
+  userSettings: UserSettings,
+  setUserSettings: (settings: Partial<UserSettings>) => void
+) => {
+  const { isConnected: isSocketConnected } = useWebSocket()
+  const { connectWithDevice, status } = useBluetoothHRM()
 
-export const useAutoConnect = ({
-  autoConnect,
-  isConnected,
-  isSupported,
-}: UseAutoConnectProps) => {
-  const { connectionStatus } = useWebSocket()
+  const autoConnect = useCallback(async () => {
+    if (
+      userSettings.deviceId &&
+      status === 'DISCONNECTED' &&
+      isSocketConnected
+    ) {
+      try {
+        await connectWithDevice(userSettings.deviceId)
+      } catch (error) {
+        // Clear the device ID if auto-connect fails
+        setUserSettings({ deviceId: undefined })
+      }
+    }
+  }, [
+    userSettings.deviceId,
+    status,
+    isSocketConnected,
+    connectWithDevice,
+    setUserSettings,
+  ])
 
   useEffect(() => {
-    if (!isConnected && isSupported && connectionStatus === 'Connected') {
-      logger.info('WebSocket ready, attempting auto-connect...')
-      const timeout = setTimeout(() => {
-        autoConnect().catch(() => {
-          logger.info('Auto-connect failed, user can connect manually')
-        })
-      }, 100)
-      return () => clearTimeout(timeout)
-    }
-    return undefined
-  }, [connectionStatus, isConnected, isSupported, autoConnect])
+    autoConnect()
+  }, [autoConnect])
 }
