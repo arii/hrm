@@ -204,7 +204,7 @@ const SpotifyControls = () => {
 
   return (
     <Card
-      data-testid="spotify-controls-card"
+      data-testid="spotify-controls"
       sx={{
         mb: 3,
         color: 'white',
