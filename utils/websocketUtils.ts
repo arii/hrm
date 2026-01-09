@@ -84,17 +84,49 @@ export const broadcast = (
 export class ConnectionMonitor {
   private wss: WebSocketServer
   private watchdogInterval: number
-  private pingTimeout: number
   private intervalId: NodeJS.Timeout | null = null
 
-  constructor(
-    wss: WebSocketServer,
-    watchdogInterval: number = 30000,
-    pingTimeout: number = 15000
-  ) {
+  /**
+   * @param wss The WebSocketServer instance to monitor.
+   * @param watchdogInterval The interval in milliseconds to check for stale connections.
+   */
+  constructor(wss: WebSocketServer, watchdogInterval?: number) {
     this.wss = wss
-    this.watchdogInterval = watchdogInterval
-    this.pingTimeout = pingTimeout
+
+    let interval = watchdogInterval
+
+    // If no interval is provided via argument, get it from the environment.
+    if (interval === undefined) {
+      const envValue = process.env.WEBSOCKET_WATCHDOG_INTERVAL
+      const parsedValue = parseInt(envValue || '30000', 10)
+
+      if (envValue && (isNaN(parsedValue) || parsedValue <= 0)) {
+        logger.warn(
+          {
+            provided: envValue,
+            fallback: 30000,
+          },
+          'Invalid WEBSOCKET_WATCHDOG_INTERVAL. Using fallback.'
+        )
+        interval = 30000
+      } else {
+        interval = parsedValue
+      }
+    }
+
+    // Final validation for any source.
+    if (interval <= 0) {
+      logger.warn(
+        {
+          provided: interval,
+          fallback: 30000,
+        },
+        'Watchdog interval must be a positive integer. Using fallback.'
+      )
+      this.watchdogInterval = 30000
+    } else {
+      this.watchdogInterval = interval
+    }
   }
 
   /**
@@ -107,18 +139,8 @@ export class ConnectionMonitor {
     }
 
     this.intervalId = setInterval(() => {
-      const now = Date.now()
       this.wss.clients.forEach((ws) => {
         const extWs = ws as ExtWebSocket
-
-        if (now - extWs.lastPong > this.pingTimeout) {
-          logger.warn(
-            { clientId: extWs.clientId },
-            'Terminating stale WebSocket connection due to ping timeout.'
-          )
-          return extWs.terminate()
-        }
-
         extWs.ping(() => {
           /* no-op */
         })

@@ -20,7 +20,6 @@ import type {
  */
 export interface ExtWebSocket extends WebSocket {
   clientId: string
-  lastPong: number
   clientType?: 'dashboard' | 'controller'
 }
 

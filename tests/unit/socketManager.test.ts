@@ -88,6 +88,7 @@ class MockWebSocket extends EventEmitter {
   isAlive: boolean
   clientType: string | undefined
   clientId?: string
+  lastPong: number
   terminate = jest.fn()
   ping = jest.fn()
   send = jest.fn()
@@ -95,6 +96,7 @@ class MockWebSocket extends EventEmitter {
   constructor() {
     super()
     this.isAlive = true
+    this.lastPong = 0
   }
 
   // Simulate receiving a pong from the client
@@ -289,20 +291,19 @@ describe('WebSocket Manager', () => {
       expect(monitorInstance.start).toHaveBeenCalled()
     })
 
-    it('should set isAlive to true on new connection', () => {
+    it('should update lastPong on pong', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
-      expect(newWs.isAlive).toBe(true)
-    })
 
-    it('should set isAlive to true on pong', () => {
-      const newWs = new MockWebSocket() as ExtWebSocket
-      const mockReq = createMockRequest()
-      mockWss.emit('connection', newWs, mockReq)
-      newWs.isAlive = false // Manually set to false
+      const initialTime = newWs.lastPong
+      jest.advanceTimersByTime(1000) // Advance time
+      const expectedTime = Date.now()
+
       newWs.emit('pong')
-      expect(newWs.isAlive).toBe(true)
+
+      expect(newWs.lastPong).toBe(expectedTime)
+      expect(newWs.lastPong).toBeGreaterThan(initialTime)
     })
 
     it('should stop the ConnectionMonitor when the server closes', () => {

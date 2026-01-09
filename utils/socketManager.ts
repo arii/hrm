@@ -136,9 +136,8 @@ const initSocketManager = (
 
     clientSockets.set(clientId, extWs)
 
-    extWs.lastPong = Date.now()
     extWs.on('pong', () => {
-      extWs.lastPong = Date.now()
+      logger.debug({ clientId }, 'Received pong from client.')
     })
 
     logger.info(logMeta, 'WebSocket client connected')
