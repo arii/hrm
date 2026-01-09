@@ -19,6 +19,8 @@ const config: KnipConfig = {
     'stories/**/*.tsx',
     '.storybook/**/*.ts',
     '.storybook/**/*.tsx',
+    'server.ts',
+    'proxy.ts',
   ],
   project: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs', '**/*.mjs'],
   ignore: [
