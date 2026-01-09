@@ -56,19 +56,30 @@ jobs:
           config-path: .github/conflict-resolver.yml
 
       - name: Handle successful resolution
+        id: handle_success
         if: steps.resolve.outputs.unresolved-files == ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Add all files to staging to check for diff
           git add .
-          git commit -m "Auto-resolve merge conflicts from ${{ github.event.inputs.source_branch }}"
-          git push --force -u origin feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
-          NEW_PR_URL=$(gh pr create \
-            --title "Merge ${{ github.event.inputs.source_branch }} with auto-resolved conflicts" \
-            --body "This PR was automatically generated after resolving merge conflicts." \
-            --base ${{ github.event.inputs.target_branch }} \
-            --head feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }})
-          echo "NEW_PR_URL=$NEW_PR_URL" >> $GITHUB_ENV
+
+          # Check if there are any staged changes
+          if git diff --staged --quiet; then
+            echo "::notice::No changes to commit after conflict resolution."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "::notice::Changes found after conflict resolution. Committing..."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            git commit -m "Auto-resolve merge conflicts from ${{ github.event.inputs.source_branch }}"
+            git push --force -u origin feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
+            NEW_PR_URL=$(gh pr create \
+              --title "Merge ${{ github.event.inputs.source_branch }} with auto-resolved conflicts" \
+              --body "This PR was automatically generated after resolving merge conflicts." \
+              --base ${{ github.event.inputs.target_branch }} \
+              --head feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }})
+            echo "NEW_PR_URL=$NEW_PR_URL" >> $GITHUB_ENV
+          fi
 
       - name: Update comment on success
         if: success() && steps.resolve.outputs.unresolved-files == '' && github.event.inputs.pr_number

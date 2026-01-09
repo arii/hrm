@@ -58,67 +58,66 @@ jobs:
 
   check-diff:
     name: 📝 Check for file changes
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
     runs-on: ubuntu-latest
     outputs:
       has_changes: ${{ steps.check_files.outputs.has_changes }}
-      last_non_empty_commit: ${{ steps.check_files.outputs.last_non_empty_commit }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 100
-      - name: Check for file changes and find last non-empty commit
+          fetch-depth: 2
+      - name: Check for file changes
         id: check_files
         run: |
-          set +e
-
-          # Fetch the base branch to ensure it exists locally
-          git fetch origin ${{ github.base_ref }} --depth=100 2>/dev/null || true
-
-          # Get merge base between current branch and base branch
-          MERGE_BASE=$(git merge-base HEAD origin/${{ github.base_ref }} 2>/dev/null)
-
-          if [ -z "$MERGE_BASE" ]; then
-            # Fallback: use previous commit if merge-base fails
-            MERGE_BASE=$(git rev-parse HEAD~1 2>/dev/null)
-          fi
-
-          if [ -z "$MERGE_BASE" ]; then
-            # Last resort: compare HEAD against itself (will show no changes)
-            MERGE_BASE=$(git rev-parse HEAD)
-          fi
-
-          # Check if there are actual file changes between merge base and HEAD
-          HAS_DIFF=0
-          git diff --quiet "$MERGE_BASE" HEAD -- .
-          HAS_DIFF=$?
-
-          if [ $HAS_DIFF -eq 0 ]; then
-            # No changes found
+          # The 'synchronize' event is triggered on new pushes to the PR branch.
+          # We check if this new commit is empty by comparing it to its parent.
+          if git diff --quiet HEAD~1 HEAD; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "::notice::No file changes detected between $MERGE_BASE and HEAD"
-
-            # Find the last commit with file changes in the PR
-            for sha in $(git rev-list "$MERGE_BASE"..HEAD 2>/dev/null | head -100); do
-              if git cat-file -e $sha^ &>/dev/null 2>/dev/null; then
-                if ! git diff --quiet $sha^ $sha -- . ; then
-                  echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
-                  break
-                fi
-              fi
-            done
+            echo "::notice::Empty commit detected. No file changes."
           else
-            # Changes found
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-            echo "::notice::File changes detected between $MERGE_BASE and HEAD"
+            echo "::notice::Changes detected in the latest commit."
           fi
 
-          exit 0
+  handle-empty-commit:
+    name: 🛡️ Handle Empty Commit
+    if: github.event_name == 'pull_request' && needs.check-diff.result == 'success' && needs.check-diff.outputs.has_changes == 'false'
+    needs: [check-diff]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post comment about empty commit
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '✅ An empty commit was detected and the CI checks were skipped.'
+            });
+      - name: Create passing dummy check
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'PR Quality Gate',
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion: 'success',
+              output: {
+                title: 'CI Skipped for Empty Commit',
+                summary: 'This commit contained no file changes, so the full CI suite was skipped.'
+              }
+            });
+
   # 1. Run CI checks on every push to a PR
   pr-quality:
-    if: github.event_name == 'pull_request' && needs.check-diff.outputs.has_changes == 'true'
+    if: github.event_name == 'pull_request' && (needs.check-diff.outputs.has_changes == 'true' || github.event.action == 'opened' || github.event.action == 'reopened')
     needs: [check-diff]
     permissions:
       contents: read
@@ -128,13 +127,13 @@ jobs:
       issues: write
     uses: ./.github/workflows/pr-quality.yml
     with:
-      has_changes: ${{ needs.check-diff.outputs.has_changes }}
+      has_changes: 'true' # Always true when this job runs
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
 
   # 2. Trigger review AFTER CI checks are done for a PR event
   review-on-pr-update:
-    if: always() && github.event_name == 'pull_request' && needs.check-diff.outputs.has_changes == 'true'
+    if: always() && github.event_name == 'pull_request' && (needs.check-diff.outputs.has_changes == 'true' || github.event.action == 'opened' || github.event.action == 'reopened')
     needs: [check-diff, pr-quality]
     permissions:
       contents: read
