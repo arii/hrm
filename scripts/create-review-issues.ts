@@ -289,8 +289,11 @@ export function isDuplicate(
     newIssue.description
   )
   for (const existing of existingIssues) {
-    // Strip the footer from the existing issue body before generating the signature
-    const existingDescription = existing.body.split('\n\n---')[0] || ''
+    // Strip the footer and fingerprint from the existing issue body before generating the signature
+    const bodyWithoutFooter = existing.body.split('\n\n---')[0] || ''
+    const existingDescription = bodyWithoutFooter
+      .replace(/<!-- fingerprint: ([\w-]+) -->\s*$/, '')
+      .trim()
     const existingSignature = getSignatureFromContent(
       existing.title,
       existingDescription
