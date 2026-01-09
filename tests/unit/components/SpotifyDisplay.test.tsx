@@ -11,13 +11,37 @@ import { ErrorProvider } from '@/context/ErrorContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
-import { fireEvent, render, screen, act } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useSession, signIn } from 'next-auth/react'
 import React from 'react'
 import { SpotifyData } from '@/types/websocket'
 
 // Mock dependencies
+jest.mock('@/components/Spotify/VolumeSlider', () => ({
+  __esModule: true,
+  default: ({
+    volume,
+    onVolumeChange,
+    onVolumeChangeCommitted,
+  }: {
+    volume: number
+    onVolumeChange: (value: number) => void
+    onVolumeChangeCommitted: (value: number) => void
+  }) => (
+    <input
+      type="range"
+      aria-label="Volume control"
+      value={volume}
+      onChange={(e) => onVolumeChange(parseInt(e.target.value, 10))}
+      onMouseUp={(e) =>
+        onVolumeChangeCommitted(
+          parseInt((e.target as HTMLInputElement).value, 10)
+        )
+      }
+    />
+  ),
+}))
 jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
   __esModule: true,
   default: () => <div data-testid="current-spotify-item-display" />,
@@ -172,7 +196,7 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('70')
     })
 
-    it('re-enables external updates after sliding and debounce period', () => {
+    it('re-enables external updates after sliding is committed', () => {
       const slider = screen.getByRole('slider', { name: /volume control/i })
       expect(slider).toHaveValue('50')
 
@@ -189,19 +213,17 @@ describe('SpotifyDisplay', () => {
       rerender(<SpotifyDisplay />)
       expect(slider).toHaveValue('75')
 
-      // Advance timers to end the debounce period
-      act(() => {
-        jest.advanceTimersByTime(300)
-      })
+      // Simulate user releasing the slider
+      fireEvent.mouseUp(slider)
 
       // Simulate another external update (should now be applied)
-      updatedSpotifyData = { ...initialSpotifyData, volume: 25 }
+      updatedSpotifyData = { ...initialSpotifyData, volume: 10 } // Ensure new volume to trigger effect
       mockedUseWebSocket.mockReturnValue({
         ...mockedUseWebSocket(),
         spotifyData: updatedSpotifyData,
       })
       rerender(<SpotifyDisplay />)
-      expect(slider).toHaveValue('25')
+      expect(slider).toHaveValue('10')
     })
   })
 })

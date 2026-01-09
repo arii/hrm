@@ -7,6 +7,7 @@ interface VolumeSliderProps {
   volume: number
   muted: boolean
   onVolumeChange: (volume: number) => void
+  onVolumeChangeCommitted?: (volume: number) => void // Add this line
   onToggleMute: () => void
   showValue?: boolean
 }
@@ -15,6 +16,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   volume,
   muted,
   onVolumeChange,
+  onVolumeChangeCommitted,
   onToggleMute,
   showValue = true,
 }) => {
@@ -34,6 +36,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       <Slider
         value={muted ? 0 : volume}
         onChange={(_, val) => onVolumeChange(val as number)}
+        onChangeCommitted={(_, val) => onVolumeChangeCommitted?.(val as number)}
         min={0}
         max={100}
         size="small"
