@@ -85,6 +85,27 @@ describe('API Route: /api/workout', () => {
         expect(response.status).toBe(500)
         expect(data).toHaveProperty('error')
       })
+
+      it('should return 404 if no table is found in the document', async () => {
+        const mockHtml = '<html><body>No table here</body></html>'
+        mockedFetch.mockResolvedValue({
+          ok: true,
+          text: () => Promise.resolve(mockHtml),
+        } as Response)
+        mockedParseGoogleDocTable.mockImplementation(() => {
+          throw new Error('No table found in the Google Doc')
+        })
+        const request = new NextRequest(
+          'http://localhost/api/workout?docId=test-doc-id'
+        )
+        const response = await GET(request)
+        const data = await response.json()
+
+        expect(response.status).toBe(404)
+        expect(data).toEqual({
+          error: 'No table found in the provided document.',
+        })
+      })
     })
 
     it('should return parsed data on successful fetch', async () => {

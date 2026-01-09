@@ -22,10 +22,12 @@ interface WorkoutData {
 }
 
 interface WorkoutTableViewerProps {
-  docId: string
+  docUrl: string
 }
 
-export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
+export default function WorkoutTableViewer({
+  docUrl,
+}: WorkoutTableViewerProps) {
   const [data, setData] = useState<WorkoutData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -34,8 +36,12 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const res = await fetch(`/api/workout?docId=${docId}`)
-        if (!res.ok) throw new Error('Failed to load workout data')
+        const params = new URLSearchParams({ docId: docUrl })
+        const res = await fetch(`/api/workout?${params.toString()}`)
+        if (!res.ok) {
+          const errorJson = await res.json()
+          throw new Error(errorJson.error || 'Failed to load workout data')
+        }
         const json = await res.json()
         setData(json)
       } catch (err) {
@@ -45,10 +51,10 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
       }
     }
 
-    if (docId) {
+    if (docUrl) {
       fetchData()
     }
-  }, [docId])
+  }, [docUrl])
 
   if (loading) {
     return (
