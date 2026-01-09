@@ -13,12 +13,16 @@ interface Logger {
   child: (bindings: pino.Bindings) => Logger
 }
 
-const pinoOptions: pino.LoggerOptions = {
+export const pinoOptions: pino.LoggerOptions = {
   level:
     process.env.NODE_ENV === 'test'
       ? 'silent'
       : process.env.LOG_LEVEL ||
         (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+  redact: {
+    paths: ['req.headers.cookie', 'req.headers.authorization', 'res.headers'],
+    remove: true,
+  },
 }
 
 if (process.env.NODE_ENV === 'development') {

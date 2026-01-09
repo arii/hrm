@@ -13,12 +13,14 @@ module.exports = {
       // and the application can decide on a default.
       env: {
         NODE_ENV: 'production',
+        LOG_LEVEL: process.env.LOG_LEVEL || 'warn',
         PORT: process.env.PORT,
         SPOTIFY_CLIENT_ID: 'test_client_id',
         SPOTIFY_CLIENT_SECRET: 'test_client_secret',
       },
       env_production: {
         NODE_ENV: 'production',
+        LOG_LEVEL: process.env.LOG_LEVEL || 'warn',
         PORT: process.env.PORT,
         SPOTIFY_CLIENT_ID: 'test_client_id',
         SPOTIFY_CLIENT_SECRET: 'test_client_secret',
