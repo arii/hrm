@@ -18,7 +18,7 @@ set -e
 : "${MAX_COMMENTS:=60}"
 : "${REVIEW_THROTTLE_MINUTES:=30}"
 : "${BOT_USERNAME:=gemini-bot}"
-: "${QUALITY_GATE_BOT_USERNAME:=github-actions[bot]}"
+: "${QUALITY_GATE_BOT_USERNAMES:=github-actions[bot]}"
 # This variable is optional and may not be present for all event types.
 : "${COMMENT_BODY:=}"
 
@@ -71,8 +71,8 @@ echo "::info::Passed initial checks (manual override, comment limit, throttling)
 # Check 4: Quality Check Failures
 # The first priority is to review PRs that have failed CI checks.
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
-  # Use the dedicated QUALITY_GATE_BOT_USERNAME to find the correct report.
-  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments | jq -r --arg bot_user "$QUALITY_GATE_BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""')
+  # Use the dedicated QUALITY_GATE_BOT_USERNAMES to find the correct report.
+  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments | jq -r --arg bot_users "$QUALITY_GATE_BOT_USERNAMES" '.comments | map(select((.author.login? as $author | ($bot_users | split(" ") | index($author))) and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""')
   
   if [ -z "$QUALITY_REPORT" ]; then
     NEEDS_REVIEW="false"
