@@ -15,6 +15,59 @@ declare module 'next-auth' {
   }
 }
 
+// Extend the JWT type to include custom properties
+declare module 'next-auth/jwt' {
+  interface JWT {
+    accessToken?: string
+    accessTokenExpires?: number
+    refreshToken?: string
+    error?: string
+    providerAccountId?: string
+  }
+}
+
+// Helper to sync token with backend
+async function syncTokenWithBackend(token: JWT) {
+  try {
+    const tokenPayload = {
+      provider: 'spotify',
+      sub: token.providerAccountId, // providerAccountId is mapped to sub in JWT usually
+      access_token: token.accessToken,
+      refresh_token: token.refreshToken,
+      expires_in: Math.floor(
+        ((token.accessTokenExpires as number) - Date.now()) / 1000
+      ),
+      scope: token.scope || '', // Ensure scope is preserved in JWT if needed
+      obtainedAt: Date.now(),
+    }
+    // Only sync if we have valid data
+    if (!tokenPayload.access_token || !tokenPayload.refresh_token) return
+
+    const response = await fetch(getAPIURL('internal/token-delivery'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-token-secret': env.NEXTAUTH_SECRET,
+      },
+      body: JSON.stringify(tokenPayload),
+    })
+
+    if (response.ok) {
+      logger.debug('Token successfully synced with the backend.')
+    } else {
+      logger.warn(
+        {
+          status: response.status,
+          body: await response.text(),
+        },
+        'Failed to sync token with the backend.'
+      )
+    }
+  } catch (e) {
+    logger.error({ error: e }, 'Failed to sync refreshed token with backend')
+  }
+}
+
 /**
  * Safely extracts the hostname from the `NEXTAUTH_URL` environment variable to be used
  * as the domain for NextAuth cookies. This prevents cookie domain errors by returning
@@ -221,80 +274,45 @@ export const authOptions: AuthOptions = {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
       if (account) {
-        logger.debug(
-          {
-            provider: account.provider,
-            providerAccountId: account.providerAccountId,
-            hasAccessToken: !!account.access_token,
-            hasProfile: !!account.profile,
-          },
-          '[AUTH] Initial sign-in'
-        )
-
-        // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
-        if (account.refresh_token) {
-          try {
-            const tokenPayload = {
-              provider: account.provider,
-              sub: account.providerAccountId,
-              access_token: account.access_token,
-              refresh_token: account.refresh_token,
-              expires_in: account.expires_at
-                ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
-                : 3600,
-              scope: account.scope || '',
-              obtainedAt: Date.now(),
-            }
-
-            const response = await fetch(getAPIURL('internal/token-delivery'), {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-internal-token-secret': env.NEXTAUTH_SECRET,
-              },
-              body: JSON.stringify(tokenPayload),
-            })
-            const responseBody = await response.text()
-            if (response.ok) {
-              logger.info(
-                { status: response.status, body: responseBody },
-                'Internal token delivery successful'
-              )
-            } else {
-              logger.warn(
-                { status: response.status, body: responseBody },
-                'Internal token delivery failed'
-              )
-            }
-          } catch (e) {
-            logger.error({ error: e }, 'Internal token delivery failed')
-          }
-        }
-
-        // Return token with Spotify account data
-        const updatedToken = {
+        // ... [Existing initial sign-in logic] ...
+        // Ensure you preserve the 'sub' or providerAccountId for future syncs
+        const initialToken = {
           ...token,
           accessToken: account.access_token,
           accessTokenExpires:
             Date.now() + (Number(account.expires_in) || 3600) * 1000,
           refreshToken: account.refresh_token,
+          providerAccountId: account.providerAccountId, // Store ID for reference
         }
-        logger.debug(
-          { keys: Object.keys(updatedToken) },
-          'Returning updated token'
+
+        // Sync on initial login
+        syncTokenWithBackend(initialToken).catch((err) =>
+          logger.error({ err }, 'Background token sync failed on initial login')
         )
-        return updatedToken
+
+        return initialToken
       }
 
-      // 2. Token is still valid - return it as-is
-      // Add a 60-second buffer to be safe
+      // 2. Token is still valid
       if (Date.now() < (token.accessTokenExpires as number) - 60000) {
         return token
       }
 
-      // 3. Token is expired - try to refresh it
+      // 3. Token is expired - Refresh it
       logger.info('[AUTH] Access token expired, refreshing...')
-      return await refreshAccessToken(token)
+
+      // Perform the refresh
+      const refreshedToken = await refreshAccessToken(token)
+
+      // CRITICAL FIX: Sync the NEW refreshed token to the backend
+      if (!refreshedToken.error) {
+        // Run in background to not block the session response
+        syncTokenWithBackend(refreshedToken).catch((err) =>
+          logger.error({ err }, 'Background token sync failed')
+        )
+      }
+
+      return refreshedToken
     },
     /**
      * Callback for creating and managing the user session.
