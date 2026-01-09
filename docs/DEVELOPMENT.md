@@ -148,6 +148,19 @@ You can bypass these limits at any time by manually triggering a review. To do t
 
 This ensures you can always get an on-demand review from the AI when needed.
 
+##### Quality Gate Bot Configuration
+
+The AI review workflow can be configured to recognize quality gate reports from multiple CI bots. The `QUALITY_GATE_BOT_USERNAMES` environment variable in the `pr-quality.yml` workflow can be set to a single username or a space-separated list of usernames.
+
+**Example:**
+
+```yaml
+env:
+  QUALITY_GATE_BOT_USERNAMES: "github-actions[bot] another-bot"
+```
+
+This allows the `decide-review-strategy.sh` script to correctly identify and parse quality reports from any of the specified bot accounts.
+
 #### Automatic Branch Updates
 
 To ensure pull requests are always synchronized with the `leader` branch, this project uses an automated workflow that updates PRs whenever new commits are pushed to `leader`.
