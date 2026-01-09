@@ -1,6 +1,10 @@
 name: PR Quality Gate
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - leader
   workflow_dispatch:
     inputs:
       branch:
