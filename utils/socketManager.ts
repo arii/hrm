@@ -136,9 +136,9 @@ const initSocketManager = (
 
     clientSockets.set(clientId, extWs)
 
-    extWs.isAlive = true
+    extWs.lastPong = Date.now()
     extWs.on('pong', () => {
-      extWs.isAlive = true
+      extWs.lastPong = Date.now()
     })
 
     logger.info(logMeta, 'WebSocket client connected')

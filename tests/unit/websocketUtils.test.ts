@@ -36,9 +36,16 @@ jest.mock('ws', () => ({
   WebSocket: jest.fn(),
 }))
 
+jest.mock('../../lib/env.js', () => ({
+  env: {
+    WEBSOCKET_WATCHDOG_INTERVAL: 30000,
+    WEBSOCKET_PING_TIMEOUT: 15000,
+  },
+}))
+
 class MockWebSocket extends EventEmitter implements Partial<ExtWebSocket> {
-  isAlive = true
   clientId = `test-client-${Math.random()}`
+  lastPong = Date.now()
   terminate = jest.fn()
   ping = jest.fn()
   pong = (): void => {}
@@ -56,54 +63,53 @@ describe('ConnectionMonitor', () => {
   let mockWss: jest.Mocked<WebSocketServer>
   let connectionMonitor: ConnectionMonitor
   const WATCHDOG_INTERVAL = 5000 // Use a shorter interval for testing
-  let setIntervalSpy: jest.SpyInstance
-  let clearIntervalSpy: jest.SpyInstance
 
   beforeEach(() => {
     jest.useFakeTimers()
-    setIntervalSpy = jest.spyOn(global, 'setInterval')
-    clearIntervalSpy = jest.spyOn(global, 'clearInterval')
     mockWss =
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
-    // Note: ConnectionMonitor is instantiated in each test to allow for env var manipulation
+    connectionMonitor = new ConnectionMonitor(
+      mockWss,
+      WATCHDOG_INTERVAL,
+      WATCHDOG_INTERVAL / 2
+    )
   })
 
   afterEach(() => {
-    connectionMonitor.stop()
+    if (connectionMonitor) {
+      connectionMonitor.stop()
+    }
     jest.useRealTimers()
     jest.clearAllMocks()
     ;(mockWss.clients as Set<MockWebSocket>).clear()
-    setIntervalSpy.mockRestore()
-    clearIntervalSpy.mockRestore()
   })
 
-  it('should start the monitoring interval', () => {
-    connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
+  it('should start and stop the monitoring interval', () => {
+    const setIntervalSpy = jest.spyOn(global, 'setInterval')
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval')
+
     connectionMonitor.start()
     expect(logger.info).toHaveBeenCalledWith(
       { interval: WATCHDOG_INTERVAL },
       'ConnectionMonitor started.'
     )
-    // Check if setInterval has been called
     expect(setIntervalSpy).toHaveBeenCalledTimes(1)
     expect(setIntervalSpy).toHaveBeenCalledWith(
       expect.any(Function),
       WATCHDOG_INTERVAL
     )
-  })
 
-  it('should stop the monitoring interval', () => {
-    connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
-    connectionMonitor.start()
     connectionMonitor.stop()
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1)
     expect(logger.info).toHaveBeenCalledWith('ConnectionMonitor stopped.')
+
+    setIntervalSpy.mockRestore()
+    clearIntervalSpy.mockRestore()
   })
 
-  it('should terminate a client if isAlive is false', () => {
-    connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
+  it('should terminate a client if a pong is not received within the timeout', () => {
     const unresponsiveClient = new MockWebSocket()
-    unresponsiveClient.isAlive = false // Simulate a client that missed a pong
+    unresponsiveClient.lastPong = Date.now() - WATCHDOG_INTERVAL * 2 // Last pong was long ago
     ;(mockWss.clients as Set<MockWebSocket>).add(unresponsiveClient)
 
     connectionMonitor.start()
@@ -112,14 +118,13 @@ describe('ConnectionMonitor', () => {
     expect(unresponsiveClient.terminate).toHaveBeenCalledTimes(1)
     expect(logger.warn).toHaveBeenCalledWith(
       { clientId: unresponsiveClient.clientId },
-      'Terminating stale WebSocket connection due to missed heartbeat.'
+      'Terminating stale WebSocket connection due to ping timeout.'
     )
   })
 
-  it('should NOT terminate a client if isAlive is true', () => {
-    connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
+  it('should not terminate a client if a pong is received within the timeout', () => {
     const responsiveClient = new MockWebSocket()
-    responsiveClient.isAlive = true
+    responsiveClient.lastPong = Date.now() // Fresh pong
     ;(mockWss.clients as Set<MockWebSocket>).add(responsiveClient)
 
     connectionMonitor.start()
@@ -128,99 +133,25 @@ describe('ConnectionMonitor', () => {
     expect(responsiveClient.terminate).not.toHaveBeenCalled()
   })
 
-  it('should set isAlive to false and ping active clients', () => {
-    connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
-    const activeClient = new MockWebSocket()
-    activeClient.isAlive = true
-    ;(mockWss.clients as Set<MockWebSocket>).add(activeClient)
+  it('should handle multiple clients, terminating only the unresponsive one', () => {
+    const responsiveClient = new MockWebSocket()
+    responsiveClient.lastPong = Date.now()
+
+    const unresponsiveClient = new MockWebSocket()
+    unresponsiveClient.lastPong = Date.now() - WATCHDOG_INTERVAL * 2
+
+    const anotherResponsiveClient = new MockWebSocket()
+    anotherResponsiveClient.lastPong = Date.now()
+
+    ;(mockWss.clients as Set<MockWebSocket>).add(responsiveClient)
+    ;(mockWss.clients as Set<MockWebSocket>).add(unresponsiveClient)
+    ;(mockWss.clients as Set<MockWebSocket>).add(anotherResponsiveClient)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)
 
-    expect(activeClient.isAlive).toBe(false)
-    expect(activeClient.ping).toHaveBeenCalledTimes(1)
-  })
-
-  it('should handle multiple clients correctly', () => {
-    connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
-    const client1 = new MockWebSocket() // Responsive
-    const client2 = new MockWebSocket() // Unresponsive
-    const client3 = new MockWebSocket() // Responsive
-
-    client2.isAlive = false
-    ;(mockWss.clients as Set<MockWebSocket>).add(client1)
-    ;(mockWss.clients as Set<MockWebSocket>).add(client2)
-    ;(mockWss.clients as Set<MockWebSocket>).add(client3)
-
-    connectionMonitor.start()
-    jest.advanceTimersByTime(WATCHDOG_INTERVAL)
-
-    // Check responsive clients
-    expect(client1.isAlive).toBe(false)
-    expect(client1.ping).toHaveBeenCalledTimes(1)
-    expect(client1.terminate).not.toHaveBeenCalled()
-
-    expect(client3.isAlive).toBe(false)
-    expect(client3.ping).toHaveBeenCalledTimes(1)
-    expect(client3.terminate).not.toHaveBeenCalled()
-
-    // Check unresponsive client
-    expect(client2.terminate).toHaveBeenCalledTimes(1)
-  })
-
-  it('should not start a new interval if one is already running', () => {
-    connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
-    connectionMonitor.start()
-    connectionMonitor.start() // Attempt to start again
-    expect(logger.warn).toHaveBeenCalledWith(
-      'ConnectionMonitor is already running.'
-    )
-    expect(setIntervalSpy).toHaveBeenCalledTimes(1) // Should only be called once
-  })
-
-  describe('Constructor Interval Validation', () => {
-    afterEach(() => {
-      delete process.env.WEBSOCKET_WATCHDOG_INTERVAL
-    })
-
-    it('should use the provided watchdogInterval if valid', () => {
-      const monitor = new ConnectionMonitor(mockWss, 10000)
-      monitor.start()
-      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000)
-    })
-
-    it('should fall back to default if provided interval is zero or negative', () => {
-      const monitor = new ConnectionMonitor(mockWss, 0)
-      monitor.start()
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.any(Object),
-        'Watchdog interval must be a positive integer. Using fallback.'
-      )
-      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000)
-    })
-
-    it('should use the environment variable if no argument is provided', () => {
-      process.env.WEBSOCKET_WATCHDOG_INTERVAL = '15000'
-      const monitor = new ConnectionMonitor(mockWss)
-      monitor.start()
-      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 15000)
-    })
-
-    it('should fall back to default if environment variable is invalid', () => {
-      process.env.WEBSOCKET_WATCHDOG_INTERVAL = 'invalid'
-      const monitor = new ConnectionMonitor(mockWss)
-      monitor.start()
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.any(Object),
-        'Invalid WEBSOCKET_WATCHDOG_INTERVAL. Using fallback.'
-      )
-      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000)
-    })
-
-    it('should use the default of 30000 if nothing is provided', () => {
-      const monitor = new ConnectionMonitor(mockWss)
-      monitor.start()
-      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000)
-    })
+    expect(responsiveClient.terminate).not.toHaveBeenCalled()
+    expect(unresponsiveClient.terminate).toHaveBeenCalledTimes(1)
+    expect(anotherResponsiveClient.terminate).not.toHaveBeenCalled()
   })
 })

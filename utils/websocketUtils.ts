@@ -9,7 +9,6 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ExtWebSocket, ServerMessage } from '../types/websocket.js'
 import logger from './logger.js'
-import { env } from '../lib/env.js'
 
 /**
  * Sends a typed WebSocket message to a single client. This is the preferred
@@ -90,8 +89,8 @@ export class ConnectionMonitor {
 
   constructor(
     wss: WebSocketServer,
-    watchdogInterval: number = env.WEBSOCKET_WATCHDOG_INTERVAL,
-    pingTimeout: number = env.WEBSOCKET_PING_TIMEOUT
+    watchdogInterval: number = 30000,
+    pingTimeout: number = 15000
   ) {
     this.wss = wss
     this.watchdogInterval = watchdogInterval
@@ -111,14 +110,18 @@ export class ConnectionMonitor {
       const now = Date.now()
       this.wss.clients.forEach((ws) => {
         const extWs = ws as ExtWebSocket
-        console.log(`Checking client ${extWs.clientId}: now=${now}, lastPong=${extWs.lastPong}, pingTimeout=${this.pingTimeout}, diff=${now - extWs.lastPong}`)
+
         if (now - extWs.lastPong > this.pingTimeout) {
           logger.warn(
             { clientId: extWs.clientId },
             'Terminating stale WebSocket connection due to ping timeout.'
           )
-          extWs.terminate()
+          return extWs.terminate()
         }
+
+        extWs.ping(() => {
+          /* no-op */
+        })
       })
     }, this.watchdogInterval)
 

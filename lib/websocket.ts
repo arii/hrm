@@ -3,19 +3,12 @@ import { IncomingMessage } from 'http'
 import { Socket } from 'net'
 import { parse } from 'url'
 import { ServerMessage } from '../types/websocket.js'
-import { env } from './env.js'
 
 export class WebSocketManager {
   public wss: WebSocketServer
 
   constructor() {
-    this.wss = new WebSocketServer({
-      noServer: true,
-      clientTracking: true,
-      // NOTE: The watchdog interval is used for pinging. The timeout for termination
-      // is handled separately in the ConnectionMonitor.
-      pingInterval: env.WEBSOCKET_WATCHDOG_INTERVAL,
-    })
+    this.wss = new WebSocketServer({ noServer: true })
   }
 
   public handleUpgrade(req: IncomingMessage, socket: Socket, head: Buffer) {
