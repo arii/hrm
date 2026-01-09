@@ -234,7 +234,11 @@ const TimerControls = () => {
             {modes.map((mode) => (
               <Button
                 key={mode}
-                data-testid={mode === 'TABATA' ? 'tabata-mode-button' : 'stopwatch-mode-button'}
+                data-testid={
+                  mode === 'TABATA'
+                    ? 'tabata-mode-button'
+                    : 'stopwatch-mode-button'
+                }
                 onClick={() => sendModeCommand(mode as 'TABATA' | 'STOPWATCH')}
                 disabled={controlsDisabled}
                 startIcon={mode === 'TABATA' ? <FitnessCenter /> : <Timer />}
