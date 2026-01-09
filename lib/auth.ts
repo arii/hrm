@@ -285,7 +285,7 @@ export const authOptions: AuthOptions = {
             Date.now() + (Number(account.expires_in) || 3600) * 1000,
           refreshToken: account.refresh_token,
           providerAccountId: account.providerAccountId, // Store ID for reference
-          scope: account.scope, // <-- ADD THIS LINE
+          scope: account.scope,
         }
 
         // Sync on initial login
