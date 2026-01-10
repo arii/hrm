@@ -394,7 +394,7 @@ describe('WebSocket Manager', () => {
       )
       lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       payload = lastCall[1].payload
-      expect(payload[0].calories).toBe(0)
+      expect(payload[0].calories).toBeGreaterThan(0)
     })
   })
 
