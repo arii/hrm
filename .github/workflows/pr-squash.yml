@@ -171,6 +171,11 @@ jobs:
             });
 
   check-for-changes:
+    # This job is crucial to prevent CI runs on empty commits. A squash operation
+    # can result in an empty commit if the squashed commits cancel each other out
+    # (e.g., adding a file and then removing it). This check ensures that the
+    # subsequent `pr-quality` workflow is only triggered if there are actual
+    # file changes in the squashed commit.
     needs: squash-and-rebase
     if: needs.squash-and-rebase.outputs.outcome == 'success'
     runs-on: ubuntu-latest

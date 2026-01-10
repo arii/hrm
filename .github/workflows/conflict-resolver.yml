@@ -61,7 +61,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Add all files to staging to check for diff
+          # After resolving conflicts, it's possible that there are no actual
+          # changes to commit (e.g., if the changes were only in deleted files).
+          # We check for staged changes before committing to avoid creating an
+          # empty commit, which would unnecessarily trigger CI workflows.
           git add .
 
           # Check if there are any staged changes

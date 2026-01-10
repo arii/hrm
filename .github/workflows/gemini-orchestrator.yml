@@ -57,6 +57,10 @@ jobs:
           fi
 
   check-diff:
+    # This job checks for empty commits on pushes to a PR. It only runs on the
+    # 'synchronize' event, which is triggered when new commits are pushed to the
+    # pull request branch. It compares the latest commit with its parent to see
+    # if there are any file changes.
     name: 📝 Check for file changes
     if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
     runs-on: ubuntu-latest
@@ -81,6 +85,10 @@ jobs:
           fi
 
   handle-empty-commit:
+    # This job runs when an empty commit is detected. It posts a comment to the
+    # PR to inform the user that the CI checks were skipped, and it creates a
+    # dummy "success" status check. This is important to prevent the PR from
+    # being blocked if branch protection rules require the status check to pass.
     name: 🛡️ Handle Empty Commit
     if: github.event_name == 'pull_request' && needs.check-diff.result == 'success' && needs.check-diff.outputs.has_changes == 'false'
     needs: [check-diff]
