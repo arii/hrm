@@ -1,10 +1,6 @@
 name: PR Quality Gate
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches:
-      - leader
   workflow_dispatch:
     inputs:
       branch:
@@ -55,9 +51,44 @@ env:
   FORCE_COLOR: 1
 
 jobs:
+  check-for-changes:
+    name: Check for file changes
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check_files.outputs.has_changes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # unshallow fetch for better diff accuracy
+
+      - name: Check for file changes
+        id: check_files
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # The git diff command with three dots (...) compares the tip of the current
+            # branch with the merge-base of the target branch. The merge-base is the
+            # common ancestor of both branches.
+            #
+            # By fetching the full history (`fetch-depth: 0`), we ensure that git can
+            # accurately find this merge-base. This prevents false positives where a
+            # rebase or merge results in an "empty" commit with no file changes.
+            #
+            # The `--quiet` flag suppresses output and exits with status 1 if there are
+            # changes, and 0 otherwise. The `!` negates the exit code, so `has_changes`
+            # is 'true' if there are changes, and 'false' if there are none.
+            if ! git diff --quiet ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}; then
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+            fi
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "has_changes=${{ inputs.has_changes }}" >> $GITHUB_OUTPUT
+          fi
   prepare-env:
     name: 📝 Prepare Environment
-    if: inputs.has_changes == 'true'
+    needs: check-for-changes
+    if: needs.check-for-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     outputs:
       session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
@@ -263,8 +294,8 @@ jobs:
 
   script-tests:
     name: 🧪 Script Tests
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [check-for-changes, prepare-env]
+    if: needs.check-for-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -307,8 +338,8 @@ jobs:
 
   knip-check:
     name: 🎒 Knip Check
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [check-for-changes, prepare-env]
+    if: needs.check-for-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -347,8 +378,8 @@ jobs:
 
   lint-check:
     name: 🔍 Lint Check
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [check-for-changes, prepare-env]
+    if: needs.check-for-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -398,8 +429,8 @@ jobs:
 
   build-check:
     name: 🏗️ Build Check
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [check-for-changes, prepare-env]
+    if: needs.check-for-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -545,8 +576,8 @@ jobs:
 
   infra-tests:
     name: 🧪 Infrastructure Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [check-for-changes, prepare-env, knip-check, lint-check, build-check]
+    if: needs.check-for-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -630,8 +661,8 @@ jobs:
 
   unit-tests:
     name: 🧪 Unit Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [check-for-changes, prepare-env, knip-check, lint-check, build-check]
+    if: needs.check-for-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -710,8 +741,8 @@ jobs:
 
   component-tests:
     name: 🧪 Component Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [check-for-changes, prepare-env, knip-check, lint-check, build-check]
+    if: needs.check-for-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -790,8 +821,8 @@ jobs:
 
   perf-tests:
     name: 🧪 Performance Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [check-for-changes, prepare-env, knip-check, lint-check, build-check]
+    if: needs.check-for-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -885,8 +916,8 @@ jobs:
 
   visual-tests:
     name: 🧪 Visual Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [check-for-changes, prepare-env, knip-check, lint-check, build-check]
+    if: needs.check-for-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
