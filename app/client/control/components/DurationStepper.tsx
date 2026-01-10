@@ -17,6 +17,7 @@ interface DurationStepperProps {
   step?: number
   disabled?: boolean
   color?: string
+  'data-testid'?: string
 }
 
 const stepperButtonSx = {
@@ -39,6 +40,7 @@ const DurationStepper: React.FC<DurationStepperProps> = ({
   step = 5,
   disabled = false,
   color = '#FFFFFF',
+  'data-testid': dataTestId,
 }) => {
   const handleIncrement = () => {
     onChange(value + step)
@@ -49,7 +51,7 @@ const DurationStepper: React.FC<DurationStepperProps> = ({
   }
 
   return (
-    <Box>
+    <Box data-testid={dataTestId}>
       <Typography
         sx={{
           color: 'white',
