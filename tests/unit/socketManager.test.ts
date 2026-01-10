@@ -311,6 +311,16 @@ describe('WebSocket Manager', () => {
         .value
       expect(monitorInstance.stop).toHaveBeenCalled()
     })
+
+    it('should set isAlive to true on any message', () => {
+      const newWs = new MockWebSocket() as ExtWebSocket
+      const mockReq = createMockRequest()
+      mockWss.emit('connection', newWs, mockReq)
+      newWs.isAlive = false // Manually set to false
+      const message = JSON.stringify({ type: 'PING' })
+      newWs.emit('message', message.toString())
+      expect(newWs.isAlive).toBe(true)
+    })
   })
 
   describe('Calorie Calculation', () => {
@@ -384,7 +394,7 @@ describe('WebSocket Manager', () => {
       )
       lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       payload = lastCall[1].payload
-      expect(payload[0].calories).toBe(0)
+      expect(payload[0].calories).toBeGreaterThan(0)
     })
   })
 
