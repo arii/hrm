@@ -1114,7 +1114,7 @@ jobs:
           echo "🎉 All checks copied."
   integration-tests:
     name: 📊 Integration Tests Summary
-    if: always() && inputs.has_changes == 'true'
+    if: needs.prepare-env.result == 'success' || needs.prepare-env.result == 'failure'
     needs:
       [
         prepare-env,
@@ -1160,7 +1160,7 @@ jobs:
 
   quality-report:
     name: 📊 Quality Report
-    if: always() && inputs.has_changes == 'true' && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
+    if: needs.prepare-env.result == 'success' || needs.prepare-env.result == 'failure'
     needs: [prepare-env, knip-check, lint-check, build-check, script-tests, integration-tests]
     runs-on: ubuntu-latest
     outputs:
