@@ -101,7 +101,7 @@ describe('useLocalWorkoutBuffer', () => {
     expect(result.current.workoutData.status).toBe('running')
   })
 
-  it('should pause a workout when status changes to idle', () => {
+  it('should end a workout when status changes to idle', () => {
     const { result, rerender } = renderHook(
       ({ status }) => useLocalWorkoutBuffer(0, status),
       { initialProps: { status: 'idle' } }
@@ -114,8 +114,8 @@ describe('useLocalWorkoutBuffer', () => {
     act(() => {
       rerender({ status: 'idle' })
     })
-    expect(result.current.workoutData.status).toBe('paused')
-    expect(result.current.workoutData.endTime).toBeNull()
+    expect(result.current.workoutData.status).toBe('finished')
+    expect(result.current.workoutData.endTime).not.toBeNull()
   })
 
   it('should reset workout data', () => {
