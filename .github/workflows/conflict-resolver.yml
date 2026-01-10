@@ -31,19 +31,23 @@ jobs:
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Checkout source branch
+      - name: Checkout target branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.source_branch }}
+          ref: ${{ github.event.inputs.target_branch }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Merge target branch
+      - name: Create temporary branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin ${{ github.event.inputs.target_branch }}
-          git merge origin/${{ github.event.inputs.target_branch }} --no-commit --no-ff || true
+          git switch -c feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
+
+      - name: Merge source branch
+        run: |
+          git fetch origin ${{ github.event.inputs.source_branch }}
+          git merge origin/${{ github.event.inputs.source_branch }} --no-commit --no-ff || true
 
       - name: Resolve conflicts
         id: resolve
@@ -51,12 +55,20 @@ jobs:
         with:
           config-path: .github/conflict-resolver.yml
 
-      - name: Commit and push changes
+      - name: Handle successful resolution
         if: steps.resolve.outputs.unresolved-files == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git add .
-          git commit -m "Auto-resolve merge conflicts by merging ${{ github.event.inputs.target_branch }}"
-          git push --force
+          git commit -m "Auto-resolve merge conflicts from ${{ github.event.inputs.source_branch }}"
+          git push --force -u origin feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
+          NEW_PR_URL=$(gh pr create \
+            --title "Merge ${{ github.event.inputs.source_branch }} with auto-resolved conflicts" \
+            --body "This PR was automatically generated after resolving merge conflicts." \
+            --base ${{ github.event.inputs.target_branch }} \
+            --head feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }})
+          echo "NEW_PR_URL=$NEW_PR_URL" >> $GITHUB_ENV
 
       - name: Update comment on success
         if: success() && steps.resolve.outputs.unresolved-files == '' && github.event.inputs.pr_number
@@ -64,7 +76,7 @@ jobs:
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
-            ✅ Successfully resolved all conflicts by merging the latest changes from `${{ github.event.inputs.target_branch }}`. The pull request has been updated.
+            ✅ Successfully resolved all conflicts. A new pull request has been created: ${{ env.NEW_PR_URL }}
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
 

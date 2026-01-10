@@ -103,11 +103,7 @@ export const useLocalWorkoutBuffer = (
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null
-    // CHANGED: The interval now starts as soon as the workout is running,
-    // regardless of whether there's an active HR signal.
-    // This allows data collection to begin immediately and catch the HR
-    // signal as soon as it's available.
-    if (workoutData.status === 'running') {
+    if (workoutData.status === 'running' && currentHrRef.current > 0) {
       intervalId = setInterval(recordHrData, 1000)
     }
     return () => {
@@ -137,12 +133,10 @@ export const useLocalWorkoutBuffer = (
           prev.status === 'running' ? { ...prev, status: 'paused' } : prev
         )
       } else if (workoutStatus === 'idle') {
-        // CHANGED: When the external timer goes idle (e.g., Tabata cycle ends),
-        // we now pause the local workout instead of finishing it.
-        // This preserves the session, allowing for continuous workouts that
-        // span multiple timer cycles.
         setWorkoutData((prev) =>
-          prev.status === 'running' ? { ...prev, status: 'paused' } : prev
+          prev.status === 'running' || prev.status === 'paused'
+            ? { ...prev, status: 'finished', endTime: Date.now() }
+            : prev
         )
       }
     }

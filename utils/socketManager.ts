@@ -231,8 +231,6 @@ const handleIncomingMessage = (
   messageString: string,
   clientId: string
 ) => {
-  // Any message from the client indicates they are still alive.
-  ws.isAlive = true
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
@@ -350,6 +348,17 @@ const handleIncomingMessage = (
 
       case 'TIMER_COMMAND':
         services.tabataService.handleCommand(message.command)
+        if (message.command === 'STOP') {
+          logger.info('Resetting calorie count for all clients.')
+          clientSessionState.forEach((session) => {
+            session.accumulatedCalories = 0
+          })
+          const allClients = hrmDataRepository.findAll()
+          allClients.forEach((client) => {
+            hrmDataRepository.save({ ...client, calories: 0 })
+          })
+          broadcastState() // Ensure clients are updated immediately
+        }
         break
 
       case 'SET_MODE':
