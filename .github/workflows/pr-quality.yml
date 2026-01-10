@@ -1,6 +1,10 @@
 name: PR Quality Gate
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - leader
   workflow_dispatch:
     inputs:
       branch:
@@ -291,7 +295,6 @@ jobs:
           fi
           echo "✅ Test Passed: Leading/Trailing Invalid Chars"
         continue-on-error: true
-
   script-tests:
     name: 🧪 Script Tests
     needs: [check-for-changes, prepare-env]
@@ -335,7 +338,6 @@ jobs:
             echo "::error::Script tests failed"
             exit 1
           fi
-
   knip-check:
     name: 🎒 Knip Check
     needs: [check-for-changes, prepare-env]
@@ -375,7 +377,6 @@ jobs:
         run: |
           echo "::warning::Knip check failed but continuing workflow for now. Knip validation is under review."
           exit 0
-
   lint-check:
     name: 🔍 Lint Check
     needs: [check-for-changes, prepare-env]
@@ -426,7 +427,6 @@ jobs:
           path: logs/lint-output.log
           retention-days: 2
           if-no-files-found: ignore
-
   build-check:
     name: 🏗️ Build Check
     needs: [check-for-changes, prepare-env]
@@ -573,7 +573,6 @@ jobs:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: release.tar.gz
           retention-days: 2
-
   infra-tests:
     name: 🧪 Infrastructure Tests
     needs: [check-for-changes, prepare-env, knip-check, lint-check, build-check]
@@ -658,7 +657,6 @@ jobs:
             echo "::error::Infrastructure tests failed"
             exit 1
           fi
-
   unit-tests:
     name: 🧪 Unit Tests
     needs: [check-for-changes, prepare-env, knip-check, lint-check, build-check]
@@ -738,7 +736,6 @@ jobs:
             echo "::error::Unit tests failed"
             exit 1
           fi
-
   component-tests:
     name: 🧪 Component Tests
     needs: [check-for-changes, prepare-env, knip-check, lint-check, build-check]
@@ -818,7 +815,6 @@ jobs:
             echo "::error::Component tests failed"
             exit 1
           fi
-
   perf-tests:
     name: 🧪 Performance Tests
     needs: [check-for-changes, prepare-env, knip-check, lint-check, build-check]
@@ -913,7 +909,6 @@ jobs:
       - name: Stop Application
         if: always()
         run: pnpm run kill-all || true
-
   visual-tests:
     name: 🧪 Visual Tests
     needs: [check-for-changes, prepare-env, knip-check, lint-check, build-check]
@@ -1008,10 +1003,12 @@ jobs:
             echo "::error::Visual tests failed"
             exit 1
           fi
-
   copy-checks:
     name: 📝 Copy checks from parent commit
-    if: inputs.has_changes == 'false'
+    needs: [check-for-changes]
+    if: |
+      (github.event_name == 'workflow_dispatch' && inputs.has_changes == 'false') ||
+      (github.event_name == 'pull_request' && needs.check-for-changes.outputs.has_changes == 'false')
     runs-on: ubuntu-latest
     permissions:
       checks: write
