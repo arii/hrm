@@ -288,5 +288,74 @@ describe('useBluetoothHRM', () => {
       // Average is (1050 + 1000 + 1000 + 1000 + 1050) / 5 = 1020
       expect(result.current.signalPeriodMs).toBe(1020)
     })
+
+    it('should proactively increase signal period on missed heartbeats', async () => {
+      jest.useFakeTimers()
+      const { result } = renderHook(() => useBluetoothHRM())
+      let characteristicValueChangedCallback: (
+        event: unknown
+      ) => void = () => {}
+
+      // Mock the characteristic and capture the event listener
+      const mockCharacteristic = {
+        startNotifications: jest.fn().mockResolvedValue(undefined),
+        addEventListener: jest.fn((_event, callback) => {
+          characteristicValueChangedCallback = callback
+        }),
+      }
+
+      // @ts-expect-error Gatt is a mock
+      mockGatt.connect.mockResolvedValue({
+        getPrimaryService: jest.fn().mockResolvedValue({
+          getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+        }),
+      })
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+
+      // Simulate a packet arrival to establish a baseline
+      const now = Date.now()
+      jest.spyOn(Date, 'now').mockReturnValue(now)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+
+      jest.spyOn(Date, 'now').mockReturnValue(now + 1000)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      expect(result.current.signalPeriodMs).toBe(1000)
+
+      // Advance time by 2 seconds without sending a packet
+      jest.spyOn(Date, 'now').mockReturnValue(now + 3000)
+      await act(async () => {
+        jest.advanceTimersByTime(2000)
+      })
+
+      // The heartbeat should have fired twice. The first time, it penalizes
+      // with the time since last data (2000ms), the second time with 3000ms.
+      // History: [1000, 2000, 3000] -> Avg: 2000
+      expect(result.current.signalPeriodMs).toBe(2000)
+
+      // A real packet arrives after the drop
+      jest.spyOn(Date, 'now').mockReturnValue(now + 4000)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+
+      // The real delta is 3000ms (from now+1000 to now+4000)
+      // History: [1000, 2000, 3000, 3000] -> Avg: 2250
+      expect(result.current.signalPeriodMs).toBe(2250)
+
+      jest.useRealTimers()
+    })
   })
 })
