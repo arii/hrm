@@ -28,6 +28,8 @@ import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
+import { ConnectionManager } from './connectionManager.js'
+import { SessionManager } from './sessionManager.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -36,41 +38,19 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
+let connectionManager: ConnectionManager
+let sessionManager: SessionManager
 
 // State Management:
 // - hrmDataRepository: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
-// - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
 const hrmDataRepository = new HrmDataRepository()
-
-// Track active sockets separately so we can handle "zombie" sockets during reconnects
-const clientSockets = new Map<string, WebSocket>()
 
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
   { lastUpdate: number; accumulatedCalories: number }
 >()
-
-/**
- * Safely parses the WebSocket request URL to extract search parameters.
- * Handles cases where headers or URL might be malformed.
- * @param req - The incoming HTTP request from the WebSocket upgrade.
- * @returns URLSearchParams object, which will be empty if parsing fails.
- */
-const getRequestParams = (req: IncomingMessage): URLSearchParams => {
-  try {
-    // Fallback to localhost if host header is missing, which can happen in some proxy/test setups
-    const host = req.headers.host || 'localhost'
-    const protocol = 'http' // WebSocket upgrades start as HTTP
-    const url = new URL(req.url || '/', `${protocol}://${host}`)
-    return url.searchParams
-  } catch (error) {
-    logger.error({ error }, 'Failed to parse WebSocket connection URL')
-    // Return empty params to prevent a crash on invalid URL
-    return new URLSearchParams()
-  }
-}
 
 /**
  * Creates a metadata object for logging, with sensitive data redaction in production.
@@ -113,32 +93,32 @@ const initSocketManager = (
   getUnifiedStateSnapshot = getSnapshot
   services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
+  connectionManager = new ConnectionManager()
+  sessionManager = new SessionManager(
+    hrmDataRepository,
+    env.WEBSOCKET_GRACE_PERIOD_MS,
+    broadcastState
+  )
   connectionMonitor.start()
+  sessionManager.start()
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket
 
-    const params = getRequestParams(req)
-    const clientId =
-      params.get('clientId') ||
-      `[GENERATED]-user-${Math.random().toString(36).substring(2, 9)}`
+    const clientId = connectionManager.addConnection(extWs, req)
+    sessionManager.reconnected(clientId)
     const logMeta = getLogMeta(req, clientId)
     extWs.clientId = clientId
 
     // it's a stale or "zombie" connection. Overwrite it with the new socket.
 
-    if (clientSockets.has(clientId)) {
-      logger.warn(
-        logMeta,
-        'Existing socket found. Overwriting with new connection.'
-      )
-    }
-
-    clientSockets.set(clientId, extWs)
-
-    extWs.isAlive = true
+    extWs.missedPongs = 0
     extWs.on('pong', () => {
-      extWs.isAlive = true
+      extWs.missedPongs = 0
+    })
+
+    extWs.on('error', (error) => {
+      logger.error({ clientId, error }, 'WebSocket client error')
     })
 
     logger.info(logMeta, 'WebSocket client connected')
@@ -169,38 +149,18 @@ const initSocketManager = (
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
 
       // CRITICAL: Do NOT immediately delete clientData.
-      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
-      // NOTE: In a high-traffic production environment, this could lead to
-      // memory pressure if many clients disconnect and don't reconnect.
-      // A more robust solution might involve a separate cleanup process
-      // or a maximum number of inactive sessions.
-      setTimeout(() => {
-        // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
-        if (clientSockets.get(clientId) === extWs) {
-          logger.info(
-            { clientId: extWs.clientId },
-            'Session expired. Deleting data.'
-          )
-          try {
-            hrmDataRepository.deleteById(extWs.clientId)
-            clientSessionState.delete(extWs.clientId)
-            broadcastState()
-          } catch (err) {
-            logger.error(
-              { clientId: extWs.clientId, error: err },
-              'Error during session cleanup'
-            )
-          } finally {
-            // Always remove the socket reference to prevent leaks
-            clientSockets.delete(extWs.clientId)
-          }
-        }
-      }, env.WEBSOCKET_GRACE_PERIOD_MS)
+      sessionManager.markAsDisconnected(clientId)
+      connectionManager.removeConnection(clientId)
     })
   })
 
   wss.on('close', () => {
     connectionMonitor.stop()
+    sessionManager.stop()
+  })
+
+  wss.on('error', (error) => {
+    logger.error({ error }, 'WebSocket Server error')
   })
 }
 
@@ -232,7 +192,7 @@ const handleIncomingMessage = (
   clientId: string
 ) => {
   // Any message from the client indicates they are still alive.
-  ws.isAlive = true
+  ws.missedPongs = 0
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
@@ -430,4 +390,4 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager, getRequestParams }
+export { initSocketManager }

@@ -147,21 +147,22 @@ describe('ConnectionMonitor', () => {
     const client2 = new MockWebSocket() // Unresponsive
     const client3 = new MockWebSocket() // Responsive
 
-    client2.isAlive = false
+    client2.missedPongs = 2
     ;(mockWss.clients as Set<MockWebSocket>).add(client1)
     ;(mockWss.clients as Set<MockWebSocket>).add(client2)
     ;(mockWss.clients as Set<MockWebSocket>).add(client3)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)
+    jest.advanceTimersByTime(WATCHDOG_INTERVAL)
 
     // Check responsive clients
-    expect(client1.isAlive).toBe(false)
-    expect(client1.ping).toHaveBeenCalledTimes(1)
+    expect(client1.missedPongs).toBe(2)
+    expect(client1.ping).toHaveBeenCalledTimes(2)
     expect(client1.terminate).not.toHaveBeenCalled()
 
-    expect(client3.isAlive).toBe(false)
-    expect(client3.ping).toHaveBeenCalledTimes(1)
+    expect(client3.missedPongs).toBe(2)
+    expect(client3.ping).toHaveBeenCalledTimes(2)
     expect(client3.terminate).not.toHaveBeenCalled()
 
     // Check unresponsive client

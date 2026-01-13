@@ -142,15 +142,15 @@ export class ConnectionMonitor {
       this.wss.clients.forEach((ws) => {
         const extWs = ws as ExtWebSocket
 
-        if (extWs.isAlive === false) {
+        if (extWs.missedPongs >= 3) {
           logger.warn(
-            { clientId: extWs.clientId },
-            'Terminating stale WebSocket connection due to missed heartbeat.'
+            { clientId: extWs.clientId, missedPongs: extWs.missedPongs },
+            'Terminating stale WebSocket connection due to missed heartbeats.'
           )
           return extWs.terminate()
         }
 
-        extWs.isAlive = false
+        extWs.missedPongs += 1
         extWs.ping(() => {
           /* no-op */
         })
