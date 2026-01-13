@@ -134,4 +134,21 @@ describe('useLocalWorkoutBuffer', () => {
     expect(result.current.workoutData.status).toBe('idle')
     expect(result.current.workoutData.startTime).toBeNull()
   })
+
+  it('should end a workout', () => {
+    const { result, rerender } = renderHook(
+      ({ status }) => useLocalWorkoutBuffer(0, status),
+      { initialProps: { status: 'idle' } }
+    )
+    act(() => {
+      rerender({ status: 'running' })
+    })
+    expect(result.current.workoutData.status).toBe('running')
+
+    act(() => {
+      result.current.endWorkout()
+    })
+    expect(result.current.workoutData.status).toBe('finished')
+    expect(result.current.workoutData.endTime).not.toBeNull()
+  })
 })
