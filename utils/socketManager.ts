@@ -44,6 +44,9 @@ let services: AppServices
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
 const hrmDataRepository = new HrmDataRepository()
 
+// Track pending cleanup timers for disconnected clients
+const clientCleanupTimers = new Map<string, NodeJS.Timeout>()
+
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
 
@@ -126,6 +129,13 @@ const initSocketManager = (
     const logMeta = getLogMeta(req, clientId)
     extWs.clientId = clientId
 
+    // If a cleanup timer is pending for this client, cancel it as they have reconnected.
+    if (clientCleanupTimers.has(clientId)) {
+      clearTimeout(clientCleanupTimers.get(clientId)!)
+      clientCleanupTimers.delete(clientId)
+      logger.info({ clientId }, 'Cleared pending session cleanup on reconnect.')
+    }
+
     // it's a stale or "zombie" connection. Overwrite it with the new socket.
 
     if (clientSockets.has(clientId)) {
@@ -175,7 +185,7 @@ const initSocketManager = (
       // memory pressure if many clients disconnect and don't reconnect.
       // A more robust solution might involve a separate cleanup process
       // or a maximum number of inactive sessions.
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
         if (clientSockets.get(clientId) === extWs) {
           logger.info(
@@ -196,7 +206,11 @@ const initSocketManager = (
             clientSockets.delete(extWs.clientId)
           }
         }
+        // The timer has run, so remove it from the map.
+        clientCleanupTimers.delete(clientId)
       }, env.WEBSOCKET_GRACE_PERIOD_MS)
+
+      clientCleanupTimers.set(clientId, timer)
     })
   })
 
@@ -239,13 +253,6 @@ const handleIncomingMessage = (
     const message = ClientCommandMessageSchema.parse(parsedJson)
 
     switch (message.type) {
-      case 'PING': {
-        // Respond to client heartbeat pings to keep the connection alive
-        logger.info({ clientId }, 'Received PING, sending PONG.')
-        const pongMessage: ServerMessage = { type: 'PONG' }
-        sendWebSocketMessage(ws, pongMessage, 'socketManager.PING')
-        break
-      }
       case 'REGISTER_CLIENT': {
         ws.clientType = (message as ClientRegistrationMessage).role
         logger.info(
