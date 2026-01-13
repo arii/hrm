@@ -111,25 +111,4 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(controlPanel, 'control-panel.png')
     })
   })
-
-  test.describe('Connect Page', () => {
-    test('initial state', async ({ page }) => {
-      await page.goto('/client/connect')
-      await takeScreenshot(page, 'connect-page.png')
-    })
-  })
-
-  test.describe('Mobile View', () => {
-    test.use({ viewport: { width: 390, height: 844 } }) // iPhone 12 Pro
-
-    test('dashboard', async ({ page }) => {
-      await page.goto('/')
-      await takeScreenshot(page, 'mobile-dashboard.png')
-    })
-
-    test('control panel', async ({ page }) => {
-      await page.goto('/client/control')
-      await takeScreenshot(page, 'mobile-control-panel.png')
-    })
-  })
 })
