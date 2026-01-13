@@ -17,7 +17,7 @@ const hasNextAuthSecret = !!process.env.NEXTAUTH_SECRET
 // Optimized ignore list - run more tests by default
 const testIgnoreList = [
   // Hardware-dependent tests (require Web Bluetooth, specific hardware)
-  // 'bluetooth-flow.spec.ts',
+  'bluetooth-flow.spec.ts',
 
   // Environment-sensitive tests (fail on CI runners due to network/CPU throttling)
   'realtime-resilience.spec.ts',
