@@ -71,6 +71,7 @@ const Dashboard = () => {
 
   return (
     <Container
+      data-testid="dashboard"
       maxWidth="xl"
       onClick={handleInteraction}
       sx={{

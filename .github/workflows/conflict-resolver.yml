@@ -31,23 +31,19 @@ jobs:
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Checkout target branch
+      - name: Checkout source branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.target_branch }}
+          ref: ${{ github.event.inputs.source_branch }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create temporary branch
+      - name: Merge target branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git switch -c feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
-
-      - name: Merge source branch
-        run: |
-          git fetch origin ${{ github.event.inputs.source_branch }}
-          git merge origin/${{ github.event.inputs.source_branch }} --no-commit --no-ff || true
+          git fetch origin ${{ github.event.inputs.target_branch }}
+          git merge origin/${{ github.event.inputs.target_branch }} --no-commit --no-ff || true
 
       - name: Resolve conflicts
         id: resolve
@@ -55,34 +51,16 @@ jobs:
         with:
           config-path: .github/conflict-resolver.yml
 
-      - name: Handle successful resolution
-        id: handle_success
+      - name: Commit and push changes
         if: steps.resolve.outputs.unresolved-files == ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # After resolving conflicts, it's possible that there are no actual
           # changes to commit (e.g., if the changes were only in deleted files).
           # We check for staged changes before committing to avoid creating an
           # empty commit, which would unnecessarily trigger CI workflows.
           git add .
-
-          # Check if there are any staged changes
-          if git diff --staged --quiet; then
-            echo "::notice::No changes to commit after conflict resolution."
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          else
-            echo "::notice::Changes found after conflict resolution. Committing..."
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            git commit -m "Auto-resolve merge conflicts from ${{ github.event.inputs.source_branch }}"
-            git push --force -u origin feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }}
-            NEW_PR_URL=$(gh pr create \
-              --title "Merge ${{ github.event.inputs.source_branch }} with auto-resolved conflicts" \
-              --body "This PR was automatically generated after resolving merge conflicts." \
-              --base ${{ github.event.inputs.target_branch }} \
-              --head feature/auto-resolve-${{ github.event.inputs.source_branch }}-into-${{ github.event.inputs.target_branch }})
-            echo "NEW_PR_URL=$NEW_PR_URL" >> $GITHUB_ENV
-          fi
+          git commit -m "Auto-resolve merge conflicts by merging ${{ github.event.inputs.target_branch }}"
+          git push --force
 
       - name: Update comment on success
         if: success() && steps.resolve.outputs.unresolved-files == '' && github.event.inputs.pr_number
@@ -90,7 +68,7 @@ jobs:
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
-            ✅ Successfully resolved all conflicts. A new pull request has been created: ${{ env.NEW_PR_URL }}
+            ✅ Successfully resolved all conflicts by merging the latest changes from `${{ github.event.inputs.target_branch }}`. The pull request has been updated.
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
 

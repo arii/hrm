@@ -28,7 +28,7 @@ test.describe('Remote Capabilities & Command Relay', () => {
     await page.goto(`${BASE_URL}/client/control`)
 
     // Wait for both components to be ready
-    await expect(page.getByTestId('spotify-controls-card')).toBeVisible({
+    await expect(page.getByTestId('spotify-controls')).toBeVisible({
       timeout: 10000,
     })
     await expect(page.getByTestId('timer-mode-heading')).toBeVisible({
