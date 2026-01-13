@@ -120,7 +120,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.describe('Mobile View', () => {
-    test.use({ viewport: { width: 390, height: 844 } }); // iPhone 12 Pro
+    test.use({ viewport: { width: 390, height: 844 } }) // iPhone 12 Pro
 
     test('dashboard', async ({ page }) => {
       await page.goto('/')
