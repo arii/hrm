@@ -2,6 +2,8 @@
 /**
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
+import { randomUUID } from 'crypto'
+import { randomUUID } from 'crypto'
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { IncomingMessage } from 'http'
