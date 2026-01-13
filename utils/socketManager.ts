@@ -341,7 +341,7 @@ const handleIncomingMessage = (
           hrmDataRepository.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
-            calories: Math.round(finalCalories * 10) / 10,
+            calories: finalCalories,
           })
         }
         broadcastState()

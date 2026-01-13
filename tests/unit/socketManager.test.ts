@@ -360,6 +360,41 @@ describe('WebSocket Manager', () => {
       expect(clientData!.calories).toBeGreaterThan(1)
     })
 
+    it('should accumulate calories with high precision for very short intervals', () => {
+      const sendHrmInput = (hr: number) => {
+        const message = JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: hr, age: 30, weightKg: 75 },
+        })
+        mockWs.emit('message', message.toString())
+      }
+
+      // Initial input
+      sendHrmInput(150)
+
+      // Send 10 updates, each 1ms apart.
+      for (let i = 0; i < 10; i++) {
+        jest.advanceTimersByTime(1) // 1ms
+        sendHrmInput(150)
+      }
+
+      // Check the last broadcasted state
+      const mockBroadcast = broadcast as jest.Mock
+      jest.runOnlyPendingTimers()
+      expect(mockBroadcast).toHaveBeenCalled()
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const finalPayload: HrmData[] = lastCall[1].payload
+      const clientData = finalPayload.find((c) => c.calories > 0)
+
+      expect(clientData).toBeDefined()
+      // Calories should be a small positive number, not zero.
+      expect(clientData!.calories).toBeGreaterThan(0)
+      // The calculated value for 10ms at 150bpm is approx 0.0024.
+      // We expect the value to be un-rounded.
+      expect(clientData!.calories).toBeCloseTo(0.0024, 4)
+    })
+
     it('should reset calories when a STOP command is received', () => {
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
