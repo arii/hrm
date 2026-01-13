@@ -81,6 +81,14 @@ test.describe('Visual Regression Tests', () => {
       await startButton.hover()
       await takeScreenshot(startButton, 'start-button-hover.png')
     })
+
+    test('in stopwatch mode', async () => {
+      await controlPage.getByTestId('stopwatch-mode-button').click()
+      const timerControls = controlPage.getByTestId('timer-controls')
+      await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png')
+      // Switch back to Tabata for subsequent tests
+      await controlPage.getByTestId('tabata-mode-button').click()
+    })
   })
 
   test.describe('SpotifyControls Component', () => {
