@@ -10,6 +10,8 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ExtWebSocket, ServerMessage } from '../types/websocket.js'
 import logger from './logger.js'
 
+export const MAX_MISSED_PONGS = 3
+
 /**
  * Sends a typed WebSocket message to a single client. This is the preferred
  * method for direct-to-client communication.
@@ -142,15 +144,15 @@ export class ConnectionMonitor {
       this.wss.clients.forEach((ws) => {
         const extWs = ws as ExtWebSocket
 
-        if (extWs.missedPongs >= 3) {
+        if (extWs.missedPongs >= MAX_MISSED_PONGS) {
           logger.warn(
-            { clientId: extWs.clientId, missedPongs: extWs.missedPongs },
-            'Terminating stale WebSocket connection due to missed heartbeats.'
+            { clientId: extWs.clientId },
+            'Terminating stale WebSocket connection due to missed heartbeat.'
           )
           return extWs.terminate()
         }
 
-        extWs.missedPongs += 1
+        extWs.missedPongs++
         extWs.ping(() => {
           /* no-op */
         })

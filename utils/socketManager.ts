@@ -2,6 +2,7 @@
 /**
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
+import { randomUUID } from 'crypto'
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { IncomingMessage } from 'http'
@@ -120,8 +121,7 @@ const initSocketManager = (
 
     const params = getRequestParams(req)
     const clientId =
-      params.get('clientId') ||
-      `[GENERATED]-user-${Math.random().toString(36).substring(2, 9)}`
+      params.get('clientId') || `[GENERATED]-user-${randomUUID()}`
     const logMeta = getLogMeta(req, clientId)
     extWs.clientId = clientId
 
@@ -136,9 +136,9 @@ const initSocketManager = (
 
     clientSockets.set(clientId, extWs)
 
-    extWs.isAlive = true
+    extWs.missedPongs = 0
     extWs.on('pong', () => {
-      extWs.isAlive = true
+      extWs.missedPongs = 0
     })
 
     logger.info(logMeta, 'WebSocket client connected')
@@ -232,7 +232,7 @@ const handleIncomingMessage = (
   clientId: string
 ) => {
   // Any message from the client indicates they are still alive.
-  ws.isAlive = true
+  ws.missedPongs = 0
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)

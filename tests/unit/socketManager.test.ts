@@ -33,6 +33,7 @@ import {
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
 import { createMockRequest } from './test-data/request-data-factory'
+import { env } from '../../lib/env'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -85,7 +86,7 @@ jest.mock('ws', () => ({
 }))
 
 class MockWebSocket extends EventEmitter {
-  isAlive: boolean
+  missedPongs: number
   clientType: string | undefined
   clientId?: string
   terminate = jest.fn()
@@ -94,7 +95,7 @@ class MockWebSocket extends EventEmitter {
 
   constructor() {
     super()
-    this.isAlive = true
+    this.missedPongs = 0
   }
 
   // Simulate receiving a pong from the client
@@ -289,20 +290,20 @@ describe('WebSocket Manager', () => {
       expect(monitorInstance.start).toHaveBeenCalled()
     })
 
-    it('should set isAlive to true on new connection', () => {
+    it('should set missedPongs to 0 on new connection', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
-      expect(newWs.isAlive).toBe(true)
+      expect(newWs.missedPongs).toBe(0)
     })
 
-    it('should set isAlive to true on pong', () => {
+    it('should set missedPongs to 0 on pong', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
-      newWs.isAlive = false // Manually set to false
+      newWs.missedPongs = 2
       newWs.emit('pong')
-      expect(newWs.isAlive).toBe(true)
+      expect(newWs.missedPongs).toBe(0)
     })
 
     it('should stop the ConnectionMonitor when the server closes', () => {
@@ -312,14 +313,14 @@ describe('WebSocket Manager', () => {
       expect(monitorInstance.stop).toHaveBeenCalled()
     })
 
-    it('should set isAlive to true on any message', () => {
+    it('should set missedPongs to 0 on any message', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
-      newWs.isAlive = false // Manually set to false
+      newWs.missedPongs = 2
       const message = JSON.stringify({ type: 'PING' })
       newWs.emit('message', message.toString())
-      expect(newWs.isAlive).toBe(true)
+      expect(newWs.missedPongs).toBe(0)
     })
   })
 
@@ -424,7 +425,7 @@ describe('WebSocket Manager', () => {
     it('should handle invalid JSON gracefully', () => {
       mockWs.emit('message', 'invalid json')
       expect(logger.error).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'test-client' }),
+        expect.objectContaining({ clientId: mockWs.clientId }),
         'Error processing incoming message'
       )
     })
@@ -433,14 +434,14 @@ describe('WebSocket Manager', () => {
       const message = JSON.stringify({ type: 'INVALID_TYPE' })
       mockWs.emit('message', message.toString())
       expect(logger.error).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'test-client' }),
+        expect.objectContaining({ clientId: mockWs.clientId }),
         'WebSocket message validation failed'
       )
     })
 
     it('should broadcast state on client disconnect', () => {
       mockWs.emit('close')
-      jest.runAllTimers()
+      jest.advanceTimersByTime(env.WEBSOCKET_GRACE_PERIOD_MS + 100)
       expect(broadcast).toHaveBeenCalledWith(
         mockWss,
         {
@@ -526,7 +527,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
 
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'test-client' }),
+        expect.objectContaining({ clientId: mockWs.clientId }),
         'Unknown message type received'
       )
     })

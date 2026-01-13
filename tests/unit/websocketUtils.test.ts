@@ -11,7 +11,7 @@ import {
 } from '@jest/globals'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
-import { ConnectionMonitor } from '../../utils/websocketUtils'
+import { ConnectionMonitor, MAX_MISSED_PONGS } from '../../utils/websocketUtils'
 import logger from '../../utils/logger'
 import { ExtWebSocket } from '@/types/websocket'
 
@@ -37,7 +37,7 @@ jest.mock('ws', () => ({
 }))
 
 class MockWebSocket extends EventEmitter implements Partial<ExtWebSocket> {
-  isAlive = true
+  missedPongs = 0
   clientId = `test-client-${Math.random()}`
   terminate = jest.fn()
   ping = jest.fn()
@@ -65,11 +65,12 @@ describe('ConnectionMonitor', () => {
     clearIntervalSpy = jest.spyOn(global, 'clearInterval')
     mockWss =
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
-    // Note: ConnectionMonitor is instantiated in each test to allow for env var manipulation
   })
 
   afterEach(() => {
-    connectionMonitor.stop()
+    if (connectionMonitor) {
+      connectionMonitor.stop()
+    }
     jest.useRealTimers()
     jest.clearAllMocks()
     ;(mockWss.clients as Set<MockWebSocket>).clear()
@@ -84,7 +85,6 @@ describe('ConnectionMonitor', () => {
       { interval: WATCHDOG_INTERVAL },
       'ConnectionMonitor started.'
     )
-    // Check if setInterval has been called
     expect(setIntervalSpy).toHaveBeenCalledTimes(1)
     expect(setIntervalSpy).toHaveBeenCalledWith(
       expect.any(Function),
@@ -100,10 +100,11 @@ describe('ConnectionMonitor', () => {
     expect(logger.info).toHaveBeenCalledWith('ConnectionMonitor stopped.')
   })
 
-  it('should terminate a client if isAlive is false', () => {
+  it('should terminate a client if missedPongs exceeds the threshold', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
     const unresponsiveClient = new MockWebSocket()
-    unresponsiveClient.isAlive = false // Simulate a client that missed a pong
+    // Set missed pongs to the max value, so the next increment triggers termination
+    unresponsiveClient.missedPongs = MAX_MISSED_PONGS
     ;(mockWss.clients as Set<MockWebSocket>).add(unresponsiveClient)
 
     connectionMonitor.start()
@@ -116,10 +117,10 @@ describe('ConnectionMonitor', () => {
     )
   })
 
-  it('should NOT terminate a client if isAlive is true', () => {
+  it('should NOT terminate a client if missedPongs is below the threshold', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
     const responsiveClient = new MockWebSocket()
-    responsiveClient.isAlive = true
+    responsiveClient.missedPongs = 0
     ;(mockWss.clients as Set<MockWebSocket>).add(responsiveClient)
 
     connectionMonitor.start()
@@ -128,16 +129,16 @@ describe('ConnectionMonitor', () => {
     expect(responsiveClient.terminate).not.toHaveBeenCalled()
   })
 
-  it('should set isAlive to false and ping active clients', () => {
+  it('should increment missedPongs and ping active clients', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
     const activeClient = new MockWebSocket()
-    activeClient.isAlive = true
+    activeClient.missedPongs = 0
     ;(mockWss.clients as Set<MockWebSocket>).add(activeClient)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)
 
-    expect(activeClient.isAlive).toBe(false)
+    expect(activeClient.missedPongs).toBe(1)
     expect(activeClient.ping).toHaveBeenCalledTimes(1)
   })
 
@@ -147,26 +148,30 @@ describe('ConnectionMonitor', () => {
     const client2 = new MockWebSocket() // Unresponsive
     const client3 = new MockWebSocket() // Responsive
 
-    client2.missedPongs = 2
+    // Setup initial states
+    client1.missedPongs = 0
+    client2.missedPongs = MAX_MISSED_PONGS
+    client3.missedPongs = 1
     ;(mockWss.clients as Set<MockWebSocket>).add(client1)
     ;(mockWss.clients as Set<MockWebSocket>).add(client2)
     ;(mockWss.clients as Set<MockWebSocket>).add(client3)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)
-    jest.advanceTimersByTime(WATCHDOG_INTERVAL)
 
     // Check responsive clients
-    expect(client1.missedPongs).toBe(2)
-    expect(client1.ping).toHaveBeenCalledTimes(2)
+    expect(client1.missedPongs).toBe(1)
+    expect(client1.ping).toHaveBeenCalledTimes(1)
     expect(client1.terminate).not.toHaveBeenCalled()
 
     expect(client3.missedPongs).toBe(2)
-    expect(client3.ping).toHaveBeenCalledTimes(2)
+    expect(client3.ping).toHaveBeenCalledTimes(1)
     expect(client3.terminate).not.toHaveBeenCalled()
 
     // Check unresponsive client
     expect(client2.terminate).toHaveBeenCalledTimes(1)
+    // It should not be pinged if it's being terminated
+    expect(client2.ping).not.toHaveBeenCalled()
   })
 
   it('should not start a new interval if one is already running', () => {
