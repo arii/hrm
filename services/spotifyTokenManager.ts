@@ -2,6 +2,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
+import logger from '../utils/logger.js'
 
 /**
  * Helper for atomic writes to prevent file corruption.
@@ -49,7 +50,7 @@ export class SpotifyTokenManager {
       this.currentToken.payload.access_token = token
       this.currentToken.payload.obtainedAt = Date.now()
       writeTokenFileSafe(this.tokenFile, this.currentToken)
-      console.log('Access token updated via setAccessToken.')
+      logger.info('Access token updated via setAccessToken.')
     } else {
       // If no token record exists, create a minimal one
       this.currentToken = {
@@ -65,7 +66,7 @@ export class SpotifyTokenManager {
         },
       }
       writeTokenFileSafe(this.tokenFile, this.currentToken)
-      console.log('Access token created via setAccessToken.')
+      logger.info('Access token created via setAccessToken.')
     }
   }
 
@@ -80,9 +81,9 @@ export class SpotifyTokenManager {
     }
     // Persist for future runs
     writeTokenFileSafe(this.tokenFile, this.currentToken)
-    console.log(
-      'Updated in-memory and persisted Spotify tokens for:',
-      this.currentToken.payload.sub
+    logger.info(
+      { sub: this.currentToken.payload.sub },
+      'Updated in-memory and persisted Spotify tokens'
     )
   }
   private tokenFile: string
@@ -103,10 +104,13 @@ export class SpotifyTokenManager {
       if (fs.existsSync(this.tokenFile)) {
         const data = fs.readFileSync(this.tokenFile, 'utf8')
         this.currentToken = JSON.parse(data) as TokenRecord
-        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
+        logger.info(
+          { sub: this.currentToken.payload.sub },
+          'Loaded Spotify tokens'
+        )
       }
     } catch (err) {
-      console.warn('Failed to load Spotify tokens:', err)
+      logger.warn({ err }, 'Failed to load Spotify tokens')
     }
   }
 
@@ -151,11 +155,9 @@ export class SpotifyTokenManager {
         }
 
         const data = (await response.json()) as SpotifyTokenResponse
-        console.log(
-          'Spotify token refresh successful. Status:',
-          response.status,
-          'Body:',
-          data
+        logger.info(
+          { status: response.status, expiresIn: data.expires_in },
+          'Spotify token refresh successful'
         )
 
         // Update current token with new values
@@ -174,21 +176,21 @@ export class SpotifyTokenManager {
         // Save updated token
         writeTokenFileSafe(this.tokenFile, this.currentToken)
 
-        console.log(
-          'Refreshed Spotify token for:',
-          this.currentToken.payload.sub
+        logger.info(
+          { sub: this.currentToken.payload.sub },
+          'Refreshed Spotify token'
         )
         return true
       } catch (error: unknown) {
         const err = error as Error
         if (err.message && err.message.includes('(Non-retriable)')) {
-          console.error('Failed to refresh Spotify token (fatal):', err)
+          logger.error({ err }, 'Failed to refresh Spotify token (fatal)')
           return false
         }
 
-        console.error(
-          `Failed to refresh Spotify token (attempt ${attempt}/${maxRetries}):`,
-          err
+        logger.error(
+          { err, attempt, maxRetries },
+          `Failed to refresh Spotify token`
         )
         if (attempt >= maxRetries) return false
         // Exponential backoff

@@ -46,11 +46,19 @@ const httpLogger = pinoHttp({
     res.setHeader('X-Request-Id', id)
     return id
   },
-  customLogLevel: function (_req: Request, res: Response, err?: Error) {
+  customLogLevel: function (req: Request, res: Response, err?: Error) {
     if (res.statusCode >= 400 && res.statusCode < 500) return 'warn'
     if (res.statusCode >= 500 || err) return 'error'
     if (res.statusCode >= 300 && res.statusCode < 400) {
       return process.env.NODE_ENV === 'production' ? 'silent' : 'info'
+    }
+    // Silence successful health checks and NextAuth session/csrf calls
+    const url = req.url || ''
+    if (
+      (url.includes('/api/health') || url.includes('/api/auth')) &&
+      res.statusCode < 400
+    ) {
+      return 'silent'
     }
     return 'info'
   },
