@@ -1,5 +1,5 @@
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository'
-import logger from './logger'
+import logger from './logger.js'
 
 interface DisconnectedClient {
   clientId: string

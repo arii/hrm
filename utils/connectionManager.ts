@@ -1,7 +1,7 @@
 import { WebSocket } from 'ws'
 import { IncomingMessage } from 'http'
 import { ExtWebSocket } from '../types/websocket'
-import logger from './logger'
+import logger from './logger.js'
 
 export class ConnectionManager {
   private clientSockets = new Map<string, WebSocket>()
