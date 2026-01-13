@@ -12,6 +12,7 @@ declare module 'next-auth' {
   interface Session {
     accessToken?: string
     error?: string
+    scope?: string
   }
 }
 
@@ -333,6 +334,7 @@ export const authOptions: AuthOptions = {
       logger.debug({ tokenKeys: Object.keys(token) }, 'Creating session')
       session.accessToken = token.accessToken as string
       session.error = token.error as string // Pass any refresh errors
+      session.scope = token.scope as string
       logger.debug({ hasAccessToken: !!session.accessToken }, 'Session created')
       return session
     },
