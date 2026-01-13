@@ -4,7 +4,10 @@ import { useMemo } from 'react'
 import { Container, Box, Button } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useLocalWorkoutBuffer, WorkoutStatus } from '../useLocalWorkoutBuffer'
+import {
+  useLocalWorkoutBuffer,
+  ActiveWorkoutInputStatus,
+} from '../useLocalWorkoutBuffer'
 import WorkoutSummary from './WorkoutSummary'
 import ZoneDistribution from './ZoneDistribution'
 // Dynamically import HeartRateTimeSeries to ensure it's only rendered client-side
@@ -19,7 +22,7 @@ const ExperimentalAnalyticsPage = () => {
   const timerStatus = timerData?.currentPhase
   const [userSettings] = useUserSettings()
 
-  const workoutStatus: WorkoutStatus =
+  const workoutStatus: ActiveWorkoutInputStatus =
     timerStatus === 'WORK' || timerStatus === 'REST' ? 'running' : 'idle'
 
   const { workoutData, resetWorkout, endWorkout } = useLocalWorkoutBuffer(
