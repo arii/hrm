@@ -1,6 +1,6 @@
 {
   "name": "hrm",
-  "version": "0.24.0",
+  "version": "0.25.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -64,7 +64,7 @@
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@google/genai": "1.35.0",
+    "@google/genai": "1.33.0",
     "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
     "@mui/material-nextjs": "^7.3.7",
@@ -113,7 +113,7 @@
     "@types/lodash.isequal": "^4.5.8",
     "@types/lodash.throttle": "^4.1.9",
     "@types/node": "^25.0.3",
-    "@types/react": "^19.2.8",
+    "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.2",
     "@types/web-bluetooth": "^0.0.21",
     "@types/ws": "^8.18.1",
