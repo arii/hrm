@@ -1,4 +1,3 @@
-
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository'
 import logger from './logger'
 

@@ -1,4 +1,3 @@
-
 import { WebSocket } from 'ws'
 import { IncomingMessage } from 'http'
 import { ExtWebSocket } from '../types/websocket'
@@ -15,7 +14,10 @@ export class ConnectionManager {
     ws.clientId = clientId
 
     if (this.clientSockets.has(clientId)) {
-      logger.warn({ clientId }, 'Existing socket found. Overwriting with new connection.')
+      logger.warn(
+        { clientId },
+        'Existing socket found. Overwriting with new connection.'
+      )
     }
 
     this.clientSockets.set(clientId, ws)
