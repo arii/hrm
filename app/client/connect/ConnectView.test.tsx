@@ -84,10 +84,17 @@ describe('ConnectView', () => {
   })
 
   it('calls onEndWorkout and onReset when the workout is ended', () => {
-    const props = { ...defaultProps, workoutStatus: 'running' as WorkoutStatus, hasStarted: true, isConnected: true }
+    const props = {
+      ...defaultProps,
+      workoutStatus: 'running' as WorkoutStatus,
+      hasStarted: true,
+      isConnected: true,
+    }
     render(<ConnectView {...props} />)
 
-    const endWorkoutButton = screen.getByRole('button', { name: /end workout/i })
+    const endWorkoutButton = screen.getByRole('button', {
+      name: /end workout/i,
+    })
     fireEvent.click(endWorkoutButton)
 
     expect(props.onEndWorkout).toHaveBeenCalledTimes(1)
