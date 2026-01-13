@@ -387,10 +387,7 @@ export default function ConnectView({
           isConnected={isConnected}
           onStart={onStartWorkout}
           onPause={onPauseWorkout}
-          onEnd={() => {
-            onEndWorkout()
-            onReset()
-          }}
+          onEnd={onEndWorkout}
           onResume={onStartWorkout}
         />
 

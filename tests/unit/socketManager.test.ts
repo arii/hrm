@@ -360,7 +360,7 @@ describe('WebSocket Manager', () => {
       expect(clientData!.calories).toBeGreaterThan(1)
     })
 
-    it('should reset calories when a STOP command is received', () => {
+    it('should reset calories when a START command is received', () => {
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
@@ -371,7 +371,7 @@ describe('WebSocket Manager', () => {
 
       // 1. Accumulate some calories
       sendHrmInput(150)
-      jest.advanceTimersByTime(1000)
+      jest.advanceTimersByTime(1000) // Simulate time passing
       sendHrmInput(150)
 
       // Verify calories have accumulated
@@ -381,20 +381,21 @@ describe('WebSocket Manager', () => {
       let payload: HrmData[] = lastCall[1].payload
       expect(payload[0].calories).toBeGreaterThan(0)
 
-      // 2. Send the STOP command
-      const stopMessage = JSON.stringify({
+      // 2. Send the START command
+      const startMessage = JSON.stringify({
         type: 'TIMER_COMMAND',
-        command: 'STOP',
+        command: 'START',
       })
-      mockWs.emit('message', stopMessage)
+      mockWs.emit('message', startMessage)
 
-      // 3. Verify calories are reset
+      // 3. Verify calories are reset to 0
       expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith(
-        'STOP'
+        'START'
       )
       lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       payload = lastCall[1].payload
-      expect(payload[0].calories).toBeGreaterThan(0)
+      // Now, we expect the calories to be reset to 0
+      expect(payload[0].calories).toBe(0)
     })
   })
 
