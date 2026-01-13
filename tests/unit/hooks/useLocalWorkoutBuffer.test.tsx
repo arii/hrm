@@ -134,4 +134,40 @@ describe('useLocalWorkoutBuffer', () => {
     expect(result.current.workoutData.status).toBe('idle')
     expect(result.current.workoutData.startTime).toBeNull()
   })
+
+  it('should record HR data even if the initial HR is 0', async () => {
+    jest.useFakeTimers()
+    const { result, rerender } = renderHook(
+      ({ hr, status }) => useLocalWorkoutBuffer(hr, status),
+      { initialProps: { hr: 0, status: 'idle' } }
+    )
+
+    act(() => {
+      rerender({ hr: 0, status: 'running' })
+    })
+
+    await waitFor(() => {
+      expect(result.current.workoutData.status).toBe('running')
+    })
+
+    act(() => {
+      jest.advanceTimersByTime(1000)
+    })
+
+    expect(result.current.workoutData.hrHistory).toHaveLength(1)
+    expect(result.current.workoutData.hrHistory[0]?.hr).toBe(0)
+    expect(result.current.workoutData.timeInZones[HrZoneName.NoData]).toBe(1)
+
+    rerender({ hr: 120, status: 'running' })
+
+    act(() => {
+      jest.advanceTimersByTime(1000)
+    })
+
+    expect(result.current.workoutData.hrHistory).toHaveLength(2)
+    expect(result.current.workoutData.hrHistory[1]?.hr).toBe(120)
+    expect(result.current.workoutData.timeInZones[HrZoneName.FatBurn]).toBe(1)
+
+    jest.useRealTimers()
+  })
 })

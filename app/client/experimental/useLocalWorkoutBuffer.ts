@@ -103,10 +103,9 @@ export const useLocalWorkoutBuffer = (
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null
-    // CHANGED: The interval now starts as soon as the workout is running,
-    // regardless of whether there's an active HR signal.
-    // This allows data collection to begin immediately and catch the HR
-    // signal as soon as it's available.
+    // The interval starts as soon as the workout is 'running', even if the
+    // initial HR is 0. This is the intended behavior to fix a regression
+    // where recording would not start if the HR signal was temporarily unavailable.
     if (workoutData.status === 'running') {
       intervalId = setInterval(recordHrData, 1000)
     }
