@@ -29,6 +29,7 @@ const envSchema = z.object({
   SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(5000),
   SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
   WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().default(5000),
+  WEBSOCKET_MAX_MISSED_PONGS: z.coerce.number().default(3),
   WEBSOCKET_WATCHDOG_INTERVAL: z.coerce.number().optional(),
   GEMINI_MODEL_FALLBACKS: z.string().optional(),
   ANALYZE: z.string().optional(),
