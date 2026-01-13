@@ -348,9 +348,26 @@ const handleIncomingMessage = (
         break
       }
 
-      case 'TIMER_COMMAND':
+      case 'TIMER_COMMAND': {
+        // Explicitly reset calorie count for all clients on a new workout START
+        if (message.command === 'START') {
+          logger.info('New workout session started. Resetting calorie count.')
+          // Reset internal server state for calorie accumulation
+          for (const session of clientSessionState.values()) {
+            session.accumulatedCalories = 0
+          }
+          // Reset the calorie data that is broadcast to clients
+          const allHrmData = hrmDataRepository.findAll()
+          for (const clientData of allHrmData) {
+            clientData.calories = 0
+            hrmDataRepository.save(clientData)
+          }
+          // Immediately inform clients of the reset
+          broadcastState()
+        }
         services.tabataService.handleCommand(message.command)
         break
+      }
 
       case 'SET_MODE':
         services.tabataService.setMode(message.mode)
