@@ -4,6 +4,7 @@ exports[`ControlPanel Component should match snapshot 1`] = `
 <DocumentFragment>
   <div
     class="MuiContainer-root MuiContainer-maxWidthXs css-n697ne-MuiContainer-root"
+    data-testid="control-panel"
   >
     <div
       class="MuiBox-root css-146i0gf"
@@ -16,6 +17,7 @@ exports[`ControlPanel Component should match snapshot 1`] = `
     </div>
     <div
       class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-18of7au-MuiPaper-root-MuiCard-root"
+      data-testid="timer-controls"
       style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
     >
       <div
@@ -35,6 +37,7 @@ exports[`ControlPanel Component should match snapshot 1`] = `
           >
             <button
               class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary css-g1hdod-MuiButtonBase-root-MuiButton-root"
+              data-testid="tabata-mode-button"
               tabindex="0"
               type="button"
             >
@@ -57,6 +60,7 @@ exports[`ControlPanel Component should match snapshot 1`] = `
             </button>
             <button
               class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary css-g1hdod-MuiButtonBase-root-MuiButton-root"
+              data-testid="stopwatch-mode-button"
               tabindex="0"
               type="button"
             >

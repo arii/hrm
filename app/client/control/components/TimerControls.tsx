@@ -194,6 +194,7 @@ const TimerControls = () => {
 
   return (
     <Card
+      data-testid="timer-controls"
       sx={{
         mb: 0,
         position: 'sticky',
@@ -233,6 +234,11 @@ const TimerControls = () => {
             {modes.map((mode) => (
               <Button
                 key={mode}
+                data-testid={
+                  mode === 'TABATA'
+                    ? 'tabata-mode-button'
+                    : 'stopwatch-mode-button'
+                }
                 onClick={() => sendModeCommand(mode as 'TABATA' | 'STOPWATCH')}
                 disabled={controlsDisabled}
                 startIcon={mode === 'TABATA' ? <FitnessCenter /> : <Timer />}
@@ -342,6 +348,7 @@ const TimerControls = () => {
                   onChange={setWorkTime}
                   disabled={controlsDisabled}
                   color="#EF4444"
+                  data-testid="work-duration-input"
                 />
                 <DurationStepper
                   label="Rest Duration (s)"
@@ -349,6 +356,7 @@ const TimerControls = () => {
                   onChange={setRestTime}
                   disabled={controlsDisabled}
                   color="#22C55E"
+                  data-testid="rest-duration-input"
                 />
               </Stack>
             </Card>

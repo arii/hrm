@@ -77,6 +77,7 @@ const ControlPanel = () => {
         />
       </Head>
       <Container
+        data-testid="control-panel"
         maxWidth="xs"
         sx={{
           py: 1,
