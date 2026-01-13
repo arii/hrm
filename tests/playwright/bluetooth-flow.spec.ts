@@ -29,9 +29,9 @@ test.describe('Bluetooth HRM Connection', () => {
     ).toBeVisible()
     await expect(connectPage.getByText('Connected to: Mock HRM')).toBeVisible()
 
-    // The "Forget" logic is part of the "Reset" button, which should be visible after connection.
+    // After connection, the "Reset" button should be visible
     const resetButton = connectPage.getByRole('button', {
-      name: 'Reset System & Device',
+      name: 'Reset Permissions & Settings',
     })
     await expect(resetButton).toBeVisible()
   })
@@ -101,9 +101,9 @@ test.describe('Bluetooth HRM Connection', () => {
 
     await expect(connectPage.getByText('Connected to: Mock HRM')).toBeVisible()
 
-    // 2. Click Reset
+    // 2. Click "Reset Permissions & Settings"
     const resetButton = connectPage.getByRole('button', {
-      name: 'Reset System & Device',
+      name: 'Reset Permissions & Settings',
     })
     await resetButton.scrollIntoViewIfNeeded()
     await resetButton.click()

@@ -138,6 +138,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isConnecting = useRef(false)
+  const reconnectInProgressRef = useRef(false)
   /**
    * @ref abortControllerRef
    * @description Manages the cancellation of in-flight Bluetooth connection attempts.
@@ -318,6 +319,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [])
 
   const onDisconnected = useCallback(() => {
+    // If a reconnect is already in progress, ignore subsequent redundant disconnect events.
+    // This prevents a race condition where multiple reconnect timeouts are scheduled.
+    if (reconnectInProgressRef.current) {
+      logger.warn(
+        { status: statusRef.current },
+        'Reconnect already in progress. Ignoring redundant disconnect event.'
+      )
+      return
+    }
     setBatteryLevel(null)
 
     // Also send a null HR value to signal immediate disconnection
@@ -352,6 +362,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setDeviceStatus(
           `${reasonText}. Reconnecting... (Attempt ${attemptNum}/${maxReconnectAttempts})`
         )
+        reconnectInProgressRef.current = true
 
         // Randomized backoff: increases with attempts
         const baseDelay = 1000 + (attemptNum - 1) * 500 // 1s, 1.5s, 2s, 2.5s, 3s
@@ -359,14 +370,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         reconnectTimeoutRef.current = setTimeout(() => {
           if (connectToGattRef.current) {
-            connectToGattRef.current(device).catch((error) => {
-              if (error.name !== 'AbortError') {
-                logger.error(
-                  { error, device: device.name, attempt: attemptNum },
-                  'Auto-reconnect attempt failed'
-                )
-              }
-            })
+            connectToGattRef
+              .current(device)
+              .catch((error) => {
+                if (error.name !== 'AbortError') {
+                  logger.error(
+                    { error, device: device.name, attempt: attemptNum },
+                    'Auto-reconnect attempt failed'
+                  )
+                }
+              })
+              .finally(() => {
+                reconnectInProgressRef.current = false
+              })
           }
         }, randomDelay)
       } else {
@@ -559,6 +575,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isTimeoutDisconnect.current = false
         setDisconnectionReason(null)
         reconnectAttempts.current = 0
+        reconnectInProgressRef.current = false // Reset on successful connection
         onConnectRef.current?.()
         return true
       } catch (error) {
@@ -587,7 +604,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           )
           setDeviceStatus('Connection timeout. Resetting device...')
           reconnectAttempts.current = maxReconnectAttempts
-          deviceRef.current = null
 
           if (reconnectTimeoutRef.current)
             clearTimeout(reconnectTimeoutRef.current)
@@ -612,9 +628,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             { device: device.name },
             'Device disconnected during connection. Will attempt auto-reconnect.'
           )
-          deviceRef.current = null
         } else if (!isIntentionalAbort) {
-          deviceRef.current = null
+          // The device ref is preserved to allow the retry mechanism in `onDisconnected` to function.
         }
 
         throw error
@@ -648,6 +663,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userAgeFromArgs?: number,
       options: { silent?: boolean } = {}
     ): Promise<void> => {
+      // If a reconnect timeout is pending, clear it and reset the progress flag.
+      // This prevents the ref from getting stuck if a manual connection interrupts an auto-reconnect.
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+        reconnectInProgressRef.current = false
+      }
       const { silent = false } = options
 
       // Prioritize args, but fall back to props.
