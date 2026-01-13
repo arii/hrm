@@ -14,7 +14,7 @@ updates:
 
     # Custom labels
     labels:
-      - 'dependencies'
+      - "dependencies"
 
     # STRATEGIC GROUPING (Crucial for React/MUI apps)
     groups:
@@ -29,7 +29,7 @@ updates:
           - 'minor'
           - 'patch'
         labels:
-          - 'automerge'
+          - "automerge"
 
       # Update all MUI and Emotion packages together to ensure styling consistency
       mui:
@@ -40,7 +40,7 @@ updates:
           - 'minor'
           - 'patch'
         labels:
-          - 'automerge'
+          - "automerge"
 
       # Keep your testing suite verified together
       testing:
@@ -50,7 +50,7 @@ updates:
           - 'minor'
           - 'patch'
         labels:
-          - 'automerge'
+          - "automerge"
 
       # Group linting tools to avoid minor formatting diffs in separate PRs
       linting:
@@ -63,7 +63,7 @@ updates:
           - 'minor'
           - 'patch'
         labels:
-          - 'automerge'
+          - "automerge"
 
   # 2. GitHub Actions (Keeps your CI/CD pipeline secure)
   - package-ecosystem: 'github-actions'
