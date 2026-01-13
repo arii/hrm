@@ -12,7 +12,7 @@ export interface HrDataPoint {
   zone: HrZoneName
 }
 
-export type WorkoutStatus = 'idle' | 'running' | 'paused' | 'finished';
+export type WorkoutStatus = 'idle' | 'running' | 'paused' | 'finished'
 
 // Define the structure for the entire workout session
 export interface WorkoutSessionData {

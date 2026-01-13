@@ -4,10 +4,7 @@ import { useMemo } from 'react'
 import { Container, Box, Button } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
-import {
-  useLocalWorkoutBuffer,
-  WorkoutStatus,
-} from '../useLocalWorkoutBuffer'
+import { useLocalWorkoutBuffer, WorkoutStatus } from '../useLocalWorkoutBuffer'
 import WorkoutSummary from './WorkoutSummary'
 import ZoneDistribution from './ZoneDistribution'
 // Dynamically import HeartRateTimeSeries to ensure it's only rendered client-side
