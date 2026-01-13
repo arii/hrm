@@ -82,4 +82,15 @@ describe('ConnectView', () => {
     expect(screen.getByLabelText('Inches')).toBeInTheDocument()
     expect(screen.getByLabelText('Your Weight (lbs)')).toBeInTheDocument()
   })
+
+  it('calls onEndWorkout and onReset when the workout is ended', () => {
+    const props = { ...defaultProps, workoutStatus: 'running' as WorkoutStatus, hasStarted: true, isConnected: true }
+    render(<ConnectView {...props} />)
+
+    const endWorkoutButton = screen.getByRole('button', { name: /end workout/i })
+    fireEvent.click(endWorkoutButton)
+
+    expect(props.onEndWorkout).toHaveBeenCalledTimes(1)
+    expect(props.onReset).toHaveBeenCalledTimes(1)
+  })
 })
