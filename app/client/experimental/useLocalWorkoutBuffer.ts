@@ -13,7 +13,7 @@ export interface HrDataPoint {
 }
 
 export type WorkoutStatus = 'idle' | 'running' | 'paused' | 'finished'
-export type ActiveWorkoutInputStatus = 'idle' | 'running' | 'paused';
+export type ActiveWorkoutInputStatus = 'idle' | 'running' | 'paused'
 
 // Define the structure for the entire workout session
 export interface WorkoutSessionData {
