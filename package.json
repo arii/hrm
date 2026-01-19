@@ -73,7 +73,7 @@
     "cheerio": "^1.1.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
-    "framer-motion": "^12.26.1",
+    "framer-motion": "^12.27.1",
     "lodash.isequal": "^4.5.0",
     "lodash.throttle": "^4.1.1",
     "next": "16.1.1",
