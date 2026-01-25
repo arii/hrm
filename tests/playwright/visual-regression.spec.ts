@@ -91,17 +91,6 @@ test.describe('Visual Regression Tests', () => {
       timeout: WAIT_TIMEOUTS.INFRASTRUCTURE,
     })
 
-    // The HrmConnectionPanel can sometimes appear due to timing issues,
-    // causing VRT flakiness. We hide it to ensure a stable snapshot.
-    await dashboardPage.evaluate(() => {
-      const panel = document.querySelector(
-        '[data-testid="hrm-connection-panel"]'
-      )
-      if (panel instanceof HTMLElement) {
-        panel.style.display = 'none'
-      }
-    })
-
     await takeScreenshot(dashboardPage, 'dashboard-active-timer.png', {
       mask: getTimerMasks(dashboardPage),
     })
