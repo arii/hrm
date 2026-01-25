@@ -3,6 +3,7 @@ import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '@/utils/logger'
+import { getAPIURL } from '../utils/urls'
 import { env } from './env'
 import { refreshSpotifyToken } from './spotify'
 
@@ -24,6 +25,48 @@ declare module 'next-auth/jwt' {
     error?: string
     providerAccountId?: string
     scope?: string
+  }
+}
+
+// Helper to sync token with backend
+async function syncTokenWithBackend(token: JWT) {
+  try {
+    const tokenPayload = {
+      provider: 'spotify',
+      sub: token.providerAccountId, // providerAccountId is mapped to sub in JWT usually
+      access_token: token.accessToken,
+      refresh_token: token.refreshToken,
+      expires_in: Math.floor(
+        ((token.accessTokenExpires as number) - Date.now()) / 1000
+      ),
+      scope: token.scope || '', // Ensure scope is preserved in JWT if needed
+      obtainedAt: Date.now(),
+    }
+    // Only sync if we have valid data
+    if (!tokenPayload.access_token || !tokenPayload.refresh_token) return
+
+    const response = await fetch(getAPIURL('internal/token-delivery'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-token-secret': env.NEXTAUTH_SECRET,
+      },
+      body: JSON.stringify(tokenPayload),
+    })
+
+    if (response.ok) {
+      logger.debug('Token successfully synced with the backend.')
+    } else {
+      logger.warn(
+        {
+          status: response.status,
+          body: await response.text(),
+        },
+        'Failed to sync token with the backend.'
+      )
+    }
+  } catch (e) {
+    logger.error({ error: e }, 'Failed to sync refreshed token with backend')
   }
 }
 
@@ -245,6 +288,12 @@ export const authOptions: AuthOptions = {
           providerAccountId: account.providerAccountId, // Store ID for reference
           scope: account.scope,
         }
+
+        // Sync on initial login
+        syncTokenWithBackend(initialToken).catch((err) =>
+          logger.error({ err }, 'Background token sync failed on initial login')
+        )
+
         return initialToken
       }
 
@@ -258,6 +307,14 @@ export const authOptions: AuthOptions = {
 
       // Perform the refresh
       const refreshedToken = await refreshAccessToken(token)
+
+      // CRITICAL FIX: Sync the NEW refreshed token to the backend
+      if (!refreshedToken.error) {
+        // Run in background to not block the session response
+        syncTokenWithBackend(refreshedToken).catch((err) =>
+          logger.error({ err }, 'Background token sync failed')
+        )
+      }
 
       return refreshedToken
     },
