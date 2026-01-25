@@ -132,11 +132,20 @@ export async function replaceIframeWithStableWorkout(
         <!DOCTYPE html>
         <html><head><style>
         body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: white; }
+        .controls { position: absolute; top: 10px; right: 10px; z-index: 100; }
+        .controls button { background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 5px; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; }
         td { padding: 10px; border: 1px solid #ddd; vertical-align: top; }
         h3 { margin: 0 0 10px 0; color: #333; }
         p { margin: 5px 0; font-size: 14px; }
         </style></head><body>
+        <div class="controls">
+          <button title="Refresh Workout View">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
         <p><strong>Sample Workout Plan</strong></p>
         <table><tr>
         <td><h3>30/10 x 3</h3><p>3 way crunch</p><p>Dead bug</p><p>Plank variations</p></td>
@@ -238,7 +247,7 @@ export async function setupMinimalVisualRegressionTest(
 ): Promise<void> {
   await navigateAndWait(page, path)
   if (path === '' || path === '/') {
-    await replaceIframeWithStableWorkout(page)
+    // await replaceIframeWithStableWorkout(page)
   }
 }
 

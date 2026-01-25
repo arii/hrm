@@ -157,7 +157,7 @@ The AI review workflow can be configured to recognize quality gate reports from 
 
 ```yaml
 env:
-  QUALITY_GATE_BOT_USERNAMES: 'github-actions[bot] another-bot'
+  QUALITY_GATE_BOT_USERNAMES: "github-actions[bot] another-bot"
 ```
 
 This allows the `decide-review-strategy.sh` script to correctly identify and parse quality reports from any of the specified bot accounts.
