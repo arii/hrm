@@ -33,4 +33,5 @@ export interface DashboardSectionLoadingSkeletonProps {
   width?: string
   shape?: 'circular' | 'rectangular' | 'rounded'
   count?: number
+  className?: string
 }
