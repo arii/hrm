@@ -25,7 +25,6 @@
  *
  *   // Setup utilities
  *   setupMinimalVisualRegressionTest,
- *   replaceIframeWithStableWorkout,
  * } from './lib'
  * ```
  */
@@ -105,8 +104,6 @@ export {
   warmupEndpoints,
   createTestPage,
   navigateAndWait,
-  // VRT helpers
-  replaceIframeWithStableWorkout,
   // Full setup functions
   setupVisualRegressionTest,
   setupMinimalVisualRegressionTest,
