@@ -22,6 +22,11 @@ const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 
+// Constants for signal quality calculation
+const ROLLING_AVG_HISTORY_LENGTH = 5
+const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
+const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
+
 /**
  * @function parseHeartRate
  * @description Parses the heart rate value from the raw DataView received from a BLE device.
@@ -130,6 +135,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const periodHistory = useRef<number[]>([])
+  const avgPeriodMs = useRef<number>(0)
   const isManualDisconnect = useRef(false)
   const isTimeoutDisconnect = useRef(false)
   const reconnectAttempts = useRef(0)
@@ -139,6 +145,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isConnecting = useRef(false)
   const reconnectInProgressRef = useRef(false)
+
+  // Centralized function to update the signal period history and state
+  const updateSignalPeriod = useCallback((newPeriod: number) => {
+    periodHistory.current.push(newPeriod)
+    if (periodHistory.current.length > ROLLING_AVG_HISTORY_LENGTH) {
+      periodHistory.current.shift()
+    }
+    const total = periodHistory.current.reduce((sum, val) => sum + val, 0)
+    const average = total / periodHistory.current.length
+    avgPeriodMs.current = average
+    setSignalPeriodMs(Math.round(average))
+  }, [])
+
   /**
    * @ref abortControllerRef
    * @description Manages the cancellation of in-flight Bluetooth connection attempts.
@@ -251,6 +270,38 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     return () => clearInterval(interval)
   }, [dataLivenessTimeoutMs, isDataStale])
 
+  // Heartbeat for proactive signal quality assessment
+  useEffect(() => {
+    const heartbeat = setInterval(() => {
+      // Only run when connected and not already stale
+      if (
+        !statusRef.current.startsWith('Connected') ||
+        isDataStale ||
+        lastDataTime.current === 0
+      ) {
+        return
+      }
+
+      const now = Date.now()
+      const timeSinceLastData = now - lastDataTime.current
+
+      // If the time since the last packet exceeds the current average + a buffer,
+      // it's likely a packet was missed.
+      const threshold = Math.max(
+        avgPeriodMs.current + MISSED_PACKET_THRESHOLD_BUFFER_MS,
+        MIN_MISSED_PACKET_THRESHOLD_MS
+      )
+
+      if (timeSinceLastData > threshold) {
+        updateSignalPeriod(timeSinceLastData)
+        // By updating the period here, we make the signal indicator degrade
+        // proactively, without waiting for the next actual packet.
+      }
+    }, 1000) // Check every second
+
+    return () => clearInterval(heartbeat)
+  }, [isDataStale, updateSignalPeriod])
+
   /**
    * @function disconnect
    * @description Manually disconnects the device, preventing auto-reconnection.
@@ -273,6 +324,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setSavedDevice(null)
     setBatteryLevel(null)
     deviceRef.current = null
+    periodHistory.current = []
+    avgPeriodMs.current = 0
+    setSignalPeriodMs(0)
   }, [])
 
   /**
@@ -541,19 +595,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             // Calculate Delta (Period) for Signal Quality
             if (lastDataTime.current > 0) {
               const delta = now - lastDataTime.current
-              // Update Rolling History
-              periodHistory.current.push(delta)
-              if (periodHistory.current.length > 5) {
-                periodHistory.current.shift()
-              }
-              // Calculate Average
-              const total = periodHistory.current.reduce(
-                (sum, val) => sum + val,
-                0
-              )
-              const average = total / periodHistory.current.length
-              // Update State
-              setSignalPeriodMs(Math.round(average))
+              updateSignalPeriod(delta)
             }
 
             const e = event as Event

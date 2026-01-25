@@ -12,6 +12,7 @@ declare module 'next-auth' {
   interface Session {
     accessToken?: string
     error?: string
+    scope?: string
   }
 }
 
@@ -331,8 +332,15 @@ export const authOptions: AuthOptions = {
     async session({ session, token }: { session: Session; token: JWT }) {
       // Pass the updated token and error info to the session object
       logger.debug({ tokenKeys: Object.keys(token) }, 'Creating session')
-      session.accessToken = token.accessToken as string
-      session.error = token.error as string // Pass any refresh errors
+      if (typeof token.accessToken === 'string') {
+        session.accessToken = token.accessToken
+      }
+      if (typeof token.error === 'string') {
+        session.error = token.error
+      }
+      if (typeof token.scope === 'string') {
+        session.scope = token.scope
+      }
       logger.debug({ hasAccessToken: !!session.accessToken }, 'Session created')
       return session
     },
