@@ -15,8 +15,6 @@ import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.server.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
-import type { SpotifyPolling } from './services/spotifyPolling.js'
-import type { SpotifyTokenPayload } from './services/spotifyTokenManager.js'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -148,58 +146,6 @@ app.prepare().then(async () => {
     }
 
     res.status(200).json({ healthy, details })
-  })
-
-  // This route is for internal, server-to-server communication only.
-  // It is used by the Next.js API route to pass the auth token to the
-  // stateful services managed by this server.
-  expressApp.post('/api/internal/sync-token', express.json(), (req, res) => {
-    // 1. Security Check: Ensure the request is coming from our own backend.
-    const internalSecret = req.headers['x-internal-secret']
-    if (internalSecret !== env.NEXTAUTH_SECRET) {
-      logger.warn('Unauthorized attempt to access internal sync-token route.')
-      return res.status(403).json({ error: 'Forbidden' })
-    }
-
-    // 2. Data Validation: Check for the presence of the token payload.
-    const tokenPayload = req.body as SpotifyTokenPayload
-    if (
-      !tokenPayload ||
-      typeof tokenPayload !== 'object' ||
-      !('access_token' in tokenPayload) ||
-      !('refresh_token' in tokenPayload) ||
-      !('sub' in tokenPayload)
-    ) {
-      logger.warn('Sync-token request received without a valid token payload.')
-      return res.status(400).json({ error: 'Invalid or missing token payload' })
-    }
-
-    // 3. Service Interaction: Pass the token to the Spotify service.
-    try {
-      const spotifyService = serviceContainer.get(
-        'spotifyService'
-      ) as SpotifyPolling
-      if (spotifyService) {
-        // The `handleTokenUpdate` is an async method, but we don't need to
-        // wait for it to complete to send the response. We can let it
-        // run in the background.
-        spotifyService.handleTokenUpdate(tokenPayload)
-        logger.info(
-          'Successfully passed token to spotifyService for background update.'
-        )
-        return res.status(202).json({ message: 'Token received for sync.' })
-      } else {
-        logger.error('Spotify service not found in service container.')
-        return res
-          .status(500)
-          .json({ error: 'Internal Server Error: Service not available' })
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'An unknown error occurred.'
-      logger.error({ error: message }, 'Error during token sync service call')
-      return res.status(500).json({ error: 'Internal Server Error' })
-    }
   })
 
   expressApp.use((req, res) => handle(req, res))
