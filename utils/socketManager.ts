@@ -163,7 +163,7 @@ const initSocketManager = (
     }
 
     extWs.on('message', (message) => {
-      extWs.isAlive = true; // <--- Treat any incoming data as a heartbeat
+      extWs.isAlive = true // <--- Treat any incoming data as a heartbeat
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)
     })
 
