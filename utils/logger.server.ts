@@ -39,13 +39,6 @@ const logger = pino(pinoOptions) as Logger
 
 const httpLogger = pinoHttp({
   logger: logger as pino.Logger,
-  autoLogging: {
-    ignore: (req: Request) => {
-      return !!(
-        req.url?.includes('/api/auth') || req.url?.includes('/api/health')
-      )
-    },
-  },
   genReqId: function (req: Request, res: Response) {
     const existingID = req.id ?? req.headers['x-request-id']
     if (existingID) return existingID
