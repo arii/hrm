@@ -1,48 +1,59 @@
-// types/index.ts
-export interface ApiSpotifyTokenPayload {
-  provider: string
-  sub: string
-  access_token: string
-  refresh_token: string
-  expires_in: number
-  scope: string
-  obtainedAt: number
-}
+// This file is for component-specific prop types.
+// All other types should be defined in their respective files.
 
-export interface WorkoutColumnItem {
-  title: string
-  value: string | number
-  color?: string
-  details?: string
-}
-
-export interface WorkoutItem {
-  duration: number
-  hr: number
-  category?: string
-  exercises?: string[]
-  details?: string
-}
-
-export interface WorkoutData {
-  [key: string]: WorkoutItem[]
-}
-
-export interface DashboardSectionLoadingSkeletonProps {
-  height?: string
-  width?: string
-  shape?: 'circular' | 'rectangular' | 'rounded'
-  count?: number
-  className?: string
-}
+import { TimerMode, TimerPhase } from './core'
 
 export interface HrTileProps {
   name: string
   bpm: number
-  percentMax: number
+  percentMax: number // 0-100
   calories?: number
   isConnected?: boolean
   isDataStale?: boolean
+
+  // NEW: Flag to trigger the visual diagnostic state
   isAlerting?: boolean
+  // NEW: Message to display in the overlay when alerting
   alertMessage?: string
+}
+
+export interface HeartRateZonesProps {
+  maxHr: number
+}
+
+export interface TimerDisplayProps {
+  phase: TimerPhase
+  timeRemaining: number
+  timeElapsed: number
+  cycle: number
+  totalCycles: number
+  mode: TimerMode
+  workDuration?: number
+  restDuration?: number
+}
+
+// Renamed to avoid conflict
+export interface WorkoutColumnItem {
+  title: string
+  details?: string
+}
+
+export interface WorkoutColumnsProps {
+  columns: Array<{ title: string; items: WorkoutColumnItem[] }>
+}
+
+// Correct WorkoutItem for the parser and WebSocket
+export interface WorkoutItem {
+  category: string
+  exercises: string[]
+}
+
+export type WorkoutData = WorkoutItem[]
+
+export interface DashboardSectionLoadingSkeletonProps {
+  width?: string | number
+  height?: string | number
+  shape?: 'rectangular' | 'circular'
+  count?: number
+  className?: string
 }
