@@ -240,42 +240,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
   }, [])
 
-  // Watchdog for stale data - marks data as stale and triggers reconnection based on timeout
+  // Consolidated watchdog and heartbeat timer
   useEffect(() => {
-    // A timeout of 0 disables the watchdog
-    if (!dataLivenessTimeoutMs) return
-
-    // This interval periodically checks if new data has been received.
     const interval = setInterval(() => {
-      if (
-        statusRef.current.startsWith('Connected') &&
-        lastDataTime.current > 0
-      ) {
-        const timeSinceLastData = Date.now() - lastDataTime.current
-
-        // Mark as stale and show visual feedback when timeout is reached
-        if (timeSinceLastData > dataLivenessTimeoutMs && !isDataStale) {
-          setIsDataStale(true)
-          setDeviceStatus('Connection unstable. Reconnecting...')
-          setDisconnectionReason('timeout')
-          isTimeoutDisconnect.current = true
-          if (deviceRef.current?.gatt?.connected)
-            deviceRef.current.gatt.disconnect()
-        } else if (timeSinceLastData <= dataLivenessTimeoutMs && isDataStale) {
-          setIsDataStale(false)
-        }
-      }
-    }, 2000) // Check every 2s
-    return () => clearInterval(interval)
-  }, [dataLivenessTimeoutMs, isDataStale])
-
-  // Heartbeat for proactive signal quality assessment
-  useEffect(() => {
-    const heartbeat = setInterval(() => {
-      // Only run when connected and not already stale
+      // Shared state check
       if (
         !statusRef.current.startsWith('Connected') ||
-        isDataStale ||
         lastDataTime.current === 0
       ) {
         return
@@ -284,22 +254,35 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       const now = Date.now()
       const timeSinceLastData = now - lastDataTime.current
 
-      // If the time since the last packet exceeds the current average + a buffer,
-      // it's likely a packet was missed.
-      const threshold = Math.max(
-        avgPeriodMs.current + MISSED_PACKET_THRESHOLD_BUFFER_MS,
-        MIN_MISSED_PACKET_THRESHOLD_MS
-      )
-
-      if (timeSinceLastData > threshold) {
-        updateSignalPeriod(timeSinceLastData)
-        // By updating the period here, we make the signal indicator degrade
-        // proactively, without waiting for the next actual packet.
+      // --- Proactive Heartbeat Logic (runs every second) ---
+      if (!isDataStale) {
+        const threshold = Math.max(
+          avgPeriodMs.current + MISSED_PACKET_THRESHOLD_BUFFER_MS,
+          MIN_MISSED_PACKET_THRESHOLD_MS
+        )
+        if (timeSinceLastData > threshold) {
+          updateSignalPeriod(timeSinceLastData)
+        }
       }
-    }, 1000) // Check every second
 
-    return () => clearInterval(heartbeat)
-  }, [isDataStale, updateSignalPeriod])
+      // --- Stale Data Watchdog Logic (runs every second) ---
+      if (dataLivenessTimeoutMs > 0) {
+        if (timeSinceLastData > dataLivenessTimeoutMs && !isDataStale) {
+          setIsDataStale(true)
+          setDeviceStatus('Connection unstable. Reconnecting...')
+          setDisconnectionReason('timeout')
+          isTimeoutDisconnect.current = true
+          if (deviceRef.current?.gatt?.connected) {
+            deviceRef.current.gatt.disconnect()
+          }
+        } else if (timeSinceLastData <= dataLivenessTimeoutMs && isDataStale) {
+          setIsDataStale(false)
+        }
+      }
+    }, 1000) // Runs every second
+
+    return () => clearInterval(interval)
+  }, [dataLivenessTimeoutMs, isDataStale, updateSignalPeriod])
 
   /**
    * @function disconnect
