@@ -109,13 +109,11 @@ test.describe('Visual Regression Tests', () => {
   test.describe('Dashboard Component', () => {
     test('initial, empty state', async () => {
       await dashboardPage.evaluate(() => {
-        const panel = document.querySelector(
-          '[data-testid="hrm-connection-panel"]'
-        )
+        const panel = document.querySelector('[data-testid="hrm-connection-panel"]');
         if (panel && panel instanceof HTMLElement) {
-          panel.style.display = 'none'
+          panel.style.display = 'none';
         }
-      })
+      });
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-empty.png')
     })

@@ -49,13 +49,11 @@ test.describe('Visual Regression Tests', () => {
   // Test cases
   test('Dashboard - main viewer page', async () => {
     await dashboardPage.evaluate(() => {
-      const panel = document.querySelector(
-        '[data-testid="hrm-connection-panel"]'
-      )
-      if (panel && panel instanceof HTMLElement) {
-        panel.style.display = 'none'
-      }
-    })
+        const panel = document.querySelector('[data-testid="hrm-connection-panel"]');
+        if (panel && panel instanceof HTMLElement) {
+          panel.style.display = 'none';
+        }
+      });
     await takeDashboardScreenshot(dashboardPage, 'dashboard-viewer.png')
   })
 
@@ -90,13 +88,11 @@ test.describe('Visual Regression Tests', () => {
     })
 
     await dashboardPage.evaluate(() => {
-      const panel = document.querySelector(
-        '[data-testid="hrm-connection-panel"]'
-      )
-      if (panel && panel instanceof HTMLElement) {
-        panel.style.display = 'none'
-      }
-    })
+        const panel = document.querySelector('[data-testid="hrm-connection-panel"]');
+        if (panel && panel instanceof HTMLElement) {
+          panel.style.display = 'none';
+        }
+      });
     await takeScreenshot(dashboardPage, 'dashboard-active-timer.png', {
       mask: getTimerMasks(dashboardPage),
     })
