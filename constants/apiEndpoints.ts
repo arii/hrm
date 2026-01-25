@@ -14,3 +14,6 @@ export const API_DEBUG_RESET = '/api/debug/reset'
 // Internal Endpoints
 export const API_INTERNAL_TOKEN_DELIVERY = '/api/internal/token-delivery'
 export const API_INTERNAL_CLEAR_TOKEN = '/api/internal/clear-token'
+
+// Auth endpoints
+export const API_AUTH_SYNC = '/api/auth/sync'

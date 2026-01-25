@@ -7,10 +7,8 @@ import {
 } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyDevice, SpotifyCommandParameters } from '../types/core'
-import {
-  SpotifyTokenManager,
-  SpotifyTokenPayload,
-} from './spotifyTokenManager.js'
+import { SpotifyTokenManager } from './spotifyTokenManager.js'
+import { ApiSpotifyTokenPayload } from '@/types/spotify'
 import logger from '../utils/logger.js'
 import {
   handleSpotifyApiError,

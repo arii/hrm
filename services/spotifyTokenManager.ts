@@ -1,7 +1,8 @@
-import { AccessToken } from '@spotify/web-api-ts-sdk'
+import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
+import { ApiSpotifyTokenPayload } from '@/types/spotify'
 
 /**
  * Helper for atomic writes to prevent file corruption.
@@ -25,19 +26,9 @@ const writeTokenFileSafe = (filePath: string, data: TokenRecord) => {
   }
 }
 
-export interface SpotifyTokenPayload {
-  provider: string
-  sub: string
-  access_token: string
-  refresh_token: string
-  expires_in: number
-  scope: string
-  obtainedAt: number
-}
-
 export interface TokenRecord {
   receivedAt: number
-  payload: SpotifyTokenPayload
+  payload: ApiSpotifyTokenPayload
 }
 
 export class SpotifyTokenManager {
@@ -71,9 +62,9 @@ export class SpotifyTokenManager {
 
   /**
    * Updates the in-memory token and persists it to disk.
-   * @param {SpotifyTokenPayload} payload - The new token payload.
+   * @param {ApiSpotifyTokenPayload} payload - The new token payload.
    */
-  public updateToken(payload: SpotifyTokenPayload): void {
+  public updateToken(payload: ApiSpotifyTokenPayload): void {
     this.currentToken = {
       receivedAt: Date.now(),
       payload: payload,
@@ -258,5 +249,9 @@ export class SpotifyTokenManager {
         this.currentToken.payload.obtainedAt +
         this.currentToken.payload.expires_in * 1000,
     }
+  }
+
+  createSdkWithToken(token: AccessToken): SpotifyApi {
+    return SpotifyApi.withAccessToken(this.clientId, token)
   }
 }
