@@ -167,7 +167,10 @@ const initSocketManager = (
     })
 
     extWs.on('close', () => {
-      logger.debug({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      logger.debug(
+        { clientId: extWs.clientId },
+        'WebSocket client disconnected'
+      )
 
       // CRITICAL: Do NOT immediately delete clientData.
       // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
