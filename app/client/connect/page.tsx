@@ -172,7 +172,6 @@ export default function ConnectPage() {
     })
   }, [currentHR, calories, throttledSend])
 
-
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
       setUserSettings((prev) => ({ ...prev, unitSystem: newUnit }))

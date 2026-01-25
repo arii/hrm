@@ -72,7 +72,6 @@ interface UseBluetoothHRMProps {
   onConnect?: () => void
 }
 
-
 /**
  * @hook useBluetoothHRM
  * @description A comprehensive hook for managing Bluetooth Low Energy (BLE) Heart Rate Monitor (HRM) devices.
@@ -679,7 +678,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isConnecting.current = false
       }
     },
-    [onDisconnected]
+    [onDisconnected, updateSignalPeriod]
   )
 
   useEffect(() => {
