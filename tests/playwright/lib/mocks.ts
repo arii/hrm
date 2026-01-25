@@ -1,0 +1,51 @@
+// File: tests/playwright/lib/mocks.ts
+/**
+ * Mocking Utilities for Playwright Tests
+ *
+ * This module provides functions for mocking network requests and other
+ * dependencies to create stable and predictable test environments.
+ */
+import type { Page, BrowserContext } from '@playwright/test'
+
+const STABLE_WORKOUT_HTML = `
+  <!DOCTYPE html>
+  <html><head><style>
+  body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: white; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 10px; border: 1px solid #ddd; vertical-align: top; }
+  h3 { margin: 0 0 10px 0; color: #333; }
+  p { margin: 5px 0; font-size: 14px; }
+  </style></head><body>
+  <p><strong>Sample Workout Plan</strong></p>
+  <table><tr>
+  <td><h3>30/10 x 3</h3><p>3 way crunch</p><p>Dead bug</p><p>Plank variations</p></td>
+  <td><h3>Tabata</h3><p>Band h. Bridge</p><p>Band p. Squat</p><p>Band hydrants</p></td>
+  <td><h3>Complex 5x5</h3><p>RDL</p><p>High pull</p><p>1 ½ squat</p></td>
+  <td><h3>3x10</h3><p>Alt box ch press</p><p>Single Hip thrust</p></td>
+  <td><h3>3 x 12</h3><p>Kb curl</p><p>Tricep planks</p><p>Butterfly bridge</p></td>
+  </tr></table>
+  <p><a href="#">Previous workouts</a></p>
+  </body></html>
+`
+
+/**
+ * Intercepts requests to the Google Doc iframe and serves a stable,
+ * static HTML response. This prevents test failures due to dynamic
+ * or flaky iframe content.
+ *
+ * @param pageOrContext - The Playwright Page or BrowserContext object.
+ */
+export async function mockGoogleDocIframe(
+  pageOrContext: Page | BrowserContext
+): Promise<void> {
+  await pageOrContext.route(
+    '**/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true',
+    (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'text/html; charset=utf-8',
+        body: STABLE_WORKOUT_HTML,
+      })
+    }
+  )
+}

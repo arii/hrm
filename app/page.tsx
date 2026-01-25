@@ -18,7 +18,7 @@ import { useAudio } from '../hooks/useAudio'
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
 const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
   ssr: false,
-  loading: () => <DashboardSectionLoadingSkeleton height={80} />, // Optional: Render nothing while loading to avoid layout shift
+  loading: () => <DashboardSectionLoadingSkeleton height="80px" />, // Optional: Render nothing while loading to avoid layout shift
 })
 
 const DOC_URL =
@@ -28,13 +28,13 @@ const WorkoutTableViewer = dynamic(
   () => import('../components/WorkoutTableViewer'),
   {
     ssr: false,
-    loading: () => <DashboardSectionLoadingSkeleton height={500} />,
+    loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
   }
 )
 
 const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
   ssr: false,
-  loading: () => <DashboardSectionLoadingSkeleton height={500} />,
+  loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
 })
 
 const DOC_ID =

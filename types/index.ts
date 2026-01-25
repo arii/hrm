@@ -51,8 +51,8 @@ export interface WorkoutItem {
 export type WorkoutData = WorkoutItem[]
 
 export interface DashboardSectionLoadingSkeletonProps {
-  width?: string | number
-  height?: string | number
+  width?: string
+  height?: string
   shape?: 'rectangular' | 'circular'
   count?: number
   className?: string
