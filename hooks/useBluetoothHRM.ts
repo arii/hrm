@@ -439,7 +439,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       setDeviceStatus('Disconnected')
       reconnectAttempts.current = 0
     }
-  }, [updateSignalPeriod])
+  }, [])
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice) => {

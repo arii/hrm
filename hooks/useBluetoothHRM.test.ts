@@ -363,7 +363,9 @@ describe('useBluetoothHRM', () => {
     it('should trigger a timeout disconnect when data becomes stale', async () => {
       jest.useFakeTimers()
       const dataLivenessTimeoutMs = 5000
-      const { result } = renderHook(() => useBluetoothHRM({ dataLivenessTimeoutMs }))
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ dataLivenessTimeoutMs })
+      )
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -372,7 +374,8 @@ describe('useBluetoothHRM', () => {
       // Simulate first data packet to set the initial `lastDataTime`
       const mockCharacteristic =
         // @ts-expect-error We are accessing a mock value
-        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0].value.getCharacteristic.mock.results[0].value
+        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0]
+          .value.getCharacteristic.mock.results[0].value
       const characteristicValueChangedCallback =
         mockCharacteristic.addEventListener.mock.calls[0][1]
 
@@ -399,7 +402,9 @@ describe('useBluetoothHRM', () => {
     it('should not trigger a timeout if data is flowing normally', async () => {
       jest.useFakeTimers()
       const dataLivenessTimeoutMs = 5000
-      const { result } = renderHook(() => useBluetoothHRM({ dataLivenessTimeoutMs }))
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ dataLivenessTimeoutMs })
+      )
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -407,7 +412,8 @@ describe('useBluetoothHRM', () => {
 
       const mockCharacteristic =
         // @ts-expect-error We are accessing a mock value
-        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0].value.getCharacteristic.mock.results[0].value
+        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0]
+          .value.getCharacteristic.mock.results[0].value
       const characteristicValueChangedCallback =
         mockCharacteristic.addEventListener.mock.calls[0][1]
 
@@ -441,7 +447,8 @@ describe('useBluetoothHRM', () => {
 
       const mockCharacteristic =
         // @ts-expect-error We are accessing a mock value
-        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0].value.getCharacteristic.mock.results[0].value
+        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0]
+          .value.getCharacteristic.mock.results[0].value
       const characteristicValueChangedCallback =
         mockCharacteristic.addEventListener.mock.calls[0][1]
 
@@ -472,7 +479,8 @@ describe('useBluetoothHRM', () => {
 
       const mockCharacteristic =
         // @ts-expect-error We are accessing a mock value
-        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0].value.getCharacteristic.mock.results[0].value
+        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0]
+          .value.getCharacteristic.mock.results[0].value
       const characteristicValueChangedCallback =
         mockCharacteristic.addEventListener.mock.calls[0][1]
 
