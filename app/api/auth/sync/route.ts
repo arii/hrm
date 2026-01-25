@@ -45,12 +45,14 @@ export async function POST(_req: NextRequest) {
       message: 'Token synchronized successfully.',
     })
   } catch (err) {
-    const errorMessage =
-      err instanceof Error ? err.message : 'An unknown error occurred'
+    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
     const statusCode = err instanceof ApiError ? err.statusCode : 500
 
     logger.error({ err }, `Error in /api/auth/sync: ${errorMessage}`)
 
-    return NextResponse.json({ error: errorMessage }, { status: statusCode })
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: statusCode }
+    )
   }
 }

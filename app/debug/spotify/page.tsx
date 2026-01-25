@@ -7,7 +7,10 @@ import Typography from '@mui/material/Typography'
 import { Session } from 'next-auth'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
-import { API_DEBUG_SPOTIFY_TOKEN } from '@/constants/apiEndpoints'
+import {
+  API_DEBUG_SPOTIFY_TOKEN,
+  API_AUTH_SYNC,
+} from '@/constants/apiEndpoints'
 
 interface ServerTokenStatus {
   status: string
@@ -30,6 +33,14 @@ export default function SpotifyDebugPage() {
     if (res.ok) {
       const data = await res.json()
       setServerToken(data.token)
+    }
+  }
+
+  const handleSignIn = async () => {
+    const result = await signIn('spotify')
+    if (result && !result.error) {
+      // After a successful sign-in, explicitly sync the token
+      await fetch(API_AUTH_SYNC, { method: 'POST' })
     }
   }
 
@@ -58,9 +69,7 @@ export default function SpotifyDebugPage() {
             <Button onClick={() => signOut()}>Sign Out</Button>
           </>
         ) : (
-          <Button onClick={() => signIn('spotify')}>
-            Sign In with Spotify
-          </Button>
+          <Button onClick={handleSignIn}>Sign In with Spotify</Button>
         )}
       </Paper>
 

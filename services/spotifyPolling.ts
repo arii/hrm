@@ -175,9 +175,9 @@ export class SpotifyPolling implements SpotifyService {
    * Asynchronously handles the token update signal by directly accepting the payload.
    * This function updates the token manager, re-initializes the SDK,
    * and immediately triggers a poll and broadcast.
-   * @param {SpotifyTokenPayload} tokens - The new token payload.
+   * @param {ApiSpotifyTokenPayload} tokens - The new token payload.
    */
-  public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
+  public async handleTokenUpdate(tokens: ApiSpotifyTokenPayload): Promise<void> {
     logger.info(
       { tokens },
       'Spotify token payload received. Updating SDK and forcing poll.'
