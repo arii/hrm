@@ -85,18 +85,31 @@ describe('ConnectView', () => {
     expect(screen.getByLabelText('Your Weight (lbs)')).toBeInTheDocument()
   })
 
-  it('calls onReset when the workout is ended', () => {
+  it('displays the workout summary after a workout ends', () => {
     const props = {
       ...defaultProps,
       hasStarted: true,
       workoutStatus: 'running' as WorkoutStatus,
+      duration: '00:10:00',
+      caloriesBurned: 100,
     }
-    render(<ConnectView {...props} />)
+    const { rerender } = render(<ConnectView {...props} />)
 
     const endButton = screen.getByText('End')
     fireEvent.click(endButton)
 
     expect(props.onEndWorkout).toHaveBeenCalled()
-    expect(props.onReset).toHaveBeenCalled()
+    expect(props.onReset).not.toHaveBeenCalled()
+
+    const updatedProps = {
+      ...props,
+      workoutStatus: 'idle' as WorkoutStatus,
+      hasStarted: true, // Should remain true to show summary
+    }
+    rerender(<ConnectView {...updatedProps} />)
+
+    expect(screen.getByText('Workout Summary')).toBeInTheDocument()
+    expect(screen.getByText('00:10:00')).toBeInTheDocument()
+    expect(screen.getByText('100')).toBeInTheDocument()
   })
 })
