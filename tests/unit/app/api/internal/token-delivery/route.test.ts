@@ -32,14 +32,14 @@ jest.mock('@/lib/serviceContainer', () => ({
 }))
 
 describe('POST /api/internal/token-delivery', () => {
-  const originalNextAuthSecret = process.env.NEXTAUTH_SECRET
+  const originalInternalApiSecret = process.env.INTERNAL_API_SECRET
 
   beforeAll(() => {
-    process.env.NEXTAUTH_SECRET = 'test-secret'
+    process.env.INTERNAL_API_SECRET = 'test-secret'
   })
 
   afterAll(() => {
-    process.env.NEXTAUTH_SECRET = originalNextAuthSecret
+    process.env.INTERNAL_API_SECRET = originalInternalApiSecret
   })
 
   beforeEach(() => {

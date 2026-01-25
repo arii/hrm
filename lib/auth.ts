@@ -49,7 +49,7 @@ async function syncTokenWithBackend(token: JWT) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-internal-token-secret': env.NEXTAUTH_SECRET,
+        'x-internal-token-secret': env.INTERNAL_API_SECRET,
       },
       body: JSON.stringify(tokenPayload),
     })
