@@ -97,5 +97,6 @@ describe('ConnectView', () => {
     fireEvent.click(endButton)
 
     expect(props.onEndWorkout).toHaveBeenCalled()
+    expect(props.onReset).toHaveBeenCalled()
   })
 })
