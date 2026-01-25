@@ -167,7 +167,7 @@ const initSocketManager = (
     })
 
     extWs.on('close', () => {
-      logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      logger.debug({ clientId: extWs.clientId }, 'WebSocket client disconnected')
 
       // CRITICAL: Do NOT immediately delete clientData.
       // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
@@ -241,7 +241,6 @@ const handleIncomingMessage = (
     switch (message.type) {
       case 'PING': {
         // Respond to client heartbeat pings to keep the connection alive
-        logger.info({ clientId }, 'Received PING, sending PONG.')
         const pongMessage: ServerMessage = { type: 'PONG' }
         sendWebSocketMessage(ws, pongMessage, 'socketManager.PING')
         break

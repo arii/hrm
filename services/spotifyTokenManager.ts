@@ -154,8 +154,8 @@ export class SpotifyTokenManager {
         console.log(
           'Spotify token refresh successful. Status:',
           response.status,
-          'Body:',
-          data
+          'Expires in:',
+          data.expires_in
         )
 
         // Update current token with new values
