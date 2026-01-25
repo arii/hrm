@@ -108,6 +108,7 @@ test.describe('Visual Regression Tests', () => {
 
   test.describe('Dashboard Component', () => {
     test('initial, empty state', async () => {
+      await dashboardPage.goto('/?emptyState=true')
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-empty.png')
     })

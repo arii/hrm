@@ -94,7 +94,7 @@ const Dashboard = () => {
          * HrmConnectionPanel does not need a height wrapper because
          * it's internally structured to fill the height of its container.
          */}
-        <HrmConnectionPanel />
+        {process.env.NEXT_PUBLIC_EMPTY_STATE !== 'true' && <HrmConnectionPanel />}
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
         {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ? (
