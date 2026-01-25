@@ -72,15 +72,6 @@ interface UseBluetoothHRMProps {
   onConnect?: () => void
 }
 
-/**
- * @typedef {'manual' | 'timeout' | 'signal_loss' | null} DisconnectionReason
- * @description Represents the reason for a device disconnection.
- * - `manual`: The user explicitly called the `disconnect` function.
- * - `timeout`: The connection was dropped due to stale data (no heart rate updates received).
- * - `signal_loss`: The device's `gattserverdisconnected` event was fired unexpectedly.
- * - `null`: The device is connected or has not yet been disconnected.
- */
-type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
 
 /**
  * @hook useBluetoothHRM
@@ -97,7 +88,6 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  * @property {number | null} batteryLevel - The device's battery level (0-100), or null if unavailable.
  * @property {boolean} isConnected - True if the device is connected and streaming.
  * @property {boolean} isSupported - True if the browser supports the Web Bluetooth API.
- * @property {DisconnectionReason} disconnectionReason - The reason for the last disconnection.
  *
  * @example
  * ```tsx
@@ -135,8 +125,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [customStatusMessage, setCustomStatusMessage] = useState<string | null>(
     null
   )
-  const [disconnectionReason, setDisconnectionReason] =
-    useState<DisconnectionReason>(null)
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isDataStale, setIsDataStale] = useState(false)
@@ -274,7 +262,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           setIsDataStale(true)
           setStatus(BluetoothConnectionStatus.RECONNECTING)
           setCustomStatusMessage('Connection unstable. Reconnecting...')
-          setDisconnectionReason('timeout')
           isTimeoutDisconnect.current = true
           if (deviceRef.current?.gatt?.connected)
             deviceRef.current.gatt.disconnect()
@@ -326,7 +313,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
     isTimeoutDisconnect.current = false
-    setDisconnectionReason('manual')
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
@@ -421,7 +407,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       if (attemptNum <= maxReconnectAttempts) {
         // Only set signal_loss if this wasn't a timeout disconnect
         if (!isTimeoutDisconnect.current) {
-          setDisconnectionReason('signal_loss')
+          // No longer need to set a reason
         }
         const reasonText = isTimeoutDisconnect.current
           ? 'Timeout'
@@ -462,7 +448,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         reconnectTimeoutRef.current = setTimeout(async () => {
           isManualDisconnect.current = true
           isTimeoutDisconnect.current = false
-          setDisconnectionReason('manual')
           if (abortControllerRef.current) {
             abortControllerRef.current.abort()
           }
@@ -629,7 +614,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setCookie('hrm_device_id', device.id)
         isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
-        setDisconnectionReason(null)
         reconnectAttempts.current = 0
         onConnectRef.current?.()
         return true
@@ -667,7 +651,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           reconnectTimeoutRef.current = setTimeout(() => {
             isManualDisconnect.current = true
             isTimeoutDisconnect.current = false
-            setDisconnectionReason('manual')
             if (abortControllerRef.current) {
               abortControllerRef.current.abort()
             }
@@ -861,7 +844,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isConnected: status === BluetoothConnectionStatus.CONNECTED,
     isDataStale,
     isSupported, // Export this flag
-    disconnectionReason,
     signalPeriodMs,
   }
 }
