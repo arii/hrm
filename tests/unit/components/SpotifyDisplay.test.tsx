@@ -114,7 +114,8 @@ describe('SpotifyDisplay', () => {
     // Assert that signIn was called correctly
     expect(mockedSignIn).toHaveBeenCalledTimes(1)
     expect(mockedSignIn).toHaveBeenCalledWith('spotify', {
-      redirect: false,
+      callbackUrl: '/',
+      redirect: true,
     })
   })
 
