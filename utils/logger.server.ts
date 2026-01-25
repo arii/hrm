@@ -41,7 +41,9 @@ const httpLogger = pinoHttp({
   logger: logger as pino.Logger,
   autoLogging: {
     ignore: (req: Request) => {
-      return req.url?.includes('/api/auth') || req.url?.includes('/api/health')
+      return !!(
+        req.url?.includes('/api/auth') || req.url?.includes('/api/health')
+      )
     },
   },
   genReqId: function (req: Request, res: Response) {
