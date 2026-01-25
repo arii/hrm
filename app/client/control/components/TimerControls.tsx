@@ -2,13 +2,13 @@
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { resolveSpotifyDeviceId } from '@/lib/spotify'
 import {
   SpotifyCommandMessage,
   TimerCommandMessage,
   TimerConfigMessage,
   TimerModeCommandMessage,
 } from '@/types/websocket'
-import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import FitnessCenter from '@mui/icons-material/FitnessCenter'
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import Stop from '@mui/icons-material/Stop'
@@ -19,11 +19,10 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
 
-// Constants
 const OPTIMISTIC_UI_SYNC_TIMEOUT =
   process.env.NEXT_PUBLIC_APP_ENV === 'test' ? 5000 : 3000 // ms
 const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
@@ -94,42 +93,15 @@ const TimerControls = () => {
     sendData(message)
   }, [debouncedWorkTime, debouncedRestTime, sendData])
 
-  interface SpotifyDevice {
-    id: string
-    name: string
-    is_active?: boolean
-  }
-  const [spotifyDeviceId, setSpotifyDeviceId] = useState<string>('')
-  const [spotifyDevices, setSpotifyDevices] = useState<SpotifyDevice[]>([])
-  useEffect(() => {
-    const fetchDevices = async () => {
-      try {
-        const response = await fetch(API_SPOTIFY_DEVICES)
-        if (!response.ok) throw new Error('Failed to fetch devices')
-        const devices: SpotifyDevice[] = await response.json()
-        setSpotifyDevices(Array.isArray(devices) ? devices : [])
-        const activeDevice = devices.find((d) => d.is_active)
-        setSpotifyDeviceId(
-          activeDevice ? activeDevice.id : devices[0]?.id || ''
-        )
-      } catch (_err) {
-        setSpotifyDevices([])
-        setSpotifyDeviceId('')
-      }
-    }
-    fetchDevices()
-  }, [])
+  const { spotifyData } = useWebSocket()
+  const spotifyDeviceId = useMemo(
+    () => resolveSpotifyDeviceId(spotifyData.devices || []),
+    [spotifyData.devices]
+  )
 
   const sendSpotifyCommand = useCallback(
     (command: 'NEXT' | 'PAUSE') => {
-      let deviceId: string | null = spotifyDeviceId
-      if (!deviceId && spotifyDevices.length > 0) {
-        const activeDevice = spotifyDevices.find((d) => d.is_active)
-        deviceId = activeDevice
-          ? activeDevice.id
-          : spotifyDevices[0]?.id || null
-        if (deviceId) setSpotifyDeviceId(deviceId)
-      }
+      const deviceId = spotifyDeviceId || null
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,
@@ -137,7 +109,7 @@ const TimerControls = () => {
       }
       sendData(message)
     },
-    [sendData, spotifyDeviceId, spotifyDevices]
+    [sendData, spotifyDeviceId]
   )
 
   const sendTimerCommand = useCallback(

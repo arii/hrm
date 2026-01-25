@@ -1,8 +1,18 @@
 import { env } from './env'
+import type { SpotifyDevice } from '@/types/core'
 
 export const SPOTIFY_CONSTANTS = {
   TOKEN_URL: 'https://accounts.spotify.com/api/token',
   BASE_URL: 'https://api.spotify.com/v1',
+}
+
+/**
+ * Resolves the target device ID from a list of devices.
+ * Returns the active device, or the first device if none are active.
+ */
+export function resolveSpotifyDeviceId(devices: SpotifyDevice[]): string {
+  const activeDevice = devices.find((d) => d.is_active)
+  return activeDevice?.id || devices[0]?.id || ''
 }
 
 /**
