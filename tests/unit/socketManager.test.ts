@@ -567,4 +567,20 @@ describe('WebSocket Manager', () => {
       )
     })
   })
+  describe('Cleanup Logic', () => {
+    it('should not clean up a client that is still connected', () => {
+      mockWs.emit('close')
+      jest.advanceTimersByTime(2000) // less than grace period
+      expect(broadcast).not.toHaveBeenCalled()
+    })
+    it('should not clean up a client that has reconnected', () => {
+      mockWs.emit('close')
+      jest.advanceTimersByTime(2000)
+      const newWs = new MockWebSocket()
+      const mockReq = createMockRequest()
+      mockWss.emit('connection', newWs, mockReq)
+      jest.advanceTimersByTime(4000) // more than grace period
+      expect(broadcast).not.toHaveBeenCalled()
+    })
+  })
 })
