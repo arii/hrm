@@ -31,4 +31,5 @@ export interface WorkoutData {
 export interface DashboardSectionLoadingSkeletonProps {
   height?: string
   width?: string
+  shape?: 'circular' | 'rectangular' | 'rounded'
 }
