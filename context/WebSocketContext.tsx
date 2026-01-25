@@ -383,7 +383,7 @@ export const WebSocketProvider = ({
         })
       }
     }
-  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
+  }, [clientId, wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
