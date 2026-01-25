@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.25.0](https://github.com/arii/hrm/compare/hrm-v0.24.0...hrm-v0.25.0) (2026-01-25)
+
+
+### Features
+
+* **bluetooth:** Implement proactive signal quality degradation ([#3724](https://github.com/arii/hrm/issues/3724)) ([fcc853f](https://github.com/arii/hrm/commit/fcc853f4f39eb7bc7e726332f39a7206ec27b126))
+* **large:** Enhance and Integrate Visual Regression Testing Framework ([#3567](https://github.com/arii/hrm/issues/3567)) ([389497b](https://github.com/arii/hrm/commit/389497bf4d278114b31b8f1bc9ab31caef493974))
+* **medium:** Test/unit spotify jwt scope 16804146029051153916 ([#3582](https://github.com/arii/hrm/issues/3582)) ([b1949c3](https://github.com/arii/hrm/commit/b1949c32647c2542b7ebde058770c5d0fbd7ad8c))
+* **small:** Add unit tests for Spotify JWT scope persistence ([#3439](https://github.com/arii/hrm/issues/3439)) ([d026cef](https://github.com/arii/hrm/commit/d026cef5120150323540b6673fea7a82f9a3f688))
+* **small:** Fix: Prevent workout data truncation on experimental page ([#3550](https://github.com/arii/hrm/issues/3550)) ([080cfa7](https://github.com/arii/hrm/commit/080cfa7ea8d43f0126c5124a8887823efeaf62d6))
+* **small:** Fix: Update DashboardSectionLoadingSkeleton props to string ([#3909](https://github.com/arii/hrm/issues/3909)) ([b80e4ef](https://github.com/arii/hrm/commit/b80e4ef117d9a195b05a40e7acbb841f31e0934d))
+* **small:** Refactor: ControlPanel Connection Status Styling for Theme Consistency ([#3443](https://github.com/arii/hrm/issues/3443)) ([d2f613c](https://github.com/arii/hrm/commit/d2f613c11a166d73cf7eb4c7a0dae5d0bd8940c6))
+* **small:** Restore Spotify Scope Persistence ([#3714](https://github.com/arii/hrm/issues/3714)) ([22d7389](https://github.com/arii/hrm/commit/22d7389f89d8b82028d6135db1a01c97556a0f2e))
+* **small:** Standardize Custom Button Background Colors in TimerControls ([#3438](https://github.com/arii/hrm/issues/3438)) ([1807199](https://github.com/arii/hrm/commit/1807199e60b3fa01d95ed1f9d4466f1d5854fa22))
+* **workouts:** Enhance Type Safety for workoutStatus ([#3716](https://github.com/arii/hrm/issues/3716)) ([bc94cc1](https://github.com/arii/hrm/commit/bc94cc1181e2cc831cc6a3a9cd35b9110b5f03c4))
+
+
+### Bug Fixes
+
+* **ci:** improve resilience of gemini-review workflow ([#3350](https://github.com/arii/hrm/issues/3350)) ([7bc0b67](https://github.com/arii/hrm/commit/7bc0b67123ba98a80c546a6f780d14ccae2c1483))
+* **gating:** Add missing run_id to workflow dispatch ([#3544](https://github.com/arii/hrm/issues/3544)) ([bf5b0e2](https://github.com/arii/hrm/commit/bf5b0e25e4573a94775b2738d618255961485fe4))
+
 ## [0.24.0](https://github.com/arii/hrm/compare/hrm-v0.23.0...hrm-v0.24.0) (2026-01-09)
 
 
