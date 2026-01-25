@@ -221,7 +221,7 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
   await stopTimer(controlPage, dashboardPage)
 
   // Replace the dynamic Google Doc iframe with static, stable content
-  await replaceIframeWithStableWorkout(dashboardPage)
+  // await replaceIframeWithStableWorkout(dashboardPage)
 
   return { context, dashboardPage, controlPage, mockPage }
 }

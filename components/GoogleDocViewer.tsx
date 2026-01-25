@@ -31,17 +31,20 @@ const GoogleDocViewer = ({
   onToggleShrink,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
+  // Use a lazy initializer for the state to ensure the function is only called once
   const [refreshKey, setRefreshKey] = useState(() => Date.now())
 
   const handleRefresh = () => {
     setIframeLoading(true)
-    setRefreshKey(Date.now())
+    setRefreshKey(Date.now()) // It's okay to use Date.now() in an event handler
   }
 
-  // Ensure embedUrl always includes ?embedded=true and a cache-busting key
-  const finalEmbedUrl = embedUrl.includes('?embedded=true')
-    ? `${embedUrl}&${refreshKey}`
-    : `${embedUrl}?embedded=true&${refreshKey}`
+  // A more robust way to handle URL params
+  const url = new URL(embedUrl)
+  url.searchParams.set('embedded', 'true')
+  // Using a named param like 'v' or 'cache_bust' is more descriptive
+  url.searchParams.set('v', refreshKey.toString())
+  const finalEmbedUrl = url.toString()
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
 
@@ -128,7 +131,9 @@ const GoogleDocViewer = ({
                     backgroundColor: 'rgba(255,255,255,1)',
                   },
                 }}
-                aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
+                aria-label={
+                  isShrunk ? 'Expand document' : 'Collapse document'
+                }
               >
                 {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
               </IconButton>
