@@ -358,4 +358,108 @@ describe('useBluetoothHRM', () => {
       jest.useRealTimers()
     })
   })
+
+  describe('Consolidated Watchdog and Heartbeat', () => {
+    it('should trigger a timeout disconnect when data becomes stale', async () => {
+      jest.useFakeTimers()
+      const dataLivenessTimeoutMs = 5000
+      const { result } = renderHook(() => useBluetoothHRM({ dataLivenessTimeoutMs }))
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+
+      // Simulate first data packet to set the initial `lastDataTime`
+      const mockCharacteristic =
+        // @ts-expect-error We are accessing a mock value
+        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0].value.getCharacteristic.mock.results[0].value
+      const characteristicValueChangedCallback =
+        mockCharacteristic.addEventListener.mock.calls[0][1]
+
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+
+      // Advance time just past the timeout threshold
+      await act(async () => {
+        jest.advanceTimersByTime(dataLivenessTimeoutMs + 100)
+      })
+
+      // Verify that the timeout logic was triggered
+      expect(result.current.deviceStatus).toBe(
+        'Connection unstable. Reconnecting...'
+      )
+      expect(result.current.disconnectionReason).toBe('timeout')
+      expect(mockDevice.gatt.disconnect).toHaveBeenCalled()
+      jest.useRealTimers()
+    })
+
+    it('should not trigger a timeout if data is flowing normally', async () => {
+      jest.useFakeTimers()
+      const dataLivenessTimeoutMs = 5000
+      const { result } = renderHook(() => useBluetoothHRM({ dataLivenessTimeoutMs }))
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+
+      const mockCharacteristic =
+        // @ts-expect-error We are accessing a mock value
+        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0].value.getCharacteristic.mock.results[0].value
+      const characteristicValueChangedCallback =
+        mockCharacteristic.addEventListener.mock.calls[0][1]
+
+      // Simulate data packets arriving within the timeout window
+      for (let i = 0; i < 5; i++) {
+        act(() => {
+          characteristicValueChangedCallback({
+            target: { value: new DataView(new ArrayBuffer(2)) },
+          })
+        })
+        await act(async () => {
+          jest.advanceTimersByTime(dataLivenessTimeoutMs - 1000)
+        })
+      }
+
+      expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+      expect(result.current.disconnectionReason).toBe(null)
+      expect(mockDevice.gatt.disconnect).not.toHaveBeenCalled()
+      jest.useRealTimers()
+    })
+
+    it('should not trigger a timeout if dataLivenessTimeoutMs is disabled (0)', async () => {
+      jest.useFakeTimers()
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ dataLivenessTimeoutMs: 0 })
+      )
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+
+      const mockCharacteristic =
+        // @ts-expect-error We are accessing a mock value
+        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0].value.getCharacteristic.mock.results[0].value
+      const characteristicValueChangedCallback =
+        mockCharacteristic.addEventListener.mock.calls[0][1]
+
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+
+      // Advance time well beyond a typical timeout
+      await act(async () => {
+        jest.advanceTimersByTime(15000)
+      })
+
+      expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+      expect(result.current.disconnectionReason).toBe(null)
+      expect(mockDevice.gatt.disconnect).not.toHaveBeenCalled()
+      jest.useRealTimers()
+    })
+  })
 })
