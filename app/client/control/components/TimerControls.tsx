@@ -60,24 +60,12 @@ const TimerControls = () => {
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
 
-  // Safety timeout to prevent optimistic UI from getting stuck.
-  // If the optimistic state and server state are different for too long,
-  // revert the optimistic state to match the server.
+  // Synchronize the optimistic UI state with the actual server state.
+  // This ensures that if the server state changes (e.g., due to another
+  // controller or a server-side event), the UI reflects the change.
   useEffect(() => {
-    if (optimisticIsRunning === timerData.isRunning) {
-      return // States are in sync, do nothing.
-    }
-
-    const safetyTimeout = setTimeout(() => {
-      console.warn(
-        `[TimerControls] Optimistic state timed out. Reverting to server state (isRunning: ${timerData.isRunning}).`
-      )
-      setOptimisticIsRunning(timerData.isRunning)
-    }, OPTIMISTIC_UI_SYNC_TIMEOUT)
-
-    // Cleanup the timeout if the states sync up before it fires
-    return () => clearTimeout(safetyTimeout)
-  }, [optimisticIsRunning, timerData.isRunning])
+    setOptimisticIsRunning(timerData.isRunning)
+  }, [timerData.isRunning])
 
   useEffect(() => {
     const message: TimerConfigMessage = {
