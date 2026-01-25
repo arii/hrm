@@ -35,3 +35,14 @@ export interface DashboardSectionLoadingSkeletonProps {
   count?: number
   className?: string
 }
+
+export interface HrTileProps {
+  name: string
+  bpm: number
+  percentMax: number
+  calories?: number
+  isConnected?: boolean
+  isDataStale?: boolean
+  isAlerting?: boolean
+  alertMessage?: string
+}
