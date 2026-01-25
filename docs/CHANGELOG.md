@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.0](https://github.com/arii/hrm/compare/hrm-v0.25.0...hrm-v0.26.0) (2026-01-25)
+
+
+### Features
+
+* **small:** fix: sync stopwatch device selection with spotify dropdown ([#4105](https://github.com/arii/hrm/issues/4105)) ([1cf6f6d](https://github.com/arii/hrm/commit/1cf6f6deba76065c31f35d652dc27f8fcb9f5181))
+
 ## [0.25.0](https://github.com/arii/hrm/compare/hrm-v0.24.0...hrm-v0.25.0) (2026-01-25)
 
 
