@@ -1,6 +1,7 @@
 // File: app/api/auth/sync/route.ts
 import { NextResponse, type NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { ApiSpotifyTokenPayload } from '@/types'
 import logger from '@/utils/logger'
 import { env } from '@/lib/env'
 import { getAPIURL } from '@/utils/urls'
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Construct the payload for the internal endpoint.
-    const tokenPayload = {
+    const tokenPayload: ApiSpotifyTokenPayload = {
       provider: 'spotify',
       sub: token.providerAccountId,
       access_token: token.accessToken,

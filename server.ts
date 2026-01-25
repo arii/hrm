@@ -16,6 +16,7 @@ import logger from './utils/logger.server.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
 import type { SpotifyPolling } from './services/spotifyPolling.js'
+import type { SpotifyTokenPayload } from './services/spotifyTokenManager.js'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -161,7 +162,7 @@ app.prepare().then(async () => {
     }
 
     // 2. Data Validation: Check for the presence of the token payload.
-    const tokenPayload = req.body
+    const tokenPayload = req.body as SpotifyTokenPayload
     if (
       !tokenPayload ||
       typeof tokenPayload !== 'object' ||
