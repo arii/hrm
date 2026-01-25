@@ -1,3 +1,4 @@
+# TEST COMMENT
 # HRM (Heart Rate Monitor) Dashboard
 
 A real-time heart rate monitoring dashboard built with Next.js, Material-UI, WebSockets, and Spotify integration. Features a custom Express server for stateful WebSocket connections, Tabata timer with audio feedback, and live HR zone visualization.
@@ -50,7 +51,7 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 - **Bluetooth HRM Support** - Real heart rate monitor connection via Web Bluetooth API (available at `/client/connect`)
 - **Visual Regression Tests** - Playwright screenshot-based testing
 
-## 🔒 Strava Compliance & Privacy
+## 🔒 Strava Compliance \& Privacy
 
 **Data Usage Disclaimer:**
 This application is a **local data generator**.
@@ -644,7 +645,7 @@ The `Upgrade` and `Connection` headers are critical for the WebSocket handshake.
 - **Symptom**: You have to log in every time the server restarts.
 - **Fix**: Check that the `logs/spotify_tokens.json` file exists and is writable.
 
-## 📦 Release & Commit Standards
+## 📦 Release \& Commit Standards
 
 To ensure the stability of the stateful WebSocket server, all contributions must adhere to the following standards.
 
