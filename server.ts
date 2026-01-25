@@ -162,10 +162,16 @@ app.prepare().then(async () => {
     }
 
     // 2. Data Validation: Check for the presence of the token payload.
-    const tokenPayload = req.body as SpotifyTokenPayload
-    if (!tokenPayload || !tokenPayload.access_token) {
+    const tokenPayload = req.body
+    if (
+      !tokenPayload ||
+      typeof tokenPayload !== 'object' ||
+      !('access_token' in tokenPayload) ||
+      !('refresh_token' in tokenPayload) ||
+      !('sub' in tokenPayload)
+    ) {
       logger.warn('Sync-token request received without a valid token payload.')
-      return res.status(400).json({ error: 'Missing token payload' })
+      return res.status(400).json({ error: 'Invalid or missing token payload' })
     }
 
     // 3. Service Interaction: Pass the token to the Spotify service.
