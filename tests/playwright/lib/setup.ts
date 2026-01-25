@@ -241,6 +241,7 @@ export async function setupComprehensiveTest(options: {
 export async function setupCoreTest(options: { page: Page }): Promise<void> {
   const { page } = options
 
+  await mockGoogleDocIframe(page)
   await waitForPageReady(page)
 
   // Wait for WebSocket connection
