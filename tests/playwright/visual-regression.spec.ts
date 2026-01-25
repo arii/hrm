@@ -55,7 +55,7 @@ test.describe('Visual Regression Tests', () => {
         '[data-testid="hrm-connection-panel"]'
       )
       if (panel instanceof HTMLElement) {
-        panel.style.display = 'none'
+        panel.style.visibility = 'hidden'
       }
     })
     await takeDashboardScreenshot(dashboardPage, 'dashboard-viewer.png')
@@ -98,7 +98,7 @@ test.describe('Visual Regression Tests', () => {
         '[data-testid="hrm-connection-panel"]'
       )
       if (panel instanceof HTMLElement) {
-        panel.style.display = 'none'
+        panel.style.visibility = 'hidden'
       }
     })
 
