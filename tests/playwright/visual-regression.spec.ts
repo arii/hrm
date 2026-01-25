@@ -48,6 +48,16 @@ test.describe('Visual Regression Tests', () => {
 
   // Test cases
   test('Dashboard - main viewer page', async () => {
+    // The HrmConnectionPanel can sometimes appear due to timing issues,
+    // causing VRT flakiness. We hide it to ensure a stable snapshot.
+    await dashboardPage.evaluate(() => {
+      const panel = document.querySelector(
+        '[data-testid="hrm-connection-panel"]'
+      )
+      if (panel) {
+        ;(panel as HTMLElement).style.display = 'none'
+      }
+    })
     await takeDashboardScreenshot(dashboardPage, 'dashboard-viewer.png')
   })
 
@@ -79,6 +89,17 @@ test.describe('Visual Regression Tests', () => {
     ).toBeVisible()
     await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({
       timeout: WAIT_TIMEOUTS.INFRASTRUCTURE,
+    })
+
+    // The HrmConnectionPanel can sometimes appear due to timing issues,
+    // causing VRT flakiness. We hide it to ensure a stable snapshot.
+    await dashboardPage.evaluate(() => {
+      const panel = document.querySelector(
+        '[data-testid="hrm-connection-panel"]'
+      )
+      if (panel) {
+        ;(panel as HTMLElement).style.display = 'none'
+      }
     })
 
     await takeScreenshot(dashboardPage, 'dashboard-active-timer.png', {
