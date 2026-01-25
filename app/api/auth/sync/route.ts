@@ -85,7 +85,10 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
-    logger.error({ error: message }, 'API Sync: Unhandled Internal Server Error')
+    logger.error(
+      { error: message },
+      'API Sync: Unhandled Internal Server Error'
+    )
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

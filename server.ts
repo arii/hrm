@@ -170,8 +170,9 @@ app.prepare().then(async () => {
 
     // 3. Service Interaction: Pass the token to the Spotify service.
     try {
-      const spotifyService =
-        serviceContainer.get('spotifyService') as SpotifyPolling
+      const spotifyService = serviceContainer.get(
+        'spotifyService'
+      ) as SpotifyPolling
       if (spotifyService) {
         // The `handleTokenUpdate` is an async method, but we don't need to
         // wait for it to complete to send the response. We can let it
