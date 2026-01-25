@@ -10,6 +10,7 @@ import {
 } from '@/context/UserSettingsContext'
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import { toDisplay } from '@/utils/units'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
 
 // Correctly mock the hooks
 jest.mock('@/hooks/useBluetoothHRM', () =>
@@ -18,7 +19,8 @@ jest.mock('@/hooks/useBluetoothHRM', () =>
     autoConnect: jest.fn(),
     disconnect: jest.fn(),
     forgetDevice: jest.fn(),
-    deviceStatus: 'disconnected',
+    status: BluetoothConnectionStatus.DISCONNECTED,
+    statusMessage: 'Disconnected',
     batteryLevel: null,
     isConnected: false,
     isDataStale: false,

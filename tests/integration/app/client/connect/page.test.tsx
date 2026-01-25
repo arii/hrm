@@ -7,6 +7,7 @@ import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
 
 // Mocks
 jest.mock('@/hooks/useBluetoothHRM')
@@ -30,7 +31,8 @@ describe('ConnectPage Integration', () => {
       return {
         connectAndStream: jest.fn(),
         disconnect: jest.fn(),
-        deviceStatus: 'Connected',
+        status: BluetoothConnectionStatus.CONNECTED,
+        statusMessage: 'Connected',
         isConnected: true,
         isSupported: true,
       }

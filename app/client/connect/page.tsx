@@ -131,12 +131,12 @@ export default function ConnectPage() {
     autoConnect,
     disconnect,
     forgetDevice,
-    deviceStatus,
+    status,
+    statusMessage,
     batteryLevel,
     isConnected,
     isDataStale,
     isSupported,
-    disconnectionReason,
     signalPeriodMs,
   } = useBluetoothHRM({
     userName,
@@ -172,13 +172,6 @@ export default function ConnectPage() {
       },
     })
   }, [currentHR, calories, throttledSend])
-
-  let deviceStatusMessage = deviceStatus
-  if (disconnectionReason === 'timeout') {
-    deviceStatusMessage = 'Connection unstable. Trying to reconnect...'
-  } else if (disconnectionReason === 'signal_loss') {
-    deviceStatusMessage = 'Signal lost. Trying to reconnect...'
-  }
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
@@ -227,7 +220,8 @@ export default function ConnectPage() {
       onUnitChange={handleUnitChange}
       isConnected={isConnected}
       isDataStale={isDataStale}
-      deviceStatus={deviceStatusMessage}
+      deviceStatus={status}
+      deviceStatusMessage={statusMessage}
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}

@@ -5,6 +5,7 @@ import { jest } from '@jest/globals'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
@@ -189,7 +190,8 @@ describe('useBluetoothHRM', () => {
 
     triggerTimeout(10000)
 
-    expect(result.current.deviceStatus).toContain('Connection unstable')
+    expect(result.current.statusMessage).toContain('Connection unstable')
+    expect(result.current.status).toBe(BluetoothConnectionStatus.RECONNECTING)
     expect(result.current.disconnectionReason).toBe('timeout')
     expect(mockDevice.gatt.disconnect).toHaveBeenCalled()
   })
@@ -205,14 +207,15 @@ describe('useBluetoothHRM', () => {
     act(() => {
       jest.advanceTimersByTime(4000)
     })
-    expect(result.current.deviceStatus).not.toContain('Connection unstable')
+    expect(result.current.statusMessage).not.toContain('Connection unstable')
 
     // Advance time by another 2 seconds (total 6s, more than timeout)
     act(() => {
       jest.advanceTimersByTime(2000)
     })
 
-    expect(result.current.deviceStatus).toContain('Connection unstable')
+    expect(result.current.statusMessage).toContain('Connection unstable')
+    expect(result.current.status).toBe(BluetoothConnectionStatus.RECONNECTING)
     expect(result.current.disconnectionReason).toBe('timeout')
   })
 
@@ -228,7 +231,7 @@ describe('useBluetoothHRM', () => {
       jest.advanceTimersByTime(20000)
     })
 
-    expect(result.current.deviceStatus).not.toContain('Connection unstable')
+    expect(result.current.statusMessage).not.toContain('Connection unstable')
     expect(result.current.disconnectionReason).toBe(null)
   })
 
@@ -426,7 +429,10 @@ describe('useBluetoothHRM', () => {
       // Verify that the connection was not established
       await waitFor(() => {
         expect(result.current.isConnected).toBe(false)
-        expect(result.current.deviceStatus).toBe('Disconnected')
+        expect(result.current.status).toBe(
+          BluetoothConnectionStatus.DISCONNECTED
+        )
+        expect(result.current.statusMessage).toBe('Disconnected')
       })
     })
   })

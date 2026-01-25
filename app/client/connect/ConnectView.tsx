@@ -20,6 +20,7 @@ import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
+import { BluetoothConnectionStatus } from '../../../types/bluetooth'
 import {
   ToggleButtonGroup,
   ToggleButton,
@@ -55,7 +56,8 @@ interface ConnectViewProps {
   onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
   isDataStale?: boolean
-  deviceStatus: string
+  deviceStatus: BluetoothConnectionStatus
+  deviceStatusMessage: string
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void
@@ -98,6 +100,7 @@ export default function ConnectView({
   isConnected,
   isDataStale = false,
   deviceStatus,
+  deviceStatusMessage,
   batteryLevel,
   onConnect,
   onDisconnect,
@@ -281,14 +284,18 @@ export default function ConnectView({
           </Box>
         )}
 
-        {deviceStatus &&
+        {deviceStatusMessage &&
           !isConnected &&
-          !deviceStatus.includes('Disconnected') && (
+          deviceStatus !== BluetoothConnectionStatus.DISCONNECTED && (
             <Alert
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
+              severity={
+                deviceStatus === BluetoothConnectionStatus.ERROR
+                  ? 'error'
+                  : 'info'
+              }
               sx={{ mb: 2 }}
             >
-              {deviceStatus}
+              {deviceStatusMessage}
             </Alert>
           )}
 
@@ -301,10 +308,10 @@ export default function ConnectView({
               disabled={
                 !userName.trim() ||
                 !userAge.trim() ||
-                deviceStatus.includes('Connecting')
+                deviceStatus === BluetoothConnectionStatus.CONNECTING
               }
             >
-              {deviceStatus.includes('Connecting') ? (
+              {deviceStatus === BluetoothConnectionStatus.CONNECTING ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
                   <span>Connecting...</span>
@@ -349,9 +356,9 @@ export default function ConnectView({
               >
                 Disconnect
               </Button>
-              {deviceStatus !== 'Connected' && (
+              {deviceStatus !== BluetoothConnectionStatus.CONNECTED && (
                 <Typography variant="caption" color="text.secondary">
-                  Status: {deviceStatus}
+                  Status: {deviceStatusMessage}
                 </Typography>
               )}
             </Stack>
