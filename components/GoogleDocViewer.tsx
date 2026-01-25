@@ -31,14 +31,14 @@ const GoogleDocViewer = ({
   onToggleShrink,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
-  const [refreshKey, setRefreshKey] = useState(Date.now())
+  const [refreshKey, setRefreshKey] = useState(() => Date.now())
 
   const handleRefresh = () => {
     setIframeLoading(true)
     setRefreshKey(Date.now())
   }
 
-  // Ensure embedUrl always includes ?embedded=true
+  // Ensure embedUrl always includes ?embedded=true and a cache-busting key
   const finalEmbedUrl = embedUrl.includes('?embedded=true')
     ? `${embedUrl}&${refreshKey}`
     : `${embedUrl}?embedded=true&${refreshKey}`
@@ -93,43 +93,48 @@ const GoogleDocViewer = ({
             onLoad={() => setIframeLoading(false)}
           />
         </Box>
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 16,
-          right: 16,
-          display: 'flex',
-          gap: 1,
-          backgroundColor: 'rgba(255,255,255,0.9)',
-          borderRadius: '50%',
-          p: 0.5,
-        }}
-      >
-        <Tooltip title="Refresh document">
-          <IconButton
-            onClick={handleRefresh}
-            sx={{ zIndex: 10 }}
-            aria-label="Refresh document"
-          >
-            <RefreshIcon />
-          </IconButton>
-        </Tooltip>
-        {onToggleShrink && (
-          <Tooltip title={isShrunk ? 'Expand document' : 'Collapse document'}>
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 16,
+            right: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
+            zIndex: 10,
+          }}
+        >
+          <Tooltip title="Refresh document">
             <IconButton
-              onClick={onToggleShrink}
+              onClick={handleRefresh}
               sx={{
-                zIndex: 10,
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,1)',
+                },
               }}
-              aria-label={
-                isShrunk ? 'Expand document' : 'Collapse document'
-              }
+              aria-label="Refresh document"
             >
-              {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+              <RefreshIcon />
             </IconButton>
           </Tooltip>
-        )}
-      </Box>
+          {onToggleShrink && (
+            <Tooltip title={isShrunk ? 'Expand document' : 'Collapse document'}>
+              <IconButton
+                onClick={onToggleShrink}
+                sx={{
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255,255,255,1)',
+                  },
+                }}
+                aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
+              >
+                {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
       </CardContent>
     </Card>
   )
