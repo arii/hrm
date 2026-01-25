@@ -170,10 +170,34 @@ jobs:
     secrets:
       gh_token: ${{ secrets.ARI_PAT }}
 
+  check-diff-on-comment:
+    name: 📝 Check for file changes on comment
+    if: github.event_name == 'issue_comment' && needs.comment-router.outputs.is_review_comment == 'true'
+    needs: [comment-router]
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check_files.outputs.has_changes }}
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+          fetch-depth: 2
+      - name: Check for file changes
+        id: check_files
+        run: |
+          if git diff --quiet HEAD HEAD~1; then
+            echo "No changes detected in HEAD commit."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected in HEAD commit."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
   # 3. Trigger review immediately for a comment command (e.g., @jules fix or @gemini-bot)
   review-on-comment:
-    if: needs.comment-router.outputs.is_review_comment == 'true'
-    needs: [comment-router]
+    if: needs.comment-router.outputs.is_review_comment == 'true' && needs.check-diff-on-comment.outputs.has_changes == 'true'
+    needs: [comment-router, check-diff-on-comment]
     permissions:
       contents: read
       issues: write
