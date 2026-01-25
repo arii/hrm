@@ -124,6 +124,7 @@ describe('ConnectView', () => {
     // The test environment doesn't automatically call onReset after onForgetDevice,
     // so we'll check that the button click is registered. In the real component,
     // onReset would be called inside the handleFullReset function.
+    expect(props.onReset).toHaveBeenCalled()
 
     // Rerender with initial state to simulate a full reset
     rerender(<ConnectView {...defaultProps} />)
