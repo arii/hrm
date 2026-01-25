@@ -183,10 +183,7 @@ const initSocketManager = (
       const session = clientSessionState.get(extWs.clientId)
       if (session) {
         session.disconnectedAt = Date.now()
-        logger.debug(
-          { clientId: extWs.clientId },
-          'Marked client for cleanup.'
-        )
+        logger.debug({ clientId: extWs.clientId }, 'Marked client for cleanup.')
       }
 
       // Important: Remove the socket reference immediately to prevent sending
@@ -223,10 +220,7 @@ const cleanupDisconnectedClients = () => {
           clientSessionState.delete(clientId)
           hasChanged = true
         } catch (err) {
-          logger.error(
-            { clientId, error: err },
-            'Error during session cleanup'
-          )
+          logger.error({ clientId, error: err }, 'Error during session cleanup')
         }
       }
     }
@@ -237,7 +231,6 @@ const cleanupDisconnectedClients = () => {
     broadcastState()
   }
 }
-
 
 /**
  * Stops the periodic cleanup task.
