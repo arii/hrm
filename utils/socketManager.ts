@@ -163,6 +163,7 @@ const initSocketManager = (
     }
 
     extWs.on('message', (message) => {
+      extWs.isAlive = true
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)
     })
 
@@ -232,8 +233,6 @@ const handleIncomingMessage = (
   messageString: string,
   clientId: string
 ) => {
-  // Any message from the client indicates they are still alive.
-  ws.isAlive = true
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
