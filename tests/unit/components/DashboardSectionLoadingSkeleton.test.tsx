@@ -14,7 +14,7 @@ describe('DashboardSectionLoadingSkeleton', () => {
   it('renders with custom props and matches snapshot', () => {
     const { asFragment } = render(
       <DashboardSectionLoadingSkeleton
-        width={200}
+        width="200px"
         height="50px"
         shape="circular"
         count={3}
