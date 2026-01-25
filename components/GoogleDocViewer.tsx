@@ -11,7 +11,7 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 
 interface GoogleDocViewerProps {
   title: string
@@ -30,24 +30,24 @@ const GoogleDocViewer = ({
   onToggleShrink,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
-  const [iframeUrl, setIframeUrl] = useState(
-    embedUrl.includes('?embedded=true') ? embedUrl : `${embedUrl}?embedded=true`
-  )
+  const [refreshTimestamp, setRefreshTimestamp] = useState<number | null>(null)
 
   const handleRefresh = () => {
     setIframeLoading(true)
-    const newUrl = new URL(iframeUrl)
-    newUrl.searchParams.set('timestamp', Date.now().toString())
-    setIframeUrl(newUrl.toString())
+    setRefreshTimestamp(Date.now())
   }
 
-  // Effect to update URL if the embedUrl prop changes
-  useEffect(() => {
-    const finalEmbedUrl = embedUrl.includes('?embedded=true')
-      ? embedUrl
-      : `${embedUrl}?embedded=true`
-    setIframeUrl(finalEmbedUrl)
-  }, [embedUrl])
+  const iframeUrl = useMemo(() => {
+    const url = new URL(
+      embedUrl.includes('?embedded=true')
+        ? embedUrl
+        : `${embedUrl}?embedded=true`
+    )
+    if (refreshTimestamp) {
+      url.searchParams.set('timestamp', refreshTimestamp.toString())
+    }
+    return url.toString()
+  }, [embedUrl, refreshTimestamp])
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
 
