@@ -179,6 +179,7 @@ export const WebSocketProvider = ({
   // Ref to hold the connect function, ensuring it's always up-to-date
   const connectRef = useRef<() => void>(() => {})
 
+  // The `clientId` is stable for the lifetime of the component.
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedActions = localStorage.getItem('pendingActions')

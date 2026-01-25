@@ -473,19 +473,7 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should mark client for cleanup on disconnect', () => {
-      // Disconnect the client
-      mockWs.emit('close')
-
-      // Ensure that the broadcast function is not called immediately
-      expect(broadcast).not.toHaveBeenCalled()
-
-      // To verify that the client is marked for cleanup, we would need to export
-      // the clientSessionState map from socketManager.ts. Since we don't want to
-      // expose internal state for testing, we will infer this by checking that
-      // the client's data is removed after the grace period.
-      // This will be tested in a separate test case.
-    })
+    // The client disconnect logic is now tested in the "Cleanup Logic" suite.
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
       const dashboardWs = new MockWebSocket() as ExtWebSocket
@@ -568,6 +556,18 @@ describe('WebSocket Manager', () => {
     })
   })
   describe('Cleanup Logic', () => {
+    it('should clean up a client after the grace period', () => {
+      mockWs.emit('close')
+      jest.advanceTimersByTime(10001) // Past grace period and cleanup interval
+      expect(broadcast).toHaveBeenCalledWith(
+        mockWss,
+        {
+          type: 'HRM_UPDATE',
+          payload: [],
+        },
+        'socketManager.broadcastState'
+      )
+    })
     it('should not clean up a client that is still connected', () => {
       mockWs.emit('close')
       jest.advanceTimersByTime(2000) // less than grace period
