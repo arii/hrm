@@ -363,7 +363,9 @@ describe('useBluetoothHRM', () => {
     it('should trigger a timeout disconnect when data becomes stale', async () => {
       jest.useFakeTimers()
       const dataLivenessTimeoutMs = 5000
-      const { result } = renderHook(() => useBluetoothHRM({ dataLivenessTimeoutMs }))
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ dataLivenessTimeoutMs })
+      )
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -372,7 +374,8 @@ describe('useBluetoothHRM', () => {
       // Simulate first data packet to set the initial `lastDataTime`
       const mockCharacteristic =
         // @ts-expect-error We are accessing a mock value
-        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0].value.getCharacteristic.mock.results[0].value
+        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0]
+          .value.getCharacteristic.mock.results[0].value
       const characteristicValueChangedCallback =
         mockCharacteristic.addEventListener.mock.calls[0][1]
 
@@ -399,7 +402,9 @@ describe('useBluetoothHRM', () => {
     it('should not trigger a timeout if data is flowing normally', async () => {
       jest.useFakeTimers()
       const dataLivenessTimeoutMs = 5000
-      const { result } = renderHook(() => useBluetoothHRM({ dataLivenessTimeoutMs }))
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ dataLivenessTimeoutMs })
+      )
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -407,7 +412,8 @@ describe('useBluetoothHRM', () => {
 
       const mockCharacteristic =
         // @ts-expect-error We are accessing a mock value
-        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0].value.getCharacteristic.mock.results[0].value
+        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0]
+          .value.getCharacteristic.mock.results[0].value
       const characteristicValueChangedCallback =
         mockCharacteristic.addEventListener.mock.calls[0][1]
 
@@ -441,7 +447,8 @@ describe('useBluetoothHRM', () => {
 
       const mockCharacteristic =
         // @ts-expect-error We are accessing a mock value
-        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0].value.getCharacteristic.mock.results[0].value
+        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0]
+          .value.getCharacteristic.mock.results[0].value
       const characteristicValueChangedCallback =
         mockCharacteristic.addEventListener.mock.calls[0][1]
 
@@ -459,6 +466,50 @@ describe('useBluetoothHRM', () => {
       expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
       expect(result.current.disconnectionReason).toBe(null)
       expect(mockDevice.gatt.disconnect).not.toHaveBeenCalled()
+      jest.useRealTimers()
+    })
+
+    it('should proactively increase signal period on missed heartbeats within consolidated timer', async () => {
+      jest.useFakeTimers()
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+
+      const mockCharacteristic =
+        // @ts-expect-error We are accessing a mock value
+        mockGatt.connect.mock.results[0].value.getPrimaryService.mock.results[0].value.getCharacteristic.mock.results[0].value
+      const characteristicValueChangedCallback =
+        mockCharacteristic.addEventListener.mock.calls[0][1]
+
+      // Establish a baseline with a few packets
+      const now = Date.now()
+      jest.spyOn(Date, 'now').mockReturnValue(now)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      jest.spyOn(Date, 'now').mockReturnValue(now + 1000)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      expect(result.current.signalPeriodMs).toBe(1000)
+
+      // Advance time by 2 seconds without a packet
+      jest.spyOn(Date, 'now').mockReturnValue(now + 3000)
+      await act(async () => {
+        jest.advanceTimersByTime(2000)
+      })
+
+      // The consolidated timer runs every second.
+      // After 1s (at now + 2000), timeSinceLastData is 1000ms. Threshold is 1000 + 500 = 1500. No penalty.
+      // After 2s (at now + 3000), timeSinceLastData is 2000ms. Threshold is 1500. Penalty applied.
+      // History becomes [1000, 2000]. Average is 1500.
+      expect(result.current.signalPeriodMs).toBe(1500)
       jest.useRealTimers()
     })
   })

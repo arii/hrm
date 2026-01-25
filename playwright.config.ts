@@ -132,7 +132,8 @@ export default defineConfig({
 
   // Web Server Configuration
   webServer: {
-    command: 'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
+    command:
+      'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
     url: `${baseURL}/api/debug/ping`,
     timeout: 120 * 1000, // 2 minutes
     reuseExistingServer: !process.env.CI,
