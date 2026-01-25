@@ -664,7 +664,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isConnecting.current = false
       }
     },
-    [onDisconnected, updateSignalPeriod]
+    [onDisconnected]
   )
 
   useEffect(() => {
