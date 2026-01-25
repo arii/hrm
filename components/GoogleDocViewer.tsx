@@ -131,9 +131,7 @@ const GoogleDocViewer = ({
                     backgroundColor: 'rgba(255,255,255,1)',
                   },
                 }}
-                aria-label={
-                  isShrunk ? 'Expand document' : 'Collapse document'
-                }
+                aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
               >
                 {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
               </IconButton>
