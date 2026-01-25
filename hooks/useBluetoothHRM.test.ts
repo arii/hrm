@@ -106,6 +106,7 @@ describe('useBluetoothHRM', () => {
     expect(mockBluetooth.getDevices).toHaveBeenCalled()
     expect(mockGatt.connect).toHaveBeenCalled()
     expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+    expect(result.current.status).toBe(3)
   })
 
   it('should handle silent connection failure gracefully', async () => {

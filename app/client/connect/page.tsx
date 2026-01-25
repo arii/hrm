@@ -137,6 +137,7 @@ export default function ConnectPage() {
     isDataStale,
     isSupported,
     signalPeriodMs,
+    status,
   } = useBluetoothHRM({
     userName,
     userAge: userAge || 0,
@@ -239,6 +240,7 @@ export default function ConnectPage() {
       onStartWorkout={startWorkout}
       onPauseWorkout={pauseWorkout}
       onEndWorkout={endWorkout}
+      status={status}
     />
   )
 }

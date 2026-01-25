@@ -845,6 +845,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isDataStale,
     isSupported, // Export this flag
     signalPeriodMs,
+    status,
   }
 }
 

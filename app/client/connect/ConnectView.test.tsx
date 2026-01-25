@@ -4,6 +4,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import ConnectView from './ConnectView'
 import { WorkoutStatus } from '../../../types/workout'
+import { BluetoothConnectionStatus } from '../../../types/bluetooth'
 
 describe('ConnectView', () => {
   const defaultProps = {
@@ -42,6 +43,7 @@ describe('ConnectView', () => {
     onStartWorkout: jest.fn(),
     onPauseWorkout: jest.fn(),
     onEndWorkout: jest.fn(),
+    status: BluetoothConnectionStatus.DISCONNECTED,
   }
 
   it('displays an error message for invalid age', () => {

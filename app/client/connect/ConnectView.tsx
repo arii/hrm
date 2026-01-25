@@ -20,6 +20,7 @@ import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
+import { BluetoothConnectionStatus } from '../../../types/bluetooth'
 import {
   ToggleButtonGroup,
   ToggleButton,
@@ -72,6 +73,7 @@ interface ConnectViewProps {
   onStartWorkout: () => void
   onPauseWorkout: () => void
   onEndWorkout: () => void
+  status: BluetoothConnectionStatus
 }
 
 export default function ConnectView({
@@ -114,6 +116,7 @@ export default function ConnectView({
   onStartWorkout,
   onPauseWorkout,
   onEndWorkout,
+  status,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -281,16 +284,14 @@ export default function ConnectView({
           </Box>
         )}
 
-        {deviceStatus &&
-          !isConnected &&
-          !deviceStatus.includes('Disconnected') && (
-            <Alert
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
-              sx={{ mb: 2 }}
-            >
-              {deviceStatus}
-            </Alert>
-          )}
+        {status !== BluetoothConnectionStatus.DISCONNECTED && !isConnected && (
+          <Alert
+            severity={status === BluetoothConnectionStatus.ERROR ? 'error' : 'info'}
+            sx={{ mb: 2 }}
+          >
+            {deviceStatus}
+          </Alert>
+        )}
 
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           {!isConnected ? (
@@ -301,10 +302,10 @@ export default function ConnectView({
               disabled={
                 !userName.trim() ||
                 !userAge.trim() ||
-                deviceStatus.includes('Connecting')
+                status === BluetoothConnectionStatus.CONNECTING
               }
             >
-              {deviceStatus.includes('Connecting') ? (
+              {status === BluetoothConnectionStatus.CONNECTING ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
                   <span>Connecting...</span>
