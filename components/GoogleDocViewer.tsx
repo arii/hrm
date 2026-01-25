@@ -5,13 +5,12 @@
  */
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import RefreshIcon from '@mui/icons-material/Refresh'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 
 interface GoogleDocViewerProps {
   title: string
@@ -30,24 +29,11 @@ const GoogleDocViewer = ({
   onToggleShrink,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
-  const [refreshTimestamp, setRefreshTimestamp] = useState<number | null>(null)
 
-  const handleRefresh = () => {
-    setIframeLoading(true)
-    setRefreshTimestamp(Date.now())
-  }
-
-  const iframeUrl = useMemo(() => {
-    const url = new URL(
-      embedUrl.includes('?embedded=true')
-        ? embedUrl
-        : `${embedUrl}?embedded=true`
-    )
-    if (refreshTimestamp) {
-      url.searchParams.set('timestamp', refreshTimestamp.toString())
-    }
-    return url.toString()
-  }, [embedUrl, refreshTimestamp])
+  // Ensure embedUrl always includes ?embedded=true
+  const finalEmbedUrl = embedUrl.includes('?embedded=true')
+    ? embedUrl
+    : `${embedUrl}?embedded=true`
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
 
@@ -57,7 +43,7 @@ const GoogleDocViewer = ({
       setIframeLoading(false)
     }, 3000) // Show iframe after 3 seconds regardless
     return () => clearTimeout(timeout)
-  }, [iframeUrl]) // Rerun on URL change
+  }, [])
 
   return (
     <Card elevation={6} sx={{ position: 'relative' }}>
@@ -83,7 +69,7 @@ const GoogleDocViewer = ({
           )}
           <Box
             component="iframe"
-            src={iframeUrl}
+            src={finalEmbedUrl}
             title={title}
             width="100%"
             height="100%"
@@ -99,44 +85,24 @@ const GoogleDocViewer = ({
             onLoad={() => setIframeLoading(false)}
           />
         </Box>
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 16,
-            right: 16,
-            zIndex: 10,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1,
-          }}
-        >
-          {onToggleShrink && (
-            <IconButton
-              onClick={onToggleShrink}
-              sx={{
-                backgroundColor: 'rgba(255,255,255,0.9)',
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,1)',
-                },
-              }}
-              aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
-            >
-              {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
-            </IconButton>
-          )}
+        {onToggleShrink && (
           <IconButton
-            onClick={handleRefresh}
+            onClick={onToggleShrink}
             sx={{
+              position: 'absolute',
+              bottom: 16,
+              right: 16,
               backgroundColor: 'rgba(255,255,255,0.9)',
               '&:hover': {
                 backgroundColor: 'rgba(255,255,255,1)',
               },
+              zIndex: 10,
             }}
-            aria-label="Refresh document"
+            aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
           >
-            <RefreshIcon />
+            {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
           </IconButton>
-        </Box>
+        )}
       </CardContent>
     </Card>
   )

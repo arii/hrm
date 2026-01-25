@@ -1,11 +1,29 @@
 /** @type {import('jest').Config} */
 const config = {
+  preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  testMatch: ['**/tests/unit/components/**/*.test.tsx'],
+  roots: ['<rootDir>/tests/unit/components'],
+  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   transform: {
-    '^.+\\.tsx?$': 'ts-jest',
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        useESM: true,
+        tsconfig: {
+          module: 'ES2022',
+          moduleResolution: 'bundler',
+          esModuleInterop: true,
+          allowSyntheticDefaultImports: true,
+        },
+      },
+    ],
   },
-  setupFilesAfterEnv: ['@testing-library/jest-dom'],
-};
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@/(.*)$': '<rootDir>/$1',
+  },
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
+}
 
-module.exports = config;
+module.exports = config
