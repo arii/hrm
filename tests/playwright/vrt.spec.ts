@@ -115,7 +115,7 @@ test.describe('Visual Regression Tests', () => {
           '[data-testid="hrm-connection-panel"]'
         )
         if (panel instanceof HTMLElement) {
-        panel.style.visibility = 'hidden'
+        panel.style.display = 'none'
         }
       })
       const dashboard = dashboardPage.getByTestId('dashboard')
