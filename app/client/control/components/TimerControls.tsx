@@ -60,11 +60,6 @@ const TimerControls = () => {
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
 
-  // Sync optimistic state with server state
-  useEffect(() => {
-    setOptimisticIsRunning(timerData.isRunning)
-  }, [timerData.isRunning])
-
   // Safety timeout to prevent optimistic UI from getting stuck.
   // If the optimistic state and server state are different for too long,
   // revert the optimistic state to match the server.
