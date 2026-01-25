@@ -54,8 +54,8 @@ test.describe('Visual Regression Tests', () => {
       const panel = document.querySelector(
         '[data-testid="hrm-connection-panel"]'
       )
-      if (panel) {
-        ;(panel as HTMLElement).style.display = 'none'
+      if (panel instanceof HTMLElement) {
+        panel.style.display = 'none'
       }
     })
     await takeDashboardScreenshot(dashboardPage, 'dashboard-viewer.png')
@@ -97,8 +97,8 @@ test.describe('Visual Regression Tests', () => {
       const panel = document.querySelector(
         '[data-testid="hrm-connection-panel"]'
       )
-      if (panel) {
-        ;(panel as HTMLElement).style.display = 'none'
+      if (panel instanceof HTMLElement) {
+        panel.style.display = 'none'
       }
     })
 

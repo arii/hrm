@@ -108,18 +108,17 @@ test.describe('Visual Regression Tests', () => {
 
   test.describe('Dashboard Component', () => {
     test('initial, empty state', async () => {
-      const dashboard = dashboardPage.getByTestId('dashboard')
-
-      // Hide the connection panel for this specific test
+      // The HrmConnectionPanel can sometimes appear due to timing issues,
+      // causing VRT flakiness. We hide it to ensure a stable snapshot.
       await dashboardPage.evaluate(() => {
-        const connectionPanel = document.querySelector(
+        const panel = document.querySelector(
           '[data-testid="hrm-connection-panel"]'
         )
-        if (connectionPanel) {
-          ;(connectionPanel as HTMLElement).style.display = 'none'
+        if (panel instanceof HTMLElement) {
+          panel.style.display = 'none'
         }
       })
-
+      const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-empty.png')
     })
   })
