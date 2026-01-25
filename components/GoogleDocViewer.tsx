@@ -5,6 +5,7 @@
  */
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -29,11 +30,24 @@ const GoogleDocViewer = ({
   onToggleShrink,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
+  const [iframeUrl, setIframeUrl] = useState(
+    embedUrl.includes('?embedded=true') ? embedUrl : `${embedUrl}?embedded=true`
+  )
 
-  // Ensure embedUrl always includes ?embedded=true
-  const finalEmbedUrl = embedUrl.includes('?embedded=true')
-    ? embedUrl
-    : `${embedUrl}?embedded=true`
+  const handleRefresh = () => {
+    setIframeLoading(true)
+    const newUrl = new URL(iframeUrl)
+    newUrl.searchParams.set('timestamp', Date.now().toString())
+    setIframeUrl(newUrl.toString())
+  }
+
+  // Effect to update URL if the embedUrl prop changes
+  useEffect(() => {
+    const finalEmbedUrl = embedUrl.includes('?embedded=true')
+      ? embedUrl
+      : `${embedUrl}?embedded=true`
+    setIframeUrl(finalEmbedUrl)
+  }, [embedUrl])
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
 
@@ -43,7 +57,7 @@ const GoogleDocViewer = ({
       setIframeLoading(false)
     }, 3000) // Show iframe after 3 seconds regardless
     return () => clearTimeout(timeout)
-  }, [])
+  }, [iframeUrl]) // Rerun on URL change
 
   return (
     <Card elevation={6} sx={{ position: 'relative' }}>
@@ -69,7 +83,7 @@ const GoogleDocViewer = ({
           )}
           <Box
             component="iframe"
-            src={finalEmbedUrl}
+            src={iframeUrl}
             title={title}
             width="100%"
             height="100%"
@@ -85,24 +99,44 @@ const GoogleDocViewer = ({
             onLoad={() => setIframeLoading(false)}
           />
         </Box>
-        {onToggleShrink && (
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 16,
+            right: 16,
+            zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
+          }}
+        >
+          {onToggleShrink && (
+            <IconButton
+              onClick={onToggleShrink}
+              sx={{
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,1)',
+                },
+              }}
+              aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
+            >
+              {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+            </IconButton>
+          )}
           <IconButton
-            onClick={onToggleShrink}
+            onClick={handleRefresh}
             sx={{
-              position: 'absolute',
-              bottom: 16,
-              right: 16,
               backgroundColor: 'rgba(255,255,255,0.9)',
               '&:hover': {
                 backgroundColor: 'rgba(255,255,255,1)',
               },
-              zIndex: 10,
             }}
-            aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
+            aria-label="Refresh document"
           >
-            {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+            <RefreshIcon />
           </IconButton>
-        )}
+        </Box>
       </CardContent>
     </Card>
   )
