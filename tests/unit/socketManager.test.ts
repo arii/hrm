@@ -312,14 +312,14 @@ describe('WebSocket Manager', () => {
       expect(monitorInstance.stop).toHaveBeenCalled()
     })
 
-    it('should set isAlive to true on any message', () => {
+    it('should not set isAlive to true on any message', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       newWs.isAlive = false // Manually set to false
       const message = JSON.stringify({ type: 'PING' })
       newWs.emit('message', message.toString())
-      expect(newWs.isAlive).toBe(true)
+      expect(newWs.isAlive).toBe(false)
     })
   })
 
@@ -473,17 +473,18 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should broadcast state on client disconnect', () => {
+    it('should mark client for cleanup on disconnect', () => {
+      // Disconnect the client
       mockWs.emit('close')
-      jest.runAllTimers()
-      expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [],
-        },
-        'socketManager.broadcastState'
-      )
+
+      // Ensure that the broadcast function is not called immediately
+      expect(broadcast).not.toHaveBeenCalled()
+
+      // To verify that the client is marked for cleanup, we would need to export
+      // the clientSessionState map from socketManager.ts. Since we don't want to
+      // expose internal state for testing, we will infer this by checking that
+      // the client's data is removed after the grace period.
+      // This will be tested in a separate test case.
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {

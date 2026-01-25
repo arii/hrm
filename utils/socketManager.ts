@@ -47,11 +47,15 @@ const hrmDataRepository = new HrmDataRepository()
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
 
+// Represents the internal state for a client's session.
+interface ClientSession {
+  lastUpdate: number
+  accumulatedCalories: number
+  disconnectedAt?: number // Timestamp of when the client disconnected
+}
+
 // Track internal state for calculations (not sent to client)
-const clientSessionState = new Map<
-  string,
-  { lastUpdate: number; accumulatedCalories: number }
->()
+const clientSessionState = new Map<string, ClientSession>()
 
 /**
  * Safely parses the WebSocket request URL to extract search parameters.
@@ -115,6 +119,7 @@ const initSocketManager = (
   services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
+  startCleanupTask()
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket
@@ -159,6 +164,12 @@ const initSocketManager = (
         accumulatedCalories: 0,
       })
     } else {
+      // If the client is reconnecting, clear the disconnect marker.
+      const session = clientSessionState.get(clientId)
+      if (session?.disconnectedAt) {
+        delete session.disconnectedAt
+        logger.debug({ clientId }, 'Cleared disconnect marker on reconnect.')
+      }
       logger.info({ clientId }, 'Reconnected with existing session.')
     }
 
@@ -168,41 +179,94 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      // Instead of a timeout, mark the session with a timestamp.
+      const session = clientSessionState.get(extWs.clientId)
+      if (session) {
+        session.disconnectedAt = Date.now()
+        logger.debug(
+          { clientId: extWs.clientId },
+          'Marked client for cleanup.'
+        )
+      }
 
-      // CRITICAL: Do NOT immediately delete clientData.
-      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
-      // NOTE: In a high-traffic production environment, this could lead to
-      // memory pressure if many clients disconnect and don't reconnect.
-      // A more robust solution might involve a separate cleanup process
-      // or a maximum number of inactive sessions.
-      setTimeout(() => {
-        // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
-        if (clientSockets.get(clientId) === extWs) {
-          logger.info(
-            { clientId: extWs.clientId },
-            'Session expired. Deleting data.'
-          )
-          try {
-            hrmDataRepository.deleteById(extWs.clientId)
-            clientSessionState.delete(extWs.clientId)
-            broadcastState()
-          } catch (err) {
-            logger.error(
-              { clientId: extWs.clientId, error: err },
-              'Error during session cleanup'
-            )
-          } finally {
-            // Always remove the socket reference to prevent leaks
-            clientSockets.delete(extWs.clientId)
-          }
-        }
-      }, env.WEBSOCKET_GRACE_PERIOD_MS)
+      // Important: Remove the socket reference immediately to prevent sending
+      // messages to a closed socket. The session data is preserved.
+      if (clientSockets.get(extWs.clientId) === extWs) {
+        clientSockets.delete(extWs.clientId)
+      }
     })
   })
 
   wss.on('close', () => {
     connectionMonitor.stop()
+    stopCleanupTask()
   })
+}
+
+// In-memory store for the cleanup task interval ID.
+let cleanupIntervalId: NodeJS.Timeout | null = null
+
+/**
+ * Periodically iterates through client sessions and removes those that have
+ * been disconnected for longer than the grace period.
+ */
+const cleanupDisconnectedClients = () => {
+  const now = Date.now()
+  let hasChanged = false
+  for (const [clientId, session] of clientSessionState.entries()) {
+    if (session.disconnectedAt) {
+      const timeSinceDisconnect = now - session.disconnectedAt
+      if (timeSinceDisconnect > env.WEBSOCKET_GRACE_PERIOD_MS) {
+        logger.info({ clientId }, 'Session expired. Deleting data.')
+        try {
+          hrmDataRepository.deleteById(clientId)
+          clientSessionState.delete(clientId)
+          hasChanged = true
+        } catch (err) {
+          logger.error(
+            { clientId, error: err },
+            'Error during session cleanup'
+          )
+        }
+      }
+    }
+  }
+
+  // If any clients were removed, broadcast the new state to all remaining clients.
+  if (hasChanged) {
+    broadcastState()
+  }
+}
+
+
+/**
+ * Stops the periodic cleanup task.
+ */
+const stopCleanupTask = () => {
+  if (cleanupIntervalId) {
+    clearInterval(cleanupIntervalId)
+    cleanupIntervalId = null
+    logger.info('Stopped periodic client cleanup task.')
+  }
+}
+
+/**
+ * Starts the periodic cleanup of disconnected clients.
+ */
+const startCleanupTask = () => {
+  // Stop any existing task before starting a new one.
+  stopCleanupTask()
+
+  // Set an interval to run the cleanup function periodically.
+  // The interval is configured via environment variables.
+  cleanupIntervalId = setInterval(
+    cleanupDisconnectedClients,
+    env.WEBSOCKET_CLEANUP_INTERVAL_MS
+  )
+  logger.info(
+    { interval: env.WEBSOCKET_CLEANUP_INTERVAL_MS },
+    'Started periodic client cleanup task.'
+  )
 }
 
 /**
@@ -232,8 +296,9 @@ const handleIncomingMessage = (
   messageString: string,
   clientId: string
 ) => {
-  // Any message from the client indicates they are still alive.
-  ws.isAlive = true
+  // The 'isAlive' flag is now managed exclusively by the ConnectionMonitor's ping/pong mechanism.
+  // Responding to any message is no longer considered a reliable indicator of a healthy connection,
+  // especially in cases of network latency where messages might be buffered.
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
