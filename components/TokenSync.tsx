@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import logger from '@/utils/logger'
 
@@ -10,13 +10,10 @@ import logger from '@/utils/logger'
  */
 export default function TokenSync() {
   const { data: session, status } = useSession()
-  const hasSynced = useRef(false)
 
   useEffect(() => {
-    // Only run the sync logic if the user is authenticated and we haven't synced before.
-    if (status === 'authenticated' && !hasSynced.current) {
-      hasSynced.current = true // Prevent re-syncs on re-renders
-
+    // Only run the sync logic if the user is authenticated.
+    if (status === 'authenticated') {
       const syncToken = async () => {
         try {
           const response = await fetch('/api/auth/sync', {
@@ -43,7 +40,7 @@ export default function TokenSync() {
 
       syncToken()
     }
-  }, [status, session])
+  }, [status, session?.accessToken])
 
   // This component does not render anything.
   return null
