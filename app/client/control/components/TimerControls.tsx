@@ -22,10 +22,12 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
+import { resolveSpotifyDeviceId } from '@/lib/spotify/device'
+import { resolveSpotifyDeviceId } from '@/lib/spotify/device'
 
 // Constants
 const OPTIMISTIC_UI_SYNC_TIMEOUT =
-  process.env.NEXT_PUBLIC_APP_ENV === 'test' ? 5000 : 3000 // ms
+  process.env.NODE_ENV === 'test' ? 5000 : 3000 // ms
 const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
 
 const actionButtonBaseSx = {
@@ -122,14 +124,8 @@ const TimerControls = () => {
 
   const sendSpotifyCommand = useCallback(
     (command: 'NEXT' | 'PAUSE') => {
-      let deviceId: string | null = spotifyDeviceId
-      if (!deviceId && spotifyDevices.length > 0) {
-        const activeDevice = spotifyDevices.find((d) => d.is_active)
-        deviceId = activeDevice
-          ? activeDevice.id
-          : spotifyDevices[0]?.id || null
-        if (deviceId) setSpotifyDeviceId(deviceId)
-      }
+      const deviceId = resolveSpotifyDeviceId(spotifyDevices, spotifyDeviceId)
+      if (deviceId) setSpotifyDeviceId(deviceId)
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,

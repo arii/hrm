@@ -323,6 +323,35 @@ describe('WebSocket Manager', () => {
     })
   })
 
+  describe('Cleanup Logic', () => {
+    it('should clean up a client after the grace period', () => {
+      mockWs.emit('close')
+      jest.advanceTimersByTime(10001) // Past grace period and cleanup interval
+      expect(broadcast).toHaveBeenCalledWith(
+        mockWss,
+        {
+          type: 'HRM_UPDATE',
+          payload: [],
+        },
+        'socketManager.broadcastState'
+      )
+    })
+    it('should not clean up a client that is still connected', () => {
+      mockWs.emit('close')
+      jest.advanceTimersByTime(2000) // less than grace period
+      expect(broadcast).not.toHaveBeenCalled()
+    })
+    it('should not clean up a client that has reconnected', () => {
+      mockWs.emit('close')
+      jest.advanceTimersByTime(2000)
+      const newWs = new MockWebSocket()
+      const mockReq = createMockRequest()
+      mockWss.emit('connection', newWs, mockReq)
+      jest.advanceTimersByTime(4000) // more than grace period
+      expect(broadcast).not.toHaveBeenCalled()
+    })
+  })
+
   describe('Calorie Calculation', () => {
     it('should accumulate calories correctly with small frequent updates', () => {
       const sendHrmInput = (hr: number) => {
@@ -553,34 +582,6 @@ describe('WebSocket Manager', () => {
         expect.objectContaining({ clientId: 'test-client' }),
         'Unknown message type received'
       )
-    })
-  })
-  describe('Cleanup Logic', () => {
-    it('should clean up a client after the grace period', () => {
-      mockWs.emit('close')
-      jest.advanceTimersByTime(10001) // Past grace period and cleanup interval
-      expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [],
-        },
-        'socketManager.broadcastState'
-      )
-    })
-    it('should not clean up a client that is still connected', () => {
-      mockWs.emit('close')
-      jest.advanceTimersByTime(2000) // less than grace period
-      expect(broadcast).not.toHaveBeenCalled()
-    })
-    it('should not clean up a client that has reconnected', () => {
-      mockWs.emit('close')
-      jest.advanceTimersByTime(2000)
-      const newWs = new MockWebSocket()
-      const mockReq = createMockRequest()
-      mockWss.emit('connection', newWs, mockReq)
-      jest.advanceTimersByTime(4000) // more than grace period
-      expect(broadcast).not.toHaveBeenCalled()
     })
   })
 })

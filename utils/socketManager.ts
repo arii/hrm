@@ -183,7 +183,10 @@ const initSocketManager = (
       const session = clientSessionState.get(extWs.clientId)
       if (session) {
         session.disconnectedAt = Date.now()
-        logger.debug({ clientId: extWs.clientId }, 'Marked client for cleanup.')
+        logger.debug(
+          { clientId: extWs.clientId },
+          'Marked client for cleanup.'
+        )
       }
 
       // Important: Remove the socket reference immediately to prevent sending
@@ -220,7 +223,10 @@ const cleanupDisconnectedClients = () => {
           clientSessionState.delete(clientId)
           hasChanged = true
         } catch (err) {
-          logger.error({ clientId, error: err }, 'Error during session cleanup')
+          logger.error(
+            { clientId, error: err },
+            'Error during session cleanup'
+          )
         }
       }
     }
@@ -229,17 +235,6 @@ const cleanupDisconnectedClients = () => {
   // If any clients were removed, broadcast the new state to all remaining clients.
   if (hasChanged) {
     broadcastState()
-  }
-}
-
-/**
- * Stops the periodic cleanup task.
- */
-const stopCleanupTask = () => {
-  if (cleanupIntervalId) {
-    clearInterval(cleanupIntervalId)
-    cleanupIntervalId = null
-    logger.info('Stopped periodic client cleanup task.')
   }
 }
 
@@ -261,6 +256,18 @@ const startCleanupTask = () => {
     'Started periodic client cleanup task.'
   )
 }
+
+/**
+ * Stops the periodic cleanup task.
+ */
+const stopCleanupTask = () => {
+  if (cleanupIntervalId) {
+    clearInterval(cleanupIntervalId)
+    cleanupIntervalId = null
+    logger.info('Stopped periodic client cleanup task.')
+  }
+}
+
 
 /**
  * Resets the socket manager state. Use this for testing purposes only.
