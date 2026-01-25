@@ -27,7 +27,6 @@ describe('ConnectPage', () => {
       batteryLevel: null,
       isConnected: false,
       isSupported: true,
-      disconnectionReason: null,
     })
   })
 
@@ -97,7 +96,6 @@ describe('ConnectPage', () => {
       batteryLevel: null,
       isConnected: true,
       isSupported: true,
-      disconnectionReason: null,
     })
 
     jest.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue({

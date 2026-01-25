@@ -190,7 +190,6 @@ describe('useBluetoothHRM', () => {
     triggerTimeout(10000)
 
     expect(result.current.deviceStatus).toContain('Connection unstable')
-    expect(result.current.disconnectionReason).toBe('timeout')
     expect(mockDevice.gatt.disconnect).toHaveBeenCalled()
   })
 
@@ -213,7 +212,6 @@ describe('useBluetoothHRM', () => {
     })
 
     expect(result.current.deviceStatus).toContain('Connection unstable')
-    expect(result.current.disconnectionReason).toBe('timeout')
   })
 
   it('should disable watchdog if timeout is 0', async () => {
@@ -229,10 +227,10 @@ describe('useBluetoothHRM', () => {
     })
 
     expect(result.current.deviceStatus).not.toContain('Connection unstable')
-    expect(result.current.disconnectionReason).toBe(null)
+    expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
   })
 
-  it('should set disconnectionReason to "manual" on disconnect', async () => {
+  it('should set status to "Disconnected" on manual disconnect', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
     await simulateConnection({ result })
     expect(result.current.isConnected).toBe(true)
@@ -242,10 +240,10 @@ describe('useBluetoothHRM', () => {
     })
 
     expect(result.current.isConnected).toBe(false)
-    expect(result.current.disconnectionReason).toBe('manual')
+    expect(result.current.deviceStatus).toBe('Disconnected')
   })
 
-  it('should reset disconnectionReason on successful reconnect', async () => {
+  it('should clear status on successful reconnect', async () => {
     const { result } = renderHook(() =>
       useBluetoothHRM({ dataLivenessTimeoutMs: 2000 })
     )
@@ -253,14 +251,14 @@ describe('useBluetoothHRM', () => {
 
     // Trigger a timeout to initiate the disconnection/reconnection cycle
     triggerTimeout(2000)
-    expect(result.current.disconnectionReason).toBe('timeout')
+    expect(result.current.deviceStatus).toContain('Connection unstable')
 
     // Simulate the device disconnecting and the hook successfully reconnecting
     await simulateReconnection()
 
     // After reconnecting, the state should be clean
     expect(result.current.isConnected).toBe(true)
-    expect(result.current.disconnectionReason).toBe(null)
+    expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
   })
 
   it('should send a null value on manual disconnect', async () => {
