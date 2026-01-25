@@ -5,11 +5,13 @@
  */
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
+import Tooltip from '@mui/material/Tooltip'
 import { memo, useEffect, useState } from 'react'
 
 interface GoogleDocViewerProps {
@@ -29,11 +31,17 @@ const GoogleDocViewer = ({
   onToggleShrink,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(Date.now())
+
+  const handleRefresh = () => {
+    setIframeLoading(true)
+    setRefreshKey(Date.now())
+  }
 
   // Ensure embedUrl always includes ?embedded=true
   const finalEmbedUrl = embedUrl.includes('?embedded=true')
-    ? embedUrl
-    : `${embedUrl}?embedded=true`
+    ? `${embedUrl}&${refreshKey}`
+    : `${embedUrl}?embedded=true&${refreshKey}`
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
 
@@ -85,24 +93,43 @@ const GoogleDocViewer = ({
             onLoad={() => setIframeLoading(false)}
           />
         </Box>
-        {onToggleShrink && (
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 16,
+          right: 16,
+          display: 'flex',
+          gap: 1,
+          backgroundColor: 'rgba(255,255,255,0.9)',
+          borderRadius: '50%',
+          p: 0.5,
+        }}
+      >
+        <Tooltip title="Refresh document">
           <IconButton
-            onClick={onToggleShrink}
-            sx={{
-              position: 'absolute',
-              bottom: 16,
-              right: 16,
-              backgroundColor: 'rgba(255,255,255,0.9)',
-              '&:hover': {
-                backgroundColor: 'rgba(255,255,255,1)',
-              },
-              zIndex: 10,
-            }}
-            aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
+            onClick={handleRefresh}
+            sx={{ zIndex: 10 }}
+            aria-label="Refresh document"
           >
-            {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+            <RefreshIcon />
           </IconButton>
+        </Tooltip>
+        {onToggleShrink && (
+          <Tooltip title={isShrunk ? 'Expand document' : 'Collapse document'}>
+            <IconButton
+              onClick={onToggleShrink}
+              sx={{
+                zIndex: 10,
+              }}
+              aria-label={
+                isShrunk ? 'Expand document' : 'Collapse document'
+              }
+            >
+              {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+            </IconButton>
+          </Tooltip>
         )}
+      </Box>
       </CardContent>
     </Card>
   )
