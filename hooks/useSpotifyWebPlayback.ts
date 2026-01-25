@@ -118,17 +118,7 @@ const useSpotifyWebPlayback = () => {
       return
     }
 
-    // Check if user has active session before initializing
-    fetchWithRetry(API_SPOTIFY_ACCESS_TOKEN)
-      .then(() => {
-        // User is logged in, proceed with initialization
-        initializeSDK()
-      })
-      .catch(() => {
-        console.log(
-          '[Spotify Web Playback] No active session, skipping Web Playback initialization'
-        )
-      })
+    initializeSDK()
 
     function initializeSDK() {
       // Load the SDK script if not already loaded
