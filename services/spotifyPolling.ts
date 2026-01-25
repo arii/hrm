@@ -7,8 +7,10 @@ import {
 } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyDevice, SpotifyCommandParameters } from '../types/core'
-import { SpotifyTokenManager } from './spotifyTokenManager.js'
-import { ApiSpotifyTokenPayload } from '@/types/spotify'
+import {
+  SpotifyTokenManager,
+  SpotifyTokenPayload,
+} from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 import {
   handleSpotifyApiError,
@@ -175,9 +177,9 @@ export class SpotifyPolling implements SpotifyService {
    * Asynchronously handles the token update signal by directly accepting the payload.
    * This function updates the token manager, re-initializes the SDK,
    * and immediately triggers a poll and broadcast.
-   * @param {ApiSpotifyTokenPayload} tokens - The new token payload.
+   * @param {SpotifyTokenPayload} tokens - The new token payload.
    */
-  public async handleTokenUpdate(tokens: ApiSpotifyTokenPayload): Promise<void> {
+  public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
     logger.info(
       { tokens },
       'Spotify token payload received. Updating SDK and forcing poll.'

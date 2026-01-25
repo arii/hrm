@@ -19,13 +19,3 @@ export interface Playlist {
   trackCount?: number
   owner?: string
 }
-
-export interface ApiSpotifyTokenPayload {
-  provider: string
-  sub: string
-  access_token: string
-  refresh_token: string
-  expires_in: number
-  scope: string
-  obtainedAt: number
-}
