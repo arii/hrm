@@ -22,3 +22,15 @@ export const formatDuration = (seconds: number): string => {
     .padStart(2, '0')
   return `${h}:${m}:${s}`
 }
+
+/**
+ * Rounds a number to a specified number of decimal places.
+ * Includes a small epsilon to handle floating-point inaccuracies.
+ * @param num The number to round.
+ * @param decimals The number of decimal places to round to.
+ * @returns The rounded number.
+ */
+export const roundTo = (num: number, decimals: number): number => {
+  const factor = Math.pow(10, decimals)
+  return Math.round((num + Number.EPSILON) * factor) / factor
+}

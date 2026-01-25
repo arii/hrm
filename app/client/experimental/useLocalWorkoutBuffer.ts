@@ -12,11 +12,14 @@ export interface HrDataPoint {
   zone: HrZoneName
 }
 
+export type WorkoutStatus = 'idle' | 'running' | 'paused' | 'finished'
+export type ActiveWorkoutInputStatus = Exclude<WorkoutStatus, 'finished'>
+
 // Define the structure for the entire workout session
 export interface WorkoutSessionData {
   startTime: number | null
   endTime: number | null
-  status: 'idle' | 'running' | 'paused' | 'finished'
+  status: WorkoutStatus
   hrHistory: HrDataPoint[]
   timeInZones: Record<HrZoneName, number>
 }
@@ -46,7 +49,7 @@ const initialWorkoutData: WorkoutSessionData = {
  */
 export const useLocalWorkoutBuffer = (
   currentHr: number,
-  workoutStatus: 'idle' | 'running' | 'paused'
+  workoutStatus: ActiveWorkoutInputStatus
 ) => {
   const [workoutData, setWorkoutData] = useLocalStorage<WorkoutSessionData>(
     'experimentalWorkoutSession',

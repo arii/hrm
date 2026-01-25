@@ -28,6 +28,7 @@ import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
+import { roundTo } from '../lib/utils.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -341,7 +342,7 @@ const handleIncomingMessage = (
           hrmDataRepository.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
-            calories: Math.round(finalCalories * 10) / 10,
+            calories: roundTo(finalCalories, 4),
           })
         }
         broadcastState()

@@ -170,12 +170,34 @@ jobs:
               body: messageBody
             });
 
-  trigger-quality-check:
+  check-for-changes:
     needs: squash-and-rebase
+    if: needs.squash-and-rebase.outputs.outcome == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check_files.outputs.has_changes }}
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.squash-and-rebase.outputs.head_ref }}
+          fetch-depth: 2
+      - name: Check for file changes
+        id: check_files
+        run: |
+          if git diff --quiet HEAD HEAD~1; then
+            echo "No changes detected after squash."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected after squash."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+  trigger-quality-check:
+    needs: [squash-and-rebase, check-for-changes]
     if: needs.squash-and-rebase.outputs.outcome == 'success'
     uses: ./.github/workflows/pr-quality.yml
     with:
       branch: ${{ needs.squash-and-rebase.outputs.head_ref }}
       pr_number: ${{ github.event.inputs.pr_number }}
-      # Force full quality checks on the newly squashed commit.
-      has_changes: 'true'
+      has_changes: ${{ needs.check-for-changes.outputs.has_changes }}

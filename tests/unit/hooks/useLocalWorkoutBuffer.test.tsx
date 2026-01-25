@@ -3,7 +3,10 @@
  */
 // tests/unit/hooks/useLocalWorkoutBuffer.test.tsx
 import { renderHook, act, waitFor } from '@testing-library/react'
-import { useLocalWorkoutBuffer } from '@/app/client/experimental/useLocalWorkoutBuffer'
+import {
+  useLocalWorkoutBuffer,
+  ActiveWorkoutInputStatus,
+} from '@/app/client/experimental/useLocalWorkoutBuffer'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { HrZoneName } from '@/utils/hr-zones'
 
@@ -35,14 +38,17 @@ describe('useLocalWorkoutBuffer', () => {
   })
 
   it('should initialize with default data', () => {
-    const { result } = renderHook(() => useLocalWorkoutBuffer(0, 'idle'))
+    const { result } = renderHook(() =>
+      useLocalWorkoutBuffer(0, 'idle' as ActiveWorkoutInputStatus)
+    )
     expect(result.current.workoutData.status).toBe('idle')
     expect(result.current.workoutData.hrHistory).toHaveLength(0)
   })
 
   it('should start a workout when status changes to running', () => {
     const { result, rerender } = renderHook(
-      ({ status }) => useLocalWorkoutBuffer(0, status),
+      ({ status }: { status: ActiveWorkoutInputStatus }) =>
+        useLocalWorkoutBuffer(0, status),
       { initialProps: { status: 'idle' } }
     )
     act(() => {
@@ -55,7 +61,8 @@ describe('useLocalWorkoutBuffer', () => {
   it('should record HR data when running', async () => {
     jest.useFakeTimers()
     const { result, rerender } = renderHook(
-      ({ hr, status }) => useLocalWorkoutBuffer(hr, status),
+      ({ hr, status }: { hr: number; status: ActiveWorkoutInputStatus }) =>
+        useLocalWorkoutBuffer(hr, status),
       { initialProps: { hr: 0, status: 'idle' } }
     )
 
@@ -82,7 +89,8 @@ describe('useLocalWorkoutBuffer', () => {
 
   it('should pause and resume a workout', () => {
     const { result, rerender } = renderHook(
-      ({ status }) => useLocalWorkoutBuffer(0, status),
+      ({ status }: { status: ActiveWorkoutInputStatus }) =>
+        useLocalWorkoutBuffer(0, status),
       { initialProps: { status: 'idle' } }
     )
     act(() => {
@@ -103,7 +111,8 @@ describe('useLocalWorkoutBuffer', () => {
 
   it('should pause a workout when status changes to idle', () => {
     const { result, rerender } = renderHook(
-      ({ status }) => useLocalWorkoutBuffer(0, status),
+      ({ status }: { status: ActiveWorkoutInputStatus }) =>
+        useLocalWorkoutBuffer(0, status),
       { initialProps: { status: 'idle' } }
     )
     act(() => {
@@ -120,7 +129,8 @@ describe('useLocalWorkoutBuffer', () => {
 
   it('should reset workout data', () => {
     const { result, rerender } = renderHook(
-      ({ status }) => useLocalWorkoutBuffer(0, status),
+      ({ status }: { status: ActiveWorkoutInputStatus }) =>
+        useLocalWorkoutBuffer(0, status),
       { initialProps: { status: 'idle' } }
     )
     act(() => {
@@ -169,5 +179,21 @@ describe('useLocalWorkoutBuffer', () => {
     expect(result.current.workoutData.timeInZones[HrZoneName.FatBurn]).toBe(1)
 
     jest.useRealTimers()
+  it('should end a workout', () => {
+    const { result, rerender } = renderHook(
+      ({ status }: { status: ActiveWorkoutInputStatus }) =>
+        useLocalWorkoutBuffer(0, status),
+      { initialProps: { status: 'idle' } }
+    )
+    act(() => {
+      rerender({ status: 'running' })
+    })
+    expect(result.current.workoutData.status).toBe('running')
+
+    act(() => {
+      result.current.endWorkout()
+    })
+    expect(result.current.workoutData.status).toBe('finished')
+    expect(result.current.workoutData.endTime).not.toBeNull()
   })
 })

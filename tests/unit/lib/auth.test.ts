@@ -170,3 +170,55 @@ describe('authOptions.callbacks.jwt', () => {
     )
   })
 })
+
+describe('authOptions.callbacks.session', () => {
+  const sessionCallback = authOptions.callbacks?.session
+
+  if (!sessionCallback) {
+    throw new Error('Session callback is not defined in authOptions')
+  }
+
+  it('should correctly pass accessToken, error, and scope to the session', async () => {
+    const token: JWT = {
+      accessToken: 'test-access-token',
+      error: 'TestError',
+      scope: 'test-scope1 test-scope2',
+    }
+    const session = {
+      expires: '1',
+      user: {
+        name: 'Test User',
+        email: 'test@example.com',
+        image: 'test.jpg',
+      },
+    }
+
+    const result = await sessionCallback({ session, token })
+
+    expect(result.accessToken).toBe(token.accessToken)
+    expect(result.error).toBe(token.error)
+    expect(result.scope).toBe(token.scope)
+  })
+
+  it('should handle undefined token properties gracefully', async () => {
+    const token: JWT = {
+      accessToken: undefined,
+      error: undefined,
+      scope: undefined,
+    }
+    const session = {
+      expires: '1',
+      user: {
+        name: 'Test User',
+        email: 'test@example.com',
+        image: 'test.jpg',
+      },
+    }
+
+    const result = await sessionCallback({ session, token })
+
+    expect(result.accessToken).toBeUndefined()
+    expect(result.error).toBeUndefined()
+    expect(result.scope).toBeUndefined()
+  })
+})
