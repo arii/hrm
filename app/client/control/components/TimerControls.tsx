@@ -2,7 +2,7 @@
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { resolveSpotifyDeviceId } from '@/lib/spotify'
+import { resolveSpotifyDeviceId } from '@/lib/spotify/device'
 import {
   SpotifyCommandMessage,
   TimerCommandMessage,
