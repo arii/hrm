@@ -20,7 +20,14 @@ export const pinoOptions: pino.LoggerOptions = {
       : process.env.LOG_LEVEL ||
         (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
   redact: {
-    paths: ['req.headers.cookie', 'req.headers.authorization', 'res.headers'],
+    paths: [
+      'req.headers.cookie',
+      'req.headers.authorization',
+      'res.headers',
+      // Redact Spotify tokens in log bodies
+      'body.access_token',
+      'body.refresh_token',
+    ],
     remove: true,
   },
 }
@@ -39,6 +46,12 @@ const logger = pino(pinoOptions) as Logger
 
 const httpLogger = pinoHttp({
   logger: logger as pino.Logger,
+  autoLogging: {
+    ignore: (req) => {
+      const pathsToIgnore = ['/api/auth', '/api/health']
+      return pathsToIgnore.includes(req.url ?? '')
+    },
+  },
   genReqId: function (req: Request, res: Response) {
     const existingID = req.id ?? req.headers['x-request-id']
     if (existingID) return existingID

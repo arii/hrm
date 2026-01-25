@@ -122,4 +122,24 @@ describe('Server Logger', () => {
       })
     )
   })
+
+  it('should ignore specified paths for autoLogging', async () => {
+    jest.doMock('pino', () => ({ __esModule: true, default: pinoMock }))
+    jest.doMock('pino-http', () => ({
+      __esModule: true,
+      default: pinoHttpMock,
+    }))
+
+    await import('../../../utils/logger.server')
+
+    const pinoHttpOptions = pinoHttpMock.mock.calls[0][0]
+    const ignoreFunction = pinoHttpOptions.autoLogging.ignore
+
+    // Test cases
+    expect(ignoreFunction({ url: '/api/health' })).toBe(true)
+    expect(ignoreFunction({ url: '/api/auth' })).toBe(true)
+    expect(ignoreFunction({ url: '/api/v1/users' })).toBe(false)
+    expect(ignoreFunction({ url: '/' })).toBe(false)
+    expect(ignoreFunction({})).toBe(false)
+  })
 })
