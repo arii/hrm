@@ -148,6 +148,30 @@ app.prepare().then(async () => {
     res.status(200).json({ healthy, details })
   })
 
+  // Middleware to protect internal routes
+  const internalApiSecretMiddleware = (req, res, next) => {
+    if (req.headers['x-internal-secret'] !== env.INTERNAL_API_SECRET) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+    next()
+  }
+
+  expressApp.post('/api/internal/sync-token', internalApiSecretMiddleware, express.json(), (req, res) => {
+    const { accessToken } = req.body
+    if (!accessToken) {
+      return res.status(400).json({ error: 'Access token is required' })
+    }
+
+    try {
+      const spotifyService = serviceContainer.get('spotifyService')
+      spotifyService.setAccessToken(accessToken)
+      res.status(200).json({ message: 'Token synced successfully' })
+    } catch (error) {
+      logger.error('Error syncing token in spotifyService:', error)
+      res.status(500).json({ error: 'Internal Server Error' })
+    }
+  })
+
   expressApp.use((req, res) => handle(req, res))
 
   // 5. Upgrade Handling
