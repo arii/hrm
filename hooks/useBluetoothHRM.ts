@@ -244,66 +244,59 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
   }, [])
 
-  // Watchdog for stale data - marks data as stale and triggers reconnection based on timeout
+  // Consolidated watchdog and heartbeat timer
   useEffect(() => {
-    // A timeout of 0 disables the watchdog
-    if (!dataLivenessTimeoutMs) return
-
-    // This interval periodically checks if new data has been received.
+    // A timeout of 0 for dataLivenessTimeoutMs disables the watchdog feature.
+    // The heartbeat for signal quality will still run.
+    let checkCounter = 0
     const interval = setInterval(() => {
+      // --- Heartbeat Logic (runs every second) ---
       if (
         statusRef.current === BluetoothConnectionStatus.CONNECTED &&
+        !isDataStale &&
         lastDataTime.current > 0
       ) {
-        const timeSinceLastData = Date.now() - lastDataTime.current
+        const now = Date.now()
+        const timeSinceLastData = now - lastDataTime.current
 
-        // Mark as stale and show visual feedback when timeout is reached
-        if (timeSinceLastData > dataLivenessTimeoutMs && !isDataStale) {
-          setIsDataStale(true)
-          setStatus(BluetoothConnectionStatus.RECONNECTING)
-          setCustomStatusMessage('Connection unstable. Reconnecting...')
-          isTimeoutDisconnect.current = true
-          if (deviceRef.current?.gatt?.connected)
-            deviceRef.current.gatt.disconnect()
-        } else if (timeSinceLastData <= dataLivenessTimeoutMs && isDataStale) {
-          setIsDataStale(false)
+        const threshold = Math.max(
+          avgPeriodMs.current + MISSED_PACKET_THRESHOLD_BUFFER_MS,
+          MIN_MISSED_PACKET_THRESHOLD_MS
+        )
+
+        if (timeSinceLastData > threshold) {
+          updateSignalPeriod(timeSinceLastData)
         }
       }
-    }, 2000) // Check every 2s
+
+      // --- Watchdog Logic (runs every 2 seconds) ---
+      checkCounter++
+      if (checkCounter % 2 === 0 && dataLivenessTimeoutMs > 0) {
+        if (
+          statusRef.current === BluetoothConnectionStatus.CONNECTED &&
+          lastDataTime.current > 0
+        ) {
+          const timeSinceLastData = Date.now() - lastDataTime.current
+
+          if (timeSinceLastData > dataLivenessTimeoutMs && !isDataStale) {
+            setIsDataStale(true)
+            setStatus(BluetoothConnectionStatus.RECONNECTING)
+            setCustomStatusMessage('Connection unstable. Reconnecting...')
+            isTimeoutDisconnect.current = true
+            if (deviceRef.current?.gatt?.connected)
+              deviceRef.current.gatt.disconnect()
+          } else if (
+            timeSinceLastData <= dataLivenessTimeoutMs &&
+            isDataStale
+          ) {
+            setIsDataStale(false)
+          }
+        }
+      }
+    }, HEARTBEAT_INTERVAL_MS) // Runs every 1s
+
     return () => clearInterval(interval)
-  }, [dataLivenessTimeoutMs, isDataStale])
-
-  // Heartbeat for proactive signal quality assessment
-  useEffect(() => {
-    const heartbeat = setInterval(() => {
-      // Only run when connected and not already stale
-      if (
-        statusRef.current !== BluetoothConnectionStatus.CONNECTED ||
-        isDataStale ||
-        lastDataTime.current === 0
-      ) {
-        return
-      }
-
-      const now = Date.now()
-      const timeSinceLastData = now - lastDataTime.current
-
-      // If the time since the last packet exceeds the current average + a buffer,
-      // it's likely a packet was missed.
-      const threshold = Math.max(
-        avgPeriodMs.current + MISSED_PACKET_THRESHOLD_BUFFER_MS,
-        MIN_MISSED_PACKET_THRESHOLD_MS
-      )
-
-      if (timeSinceLastData > threshold) {
-        updateSignalPeriod(timeSinceLastData)
-        // By updating the period here, we make the signal indicator degrade
-        // proactively, without waiting for the next actual packet.
-      }
-    }, HEARTBEAT_INTERVAL_MS) // Check every second
-
-    return () => clearInterval(heartbeat)
-  }, [isDataStale, updateSignalPeriod])
+  }, [dataLivenessTimeoutMs, isDataStale, updateSignalPeriod])
 
   /**
    * @function disconnect
