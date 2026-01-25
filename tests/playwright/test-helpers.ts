@@ -29,7 +29,6 @@ export {
   getHrMasks,
   getTimerMasks,
   // Setup utilities
-  replaceIframeWithStableWorkout,
   setupVisualRegressionTest,
   setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
