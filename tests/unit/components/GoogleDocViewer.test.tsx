@@ -27,10 +27,7 @@ describe('GoogleDocViewer', () => {
     const refreshButton = screen.getByLabelText('Refresh document')
     fireEvent.click(refreshButton)
     const iframe = screen.getByTitle('Test Document')
-    expect(iframe).toHaveAttribute(
-      'src',
-      expect.stringContaining('timestamp=')
-    )
+    expect(iframe).toHaveAttribute('src', expect.stringContaining('timestamp='))
   })
 
   it('shows the loading skeleton when the refresh button is clicked', () => {
