@@ -9,17 +9,16 @@
  * The session's associated Spotify token is used for synchronization.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { getIronSession } from 'iron-session'
-import { SessionData, sessionOptions } from '@/lib/session'
+import { getSession } from '@/lib/session'
 import { ApiError } from '@/lib/errors'
 import { serviceContainer } from '@/lib/serviceContainer'
 import { ApiSpotifyTokenPayload } from '@/types/spotify'
 import logger from '@/utils/logger'
+import { cookies } from 'next/headers'
 
 export async function POST(_req: NextRequest) {
-  const res = new NextResponse()
   try {
-    const session = await getIronSession<SessionData>(_req, res, sessionOptions)
+    const session = await getSession(cookies())
 
     // 1. Validate session and token existence
     if (!session.token) {
@@ -45,12 +44,14 @@ export async function POST(_req: NextRequest) {
       message: 'Token synchronized successfully.',
     })
   } catch (err) {
-    const errorMessage =
-      err instanceof Error ? err.message : 'An unknown error occurred'
+    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
     const statusCode = err instanceof ApiError ? err.statusCode : 500
 
     logger.error({ err }, `Error in /api/auth/sync: ${errorMessage}`)
 
-    return NextResponse.json({ error: errorMessage }, { status: statusCode })
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: statusCode }
+    )
   }
 }
