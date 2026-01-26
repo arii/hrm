@@ -361,30 +361,30 @@ Then, fill in the variables as described below.
 
 ### Server & Next.js
 
-| Variable       | Description                                     | Default       |
-| -------------- | ----------------------------------------------- | ------------- |
-| **`NODE_ENV`** | The environment your application is running in. | `development` |
-| **`PORT`**     | The port the server will run on.                | `3000`        |
-| **`HOST`**     | The host the server will bind to.               | `127.0.0.1`   |
+| Variable       | Description                                     | Default       | Required |
+| -------------- | ----------------------------------------------- | ------------- | -------- |
+| **`NODE_ENV`** | The environment your application is running in. | `development` | No       |
+| **`PORT`**     | The port the server will run on.                | `3000`        | No       |
+| **`HOST`**     | The host the server will bind to.               | `127.0.0.1`   | No       |
 
 ### Authentication
 
-| Variable              | Description                                                                                | Required                |
-| --------------------- | ------------------------------------------------------------------------------------------ | ----------------------- |
-| **`NEXTAUTH_SECRET`** | A secret key for NextAuth.js session encryption. Generate one with `openssl rand -hex 32`. | **Yes**                 |
-| **`NEXTAUTH_URL`**    | The base URL of your application, used for authentication callbacks.                       | **Yes**                 |
-| **`BASE_URL`**        | An alternative base URL for your application.                                              | `http://127.0.0.1:3000` |
+| Variable              | Description                                                                                                                               | Default                 | Required |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | -------- |
+| **`NEXTAUTH_SECRET`** | A secret key for NextAuth.js session encryption. Generate one with `openssl rand -hex 32`.                                                | -                       | **Yes**  |
+| **`NEXTAUTH_URL`**    | The canonical, public-facing URL of the application. **Required by `next-auth`** for OAuth callbacks and other authentication mechanisms. | -                       | **Yes**  |
+| **`BASE_URL`**        | An optional, alternative base URL. Not used in core application logic but available for other purposes. Defaults to `NEXTAUTH_URL`.       | `http://127.0.0.1:3000` | No       |
 
 ### Spotify API
 
 For Spotify integration, create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and add `http://127.0.0.1:3000/api/auth/callback/spotify` as a Redirect URI in the app settings.
 
-| Variable                    | Description                                            | Required                    |
-| --------------------------- | ------------------------------------------------------ | --------------------------- |
-| **`SPOTIFY_CLIENT_ID`**     | Your Spotify application's Client ID.                  | **Yes**                     |
-| **`SPOTIFY_CLIENT_SECRET`** | Your Spotify application's Client Secret.              | **Yes**                     |
-| **`SPOTIFY_CALLBACK_URL`**  | The callback URL for Spotify authentication.           | `http://127.0.0.1:3000/...` |
-| **`SPOTIFY_DEBUG`**         | Set to `true` or `1` to enable Spotify debugging logs. | `false`                     |
+| Variable                    | Description                                                               | Default                                           | Required |
+| --------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------- | -------- |
+| **`SPOTIFY_CLIENT_ID`**     | Your Spotify application's Client ID.                                     | -                                                 | **Yes**  |
+| **`SPOTIFY_CLIENT_SECRET`** | Your Spotify application's Client Secret.                                 | -                                                 | **Yes**  |
+| **`SPOTIFY_CALLBACK_URL`**  | The callback URL for Spotify authentication. Must match the Redirect URI. | `http://127.0.0.1:3000/api/auth/callback/spotify` | No       |
+| **`SPOTIFY_DEBUG`**         | Set to `true` or `1` to enable Spotify debugging logs.                    | `false`                                           | No       |
 
 ### Internal API
 
@@ -394,38 +394,38 @@ For Spotify integration, create an app at the [Spotify Developer Dashboard](http
 
 ### Google Docs
 
-| Variable                           | Description                                                                           | Default                                                                                                                                               |
-| ---------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`GOOGLE_DOC_WORKOUT_URL`**       | The URL of the public Google Doc to be parsed for workout data.                       | [Link](https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true) |
-| **`NEXT_PUBLIC_USE_NATIVE_TABLE`** | Feature flag to switch between the Google Doc iframe and a native table for workouts. | `false`                                                                                                                                               |
+| Variable                           | Description                                                                           | Default                                                                                                                                               | Required |
+| ---------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| **`GOOGLE_DOC_WORKOUT_URL`**       | The URL of the public Google Doc to be parsed for workout data.                       | [Link](https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true) | No       |
+| **`NEXT_PUBLIC_USE_NATIVE_TABLE`** | Feature flag to switch between the Google Doc iframe and a native table for workouts. | `false`                                                                                                                                               | No       |
 
 ### Client-side Configuration
 
 These variables are prefixed with `NEXT_PUBLIC_` and will be exposed to the browser.
 
-| Variable                  | Description                                                                               | Default |
-| ------------------------- | ----------------------------------------------------------------------------------------- | ------- |
-| **`NEXT_PUBLIC_API_URL`** | Overrides the default base URL for API requests. Defaults to the current origin.          | `''`    |
-| **`NEXT_PUBLIC_WS_URL`**  | Overrides the default base URL for WebSocket connections. Defaults to the current origin. | `''`    |
+| Variable                  | Description                                                                               | Default | Required |
+| ------------------------- | ----------------------------------------------------------------------------------------- | ------- | -------- |
+| **`NEXT_PUBLIC_API_URL`** | Overrides the default base URL for API requests. Defaults to the current origin.          | `''`    | No       |
+| **`NEXT_PUBLIC_WS_URL`**  | Overrides the default base URL for WebSocket connections. Defaults to the current origin. | `''`    | No       |
 
 ### Rate Limiting
 
-| Variable                        | Description                                                      | Default |
-| ------------------------------- | ---------------------------------------------------------------- | ------- |
-| **`RATE_LIMIT_WINDOW_MS`**      | The window in milliseconds for rate limiting.                    | `60000` |
-| **`SPOTIFY_API_MAX_REQUESTS`**  | The maximum number of requests for the Spotify API per window.   | `30`    |
-| **`INTERNAL_API_MAX_REQUESTS`** | The maximum number of requests for the internal API per window.  | `100`   |
-| **`GENERAL_API_MAX_REQUESTS`**  | The maximum number of requests for general API usage per window. | `200`   |
+| Variable                        | Description                                                      | Default | Required |
+| ------------------------------- | ---------------------------------------------------------------- | ------- | -------- |
+| **`RATE_LIMIT_WINDOW_MS`**      | The window in milliseconds for rate limiting.                    | `60000` | No       |
+| **`SPOTIFY_API_MAX_REQUESTS`**  | The maximum number of requests for the Spotify API per window.   | `30`    | No       |
+| **`INTERNAL_API_MAX_REQUESTS`** | The maximum number of requests for the internal API per window.  | `100`   | No       |
+| **`GENERAL_API_MAX_REQUESTS`**  | The maximum number of requests for general API usage per window. | `200`   | No       |
 
 ### WebSocket Server
 
 These variables control the behavior of the WebSocket server.
 
-| Variable                          | Description                                                                                                                                                         | Default |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| **`WS_MAX_CONNECTIONS`**          | The maximum number of concurrent WebSocket connections.                                                                                                             | `5`     |
-| **`WEBSOCKET_GRACE_PERIOD_MS`**   | The time in milliseconds the server waits before cleaning up a disconnected client's session data. This allows for brief network interruptions without losing data. | `5000`  |
-| **`WEBSOCKET_WATCHDOG_INTERVAL`** | The interval in milliseconds at which the server's "watchdog" process checks for and terminates unresponsive connections.                                           | `30000` |
+| Variable                          | Description                                                                                                                                                         | Default | Required |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------- |
+| **`WS_MAX_CONNECTIONS`**          | The maximum number of concurrent WebSocket connections.                                                                                                             | `5`     | No       |
+| **`WEBSOCKET_GRACE_PERIOD_MS`**   | The time in milliseconds the server waits before cleaning up a disconnected client's session data. This allows for brief network interruptions without losing data. | `5000`  | No       |
+| **`WEBSOCKET_WATCHDOG_INTERVAL`** | The interval in milliseconds at which the server's "watchdog" process checks for and terminates unresponsive connections.                                           | `30000` | No       |
 
 ## Documentation
 
