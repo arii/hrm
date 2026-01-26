@@ -29,8 +29,8 @@ describe('useBluetoothHRM Comprehensive Tests', () => {
     id: string
     name: string
     gatt: {
-        connect: jest.Mock<any, any, any>;
-        disconnect: jest.Mock<any, any, any>;
+      connect: jest.Mock<any, any, any>
+      disconnect: jest.Mock<any, any, any>
     }
     addEventListener: jest.Mock
     removeEventListener: jest.Mock
@@ -96,9 +96,9 @@ describe('useBluetoothHRM Comprehensive Tests', () => {
       gatt: {
         connect: jest.fn().mockResolvedValue(mockGattServer),
         disconnect: jest.fn(() => {
-            if (gattServerDisconnectedCallback) {
-                gattServerDisconnectedCallback();
-            }
+          if (gattServerDisconnectedCallback) {
+            gattServerDisconnectedCallback()
+          }
         }),
       },
       addEventListener: jest.fn((event, callback) => {
