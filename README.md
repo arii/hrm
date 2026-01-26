@@ -388,9 +388,9 @@ For Spotify integration, create an app at the [Spotify Developer Dashboard](http
 
 ### Internal API
 
-| Variable                             | Description                                                 | Required |
-| ------------------------------------ | ----------------------------------------------------------- | -------- |
-| **`INTERNAL_TOKEN_DELIVERY_SECRET`** | A secret for securing the internal token delivery endpoint. | No       |
+| Variable                             | Description                                                 | Default | Required |
+| ------------------------------------ | ----------------------------------------------------------- | ------- | -------- |
+| **`INTERNAL_TOKEN_DELIVERY_SECRET`** | A secret for securing the internal token delivery endpoint. | -       | No       |
 
 ### Google Docs
 
@@ -421,11 +421,11 @@ These variables are prefixed with `NEXT_PUBLIC_` and will be exposed to the brow
 
 These variables control the behavior of the WebSocket server.
 
-| Variable                          | Description                                                                                                                                                         | Default | Required |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------- |
-| **`WS_MAX_CONNECTIONS`**          | The maximum number of concurrent WebSocket connections.                                                                                                             | `5`     | No       |
-| **`WEBSOCKET_GRACE_PERIOD_MS`**   | The time in milliseconds the server waits before cleaning up a disconnected client's session data. This allows for brief network interruptions without losing data. | `5000`  | No       |
-| **`WEBSOCKET_WATCHDOG_INTERVAL`** | The interval in milliseconds at which the server's "watchdog" process checks for and terminates unresponsive connections.                                           | `30000` | No       |
+| Variable                          | Description                                                                                                                                                                                           | Default | Required |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------- |
+| **`WS_MAX_CONNECTIONS`**          | The maximum number of concurrent WebSocket connections.                                                                                                                                               | `5`     | No       |
+| **`WEBSOCKET_GRACE_PERIOD_MS`**   | The time in milliseconds the server retains a disconnected client's session data. This allows users to refresh or briefly lose connection without their HR data being immediately cleared.            | `5000`  | No       |
+| **`WEBSOCKET_WATCHDOG_INTERVAL`** | The interval in milliseconds for the server's heartbeat check. The watchdog terminates any active connections that fail to respond to a ping, preventing "zombie" connections from leaking resources. | `30000` | No       |
 
 ## Documentation
 
