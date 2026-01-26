@@ -5,7 +5,6 @@ import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM from './useBluetoothHRM'
 import * as WebSocketContext from '../context/WebSocketContext'
 import * as cookieUtils from '../utils/cookies'
-import { BluetoothConnectionStatus } from '../types/bluetooth'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
@@ -92,7 +91,7 @@ describe('useBluetoothHRM', () => {
 
     expect(mockBluetooth.getDevices).toHaveBeenCalled()
     expect(mockGatt.connect).not.toHaveBeenCalled()
-    expect(result.current.status).toBe(BluetoothConnectionStatus.DISCONNECTED)
+    expect(result.current.deviceStatus).toBe('Disconnected')
   })
 
   it('should auto-connect to a saved device', async () => {
@@ -106,7 +105,7 @@ describe('useBluetoothHRM', () => {
 
     expect(mockBluetooth.getDevices).toHaveBeenCalled()
     expect(mockGatt.connect).toHaveBeenCalled()
-    expect(result.current.status).toBe(BluetoothConnectionStatus.CONNECTED)
+    expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
   })
 
   it('should handle silent connection failure gracefully', async () => {
@@ -119,7 +118,7 @@ describe('useBluetoothHRM', () => {
       await result.current.autoConnect()
     })
 
-    expect(result.current.status).toBe(BluetoothConnectionStatus.DISCONNECTED)
+    expect(result.current.deviceStatus).toBe('Disconnected')
   })
 
   it('should not show device picker in silent mode', async () => {

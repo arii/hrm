@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { BluetoothConnectionStatus } from '../types/bluetooth'
 
 // --- State, Actions, and Reducer for managing session state ---
 
@@ -86,12 +87,12 @@ function sessionReducer(
  * across the application.
  */
 interface WorkoutSessionOptions {
-  isConnected: boolean
+  bluetoothStatus: BluetoothConnectionStatus
   totalCalories?: number
 }
 
 export const useWorkoutSession = ({
-  isConnected,
+  bluetoothStatus,
   totalCalories = 0,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
@@ -112,17 +113,17 @@ export const useWorkoutSession = ({
     dispatch({ type: 'UPDATE_CALORIES', payload: totalCalories })
   }, [totalCalories, state.status, startCalories])
 
-  const prevIsConnected = useRef(isConnected)
+  const prevBluetoothStatus = useRef(bluetoothStatus)
   useEffect(() => {
-    if (prevIsConnected.current !== isConnected) {
-      if (isConnected) {
+    if (prevBluetoothStatus.current !== bluetoothStatus) {
+      if (bluetoothStatus === BluetoothConnectionStatus.CONNECTED) {
         dispatch({ type: 'CONNECT' })
       } else {
         dispatch({ type: 'DISCONNECT' })
       }
-      prevIsConnected.current = isConnected
+      prevBluetoothStatus.current = bluetoothStatus
     }
-  }, [isConnected])
+  }, [bluetoothStatus])
 
   useEffect(() => {
     const session = sessionDataRef.current
@@ -172,7 +173,6 @@ export const useWorkoutSession = ({
     session.pauseTime = null
     session.totalPaused = 0
     setStartCalories(0)
-    prevIsConnected.current = false
     dispatch({ type: 'RESET' })
   }, [])
 

@@ -100,6 +100,25 @@ export default function ConnectPage() {
   )
 
   const {
+    connectAndStream,
+    autoConnect,
+    disconnect,
+    forgetDevice,
+    deviceStatus,
+    batteryLevel,
+    isConnected,
+    isDataStale,
+    isSupported,
+    signalPeriodMs,
+    status: bluetoothStatus,
+  } = useBluetoothHRM({
+    userName,
+    userAge: userAge || 0,
+    onHeartRateUpdate: handleHeartRateUpdate,
+    onConnect: () => startWorkoutRef.current?.(),
+  })
+
+  const {
     workoutDuration,
     resetWorkout: resetWorkoutSession,
     hasStarted,
@@ -108,41 +127,14 @@ export default function ConnectPage() {
     endWorkout,
     workoutStatus,
   } = useWorkoutSession({
-    isConnected,
+    bluetoothStatus,
     totalCalories: calories,
   })
 
-  // Callback for raw heart rate updates from the Bluetooth hook
-  const handleHeartRateUpdate = useCallback(
-    (heartRate: number) => {
-      logger.debug(
-        { heartRate },
-        'handleHeartRateUpdate called, updating local state'
-      )
-      setCurrentHR(heartRate)
-      if (workoutStatus === 'running') {
-        processHeartRate(heartRate)
-      }
-    },
-    [processHeartRate, workoutStatus, setCurrentHR]
-  )
-  const {
-    connectAndStream,
-    autoConnect,
-    disconnect,
-    forgetDevice,
-    status,
-    batteryLevel,
-    isConnected,
-    isDataStale,
-    isSupported,
-    signalPeriodMs,
-  } = useBluetoothHRM({
-    userName,
-    userAge: userAge || 0,
-    onHeartRateUpdate: handleHeartRateUpdate,
-    onConnect: startWorkout,
-  })
+  const startWorkoutRef = useRef(startWorkout)
+  useEffect(() => {
+    startWorkoutRef.current = startWorkout
+  }, [startWorkout])
 
   useEffect(() => {
     // Try to auto-connect when WebSocket is ready and we're not already connected.
@@ -219,7 +211,7 @@ export default function ConnectPage() {
       onUnitChange={handleUnitChange}
       isConnected={isConnected}
       isDataStale={isDataStale}
-      status={status}
+      deviceStatus={deviceStatus}
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}
@@ -232,6 +224,7 @@ export default function ConnectPage() {
         progressColor: hrZoneProps.progressColor,
       }}
       connectionStatus={connectionStatus}
+      bluetoothStatus={bluetoothStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}
       onReset={resetWorkout}
