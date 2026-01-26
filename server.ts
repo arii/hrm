@@ -15,7 +15,6 @@ import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.server.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
-import { internalApiSecretMiddleware } from './lib/middleware/internalApiSecretMiddleware.js'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -139,31 +138,6 @@ app.prepare().then(async () => {
   expressApp.get('/api/internal/health/services', async (_req, res) => {
     const timerCheck = checkTimerService(services.tabataService)
     const wsCheck = await checkWebSocketService()
-
-    const healthy = timerCheck.healthy && wsCheck.healthy
-    const details = {
-      timer: timerCheck,
-      websocket: wsCheck,
-    }
-
-    res.status(200).json({ healthy, details })
-  })
-
-  expressApp.post(
-    '/api/internal/token-delivery',
-    internalApiSecretMiddleware,
-    express.json(),
-    async (req, res) => {
-      try {
-        const spotifyService = serviceContainer.get('spotifyService');
-        await spotifyService.handleTokenUpdate(req.body);
-        res.status(200).json({ success: true });
-      } catch (error) {
-        logger.error({ err: error }, 'Error in token-delivery');
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
-      }
-    }
-  );
 
     const healthy = timerCheck.healthy && wsCheck.healthy
     const details = {
