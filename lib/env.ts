@@ -12,7 +12,7 @@ const envSchema = z.object({
   SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
   SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
   SPOTIFY_CALLBACK_URL: z.string().url().optional(),
-  INTERNAL_API_SECRET: z.string().min(1),
+  INTERNAL_TOKEN_DELIVERY_SECRET: z.string().optional(),
   SPOTIFY_DEBUG: z.string().optional(),
   CI: z.string().optional(),
   GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
