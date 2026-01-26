@@ -10,6 +10,8 @@ import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
+import IconButton from '@mui/material/IconButton'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
@@ -52,7 +54,12 @@ const mainGridStyles: SxProps = {
 const Dashboard = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
+
+  const handleRefresh = () => {
+    setRefreshKey((prevKey) => prevKey + 1)
+  }
 
   const handleInteraction = () => {
     if (!audioInitialized) {
@@ -97,8 +104,19 @@ const Dashboard = () => {
         <HrmConnectionPanel />
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <h2 style={{ flexGrow: 1, margin: 0 }}>
+            Today&apos;s Training Regimen
+          </h2>
+          <IconButton
+            onClick={handleRefresh}
+            aria-label="refresh workout table"
+          >
+            <RefreshIcon />
+          </IconButton>
+        </Box>
         {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ? (
-          <WorkoutTableViewer docId={DOC_ID} />
+          <WorkoutTableViewer docId={DOC_ID} refreshKey={refreshKey} />
         ) : (
           <GoogleDocViewer
             title="Today's Training Regimen"
@@ -106,6 +124,7 @@ const Dashboard = () => {
             height={500}
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
+            refreshKey={refreshKey}
           />
         )}
       </Box>

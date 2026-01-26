@@ -23,9 +23,13 @@ interface WorkoutData {
 
 interface WorkoutTableViewerProps {
   docId: string
+  refreshKey?: number
 }
 
-export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
+export default function WorkoutTableViewer({
+  docId,
+  refreshKey,
+}: WorkoutTableViewerProps) {
   const [data, setData] = useState<WorkoutData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -34,6 +38,7 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
     const fetchData = async () => {
       try {
         setLoading(true)
+        setError(null) // Reset error on re-fetch
         const res = await fetch(`/api/workout?docId=${docId}`)
         if (!res.ok) throw new Error('Failed to load workout data')
         const json = await res.json()
@@ -48,7 +53,7 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
     if (docId) {
       fetchData()
     }
-  }, [docId])
+  }, [docId, refreshKey])
 
   if (loading) {
     return (
