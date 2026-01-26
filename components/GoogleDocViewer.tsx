@@ -33,9 +33,9 @@ const GoogleDocViewer = ({
   const [iframeLoading, setIframeLoading] = useState(true)
 
   // Ensure embedUrl always includes ?embedded=true
-  const finalEmbedUrl = embedUrl.includes('?')
-    ? `${embedUrl}&embedded=true`
-    : `${embedUrl}?embedded=true`
+  const url = new URL(embedUrl)
+  url.searchParams.set('embedded', 'true')
+  const finalEmbedUrl = url.toString()
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
 
