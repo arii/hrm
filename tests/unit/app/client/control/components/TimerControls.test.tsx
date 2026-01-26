@@ -118,7 +118,7 @@ describe('TimerControls', () => {
     const { rerender } = render(
       <WebSocketContext.Provider value={mockWebSocketContext}>
         <TimerControls />
-      </WebSocket.Provider>
+      </WebSocketContext.Provider>
     )
 
     // Simulate connection drop
@@ -156,7 +156,7 @@ describe('TimerControls', () => {
     const { rerender } = render(
       <WebSocketContext.Provider value={mockWebSocketContext}>
         <TimerControls />
-      </WebSocket.Provider>
+      </WebSocketContext.Provider>
     )
 
     const startButton = screen.getByTestId('start-timer-button')
@@ -172,7 +172,7 @@ describe('TimerControls', () => {
     rerender(
       <WebSocketContext.Provider value={mockWebSocketContext}>
         <TimerControls />
-      </WebSocket.Provider>
+      </WebSocketContext.Provider>
     )
 
     // Advance timers past the safety timeout
