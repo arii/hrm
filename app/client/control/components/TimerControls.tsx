@@ -92,13 +92,15 @@ const TimerControls = () => {
   }, [optimisticAction])
 
   useEffect(() => {
+    if (connectionStatus !== 'Connected') return
+
     const message: TimerConfigMessage = {
       type: 'TIMER_CONFIG',
       workDuration: debouncedWorkTime,
       restDuration: debouncedRestTime,
     }
     sendData(message)
-  }, [debouncedWorkTime, debouncedRestTime, sendData])
+  }, [debouncedWorkTime, debouncedRestTime, sendData, connectionStatus])
 
   const { spotifyData } = useWebSocket()
   const spotifyDeviceId = useMemo(
