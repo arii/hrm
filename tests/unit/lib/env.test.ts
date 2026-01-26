@@ -61,7 +61,9 @@ describe('Environment Variables', () => {
     process.env.SPOTIFY_CLIENT_ID = 'id'
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
     const { env } = await import('../../../lib/env')
-    expect(env.SPOTIFY_CALLBACK_URL).toBe('http://localhost:3000/api/auth/callback/spotify')
+    expect(env.SPOTIFY_CALLBACK_URL).toBe(
+      'http://localhost:3000/api/auth/callback/spotify'
+    )
   })
 
   it('should throw an error if Spotify credentials are provided but callback URL cannot be determined', async () => {
