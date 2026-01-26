@@ -27,7 +27,6 @@ import {
   OPTIMISTIC_ACTION_TIMEOUT,
 } from '../constants'
 
-
 const actionButtonBaseSx = {
   flex: 1,
   width: '100%',
