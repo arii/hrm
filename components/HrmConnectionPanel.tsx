@@ -39,6 +39,7 @@ const HrmConnectionPanel = () => {
 
   return (
     <Box
+      data-testid="hrm-connection-panel"
       sx={{
         display: 'flex',
         flexWrap: 'wrap',
