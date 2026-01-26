@@ -361,7 +361,6 @@ const TimerControls = () => {
                 data-testid="start-timer-button"
                 variant="contained"
                 onClick={() => sendTimerCommand('START')}
-                disabled={connectionStatus !== 'Connected'}
                 sx={startButtonSx}
                 startIcon={<PlayArrow fontSize="large" />}
               >
@@ -372,7 +371,6 @@ const TimerControls = () => {
                 data-testid="stop-timer-button"
                 variant="contained"
                 onClick={() => sendTimerCommand('STOP')}
-                disabled={connectionStatus !== 'Connected'}
                 sx={stopButtonSx}
                 startIcon={<Stop fontSize="large" />}
               >
