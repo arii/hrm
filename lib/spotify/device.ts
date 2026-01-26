@@ -18,9 +18,11 @@ export function resolveSpotifyDeviceId(
     return activeDevice.id
   }
 
-  // 2. Prioritize preferred device types
+  // 2. Prioritize preferred device types (case-insensitive)
   for (const preferredType of preferredDeviceTypes) {
-    const preferredDevice = devices.find((d) => d.type === preferredType)
+    const preferredDevice = devices.find(
+      (d) => d.type.toLowerCase() === preferredType.toLowerCase()
+    )
     if (preferredDevice) {
       return preferredDevice.id
     }

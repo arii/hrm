@@ -80,4 +80,11 @@ describe('resolveSpotifyDeviceId', () => {
       'MOCK_DEVICE_ID_1'
     )
   })
+
+  it('should perform case-insensitive matching for preferred device types', () => {
+    const preferredTypes = ['mock_device_type_2']
+    expect(resolveSpotifyDeviceId(mockDevices, preferredTypes)).toBe(
+      'MOCK_DEVICE_ID_2'
+    )
+  })
 })
