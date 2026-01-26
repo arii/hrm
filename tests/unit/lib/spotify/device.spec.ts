@@ -42,19 +42,42 @@ describe('resolveSpotifyDeviceId', () => {
     expect(resolveSpotifyDeviceId([])).toBe('')
   })
 
-  it('should return the first device ID if no device is active', () => {
+  it('should return the first device ID if no device is active and no preferred types are provided', () => {
     expect(resolveSpotifyDeviceId(mockDevices)).toBe('MOCK_DEVICE_ID_1')
   })
 
   it('should return the active device ID if one is active', () => {
-    const devices = [...mockDevices]
+    const devices = JSON.parse(JSON.stringify(mockDevices))
     devices[1].is_active = true
     expect(resolveSpotifyDeviceId(devices)).toBe('MOCK_DEVICE_ID_2')
   })
 
-  it('should return the active device ID if multiple devices are present but only one is active', () => {
-    const devices = [...mockDevices]
+  it('should return the active device ID even if preferred types are provided', () => {
+    const devices = JSON.parse(JSON.stringify(mockDevices))
     devices[2].is_active = true
-    expect(resolveSpotifyDeviceId(devices)).toBe('MOCK_DEVICE_ID_3')
+    expect(resolveSpotifyDeviceId(devices, ['MOCK_DEVICE_TYPE_1'])).toBe(
+      'MOCK_DEVICE_ID_3',
+    )
+  })
+
+  it('should return the first preferred device type if no device is active', () => {
+    const preferredTypes = ['MOCK_DEVICE_TYPE_2', 'MOCK_DEVICE_TYPE_3']
+    expect(resolveSpotifyDeviceId(mockDevices, preferredTypes)).toBe(
+      'MOCK_DEVICE_ID_2',
+    )
+  })
+
+  it('should return the second preferred device type if the first is not available', () => {
+    const preferredTypes = ['NonExistentType', 'MOCK_DEVICE_TYPE_3']
+    expect(resolveSpotifyDeviceId(mockDevices, preferredTypes)).toBe(
+      'MOCK_DEVICE_ID_3',
+    )
+  })
+
+  it('should return the first device if no preferred types match and no device is active', () => {
+    const preferredTypes = ['NonExistentType1', 'NonExistentType2']
+    expect(resolveSpotifyDeviceId(mockDevices, preferredTypes)).toBe(
+      'MOCK_DEVICE_ID_1',
+    )
   })
 })

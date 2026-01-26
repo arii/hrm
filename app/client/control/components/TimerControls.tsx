@@ -104,7 +104,11 @@ const TimerControls = () => {
 
   const { spotifyData } = useWebSocket()
   const spotifyDeviceId = useMemo(
-    () => resolveSpotifyDeviceId(spotifyData.devices || []),
+    () =>
+      resolveSpotifyDeviceId(spotifyData.devices || [], [
+        'Computer',
+        'Speaker',
+      ]),
     [spotifyData.devices]
   )
 
