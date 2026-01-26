@@ -30,3 +30,32 @@ export const getCookie = (name: string): string => {
     return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
   }, '')
 }
+
+/**
+ * @function setConnectionCookie
+ * @description Stores connection preferences in a cookie for easy auto-fill.
+ * Useful as a fallback when localStorage is unavailable.
+ * @param {object} preferences - Connection preferences object
+ * @param {number} [days=30] - Days until cookie expires
+ */
+export const setConnectionCookie = (
+  preferences: Record<string, unknown>,
+  days = 30
+) => {
+  setCookie('hrm-connection-prefs', JSON.stringify(preferences), days)
+}
+
+/**
+ * @function getConnectionCookie
+ * @description Retrieves stored connection preferences from a cookie.
+ * @returns {object|null} Parsed preferences or null if not found
+ */
+export const getConnectionCookie = (): Record<string, unknown> | null => {
+  const cookie = getCookie('hrm-connection-prefs')
+  if (!cookie) return null
+  try {
+    return JSON.parse(cookie)
+  } catch {
+    return null
+  }
+}

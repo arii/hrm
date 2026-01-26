@@ -44,6 +44,12 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 describe('useLocalStorage', () => {
   beforeEach(() => {
     window.localStorage.clear()
+    // Clear cookies
+    document.cookie.split(';').forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, '')
+        .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`)
+    })
   })
 
   it('should return the initial value when localStorage is empty', () => {
@@ -120,5 +126,47 @@ describe('useLocalStorage', () => {
     expect(result.current[0].userName).toBe('John Doe')
     const fromStorage = JSON.parse(window.localStorage.getItem(TEST_KEY)!)
     expect(fromStorage.userName).toBe('John Doe')
+  })
+
+  it('should fallback to cookie when localStorage is empty', () => {
+    const storedPrefs = {
+      ...DEFAULT_PREFERENCES,
+      userName: 'Cookie User',
+      userAge: 40,
+    }
+    // Set a cookie with the same key
+    document.cookie = `${TEST_KEY}=${encodeURIComponent(JSON.stringify(storedPrefs))}; path=/`
+
+    const { result } = renderHook(() =>
+      useLocalStorage(TEST_KEY, DEFAULT_PREFERENCES)
+    )
+
+    expect(result.current[0].userName).toBe('Cookie User')
+    expect(result.current[0].userAge).toBe(40)
+  })
+
+  it('should prefer localStorage over cookie', () => {
+    const localStoragePrefs = {
+      ...DEFAULT_PREFERENCES,
+      userName: 'LocalStorage User',
+      userAge: 25,
+    }
+    const cookiePrefs = {
+      ...DEFAULT_PREFERENCES,
+      userName: 'Cookie User',
+      userAge: 40,
+    }
+
+    // Set both localStorage and cookie
+    window.localStorage.setItem(TEST_KEY, JSON.stringify(localStoragePrefs))
+    document.cookie = `${TEST_KEY}=${encodeURIComponent(JSON.stringify(cookiePrefs))}; path=/`
+
+    const { result } = renderHook(() =>
+      useLocalStorage(TEST_KEY, DEFAULT_PREFERENCES)
+    )
+
+    // Should use localStorage value, not cookie
+    expect(result.current[0].userName).toBe('LocalStorage User')
+    expect(result.current[0].userAge).toBe(25)
   })
 })

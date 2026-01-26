@@ -7,6 +7,14 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return proto === null || proto === Object.prototype
 }
 
+function getCookieValue(name: string): string {
+  if (typeof document === 'undefined') return ''
+  return document.cookie.split('; ').reduce((r, v) => {
+    const parts = v.split('=')
+    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
+  }, '')
+}
+
 // Hook
 function useLocalStorage<T>(key: string, initialValue: T) {
   // 1. Initialize state with initialValue to match Server Side rendering.
@@ -20,7 +28,16 @@ function useLocalStorage<T>(key: string, initialValue: T) {
     }
 
     try {
-      const item = window.localStorage.getItem(key)
+      let item = window.localStorage.getItem(key)
+
+      // If localStorage is empty, try reading from a corresponding cookie
+      if (!item) {
+        const cookieValue = getCookieValue(key)
+        if (cookieValue) {
+          item = cookieValue
+        }
+      }
+
       if (item) {
         const parsed = JSON.parse(item)
 
@@ -62,7 +79,10 @@ function useLocalStorage<T>(key: string, initialValue: T) {
         }
       }
     } catch (error) {
-      console.error(`Error reading or parsing localStorage key “${key}”`, error)
+      console.error(
+        `Error reading or parsing localStorage/cookie key "${key}"`,
+        error
+      )
     }
   }, [key, initialValue])
 
