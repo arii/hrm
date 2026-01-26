@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.27.0](https://github.com/arii/hrm/compare/hrm-v0.26.0...hrm-v0.27.0) (2026-01-26)
+
+
+### Features
+
+* **small:** Fix Timer UI/Server State Divergence ([#4132](https://github.com/arii/hrm/issues/4132)) ([31a0b81](https://github.com/arii/hrm/commit/31a0b81c66d6243f17be124a67185a526a68e189))
+* **small:** Stabilize HrmConnectionPanel Rendering in Visual Regression Tests ([#4143](https://github.com/arii/hrm/issues/4143)) ([df75650](https://github.com/arii/hrm/commit/df75650894fc08afbd6019089ffb30bfc5c506de))
+
 ## [0.26.0](https://github.com/arii/hrm/compare/hrm-v0.25.0...hrm-v0.26.0) (2026-01-25)
 
 
