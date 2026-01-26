@@ -1,7 +1,7 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
-import logger from '../utils/logger.server'
+import logger from '../utils/logger.server.js'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
 
 /**
