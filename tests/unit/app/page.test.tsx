@@ -1,15 +1,19 @@
 /** @jest-environment jsdom */
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import Dashboard from '../../../app/page'
 
 // Mock child components to isolate the Dashboard component
 jest.mock('../../../components/WorkoutTableViewer', () => {
-  const WorkoutTableViewer = () => <div data-testid="workout-table-viewer" />
+  const WorkoutTableViewer = ({ refreshKey }: { refreshKey: number }) => (
+    <div data-testid="workout-table-viewer" data-refresh-key={refreshKey} />
+  )
   WorkoutTableViewer.displayName = 'WorkoutTableViewer'
   return WorkoutTableViewer
 })
 jest.mock('../../../components/GoogleDocViewer', () => {
-  const GoogleDocViewer = () => <div data-testid="google-doc-viewer" />
+  const GoogleDocViewer = ({ refreshKey }: { refreshKey: number }) => (
+    <div data-testid="google-doc-viewer" data-refresh-key={refreshKey} />
+  )
   GoogleDocViewer.displayName = 'GoogleDocViewer'
   return GoogleDocViewer
 })
@@ -66,5 +70,30 @@ describe('Dashboard', () => {
       await screen.findByTestId('workout-table-viewer')
     ).toBeInTheDocument()
     expect(screen.queryByTestId('google-doc-viewer')).not.toBeInTheDocument()
+  })
+
+  it('passes a new refreshKey to child components when refresh button is clicked', async () => {
+    process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'true'
+    render(<Dashboard />)
+
+    const workoutTableViewer = await screen.findByTestId('workout-table-viewer')
+    const initialRefreshKey =
+      workoutTableViewer.getAttribute('data-refresh-key')
+
+    const refreshButton = screen.getByRole('button', {
+      name: /refresh workout table/i,
+    })
+    fireEvent.click(refreshButton)
+
+    const updatedWorkoutTableViewer = await screen.findByTestId(
+      'workout-table-viewer'
+    )
+    const updatedRefreshKey =
+      updatedWorkoutTableViewer.getAttribute('data-refresh-key')
+
+    expect(updatedRefreshKey).not.toBe(initialRefreshKey)
+    expect(parseInt(updatedRefreshKey as string)).toBe(
+      parseInt(initialRefreshKey as string) + 1
+    )
   })
 })
