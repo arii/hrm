@@ -351,50 +351,81 @@ This workspace is pre-configured for a seamless development experience with VS C
 
 ## Environment Variables
 
-Create a `.env.local` file in the root directory for secrets:
+To configure the application, create a `.env.local` file in the root directory by copying the example file:
 
-```env
-# Spotify OAuth credentials (from developer.spotify.com/dashboard)
-SPOTIFY_CLIENT_ID=your_client_id
-SPOTIFY_CLIENT_SECRET=your_client_secret
-
-# NextAuth.js configuration
-NEXTAUTH_URL=http://127.0.0.1:3000
-NEXTAUTH_SECRET=your_random_secret_here
+```bash
+cp .env.example .env.local
 ```
 
-### Spotify Setup
+Then, fill in the variables as described below.
 
-1. Create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
-2. Add `http://127.0.0.1:3000/api/auth/callback/spotify` as a Redirect URI in the app settings.
-3. Copy the Client ID and Client Secret into your `.env.local` file.
-4. Generate a `NEXTAUTH_SECRET` with `openssl rand -base64 32`.
-5. Restart the server and run `pnpm run verify:spotify` to test the connection.
+### Server & Next.js
 
-### Audio System
+| Variable       | Description                                     | Default       |
+| -------------- | ----------------------------------------------- | ------------- |
+| **`NODE_ENV`** | The environment your application is running in. | `development` |
+| **`PORT`**     | The port the server will run on.                | `3000`        |
+| **`HOST`**     | The host the server will bind to.               | `127.0.0.1`   |
 
-The app includes the original HRM audio feedback system:
+### Authentication
 
-- **Countdown beeps**: Short beeps during the last 3 seconds of any countdown phase
-- **Transition beeps**: Long beeps when phases change (prepare→work, work→rest, rest→work)
-- **Volume control**: Synchronized with Spotify volume controls
-- **Audio files**: Located in `public/assets/` (beep-01a.wav, beep-07.wav)
+| Variable              | Description                                                                                | Required                |
+| --------------------- | ------------------------------------------------------------------------------------------ | ----------------------- |
+| **`NEXTAUTH_SECRET`** | A secret key for NextAuth.js session encryption. Generate one with `openssl rand -hex 32`. | **Yes**                 |
+| **`NEXTAUTH_URL`**    | The base URL of your application, used for authentication callbacks.                       | **Yes**                 |
+| **`BASE_URL`**        | An alternative base URL for your application.                                              | `http://127.0.0.1:3000` |
+
+### Spotify API
+
+For Spotify integration, create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and add `http://127.0.0.1:3000/api/auth/callback/spotify` as a Redirect URI in the app settings.
+
+| Variable                    | Description                                            | Required                    |
+| --------------------------- | ------------------------------------------------------ | --------------------------- |
+| **`SPOTIFY_CLIENT_ID`**     | Your Spotify application's Client ID.                  | **Yes**                     |
+| **`SPOTIFY_CLIENT_SECRET`** | Your Spotify application's Client Secret.              | **Yes**                     |
+| **`SPOTIFY_CALLBACK_URL`**  | The callback URL for Spotify authentication.           | `http://127.0.0.1:3000/...` |
+| **`SPOTIFY_DEBUG`**         | Set to `true` or `1` to enable Spotify debugging logs. | `false`                     |
+
+### Internal API
+
+| Variable                             | Description                                                 | Required |
+| ------------------------------------ | ----------------------------------------------------------- | -------- |
+| **`INTERNAL_TOKEN_DELIVERY_SECRET`** | A secret for securing the internal token delivery endpoint. | No       |
+
+### Google Docs
+
+| Variable                           | Description                                                                           | Default                                                                                                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`GOOGLE_DOC_WORKOUT_URL`**       | The URL of the public Google Doc to be parsed for workout data.                       | [Link](https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true) |
+| **`NEXT_PUBLIC_USE_NATIVE_TABLE`** | Feature flag to switch between the Google Doc iframe and a native table for workouts. | `false`                                                                                                                                               |
+
+### Client-side Configuration
+
+These variables are prefixed with `NEXT_PUBLIC_` and will be exposed to the browser.
+
+| Variable                  | Description                                                                               | Default |
+| ------------------------- | ----------------------------------------------------------------------------------------- | ------- |
+| **`NEXT_PUBLIC_API_URL`** | Overrides the default base URL for API requests. Defaults to the current origin.          | `''`    |
+| **`NEXT_PUBLIC_WS_URL`**  | Overrides the default base URL for WebSocket connections. Defaults to the current origin. | `''`    |
+
+### Rate Limiting
+
+| Variable                        | Description                                                      | Default |
+| ------------------------------- | ---------------------------------------------------------------- | ------- |
+| **`RATE_LIMIT_WINDOW_MS`**      | The window in milliseconds for rate limiting.                    | `60000` |
+| **`SPOTIFY_API_MAX_REQUESTS`**  | The maximum number of requests for the Spotify API per window.   | `30`    |
+| **`INTERNAL_API_MAX_REQUESTS`** | The maximum number of requests for the internal API per window.  | `100`   |
+| **`GENERAL_API_MAX_REQUESTS`**  | The maximum number of requests for general API usage per window. | `200`   |
 
 ### WebSocket Server
 
-These variables control the behavior of the WebSocket server, which manages real-time communication for heart rate data and application state.
+These variables control the behavior of the WebSocket server.
 
-> [!NOTE]
-> The variable `WEBSOCKET_CLEANUP_INTERVAL_MS`, mentioned in the original issue, has been superseded by `WEBSOCKET_WATCHDOG_INTERVAL`, which provides a more specific heartbeat-based approach to cleaning up stale connections.
-
--   **`WEBSOCKET_GRACE_PERIOD_MS`**
-    -   **Purpose**: The time in milliseconds the server will wait before cleaning up a disconnected client's session data. This allows a user to refresh their browser or momentarily lose connection without losing their heart rate data.
-    -   **Default**: `5000` (5 seconds)
-    -   **Impact**: A higher value can consume more server memory by holding onto stale sessions for longer. A lower value may cause users to lose their data on brief disconnects.
--   **`WEBSOCKET_WATCHDOG_INTERVAL`**
-    -   **Purpose**: The interval in milliseconds at which the server's "watchdog" process runs. It checks for and terminates stale or unresponsive WebSocket connections that have not responded to a heartbeat (ping) request. This is the primary mechanism for cleaning up "zombie" connections and preventing resource leaks.
-    -   **Default**: `30000` (30 seconds)
-    -   **Impact**: A shorter interval can be more aggressive in cleaning up dead connections, but may also terminate connections that are only temporarily latent. A longer interval is safer but may allow dead connections to persist for longer.
+| Variable                          | Description                                                                                                                                                         | Default |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| **`WS_MAX_CONNECTIONS`**          | The maximum number of concurrent WebSocket connections.                                                                                                             | `5`     |
+| **`WEBSOCKET_GRACE_PERIOD_MS`**   | The time in milliseconds the server waits before cleaning up a disconnected client's session data. This allows for brief network interruptions without losing data. | `5000`  |
+| **`WEBSOCKET_WATCHDOG_INTERVAL`** | The interval in milliseconds at which the server's "watchdog" process checks for and terminates unresponsive connections.                                           | `30000` |
 
 ## Documentation
 
