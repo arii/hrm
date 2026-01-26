@@ -14,6 +14,7 @@ import { pageVariants } from '@/components/animation/variants'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import { SnackbarProvider } from 'notistack'
 
 export default function Main({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -22,22 +23,24 @@ export default function Main({ children }: { children: React.ReactNode }) {
       <ErrorProvider>
         <LoadingProvider>
           <Providers>
-            <UserSettingsProvider>
-              <TimerSoundProvider>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={pathname}
-                    variants={pageVariants}
-                    initial="initial"
-                    animate="in"
-                    exit="out"
-                    data-testid="main-content-layout"
-                  >
-                    {children}
-                  </motion.div>
-                </AnimatePresence>
-              </TimerSoundProvider>
-            </UserSettingsProvider>
+            <SnackbarProvider>
+              <UserSettingsProvider>
+                <TimerSoundProvider>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={pathname}
+                      variants={pageVariants}
+                      initial="initial"
+                      animate="in"
+                      exit="out"
+                      data-testid="main-content-layout"
+                    >
+                      {children}
+                    </motion.div>
+                  </AnimatePresence>
+                </TimerSoundProvider>
+              </UserSettingsProvider>
+            </SnackbarProvider>
           </Providers>
           <LoadingIndicator />
           <ErrorDisplay />

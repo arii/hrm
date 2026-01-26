@@ -19,8 +19,9 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState, useMemo }' from 'react'
 import { motion } from 'framer-motion'
+import { useSnackbar } from 'notistack'
 import DurationStepper from './DurationStepper'
 
 const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
@@ -49,6 +50,7 @@ const stopButtonSx = {
 }
 
 const TimerControls = () => {
+  const { enqueueSnackbar } = useSnackbar()
   const { timerData, sendData, connectionStatus } = useWebSocket()
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
@@ -81,15 +83,15 @@ const TimerControls = () => {
   useEffect(() => {
     if (optimisticAction) {
       const timer = setTimeout(() => {
-        console.warn(
-          `[TimerControls] Optimistic action "${optimisticAction}" timed out. Reverting UI.`
-        )
+        enqueueSnackbar('Server response timed out. Please try again.', {
+          variant: 'warning',
+        })
         setOptimisticAction(null)
       }, OPTIMISTIC_ACTION_TIMEOUT)
       return () => clearTimeout(timer)
     }
     return () => {}
-  }, [optimisticAction])
+  }, [optimisticAction, enqueueSnackbar])
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') return
@@ -128,9 +130,9 @@ const TimerControls = () => {
 
       // If disconnected, revert the optimistic update after a short delay
       if (connectionStatus !== 'Connected') {
-        console.warn(
-          `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
-        )
+        enqueueSnackbar('Connection lost. Please check your network.', {
+          variant: 'error',
+        })
         setTimeout(() => {
           setOptimisticAction(null)
         }, DISCONNECTED_UI_REVERT_DELAY)
@@ -152,7 +154,14 @@ const TimerControls = () => {
       if (command === 'START') sendSpotifyCommand('NEXT')
       else if (command === 'STOP') sendSpotifyCommand('PAUSE')
     },
-    [sendData, sendSpotifyCommand, connectionStatus, workTime, restTime]
+    [
+      sendData,
+      sendSpotifyCommand,
+      connectionStatus,
+      workTime,
+      restTime,
+      enqueueSnackbar,
+    ]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
