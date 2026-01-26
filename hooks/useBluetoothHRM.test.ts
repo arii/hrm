@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react'
-import useBluetoothHRM from './useBluetoothHRM'
+import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from './useBluetoothHRM'
 import * as WebSocketContext from '../context/WebSocketContext'
 import * as cookieUtils from '../utils/cookies'
 
@@ -17,10 +17,37 @@ jest.mock('@/utils/logger', () => ({
   error: jest.fn(),
 }))
 
+// Type definitions for mocks to avoid @ts-expect-error
+interface MockCharacteristic {
+  startNotifications: jest.Mock<Promise<void>>
+  addEventListener: jest.Mock
+}
+
+interface MockService {
+  getCharacteristic: jest.Mock<Promise<MockCharacteristic>>
+}
+
+interface MockGatt {
+  connect: jest.Mock<
+    Promise<{ getPrimaryService: jest.Mock<Promise<MockService>> }>
+  >
+  disconnect: jest.Mock<void>
+}
+
+interface MockDevice {
+  id: string
+  name: string
+  gatt: MockGatt
+  addEventListener: jest.Mock
+}
+
 describe('useBluetoothHRM', () => {
-  let mockGatt: jest.Mock
-  let mockDevice: jest.Mock
-  let mockBluetooth: jest.Mock
+  let mockGatt: MockGatt
+  let mockDevice: MockDevice
+  let mockBluetooth: {
+    requestDevice: jest.Mock<Promise<MockDevice>>
+    getDevices: jest.Mock<Promise<MockDevice[]>>
+  }
 
   beforeEach(() => {
     // Reset mocks before each test
@@ -158,11 +185,14 @@ describe('useBluetoothHRM', () => {
     )
 
     // Make the connect call a promise that we can control, so it stays pending
-    let connectResolver: (value: unknown) => void
-    const connectPromise = new Promise((resolve) => {
+    let connectResolver: (
+      value: { getPrimaryService: jest.Mock<Promise<MockService>> }
+    ) => void
+    const connectPromise = new Promise<{
+      getPrimaryService: jest.Mock<Promise<MockService>>
+    }>((resolve) => {
       connectResolver = resolve
     })
-    // @ts-expect-error Gatt is a mock
     mockGatt.connect.mockReturnValue(connectPromise)
 
     const { result } = renderHook(() => useBluetoothHRM())
@@ -360,8 +390,7 @@ describe('useBluetoothHRM', () => {
   })
 
   describe('Watchdog and Reconnection', () => {
-    // Corresponds to the HEARTBEAT_INTERVAL_MS in the hook
-    const WATCHDOG_INTERVAL_MS = 1000 * 2 // Watchdog runs every 2nd heartbeat
+    const WATCHDOG_INTERVAL_MS = HEARTBEAT_INTERVAL_MS * 2 // Watchdog runs every 2nd heartbeat
 
     it('should detect data staleness and attempt to reconnect', async () => {
       jest.useFakeTimers()
@@ -373,13 +402,12 @@ describe('useBluetoothHRM', () => {
         event: unknown
       ) => void = () => {}
 
-      const mockCharacteristic = {
+      const mockCharacteristic: MockCharacteristic = {
         startNotifications: jest.fn().mockResolvedValue(undefined),
         addEventListener: jest.fn((_event, callback) => {
           characteristicValueChangedCallback = callback
         }),
       }
-      // @ts-expect-error Gatt is a mock
       mockGatt.connect.mockResolvedValue({
         getPrimaryService: jest.fn().mockResolvedValue({
           getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
@@ -424,12 +452,13 @@ describe('useBluetoothHRM', () => {
       let onDisconnectedCallback: () => void = () => {}
 
       // Capture the 'gattserverdisconnected' event listener
-      // @ts-expect-error mock device
-      mockDevice.addEventListener.mockImplementation((event, callback) => {
-        if (event === 'gattserverdisconnected') {
-          onDisconnectedCallback = callback
+      mockDevice.addEventListener.mockImplementation(
+        (event: string, callback: () => void) => {
+          if (event === 'gattserverdisconnected') {
+            onDisconnectedCallback = callback
+          }
         }
-      })
+      )
 
       // First connection is successful
       await act(async () => {
@@ -437,11 +466,9 @@ describe('useBluetoothHRM', () => {
       })
 
       expect(result.current.isConnected).toBe(true)
-      // @ts-expect-error connect is a mock
       mockGatt.connect.mockClear() // Clear the initial connect call
 
       // Subsequent connection attempts will fail
-      // @ts-expect-error connect is a mock
       mockGatt.connect.mockRejectedValue(new Error('Reconnect failed'))
 
       // --- Simulate disconnection ---
@@ -493,21 +520,20 @@ describe('useBluetoothHRM', () => {
       const { result } = renderHook(() => useBluetoothHRM())
       let onDisconnectedCallback: () => void = () => {}
 
-      // @ts-expect-error mock device
-      mockDevice.addEventListener.mockImplementation((event, callback) => {
-        if (event === 'gattserverdisconnected') {
-          onDisconnectedCallback = callback
+      mockDevice.addEventListener.mockImplementation(
+        (event: string, callback: () => void) => {
+          if (event === 'gattserverdisconnected') {
+            onDisconnectedCallback = callback
+          }
         }
-      })
+      )
 
       await act(async () => {
         await result.current.connectAndStream()
       })
-      // @ts-expect-error connect is a mock
       mockGatt.connect.mockClear()
 
       // First reconnect attempt fails, second succeeds
-      // @ts-expect-error connect is a mock
       mockGatt.connect
         .mockRejectedValueOnce(new Error('Reconnect failed'))
         .mockResolvedValue({
@@ -547,17 +573,17 @@ describe('useBluetoothHRM', () => {
       const { result } = renderHook(() => useBluetoothHRM())
       let onDisconnectedCallback: () => void = () => {}
 
-      // @ts-expect-error mock device
-      mockDevice.addEventListener.mockImplementation((event, callback) => {
-        if (event === 'gattserverdisconnected') {
-          onDisconnectedCallback = callback
+      mockDevice.addEventListener.mockImplementation(
+        (event: string, callback: () => void) => {
+          if (event === 'gattserverdisconnected') {
+            onDisconnectedCallback = callback
+          }
         }
-      })
+      )
 
       await act(async () => {
         await result.current.connectAndStream()
       })
-      // @ts-expect-error connect is a mock
       mockGatt.connect.mockClear()
 
       // Manually disconnect
