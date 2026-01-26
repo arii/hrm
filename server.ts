@@ -1,11 +1,6 @@
 // server.ts (Refactored)
 import './lib/env.js' // Triggers validation immediately
-import express, {
-  type RequestHandler,
-  type Request,
-  type Response,
-  type NextFunction,
-} from 'express'
+import express, { type RequestHandler } from 'express'
 import { createServer } from 'http'
 import next from 'next'
 import { env } from './lib/env.js' // New import
@@ -20,6 +15,7 @@ import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.server.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
+import { ApiSpotifyTokenPayload } from './types/spotify.js'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -30,24 +26,18 @@ const app = next({
 const handle = app.getRequestHandler()
 const expressApp = express()
 
-const internalApiSecretMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const secret = req.headers['x-internal-api-secret']
-  if (secret !== env.NEXTAUTH_SECRET) {
-    return res.status(401).json({ error: 'Unauthorized' })
-  }
-  next()
-}
-
 app.prepare().then(async () => {
   const server = createServer(expressApp)
 
   // --- Logger Setup ---
   // Must be the first middleware to capture all requests
   expressApp.use(httpLogger as RequestHandler)
+
+  // Global body parsing is intentionally omitted here.
+  // Next.js API routes handle their own body parsing, and adding a global
+  // `express.json()` middleware can cause conflicts, such as the
+  // "TypeError: Response body object should not be disturbed or locked" error,
+  // by attempting to parse the request body twice.
 
   // --- Rate Limiting Setup ---
   if (env.NODE_ENV !== 'test') {
@@ -56,7 +46,7 @@ app.prepare().then(async () => {
       max: env.SPOTIFY_API_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
-      keyGenerator: (req: Request) => {
+      keyGenerator: (req) => {
         return (
           (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
           req.socket.remoteAddress ||
@@ -73,7 +63,7 @@ app.prepare().then(async () => {
       max: env.INTERNAL_API_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
-      keyGenerator: (req: Request) => {
+      keyGenerator: (req) => {
         return (
           (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
           req.socket.remoteAddress ||
@@ -89,7 +79,7 @@ app.prepare().then(async () => {
       max: env.GENERAL_API_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
-      keyGenerator: (req: Request) => {
+      keyGenerator: (req) => {
         return (
           (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
           req.socket.remoteAddress ||
@@ -158,28 +148,6 @@ app.prepare().then(async () => {
 
     res.status(200).json({ healthy, details })
   })
-
-  expressApp.post(
-    '/api/internal/sync-token',
-    internalApiSecretMiddleware,
-    express.json(),
-    async (req, res) => {
-      try {
-        const { accessToken } = req.body
-        if (!accessToken) {
-          return res.status(400).json({ error: 'Access token is required' })
-        }
-        // Assuming spotifyService has a method to update the token
-        const spotifyService = serviceContainer.get('spotifyService')
-        // This method needs to be implemented in SpotifyPolling
-        spotifyService.setAccessToken(accessToken)
-        res.status(200).json({ message: 'Token updated successfully' })
-      } catch (error) {
-        logger.error('Error syncing token:', error)
-        res.status(500).json({ error: 'Internal server error' })
-      }
-    }
-  )
 
   expressApp.use((req, res) => handle(req, res))
 
