@@ -30,7 +30,7 @@ const GoogleDocViewer = ({
   onToggleShrink,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
-  const [refreshKey, setRefreshKey] = useState(Date.now())
+  const [refreshKey, setRefreshKey] = useState(() => Date.now())
 
   const handleRefresh = () => {
     setIframeLoading(true)
