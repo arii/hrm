@@ -1,7 +1,8 @@
+
 import { SpotifyTokenManager } from '../../../services/spotifyTokenManager'
 import fs from 'fs'
 import path from 'path'
-import logger from '../../../utils/logger.server.js'
+import logger from '../../../utils/logger.server'
 
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
@@ -13,7 +14,7 @@ jest.mock('fs', () => ({
   unlinkSync: jest.fn(),
 }))
 
-jest.mock('../../../utils/logger.server.js', () => ({
+jest.mock('../../../utils/logger.server', () => ({
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
@@ -104,10 +105,7 @@ describe('SpotifyTokenManager', () => {
   it('should handle token refresh failure', async () => {
     const expiringToken = {
       ...mockTokenRecord,
-      payload: {
-        ...mockTokenRecord.payload,
-        obtainedAt: Date.now() - 3540 * 1000,
-      },
+      payload: { ...mockTokenRecord.payload, obtainedAt: Date.now() - 3540 * 1000 },
     }
     mockedFs.existsSync.mockReturnValue(true)
     mockedFs.readFileSync.mockReturnValue(JSON.stringify(expiringToken))
