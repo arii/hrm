@@ -4,7 +4,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import ConnectView from './ConnectView'
 import { WorkoutStatus } from '../../../types/workout'
-import { BluetoothConnectionStatus } from '../../../types/bluetooth'
 
 describe('ConnectView', () => {
   const defaultProps = {
@@ -28,7 +27,6 @@ describe('ConnectView', () => {
     validateWeight: jest.fn(),
     isConnected: false,
     deviceStatus: 'Disconnected',
-    status: BluetoothConnectionStatus.DISCONNECTED,
     batteryLevel: null,
     onConnect: jest.fn(),
     onDisconnect: jest.fn(),

@@ -5,6 +5,7 @@ import { jest } from '@jest/globals'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
@@ -189,7 +190,7 @@ describe('useBluetoothHRM', () => {
 
     triggerTimeout(10000)
 
-    expect(result.current.deviceStatus).toContain('Connection unstable')
+    expect(result.current.status).toBe(BluetoothConnectionStatus.RECONNECTING)
     expect(mockDevice.gatt.disconnect).toHaveBeenCalled()
   })
 
@@ -204,14 +205,16 @@ describe('useBluetoothHRM', () => {
     act(() => {
       jest.advanceTimersByTime(4000)
     })
-    expect(result.current.deviceStatus).not.toContain('Connection unstable')
+    expect(result.current.status).not.toBe(
+      BluetoothConnectionStatus.RECONNECTING
+    )
 
     // Advance time by another 2 seconds (total 6s, more than timeout)
     act(() => {
       jest.advanceTimersByTime(2000)
     })
 
-    expect(result.current.deviceStatus).toContain('Connection unstable')
+    expect(result.current.status).toBe(BluetoothConnectionStatus.RECONNECTING)
   })
 
   it('should disable watchdog if timeout is 0', async () => {
@@ -226,8 +229,10 @@ describe('useBluetoothHRM', () => {
       jest.advanceTimersByTime(20000)
     })
 
-    expect(result.current.deviceStatus).not.toContain('Connection unstable')
-    expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+    expect(result.current.status).not.toBe(
+      BluetoothConnectionStatus.RECONNECTING
+    )
+    expect(result.current.status).toBe(BluetoothConnectionStatus.CONNECTED)
   })
 
   it('should set status to "Disconnected" on manual disconnect', async () => {
@@ -240,7 +245,7 @@ describe('useBluetoothHRM', () => {
     })
 
     expect(result.current.isConnected).toBe(false)
-    expect(result.current.deviceStatus).toBe('Disconnected')
+    expect(result.current.status).toBe(BluetoothConnectionStatus.DISCONNECTED)
   })
 
   it('should clear status on successful reconnect', async () => {
@@ -251,14 +256,14 @@ describe('useBluetoothHRM', () => {
 
     // Trigger a timeout to initiate the disconnection/reconnection cycle
     triggerTimeout(2000)
-    expect(result.current.deviceStatus).toContain('Connection unstable')
+    expect(result.current.status).toBe(BluetoothConnectionStatus.RECONNECTING)
 
     // Simulate the device disconnecting and the hook successfully reconnecting
     await simulateReconnection()
 
     // After reconnecting, the state should be clean
     expect(result.current.isConnected).toBe(true)
-    expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+    expect(result.current.status).toBe(BluetoothConnectionStatus.CONNECTED)
   })
 
   it('should send a null value on manual disconnect', async () => {
@@ -424,7 +429,9 @@ describe('useBluetoothHRM', () => {
       // Verify that the connection was not established
       await waitFor(() => {
         expect(result.current.isConnected).toBe(false)
-        expect(result.current.deviceStatus).toBe('Disconnected')
+        expect(result.current.status).toBe(
+          BluetoothConnectionStatus.DISCONNECTED
+        )
       })
     })
   })

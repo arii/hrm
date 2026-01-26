@@ -56,7 +56,6 @@ interface ConnectViewProps {
   onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
   isDataStale?: boolean
-  deviceStatus: string
   status: BluetoothConnectionStatus
   batteryLevel: number | null
   onConnect: () => void
@@ -99,7 +98,6 @@ export default function ConnectView({
   onUnitChange,
   isConnected,
   isDataStale = false,
-  deviceStatus,
   status,
   batteryLevel,
   onConnect,
@@ -284,18 +282,16 @@ export default function ConnectView({
           </Box>
         )}
 
-        {deviceStatus &&
-          status !== BluetoothConnectionStatus.DISCONNECTED &&
-          !isConnected && (
-            <Alert
-              severity={
-                status === BluetoothConnectionStatus.ERROR ? 'error' : 'info'
-              }
-              sx={{ mb: 2 }}
-            >
-              {deviceStatus}
-            </Alert>
-          )}
+        {status !== BluetoothConnectionStatus.DISCONNECTED && !isConnected && (
+          <Alert
+            severity={
+              status === BluetoothConnectionStatus.ERROR ? 'error' : 'info'
+            }
+            sx={{ mb: 2 }}
+          >
+            {status}
+          </Alert>
+        )}
 
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           {!isConnected ? (
@@ -356,7 +352,7 @@ export default function ConnectView({
               </Button>
               {status !== BluetoothConnectionStatus.CONNECTED && (
                 <Typography variant="caption" color="text.secondary">
-                  Status: {deviceStatus}
+                  Status: {status}
                 </Typography>
               )}
             </Stack>

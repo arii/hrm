@@ -207,6 +207,6 @@ export const useWorkoutSession = ({
     pauseWorkout,
     endWorkout,
     workoutStatus: state.status,
-    hasStarted: state.status !== 'idle',
+    hasStarted: state.status !== 'idle' || caloriesBurned > 0,
   }
 }

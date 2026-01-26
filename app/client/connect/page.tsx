@@ -108,7 +108,7 @@ export default function ConnectPage() {
     endWorkout,
     workoutStatus,
   } = useWorkoutSession({
-    isConnected: false, // This will be updated by the useBluetoothHRM hook
+    isConnected,
     totalCalories: calories,
   })
 
