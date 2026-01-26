@@ -52,7 +52,6 @@ const mainGridStyles: SxProps = {
 const Dashboard = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
 
   const handleInteraction = () => {
