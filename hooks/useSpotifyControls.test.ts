@@ -40,7 +40,9 @@ describe('useSpotifyControls', () => {
     ;(resolveSpotifyDeviceId as jest.Mock).mockReturnValue(mockDeviceId)
     mockUseWebSocket.mockReturnValue({
       sendData: mockSendData,
-      spotifyData: { devices: [{ id: mockDeviceId, is_active: true, name: 'Test Device' }] },
+      spotifyData: {
+        devices: [{ id: mockDeviceId, is_active: true, name: 'Test Device' }],
+      },
     })
     const { result } = renderHook(() => useSpotifyControls())
     result.current.sendSpotifyCommand('NEXT')
