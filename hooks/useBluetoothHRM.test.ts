@@ -478,7 +478,11 @@ describe('useBluetoothHRM', () => {
       await act(async () => {
         jest.runOnlyPendingTimers() // Run the final timer to forget the device
       })
-      expect(cookieUtils.setCookie).toHaveBeenCalledWith('hrm_device_id', '', -1)
+      expect(cookieUtils.setCookie).toHaveBeenCalledWith(
+        'hrm_device_id',
+        '',
+        -1
+      )
 
       jest.useRealTimers()
     })
