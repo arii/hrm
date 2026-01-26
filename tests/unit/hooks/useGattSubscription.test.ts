@@ -1,163 +1,191 @@
-/**
- * @jest-environment jsdom
- */
+/** @jest-environment jsdom */
 import { renderHook, act } from '@testing-library/react'
-import { useGattSubscription } from '@/hooks/useGattSubscription'
+import useGattSubscription from '@/hooks/useGattSubscription'
+import { mock, mockClear } from 'jest-mock-extended'
 
-// Mock the logger to avoid console errors during tests
+// Mock logger
 jest.mock('@/utils/logger', () => ({
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
 }))
 
+// Mocks for Web Bluetooth API
+const mockHrCharacteristic = mock<BluetoothRemoteGATTCharacteristic>()
+const mockBatteryCharacteristic = mock<BluetoothRemoteGATTCharacteristic>()
+const mockHrService = mock<BluetoothRemoteGATTService>()
+const mockBatteryService = mock<BluetoothRemoteGATTService>()
+const mockServer = mock<BluetoothRemoteGATTServer>()
+
 describe('useGattSubscription', () => {
-  let mockCharacteristic: jest.Mocked<BluetoothRemoteGATTCharacteristic>
-  let mockService: jest.Mocked<BluetoothRemoteGATTService>
-  let mockServer: jest.Mocked<BluetoothRemoteGATTServer>
-  let mockDevice: jest.Mocked<BluetoothDevice>
+  let onHeartRateUpdate: jest.Mock
 
   beforeEach(() => {
-    mockCharacteristic = {
-      startNotifications: jest.fn().mockResolvedValue(undefined),
-      stopNotifications: jest.fn().mockResolvedValue(undefined),
-      readValue: jest.fn().mockResolvedValue(new DataView(new ArrayBuffer(1))),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      value: null,
-    } as any
+    onHeartRateUpdate = jest.fn()
+    mockClear(mockServer)
+    mockClear(mockHrService)
+    mockClear(mockBatteryService)
+    mockClear(mockHrCharacteristic)
+    mockClear(mockBatteryCharacteristic)
 
-    mockService = {
-      getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
-    } as any
+    // Setup default mock implementations
+    mockServer.connected = true
+    mockServer.getPrimaryService.mockImplementation(async (uuid) => {
+      if (uuid === 'heart_rate') return mockHrService
+      if (uuid === 'battery_service') return mockBatteryService
+      throw new Error(`Service ${uuid} not found`)
+    })
 
-    mockServer = {
-      getPrimaryService: jest.fn().mockResolvedValue(mockService),
-    } as any
+    mockHrService.getCharacteristic.mockResolvedValue(mockHrCharacteristic)
+    mockBatteryService.getCharacteristic.mockResolvedValue(
+      mockBatteryCharacteristic
+    )
 
-    mockDevice = {
-      gatt: {
-        connected: true,
-        ...mockServer,
-      },
-    } as any
+    // Mock battery initial value
+    const batteryValue = new DataView(new ArrayBuffer(1))
+    batteryValue.setUint8(0, 99)
+    mockBatteryCharacteristic.readValue.mockResolvedValue(batteryValue)
   })
 
-  it('should not attempt to subscribe if there is no device', () => {
+  it('should not do anything if server is null', () => {
+    const { result } = renderHook(() =>
+      useGattSubscription({ server: null, onHeartRateUpdate })
+    )
+    expect(result.current.batteryLevel).toBeNull()
+    expect(result.current.lastDataTimestamp).toBe(0)
+    expect(mockServer.getPrimaryService).not.toHaveBeenCalled()
+  })
+
+  it('should not do anything if server is not connected', () => {
+    mockServer.connected = false
     renderHook(() =>
-      useGattSubscription({
-        device: null,
-        serviceUuid: 's1',
-        characteristicUuid: 'c1',
-      })
+      useGattSubscription({ server: mockServer, onHeartRateUpdate })
     )
     expect(mockServer.getPrimaryService).not.toHaveBeenCalled()
   })
 
-  it('should subscribe to the characteristic and start notifications', async () => {
+  it('should subscribe to HR and battery characteristics when server is provided', async () => {
     await act(async () => {
       renderHook(() =>
-        useGattSubscription({
-          device: mockDevice,
-          serviceUuid: 's1',
-          characteristicUuid: 'c1',
-        })
+        useGattSubscription({ server: mockServer, onHeartRateUpdate })
       )
+      await new Promise(process.nextTick) // Allow promises to resolve
     })
-    expect(mockServer.getPrimaryService).toHaveBeenCalledWith('s1')
-    expect(mockService.getCharacteristic).toHaveBeenCalledWith('c1')
-    expect(mockCharacteristic.startNotifications).toHaveBeenCalled()
-    expect(mockCharacteristic.addEventListener).toHaveBeenCalledWith(
+
+    expect(mockServer.getPrimaryService).toHaveBeenCalledWith('heart_rate')
+    expect(mockHrService.getCharacteristic).toHaveBeenCalledWith(
+      'heart_rate_measurement'
+    )
+    expect(mockHrCharacteristic.startNotifications).toHaveBeenCalled()
+    expect(mockHrCharacteristic.addEventListener).toHaveBeenCalledWith(
+      'characteristicvaluechanged',
+      expect.any(Function)
+    )
+
+    expect(mockServer.getPrimaryService).toHaveBeenCalledWith('battery_service')
+    expect(mockBatteryService.getCharacteristic).toHaveBeenCalledWith(
+      'battery_level'
+    )
+    expect(mockBatteryCharacteristic.readValue).toHaveBeenCalled()
+    expect(mockBatteryCharacteristic.startNotifications).toHaveBeenCalled()
+    expect(mockBatteryCharacteristic.addEventListener).toHaveBeenCalledWith(
       'characteristicvaluechanged',
       expect.any(Function)
     )
   })
 
-  it('should call onValueChange with the new value', async () => {
-    const onValueChange = jest.fn()
-    let capturedCallback: (event: {
-      target: { value: DataView }
-    }) => void = () => {}
-
-    mockCharacteristic.addEventListener.mockImplementation((type, callback) => {
-      if (type === 'characteristicvaluechanged') {
-        capturedCallback = callback as any
-      }
-    })
+  it('should handle heart rate updates', async () => {
+    let hrCallback: (event: Partial<Event>) => void
 
     await act(async () => {
       renderHook(() =>
-        useGattSubscription({
-          device: mockDevice,
-          serviceUuid: 's1',
-          characteristicUuid: 'c1',
-          onValueChange,
-        })
+        useGattSubscription({ server: mockServer, onHeartRateUpdate })
       )
+      await new Promise(process.nextTick)
+
+      // Capture the event listener
+      hrCallback = mockHrCharacteristic.addEventListener.mock.calls.find(
+        (call) => call[0] === 'characteristicvaluechanged'
+      )?.[1] as (event: Partial<Event>) => void
     })
 
-    const testValue = new DataView(new ArrayBuffer(1))
-    testValue.setUint8(0, 123)
+    const heartRateValue = new DataView(new ArrayBuffer(2))
+    heartRateValue.setUint8(0, 0) // 8-bit format
+    heartRateValue.setUint8(1, 75) // HR: 75
 
     act(() => {
-      capturedCallback({ target: { value: testValue } })
+      hrCallback({ target: { value: heartRateValue } })
     })
 
-    expect(onValueChange).toHaveBeenCalledWith(testValue)
+    expect(onHeartRateUpdate).toHaveBeenCalledWith(75)
   })
 
-  it('should read the value on connect if readValueOnConnect is true', async () => {
+  it('should handle battery level updates', async () => {
+    let batteryCallback: (event: Partial<Event>) => void
+    const { result } = renderHook(() =>
+      useGattSubscription({ server: mockServer, onHeartRateUpdate })
+    )
+
+    await act(async () => {
+      await new Promise(process.nextTick)
+      batteryCallback =
+        mockBatteryCharacteristic.addEventListener.mock.calls.find(
+          (call) => call[0] === 'characteristicvaluechanged'
+        )?.[1] as (event: Partial<Event>) => void
+    })
+
+    expect(result.current.batteryLevel).toBe(99) // Initial value
+
+    const batteryUpdateValue = new DataView(new ArrayBuffer(1))
+    batteryUpdateValue.setUint8(0, 80)
+
+    act(() => {
+      batteryCallback({ target: { value: batteryUpdateValue } })
+    })
+
+    expect(result.current.batteryLevel).toBe(80)
+  })
+
+  it('should handle missing battery service gracefully', async () => {
+    mockServer.getPrimaryService.mockImplementation(async (uuid) => {
+      if (uuid === 'heart_rate') return mockHrService
+      throw new Error('Battery service not found')
+    })
+
     await act(async () => {
       renderHook(() =>
-        useGattSubscription({
-          device: mockDevice,
-          serviceUuid: 's1',
-          characteristicUuid: 'c1',
-          readValueOnConnect: true,
-        })
+        useGattSubscription({ server: mockServer, onHeartRateUpdate })
       )
-    })
-    expect(mockCharacteristic.readValue).toHaveBeenCalled()
-  })
-
-  it('should set an error state if subscription fails', async () => {
-    mockService.getCharacteristic.mockRejectedValue(new Error('Test Error'))
-    let result: any
-    await act(async () => {
-      const { result: hookResult } = renderHook(() =>
-        useGattSubscription({
-          device: mockDevice,
-          serviceUuid: 's1',
-          characteristicUuid: 'c1',
-        })
-      )
-      result = hookResult
+      await new Promise(process.nextTick)
     })
 
-    expect(result.current.error).toContain('Test Error')
+    // Should still subscribe to HR
+    expect(mockHrCharacteristic.startNotifications).toHaveBeenCalled()
+    // Should not have failed
+    expect(mockBatteryCharacteristic.startNotifications).not.toHaveBeenCalled()
   })
 
-  it('should clean up and stop notifications on unmount', async () => {
-    let unmount: () => void
+  it('should unsubscribe on unmount', async () => {
+    const { unmount } = renderHook(() =>
+      useGattSubscription({ server: mockServer, onHeartRateUpdate })
+    )
+
     await act(async () => {
-      const { unmount: hookUnmount } = renderHook(() =>
-        useGattSubscription({
-          device: mockDevice,
-          serviceUuid: 's1',
-          characteristicUuid: 'c1',
-        })
-      )
-      unmount = hookUnmount
+      await new Promise(process.nextTick)
     })
 
     act(() => {
       unmount()
     })
 
-    expect(mockCharacteristic.removeEventListener).toHaveBeenCalledWith(
-      'characteristicvaluechanged',
-      expect.any(Function)
-    )
-    expect(mockCharacteristic.stopNotifications).toHaveBeenCalled()
+    // Allow the async cleanup to run
+    await act(async () => {
+      await new Promise(process.nextTick)
+    })
+
+    expect(mockHrCharacteristic.removeEventListener).toHaveBeenCalled()
+    expect(mockHrCharacteristic.stopNotifications).toHaveBeenCalled()
+    expect(mockBatteryCharacteristic.removeEventListener).toHaveBeenCalled()
+    expect(mockBatteryCharacteristic.stopNotifications).toHaveBeenCalled()
   })
 })

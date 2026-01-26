@@ -1,10 +1,4 @@
-/**
- * @file useSignalQuality.ts
- * @description A React hook to assess the quality of a data stream by analyzing the period between data packets.
- * It calculates a rolling average of the packet arrival time and can proactively update this
- * period if packets are missed.
- */
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 // Constants for signal quality calculation
 const ROLLING_AVG_HISTORY_LENGTH = 5
@@ -13,23 +7,20 @@ const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 const HEARTBEAT_INTERVAL_MS = 1000
 
 interface UseSignalQualityProps {
-  /**
-   * @property {number} lastDataTimestamp - The timestamp of the last received data packet. Should be 0 if no data has been received yet.
-   */
   lastDataTimestamp: number
-  /**
-   * @property {boolean} [isEnabled=true] - A flag to enable or disable the signal quality check.
-   */
-  isEnabled?: boolean
+  isConnected: boolean
+  isDataStale: boolean
 }
 
-export const useSignalQuality = ({
+const useSignalQuality = ({
   lastDataTimestamp,
-  isEnabled = true,
+  isConnected,
+  isDataStale,
 }: UseSignalQualityProps) => {
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
   const periodHistory = useRef<number[]>([])
   const avgPeriodMs = useRef<number>(0)
+  const prevDataTimestampRef = useRef<number>(0)
 
   const updateSignalPeriod = useCallback((newPeriod: number) => {
     periodHistory.current.push(newPeriod)
@@ -42,37 +33,41 @@ export const useSignalQuality = ({
     setSignalPeriodMs(Math.round(average))
   }, [])
 
-  const reset = useCallback(() => {
-    periodHistory.current = []
-    avgPeriodMs.current = 0
-    setSignalPeriodMs(0)
-  }, [])
-
+  // Reset when disconnected
   useEffect(() => {
-    if (!isEnabled || lastDataTimestamp === 0) {
-      reset()
-      return
+    if (!isConnected) {
+      periodHistory.current = []
+      avgPeriodMs.current = 0
+      setSignalPeriodMs(0)
+      prevDataTimestampRef.current = 0
     }
+  }, [isConnected])
 
-    // This is the first packet in a new stream
-    if (periodHistory.current.length === 0) {
-      return
+  // Calculate signal period based on incoming data packets
+  useEffect(() => {
+    if (
+      isConnected &&
+      lastDataTimestamp > 0 &&
+      lastDataTimestamp !== prevDataTimestampRef.current
+    ) {
+      // Don't calculate a delta for the very first packet
+      if (prevDataTimestampRef.current > 0) {
+        const delta = lastDataTimestamp - prevDataTimestampRef.current
+        updateSignalPeriod(delta)
+      }
+      prevDataTimestampRef.current = lastDataTimestamp
     }
-
-    const delta = Date.now() - lastDataTimestamp
-    updateSignalPeriod(delta)
-  }, [lastDataTimestamp, isEnabled, updateSignalPeriod, reset])
+  }, [lastDataTimestamp, isConnected, updateSignalPeriod])
 
   // Heartbeat for proactive signal quality assessment
   useEffect(() => {
-    if (!isEnabled) return
-
     const heartbeat = setInterval(() => {
-      if (lastDataTimestamp === 0) return
+      if (!isConnected || isDataStale || lastDataTimestamp === 0) {
+        return
+      }
 
       const now = Date.now()
       const timeSinceLastData = now - lastDataTimestamp
-
       const threshold = Math.max(
         avgPeriodMs.current + MISSED_PACKET_THRESHOLD_BUFFER_MS,
         MIN_MISSED_PACKET_THRESHOLD_MS
@@ -84,7 +79,9 @@ export const useSignalQuality = ({
     }, HEARTBEAT_INTERVAL_MS)
 
     return () => clearInterval(heartbeat)
-  }, [isEnabled, lastDataTimestamp, updateSignalPeriod])
+  }, [isConnected, isDataStale, lastDataTimestamp, updateSignalPeriod])
 
-  return { signalPeriodMs, resetSignalQuality: reset }
+  return { signalPeriodMs }
 }
+
+export default useSignalQuality

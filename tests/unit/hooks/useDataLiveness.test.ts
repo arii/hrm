@@ -1,125 +1,96 @@
-/**
- * @jest-environment jsdom
- */
+/** @jest-environment jsdom */
 import { renderHook, act } from '@testing-library/react'
-import { useDataLiveness } from '@/hooks/useDataLiveness'
+import useDataLiveness from '@/hooks/useDataLiveness'
 
 describe('useDataLiveness', () => {
-  beforeEach(() => {
-    jest.useFakeTimers()
-  })
+  const RealDateNow = Date.now
 
   afterEach(() => {
+    // Restore original Date.now after each test
+    global.Date.now = RealDateNow
     jest.useRealTimers()
   })
 
+  const setup = (props: any) => {
+    const onStale = jest.fn()
+    const initialTimestamp = 10000000 // A fixed starting point
+    global.Date.now = jest.fn(() => initialTimestamp)
+    jest.useFakeTimers()
+
+    const initialProps = {
+      lastDataTimestamp: initialTimestamp,
+      isConnected: true,
+      dataLivenessTimeoutMs: 5000,
+      onStale,
+      ...props,
+    }
+    const { rerender, ...rest } = renderHook(
+      (props) => useDataLiveness(props),
+      {
+        initialProps,
+      }
+    )
+    return { rerender, onStale, initialTimestamp, ...rest }
+  }
+
   it('should initialize with isDataStale as false', () => {
-    const { result } = renderHook(() =>
-      useDataLiveness({ lastDataTimestamp: 0, timeoutMs: 5000 })
-    )
+    const { result } = setup({})
     expect(result.current.isDataStale).toBe(false)
   })
 
-  it('should mark data as stale when the timeout is exceeded', () => {
-    const onStale = jest.fn()
-    const { result } = renderHook(() =>
-      useDataLiveness({
-        lastDataTimestamp: Date.now(),
-        timeoutMs: 5000,
-        onStale,
-      })
-    )
+  it('should call onStale and set isDataStale to true when timeout is exceeded', () => {
+    const { result, onStale, initialTimestamp } = setup({})
 
-    act(() => {
-      jest.advanceTimersByTime(5001)
-    })
-
-    expect(result.current.isDataStale).toBe(true)
-    expect(onStale).toHaveBeenCalledTimes(1)
-  })
-
-  it('should not mark data as stale if a new timestamp arrives before the timeout', () => {
-    const { result, rerender } = renderHook(
-      ({ lastDataTimestamp }) =>
-        useDataLiveness({ lastDataTimestamp, timeoutMs: 5000 }),
-      { initialProps: { lastDataTimestamp: Date.now() } }
-    )
-
-    act(() => {
-      jest.advanceTimersByTime(3000)
-    })
-
-    rerender({ lastDataTimestamp: Date.now() })
-
-    act(() => {
-      jest.advanceTimersByTime(3000)
-    })
-
+    // Initial state
     expect(result.current.isDataStale).toBe(false)
-  })
 
-  it('should call onFresh when a stale stream receives new data', () => {
-    const onStale = jest.fn()
-    const onFresh = jest.fn()
-    const timestamp = Date.now()
-
-    const { result, rerender } = renderHook(
-      ({ lastDataTimestamp }) =>
-        useDataLiveness({
-          lastDataTimestamp,
-          timeoutMs: 5000,
-          onStale,
-          onFresh,
-        }),
-      { initialProps: { lastDataTimestamp: timestamp } }
-    )
-
+    // Advance time just past the timeout
     act(() => {
-      jest.advanceTimersByTime(5001)
+      // Mock Date.now to have moved forward in time
+      global.Date.now = jest.fn(() => initialTimestamp + 5001)
+      jest.advanceTimersByTime(2000) // Trigger the interval check
     })
 
-    expect(result.current.isDataStale).toBe(true)
     expect(onStale).toHaveBeenCalledTimes(1)
+    expect(result.current.isDataStale).toBe(true)
+  })
 
-    rerender({ lastDataTimestamp: Date.now() })
+  it('should reset isDataStale to false when new data arrives', () => {
+    const { result, onStale, rerender, initialTimestamp } = setup({})
 
-    // The check interval needs to run for the hook to update
+    // First, make the data stale
     act(() => {
+      global.Date.now = jest.fn(() => initialTimestamp + 5001)
+      jest.advanceTimersByTime(2000)
+    })
+    expect(onStale).toHaveBeenCalledTimes(1)
+    expect(result.current.isDataStale).toBe(true)
+
+    // Then, simulate new data arriving by updating props
+    const newTimestamp = initialTimestamp + 6000
+    rerender({
+      lastDataTimestamp: newTimestamp,
+      isConnected: true,
+      dataLivenessTimeoutMs: 5000,
+      onStale,
+    })
+
+    // Run the interval check again, where Date.now is still ahead but the gap is small
+    act(() => {
+      global.Date.now = jest.fn(() => newTimestamp + 1000)
       jest.advanceTimersByTime(2000)
     })
 
+    // isDataStale should now be false
     expect(result.current.isDataStale).toBe(false)
-    expect(onFresh).toHaveBeenCalledTimes(1)
   })
 
-  it('should not do anything if isEnabled is false', () => {
-    const onStale = jest.fn()
-    const { result } = renderHook(() =>
-      useDataLiveness({
-        lastDataTimestamp: Date.now(),
-        timeoutMs: 5000,
-        onStale,
-        isEnabled: false,
-      })
-    )
+  it('should clean up the interval on unmount', () => {
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval')
+    const { unmount } = setup({})
 
-    act(() => {
-      jest.advanceTimersByTime(5001)
-    })
+    unmount()
 
-    expect(result.current.isDataStale).toBe(false)
-    expect(onStale).not.toHaveBeenCalled()
-  })
-
-  it('should do nothing if timeoutMs is 0', () => {
-    const { result } = renderHook(() =>
-      useDataLiveness({ lastDataTimestamp: Date.now(), timeoutMs: 0 })
-    )
-
-    act(() => {
-      jest.advanceTimersByTime(5001)
-    })
-
-    expect(result.current.isDataStale).toBe(false)
+    expect(clearIntervalSpy).toHaveBeenCalled()
   })
 })
