@@ -20,6 +20,29 @@ This script will:
 
 > **⚠️ Important**: This project uses `pnpm` as its package manager. **Do not use `npm install`**, as this will create a `package-lock.json` file, causing conflicts with the official `pnpm-lock.yaml`. The pre-commit hooks will block any commits that include this file.
 
+## Environment Variables
+
+For a complete list of environment variables, see the [Environment Variables section in the main README.md](../README.md#environment-variables).
+
+### Generating `NEXTAUTH_SECRET`
+
+A `NEXTAUTH_SECRET` is required for NextAuth.js to sign and encrypt session cookies. You can generate a secure secret using the following command:
+
+```bash
+openssl rand -hex 32
+```
+
+Add this value to your `.env.local` file.
+
+## Audio System
+
+The app includes the original HRM audio feedback system, which provides auditory cues for timer events. This system is designed to mimic the sounds of a physical heart rate monitor, enhancing the user experience during workouts.
+
+- **Countdown Beeps**: Short beeps are played during the last 3 seconds of any countdown phase (e.g., the prepare phase before a work interval).
+- **Transition Beeps**: A long beep signals a change between phases (e.g., from `prepare` to `work`, `work` to `rest`, or `rest` to `work`).
+- **Volume Control**: The volume of the beeps is synchronized with the Spotify volume controls, allowing for unified audio management.
+- **Audio Files**: The sound files are located in the `public/assets/` directory (`beep-01a.wav` for the long beep, `beep-07.wav` for the short beep).
+
 ## Quality Assurance Tooling
 
 To maintain code quality and consistency, this project uses a combination of automated tooling.
