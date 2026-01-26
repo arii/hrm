@@ -402,6 +402,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
+      INTERNAL_API_SECRET: ci-internal-api-secret
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
