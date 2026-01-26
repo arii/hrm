@@ -1,4 +1,3 @@
-
 import { httpLogger, pinoOptions } from '../../utils/logger.server'
 import { NextFunction, Request, Response } from 'express'
 import pino from 'pino'
