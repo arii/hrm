@@ -185,9 +185,9 @@ describe('useBluetoothHRM', () => {
     )
 
     // Make the connect call a promise that we can control, so it stays pending
-    let connectResolver: (
-      value: { getPrimaryService: jest.Mock<Promise<MockService>> }
-    ) => void
+    let connectResolver: (value: {
+      getPrimaryService: jest.Mock<Promise<MockService>>
+    }) => void
     const connectPromise = new Promise<{
       getPrimaryService: jest.Mock<Promise<MockService>>
     }>((resolve) => {
@@ -218,8 +218,8 @@ describe('useBluetoothHRM', () => {
           getCharacteristic: jest.fn().mockResolvedValue({
             startNotifications: jest.fn().mockResolvedValue(undefined),
             addEventListener: jest.fn(),
-          }),
-        }),
+          } as MockCharacteristic),
+        } as MockService),
       })
     })
 
@@ -235,14 +235,13 @@ describe('useBluetoothHRM', () => {
       ) => void = () => {}
 
       // Mock the characteristic and capture the event listener
-      const mockCharacteristic = {
+      const mockCharacteristic: MockCharacteristic = {
         startNotifications: jest.fn().mockResolvedValue(undefined),
         addEventListener: jest.fn((_event, callback) => {
           characteristicValueChangedCallback = callback
         }),
       }
 
-      // @ts-expect-error Gatt is a mock
       mockGatt.connect.mockResolvedValue({
         getPrimaryService: jest.fn().mockResolvedValue({
           getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
@@ -327,14 +326,13 @@ describe('useBluetoothHRM', () => {
       ) => void = () => {}
 
       // Mock the characteristic and capture the event listener
-      const mockCharacteristic = {
+      const mockCharacteristic: MockCharacteristic = {
         startNotifications: jest.fn().mockResolvedValue(undefined),
         addEventListener: jest.fn((_event, callback) => {
           characteristicValueChangedCallback = callback
         }),
       }
 
-      // @ts-expect-error Gatt is a mock
       mockGatt.connect.mockResolvedValue({
         getPrimaryService: jest.fn().mockResolvedValue({
           getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
@@ -599,7 +597,6 @@ describe('useBluetoothHRM', () => {
 
       // Ensure no timers are pending for reconnection
       expect(setTimeout).not.toHaveBeenCalled()
-      // @ts-expect-error connect is a mock
       expect(mockGatt.connect).not.toHaveBeenCalled()
       expect(result.current.deviceStatus).toBe('Disconnected')
 
