@@ -15,6 +15,13 @@ import {
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
+
+// Define a type for the test controls to avoid using 'any'
+interface TestControls {
+  dispatch: (message: ServerMessage) => void
+  disconnect: () => void
+  connect: () => void
+}
 import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
 
 // Client-side extension of HrmData to include connection status
@@ -167,12 +174,6 @@ export const WebSocketProvider = ({
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
-  // Expose the dispatch function on the window object for Playwright testing.
-  // This allows tests to simulate server-sent messages and verify UI reactions.
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-    ;(window as any).__TEST_DISPATCH__ = dispatch
-  }
-
   const throttledDispatch = useRef(
     throttle((message: ServerMessage) => {
       dispatch(message)
@@ -191,8 +192,18 @@ export const WebSocketProvider = ({
       if (savedActions) {
         pendingActions.current = JSON.parse(savedActions)
       }
+
+      if (process.env.NODE_ENV !== 'production') {
+        ;(
+          window as Window & { __TEST_CONTROLS__?: TestControls }
+        ).__TEST_CONTROLS__ = {
+          dispatch,
+          disconnect: () => {},
+          connect: () => {},
+        }
+      }
     }
-  }, [])
+  }, [dispatch])
 
   // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
@@ -393,6 +404,19 @@ export const WebSocketProvider = ({
   useEffect(() => {
     connectRef.current = connect
     connect()
+
+    if (
+      typeof window !== 'undefined' &&
+      process.env.NODE_ENV !== 'production'
+    ) {
+      const testControls = (
+        window as Window & { __TEST_CONTROLS__?: TestControls }
+      ).__TEST_CONTROLS__
+      if (testControls) {
+        testControls.disconnect = disconnect
+        testControls.connect = connect
+      }
+    }
 
     return () => {
       disconnect()
