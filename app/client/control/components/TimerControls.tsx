@@ -23,9 +23,8 @@ import { useCallback, useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
 
-const OPTIMISTIC_UI_SYNC_TIMEOUT =
-  process.env.NEXT_PUBLIC_APP_ENV === 'test' ? 5000 : 3000 // ms
 const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
+const OPTIMISTIC_ACTION_TIMEOUT = 3000 // ms for reverting optimistic UI
 
 const actionButtonBaseSx = {
   flex: 1,
@@ -53,40 +52,55 @@ const TimerControls = () => {
   const { timerData, sendData, connectionStatus } = useWebSocket()
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
-  const [optimisticIsRunning, setOptimisticIsRunning] = useState(
-    timerData.isRunning
-  )
+  const [optimisticAction, setOptimisticAction] = useState<
+    'START' | 'STOP' | null
+  >(null)
 
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
 
-  // Safety timeout to prevent optimistic UI from getting stuck.
-  // If the optimistic state and server state are different for too long,
-  // revert the optimistic state to match the server.
+  // When the server's running state changes and confirms our optimistic
+  // action, we can clear the optimistic state.
   useEffect(() => {
-    if (optimisticIsRunning === timerData.isRunning) {
-      return // States are in sync, do nothing.
+    if (optimisticAction === null) return
+
+    const actionConfirmed =
+      (optimisticAction === 'START' && timerData.isRunning) ||
+      (optimisticAction === 'STOP' && !timerData.isRunning)
+
+    if (actionConfirmed) {
+      // This is a desired state update to synchronize with the server,
+      // not a cascading render. The condition prevents an infinite loop.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOptimisticAction(null)
     }
+  }, [timerData.isRunning, optimisticAction])
 
-    const safetyTimeout = setTimeout(() => {
-      console.warn(
-        `[TimerControls] Optimistic state timed out. Reverting to server state (isRunning: ${timerData.isRunning}).`
-      )
-      setOptimisticIsRunning(timerData.isRunning)
-    }, OPTIMISTIC_UI_SYNC_TIMEOUT)
-
-    // Cleanup the timeout if the states sync up before it fires
-    return () => clearTimeout(safetyTimeout)
-  }, [optimisticIsRunning, timerData.isRunning])
+  // Safety timeout to clear the optimistic action if the server doesn't
+  // confirm it within a reasonable time.
+  useEffect(() => {
+    if (optimisticAction) {
+      const timer = setTimeout(() => {
+        console.warn(
+          `[TimerControls] Optimistic action "${optimisticAction}" timed out. Reverting UI.`
+        )
+        setOptimisticAction(null)
+      }, OPTIMISTIC_ACTION_TIMEOUT)
+      return () => clearTimeout(timer)
+    }
+    return () => {}
+  }, [optimisticAction])
 
   useEffect(() => {
+    if (connectionStatus !== 'Connected') return
+
     const message: TimerConfigMessage = {
       type: 'TIMER_CONFIG',
       workDuration: debouncedWorkTime,
       restDuration: debouncedRestTime,
     }
     sendData(message)
-  }, [debouncedWorkTime, debouncedRestTime, sendData])
+  }, [debouncedWorkTime, debouncedRestTime, sendData, connectionStatus])
 
   const { spotifyData } = useWebSocket()
   const spotifyDeviceId = useMemo(
@@ -110,17 +124,16 @@ const TimerControls = () => {
   const sendTimerCommand = useCallback(
     (command: 'START' | 'STOP') => {
       // Optimistically update the UI
-      setOptimisticIsRunning(command === 'START')
+      setOptimisticAction(command)
 
       // If disconnected, revert the optimistic update after a short delay
       if (connectionStatus !== 'Connected') {
         console.warn(
           `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
         )
-        setTimeout(
-          () => setOptimisticIsRunning(timerData.isRunning),
-          DISCONNECTED_UI_REVERT_DELAY
-        )
+        setTimeout(() => {
+          setOptimisticAction(null)
+        }, DISCONNECTED_UI_REVERT_DELAY)
         return
       }
 
@@ -139,14 +152,7 @@ const TimerControls = () => {
       if (command === 'START') sendSpotifyCommand('NEXT')
       else if (command === 'STOP') sendSpotifyCommand('PAUSE')
     },
-    [
-      sendData,
-      sendSpotifyCommand,
-      connectionStatus,
-      timerData.isRunning,
-      workTime,
-      restTime,
-    ]
+    [sendData, sendSpotifyCommand, connectionStatus, workTime, restTime]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
@@ -155,8 +161,15 @@ const TimerControls = () => {
     sendData(message)
   }
 
-  const controlsDisabled =
-    optimisticIsRunning || connectionStatus !== 'Connected'
+  // Derive the running state from the server state and any optimistic action.
+  const isRunning =
+    optimisticAction === 'START'
+      ? true
+      : optimisticAction === 'STOP'
+        ? false
+        : timerData.isRunning
+
+  const controlsDisabled = isRunning || connectionStatus !== 'Connected'
   const modes = ['TABATA', 'STOPWATCH']
 
   return (
@@ -241,11 +254,9 @@ const TimerControls = () => {
           <Typography
             variant="h6"
             sx={{ color: 'white', mb: 0.5 }}
-            data-testid={
-              optimisticIsRunning ? 'timer-running' : 'timer-stopped'
-            }
+            data-testid={isRunning ? 'timer-running' : 'timer-stopped'}
           >
-            {optimisticIsRunning ? 'Timer Running' : 'Timer Stopped'}
+            {isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#EF4444' }}>
             {timerData.currentPhase}
@@ -336,7 +347,7 @@ const TimerControls = () => {
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
-            {!optimisticIsRunning ? (
+            {!isRunning ? (
               <Button
                 data-testid="start-timer-button"
                 variant="contained"
