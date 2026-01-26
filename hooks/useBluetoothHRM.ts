@@ -17,13 +17,14 @@ import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
+import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
-  [BluetoothConnectionStatus.DISCONNECTED]: 'Disconnected',
-  [BluetoothConnectionStatus.CONNECTING]: 'Connecting...',
-  [BluetoothConnectionStatus.CONNECTED]: 'Connected',
-  [BluetoothConnectionStatus.RECONNECTING]: 'Reconnecting...',
-  [BluetoothConnectionStatus.ERROR]: 'Error',
+  [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
+  [BluetoothConnectionStatus.CONNECTING]: BLUETOOTH_MESSAGES.connecting,
+  [BluetoothConnectionStatus.CONNECTED]: BLUETOOTH_MESSAGES.connected,
+  [BluetoothConnectionStatus.RECONNECTING]: BLUETOOTH_MESSAGES.reconnecting,
+  [BluetoothConnectionStatus.ERROR]: BLUETOOTH_MESSAGES.error,
 }
 
 const HR_SERVICE_UUID = 'heart_rate'
@@ -281,7 +282,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           if (timeSinceLastData > dataLivenessTimeoutMs && !isDataStale) {
             setIsDataStale(true)
             setStatus(BluetoothConnectionStatus.RECONNECTING)
-            setCustomStatusMessage('Connection unstable. Reconnecting...')
+            setCustomStatusMessage(BLUETOOTH_MESSAGES.unstableConnection)
             isTimeoutDisconnect.current = true
             if (deviceRef.current?.gatt?.connected)
               deviceRef.current.gatt.disconnect()
@@ -338,38 +339,36 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     try {
       setCookie('hrm_device_id', '', -1)
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
-      setCustomStatusMessage(
-        'Device permissions revoked. Ready for new connection.'
-      )
+      setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
     } catch (e) {
       logger.warn({ error: e }, 'Error during device forget')
       setStatus(BluetoothConnectionStatus.ERROR)
-      setCustomStatusMessage('Error clearing device permissions.')
+      setCustomStatusMessage(BLUETOOTH_MESSAGES.errorClearingPermissions)
     }
   }, [disconnect])
 
   const handleConnectionError = useCallback((error: unknown) => {
-    let msg = 'An unknown error occurred.'
+    let msg = BLUETOOTH_MESSAGES.unknownError
     if (error instanceof DOMException) {
       if (error.name === 'NotFoundError') {
-        msg = 'Connection cancelled. No device selected.'
+        msg = BLUETOOTH_MESSAGES.connectionCancelled
       } else if (error.name === 'SecurityError') {
-        msg = 'Security error. Use HTTPS or localhost.'
+        msg = BLUETOOTH_MESSAGES.securityError
       } else if (error.name === 'NetworkError') {
-        msg = 'Connection failed. Device might be too far or low battery.'
+        msg = BLUETOOTH_MESSAGES.connectionFailed
       } else {
-        msg = `Bluetooth error: ${error.name}`
+        msg = BLUETOOTH_MESSAGES.bluetoothError(error.name)
       }
     } else if (error instanceof Error) {
       // Handle our custom timeout error
       if (error.message.includes('timeout')) {
-        msg = 'Connection timed out. Wake up device and try again.'
+        msg = BLUETOOTH_MESSAGES.connectionTimeout
       } else {
         msg = `Error: ${error.message}`
       }
     }
     setStatus(BluetoothConnectionStatus.ERROR)
-    setCustomStatusMessage(`Failed: ${msg}`)
+    setCustomStatusMessage(BLUETOOTH_MESSAGES.errorWithDetails(msg))
     logger.error({ error }, msg)
   }, [])
 
@@ -407,7 +406,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           : 'Signal Lost'
         setStatus(BluetoothConnectionStatus.RECONNECTING)
         setCustomStatusMessage(
-          `${reasonText}. Reconnecting... (Attempt ${attemptNum}/${maxReconnectAttempts})`
+          BLUETOOTH_MESSAGES.reconnectingAttempt(
+            reasonText,
+            attemptNum,
+            maxReconnectAttempts
+          )
         )
 
         // Randomized backoff: increases with attempts
@@ -434,7 +437,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
         setStatus(BluetoothConnectionStatus.ERROR)
         setCustomStatusMessage(
-          `Failed to reconnect after ${maxReconnectAttempts} attempts. Resetting device...`
+          BLUETOOTH_MESSAGES.failedToReconnect(maxReconnectAttempts)
         )
 
         // Trigger device reset after a brief delay to show the message
@@ -446,9 +449,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           }
           setCookie('hrm_device_id', '', -1)
           setStatus(BluetoothConnectionStatus.DISCONNECTED)
-          setCustomStatusMessage(
-            'Device permissions revoked. Ready for new connection.'
-          )
+          setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
           setSavedDevice(null)
           setBatteryLevel(null)
           deviceRef.current = null
@@ -479,7 +480,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isConnecting.current = true
         deviceRef.current = device
         setStatus(BluetoothConnectionStatus.CONNECTING)
-        setCustomStatusMessage(`Connecting to: ${device.name || 'Device'}...`)
+        setCustomStatusMessage(
+          BLUETOOTH_MESSAGES.connectingToDevice(device.name || '')
+        )
 
         // Create a new AbortController for this connection attempt
         abortControllerRef.current = new AbortController()
@@ -525,7 +528,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               )
               setStatus(BluetoothConnectionStatus.CONNECTING)
               setCustomStatusMessage(
-                `Device busy (Zombie). Retrying in ${delayMs / 1000}s... (${attempt}/${maxRetries})`
+                BLUETOOTH_MESSAGES.deviceBusy(delayMs, attempt, maxRetries)
               )
 
               // Exponential backoff: 2s, 4s, 8s to let the Android Bluetooth stack clear the connection
@@ -602,7 +605,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
 
         setStatus(BluetoothConnectionStatus.CONNECTED)
-        setCustomStatusMessage(`Connected to: ${device.name}`)
+        setCustomStatusMessage(
+          BLUETOOTH_MESSAGES.connectedToDevice(device.name || '')
+        )
         setSavedDevice(device)
         setCookie('hrm_device_id', device.id)
         isManualDisconnect.current = false
@@ -635,7 +640,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             'Connection timeout detected. Resetting device and permissions.'
           )
           setStatus(BluetoothConnectionStatus.ERROR)
-          setCustomStatusMessage('Connection timeout. Resetting device...')
+          setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeoutReset)
           reconnectAttempts.current = maxReconnectAttempts
           deviceRef.current = null
 
@@ -649,9 +654,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             }
             setCookie('hrm_device_id', '', -1)
             setStatus(BluetoothConnectionStatus.DISCONNECTED)
-            setCustomStatusMessage(
-              'Device permissions revoked. Ready for new connection.'
-            )
+          setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
             setSavedDevice(null)
             setBatteryLevel(null)
             deviceRef.current = null
@@ -719,7 +722,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           'connectAndStream called'
         )
         setStatus(BluetoothConnectionStatus.CONNECTING)
-        setCustomStatusMessage('Checking saved devices...')
+        setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
         let device = savedDevice
 
         if (!device) {
@@ -762,7 +765,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (!device && !silent) {
           setStatus(BluetoothConnectionStatus.CONNECTING)
-          setCustomStatusMessage('Scanning for devices...')
+          setCustomStatusMessage(BLUETOOTH_MESSAGES.scanningForDevices)
           device = await navigator.bluetooth.requestDevice({
             filters: [{ services: [HR_SERVICE_UUID] }],
             optionalServices: [BATTERY_SERVICE_UUID],
@@ -809,7 +812,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     try {
       logger.info('Starting auto-connect to saved device...')
       setStatus(BluetoothConnectionStatus.CONNECTING)
-      setCustomStatusMessage('Connecting to saved device...')
+      setCustomStatusMessage(BLUETOOTH_MESSAGES.connectingToSavedDevice)
       await connectAndStream(undefined, undefined, { silent: true })
       logger.info('Auto-connect succeeded')
     } catch (error) {
@@ -821,9 +824,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       )
       // Set status back to allow manual connection
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
-      setCustomStatusMessage(
-        'Auto-connect failed. Use Connect button to select device.'
-      )
+      setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
     }
   }, [connectAndStream])
 
