@@ -36,6 +36,25 @@ const envSchema = z.object({
   IS_DEPLOYMENT: z.string().optional(),
   WS_URL: z.string().url().optional(),
 })
+.superRefine((data, ctx) => {
+  // If Spotify credentials are provided, a callback URL must be available.
+  if (data.SPOTIFY_CLIENT_ID && data.SPOTIFY_CLIENT_SECRET) {
+    if (!data.SPOTIFY_CALLBACK_URL && !data.NEXTAUTH_URL) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['SPOTIFY_CALLBACK_URL'],
+        message:
+          'SPOTIFY_CALLBACK_URL is required when SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are set, but it could not be derived from NEXTAUTH_URL.',
+      })
+    }
+  }
+})
+.transform((data) => {
+  if (!data.SPOTIFY_CALLBACK_URL && data.NEXTAUTH_URL) {
+    data.SPOTIFY_CALLBACK_URL = `${data.NEXTAUTH_URL}/api/auth/callback/spotify`
+  }
+  return data
+})
 
 const parsedEnv = envSchema.safeParse(process.env)
 
