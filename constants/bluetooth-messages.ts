@@ -21,14 +21,12 @@ export const BLUETOOTH_MESSAGES = {
   connectedToDevice: (deviceName: string) => `Connected to: ${deviceName}`,
   failedToReconnect: (maxAttempts: number) =>
     `Failed to reconnect after ${maxAttempts} attempts. Resetting device...`,
-  reconnectingAttempt: (
-    reason: string,
-    attempt: number,
-    maxAttempts: number
-  ) => `${reason}. Reconnecting... (Attempt ${attempt}/${maxAttempts})`,
+  reconnectingAttempt: (reason: string, attempt: number, maxAttempts: number) =>
+    `${reason}. Reconnecting... (Attempt ${attempt}/${maxAttempts})`,
   checkingSavedDevices: 'Checking saved devices...',
   scanningForDevices: 'Scanning for devices...',
-  autoConnectFailed: 'Auto-connect failed. Use Connect button to select device.',
+  autoConnectFailed:
+    'Auto-connect failed. Use Connect button to select device.',
   connectingToSavedDevice: 'Connecting to saved device...',
   deviceBusy: (delay: number, attempt: number, maxRetries: number) =>
     `Device busy (Zombie). Retrying in ${
@@ -41,7 +39,8 @@ export const BLUETOOTH_MESSAGES = {
   errorClearingPermissions: 'Error clearing device permissions.',
   connectionCancelled: 'Connection cancelled. No device selected.',
   securityError: 'Security error. Use HTTPS or localhost.',
-  connectionFailed: 'Connection failed. Device might be too far or low battery.',
+  connectionFailed:
+    'Connection failed. Device might be too far or low battery.',
   bluetoothError: (errorName: string) => `Bluetooth error: ${errorName}`,
   connectionTimeout: 'Connection timed out. Wake up device and try again.',
   connectionTimeoutReset: 'Connection timeout. Resetting device...',

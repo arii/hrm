@@ -654,7 +654,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             }
             setCookie('hrm_device_id', '', -1)
             setStatus(BluetoothConnectionStatus.DISCONNECTED)
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
+            setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
             setSavedDevice(null)
             setBatteryLevel(null)
             deviceRef.current = null
