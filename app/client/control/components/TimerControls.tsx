@@ -62,8 +62,13 @@ const TimerControls = () => {
   // When the server's running state changes, our optimistic action has been
   // confirmed, so we can clear it.
   useEffect(() => {
-    setOptimisticAction(null)
-  }, [timerData.isRunning])
+    if (
+      optimisticAction &&
+      timerData.isRunning !== (optimisticAction === 'START')
+    ) {
+      setOptimisticAction(null)
+    }
+  }, [timerData.isRunning, optimisticAction])
 
   // Safety timeout to clear the optimistic action if the server doesn't
   // confirm it within a reasonable time.
@@ -117,7 +122,9 @@ const TimerControls = () => {
         console.warn(
           `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
         )
-        setTimeout(() => setOptimisticAction(null), DISCONNECTED_UI_REVERT_DELAY)
+        setTimeout(() => {
+          setOptimisticAction(null)
+        }, DISCONNECTED_UI_REVERT_DELAY)
         return
       }
 
@@ -136,13 +143,7 @@ const TimerControls = () => {
       if (command === 'START') sendSpotifyCommand('NEXT')
       else if (command === 'STOP') sendSpotifyCommand('PAUSE')
     },
-    [
-      sendData,
-      sendSpotifyCommand,
-      connectionStatus,
-      workTime,
-      restTime,
-    ]
+    [sendData, sendSpotifyCommand, connectionStatus, workTime, restTime]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
@@ -244,9 +245,7 @@ const TimerControls = () => {
           <Typography
             variant="h6"
             sx={{ color: 'white', mb: 0.5 }}
-            data-testid={
-              isRunning ? 'timer-running' : 'timer-stopped'
-            }
+            data-testid={isRunning ? 'timer-running' : 'timer-stopped'}
           >
             {isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
