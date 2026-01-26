@@ -14,7 +14,7 @@ const createCapturingStream = (logOutput: LogEntry[]) => {
     write(chunk, encoding, callback) {
       try {
         logOutput.push(JSON.parse(chunk.toString()))
-        } catch (_e) {
+      } catch (_e) {
         // Ignore parse errors for non-JSON output (like pino-pretty)
       }
       callback()
