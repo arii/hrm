@@ -49,13 +49,16 @@ const stopButtonSx = {
 }
 
 const TimerControls = () => {
-  const { enqueueSnackbar } = useSnackbar()
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar()
   const { timerData, sendData, connectionStatus } = useWebSocket()
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
   const [optimisticAction, setOptimisticAction] = useState<
     'START' | 'STOP' | null
   >(null)
+  const [snackbarKey, setSnackbarKey] = useState<string | number | undefined>(
+    undefined
+  )
 
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
@@ -70,9 +73,6 @@ const TimerControls = () => {
       (optimisticAction === 'STOP' && !timerData.isRunning)
 
     if (actionConfirmed) {
-      // This is a desired state update to synchronize with the server,
-      // not a cascading render. The condition prevents an infinite loop.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOptimisticAction(null)
     }
   }, [timerData.isRunning, optimisticAction])
@@ -91,6 +91,27 @@ const TimerControls = () => {
     }
     return () => {}
   }, [optimisticAction, enqueueSnackbar])
+
+  // Proactively notify the user about the connection status.
+  useEffect(() => {
+    if (connectionStatus === 'Disconnected') {
+      // Don't show a new snackbar if one is already showing
+      if (snackbarKey) return
+
+      const key = enqueueSnackbar(
+        'Connection lost. Please check your network.',
+        {
+          variant: 'error',
+          persist: true,
+        }
+      )
+      setSnackbarKey(key)
+    } else if (connectionStatus === 'Connected' && snackbarKey) {
+      closeSnackbar(snackbarKey)
+      setSnackbarKey(undefined)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectionStatus, snackbarKey])
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') return

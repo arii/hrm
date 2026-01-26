@@ -13,10 +13,12 @@ import { SnackbarProvider } from 'notistack'
 
 // Mock the useSnackbar hook
 const mockEnqueueSnackbar = jest.fn()
+const mockCloseSnackbar = jest.fn()
 jest.mock('notistack', () => ({
   ...jest.requireActual('notistack'),
   useSnackbar: () => ({
     enqueueSnackbar: mockEnqueueSnackbar,
+    closeSnackbar: mockCloseSnackbar,
   }),
 }))
 
@@ -61,6 +63,7 @@ describe('TimerControls Notifications', () => {
   beforeEach(() => {
     jest.useFakeTimers()
     mockEnqueueSnackbar.mockClear()
+    mockCloseSnackbar.mockClear()
   })
 
   afterEach(() => {
@@ -95,5 +98,68 @@ describe('TimerControls Notifications', () => {
         }
       )
     })
+  })
+
+  it('shows a persistent error notification when connection is lost', () => {
+    const { rerender } = render(
+      <SnackbarProvider>
+        <WebSocketContext.Provider value={mockWebSocketContext}>
+          <TimerControls />
+        </WebSocketContext.Provider>
+      </SnackbarProvider>
+    )
+
+    const disconnectedContext = {
+      ...mockWebSocketContext,
+      connectionStatus: 'Disconnected',
+    }
+
+    rerender(
+      <SnackbarProvider>
+        <WebSocketContext.Provider value={disconnectedContext}>
+          <TimerControls />
+        </WebSocketContext.Provider>
+      </SnackbarProvider>
+    )
+
+    expect(mockEnqueueSnackbar).toHaveBeenCalledWith(
+      'Connection lost. Please check your network.',
+      {
+        variant: 'error',
+        persist: true,
+      }
+    )
+  })
+
+  it('dismisses the error notification when connection is restored', () => {
+    mockEnqueueSnackbar.mockReturnValue('snackbar-key')
+
+    const disconnectedContext = {
+      ...mockWebSocketContext,
+      connectionStatus: 'Disconnected',
+    }
+
+    const { rerender } = render(
+      <SnackbarProvider>
+        <WebSocketContext.Provider value={disconnectedContext}>
+          <TimerControls />
+        </WebSocketContext.Provider>
+      </SnackbarProvider>
+    )
+
+    const reconnectedContext = {
+      ...mockWebSocketContext,
+      connectionStatus: 'Connected',
+    }
+
+    rerender(
+      <SnackbarProvider>
+        <WebSocketContext.Provider value={reconnectedContext}>
+          <TimerControls />
+        </WebSocketContext.Provider>
+      </SnackbarProvider>
+    )
+
+    expect(mockCloseSnackbar).toHaveBeenCalledWith('snackbar-key')
   })
 })
