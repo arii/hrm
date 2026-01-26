@@ -20,8 +20,16 @@ export const pinoOptions: pino.LoggerOptions = {
       : process.env.LOG_LEVEL ||
         (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
   redact: {
-    paths: ['req.headers.cookie', 'req.headers.authorization', 'res.headers'],
-    remove: true,
+    paths: [
+      'req.headers.cookie',
+      'req.headers.authorization',
+      'res.headers',
+      '*.access_token',
+      '*.refresh_token',
+      'body.access_token',
+      'body.refresh_token',
+    ],
+    censor: '[REDACTED]',
   },
 }
 
@@ -39,6 +47,17 @@ const logger = pino(pinoOptions) as Logger
 
 const httpLogger = pinoHttp({
   logger: logger as pino.Logger,
+  autoLogging: {
+    ignore: (req) => {
+      const pathsToIgnore = [
+        '/api/health',
+        '/api/auth/session',
+        '/api/spotify/callback',
+      ]
+      // Support nested routes, e.g. /api/health/detailed
+      return pathsToIgnore.some((path) => req.url?.startsWith(path))
+    },
+  },
   genReqId: function (req: Request, res: Response) {
     const existingID = req.id ?? req.headers['x-request-id']
     if (existingID) return existingID

@@ -41,9 +41,9 @@ describe('Server Logger Redaction using pinoOptions', () => {
 
     expect(logObject.req).toBeDefined()
     expect(logObject.req.headers).toBeDefined()
-    // The 'remove: true' option should make these keys disappear
-    expect(logObject.req.headers.cookie).toBeUndefined()
-    expect(logObject.req.headers.authorization).toBeUndefined()
+    // The 'censor' option should replace these values
+    expect(logObject.req.headers.cookie).toBe('[REDACTED]')
+    expect(logObject.req.headers.authorization).toBe('[REDACTED]')
     // This header should remain untouched
     expect(logObject.req.headers['x-custom-header']).toBe('safe-value')
   })
