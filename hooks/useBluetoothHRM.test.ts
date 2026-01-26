@@ -1,76 +1,94 @@
-/**
- * @jest-environment jsdom
- */
-import { renderHook, act } from '@testing-library/react';
-import useBluetoothHRM from '../useBluetoothHRM';
-import { useBluetoothConnection } from '../useBluetoothHRM/useBluetoothConnection';
-import { useHRMDataSubscription } from '../useBluetoothHRM/useHRMDataSubscription';
-import { useBluetoothWatchdog } from '../useBluetoothHRM/useBluetoothWatchdog';
 
-jest.mock('../useBluetoothHRM/useBluetoothConnection');
-jest.mock('../useBluetoothHRM/useHRMDataSubscription');
-jest.mock('../useBluetoothHRM/useBluetoothWatchdog');
+  describe('Watchdog Timers', () => {
+    beforeEach(() => {
+      jest.useFakeTimers()
+    })
 
-const mockUseBluetoothConnection = useBluetoothConnection as jest.Mock;
-const mockUseHRMDataSubscription = useHRMDataSubscription as jest.Mock;
-const mockUseBluetoothWatchdog = useBluetoothWatchdog as jest.Mock;
+    afterEach(() => {
+      jest.useRealTimers()
+    })
 
-describe('useBluetoothHRM', () => {
-  beforeEach(() => {
-    mockUseBluetoothConnection.mockReturnValue({
-      connectAndStream: jest.fn(),
-      autoConnect: jest.fn(),
-      disconnect: jest.fn(),
-      forgetDevice: jest.fn(),
-      deviceStatus: 'Disconnected',
-      isConnected: false,
-      isSupported: true,
-      deviceRef: { current: null },
-    });
+    it('should proactively increase signal period on missed heartbeats', async () => {
+      const { result } = renderHook(() => useBluetoothHRM())
+      let characteristicValueChangedCallback: (
+        event: unknown
+      ) => void = () => {}
 
-    mockUseHRMDataSubscription.mockReturnValue({
-      batteryLevel: null,
-      signalPeriodMs: 0,
-      lastDataTime: { current: 0 },
-      avgPeriodMs: { current: 0 },
-      handleGattServerConnected: jest.fn(),
-      updateSignalPeriod: jest.fn(),
-      reset: jest.fn(),
-    });
-
-    mockUseBluetoothWatchdog.mockReturnValue({
-      isDataStale: false,
-    });
-  });
-
-  it('should return the correct initial state', () => {
-    const { result } = renderHook(() => useBluetoothHRM());
-
-    expect(result.current.isConnected).toBe(false);
-    expect(result.current.deviceStatus).toBe('Disconnected');
-    expect(result.current.batteryLevel).toBeNull();
-    expect(result.current.isDataStale).toBe(false);
-    expect(result.current.signalPeriodMs).toBe(0);
-  });
-
-  it('should call the underlying hooks with the correct parameters', () => {
-    const onHeartRateUpdate = jest.fn();
-    const onConnect = jest.fn();
-
-    renderHook(() =>
-      useBluetoothHRM({
-        dataLivenessTimeoutMs: 5000,
-        onHeartRateUpdate,
-        onConnect,
+      const mockCharacteristic = {
+        startNotifications: jest.fn().mockResolvedValue(undefined),
+        addEventListener: jest.fn((_event, callback) => {
+          characteristicValueChangedCallback = callback
+        }),
+      }
+      // @ts-expect-error Gatt is a mock
+      mockGatt.connect.mockResolvedValue({
+        getPrimaryService: jest.fn().mockResolvedValue({
+          getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+        }),
       })
-    );
 
-    expect(mockUseHRMDataSubscription).toHaveBeenCalledWith({ onHeartRateUpdate });
-    expect(mockUseBluetoothConnection).toHaveBeenCalled();
-    expect(mockUseBluetoothWatchdog).toHaveBeenCalledWith(
-      expect.objectContaining({
-        dataLivenessTimeoutMs: 5000,
+      await act(async () => {
+        await result.current.connectAndStream()
       })
-    );
-  });
-});
+
+      const now = Date.now()
+      jest.spyOn(Date, 'now').mockReturnValue(now)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      jest.spyOn(Date, 'now').mockReturnValue(now + 1000)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      expect(result.current.signalPeriodMs).toBe(1000)
+
+      jest.spyOn(Date, 'now').mockReturnValue(now + 3000)
+      act(() => {
+        jest.advanceTimersByTime(2000)
+      })
+
+      expect(result.current.signalPeriodMs).toBe(2000)
+    })
+
+    it('should trigger a reconnect when data stream goes stale', async () => {
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ dataLivenessTimeoutMs: 5000 })
+      )
+      let characteristicValueChangedCallback: (
+        event: unknown
+      ) => void = () => {}
+      const mockCharacteristic = {
+        startNotifications: jest.fn().mockResolvedValue(undefined),
+        addEventListener: jest.fn((_event, callback) => {
+          characteristicValueChangedCallback = callback
+        }),
+      }
+      // @ts-expect-error Gatt is a mock
+      mockGatt.connect.mockResolvedValue({
+        getPrimaryService: jest.fn().mockResolvedValue({
+          getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+        }),
+      })
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+      expect(result.current.deviceStatus).toContain('Connected')
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      act(() => {
+        jest.advanceTimersByTime(6000) // Exceed the 5s timeout
+      })
+      expect(result.current.deviceStatus).toBe(
+        'Connection unstable. Reconnecting...'
+      )
+      expect(mockGatt.disconnect).toHaveBeenCalledTimes(1)
+    })
+  })
+})

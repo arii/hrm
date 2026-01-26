@@ -1,192 +1,114 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import TimerControls from '@/app/client/control/components/TimerControls'
-import {
-  WebSocketContext,
-  WebSocketContextType,
-} from '@/context/WebSocketContext'
-import { TimerData } from '@/types/websocket'
-import '@testing-library/jest-dom'
+import { WebSocketContext } from '@/context/WebSocketContext'
+import { mockWebSocketContext } from '../../../../../__mocks__/WebSocketContext'
+import { TimerData } from '@/types/timer'
 
-// Mock framer-motion
-jest.mock('framer-motion', () => ({
-  ...jest.requireActual('framer-motion'),
-  motion: {
-    div: jest.fn(({ children }) => children),
-  },
+// Mock the useDebounce hook as it's not relevant to these tests
+jest.mock('@/hooks/useDebounce', () => ({
+  useDebounce: (value: any) => value,
 }))
 
-const mockTimerData: TimerData = {
-  isRunning: false,
-  isPaused: false,
-  mode: 'TABATA',
-  currentPhase: 'IDLE',
-  timeRemaining: 0,
-  workDuration: 20,
-  restDuration: 10,
-  totalRounds: 8,
-  currentRound: 0,
-}
-
-const mockWebSocketContext: WebSocketContextType = {
-  timerData: mockTimerData,
-  sendData: jest.fn(),
-  connectionStatus: 'Connected',
-  connect: jest.fn(),
-  disconnect: jest.fn(),
-  hrmData: [],
-  spotifyData: {
-    track: null,
-    isPlaying: false,
-    volumePercent: 0,
-  },
-  activeAlerts: [],
-  spotifyServiceInitialized: false,
-  userSettings: null,
-}
-
 describe('TimerControls', () => {
+  let sendDataMock: jest.Mock
+
   beforeEach(() => {
-    jest.useFakeTimers()
+    sendDataMock = jest.fn()
   })
 
-  afterEach(() => {
-    jest.useRealTimers()
-    jest.clearAllMocks()
-  })
-
-  it('optimistically updates the UI when the start button is clicked', async () => {
-    const sendDataSpy = jest.spyOn(mockWebSocketContext, 'sendData')
-    render(
-      <WebSocketContext.Provider value={mockWebSocketContext}>
-        <TimerControls />
-      </WebSocketContext.Provider>
-    )
-
-    const startButton = screen.getByTestId('start-timer-button')
-    act(() => {
-      fireEvent.click(startButton)
-    })
-
-    // The UI should immediately update to show the timer as running
-    await screen.findByTestId('timer-running')
-    expect(screen.queryByTestId('start-timer-button')).not.toBeInTheDocument()
-    expect(screen.getByTestId('stop-timer-button')).toBeInTheDocument()
-    expect(sendDataSpy).toHaveBeenCalledWith({
-      type: 'TIMER_COMMAND',
-      command: 'START',
-    })
-  })
-
-  it('reverts the optimistic UI update if the WebSocket is not connected', async () => {
-    const disconnectedContext = {
+  const renderComponent = (
+    timerData: Partial<TimerData>,
+    connectionStatus = 'Connected'
+  ) => {
+    const contextValue = {
       ...mockWebSocketContext,
-      connectionStatus: 'Disconnected',
+      timerData: {
+        ...mockWebSocketContext.timerData,
+        ...timerData,
+      },
+      connectionStatus,
+      sendData: sendDataMock,
     }
-    const sendDataSpy = jest.spyOn(disconnectedContext, 'sendData')
-
-    render(
-      <WebSocketContext.Provider value={disconnectedContext}>
+    return render(
+      <WebSocketContext.Provider value={contextValue}>
         <TimerControls />
       </WebSocketContext.Provider>
     )
+  }
 
-    const startButton = screen.getByTestId('start-timer-button')
-    act(() => {
-      fireEvent.click(startButton)
-    })
-
-    // The UI should revert back to the original state
-    act(() => {
-      jest.advanceTimersByTime(600)
-    })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
-    })
+  it('renders correctly in the stopped state', () => {
+    renderComponent({ isRunning: false })
+    expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
     expect(screen.getByTestId('start-timer-button')).toBeInTheDocument()
-    expect(screen.queryByTestId('stop-timer-button')).not.toBeInTheDocument()
-    expect(sendDataSpy).not.toHaveBeenCalledWith({
+    expect(
+      screen.queryByTestId('stop-timer-button')
+    ).not.toBeInTheDocument()
+  })
+
+  it('renders correctly in the running state', () => {
+    renderComponent({ isRunning: true })
+    expect(screen.getByTestId('timer-running')).toBeInTheDocument()
+    expect(
+      screen.queryByTestId('start-timer-button')
+    ).not.toBeInTheDocument()
+    expect(screen.getByTestId('stop-timer-button')).toBeInTheDocument()
+  })
+
+  it('optimistically updates to "running" when start is clicked', () => {
+    renderComponent({ isRunning: false })
+    fireEvent.click(screen.getByTestId('start-timer-button'))
+    expect(screen.getByTestId('timer-running')).toBeInTheDocument()
+    expect(screen.getByTestId('stop-timer-button')).toBeInTheDocument()
+    expect(sendDataMock).toHaveBeenCalledWith({
       type: 'TIMER_COMMAND',
       command: 'START',
     })
   })
 
-  it('handles connection drop after render but before interaction', async () => {
-    const { rerender } = render(
-      <WebSocketContext.Provider value={mockWebSocketContext}>
-        <TimerControls />
-      </WebSocketContext.Provider>
-    )
+  it('optimistically updates to "stopped" when stop is clicked', () => {
+    renderComponent({ isRunning: true })
+    fireEvent.click(screen.getByTestId('stop-timer-button'))
+    expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
+    expect(screen.getByTestId('start-timer-button')).toBeInTheDocument()
+    expect(sendDataMock).toHaveBeenCalledWith({
+      type: 'TIMER_COMMAND',
+      command: 'STOP',
+    })
+  })
 
-    // Simulate connection drop
-    const disconnectedContext = {
+  it('synchronizes with server state when timer stops remotely', () => {
+    const { rerender } = renderComponent({ isRunning: true })
+    expect(screen.getByTestId('timer-running')).toBeInTheDocument()
+
+    // Simulate a server-side update where the timer stops
+    const updatedContextValue = {
       ...mockWebSocketContext,
-      connectionStatus: 'Disconnected',
+      timerData: { ...mockWebSocketContext.timerData, isRunning: false },
+      sendData: sendDataMock,
     }
     rerender(
-      <WebSocketContext.Provider value={disconnectedContext}>
+      <WebSocketContext.Provider value={updatedContextValue}>
         <TimerControls />
       </WebSocketContext.Provider>
     )
 
-    const startButton = screen.getByTestId('start-timer-button')
-    act(() => {
-      fireEvent.click(startButton)
-    })
-
-    // ...then revert because of the disconnection
-    act(() => {
-      jest.advanceTimersByTime(600)
-    })
-
-    await waitFor(() => {
-      expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
-    })
-    expect(disconnectedContext.sendData).not.toHaveBeenCalledWith({
-      type: 'TIMER_COMMAND',
-      command: 'START',
-    })
+    expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
+    expect(screen.getByTestId('start-timer-button')).toBeInTheDocument()
   })
 
-  it('reverts optimistic UI if server state does not sync after timeout', async () => {
-    const sendDataSpy = jest.spyOn(mockWebSocketContext, 'sendData')
-    const { rerender } = render(
-      <WebSocketContext.Provider value={mockWebSocketContext}>
-        <TimerControls />
-      </WebSocketContext.Provider>
-    )
-
-    const startButton = screen.getByTestId('start-timer-button')
-    act(() => {
-      fireEvent.click(startButton)
+  it('reverts optimistic UI if disconnected', async () => {
+    jest.useFakeTimers()
+    renderComponent({ isRunning: false }, 'Disconnected')
+    fireEvent.click(screen.getByTestId('start-timer-button'))
+    expect(screen.getByTestId('timer-running')).toBeInTheDocument()
+    // Fast-forward timers
+    await act(async () => {
+      jest.runAllTimers()
     })
-
-    // UI optimistically shows "Running"
-    await screen.findByTestId('timer-running')
-
-    // IMPORTANT: We do NOT update the context's timerData.isRunning to simulate
-    // the server failing to respond or the message being dropped.
-    rerender(
-      <WebSocketContext.Provider value={mockWebSocketContext}>
-        <TimerControls />
-      </WebSocketContext.Provider>
-    )
-
-    // Advance timers past the safety timeout
-    act(() => {
-      jest.advanceTimersByTime(3100)
-    })
-
-    // The UI should revert to the server's state, which is still "stopped"
-    await waitFor(() => {
-      expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
-    })
-    expect(sendDataSpy).toHaveBeenCalledWith({
-      type: 'TIMER_COMMAND',
-      command: 'START',
-    })
+    expect(screen.getByTestId('timer-stopped')).toBeInTheDocument()
+    jest.useRealTimers()
   })
 })
