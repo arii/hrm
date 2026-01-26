@@ -179,7 +179,6 @@ export const WebSocketProvider = ({
   // Ref to hold the connect function, ensuring it's always up-to-date
   const connectRef = useRef<() => void>(() => {})
 
-  // The `clientId` is stable for the lifetime of the component.
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedActions = localStorage.getItem('pendingActions')
@@ -253,9 +252,6 @@ export const WebSocketProvider = ({
       logger.info('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
-      // NEW: Debug log for connection open event.
-      logger.debug({ clientId, url: wsUrl }, 'WebSocket connection opened.')
-
       // Set test flag for Playwright tests - use a more reliable method
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
@@ -290,16 +286,6 @@ export const WebSocketProvider = ({
     ws.onclose = (event) => {
       logger.info(
         `[WebSocketProvider] Disconnected from server. Code: ${event.code}, Reason: ${event.reason}`
-      )
-      // NEW: Debug log for connection close event.
-      logger.debug(
-        {
-          clientId,
-          code: event.code,
-          reason: event.reason,
-          wasClean: event.wasClean,
-        },
-        'WebSocket connection closed.'
       )
       setConnectionStatus('Disconnected')
 
@@ -342,8 +328,6 @@ export const WebSocketProvider = ({
 
     ws.onerror = (err) => {
       logger.warn('[WebSocketProvider] Connection error', err)
-      // NEW: Debug log for connection error event.
-      logger.debug({ clientId, error: err }, 'WebSocket connection error.')
       setConnectionStatus('Error')
     }
 
@@ -384,7 +368,7 @@ export const WebSocketProvider = ({
         })
       }
     }
-  }, [clientId, wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
+  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false

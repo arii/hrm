@@ -1,7 +1,4 @@
 /** @type {import('jest').Config} */
-const { pathsToModuleNameMapper } = require('ts-jest')
-const { compilerOptions } = require('./tsconfig.json')
-
 const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
@@ -51,7 +48,7 @@ const config = {
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    ...pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
+    '^@/(.*)$': '<rootDir>/$1',
     '^recharts$': '<rootDir>/tests/__mocks__/recharts.tsx',
   },
   testTimeout: 10000,

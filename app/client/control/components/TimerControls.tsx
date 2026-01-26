@@ -1,4 +1,4 @@
-// File: app/client/control/components/TimerControls.tsx
+// app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -23,11 +23,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
 import { resolveSpotifyDeviceId } from '@/lib/spotify/device'
-import { resolveSpotifyDeviceId } from '@/lib/spotify/device'
 
 // Constants
-const OPTIMISTIC_UI_SYNC_TIMEOUT =
-  process.env.NODE_ENV === 'test' ? 5000 : 3000 // ms
+const OPTIMISTIC_UI_SYNC_TIMEOUT = process.env.NODE_ENV === 'test' ? 5000 : 3000 // ms
 const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
 
 const actionButtonBaseSx = {

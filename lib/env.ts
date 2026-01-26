@@ -1,48 +1,77 @@
+// lib/env.ts
 import { z } from 'zod'
 
 const envSchema = z.object({
+  // General
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
-  PORT: z.coerce.number().default(3000),
-  HOST: z.string().default('0.0.0.0'),
+  LOG_LEVEL: z
+    .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
+    .default('info'),
+
+  // NextAuth
+  NEXTAUTH_URL: z.string().url().optional(),
   NEXTAUTH_SECRET: z.string().min(1),
-  NEXTAUTH_URL: z.string().url(),
-  BASE_URL: z.string().url().optional(),
-  SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
-  SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
-  SPOTIFY_CALLBACK_URL: z.string().url().optional(),
-  INTERNAL_TOKEN_DELIVERY_SECRET: z.string().optional(),
-  SPOTIFY_DEBUG: z.string().optional(),
-  CI: z.string().optional(),
-  GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
-  NEXT_PUBLIC_USE_NATIVE_TABLE: z.string().optional(),
-  NEXT_PUBLIC_API_URL: z.string().url().optional().or(z.literal('')),
-  NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
-  SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
-  INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
-  GENERAL_API_MAX_REQUESTS: z.coerce.number().default(200),
-  // The default of 1000 provides a generous limit for concurrent WebSocket connections,
-  // suitable for a moderate-scale deployment. This can be adjusted based on expected user load.
-  WS_MAX_CONNECTIONS: z.coerce.number().default(1000),
-  SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(5000),
-  SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
-  WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().default(5000),
-  WEBSOCKET_CLEANUP_INTERVAL_MS: z.coerce.number().default(10000),
-  WEBSOCKET_WATCHDOG_INTERVAL: z.coerce.number().optional(),
-  GEMINI_MODEL_FALLBACKS: z.string().optional(),
-  ANALYZE: z.string().optional(),
-  TESTING: z.string().optional(),
-  IS_DEPLOYMENT: z.string().optional(),
-  WS_URL: z.string().url().optional(),
+
+  // Spotify
+  SPOTIFY_CLIENT_ID: z.string().min(1),
+  SPOTIFY_CLIENT_SECRET: z.string().min(1),
+  SPOTIFY_POLLING_INTERVAL_MS: z
+    .string()
+    .transform(Number)
+    .refine((n) => n >= 1000, 'Must be at least 1000ms')
+    .default('5000'),
+
+  // Redis (Optional)
+  REDIS_URL: z.string().url().optional(),
+
+  // Google Docs
+  NEXT_PUBLIC_WORKOUT_URL: z.string().url().optional(),
+
+  // WebSocket
+  WS_PORT: z
+    .string()
+    .transform(Number)
+    .refine((p) => p > 0 && p < 65536, 'Invalid port')
+    .default('3001'),
+  CLIENT_SESSION_TIMEOUT_MS: z
+    .string()
+    .transform(Number)
+    .refine((n) => n > 5000, 'Must be greater than 5000ms')
+    .default('60000'), // 1 minute
 })
 
-const parsedEnv = envSchema.safeParse(process.env)
+// Use a function to safely parse and export environment variables
+const getEnv = () => {
+  const result = envSchema.safeParse(process.env)
 
-if (!parsedEnv.success) {
-  console.error('❌ Invalid environment variables:', parsedEnv.error.format())
-  throw parsedEnv.error
+  if (!result.success) {
+    console.error(
+      '🔥 Invalid environment variables:',
+      result.error.flatten().fieldErrors
+    )
+    // Exit if validation fails, except in test environment for setup purposes
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1)
+    }
+  }
+
+  return result.success ? result.data : ({} as z.infer<typeof envSchema>)
 }
 
-export const env = parsedEnv.data
+const env = getEnv()
+
+export const {
+  NODE_ENV,
+  LOG_LEVEL,
+  NEXTAUTH_URL,
+  NEXTAUTH_SECRET,
+  SPOTIFY_CLIENT_ID,
+  SPOTIFY_CLIENT_SECRET,
+  SPOTIFY_POLLING_INTERVAL_MS,
+  REDIS_URL,
+  NEXT_PUBLIC_WORKOUT_URL,
+  WS_PORT,
+  CLIENT_SESSION_TIMEOUT_MS,
+} = env

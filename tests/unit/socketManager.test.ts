@@ -312,43 +312,14 @@ describe('WebSocket Manager', () => {
       expect(monitorInstance.stop).toHaveBeenCalled()
     })
 
-    it('should not set isAlive to true on any message', () => {
+    it('should set isAlive to true on any message', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       newWs.isAlive = false // Manually set to false
       const message = JSON.stringify({ type: 'PING' })
       newWs.emit('message', message.toString())
-      expect(newWs.isAlive).toBe(false)
-    })
-  })
-
-  describe('Cleanup Logic', () => {
-    it('should clean up a client after the grace period', () => {
-      mockWs.emit('close')
-      jest.advanceTimersByTime(10001) // Past grace period and cleanup interval
-      expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [],
-        },
-        'socketManager.broadcastState'
-      )
-    })
-    it('should not clean up a client that is still connected', () => {
-      mockWs.emit('close')
-      jest.advanceTimersByTime(2000) // less than grace period
-      expect(broadcast).not.toHaveBeenCalled()
-    })
-    it('should not clean up a client that has reconnected', () => {
-      mockWs.emit('close')
-      jest.advanceTimersByTime(2000)
-      const newWs = new MockWebSocket()
-      const mockReq = createMockRequest()
-      mockWss.emit('connection', newWs, mockReq)
-      jest.advanceTimersByTime(4000) // more than grace period
-      expect(broadcast).not.toHaveBeenCalled()
+      expect(newWs.isAlive).toBe(true)
     })
   })
 
@@ -502,7 +473,18 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    // The client disconnect logic is now tested in the "Cleanup Logic" suite.
+    it('should broadcast state on client disconnect', () => {
+      mockWs.emit('close')
+      jest.runAllTimers()
+      expect(broadcast).toHaveBeenCalledWith(
+        mockWss,
+        {
+          type: 'HRM_UPDATE',
+          payload: [],
+        },
+        'socketManager.broadcastState'
+      )
+    })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
       const dashboardWs = new MockWebSocket() as ExtWebSocket
