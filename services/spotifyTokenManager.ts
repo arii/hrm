@@ -1,5 +1,5 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
-import logger from '../utils/logger.server.js'
+import logger from '../utils/logger.server'
 import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
@@ -214,7 +214,9 @@ export class SpotifyTokenManager {
 
     if (Date.now() >= expiresAt - 60000) {
       if (this.currentToken.payload.refresh_token) {
-        logger.info('Spotify access token is expiring soon, initiating refresh...')
+        logger.info(
+          'Spotify access token is expiring soon, initiating refresh...'
+        )
         // Refresh if within 1 minute of expiry
         // Ensure only one refresh happens at a time
         if (!this.refreshPromise) {
@@ -225,10 +227,7 @@ export class SpotifyTokenManager {
             })
             .catch((error) => {
               this.refreshPromise = null
-              logger.error(
-                { error },
-                'Spotify access token refresh failed'
-              )
+              logger.error({ error }, 'Spotify access token refresh failed')
             })
         }
         await this.refreshPromise

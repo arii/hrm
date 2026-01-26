@@ -1,4 +1,3 @@
-
 import { SpotifyTokenManager } from '../../../services/spotifyTokenManager'
 import fs from 'fs'
 import path from 'path'
@@ -105,7 +104,10 @@ describe('SpotifyTokenManager', () => {
   it('should handle token refresh failure', async () => {
     const expiringToken = {
       ...mockTokenRecord,
-      payload: { ...mockTokenRecord.payload, obtainedAt: Date.now() - 3540 * 1000 },
+      payload: {
+        ...mockTokenRecord.payload,
+        obtainedAt: Date.now() - 3540 * 1000,
+      },
     }
     mockedFs.existsSync.mockReturnValue(true)
     mockedFs.readFileSync.mockReturnValue(JSON.stringify(expiringToken))

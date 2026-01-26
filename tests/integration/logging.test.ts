@@ -1,4 +1,3 @@
-
 import { httpLogger, pinoOptions } from '../../utils/logger.server'
 import { NextFunction, Request, Response } from 'express'
 import pino from 'pino'
@@ -15,7 +14,7 @@ const createCapturingStream = (logOutput: LogEntry[]) => {
     write(chunk, encoding, callback) {
       try {
         logOutput.push(JSON.parse(chunk.toString()))
-      } catch (e) {
+        } catch (_e) {
         // Ignore parse errors for non-JSON output (like pino-pretty)
       }
       callback()

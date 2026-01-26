@@ -48,7 +48,7 @@ const logger = pino(pinoOptions) as Logger
 const httpLogger = pinoHttp({
   logger: logger as pino.Logger,
   autoLogging: {
-    ignore: (req) => {
+    ignore: (req: Request) => {
       const pathsToIgnore = [
         '/api/health',
         '/api/auth/session',
