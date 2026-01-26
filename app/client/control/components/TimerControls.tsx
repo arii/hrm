@@ -23,9 +23,8 @@ import { useCallback, useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
 
-const OPTIMISTIC_UI_SYNC_TIMEOUT =
-  process.env.NEXT_PUBLIC_APP_ENV === 'test' ? 5000 : 3000 // ms
 const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
+const OPTIMISTIC_ACTION_TIMEOUT = 3000 // ms for reverting optimistic UI
 
 const actionButtonBaseSx = {
   flex: 1,
@@ -53,19 +52,32 @@ const TimerControls = () => {
   const { timerData, sendData, connectionStatus } = useWebSocket()
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
-  const [optimisticIsRunning, setOptimisticIsRunning] = useState(
-    timerData.isRunning
-  )
+  const [optimisticAction, setOptimisticAction] = useState<
+    'START' | 'STOP' | null
+  >(null)
 
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
 
-  // Synchronize the optimistic UI state with the actual server state.
-  // This ensures that if the server state changes (e.g., due to another
-  // controller or a server-side event), the UI reflects the change.
+  // When the server's running state changes, our optimistic action has been
+  // confirmed, so we can clear it.
   useEffect(() => {
-    setOptimisticIsRunning(timerData.isRunning)
+    setOptimisticAction(null)
   }, [timerData.isRunning])
+
+  // Safety timeout to clear the optimistic action if the server doesn't
+  // confirm it within a reasonable time.
+  useEffect(() => {
+    if (optimisticAction) {
+      const timer = setTimeout(() => {
+        console.warn(
+          `[TimerControls] Optimistic action "${optimisticAction}" timed out. Reverting UI.`
+        )
+        setOptimisticAction(null)
+      }, OPTIMISTIC_ACTION_TIMEOUT)
+      return () => clearTimeout(timer)
+    }
+  }, [optimisticAction])
 
   useEffect(() => {
     const message: TimerConfigMessage = {
@@ -98,17 +110,14 @@ const TimerControls = () => {
   const sendTimerCommand = useCallback(
     (command: 'START' | 'STOP') => {
       // Optimistically update the UI
-      setOptimisticIsRunning(command === 'START')
+      setOptimisticAction(command)
 
       // If disconnected, revert the optimistic update after a short delay
       if (connectionStatus !== 'Connected') {
         console.warn(
           `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
         )
-        setTimeout(
-          () => setOptimisticIsRunning(timerData.isRunning),
-          DISCONNECTED_UI_REVERT_DELAY
-        )
+        setTimeout(() => setOptimisticAction(null), DISCONNECTED_UI_REVERT_DELAY)
         return
       }
 
@@ -131,7 +140,6 @@ const TimerControls = () => {
       sendData,
       sendSpotifyCommand,
       connectionStatus,
-      timerData.isRunning,
       workTime,
       restTime,
     ]
@@ -143,8 +151,15 @@ const TimerControls = () => {
     sendData(message)
   }
 
-  const controlsDisabled =
-    optimisticIsRunning || connectionStatus !== 'Connected'
+  // Derive the running state from the server state and any optimistic action.
+  const isRunning =
+    optimisticAction === 'START'
+      ? true
+      : optimisticAction === 'STOP'
+        ? false
+        : timerData.isRunning
+
+  const controlsDisabled = isRunning || connectionStatus !== 'Connected'
   const modes = ['TABATA', 'STOPWATCH']
 
   return (
@@ -230,10 +245,10 @@ const TimerControls = () => {
             variant="h6"
             sx={{ color: 'white', mb: 0.5 }}
             data-testid={
-              optimisticIsRunning ? 'timer-running' : 'timer-stopped'
+              isRunning ? 'timer-running' : 'timer-stopped'
             }
           >
-            {optimisticIsRunning ? 'Timer Running' : 'Timer Stopped'}
+            {isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#EF4444' }}>
             {timerData.currentPhase}
@@ -324,7 +339,7 @@ const TimerControls = () => {
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
-            {!optimisticIsRunning ? (
+            {!isRunning ? (
               <Button
                 data-testid="start-timer-button"
                 variant="contained"
