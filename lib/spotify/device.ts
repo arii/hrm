@@ -6,7 +6,7 @@ import type { SpotifyDevice } from '@/types/core'
  */
 export function resolveSpotifyDeviceId(
   devices: SpotifyDevice[],
-  preferredDeviceTypes: string[] = [],
+  preferredDeviceTypes: string[] = []
 ): string {
   if (!devices || devices.length === 0) {
     return ''
@@ -27,5 +27,5 @@ export function resolveSpotifyDeviceId(
   }
 
   // 3. Fallback to the first available device
-  return devices[0].id
+  return devices[0]?.id || ''
 }
