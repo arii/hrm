@@ -22,6 +22,7 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
+import logger from '@/utils/logger'
 
 const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
 const OPTIMISTIC_ACTION_TIMEOUT = 3000 // ms for reverting optimistic UI
@@ -81,7 +82,7 @@ const TimerControls = () => {
   useEffect(() => {
     if (optimisticAction) {
       const timer = setTimeout(() => {
-        console.warn(
+        logger.warn(
           `[TimerControls] Optimistic action "${optimisticAction}" timed out. Reverting UI.`
         )
         setOptimisticAction(null)
@@ -128,7 +129,7 @@ const TimerControls = () => {
 
       // If disconnected, revert the optimistic update after a short delay
       if (connectionStatus !== 'Connected') {
-        console.warn(
+        logger.warn(
           `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
         )
         setTimeout(() => {
