@@ -97,32 +97,4 @@ describe('TimerControls Notifications', () => {
     })
   })
 
-  it('shows an error notification if websocket is not connected', async () => {
-    const disconnectedContext = {
-      ...mockWebSocketContext,
-      connectionStatus: 'Disconnected',
-    }
-
-    render(
-      <SnackbarProvider>
-        <WebSocketContext.Provider value={disconnectedContext}>
-          <TimerControls />
-        </WebSocketContext.Provider>
-      </SnackbarProvider>
-    )
-
-    const startButton = screen.getByTestId('start-timer-button')
-    act(() => {
-      fireEvent.click(startButton)
-    })
-
-    await waitFor(() => {
-      expect(mockEnqueueSnackbar).toHaveBeenCalledWith(
-        'Connection lost. Please check your network.',
-        {
-          variant: 'error',
-        }
-      )
-    })
-  })
 })

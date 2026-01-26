@@ -128,17 +128,6 @@ const TimerControls = () => {
       // Optimistically update the UI
       setOptimisticAction(command)
 
-      // If disconnected, revert the optimistic update after a short delay
-      if (connectionStatus !== 'Connected') {
-        enqueueSnackbar('Connection lost. Please check your network.', {
-          variant: 'error',
-        })
-        setTimeout(() => {
-          setOptimisticAction(null)
-        }, DISCONNECTED_UI_REVERT_DELAY)
-        return
-      }
-
       // When starting, send the most up-to-date config.
       if (command === 'START') {
         const config: TimerConfigMessage = {
@@ -361,6 +350,7 @@ const TimerControls = () => {
                 data-testid="start-timer-button"
                 variant="contained"
                 onClick={() => sendTimerCommand('START')}
+                disabled={connectionStatus !== 'Connected'}
                 sx={startButtonSx}
                 startIcon={<PlayArrow fontSize="large" />}
               >
@@ -371,6 +361,7 @@ const TimerControls = () => {
                 data-testid="stop-timer-button"
                 variant="contained"
                 onClick={() => sendTimerCommand('STOP')}
+                disabled={connectionStatus !== 'Connected'}
                 sx={stopButtonSx}
                 startIcon={<Stop fontSize="large" />}
               >
