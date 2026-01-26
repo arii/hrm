@@ -373,7 +373,7 @@ Then, fill in the variables as described below.
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | -------- |
 | **`NEXTAUTH_SECRET`** | A secret key for NextAuth.js session encryption. Generate one with `openssl rand -hex 32`.                                                | -                       | **Yes**  |
 | **`NEXTAUTH_URL`**    | The canonical, public-facing URL of the application. **Required by `next-auth`** for OAuth callbacks and other authentication mechanisms. | -                       | **Yes**  |
-| **`BASE_URL`**        | An optional, alternative base URL. Not used in core application logic but available for other purposes. Defaults to `NEXTAUTH_URL`.       | `http://127.0.0.1:3000` | No       |
+| **`BASE_URL`**        | An optional, alternative base URL. Not used in core application logic but available for other purposes.                                   | `http://127.0.0.1:3000` | No       |
 
 ### Spotify API
 
