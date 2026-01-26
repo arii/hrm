@@ -387,14 +387,14 @@ These variables control the behavior of the WebSocket server, which manages real
 > [!NOTE]
 > The variable `WEBSOCKET_CLEANUP_INTERVAL_MS`, mentioned in the original issue, has been superseded by `WEBSOCKET_WATCHDOG_INTERVAL`, which provides a more specific heartbeat-based approach to cleaning up stale connections.
 
-- **`WEBSOCKET_GRACE_PERIOD_MS`**
-  - **Purpose**: The time in milliseconds the server will wait before cleaning up a disconnected client's session data. This allows a user to refresh their browser or momentarily lose connection without losing their heart rate data.
-  - **Default**: `5000` (5 seconds)
-  - **Impact**: A higher value can consume more server memory by holding onto stale sessions for longer. A lower value may cause users to lose their data on brief disconnects.
-- **`WEBSOCKET_WATCHDOG_INTERVAL`**
-  - **Purpose**: The interval in milliseconds at which the server's "watchdog" process runs. It checks for and terminates stale or unresponsive WebSocket connections that have not responded to a heartbeat (ping) request. This is the primary mechanism for cleaning up "zombie" connections and preventing resource leaks.
-  - **Default**: `30000` (30 seconds)
-  - **Impact**: A shorter interval can be more aggressive in cleaning up dead connections, but may also terminate connections that are only temporarily latent. A longer interval is safer but may allow dead connections to persist for longer.
+-   **`WEBSOCKET_GRACE_PERIOD_MS`**
+    -   **Purpose**: The time in milliseconds the server will wait before cleaning up a disconnected client's session data. This allows a user to refresh their browser or momentarily lose connection without losing their heart rate data.
+    -   **Default**: `5000` (5 seconds)
+    -   **Impact**: A higher value can consume more server memory by holding onto stale sessions for longer. A lower value may cause users to lose their data on brief disconnects.
+-   **`WEBSOCKET_WATCHDOG_INTERVAL`**
+    -   **Purpose**: The interval in milliseconds at which the server's "watchdog" process runs. It checks for and terminates stale or unresponsive WebSocket connections that have not responded to a heartbeat (ping) request. This is the primary mechanism for cleaning up "zombie" connections and preventing resource leaks.
+    -   **Default**: `30000` (30 seconds)
+    -   **Impact**: A shorter interval can be more aggressive in cleaning up dead connections, but may also terminate connections that are only temporarily latent. A longer interval is safer but may allow dead connections to persist for longer.
 
 ## Documentation
 
