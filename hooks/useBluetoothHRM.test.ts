@@ -358,4 +358,30 @@ describe('useBluetoothHRM', () => {
       jest.useRealTimers()
     })
   })
+
+  describe('Status Messages', () => {
+    it('should show the correct status message on successful connection', async () => {
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+
+      expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+    })
+
+    it('should show the correct status message on disconnection', async () => {
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+
+      act(() => {
+        result.current.disconnect()
+      })
+
+      expect(result.current.deviceStatus).toBe('Disconnected')
+    })
+  })
 })
