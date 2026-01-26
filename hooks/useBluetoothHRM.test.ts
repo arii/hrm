@@ -18,11 +18,15 @@ jest.mock('@/utils/logger', () => ({
 }))
 
 describe('useBluetoothHRM', () => {
-  let mockGatt: jest.Mock;
-  let mockDevice: jest.Mock;
-  let mockBluetooth: jest.Mock;
-  let mockCharacteristic: jest.Mock;
-  let characteristicValueChangedCallback: (event: any) => void;
+  let mockGatt: jest.Mock
+  let mockDevice: jest.Mock
+  let mockBluetooth: jest.Mock
+  let mockCharacteristic: jest.Mock
+  let characteristicValueChangedCallback: (event: {
+    target: { value: DataView }
+  }) => void
+  let mockCharacteristic: jest.Mock
+  let characteristicValueChangedCallback: (event: any) => void
 
   beforeEach(() => {
     // Reset mocks before each test
@@ -52,13 +56,13 @@ describe('useBluetoothHRM', () => {
     jest.spyOn(cookieUtils, 'setCookie').mockImplementation(() => {})
 
     // Mock Bluetooth device
-    characteristicValueChangedCallback = () => {};
+    characteristicValueChangedCallback = () => {}
     mockCharacteristic = {
       startNotifications: jest.fn().mockResolvedValue(undefined),
       addEventListener: jest.fn((_event, callback) => {
-        characteristicValueChangedCallback = callback;
+        characteristicValueChangedCallback = callback
       }),
-    };
+    }
 
     mockGatt = {
       connect: jest.fn().mockResolvedValue({
@@ -67,14 +71,14 @@ describe('useBluetoothHRM', () => {
         }),
       }),
       disconnect: jest.fn(),
-    };
+    }
 
     mockDevice = {
       id: 'test-device-id',
       name: 'Test HRM',
       gatt: mockGatt,
       addEventListener: jest.fn(),
-    };
+    }
 
     // Mock Web Bluetooth API
     mockBluetooth = {
@@ -169,7 +173,7 @@ describe('useBluetoothHRM', () => {
     const connectPromise = new Promise((resolve) => {
       connectResolver = resolve
     })
-      mockGatt.connect.mockReturnValue(connectPromise);
+    mockGatt.connect.mockReturnValue(connectPromise)
 
     const { result } = renderHook(() => useBluetoothHRM())
 
@@ -222,7 +226,7 @@ describe('useBluetoothHRM', () => {
         getPrimaryService: jest.fn().mockResolvedValue({
           getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
         }),
-      });
+      })
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -313,7 +317,7 @@ describe('useBluetoothHRM', () => {
         getPrimaryService: jest.fn().mockResolvedValue({
           getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
         }),
-      });
+      })
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -468,7 +472,9 @@ describe('useBluetoothHRM', () => {
       expect(result.current.signalPeriodMs).toBe(1000)
 
       // Advance time past the liveness timeout
-      jest.spyOn(Date, 'now').mockReturnValue(now + 1000 + dataLivenessTimeoutMs + 1)
+      jest
+        .spyOn(Date, 'now')
+        .mockReturnValue(now + 1000 + dataLivenessTimeoutMs + 1)
       await act(async () => {
         jest.advanceTimersByTime(dataLivenessTimeoutMs + 1)
       })
@@ -477,7 +483,7 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.disconnect).toHaveBeenCalledTimes(1)
       expect(result.current.isDataStale).toBe(true)
 
-      const initialSignalPeriod = result.current.signalPeriodMs;
+      const initialSignalPeriod = result.current.signalPeriodMs
 
       // Advance the heartbeat timer again
       await act(async () => {
