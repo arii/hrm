@@ -131,13 +131,12 @@ export default function ConnectPage() {
     autoConnect,
     disconnect,
     forgetDevice,
-    deviceStatus,
+    status,
     batteryLevel,
     isConnected,
     isDataStale,
     isSupported,
     signalPeriodMs,
-    status,
   } = useBluetoothHRM({
     userName,
     userAge: userAge || 0,
@@ -220,7 +219,7 @@ export default function ConnectPage() {
       onUnitChange={handleUnitChange}
       isConnected={isConnected}
       isDataStale={isDataStale}
-      deviceStatus={deviceStatus}
+      status={status}
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}
@@ -240,7 +239,6 @@ export default function ConnectPage() {
       onStartWorkout={startWorkout}
       onPauseWorkout={pauseWorkout}
       onEndWorkout={endWorkout}
-      status={status}
     />
   )
 }

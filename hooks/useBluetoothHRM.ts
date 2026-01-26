@@ -18,14 +18,6 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 
-const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
-  [BluetoothConnectionStatus.DISCONNECTED]: 'Disconnected',
-  [BluetoothConnectionStatus.CONNECTING]: 'Connecting...',
-  [BluetoothConnectionStatus.CONNECTED]: 'Connected',
-  [BluetoothConnectionStatus.RECONNECTING]: 'Reconnecting...',
-  [BluetoothConnectionStatus.ERROR]: 'Error',
-}
-
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
@@ -122,9 +114,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [status, setStatus] = useState<BluetoothConnectionStatus>(
     BluetoothConnectionStatus.DISCONNECTED
   )
-  const [customStatusMessage, setCustomStatusMessage] = useState<string | null>(
-    null
-  )
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isDataStale, setIsDataStale] = useState(false)
@@ -132,8 +121,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
-
-  const deviceStatus = customStatusMessage ?? statusMessageMap[status]
 
   const statusRef = useRef(status)
   const lastDataTime = useRef<number>(0)
@@ -839,13 +826,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     autoConnect,
     disconnect,
     forgetDevice,
-    deviceStatus,
+    status,
     batteryLevel,
     isConnected: status === BluetoothConnectionStatus.CONNECTED,
     isDataStale,
     isSupported, // Export this flag
     signalPeriodMs,
-    status,
   }
 }
 

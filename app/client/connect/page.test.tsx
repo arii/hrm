@@ -1,40 +1,130 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import ConnectPage from './page'
-import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import * as BluetoothHRMHook from '@/hooks/useBluetoothHRM'
+import * as WebSocketContext from '@/context/WebSocketContext'
+import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
 
-jest.mock('@/hooks/useWorkoutSession')
+// Mock the BluetoothHRM hook
 jest.mock('@/hooks/useBluetoothHRM')
+// Mock the WebSocket context
+jest.mock('@/context/WebSocketContext')
+
+const mockAutoConnect = jest.fn()
+const mockConnectAndStream = jest.fn()
 
 describe('ConnectPage', () => {
-  it('renders without crashing', () => {
-    // Mock the hooks with default values
-    (useWorkoutSession as jest.Mock).mockReturnValue({
-      workoutDuration: 0,
-      caloriesBurned: 0,
-      resetWorkout: jest.fn(),
-      startWorkout: jest.fn(),
-      pauseWorkout: jest.fn(),
-      endWorkout: jest.fn(),
-      workoutStatus: 'idle',
-      hasStarted: false,
-    });
-    (useBluetoothHRM as jest.Mock).mockReturnValue({
-      connectAndStream: jest.fn(),
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.spyOn(BluetoothHRMHook, 'default').mockReturnValue({
+      connectAndStream: mockConnectAndStream,
+      autoConnect: mockAutoConnect,
       disconnect: jest.fn(),
       forgetDevice: jest.fn(),
       deviceStatus: 'Disconnected',
+      status: BluetoothConnectionStatus.DISCONNECTED,
       batteryLevel: null,
       isConnected: false,
-      isDataStale: false,
       isSupported: true,
-      signalPeriodMs: 0,
+    })
+  })
+
+  it('should call autoConnect on mount when WebSocket is connected', () => {
+    jest.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue({
+      connectionStatus: 'Connected',
+      sendData: jest.fn(),
+      hrmData: [],
+      timerData: {
+        phase: 'idle',
+        timeRemaining: 0,
+        currentRound: 0,
+        totalRounds: 0,
+      },
+      spotifyData: null,
+      workoutData: {
+        totalCalories: 0,
+        workoutDuration: 0,
+      },
+      lastJsonMessage: null,
     })
 
-    render(<ConnectPage />)
-    expect(screen.getByText('Connect Heart Rate Monitor')).toBeInTheDocument()
+    render(
+      <UserSettingsProvider>
+        <ConnectPage />
+      </UserSettingsProvider>
+    )
+
+    expect(mockAutoConnect).toHaveBeenCalledTimes(1)
+  })
+
+  it('should not call autoConnect on mount when WebSocket is disconnected', () => {
+    jest.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue({
+      connectionStatus: 'Disconnected',
+      sendData: jest.fn(),
+      hrmData: [],
+      timerData: {
+        phase: 'idle',
+        timeRemaining: 0,
+        currentRound: 0,
+        totalRounds: 0,
+      },
+      spotifyData: null,
+      workoutData: {
+        totalCalories: 0,
+        workoutDuration: 0,
+      },
+      lastJsonMessage: null,
+    })
+
+    render(
+      <UserSettingsProvider>
+        <ConnectPage />
+      </UserSettingsProvider>
+    )
+
+    expect(mockAutoConnect).not.toHaveBeenCalled()
+  })
+
+  it('should not call autoConnect if already connected', () => {
+    jest.spyOn(BluetoothHRMHook, 'default').mockReturnValue({
+      connectAndStream: mockConnectAndStream,
+      autoConnect: mockAutoConnect,
+      disconnect: jest.fn(),
+      forgetDevice: jest.fn(),
+      deviceStatus: 'Connected',
+      status: BluetoothConnectionStatus.CONNECTED,
+      batteryLevel: null,
+      isConnected: true,
+      isSupported: true,
+    })
+
+    jest.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue({
+      connectionStatus: 'Connected',
+      sendData: jest.fn(),
+      hrmData: [],
+      timerData: {
+        phase: 'idle',
+        timeRemaining: 0,
+        currentRound: 0,
+        totalRounds: 0,
+      },
+      spotifyData: null,
+      workoutData: {
+        totalCalories: 0,
+        workoutDuration: 0,
+      },
+      lastJsonMessage: null,
+    })
+
+    render(
+      <UserSettingsProvider>
+        <ConnectPage />
+      </UserSettingsProvider>
+    )
+
+    expect(mockAutoConnect).not.toHaveBeenCalled()
   })
 })

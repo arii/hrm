@@ -57,6 +57,7 @@ interface ConnectViewProps {
   isConnected: boolean
   isDataStale?: boolean
   deviceStatus: string
+  status: BluetoothConnectionStatus
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void
@@ -73,7 +74,6 @@ interface ConnectViewProps {
   onStartWorkout: () => void
   onPauseWorkout: () => void
   onEndWorkout: () => void
-  status: BluetoothConnectionStatus
 }
 
 export default function ConnectView({
@@ -100,6 +100,7 @@ export default function ConnectView({
   isConnected,
   isDataStale = false,
   deviceStatus,
+  status,
   batteryLevel,
   onConnect,
   onDisconnect,
@@ -116,7 +117,6 @@ export default function ConnectView({
   onStartWorkout,
   onPauseWorkout,
   onEndWorkout,
-  status,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -284,14 +284,18 @@ export default function ConnectView({
           </Box>
         )}
 
-        {status !== BluetoothConnectionStatus.DISCONNECTED && !isConnected && (
-          <Alert
-            severity={status === BluetoothConnectionStatus.ERROR ? 'error' : 'info'}
-            sx={{ mb: 2 }}
-          >
-            {deviceStatus}
-          </Alert>
-        )}
+        {deviceStatus &&
+          status !== BluetoothConnectionStatus.DISCONNECTED &&
+          !isConnected && (
+            <Alert
+              severity={
+                status === BluetoothConnectionStatus.ERROR ? 'error' : 'info'
+              }
+              sx={{ mb: 2 }}
+            >
+              {deviceStatus}
+            </Alert>
+          )}
 
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           {!isConnected ? (
@@ -350,7 +354,7 @@ export default function ConnectView({
               >
                 Disconnect
               </Button>
-              {deviceStatus !== 'Connected' && (
+              {status !== BluetoothConnectionStatus.CONNECTED && (
                 <Typography variant="caption" color="text.secondary">
                   Status: {deviceStatus}
                 </Typography>
