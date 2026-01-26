@@ -42,8 +42,8 @@ const config = {
     ],
   },
   transformIgnorePatterns: [
-    // The following modules are all ESM, so they need to be transformed by Jest.
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi|pretty-bytes|p-timeout|strip-indent|p-cancelable)',
+    // recharts is mocked, so it doesn't need to be explicitly transformed or ignored from transformation.
+    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {

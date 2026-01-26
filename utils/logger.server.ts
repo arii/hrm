@@ -3,6 +3,7 @@ import pino from 'pino'
 import { Request, Response } from 'express'
 import pinoHttp from 'pino-http'
 import { randomUUID } from 'crypto'
+import http from 'http' // Import http for type annotation
 
 // Define a consistent logger interface
 interface Logger {
@@ -24,7 +25,8 @@ export const pinoOptions: pino.LoggerOptions = {
       'req.headers.cookie',
       'req.headers.authorization',
       'res.headers',
-      // Redact Spotify tokens in log bodies
+      '*.access_token',
+      '*.refresh_token',
       'body.access_token',
       'body.refresh_token',
     ],
@@ -44,7 +46,7 @@ if (process.env.NODE_ENV === 'development') {
 
 const logger = pino(pinoOptions) as Logger
 
-const httpLogger = pinoHttp({
+const httpLogger = (pinoHttp as any)({
   logger: logger as pino.Logger,
   genReqId: function (req: Request, res: Response) {
     const existingID = req.id ?? req.headers['x-request-id']
@@ -72,6 +74,12 @@ const httpLogger = pinoHttp({
   },
   customErrorMessage: function (req: Request, res: Response, _err: Error) {
     return `${req.method} ${req.url} errored with status code ${res.statusCode}`
+  },
+  autoLogging: {
+    ignore: (req: http.IncomingMessage) => {
+      const pathsToIgnore = ['/api/health', '/api/auth/session', '/_next/']
+      return pathsToIgnore.some((path) => req.url?.startsWith(path))
+    },
   },
 })
 
