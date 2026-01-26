@@ -59,13 +59,19 @@ const TimerControls = () => {
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
 
-  // When the server's running state changes, our optimistic action has been
-  // confirmed, so we can clear it.
+  // When the server's running state changes and confirms our optimistic
+  // action, we can clear the optimistic state.
   useEffect(() => {
-    if (
-      optimisticAction &&
-      timerData.isRunning !== (optimisticAction === 'START')
-    ) {
+    if (optimisticAction === null) return
+
+    const actionConfirmed =
+      (optimisticAction === 'START' && timerData.isRunning) ||
+      (optimisticAction === 'STOP' && !timerData.isRunning)
+
+    if (actionConfirmed) {
+      // This is a desired state update to synchronize with the server,
+      // not a cascading render. The condition prevents an infinite loop.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOptimisticAction(null)
     }
   }, [timerData.isRunning, optimisticAction])
@@ -82,6 +88,7 @@ const TimerControls = () => {
       }, OPTIMISTIC_ACTION_TIMEOUT)
       return () => clearTimeout(timer)
     }
+    return () => {}
   }, [optimisticAction])
 
   useEffect(() => {
