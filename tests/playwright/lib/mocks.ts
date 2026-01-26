@@ -6,15 +6,27 @@
  * dependencies to create stable and predictable test environments.
  */
 import type { Page, BrowserContext } from '@playwright/test'
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-// ES module-safe way to get __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const STABLE_WORKOUT_HTML = fs.readFileSync(path.join(__dirname, '../stable-workout-overlay.html'), 'utf-8');
+const STABLE_WORKOUT_HTML = `
+  <!DOCTYPE html>
+  <html><head><style>
+  body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: white; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 10px; border: 1px solid #ddd; vertical-align: top; }
+  h3 { margin: 0 0 10px 0; color: #333; }
+  p { margin: 5px 0; font-size: 14px; }
+  </style></head><body>
+  <p><strong>Sample Workout Plan</strong></p>
+  <table><tr>
+  <td><h3>30/10 x 3</h3><p>3 way crunch</p><p>Dead bug</p><p>Plank variations</p></td>
+  <td><h3>Tabata</h3><p>Band h. Bridge</p><p>Band p. Squat</p><p>Band hydrants</p></td>
+  <td><h3>Complex 5x5</h3><p>RDL</p><p>High pull</p><p>1 ½ squat</p></td>
+  <td><h3>3x10</h3><p>Alt box ch press</p><p>Single Hip thrust</p></td>
+  <td><h3>3 x 12</h3><p>Kb curl</p><p>Tricep planks</p><p>Butterfly bridge</p></td>
+  </tr></table>
+  <p><a href="#">Previous workouts</a></p>
+  </body></html>
+`
 
 /**
  * Intercepts requests to the Google Doc iframe and serves a stable,
