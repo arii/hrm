@@ -96,5 +96,4 @@ describe('TimerControls Notifications', () => {
       )
     })
   })
-
 })

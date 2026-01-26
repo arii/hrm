@@ -24,7 +24,6 @@ import { motion } from 'framer-motion'
 import { useSnackbar } from 'notistack'
 import DurationStepper from './DurationStepper'
 
-const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
 const OPTIMISTIC_ACTION_TIMEOUT = 3000 // ms for reverting optimistic UI
 
 const actionButtonBaseSx = {
@@ -143,14 +142,7 @@ const TimerControls = () => {
       if (command === 'START') sendSpotifyCommand('NEXT')
       else if (command === 'STOP') sendSpotifyCommand('PAUSE')
     },
-    [
-      sendData,
-      sendSpotifyCommand,
-      connectionStatus,
-      workTime,
-      restTime,
-      enqueueSnackbar,
-    ]
+    [sendData, sendSpotifyCommand, workTime, restTime]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
