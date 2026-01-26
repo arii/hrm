@@ -11,20 +11,11 @@ interface Logger {
   child: (bindings: object) => Logger
 }
 
-const isProduction = process.env.NODE_ENV === 'production'
-
-// No-op function for production logging
-const noOp = () => {}
-
 // Client-side logger - wrap console methods to match pino interface
 const logger: Logger = {
-  debug: isProduction
-    ? noOp
-    : (msg: unknown, ...args: unknown[]) => console.log(msg, ...args),
+  debug: (msg: unknown, ...args: unknown[]) => console.log(msg, ...args),
   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
-  warn: isProduction
-    ? noOp
-    : (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+  warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
   child: function () {
     return this
