@@ -1,6 +1,4 @@
-## Change Summary for PR #4073
-
-*(Note: The following statistics describe the changes in PR #4073, not the PR that updated this description.)*
+## Change Summary
 
 - **Files Changed:** 1
 - **Lines Added:** 42
