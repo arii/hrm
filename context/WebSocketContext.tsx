@@ -167,6 +167,12 @@ export const WebSocketProvider = ({
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
+  // Expose the dispatch function on the window object for Playwright testing.
+  // This allows tests to simulate server-sent messages and verify UI reactions.
+  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+    ;(window as any).__TEST_DISPATCH__ = dispatch
+  }
+
   const throttledDispatch = useRef(
     throttle((message: ServerMessage) => {
       dispatch(message)
