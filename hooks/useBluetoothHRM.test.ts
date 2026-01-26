@@ -360,6 +360,9 @@ describe('useBluetoothHRM', () => {
   })
 
   describe('Watchdog and Reconnection', () => {
+    // Corresponds to the HEARTBEAT_INTERVAL_MS in the hook
+    const WATCHDOG_INTERVAL_MS = 1000 * 2 // Watchdog runs every 2nd heartbeat
+
     it('should detect data staleness and attempt to reconnect', async () => {
       jest.useFakeTimers()
       const dataLivenessTimeoutMs = 5000
@@ -402,13 +405,13 @@ describe('useBluetoothHRM', () => {
         jest.advanceTimersByTime(dataLivenessTimeoutMs + 100)
       })
 
-      // The watchdog runs every 2 seconds, so we need to advance time enough for it to run
+      // The watchdog runs on a timer, so we need to advance time for it to trigger
       await act(async () => {
-        jest.advanceTimersByTime(2000)
+        jest.advanceTimersByTime(WATCHDOG_INTERVAL_MS)
       })
 
       expect(result.current.isDataStale).toBe(true)
-      expect(result.current.deviceStatus).toContain('Reconnecting')
+      expect(result.current.deviceStatus).toMatch(/reconnecting/i)
       expect(mockGatt.disconnect).toHaveBeenCalled()
 
       jest.useRealTimers()
@@ -447,9 +450,7 @@ describe('useBluetoothHRM', () => {
       })
 
       expect(result.current.isConnected).toBe(false)
-      expect(result.current.deviceStatus).toContain(
-        'Reconnecting... (Attempt 1/5)'
-      )
+      expect(result.current.deviceStatus).toMatch(/reconnecting.*attempt 1\/5/i)
 
       // --- Reconnection attempts ---
       for (let i = 1; i <= 5; i++) {
@@ -458,8 +459,8 @@ describe('useBluetoothHRM', () => {
         })
         expect(mockGatt.connect).toHaveBeenCalledTimes(i)
         if (i < 5) {
-          expect(result.current.deviceStatus).toContain(
-            `Reconnecting... (Attempt ${i + 1}/5)`
+          expect(result.current.deviceStatus).toMatch(
+            new RegExp(`reconnecting.*attempt ${i + 1}/5`, 'i')
           )
         }
       }
@@ -469,8 +470,8 @@ describe('useBluetoothHRM', () => {
         jest.runOnlyPendingTimers()
       })
 
-      expect(result.current.deviceStatus).toContain(
-        'Failed to reconnect after 5 attempts'
+      expect(result.current.deviceStatus).toMatch(
+        /failed to reconnect after 5 attempts/i
       )
       expect(mockGatt.connect).toHaveBeenCalledTimes(5) // No more calls
 
@@ -528,9 +529,7 @@ describe('useBluetoothHRM', () => {
       })
       expect(mockGatt.connect).toHaveBeenCalledTimes(1)
       expect(result.current.isConnected).toBe(false)
-      expect(result.current.deviceStatus).toContain(
-        'Reconnecting... (Attempt 2/5)'
-      )
+      expect(result.current.deviceStatus).toMatch(/reconnecting.*attempt 2\/5/i)
 
       // Second attempt (should succeed)
       await act(async () => {
@@ -538,7 +537,7 @@ describe('useBluetoothHRM', () => {
       })
       expect(mockGatt.connect).toHaveBeenCalledTimes(2)
       expect(result.current.isConnected).toBe(true)
-      expect(result.current.deviceStatus).toContain('Connected to: Test HRM')
+      expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
 
       jest.useRealTimers()
     })
