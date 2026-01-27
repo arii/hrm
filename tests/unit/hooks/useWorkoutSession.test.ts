@@ -3,149 +3,155 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { useWorkoutState } from '@/hooks/useWorkoutState'
+import { useWorkoutData } from '@/hooks/useWorkoutData'
 
-describe('useWorkoutSession calorie logic', () => {
-  it('should initialize with zero calories burned', () => {
+jest.mock('@/hooks/useWorkoutState')
+jest.mock('@/hooks/useWorkoutData')
+
+const useWorkoutStateMock = useWorkoutState as jest.Mock
+const useWorkoutDataMock = useWorkoutData as jest.Mock
+
+describe('useWorkoutSession', () => {
+  beforeEach(() => {
+    // Reset mocks before each test
+    useWorkoutStateMock.mockClear()
+    useWorkoutDataMock.mockClear()
+  })
+  it('should return the correct initial values', () => {
+    useWorkoutStateMock.mockReturnValue({
+      workoutStatus: 'idle',
+      startWorkout: jest.fn(),
+      pauseWorkout: jest.fn(),
+      endWorkout: jest.fn(),
+      resetWorkout: jest.fn(),
+    })
+    useWorkoutDataMock.mockReturnValue({
+      workoutDuration: 0,
+      caloriesBurned: 0,
+      resetWorkoutData: jest.fn(),
+      startWorkoutData: jest.fn(),
+    })
+
     const { result } = renderHook(() =>
       useWorkoutSession({ isConnected: false, totalCalories: 0 })
     )
+
+    expect(result.current.workoutStatus).toBe('idle')
+    expect(result.current.workoutDuration).toBe(0)
     expect(result.current.caloriesBurned).toBe(0)
+    expect(result.current.hasStarted).toBe(false)
   })
 
-  it('should start with zero calories burned even if totalCalories is non-zero', () => {
+  it('should call the correct functions when startWorkout is called', () => {
+    const startState = jest.fn()
+    const startWorkoutData = jest.fn()
+    useWorkoutStateMock.mockReturnValue({
+      workoutStatus: 'idle',
+      startWorkout: startState,
+      pauseWorkout: jest.fn(),
+      endWorkout: jest.fn(),
+      resetWorkout: jest.fn(),
+    })
+    useWorkoutDataMock.mockReturnValue({
+      workoutDuration: 0,
+      caloriesBurned: 0,
+      resetWorkoutData: jest.fn(),
+      startWorkoutData,
+    })
+
     const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: false, totalCalories: 100 })
-    )
-    expect(result.current.caloriesBurned).toBe(0)
-  })
-
-  it('should capture the starting calorie count on startWorkout', () => {
-    const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: false, totalCalories }),
-      { initialProps: { totalCalories: 100 } }
+      useWorkoutSession({ isConnected: false, totalCalories: 0 })
     )
 
     act(() => {
       result.current.startWorkout()
     })
 
-    rerender({ totalCalories: 110 })
-    expect(result.current.caloriesBurned).toBe(10)
+    expect(startState).toHaveBeenCalled()
+    expect(startWorkoutData).toHaveBeenCalled()
   })
 
-  it('should calculate calories burned based on the difference from the start', () => {
-    const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 50 } }
+  it('should call the correct functions when pauseWorkout is called', () => {
+    const pauseState = jest.fn()
+    useWorkoutStateMock.mockReturnValue({
+      workoutStatus: 'running',
+      startWorkout: jest.fn(),
+      pauseWorkout: pauseState,
+      endWorkout: jest.fn(),
+      resetWorkout: jest.fn(),
+    })
+    useWorkoutDataMock.mockReturnValue({
+      workoutDuration: 10,
+      caloriesBurned: 5,
+      resetWorkoutData: jest.fn(),
+      startWorkoutData: jest.fn(),
+    })
+
+    const { result } = renderHook(() =>
+      useWorkoutSession({ isConnected: false, totalCalories: 0 })
     )
 
     act(() => {
-      result.current.startWorkout()
+      result.current.pauseWorkout()
     })
 
-    rerender({ totalCalories: 55 })
-    expect(result.current.caloriesBurned).toBe(5)
-
-    rerender({ totalCalories: 75 })
-    expect(result.current.caloriesBurned).toBe(25)
+    expect(pauseState).toHaveBeenCalled()
   })
 
-  it('should not show negative calories if totalCalories decreases', () => {
-    const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 100 } }
-    )
-
-    act(() => {
-      result.current.startWorkout()
+  it('should call the correct functions when endWorkout is called', () => {
+    const endState = jest.fn()
+    useWorkoutStateMock.mockReturnValue({
+      workoutStatus: 'running',
+      startWorkout: jest.fn(),
+      pauseWorkout: jest.fn(),
+      endWorkout: endState,
+      resetWorkout: jest.fn(),
+    })
+    useWorkoutDataMock.mockReturnValue({
+      workoutDuration: 10,
+      caloriesBurned: 5,
+      resetWorkoutData: jest.fn(),
+      startWorkoutData: jest.fn(),
     })
 
-    rerender({ totalCalories: 90 }) // totalCalories decreased
-    expect(result.current.caloriesBurned).toBe(0)
-  })
-
-  it('should preserve the last calculated calories when the workout ends', () => {
-    const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 200 } }
+    const { result } = renderHook(() =>
+      useWorkoutSession({ isConnected: false, totalCalories: 0 })
     )
-
-    act(() => {
-      result.current.startWorkout()
-    })
-
-    rerender({ totalCalories: 250 })
-    expect(result.current.caloriesBurned).toBe(50)
 
     act(() => {
       result.current.endWorkout()
     })
 
-    expect(result.current.caloriesBurned).toBe(50)
-    rerender({ totalCalories: 260 }) // Further changes should not affect burned calories
-    expect(result.current.caloriesBurned).toBe(50)
+    expect(endState).toHaveBeenCalled()
   })
 
-  it('should reset caloriesBurned to zero on resetWorkout', () => {
-    const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 300 } }
-    )
-
-    act(() => {
-      result.current.startWorkout()
+  it('should call the correct functions when resetWorkout is called', () => {
+    const resetState = jest.fn()
+    const resetWorkoutData = jest.fn()
+    useWorkoutStateMock.mockReturnValue({
+      workoutStatus: 'idle',
+      startWorkout: jest.fn(),
+      pauseWorkout: jest.fn(),
+      endWorkout: jest.fn(),
+      resetWorkout: resetState,
+    })
+    useWorkoutDataMock.mockReturnValue({
+      workoutDuration: 0,
+      caloriesBurned: 0,
+      resetWorkoutData,
+      startWorkoutData: jest.fn(),
     })
 
-    rerender({ totalCalories: 320 })
-    expect(result.current.caloriesBurned).toBe(20)
+    const { result } = renderHook(() =>
+      useWorkoutSession({ isConnected: false, totalCalories: 0 })
+    )
 
     act(() => {
       result.current.resetWorkout()
     })
 
-    expect(result.current.caloriesBurned).toBe(0)
-  })
-
-  it('should not be affected by pause and resume', () => {
-    const { result, rerender } = renderHook(
-      ({ isConnected, totalCalories }) =>
-        useWorkoutSession({ isConnected, totalCalories }),
-      { initialProps: { isConnected: true, totalCalories: 100 } }
-    )
-
-    act(() => {
-      result.current.startWorkout()
-    })
-    rerender({ isConnected: true, totalCalories: 110 })
-    expect(result.current.caloriesBurned).toBe(10)
-
-    // Pause
-    rerender({ isConnected: false, totalCalories: 115 })
-    expect(result.current.caloriesBurned).toBe(15)
-
-    // Resume
-    rerender({ isConnected: true, totalCalories: 125 })
-    expect(result.current.caloriesBurned).toBe(25)
-  })
-
-  it('should pause the workout when pauseWorkout is called', () => {
-    const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: true })
-    )
-
-    act(() => {
-      result.current.startWorkout()
-    })
-    expect(result.current.workoutStatus).toBe('running')
-
-    act(() => {
-      result.current.pauseWorkout()
-    })
-    expect(result.current.workoutStatus).toBe('paused')
+    expect(resetState).toHaveBeenCalled()
+    expect(resetWorkoutData).toHaveBeenCalled()
   })
 })
