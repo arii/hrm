@@ -1,7 +1,7 @@
 // File: utils/constants.ts
 // Centralized constants for the application.
 
-import { MAX_HR_DEFAULT } from '@/lib/constants/index'
+import { MAX_HR_DEFAULT } from '../lib/constants'
 
 // --- Heart Rate Calculation Constants ---
 export const MAX_HR_ESTIMATION_BASE = 220 // Fox formula constant
