@@ -67,6 +67,8 @@ jest.mock('../../utils/logger', () => ({
 
 // Manual mock for the 'ws' module
 jest.mock('ws', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const EventEmitter = require('events')
   class MockWebSocketServer extends EventEmitter {
     clients = new Set<MockWebSocket>()
     on(event: string, listener: (...args: unknown[]) => void) {
