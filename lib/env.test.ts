@@ -50,9 +50,11 @@ describe('Environment Schema Validation', () => {
         NEXTAUTH_URL: 'http://localhost:3000',
       })
       expect(error).toBeInstanceOf(z.ZodError)
-      expect((error as z.ZodError).errors[0].message).toBe(
-        'SPOTIFY_CLIENT_SECRET is required when SPOTIFY_CLIENT_ID is set.'
-      )
+      if (error instanceof z.ZodError) {
+        expect(error.issues[0]?.message).toBe(
+          'SPOTIFY_CLIENT_SECRET is required when SPOTIFY_CLIENT_ID is set.',
+        )
+      }
     })
 
     it('should fail if SPOTIFY_CLIENT_SECRET is set but SPOTIFY_CLIENT_ID is not', async () => {
@@ -63,9 +65,11 @@ describe('Environment Schema Validation', () => {
         NEXTAUTH_URL: 'http://localhost:3000',
       })
       expect(error).toBeInstanceOf(z.ZodError)
-      expect((error as z.ZodError).errors[0].message).toBe(
-        'SPOTIFY_CLIENT_ID is required when SPOTIFY_CLIENT_SECRET is set.'
-      )
+      if (error instanceof z.ZodError) {
+        expect(error.issues[0]?.message).toBe(
+          'SPOTIFY_CLIENT_ID is required when SPOTIFY_CLIENT_SECRET is set.',
+        )
+      }
     })
 
     it('should succeed if both SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are set', async () => {
@@ -88,9 +92,11 @@ describe('Environment Schema Validation', () => {
         NEXTAUTH_URL: 'http://localhost:3000',
       })
       expect(error).toBeInstanceOf(z.ZodError)
-      expect((error as z.ZodError).errors[0].message).toBe(
-        'NEXTAUTH_SECRET must be at least 32 characters long in production.'
-      )
+      if (error instanceof z.ZodError) {
+        expect(error.issues[0]?.message).toBe(
+          'NEXTAUTH_SECRET must be at least 32 characters long in production.',
+        )
+      }
     })
 
     it('should succeed in production if NEXTAUTH_SECRET is at least 32 characters', async () => {
@@ -109,9 +115,9 @@ describe('Environment Schema Validation', () => {
         NEXTAUTH_URL: 'http://localhost:3000',
       })
       expect(error).toBeInstanceOf(z.ZodError)
-      expect((error as z.ZodError).errors[0].message).toBe(
-        'NEXTAUTH_SECRET is required.'
-      )
+      if (error instanceof z.ZodError) {
+        expect(error.issues[0]?.message).toBe('NEXTAUTH_SECRET is required.')
+      }
     })
 
     it('should succeed in development if NEXTAUTH_SECRET is not empty', async () => {
