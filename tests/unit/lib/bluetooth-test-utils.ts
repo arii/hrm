@@ -17,9 +17,12 @@ export const mockBluetoothGattCharacteristic = (
 } => {
   const listeners: ListenerMap = {}
 
-  const characteristic = {
-    startNotifications: jest.fn().mockResolvedValue(this),
-    stopNotifications: jest.fn().mockResolvedValue(this),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const characteristicMock: any = {}
+
+  const implementation = {
+    startNotifications: jest.fn().mockResolvedValue(characteristicMock),
+    stopNotifications: jest.fn().mockResolvedValue(characteristicMock),
     addEventListener: jest.fn(
       (eventName: string, callback: (event: Event) => void) => {
         if (!listeners[eventName]) {
@@ -48,10 +51,10 @@ export const mockBluetoothGattCharacteristic = (
       }
     },
   }
-  return characteristic as jest.Mocked<BluetoothRemoteGATTCharacteristic> & {
-    _listeners: ListenerMap
-    _trigger: (eventName: string, event: Partial<Event>) => void
-  }
+
+  Object.assign(characteristicMock, implementation)
+
+  return characteristicMock
 }
 
 /**
