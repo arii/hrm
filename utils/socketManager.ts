@@ -213,6 +213,26 @@ export const resetSocketManager = () => {
   clientSessionState.clear()
 }
 
+/**
+ * Resets the calorie and accumulated calorie data for all clients.
+ * This is intended to be called when a workout session ends or is reset.
+ */
+export const resetHrmData = () => {
+  const allClients = hrmDataRepository.findAll()
+  for (const client of allClients) {
+    const sessionState = clientSessionState.get(client.clientId)
+    if (sessionState) {
+      sessionState.accumulatedCalories = 0
+    }
+    hrmDataRepository.save({
+      ...client,
+      calories: 0,
+    })
+  }
+  logger.info('All client calorie counts have been reset.')
+  broadcastState() // Notify all clients of the reset
+}
+
 const broadcastState = () => {
   broadcast(
     wsServerInstance,

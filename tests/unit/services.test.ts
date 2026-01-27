@@ -21,6 +21,9 @@ import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
 // Mock dependencies
+jest.mock('../../utils/socketManager', () => ({
+  resetHrmData: jest.fn(),
+}))
 jest.mock('../../services/spotifyTokenManager')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {

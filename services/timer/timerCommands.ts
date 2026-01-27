@@ -12,6 +12,7 @@ import {
 import { DualModeTimerState } from './timerState.js'
 import { ConfigurationError } from '../../types/errors.js'
 import { TimerQueries } from './timerQueries.js'
+import { resetHrmData } from '../../utils/socketManager.js'
 
 export class TimerCommands {
   private readonly state: DualModeTimerState
@@ -104,6 +105,7 @@ export class TimerCommands {
       type: 'TIMER_UPDATE',
       payload: this.queries.getState(),
     })
+    resetHrmData()
   }
 
   /**
