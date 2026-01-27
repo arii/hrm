@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography'
 import { Session } from 'next-auth'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
-import { API_DEBUG_SPOTIFY_TOKEN } from '@/constants/apiEndpoints'
+import { API_DEBUG_SPOTIFY_TOKEN } from '@/lib/constants/apiEndpoints'
 
 interface ServerTokenStatus {
   status: string

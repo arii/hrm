@@ -18,7 +18,7 @@ import PhaseBackground from './PhaseBackground'
 import AnimatedCounter from './AnimatedCounter'
 import ProgressRing from './ProgressRing'
 import { TimerData, TimerPhase } from '@/types/core'
-import { PREPARE_DURATION } from '@/constants/timer'
+import { PREPARE_DURATION } from '@/lib/constants/timer'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 

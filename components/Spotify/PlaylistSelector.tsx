@@ -15,7 +15,7 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
-import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
+import { API_SPOTIFY_PLAYLISTS } from '@/lib/constants/apiEndpoints'
 import { Playlist } from '../../types/spotify'
 
 interface PlaylistSelectorProps {

@@ -11,7 +11,7 @@ import {
   CONNECT_HR_MONITOR_BUTTON_TEXT,
   DISCONNECT_HR_MONITOR_BUTTON_TEXT,
   UNSUPPORTED_BLUETOOTH_TOOLTIP,
-} from '@/constants/index'
+} from '@/lib/constants/index'
 
 interface ConnectHRMonitorButtonProps {
   connect: () => void

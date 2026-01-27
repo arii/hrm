@@ -1,6 +1,6 @@
 import { SpotifyDevice } from '@/types/core'
 import { SpotifyData } from '@/types/websocket'
-import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
+import { HRM_WEB_PLAYER_NAME } from '@/lib/constants/spotify'
 
 /**
  * Creates a mock SpotifyDevice object for use in tests.

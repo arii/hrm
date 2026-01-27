@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw'
 import {
   API_SPOTIFY_ACCESS_TOKEN,
   API_SPOTIFY_DEVICES,
-} from '@/constants/apiEndpoints'
+} from '@/lib/constants/apiEndpoints'
 
 const spotifyDevices = [
   {

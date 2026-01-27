@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useError } from '@/context/ErrorContext'
-import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
+import { API_SPOTIFY_ACCESS_TOKEN } from '@/lib/constants/apiEndpoints'
 import { fetchWithRetry, AppError } from '@/utils/network'
 
 // Define event data types for better type safety

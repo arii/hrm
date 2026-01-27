@@ -17,7 +17,7 @@ import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
-import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
+import { BLUETOOTH_MESSAGES } from '@/lib/constants/bluetooth-messages'
 import {
   HR_SERVICE_UUID,
   HR_CHARACTERISTIC_UUID,
