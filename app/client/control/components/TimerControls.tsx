@@ -1,10 +1,11 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
+// File: app/client/control/components/TimerControls.tsx
+'use client'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useSpotifyControls } from '@/hooks/useSpotifyControls'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { resolveSpotifyDeviceId } from '@/lib/spotify/device'
 import {
-  SpotifyCommandMessage,
   TimerCommandMessage,
   TimerConfigMessage,
   TimerModeCommandMessage,
@@ -19,7 +20,7 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
 import {
@@ -51,6 +52,7 @@ const stopButtonSx = {
 
 const TimerControls = () => {
   const { timerData, sendData, connectionStatus } = useWebSocket()
+  const { sendSpotifyCommand } = useSpotifyControls()
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
   const [optimisticAction, setOptimisticAction] = useState<
@@ -98,25 +100,6 @@ const TimerControls = () => {
     }
     sendData(message)
   }, [debouncedWorkTime, debouncedRestTime, sendData, connectionStatus])
-
-  const { spotifyData } = useWebSocket()
-  const spotifyDeviceId = useMemo(
-    () => resolveSpotifyDeviceId(spotifyData.devices || []),
-    [spotifyData.devices]
-  )
-
-  const sendSpotifyCommand = useCallback(
-    (command: 'NEXT' | 'PAUSE') => {
-      const deviceId = spotifyDeviceId || null
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        ...(deviceId ? { deviceId } : {}),
-      }
-      sendData(message)
-    },
-    [sendData, spotifyDeviceId]
-  )
 
   const sendTimerCommand = useCallback(
     (command: 'START' | 'STOP') => {
