@@ -67,14 +67,11 @@ export const useWorkoutData = ({
   })
 
   useEffect(() => {
-    // A workout is considered "over" if the status is idle but we have a startCalories value.
-    // This prevents the calorie count from updating after the workout has ended.
-    const isWorkoutOver = workoutStatus === 'idle' && startCalories > 0
-    if (isWorkoutOver) {
+    if (workoutStatus === 'idle') {
       return
     }
     dispatch({ type: 'UPDATE_CALORIES', payload: totalCalories })
-  }, [totalCalories, workoutStatus, startCalories])
+  }, [totalCalories, workoutStatus])
 
   useEffect(() => {
     const session = sessionDataRef.current
