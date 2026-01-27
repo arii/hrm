@@ -37,7 +37,7 @@ The client-side logger provides four main methods for logging messages, each cor
 
 ### `logger.debug(msg, ...args)`
 
--   **Purpose**: Used for detailed diagnostic information that is useful for debugging.
+-   **Purpose**: Used for detailed diagnostic information that is useful for debugging. (Note: Often stripped in production builds).
 -   **When to use**: Logging component lifecycle events, function entry and exit points, or the state of variables.
 -   **Example**:
     ```typescript
@@ -51,7 +51,7 @@ The client-side logger provides four main methods for logging messages, each cor
 
 ### `logger.info(msg, ...args)`
 
--   **Purpose**: Used for informational messages that highlight the progress of the application.
+-   **Purpose**: Used for informational messages that highlight the progress of the application. (Note: Often stripped in production builds).
 -   **When to use**: Logging routine events, such as the initialization of a service or successful API calls.
 -   **Example**:
     ```typescript
