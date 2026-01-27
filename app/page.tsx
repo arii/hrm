@@ -107,9 +107,9 @@ const Dashboard = () => {
       <Box sx={{ width: '100%', mt: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <Typography
-            variant="h2"
+            variant="h4"
             component="h2"
-            sx={{ flexGrow: 1, margin: 0, fontSize: '1.5rem' }}
+            sx={{ flexGrow: 1, margin: 0 }}
           >
             Today&apos;s Training Regimen
           </Typography>
