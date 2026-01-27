@@ -17,33 +17,16 @@ jest.mock('@/utils/logger', () => ({
   error: jest.fn(),
 }))
 
-// Type definitions for mocks to avoid @ts-expect-error
-interface MockCharacteristic {
-  startNotifications: jest.Mock<Promise<void>>
-  addEventListener: jest.Mock
-}
-
-interface MockService {
-  getCharacteristic: jest.Mock<Promise<MockCharacteristic>>
-}
-
-interface MockGatt {
-  connect: jest.Mock<
-    Promise<{ getPrimaryService: jest.Mock<Promise<MockService>> }>
-  >
-  disconnect: jest.Mock<void>
-}
-
-interface MockDevice {
-  id: string
-  name: string
-  gatt: MockGatt
-  addEventListener: jest.Mock
-}
+import {
+  MockBluetoothDevice,
+  MockBluetoothRemoteGATTServer,
+  MockBluetoothRemoteGATTService,
+  MockBluetoothRemoteGATTCharacteristic,
+} from '@/tests/unit/lib/bluetooth-test-utils'
 
 describe('useBluetoothHRM', () => {
-  let mockGatt: MockGatt
-  let mockDevice: MockDevice
+  let mockGatt: MockBluetoothRemoteGATTServer
+  let mockDevice: MockBluetoothDevice
   let mockBluetooth: {
     requestDevice: jest.Mock<Promise<MockDevice>>
     getDevices: jest.Mock<Promise<MockDevice[]>>
@@ -77,23 +60,30 @@ describe('useBluetoothHRM', () => {
     jest.spyOn(cookieUtils, 'setCookie').mockImplementation(() => {})
 
     // Mock Bluetooth device
-    mockGatt = {
-      connect: jest.fn().mockResolvedValue({
-        getPrimaryService: jest.fn().mockResolvedValue({
-          getCharacteristic: jest.fn().mockResolvedValue({
-            startNotifications: jest.fn().mockResolvedValue(undefined),
-            addEventListener: jest.fn(),
-          }),
-        }),
-      }),
-      disconnect: jest.fn(),
+    const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
+      startNotifications: jest.fn().mockResolvedValue(undefined),
+      stopNotifications: jest.fn().mockResolvedValue(undefined),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
     }
+
+    const mockService: MockBluetoothRemoteGATTService = {
+      getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+    }
+
+    mockGatt = {
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      getPrimaryService: jest.fn().mockResolvedValue(mockService),
+    }
+    mockGatt.connect.mockResolvedValue(mockGatt)
 
     mockDevice = {
       id: 'test-device-id',
       name: 'Test HRM',
       gatt: mockGatt,
       addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
     }
 
     // Mock Web Bluetooth API
@@ -185,14 +175,12 @@ describe('useBluetoothHRM', () => {
     )
 
     // Make the connect call a promise that we can control, so it stays pending
-    let connectResolver: (value: {
-      getPrimaryService: jest.Mock<Promise<MockService>>
-    }) => void
-    const connectPromise = new Promise<{
-      getPrimaryService: jest.Mock<Promise<MockService>>
-    }>((resolve) => {
-      connectResolver = resolve
-    })
+    let connectResolver: (value: MockBluetoothRemoteGATTServer) => void
+    const connectPromise = new Promise<MockBluetoothRemoteGATTServer>(
+      (resolve) => {
+        connectResolver = resolve
+      }
+    )
     mockGatt.connect.mockReturnValue(connectPromise)
 
     const { result } = renderHook(() => useBluetoothHRM())
@@ -213,14 +201,22 @@ describe('useBluetoothHRM', () => {
 
     // Clean up by resolving the promise to avoid open handles
     await act(async () => {
-      connectResolver({
-        getPrimaryService: jest.fn().mockResolvedValue({
-          getCharacteristic: jest.fn().mockResolvedValue({
-            startNotifications: jest.fn().mockResolvedValue(undefined),
-            addEventListener: jest.fn(),
-          } as MockCharacteristic),
-        } as MockService),
-      })
+      const mockChar: MockBluetoothRemoteGATTCharacteristic = {
+        startNotifications: jest.fn().mockResolvedValue(undefined),
+        stopNotifications: jest.fn().mockResolvedValue(undefined),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
+      const mockSvc: MockBluetoothRemoteGATTService = {
+        getCharacteristic: jest.fn().mockResolvedValue(mockChar),
+      }
+      const mockGattServer: MockBluetoothRemoteGATTServer = {
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+        getPrimaryService: jest.fn().mockResolvedValue(mockSvc),
+      }
+      mockGattServer.connect.mockResolvedValue(mockGattServer)
+      connectResolver(mockGattServer)
     })
 
     // Restore original AbortController
@@ -230,22 +226,27 @@ describe('useBluetoothHRM', () => {
   describe('Signal Quality Calculation', () => {
     it('should calculate the rolling average of signal period', async () => {
       const { result } = renderHook(() => useBluetoothHRM())
-      let characteristicValueChangedCallback: (
-        event: unknown
-      ) => void = () => {}
+      let characteristicValueChangedCallback: (event: {
+        target: { value: DataView }
+      }) => void = () => {}
 
       // Mock the characteristic and capture the event listener
-      const mockCharacteristic: MockCharacteristic = {
+      const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
         startNotifications: jest.fn().mockResolvedValue(undefined),
+        stopNotifications: jest.fn().mockResolvedValue(undefined),
         addEventListener: jest.fn((_event, callback) => {
           characteristicValueChangedCallback = callback
         }),
+        removeEventListener: jest.fn(),
+      }
+
+      const mockService: MockBluetoothRemoteGATTService = {
+        getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
       }
 
       mockGatt.connect.mockResolvedValue({
-        getPrimaryService: jest.fn().mockResolvedValue({
-          getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
-        }),
+        ...mockGatt,
+        getPrimaryService: jest.fn().mockResolvedValue(mockService),
       })
 
       await act(async () => {
@@ -321,22 +322,27 @@ describe('useBluetoothHRM', () => {
     it('should proactively increase signal period on missed heartbeats', async () => {
       jest.useFakeTimers()
       const { result } = renderHook(() => useBluetoothHRM())
-      let characteristicValueChangedCallback: (
-        event: unknown
-      ) => void = () => {}
+      let characteristicValueChangedCallback: (event: {
+        target: { value: DataView }
+      }) => void = () => {}
 
       // Mock the characteristic and capture the event listener
-      const mockCharacteristic: MockCharacteristic = {
+      const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
         startNotifications: jest.fn().mockResolvedValue(undefined),
+        stopNotifications: jest.fn().mockResolvedValue(undefined),
         addEventListener: jest.fn((_event, callback) => {
           characteristicValueChangedCallback = callback
         }),
+        removeEventListener: jest.fn(),
+      }
+
+      const mockService: MockBluetoothRemoteGATTService = {
+        getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
       }
 
       mockGatt.connect.mockResolvedValue({
-        getPrimaryService: jest.fn().mockResolvedValue({
-          getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
-        }),
+        ...mockGatt,
+        getPrimaryService: jest.fn().mockResolvedValue(mockService),
       })
 
       await act(async () => {
@@ -396,20 +402,26 @@ describe('useBluetoothHRM', () => {
       const { result } = renderHook(() =>
         useBluetoothHRM({ dataLivenessTimeoutMs })
       )
-      let characteristicValueChangedCallback: (
-        event: unknown
-      ) => void = () => {}
+      let characteristicValueChangedCallback: (event: {
+        target: { value: DataView }
+      }) => void = () => {}
 
-      const mockCharacteristic: MockCharacteristic = {
+      const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
         startNotifications: jest.fn().mockResolvedValue(undefined),
+        stopNotifications: jest.fn().mockResolvedValue(undefined),
         addEventListener: jest.fn((_event, callback) => {
           characteristicValueChangedCallback = callback
         }),
+        removeEventListener: jest.fn(),
       }
+
+      const mockService: MockBluetoothRemoteGATTService = {
+        getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+      }
+
       mockGatt.connect.mockResolvedValue({
-        getPrimaryService: jest.fn().mockResolvedValue({
-          getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
-        }),
+        ...mockGatt,
+        getPrimaryService: jest.fn().mockResolvedValue(mockService),
       })
 
       await act(async () => {
@@ -534,14 +546,7 @@ describe('useBluetoothHRM', () => {
       // First reconnect attempt fails, second succeeds
       mockGatt.connect
         .mockRejectedValueOnce(new Error('Reconnect failed'))
-        .mockResolvedValue({
-          getPrimaryService: jest.fn().mockResolvedValue({
-            getCharacteristic: jest.fn().mockResolvedValue({
-              startNotifications: jest.fn().mockResolvedValue(undefined),
-              addEventListener: jest.fn(),
-            }),
-          }),
-        })
+        .mockResolvedValue(mockGatt)
 
       await act(async () => {
         onDisconnectedCallback()
