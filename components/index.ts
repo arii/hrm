@@ -1,7 +1,6 @@
 export * from './BottomNavBar'
 export * from './ConnectHRMonitorButton'
 export * from './ErrorBoundary'
-export * from './ErrorDisplay'
 export * from './ErrorFallback'
 export * from './Footer'
 export * from './FooterControls'
