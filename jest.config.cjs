@@ -27,7 +27,7 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.(js|jsx|mjs)$': 'babel-jest',
+    '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
     '^.+\\.(ts|tsx)$': [
       'ts-jest',
       {
@@ -43,7 +43,7 @@ const config = {
   },
   transformIgnorePatterns: [
     // recharts is mocked, so it doesn't need to be explicitly transformed or ignored from transformation.
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi|@exodus/bytes|encoding-sniffer)',
+    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
