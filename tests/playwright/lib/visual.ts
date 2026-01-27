@@ -81,7 +81,7 @@ export async function takeDashboardScreenshot(
   // This helps catch any final rendering/data loading without failing on persistent connections.
   try {
     await page.waitForLoadState('networkidle', { timeout: 3000 })
-  } catch (e) {
+  } catch (_e) {
     // Ignore timeout errors, as the primary element waits have already passed.
   }
 
