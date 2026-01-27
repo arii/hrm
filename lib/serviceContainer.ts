@@ -30,6 +30,13 @@ class ServiceContainer {
     }
     return service
   }
+
+  /**
+   * Clears all registered services. Useful for test environments.
+   */
+  public reset(): void {
+    this.services = {}
+  }
 }
 
 // Export a singleton instance of the container
