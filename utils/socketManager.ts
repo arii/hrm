@@ -48,7 +48,10 @@ const hrmDataRepository = new HrmDataRepository()
 const clientSockets = new Map<string, WebSocket>()
 
 // Track internal state for calculations (not sent to client)
-const clientSessionState = new Map()
+const clientSessionState = new Map<
+  string,
+  { lastUpdate: number; accumulatedCalories: number }
+>()
 
 /**
  * @internal
