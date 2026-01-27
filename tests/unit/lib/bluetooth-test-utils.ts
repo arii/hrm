@@ -18,8 +18,8 @@ export const mockBluetoothGattCharacteristic = (
   const listeners: ListenerMap = {}
 
   const characteristic = {
-    startNotifications: jest.fn().mockResolvedValue(undefined),
-    stopNotifications: jest.fn().mockResolvedValue(undefined),
+    startNotifications: jest.fn().mockResolvedValue(this),
+    stopNotifications: jest.fn().mockResolvedValue(this),
     addEventListener: jest.fn(
       (eventName: string, callback: (event: Event) => void) => {
         if (!listeners[eventName]) {
