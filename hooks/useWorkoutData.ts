@@ -92,7 +92,7 @@ export const useWorkoutData = ({
   }, [workoutStatus])
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
+    let interval: ReturnType<typeof setTimeout> | null = null
     const session = sessionDataRef.current
 
     if (workoutStatus === 'running') {
