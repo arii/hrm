@@ -3,7 +3,11 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM from './useBluetoothHRM'
-import { HEARTBEAT_INTERVAL_MS } from './useBluetoothHRM.constants'
+import {
+  HEARTBEAT_INTERVAL_MS,
+  MAX_RECONNECT_ATTEMPTS,
+  DEFAULT_DATA_LIVENESS_TIMEOUT_MS,
+} from './useBluetoothHRM.constants'
 import * as WebSocketContext from '../context/WebSocketContext'
 import * as cookieUtils from '../utils/cookies'
 
@@ -444,6 +448,45 @@ describe('useBluetoothHRM', () => {
       jest.useRealTimers()
     })
 
+    it('should handle GATT connection timeout and reset', async () => {
+      jest.useFakeTimers()
+
+      // Mock the gatt.connect to simulate a timeout
+      mockGatt.connect.mockRejectedValue(new Error('GATT connection timeout'))
+
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // Attempt to connect, which will now time out
+      await act(async () => {
+        // The connectAndStream function will catch the error internally, so we don't expect it to throw here
+        await result.current.connectAndStream()
+      })
+
+      // Check that the status reflects the timeout error
+      expect(result.current.deviceStatus).toBe(
+        'Connection timed out. Please try again. Resetting device permissions.'
+      )
+
+      // The hook should schedule a reset after a timeout
+      // Fast-forward timers to trigger the reset
+      await act(async () => {
+        jest.runOnlyPendingTimers()
+      })
+
+      // After the reset, the status should be 'Device Permissions Revoked'
+      // and the device should be forgotten
+      expect(result.current.deviceStatus).toBe(
+        'Device permissions have been revoked. Please reconnect.'
+      )
+      expect(cookieUtils.setCookie).toHaveBeenCalledWith(
+        'hrm_device_id',
+        '',
+        -1
+      )
+
+      jest.useRealTimers()
+    })
+
     it('should attempt to reconnect on disconnection and give up after max attempts', async () => {
       jest.useFakeTimers()
 
@@ -476,30 +519,38 @@ describe('useBluetoothHRM', () => {
       })
 
       expect(result.current.isConnected).toBe(false)
-      expect(result.current.deviceStatus).toMatch(/reconnecting.*attempt 1\/5/i)
+      expect(result.current.deviceStatus).toMatch(
+        new RegExp(`reconnecting.*attempt 1/${MAX_RECONNECT_ATTEMPTS}`, 'i')
+      )
 
       // --- Reconnection attempts ---
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= MAX_RECONNECT_ATTEMPTS; i++) {
         await act(async () => {
           jest.runOnlyPendingTimers() // Run the setTimeout for reconnect
         })
         expect(mockGatt.connect).toHaveBeenCalledTimes(i)
-        if (i < 5) {
+        if (i < MAX_RECONNECT_ATTEMPTS) {
           expect(result.current.deviceStatus).toMatch(
-            new RegExp(`reconnecting.*attempt ${i + 1}/5`, 'i')
+            new RegExp(
+              `reconnecting.*attempt ${i + 1}/${MAX_RECONNECT_ATTEMPTS}`,
+              'i'
+            )
           )
         }
       }
 
-      // After 5 attempts, it should fail
+      // After MAX_RECONNECT_ATTEMPTS attempts, it should fail
       await act(async () => {
         jest.runOnlyPendingTimers()
       })
 
       expect(result.current.deviceStatus).toMatch(
-        /failed to reconnect after 5 attempts/i
+        new RegExp(
+          `failed to reconnect after ${MAX_RECONNECT_ATTEMPTS} attempts`,
+          'i'
+        )
       )
-      expect(mockGatt.connect).toHaveBeenCalledTimes(5) // No more calls
+      expect(mockGatt.connect).toHaveBeenCalledTimes(MAX_RECONNECT_ATTEMPTS) // No more calls
 
       // It should also forget the device
       await act(async () => {
