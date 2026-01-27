@@ -15,7 +15,7 @@ describe('useWorkoutData', () => {
 
   it('should initialize with 0 duration and calories', () => {
     const { result } = renderHook(() =>
-      useWorkoutData({ workoutStatus: 'idle' })
+      useWorkoutData({ workoutStatus: 'idle', totalCalories: 0 })
     )
     expect(result.current.workoutDuration).toBe(0)
     expect(result.current.caloriesBurned).toBe(0)
