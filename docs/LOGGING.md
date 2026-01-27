@@ -52,7 +52,7 @@ The client-side logger provides four main methods for logging messages, each cor
 ### `logger.info(msg, ...args)`
 
 -   **Purpose**: Used for informational messages that highlight the progress of the application.
--   **When to use**: Logging routine events, such as the initialization of a service or a successful API call.
+-   **When to use**: Logging routine events, such as the initialization of a service or successful API calls.
 -   **Example**:
     ```typescript
     import logger from 'utils/logger';
