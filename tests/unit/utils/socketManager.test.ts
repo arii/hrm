@@ -2,6 +2,8 @@ import { jest } from '@jest/globals'
 import {
   _resetState,
   _setClientData,
+  clientSessionState,
+  hrmDataRepository,
   resetHrmData,
 } from '../../../utils/socketManager'
 import * as websocketUtils from '../../../utils/websocketUtils'
@@ -40,6 +42,16 @@ describe('socketManager', () => {
       // Assert
       const broadcastMock = jest.spyOn(websocketUtils, 'broadcast')
       expect(broadcastMock).toHaveBeenCalled()
+
+      const client1Data = hrmDataRepository.findById('client1')
+      const client2Data = hrmDataRepository.findById('client2')
+      const client1Session = clientSessionState.get('client1')
+      const client2Session = clientSessionState.get('client2')
+
+      expect(client1Data?.calories).toBe(0)
+      expect(client2Data?.calories).toBe(0)
+      expect(client1Session?.accumulatedCalories).toBe(0)
+      expect(client2Session?.accumulatedCalories).toBe(0)
     })
   })
 })
