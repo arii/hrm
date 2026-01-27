@@ -62,9 +62,20 @@ export async function takeDashboardScreenshot(
   snapshotName: string,
   options: ScreenshotOptions = {}
 ) {
-  await page.waitForLoadState('networkidle') // Ensure page is fully loaded and stable
   const mainContentLocator = page.getByTestId('main-content-layout')
+  const timerDisplayLocator = page.getByTestId('timer-display-container')
+  const spotifyAuthLocator = page.getByTestId('spotify-auth-container')
+  const spotifyDisplayLocator = page.getByTestId('spotify-display-container')
+
+  // Wait for the main layout and timer to be visible
   await mainContentLocator.waitFor({ state: 'visible' })
+  await timerDisplayLocator.waitFor({ state: 'visible' })
+
+  // Wait for either the Spotify login button OR the playback controls to be visible
+  await Promise.race([
+    spotifyAuthLocator.waitFor({ state: 'visible' }),
+    spotifyDisplayLocator.waitFor({ state: 'visible' }),
+  ])
 
   const clippingRegion = await mainContentLocator.boundingBox()
   let clipOption: ScreenshotOptions['clip'] = options.clip // Preserve existing clip option if any

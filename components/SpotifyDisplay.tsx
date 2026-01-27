@@ -282,6 +282,7 @@ const SpotifyDisplay = () => {
   if (!isLoggedIn) {
     return (
       <Box
+        data-testid="spotify-auth-container"
         sx={{
           backgroundColor: 'grey.900',
           color: 'common.white',
