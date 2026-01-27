@@ -148,7 +148,10 @@ const initSocketManager = (
     const isReconnection = hrmDataRepository.findById(clientId)
 
     if (!isReconnection) {
-      logger.info(logMeta, 'New WebSocket client connected. Initializing session.')
+      logger.info(
+        logMeta,
+        'New WebSocket client connected. Initializing session.'
+      )
       const newClient: HrmStreamData = {
         clientId: extWs.clientId,
         value: 0,
@@ -170,7 +173,10 @@ const initSocketManager = (
     })
 
     extWs.on('close', () => {
-      logger.info(logMeta, 'WebSocket client disconnected. Starting grace period.')
+      logger.info(
+        logMeta,
+        'WebSocket client disconnected. Starting grace period.'
+      )
 
       // CRITICAL: Do NOT immediately delete client data. Wait a grace period to allow for a page refresh or network hiccup.
       // This is a simple but effective strategy for session continuity. A more advanced system might use a dedicated

@@ -31,7 +31,9 @@ const envSchema = z
       .int()
       .positive()
       .default(1000)
-      .describe('Maximum number of concurrent WebSocket connections allowed from a single IP address.'),
+      .describe(
+        'Maximum number of concurrent WebSocket connections allowed from a single IP address.'
+      ),
     SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(5000),
     SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
     // The time in milliseconds the server waits before cleaning up a disconnected client's session.
@@ -42,7 +44,9 @@ const envSchema = z
       .positive()
       .max(60000) // Capped at 1 minute to prevent excessive memory usage
       .default(5000)
-      .describe("Grace period in milliseconds before cleaning up a disconnected client's session."),
+      .describe(
+        "Grace period in milliseconds before cleaning up a disconnected client's session."
+      ),
     // The interval at which the server's "watchdog" checks for and terminates stale connections.
     // This is the primary mechanism for preventing resource leaks from "zombie" connections.
     WEBSOCKET_WATCHDOG_INTERVAL: z.coerce
@@ -51,7 +55,9 @@ const envSchema = z
       .positive()
       .min(5000) // Must be at least 5 seconds to avoid overly aggressive termination
       .default(30000)
-      .describe('Interval in milliseconds for the WebSocket watchdog to check for stale connections.'),
+      .describe(
+        'Interval in milliseconds for the WebSocket watchdog to check for stale connections.'
+      ),
     GEMINI_MODEL_FALLBACKS: z.string().optional(),
     ANALYZE: z.string().optional(),
     TESTING: z.string().optional(),
