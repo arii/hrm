@@ -81,6 +81,7 @@ const GoogleDocViewer = ({
             width="100%"
             height="100%"
             loading="lazy"
+            data-testid="google-doc-viewer-iframe"
             sx={{
               border: 'none',
               display: iframeLoading ? 'none' : 'block',

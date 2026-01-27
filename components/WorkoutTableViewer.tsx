@@ -74,7 +74,11 @@ export default function WorkoutTableViewer({
   }
 
   return (
-    <TableContainer component={Paper} elevation={2}>
+    <TableContainer
+      component={Paper}
+      elevation={2}
+      data-testid="workout-table-viewer"
+    >
       <Table sx={{ minWidth: 650 }} aria-label="workout table">
         {/* Render Headers */}
         {data.headers.length > 0 && (
