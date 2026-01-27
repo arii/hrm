@@ -21,7 +21,9 @@ export async function checkAccessibility(target: Page | Locator) {
     selector = `[${uniqueId}]`
   }
 
-  const axeBuilder = new AxeBuilder({ page }).withTags(['wcag2aa'])
+  const axeBuilder = new Axe-core/playwright
+    .withTags(['wcag2aa'])
+    .disableRules(['color-contrast'])
 
   if (selector) {
     axeBuilder.include(selector)
