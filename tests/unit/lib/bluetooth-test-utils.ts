@@ -106,15 +106,23 @@ export const mockBluetoothRemoteGattServer = (
   overrides: Partial<BluetoothRemoteGATTServer> = {},
   mockService: jest.Mocked<BluetoothRemoteGATTService>
 ): jest.Mocked<BluetoothRemoteGATTServer> => {
-  const gattServer = {
-    connect: jest.fn().mockImplementation(() => Promise.resolve(undefined)),
+  const gattServerMock = {} as jest.Mocked<BluetoothRemoteGATTServer>
+
+  const implementation = {
+    connect: jest
+      .fn()
+      .mockImplementation(() => Promise.resolve(gattServerMock)),
     disconnect: jest.fn(),
     getPrimaryService: jest
       .fn()
       .mockImplementation(() => Promise.resolve(mockService)),
+    connected: false,
     ...overrides,
   }
-  return gattServer as jest.Mocked<BluetoothRemoteGATTServer>
+
+  Object.assign(gattServerMock, implementation)
+
+  return gattServerMock
 }
 
 /**
@@ -128,14 +136,7 @@ export const mockBluetoothDevice = (
   const device = {
     id: 'test-device-id',
     name: 'Test HRM',
-    gatt: {
-      ...mockGattServer,
-      connected: false,
-      connect: jest
-        .fn()
-        .mockImplementation(() => Promise.resolve(mockGattServer)),
-      disconnect: jest.fn(),
-    },
+    gatt: mockGattServer,
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
     ...overrides,
