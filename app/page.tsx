@@ -15,7 +15,6 @@ import RefreshIcon from '@mui/icons-material/Refresh'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
-import Typography from '@mui/material/Typography'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -105,14 +104,8 @@ const Dashboard = () => {
         <HrmConnectionPanel />
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <Typography
-            variant="h4"
-            component="h2"
-            sx={{ flexGrow: 1, margin: 0 }}
-          >
-            Today&apos;s Training Regimen
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'flex-end', mb: 1 }}>
+          <Box sx={{ flexGrow: 1 }} />
           <IconButton
             onClick={handleRefresh}
             aria-label="refresh workout table"
