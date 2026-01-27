@@ -44,8 +44,14 @@ export const mockBluetoothGattCharacteristic = (
         }
       }
     ),
-    readValue: jest.fn().mockResolvedValue(new DataView(new ArrayBuffer(1))),
-    writeValue: jest.fn().mockResolvedValue(undefined),
+    readValue: jest
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve(new DataView(new ArrayBuffer(1)))
+      ),
+    writeValue: jest
+      .fn()
+      .mockImplementation(() => Promise.resolve(undefined)),
     ...overrides,
     // Test utilities
     _listeners: listeners,
