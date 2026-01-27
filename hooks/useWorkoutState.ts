@@ -48,6 +48,9 @@ function sessionReducer(
 
 // --- The Hook Implementation ---
 
+/**
+ * Manages the core lifecycle status of a workout session (idle, running, paused).
+ */
 export const useWorkoutState = () => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
 

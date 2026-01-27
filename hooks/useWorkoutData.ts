@@ -43,6 +43,10 @@ function sessionDataReducer(
 
 // --- The Hook Implementation ---
 
+/**
+ * Handles the calculation and management of workout-specific data such as duration and calories burned.
+ * It relies on an external workoutStatus to drive its internal timing logic.
+ */
 interface WorkoutDataOptions {
   workoutStatus: SessionStatus
   totalCalories?: number
