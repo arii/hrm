@@ -233,6 +233,7 @@ const handleIncomingMessage = (
   messageString: string,
   clientId: string
 ) => {
+  console.log('handleIncomingMessage called with:', messageString)
   // Any message from the client indicates they are still alive.
   ws.isAlive = true
   try {
