@@ -69,11 +69,11 @@ const TimerControls = () => {
       setOptimisticAction(null)
     }
     // Disabling the lint rule because we intentionally want this effect to run
-    // ONLY when timerData.isRunning changes, to synchronize the client state
+    // ONLY when timerData changes, to synchronize the client state
     // with the server's ground truth. Adding optimisticAction to the dependency
     // array would cause an infinite loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerData.isRunning])
+  }, [timerData])
 
   // Safety timeout to clear the optimistic action if the server doesn't
   // confirm it within a reasonable time.
