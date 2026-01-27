@@ -6,6 +6,7 @@
 import { jest } from '@jest/globals'
 import TabataTimer from '../../../services/tabataTimer'
 import { ConfigurationError } from '../../../types/errors'
+import { resetHrmData } from '../../../utils/socketManager'
 
 // Mock the broadcast function
 const broadcastUpdate = jest.fn()
@@ -127,6 +128,7 @@ describe('TabataTimer (Refactored)', () => {
       expect(state.isRunning).toBe(false)
       expect(state.currentPhase).toBe('IDLE')
       expect(state.timeElapsed).toBe(0)
+      expect(resetHrmData).toHaveBeenCalled()
     })
   })
 

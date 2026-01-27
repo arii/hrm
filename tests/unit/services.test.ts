@@ -16,6 +16,7 @@ import { SpotifyPolling } from '../../services/spotifyPolling'
 import { ServerMessage } from '../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
+import { resetHrmData } from '../../utils/socketManager'
 
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
@@ -235,6 +236,7 @@ describe('Services Integration', () => {
       const state = tabataTimer.getState()
       expect(state.isRunning).toBe(false)
       expect(state.currentPhase).toBe('IDLE')
+      expect(resetHrmData).toHaveBeenCalled()
     })
   })
 
@@ -364,6 +366,7 @@ describe('Services Integration', () => {
       const timerState = tabataTimer.getState()
       expect(timerState.isRunning).toBe(false)
       expect(mockPlayerFns.pausePlayback).toHaveBeenCalled()
+      expect(resetHrmData).toHaveBeenCalled()
     })
   })
 })
