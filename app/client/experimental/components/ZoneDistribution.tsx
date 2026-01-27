@@ -1,7 +1,8 @@
 // app/client/experimental/components/ZoneDistribution.tsx
 'use client'
 import { Card, CardContent, Typography, Box } from '@mui/material'
-import { HrZoneName, getUserHrZones, calculateMaxHr } from '@/utils/hr-zones'
+import { HrZoneName, getUserHrZones } from '@/utils/hr-zones'
+import { calculateMaxHr } from '@/lib/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 
 interface ZoneDistributionProps {

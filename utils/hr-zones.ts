@@ -1,4 +1,6 @@
 // utils/hr-zones.ts
+import { calculateMaxHr } from '@/lib/constants/index'
+
 // Define the HrZoneName enum here
 export enum HrZoneName {
   WarmUp = 'WarmUp',
@@ -8,11 +10,6 @@ export enum HrZoneName {
   Max = 'Max',
   NoData = 'No Data',
   Unknown = 'Unknown',
-}
-
-export const calculateMaxHr = (age: number): number => {
-  if (age <= 0) return 200
-  return 220 - age
 }
 
 // Define a type for the return value for clarity

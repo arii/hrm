@@ -1,29 +1,6 @@
 // File: utils/constants.ts
 // Centralized constants for the application.
 
-// Duplicating this constant is a pragmatic solution to avoid a circular dependency
-// between server-side (`tsc`) and client-side (Webpack) build systems.
-const MAX_HR_DEFAULT = 185
-
-// --- Heart Rate Calculation Constants ---
-export const MAX_HR_ESTIMATION_BASE = 220 // Fox formula constant
-
-/**
- * Calculates Max Heart Rate based on age using the standard Fox formula.
- * Falls back to MAX_HR_DEFAULT if age is invalid or not provided.
- */
-export const calculateMaxHr = (age?: number | string | null): number => {
-  if (!age) return MAX_HR_DEFAULT
-
-  const ageNum = typeof age === 'string' ? parseInt(age, 10) : age
-
-  if (isNaN(ageNum) || ageNum <= 0) {
-    return MAX_HR_DEFAULT
-  }
-
-  return MAX_HR_ESTIMATION_BASE - ageNum
-}
-
 // --- Calorie Calculation Constants ---
 // Based on standard metabolic formulas (e.g., Keytel)
 export const CALORIE_DEFAULTS = {

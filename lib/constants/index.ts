@@ -2,6 +2,23 @@
 // Centralized constants for the UI.
 
 export const MAX_HR_DEFAULT = 185
+export const MAX_HR_ESTIMATION_BASE = 220 // Fox formula constant
+
+/**
+ * Calculates Max Heart Rate based on age using the standard Fox formula.
+ * Falls back to MAX_HR_DEFAULT if age is invalid or not provided.
+ */
+export const calculateMaxHr = (age?: number | string | null): number => {
+  if (!age) return MAX_HR_DEFAULT
+
+  const ageNum = typeof age === 'string' ? parseInt(age, 10) : age
+
+  if (isNaN(ageNum) || ageNum <= 0) {
+    return MAX_HR_DEFAULT
+  }
+
+  return MAX_HR_ESTIMATION_BASE - ageNum
+}
 
 // Battery level thresholds for UI icons
 export const BATTERY_LEVEL_FULL = 70
