@@ -13,6 +13,7 @@ import {
   type Locator,
   type ScreenshotOptions,
 } from '@playwright/test'
+import { checkAccessibility } from './accessibility'
 import { getHrMasks, getTimerMasks, waitForFontsLoaded } from '.'
 
 /**
@@ -44,10 +45,14 @@ export async function takeScreenshot(
   snapshotName: string,
   options: object = {}
 ) {
+  // Always perform an accessibility check before taking a screenshot.
+  // This ensures that our accessibility standards are maintained with every visual change.
+  await checkAccessibility(target);
+
   await expect(target).toHaveScreenshot(snapshotName, {
     ...SCREENSHOT_OPTIONS,
     ...options,
-  })
+  });
 }
 
 /**
