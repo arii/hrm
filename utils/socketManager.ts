@@ -50,10 +50,7 @@ const clientSockets = new Map<string, WebSocket>()
 
 // Track internal state for calculations (not sent to client)
 /** @internal For testing purposes only. */
-export const clientSessionState = new Map<
-  string,
-  { lastUpdate: number; accumulatedCalories: number }
->()
+export const clientSessionState = new Map()
 
 /**
  * Safely parses the WebSocket request URL to extract search parameters.
