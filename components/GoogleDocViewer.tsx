@@ -22,6 +22,56 @@ interface GoogleDocViewerProps {
   refreshKey?: number
 }
 
+// Helper component to manage iframe loading state.
+// By giving this component a `key`, we can force it to re-mount and reset its state.
+const IframeWithLoader = memo(
+  ({ embedUrl, title }: { embedUrl: string; title: string }) => {
+    const [iframeLoading, setIframeLoading] = useState(true)
+
+    // Fallback to hide loader if onLoad doesn't fire.
+    useEffect(() => {
+      const timeout = setTimeout(() => {
+        if (iframeLoading) {
+          setIframeLoading(false)
+        }
+      }, 3000)
+      return () => clearTimeout(timeout)
+    }, [iframeLoading])
+
+    return (
+      <>
+        {iframeLoading && (
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height="100%"
+            sx={{ position: 'absolute', top: 0, left: 0 }}
+          />
+        )}
+        <Box
+          component="iframe"
+          src={embedUrl}
+          title={title}
+          width="100%"
+          height="100%"
+          loading="lazy"
+          data-testid="google-doc-viewer-iframe"
+          sx={{
+            border: 'none',
+            display: iframeLoading ? 'none' : 'block',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            transition: 'height 0.3s ease-in-out',
+          }}
+          onLoad={() => setIframeLoading(false)}
+        />
+      </>
+    )
+  }
+)
+IframeWithLoader.displayName = 'IframeWithLoader'
+
 const GoogleDocViewer = ({
   title,
   embedUrl,
@@ -30,26 +80,12 @@ const GoogleDocViewer = ({
   onToggleShrink,
   refreshKey,
 }: GoogleDocViewerProps) => {
-  const [iframeLoading, setIframeLoading] = useState(true)
-
   // Ensure embedUrl always includes ?embedded=true
   const url = new URL(embedUrl)
   url.searchParams.set('embedded', 'true')
   const finalEmbedUrl = url.toString()
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
-
-  // Use useEffect to set a timeout fallback in case onLoad doesn't fire
-  useEffect(() => {
-    // The loading skeleton must be shown on each refresh, so we reset the
-    // loading state here. This is a deliberate and safe use case.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIframeLoading(true) // Reset loading state on refresh
-    const timeout = setTimeout(() => {
-      setIframeLoading(false)
-    }, 3000) // Show iframe after 3 seconds regardless
-    return () => clearTimeout(timeout)
-  }, [refreshKey]) // Rerun on refresh
 
   return (
     <Card elevation={6} sx={{ position: 'relative' }}>
@@ -65,32 +101,10 @@ const GoogleDocViewer = ({
             position: 'relative',
           }}
         >
-          {iframeLoading && (
-            <Skeleton
-              variant="rectangular"
-              width="100%"
-              height="100%"
-              sx={{ position: 'absolute', top: 0, left: 0 }}
-            />
-          )}
-          <Box
+          <IframeWithLoader
             key={refreshKey}
-            component="iframe"
-            src={finalEmbedUrl}
+            embedUrl={finalEmbedUrl}
             title={title}
-            width="100%"
-            height="100%"
-            loading="lazy"
-            data-testid="google-doc-viewer-iframe"
-            sx={{
-              border: 'none',
-              display: iframeLoading ? 'none' : 'block',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              transition: 'height 0.3s ease-in-out',
-            }}
-            onLoad={() => setIframeLoading(false)}
           />
         </Box>
         {onToggleShrink && (
