@@ -32,9 +32,7 @@ describe('app/client/mock/page', () => {
     expect(screen.getByLabelText('User Name')).toHaveValue('Mock User')
     expect(screen.getByLabelText('Age')).toHaveValue(30)
     expect(screen.getByLabelText('Current BPM')).toHaveValue(100)
-    expect(
-      screen.getByTestId('streaming-start-button')
-    ).toBeInTheDocument()
+    expect(screen.getByTestId('streaming-start-button')).toBeInTheDocument()
   })
 
   it('sends an HR packet when BPM is changed and not streaming', () => {
