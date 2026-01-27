@@ -53,27 +53,7 @@ export class TimerCommands {
     this.state._startTime = Date.now()
 
     if (this.state.currentPhase === 'IDLE') {
-      // --- Calorie Reset Logic ---
-      const allClients = this.hrmDataRepository.findAll()
-      const updatedClients = allClients.map((client) => {
-        const sessionState = this.clientSessionState.get(client.clientId)
-        if (sessionState) {
-          sessionState.accumulatedCalories = 0
-          sessionState.lastUpdate = Date.now()
-        }
-        return { ...client, calories: 0 }
-      })
-
-      if (updatedClients.length > 0) {
-        this.hrmDataRepository.saveAll(updatedClients)
-        // Broadcast the reset state immediately
-        this.broadcastUpdate({
-          type: 'HRM_UPDATE',
-          payload: updatedClients,
-        })
-      }
-      // --- End Calorie Reset ---
-
+      this._resetClientCaloriesOnIdle()
       this.state.currentPhase = 'PREPARE'
       this.state.timeRemaining = START_COUNTDOWN_DURATION
       this.resetCountdownMarker()
@@ -300,6 +280,27 @@ export class TimerCommands {
     if (this.state._timerInterval) {
       clearInterval(this.state._timerInterval)
       this.state._timerInterval = null
+    }
+  }
+
+  private _resetClientCaloriesOnIdle(): void {
+    const allClients = this.hrmDataRepository.findAll()
+    const updatedClients = allClients.map((client) => {
+      const sessionState = this.clientSessionState.get(client.clientId)
+      if (sessionState) {
+        sessionState.accumulatedCalories = 0
+        sessionState.lastUpdate = Date.now()
+      }
+      return { ...client, calories: 0 }
+    })
+
+    if (updatedClients.length > 0) {
+      this.hrmDataRepository.saveAll(updatedClients)
+      // Broadcast the reset state immediately
+      this.broadcastUpdate({
+        type: 'HRM_UPDATE',
+        payload: updatedClients,
+      })
     }
   }
 }
