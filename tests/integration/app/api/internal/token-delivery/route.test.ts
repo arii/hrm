@@ -50,14 +50,17 @@ describe('POST /api/internal/token-delivery', () => {
       scope: 'user-read-private',
     }
 
-    const request = new NextRequest('http://localhost/api/internal/token-delivery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-token-secret': VALID_SECRET,
-      },
-      body: JSON.stringify(tokenData),
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token-secret': VALID_SECRET,
+        },
+        body: JSON.stringify(tokenData),
+      }
+    )
 
     // Act
     const response = await POST(request)
@@ -90,14 +93,17 @@ describe('POST /api/internal/token-delivery', () => {
       scope: 'user-read-private',
     }
 
-    const request = new NextRequest('http://localhost/api/internal/token-delivery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // No 'x-internal-token-secret' header
-      },
-      body: JSON.stringify(tokenData),
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // No 'x-internal-token-secret' header
+        },
+        body: JSON.stringify(tokenData),
+      }
+    )
 
     // Act
     const response = await POST(request)
@@ -120,14 +126,17 @@ describe('POST /api/internal/token-delivery', () => {
       scope: 'user-read-private',
     }
 
-    const request = new NextRequest('http://localhost/api/internal/token-delivery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-token-secret': 'invalid-secret',
-      },
-      body: JSON.stringify(tokenData),
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token-secret': 'invalid-secret',
+        },
+        body: JSON.stringify(tokenData),
+      }
+    )
 
     // Act
     const response = await POST(request)
@@ -150,14 +159,17 @@ describe('POST /api/internal/token-delivery', () => {
       scope: 'user-read-private',
     }
 
-    const request = new NextRequest('http://localhost/api/internal/token-delivery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-token-secret': VALID_SECRET,
-      },
-      body: JSON.stringify(invalidTokenData),
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token-secret': VALID_SECRET,
+        },
+        body: JSON.stringify(invalidTokenData),
+      }
+    )
 
     // Act
     const response = await POST(request)
@@ -173,7 +185,10 @@ describe('POST /api/internal/token-delivery', () => {
     // Arrange
     process.env.NEXTAUTH_SECRET = VALID_SECRET
     // Unregister the service to simulate it being unavailable
-    serviceContainer.register('spotifyService', undefined as any)
+    serviceContainer.register(
+      'spotifyService',
+      undefined as unknown as SpotifyPolling,
+    );
 
     const tokenData: AccessToken = {
       access_token: 'test_access_token',
@@ -183,14 +198,17 @@ describe('POST /api/internal/token-delivery', () => {
       scope: 'user-read-private',
     }
 
-    const request = new NextRequest('http://localhost/api/internal/token-delivery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-token-secret': VALID_SECRET,
-      },
-      body: JSON.stringify(tokenData),
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token-secret': VALID_SECRET,
+        },
+        body: JSON.stringify(tokenData),
+      }
+    )
 
     // Act
     const response = await POST(request)
@@ -213,14 +231,17 @@ describe('POST /api/internal/token-delivery', () => {
       scope: 'user-read-private',
     }
 
-    const request = new NextRequest('http://localhost/api/internal/token-delivery', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-token-secret': VALID_SECRET,
-      },
-      body: JSON.stringify(tokenData),
-    })
+    const request = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token-secret': VALID_SECRET,
+        },
+        body: JSON.stringify(tokenData),
+      }
+    )
 
     // Act
     const response = await POST(request)
