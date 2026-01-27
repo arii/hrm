@@ -53,4 +53,25 @@ describe('Environment Variables', () => {
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
     await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
   })
+
+  it('should derive SPOTIFY_CALLBACK_URL from NEXTAUTH_URL if not provided', async () => {
+    process.env.NODE_ENV = 'test'
+    process.env.NEXTAUTH_URL = 'http://localhost:3000'
+    process.env.NEXTAUTH_SECRET = 'secret'
+    process.env.SPOTIFY_CLIENT_ID = 'id'
+    process.env.SPOTIFY_CLIENT_SECRET = 'secret'
+    const { env } = await import('../../../lib/env')
+    expect(env.SPOTIFY_CALLBACK_URL).toBe(
+      'http://localhost:3000/api/auth/callback/spotify'
+    )
+  })
+
+  it('should throw an error if Spotify credentials are provided but callback URL cannot be determined', async () => {
+    process.env.NODE_ENV = 'test'
+    process.env.NEXTAUTH_SECRET = 'secret'
+    process.env.SPOTIFY_CLIENT_ID = 'id'
+    process.env.SPOTIFY_CLIENT_SECRET = 'secret'
+    delete process.env.NEXTAUTH_URL
+    await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
+  })
 })
