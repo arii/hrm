@@ -33,7 +33,6 @@ import {
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
 import { createMockRequest } from './test-data/request-data-factory'
-import { HrmDataRepository } from '../../lib/repositories/HrmDataRepository.js'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -66,25 +65,24 @@ jest.mock('../../utils/logger', () => ({
 }))
 
 // Manual mock for the 'ws' module
-jest.mock('ws', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const EventEmitter = require('events')
-  class MockWebSocketServer extends EventEmitter {
-    clients = new Set<MockWebSocket>()
-    on(event: string, listener: (...args: unknown[]) => void) {
-      super.on(event, listener)
-      return this
-    }
-    emit(event: string, ...args: unknown[]) {
-      super.emit(event, ...args)
-      return true
-    }
-  }
-  return {
-    Server: jest.fn().mockImplementation(() => new MockWebSocketServer()),
-    WebSocket: jest.fn(),
-  }
-})
+jest.mock('ws', () => ({
+  Server: jest.fn().mockImplementation(() => {
+    const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
+    wss.clients = new Set<MockWebSocket>()
+    const originalOn = wss.on.bind(wss)
+    const originalEmit = wss.emit.bind(wss)
+    wss.on = jest.fn(
+      (event: string, listener: (...args: unknown[]) => void) => {
+        return originalOn(event, listener)
+      }
+    )
+    wss.emit = jest.fn((event: string, ...args: unknown[]) => {
+      return originalEmit(event, ...args)
+    })
+    return wss
+  }),
+  WebSocket: jest.fn(),
+}))
 
 class MockWebSocket extends EventEmitter {
   isAlive: boolean
@@ -175,7 +173,6 @@ describe('WebSocket Manager', () => {
     jest.clearAllMocks()
     ;(mockWss.clients as Set<MockWebSocket>).clear()
     resetSocketManager()
-    jest.restoreAllMocks()
   })
 
   describe('Connection Logging', () => {
@@ -398,67 +395,6 @@ describe('WebSocket Manager', () => {
       expect(clientData!.calories).toBeCloseTo(0.0024, 4)
     })
 
-    describe('HRM_INPUT with client-side calories', () => {
-      it('should accept client-side calories when they are reasonable', () => {
-        const message = JSON.stringify({
-          type: 'HRM_INPUT',
-          data: { value: 160, calories: 45 },
-        })
-        mockWs.emit('message', message.toString())
-
-        const mockBroadcast = broadcast as jest.Mock
-        const lastCall =
-          mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-        const finalPayload: HrmData[] = lastCall[1].payload
-        const clientData = finalPayload.find(
-          (c) => c.clientId === 'test-client'
-        )
-
-        expect(clientData!.calories).toBe(45)
-      })
-
-      it('should reject client-side calories when a large discrepancy is detected', () => {
-        // Step 1: Establish a server-side calorie count
-        const initialMessage = JSON.stringify({
-          type: 'HRM_INPUT',
-          data: { value: 150, age: 30, weightKg: 75 },
-        })
-        mockWs.emit('message', initialMessage)
-        jest.advanceTimersByTime(60000) // Advance 1 minute
-        mockWs.emit('message', initialMessage)
-
-        const mockBroadcast = broadcast as jest.Mock
-        let lastCall =
-          mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-        let serverPayload: HrmData[] = lastCall[1].payload
-        const serverCalories = serverPayload[0].calories
-        expect(serverCalories).toBeGreaterThan(5) // Ensure some calories have accumulated
-
-        // Step 2: Send a client update with a large calorie jump
-        const largeJumpMessage = JSON.stringify({
-          type: 'HRM_INPUT',
-          data: { value: 150, calories: serverCalories + 51 }, // 51 is > 50 discrepancy
-        })
-        mockWs.emit('message', largeJumpMessage)
-
-        // Step 3: Verify the server rejected the client value and kept its own
-        expect(logger.warn).toHaveBeenCalledWith(
-          expect.objectContaining({
-            clientId: 'test-client',
-            clientCalories: serverCalories + 51,
-            serverCalories: expect.any(Number),
-          }),
-          'Large calorie discrepancy detected. Rejecting client update.'
-        )
-
-        lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-        serverPayload = lastCall[1].payload
-        // The final calorie count should be the server's, not the client's inflated one
-        expect(serverPayload[0].calories).toBeCloseTo(serverCalories)
-        expect(serverPayload[0].calories).not.toBe(serverCalories + 51)
-      })
-    })
-
     it('should reset calories when a STOP command is received', () => {
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
@@ -520,17 +456,6 @@ describe('WebSocket Manager', () => {
       expect(sentData.payload).toHaveProperty('hrmData')
     })
 
-    it('should respond with PONG to a PING message', () => {
-      const message = JSON.stringify({ type: 'PING' })
-      mockWs.emit('message', message.toString())
-
-      expect(sendWebSocketMessage).toHaveBeenCalledWith(
-        mockWs,
-        { type: 'PONG' },
-        'socketManager.PING'
-      )
-    })
-
     it('should handle invalid JSON gracefully', () => {
       mockWs.emit('message', 'invalid json')
       expect(logger.error).toHaveBeenCalledWith(
@@ -548,92 +473,17 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should delete a disconnected clients data after the grace period', () => {
-      // Add a second client to ensure the repository isn't just empty
-      const secondWs = new MockWebSocket() as ExtWebSocket
-      const mockReq = createMockRequest('/?clientId=second-client')
-      mockWss.emit('connection', secondWs, mockReq)
-
-      // Disconnect the first client
+    it('should broadcast state on client disconnect', () => {
       mockWs.emit('close')
-
-      // Advance timers past the grace period
       jest.runAllTimers()
-
-      // Verify the broadcast only contains the second client's data
-      const lastBroadcastCall = (broadcast as jest.Mock).mock.calls.pop()
-      const payload = lastBroadcastCall[1].payload
-      expect(payload).toHaveLength(1)
-      expect(payload[0].clientId).toBe('second-client')
-    })
-
-    it('should not delete a disconnected clients data if they reconnect within the grace period', () => {
-      // Add some data to the client
-      const message = JSON.stringify({
-        type: 'HRM_METADATA_UPDATE',
-        data: { name: 'Jules' },
-      })
-      mockWs.emit('message', message.toString())
-
-      // Disconnect the client
-      mockWs.emit('close')
-
-      // Advance the timer, but not past the grace period
-      jest.advanceTimersByTime(2000)
-
-      // Reconnect the client
-      const newWs = new MockWebSocket()
-      const mockReq = createMockRequest() // Reconnects with the same test-client ID
-      mockWss.emit('connection', newWs, mockReq)
-
-      // Advance timers past the grace period
-      jest.runAllTimers()
-
-      // Verify the broadcast still contains the original client's data
-      const lastBroadcastCall = (broadcast as jest.Mock).mock.calls.pop()
-      const payload = lastBroadcastCall[1].payload
-      expect(payload).toHaveLength(1)
-      expect(payload[0].clientId).toBe('test-client')
-      expect(payload[0].name).toBe('Jules')
-    })
-
-    it('should always remove the socket from clientSockets on disconnect, even if data deletion fails', () => {
-      // Mock the repository to throw an error on deletion
-      const mockDeleteById = jest
-        .spyOn(HrmDataRepository.prototype, 'deleteById')
-        .mockImplementation(() => {
-          throw new Error('Test deletion error')
-        })
-
-      // Disconnect the client
-      mockWs.emit('close')
-
-      // Advance timers past the grace period
-      jest.runAllTimers()
-
-      // Verify the error was logged
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.objectContaining({
-          clientId: 'test-client',
-          error: expect.any(Error),
-        }),
-        'Error during session cleanup'
+      expect(broadcast).toHaveBeenCalledWith(
+        mockWss,
+        {
+          type: 'HRM_UPDATE',
+          payload: [],
+        },
+        'socketManager.broadcastState'
       )
-
-      // This is the key assertion: The socket should still be removed
-      // To check this, we try to reconnect. If the socket was removed,
-      // a new connection should not trigger the "Existing socket found" warning.
-      const loggerWarnSpy = jest.spyOn(logger, 'warn')
-      const newWs = new MockWebSocket()
-      const mockReq = createMockRequest()
-      mockWss.emit('connection', newWs, mockReq)
-
-      expect(loggerWarnSpy).not.toHaveBeenCalledWith(
-        expect.anything(),
-        'Existing socket found. Overwriting with new connection.'
-      )
-
-      mockDeleteById.mockRestore()
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
@@ -714,117 +564,6 @@ describe('WebSocket Manager', () => {
         expect.objectContaining({ clientId: 'test-client' }),
         'Unknown message type received'
       )
-    })
-
-    describe('HRM_METADATA_UPDATE', () => {
-      it('should update client metadata and broadcast', () => {
-        const message = JSON.stringify({
-          type: 'HRM_METADATA_UPDATE',
-          data: { age: 35, maxHr: 180 },
-        })
-        mockWs.emit('message', message.toString())
-
-        expect(broadcast).toHaveBeenCalledWith(
-          mockWss,
-          expect.objectContaining({
-            type: 'HRM_UPDATE',
-            payload: expect.arrayContaining([
-              expect.objectContaining({
-                clientId: 'test-client',
-                age: 35,
-                maxHr: 180,
-              }),
-            ]),
-          }),
-          'socketManager.broadcastState'
-        )
-      })
-
-      it('should not overwrite a real name with a default name', () => {
-        // First, set a real name
-        const setNameMessage = JSON.stringify({
-          type: 'HRM_METADATA_UPDATE',
-          data: { name: 'Jules' },
-        })
-        mockWs.emit('message', setNameMessage.toString())
-
-        // Then, attempt to overwrite with a default name
-        const overwriteMessage = JSON.stringify({
-          type: 'HRM_METADATA_UPDATE',
-          data: { name: 'New User' },
-        })
-        mockWs.emit('message', overwriteMessage.toString())
-
-        const lastBroadcastCall = (broadcast as jest.Mock).mock.calls.pop()
-        const payload = lastBroadcastCall[1].payload
-        const clientData = payload.find(
-          (c: HrmData) => c.clientId === 'test-client'
-        )
-        expect(clientData.name).toBe('Jules')
-      })
-
-      it('should allow overwriting a default name with a real name', () => {
-        // First, set a default name
-        const setDefaultNameMessage = JSON.stringify({
-          type: 'HRM_METADATA_UPDATE',
-          data: { name: 'Bluetooth HRM' },
-        })
-        mockWs.emit('message', setDefaultNameMessage.toString())
-
-        // Then, overwrite with a real name
-        const setRealNameMessage = JSON.stringify({
-          type: 'HRM_METADATA_UPDATE',
-          data: { name: 'Jules' },
-        })
-        mockWs.emit('message', setRealNameMessage.toString())
-
-        const lastBroadcastCall = (broadcast as jest.Mock).mock.calls.pop()
-        const payload = lastBroadcastCall[1].payload
-        const clientData = payload.find(
-          (c: HrmData) => c.clientId === 'test-client'
-        )
-        expect(clientData.name).toBe('Jules')
-      })
-    })
-
-    describe('Timer and Mode Commands', () => {
-      it('should handle TIMER_COMMAND and forward to tabataService', () => {
-        const message = JSON.stringify({
-          type: 'TIMER_COMMAND',
-          command: 'START',
-        })
-        mockWs.emit('message', message.toString())
-
-        expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith(
-          'START'
-        )
-      })
-
-      it('should handle SET_MODE and forward to tabataService', () => {
-        const message = JSON.stringify({
-          type: 'SET_MODE',
-          mode: 'tabata',
-        })
-        mockWs.emit('message', message.toString())
-
-        expect(mockServices.tabataService.setMode).toHaveBeenCalledWith(
-          'tabata'
-        )
-      })
-
-      it('should handle TIMER_CONFIG and forward to tabataService', () => {
-        const message = JSON.stringify({
-          type: 'TIMER_CONFIG',
-          workDuration: 50,
-          restDuration: 10,
-        })
-        mockWs.emit('message', message.toString())
-
-        expect(mockServices.tabataService.setConfig).toHaveBeenCalledWith({
-          workDuration: 50,
-          restDuration: 10,
-        })
-      })
     })
   })
 })

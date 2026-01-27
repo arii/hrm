@@ -211,7 +211,6 @@ const initSocketManager = (
 export const resetSocketManager = () => {
   hrmDataRepository.clear()
   clientSessionState.clear()
-  clientSockets.clear()
 }
 
 const broadcastState = () => {
@@ -233,13 +232,11 @@ const handleIncomingMessage = (
   messageString: string,
   clientId: string
 ) => {
-  console.log('handleIncomingMessage called with:', messageString)
   // Any message from the client indicates they are still alive.
   ws.isAlive = true
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
-    console.log('message:', message)
 
     switch (message.type) {
       case 'PING': {
