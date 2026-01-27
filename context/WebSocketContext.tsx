@@ -197,7 +197,16 @@ export const WebSocketProvider = ({
         ;(
           window as Window & { __TEST_CONTROLS__?: TestControls }
         ).__TEST_CONTROLS__ = {
-          dispatch,
+          dispatch: (message: ServerMessage) => {
+            if (
+              message.type === 'HRM_UPDATE' ||
+              message.type === 'TIMER_UPDATE'
+            ) {
+              throttledDispatch(message)
+            } else {
+              dispatch(message)
+            }
+          },
           disconnect: () => {},
           connect: () => {},
         }

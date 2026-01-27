@@ -20,7 +20,7 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   DISCONNECTED_UI_REVERT_DELAY,
@@ -50,57 +50,30 @@ const stopButtonSx = {
   boxShadow: '0 8px 24px rgba(244, 63, 94, 0.4)',
 }
 
-// Define the state and action types for the reducer
-type OptimisticAction = 'START' | 'STOP' | null
-type ReducerAction =
-  | { type: 'SET_OPTIMISTIC'; payload: 'START' | 'STOP' }
-  | { type: 'CLEAR_OPTIMISTIC' }
-  | { type: 'SYNC_WITH_SERVER'; payload: { serverIsRunning: boolean } }
-
-// Reducer function to manage optimistic state
-const optimisticActionReducer = (
-  state: OptimisticAction,
-  action: ReducerAction
-): OptimisticAction => {
-  switch (action.type) {
-    case 'SET_OPTIMISTIC':
-      return action.payload
-    case 'CLEAR_OPTIMISTIC':
-      return null
-    case 'SYNC_WITH_SERVER': {
-      const { serverIsRunning } = action.payload
-      const clientIsRunning = state === 'START'
-      // If the client's optimistic state is out of sync with the server,
-      // the server state becomes the source of truth.
-      if (state !== null && clientIsRunning !== serverIsRunning) {
-        return null
-      }
-      return state
-    }
-    default:
-      return state
-  }
-}
-
 const TimerControls = () => {
   const { timerData, sendData, connectionStatus } = useWebSocket()
   const { sendSpotifyCommand } = useSpotifyControls()
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
-  const [optimisticAction, dispatch] = useReducer(optimisticActionReducer, null)
+  const [optimisticAction, setOptimisticAction] = useState<
+    'START' | 'STOP' | null
+  >(null)
 
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
 
+  // When the server's running state changes, it becomes the source of truth.
+  // We clear any optimistic action to ensure the UI reflects the server state.
   useEffect(() => {
-    // When the server's state changes, it becomes the source of truth.
-    // We dispatch an action to synchronize the client state, which will
-    // in turn clear any optimistic action if it's out of sync.
-    dispatch({
-      type: 'SYNC_WITH_SERVER',
-      payload: { serverIsRunning: timerData.isRunning },
-    })
-  }, [timerData])
+    if (optimisticAction !== null) {
+      setOptimisticAction(null)
+    }
+    // Disabling the lint rule because we intentionally want this effect to run
+    // ONLY when timerData.isRunning changes, to synchronize the client state
+    // with the server's ground truth. Adding optimisticAction to the dependency
+    // array would cause an infinite loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timerData.isRunning])
 
   // Safety timeout to clear the optimistic action if the server doesn't
   // confirm it within a reasonable time.
@@ -110,7 +83,7 @@ const TimerControls = () => {
         console.warn(
           `[TimerControls] Optimistic action "${optimisticAction}" timed out. Reverting UI.`
         )
-        dispatch({ type: 'CLEAR_OPTIMISTIC' })
+        setOptimisticAction(null)
       }, OPTIMISTIC_ACTION_TIMEOUT)
       return () => clearTimeout(timer)
     }
@@ -131,7 +104,7 @@ const TimerControls = () => {
   const sendTimerCommand = useCallback(
     (command: 'START' | 'STOP') => {
       // Optimistically update the UI
-      dispatch({ type: 'SET_OPTIMISTIC', payload: command })
+      setOptimisticAction(command)
 
       // If disconnected, revert the optimistic update after a short delay
       if (connectionStatus !== 'Connected') {
@@ -139,7 +112,7 @@ const TimerControls = () => {
           `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
         )
         setTimeout(() => {
-          dispatch({ type: 'CLEAR_OPTIMISTIC' })
+          setOptimisticAction(null)
         }, DISCONNECTED_UI_REVERT_DELAY)
         return
       }
