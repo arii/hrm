@@ -114,19 +114,7 @@ When a user selects a device from the UI, a `TRANSFER_PLAYBACK` command is sent 
 
 ### SpotifyDevice Type Documentation
 
-The `SpotifyDevice` type is defined in `types/core.ts` and represents a single device. It mirrors the structure returned by the Spotify API.
-
-```typescript
-export interface SpotifyDevice {
-  id: string | null;
-  is_active: boolean;
-  is_private_session: boolean;
-  is_restricted: boolean;
-  name: string;
-  type: string; // e.g., "Computer", "Speaker", "Smartphone"
-  volume_percent: number;
-}
-```
+The `SpotifyDevice` type, defined in `types/core.ts`, represents a single Spotify device. Its structure is detailed in the "Type Documentation" section below.
 
 ### Available Device Types
 
@@ -180,7 +168,19 @@ Errors are communicated to the user via the application's notification system (n
 
 ### SpotifyDevice Interface
 
-As shown in section 4, the `SpotifyDevice` interface in `types/core.ts` is the primary type for device management.
+The `SpotifyDevice` interface in `types/core.ts` is the primary type for device management. It mirrors the structure returned by the Spotify API:
+
+```typescript
+export interface SpotifyDevice {
+  id: string | null;
+  is_active: boolean;
+  is_private_session: boolean;
+  is_restricted: boolean;
+  name: string;
+  type: string; // e.g., "Computer", "Speaker", "Smartphone"
+  volume_percent: number;
+}
+```
 
 ### Related Types
 
