@@ -35,5 +35,5 @@ export function resolveSpotifyDeviceId(devices: SpotifyDevice[]): string {
   }
 
   // 3. Fallback to the first device in the list
-  return devices[0].id
+  return devices[0]!.id
 }

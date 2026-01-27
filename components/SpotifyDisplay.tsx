@@ -307,11 +307,11 @@ const SpotifyDisplay = () => {
           Connect Spotify
         </Typography>
         <Typography variant="body2" sx={{ mb: 2 }}>
-          Log in to control your music and see what's playing.
+          Log in to control your music and see what&apos;s playing.
         </Typography>
         <AuthButton providerId="spotify" providerName="Spotify" />
       </Box>
-    );
+    )
   }
 
   if (isLoggedIn) {

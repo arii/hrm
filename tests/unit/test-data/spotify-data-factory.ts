@@ -1,4 +1,4 @@
-import { SpotifyDevice } from '@/types/core'
+import { SpotifyDevice } from '@/types/spotify'
 import { SpotifyData } from '@/types/websocket'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 
