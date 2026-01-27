@@ -4,6 +4,7 @@
  */
 
 import { jest } from '@jest/globals'
+import { HrmDataRepository } from '../../../lib/repositories/HrmDataRepository'
 import TabataTimer from '../../../services/tabataTimer'
 import { ConfigurationError } from '../../../types/errors'
 
@@ -20,7 +21,15 @@ describe('TabataTimer (Refactored)', () => {
     // Clear any previous mocks and timers
     broadcastUpdate.mockClear()
     jest.clearAllTimers()
-    timer = new TabataTimer(broadcastUpdate)
+    const hrmDataRepository =
+      new HrmDataRepository() as jest.Mocked<HrmDataRepository>
+    const clientSessionState = new Map()
+
+    timer = new TabataTimer(
+      broadcastUpdate,
+      hrmDataRepository,
+      clientSessionState
+    )
   })
 
   // Test initial state

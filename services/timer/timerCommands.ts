@@ -3,6 +3,7 @@
  * Encapsulates all state-mutating operations (commands) for the timer.
  * This class directly modifies the state object and triggers broadcasts.
  */
+import { HrmDataRepository } from '../../lib/repositories/HrmDataRepository'
 import { ServerMessage } from '../../types/websocket'
 import { TimerMode } from '../../types/core'
 import {
@@ -17,6 +18,11 @@ export class TimerCommands {
   private readonly state: DualModeTimerState
   private readonly broadcastUpdate: (message: ServerMessage) => void
   private readonly queries: TimerQueries
+  private readonly hrmDataRepository: HrmDataRepository
+  private readonly clientSessionState: Map<
+    string,
+    { lastUpdate: number; accumulatedCalories: number }
+  >
 
   /**
    * @param {DualModeTimerState} state The timer state object to mutate.
@@ -26,11 +32,18 @@ export class TimerCommands {
   constructor(
     state: DualModeTimerState,
     broadcastUpdate: (message: ServerMessage) => void,
-    queries: TimerQueries
+    queries: TimerQueries,
+    hrmDataRepository: HrmDataRepository,
+    clientSessionState: Map<
+      string,
+      { lastUpdate: number; accumulatedCalories: number }
+    >
   ) {
     this.state = state
     this.broadcastUpdate = broadcastUpdate
     this.queries = queries
+    this.hrmDataRepository = hrmDataRepository
+    this.clientSessionState = clientSessionState
   }
 
   // --- Public Command Methods ---
@@ -46,6 +59,27 @@ export class TimerCommands {
     this.state._startTime = Date.now()
 
     if (this.state.currentPhase === 'IDLE') {
+      // --- Calorie Reset Logic ---
+      const allClients = this.hrmDataRepository.findAll()
+      const updatedClients = allClients.map((client) => {
+        const sessionState = this.clientSessionState.get(client.clientId)
+        if (sessionState) {
+          sessionState.accumulatedCalories = 0
+          sessionState.lastUpdate = Date.now()
+        }
+        return { ...client, calories: 0 }
+      })
+
+      if (updatedClients.length > 0) {
+        this.hrmDataRepository.saveAll(updatedClients)
+        // Broadcast the reset state immediately
+        this.broadcastUpdate({
+          type: 'HRM_UPDATE',
+          payload: updatedClients,
+        })
+      }
+      // --- End Calorie Reset ---
+
       this.state.currentPhase = 'PREPARE'
       this.state.timeRemaining = START_COUNTDOWN_DURATION
       this.resetCountdownMarker()

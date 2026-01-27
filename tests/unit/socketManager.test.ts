@@ -15,6 +15,7 @@ import {
   initSocketManager,
   resetSocketManager,
 } from '../../utils/socketManager'
+import { HrmDataRepository } from '../../lib/repositories/HrmDataRepository'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import { TLSSocket } from 'tls'
@@ -161,7 +162,17 @@ describe('WebSocket Manager', () => {
       spotify: {},
     })
 
-    initSocketManager(mockWss, getSnapshot, mockServices)
+    const hrmDataRepository =
+      new HrmDataRepository() as jest.Mocked<HrmDataRepository>
+    const clientSessionState = new Map()
+
+    initSocketManager(
+      mockWss,
+      getSnapshot,
+      mockServices,
+      hrmDataRepository,
+      clientSessionState
+    )
     const mockReq = createMockRequest()
     mockWs = new MockWebSocket()
     ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
@@ -261,8 +272,18 @@ describe('WebSocket Manager', () => {
           const { initSocketManager: initSocketManagerProd } =
             await import('../../utils/socketManager')
 
+          const hrmDataRepository =
+            new HrmDataRepository() as jest.Mocked<HrmDataRepository>
+          const clientSessionState = new Map()
+
           // Use the re-imported init function
-          initSocketManagerProd(mockWss, getSnapshot, mockServices)
+          initSocketManagerProd(
+            mockWss,
+            getSnapshot,
+            mockServices,
+            hrmDataRepository,
+            clientSessionState
+          )
           mockWss.emit('connection', newWs, mockReq)
 
           expect(loggerInfoSpy).toHaveBeenCalledWith(

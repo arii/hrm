@@ -11,6 +11,7 @@ import {
   afterEach,
 } from '@jest/globals'
 import { jest } from '@jest/globals'
+import { HrmDataRepository } from '../../lib/repositories/HrmDataRepository'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { ServerMessage } from '../../types/websocket'
@@ -89,7 +90,15 @@ describe('Services Integration', () => {
     // Mock SpotifyApi.withAccessToken to return our mock SDK
     ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk)
 
-    tabataTimer = new TabataTimer(broadcastFn)
+    const hrmDataRepository =
+      new HrmDataRepository() as jest.Mocked<HrmDataRepository>
+    const clientSessionState = new Map()
+
+    tabataTimer = new TabataTimer(
+      broadcastFn,
+      hrmDataRepository,
+      clientSessionState
+    )
     // Initialize service (which will trigger async token load)
     spotifyService = await SpotifyPolling.create(broadcastFn)
   })

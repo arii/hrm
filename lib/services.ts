@@ -1,3 +1,4 @@
+import { HrmDataRepository } from './repositories/HrmDataRepository.js'
 import { ServerMessage } from '../types/websocket.js'
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
@@ -10,9 +11,18 @@ export interface AppServices {
 }
 
 export async function createServices(
-  broadcast: (data: Partial<ServerMessage>) => void
+  broadcast: (data: Partial<ServerMessage>) => void,
+  hrmDataRepository: HrmDataRepository,
+  clientSessionState: Map<
+    string,
+    { lastUpdate: number; accumulatedCalories: number }
+  >
 ): Promise<AppServices> {
-  const tabataService = new TabataTimer(broadcast)
+  const tabataService = new TabataTimer(
+    broadcast,
+    hrmDataRepository,
+    clientSessionState
+  )
   let spotifyService: SpotifyService
   let isSpotifyInitialized = true
 

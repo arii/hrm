@@ -34,6 +34,16 @@ export class HrmDataRepository {
   }
 
   /**
+   * Saves multiple client data entries in a batch.
+   * @param data An array of client data to save.
+   */
+  saveAll(data: HrmStreamData[]): void {
+    for (const item of data) {
+      this.clientData.set(item.clientId, item)
+    }
+  }
+
+  /**
    * Deletes a client's data by their ID.
    * @param id The client's unique identifier.
    */

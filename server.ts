@@ -7,6 +7,7 @@ import { env } from './lib/env.js' // New import
 import { httpLogger } from './utils/logger.server.js'
 import { serviceContainer } from './lib/serviceContainer.js'
 import { AppServices, createServices } from './lib/services.js' // New import
+import { HrmDataRepository } from './lib/repositories/HrmDataRepository.js'
 import { WebSocketManager } from './lib/websocket.js' // New import
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
@@ -115,8 +116,16 @@ app.prepare().then(async () => {
   const wsManager = new WebSocketManager()
 
   // 2. Setup Services with Broadcaster
+  const hrmDataRepository = new HrmDataRepository()
+  const clientSessionState = new Map<
+    string,
+    { lastUpdate: number; accumulatedCalories: number }
+  >()
+
   const services: AppServices = await createServices(
-    wsManager.createBroadcaster()
+    wsManager.createBroadcaster(),
+    hrmDataRepository,
+    clientSessionState
   )
   serviceContainer.register('spotifyService', services.spotifyService)
   serviceContainer.register('tabataService', services.tabataService)
@@ -128,7 +137,13 @@ app.prepare().then(async () => {
     spotifyServiceInitialized: services.isSpotifyInitialized,
   })
 
-  initSocketManager(wsManager.wss, getUnifiedStateSnapshot, services)
+  initSocketManager(
+    wsManager.wss,
+    getUnifiedStateSnapshot,
+    services,
+    hrmDataRepository,
+    clientSessionState
+  )
 
   // 4. Routes
   expressApp.get('/api/health', (_req, res) => {

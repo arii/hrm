@@ -5,6 +5,7 @@
  * cohesive public API for managing the timer. It delegates all logic to the
  * respective modules, acting as a facade.
  */
+import { HrmDataRepository } from '../lib/repositories/HrmDataRepository'
 import { ServerMessage } from '../types/websocket'
 import { TimerData, TimerMode } from '../types/core'
 import {
@@ -21,10 +22,23 @@ class TabataTimer {
   private readonly queries: TimerQueries
   private readonly commands: TimerCommands
 
-  constructor(broadcastUpdate: (message: ServerMessage) => void) {
+  constructor(
+    broadcastUpdate: (message: ServerMessage) => void,
+    hrmDataRepository: HrmDataRepository,
+    clientSessionState: Map<
+      string,
+      { lastUpdate: number; accumulatedCalories: number }
+    >
+  ) {
     this.state = createInitialTimerState()
     this.queries = new TimerQueries(this.state)
-    this.commands = new TimerCommands(this.state, broadcastUpdate, this.queries)
+    this.commands = new TimerCommands(
+      this.state,
+      broadcastUpdate,
+      this.queries,
+      hrmDataRepository,
+      clientSessionState
+    )
   }
 
   /**

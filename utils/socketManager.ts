@@ -42,16 +42,16 @@ let services: AppServices
 // - hrmDataRepository: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
 // - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
-const hrmDataRepository = new HrmDataRepository()
+let hrmDataRepository: HrmDataRepository
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
 
 // Track internal state for calculations (not sent to client)
-const clientSessionState = new Map<
+let clientSessionState: Map<
   string,
   { lastUpdate: number; accumulatedCalories: number }
->()
+>
 
 /**
  * Safely parses the WebSocket request URL to extract search parameters.
@@ -108,11 +108,18 @@ const getLogMeta = (
 const initSocketManager = (
   wss: WebSocketServer,
   getSnapshot: () => StateSnapshot,
-  svcs: AppServices
+  svcs: AppServices,
+  hrmDataRepo: HrmDataRepository,
+  clientSessState: Map<
+    string,
+    { lastUpdate: number; accumulatedCalories: number }
+  >
 ) => {
   wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot
   services = svcs
+  hrmDataRepository = hrmDataRepo
+  clientSessionState = clientSessState
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
