@@ -604,7 +604,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const target = e.target as BluetoothRemoteGATTCharacteristic
             const value = target.value
             if (!value) {
-              logger.warn('Received characteristic value changed event with no value.')
+              logger.warn(
+                'Received characteristic value changed event with no value.'
+              )
               return
             }
             const heartRate = parseHeartRate(value)
