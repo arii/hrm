@@ -62,7 +62,7 @@ const TimerControls = () => {
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
 
-  // When the server's running state changes, it becomes the source of truth.
+  // When the server's timer data changes, it becomes the source of truth.
   // We clear any optimistic action to ensure the UI reflects the server state.
   useEffect(() => {
     if (optimisticAction !== null) {
