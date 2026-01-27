@@ -22,9 +22,10 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
-
-const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
-const OPTIMISTIC_ACTION_TIMEOUT = 3000 // ms for reverting optimistic UI
+import {
+  DISCONNECTED_UI_REVERT_DELAY,
+  OPTIMISTIC_ACTION_TIMEOUT,
+} from '../constants'
 
 const actionButtonBaseSx = {
   flex: 1,
