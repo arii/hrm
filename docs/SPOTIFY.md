@@ -65,7 +65,7 @@ These credentials are obtained from the Spotify Developer Dashboard.
 ### Security Considerations
 
 -   The `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, and user refresh tokens are sensitive credentials and are only handled server-side.
--   The internal API endpoint for token delivery is protected by a shared secret (`NEXTAUTH_SECRET`). The NextAuth backend includes this secret in the `x-internal-token-secret` header of its request, and the receiving endpoint middleware verifies that this header matches the server's environment variable. This ensures only NextAuth can send tokens to the backend.
+-   The internal API endpoint for token delivery (`app/api/internal/token-delivery/route.ts`) is protected by a shared secret (`NEXTAUTH_SECRET`). The NextAuth backend includes this secret in the `x-internal-token-secret` header of its request, and the receiving endpoint middleware verifies that this header matches the server's environment variable. This ensures only NextAuth can send tokens to the backend.
 
 ## 3. Web Playback SDK
 
