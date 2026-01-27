@@ -43,7 +43,7 @@ Authentication is handled by NextAuth.js using the `SpotifyProvider`.
 2.  NextAuth redirects the user to the Spotify authorization page.
 3.  After the user grants permission, Spotify redirects back to a NextAuth callback URL.
 4.  NextAuth intercepts the authorization code, exchanges it for an access token and refresh token, and creates a session.
-5.  Crucially, the tokens are also securely forwarded to the persistent backend server via an internal API endpoint (`/api/internal/token-delivery`) to be used for server-side API calls.
+5.  Crucially, the tokens are also securely forwarded to the persistent backend server via an internal API endpoint (`app/api/internal/token-delivery/route.ts`) to be used for server-side API calls.
 
 ### SPOTIFY_CLIENT_ID/SECRET Setup
 
@@ -58,14 +58,14 @@ These credentials are obtained from the Spotify Developer Dashboard.
 
 ### Token Management and Refresh
 
--   **Frontend**: The `useSpotifyWebPlayback` hook is responsible for fetching a short-lived access token from a dedicated Next.js API route. This token is used exclusively for the Web Playback SDK.
--   **Backend**: The `SpotifyTokenManager` service stores the access and refresh tokens. It's responsible for refreshing the access token using the refresh token whenever it expires. The `SpotifyPolling` service uses this manager to ensure it always has a valid token for its API calls.
--   **Synchronization**: When a user logs in or when a token is refreshed, the updated tokens are sent from the NextAuth session to the backend `SpotifyPolling` service to keep them in sync.
+-   **Frontend**: The `useSpotifyWebPlayback` hook (`hooks/useSpotifyWebPlayback.ts`) is responsible for fetching a short-lived access token from a dedicated Next.js API route. This token is used exclusively for the Web Playback SDK.
+-   **Backend**: The `SpotifyTokenManager` service stores the access and refresh tokens. It's responsible for refreshing the access token using the refresh token whenever it expires. The `SpotifyPolling` service (`services/spotifyPolling.ts`) uses this manager to ensure it always has a valid token for its API calls.
+-   **Synchronization**: When a user logs in or when a token is refreshed, the updated tokens are sent from the NextAuth session to the backend `SpotifyPolling` service (`services/spotifyPolling.ts`) to keep them in sync.
 
 ### Security Considerations
 
 -   The `SPOTIFY_CLIENT_SECRET` and user refresh tokens are sensitive credentials and are only handled server-side.
--   The internal API endpoint for token delivery is protected by a shared secret (`NEXTAUTH_SECRET`) to ensure only NextAuth can send tokens to the backend.
+-   The internal API endpoint for token delivery is protected by a shared secret (`NEXTAUTH_SECRET`). The NextAuth backend includes this secret in the `x-internal-token-secret` header of its request, and the receiving endpoint middleware verifies that this header matches the server's environment variable. This ensures only NextAuth can send tokens to the backend.
 
 ## 3. Web Playback SDK
 
@@ -73,7 +73,7 @@ The Web Playback SDK allows music to be played directly through the browser, tur
 
 ### Initialization Process
 
-The `useSpotifyWebPlayback` hook manages the entire lifecycle of the SDK:
+The `useSpotifyWebPlayback` hook (`hooks/useSpotifyWebPlayback.ts`) manages the entire lifecycle of the SDK:
 
 1.  **Script Loading**: The hook dynamically appends the Spotify Player SDK script (`https://sdk.scdn.co/spotify-player.js`) to the document.
 2.  **Player Instantiation**: Once the script is loaded, `window.onSpotifyWebPlaybackSDKReady` is called. The hook then creates a new `window.Spotify.Player` instance.
@@ -107,7 +107,7 @@ These errors are caught and displayed to the user using the global error handlin
 
 ### How Selection Works
 
-The `SpotifyPolling` service on the backend periodically fetches a list of the user's available Spotify devices using `sdk.player.getAvailableDevices()`. This list is then broadcast to the frontend via WebSockets and updated in the application's state.
+The `SpotifyPolling` service (`services/spotifyPolling.ts`) on the backend periodically fetches a list of the user's available Spotify devices using `sdk.player.getAvailableDevices()`. This list is then broadcast to the frontend via WebSockets and updated in the application's state.
 
 When a user selects a device from the UI, a `TRANSFER_PLAYBACK` command is sent to the backend via WebSocket. The backend then instructs the Spotify API to transfer playback to the selected device ID.
 
@@ -161,7 +161,7 @@ This architecture ensures that if a user starts or stops playing music on anothe
 ### Recovery Strategies
 
 -   **Token Expiration**: The backend `SpotifyTokenManager` automatically uses the refresh token to get a new access token when a 401 error is detected. The `useSpotifyWebPlayback` hook on the frontend will also request a new token on subsequent initializations.
--   **API Errors**: The `handleSpotifyApiError` utility function centralizes logging and handling of common Spotify API errors.
+-   **API Errors**: The `handleSpotifyApiError` utility function (`services/spotifyApiErrorHandling.js`) centralizes logging and handling of common Spotify API errors.
 
 ### User-Facing Messages
 
