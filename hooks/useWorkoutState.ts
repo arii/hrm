@@ -48,6 +48,8 @@ function sessionReducer(
       // This is a runtime safeguard.
       throw new Error(`Unhandled action in sessionReducer`)
     }
+  }
+}
 
 // --- The Hook Implementation ---
 
