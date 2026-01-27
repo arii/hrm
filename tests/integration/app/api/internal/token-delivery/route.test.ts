@@ -187,8 +187,8 @@ describe('POST /api/internal/token-delivery', () => {
     // Unregister the service to simulate it being unavailable
     serviceContainer.register(
       'spotifyService',
-      undefined as unknown as SpotifyPolling,
-    );
+      undefined as unknown as SpotifyPolling
+    )
 
     const tokenData: AccessToken = {
       access_token: 'test_access_token',
