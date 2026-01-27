@@ -197,6 +197,64 @@ await startMockHrStreaming(mockPage)
 await prepareForVisualRegression(dashboardPage, controlPage, mockPage)
 ```
 
+### E2E Test Control Pattern (`TEST_CONTROLS`)
+
+For complex scenarios requiring direct interaction with the application's internal state (e.g., simulating WebSocket messages, triggering state changes), this project uses a `TEST_CONTROLS` pattern.
+
+**Concept**: In non-production environments, the application exposes a global `window.TEST_CONTROLS` object. This object contains functions that allow E2E tests to directly manipulate the application's state, bypassing the UI for more precise and reliable testing.
+
+**Implementation**:
+
+1.  **Exposing Controls**: In the application code (e.g., a React component or hook), add a conditional block to expose the necessary functions:
+
+    ```tsx
+    // Example in a React component
+    useEffect(() => {
+      if (process.env.NODE_ENV !== 'production') {
+        window.TEST_CONTROLS = {
+          ...window.TEST_CONTROLS,
+          simulateWebSocketMessage: (message) => {
+            // Logic to handle the simulated message
+            dispatch(message)
+          },
+        }
+      }
+    }, [dispatch])
+    ```
+
+2.  **Using Controls in Tests**: In your Playwright test, you can then call these functions using `page.evaluate()`:
+
+    ```typescript
+    // In your Playwright test
+    test('should react to a simulated WebSocket message', async ({ page }) => {
+      await page.evaluate(() => {
+        window.TEST_CONTROLS.simulateWebSocketMessage({
+          type: 'TIMER_UPDATE',
+          data: {
+            /* ... */
+          },
+        })
+      })
+
+      // Add assertions to verify the UI has updated correctly
+      await expect(page.getByTestId('timer-display')).toHaveText('1:23')
+    })
+    ```
+
+**Best Practices**:
+
+- **Production Only**: Always wrap the `window.TEST_CONTROLS` assignment in a `process.env.NODE_ENV !== 'production'` check to ensure these controls are not exposed in the production build.
+- **TypeScript Definitions**: To ensure type safety, you can extend the `Window` interface in a declaration file (e.g., `playwright-global.d.ts`):
+  ```typescript
+  interface Window {
+    TEST_CONTROLS: {
+      simulateWebSocketMessage: (message: WebSocketMessage) => void
+      // Add other control functions here
+    }
+  }
+  ```
+- **Centralize**: Keep the `TEST_CONTROLS` logic in a single, well-defined place within the application to make it easy to manage and discover.
+
 ## Backward Compatibility
 
 The original `test-helpers.ts` file has been converted to a compatibility layer that re-exports from this library. Existing tests will continue to work without modification.
