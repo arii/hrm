@@ -49,7 +49,7 @@ function sessionDataReducer(
  */
 interface WorkoutDataOptions {
   workoutStatus: SessionStatus
-  totalCalories?: number
+  totalCalories: number
 }
 
 export const useWorkoutData = ({

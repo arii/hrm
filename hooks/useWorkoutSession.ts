@@ -6,12 +6,12 @@ import { useWorkoutData } from './useWorkoutData'
 
 interface WorkoutSessionOptions {
   isConnected: boolean
-  totalCalories?: number
+  totalCalories: number
 }
 
 export const useWorkoutSession = ({
   isConnected,
-  totalCalories = 0,
+  totalCalories,
 }: WorkoutSessionOptions) => {
   const {
     workoutStatus,
