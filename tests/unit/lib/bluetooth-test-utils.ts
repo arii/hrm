@@ -55,8 +55,21 @@ export const mockBluetoothGattCharacteristic = (
     writeValue: jest.fn().mockImplementation(() => Promise.resolve(undefined)),
     ...overrides,
     // Test utilities
+    /**
+     * @internal
+     * Test-only property to inspect registered event listeners.
+     */
     _listeners: listeners,
-    _trigger: (eventName: string, event: Partial<Event>) => {
+    /**
+     * @internal
+     * Test-only utility to simulate a characteristic event.
+     * @param eventName - The name of the event to trigger.
+     * @param event - The partial event object to dispatch.
+     */
+    _trigger: (
+      eventName: string,
+      event: Partial<{ target: Partial<BluetoothRemoteGATTCharacteristic> }>
+    ) => {
       if (listeners[eventName]) {
         listeners[eventName].forEach((callback) => callback(event as Event))
       }
