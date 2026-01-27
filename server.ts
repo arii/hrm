@@ -118,7 +118,7 @@ app.prepare().then(async () => {
 
   // 2. Setup Services with Broadcaster
   const hrmDataRepository = new HrmDataRepository()
-  const clientSessionState = new Map<string, ClientSessionMetrics>()
+  const clientSessionState: Map<string, ClientSessionMetrics> = new Map()
 
   const services: AppServices = await createServices(
     wsManager.createBroadcaster(),
