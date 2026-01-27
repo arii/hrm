@@ -47,12 +47,12 @@ export async function takeScreenshot(
 ) {
   // Always perform an accessibility check before taking a screenshot.
   // This ensures that our accessibility standards are maintained with every visual change.
-  await checkAccessibility(target);
+  await checkAccessibility(target)
 
   await expect(target).toHaveScreenshot(snapshotName, {
     ...SCREENSHOT_OPTIONS,
     ...options,
-  });
+  })
 }
 
 /**
