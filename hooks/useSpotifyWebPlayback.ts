@@ -95,7 +95,9 @@ const useSpotifyWebPlayback = () => {
             '[Spotify Web Playback] User not logged in, Web Playback unavailable'
           )
         } else {
-          addError(`Authentication failed: ${appError.message}`)
+          addError(`Authentication failed: ${appError.message}`, {
+            persist: true,
+          })
           console.warn(
             `[Spotify Web Playback] getOAuthToken error: ${appError.message}`
           )
@@ -178,17 +180,19 @@ const useSpotifyWebPlayback = () => {
 
       spotifyPlayer.addListener('initialization_error', ({ message }) => {
         console.error('[Spotify Web Playback] Initialization Error:', message)
-        addError(`Initialization failed: ${message}`)
+        addError(`Initialization failed: ${message}`, { persist: true })
       })
 
       spotifyPlayer.addListener('authentication_error', ({ message }) => {
         console.error('[Spotify Web Playback] Authentication Error:', message)
-        addError(`Authentication failed: ${message}`)
+        addError(`Authentication failed: ${message}`, { persist: true })
       })
 
       spotifyPlayer.addListener('account_error', ({ message }) => {
         console.error('[Spotify Web Playback] Account Error:', message)
-        addError(`Account error: ${message}. A Premium account is required.`)
+        addError(`Account error: ${message}. A Premium account is required.`, {
+          persist: true,
+        })
       })
 
       setPlayer(spotifyPlayer)

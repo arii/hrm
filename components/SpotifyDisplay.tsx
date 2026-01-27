@@ -123,7 +123,9 @@ const SpotifyDisplay = () => {
   // Effect to handle session-level errors, like token refresh failure
   useEffect(() => {
     if (session?.error === 'RefreshAccessTokenError') {
-      addError('Spotify session expired. Please log in again.')
+      addError('Spotify session expired. Please log in again.', {
+        persist: true,
+      })
       // Sign out to clear the invalid session
       signOut()
     }

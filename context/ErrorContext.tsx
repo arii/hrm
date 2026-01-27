@@ -10,7 +10,7 @@ import React, {
 } from 'react'
 
 interface ErrorContextType {
-  addError: (message: string) => void
+  addError: (message: string, options?: { persist?: boolean }) => void
 }
 
 const ErrorContext = createContext<ErrorContextType | undefined>(undefined)
@@ -18,9 +18,12 @@ const ErrorContext = createContext<ErrorContextType | undefined>(undefined)
 export const ErrorProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const addError = useCallback((message: string) => {
-    showError(message)
-  }, [])
+  const addError = useCallback(
+    (message: string, options?: { persist?: boolean }) => {
+      showError(message, options)
+    },
+    []
+  )
 
   const contextValue = useMemo(() => ({ addError }), [addError])
 
