@@ -143,7 +143,7 @@ The Web Playback SDK registers the browser as a `Computer` device.
 
 Device management is tightly integrated with WebSockets:
 
--   The backend's `SpotifyPolling` service fetches the device list every `SPOTIFY_DEVICE_POLLING_INTERVAL_MS` milliseconds (a configurable backend constant defined in `lib/env.ts`).
+-   The backend's `SpotifyPolling` service fetches the device list every `SPOTIFY_DEVICE_POLLING_INTERVAL_MS` milliseconds (a configurable backend constant defined in `lib/env.ts`, defaulting to 10,000ms).
 -   Any changes to the device list are broadcast in a `SPOTIFY_UPDATE` message to all connected clients.
 -   The frontend receives this message, updates its state, and re-renders the device selector UI to show the most current list of devices.
 
