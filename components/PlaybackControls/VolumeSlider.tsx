@@ -41,7 +41,18 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       >
         {muted ? <VolumeOff fontSize="small" /> : <VolumeUp fontSize="small" />}
       </IconButton>
-      <Box sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }} component="span" id="volume-slider">
+      <Box
+        sx={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          overflow: 'hidden',
+          clip: 'rect(0 0 0 0)',
+          whiteSpace: 'nowrap',
+        }}
+        component="span"
+        id="volume-slider"
+      >
         Volume
       </Box>
       <Slider
