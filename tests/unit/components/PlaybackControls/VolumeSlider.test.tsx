@@ -14,17 +14,17 @@ describe('VolumeSlider', () => {
         onVolumeChange={() => {}}
         onToggleMute={() => {}}
       />
-    );
+    )
 
-    const muteButton = screen.getByRole('button', { name: /mute/i });
-    expect(muteButton).toHaveAttribute('aria-label', 'Mute');
+    const muteButton = screen.getByRole('button', { name: /mute/i })
+    expect(muteButton).toHaveAttribute('aria-label', 'Mute')
 
-    const slider = screen.getByRole('slider');
-    expect(slider).toHaveAttribute('aria-labelledby', 'volume-slider');
+    const slider = screen.getByRole('slider')
+    expect(slider).toHaveAttribute('aria-labelledby', 'volume-slider')
 
-    const sliderLabel = screen.getByText('Volume');
-    expect(sliderLabel).toHaveAttribute('id', 'volume-slider');
-  });
+    const sliderLabel = screen.getByText('Volume')
+    expect(sliderLabel).toHaveAttribute('id', 'volume-slider')
+  })
 
   it('should have the correct accessibility attributes when muted', () => {
     render(
@@ -34,9 +34,9 @@ describe('VolumeSlider', () => {
         onVolumeChange={() => {}}
         onToggleMute={() => {}}
       />
-    );
+    )
 
-    const unmuteButton = screen.getByRole('button', { name: /unmute/i });
-    expect(unmuteButton).toHaveAttribute('aria-label', 'Unmute');
-  });
-});
+    const unmuteButton = screen.getByRole('button', { name: /unmute/i })
+    expect(unmuteButton).toHaveAttribute('aria-label', 'Unmute')
+  })
+})
