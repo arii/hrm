@@ -22,9 +22,10 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
-
-const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
-const OPTIMISTIC_ACTION_TIMEOUT = 3000 // ms for reverting optimistic UI
+import {
+  DISCONNECTED_UI_REVERT_DELAY,
+  OPTIMISTIC_ACTION_TIMEOUT,
+} from '../constants'
 
 const actionButtonBaseSx = {
   flex: 1,
@@ -59,22 +60,18 @@ const TimerControls = () => {
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
 
-  // When the server's running state changes and confirms our optimistic
-  // action, we can clear the optimistic state.
+  // When the server's running state changes, it becomes the source of truth.
+  // We clear any optimistic action to ensure the UI reflects the server state.
   useEffect(() => {
-    if (optimisticAction === null) return
-
-    const actionConfirmed =
-      (optimisticAction === 'START' && timerData.isRunning) ||
-      (optimisticAction === 'STOP' && !timerData.isRunning)
-
-    if (actionConfirmed) {
-      // This is a desired state update to synchronize with the server,
-      // not a cascading render. The condition prevents an infinite loop.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (optimisticAction !== null) {
       setOptimisticAction(null)
     }
-  }, [timerData.isRunning, optimisticAction])
+    // Disabling the lint rule because we intentionally want this effect to run
+    // ONLY when timerData.isRunning changes, to synchronize the client state
+    // with the server's ground truth. Adding optimisticAction to the dependency
+    // array would cause an infinite loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timerData.isRunning])
 
   // Safety timeout to clear the optimistic action if the server doesn't
   // confirm it within a reasonable time.
