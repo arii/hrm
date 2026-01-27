@@ -1,30 +1,30 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
-import { useDebounce } from '@/hooks/useDebounce';
-import { useWebSocket } from '@/context/WebSocketContext';
-import { resolveSpotifyDeviceId } from '@/lib/spotify/device';
+import { useDebounce } from '@/hooks/useDebounce'
+import { useWebSocket } from '@/context/WebSocketContext'
+import { resolveSpotifyDeviceId } from '@/lib/spotify/device'
 import {
   SpotifyCommandMessage,
   TimerCommandMessage,
   TimerConfigMessage,
   TimerModeCommandMessage,
-} from '@/types/websocket';
-import FitnessCenter from '@mui/icons-material/FitnessCenter';
-import PlayArrow from '@mui/icons-material/PlayArrow';
-import Stop from '@mui/icons-material/Stop';
-import Timer from '@mui/icons-material/Timer';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { useCallback, useEffect, useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import DurationStepper from './DurationStepper';
-import { useOptimisticAction } from '@/hooks/useOptimisticAction';
+} from '@/types/websocket'
+import FitnessCenter from '@mui/icons-material/FitnessCenter'
+import PlayArrow from '@mui/icons-material/PlayArrow'
+import Stop from '@mui/icons-material/Stop'
+import Timer from '@mui/icons-material/Timer'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
+import { useCallback, useEffect, useState, useMemo } from 'react'
+import { motion } from 'framer-motion'
+import DurationStepper from './DurationStepper'
 
-const DISCONNECTED_UI_REVERT_DELAY = 500; // ms
+const DISCONNECTED_UI_REVERT_DELAY = 500 // ms
+const OPTIMISTIC_ACTION_TIMEOUT = 3000 // ms for reverting optimistic UI
 
 const actionButtonBaseSx = {
   flex: 1,
@@ -49,15 +49,47 @@ const stopButtonSx = {
 }
 
 const TimerControls = () => {
-  const { timerData, sendData, connectionStatus } = useWebSocket();
-  const [workTime, setWorkTime] = useState(20);
-  const [restTime, setRestTime] = useState(10);
-  const { isRunning, setOptimisticAction } = useOptimisticAction(
-    timerData.isRunning
-  );
+  const { timerData, sendData, connectionStatus } = useWebSocket()
+  const [workTime, setWorkTime] = useState(20)
+  const [restTime, setRestTime] = useState(10)
+  const [optimisticAction, setOptimisticAction] = useState<
+    'START' | 'STOP' | null
+  >(null)
 
-  const debouncedWorkTime = useDebounce(workTime, 500);
-  const debouncedRestTime = useDebounce(restTime, 500);
+  const debouncedWorkTime = useDebounce(workTime, 500)
+  const debouncedRestTime = useDebounce(restTime, 500)
+
+  // When the server's running state changes and confirms our optimistic
+  // action, we can clear the optimistic state.
+  useEffect(() => {
+    if (optimisticAction === null) return
+
+    const actionConfirmed =
+      (optimisticAction === 'START' && timerData.isRunning) ||
+      (optimisticAction === 'STOP' && !timerData.isRunning)
+
+    if (actionConfirmed) {
+      // This is a desired state update to synchronize with the server,
+      // not a cascading render. The condition prevents an infinite loop.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOptimisticAction(null)
+    }
+  }, [timerData.isRunning, optimisticAction])
+
+  // Safety timeout to clear the optimistic action if the server doesn't
+  // confirm it within a reasonable time.
+  useEffect(() => {
+    if (optimisticAction) {
+      const timer = setTimeout(() => {
+        console.warn(
+          `[TimerControls] Optimistic action "${optimisticAction}" timed out. Reverting UI.`
+        )
+        setOptimisticAction(null)
+      }, OPTIMISTIC_ACTION_TIMEOUT)
+      return () => clearTimeout(timer)
+    }
+    return () => {}
+  }, [optimisticAction])
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') return
@@ -92,17 +124,17 @@ const TimerControls = () => {
   const sendTimerCommand = useCallback(
     (command: 'START' | 'STOP') => {
       // Optimistically update the UI
-      setOptimisticAction(command as 'START' | 'STOP');
+      setOptimisticAction(command)
 
       // If disconnected, revert the optimistic update after a short delay
       if (connectionStatus !== 'Connected') {
         console.warn(
           `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
-        );
+        )
         setTimeout(() => {
-          setOptimisticAction(null);
-        }, DISCONNECTED_UI_REVERT_DELAY);
-        return;
+          setOptimisticAction(null)
+        }, DISCONNECTED_UI_REVERT_DELAY)
+        return
       }
 
       // When starting, send the most up-to-date config.
@@ -111,17 +143,17 @@ const TimerControls = () => {
           type: 'TIMER_CONFIG',
           workDuration: workTime,
           restDuration: restTime,
-        };
-        sendData(config);
+        }
+        sendData(config)
       }
-      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command };
-      sendData(message);
+      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
+      sendData(message)
 
-      if (command === 'START') sendSpotifyCommand('NEXT');
-      else if (command === 'STOP') sendSpotifyCommand('PAUSE');
+      if (command === 'START') sendSpotifyCommand('NEXT')
+      else if (command === 'STOP') sendSpotifyCommand('PAUSE')
     },
-    [sendData, sendSpotifyCommand, connectionStatus, workTime, restTime, setOptimisticAction]
-  );
+    [sendData, sendSpotifyCommand, connectionStatus, workTime, restTime]
+  )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
     if (connectionStatus !== 'Connected') return
@@ -129,6 +161,13 @@ const TimerControls = () => {
     sendData(message)
   }
 
+  // Derive the running state from the server state and any optimistic action.
+  const isRunning =
+    optimisticAction === 'START'
+      ? true
+      : optimisticAction === 'STOP'
+        ? false
+        : timerData.isRunning
 
   const controlsDisabled = isRunning || connectionStatus !== 'Connected'
   const modes = ['TABATA', 'STOPWATCH']
