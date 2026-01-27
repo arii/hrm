@@ -35,7 +35,7 @@ const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 const ROLLING_AVG_HISTORY_LENGTH = 5
 const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
 const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
-export const HEARTBEAT_INTERVAL_MS = 1000
+export const HEARTBEAT_INTERVAL_MS = 1000 // Exported for testing purposes
 
 /**
  * @function parseHeartRate
