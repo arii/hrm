@@ -25,7 +25,7 @@ export default function MockPage() {
   const [weight, setWeight] = useState(70) // Add weight state
   const [height, setHeight] = useState(175) // Add height state
   const [gender, setGender] = useState('male') // Add gender state
-  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
+  const [intervalId, setIntervalId] = useState<number | null>(null)
 
   const isStreaming = intervalId !== null
   const maxHr = 220 - age

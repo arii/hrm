@@ -182,7 +182,7 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, sendData]
   )
 
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const debounceTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') {
