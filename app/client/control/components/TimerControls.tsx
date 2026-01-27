@@ -20,12 +20,10 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import Chip from '@mui/material/Chip'
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import {
-  DISCONNECTED_UI_REVERT_DELAY,
-  OPTIMISTIC_ACTION_TIMEOUT,
-} from '../constants'
+import { OPTIMISTIC_ACTION_TIMEOUT } from '../constants'
 import DurationStepper from './DurationStepper'
 
 const actionButtonBaseSx = {
@@ -68,12 +66,13 @@ const TimerControls = () => {
     if (optimisticAction !== null) {
       setOptimisticAction(null)
     }
-    // Disabling the lint rule because we intentionally want this effect to run
-    // ONLY when timerData.isRunning changes, to synchronize the client state
-    // with the server's ground truth. Adding optimisticAction to the dependency
-    // array would cause an infinite loop.
+    // The server-sent timerData is the source of truth. This effect hook
+    // ensures that any optimistic UI state is cleared whenever the server
+    // sends an update. By depending on the entire timerData object, we guarantee
+    // that the UI will re-synchronize with the server's state, preventing
+    // the optimistic UI from becoming stale.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerData.isRunning])
+  }, [timerData])
 
   // Safety timeout to clear the optimistic action if the server doesn't
   // confirm it within a reasonable time.
@@ -90,6 +89,20 @@ const TimerControls = () => {
     return () => {}
   }, [optimisticAction])
 
+  // This effect hook immediately reverts any optimistic UI state if the
+  // WebSocket connection is lost. This is a critical part of ensuring the
+  // UI remains synchronized with the true server state.
+  useEffect(() => {
+    if (connectionStatus !== 'Connected') {
+      if (optimisticAction) {
+        console.warn(
+          `[TimerControls] Connection lost (status: ${connectionStatus}). Reverting optimistic action "${optimisticAction}".`
+        )
+        setOptimisticAction(null)
+      }
+    }
+  }, [connectionStatus, optimisticAction])
+
   useEffect(() => {
     if (connectionStatus !== 'Connected') return
 
@@ -103,19 +116,14 @@ const TimerControls = () => {
 
   const sendTimerCommand = useCallback(
     (command: 'START' | 'STOP') => {
-      // Optimistically update the UI
-      setOptimisticAction(command)
-
-      // If disconnected, revert the optimistic update after a short delay
       if (connectionStatus !== 'Connected') {
         console.warn(
-          `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
+          `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Cannot send "${command}" command.`
         )
-        setTimeout(() => {
-          setOptimisticAction(null)
-        }, DISCONNECTED_UI_REVERT_DELAY)
         return
       }
+      // Optimistically update the UI
+      setOptimisticAction(command)
 
       // When starting, send the most up-to-date config.
       if (command === 'START') {
@@ -231,13 +239,39 @@ const TimerControls = () => {
         </Box>
 
         <Box sx={{ textAlign: 'center', mb: 1.5 }}>
-          <Typography
-            variant="h6"
-            sx={{ color: 'white', mb: 0.5 }}
-            data-testid={isRunning ? 'timer-running' : 'timer-stopped'}
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            justifyContent="center"
+            sx={{ mb: 0.5 }}
           >
-            {isRunning ? 'Timer Running' : 'Timer Stopped'}
-          </Typography>
+            <Typography
+              variant="h6"
+              sx={{ color: 'white' }}
+              data-testid={isRunning ? 'timer-running' : 'timer-stopped'}
+            >
+              {isRunning ? 'Timer Running' : 'Timer Stopped'}
+            </Typography>
+            <Chip
+              label={connectionStatus}
+              size="small"
+              color={
+                connectionStatus === 'Connected'
+                  ? 'success'
+                  : connectionStatus === 'Connecting...' ||
+                      connectionStatus === 'Reconnecting...'
+                    ? 'warning'
+                    : 'error'
+              }
+              sx={{
+                fontWeight: 'medium',
+                height: '20px',
+                fontSize: '0.7rem',
+                '.MuiChip-label': { px: '8px' },
+              }}
+            />
+          </Stack>
           <Typography variant="body2" sx={{ color: '#EF4444' }}>
             {timerData.currentPhase}
           </Typography>

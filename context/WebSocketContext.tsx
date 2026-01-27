@@ -236,20 +236,18 @@ export const WebSocketProvider = ({
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ type: 'PING' }))
 
-        // The pong timeout is set to 15 seconds. This is a tripling of the
-        // original 5-second timeout and provides a more generous buffer for
-        // temporary network latency or server-side processing delays. This value
-        // was chosen to be significantly longer than a typical network round-trip
-        // time, but not so long that a genuinely stale connection would persist
-        // for an excessive period.
+        // To ensure a responsive UI and immediate feedback on connection loss,
+        // the pong timeout is set to a more aggressive 2.5 seconds. This allows
+        // the client to quickly detect a stale connection and reset the UI,
+        // preventing the user from interacting with a desynchronized state.
         pongTimeoutRef.current = setTimeout(() => {
           logger.warn(
             '[WebSocketProvider] Pong not received in time. Forcing reconnect.'
           )
-          wsRef.current?.close() // Triggers the onclose reconnect logic
-        }, 15000)
+          wsRef.current?.close() // This will trigger the onclose logic for reconnection
+        }, 2500) // 2.5-second timeout for pong
       }
-    }, 30000)
+    }, 5000) // Send a ping every 5 seconds
   }, [stopHeartbeat])
 
   const connect = useCallback(() => {

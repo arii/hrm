@@ -89,12 +89,25 @@ exports[`ControlPanel Component should match snapshot 1`] = `
         <div
           class="MuiBox-root css-16zxwo7"
         >
-          <h6
-            class="MuiTypography-root MuiTypography-h6 css-11qh6jo-MuiTypography-root"
-            data-testid="timer-stopped"
+          <div
+            class="MuiStack-root css-s03tk3-MuiStack-root"
           >
-            Timer Stopped
-          </h6>
+            <h6
+              class="MuiTypography-root MuiTypography-h6 css-1kbo3sr-MuiTypography-root"
+              data-testid="timer-stopped"
+            >
+              Timer Stopped
+            </h6>
+            <div
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-filledSuccess css-kxv23t-MuiChip-root"
+            >
+              <span
+                class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
+              >
+                Connected
+              </span>
+            </div>
+          </div>
           <p
             class="MuiTypography-root MuiTypography-body2 css-134g84n-MuiTypography-root"
           />
