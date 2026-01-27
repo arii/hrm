@@ -22,9 +22,9 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       BluetoothConnectionStatus.CONNECTING
     )
     await expect(
-      connectPage.getByRole('alert').getByText('Connecting...')
-    ).toBeVisible()
-    await takeScreenshot(connectPage, 'connect-page-scanning.png', {
+      connectPage.getByTestId('connection-status-alert')
+    ).toContainText('Checking saved devices...')
+    await takeScreenshot(connectPage, 'connect-page-checking-saved-devices.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
     })
   })
