@@ -52,6 +52,7 @@ To enable the Spotify integration, you must set the following environment variab
 ```
 SPOTIFY_CLIENT_ID=your_spotify_client_id
 SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+SPOTIFY_DEVICE_POLLING_INTERVAL_MS=10000
 ```
 
 These credentials are obtained from the Spotify Developer Dashboard.
@@ -156,6 +157,9 @@ This architecture ensures that if a user starts or stops playing music on anothe
 -   **401 Unauthorized**: The access token is expired or invalid.
 -   **403 Forbidden**: The user's account does not have the required permissions or subscription level (e.g., Spotify Premium is required for many actions).
 -   **404 Not Found**: The requested resource (e.g., a device ID) could not be found.
+
+### Expected API Responses
+
 -   **204 No Content**: This is an expected success response for many playback commands (e.g., play, pause) that don't return any data. The code specifically handles this to prevent it from being treated as an error.
 
 ### Recovery Strategies
