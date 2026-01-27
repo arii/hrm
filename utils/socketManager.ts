@@ -17,7 +17,7 @@ import {
   ExtWebSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js'
+import { CALORIE_DEFAULTS } from '../lib/constants/index.js'
 import {
   broadcast,
   sendWebSocketMessage,

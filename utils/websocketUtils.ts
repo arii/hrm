@@ -9,7 +9,7 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ExtWebSocket, ServerMessage } from '../types/websocket.js'
 import logger from './logger.js'
-import { WEBSOCKET_WATCHDOG_INTERVAL_MS } from './constants.js'
+import { WEBSOCKET_WATCHDOG_INTERVAL_MS } from '../lib/constants/index.js'
 
 /**
  * Sends a typed WebSocket message to a single client. This is the preferred

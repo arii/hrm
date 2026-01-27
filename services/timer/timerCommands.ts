@@ -8,7 +8,7 @@ import { TimerMode } from '../../types/core'
 import {
   START_COUNTDOWN_DURATION,
   TIMER_INTERVAL,
-} from '../../utils/constants.js'
+} from '../../lib/constants/index.js'
 import { DualModeTimerState } from './timerState.js'
 import { ConfigurationError } from '../../types/errors.js'
 import { TimerQueries } from './timerQueries.js'

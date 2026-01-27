@@ -7,7 +7,7 @@ import { TimerMode, TimerPhase } from '../../types/core'
 import {
   DEFAULT_WORK_DURATION,
   DEFAULT_REST_DURATION,
-} from '../../utils/constants.js'
+} from '../../lib/constants/index.js'
 
 /**
  * Encapsulates the complete state of the timer, including both publicly
