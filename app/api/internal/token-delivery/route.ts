@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
 import { serviceContainer } from '@/lib/serviceContainer'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
-import { ProcessedAccessTokenData } from '@/types/spotify'
+import { SpotifyTokenPayload } from '@/services/spotifyTokenManager.js'
 
 /**
  * @route POST /api/internal/token-delivery
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Directly and reliably update the service with the new token
-    const processedToken: ProcessedAccessTokenData = {
+    const processedToken: SpotifyTokenPayload = {
       ...tokenData,
       provider: 'spotify',
       sub: '', // `sub` is not provided by Spotify's token response, default to empty

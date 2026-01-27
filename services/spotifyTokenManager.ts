@@ -29,6 +29,7 @@ export interface SpotifyTokenPayload {
   provider: string
   sub: string
   access_token: string
+  token_type: string
   refresh_token: string
   expires_in: number
   scope: string
@@ -48,7 +49,9 @@ export class SpotifyTokenManager {
     if (this.currentToken) {
       this.currentToken.payload.access_token = token
       this.currentToken.payload.obtainedAt = Date.now()
-      writeTokenFileSafe(this.tokenFile, this.currentToken)
+      if (this.currentToken) {
+        writeTokenFileSafe(this.tokenFile, this.currentToken)
+      }
       console.log('Access token updated via setAccessToken.')
     } else {
       // If no token record exists, create a minimal one
@@ -58,6 +61,7 @@ export class SpotifyTokenManager {
           provider: 'manual',
           sub: 'manual',
           access_token: token,
+          token_type: 'Bearer',
           refresh_token: '',
           expires_in: 3600,
           scope: '',
