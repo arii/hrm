@@ -70,11 +70,11 @@ jest.mock('ws', () => {
   const EventEmitter = require('events')
   class MockWebSocketServer extends EventEmitter {
     clients = new Set<MockWebSocket>()
-    on(event: string, listener: (...args: any[]) => void) {
+    on(event: string, listener: (...args: unknown[]) => void) {
       super.on(event, listener)
       return this
     }
-    emit(event: string, ...args: any[]) {
+    emit(event: string, ...args: unknown[]) {
       super.emit(event, ...args)
       return true
     }
