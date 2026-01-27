@@ -54,7 +54,7 @@ interface WorkoutDataOptions {
 
 export const useWorkoutData = ({
   workoutStatus,
-  totalCalories = 0,
+  totalCalories,
 }: WorkoutDataOptions) => {
   const [state, dispatch] = useReducer(sessionDataReducer, initialState)
   const [startCalories, setStartCalories] = useState(0)
