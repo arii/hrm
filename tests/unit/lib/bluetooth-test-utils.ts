@@ -91,9 +91,11 @@ export const mockBluetoothRemoteGattServer = (
   mockService: jest.Mocked<BluetoothRemoteGATTService>
 ): jest.Mocked<BluetoothRemoteGATTServer> => {
   const gattServer = {
-    connect: jest.fn().mockResolvedValue(undefined),
+    connect: jest.fn().mockImplementation(() => Promise.resolve(undefined)),
     disconnect: jest.fn(),
-    getPrimaryService: jest.fn().mockResolvedValue(mockService),
+    getPrimaryService: jest
+      .fn()
+      .mockImplementation(() => Promise.resolve(mockService)),
     ...overrides,
   }
   return gattServer as jest.Mocked<BluetoothRemoteGATTServer>
@@ -113,7 +115,9 @@ export const mockBluetoothDevice = (
     gatt: {
       ...mockGattServer,
       connected: false,
-      connect: jest.fn().mockResolvedValue(mockGattServer),
+      connect: jest
+        .fn()
+        .mockImplementation(() => Promise.resolve(mockGattServer)),
       disconnect: jest.fn(),
     },
     addEventListener: jest.fn(),
