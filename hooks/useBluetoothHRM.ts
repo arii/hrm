@@ -602,7 +602,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
             const e = event as Event
             const target = e.target as BluetoothRemoteGATTCharacteristic
-            const value = target.value!
+            const value = target.value
+            if (!value) {
+              logger.warn('Received characteristic value changed event with no value.')
+              return
+            }
             const heartRate = parseHeartRate(value)
             lastDataTime.current = now // Update timestamp for next delta
             logger.debug(
