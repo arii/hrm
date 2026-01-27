@@ -39,9 +39,9 @@ describe('Bluetooth Message Constants', () => {
   })
 
   it('should generate the correct message for "reconnectingAttempt"', () => {
-    expect(
-      BLUETOOTH_MESSAGES.reconnectingAttempt('Signal Lost', 2, 5)
-    ).toBe('Signal Lost. Reconnecting... (Attempt 2/5)')
+    expect(BLUETOOTH_MESSAGES.reconnectingAttempt('Signal Lost', 2, 5)).toBe(
+      'Signal Lost. Reconnecting... (Attempt 2/5)'
+    )
   })
 
   it('should have the correct value for "unstableConnection"', () => {

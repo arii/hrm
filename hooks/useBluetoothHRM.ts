@@ -650,7 +650,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           )
           setStatus(BluetoothConnectionStatus.ERROR)
           setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeoutReset)
-          reconnectAttempts.current = maxReconnectAttempts
+          reconnectAttempts.current = MAX_RECONNECT_ATTEMPTS
           deviceRef.current = null
 
           if (reconnectTimeoutRef.current)
