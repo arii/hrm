@@ -1,7 +1,9 @@
 // File: utils/constants.ts
 // Centralized constants for the application.
 
-import { MAX_HR_DEFAULT } from '../lib/constants'
+// Duplicating this constant is a pragmatic solution to avoid a circular dependency
+// between server-side (`tsc`) and client-side (Webpack) build systems.
+const MAX_HR_DEFAULT = 185
 
 // --- Heart Rate Calculation Constants ---
 export const MAX_HR_ESTIMATION_BASE = 220 // Fox formula constant
