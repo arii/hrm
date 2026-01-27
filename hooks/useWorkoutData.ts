@@ -37,7 +37,9 @@ function sessionDataReducer(
     case 'RESET':
       return initialState
     default:
-      return state
+      // This helps catch any unhandled actions during development.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      throw new Error(`Unhandled action type: ${(action as any)?.type}`)
   }
 }
 
@@ -66,6 +68,8 @@ export const useWorkoutData = ({
   })
 
   useEffect(() => {
+    // A workout is considered "over" if the status is idle but we have a startCalories value.
+    // This prevents the calorie count from updating after the workout has ended.
     const isWorkoutOver = workoutStatus === 'idle' && startCalories > 0
     if (isWorkoutOver) {
       return
