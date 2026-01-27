@@ -111,10 +111,10 @@ export const useLocalWorkoutBuffer = (
     // This allows data collection to begin immediately and catch the HR
     // signal as soon as it's available.
     if (workoutData.status === 'running') {
-      intervalId = setInterval(recordHrData, 1000)
+      intervalId = window.setInterval(recordHrData, 1000)
     }
     return () => {
-      if (intervalId) clearInterval(intervalId)
+      if (intervalId) window.clearInterval(intervalId)
     }
   }, [workoutData.status, recordHrData])
 
