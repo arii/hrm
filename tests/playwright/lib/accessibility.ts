@@ -23,6 +23,9 @@ export async function checkAccessibility(target: Page | Locator) {
 
   const axeBuilder = new AxeBuilder({ page })
     .withTags(['wcag2aa'])
+    // TODO: Re-enable this rule once the application's color palette is updated
+    // to meet WCAG 2.1 AA contrast ratio requirements. This is temporarily
+    // disabled to allow the initial integration of accessibility checks.
     .disableRules(['color-contrast'])
 
   if (selector) {
