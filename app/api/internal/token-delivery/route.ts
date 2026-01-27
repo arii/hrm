@@ -47,8 +47,6 @@ export async function POST(req: NextRequest) {
     const processedToken: SpotifyTokenPayload = {
       ...tokenData,
       provider: 'spotify',
-      sub: '', // `sub` is not provided by Spotify's token response, default to empty
-      scope: '', // `scope` is not used by the polling service, default to empty
       obtainedAt: Date.now(),
     }
     await spotifyService.handleTokenUpdate(processedToken)
