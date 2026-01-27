@@ -62,19 +62,25 @@ const TimerControls = () => {
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
 
-  // Use a ref to track the previous isRunning state from the server.
   const prevIsRunning = useRef(timerData.isRunning)
 
-  // When the server's running state changes, it becomes the source of truth.
-  // We clear any optimistic action to ensure the UI reflects the server state.
   useEffect(() => {
-    // If the server's isRunning state has changed, it overrides any optimistic state.
-    if (prevIsRunning.current !== timerData.isRunning) {
-      if (optimisticAction !== null) {
-        setOptimisticAction(null)
-      }
+    // This effect synchronizes the optimistic UI with the server's state.
+    // When the server's `isRunning` state changes, we must clear any
+    // optimistic action to ensure the UI reflects the ground truth.
+    if (
+      prevIsRunning.current !== timerData.isRunning &&
+      optimisticAction !== null
+    ) {
+      // Calling setState here is intentional. It overrides the client-side
+      // optimistic state with the server's authoritative state. The linter
+      // warns about cascading renders, but this is a necessary and deliberate
+      // part of the synchronization pattern.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOptimisticAction(null)
     }
-    // Update the ref for the next render.
+
+    // Update the ref for the next render to track the last known server state.
     prevIsRunning.current = timerData.isRunning
   }, [timerData.isRunning, optimisticAction])
 
