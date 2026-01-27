@@ -77,6 +77,14 @@ export async function takeDashboardScreenshot(
     spotifyDisplayLocator.waitFor({ state: 'visible' }),
   ])
 
+  // As a final stabilization step, wait for network idle with a short timeout.
+  // This helps catch any final rendering/data loading without failing on persistent connections.
+  try {
+    await page.waitForLoadState('networkidle', { timeout: 3000 })
+  } catch (e) {
+    // Ignore timeout errors, as the primary element waits have already passed.
+  }
+
   const clippingRegion = await mainContentLocator.boundingBox()
   let clipOption: ScreenshotOptions['clip'] = options.clip // Preserve existing clip option if any
 
