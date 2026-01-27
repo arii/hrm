@@ -34,6 +34,8 @@ describe('ErrorContext', () => {
       result.current.addError('Persistent error', { persist: true })
     })
 
-    expect(showError).toHaveBeenCalledWith('Persistent error', { persist: true })
+    expect(showError).toHaveBeenCalledWith('Persistent error', {
+      persist: true,
+    })
   })
 })
