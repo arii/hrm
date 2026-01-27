@@ -76,6 +76,19 @@ export default function ConnectPage() {
 
   const { connectionStatus, sendData } = useWebSocket()
 
+  // Send user metadata when WebSocket connects
+  useEffect(() => {
+    if (connectionStatus === 'Connected' && userName) {
+      sendData({
+        type: 'HRM_METADATA_UPDATE',
+        data: {
+          name: userName,
+          age: userAge || 30,
+        },
+      })
+    }
+  }, [connectionStatus, userName, userAge, sendData])
+
   // Centralized calorie calculation engine
   const {
     calories,
