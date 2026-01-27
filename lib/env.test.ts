@@ -1,8 +1,9 @@
-/* eslint-disable no-process-env */
 import { z } from 'zod'
 
 // Mock the console.error before any imports
-const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
+const mockConsoleError = jest
+  .spyOn(console, 'error')
+  .mockImplementation(() => {})
 
 describe('Environment Schema Validation', () => {
   const originalEnv = process.env
@@ -19,16 +20,14 @@ describe('Environment Schema Validation', () => {
   })
 
   // Helper function to dynamically import and test the schema
-  const validateEnv = (env: NodeJS.ProcessEnv) => {
+  const validateEnv = async (env: NodeJS.ProcessEnv) => {
     process.env = { ...originalEnv, ...env }
-    let envSchema: z.ZodObject<any> | undefined
     let parsedEnv: { success: boolean; error?: z.ZodError } | undefined
-    let error: any
+    let error: unknown
 
     try {
       // Dynamically import the module to re-evaluate it with the new process.env
-      const envModule = require('../lib/env')
-      envSchema = envModule.envSchema // Assuming you export envSchema for testing
+      const { envSchema } = await import('../lib/env')
       parsedEnv = envSchema?.safeParse(process.env)
     } catch (e) {
       error = e
@@ -43,32 +42,35 @@ describe('Environment Schema Validation', () => {
   }
 
   describe('Spotify Credentials', () => {
-    it('should fail if SPOTIFY_CLIENT_ID is set but SPOTIFY_CLIENT_SECRET is not', () => {
-      const { error } = validateEnv({
+    it('should fail if SPOTIFY_CLIENT_ID is set but SPOTIFY_CLIENT_SECRET is not', async () => {
+      const { error } = await validateEnv({
+        NODE_ENV: 'development',
         SPOTIFY_CLIENT_ID: 'test-id',
         NEXTAUTH_SECRET: 'a-valid-secret-for-testing',
         NEXTAUTH_URL: 'http://localhost:3000',
       })
       expect(error).toBeInstanceOf(z.ZodError)
-      expect(error.errors[0].message).toBe(
-        'SPOTIFY_CLIENT_SECRET is required when SPOTIFY_CLIENT_ID is set.',
+      expect((error as z.ZodError).errors[0].message).toBe(
+        'SPOTIFY_CLIENT_SECRET is required when SPOTIFY_CLIENT_ID is set.'
       )
     })
 
-    it('should fail if SPOTIFY_CLIENT_SECRET is set but SPOTIFY_CLIENT_ID is not', () => {
-      const { error } = validateEnv({
+    it('should fail if SPOTIFY_CLIENT_SECRET is set but SPOTIFY_CLIENT_ID is not', async () => {
+      const { error } = await validateEnv({
+        NODE_ENV: 'development',
         SPOTIFY_CLIENT_SECRET: 'test-secret',
         NEXTAUTH_SECRET: 'a-valid-secret-for-testing',
         NEXTAUTH_URL: 'http://localhost:3000',
       })
       expect(error).toBeInstanceOf(z.ZodError)
-      expect(error.errors[0].message).toBe(
-        'SPOTIFY_CLIENT_ID is required when SPOTIFY_CLIENT_SECRET is set.',
+      expect((error as z.ZodError).errors[0].message).toBe(
+        'SPOTIFY_CLIENT_ID is required when SPOTIFY_CLIENT_SECRET is set.'
       )
     })
 
-    it('should succeed if both SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are set', () => {
-      const { error } = validateEnv({
+    it('should succeed if both SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are set', async () => {
+      const { error } = await validateEnv({
+        NODE_ENV: 'development',
         SPOTIFY_CLIENT_ID: 'test-id',
         SPOTIFY_CLIENT_SECRET: 'test-secret',
         NEXTAUTH_SECRET: 'a-valid-secret-for-testing',
@@ -79,20 +81,20 @@ describe('Environment Schema Validation', () => {
   })
 
   describe('NEXTAUTH_SECRET', () => {
-    it('should fail in production if NEXTAUTH_SECRET is less than 32 characters', () => {
-      const { error } = validateEnv({
+    it('should fail in production if NEXTAUTH_SECRET is less than 32 characters', async () => {
+      const { error } = await validateEnv({
         NODE_ENV: 'production',
         NEXTAUTH_SECRET: 'short-secret',
         NEXTAUTH_URL: 'http://localhost:3000',
       })
       expect(error).toBeInstanceOf(z.ZodError)
-      expect(error.errors[0].message).toBe(
-        'NEXTAUTH_SECRET must be at least 32 characters long in production.',
+      expect((error as z.ZodError).errors[0].message).toBe(
+        'NEXTAUTH_SECRET must be at least 32 characters long in production.'
       )
     })
 
-    it('should succeed in production if NEXTAUTH_SECRET is at least 32 characters', () => {
-      const { error } = validateEnv({
+    it('should succeed in production if NEXTAUTH_SECRET is at least 32 characters', async () => {
+      const { error } = await validateEnv({
         NODE_ENV: 'production',
         NEXTAUTH_SECRET: 'a-very-long-and-secure-secret-for-production-env',
         NEXTAUTH_URL: 'http://localhost:3000',
@@ -100,18 +102,20 @@ describe('Environment Schema Validation', () => {
       expect(error).toBeUndefined()
     })
 
-    it('should fail in development if NEXTAUTH_SECRET is empty', () => {
-      const { error } = validateEnv({
+    it('should fail in development if NEXTAUTH_SECRET is empty', async () => {
+      const { error } = await validateEnv({
         NODE_ENV: 'development',
         NEXTAUTH_SECRET: '',
         NEXTAUTH_URL: 'http://localhost:3000',
       })
       expect(error).toBeInstanceOf(z.ZodError)
-      expect(error.errors[0].message).toBe('NEXTAUTH_SECRET is required.')
+      expect((error as z.ZodError).errors[0].message).toBe(
+        'NEXTAUTH_SECRET is required.'
+      )
     })
 
-    it('should succeed in development if NEXTAUTH_SECRET is not empty', () => {
-      const { error } = validateEnv({
+    it('should succeed in development if NEXTAUTH_SECRET is not empty', async () => {
+      const { error } = await validateEnv({
         NODE_ENV: 'development',
         NEXTAUTH_SECRET: 'a-secret',
         NEXTAUTH_URL: 'http://localhost:3000',
