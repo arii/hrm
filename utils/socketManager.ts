@@ -211,6 +211,7 @@ const initSocketManager = (
 export const resetSocketManager = () => {
   hrmDataRepository.clear()
   clientSessionState.clear()
+  clientSockets.clear()
 }
 
 const broadcastState = () => {
@@ -237,6 +238,7 @@ const handleIncomingMessage = (
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
+    console.log('message:', message)
 
     switch (message.type) {
       case 'PING': {
