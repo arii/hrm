@@ -42,15 +42,55 @@ let services: AppServices
 // - hrmDataRepository: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
 // - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
-/** @internal For testing purposes only. */
-export const hrmDataRepository = new HrmDataRepository()
+const hrmDataRepository = new HrmDataRepository()
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
 
 // Track internal state for calculations (not sent to client)
-/** @internal For testing purposes only. */
-export const clientSessionState = new Map()
+const clientSessionState = new Map()
+
+/**
+ * @internal
+ * Test-only properties for inspecting internal state. This object is only defined
+ * when `process.env.NODE_ENV === 'test'`, ensuring it does not exist in production.
+ */
+export const _test_ =
+  process.env.NODE_ENV === 'test'
+    ? {
+        hrmDataRepository,
+        clientSessionState,
+        _resetState: () => {
+          hrmDataRepository.clear()
+          clientSessionState.clear()
+        },
+        _setClientData: (
+          clients: Map<
+            string,
+            {
+              clientId: string
+              value: number
+              calories: number
+              accumulatedCalories: number
+            }
+          >
+        ) => {
+          clients.forEach((client, clientId) => {
+            hrmDataRepository.save({
+              clientId: client.clientId,
+              value: client.value,
+              calories: client.calories,
+              maxHr: 185,
+              age: 30,
+            })
+            clientSessionState.set(clientId, {
+              lastUpdate: Date.now(),
+              accumulatedCalories: client.accumulatedCalories,
+            })
+          })
+        },
+      }
+    : undefined
 
 /**
  * Safely parses the WebSocket request URL to extract search parameters.
@@ -448,40 +488,6 @@ const handleIncomingMessage = (
       logger.error({ clientId, error: e }, 'Error processing incoming message')
     }
   }
-}
-
-// Exported for testing purposes
-/** @internal For testing purposes only. */
-export const _resetState = () => {
-  hrmDataRepository.clear()
-  clientSessionState.clear()
-}
-
-/** @internal For testing purposes only. */
-export const _setClientData = (
-  clients: Map<
-    string,
-    {
-      clientId: string
-      value: number
-      calories: number
-      accumulatedCalories: number
-    }
-  >
-) => {
-  clients.forEach((client, clientId) => {
-    hrmDataRepository.save({
-      clientId: client.clientId,
-      value: client.value,
-      calories: client.calories,
-      maxHr: 185,
-      age: 30,
-    })
-    clientSessionState.set(clientId, {
-      lastUpdate: Date.now(),
-      accumulatedCalories: client.accumulatedCalories,
-    })
-  })
 }
 
 export { initSocketManager, getRequestParams }

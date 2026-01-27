@@ -1,11 +1,5 @@
 import { jest } from '@jest/globals'
-import {
-  _resetState,
-  _setClientData,
-  clientSessionState,
-  hrmDataRepository,
-  resetHrmData,
-} from '../../../utils/socketManager'
+import { resetHrmData, _test_ } from '../../../utils/socketManager'
 import * as websocketUtils from '../../../utils/websocketUtils'
 
 jest.mock('../../../utils/websocketUtils', () => ({
@@ -15,7 +9,7 @@ jest.mock('../../../utils/websocketUtils', () => ({
 
 describe('socketManager', () => {
   afterEach(() => {
-    _resetState()
+    _test_?._resetState()
     jest.clearAllMocks()
   })
   describe('resetHrmData', () => {
@@ -34,7 +28,7 @@ describe('socketManager', () => {
         calories: 150,
         accumulatedCalories: 250,
       })
-      _setClientData(mockClients)
+      _test_?._setClientData(mockClients)
 
       // Act
       resetHrmData()
@@ -43,10 +37,10 @@ describe('socketManager', () => {
       const broadcastMock = jest.spyOn(websocketUtils, 'broadcast')
       expect(broadcastMock).toHaveBeenCalled()
 
-      const client1Data = hrmDataRepository.findById('client1')
-      const client2Data = hrmDataRepository.findById('client2')
-      const client1Session = clientSessionState.get('client1')
-      const client2Session = clientSessionState.get('client2')
+      const client1Data = _test_?.hrmDataRepository.findById('client1')
+      const client2Data = _test_?.hrmDataRepository.findById('client2')
+      const client1Session = _test_?.clientSessionState.get('client1')
+      const client2Session = _test_?.clientSessionState.get('client2')
 
       expect(client1Data?.calories).toBe(0)
       expect(client2Data?.calories).toBe(0)
