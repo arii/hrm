@@ -192,7 +192,7 @@ describe('WebSocket Manager', () => {
           userAgent: 'jest-test',
           host: 'localhost:3000',
         },
-        'WebSocket client connected'
+        'New WebSocket client connected. Initializing session.'
       )
     })
 
@@ -212,7 +212,7 @@ describe('WebSocket Manager', () => {
           userAgent: 'jest-test',
           host: 'localhost:3000',
         },
-        'Existing socket found. Overwriting with new connection.'
+        'Found a likely zombie connection. Terminating the old socket and replacing it with the new one.'
       )
     })
 
@@ -234,7 +234,7 @@ describe('WebSocket Manager', () => {
           clientId: 'secure-client',
           isSecure: true,
         }),
-        'WebSocket client connected'
+        'New WebSocket client connected. Initializing session.'
       )
     })
 
@@ -274,7 +274,7 @@ describe('WebSocket Manager', () => {
               userAgent: '[REDACTED]',
               host: 'localhost:3000',
             },
-            'WebSocket client connected'
+            'New WebSocket client connected. Initializing session.'
           )
         })
       })
