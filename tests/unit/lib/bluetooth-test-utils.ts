@@ -1,0 +1,111 @@
+import { jest } from '@jest/globals'
+
+// A helper type for the event listener map
+type ListenerMap = {
+  [eventName: string]: ((event: Event) => void)[]
+}
+
+/**
+ * Mocks a BluetoothGATTCharacteristic object.
+ * This is the object that represents a GATT characteristic, which is a basic data element used to construct a GATT service.
+ */
+export const mockBluetoothGattCharacteristic = (
+  overrides: Partial<BluetoothGATTCharacteristic> = {}
+): jest.Mocked<BluetoothGATTCharacteristic> & {
+  _listeners: ListenerMap
+  _trigger: (eventName: string, event: Partial<Event>) => void
+} => {
+  const listeners: ListenerMap = {}
+
+  const characteristic = {
+    startNotifications: jest.fn().mockResolvedValue(undefined),
+    stopNotifications: jest.fn().mockResolvedValue(undefined),
+    addEventListener: jest.fn(
+      (eventName: string, callback: (event: Event) => void) => {
+        if (!listeners[eventName]) {
+          listeners[eventName] = []
+        }
+        listeners[eventName].push(callback)
+      }
+    ),
+    removeEventListener: jest.fn(
+      (eventName: string, callback: (event: Event) => void) => {
+        if (listeners[eventName]) {
+          listeners[eventName] = listeners[eventName].filter(
+            (cb) => cb !== callback
+          )
+        }
+      }
+    ),
+    readValue: jest.fn().mockResolvedValue(new DataView(new ArrayBuffer(1))),
+    writeValue: jest.fn().mockResolvedValue(undefined),
+    ...overrides,
+    // Test utilities
+    _listeners: listeners,
+    _trigger: (eventName: string, event: Partial<Event>) => {
+      if (listeners[eventName]) {
+        listeners[eventName].forEach((callback) => callback(event as Event))
+      }
+    },
+  }
+  return characteristic as jest.Mocked<BluetoothGATTCharacteristic> & {
+    _listeners: ListenerMap
+    _trigger: (eventName: string, event: Partial<Event>) => void
+  }
+}
+
+/**
+ * Mocks a BluetoothGATTService object.
+ * This is the object that represents a GATT service, which is a collection of GATT characteristics.
+ */
+export const mockBluetoothGattService = (
+  overrides: Partial<BluetoothGATTService> = {},
+  mockCharacteristic: jest.Mocked<BluetoothGATTCharacteristic>
+): jest.Mocked<BluetoothGATTService> => {
+  const service = {
+    getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+    ...overrides,
+  }
+  return service as jest.Mocked<BluetoothGATTService>
+}
+
+/**
+ * Mocks a BluetoothRemoteGATTServer object.
+ * This is the object that represents a GATT server on a remote Bluetooth device.
+ */
+export const mockBluetoothRemoteGattServer = (
+  overrides: Partial<BluetoothRemoteGATTServer> = {},
+  mockService: jest.Mocked<BluetoothGATTService>
+): jest.Mocked<BluetoothRemoteGATTServer> => {
+  const gattServer = {
+    connect: jest.fn().mockResolvedValue(undefined),
+    disconnect: jest.fn(),
+    getPrimaryService: jest.fn().mockResolvedValue(mockService),
+    ...overrides,
+  }
+  return gattServer as jest.Mocked<BluetoothRemoteGATTServer>
+}
+
+/**
+ * Mocks a BluetoothDevice object.
+ * This is the object that represents a Bluetooth device.
+ */
+export const mockBluetoothDevice = (
+  overrides: Partial<BluetoothDevice> = {},
+  mockGattServer: jest.Mocked<BluetoothRemoteGATTServer>
+): jest.Mocked<BluetoothDevice> => {
+  const device = {
+    id: 'test-device-id',
+    name: 'Test HRM',
+    gatt: {
+      ...mockGattServer,
+      connected: false,
+      connect: jest.fn().mockResolvedValue(mockGattServer),
+      disconnect: jest.fn(),
+    },
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    ...overrides,
+  }
+  return device as jest.Mocked<BluetoothDevice>
+}
