@@ -484,11 +484,7 @@ describe('useBluetoothHRM', () => {
       )
 
       // --- Reconnection attempts ---
-      for (
-        let i = 1;
-        i <= env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS;
-        i++
-      ) {
+      for (let i = 1; i <= env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS; i++) {
         await act(async () => {
           jest.runOnlyPendingTimers() // Run the setTimeout for reconnect
         })
@@ -642,12 +638,14 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should use the default max reconnection attempts when the environment variable is not set', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { env } = require('../lib/env')
       expect(env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS).toBe(5)
     })
 
     it('should use the custom max reconnection attempts from the environment variable', async () => {
       process.env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS = '10'
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { env } = require('../lib/env')
       expect(env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS).toBe(10)
     })
