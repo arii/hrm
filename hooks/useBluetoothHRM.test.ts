@@ -6,7 +6,6 @@ import useBluetoothHRM from './useBluetoothHRM'
 import {
   HEARTBEAT_INTERVAL_MS,
   MAX_RECONNECT_ATTEMPTS,
-  DEFAULT_DATA_LIVENESS_TIMEOUT_MS,
 } from './useBluetoothHRM.constants'
 import * as WebSocketContext from '../context/WebSocketContext'
 import * as cookieUtils from '../utils/cookies'
