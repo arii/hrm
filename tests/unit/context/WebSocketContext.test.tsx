@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react'
-import { WebSocketProvider, reducer } from '@/context/WebSocketContext'
+import { WebSocketProvider } from '@/context/WebSocketContext'
 import { ServerMessage } from '@/types/websocket'
 import { INITIAL_STATE } from '@/context/webSocketReducer'
 import React from 'react'
@@ -33,7 +33,7 @@ describe('WebSocketProvider __TEST_CONTROLS__', () => {
 
   it('throttles HRM_UPDATE messages', () => {
     renderHook(() => {}, { wrapper: WebSocketProvider })
-    const testControls = (window as any).__TEST_CONTROLS__
+    const testControls = (window as unknown as { __TEST_CONTROLS__: { dispatch: (message: ServerMessage) => void } }).__TEST_CONTROLS__
 
     const hrmMessage: ServerMessage = {
       type: 'HRM_UPDATE',
@@ -61,7 +61,7 @@ describe('WebSocketProvider __TEST_CONTROLS__', () => {
 
   it('throttles TIMER_UPDATE messages', () => {
     renderHook(() => {}, { wrapper: WebSocketProvider })
-    const testControls = (window as any).__TEST_CONTROLS__
+    const testControls = (window as unknown as { __TEST_CONTROLS__: { dispatch: (message: ServerMessage) => void } }).__TEST_CONTROLS__
 
     const timerMessage: ServerMessage = {
       type: 'TIMER_UPDATE',
@@ -84,7 +84,7 @@ describe('WebSocketProvider __TEST_CONTROLS__', () => {
 
   it('does not throttle other message types', () => {
     renderHook(() => {}, { wrapper: WebSocketProvider })
-    const testControls = (window as any).__TEST_CONTROLS__
+    const testControls = (window as unknown as { __TEST_CONTROLS__: { dispatch: (message: ServerMessage) => void } }).__TEST_CONTROLS__
 
     const otherMessage: ServerMessage = {
       type: 'SPOTIFY_UPDATE',

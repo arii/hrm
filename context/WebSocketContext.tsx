@@ -174,11 +174,13 @@ export const WebSocketProvider = ({
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
-  const throttledDispatch = useRef(
-    throttle((message: ServerMessage) => {
-      dispatch(message)
-    }, 100)
-  ).current
+  const throttledDispatch = useMemo(
+    () =>
+      throttle((message: ServerMessage) => {
+        dispatch(message)
+      }, 100),
+    [dispatch]
+  )
 
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
@@ -212,7 +214,7 @@ export const WebSocketProvider = ({
         }
       }
     }
-  }, [dispatch])
+  }, [dispatch, throttledDispatch])
 
   // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
