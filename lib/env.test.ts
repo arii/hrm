@@ -52,7 +52,7 @@ describe('Environment Schema Validation', () => {
       expect(error).toBeInstanceOf(z.ZodError)
       if (error instanceof z.ZodError) {
         expect(error.issues[0]?.message).toBe(
-          'SPOTIFY_CLIENT_SECRET is required when SPOTIFY_CLIENT_ID is set.',
+          'SPOTIFY_CLIENT_SECRET is required when SPOTIFY_CLIENT_ID is set.'
         )
       }
     })
@@ -67,7 +67,7 @@ describe('Environment Schema Validation', () => {
       expect(error).toBeInstanceOf(z.ZodError)
       if (error instanceof z.ZodError) {
         expect(error.issues[0]?.message).toBe(
-          'SPOTIFY_CLIENT_ID is required when SPOTIFY_CLIENT_SECRET is set.',
+          'SPOTIFY_CLIENT_ID is required when SPOTIFY_CLIENT_SECRET is set.'
         )
       }
     })
@@ -94,7 +94,7 @@ describe('Environment Schema Validation', () => {
       expect(error).toBeInstanceOf(z.ZodError)
       if (error instanceof z.ZodError) {
         expect(error.issues[0]?.message).toBe(
-          'NEXTAUTH_SECRET must be at least 32 characters long in production.',
+          'NEXTAUTH_SECRET must be at least 32 characters long in production.'
         )
       }
     })
