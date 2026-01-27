@@ -450,8 +450,7 @@ describe('WebSocket Manager', () => {
           'Large calorie discrepancy detected. Rejecting client update.'
         )
 
-        lastCall =
-          mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+        lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
         serverPayload = lastCall[1].payload
         // The final calorie count should be the server's, not the client's inflated one
         expect(serverPayload[0].calories).toBeCloseTo(serverCalories)
@@ -795,9 +794,9 @@ describe('WebSocket Manager', () => {
         })
         mockWs.emit('message', message.toString())
 
-        expect(
-          mockServices.tabataService.handleCommand
-        ).toHaveBeenCalledWith('START')
+        expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith(
+          'START'
+        )
       })
 
       it('should handle SET_MODE and forward to tabataService', () => {
