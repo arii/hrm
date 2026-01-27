@@ -29,7 +29,7 @@ Object.defineProperty(navigator, 'bluetooth', {
 
 describe('useBluetoothHRM', () => {
   let mockSendData: jest.Mock
-  let mockCharacteristic: jest.Mocked<BluetoothGATTCharacteristic>
+  let mockCharacteristic: jest.Mocked<BluetoothRemoteGATTCharacteristic>
   let mockGattServer: jest.Mocked<BluetoothRemoteGATTServer>
   let mockDevice: jest.Mocked<BluetoothDevice>
   let consoleWarnSpy: jest.SpyInstance
@@ -323,9 +323,7 @@ describe('useBluetoothHRM', () => {
       await simulateConnection({ result })
 
       // The listener should have been added
-      expect(
-        mockCharacteristic.addEventListener
-      ).toHaveBeenCalledWith(
+      expect(mockCharacteristic.addEventListener).toHaveBeenCalledWith(
         'characteristicvaluechanged',
         expect.any(Function)
       )

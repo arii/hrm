@@ -6,12 +6,12 @@ type ListenerMap = {
 }
 
 /**
- * Mocks a BluetoothGATTCharacteristic object.
+ * Mocks a BluetoothRemoteGATTCharacteristic object.
  * This is the object that represents a GATT characteristic, which is a basic data element used to construct a GATT service.
  */
 export const mockBluetoothGattCharacteristic = (
-  overrides: Partial<BluetoothGATTCharacteristic> = {}
-): jest.Mocked<BluetoothGATTCharacteristic> & {
+  overrides: Partial<BluetoothRemoteGATTCharacteristic> = {}
+): jest.Mocked<BluetoothRemoteGATTCharacteristic> & {
   _listeners: ListenerMap
   _trigger: (eventName: string, event: Partial<Event>) => void
 } => {
@@ -48,25 +48,25 @@ export const mockBluetoothGattCharacteristic = (
       }
     },
   }
-  return characteristic as jest.Mocked<BluetoothGATTCharacteristic> & {
+  return characteristic as jest.Mocked<BluetoothRemoteGATTCharacteristic> & {
     _listeners: ListenerMap
     _trigger: (eventName: string, event: Partial<Event>) => void
   }
 }
 
 /**
- * Mocks a BluetoothGATTService object.
+ * Mocks a BluetoothRemoteGATTService object.
  * This is the object that represents a GATT service, which is a collection of GATT characteristics.
  */
 export const mockBluetoothGattService = (
-  overrides: Partial<BluetoothGATTService> = {},
-  mockCharacteristic: jest.Mocked<BluetoothGATTCharacteristic>
-): jest.Mocked<BluetoothGATTService> => {
+  overrides: Partial<BluetoothRemoteGATTService> = {},
+  mockCharacteristic: jest.Mocked<BluetoothRemoteGATTCharacteristic>
+): jest.Mocked<BluetoothRemoteGATTService> => {
   const service = {
     getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
     ...overrides,
   }
-  return service as jest.Mocked<BluetoothGATTService>
+  return service as jest.Mocked<BluetoothRemoteGATTService>
 }
 
 /**
@@ -75,7 +75,7 @@ export const mockBluetoothGattService = (
  */
 export const mockBluetoothRemoteGattServer = (
   overrides: Partial<BluetoothRemoteGATTServer> = {},
-  mockService: jest.Mocked<BluetoothGATTService>
+  mockService: jest.Mocked<BluetoothRemoteGATTService>
 ): jest.Mocked<BluetoothRemoteGATTServer> => {
   const gattServer = {
     connect: jest.fn().mockResolvedValue(undefined),
