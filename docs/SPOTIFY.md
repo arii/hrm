@@ -64,7 +64,7 @@ These credentials are obtained from the Spotify Developer Dashboard.
 
 ### Security Considerations
 
--   The `SPOTIFY_CLIENT_SECRET` and user refresh tokens are sensitive credentials and are only handled server-side.
+-   The `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, and user refresh tokens are sensitive credentials and are only handled server-side.
 -   The internal API endpoint for token delivery is protected by a shared secret (`NEXTAUTH_SECRET`). The NextAuth backend includes this secret in the `x-internal-token-secret` header of its request, and the receiving endpoint middleware verifies that this header matches the server's environment variable. This ensures only NextAuth can send tokens to the backend.
 
 ## 3. Web Playback SDK
@@ -182,6 +182,7 @@ As shown in section 4, the `SpotifyDevice` interface in `types/core.ts` is the p
 
 -   `SpotifyData` (`types/websocket.ts`): Represents the complete state of the Spotify integration that is broadcast to the client, including track information and the list of devices.
 -   `SpotifyTokenPayload` (`services/spotifyTokenManager.ts`): The structure of the token object passed from NextAuth to the backend.
+-   **Official SDK Types**: For detailed data structures such as `Track`, `Artist`, and `Album`, developers should refer to the official `@spotify/web-api-ts-sdk` library, which is the source of truth for these types.
 
 ## 7. Architecture Decisions
 
