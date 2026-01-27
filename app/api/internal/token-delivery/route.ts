@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
 import { serviceContainer } from '@/lib/serviceContainer'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
+import { ProcessedAccessTokenData } from '@/types/spotify'
 
 /**
  * @route POST /api/internal/token-delivery
@@ -43,13 +44,14 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Directly and reliably update the service with the new token
-    await spotifyService.handleTokenUpdate({
+    const processedToken: ProcessedAccessTokenData = {
       ...tokenData,
       provider: 'spotify',
       sub: '', // `sub` is not provided by Spotify's token response, default to empty
       scope: '', // `scope` is not used by the polling service, default to empty
       obtainedAt: Date.now(),
-    })
+    }
+    await spotifyService.handleTokenUpdate(processedToken)
     logger.info('Spotify token delivered and processed successfully.')
 
     return NextResponse.json({
