@@ -1,4 +1,3 @@
-
 import { test, expect } from './fixtures'
 import { injectBluetoothMocks } from './lib/bluetooth-mocks'
 import { takeScreenshot } from './lib/visual'
@@ -18,11 +17,13 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
   test('scanning state', async ({ connectPage }) => {
     // Simulate the app entering the "Connecting..." state
-    await connectPage.evaluate((status) =>
-      window.TEST_CONTROLS.setHrmStatus(status),
+    await connectPage.evaluate(
+      (status) => window.TEST_CONTROLS.setHrmStatus(status),
       BluetoothConnectionStatus.CONNECTING
     )
-    await expect(connectPage.getByRole('alert').getByText('Connecting...')).toBeVisible()
+    await expect(
+      connectPage.getByRole('alert').getByText('Connecting...')
+    ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-scanning.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
     })
@@ -64,8 +65,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   test('no devices found state', async ({ connectPage }) => {
     // This state is managed internally by the hook and is harder to mock.
     // We'll simulate a more generic "Disconnected" state which is visually similar.
-    await connectPage.evaluate((status) =>
-      window.TEST_CONTROLS.setHrmStatus(status),
+    await connectPage.evaluate(
+      (status) => window.TEST_CONTROLS.setHrmStatus(status),
       BluetoothConnectionStatus.DISCONNECTED
     )
     // The button should be visible and ready for another attempt.

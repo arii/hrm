@@ -239,7 +239,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isManualDisconnect.current = false
 
     // Expose test controls when in a test environment
-    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_TESTING === 'true') {
+    if (
+      typeof window !== 'undefined' &&
+      process.env.NEXT_PUBLIC_TESTING === 'true'
+    ) {
       window.TEST_CONTROLS = {
         ...window.TEST_CONTROLS,
         setHrmStatus: setStatus,
