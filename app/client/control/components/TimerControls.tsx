@@ -22,11 +22,11 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import DurationStepper from './DurationStepper'
 import {
   DISCONNECTED_UI_REVERT_DELAY,
   OPTIMISTIC_ACTION_TIMEOUT,
 } from '../constants'
+import DurationStepper from './DurationStepper'
 
 const actionButtonBaseSx = {
   flex: 1,

@@ -7,6 +7,10 @@ import {
   WebSocketContext,
   WebSocketContextType,
 } from '@/context/WebSocketContext'
+import {
+  DISCONNECTED_UI_REVERT_DELAY,
+  OPTIMISTIC_ACTION_TIMEOUT,
+} from '@/app/client/control/constants'
 import { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
 
@@ -131,7 +135,7 @@ describe('TimerControls', () => {
 
     // The UI should revert back to the original state after a timeout
     act(() => {
-      jest.advanceTimersByTime(501)
+      jest.advanceTimersByTime(DISCONNECTED_UI_REVERT_DELAY + 1)
     })
 
     await waitFor(() => {
@@ -163,7 +167,7 @@ describe('TimerControls', () => {
 
     // Advance timers past the safety timeout
     act(() => {
-      jest.advanceTimersByTime(3100)
+      jest.advanceTimersByTime(OPTIMISTIC_ACTION_TIMEOUT + 100)
     })
 
     // The UI should revert to the server's state, which is still "stopped"
@@ -198,7 +202,7 @@ describe('TimerControls', () => {
 
     // Advance timers past the safety timeout
     act(() => {
-      jest.advanceTimersByTime(3100)
+      jest.advanceTimersByTime(OPTIMISTIC_ACTION_TIMEOUT + 100)
     })
 
     // The UI should revert to the server's state, which is still "running"
