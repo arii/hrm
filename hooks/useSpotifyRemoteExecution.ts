@@ -31,65 +31,64 @@ export const useSpotifyRemoteExecution = (
     sendData({ type: 'REGISTER_CLIENT', role: 'dashboard' })
 
     // Listen for custom events dispatched by the WebSocket context
-    const handleCustomEvent = (event: CustomEvent) => {
+    const handleCustomEvent = async (event: CustomEvent) => {
       const message = event.detail as SpotifyExecutionMessage
       if (message.type === 'EXECUTE_SPOTIFY') {
         const { command, volume, deviceId } = message.payload
         console.log(`[Dashboard] Executing Remote Command: ${command}`)
 
-        try {
-          switch (command) {
-            case 'PLAY':
-            case 'PAUSE':
-              // Use the Spotify Web API for playback control
-              fetch('/api/spotify/control', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: command }),
-              })
-              break
-            case 'NEXT':
-              fetch('/api/spotify/control', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: 'NEXT' }),
-              })
-              break
-            case 'PREVIOUS':
-              fetch('/api/spotify/control', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: 'PREVIOUS' }),
-              })
-              break
-            case 'SET_VOLUME':
-              if (volume !== undefined) {
-                // Use both the local player and the API for volume control
-                const vol = volume > 1 ? volume / 100 : volume
-                player.setVolume(vol)
-                fetch('/api/spotify/control', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    command: 'SET_VOLUME',
-                    volume: volume,
-                    deviceId,
-                  }),
-                })
-              }
-              break
-            case 'TRANSFER_PLAYBACK':
-              if (deviceId) {
-                fetch('/api/spotify/control', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ command: 'TRANSFER', deviceId }),
-                })
-              }
-              break
+        const executeCommand = async (
+          cmd: string,
+          payload: Record<string, unknown>
+        ) => {
+          try {
+            const res = await fetch('/api/spotify/control', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            })
+            if (!res.ok) {
+              const text = await res.text()
+              console.error(
+                `[Dashboard] Command ${cmd} failed: ${res.status}`,
+                text
+              )
+            }
+          } catch (err) {
+            console.error(`[Dashboard] Command ${cmd} fetch error:`, err)
           }
-        } catch (execError) {
-          console.error('[Dashboard] Command execution failed:', execError)
+        }
+
+        switch (command) {
+          case 'PLAY':
+          case 'PAUSE':
+            await executeCommand(command, { command })
+            break
+          case 'NEXT':
+            await executeCommand('NEXT', { command: 'NEXT' })
+            break
+          case 'PREVIOUS':
+            await executeCommand('PREVIOUS', { command: 'PREVIOUS' })
+            break
+          case 'SET_VOLUME':
+            if (volume !== undefined) {
+              const vol = volume > 1 ? volume / 100 : volume
+              player.setVolume(vol)
+              await executeCommand('SET_VOLUME', {
+                command: 'SET_VOLUME',
+                volume,
+                deviceId,
+              })
+            }
+            break
+          case 'TRANSFER_PLAYBACK':
+            if (deviceId) {
+              await executeCommand('TRANSFER_PLAYBACK', {
+                command: 'TRANSFER_PLAYBACK',
+                deviceId,
+              })
+            }
+            break
         }
       }
     }
@@ -97,13 +96,13 @@ export const useSpotifyRemoteExecution = (
     if (typeof window !== 'undefined') {
       window.addEventListener(
         'spotify-remote-command',
-        handleCustomEvent as EventListener
+        handleCustomEvent as unknown as EventListener
       )
 
       return () => {
         window.removeEventListener(
           'spotify-remote-command',
-          handleCustomEvent as EventListener
+          handleCustomEvent as unknown as EventListener
         )
       }
     }

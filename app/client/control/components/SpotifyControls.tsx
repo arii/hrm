@@ -29,6 +29,7 @@ const SpotifyControls = () => {
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const prevActiveIdRef = useRef<string | undefined>(undefined)
+  const lastVolumeSyncTimeRef = useRef<number>(0)
 
   const handleTrackSelect = (uri: string) => {
     const targetDeviceId = resolveTargetDeviceId()
@@ -84,10 +85,16 @@ const SpotifyControls = () => {
     }
     prevActiveIdRef.current = activeId
 
-    // Sync Volume (if not dragging)
+    // Sync Volume (if not dragging and not within grace period after send)
     if (activeDevice && typeof activeDevice.volume_percent === 'number') {
-      if (activeDevice.volume_percent !== volume) {
-        setVolume(activeDevice.volume_percent)
+      const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
+      const GRACE_PERIOD_MS = 600 // Match the debounce + buffer
+
+      // Only sync if we haven't sent a volume command recently
+      if (timeSinceLastVolumeSend > GRACE_PERIOD_MS) {
+        if (activeDevice.volume_percent !== volume) {
+          setVolume(activeDevice.volume_percent)
+        }
       }
     }
 
@@ -170,6 +177,7 @@ const SpotifyControls = () => {
       }
       sendData(message)
       lastSentVolumeRef.current = messageKey
+      lastVolumeSyncTimeRef.current = Date.now()
     },
     [connectionStatus, resolveTargetDeviceId, sendData]
   )

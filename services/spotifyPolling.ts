@@ -452,6 +452,12 @@ export class SpotifyPolling implements SpotifyService {
             () => this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId),
             { deviceId, volume: clampedVolume }
           )
+          this.state.volume = clampedVolume
+          this.state.isMuted = clampedVolume === 0
+          this.broadcastUpdate({
+            type: 'SPOTIFY_UPDATE',
+            payload: this.getState(),
+          })
         }
         break
       case 'LOGIN':

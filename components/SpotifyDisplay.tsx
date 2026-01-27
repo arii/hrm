@@ -15,7 +15,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer } from 'react'
+import { useCallback, useEffect, useReducer, useRef } from 'react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
@@ -139,6 +139,10 @@ const SpotifyDisplay = () => {
   )
   const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
 
+  // Track the last time volume command was sent to prevent sync race conditions
+  const lastVolumeSendTimeRef = useRef<number>(0)
+  const hasPendingSendRef = useRef<boolean>(false)
+
   const handleLogout = async () => {
     await signOut({ redirect: false })
     window.location.reload()
@@ -155,12 +159,29 @@ const SpotifyDisplay = () => {
   useSpotifyRemoteExecution(player)
 
   // Synchronize with WebSocket data whenever it changes
+  // Grace period prevents race conditions when volume commands are in flight
   useEffect(() => {
+    const timeSinceLastSend = Date.now() - lastVolumeSendTimeRef.current
+    const GRACE_PERIOD_MS = 500 // Wait 500ms after sending before syncing from server
+
+    // Only apply grace period if a send is pending and within the window
+    const shouldRespectGracePeriod =
+      hasPendingSendRef.current && timeSinceLastSend < GRACE_PERIOD_MS
+
+    if (state.isSliding || shouldRespectGracePeriod) {
+      return
+    }
+
+    // Once grace period has elapsed, clear the pending send flag
+    if (hasPendingSendRef.current && timeSinceLastSend >= GRACE_PERIOD_MS) {
+      hasPendingSendRef.current = false
+    }
+
     dispatch({
       type: 'SYNC_WITH_WEBSOCKET',
       payload: { volume: spotifyData.volume, isMuted: spotifyData.isMuted },
     })
-  }, [spotifyData.volume, spotifyData.isMuted])
+  }, [spotifyData.volume, spotifyData.isMuted, state.isSliding])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
@@ -182,6 +203,8 @@ const SpotifyDisplay = () => {
         volume: sanitized,
         deviceId: targetDeviceId,
       }
+      lastVolumeSendTimeRef.current = Date.now()
+      hasPendingSendRef.current = true
       sendData(message)
     },
     [connectionStatus, selectedDeviceId, sendData, spotifyData.devices]
