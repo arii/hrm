@@ -451,4 +451,36 @@ const handleIncomingMessage = (
   }
 }
 
+// Exported for testing purposes
+export const _resetState = () => {
+  hrmDataRepository.clear()
+  clientSessionState.clear()
+}
+
+export const _setClientData = (
+  clients: Map<
+    string,
+    {
+      clientId: string
+      value: number
+      calories: number
+      accumulatedCalories: number
+    }
+  >
+) => {
+  clients.forEach((client, clientId) => {
+    hrmDataRepository.save({
+      clientId: client.clientId,
+      value: client.value,
+      calories: client.calories,
+      maxHr: 185,
+      age: 30,
+    })
+    clientSessionState.set(clientId, {
+      lastUpdate: Date.now(),
+      accumulatedCalories: client.accumulatedCalories,
+    })
+  })
+}
+
 export { initSocketManager, getRequestParams }
