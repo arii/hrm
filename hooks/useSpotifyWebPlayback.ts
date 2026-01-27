@@ -188,9 +188,7 @@ const useSpotifyWebPlayback = () => {
 
       spotifyPlayer.addListener('account_error', ({ message }) => {
         console.error('[Spotify Web Playback] Account Error:', message)
-        addError(
-          `Account error: ${message}. A Premium account is required.`
-        )
+        addError(`Account error: ${message}. A Premium account is required.`)
       })
 
       setPlayer(spotifyPlayer)
