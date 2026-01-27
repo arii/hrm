@@ -238,6 +238,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     // Reset the manual disconnect flag on mount to allow auto-reconnect after page refresh
     isManualDisconnect.current = false
 
+    // Expose test controls when in a test environment
+    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_TESTING === 'true') {
+      window.TEST_CONTROLS = {
+        ...window.TEST_CONTROLS,
+        setHrmStatus: setStatus,
+        setCustomHrmStatusMessage: setCustomStatusMessage,
+      }
+    }
+
     return () => {
       // Clear timeouts on unmount, but don't mark as manual disconnect
       // This allows auto-reconnect to work properly on component remount
