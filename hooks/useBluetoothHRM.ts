@@ -18,6 +18,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
+import { env } from '@/lib/env'
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
@@ -37,6 +38,13 @@ const ROLLING_AVG_HISTORY_LENGTH = 5
 const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
 const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 export const HEARTBEAT_INTERVAL_MS = 1000 // Exported for testing purposes
+const HEARTBEAT_INTERVAL_MS_test = 100 // For faster test execution
+
+// Use the test interval if the environment is 'test', otherwise use the production value.
+const effectiveHeartbeatInterval =
+  process.env.NODE_ENV === 'test'
+    ? HEARTBEAT_INTERVAL_MS_test
+    : HEARTBEAT_INTERVAL_MS
 
 /**
  * @function parseHeartRate
@@ -144,7 +152,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const isManualDisconnect = useRef(false)
   const isTimeoutDisconnect = useRef(false)
   const reconnectAttempts = useRef(0)
-  const maxReconnectAttempts = 5
   const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
   const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -294,7 +301,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           }
         }
       }
-    }, HEARTBEAT_INTERVAL_MS) // Runs every 1s
+    }, effectiveHeartbeatInterval) // Dynamically set for testing or production
 
     return () => clearInterval(interval)
   }, [dataLivenessTimeoutMs, isDataStale, updateSignalPeriod])
@@ -391,12 +398,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         {
           device: device.name,
           attempt: attemptNum,
-          maxAttempts: maxReconnectAttempts,
+          maxAttempts: env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS,
         },
         'Device disconnected, attempting auto-reconnect...'
       )
 
-      if (attemptNum <= maxReconnectAttempts) {
+      if (attemptNum <= env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS) {
         // Only set signal_loss if this wasn't a timeout disconnect
         if (!isTimeoutDisconnect.current) {
           // No longer need to set a reason
@@ -409,7 +416,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           BLUETOOTH_MESSAGES.reconnectingAttempt(
             reasonText,
             attemptNum,
-            maxReconnectAttempts
+            env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS
           )
         )
 
@@ -432,12 +439,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       } else {
         // Max reconnection attempts reached - reset device and permissions
         logger.error(
-          { device: device.name, maxAttempts: maxReconnectAttempts },
+          {
+            device: device.name,
+            maxAttempts: env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS,
+          },
           'Max reconnection attempts reached. Resetting device.'
         )
         setStatus(BluetoothConnectionStatus.ERROR)
         setCustomStatusMessage(
-          BLUETOOTH_MESSAGES.failedToReconnect(maxReconnectAttempts)
+          BLUETOOTH_MESSAGES.failedToReconnect(
+            env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS
+          )
         )
 
         // Trigger device reset after a brief delay to show the message
@@ -641,7 +653,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           )
           setStatus(BluetoothConnectionStatus.ERROR)
           setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeoutReset)
-          reconnectAttempts.current = maxReconnectAttempts
+          reconnectAttempts.current = env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS
           deviceRef.current = null
 
           if (reconnectTimeoutRef.current)
