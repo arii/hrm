@@ -290,9 +290,14 @@ const SpotifyControls = () => {
                         color: 'white',
                       },
                     }}
+                    data-testid="spotify-device-select"
                   >
                     {devices.map((device) => (
-                      <MenuItem key={device.id} value={device.id}>
+                      <MenuItem
+                        key={device.id}
+                        value={device.id}
+                        data-testid={`spotify-device-select-option-${device.id}`}
+                      >
                         {device.name} {device.is_active && '(Active)'}
                       </MenuItem>
                     ))}
@@ -306,12 +311,18 @@ const SpotifyControls = () => {
               startIcon={<LibraryMusic />}
               onClick={handleBrowseClick}
               sx={{ mt: 2, borderColor: 'grey.600', color: 'grey.300' }}
+              data-testid="spotify-select-playlist-button"
             >
               Select Playlist
             </Button>
           </>
         ) : (
-          <Button onClick={handleBrowseClick}>Select Music</Button>
+          <Button
+            onClick={handleBrowseClick}
+            data-testid="spotify-select-music-button"
+          >
+            Select Music
+          </Button>
         )}
       </CardContent>
     </Card>
