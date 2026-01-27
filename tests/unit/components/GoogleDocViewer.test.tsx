@@ -3,9 +3,11 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import GoogleDocViewer from '../../../components/GoogleDocViewer'
 
 // Mock the Skeleton component to simplify testing and focus on the loader logic
-jest.mock('@mui/material/Skeleton', () => () => (
-  <div data-testid="skeleton" />
-))
+jest.mock('@mui/material/Skeleton', () => {
+  const MockSkeleton = () => <div data-testid="skeleton" />
+  MockSkeleton.displayName = 'MockSkeleton'
+  return MockSkeleton
+})
 
 describe('GoogleDocViewer', () => {
   const defaultProps = {
