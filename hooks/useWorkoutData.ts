@@ -36,10 +36,13 @@ function sessionDataReducer(
       return { ...state, calories: action.payload }
     case 'RESET':
       return initialState
-    default:
-      // This helps catch any unhandled actions during development.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      throw new Error(`Unhandled action type: ${(action as any)?.type}`)
+    default: {
+      // This compile-time check ensures all actions are handled.
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const exhaustiveCheck: never = action
+      // This is a runtime safeguard.
+      throw new Error(`Unhandled action in sessionDataReducer`)
+    }
   }
 }
 

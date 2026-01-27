@@ -41,10 +41,13 @@ function sessionReducer(
       return { ...state, status: 'idle' }
     case 'RESET':
       return initialState
-    default:
-      return state
-  }
-}
+    default: {
+      // This compile-time check ensures all actions are handled.
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const exhaustiveCheck: never = action
+      // This is a runtime safeguard.
+      throw new Error(`Unhandled action in sessionReducer`)
+    }
 
 // --- The Hook Implementation ---
 
