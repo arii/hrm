@@ -14,6 +14,13 @@ interface Logger {
 }
 
 export const pinoOptions: pino.LoggerOptions = {
+  /**
+   * The logging level is dynamically set based on the environment.
+   * - In a 'test' environment, logging is 'silent' to prevent clutter in test outputs.
+   * - A `LOG_LEVEL` environment variable can be used to explicitly set the level.
+   * - In a 'production' environment, the default level is 'info'.
+   * - In a 'development' environment (or any other case), the default is 'debug'.
+   */
   level:
     process.env.NODE_ENV === 'test'
       ? 'silent'

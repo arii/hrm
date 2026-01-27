@@ -2,9 +2,9 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
+import { SnackbarProvider } from 'notistack'
 import BottomNavBar from '@/components/BottomNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import ErrorDisplay from '@/components/ErrorDisplay'
 import ErrorFallback from '@/components/ErrorFallback'
 import Footer from '@/components/Footer'
 import LoadingIndicator from '@/components/LoadingIndicator'
@@ -19,30 +19,31 @@ export default function Main({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   return (
     <ErrorBoundary fallback={<ErrorFallback />}>
-      <ErrorProvider>
-        <LoadingProvider>
-          <Providers>
-            <UserSettingsProvider>
-              <TimerSoundProvider>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={pathname}
-                    variants={pageVariants}
-                    initial="initial"
-                    animate="in"
-                    exit="out"
-                    data-testid="main-content-layout"
-                  >
-                    {children}
-                  </motion.div>
-                </AnimatePresence>
-              </TimerSoundProvider>
-            </UserSettingsProvider>
-          </Providers>
-          <LoadingIndicator />
-          <ErrorDisplay />
-        </LoadingProvider>
-      </ErrorProvider>
+      <SnackbarProvider>
+        <ErrorProvider>
+          <LoadingProvider>
+            <Providers>
+              <UserSettingsProvider>
+                <TimerSoundProvider>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={pathname}
+                      variants={pageVariants}
+                      initial="initial"
+                      animate="in"
+                      exit="out"
+                      data-testid="main-content-layout"
+                    >
+                      {children}
+                    </motion.div>
+                  </AnimatePresence>
+                </TimerSoundProvider>
+              </UserSettingsProvider>
+            </Providers>
+            <LoadingIndicator />
+          </LoadingProvider>
+        </ErrorProvider>
+      </SnackbarProvider>
       <Footer />
       <BottomNavBar />
     </ErrorBoundary>

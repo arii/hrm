@@ -16,9 +16,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useSnackbar } from 'notistack'
 import { useEffect, useState } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
+import { showError } from '@/lib/notifications'
 
 interface SpotifyTrack {
   id: string
@@ -40,7 +40,6 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
   const [results, setResults] = useState<SpotifyTrack[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
-  const { enqueueSnackbar } = useSnackbar()
 
   // Debounce the search query by 500ms
   const debouncedQuery = useDebounce(query, 500)
@@ -86,9 +85,8 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
         setResults(tracks)
       } catch (error) {
         console.error('Spotify Search Error:', error)
-        enqueueSnackbar(
-          error instanceof Error ? error.message : 'Failed to search Spotify',
-          { variant: 'error' }
+        showError(
+          error instanceof Error ? error.message : 'Failed to search Spotify'
         )
         setResults([])
       } finally {
@@ -97,7 +95,7 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
     }
 
     searchSpotify()
-  }, [debouncedQuery, enqueueSnackbar])
+  }, [debouncedQuery])
 
   // --- Render Helpers ---
 
