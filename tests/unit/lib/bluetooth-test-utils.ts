@@ -49,9 +49,7 @@ export const mockBluetoothGattCharacteristic = (
       .mockImplementation(() =>
         Promise.resolve(new DataView(new ArrayBuffer(1)))
       ),
-    writeValue: jest
-      .fn()
-      .mockImplementation(() => Promise.resolve(undefined)),
+    writeValue: jest.fn().mockImplementation(() => Promise.resolve(undefined)),
     ...overrides,
     // Test utilities
     _listeners: listeners,
@@ -76,7 +74,9 @@ export const mockBluetoothGattService = (
   mockCharacteristic: jest.Mocked<BluetoothRemoteGATTCharacteristic>
 ): jest.Mocked<BluetoothRemoteGATTService> => {
   const service = {
-    getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+    getCharacteristic: jest
+      .fn()
+      .mockImplementation(() => Promise.resolve(mockCharacteristic)),
     ...overrides,
   }
   return service as jest.Mocked<BluetoothRemoteGATTService>
