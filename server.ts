@@ -11,6 +11,7 @@ import { HrmDataRepository } from './lib/repositories/HrmDataRepository.js'
 import { WebSocketManager } from './lib/websocket.js' // New import
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
+import { ClientSessionMetrics } from './types/core.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.server.js'
@@ -117,10 +118,7 @@ app.prepare().then(async () => {
 
   // 2. Setup Services with Broadcaster
   const hrmDataRepository = new HrmDataRepository()
-  const clientSessionState = new Map<
-    string,
-    { lastUpdate: number; accumulatedCalories: number }
-  >()
+  const clientSessionState = new Map<string, ClientSessionMetrics>()
 
   const services: AppServices = await createServices(
     wsManager.createBroadcaster(),

@@ -16,7 +16,7 @@ import {
   StateSnapshot,
   ExtWebSocket,
 } from '../types/websocket.js'
-import { HrmStreamData } from '../types/core.js'
+import { ClientSessionMetrics, HrmStreamData } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import {
   broadcast,
@@ -48,10 +48,7 @@ let hrmDataRepository: HrmDataRepository
 const clientSockets = new Map<string, WebSocket>()
 
 // Track internal state for calculations (not sent to client)
-let clientSessionState: Map<
-  string,
-  { lastUpdate: number; accumulatedCalories: number }
->
+let clientSessionState: Map<string, ClientSessionMetrics>
 
 /**
  * Safely parses the WebSocket request URL to extract search parameters.
@@ -110,10 +107,7 @@ const initSocketManager = (
   getSnapshot: () => StateSnapshot,
   svcs: AppServices,
   hrmDataRepo: HrmDataRepository,
-  clientSessState: Map<
-    string,
-    { lastUpdate: number; accumulatedCalories: number }
-  >
+  clientSessState: Map<string, ClientSessionMetrics>
 ) => {
   wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot

@@ -7,7 +7,7 @@
  */
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository'
 import { ServerMessage } from '../types/websocket'
-import { TimerData, TimerMode } from '../types/core'
+import { ClientSessionMetrics, TimerData, TimerMode } from '../types/core'
 import {
   createInitialTimerState,
   DualModeTimerState,
@@ -25,10 +25,7 @@ class TabataTimer {
   constructor(
     broadcastUpdate: (message: ServerMessage) => void,
     hrmDataRepository: HrmDataRepository,
-    clientSessionState: Map<
-      string,
-      { lastUpdate: number; accumulatedCalories: number }
-    >
+    clientSessionState: Map<string, ClientSessionMetrics>
   ) {
     this.state = createInitialTimerState()
     this.queries = new TimerQueries(this.state)

@@ -5,7 +5,7 @@
  */
 import { HrmDataRepository } from '../../lib/repositories/HrmDataRepository'
 import { ServerMessage } from '../../types/websocket'
-import { TimerMode } from '../../types/core'
+import { ClientSessionMetrics, TimerMode } from '../../types/core'
 import {
   START_COUNTDOWN_DURATION,
   TIMER_INTERVAL,
@@ -19,10 +19,7 @@ export class TimerCommands {
   private readonly broadcastUpdate: (message: ServerMessage) => void
   private readonly queries: TimerQueries
   private readonly hrmDataRepository: HrmDataRepository
-  private readonly clientSessionState: Map<
-    string,
-    { lastUpdate: number; accumulatedCalories: number }
-  >
+  private readonly clientSessionState: Map<string, ClientSessionMetrics>
 
   /**
    * @param {DualModeTimerState} state The timer state object to mutate.
@@ -34,10 +31,7 @@ export class TimerCommands {
     broadcastUpdate: (message: ServerMessage) => void,
     queries: TimerQueries,
     hrmDataRepository: HrmDataRepository,
-    clientSessionState: Map<
-      string,
-      { lastUpdate: number; accumulatedCalories: number }
-    >
+    clientSessionState: Map<string, ClientSessionMetrics>
   ) {
     this.state = state
     this.broadcastUpdate = broadcastUpdate

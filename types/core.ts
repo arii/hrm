@@ -98,6 +98,14 @@ export interface HrmStreamData {
 }
 
 /**
+ * Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
+ */
+export interface ClientSessionMetrics {
+  lastUpdate: number
+  accumulatedCalories: number
+}
+
+/**
  * Defines the possible modes for the application timer.
  */
 export type TimerMode = 'STOPWATCH' | 'TABATA'
