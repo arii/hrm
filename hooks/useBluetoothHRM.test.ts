@@ -2,7 +2,8 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react'
-import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from './useBluetoothHRM'
+import useBluetoothHRM from './useBluetoothHRM'
+import { HEARTBEAT_INTERVAL_MS } from './useBluetoothHRM.constants'
 import * as WebSocketContext from '../context/WebSocketContext'
 import * as cookieUtils from '../utils/cookies'
 
