@@ -61,7 +61,7 @@ These credentials are obtained from the Spotify Developer Dashboard.
 
 -   **Frontend**: The `useSpotifyWebPlayback` hook (`hooks/useSpotifyWebPlayback.ts`) is responsible for fetching a short-lived access token from a dedicated Next.js API route. This token is used exclusively for the Web Playback SDK.
 -   **Backend**: The `SpotifyTokenManager` service (`services/spotifyTokenManager.ts`) stores the access and refresh tokens. It's responsible for refreshing the access token using the refresh token whenever it expires. The `SpotifyPolling` service (`services/spotifyPolling.ts`) uses this manager to ensure it always has a valid token for its API calls.
--   **Synchronization**: When a user logs in or when a token is refreshed, the updated tokens are sent from the NextAuth session to the backend `SpotifyPolling` service (`services/spotifyPolling.ts`) to keep them in sync.
+-   **Synchronization**: When a user logs in or when a token is refreshed, the updated tokens are sent from the NextAuth session to the Next.js internal API route (`app/api/internal/token-delivery/route.ts`), which then securely forwards them to the persistent Node.js/Express backend's `SpotifyPolling` service (`services/spotifyPolling.ts`) to keep them in sync.
 
 ### Security Considerations
 
