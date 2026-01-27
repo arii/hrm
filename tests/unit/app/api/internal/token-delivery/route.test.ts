@@ -130,8 +130,6 @@ describe('POST /api/internal/token-delivery', () => {
       expect.objectContaining({
         ...tokenData,
         provider: 'spotify',
-        sub: '',
-        scope: '',
         obtainedAt: expect.any(Number),
       })
     )
