@@ -17,10 +17,11 @@ export const mockBluetoothGattCharacteristic = (
 } => {
   const listeners: ListenerMap = {}
 
-  const characteristicMock = {} as jest.Mocked<BluetoothRemoteGATTCharacteristic> & {
-    _listeners: ListenerMap
-    _trigger: (eventName: string, event: Partial<Event>) => void
-  }
+  const characteristicMock =
+    {} as jest.Mocked<BluetoothRemoteGATTCharacteristic> & {
+      _listeners: ListenerMap
+      _trigger: (eventName: string, event: Partial<Event>) => void
+    }
 
   const implementation = {
     startNotifications: jest
