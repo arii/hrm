@@ -6,7 +6,6 @@
 import { jest } from '@jest/globals'
 import TabataTimer from '../../../services/tabataTimer'
 import { ConfigurationError } from '../../../types/errors'
-import { resetHrmData } from '../../../utils/socketManager'
 
 // Mock the broadcast function
 const broadcastUpdate = jest.fn()
