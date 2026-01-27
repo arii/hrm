@@ -109,8 +109,13 @@ export async function handleSpotifyApiError(
   }
 
   if (err?.status === 401) {
-    logger.warn('Spotify token expired during polling. Attempting refresh.')
-    onTokenExpired()
+    logger.warn('Spotify token expired or invalid. Attempting to refresh...')
+    try {
+      await onTokenExpired()
+      logger.info('Spotify token refresh process completed.')
+    } catch (refreshError) {
+      logger.error({ err: refreshError }, 'Failed to refresh Spotify token.')
+    }
     return true // Handled
   }
 

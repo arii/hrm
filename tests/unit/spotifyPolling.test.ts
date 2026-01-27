@@ -449,7 +449,7 @@ describe('SpotifyPolling Service', () => {
       // Should attempt to handle 401 without crashing
       expect(() => spotifyService.getState()).not.toThrow()
       expect(logger.warn).toHaveBeenCalledWith(
-        'Spotify token expired during polling. Attempting refresh.'
+        'Spotify token expired or invalid. Attempting to refresh...'
       )
       expect(refreshSpy).toHaveBeenCalled()
     })

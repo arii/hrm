@@ -286,11 +286,14 @@ const SpotifyDisplay = () => {
           backgroundColor: 'grey.900',
           color: 'common.white',
           px: 3,
-          py: 1.5,
+          py: 2,
           borderRadius: 2,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          textAlign: 'center',
+          gap: 2,
           position: 'fixed',
           bottom: 56,
           left: 0,
@@ -300,9 +303,15 @@ const SpotifyDisplay = () => {
           width: '100%',
         }}
       >
+        <Typography variant="h6" component="h2">
+          Connect Spotify
+        </Typography>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Log in to control your music and see what's playing.
+        </Typography>
         <AuthButton providerId="spotify" providerName="Spotify" />
       </Box>
-    )
+    );
   }
 
   if (isLoggedIn) {
