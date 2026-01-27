@@ -454,11 +454,13 @@ const handleIncomingMessage = (
 }
 
 // Exported for testing purposes
+/** @internal For testing purposes only. */
 export const _resetState = () => {
   hrmDataRepository.clear()
   clientSessionState.clear()
 }
 
+/** @internal For testing purposes only. */
 export const _setClientData = (
   clients: Map<
     string,
