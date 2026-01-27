@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.27.0](https://github.com/arii/hrm/compare/hrm-v0.26.0...hrm-v0.27.0) (2026-01-27)
+
+
+### Features
+
+* **small:** Add Reload Button for Workout Table ([#4422](https://github.com/arii/hrm/issues/4422)) ([f10c022](https://github.com/arii/hrm/commit/f10c022b693f33deb7736e5ad702e0ac1a69b00d))
+* **small:** Automate SPOTIFY_CALLBACK_URL Derivation ([#4424](https://github.com/arii/hrm/issues/4424)) ([eddcbf9](https://github.com/arii/hrm/commit/eddcbf95965e027bbffb389480dfce3899591f21))
+* **small:** Fix Timer UI/Server State Divergence ([#4132](https://github.com/arii/hrm/issues/4132)) ([31a0b81](https://github.com/arii/hrm/commit/31a0b81c66d6243f17be124a67185a526a68e189))
+* **small:** Fix: Update test imports for centralized UI constants location ([#4423](https://github.com/arii/hrm/issues/4423)) ([f4d998e](https://github.com/arii/hrm/commit/f4d998e99fb324a530182396c1618a5297d5ad04))
+* **small:** Refactor: Centralize UI Timeout Constants ([#4366](https://github.com/arii/hrm/issues/4366)) ([24cf96b](https://github.com/arii/hrm/commit/24cf96b481957bfe15e9c4f351a2cec849fa3c00))
+* **small:** Stabilize HrmConnectionPanel Rendering in Visual Regression Tests ([#4143](https://github.com/arii/hrm/issues/4143)) ([df75650](https://github.com/arii/hrm/commit/df75650894fc08afbd6019089ffb30bfc5c506de))
+
+
+### Bug Fixes
+
+* improve Spotify remote command error handling and fix TRANSFER_P… ([#4544](https://github.com/arii/hrm/issues/4544)) ([82becaf](https://github.com/arii/hrm/commit/82becafcdfcc2be7705c30421c3d4f319ba59cd9))
+
 ## [0.26.0](https://github.com/arii/hrm/compare/hrm-v0.25.0...hrm-v0.26.0) (2026-01-25)
 
 
