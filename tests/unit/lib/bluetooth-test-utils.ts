@@ -10,9 +10,7 @@ export interface MockBluetoothRemoteGATTCharacteristic {
 }
 
 export interface MockBluetoothRemoteGATTService {
-  getCharacteristic: jest.Mock<
-    Promise<MockBluetoothRemoteGATTCharacteristic>
-  >
+  getCharacteristic: jest.Mock<Promise<MockBluetoothRemoteGATTCharacteristic>>
 }
 
 export interface MockBluetoothRemoteGATTServer {
