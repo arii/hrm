@@ -197,33 +197,41 @@ describe('SpotifyDisplay', () => {
     })
 
     it('re-enables external updates after sliding is committed', () => {
-      const slider = screen.getByRole('slider', { name: /volume control/i })
-      expect(slider).toHaveValue('50')
+      jest.useFakeTimers()
+      try {
+        const slider = screen.getByRole('slider', { name: /volume control/i })
+        expect(slider).toHaveValue('50')
 
-      // Simulate user sliding
-      fireEvent.change(slider, { target: { value: '75' } })
-      expect(slider).toHaveValue('75')
+        // Simulate user sliding
+        fireEvent.change(slider, { target: { value: '75' } })
+        expect(slider).toHaveValue('75')
 
-      // Simulate external update while sliding (should be ignored)
-      let updatedSpotifyData = { ...initialSpotifyData, volume: 100 }
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
-      })
-      rerender(<SpotifyDisplay />)
-      expect(slider).toHaveValue('75')
+        // Simulate external update while sliding (should be ignored)
+        let updatedSpotifyData = { ...initialSpotifyData, volume: 100 }
+        mockedUseWebSocket.mockReturnValue({
+          ...mockedUseWebSocket(),
+          spotifyData: updatedSpotifyData,
+        })
+        rerender(<SpotifyDisplay />)
+        expect(slider).toHaveValue('75')
 
-      // Simulate user releasing the slider
-      fireEvent.mouseUp(slider)
+        // Simulate user releasing the slider
+        fireEvent.mouseUp(slider)
 
-      // Simulate another external update (should now be applied)
-      updatedSpotifyData = { ...initialSpotifyData, volume: 10 } // Ensure new volume to trigger effect
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
-      })
-      rerender(<SpotifyDisplay />)
-      expect(slider).toHaveValue('10')
+        // Advance time past the grace period (500ms) to allow syncing
+        jest.advanceTimersByTime(600)
+
+        // Simulate another external update (should now be applied)
+        updatedSpotifyData = { ...initialSpotifyData, volume: 10 } // Ensure new volume to trigger effect
+        mockedUseWebSocket.mockReturnValue({
+          ...mockedUseWebSocket(),
+          spotifyData: updatedSpotifyData,
+        })
+        rerender(<SpotifyDisplay />)
+        expect(slider).toHaveValue('10')
+      } finally {
+        jest.useRealTimers()
+      }
     })
   })
 })

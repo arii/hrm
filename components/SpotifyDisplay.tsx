@@ -141,6 +141,7 @@ const SpotifyDisplay = () => {
 
   // Track the last time volume command was sent to prevent sync race conditions
   const lastVolumeSendTimeRef = useRef<number>(0)
+  const hasPendingSendRef = useRef<boolean>(false)
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -163,8 +164,17 @@ const SpotifyDisplay = () => {
     const timeSinceLastSend = Date.now() - lastVolumeSendTimeRef.current
     const GRACE_PERIOD_MS = 500 // Wait 500ms after sending before syncing from server
 
-    if (state.isSliding || timeSinceLastSend < GRACE_PERIOD_MS) {
+    // Only apply grace period if a send is pending and within the window
+    const shouldRespectGracePeriod =
+      hasPendingSendRef.current && timeSinceLastSend < GRACE_PERIOD_MS
+
+    if (state.isSliding || shouldRespectGracePeriod) {
       return
+    }
+
+    // Once grace period has elapsed, clear the pending send flag
+    if (hasPendingSendRef.current && timeSinceLastSend >= GRACE_PERIOD_MS) {
+      hasPendingSendRef.current = false
     }
 
     dispatch({
@@ -194,6 +204,7 @@ const SpotifyDisplay = () => {
         deviceId: targetDeviceId,
       }
       lastVolumeSendTimeRef.current = Date.now()
+      hasPendingSendRef.current = true
       sendData(message)
     },
     [connectionStatus, selectedDeviceId, sendData, spotifyData.devices]
