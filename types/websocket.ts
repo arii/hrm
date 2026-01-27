@@ -171,6 +171,7 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
+
 import { z } from 'zod'
 
 // --- Zod Schemas for Client Input Command Interfaces ---
