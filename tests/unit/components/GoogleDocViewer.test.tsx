@@ -1,0 +1,35 @@
+/** @jest-environment jsdom */
+import { render, screen } from '@testing-library/react'
+import GoogleDocViewer from '../../../components/GoogleDocViewer'
+
+describe('GoogleDocViewer', () => {
+  it('receives a new key when refreshKey changes', () => {
+    const { rerender } = render(
+      <GoogleDocViewer
+        title="Test Doc"
+        embedUrl="https://example.com"
+        refreshKey={0}
+      />
+    )
+
+    const iframe = screen.getByTitle('Test Doc')
+    // The key is not directly accessible as a DOM attribute,
+    // so we'll check for a change in the iframe's identity.
+
+    const initialIframeInstance = iframe
+
+    rerender(
+      <GoogleDocViewer
+        title="Test Doc"
+        embedUrl="https://example.com"
+        refreshKey={1}
+      />
+    )
+
+    const newIframeInstance = screen.getByTitle('Test Doc')
+
+    // A new key should cause React to create a new component instance,
+    // so the iframe element itself should be a different object.
+    expect(newIframeInstance).not.toBe(initialIframeInstance)
+  })
+})

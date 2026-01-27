@@ -19,6 +19,7 @@ interface GoogleDocViewerProps {
   height?: number
   isShrunk?: boolean // New prop
   onToggleShrink?: () => void // New callback prop
+  refreshKey?: number
 }
 
 const GoogleDocViewer = ({
@@ -27,23 +28,28 @@ const GoogleDocViewer = ({
   height = 700,
   isShrunk = false, // Default to not shrunk
   onToggleShrink,
+  refreshKey,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
 
   // Ensure embedUrl always includes ?embedded=true
-  const finalEmbedUrl = embedUrl.includes('?embedded=true')
-    ? embedUrl
-    : `${embedUrl}?embedded=true`
+  const url = new URL(embedUrl)
+  url.searchParams.set('embedded', 'true')
+  const finalEmbedUrl = url.toString()
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
 
   // Use useEffect to set a timeout fallback in case onLoad doesn't fire
   useEffect(() => {
+    // The loading skeleton must be shown on each refresh, so we reset the
+    // loading state here. This is a deliberate and safe use case.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIframeLoading(true) // Reset loading state on refresh
     const timeout = setTimeout(() => {
       setIframeLoading(false)
     }, 3000) // Show iframe after 3 seconds regardless
     return () => clearTimeout(timeout)
-  }, [])
+  }, [refreshKey]) // Rerun on refresh
 
   return (
     <Card elevation={6} sx={{ position: 'relative' }}>
@@ -68,12 +74,14 @@ const GoogleDocViewer = ({
             />
           )}
           <Box
+            key={refreshKey}
             component="iframe"
             src={finalEmbedUrl}
             title={title}
             width="100%"
             height="100%"
             loading="lazy"
+            data-testid="google-doc-viewer-iframe"
             sx={{
               border: 'none',
               display: iframeLoading ? 'none' : 'block',
