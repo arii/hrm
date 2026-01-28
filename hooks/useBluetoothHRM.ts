@@ -463,7 +463,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       setCustomStatusMessage(null)
       reconnectAttempts.current = 0
     }
-  }, [])
+  }, [maxReconnectAttempts])
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice) => {
@@ -676,7 +676,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isConnecting.current = false
       }
     },
-    [onDisconnected, updateSignalPeriod]
+    [onDisconnected, updateSignalPeriod, maxReconnectAttempts]
   )
 
   useEffect(() => {
