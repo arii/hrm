@@ -9,12 +9,12 @@ import {
   useEffect,
   useRef,
   useState,
-  useReducer,
   useMemo,
 } from 'react'
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
+import useLocalStorage from '@/hooks/useLocalStorage'
 
 // Define a type for the test controls to avoid using 'any'
 interface TestControls {
@@ -172,7 +172,14 @@ export const WebSocketProvider = ({
   // The factor by which the reconnection delay is randomized to prevent clients from reconnecting simultaneously.
   const JITTER_FACTOR = 0.2 // 20% jitter
 
-  const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
+  const [appState, setAppState] = useLocalStorage<WebSocketState>(
+    'webSocketState',
+    INITIAL_STATE
+  )
+
+  const dispatch = (message: ServerMessage | { type: 'RESET_STATE' }) => {
+    setAppState((prevState) => reducer(prevState, message))
+  }
 
   const throttledDispatch = useRef(
     throttle((message: ServerMessage) => {
