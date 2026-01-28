@@ -24,40 +24,13 @@ const envSchema = z
     SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
     INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
     GENERAL_API_MAX_REQUESTS: z.coerce.number().default(200),
-    // The maximum number of concurrent WebSocket connections allowed from a single IP address.
-    // Helps prevent simple denial-of-service attacks.
-    WS_MAX_CONNECTIONS: z.coerce
-      .number()
-      .int()
-      .positive()
-      .default(1000)
-      .describe(
-        'Maximum number of concurrent WebSocket connections allowed from a single IP address.'
-      ),
+    // The default of 1000 provides a generous limit for concurrent WebSocket connections,
+    // suitable for a moderate-scale deployment. This can be adjusted based on expected user load.
+    WS_MAX_CONNECTIONS: z.coerce.number().default(1000),
     SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(5000),
     SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
-    // The time in milliseconds the server waits before cleaning up a disconnected client's session.
-    // Allows for brief disconnects (e.g., page refresh) without losing session data.
-    WEBSOCKET_GRACE_PERIOD_MS: z.coerce
-      .number()
-      .int()
-      .positive()
-      .max(60000) // Capped at 1 minute to prevent excessive memory usage
-      .default(5000)
-      .describe(
-        "Grace period in milliseconds before cleaning up a disconnected client's session."
-      ),
-    // The interval at which the server's "watchdog" checks for and terminates stale connections.
-    // This is the primary mechanism for preventing resource leaks from "zombie" connections.
-    WEBSOCKET_WATCHDOG_INTERVAL: z.coerce
-      .number()
-      .int()
-      .positive()
-      .min(5000) // Must be at least 5 seconds to avoid overly aggressive termination
-      .default(30000)
-      .describe(
-        'Interval in milliseconds for the WebSocket watchdog to check for stale connections.'
-      ),
+    WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().default(5000),
+    WEBSOCKET_WATCHDOG_INTERVAL: z.coerce.number().default(30000),
     GEMINI_MODEL_FALLBACKS: z.string().optional(),
     ANALYZE: z.string().optional(),
     TESTING: z.string().optional(),

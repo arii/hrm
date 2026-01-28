@@ -82,6 +82,7 @@ test.describe('Timer UI Synchronization', () => {
       type: 'TIMER_UPDATE',
       payload: { isRunning: true },
     })
+    await page.waitForTimeout(500)
     await expect(page.locator('[data-testid="timer-running"]')).toBeVisible()
     await expect(
       page.locator('[data-testid="stop-timer-button"]')
@@ -111,6 +112,7 @@ test.describe('Timer UI Synchronization', () => {
       type: 'TIMER_UPDATE',
       payload: { isRunning: false },
     })
+    await page.waitForTimeout(500)
     await expect(page.locator('[data-testid="timer-stopped"]')).toBeVisible()
     await expect(
       page.locator('[data-testid="start-timer-button"]')
@@ -121,6 +123,7 @@ test.describe('Timer UI Synchronization', () => {
     page,
   }) => {
     await disconnectWebSocket(page)
+    await page.waitForTimeout(1000)
     await page.click('[data-testid="start-timer-button"]')
     await expect(page.locator('[data-testid="timer-running"]')).toBeVisible()
     await page.waitForTimeout(3500)

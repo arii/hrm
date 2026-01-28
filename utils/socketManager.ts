@@ -126,16 +126,13 @@ const initSocketManager = (
     const logMeta = getLogMeta(req, clientId)
     extWs.clientId = clientId
 
-    // A "zombie" connection is a state where the server thinks a client is connected,
-    // but the actual socket is gone. This can happen during abrupt disconnects or network changes.
-    // If we find an existing socket for this clientId, it's likely a zombie.
+    // it's a stale or "zombie" connection. Overwrite it with the new socket.
+
     if (clientSockets.has(clientId)) {
       logger.warn(
         logMeta,
-        'Found a likely zombie connection. Terminating the old socket and replacing it with the new one.'
+        'Existing socket found. Overwriting with new connection.'
       )
-      // Ensure the old socket is properly terminated before replacing it.
-      clientSockets.get(clientId)?.terminate()
     }
 
     clientSockets.set(clientId, extWs)
@@ -145,19 +142,16 @@ const initSocketManager = (
       extWs.isAlive = true
     })
 
-    const isReconnection = hrmDataRepository.findById(clientId)
+    logger.info(logMeta, 'WebSocket client connected')
 
-    if (!isReconnection) {
-      logger.info(
-        logMeta,
-        'New WebSocket client connected. Initializing session.'
-      )
+    if (!hrmDataRepository.findById(clientId)) {
+      // Initialize new client
       const newClient: HrmStreamData = {
         clientId: extWs.clientId,
         value: 0,
         maxHr: 185,
         age: 30,
-        calories: 0,
+        calories: 0, // Initialize to 0
       }
       hrmDataRepository.save(newClient)
       clientSessionState.set(extWs.clientId, {
@@ -165,7 +159,7 @@ const initSocketManager = (
         accumulatedCalories: 0,
       })
     } else {
-      logger.info(logMeta, 'Client reconnected with an existing session.')
+      logger.info({ clientId }, 'Reconnected with existing session.')
     }
 
     extWs.on('message', (message) => {
@@ -173,41 +167,34 @@ const initSocketManager = (
     })
 
     extWs.on('close', () => {
-      logger.info(
-        logMeta,
-        'WebSocket client disconnected. Starting grace period.'
-      )
+      logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
 
-      // CRITICAL: Do NOT immediately delete client data. Wait a grace period to allow for a page refresh or network hiccup.
-      // This is a simple but effective strategy for session continuity. A more advanced system might use a dedicated
-      // cleanup service with a sliding expiration window.
+      // CRITICAL: Do NOT immediately delete clientData.
+      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
+      // NOTE: In a high-traffic production environment, this could lead to
+      // memory pressure if many clients disconnect and don't reconnect.
+      // A more robust solution might involve a separate cleanup process
+      // or a maximum number of inactive sessions.
       setTimeout(() => {
-        // Only delete data if the client has NOT reconnected with a new socket.
+        // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
         if (clientSockets.get(clientId) === extWs) {
           logger.info(
-            logMeta,
-            'Grace period expired. Deleting session data permanently.'
+            { clientId: extWs.clientId },
+            'Session expired. Deleting data.'
           )
           try {
             hrmDataRepository.deleteById(extWs.clientId)
             clientSessionState.delete(extWs.clientId)
             broadcastState()
-            logger.info(logMeta, 'Session data cleanup successful.')
           } catch (err) {
             logger.error(
-              { ...logMeta, error: err },
-              'Error during session data cleanup.'
+              { clientId: extWs.clientId, error: err },
+              'Error during session cleanup'
             )
           } finally {
-            // CRITICAL: Always remove the socket from the map to prevent memory leaks,
-            // even if data deletion fails.
+            // Always remove the socket reference to prevent leaks
             clientSockets.delete(extWs.clientId)
           }
-        } else {
-          logger.info(
-            logMeta,
-            'Client reconnected within the grace period. Session data preserved.'
-          )
         }
       }, env.WEBSOCKET_GRACE_PERIOD_MS)
     })

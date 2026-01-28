@@ -26,7 +26,7 @@ export const sendWebSocketMessage = (
   const extWs = ws as ExtWebSocket
   if (extWs.readyState !== WebSocket.OPEN) {
     logger.warn(
-      { clientId: extWs.clientId, origin, messageType: message.type },
+      { clientId: extWs.clientId, origin }, // Assuming clientId is attached
       'Attempted to send message to a non-open WebSocket.'
     )
     return
@@ -39,7 +39,6 @@ export const sendWebSocketMessage = (
         clientId: extWs.clientId,
         error,
         origin,
-        messageType: message.type,
       },
       'Failed to send WebSocket message.'
     )
