@@ -177,15 +177,20 @@ export const WebSocketProvider = ({
     INITIAL_STATE
   )
 
-  const dispatch = (message: ServerMessage | { type: 'RESET_STATE' }) => {
-    setAppState((prevState) => reducer(prevState, message))
-  }
+  const dispatch = useCallback(
+    (message: ServerMessage | { type: 'RESET_STATE' }) => {
+      setAppState((prevState) => reducer(prevState, message))
+    },
+    [setAppState]
+  )
 
-  const throttledDispatch = useRef(
-    throttle((message: ServerMessage) => {
-      dispatch(message)
-    }, 100)
-  ).current
+  const throttledDispatch = useMemo(
+    () =>
+      throttle((message: ServerMessage) => {
+        dispatch(message)
+      }, 100),
+    [dispatch]
+  )
 
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
@@ -392,7 +397,7 @@ export const WebSocketProvider = ({
         })
       }
     }
-  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
+  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat, dispatch])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
