@@ -18,6 +18,12 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
+import {
+  MAX_RECONNECT_ATTEMPTS,
+  RECONNECT_BASE_DELAY_MS,
+  RECONNECT_DELAY_INCREMENT_MS,
+  RECONNECT_RANDOM_DELAY_MS,
+} from '@/constants/reconnection'
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
@@ -144,7 +150,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const isManualDisconnect = useRef(false)
   const isTimeoutDisconnect = useRef(false)
   const reconnectAttempts = useRef(0)
-  const maxReconnectAttempts = 5
   const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
   const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -391,12 +396,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         {
           device: device.name,
           attempt: attemptNum,
-          maxAttempts: maxReconnectAttempts,
+          maxAttempts: MAX_RECONNECT_ATTEMPTS,
         },
         'Device disconnected, attempting auto-reconnect...'
       )
 
-      if (attemptNum <= maxReconnectAttempts) {
+      if (attemptNum <= MAX_RECONNECT_ATTEMPTS) {
         // Only set signal_loss if this wasn't a timeout disconnect
         if (!isTimeoutDisconnect.current) {
           // No longer need to set a reason
@@ -409,13 +414,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           BLUETOOTH_MESSAGES.reconnectingAttempt(
             reasonText,
             attemptNum,
-            maxReconnectAttempts
+            MAX_RECONNECT_ATTEMPTS
           )
         )
 
         // Randomized backoff: increases with attempts
-        const baseDelay = 1000 + (attemptNum - 1) * 500 // 1s, 1.5s, 2s, 2.5s, 3s
-        const randomDelay = baseDelay + Math.random() * 1000
+        const baseDelay =
+          RECONNECT_BASE_DELAY_MS +
+          (attemptNum - 1) * RECONNECT_DELAY_INCREMENT_MS
+        const randomDelay =
+          baseDelay + Math.random() * RECONNECT_RANDOM_DELAY_MS
 
         reconnectTimeoutRef.current = setTimeout(() => {
           if (connectToGattRef.current) {
@@ -432,12 +440,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       } else {
         // Max reconnection attempts reached - reset device and permissions
         logger.error(
-          { device: device.name, maxAttempts: maxReconnectAttempts },
+          { device: device.name, maxAttempts: MAX_RECONNECT_ATTEMPTS },
           'Max reconnection attempts reached. Resetting device.'
         )
         setStatus(BluetoothConnectionStatus.ERROR)
         setCustomStatusMessage(
-          BLUETOOTH_MESSAGES.failedToReconnect(maxReconnectAttempts)
+          BLUETOOTH_MESSAGES.failedToReconnect(MAX_RECONNECT_ATTEMPTS)
         )
 
         // Trigger device reset after a brief delay to show the message
@@ -594,7 +602,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
             const e = event as Event
             const target = e.target as BluetoothRemoteGATTCharacteristic
-            const heartRate = parseHeartRate(target.value!)
+            const value = target.value
+            if (!value) {
+              logger.warn(
+                'Received characteristic value changed event with no value.'
+              )
+              return
+            }
+            const heartRate = parseHeartRate(value)
             lastDataTime.current = now // Update timestamp for next delta
             logger.debug(
               { heartRate },
@@ -641,7 +656,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           )
           setStatus(BluetoothConnectionStatus.ERROR)
           setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeoutReset)
-          reconnectAttempts.current = maxReconnectAttempts
+          reconnectAttempts.current = MAX_RECONNECT_ATTEMPTS
           deviceRef.current = null
 
           if (reconnectTimeoutRef.current)
