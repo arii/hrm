@@ -62,18 +62,18 @@ const TimerControls = () => {
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
 
-  // When the server's running state changes, it becomes the source of truth.
+  // When the server's timer data changes, it becomes the source of truth.
   // We clear any optimistic action to ensure the UI reflects the server state.
   useEffect(() => {
     if (optimisticAction !== null) {
       setOptimisticAction(null)
     }
     // Disabling the lint rule because we intentionally want this effect to run
-    // ONLY when timerData.isRunning changes, to synchronize the client state
+    // ONLY when timerData changes, to synchronize the client state
     // with the server's ground truth. Adding optimisticAction to the dependency
     // array would cause an infinite loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerData.isRunning])
+  }, [timerData])
 
   // Safety timeout to clear the optimistic action if the server doesn't
   // confirm it within a reasonable time.
@@ -270,6 +270,7 @@ const TimerControls = () => {
                     backgroundColor: 'secondary.dark',
                     '&:hover': { backgroundColor: 'secondary.main' },
                   }}
+                  data-testid="timer-preset-tabata-button"
                 >
                   Tabata (20/10)
                 </Button>
@@ -285,6 +286,7 @@ const TimerControls = () => {
                     backgroundColor: 'secondary.dark',
                     '&:hover': { backgroundColor: 'secondary.main' },
                   }}
+                  data-testid="timer-preset-emom-button"
                 >
                   EMOM (60/60)
                 </Button>

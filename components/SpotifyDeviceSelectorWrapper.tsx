@@ -32,6 +32,7 @@ const SpotifyDeviceSelectorWrapper = ({
           '&:hover': { backgroundColor: 'grey.800' },
         }}
         aria-label="Select playback device"
+        data-testid="spotify-device-selector-button"
       >
         <SpeakerIcon fontSize="small" />
       </IconButton>
@@ -47,6 +48,7 @@ const SpotifyDeviceSelectorWrapper = ({
           vertical: 'bottom',
           horizontal: 'right',
         }}
+        data-testid="spotify-device-selector-menu"
       >
         {availableDevices.length > 0 ? (
           availableDevices.map((device) => (
@@ -54,12 +56,15 @@ const SpotifyDeviceSelectorWrapper = ({
               key={device.id}
               onClick={() => onDeviceSelect(device.id)}
               selected={device.is_active}
+              data-testid={`spotify-device-selector-item-${device.id}`}
             >
               {device.name} {device.is_active && '✓'}
             </MenuItem>
           ))
         ) : (
-          <MenuItem disabled>No devices available</MenuItem>
+          <MenuItem disabled data-testid="spotify-device-selector-no-devices">
+            No devices available
+          </MenuItem>
         )}
       </Menu>
     </>
