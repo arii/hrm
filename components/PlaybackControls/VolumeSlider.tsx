@@ -4,6 +4,7 @@ import VolumeUp from '@mui/icons-material/VolumeUp'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
+import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import { memo, useCallback } from 'react'
 
@@ -40,6 +41,20 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       >
         {muted ? <VolumeOff fontSize="small" /> : <VolumeUp fontSize="small" />}
       </IconButton>
+      <Box
+        sx={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          overflow: 'hidden',
+          clip: 'rect(0 0 0 0)',
+          whiteSpace: 'nowrap',
+        }}
+        component="span"
+        id="volume-slider"
+      >
+        Volume
+      </Box>
       <Slider
         value={volume}
         onChange={handleVolumeChange}

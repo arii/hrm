@@ -69,7 +69,6 @@
     "@mui/material": "^7.3.7",
     "@mui/material-nextjs": "^7.3.7",
     "@spotify/web-api-ts-sdk": "^1.2.0",
-    "@types/uuid": "9",
     "cheerio": "^1.1.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
@@ -84,11 +83,11 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.7.0",
-    "uuid": "^9.0.1",
     "ws": "^8.19.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@commitlint/cli": "^20.3.1",
     "@commitlint/config-conventional": "^20.3.1",
     "@eslint/js": "^9.39.2",
@@ -115,6 +114,7 @@
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.2",
+    "@types/uuid": "^9.0.8",
     "@types/web-bluetooth": "^0.0.21",
     "@types/ws": "^8.18.1",
     "babel-jest": "^30.2.0",
@@ -146,6 +146,7 @@
     "tsx": "4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.0",
+    "uuid": "^9.0.1",
     "wait-on": "^9.0.3"
   },
   "engines": {
