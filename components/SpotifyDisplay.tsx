@@ -282,6 +282,7 @@ const SpotifyDisplay = () => {
   if (!isLoggedIn) {
     return (
       <Box
+        data-testid="spotify-auth-container"
         sx={{
           backgroundColor: 'grey.900',
           color: 'common.white',
@@ -314,6 +315,7 @@ const SpotifyDisplay = () => {
 
     return (
       <Box
+        data-testid="spotify-display-container"
         aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
           spotifyData.isPlaying ? 'Playing' : 'Paused'
         }${isReady ? ', Browser player ready' : ''}`}
@@ -343,7 +345,11 @@ const SpotifyDisplay = () => {
             gap: 2,
           }}
         >
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 600 }}
+            data-testid="spotify-now-playing"
+          >
             {displayTrackName} {displayArtist}
           </Typography>
           {spotifyAuthenticated && !isReady && (
@@ -394,6 +400,7 @@ const SpotifyDisplay = () => {
               '&:hover': { backgroundColor: 'grey.800' },
             }}
             aria-label="Previous track"
+            data-testid="spotify-previous-button"
           >
             <SkipPreviousIcon />
           </IconButton>
@@ -406,6 +413,7 @@ const SpotifyDisplay = () => {
               '&:hover': { backgroundColor: 'grey.600' },
             }}
             aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
+            data-testid="spotify-play-pause-button"
           >
             {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
           </IconButton>
@@ -417,6 +425,7 @@ const SpotifyDisplay = () => {
               '&:hover': { backgroundColor: 'grey.800' },
             }}
             aria-label="Next track"
+            data-testid="spotify-next-button"
           >
             <SkipNextIcon />
           </IconButton>
@@ -450,6 +459,7 @@ const SpotifyDisplay = () => {
             variant="outlined"
             size="small"
             onClick={handleLogout}
+            data-testid="spotify-logout-button"
             sx={{
               color: 'common.white',
               borderColor: 'grey.600',

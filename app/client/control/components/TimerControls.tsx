@@ -270,6 +270,7 @@ const TimerControls = () => {
                     backgroundColor: 'secondary.dark',
                     '&:hover': { backgroundColor: 'secondary.main' },
                   }}
+                  data-testid="timer-preset-tabata-button"
                 >
                   Tabata (20/10)
                 </Button>
@@ -285,6 +286,7 @@ const TimerControls = () => {
                     backgroundColor: 'secondary.dark',
                     '&:hover': { backgroundColor: 'secondary.main' },
                   }}
+                  data-testid="timer-preset-emom-button"
                 >
                   EMOM (60/60)
                 </Button>
