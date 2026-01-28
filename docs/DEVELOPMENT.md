@@ -308,3 +308,17 @@ When integrating with third-party libraries that may have incorrect or incomplet
 **Problem**: The `@spotify/web-api-ts-sdk` library does not correctly type the `deviceId` parameter as optional for several of its player methods. This can lead to runtime errors and requires unsafe type assertions in the application code.
 
 **Solution**: The `safeSpotifyApi.ts` module provides a `createSafeSpotifyApi` function that wraps the Spotify SDK instance in a `Proxy`. This proxy intercepts calls to the player methods and dynamically handles the `deviceId` parameter, ensuring that `undefined` values are not passed to the SDK. This encapsulates the workaround in a single, reusable module, eliminating the need for scattered type assertions and improving the overall type safety of the codebase.
+## Testing
+
+### Mocking
+
+#### Web Bluetooth API Mocks
+
+To facilitate consistent and type-safe testing of Web Bluetooth API interactions, a set of mock utilities is available in `tests/unit/lib/bluetooth-test-utils.ts`. These utilities provide mock implementations for the following Web Bluetooth API objects:
+
+-   `BluetoothDevice`
+-   `BluetoothRemoteGATTServer`
+-   `BluetoothRemoteGATTService`
+-   `BluetoothRemoteGATTCharacteristic`
+
+These mocks are designed to be used in Jest unit tests and provide a type-safe way to simulate Bluetooth device interactions.
