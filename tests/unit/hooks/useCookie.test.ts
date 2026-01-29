@@ -21,13 +21,13 @@ describe('useCookie', () => {
   })
 
   it('should return the initial value when the cookie is empty', () => {
-    (Cookies.get as jest.Mock).mockReturnValue(undefined)
+    ;(Cookies.get as jest.Mock).mockReturnValue(undefined)
     const { result } = renderHook(() => useCookie(TEST_KEY, INITIAL_VALUE))
     expect(result.current[0]).toEqual(INITIAL_VALUE)
   })
 
   it('should load a valid value from the cookie', () => {
-    (Cookies.get as jest.Mock).mockReturnValue(JSON.stringify(UPDATED_VALUE))
+    ;(Cookies.get as jest.Mock).mockReturnValue(JSON.stringify(UPDATED_VALUE))
     const { result } = renderHook(() => useCookie(TEST_KEY, INITIAL_VALUE))
     expect(result.current[0]).toEqual(UPDATED_VALUE)
   })
@@ -49,7 +49,7 @@ describe('useCookie', () => {
   })
 
   it('should handle malformed JSON in the cookie and return the initial value', () => {
-    (Cookies.get as jest.Mock).mockReturnValue('{ not json }')
+    ;(Cookies.get as jest.Mock).mockReturnValue('{ not json }')
     const { result } = renderHook(() => useCookie(TEST_KEY, INITIAL_VALUE))
     expect(result.current[0]).toEqual(INITIAL_VALUE)
   })

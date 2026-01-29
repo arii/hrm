@@ -29,7 +29,7 @@ describe('usePersistentStorage', () => {
     })
   })
 
-  it('should select useLocalStorage when localStorage is available', () => {
+  it('should select useLocalStorage when localStorage is available', async () => {
     // Ensure localStorage is functional
     Object.defineProperty(window, 'localStorage', {
       value: {
@@ -41,11 +41,14 @@ describe('usePersistentStorage', () => {
       configurable: true,
     })
 
-    // Re-require the mocks and the hook under test within this scope
-    const useLocalStorage = require('../../../hooks/useLocalStorage').default
-    const useCookie = require('../../../hooks/useCookie').default
-    const usePersistentStorage =
-      require('../../../hooks/usePersistentStorage').default
+    // Dynamically import the mocks and the hook under test
+    const { default: useLocalStorage } = await import(
+      '../../../hooks/useLocalStorage'
+    )
+    const { default: useCookie } = await import('../../../hooks/useCookie')
+    const { default: usePersistentStorage } = await import(
+      '../../../hooks/usePersistentStorage'
+    )
 
     renderHook(() => usePersistentStorage('test', ''))
 
@@ -53,7 +56,7 @@ describe('usePersistentStorage', () => {
     expect(useCookie).not.toHaveBeenCalled()
   })
 
-  it('should select useCookie when localStorage is not available', () => {
+  it('should select useCookie when localStorage is not available', async () => {
     // Break localStorage by making setItem throw an error
     Object.defineProperty(window, 'localStorage', {
       value: {
@@ -66,11 +69,14 @@ describe('usePersistentStorage', () => {
       configurable: true,
     })
 
-    // Re-require the mocks and the hook under test within this scope
-    const useLocalStorage = require('../../../hooks/useLocalStorage').default
-    const useCookie = require('../../../hooks/useCookie').default
-    const usePersistentStorage =
-      require('../../../hooks/usePersistentStorage').default
+    // Dynamically import the mocks and the hook under test
+    const { default: useLocalStorage } = await import(
+      '../../../hooks/useLocalStorage'
+    )
+    const { default: useCookie } = await import('../../../hooks/useCookie')
+    const { default: usePersistentStorage } = await import(
+      '../../../hooks/usePersistentStorage'
+    )
 
     renderHook(() => usePersistentStorage('test', ''))
 
