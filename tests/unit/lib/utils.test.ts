@@ -1,8 +1,4 @@
-import {
-  objectFromEntries,
-  roundTo,
-  formatDuration,
-} from '@/lib/utils'
+import { objectFromEntries, roundTo, formatDuration } from '@/lib/utils'
 
 describe('lib/utils', () => {
   describe('objectFromEntries', () => {

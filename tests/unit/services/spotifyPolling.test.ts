@@ -15,7 +15,7 @@ describe('SpotifyPolling', () => {
 
   it('should throw an error when getSdk is called before initialization', () => {
     // Directly accessing a private method for testing purposes.
-    expect(() => (spotifyPolling as any).getSdk()).toThrow(
+    expect(() => (spotifyPolling as { getSdk: () => void }).getSdk()).toThrow(
       'Spotify SDK has not been initialized.'
     )
   })
