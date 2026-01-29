@@ -9,10 +9,10 @@ declare module '@mui/material/styles' {
     loadingIndicator: number
   }
   interface Palette {
-    spotify: Palette['primary'];
+    spotify: Palette['primary']
   }
   interface PaletteOptions {
-    spotify: PaletteOptions['primary'];
+    spotify: PaletteOptions['primary']
   }
   interface TypeBackground {
     overlay: string
