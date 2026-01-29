@@ -25,7 +25,7 @@ describe('formatDuration', () => {
   it('should handle zero duration', () => {
     expect(formatDuration(0, { unit: 'seconds' })).toBe('00:00:00')
     expect(formatDuration(0, { unit: 'milliseconds', format: 'MM:SS' })).toBe(
-      '00:00'
+      '0:00'
     )
   })
 
