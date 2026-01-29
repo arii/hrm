@@ -5,7 +5,7 @@ import { HrmStreamData } from '../../types/core'
  * Repository for managing HRM client data.
  * Encapsulates the storage and retrieval of HrmStreamData.
  */
-export class HrmDataRepository {
+export class HrmDataStore {
   private clientData = new Map<string, HrmStreamData>()
 
   /**
