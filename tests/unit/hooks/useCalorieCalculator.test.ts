@@ -9,7 +9,7 @@ jest.useFakeTimers()
 
 describe('useCalorieCalculator', () => {
   afterEach(() => {
-    mockEstimateCaloriesBurned.mockRestore()
+    mockEstimateCaloriesBurned.mockReset()
     jest.clearAllTimers()
   })
 
