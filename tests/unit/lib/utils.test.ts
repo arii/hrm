@@ -25,21 +25,21 @@ describe('formatDuration', () => {
   it('should handle zero duration', () => {
     expect(formatDuration(0, { unit: 'seconds' })).toBe('00:00:00')
     expect(formatDuration(0, { unit: 'milliseconds', format: 'MM:SS' })).toBe(
-      '0:00'
+      '00:00'
     )
   })
 
   it('should handle negative duration', () => {
     expect(formatDuration(-1, { unit: 'seconds' })).toBe('00:00:00')
     expect(formatDuration(-1, { unit: 'milliseconds', format: 'MM:SS' })).toBe(
-      '0:00'
+      '00:00'
     )
   })
 
   it('should handle NaN duration', () => {
     expect(formatDuration(NaN, { unit: 'seconds' })).toBe('00:00:00')
     expect(formatDuration(NaN, { unit: 'milliseconds', format: 'MM:SS' })).toBe(
-      '0:00'
+      '00:00'
     )
   })
 })

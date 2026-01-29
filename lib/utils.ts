@@ -21,7 +21,7 @@ export const formatDuration = (
     if (format === 'HH:MM:SS') {
       return '00:00:00'
     }
-    return '0:00'
+    return '00:00'
   }
 
   const totalSeconds =
