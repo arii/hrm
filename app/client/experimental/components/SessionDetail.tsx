@@ -34,7 +34,13 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
           &larr; Back to List
         </Button>
 
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: 3,
+          }}
+        >
           <Box sx={{ flex: 1 }}>
             <Typography variant="h6">Summary</Typography>
             <Typography>
@@ -43,7 +49,9 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
             <Typography>
               Duration: {(durationInSeconds / 60).toFixed(1)} mins
             </Typography>
-            <Typography>Total Calories: {totalCalories.toFixed(0)} kCal</Typography>
+            <Typography>
+              Total Calories: {totalCalories.toFixed(0)} kCal
+            </Typography>
             <Typography>Average HR: {avgHr.toFixed(0)} bpm</Typography>
           </Box>
 

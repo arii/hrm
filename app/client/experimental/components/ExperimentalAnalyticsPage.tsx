@@ -47,18 +47,11 @@ const ExperimentalAnalyticsPage = () => {
     deleteSession,
   } = useWorkoutSessionStorage()
 
-  const [view, setView] = useState<View>('list')
+  const [view, setView] = useState<View>(() =>
+    activeSession ? 'active' : 'list'
+  )
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
-
-  // Determine view based on active session on initial load
-  useEffect(() => {
-    if (activeSession) {
-      setView('active')
-    } else {
-      setView('list')
-    }
-  }, [activeSession])
 
   // Data recording interval for the active session
   useEffect(() => {
@@ -117,7 +110,13 @@ const ExperimentalAnalyticsPage = () => {
         calories={totalCalories}
         status={activeSession?.status ?? 'idle'}
       />
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 3,
+        }}
+      >
         <Box sx={{ flex: 1 }}>
           <CalorieTracker
             calorieHistory={activeSession?.calorieHistory ?? []}

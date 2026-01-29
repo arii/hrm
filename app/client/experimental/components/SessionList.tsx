@@ -15,7 +15,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import { WorkoutSessionData } from '@/lib/sessionDataValidator'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 interface SessionListProps {
   sessions: WorkoutSessionData[]
@@ -23,20 +23,21 @@ interface SessionListProps {
   onDeleteSession: (sessionId: string) => void
 }
 
+const getTotalCalories = (session: WorkoutSessionData) =>
+  session.calorieHistory.reduce((total, dp) => total + dp.calories, 0)
+
+const getDurationInMinutes = (session: WorkoutSessionData, now: number) =>
+  session.endTime
+    ? (session.endTime - session.startTime) / 60000
+    : (now - session.startTime) / 60000
+
 const SessionList = ({
   sessions,
   onSelectSession,
   onDeleteSession,
 }: SessionListProps) => {
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
-
-  const getTotalCalories = (session: WorkoutSessionData) =>
-    session.calorieHistory.reduce((total, dp) => total + dp.calories, 0)
-
-  const getDurationInMinutes = (session: WorkoutSessionData) =>
-    session.endTime
-      ? (session.endTime - session.startTime) / 60000
-      : (Date.now() - session.startTime) / 60000
+  const now = useMemo(() => Date.now(), [])
 
   const handleDeleteClick = (sessionId: string) => {
     setSessionToDelete(sessionId)
@@ -82,7 +83,8 @@ const SessionList = ({
                     session.startTime
                   ).toLocaleDateString()}`}
                   secondary={`Duration: ${getDurationInMinutes(
-                    session
+                    session,
+                    now
                   ).toFixed(1)} mins | Calories: ${getTotalCalories(
                     session
                   ).toFixed(0)} kCal`}

@@ -20,27 +20,22 @@ export const useWorkoutSessionStorage = () => {
   const [storedSessions, setStoredSessions] = useLocalStorage<
     WorkoutSessionData[]
   >(WORKOUT_STORAGE_KEY, [])
-  const [activeSession, setActiveSession] = useState<WorkoutSessionData | null>(
-    null
-  )
-  const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
-  const [userSettings] = useUserSettings()
-
-  // Initialize state from localStorage on mount
-  useEffect(() => {
+  const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>(() => {
     const validSessions = storedSessions
       .map(validateAndMigrateSessionData)
       .filter((s): s is WorkoutSessionData => s !== null)
+    return validSessions
+  })
 
-    setAllSessions(validSessions)
-
-    const unfinishedSession = validSessions.find(
-      (s) => s.status === 'running' || s.status === 'paused'
-    )
-    if (unfinishedSession) {
-      setActiveSession(unfinishedSession)
+  const [activeSession, setActiveSession] = useState<WorkoutSessionData | null>(
+    () => {
+      const unfinishedSession = allSessions.find(
+        (s) => s.status === 'running' || s.status === 'paused'
+      )
+      return unfinishedSession || null
     }
-  }, []) // Run only once on mount
+  )
+  const [userSettings] = useUserSettings()
 
   // Persist changes to allSessions back to localStorage
   useEffect(() => {
@@ -120,12 +115,15 @@ export const useWorkoutSessionStorage = () => {
     [activeSession, getZoneForHr]
   )
 
-  const deleteSession = useCallback((sessionId: string) => {
-    setAllSessions((prev) => prev.filter((s) => s.id !== sessionId))
-    if (activeSession?.id === sessionId) {
-      setActiveSession(null)
-    }
-  }, [activeSession])
+  const deleteSession = useCallback(
+    (sessionId: string) => {
+      setAllSessions((prev) => prev.filter((s) => s.id !== sessionId))
+      if (activeSession?.id === sessionId) {
+        setActiveSession(null)
+      }
+    },
+    [activeSession]
+  )
 
   return {
     activeSession,

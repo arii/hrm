@@ -29,16 +29,10 @@ export const estimateCaloriesBurned = (
 
   // Karvonen formula for calorie burn estimation
   const caloriesBurned = isMale
-    ? ((-55.0969 +
-        0.6309 * heartRate +
-        0.1988 * weightKg +
-        0.2017 * age) /
+    ? ((-55.0969 + 0.6309 * heartRate + 0.1988 * weightKg + 0.2017 * age) /
         4.184) *
       durationMinutes
-    : ((-20.4022 +
-        0.4472 * heartRate -
-        0.1263 * weightKg +
-        0.074 * age) /
+    : ((-20.4022 + 0.4472 * heartRate - 0.1263 * weightKg + 0.074 * age) /
         4.184) *
       durationMinutes
 

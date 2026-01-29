@@ -73,7 +73,7 @@ export const validateAndMigrateSessionData = (
     return null
   }
 
-  let session = rawData as Partial<WorkoutSessionData>
+  const session = rawData as Partial<WorkoutSessionData>
 
   // Migration logic based on schema version
   const version =

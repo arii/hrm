@@ -21,7 +21,15 @@ const mockRunningSession: WorkoutSessionData = {
   status: 'running',
   hrHistory: [],
   calorieHistory: [],
-  timeInZones: {} as any,
+  timeInZones: {
+    WarmUp: 0,
+    FatBurn: 0,
+    Cardio: 0,
+    Peak: 0,
+    Max: 0,
+    NoData: 0,
+    Unknown: 0,
+  },
   schemaVersion: 1,
 }
 
@@ -62,9 +70,7 @@ describe('useWorkoutSessionStorage', () => {
     expect(result.current.activeSession?.status).toBe('running')
     expect(result.current.allSessions.length).toBe(1)
     expect(setStoredSessions).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ status: 'running' }),
-      ])
+      expect.arrayContaining([expect.objectContaining({ status: 'running' })])
     )
   })
 
@@ -81,9 +87,7 @@ describe('useWorkoutSessionStorage', () => {
     expect(session.status).toBe('finished')
     expect(session.endTime).not.toBeNull()
     expect(setStoredSessions).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ status: 'finished' }),
-      ])
+      expect.arrayContaining([expect.objectContaining({ status: 'finished' })])
     )
   })
 
