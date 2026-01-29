@@ -53,6 +53,9 @@ const clientSessionState = new Map<
   { lastUpdate: number; accumulatedCalories: number }
 >()
 
+// New: Map to hold cleanup timers for disconnected clients
+const clientCleanupTimers = new Map<string, NodeJS.Timeout>()
+
 /**
  * Safely parses the WebSocket request URL to extract search parameters.
  * Handles cases where headers or URL might be malformed.
@@ -70,6 +73,28 @@ const getRequestParams = (req: IncomingMessage): URLSearchParams => {
     logger.error({ error }, 'Failed to parse WebSocket connection URL')
     // Return empty params to prevent a crash on invalid URL
     return new URLSearchParams()
+  }
+}
+
+/**
+ * Centralized function to clean up a client's session data.
+ * @param clientId The identifier of the client to clean up.
+ */
+const cleanupClientSession = (clientId: string) => {
+  logger.info({ clientId }, 'Session expired. Deleting data.')
+  try {
+    hrmDataRepository.deleteById(clientId)
+    clientSessionState.delete(clientId)
+    broadcastState()
+  } catch (err) {
+    logger.error(
+      { clientId: clientId, error: err },
+      'Error during session cleanup'
+    )
+  } finally {
+    // Always remove the socket reference and cleanup timer to prevent leaks
+    clientSockets.delete(clientId)
+    clientCleanupTimers.delete(clientId)
   }
 }
 
@@ -126,6 +151,13 @@ const initSocketManager = (
     const logMeta = getLogMeta(req, clientId)
     extWs.clientId = clientId
 
+    // New: If a cleanup timer exists for this client, clear it
+    if (clientCleanupTimers.has(clientId)) {
+      clearTimeout(clientCleanupTimers.get(clientId))
+      clientCleanupTimers.delete(clientId)
+      logger.info({ clientId }, 'Cleared cleanup timer for reconnected client.')
+    }
+
     // it's a stale or "zombie" connection. Overwrite it with the new socket.
 
     if (clientSockets.has(clientId)) {
@@ -175,28 +207,23 @@ const initSocketManager = (
       // memory pressure if many clients disconnect and don't reconnect.
       // A more robust solution might involve a separate cleanup process
       // or a maximum number of inactive sessions.
-      setTimeout(() => {
-        // Only delete if they haven't reconnected (i.e., the current socket is still this closed one)
+      const timer = setTimeout(() => {
+        // Only cleanup if the client has not reconnected.
+        // We verify this by checking if the socket associated with the clientId is the one that just closed.
+        // If they are different, it means a new connection has been established.
         if (clientSockets.get(clientId) === extWs) {
+          cleanupClientSession(clientId)
+        } else {
+          // If the client has reconnected, we can safely remove the timer without taking further action.
+          clientCleanupTimers.delete(clientId)
           logger.info(
-            { clientId: extWs.clientId },
-            'Session expired. Deleting data.'
+            { clientId },
+            'Client reconnected before cleanup timer expired. Timer cleared.'
           )
-          try {
-            hrmDataRepository.deleteById(extWs.clientId)
-            clientSessionState.delete(extWs.clientId)
-            broadcastState()
-          } catch (err) {
-            logger.error(
-              { clientId: extWs.clientId, error: err },
-              'Error during session cleanup'
-            )
-          } finally {
-            // Always remove the socket reference to prevent leaks
-            clientSockets.delete(extWs.clientId)
-          }
         }
       }, env.WEBSOCKET_GRACE_PERIOD_MS)
+
+      clientCleanupTimers.set(clientId, timer)
     })
   })
 

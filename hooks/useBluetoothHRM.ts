@@ -12,30 +12,18 @@ import {
 } from '../types/websocket'
 import { BluetoothConnectionStatus } from '../types/bluetooth'
 import isEqual from 'lodash.isequal'
-import { calculateMaxHr } from '@/lib/constants'
+import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
-import { BLUETOOTH_MESSAGES } from '@/lib/constants/bluetooth-messages'
+import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import {
-  HR_SERVICE_UUID,
-  HR_CHARACTERISTIC_UUID,
-  BATTERY_SERVICE_UUID,
-  BATTERY_LEVEL_CHARACTERISTIC_UUID,
-  ROLLING_AVG_HISTORY_LENGTH,
-  MISSED_PACKET_THRESHOLD_BUFFER_MS,
-  MIN_MISSED_PACKET_THRESHOLD_MS,
-  HEARTBEAT_INTERVAL_MS,
-  DEFAULT_DATA_LIVENESS_TIMEOUT_MS,
   MAX_RECONNECT_ATTEMPTS,
-  RECONNECT_DELAY_BASE_MS,
-  RECONNECT_DELAY_BACKOFF_FACTOR_MS,
-  RECONNECT_DELAY_RANDOMIZATION_MS,
-  FAILED_RECONNECT_RESET_DELAY_MS,
-  GATT_CONNECTION_TIMEOUT_MS,
-  GATT_CONNECTION_MAX_RETRIES,
-} from './useBluetoothHRM.constants'
+  RECONNECT_BASE_DELAY_MS,
+  RECONNECT_DELAY_INCREMENT_MS,
+  RECONNECT_RANDOM_DELAY_MS,
+} from '@/constants/reconnection'
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
@@ -44,6 +32,17 @@ const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.RECONNECTING]: BLUETOOTH_MESSAGES.reconnecting,
   [BluetoothConnectionStatus.ERROR]: BLUETOOTH_MESSAGES.error,
 }
+
+const HR_SERVICE_UUID = 'heart_rate'
+const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
+const BATTERY_SERVICE_UUID = 'battery_service'
+const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
+
+// Constants for signal quality calculation
+const ROLLING_AVG_HISTORY_LENGTH = 5
+const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
+const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
+export const HEARTBEAT_INTERVAL_MS = 1000 // Exported for testing purposes
 
 /**
  * @function parseHeartRate
@@ -63,11 +62,10 @@ const parseHeartRate = (value: DataView): number => {
  */
 interface UseBluetoothHRMProps {
   /**
-   * @property {number} [dataLivenessTimeoutMs]
+   * @property {number} [dataLivenessTimeoutMs=10000]
    * @description The timeout in milliseconds for determining if the Bluetooth data stream is stale.
    * If no new data is received within this period, the hook will attempt to reconnect.
    * A value of 0 disables this feature.
-   * @default DEFAULT_DATA_LIVENESS_TIMEOUT_MS
    */
   dataLivenessTimeoutMs?: number
   /**
@@ -121,7 +119,7 @@ interface UseBluetoothHRMProps {
  */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
-    dataLivenessTimeoutMs = DEFAULT_DATA_LIVENESS_TIMEOUT_MS,
+    dataLivenessTimeoutMs = 10000,
     userName,
     userAge,
     onHeartRateUpdate,
@@ -245,10 +243,33 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     // Reset the manual disconnect flag on mount to allow auto-reconnect after page refresh
     isManualDisconnect.current = false
 
+    // Expose test controls when in a test environment
+    if (
+      typeof window !== 'undefined' &&
+      process.env.NEXT_PUBLIC_TESTING === 'true'
+    ) {
+      window.TEST_CONTROLS = {
+        ...window.TEST_CONTROLS,
+        setHrmStatus: setStatus,
+        setCustomHrmStatusMessage: setCustomStatusMessage,
+      }
+    }
+
     return () => {
       // Clear timeouts on unmount, but don't mark as manual disconnect
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+
+      // Cleanup test controls on unmount
+      if (
+        typeof window !== 'undefined' &&
+        process.env.NEXT_PUBLIC_TESTING === 'true'
+      ) {
+        if (window.TEST_CONTROLS) {
+          delete window.TEST_CONTROLS.setHrmStatus
+          delete window.TEST_CONTROLS.setCustomHrmStatusMessage
+        }
+      }
     }
   }, [])
 
@@ -422,10 +443,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         // Randomized backoff: increases with attempts
         const baseDelay =
-          RECONNECT_DELAY_BASE_MS +
-          (attemptNum - 1) * RECONNECT_DELAY_BACKOFF_FACTOR_MS // 1s, 1.5s, 2s, 2.5s, 3s
+          RECONNECT_BASE_DELAY_MS +
+          (attemptNum - 1) * RECONNECT_DELAY_INCREMENT_MS
         const randomDelay =
-          baseDelay + Math.random() * RECONNECT_DELAY_RANDOMIZATION_MS
+          baseDelay + Math.random() * RECONNECT_RANDOM_DELAY_MS
 
         reconnectTimeoutRef.current = setTimeout(() => {
           if (connectToGattRef.current) {
@@ -464,7 +485,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           setBatteryLevel(null)
           deviceRef.current = null
           reconnectAttempts.current = 0
-        }, FAILED_RECONNECT_RESET_DELAY_MS)
+        }, 2000)
       }
     } else {
       logger.info('Device disconnected manually.')
@@ -500,12 +521,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         // --- START NEW RETRY LOGIC ---
         let server: BluetoothRemoteGATTServer | undefined
         let attempt = 0
+        const maxRetries = 3
 
         while (true) {
           try {
             // Attempt the connection
             server = await cancellablePromise(device.gatt!.connect(), {
-              timeoutMs: GATT_CONNECTION_TIMEOUT_MS,
+              timeoutMs: 30000,
               errorMessage: 'GATT connection timeout',
               signal: abortControllerRef.current.signal,
             })
@@ -526,7 +548,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             // If it's a zombie error and we haven't given up yet...
             if (
               isZombieError &&
-              attempt < GATT_CONNECTION_MAX_RETRIES &&
+              attempt < maxRetries &&
               !abortControllerRef.current.signal.aborted
             ) {
               attempt++
@@ -537,11 +559,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               )
               setStatus(BluetoothConnectionStatus.CONNECTING)
               setCustomStatusMessage(
-                BLUETOOTH_MESSAGES.deviceBusy(
-                  delayMs,
-                  attempt,
-                  GATT_CONNECTION_MAX_RETRIES
-                )
+                BLUETOOTH_MESSAGES.deviceBusy(delayMs, attempt, maxRetries)
               )
 
               // Exponential backoff: 2s, 4s, 8s to let the Android Bluetooth stack clear the connection
@@ -607,7 +625,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
             const e = event as Event
             const target = e.target as BluetoothRemoteGATTCharacteristic
-            const heartRate = parseHeartRate(target.value!)
+            const value = target.value
+            if (!value) {
+              logger.warn(
+                'Received characteristic value changed event with no value.'
+              )
+              return
+            }
+            const heartRate = parseHeartRate(value)
             lastDataTime.current = now // Update timestamp for next delta
             logger.debug(
               { heartRate },
@@ -672,7 +697,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             setBatteryLevel(null)
             deviceRef.current = null
             reconnectAttempts.current = 0
-          }, FAILED_RECONNECT_RESET_DELAY_MS)
+          }, 2000)
         } else if (isGattDisconnected) {
           logger.warn(
             { device: device.name },

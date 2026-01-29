@@ -13,6 +13,7 @@ import {
   type Locator,
   type ScreenshotOptions,
 } from '@playwright/test'
+import { checkAccessibility } from './accessibility'
 import { getHrMasks, getTimerMasks, waitForFontsLoaded } from '.'
 
 /**
@@ -44,6 +45,10 @@ export async function takeScreenshot(
   snapshotName: string,
   options: object = {}
 ) {
+  // Always perform an accessibility check before taking a screenshot.
+  // This ensures that our accessibility standards are maintained with every visual change.
+  await checkAccessibility(target)
+
   await expect(target).toHaveScreenshot(snapshotName, {
     ...SCREENSHOT_OPTIONS,
     ...options,
@@ -62,9 +67,28 @@ export async function takeDashboardScreenshot(
   snapshotName: string,
   options: ScreenshotOptions = {}
 ) {
-  await page.waitForLoadState('networkidle') // Ensure page is fully loaded and stable
   const mainContentLocator = page.getByTestId('main-content-layout')
+  const timerDisplayLocator = page.getByTestId('timer-display-container')
+  const spotifyAuthLocator = page.getByTestId('spotify-auth-container')
+  const spotifyDisplayLocator = page.getByTestId('spotify-display-container')
+
+  // Wait for the main layout and timer to be visible
   await mainContentLocator.waitFor({ state: 'visible' })
+  await timerDisplayLocator.waitFor({ state: 'visible' })
+
+  // Wait for either the Spotify login button OR the playback controls to be visible
+  await Promise.race([
+    spotifyAuthLocator.waitFor({ state: 'visible' }),
+    spotifyDisplayLocator.waitFor({ state: 'visible' }),
+  ])
+
+  // As a final stabilization step, wait for network idle with a short timeout.
+  // This helps catch any final rendering/data loading without failing on persistent connections.
+  try {
+    await page.waitForLoadState('networkidle', { timeout: 3000 })
+  } catch (_e) {
+    // Ignore timeout errors, as the primary element waits have already passed.
+  }
 
   const clippingRegion = await mainContentLocator.boundingBox()
   let clipOption: ScreenshotOptions['clip'] = options.clip // Preserve existing clip option if any
