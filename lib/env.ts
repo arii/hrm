@@ -7,7 +7,7 @@ const envSchema = z
       .default('development'),
     PORT: z.coerce.number().default(3000),
     HOST: z.string().default('0.0.0.0'),
-    NEXTAUTH_SECRET: z.string().min(1),
+    NEXTAUTH_SECRET: z.string(),
     NEXTAUTH_URL: z.string().url(),
     BASE_URL: z.string().url().optional(),
     SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
@@ -39,6 +39,24 @@ const envSchema = z
     WS_URL: z.string().url().optional(),
   })
   .superRefine((data, ctx) => {
+    // Paired validation for Spotify credentials
+    if (data.SPOTIFY_CLIENT_ID && !data.SPOTIFY_CLIENT_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['SPOTIFY_CLIENT_SECRET'],
+        message:
+          'SPOTIFY_CLIENT_SECRET is required when SPOTIFY_CLIENT_ID is set.',
+      })
+    }
+    if (!data.SPOTIFY_CLIENT_ID && data.SPOTIFY_CLIENT_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['SPOTIFY_CLIENT_ID'],
+        message:
+          'SPOTIFY_CLIENT_ID is required when SPOTIFY_CLIENT_SECRET is set.',
+      })
+    }
+
     // If Spotify credentials are provided, a callback URL must be available.
     if (data.SPOTIFY_CLIENT_ID && data.SPOTIFY_CLIENT_SECRET) {
       if (!data.SPOTIFY_CALLBACK_URL && !data.NEXTAUTH_URL) {
@@ -49,6 +67,24 @@ const envSchema = z
             'SPOTIFY_CALLBACK_URL is required when SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are set, but it could not be derived from NEXTAUTH_URL.',
         })
       }
+    }
+
+    // Production-ready NEXTAUTH_SECRET validation
+    if (data.NODE_ENV === 'production' && data.NEXTAUTH_SECRET.length < 32) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['NEXTAUTH_SECRET'],
+        message:
+          'NEXTAUTH_SECRET must be at least 32 characters long in production.',
+      })
+    }
+
+    if (data.NODE_ENV !== 'production' && data.NEXTAUTH_SECRET.length < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['NEXTAUTH_SECRET'],
+        message: 'NEXTAUTH_SECRET is required.',
+      })
     }
   })
   .transform((data) => {
@@ -66,3 +102,5 @@ if (!parsedEnv.success) {
 }
 
 export const env = parsedEnv.data
+
+export { envSchema }
