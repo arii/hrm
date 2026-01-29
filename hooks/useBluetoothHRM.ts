@@ -12,18 +12,18 @@ import {
 } from '../types/websocket'
 import { BluetoothConnectionStatus } from '../types/bluetooth'
 import isEqual from 'lodash.isequal'
-import { calculateMaxHr } from '../utils/constants'
+import { calculateMaxHr } from '@/utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
-import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
+import { BLUETOOTH_MESSAGES } from '../constants/bluetooth-messages'
 import {
   MAX_RECONNECT_ATTEMPTS,
   RECONNECT_BASE_DELAY_MS,
   RECONNECT_DELAY_INCREMENT_MS,
   RECONNECT_RANDOM_DELAY_MS,
-} from '@/constants/reconnection'
+} from '../constants/reconnection'
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
