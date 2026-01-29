@@ -39,7 +39,10 @@ describe('useSpotifyAuth', () => {
 
   it('should return authenticated status when session exists', () => {
     const mockSession = { accessToken: '123', user: { name: 'Test User' } }
-    mockUseSession.mockReturnValue({ data: mockSession, status: 'authenticated' })
+    mockUseSession.mockReturnValue({
+      data: mockSession,
+      status: 'authenticated',
+    })
 
     const { result } = renderHook(() => useSpotifyAuth())
 
@@ -62,7 +65,10 @@ describe('useSpotifyAuth', () => {
       error: 'RefreshAccessTokenError',
       accessToken: 'expired-token',
     }
-    mockUseSession.mockReturnValue({ data: mockSession, status: 'authenticated' })
+    mockUseSession.mockReturnValue({
+      data: mockSession,
+      status: 'authenticated',
+    })
 
     renderHook(() => useSpotifyAuth())
 
@@ -78,7 +84,10 @@ describe('useSpotifyAuth', () => {
       error: 'SomeOtherError',
       accessToken: 'valid-token',
     }
-    mockUseSession.mockReturnValue({ data: mockSession, status: 'authenticated' })
+    mockUseSession.mockReturnValue({
+      data: mockSession,
+      status: 'authenticated',
+    })
 
     const { rerender } = renderHook(() => useSpotifyAuth())
 
@@ -87,7 +96,10 @@ describe('useSpotifyAuth', () => {
 
     // Rerender with no error
     const validSession = { accessToken: 'valid-token' }
-    mockUseSession.mockReturnValue({ data: validSession, status: 'authenticated' })
+    mockUseSession.mockReturnValue({
+      data: validSession,
+      status: 'authenticated',
+    })
     rerender()
 
     expect(mockAddError).not.toHaveBeenCalled()
