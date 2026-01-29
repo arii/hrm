@@ -277,7 +277,7 @@ const handleIncomingMessage = (
         ws.clientType = (message as ClientRegistrationMessage).role
         logger.info(
           { clientId, clientType: ws.clientType },
-          'Client registered'
+          'Client registration successful'
         )
         break
       }

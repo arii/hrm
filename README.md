@@ -384,8 +384,6 @@ The app includes the original HRM audio feedback system:
 
 These variables control the behavior of the WebSocket server, which manages real-time communication for heart rate data and application state.
 
-> [!NOTE]
-> The variable `WEBSOCKET_CLEANUP_INTERVAL_MS`, mentioned in the original issue, has been superseded by `WEBSOCKET_WATCHDOG_INTERVAL`, which provides a more specific heartbeat-based approach to cleaning up stale connections.
 
 - **`WEBSOCKET_GRACE_PERIOD_MS`**
   - **Purpose**: The time in milliseconds the server will wait before cleaning up a disconnected client's session data. This allows a user to refresh their browser or momentarily lose connection without losing their heart rate data.
