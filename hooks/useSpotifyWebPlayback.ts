@@ -99,6 +99,11 @@ const useSpotifyWebPlayback = () => {
           addError('Spotify session expired. Please log in again.', {
             persist: true,
           })
+          // Note: This is a redundant sign-out trigger. The `useSpotifyAuth`
+          // hook also handles the `RefreshAccessTokenError` and initiates a
+          // sign-out. While this is a safeguard, a future refactor could
+          // streamline this to rely on a single source of truth for session
+          // validity.
           await signOut()
         }
         // For other errors, we might not need to sign out.

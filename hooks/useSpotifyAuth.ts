@@ -29,7 +29,10 @@ export const useSpotifyAuth = () => {
         persist: true,
       })
       // Automatically sign out the user to clear the invalid session
-      signOut()
+      const signOutUser = async () => {
+        await signOut()
+      }
+      signOutUser()
     }
   }, [session, addError])
 
