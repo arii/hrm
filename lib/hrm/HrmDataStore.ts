@@ -2,7 +2,7 @@
 import { HrmStreamData } from '../../types/core'
 
 /**
- * Repository for managing HRM client data.
+ * DataStore for managing HRM client data.
  * Encapsulates the storage and retrieval of HrmStreamData.
  */
 export class HrmDataStore {
