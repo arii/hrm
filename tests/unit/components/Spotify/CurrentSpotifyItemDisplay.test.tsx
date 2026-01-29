@@ -5,10 +5,7 @@ import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import CurrentSpotifyItemDisplay from '@/components/Spotify/CurrentSpotifyItemDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
-import {
-  WebSocketContextType,
-  SpotifyPlaybackState,
-} from '@/types/websocket'
+import { WebSocketContextType, SpotifyPlaybackState } from '@/types/websocket'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 
 // Mock the uuid module

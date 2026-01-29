@@ -22,13 +22,9 @@ import VolumeSlider from '@/components/Spotify/VolumeSlider'
 
 const SpotifyControls = () => {
   const router = useRouter()
-  const {
-    spotifyData: spotifyPlaybackState,
-    connectionStatus,
-    sendData,
-    spotifyServiceInitialized,
-  } = useWebSocket()
-  const { devices = [] } = spotifyPlaybackState // Default to empty array if undefined
+  const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
+    useWebSocket()
+  const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
@@ -51,9 +47,9 @@ const SpotifyControls = () => {
   }
 
   const hasSpotifyData =
-    spotifyPlaybackState.trackName !== 'Awaiting Login...' &&
-    spotifyPlaybackState.trackName !== '' &&
-    spotifyPlaybackState.trackName !== 'No Track Playing'
+    spotifyData.trackName !== 'Awaiting Login...' &&
+    spotifyData.trackName !== '' &&
+    spotifyData.trackName !== 'No Track Playing'
 
   // 3. Request devices on mount or connection
   useEffect(() => {
@@ -249,15 +245,15 @@ const SpotifyControls = () => {
           <>
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                {spotifyPlaybackState.trackName}
+                {spotifyData.trackName}
               </Typography>
               <Typography variant="body2" sx={{ color: 'grey.400' }}>
-                {spotifyPlaybackState.artist}
+                {spotifyData.artist}
               </Typography>
             </Box>
 
             <PlaybackControls
-              isPlaying={spotifyPlaybackState.isPlaying}
+              isPlaying={spotifyData.isPlaying}
               onCommand={handlePlaybackCommand}
               disabled={connectionStatus !== 'Connected'}
             />

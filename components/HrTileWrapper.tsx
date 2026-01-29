@@ -2,7 +2,6 @@
 'use client'
 import { useHrZone } from '@/hooks/useHrZone'
 import HrTile from '@/components/HrTile'
-import { HrmStreamData } from '@/types/websocket'
 import { ClientHrmData } from '@/context/WebSocketContext'
 
 interface HrTileWrapperProps {

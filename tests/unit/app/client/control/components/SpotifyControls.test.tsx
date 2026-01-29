@@ -42,7 +42,7 @@ describe('components/SpotifyControls', () => {
     ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
-      spotifyPlaybackState: createMockSpotifyData({
+      spotifyData: createMockSpotifyData({
         trackName: 'Test Track',
         artist: 'Test Artist',
         isPlaying: true,
@@ -142,7 +142,7 @@ describe('components/SpotifyControls', () => {
   it('selects HRM Web Player by default when no device is active', async () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
-      spotifyPlaybackState: createMockSpotifyData({
+      spotifyData: createMockSpotifyData({
         devices: [
           createMockSpotifyDevice({
             id: '1',
