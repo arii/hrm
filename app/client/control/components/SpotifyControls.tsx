@@ -182,7 +182,7 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, sendData]
   )
 
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const debounceTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') {
@@ -193,11 +193,11 @@ const SpotifyControls = () => {
   useEffect(() => {
     // Clear any existing timer
     if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current)
+      window.clearTimeout(debounceTimeoutRef.current)
     }
 
     // Set a new timer to send the volume command after 300ms
-    debounceTimeoutRef.current = setTimeout(() => {
+    debounceTimeoutRef.current = window.setTimeout(() => {
       sendVolumeCommand(volume)
     }, 300)
 
@@ -205,7 +205,7 @@ const SpotifyControls = () => {
     // or if the volume changes again before the timeout has passed
     return () => {
       if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current)
+        window.clearTimeout(debounceTimeoutRef.current)
       }
     }
   }, [volume, sendVolumeCommand])
@@ -290,9 +290,14 @@ const SpotifyControls = () => {
                         color: 'white',
                       },
                     }}
+                    data-testid="spotify-device-select"
                   >
                     {devices.map((device) => (
-                      <MenuItem key={device.id} value={device.id}>
+                      <MenuItem
+                        key={device.id}
+                        value={device.id}
+                        data-testid={`spotify-device-select-option-${device.id}`}
+                      >
                         {device.name} {device.is_active && '(Active)'}
                       </MenuItem>
                     ))}
@@ -306,12 +311,18 @@ const SpotifyControls = () => {
               startIcon={<LibraryMusic />}
               onClick={handleBrowseClick}
               sx={{ mt: 2, borderColor: 'grey.600', color: 'grey.300' }}
+              data-testid="spotify-select-playlist-button"
             >
               Select Playlist
             </Button>
           </>
         ) : (
-          <Button onClick={handleBrowseClick}>Select Music</Button>
+          <Button
+            onClick={handleBrowseClick}
+            data-testid="spotify-select-music-button"
+          >
+            Select Music
+          </Button>
         )}
       </CardContent>
     </Card>
