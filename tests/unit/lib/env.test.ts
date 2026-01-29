@@ -60,5 +60,15 @@ describe('envSchema', () => {
       })
       expect(result.success).toBe(false)
     })
+
+    it('should apply default positive values when variables are not set', () => {
+      const result = envSchema.safeParse(baseEnv)
+      if (!result.success) {
+        throw new Error('Schema validation failed unexpectedly')
+      }
+      expect(result.data.WEBSOCKET_WATCHDOG_INTERVAL).toBe(30000)
+      expect(result.data.WEBSOCKET_GRACE_PERIOD_MS).toBe(5000)
+      expect(result.data.WS_MAX_CONNECTIONS).toBe(1000)
+    })
   })
 })

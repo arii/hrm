@@ -10,12 +10,24 @@ The WebSocket server is an integral part of the application, providing real-time
 
 The server-side WebSocket implementation is built on top of the `ws` library and is tightly integrated with the custom Express server.
 
-### Key Files
+### Key Files & Responsibilities
 
-- **`server.ts`**: The main entry point of the application. It creates the Express server and the WebSocket server, and it handles the upgrade of HTTP connections to WebSocket connections.
-- **`lib/websocket.ts`**: This file contains the `WebSocketManager` class, which is responsible for creating the WebSocket server and broadcasting messages to connected clients.
-- **`utils/socketManager.ts`**: This file contains the core logic for managing WebSocket connections. It handles client connections, disconnections, and incoming messages.
-- **`utils/websocketUtils.ts`**: This file contains utility functions for sending and broadcasting WebSocket messages, as well as the `ConnectionMonitor` class for terminating stale connections.
+The server-side WebSocket logic is decoupled into three main modules, each with a distinct responsibility:
+
+- **`lib/websocket.ts` (`WebSocketManager`)**: This class is the foundational layer. Its primary role is to create the `WebSocketServer` instance and handle the initial HTTP `upgrade` request from the client, effectively establishing the WebSocket connection. It provides a generic `createBroadcaster` method that other services can use to send messages to all clients without needing to know the implementation details.
+
+- **`utils/socketManager.ts` (`initSocketManager`)**: This module acts as the "controller" for the WebSocket server. It contains the core application logic for what happens *after* a connection is established. It is initialized by `server.ts` and receives the `WebSocketServer` instance created by `WebSocketManager`. Its responsibilities include:
+    - Handling the `connection` event.
+    - Managing the lifecycle of individual client sessions (e.g., registration, state initialization).
+    - Routing incoming client messages to the appropriate services or handlers.
+    - Triggering state broadcasts.
+
+- **`utils/websocketUtils.ts` (`ConnectionMonitor`)**: This module provides specialized utilities, most notably the `ConnectionMonitor` class. This class is instantiated and managed by `socketManager.ts`. Its sole purpose is to prevent memory leaks from "zombie" connections by:
+    - Running a periodic "watchdog" timer.
+    - Sending `ping` frames to all clients at a regular interval.
+    - Terminating connections that fail to respond with a `pong` frame in a timely manner.
+
+This separation of concerns ensures that the low-level connection handling (`WebSocketManager`) is distinct from the application's business logic (`socketManager.ts`) and the connection health checks (`ConnectionMonitor`).
 
 ### Connection Management
 
