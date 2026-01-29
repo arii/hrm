@@ -15,7 +15,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import { WorkoutSessionData } from '@/lib/sessionDataValidator'
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 
 interface SessionListProps {
   sessions: WorkoutSessionData[]
@@ -37,7 +37,12 @@ const SessionList = ({
   onDeleteSession,
 }: SessionListProps) => {
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
-  const now = useMemo(() => Date.now(), [])
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleDeleteClick = (sessionId: string) => {
     setSessionToDelete(sessionId)
