@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useError } from '@/context/ErrorContext'
 import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
 import { fetchWithRetry, AppError } from '@/utils/network'
+import { signOut } from 'next-auth/react'
 
 // Define event data types for better type safety
 interface SpotifyDeviceEvent {
@@ -66,7 +67,6 @@ const useSpotifyWebPlayback = () => {
   const [isReady, setIsReady] = useState(false)
   const [deviceId, setDeviceId] = useState<string | null>(null)
   const { addError } = useError()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   /**
    * Fetches the Spotify OAuth token from our secure backend API.
@@ -81,28 +81,28 @@ const useSpotifyWebPlayback = () => {
         if (!accessToken) {
           throw new Error('Access token was not found in the response.')
         }
-
-        console.log(
-          '[Spotify Web Playback] Access token retrieved successfully'
-        )
-        setIsAuthenticated(true)
         cb(accessToken)
       } catch (error) {
         const appError = error as AppError
-        // Don't show a persistent error for unauthenticated users
+        console.error(
+          `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
+        )
+
+        // If the error is a 401 Unauthorized, it likely means the session is
+        // invalid or expired. The Spotify SDK will cache this failing token
+        // and stop asking for a new one. To force a re-auth flow, we must
+        // sign the user out, which will clear the session and prompt a new login.
         if (appError.code === 'HTTP_ERROR_401') {
-          console.log(
-            '[Spotify Web Playback] User not logged in, Web Playback unavailable'
+          console.warn(
+            '[Spotify Web Playback] Received 401, signing out to force re-authentication.'
           )
-        } else {
-          addError(`Authentication failed: ${appError.message}`, {
+          addError('Spotify session expired. Please log in again.', {
             persist: true,
           })
-          console.warn(
-            `[Spotify Web Playback] getOAuthToken error: ${appError.message}`
-          )
+          await signOut()
         }
-        setIsAuthenticated(false)
+        // For other errors, we might not need to sign out.
+        // The SDK might retry on its own.
       }
     },
     [addError]
@@ -224,7 +224,7 @@ const useSpotifyWebPlayback = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getOAuthToken])
 
-  return { player, isReady, deviceId, isAuthenticated }
+  return { player, isReady, deviceId }
 }
 
 export default useSpotifyWebPlayback
