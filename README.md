@@ -395,6 +395,10 @@ These variables control the behavior of the WebSocket server, which manages real
   - **Purpose**: The interval in milliseconds at which the server's "watchdog" process runs. It checks for and terminates stale or unresponsive WebSocket connections that have not responded to a heartbeat (ping) request. This is the primary mechanism for cleaning up "zombie" connections and preventing resource leaks.
   - **Default**: `30000` (30 seconds)
   - **Impact**: A shorter interval can be more aggressive in cleaning up dead connections, but may also terminate connections that are only temporarily latent. A longer interval is safer but may allow dead connections to persist for longer.
+- **`BLUETOOTH_MAX_RECONNECTION_ATTEMPTS`**
+  - **Purpose**: The maximum number of times the application will attempt to reconnect to a Bluetooth HRM device after the connection is lost.
+  - **Default**: `5`
+  - **Impact**: A higher value may be useful for users with unstable Bluetooth connections, while a lower value will fail faster and allow the user to manually reconnect sooner.
 
 ## Documentation
 
