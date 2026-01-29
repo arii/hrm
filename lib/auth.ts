@@ -229,6 +229,7 @@ export const authOptions: AuthOptions = {
       return true
     },
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
+      // 1. Initial sign-in: Augment the token with provider-specific details.
       if (account) {
         // Ensure you preserve the 'sub' or providerAccountId for future syncs
         const initialToken = {
@@ -248,15 +249,17 @@ export const authOptions: AuthOptions = {
         return initialToken
       }
 
+      // 2. Token still valid: Return the token without modification.
       if (Date.now() < (token.accessTokenExpires as number) - 60000) {
         return token
       }
 
+      // 3. Token expired: Refresh the token and sync with the backend.
       logger.info('[AUTH] Access token expired, refreshing...')
 
       const refreshedToken = await refreshAccessToken(token)
 
-      // CRITICAL FIX: Sync the NEW refreshed token to the backend
+      // CRITICAL FIX: Sync the NEW refreshed token to the backend in the background.
       if (!refreshedToken.error) {
         syncTokenWithBackend(refreshedToken).catch((err) =>
           logger.error({ err }, 'Background token sync failed')

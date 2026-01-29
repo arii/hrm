@@ -452,6 +452,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const errorMsg = err.message || ''
 
             // This is the specific error Android throws when the device is busy with the old page
+            // "Zombie" errors (NetworkError, busy, out of range) can occur on Android
+            // when the OS Bluetooth stack is slow to clear a previous connection.
+            // We use exponential backoff to give it time to recover.
             const isZombieError =
               errorName === 'NetworkError' ||
               errorMsg.includes('range') ||
@@ -473,7 +476,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 BLUETOOTH_MESSAGES.deviceBusy(delayMs, attempt, maxRetries)
               )
 
-              // Exponential backoff lets the Android Bluetooth stack clear the connection
               await new Promise((resolve) => setTimeout(resolve, delayMs))
               continue
             } else {
