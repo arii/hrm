@@ -374,6 +374,7 @@ When integrating with third-party libraries that may have incorrect or incomplet
 - Integrate guidelines into the CI/CD pipeline.
 - Create development setup scripts that enforce standards.
 - Build custom linting rules for project-specific patterns.
+
 ## Testing
 
 ### Mocking
@@ -382,9 +383,9 @@ When integrating with third-party libraries that may have incorrect or incomplet
 
 To facilitate consistent and type-safe testing of Web Bluetooth API interactions, a set of mock utilities is available in `tests/unit/lib/bluetooth-test-utils.ts`. These utilities provide mock implementations for the following Web Bluetooth API objects:
 
--   `BluetoothDevice`
--   `BluetoothRemoteGATTServer`
--   `BluetoothRemoteGATTService`
--   `BluetoothRemoteGATTCharacteristic`
+- `BluetoothDevice`
+- `BluetoothRemoteGATTServer`
+- `BluetoothRemoteGATTService`
+- `BluetoothRemoteGATTCharacteristic`
 
 These mocks are designed to be used in Jest unit tests and provide a type-safe way to simulate Bluetooth device interactions.
