@@ -171,6 +171,19 @@ export class SpotifyPolling implements SpotifyService {
     return this.sdk !== null
   }
 
+  /**
+   * Returns the initialized Spotify SDK instance or throws an error if not ready.
+   * @private
+   * @returns {SafeSpotifyApi} The initialized SDK instance.
+   * @throws {Error} If the SDK is not initialized.
+   */
+  private getSdk(): SafeSpotifyApi {
+    if (!this.sdk) {
+      throw new Error('Spotify SDK has not been initialized.')
+    }
+    return this.sdk
+  }
+
   // --- Token Management (Used by NextAuth route) ---
 
   /**
@@ -242,10 +255,9 @@ export class SpotifyPolling implements SpotifyService {
   }
 
   private getCurrentlyPlaying = async () => {
-    if (!this.sdk) return
-
     try {
-      const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
+      const sdk = this.getSdk()
+      const playbackState = await sdk.player.getCurrentlyPlayingTrack()
 
       if (!playbackState || !playbackState.item) {
         // Nothing playing, 204, or private session
@@ -320,12 +332,9 @@ export class SpotifyPolling implements SpotifyService {
   // --- Command Handling (Used by socketManager) ---
 
   public async refreshDevices(): Promise<void> {
-    if (!this.sdk) {
-      logger.warn('Cannot get devices: SDK not initialized.')
-      return
-    }
     try {
-      const response = await this.sdk.player.getAvailableDevices()
+      const sdk = this.getSdk()
+      const response = await sdk.player.getAvailableDevices()
       const validDevices: SpotifyDevice[] = (response.devices || [])
         .filter((d: Device): d is Device & { id: string } => d.id !== null)
         .map((d) => ({
@@ -363,11 +372,6 @@ export class SpotifyPolling implements SpotifyService {
     command: SpotifyCommand,
     params: SpotifyCommandParameters
   ): Promise<void> {
-    if (!this.sdk && command !== 'GET_DEVICES') {
-      logger.warn('Cannot execute command: SDK not initialized.')
-      return
-    }
-
     if (command === 'GET_DEVICES') {
       await this.refreshDevices()
       return
@@ -388,6 +392,7 @@ export class SpotifyPolling implements SpotifyService {
   ) {
     const { deviceId, volume, playlistUri, contextUri, uri } = params
     const effectiveContextUri = contextUri || playlistUri
+    const sdk = this.getSdk()
 
     switch (command) {
       case 'PLAY':
@@ -398,18 +403,16 @@ export class SpotifyPolling implements SpotifyService {
               // The Spotify API requires that if a `uri` (for a specific track) is provided,
               // the `context_uri` must be omitted. The SDK handles this by accepting
               // `undefined` for the context parameter.
-              return this.sdk!.player.startResumePlayback(deviceId, undefined, [
-                uri,
-              ])
+              return sdk.player.startResumePlayback(deviceId, undefined, [uri])
             }
             if (effectiveContextUri) {
-              return this.sdk!.player.startResumePlayback(
+              return sdk.player.startResumePlayback(
                 deviceId,
                 effectiveContextUri
               )
             }
             // If neither uri nor contextUri is provided, call with just deviceId.
-            return this.sdk!.player.startResumePlayback(deviceId)
+            return sdk.player.startResumePlayback(deviceId)
           },
           { deviceId, contextUri: effectiveContextUri, uri }
         )
@@ -417,21 +420,21 @@ export class SpotifyPolling implements SpotifyService {
       case 'PAUSE':
         await this.executeSdkCommand(
           command,
-          () => this.sdk!.player.pausePlayback(deviceId),
+          () => sdk.player.pausePlayback(deviceId),
           { deviceId }
         )
         break
       case 'NEXT':
         await this.executeSdkCommand(
           command,
-          () => this.sdk!.player.skipToNext(deviceId),
+          () => sdk.player.skipToNext(deviceId),
           { deviceId }
         )
         break
       case 'PREVIOUS':
         await this.executeSdkCommand(
           command,
-          () => this.sdk!.player.skipToPrevious(deviceId),
+          () => sdk.player.skipToPrevious(deviceId),
           { deviceId }
         )
         break
@@ -439,7 +442,7 @@ export class SpotifyPolling implements SpotifyService {
         if (deviceId) {
           await this.executeSdkCommand(
             command,
-            () => this.sdk!.player.transferPlayback([deviceId], true),
+            () => sdk.player.transferPlayback([deviceId], true),
             { deviceId }
           )
         }
@@ -449,7 +452,7 @@ export class SpotifyPolling implements SpotifyService {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
           await this.executeSdkCommand(
             command,
-            () => this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId),
+            () => sdk.player.setPlaybackVolume(clampedVolume, deviceId),
             { deviceId, volume: clampedVolume }
           )
           this.state.volume = clampedVolume

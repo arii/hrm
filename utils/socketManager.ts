@@ -28,7 +28,7 @@ import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
-import { roundTo } from '../lib/utils.js'
+import { roundTo, objectFromEntries } from '../lib/utils.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -297,8 +297,8 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
-          const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
+          const updateData: Partial<HrmStreamData> = objectFromEntries(
+            Object.entries(message.data)
           )
 
           // Prevent overwriting a real name with a default "Unknown" name
@@ -417,22 +417,13 @@ const handleIncomingMessage = (
         })
 
         const spotifyService = services.spotifyService
-        const spotifyCommandParams: {
-          deviceId?: string
-          volume?: number
-          playlistUri?: string
-          contextUri?: string
-          uri?: string
-        } = {}
-        if (commandMsg.deviceId)
-          spotifyCommandParams.deviceId = commandMsg.deviceId
-        if (commandMsg.volume !== undefined)
-          spotifyCommandParams.volume = commandMsg.volume
-        if (commandMsg.playlistUri)
-          spotifyCommandParams.playlistUri = commandMsg.playlistUri
-        if (commandMsg.contextUri)
-          spotifyCommandParams.contextUri = commandMsg.contextUri
-        if (commandMsg.uri) spotifyCommandParams.uri = commandMsg.uri
+        const spotifyCommandParams = {
+          deviceId: commandMsg.deviceId,
+          volume: commandMsg.volume,
+          playlistUri: commandMsg.playlistUri,
+          contextUri: commandMsg.contextUri,
+          uri: commandMsg.uri,
+        }
 
         spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
         break
