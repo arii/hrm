@@ -25,7 +25,14 @@ jest.mock('@/context/WebSocketContext', () => ({
 }))
 
 // Mock the volume preference hook
-jest.mock('@/hooks/useVolumePreference')
+jest.mock('@/hooks/useVolumePreference', () => {
+  const originalModule = jest.requireActual('@/hooks/useVolumePreference')
+  return {
+    __esModule: true,
+    ...originalModule,
+    default: jest.fn(),
+  }
+})
 
 describe('components/SpotifyControls', () => {
   let mockSendData: jest.Mock
@@ -93,6 +100,43 @@ describe('components/SpotifyControls', () => {
     render(<SpotifyControls />)
     const muteButton = screen.getByLabelText(/mute volume/i)
     expect(muteButton).toBeInTheDocument()
+  })
+
+  it('debounces volume change commands', () => {
+    jest.useFakeTimers()
+    const setVolumeMock = jest.fn()
+    const mockUseVolumePreference = useVolumePreference as jest.Mock
+
+    // Initial render with volume 50
+    mockUseVolumePreference.mockReturnValue({
+      volume: 50,
+      muted: false,
+      setVolume: setVolumeMock,
+      toggleMute: jest.fn(),
+    })
+    const { rerender } = render(<SpotifyControls />)
+
+    // Simulate the state update by re-rendering with the new value
+    mockUseVolumePreference.mockReturnValue({
+      volume: 80,
+      muted: false,
+      setVolume: setVolumeMock,
+      toggleMute: jest.fn(),
+    })
+    rerender(<SpotifyControls />)
+
+    // Advance time past the debounce period
+    jest.advanceTimersByTime(300)
+
+    // Now the command should have been sent with the latest value
+    expect(mockSendData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'SPOTIFY_COMMAND',
+        command: 'SET_VOLUME',
+        volume: 80,
+      })
+    )
+    jest.useRealTimers()
   })
 
   it('selects HRM Web Player by default when no device is active', async () => {

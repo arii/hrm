@@ -36,6 +36,7 @@ const AuthButton = ({ providerId, providerName }: AuthButtonProps) => {
       color="primary"
       onClick={handleLogin}
       disabled={isLoading}
+      aria-label={`Login with ${providerName}`}
     >
       {isLoading ? 'Logging in...' : `Login with ${providerName}`}
     </Button>

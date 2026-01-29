@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
-import { SnackbarProvider } from 'notistack'
 import BottomNavBar from '@/components/BottomNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorFallback from '@/components/ErrorFallback'
@@ -14,14 +13,15 @@ import { pageVariants } from '@/components/animation/variants'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import { SnackbarProvider } from 'notistack'
 
 export default function Main({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   return (
     <ErrorBoundary fallback={<ErrorFallback />}>
-      <SnackbarProvider>
-        <ErrorProvider>
-          <LoadingProvider>
+      <ErrorProvider>
+        <LoadingProvider>
+          <SnackbarProvider>
             <Providers>
               <UserSettingsProvider>
                 <TimerSoundProvider>
@@ -40,10 +40,10 @@ export default function Main({ children }: { children: React.ReactNode }) {
                 </TimerSoundProvider>
               </UserSettingsProvider>
             </Providers>
-            <LoadingIndicator />
-          </LoadingProvider>
-        </ErrorProvider>
-      </SnackbarProvider>
+          </SnackbarProvider>
+          <LoadingIndicator />
+        </LoadingProvider>
+      </ErrorProvider>
       <Footer />
       <BottomNavBar />
     </ErrorBoundary>

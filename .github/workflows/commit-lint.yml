@@ -24,3 +24,12 @@ jobs:
             Please review the [commitlint logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details.
 
             You can also refer to the [commit message guidelines](https://github.com/conventional-changelog/commitlint/#what-is-commitlint) for help.
+
+  pr-title-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: pnpm install @commitlint/cli @commitlint/config-conventional
+      - name: Lint PR title
+        run: echo "${{ github.event.pull_request.title }}" | pnpm exec commitlint --config commitlint.config.cjs
