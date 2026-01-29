@@ -518,7 +518,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         // Create a new AbortController for this connection attempt
         abortControllerRef.current = new AbortController()
 
-        // --- START NEW RETRY LOGIC ---
+        // --- START GATT CONNECTION RETRY LOGIC ---
+        // This logic specifically handles a "Zombie Connection" scenario observed
+        // primarily on Android devices.
+        // The Error: When a user refreshes the page or navigates away while a BLE
+        // device is connected, the OS may not immediately clear the connection.
+        // On subsequent connection attempts, the browser throws a 'NetworkError',
+        // 'GATT operation already in progress', or similar vague error because the
+        // device is still "busy" with the old, now-defunct session.
+        // The Solution: Implement a retry loop with exponential backoff. This gives
+        // the underlying Bluetooth stack time to fully release the old connection.
+        // A simple, immediate retry is often not enough.
         let server: BluetoothRemoteGATTServer | undefined
         let attempt = 0
         const maxRetries = 3
@@ -538,21 +548,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const errorName = 'name' in err ? err.name : 'Error'
             const errorMsg = err.message || ''
 
-            // Check if this is the "Zombie" error (NetworkError or "out of range")
-            // This is the specific error Android throws when the device is busy with the old page
             const isZombieError =
               errorName === 'NetworkError' ||
               errorMsg.includes('range') ||
               errorMsg.includes('busy')
 
-            // If it's a zombie error and we haven't given up yet...
             if (
               isZombieError &&
               attempt < maxRetries &&
               !abortControllerRef.current.signal.aborted
             ) {
               attempt++
-              const delayMs = Math.pow(2, attempt) * 1000
+              const delayMs = Math.pow(2, attempt) * 1000 // 2s, 4s, 8s
               logger.warn(
                 { device: device.name, attempt, delayMs, errorMsg },
                 'Device likely busy (Zombie connection). Retrying with exponential backoff...'
@@ -562,16 +569,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 BLUETOOTH_MESSAGES.deviceBusy(delayMs, attempt, maxRetries)
               )
 
-              // Exponential backoff: 2s, 4s, 8s to let the Android Bluetooth stack clear the connection
+              // Wait for the specified delay before the next attempt
               await new Promise((resolve) => setTimeout(resolve, delayMs))
-              continue // Try again
+              continue // Retry the connection
             } else {
-              // If it's a different error, or we ran out of retries, fail for real
+              // If it's a different error, or we've run out of retries, re-throw to fail.
               throw error
             }
           }
         }
-        // --- END NEW RETRY LOGIC ---
+        // --- END GATT CONNECTION RETRY LOGIC ---
 
         if (abortControllerRef.current?.signal.aborted) {
           server?.disconnect()
