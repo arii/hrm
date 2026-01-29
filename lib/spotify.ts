@@ -1,4 +1,5 @@
 import { env } from './env'
+import logger from '@/utils/logger'
 
 export const SPOTIFY_CONSTANTS = {
   TOKEN_URL: 'https://accounts.spotify.com/api/token',
@@ -34,7 +35,30 @@ export async function refreshSpotifyToken(refreshToken: string) {
   })
 
   if (!response.ok) {
-    throw await response.json()
+    const errorBody = await response.text()
+    logger.error(
+      {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorBody,
+      },
+      'Failed to refresh Spotify token'
+    )
+
+    // Attempt to parse the error body as JSON, but fall back to a generic error
+    try {
+      const errorJson = JSON.parse(errorBody)
+      throw new Error(
+        errorJson.error_description ||
+          errorJson.error ||
+          'Spotify token refresh failed'
+      )
+    } catch (_e) {
+      // If parsing fails, throw a more generic error with the raw text
+      throw new Error(
+        `Spotify token refresh failed: ${response.status} ${response.statusText} - ${errorBody}`
+      )
+    }
   }
 
   return response.json()

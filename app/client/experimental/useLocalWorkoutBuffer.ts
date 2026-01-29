@@ -105,16 +105,16 @@ export const useLocalWorkoutBuffer = (
   }, [getZoneForHr, setWorkoutData])
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null
+    let intervalId: number | null = null
     // CHANGED: The interval now starts as soon as the workout is running,
     // regardless of whether there's an active HR signal.
     // This allows data collection to begin immediately and catch the HR
     // signal as soon as it's available.
     if (workoutData.status === 'running') {
-      intervalId = setInterval(recordHrData, 1000)
+      intervalId = window.setInterval(recordHrData, 1000)
     }
     return () => {
-      if (intervalId) clearInterval(intervalId)
+      if (intervalId) window.clearInterval(intervalId)
     }
   }, [workoutData.status, recordHrData])
 

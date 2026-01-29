@@ -112,7 +112,7 @@ test.describe('Infrastructure & Scripts', () => {
       ...process.env,
       NODE_ENV: 'production',
       PORT: String(PORT),
-      NEXTAUTH_SECRET: 'test-secret-mock',
+      NEXTAUTH_SECRET: 'a-super-long-and-secure-secret-for-ci-tests',
       NEXTAUTH_URL: `http://localhost:${PORT}`,
     }
 

@@ -26,10 +26,12 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       spacing={1}
       alignItems="center"
       sx={{ flexGrow: 1, minWidth: 150 }}
+      data-testid="volume-slider-container"
     >
       <IconButton
         onClick={onToggleMute}
         aria-label={muted ? 'Unmute volume' : 'Mute volume'}
+        data-testid="volume-slider-mute-button"
       >
         {muted || volume === 0 ? <VolumeOff /> : <VolumeUp />}
       </IconButton>
@@ -41,11 +43,13 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         max={100}
         size="small"
         aria-label="Volume control"
+        data-testid="volume-slider-input"
       />
       {showValue && (
         <Typography
           variant="caption"
           sx={{ minWidth: '3ch', textAlign: 'right' }}
+          data-testid="volume-slider-value"
         >
           {muted ? '0' : volume}
         </Typography>

@@ -251,6 +251,8 @@ describe('WebSocket Manager', () => {
 
       it('should redact sensitive fields in production', async () => {
         process.env.NODE_ENV = 'production'
+        process.env.NEXTAUTH_SECRET =
+          'a-very-long-and-secure-secret-for-production-env'
 
         const loggerInfoSpy = jest.spyOn(logger, 'info')
         const mockReq = createMockRequest('/?clientId=prod-client')
@@ -564,6 +566,79 @@ describe('WebSocket Manager', () => {
         expect.objectContaining({ clientId: 'test-client' }),
         'Unknown message type received'
       )
+    })
+  })
+  describe('Session Cleanup', () => {
+    it('should clean up client session after grace period', () => {
+      const clientId = 'test-client-cleanup'
+      const mockReq = createMockRequest(`/?clientId=${clientId}`)
+      const newWs = new MockWebSocket()
+      mockWss.emit('connection', newWs, mockReq)
+
+      // Disconnect the client
+      newWs.emit('close')
+
+      // Advance timers to trigger cleanup
+      jest.runAllTimers()
+
+      // Verify that the cleanup logic was called
+      expect(logger.info).toHaveBeenCalledWith(
+        { clientId },
+        'Session expired. Deleting data.'
+      )
+
+      // Verify the broadcast payload contains the other client but not the cleaned-up one
+      const mockBroadcast = broadcast as jest.Mock
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const payload: HrmData[] = lastCall[1].payload
+
+      expect(payload.length).toBe(1)
+      expect(payload[0].clientId).toBe('test-client')
+      expect(payload.find((c) => c.clientId === clientId)).toBeUndefined()
+    })
+
+    it('should not clean up session if client reconnects within grace period', () => {
+      const clientId = 'test-client-reconnect'
+      const mockReq = createMockRequest(`/?clientId=${clientId}`)
+      const firstWs = new MockWebSocket()
+      mockWss.emit('connection', firstWs, mockReq)
+
+      // Disconnect the first client
+      firstWs.emit('close')
+
+      // Reconnect with a new WebSocket instance before the timer fires
+      const secondWs = new MockWebSocket()
+      mockWss.emit('connection', secondWs, mockReq)
+
+      // Advance timers past the grace period
+      jest.runAllTimers()
+
+      // Verify that the cleanup was NOT called for the original session
+      expect(logger.info).not.toHaveBeenCalledWith(
+        { clientId },
+        'Session expired. Deleting data.'
+      )
+      // Verify that the "timer cleared" message was logged
+      expect(logger.info).toHaveBeenCalledWith(
+        { clientId },
+        'Cleared cleanup timer for reconnected client.'
+      )
+
+      // Trigger a broadcast by having the other client disconnect
+      mockWs.emit('close') // This is the 'test-client' from beforeEach
+      jest.runAllTimers()
+
+      // Verify that the client's data still exists in the broadcast from the *other* client's cleanup
+      const mockBroadcast = broadcast as jest.Mock
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const payload: HrmData[] = lastCall[1].payload
+
+      // The payload should contain our reconnected client
+      expect(payload.find((c) => c.clientId === clientId)).toBeDefined()
+      // The payload should NOT contain the client that just disconnected to trigger the broadcast
+      expect(payload.find((c) => c.clientId === 'test-client')).toBeUndefined()
     })
   })
 })

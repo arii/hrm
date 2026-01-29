@@ -70,6 +70,21 @@ The dashboard layout has been improved with consistent proportions, rotated side
 
 Some ARIA labels and improved color contrast have been implemented. Further work is in progress to improve keyboard navigation and screen reader support.
 
+#### Automated Accessibility Testing
+
+To ensure ongoing compliance and prevent regressions, automated accessibility checks have been integrated into the Playwright visual regression test (VRT) suite. These tests use `axe-core` to analyze the application's UI and report any violations of the WCAG 2.1 AA standard.
+
+**How it Works:**
+
+- Before each visual snapshot is taken, an accessibility scan is performed on the relevant component or page.
+- The scan checks for a wide range of accessibility issues, including color contrast, ARIA attributes, keyboard navigation, and more.
+- If any violations are detected, the test will fail, and the specific issues will be logged to the console for review.
+
+**Developer Responsibility:**
+
+- When a VRT fails due to an accessibility violation, it is the developer's responsibility to investigate and fix the issue.
+- While some rules may be temporarily disabled to unblock development, the long-term goal is to address all accessibility issues and maintain a fully compliant application.
+
 ## Usage Guide for Developers
 
 ### Accessing Theme Values
