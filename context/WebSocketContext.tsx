@@ -194,9 +194,7 @@ export const WebSocketProvider = ({
       }
 
       if (process.env.NODE_ENV !== 'production') {
-        ;(
-          window as Window & { TEST_CONTROLS?: TestControls }
-        ).TEST_CONTROLS = {
+        ;(window as Window & { TEST_CONTROLS?: TestControls }).TEST_CONTROLS = {
           dispatch,
           disconnect: () => {},
           connect: () => {},
@@ -409,9 +407,8 @@ export const WebSocketProvider = ({
       typeof window !== 'undefined' &&
       process.env.NODE_ENV !== 'production'
     ) {
-      const testControls = (
-        window as Window & { TEST_CONTROLS?: TestControls }
-      ).TEST_CONTROLS
+      const testControls = (window as Window & { TEST_CONTROLS?: TestControls })
+        .TEST_CONTROLS
       if (testControls) {
         testControls.disconnect = disconnect
         testControls.connect = connect
