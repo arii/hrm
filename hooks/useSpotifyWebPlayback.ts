@@ -105,9 +105,13 @@ const useSpotifyWebPlayback = () => {
           // streamline this to rely on a single source of truth for session
           // validity.
           await signOut()
+        } else {
+          // For other errors, show a non-persistent error message to the user.
+          addError(`Failed to authenticate with Spotify: ${appError.message}`, {
+            persist: false,
+          })
         }
-        // For other errors, we might not need to sign out.
-        // The SDK might retry on its own.
+        // The SDK might retry on its own for certain errors.
       }
     },
     [addError]

@@ -82,7 +82,7 @@ describe('useSpotifyWebPlayback', () => {
     })
   })
 
-  it('should not call signOut for non-401 errors', async () => {
+  it('should call addError but not signOut for non-401 errors', async () => {
     const error: networkUtils.AppError = {
       message: 'Internal Server Error',
       code: 'HTTP_ERROR_500',
@@ -96,7 +96,10 @@ describe('useSpotifyWebPlayback', () => {
     await playerOptions.getOAuthToken(() => {})
 
     await waitFor(() => {
-      expect(mockAddError).not.toHaveBeenCalled()
+      expect(mockAddError).toHaveBeenCalledWith(
+        'Failed to authenticate with Spotify: Internal Server Error',
+        { persist: false }
+      )
       expect(mockSignOut).not.toHaveBeenCalled()
     })
   })
