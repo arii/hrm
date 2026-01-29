@@ -184,7 +184,7 @@ export interface SpotifyDevice {
 
 ### Related Types
 
--   `SpotifyData` (`types/websocket.ts`): Represents the complete state of the Spotify integration that is broadcast to the client, including track information and the list of devices.
+-   `SpotifyPlaybackState` (`types/websocket.ts`): Represents the complete state of the Spotify integration that is broadcast to the client, including track information and the list of devices.
 -   `SpotifyTokenPayload` (`services/spotifyTokenManager.ts`): The structure of the token object passed from NextAuth to the backend.
 -   **Official SDK Types**: For detailed data structures such as `Track`, `Artist`, and `Album`, developers should refer to the official `@spotify/web-api-ts-sdk` library, which is the source of truth for these types.
 

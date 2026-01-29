@@ -5,7 +5,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
-import { SpotifyData } from '../../types/websocket'
+import { SpotifyPlaybackState } from '../../types/websocket'
 import logger from '@/utils/logger'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
@@ -84,7 +84,7 @@ import { ServerMessage } from '../../types/websocket'
 describe('SpotifyPolling Service', () => {
   let spotifyService: SpotifyPolling
   let broadcastMock: jest.Mock<(message: ServerMessage) => void>
-  let broadcastedStates: SpotifyData[]
+  let broadcastedStates: SpotifyPlaybackState[]
 
   beforeEach(async () => {
     jest.useFakeTimers()

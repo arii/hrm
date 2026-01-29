@@ -142,7 +142,7 @@ export default defineConfig([
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern:
-            '^fetch$|^SpotifyData$|^UnifiedStateMessage$|^SpotifyTokenManager$|^TOKEN_URL$|^SpotifyTokenResponse$',
+            '^fetch$|^SpotifyPlaybackState$|^UnifiedStateMessage$|^SpotifyTokenManager$|^TOKEN_URL$|^SpotifyTokenResponse$',
         },
       ],
     },

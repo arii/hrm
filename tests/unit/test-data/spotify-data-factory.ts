@@ -1,5 +1,5 @@
 import { SpotifyDevice } from '@/types/core'
-import { SpotifyData } from '@/types/websocket'
+import { SpotifyPlaybackState } from '@/types/websocket'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 
 /**
@@ -22,12 +22,12 @@ export const createMockSpotifyDevice = (
 
 /**
  * Creates a mock SpotifyData object for use in tests.
- * @param overrides - Partial<SpotifyData> to override default values.
+ * @param overrides - Partial<SpotifyPlaybackState> to override default values.
  * @returns A mock SpotifyData.
  */
 export const createMockSpotifyData = (
-  overrides: Partial<SpotifyData> = {}
-): SpotifyData => ({
+  overrides: Partial<SpotifyPlaybackState> = {}
+): SpotifyPlaybackState => ({
   trackId: 'mock-track-id',
   trackName: 'Mock Track',
   artist: 'Mock Artist',

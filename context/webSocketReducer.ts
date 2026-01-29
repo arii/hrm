@@ -1,20 +1,16 @@
 import {
-  SpotifyData,
   TimerData,
   ServerMessage,
   ActiveAlert,
+  SpotifyPlaybackState,
 } from '../types/websocket'
-import { HrmStreamData as ServerHrmData } from '../types/core'
-
-// Client-side extension of HrmData to include connection status
-export interface HrmData extends ServerHrmData {
-  isConnected: boolean
-}
+import { HrmStreamData } from '../types/core'
+import { ClientHrmData } from './WebSocketContext'
 
 export interface WebSocketState {
-  hrmData: HrmData[]
+  hrmData: ClientHrmData[]
   timerData: TimerData
-  spotifyData: SpotifyData
+  spotifyData: SpotifyPlaybackState
   activeAlerts: ActiveAlert[]
   spotifyServiceInitialized?: boolean
 }
@@ -65,7 +61,7 @@ export const reducer = (
       }
     }
     case 'HRM_UPDATE': {
-      const payload = message.payload as ServerHrmData[]
+      const payload = message.payload as HrmStreamData[]
       // Create a map of incoming clientIds for efficient lookup
       const incomingClients = new Set(payload.map((user) => user.clientId))
 

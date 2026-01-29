@@ -13,7 +13,7 @@ import {
   useMemo,
 } from 'react'
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
-import { HrmStreamData as ServerHrmData } from '../types/core'
+import { HrmStreamData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
 
 // Define a type for the test controls to avoid using 'any'
@@ -24,8 +24,8 @@ interface TestControls {
 }
 import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
 
-// Client-side extension of HrmData to include connection status
-export interface HrmData extends ServerHrmData {
+// Client-side extension of HrmStreamData to include connection status
+export interface ClientHrmData extends HrmStreamData {
   isConnected: boolean
 }
 
@@ -59,7 +59,7 @@ export const reducer = (
       }
     }
     case 'HRM_UPDATE': {
-      const payload = message.payload as ServerHrmData[]
+      const payload = message.payload as HrmStreamData[]
       // Create a new state array by merging existing and new data
       // The previous logic used a Set of incoming client IDs to determine who was connected,
       // but this was flawed. By using the payload as the single source of truth, we ensure

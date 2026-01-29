@@ -7,7 +7,7 @@ t* estable, and easier to refactor.
  */
 
 import { SpotifyTokenPayload } from '../services/spotifyTokenManager'
-import { SpotifyData } from './websocket'
+import { SpotifyPlaybackState } from './websocket'
 
 /**
  * Represents a service that provides a snapshot of its current state.
@@ -92,7 +92,7 @@ export type SpotifyCommand =
  * Combined interface for the Spotify service, adhering to ISP.
  * Consumers can depend on this, or on one of the more granular interfaces.
  */
-export type SpotifyService = StateProvider<SpotifyData> &
+export type SpotifyService = StateProvider<SpotifyPlaybackState> &
   CommandHandler<
     SpotifyCommand,
     {

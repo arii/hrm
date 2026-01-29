@@ -5,9 +5,9 @@
  */
 import { WebSocket } from 'ws'
 import type {
-  HrmStreamData as HrmData,
+  HrmStreamData,
   TimerData,
-  SpotifyPlaybackState as SpotifyData,
+  SpotifyPlaybackState,
   TimerMode,
 } from './core'
 
@@ -26,7 +26,7 @@ export interface ExtWebSocket extends WebSocket {
 
 // --- Server Broadcast State Interfaces ---
 
-export type { HrmData, TimerData, SpotifyData, TimerMode }
+export type { HrmStreamData, TimerData, SpotifyPlaybackState, TimerMode }
 
 export type SpotifyCommand =
   | 'PLAY'
@@ -41,9 +41,9 @@ export type SpotifyCommand =
  * The payload for the INITIAL_STATE message, representing the full application state.
  */
 export interface InitialStateSnapshotPayload {
-  hrmData: HrmData[]
+  hrmData: HrmStreamData[]
   timerData: TimerData
-  spotifyData: SpotifyData
+  spotifyData: SpotifyPlaybackState
   spotifyServiceInitialized?: boolean
 }
 
@@ -71,9 +71,9 @@ export type ServerMessage =
       type: 'INITIAL_STATE'
       payload: InitialStateSnapshotPayload
     }
-  | { type: 'HRM_UPDATE'; payload: HrmData[] }
+  | { type: 'HRM_UPDATE'; payload: HrmStreamData[] }
   | { type: 'TIMER_UPDATE'; payload: TimerData }
-  | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
+  | { type: 'SPOTIFY_UPDATE'; payload: SpotifyPlaybackState }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
   | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
@@ -101,7 +101,7 @@ export interface HrmInputMessage {
 }
 
 export type HrmMetadataUpdateData = Omit<
-  Partial<HrmData>,
+  Partial<HrmStreamData>,
   'clientId' | 'value' | 'calories'
 > & {
   weight?: number

@@ -5,7 +5,10 @@ import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import CurrentSpotifyItemDisplay from '@/components/Spotify/CurrentSpotifyItemDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
-import { WebSocketContextType, SpotifyData } from '@/types/websocket'
+import {
+  WebSocketContextType,
+  SpotifyPlaybackState,
+} from '@/types/websocket'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 
 // Mock the uuid module
@@ -20,10 +23,10 @@ const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
 
 // Mock the WebSocketContext
 const mockWebSocketContext = (
-  spotifyData: Partial<SpotifyData>,
+  spotifyPlaybackState: Partial<SpotifyPlaybackState>,
   connectionStatus: 'Connecting' | 'Connected' | 'Disconnected'
 ): WebSocketContextType => ({
-  spotifyData: spotifyData as SpotifyData,
+  spotifyData: spotifyPlaybackState as SpotifyPlaybackState,
   connectionStatus,
   sendData: jest.fn(),
   timerData: {
@@ -40,7 +43,7 @@ const mockWebSocketContext = (
       timeRemaining: 0,
       totalTime: 0,
     },
-    spotify: spotifyData,
+    spotify: spotifyPlaybackState,
     hrm: {},
   },
 })

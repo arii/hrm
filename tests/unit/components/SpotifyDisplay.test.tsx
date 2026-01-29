@@ -15,7 +15,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useSession, signIn } from 'next-auth/react'
 import React from 'react'
-import { SpotifyData } from '@/types/websocket'
+import { SpotifyPlaybackState } from '@/types/websocket'
 
 // Mock dependencies
 jest.mock('@/components/Spotify/VolumeSlider', () => ({
@@ -122,7 +122,7 @@ describe('SpotifyDisplay', () => {
   describe('when authenticated', () => {
     let mockSendData: jest.Mock
     let rerender: (ui: React.ReactElement) => void
-    let initialSpotifyData: SpotifyData
+    let initialSpotifyData: SpotifyPlaybackState
 
     beforeEach(() => {
       jest.useFakeTimers()

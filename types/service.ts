@@ -1,6 +1,6 @@
 // types/service.ts
 
-import { SpotifyData, TimerData, TimerMode } from './websocket.js'
+import { SpotifyPlaybackState, TimerData, TimerMode } from './websocket.js'
 
 /**
  * A generic service interface.
@@ -14,7 +14,7 @@ export interface Service {
  * The Spotify polling service interface.
  */
 export interface SpotifyService extends Service {
-  getState(): SpotifyData
+  getState(): SpotifyPlaybackState
   handleCommand(
     command:
       | 'PLAY'

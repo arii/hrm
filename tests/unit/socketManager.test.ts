@@ -21,7 +21,7 @@ import { TLSSocket } from 'tls'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import {
-  HrmData,
+  HrmStreamData,
   StateSnapshot,
   ClientCommandMessageSchema,
   ExtWebSocket,
@@ -351,7 +351,7 @@ describe('WebSocket Manager', () => {
       expect(mockBroadcast).toHaveBeenCalled()
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const finalPayload: HrmData[] = lastCall[1].payload
+      const finalPayload: HrmStreamData[] = lastCall[1].payload
       const clientData = finalPayload.find((c) => c.calories > 0)
 
       expect(clientData).toBeDefined()
@@ -386,7 +386,7 @@ describe('WebSocket Manager', () => {
       expect(mockBroadcast).toHaveBeenCalled()
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const finalPayload: HrmData[] = lastCall[1].payload
+      const finalPayload: HrmStreamData[] = lastCall[1].payload
       const clientData = finalPayload.find((c) => c.calories > 0)
 
       expect(clientData).toBeDefined()
@@ -415,7 +415,7 @@ describe('WebSocket Manager', () => {
       const mockBroadcast = broadcast as jest.Mock
       let lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      let payload: HrmData[] = lastCall[1].payload
+      let payload: HrmStreamData[] = lastCall[1].payload
       expect(payload[0].calories).toBeGreaterThan(0)
 
       // 2. Send the STOP command
@@ -591,7 +591,7 @@ describe('WebSocket Manager', () => {
       const mockBroadcast = broadcast as jest.Mock
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const payload: HrmData[] = lastCall[1].payload
+      const payload: HrmStreamData[] = lastCall[1].payload
 
       expect(payload.length).toBe(1)
       expect(payload[0].clientId).toBe('test-client')
@@ -633,7 +633,7 @@ describe('WebSocket Manager', () => {
       const mockBroadcast = broadcast as jest.Mock
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const payload: HrmData[] = lastCall[1].payload
+      const payload: HrmStreamData[] = lastCall[1].payload
 
       // The payload should contain our reconnected client
       expect(payload.find((c) => c.clientId === clientId)).toBeDefined()

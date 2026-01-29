@@ -52,7 +52,7 @@ export const NoActivePlayback: Story = {
         <WebSocketContext.Provider
           value={{
             ...mockWebSocketContext,
-            spotifyData: mockSpotifyDataNoActivePlayback,
+            spotifyPlaybackState: mockSpotifyDataNoActivePlayback,
           }}
         >
           <Story />
