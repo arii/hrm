@@ -251,6 +251,8 @@ describe('WebSocket Manager', () => {
 
       it('should redact sensitive fields in production', async () => {
         process.env.NODE_ENV = 'production'
+        process.env.NEXTAUTH_SECRET =
+          'a-very-long-and-secure-secret-for-production-env'
 
         const loggerInfoSpy = jest.spyOn(logger, 'info')
         const mockReq = createMockRequest('/?clientId=prod-client')
