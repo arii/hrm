@@ -18,11 +18,11 @@ describe('getUserHrZones', () => {
     const age = 0
     const zones = getUserHrZones(age)
 
-    // Max HR = 200
-    expect(zones.warmUp.min).toBe(100)
-    expect(zones.fatBurn.min).toBe(120)
-    expect(zones.cardio.min).toBe(140)
-    expect(zones.peak.min).toBe(170)
-    expect(zones.max.min).toBe(190)
+    // Max HR = 185 (default)
+    expect(zones.warmUp.min).toBe(93) // 185 * 0.5 = 92.5, rounded
+    expect(zones.fatBurn.min).toBe(111) // 185 * 0.6
+    expect(zones.cardio.min).toBe(130) // 185 * 0.7 = 129.5, rounded
+    expect(zones.peak.min).toBe(157) // 185 * 0.85 = 157.25, rounded
+    expect(zones.max.min).toBe(176) // 185 * 0.95 = 175.75, rounded
   })
 })
