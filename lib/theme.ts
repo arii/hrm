@@ -340,24 +340,6 @@ const theme = createTheme({
         }),
       },
     },
-    MuiSlider: {
-      styleOverrides: {
-        root: {
-          color: '#1DB954', // Spotify green as the default color
-          '& .MuiSlider-thumb': {
-            backgroundColor: 'white',
-            width: 12,
-            height: 12,
-          },
-          '& .MuiSlider-track': {
-            height: 3,
-          },
-          '& .MuiSlider-rail': {
-            height: 3,
-          },
-        },
-      },
-    },
   },
 
   // Breakpoints for responsive design

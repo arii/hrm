@@ -82,6 +82,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         min={0}
         max={100}
         size="small"
+        sx={{ color: 'spotify.main' }}
         aria-labelledby="volume-slider"
         data-testid="volume-slider-input"
       />
