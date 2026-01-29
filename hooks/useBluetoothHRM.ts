@@ -1,10 +1,4 @@
-/**
- * @file useBluetoothHRM.ts
- * @description This file exports a custom React hook, `useBluetoothHRM`, for managing
- * interactions with Bluetooth Low Energy (BLE) Heart Rate Monitor (HRM) devices.
- * It encapsulates the logic for device discovery, connection, disconnection,
- * data streaming, and automatic reconnection on signal loss.
- */
+// Manages Bluetooth HRM device lifecycle: discovery, connection, data streaming, reconnection
 import { useCallback, useState, useRef, useEffect } from 'react'
 import {
   HrmMetadataUpdateMessage,
@@ -44,35 +38,17 @@ const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
 const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 export const HEARTBEAT_INTERVAL_MS = 1000 // Exported for testing purposes
 
-/**
- * @function parseHeartRate
- * @description Parses the heart rate value from the raw DataView received from a BLE device.
- * It handles both 8-bit and 16-bit heart rate value formats based on the flags.
- * @param {DataView} value - The raw data from the heart rate measurement characteristic.
- * @returns {number} The parsed heart rate in beats per minute.
- */
+// Parses the heart rate value from the raw DataView received from a BLE device.
 const parseHeartRate = (value: DataView): number => {
   const flags = value.getUint8(0)
   const is16Bit = flags & 0x1
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
 }
-/**
- * @interface UseBluetoothHRMProps
- * @description Props for configuring the useBluetoothHRM hook.
- */
+
 interface UseBluetoothHRMProps {
-  /**
-   * @property {number} [dataLivenessTimeoutMs=10000]
-   * @description The timeout in milliseconds for determining if the Bluetooth data stream is stale.
-   * If no new data is received within this period, the hook will attempt to reconnect.
-   * A value of 0 disables this feature.
-   */
+  // The timeout in milliseconds for determining if the Bluetooth data stream is stale.
   dataLivenessTimeoutMs?: number
-  /**
-   * @property {number} [throttleMs=250]
-   * @description The frequency in milliseconds at which to throttle heart rate updates.
-   * A lower value will send more frequent updates, while a higher value will send fewer.
-   */
+  // The frequency in milliseconds at which to throttle heart rate updates.
   throttleMs?: number
   userName?: string | null
   userAge?: number | null
@@ -80,43 +56,6 @@ interface UseBluetoothHRMProps {
   onConnect?: () => void
 }
 
-/**
- * @hook useBluetoothHRM
- * @description A comprehensive hook for managing Bluetooth Low Energy (BLE) Heart Rate Monitor (HRM) devices.
- * It handles device discovery, connection, data streaming, and automatic reconnection.
- *
- * @param {UseBluetoothHRMProps} props - Configuration properties for the hook.
- *
- * @returns {object} An object containing functions and state for managing a Bluetooth HRM device.
- * @property {Function} connectAndStream - Initiates device connection and data streaming.
- * @property {Function} disconnect - Manually disconnects the device.
- * @property {Function} forgetDevice - Disconnects and forgets the device.
- * @property {string} deviceStatus - A human-readable string of the current connection status.
- * @property {number | null} batteryLevel - The device's battery level (0-100), or null if unavailable.
- * @property {boolean} isConnected - True if the device is connected and streaming.
- * @property {boolean} isSupported - True if the browser supports the Web Bluetooth API.
- *
- * @example
- * ```tsx
- * const {
- *   connectAndStream,
- *   disconnect,
- *   deviceStatus,
- *   isConnected,
- *   batteryLevel
- * } = useBluetoothHRM({ dataLivenessTimeoutMs: 5000 });
- *
- * return (
- *   <div>
- *     <p>Device Status: {deviceStatus}</p>
- *     <p>Connected: {isConnected ? 'Yes' : 'No'}</p>
- *     {batteryLevel && <p>Battery: {batteryLevel}%</p>}
- *     <button onClick={() => connectAndStream('John Doe', 30)}>Connect</button>
- *     <button onClick={disconnect}>Disconnect</button>
- *   </div>
- * );
- * ```
- */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
     dataLivenessTimeoutMs = 10000,
@@ -167,16 +106,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setSignalPeriodMs(Math.round(average))
   }, [])
 
-  /**
-   * @ref abortControllerRef
-   * @description Manages the cancellation of in-flight Bluetooth connection attempts.
-   * This is crucial for handling timeouts and preventing race conditions where multiple
-   * connection attempts (e.g., auto-reconnect vs. manual) might overlap.
-   * - It is created and assigned in `connectToGatt`.
-   * - It is aborted in `disconnect` to stop any ongoing connection attempts.
-   * - It is also aborted at the start of `connectToGatt` to cancel any previous,
-   *   still-pending connection attempts before starting a new one.
-   */
+  // Manages the cancellation of in-flight Bluetooth connection attempts.
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
@@ -203,7 +133,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [userName, userAge])
 
   useEffect(() => {
-    // Keep the ref updated if props change
     userDetailsRef.current = {
       name: userName || '',
       age: userAge || 0,
@@ -240,10 +169,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   // Cleanup
   useEffect(() => {
-    // Reset the manual disconnect flag on mount to allow auto-reconnect after page refresh
     isManualDisconnect.current = false
 
-    // Expose test controls when in a test environment
     if (
       typeof window !== 'undefined' &&
       process.env.NEXT_PUBLIC_TESTING === 'true'
@@ -256,11 +183,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
 
     return () => {
-      // Clear timeouts on unmount, but don't mark as manual disconnect
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
 
-      // Cleanup test controls on unmount
       if (
         typeof window !== 'undefined' &&
         process.env.NEXT_PUBLIC_TESTING === 'true'
@@ -273,13 +198,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
   }, [])
 
-  // Consolidated watchdog and heartbeat timer
   useEffect(() => {
-    // A timeout of 0 for dataLivenessTimeoutMs disables the watchdog feature.
-    // The heartbeat for signal quality will still run.
     let checkCounter = 0
     const interval = setInterval(() => {
-      // --- Heartbeat Logic (runs every second) ---
       if (
         statusRef.current === BluetoothConnectionStatus.CONNECTED &&
         !isDataStale &&
@@ -298,7 +219,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       }
 
-      // --- Watchdog Logic (runs every 2 seconds) ---
       checkCounter++
       if (checkCounter % 2 === 0 && dataLivenessTimeoutMs > 0) {
         if (
@@ -327,11 +247,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     return () => clearInterval(interval)
   }, [dataLivenessTimeoutMs, isDataStale, updateSignalPeriod])
 
-  /**
-   * @function disconnect
-   * @description Manually disconnects the device, preventing auto-reconnection.
-   * @sideeffect Clears connection timeouts and resets device state.
-   */
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
     isTimeoutDisconnect.current = false
@@ -341,7 +256,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
-    // Send a 'null' heart rate value to signal disconnection to the server
     sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
 
     setStatus(BluetoothConnectionStatus.DISCONNECTED)
@@ -354,13 +268,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setSignalPeriodMs(0)
   }, [])
 
-  /**
-   * @function forgetDevice
-   * @description Disconnects, clears the saved device from cookies, and revokes permissions.
-   * @async
-   * @returns {Promise<void>}
-   * @sideeffect Calls `disconnect`, deletes cookies, and may call `device.forget()`.
-   */
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
     disconnect()
@@ -538,14 +445,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const errorName = 'name' in err ? err.name : 'Error'
             const errorMsg = err.message || ''
 
-            // Check if this is the "Zombie" error (NetworkError or "out of range")
             // This is the specific error Android throws when the device is busy with the old page
             const isZombieError =
               errorName === 'NetworkError' ||
               errorMsg.includes('range') ||
               errorMsg.includes('busy')
 
-            // If it's a zombie error and we haven't given up yet...
             if (
               isZombieError &&
               attempt < maxRetries &&
@@ -562,11 +467,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 BLUETOOTH_MESSAGES.deviceBusy(delayMs, attempt, maxRetries)
               )
 
-              // Exponential backoff: 2s, 4s, 8s to let the Android Bluetooth stack clear the connection
+              // Exponential backoff lets the Android Bluetooth stack clear the connection
               await new Promise((resolve) => setTimeout(resolve, delayMs))
-              continue // Try again
+              continue
             } else {
-              // If it's a different error, or we ran out of retries, fail for real
               throw error
             }
           }
@@ -720,19 +624,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     connectToGattRef.current = connectToGatt
   }, [connectToGatt])
 
-  /**
-   * @function connectAndStream
-   * @description Connects to a Bluetooth HRM device and starts streaming data.
-   * It attempts to reconnect to a saved device or prompts the user to select a new one.
-   *
-   * @param {string} [userName] - The user's name for display.
-   * @param {number} [userAge] - The user's age to calculate max heart rate.
-   * @returns {Promise<void>} A promise that resolves on successful connection, or rejects on failure.
-   * @throws {Error} If the connection fails for any reason (e.g., WebSocket disconnected,
-   * device not found, user cancellation).
-   * @sideeffect May trigger the browser's Bluetooth device picker.
-   * @sideeffect Updates component state throughout the connection process.
-   */
   const connectAndStream = useCallback(
     async (
       userNameFromArgs?: string,
