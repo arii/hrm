@@ -42,7 +42,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       direction="row"
       spacing={1}
       alignItems="center"
-      sx={{ width: 150, flexGrow: 1, minWidth: 150 }}
+      sx={{ minWidth: 150, flexGrow: 1 }}
       data-testid="volume-slider-container"
     >
       <IconButton
