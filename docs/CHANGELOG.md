@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.28.0](https://github.com/arii/hrm/compare/hrm-v0.27.0...hrm-v0.28.0) (2026-01-29)
+
+
+### Features
+
+* **medium:** Bluetooth HRM Integration & Testing Improvements ([#4583](https://github.com/arii/hrm/issues/4583)) ([03bf948](https://github.com/arii/hrm/commit/03bf948e72dc50dcf6e704e76368937b95f7fe36))
+* **medium:** Enhance Environment Variable Validation ([#4580](https://github.com/arii/hrm/issues/4580)) ([f37a217](https://github.com/arii/hrm/commit/f37a21729a9eccff6863060c99710b910fb5056e))
+* **notifications:** Replace custom error display with notistack ([#4582](https://github.com/arii/hrm/issues/4582)) ([f5322c3](https://github.com/arii/hrm/commit/f5322c3c5797b7c9aa285a53fae91f79287c850b))
+* **small:** Enhance UI Accessibility ([#4595](https://github.com/arii/hrm/issues/4595)) ([0ab68b5](https://github.com/arii/hrm/commit/0ab68b50ed940cfb7f859b20d7f106579b194a4b))
+* **testing:** Enhance data-testid Coverage for Granular UI Testing ([#4645](https://github.com/arii/hrm/issues/4645)) ([a1b0199](https://github.com/arii/hrm/commit/a1b01997fe9e42d4609779390b3c3a59339e6c2c))
+
+
+### Bug Fixes
+
+* **spotify:** Improve token refresh error handling ([#4994](https://github.com/arii/hrm/issues/4994)) ([8b1b432](https://github.com/arii/hrm/commit/8b1b432432a9d98241116a3ae643f6aceba7ed81))
+* **TimerControls:** Synchronize optimistic UI with server state ([#4574](https://github.com/arii/hrm/issues/4574)) ([7c02eb2](https://github.com/arii/hrm/commit/7c02eb2e108b6f46cd570af4fc5d19f679714e09))
+
 ## [0.27.0](https://github.com/arii/hrm/compare/hrm-v0.26.0...hrm-v0.27.0) (2026-01-27)
 
 
