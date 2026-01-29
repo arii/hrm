@@ -50,11 +50,7 @@ const ExperimentalAnalyticsPage = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box display="flex" flexDirection="column" gap={3}>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-        >
+        <Box display="flex" justifyContent="space-between" alignItems="center">
           <WorkoutSummary
             duration={totalDuration}
             calories={caloriesBurned}
