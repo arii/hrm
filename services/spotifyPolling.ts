@@ -11,7 +11,7 @@ import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
 } from './spotifyTokenManager.js'
-import logger from '../utils/logger.js'
+import logger from '../lib/logger.js'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,

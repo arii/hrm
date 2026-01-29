@@ -12,7 +12,7 @@ jest.mock('@/lib/spotify', () => ({
 }))
 
 // Mock the logger
-jest.mock('@/utils/logger', () => ({
+jest.mock('@/lib/logger', () => ({
   __esModule: true,
   default: {
     info: jest.fn(),

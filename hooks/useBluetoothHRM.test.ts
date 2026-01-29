@@ -12,7 +12,7 @@ jest.mock('@/context/WebSocketContext')
 jest.mock('@/utils/cookies')
 
 // Mock logger
-jest.mock('@/utils/logger', () => ({
+jest.mock('@/lib/logger', () => ({
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),

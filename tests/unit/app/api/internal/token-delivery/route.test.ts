@@ -6,7 +6,7 @@ import { POST } from '@/app/api/internal/token-delivery/route'
 import { NextRequest } from 'next/server'
 
 // Mock logger
-jest.mock('@/utils/logger', () => ({
+jest.mock('@/lib/logger', () => ({
   __esModule: true,
   default: {
     info: jest.fn(),

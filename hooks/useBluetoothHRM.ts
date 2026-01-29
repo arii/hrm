@@ -13,7 +13,7 @@ import {
 import { BluetoothConnectionStatus } from '../types/bluetooth'
 import isEqual from 'lodash.isequal'
 import { calculateMaxHr } from '../utils/constants'
-import logger from '@/utils/logger'
+import logger from '@/lib/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'

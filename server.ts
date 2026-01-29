@@ -4,15 +4,14 @@ import express, { type RequestHandler } from 'express'
 import { createServer } from 'http'
 import next from 'next'
 import { env } from './lib/env.js' // New import
-import { httpLogger } from './utils/logger.server.js'
-import { serviceContainer } from './lib/serviceContainer.js'
+import { httpLogger } from './lib/logger.js'
+import logger from './lib/logger.js'
 import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
-import logger from './utils/logger.server.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
 

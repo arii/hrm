@@ -1,7 +1,7 @@
 // lib/middleware/errorHandler.ts
 import { NextResponse, NextRequest } from 'next/server'
 import { ApiError } from '@/lib/errors'
-import logger from '@/utils/logger'
+import logger from '@/lib/logger'
 import { RouteContext } from '@/lib/types'
 
 type ApiHandler<T> = (

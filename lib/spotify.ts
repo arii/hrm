@@ -1,5 +1,5 @@
 import { env } from './env'
-import logger from '@/utils/logger'
+import logger from '@/lib/logger'
 
 export const SPOTIFY_CONSTANTS = {
   TOKEN_URL: 'https://accounts.spotify.com/api/token',

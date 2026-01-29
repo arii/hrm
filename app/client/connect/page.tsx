@@ -17,7 +17,7 @@ import {
 } from '@/lib/validation/userMetrics'
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
-import logger from '@/utils/logger'
+import logger from '@/lib/logger'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()

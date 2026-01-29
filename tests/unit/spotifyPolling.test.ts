@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'
-import logger from '@/utils/logger'
+import logger from '@/lib/logger'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Mock the logger
@@ -26,7 +26,7 @@ jest.mock('../../lib/env.js', () => ({
   },
 }))
 
-jest.mock('@/utils/logger', () => ({
+jest.mock('@/lib/logger', () => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),

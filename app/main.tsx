@@ -7,13 +7,13 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorFallback from '@/components/ErrorFallback'
 import Footer from '@/components/Footer'
 import LoadingIndicator from '@/components/LoadingIndicator'
+import NotificationProvider from '@/components/NotificationProvider'
 import Providers from '@/components/Providers'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { pageVariants } from '@/components/animation/variants'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
-import { SnackbarProvider } from 'notistack'
 
 export default function Main({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -21,7 +21,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
     <ErrorBoundary fallback={<ErrorFallback />}>
       <ErrorProvider>
         <LoadingProvider>
-          <SnackbarProvider>
+          <NotificationProvider>
             <Providers>
               <UserSettingsProvider>
                 <TimerSoundProvider>
@@ -40,7 +40,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
                 </TimerSoundProvider>
               </UserSettingsProvider>
             </Providers>
-          </SnackbarProvider>
+          </NotificationProvider>
           <LoadingIndicator />
         </LoadingProvider>
       </ErrorProvider>

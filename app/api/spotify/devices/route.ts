@@ -1,7 +1,7 @@
 import { authOptions } from '@/lib/auth'
 import { ApiError } from '@/lib/errors'
 import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
-import logger from '@/utils/logger'
+import logger from '@/lib/logger'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 

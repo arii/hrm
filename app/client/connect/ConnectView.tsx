@@ -17,7 +17,7 @@ import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
 import { useState, useEffect } from 'react'
-import logger from '@/utils/logger'
+import logger from '@/lib/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
 import {

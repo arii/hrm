@@ -3,11 +3,11 @@
  */
 import { refreshSpotifyToken, getSpotifyBasicAuth } from '@/lib/spotify'
 import { SPOTIFY_CONSTANTS } from '@/lib/spotify'
-import logger from '@/utils/logger'
+import logger from '@/lib/logger'
 import { env } from '@/lib/env'
 
 // Mock the logger to prevent console output during tests
-jest.mock('@/utils/logger', () => ({
+jest.mock('@/lib/logger', () => ({
   error: jest.fn(),
 }))
 
