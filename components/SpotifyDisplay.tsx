@@ -17,7 +17,7 @@ import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import AuthButton from './AuthButton'
-import VolumeSlider from './Spotify/VolumeSlider'
+import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
 
 // 1. State Shape

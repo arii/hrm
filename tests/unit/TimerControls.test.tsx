@@ -3,18 +3,22 @@
 import { jest } from '@jest/globals'
 import TimerControls from '@/app/client/control/components/TimerControls'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useSpotifyControls } from '@/hooks/useSpotifyControls'
 import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
-import { act, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render, screen, fireEvent } from '@testing-library/react'
 
 type UseWebSocketReturn = ReturnType<typeof useWebSocket>
 
 jest.mock('@/context/WebSocketContext')
+jest.mock('@/hooks/useSpotifyControls')
 jest.useFakeTimers()
 
 const mockedUseWebSocket = useWebSocket as jest.MockedFunction<
   () => UseWebSocketReturn
+>
+const mockedUseSpotifyControls = useSpotifyControls as jest.MockedFunction<
+  () => ReturnType<typeof useSpotifyControls>
 >
 
 const baseTimerData: TimerData = {
@@ -29,25 +33,14 @@ const baseTimerData: TimerData = {
 }
 
 describe('TimerControls', () => {
+  let sendData: jest.Mock
+  let sendSpotifyCommand: jest.Mock
+
   beforeEach(() => {
-    jest.resetAllMocks()
+    sendData = jest.fn()
+    sendSpotifyCommand = jest.fn()
 
-    // Mock the fetch call for Spotify devices to prevent console warnings
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve([
-            { id: 'test-device-id', name: 'Test Device', is_active: true },
-          ]),
-      })
-    ) as jest.Mock
-  })
-
-  it('should send a TIMER_CONFIG message when durations change before starting the timer', async () => {
-    const sendData = jest.fn()
-
-    const mockUseWebSocket: UseWebSocketReturn = {
+    mockedUseWebSocket.mockReturnValue({
       hrmData: [],
       timerData: { ...baseTimerData },
       spotifyData: {
@@ -64,51 +57,63 @@ describe('TimerControls', () => {
       connectionStatus: 'Connected',
       sendData,
       isOwner: true,
-    }
-    mockedUseWebSocket.mockReturnValue(mockUseWebSocket)
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+    })
 
+    mockedUseSpotifyControls.mockReturnValue({
+      sendSpotifyCommand,
+    })
+  })
+
+  it('should render the initial state correctly', () => {
+    render(<TimerControls />)
+    expect(screen.getByTestId('work-duration-input')).toHaveTextContent('20')
+    expect(screen.getByTestId('rest-duration-input')).toHaveTextContent('10')
+    expect(screen.getByTestId('start-timer-button')).toBeInTheDocument()
+  })
+
+  it('should send a TIMER_CONFIG message when durations change', () => {
     render(<TimerControls />)
 
-    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
+    const increaseWorkButton = screen.getByTestId('work-duration-input-increment-button')
+    const increaseRestButton = screen.getByTestId('rest-duration-input-increment-button')
 
-    // Find the stepper buttons by their accessible ARIA labels
-    const increaseWorkButton = screen.getByRole('button', {
-      name: /Increase Work Duration/i,
+    fireEvent.click(increaseWorkButton)
+    fireEvent.click(increaseRestButton)
+
+    jest.advanceTimersByTime(500)
+
+    expect(sendData).toHaveBeenCalledWith({
+      type: 'TIMER_CONFIG',
+      workDuration: 25,
+      restDuration: 15,
     })
-    const increaseRestButton = screen.getByRole('button', {
-      name: /Increase Rest Duration/i,
+  })
+
+  it('should send a START command', () => {
+    render(<TimerControls />)
+    const startButton = screen.getByTestId('start-timer-button')
+    fireEvent.click(startButton)
+
+    expect(sendData).toHaveBeenCalledWith({
+      type: 'TIMER_COMMAND',
+      command: 'START',
     })
+  })
 
-    // Initial workTime is 20. Increase by 5, 5 times to reach 45.
-    for (let i = 0; i < 5; i++) {
-      await user.click(increaseWorkButton)
-    }
-
-    // Initial restTime is 10. Increase by 5 once to reach 15.
-    await user.click(increaseRestButton)
-
-    // Verify the UI displays the new values
-    expect(
-      screen.getByTestId('work duration (s)-duration-display')
-    ).toHaveTextContent('45')
-    expect(
-      screen.getByTestId('rest duration (s)-duration-display')
-    ).toHaveTextContent('15')
-
-    // Wait for debounce and React state updates
-    act(() => {
-      jest.advanceTimersByTime(600)
+  it('should send a STOP command', () => {
+    mockedUseWebSocket.mockReturnValue({
+      ...mockedUseWebSocket(),
+      timerData: { ...baseTimerData, isRunning: true },
     })
+    const { getByTestId } = render(<TimerControls />)
+    const stopButton = getByTestId('stop-timer-button')
+    fireEvent.click(stopButton)
 
-    await user.click(screen.getByRole('button', { name: /start/i }))
-
-    // Verify that TIMER_CONFIG was sent with the updated values
-    expect(sendData).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'TIMER_CONFIG',
-        workDuration: 45,
-        restDuration: 15,
-      })
-    )
+    expect(sendData).toHaveBeenCalledWith({
+      type: 'TIMER_COMMAND',
+      command: 'STOP',
+    })
   })
 })

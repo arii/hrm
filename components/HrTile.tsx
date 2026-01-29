@@ -9,7 +9,7 @@ import WifiOffIcon from '@mui/icons-material/WifiOff'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import StyledCard from './shared/StyledCard'
+import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 
 // Define the style for the centered overlay
@@ -51,7 +51,7 @@ const HrTile = ({
 
   return (
     <Tooltip title={tooltipTitle} arrow>
-      <StyledCard
+      <ControlCard
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
@@ -167,7 +167,7 @@ const HrTile = ({
             )}
           </CardContent>
         </Box>
-      </StyledCard>
+      </ControlCard>
     </Tooltip>
   )
 }

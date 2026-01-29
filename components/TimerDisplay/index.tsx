@@ -6,37 +6,16 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import Slider from '@mui/material/Slider'
-import Stack from '@mui/material/Stack'
-import VolumeDown from '@mui/icons-material/VolumeDown'
-import VolumeUp from '@mui/icons-material/VolumeUp'
-import VolumeOff from '@mui/icons-material/VolumeOff'
-import IconButton from '@mui/material/IconButton'
 
 import { useAudioContext } from '@/context/AudioContext'
+import VolumeSlider from '../shared/VolumeSlider'
 import PhaseBackground from './PhaseBackground'
 import AnimatedCounter from './AnimatedCounter'
 import ProgressRing from './ProgressRing'
-import { TimerData, TimerPhase } from '@/types/core'
-import { PREPARE_DURATION } from '@/constants/timer'
+import { TimerData } from '@/types/core'
+import { PREPARE_DURATION, phaseProps } from '@/constants/timer'
 
 const pad = (n: number) => String(n).padStart(2, '0')
-
-type PhaseProps = {
-  [key in TimerPhase]: {
-    color: string
-    label: string
-  }
-}
-
-const phaseProps: PhaseProps = {
-  PREPARE: { color: '#f59e0b', label: 'GET READY' },
-  WORK: { color: '#ef4444', label: 'WORK' },
-  REST: { color: '#22c55e', label: 'REST' },
-  RUNNING: { color: '#3b82f6', label: 'RUNNING' },
-  IDLE: { color: '#6b7280', label: 'IDLE' },
-  COOLDOWN: { color: '#6b7280', label: 'COOLDOWN' },
-}
 
 const getPhaseProps = (phase: TimerData['currentPhase']) => {
   return phaseProps[phase]
@@ -224,33 +203,15 @@ const TimerDisplay = () => {
         <AnimatedCounter displayTime={displayTime} phaseColor={phaseColor} />
 
         {/* Volume Control */}
-        <Stack
-          spacing={{ xs: 1, sm: 2 }}
-          direction="row"
-          sx={{
-            mt: 2,
-            mb: 1,
-            width: { xs: '90%', md: '80%' },
-            maxWidth: 300,
-          }}
-          alignItems="center"
-        >
-          <IconButton onClick={toggleMute} sx={{ color: 'white' }}>
-            {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
-          </IconButton>
-          <Slider
-            aria-label="Volume"
-            value={muted ? 0 : volume}
-            onChange={(_, newValue) => setVolume(newValue as number)}
-            sx={{
-              color: 'white',
-              '& .MuiSlider-thumb': {
-                color: phaseColor,
-              },
-            }}
+        <Box sx={{ width: { xs: '90%', md: '80%' }, maxWidth: 300, mt: 2, mb: 1 }}>
+          <VolumeSlider
+            volume={volume}
+            muted={muted}
+            onVolumeChange={setVolume}
+            onToggleMute={toggleMute}
+            sliderColor={phaseColor}
           />
-          <VolumeUp sx={{ color: 'white' }} />
-        </Stack>
+        </Box>
       </CardContent>
     </Card>
   )
