@@ -117,8 +117,6 @@ app.prepare().then(async () => {
   const services: AppServices = await createServices(
     wsManager.createBroadcaster()
   )
-  serviceContainer.register('spotifyService', services.spotifyService)
-  serviceContainer.register('tabataService', services.tabataService)
 
   // 3. Initialize Socket Logic (Controllers)
   const getUnifiedStateSnapshot = (): StateSnapshot => ({

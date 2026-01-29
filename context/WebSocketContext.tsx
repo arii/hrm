@@ -1,6 +1,6 @@
 'use client'
 import throttle from 'lodash.throttle'
-import logger from '../utils/logger'
+import logger from '../lib/logger'
 import {
   createContext,
   ReactNode,

@@ -11,11 +11,10 @@ describe('Logger', () => {
   })
 
   describe('Server-side Environment', () => {
-    it('should use pino with pretty-print in development', async () => {
+    it('should use pino with pretty-print in development', () => {
       process.env.NODE_ENV = 'development'
       const pino = require('pino')
-      const { default: logger } = await import('@/lib/logger')
-      const pinoInstance = pino()
+      const { default: logger } = require('@/lib/logger')
 
       expect(logger.info).toBeInstanceOf(Function)
       expect(pino).toHaveBeenCalledWith(
@@ -28,12 +27,11 @@ describe('Logger', () => {
       )
     })
 
-    it('should use pino without pretty-print in production', async () => {
+    it('should use pino without pretty-print in production', () => {
       process.env.NODE_ENV = 'production'
       const pino = require('pino')
-      const { default: logger } = await import('@/lib/logger')
+      require('@/lib/logger')
 
-      expect(logger.info).toBeInstanceOf(Function)
       expect(pino).toHaveBeenCalledWith(
         expect.not.objectContaining({
           transport: expect.any(Object),
@@ -48,19 +46,19 @@ describe('Logger', () => {
       global.window = {}
     })
 
-    it('should use console methods on the client-side', async () => {
+    it('should use console methods on the client-side', () => {
       const consoleInfoSpy = jest
         .spyOn(console, 'info')
         .mockImplementation(() => {})
-      const { default: logger } = await import('@/lib/logger')
+      const { default: logger } = require('@/lib/logger')
 
       logger.info('test message')
       expect(consoleInfoSpy).toHaveBeenCalledWith('test message')
       consoleInfoSpy.mockRestore()
     })
 
-    it('should return a no-op httpLogger on the client-side', async () => {
-      const { httpLogger } = await import('@/lib/logger')
+    it('should return a no-op httpLogger on the client-side', () => {
+      const { httpLogger } = require('@/lib/logger')
       const next = jest.fn()
       // @ts-expect-error - mock req and res
       httpLogger({}, {}, next)

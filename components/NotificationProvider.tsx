@@ -34,16 +34,16 @@ const StyledSnackbarProvider = styled(SnackbarProvider)(({ theme }) => {
       ...commonStyles,
     },
     '&.notistack-MuiContent-root': {
-        color: theme.palette.text.primary,
-        backgroundColor: 'transparent',
-        boxShadow: 'none',
-        backgroundImage: `linear-gradient(to right, ${alpha(
-          theme.palette.background.paper,
-          0.7
-        )}, ${alpha(theme.palette.background.paper, 0.95)})`,
-        border: `1px solid ${theme.palette.divider}`,
-        backdropFilter: 'blur(8px)',
-    }
+      color: theme.palette.text.primary,
+      backgroundColor: 'transparent',
+      boxShadow: 'none',
+      backgroundImage: `linear-gradient(to right, ${alpha(
+        theme.palette.background.paper,
+        0.7
+      )}, ${alpha(theme.palette.background.paper, 0.95)})`,
+      border: `1px solid ${theme.palette.divider}`,
+      backdropFilter: 'blur(8px)',
+    },
   }
 })
 
