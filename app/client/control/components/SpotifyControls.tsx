@@ -182,7 +182,7 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, sendData]
   )
 
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const debounceTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') {
@@ -193,11 +193,11 @@ const SpotifyControls = () => {
   useEffect(() => {
     // Clear any existing timer
     if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current)
+      window.clearTimeout(debounceTimeoutRef.current)
     }
 
     // Set a new timer to send the volume command after 300ms
-    debounceTimeoutRef.current = setTimeout(() => {
+    debounceTimeoutRef.current = window.setTimeout(() => {
       sendVolumeCommand(volume)
     }, 300)
 
@@ -205,7 +205,7 @@ const SpotifyControls = () => {
     // or if the volume changes again before the timeout has passed
     return () => {
       if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current)
+        window.clearTimeout(debounceTimeoutRef.current)
       }
     }
   }, [volume, sendVolumeCommand])
