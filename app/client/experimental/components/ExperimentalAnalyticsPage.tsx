@@ -1,85 +1,182 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
-import { useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Container, Box, Button } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
-import {
-  useLocalWorkoutBuffer,
-  ActiveWorkoutInputStatus,
-} from '../useLocalWorkoutBuffer'
+import { useWorkoutSessionStorage } from '@/hooks/useWorkoutSessionStorage'
+import { useUserSettings } from '@/context/UserSettingsContext'
+import { estimateCaloriesBurned } from '@/lib/calorieCalculation'
+import { WorkoutSessionData } from '@/lib/sessionDataValidator'
+import { HrZoneName } from '@/utils/hr-zones'
+
+const defaultTimeInZones: Record<HrZoneName, number> = {
+  [HrZoneName.WarmUp]: 0,
+  [HrZoneName.FatBurn]: 0,
+  [HrZoneName.Cardio]: 0,
+  [HrZoneName.Peak]: 0,
+  [HrZoneName.Max]: 0,
+  [HrZoneName.NoData]: 0,
+  [HrZoneName.Unknown]: 0,
+}
+
+// New components
 import WorkoutSummary from './WorkoutSummary'
 import ZoneDistribution from './ZoneDistribution'
-// Dynamically import HeartRateTimeSeries to ensure it's only rendered client-side
+import CalorieTracker from './CalorieTracker'
+import SessionList from './SessionList'
+import SessionDetail from './SessionDetail'
+
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
 })
-import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
-import { useUserSettings } from '@/context/UserSettingsContext'
+
+type View = 'active' | 'list' | 'detail'
 
 const ExperimentalAnalyticsPage = () => {
-  const { hrmData, timerData } = useWebSocket()
-  const timerStatus = timerData?.currentPhase
+  const { hrmData } = useWebSocket()
   const [userSettings] = useUserSettings()
+  const {
+    activeSession,
+    allSessions,
+    startNewWorkout,
+    endWorkout,
+    pauseWorkout,
+    resumeWorkout,
+    recordDataPoint,
+    deleteSession,
+  } = useWorkoutSessionStorage()
 
-  const workoutStatus: ActiveWorkoutInputStatus =
-    timerStatus === 'WORK' || timerStatus === 'REST' ? 'running' : 'idle'
+  const [view, setView] = useState<View>('list')
+  const [selectedSession, setSelectedSession] =
+    useState<WorkoutSessionData | null>(null)
 
-  const { workoutData, resetWorkout, endWorkout } = useLocalWorkoutBuffer(
-    hrmData[0]?.value ?? 0,
-    workoutStatus
-  )
+  // Determine view based on active session on initial load
+  useEffect(() => {
+    if (activeSession) {
+      setView('active')
+    } else {
+      setView('list')
+    }
+  }, [activeSession])
 
-  const totalDuration = workoutData.hrHistory.length
+  // Data recording interval for the active session
+  useEffect(() => {
+    if (activeSession?.status !== 'running') return
 
-  const caloriesBurned = useMemo(() => {
-    return workoutData.hrHistory.reduce((totalCalories, dataPoint) => {
-      const calories = estimateCaloriesBurned({
-        heartRate: dataPoint.hr,
+    const intervalId = setInterval(() => {
+      const currentHr = hrmData[0]?.value ?? 0 // Gracefully handle no HR data
+      const caloriesPerSecond = estimateCaloriesBurned({
+        heartRate: currentHr,
         age: userSettings.userAge || 30,
         weightKg: userSettings.userWeight || 70,
-        durationMinutes: 1 / 60,
+        isMale: userSettings.gender === 'MALE',
+        durationMinutes: 1 / 60, // Calculate for one second
       })
-      return totalCalories + calories
-    }, 0)
-  }, [workoutData.hrHistory, userSettings])
+      recordDataPoint(currentHr, caloriesPerSecond)
+    }, 1000)
+
+    return () => clearInterval(intervalId)
+  }, [activeSession?.status, hrmData, userSettings, recordDataPoint])
+
+  const handleSelectSession = (session: WorkoutSessionData) => {
+    setSelectedSession(session)
+    setView('detail')
+  }
+
+  const handleBackToList = () => {
+    setSelectedSession(null)
+    setView('list')
+  }
+
+  const handleStartNewWorkout = () => {
+    startNewWorkout()
+    setView('active')
+  }
+
+  const handleEndWorkout = () => {
+    endWorkout()
+    setView('list')
+  }
+
+  // Memoized values for the active session display
+  const totalDuration = activeSession?.hrHistory.length ?? 0
+  const totalCalories = useMemo(
+    () =>
+      activeSession?.calorieHistory.reduce(
+        (total, dp) => total + dp.calories,
+        0
+      ) ?? 0,
+    [activeSession?.calorieHistory]
+  )
+
+  const renderActiveWorkout = () => (
+    <Box display="flex" flexDirection="column" gap={3}>
+      <WorkoutSummary
+        duration={totalDuration}
+        calories={totalCalories}
+        status={activeSession?.status ?? 'idle'}
+      />
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+        <Box sx={{ flex: 1 }}>
+          <CalorieTracker
+            calorieHistory={activeSession?.calorieHistory ?? []}
+          />
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          <ZoneDistribution
+            timeInZones={activeSession?.timeInZones ?? defaultTimeInZones}
+            userAge={userSettings.userAge}
+          />
+        </Box>
+      </Box>
+      <HeartRateTimeSeries hrHistory={activeSession?.hrHistory ?? []} />
+      <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
+        {activeSession?.status === 'running' && (
+          <Button variant="contained" color="warning" onClick={pauseWorkout}>
+            Pause
+          </Button>
+        )}
+        {activeSession?.status === 'paused' && (
+          <Button variant="contained" color="success" onClick={resumeWorkout}>
+            Resume
+          </Button>
+        )}
+        <Button variant="contained" color="primary" onClick={handleEndWorkout}>
+          End Workout
+        </Button>
+      </Box>
+    </Box>
+  )
+
+  const renderSessionList = () => (
+    <>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleStartNewWorkout}
+        sx={{ mb: 3 }}
+      >
+        Start New Workout
+      </Button>
+      <SessionList
+        sessions={allSessions}
+        onSelectSession={handleSelectSession}
+        onDeleteSession={deleteSession}
+      />
+    </>
+  )
+
+  const renderSessionDetail = () =>
+    selectedSession && (
+      <SessionDetail session={selectedSession} onBack={handleBackToList} />
+    )
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box display="flex" flexDirection="column" gap={3}>
-        <WorkoutSummary
-          duration={totalDuration}
-          calories={caloriesBurned}
-          status={workoutData.status}
-        />
-        <Box display="flex" gap={3}>
-          <Box flex={1}>
-            <ZoneDistribution
-              timeInZones={workoutData.timeInZones}
-              userAge={userSettings.userAge}
-            />
-          </Box>
-          <Box flex={1}>
-            <HeartRateTimeSeries hrHistory={workoutData.hrHistory} />
-          </Box>
-        </Box>
-        <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={endWorkout}
-            disabled={
-              workoutData.status !== 'running' &&
-              workoutData.status !== 'paused'
-            }
-          >
-            End Workout
-          </Button>
-          <Button variant="outlined" color="secondary" onClick={resetWorkout}>
-            Reset Data
-          </Button>
-        </Box>
-      </Box>
+      {view === 'active' && renderActiveWorkout()}
+      {view === 'list' && renderSessionList()}
+      {view === 'detail' && renderSessionDetail()}
     </Container>
   )
 }
