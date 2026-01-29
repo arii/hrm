@@ -54,7 +54,7 @@ This document provides a consolidated overview of known issues, planned improvem
 
 ## 5. Development Standards
 
-### Key Practices (from DEVELOPMENT.md, DEVELOPMENT_STANDARDS.md)
+### Key Practices (from DEVELOPMENT.md)
 
 - **Package Manager**: `pnpm` is the standard package manager, and its use is enforced.
 - **Code Quality**: Pre-commit hooks with `lint-staged`, Husky, Prettier, and ESLint are used to maintain code quality.
