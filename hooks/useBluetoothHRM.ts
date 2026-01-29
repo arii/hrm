@@ -56,6 +56,12 @@ interface UseBluetoothHRMProps {
   onConnect?: () => void
 }
 
+/**
+ * Manages the entire lifecycle of a Bluetooth HRM device, including discovery,
+ * connection, data streaming, and reconnection.
+ * @returns An object with functions to manage the device and state properties
+ * like connection status, battery level, and data staleness.
+ */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
     dataLivenessTimeoutMs = 10000,
@@ -624,6 +630,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     connectToGattRef.current = connectToGatt
   }, [connectToGatt])
 
+  /**
+   * Scans for a Bluetooth device, connects to it, and starts streaming heart rate data.
+   * Will attempt to reconnect to a previously saved device if one exists.
+   * @param userNameFromArgs The user's name for display purposes.
+   * @param userAgeFromArgs The user's age, used to calculate max HR.
+   * @throws If the connection fails (e.g., user cancellation, WebSocket disconnect).
+   */
   const connectAndStream = useCallback(
     async (
       userNameFromArgs?: string,
