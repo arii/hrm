@@ -396,4 +396,72 @@ describe('useBluetoothHRM', () => {
       })
     })
   })
+
+  describe('Zombie Connection Retry Logic', () => {
+    it('should retry with exponential backoff on "busy" error and then connect', async () => {
+      const busyError = new DOMException('GATT operation is busy')
+      // The error name is also checked, so let's set it.
+      Object.defineProperty(busyError, 'name', { value: 'NetworkError' })
+
+      // Fail twice with a "busy" error, then succeed.
+      mockDevice.gatt.connect
+        .mockRejectedValueOnce(busyError)
+        .mockRejectedValueOnce(busyError)
+        .mockResolvedValue(mockGattServer)
+
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // Start the connection process. Do not await, as we need to advance timers.
+      act(() => {
+        result.current.connectAndStream('Zombie Tester', 40)
+      })
+
+      // Wait for the first attempt to fail and the status to update.
+      await waitFor(() => {
+        expect(result.current.deviceStatus).toContain(
+          'Device busy (Zombie). Retrying'
+        )
+        expect(result.current.deviceStatus).toContain('(1/3)')
+      })
+
+      // Check that the warning was logged for the first attempt.
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ attempt: 1 }),
+        'Device likely busy (Zombie connection). Retrying with exponential backoff...'
+      )
+
+      // Advance timers past the first backoff delay (2s).
+      await act(async () => {
+        jest.advanceTimersByTime(2001)
+      })
+
+      // Wait for the second attempt to fail and the status to update.
+      await waitFor(() => {
+        expect(result.current.deviceStatus).toContain(
+          'Device busy (Zombie). Retrying'
+        )
+        expect(result.current.deviceStatus).toContain('(2/3)')
+      })
+
+      // Check that the warning was logged for the second attempt.
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ attempt: 2 }),
+        'Device likely busy (Zombie connection). Retrying with exponential backoff...'
+      )
+
+      // Advance timers past the second backoff delay (4s).
+      await act(async () => {
+        jest.advanceTimersByTime(4001)
+      })
+
+      // The third attempt should now be made and succeed.
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(true)
+        expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+      })
+
+      // Verify connect was called a total of 3 times.
+      expect(mockDevice.gatt.connect).toHaveBeenCalledTimes(3)
+    })
+  })
 })
