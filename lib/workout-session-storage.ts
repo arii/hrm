@@ -30,7 +30,7 @@ export interface WorkoutSessionData {
   maxHr: number
   calorieHistory: CalorieDataPoint[]
   totalCaloriesBurned: number
-  userSettings: { age: number; weight: number, maxHr: number }
+  userSettings: { age: number; weight: number; maxHr: number }
   lastSyncTime: number
   syncStatus: 'pending' | 'synced' | 'failed'
 }
@@ -58,7 +58,8 @@ export class WorkoutSessionStorage {
   private localStorageIndexKey = 'workout-sessions-index'
 
   constructor() {
-    this.isIndexedDBSupported = typeof window !== 'undefined' && !!window.indexedDB
+    this.isIndexedDBSupported =
+      typeof window !== 'undefined' && !!window.indexedDB
     if (this.isIndexedDBSupported) {
       this.dbPromise = openDB<WorkoutDB>(DB_NAME, DB_VERSION, {
         upgrade(db) {
@@ -86,17 +87,24 @@ export class WorkoutSessionStorage {
         index.push(session.sessionId)
         localStorage.setItem(this.localStorageIndexKey, JSON.stringify(index))
       }
-      localStorage.setItem(this.localStorageKeyPrefix + session.sessionId, JSON.stringify(session))
+      localStorage.setItem(
+        this.localStorageKeyPrefix + session.sessionId,
+        JSON.stringify(session)
+      )
     }
   }
 
-  public async getSession(sessionId: string): Promise<WorkoutSessionData | null> {
+  public async getSession(
+    sessionId: string
+  ): Promise<WorkoutSessionData | null> {
     if (this.isIndexedDBSupported && this.dbPromise) {
       const db = await this.dbPromise
       const session = await db.get(STORE_NAME, sessionId)
       return session || null
     } else {
-      const sessionStr = localStorage.getItem(this.localStorageKeyPrefix + sessionId)
+      const sessionStr = localStorage.getItem(
+        this.localStorageKeyPrefix + sessionId
+      )
       return sessionStr ? JSON.parse(sessionStr) : null
     }
   }
@@ -107,7 +115,13 @@ export class WorkoutSessionStorage {
       return db.getAll(STORE_NAME)
     } else {
       const index = this.getLocalStorageIndex()
-      return index.map(id => JSON.parse(localStorage.getItem(this.localStorageKeyPrefix + id) || 'null')).filter(Boolean)
+      return index
+        .map((id) =>
+          JSON.parse(
+            localStorage.getItem(this.localStorageKeyPrefix + id) || 'null'
+          )
+        )
+        .filter(Boolean)
     }
   }
 
@@ -117,7 +131,7 @@ export class WorkoutSessionStorage {
       await db.delete(STORE_NAME, sessionId)
     } else {
       const index = this.getLocalStorageIndex()
-      const newIndex = index.filter(id => id !== sessionId)
+      const newIndex = index.filter((id) => id !== sessionId)
       localStorage.setItem(this.localStorageIndexKey, JSON.stringify(newIndex))
       localStorage.removeItem(this.localStorageKeyPrefix + sessionId)
     }
@@ -136,9 +150,9 @@ export class WorkoutSessionStorage {
       return pausedSession || null
     } else {
       const allSessions = await this.getAllSessions()
-      const runningSession = allSessions.find(s => s.status === 'running')
+      const runningSession = allSessions.find((s) => s.status === 'running')
       if (runningSession) return runningSession
-      const pausedSession = allSessions.find(s => s.status === 'paused')
+      const pausedSession = allSessions.find((s) => s.status === 'paused')
       return pausedSession || null
     }
   }

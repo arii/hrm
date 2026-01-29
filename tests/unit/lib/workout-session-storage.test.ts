@@ -4,7 +4,10 @@
 // tests/unit/lib/workout-session-storage.test.ts
 
 import 'fake-indexeddb/auto'
-import { WorkoutSessionStorage, WorkoutSessionData } from '../../../lib/workout-session-storage'
+import {
+  WorkoutSessionStorage,
+  WorkoutSessionData,
+} from '../../../lib/workout-session-storage'
 
 describe('WorkoutSessionStorage', () => {
   let storage: WorkoutSessionStorage
@@ -20,13 +23,22 @@ describe('WorkoutSessionStorage', () => {
     }
   })
 
-  const createMockSession = (sessionId: string, status: 'running' | 'paused' | 'finished'): WorkoutSessionData => ({
+  const createMockSession = (
+    sessionId: string,
+    status: 'running' | 'paused' | 'finished'
+  ): WorkoutSessionData => ({
     sessionId,
     startTime: Date.now(),
     endTime: null,
     status,
     hrHistory: [],
-    timeInZones: { 'Zone 1': 0, 'Zone 2': 0, 'Zone 3': 0, 'Zone 4': 0, 'Zone 5': 0 },
+    timeInZones: {
+      'Zone 1': 0,
+      'Zone 2': 0,
+      'Zone 3': 0,
+      'Zone 4': 0,
+      'Zone 5': 0,
+    },
     averageHr: 0,
     maxHr: 0,
     calorieHistory: [],
@@ -97,7 +109,7 @@ describe('WorkoutSessionStorage with localStorage fallback', () => {
   let storage: WorkoutSessionStorage
 
   beforeAll(() => {
-    // @ts-ignore
+    // @ts-expect-error - This is to test the localStorage fallback
     delete window.indexedDB
   })
 
@@ -106,13 +118,22 @@ describe('WorkoutSessionStorage with localStorage fallback', () => {
     localStorage.clear()
   })
 
-  const createMockSession = (sessionId: string, status: 'running' | 'paused' | 'finished'): WorkoutSessionData => ({
+  const createMockSession = (
+    sessionId: string,
+    status: 'running' | 'paused' | 'finished'
+  ): WorkoutSessionData => ({
     sessionId,
     startTime: Date.now(),
     endTime: null,
     status,
     hrHistory: [],
-    timeInZones: { 'Zone 1': 0, 'Zone 2': 0, 'Zone 3': 0, 'Zone 4': 0, 'Zone 5': 0 },
+    timeInZones: {
+      'Zone 1': 0,
+      'Zone 2': 0,
+      'Zone 3': 0,
+      'Zone 4': 0,
+      'Zone 5': 0,
+    },
     averageHr: 0,
     maxHr: 0,
     calorieHistory: [],

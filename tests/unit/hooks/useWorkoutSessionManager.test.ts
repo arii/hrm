@@ -5,16 +5,20 @@
 
 import { renderHook, act } from '@testing-library/react'
 import { useWorkoutSessionManager } from '../../../hooks/useWorkoutSessionManager'
-import { workoutSessionStorage } from '../../../lib/workout-session-storage'
+import { workoutSessionStorage, HrZoneName } from '../../../lib/workout-session-storage'
 
 // Mock the storage module
-jest.mock('../../../lib/workout-session-storage', () => ({
-  workoutSessionStorage: {
-    getIncompleteSession: jest.fn(),
-    saveSession: jest.fn(),
-    deleteSession: jest.fn(),
-  },
-}))
+jest.mock('../../../lib/workout-session-storage', () => {
+  const originalModule = jest.requireActual('../../../lib/workout-session-storage')
+  return {
+    ...originalModule,
+    workoutSessionStorage: {
+      getIncompleteSession: jest.fn(),
+      saveSession: jest.fn(),
+      deleteSession: jest.fn(),
+    },
+  }
+})
 
 describe('useWorkoutSessionManager', () => {
   beforeEach(() => {
@@ -22,11 +26,13 @@ describe('useWorkoutSessionManager', () => {
   })
 
   it('should initialize and check for incomplete sessions', async () => {
-    (workoutSessionStorage.getIncompleteSession as jest.Mock).mockResolvedValueOnce(null)
+    ;(
+      workoutSessionStorage.getIncompleteSession as jest.Mock
+    ).mockResolvedValueOnce(null)
     const { result } = renderHook(() => useWorkoutSessionManager())
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     expect(result.current.isInitialized).toBe(true)
@@ -35,12 +41,14 @@ describe('useWorkoutSessionManager', () => {
 
   it('should recover an incomplete session', async () => {
     const mockSession = { sessionId: 'incomplete-session', status: 'paused' }
-    ;(workoutSessionStorage.getIncompleteSession as jest.Mock).mockResolvedValueOnce(mockSession)
+    ;(
+      workoutSessionStorage.getIncompleteSession as jest.Mock
+    ).mockResolvedValueOnce(mockSession)
     const { result } = renderHook(() => useWorkoutSessionManager())
 
     await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0))
-      })
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
 
     expect(result.current.session).toEqual(mockSession)
     expect(result.current.status).toBe('paused')
@@ -97,29 +105,34 @@ describe('useWorkoutSessionManager', () => {
 
   it('should calculate time in zones correctly', () => {
     const { result } = renderHook(() => useWorkoutSessionManager())
-    const age = 30;
-    const maxHr = 208 - 0.7 * age; // ~187
+    const age = 30
+    const maxHr = 208 - 0.7 * age // ~187
+    const startTime = Date.now()
 
     act(() => {
       result.current.startWorkout(age, 70, maxHr)
     })
 
-    // Zone 2: 60-70% of max HR (112-131)
+    // NoData zone - 1s
     act(() => {
-      result.current.addHrData({ time: Date.now(), hr: 120 })
+      result.current.addHrData({ time: startTime, hr: 0 })
     })
 
+    // Fat Burn zone - 2s
     act(() => {
-      result.current.addHrData({ time: Date.now() + 1000, hr: 125 })
+      result.current.addHrData({ time: startTime + 1000, hr: 120 })
+    })
+    act(() => {
+      result.current.addHrData({ time: startTime + 2000, hr: 125 })
     })
 
-    // Zone 3: 70-80% of max HR (131-149)
+    // Cardio zone - 1s
     act(() => {
-      result.current.addHrData({ time: Date.now() + 2000, hr: 140 })
+      result.current.addHrData({ time: startTime + 3000, hr: 140 })
     })
 
-    expect(result.current.session?.timeInZones['Zone 2']).toBeCloseTo(1)
-    expect(result.current.session?.timeInZones['Zone 3']).toBeCloseTo(1)
-
+    expect(result.current.session?.timeInZones[HrZoneName.NoData]).toBeCloseTo(1)
+    expect(result.current.session?.timeInZones[HrZoneName.FatBurn]).toBeCloseTo(2)
+    expect(result.current.session?.timeInZones[HrZoneName.Cardio]).toBeCloseTo(1)
   })
 })

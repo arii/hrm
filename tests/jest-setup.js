@@ -1,2 +1,3 @@
 // tests/jest.setup.js
-require('core-js/actual/structured-clone');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+require('core-js/actual/structured-clone')

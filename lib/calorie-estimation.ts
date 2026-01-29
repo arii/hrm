@@ -1,10 +1,10 @@
 // lib/calorie-estimation.ts
 
 export interface CalorieEstimationParams {
-  heartRate: number;
-  age: number;
-  weightKg: number;
-  durationMinutes: number;
+  heartRate: number
+  age: number
+  weightKg: number
+  durationMinutes: number
 }
 
 /**
@@ -22,20 +22,16 @@ export const estimateCaloriesBurned = ({
   durationMinutes,
 }: CalorieEstimationParams): number => {
   if (durationMinutes <= 0 || heartRate < 30) {
-    return 0;
+    return 0
   }
 
   // Formula for men, as it matches the test cases.
   const caloriesPerMinute =
-    (-55.0969 +
-      0.6309 * heartRate +
-      0.1988 * weightKg +
-      0.2017 * age) /
-    4.184;
+    (-55.0969 + 0.6309 * heartRate + 0.1988 * weightKg + 0.2017 * age) / 4.184
 
   if (caloriesPerMinute <= 0) {
-    return 0;
+    return 0
   }
 
-  return caloriesPerMinute * durationMinutes;
-};
+  return caloriesPerMinute * durationMinutes
+}

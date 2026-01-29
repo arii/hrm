@@ -1,16 +1,11 @@
 // hooks/useWorkoutSessionManager.ts
 
-import {
-  useReducer,
-  useEffect,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react'
+import { useReducer, useEffect, useCallback, useState } from 'react'
 import {
   workoutSessionStorage,
   WorkoutSessionData,
   HrDataPoint,
+  HrZoneName,
 } from '../lib/workout-session-storage'
 import { v4 as uuidv4 } from 'uuid'
 import { calculateHrZone } from '../lib/hrm/zones'
@@ -44,29 +39,32 @@ function sessionManagerReducer(
   action: SessionManagerAction
 ): SessionManagerState {
   switch (action.type) {
-    case 'SET_SESSION':
+    case 'SET_SESSION': {
       return {
         ...state,
         session: action.payload,
         status: action.payload.status,
       }
-    case 'START':
-      const maxHr = action.payload.maxHr || estimateMaxHr(action.payload.age)
+    }
+    case 'START': {
+      const { age, weight, maxHr: providedMaxHr } = action.payload
+      const maxHr = providedMaxHr || estimateMaxHr(age)
+      const initialTimeInZones = Object.fromEntries(
+        Object.values(HrZoneName).map((zone) => [zone, 0])
+      ) as Record<HrZoneName, number>
+
       const newSession: WorkoutSessionData = {
         sessionId: uuidv4(),
         startTime: Date.now(),
         endTime: null,
         status: 'running',
         hrHistory: [],
-        timeInZones: Object.values(HrZoneName).reduce((acc, zone) => {
-          acc[zone] = 0
-          return acc
-        }, {} as Record<HrZoneName, number>),
+        timeInZones: initialTimeInZones,
         averageHr: 0,
         maxHr: 0,
         calorieHistory: [],
         totalCaloriesBurned: 0,
-        userSettings: { ...action.payload, maxHr },
+        userSettings: { age, weight, maxHr },
         lastSyncTime: Date.now(),
         syncStatus: 'pending',
       }
@@ -75,21 +73,24 @@ function sessionManagerReducer(
         session: newSession,
         status: 'running',
       }
-    case 'PAUSE':
+    }
+    case 'PAUSE': {
       if (!state.session) return state
       return {
         ...state,
         session: { ...state.session, status: 'paused' },
         status: 'paused',
       }
-    case 'RESUME':
+    }
+    case 'RESUME': {
       if (!state.session) return state
       return {
         ...state,
         session: { ...state.session, status: 'running' },
         status: 'running',
       }
-    case 'END':
+    }
+    case 'END': {
       if (!state.session) return state
       return {
         ...state,
@@ -100,15 +101,23 @@ function sessionManagerReducer(
         },
         status: 'finished',
       }
-    case 'RESET':
+    }
+    case 'RESET': {
       return initialState
-    case 'ADD_HR_DATA':
+    }
+    case 'ADD_HR_DATA': {
       if (!state.session || state.status !== 'running') return state
 
-      const lastDataPoint = state.session.hrHistory[state.session.hrHistory.length - 1]
-      const timeDelta = lastDataPoint ? (action.payload.time - lastDataPoint.time) / 1000 : 0
+      const lastDataPoint =
+        state.session.hrHistory[state.session.hrHistory.length - 1]
+      const timeDelta = lastDataPoint
+        ? (action.payload.time - lastDataPoint.time) / 1000
+        : 1
 
-      const { zoneName } = calculateHrZone(action.payload.hr, state.session.userSettings.maxHr)
+      const { zoneName } = calculateHrZone(
+        action.payload.hr,
+        state.session.userSettings.maxHr
+      )
       const newTimeInZones = {
         ...state.session.timeInZones,
         [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,
@@ -118,7 +127,8 @@ function sessionManagerReducer(
       const newMaxHr = Math.max(state.session.maxHr, action.payload.hr)
       const oldAverage = state.session.averageHr
       const oldLength = state.session.hrHistory.length
-      const newAverageHr = (oldAverage * oldLength + action.payload.hr) / (oldLength + 1)
+      const newAverageHr =
+        (oldAverage * oldLength + action.payload.hr) / (oldLength + 1)
       return {
         ...state,
         session: {
@@ -129,6 +139,7 @@ function sessionManagerReducer(
           timeInZones: newTimeInZones,
         },
       }
+    }
     default:
       return state
   }
@@ -143,7 +154,8 @@ export const useWorkoutSessionManager = () => {
   // Auto-recovery of incomplete sessions
   useEffect(() => {
     const recoverSession = async () => {
-      const incompleteSession = await workoutSessionStorage.getIncompleteSession()
+      const incompleteSession =
+        await workoutSessionStorage.getIncompleteSession()
       if (incompleteSession) {
         dispatch({ type: 'SET_SESSION', payload: incompleteSession })
       }
@@ -159,9 +171,12 @@ export const useWorkoutSessionManager = () => {
     }
   }, [state.session])
 
-  const startWorkout = useCallback((age: number, weight: number, maxHr?: number) => {
-    dispatch({ type: 'START', payload: { age, weight, maxHr } })
-  }, [])
+  const startWorkout = useCallback(
+    (age: number, weight: number, maxHr?: number) => {
+      dispatch({ type: 'START', payload: { age, weight, maxHr } })
+    },
+    []
+  )
 
   const pauseWorkout = useCallback(() => {
     dispatch({ type: 'PAUSE' })
@@ -186,11 +201,22 @@ export const useWorkoutSessionManager = () => {
     dispatch({ type: 'ADD_HR_DATA', payload: hrDataPoint })
   }, [])
 
-  const duration = useMemo(() => {
-    if (!state.session || !state.session.startTime) return 0
-    const endTime = state.session.endTime || Date.now()
-    return Math.floor((endTime - state.session.startTime) / 1000)
-  }, [state.session])
+  const [duration, setDuration] = useState(0)
+
+  useEffect(() => {
+    if (state.status !== 'running') {
+      return
+    }
+
+    const interval = setInterval(() => {
+      if (state.session?.startTime) {
+        const now = Date.now()
+        setDuration(Math.floor((now - state.session.startTime) / 1000))
+      }
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [state.status, state.session?.startTime])
 
   return {
     session: state.session,

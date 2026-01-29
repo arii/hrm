@@ -6,5 +6,5 @@
  * @returns The estimated maximum heart rate.
  */
 export const estimateMaxHr = (age: number): number => {
-  return 208 - 0.7 * age;
-};
+  return 208 - 0.7 * age
+}

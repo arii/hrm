@@ -31,7 +31,10 @@ const initialState: CalorieState = {
   calorieHistory: [],
 }
 
-function calorieReducer(state: CalorieState, action: CalorieAction): CalorieState {
+function calorieReducer(
+  state: CalorieState,
+  action: CalorieAction
+): CalorieState {
   switch (action.type) {
     case 'PROCESS_HR': {
       const { hr, caloriesBurnedThisInterval, now, caloriesPerSecond } =

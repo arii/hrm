@@ -12,7 +12,8 @@ jest.mock('../../../lib/calorie-estimation', () => ({
   estimateCaloriesBurned: jest.fn(),
 }))
 
-const mockedEstimateCaloriesBurned = calorieEstimation.estimateCaloriesBurned as jest.Mock
+const mockedEstimateCaloriesBurned =
+  calorieEstimation.estimateCaloriesBurned as jest.Mock
 
 describe('useCalorieTracker', () => {
   const props = { age: 30, weightKg: 70 }
@@ -21,7 +22,9 @@ describe('useCalorieTracker', () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
     // Mock to return 10 calories per minute
-    mockedEstimateCaloriesBurned.mockImplementation(({ durationMinutes }) => 10 * durationMinutes)
+    mockedEstimateCaloriesBurned.mockImplementation(
+      ({ durationMinutes }) => 10 * durationMinutes
+    )
   })
 
   afterEach(() => {
@@ -51,14 +54,18 @@ describe('useCalorieTracker', () => {
     })
 
     act(() => {
-        jest.advanceTimersByTime(1000) // 1 second later
-        result.current.processHeartRate(125)
+      jest.advanceTimersByTime(1000) // 1 second later
+      result.current.processHeartRate(125)
     })
 
-    const expectedCaloriesPerSecond = (10 / 60) // 10 calories per minute / 60 seconds
-    expect(result.current.totalCaloriesBurned).toBeCloseTo(expectedCaloriesPerSecond)
+    const expectedCaloriesPerSecond = 10 / 60 // 10 calories per minute / 60 seconds
+    expect(result.current.totalCaloriesBurned).toBeCloseTo(
+      expectedCaloriesPerSecond
+    )
     expect(result.current.calorieHistory).toHaveLength(1)
-    expect(result.current.calorieHistory[0].caloriesPerSecond).toBeCloseTo(expectedCaloriesPerSecond)
+    expect(result.current.calorieHistory[0].caloriesPerSecond).toBeCloseTo(
+      expectedCaloriesPerSecond
+    )
     expect(mockedEstimateCaloriesBurned).toHaveBeenCalledTimes(1)
   })
 
@@ -66,14 +73,14 @@ describe('useCalorieTracker', () => {
     const { result } = renderHook(() => useCalorieTracker(props))
 
     act(() => {
-        jest.setSystemTime(new Date())
-        result.current.processHeartRate(120)
-      })
+      jest.setSystemTime(new Date())
+      result.current.processHeartRate(120)
+    })
 
-      act(() => {
-          jest.advanceTimersByTime(1000)
-          result.current.processHeartRate(125)
-      })
+    act(() => {
+      jest.advanceTimersByTime(1000)
+      result.current.processHeartRate(125)
+    })
 
     act(() => {
       result.current.reset()
