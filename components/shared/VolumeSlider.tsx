@@ -1,7 +1,7 @@
 // components/shared/VolumeSlider.tsx
 'use client'
 import { memo, useCallback } from 'react'
-import { Box, IconButton, Slider, Stack, Typography } from '@mui/material'
+import { IconButton, Slider, Stack, Typography } from '@mui/material'
 import { VolumeUp, VolumeDown, VolumeOff } from '@mui/icons-material'
 
 interface VolumeSliderProps {
