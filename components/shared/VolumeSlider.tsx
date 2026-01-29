@@ -26,14 +26,14 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   size = 'small',
 }) => {
   const handleVolumeChange = useCallback(
-    (_: Event, value: number | number[]) => {
+    (_event: any, value: number | number[]) => {
       onVolumeChange(value as number)
     },
     [onVolumeChange]
   )
 
   const handleVolumeChangeCommitted = useCallback(
-    (_: Event, value: number | number[]) => {
+    (_event: any, value: number | number[]) => {
       onVolumeChangeCommitted?.(value as number)
     },
     [onVolumeChangeCommitted]
@@ -57,7 +57,11 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         aria-label={muted ? 'Unmute' : 'Mute'}
         data-testid="volume-slider-mute-button"
       >
-        {muted || volume === 0 ? <VolumeOff fontSize={size} /> : <VolumeDown fontSize={size} />}
+        {muted || volume === 0 ? (
+          <VolumeOff fontSize={size} />
+        ) : (
+          <VolumeDown fontSize={size} />
+        )}
       </IconButton>
       <Slider
         value={muted ? 0 : volume}
@@ -79,7 +83,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         aria-label="Volume control"
         data-testid="volume-slider-input"
       />
-      <VolumeUp sx={{ color: 'grey.400' }} fontSize={size}/>
+      <VolumeUp sx={{ color: 'grey.400' }} fontSize={size} />
       {showValue && (
         <Typography
           variant="caption"

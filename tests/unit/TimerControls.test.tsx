@@ -76,8 +76,12 @@ describe('TimerControls', () => {
   it('should send a TIMER_CONFIG message when durations change', () => {
     render(<TimerControls />)
 
-    const increaseWorkButton = screen.getByTestId('work-duration-input-increment-button')
-    const increaseRestButton = screen.getByTestId('rest-duration-input-increment-button')
+    const increaseWorkButton = screen.getByTestId(
+      'work-duration-input-increment-button'
+    )
+    const increaseRestButton = screen.getByTestId(
+      'rest-duration-input-increment-button'
+    )
 
     fireEvent.click(increaseWorkButton)
     fireEvent.click(increaseRestButton)

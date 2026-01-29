@@ -203,7 +203,9 @@ const TimerDisplay = () => {
         <AnimatedCounter displayTime={displayTime} phaseColor={phaseColor} />
 
         {/* Volume Control */}
-        <Box sx={{ width: { xs: '90%', md: '80%' }, maxWidth: 300, mt: 2, mb: 1 }}>
+        <Box
+          sx={{ width: { xs: '90%', md: '80%' }, maxWidth: 300, mt: 2, mb: 1 }}
+        >
           <VolumeSlider
             volume={volume}
             muted={muted}
