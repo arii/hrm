@@ -1,6 +1,7 @@
 // app/client/experimental/components/WorkoutSummary.tsx
 'use client'
 import { Card, CardContent, Typography, Box } from '@mui/material'
+import { formatDuration } from '@/lib/utils'
 
 interface WorkoutSummaryProps {
   duration: number
@@ -13,17 +14,6 @@ const WorkoutSummary = ({
   calories,
   status,
 }: WorkoutSummaryProps) => {
-  const formatDuration = (seconds: number) => {
-    const h = Math.floor(seconds / 3600)
-      .toString()
-      .padStart(2, '0')
-    const m = Math.floor((seconds % 3600) / 60)
-      .toString()
-      .padStart(2, '0')
-    const s = (seconds % 60).toString().padStart(2, '0')
-    return `${h}:${m}:${s}`
-  }
-
   return (
     <Card>
       <CardContent>
@@ -37,7 +27,9 @@ const WorkoutSummary = ({
           </Box>
           <Box width="50%" p={1}>
             <Typography variant="h6">Duration</Typography>
-            <Typography variant="body1">{formatDuration(duration)}</Typography>
+            <Typography variant="body1">
+              {formatDuration(duration, { unit: 'seconds' })}
+            </Typography>
           </Box>
           <Box width="50%" p={1}>
             <Typography variant="h6">Calories Burned</Typography>

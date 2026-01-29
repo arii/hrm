@@ -3,21 +3,44 @@
  */
 
 /**
- * Formats a duration in seconds into a HH:MM:SS string.
- * @param seconds The duration in seconds.
+ * Formats a duration into a string.
+ * @param duration The duration.
+ * @param options The options for formatting.
  * @returns The formatted duration string.
  */
-export const formatDuration = (seconds: number): string => {
-  if (isNaN(seconds) || seconds < 0) {
-    return '00:00:00'
+export const formatDuration = (
+  duration: number,
+  options: {
+    unit: 'seconds' | 'milliseconds'
+    format?: 'HH:MM:SS' | 'MM:SS'
+  },
+): string => {
+  const { unit, format = 'HH:MM:SS' } = options
+
+  if (isNaN(duration) || duration < 0) {
+    if (format === 'HH:MM:SS') {
+      return '00:00:00'
+    }
+    return '0:00'
   }
-  const h = Math.floor(seconds / 3600)
+
+  const totalSeconds = unit === 'milliseconds' ? Math.floor(duration / 1000) : duration
+
+  if (format === 'MM:SS') {
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = Math.floor(totalSeconds % 60)
+      .toString()
+      .padStart(2, '0')
+    return `${minutes}:${seconds}`
+  }
+
+  const h = Math.floor(totalSeconds / 3600)
     .toString()
     .padStart(2, '0')
-  const m = Math.floor((seconds % 3600) / 60)
+  const m = Math.floor((totalSeconds % 3600) / 60)
     .toString()
     .padStart(2, '0')
-  const s = Math.floor(seconds % 60)
+  const s = Math.floor(totalSeconds % 60)
     .toString()
     .padStart(2, '0')
   return `${h}:${m}:${s}`

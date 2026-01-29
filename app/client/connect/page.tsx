@@ -207,7 +207,7 @@ export default function ConnectPage() {
   }
   return (
     <ConnectView
-      duration={formatDuration(workoutDuration)}
+      duration={formatDuration(workoutDuration, { unit: 'seconds' })}
       caloriesBurned={calories}
       userName={userName}
       setUserName={(name) =>
