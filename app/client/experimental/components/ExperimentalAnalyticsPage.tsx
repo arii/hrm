@@ -1,7 +1,7 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
 import { useMemo } from 'react'
-import { Container, Box, Button } from '@mui/material'
+import { Container, Box, Button, Chip } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
@@ -44,14 +44,28 @@ const ExperimentalAnalyticsPage = () => {
     }, 0)
   }, [workoutData.hrHistory, userSettings])
 
+  // Determine if the displayed data is from a live session.
+  const isLive = workoutStatus === 'running' && workoutData.status === 'running'
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box display="flex" flexDirection="column" gap={3}>
-        <WorkoutSummary
-          duration={totalDuration}
-          calories={caloriesBurned}
-          status={workoutData.status}
-        />
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <WorkoutSummary
+            duration={totalDuration}
+            calories={caloriesBurned}
+            status={workoutData.status}
+          />
+          <Chip
+            label={isLive ? 'Status: Live' : 'Status: Stored'}
+            color={isLive ? 'success' : 'default'}
+            variant="outlined"
+          />
+        </Box>
         <Box display="flex" gap={3}>
           <Box flex={1}>
             <ZoneDistribution

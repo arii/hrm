@@ -17,6 +17,7 @@ export type ActiveWorkoutInputStatus = Exclude<WorkoutStatus, 'finished'>
 
 // Define the structure for the entire workout session
 export interface WorkoutSessionData {
+  sessionId: string
   startTime: number | null
   endTime: number | null
   status: WorkoutStatus
@@ -25,6 +26,7 @@ export interface WorkoutSessionData {
 }
 
 const initialWorkoutData: WorkoutSessionData = {
+  sessionId: '',
   startTime: null,
   endTime: null,
   status: 'idle',
@@ -106,30 +108,35 @@ export const useLocalWorkoutBuffer = (
 
   useEffect(() => {
     let intervalId: number | null = null
-    // CHANGED: The interval now starts as soon as the workout is running,
-    // regardless of whether there's an active HR signal.
-    // This allows data collection to begin immediately and catch the HR
-    // signal as soon as it's available.
-    if (workoutData.status === 'running') {
+    // The interval should only run when the stored session is 'running' AND
+    // the live workout signal is also 'running'. This prevents the hook
+    // from recording empty data points when viewing a stored session
+    // without an active connection.
+    if (workoutData.status === 'running' && workoutStatus === 'running') {
       intervalId = window.setInterval(recordHrData, 1000)
     }
     return () => {
       if (intervalId) window.clearInterval(intervalId)
     }
-  }, [workoutData.status, recordHrData])
+  }, [workoutData.status, workoutStatus, recordHrData])
 
   useEffect(() => {
     const prevStatus = prevWorkoutStatusRef.current
     if (prevStatus !== workoutStatus) {
       if (workoutStatus === 'running') {
         setWorkoutData((prev) => {
+          // A new workout is starting. Generate a new session ID.
           if (prev.status === 'idle' || prev.status === 'finished') {
             return {
               ...initialWorkoutData,
+              sessionId: `${Date.now().toString(36)}-${Math.random()
+                .toString(36)
+                .substring(2, 9)}`,
               status: 'running',
               startTime: Date.now(),
             }
           }
+          // The workout is resuming from a paused state.
           if (prev.status === 'paused') {
             return { ...prev, status: 'running' }
           }
@@ -140,7 +147,7 @@ export const useLocalWorkoutBuffer = (
           prev.status === 'running' ? { ...prev, status: 'paused' } : prev
         )
       } else if (workoutStatus === 'idle') {
-        // CHANGED: When the external timer goes idle (e.g., Tabata cycle ends),
+        // When the external timer goes idle (e.g., Tabata cycle ends),
         // we now pause the local workout instead of finishing it.
         // This preserves the session, allowing for continuous workouts that
         // span multiple timer cycles.
