@@ -5,6 +5,7 @@ import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from './useBluetoothHRM'
 import * as WebSocketContext from '../context/WebSocketContext'
 import * as cookieUtils from '../utils/cookies'
+import { env } from '../lib/env'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
@@ -17,33 +18,16 @@ jest.mock('@/utils/logger', () => ({
   error: jest.fn(),
 }))
 
-// Type definitions for mocks to avoid @ts-expect-error
-interface MockCharacteristic {
-  startNotifications: jest.Mock<Promise<void>>
-  addEventListener: jest.Mock
-}
-
-interface MockService {
-  getCharacteristic: jest.Mock<Promise<MockCharacteristic>>
-}
-
-interface MockGatt {
-  connect: jest.Mock<
-    Promise<{ getPrimaryService: jest.Mock<Promise<MockService>> }>
-  >
-  disconnect: jest.Mock<void>
-}
-
-interface MockDevice {
-  id: string
-  name: string
-  gatt: MockGatt
-  addEventListener: jest.Mock
-}
+import {
+  MockBluetoothDevice,
+  MockBluetoothRemoteGATTServer,
+  MockBluetoothRemoteGATTService,
+  MockBluetoothRemoteGATTCharacteristic,
+} from '@/tests/unit/lib/bluetooth-test-utils'
 
 describe('useBluetoothHRM', () => {
-  let mockGatt: MockGatt
-  let mockDevice: MockDevice
+  let mockGatt: MockBluetoothRemoteGATTServer
+  let mockDevice: MockBluetoothDevice
   let mockBluetooth: {
     requestDevice: jest.Mock<Promise<MockDevice>>
     getDevices: jest.Mock<Promise<MockDevice[]>>
@@ -77,23 +61,30 @@ describe('useBluetoothHRM', () => {
     jest.spyOn(cookieUtils, 'setCookie').mockImplementation(() => {})
 
     // Mock Bluetooth device
-    mockGatt = {
-      connect: jest.fn().mockResolvedValue({
-        getPrimaryService: jest.fn().mockResolvedValue({
-          getCharacteristic: jest.fn().mockResolvedValue({
-            startNotifications: jest.fn().mockResolvedValue(undefined),
-            addEventListener: jest.fn(),
-          }),
-        }),
-      }),
-      disconnect: jest.fn(),
+    const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
+      startNotifications: jest.fn().mockResolvedValue(undefined),
+      stopNotifications: jest.fn().mockResolvedValue(undefined),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
     }
+
+    const mockService: MockBluetoothRemoteGATTService = {
+      getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+    }
+
+    mockGatt = {
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      getPrimaryService: jest.fn().mockResolvedValue(mockService),
+    }
+    mockGatt.connect.mockResolvedValue(mockGatt)
 
     mockDevice = {
       id: 'test-device-id',
       name: 'Test HRM',
       gatt: mockGatt,
       addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
     }
 
     // Mock Web Bluetooth API
@@ -185,14 +176,12 @@ describe('useBluetoothHRM', () => {
     )
 
     // Make the connect call a promise that we can control, so it stays pending
-    let connectResolver: (value: {
-      getPrimaryService: jest.Mock<Promise<MockService>>
-    }) => void
-    const connectPromise = new Promise<{
-      getPrimaryService: jest.Mock<Promise<MockService>>
-    }>((resolve) => {
-      connectResolver = resolve
-    })
+    let connectResolver: (value: MockBluetoothRemoteGATTServer) => void
+    const connectPromise = new Promise<MockBluetoothRemoteGATTServer>(
+      (resolve) => {
+        connectResolver = resolve
+      }
+    )
     mockGatt.connect.mockReturnValue(connectPromise)
 
     const { result } = renderHook(() => useBluetoothHRM())
@@ -213,14 +202,22 @@ describe('useBluetoothHRM', () => {
 
     // Clean up by resolving the promise to avoid open handles
     await act(async () => {
-      connectResolver({
-        getPrimaryService: jest.fn().mockResolvedValue({
-          getCharacteristic: jest.fn().mockResolvedValue({
-            startNotifications: jest.fn().mockResolvedValue(undefined),
-            addEventListener: jest.fn(),
-          } as MockCharacteristic),
-        } as MockService),
-      })
+      const mockChar: MockBluetoothRemoteGATTCharacteristic = {
+        startNotifications: jest.fn().mockResolvedValue(undefined),
+        stopNotifications: jest.fn().mockResolvedValue(undefined),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
+      const mockSvc: MockBluetoothRemoteGATTService = {
+        getCharacteristic: jest.fn().mockResolvedValue(mockChar),
+      }
+      const mockGattServer: MockBluetoothRemoteGATTServer = {
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+        getPrimaryService: jest.fn().mockResolvedValue(mockSvc),
+      }
+      mockGattServer.connect.mockResolvedValue(mockGattServer)
+      connectResolver(mockGattServer)
     })
 
     // Restore original AbortController
@@ -230,22 +227,27 @@ describe('useBluetoothHRM', () => {
   describe('Signal Quality Calculation', () => {
     it('should calculate the rolling average of signal period', async () => {
       const { result } = renderHook(() => useBluetoothHRM())
-      let characteristicValueChangedCallback: (
-        event: unknown
-      ) => void = () => {}
+      let characteristicValueChangedCallback: (event: {
+        target: { value: DataView }
+      }) => void = () => {}
 
       // Mock the characteristic and capture the event listener
-      const mockCharacteristic: MockCharacteristic = {
+      const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
         startNotifications: jest.fn().mockResolvedValue(undefined),
+        stopNotifications: jest.fn().mockResolvedValue(undefined),
         addEventListener: jest.fn((_event, callback) => {
           characteristicValueChangedCallback = callback
         }),
+        removeEventListener: jest.fn(),
+      }
+
+      const mockService: MockBluetoothRemoteGATTService = {
+        getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
       }
 
       mockGatt.connect.mockResolvedValue({
-        getPrimaryService: jest.fn().mockResolvedValue({
-          getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
-        }),
+        ...mockGatt,
+        getPrimaryService: jest.fn().mockResolvedValue(mockService),
       })
 
       await act(async () => {
@@ -321,22 +323,27 @@ describe('useBluetoothHRM', () => {
     it('should proactively increase signal period on missed heartbeats', async () => {
       jest.useFakeTimers()
       const { result } = renderHook(() => useBluetoothHRM())
-      let characteristicValueChangedCallback: (
-        event: unknown
-      ) => void = () => {}
+      let characteristicValueChangedCallback: (event: {
+        target: { value: DataView }
+      }) => void = () => {}
 
       // Mock the characteristic and capture the event listener
-      const mockCharacteristic: MockCharacteristic = {
+      const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
         startNotifications: jest.fn().mockResolvedValue(undefined),
+        stopNotifications: jest.fn().mockResolvedValue(undefined),
         addEventListener: jest.fn((_event, callback) => {
           characteristicValueChangedCallback = callback
         }),
+        removeEventListener: jest.fn(),
+      }
+
+      const mockService: MockBluetoothRemoteGATTService = {
+        getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
       }
 
       mockGatt.connect.mockResolvedValue({
-        getPrimaryService: jest.fn().mockResolvedValue({
-          getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
-        }),
+        ...mockGatt,
+        getPrimaryService: jest.fn().mockResolvedValue(mockService),
       })
 
       await act(async () => {
@@ -396,20 +403,26 @@ describe('useBluetoothHRM', () => {
       const { result } = renderHook(() =>
         useBluetoothHRM({ dataLivenessTimeoutMs })
       )
-      let characteristicValueChangedCallback: (
-        event: unknown
-      ) => void = () => {}
+      let characteristicValueChangedCallback: (event: {
+        target: { value: DataView }
+      }) => void = () => {}
 
-      const mockCharacteristic: MockCharacteristic = {
+      const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
         startNotifications: jest.fn().mockResolvedValue(undefined),
+        stopNotifications: jest.fn().mockResolvedValue(undefined),
         addEventListener: jest.fn((_event, callback) => {
           characteristicValueChangedCallback = callback
         }),
+        removeEventListener: jest.fn(),
       }
+
+      const mockService: MockBluetoothRemoteGATTService = {
+        getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+      }
+
       mockGatt.connect.mockResolvedValue({
-        getPrimaryService: jest.fn().mockResolvedValue({
-          getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
-        }),
+        ...mockGatt,
+        getPrimaryService: jest.fn().mockResolvedValue(mockService),
       })
 
       await act(async () => {
@@ -443,7 +456,7 @@ describe('useBluetoothHRM', () => {
       jest.useRealTimers()
     })
 
-    it('should attempt to reconnect on disconnection and give up after max attempts', async () => {
+    it(`should attempt to reconnect on disconnection and give up after ${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS} attempts`, async () => {
       jest.useFakeTimers()
 
       const { result } = renderHook(() => useBluetoothHRM())
@@ -475,30 +488,45 @@ describe('useBluetoothHRM', () => {
       })
 
       expect(result.current.isConnected).toBe(false)
-      expect(result.current.deviceStatus).toMatch(/reconnecting.*attempt 1\/5/i)
+      expect(result.current.deviceStatus).toMatch(
+        new RegExp(
+          `reconnecting.*attempt 1/${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS}`,
+          'i'
+        )
+      )
 
       // --- Reconnection attempts ---
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS; i++) {
         await act(async () => {
           jest.runOnlyPendingTimers() // Run the setTimeout for reconnect
         })
         expect(mockGatt.connect).toHaveBeenCalledTimes(i)
-        if (i < 5) {
+        if (i < env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS) {
           expect(result.current.deviceStatus).toMatch(
-            new RegExp(`reconnecting.*attempt ${i + 1}/5`, 'i')
+            new RegExp(
+              `reconnecting.*attempt ${
+                i + 1
+              }/${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS}`,
+              'i'
+            )
           )
         }
       }
 
-      // After 5 attempts, it should fail
+      // After max attempts, it should fail
       await act(async () => {
         jest.runOnlyPendingTimers()
       })
 
       expect(result.current.deviceStatus).toMatch(
-        /failed to reconnect after 5 attempts/i
+        new RegExp(
+          `failed to reconnect after ${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS} attempts`,
+          'i'
+        )
       )
-      expect(mockGatt.connect).toHaveBeenCalledTimes(5) // No more calls
+      expect(mockGatt.connect).toHaveBeenCalledTimes(
+        env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS
+      ) // No more calls
 
       // It should also forget the device
       await act(async () => {
@@ -534,14 +562,7 @@ describe('useBluetoothHRM', () => {
       // First reconnect attempt fails, second succeeds
       mockGatt.connect
         .mockRejectedValueOnce(new Error('Reconnect failed'))
-        .mockResolvedValue({
-          getPrimaryService: jest.fn().mockResolvedValue({
-            getCharacteristic: jest.fn().mockResolvedValue({
-              startNotifications: jest.fn().mockResolvedValue(undefined),
-              addEventListener: jest.fn(),
-            }),
-          }),
-        })
+        .mockResolvedValue(mockGatt)
 
       await act(async () => {
         onDisconnectedCallback()
@@ -553,7 +574,12 @@ describe('useBluetoothHRM', () => {
       })
       expect(mockGatt.connect).toHaveBeenCalledTimes(1)
       expect(result.current.isConnected).toBe(false)
-      expect(result.current.deviceStatus).toMatch(/reconnecting.*attempt 2\/5/i)
+      expect(result.current.deviceStatus).toMatch(
+        new RegExp(
+          `reconnecting.*attempt 2/${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS}`,
+          'i'
+        )
+      )
 
       // Second attempt (should succeed)
       await act(async () => {
@@ -601,6 +627,32 @@ describe('useBluetoothHRM', () => {
       expect(result.current.deviceStatus).toBe('Disconnected')
 
       jest.useRealTimers()
+    })
+  })
+
+  describe('Configurable Reconnection Attempts', () => {
+    const originalEnv = process.env
+
+    beforeEach(() => {
+      jest.resetModules() // Important to re-evaluate env variables
+      process.env = { ...originalEnv }
+    })
+
+    afterAll(() => {
+      process.env = originalEnv
+    })
+
+    it('should use the default max reconnection attempts when the environment variable is not set', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { env } = require('../lib/env')
+      expect(env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS).toBe(5)
+    })
+
+    it('should use the custom max reconnection attempts from the environment variable', async () => {
+      process.env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS = '10'
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { env } = require('../lib/env')
+      expect(env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS).toBe(10)
     })
   })
 })
