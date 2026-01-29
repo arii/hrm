@@ -1,4 +1,5 @@
 // tests/unit/lib/logger.test.ts
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 describe('Logger', () => {
   const OLD_ENV = process.env

@@ -21,7 +21,9 @@ type HttpLogger = (
 const createLogger = (): { logger: Logger; httpLogger: HttpLogger } => {
   if (typeof window === 'undefined') {
     // Server-side logger using pino
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const pino = require('pino')
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const pinoHttp = require('pino-http')
 
     const pinoOptions: LoggerOptions = {
