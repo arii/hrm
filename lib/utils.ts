@@ -13,7 +13,7 @@ export const formatDuration = (
   options: {
     unit: 'seconds' | 'milliseconds'
     format?: 'HH:MM:SS' | 'MM:SS'
-  },
+  }
 ): string => {
   const { unit, format = 'HH:MM:SS' } = options
 
@@ -24,7 +24,8 @@ export const formatDuration = (
     return '0:00'
   }
 
-  const totalSeconds = unit === 'milliseconds' ? Math.floor(duration / 1000) : duration
+  const totalSeconds =
+    unit === 'milliseconds' ? Math.floor(duration / 1000) : duration
 
   if (format === 'MM:SS') {
     const minutes = Math.floor(totalSeconds / 60)

@@ -5,7 +5,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import PlaylistTracksDisplay from '@/components/Playlist/PlaylistTracksDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
-import { formatDuration } from '@/lib/utils'
 
 // Mock fetch
 global.fetch = jest.fn()
