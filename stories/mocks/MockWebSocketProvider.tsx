@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react'
 import {
   WebSocketContext,
   WebSocketContextType,
-  ClientHrmData, // Import the client-side HrmData type from the context
 } from '@/context/WebSocketContext'
+import { ClientHrmData } from '@/types/context'
 import {
   ServerMessage,
   ClientCommandMessage,

@@ -24,11 +24,6 @@ interface TestControls {
 }
 import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
 
-// Client-side extension of HrmStreamData to include connection status
-export interface ClientHrmData extends HrmStreamData {
-  isConnected: boolean
-}
-
 export interface WebSocketContextType extends WebSocketState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void

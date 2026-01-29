@@ -2,7 +2,7 @@
 'use client'
 import { useHrZone } from '@/hooks/useHrZone'
 import HrTile from '@/components/HrTile'
-import { ClientHrmData } from '@/context/WebSocketContext'
+import { ClientHrmData } from '@/types/context'
 
 interface HrTileWrapperProps {
   user: ClientHrmData & { isAlerting: boolean; alertMessage?: string }

@@ -1,4 +1,5 @@
-import { WebSocketContextType, ClientHrmData } from '@/context/WebSocketContext'
+import { WebSocketContextType } from '@/context/WebSocketContext'
+import { ClientHrmData } from '@/types/context'
 import { SpotifyPlaybackState, TimerData } from '@/types/websocket'
 
 export const mockSpotifyData: SpotifyPlaybackState = {

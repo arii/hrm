@@ -5,7 +5,7 @@ import {
   SpotifyPlaybackState,
 } from '../types/websocket'
 import { HrmStreamData } from '../types/core'
-import { ClientHrmData } from './WebSocketContext'
+import { ClientHrmData } from '../types/context'
 
 export interface WebSocketState {
   hrmData: ClientHrmData[]
