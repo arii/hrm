@@ -1,10 +1,3 @@
-/**
- * @file useBluetoothHRM.ts
- * @description This file exports a custom React hook, `useBluetoothHRM`, for managing
- * interactions with Bluetooth Low Energy (BLE) Heart Rate Monitor (HRM) devices.
- * It encapsulates the logic for device discovery, connection, disconnection,
- * data streaming, and automatic reconnection on signal loss.
- */
 import { useCallback, useState, useRef, useEffect } from 'react'
 import {
   HrmMetadataUpdateMessage,
