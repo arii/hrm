@@ -7,7 +7,7 @@ import { waitForPageReady } from './lib/waits'
  */
 const startMockWorkout = async (page: Page) => {
   await page.evaluate(() => {
-    window.__TEST_CONTROLS__?.sendMockTimerMessage({
+    window.TEST_CONTROLS?.sendMockTimerMessage({
       timer: 30,
       currentPhase: 'WORK',
       cycle: 1,
