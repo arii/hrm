@@ -40,7 +40,11 @@ export class SpotifyPolling implements SpotifyService {
   private devicePollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
 
-  // Test-only properties for inspecting internal state.
+  /**
+   * @internal
+   * Test-only properties for inspecting internal state, defined only in 'test' env.
+   * See docs/TESTING.md for more info on this pattern.
+   */
   public _test_ =
     process.env.NODE_ENV === 'test'
       ? {

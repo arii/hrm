@@ -71,7 +71,10 @@ async function syncTokenWithBackend(token: JWT) {
 }
 
 /**
- * Safely extracts the hostname from the `NEXTAUTH_URL` environment variable.
+/**
+ * Safely extracts the hostname from `NEXTAUTH_URL` to set the cookie domain.
+ * Returns `undefined` for localhost to allow the browser to use the current domain,
+ * preventing cookie domain errors in local development.
  */
 function getCookieDomain(): string | undefined {
   if (!env.NEXTAUTH_URL) {
@@ -93,7 +96,10 @@ function getCookieDomain(): string | undefined {
   }
 }
 
-// Refreshes an expired Spotify access token.
+/**
+ * Refreshes an expired Spotify access token using the refresh token.
+ * Invoked by the NextAuth JWT callback when the access token is expired.
+ */
 async function refreshAccessToken(token: JWT) {
   try {
     const refreshedTokens = await refreshSpotifyToken(
