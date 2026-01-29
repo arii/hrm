@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import Cookies from 'js-cookie'
 
 function useCookie<T>(
@@ -8,7 +8,27 @@ function useCookie<T>(
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = Cookies.get(key)
-      return item ? JSON.parse(item) : initialValue
+      if (!item) return initialValue
+
+      const parsed = JSON.parse(item)
+
+      // Handle object type values
+      if (typeof initialValue === 'object' && initialValue !== null) {
+        if (typeof parsed === 'object' && parsed !== null) {
+          const initialValueKeys = Object.keys(initialValue)
+          if (Object.keys(parsed).every((k) => initialValueKeys.includes(k))) {
+            return { ...initialValue, ...parsed }
+          }
+        }
+        return initialValue
+      }
+
+      // Handle primitive types
+      if (typeof parsed === typeof initialValue) {
+        return parsed
+      }
+
+      return initialValue
     } catch (error) {
       console.error(`Error reading or parsing cookie key “${key}”:`, error)
       return initialValue
@@ -26,7 +46,6 @@ function useCookie<T>(
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
           })
-          window.dispatchEvent(new Event(`cookie-change-${key}`))
           return valueToStore
         })
       } catch (error) {
@@ -35,24 +54,6 @@ function useCookie<T>(
     },
     [key]
   )
-
-  useEffect(() => {
-    const handleCookieChange = () => {
-      try {
-        const item = Cookies.get(key)
-        if (item) {
-          setStoredValue(JSON.parse(item))
-        }
-      } catch (error) {
-        console.error(`Error parsing cookie change for key “${key}”:`, error)
-      }
-    }
-
-    window.addEventListener(`cookie-change-${key}`, handleCookieChange)
-    return () => {
-      window.removeEventListener(`cookie-change-${key}`, handleCookieChange)
-    }
-  }, [key])
 
   return [storedValue, setValue]
 }
