@@ -76,6 +76,7 @@ const DurationStepper: React.FC<DurationStepperProps> = ({
               aria-label={`Decrease ${label}`}
               disabled={disabled || value <= min}
               sx={stepperButtonSx}
+              data-testid={`${dataTestId}-decrement-button`}
             >
               <Remove fontSize="large" />
             </IconButton>
@@ -101,6 +102,7 @@ const DurationStepper: React.FC<DurationStepperProps> = ({
               aria-label={`Increase ${label}`}
               disabled={disabled}
               sx={stepperButtonSx}
+              data-testid={`${dataTestId}-increment-button`}
             >
               <Add fontSize="large" />
             </IconButton>

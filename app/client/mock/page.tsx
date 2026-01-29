@@ -25,21 +25,21 @@ export default function MockPage() {
   const [weight, setWeight] = useState(70) // Add weight state
   const [height, setHeight] = useState(175) // Add height state
   const [gender, setGender] = useState('male') // Add gender state
-  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
+  const [intervalId, setIntervalId] = useState<number | null>(null)
 
   const isStreaming = intervalId !== null
   const maxHr = 220 - age
 
   // Signal when page is ready for testing
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = window.setTimeout(() => {
       if (typeof window !== 'undefined') {
         window.__TEST_READY__ = true
         window.dispatchEvent(new CustomEvent('test-ready'))
       }
     }, 1000)
 
-    return () => clearTimeout(timer)
+    return () => window.clearTimeout(timer)
   }, [])
 
   const sendHrPacket = useCallback(
@@ -80,7 +80,7 @@ export default function MockPage() {
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return
     sendHrPacket(hrValue)
-    const id = setInterval(() => {
+    const id = window.setInterval(() => {
       const fluctuatedHr = Math.max(
         70,
         hrValue + Math.floor(Math.random() * 5) - 2
@@ -93,7 +93,7 @@ export default function MockPage() {
 
   const stopStreaming = () => {
     if (intervalId) {
-      clearInterval(intervalId)
+      window.clearInterval(intervalId)
       setIntervalId(null)
     }
   }

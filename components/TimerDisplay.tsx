@@ -208,13 +208,18 @@ const TimerDisplay = () => {
           }}
           alignItems="center"
         >
-          <IconButton onClick={toggleMute} sx={{ color: 'white' }}>
+          <IconButton
+            onClick={toggleMute}
+            sx={{ color: 'white' }}
+            data-testid="timer-volume-mute-button"
+          >
             {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
           </IconButton>
           <Slider
             aria-label="Volume"
             value={muted ? 0 : volume}
             onChange={(_, newValue) => setVolume(newValue as number)}
+            data-testid="timer-volume-slider"
             sx={{
               color: 'white',
               '& .MuiSlider-thumb': {
