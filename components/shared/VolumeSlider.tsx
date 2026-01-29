@@ -82,16 +82,6 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         min={0}
         max={100}
         size="small"
-        sx={{
-          color: '#1DB954',
-          '& .MuiSlider-thumb': {
-            backgroundColor: 'white',
-            width: 12,
-            height: 12,
-          },
-          '& .MuiSlider-track': { height: 3 },
-          '& .MuiSlider-rail': { height: 3 },
-        }}
         aria-labelledby="volume-slider"
         data-testid="volume-slider-input"
       />
