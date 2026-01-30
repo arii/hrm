@@ -17,6 +17,7 @@ import Timer from '@mui/icons-material/Timer'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
+import ControlCard from '@/components/shared/ControlCard'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -153,7 +154,7 @@ const TimerControls = () => {
   const modes = ['TABATA', 'STOPWATCH']
 
   return (
-    <Card
+    <ControlCard
       data-testid="timer-controls"
       sx={{
         mb: 0,
@@ -161,10 +162,6 @@ const TimerControls = () => {
         top: 8,
         zIndex: 1000,
         background: 'rgba(30, 41, 59, 0.7)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: 3,
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       }}
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
@@ -355,7 +352,7 @@ const TimerControls = () => {
           </motion.div>
         </Stack>
       </CardContent>
-    </Card>
+    </ControlCard>
   )
 }
 

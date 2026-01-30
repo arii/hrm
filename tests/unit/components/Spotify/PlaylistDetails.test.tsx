@@ -29,7 +29,6 @@ describe('PlaylistDetails', () => {
   })
 
   it('displays a loading indicator while fetching data', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockFetch.mockImplementationOnce(
       () =>
         new Promise((resolve) =>
@@ -50,7 +49,6 @@ describe('PlaylistDetails', () => {
   })
 
   it('displays the track list when data is fetched successfully', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ tracks: mockTracks }),
@@ -70,7 +68,6 @@ describe('PlaylistDetails', () => {
   })
 
   it('displays an error message when the API call fails', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockFetch.mockResolvedValueOnce({
       ok: false,
     })
