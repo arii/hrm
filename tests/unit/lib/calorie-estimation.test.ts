@@ -15,7 +15,7 @@ describe('Calorie Estimation', () => {
         age: 30,
         weightKg: 70,
         durationMinutes: 30,
-        isMale: true,
+        gender: 'MALE',
       },
       426.7,
     ],
@@ -26,7 +26,7 @@ describe('Calorie Estimation', () => {
         age: 30,
         weightKg: 70,
         durationMinutes: 30,
-        isMale: false,
+        gender: 'FEMALE',
       },
       287.2, // Manual calc: (-20.4022 + 0.4472*150 - 0.1263*70 + 0.074*30) / 4.184 * 30
       // = (-20.4022 + 67.08 - 8.841 + 2.22) / 4.184 * 30
@@ -57,7 +57,7 @@ describe('Calorie Estimation', () => {
         age: 65,
         weightKg: 55,
         durationMinutes: 60,
-        isMale: true,
+        gender: 'MALE',
       },
       821.3,
     ],
@@ -68,7 +68,7 @@ describe('Calorie Estimation', () => {
         age: 22,
         weightKg: 90,
         durationMinutes: 45,
-        isMale: false,
+        gender: 'FEMALE',
       },
       // -20.4022 + 0.4472*160 - 0.1263*90 + 0.074*22
       // = -20.4022 + 71.552 - 11.367 + 1.628
@@ -76,6 +76,16 @@ describe('Calorie Estimation', () => {
       // 41.4108 / 4.184 = 9.897.
       // 9.897 * 45 = 445.4.
       445.4,
+    ],
+    [
+      'missing gender defaults to male',
+      {
+        heartRate: 150,
+        age: 30,
+        weightKg: 70,
+        durationMinutes: 30,
+      },
+      426.7,
     ],
   ]
 

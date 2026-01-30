@@ -1,11 +1,12 @@
 // File: hooks/useCalorieCalculator.ts
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
+import { Gender } from '../types/core'
 
 interface CalorieCalculatorProps {
   age: number
   weightKg: number
-  isMale?: boolean
+  gender?: Gender
   smoothingWindow?: number
 }
 
@@ -20,7 +21,7 @@ interface CalorieCalculatorProps {
 export const useCalorieCalculator = ({
   age,
   weightKg,
-  isMale = true,
+  gender = 'MALE',
   smoothingWindow = 5, // Default to a 5-sample window for SMA
 }: CalorieCalculatorProps) => {
   const [calories, setCalories] = useState(0)
@@ -29,14 +30,14 @@ export const useCalorieCalculator = ({
 
   const ageRef = useRef(age)
   const weightKgRef = useRef(weightKg)
-  const isMaleRef = useRef(isMale)
+  const genderRef = useRef(gender)
 
   // Keep refs updated to avoid stale closures in callbacks
   useEffect(() => {
     ageRef.current = age
     weightKgRef.current = weightKg
-    isMaleRef.current = isMale
-  }, [age, weightKg, isMale])
+    genderRef.current = gender
+  }, [age, weightKg, gender])
 
   /**
    * Processes a new heart rate measurement.
@@ -69,7 +70,7 @@ export const useCalorieCalculator = ({
             heartRate: smoothedHr,
             age: ageRef.current,
             weightKg: weightKgRef.current,
-            isMale: isMaleRef.current,
+            gender: genderRef.current,
             durationMinutes: dtMinutes,
           })
           setCalories((prev) => prev + caloriesBurned)

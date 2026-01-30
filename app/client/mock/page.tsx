@@ -10,12 +10,14 @@ import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
+import { Select, MenuItem, FormControl, InputLabel } from '@mui/material'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
+import { Gender } from '../../../types/core'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
@@ -24,7 +26,7 @@ export default function MockPage() {
   const [age, setAge] = useState(30)
   const [weight, setWeight] = useState(70) // Add weight state
   const [height, setHeight] = useState(175) // Add height state
-  const [gender, setGender] = useState('female') // Add gender state
+  const [gender, setGender] = useState<Gender>('FEMALE') // Add gender state
   const [intervalId, setIntervalId] = useState<number | null>(null)
 
   const isStreaming = intervalId !== null
@@ -181,13 +183,17 @@ export default function MockPage() {
               />
             </Grid>
             <Grid size={{ xs: 4 }}>
-              <TextField
-                label="Gender"
-                placeholder="e.g., male"
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                fullWidth
-              />
+              <FormControl fullWidth>
+                <InputLabel>Gender</InputLabel>
+                <Select
+                  value={gender}
+                  label="Gender"
+                  onChange={(e) => setGender(e.target.value as Gender)}
+                >
+                  <MenuItem value="MALE">Male</MenuItem>
+                  <MenuItem value="FEMALE">Female</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
           </Grid>
 

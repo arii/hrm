@@ -57,6 +57,7 @@ const ExperimentalAnalyticsPage = () => {
     useCalorieTracker({
       age: userSettings.userAge || 30,
       weightKg: userSettings.userWeight || 70,
+      gender: userSettings.gender,
     })
 
   // Session list management (direct storage access)
@@ -88,6 +89,7 @@ const ExperimentalAnalyticsPage = () => {
         data: {
           age,
           maxHr,
+          gender: userSettings.gender,
         },
       })
     }

@@ -15,6 +15,7 @@
     "utils/**/*.ts",
     "types/**/*.ts",
     "lib/**/*.ts",
-    "scripts/**/*.ts"
+    "scripts/**/*.ts",
+    "constants/**/*.ts"
   ]
 }

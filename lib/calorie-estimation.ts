@@ -1,11 +1,14 @@
 // lib/calorie-estimation.ts
 
+import { Gender } from '../types/core'
+import { CALORIE_COEFFICIENTS } from './fitness-constants.js'
+
 export interface CalorieEstimationParams {
   heartRate: number
   age: number
   weightKg: number
   durationMinutes: number
-  isMale?: boolean
+  gender: Gender
 }
 
 /**
@@ -26,16 +29,24 @@ export const estimateCaloriesBurned = ({
   age,
   weightKg,
   durationMinutes,
-  isMale = true,
+  gender = 'MALE',
 }: CalorieEstimationParams): number => {
   if (durationMinutes <= 0 || heartRate < 30) {
     return 0
   }
 
   // Karvonen formula - gender-specific coefficients
-  const caloriesPerMinute = isMale
-    ? (-55.0969 + 0.6309 * heartRate + 0.1988 * weightKg + 0.2017 * age) / 4.184
-    : (-20.4022 + 0.4472 * heartRate - 0.1263 * weightKg + 0.074 * age) / 4.184
+  const coeffs =
+    gender === 'MALE'
+      ? CALORIE_COEFFICIENTS.MALE
+      : CALORIE_COEFFICIENTS.FEMALE
+
+  const caloriesPerMinute =
+    (coeffs.BASE +
+      coeffs.HR * heartRate +
+      coeffs.WEIGHT * weightKg +
+      coeffs.AGE * age) /
+    CALORIE_COEFFICIENTS.CONVERSION_FACTOR
 
   if (caloriesPerMinute <= 0) {
     return 0

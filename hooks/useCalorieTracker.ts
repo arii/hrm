@@ -3,10 +3,12 @@
 import { useCallback, useRef, useEffect, useReducer } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 import { CalorieDataPoint } from '../lib/workout-session-storage'
+import { Gender } from '../types/core'
 
 interface CalorieTrackerProps {
   age: number
   weightKg: number
+  gender?: Gender
 }
 
 interface CalorieState {
@@ -58,17 +60,23 @@ function calorieReducer(
   }
 }
 
-export const useCalorieTracker = ({ age, weightKg }: CalorieTrackerProps) => {
+export const useCalorieTracker = ({
+  age,
+  weightKg,
+  gender = 'MALE',
+}: CalorieTrackerProps) => {
   const [state, dispatch] = useReducer(calorieReducer, initialState)
   const lastTimestampRef = useRef<number | null>(null)
 
   const ageRef = useRef(age)
   const weightKgRef = useRef(weightKg)
+  const genderRef = useRef(gender)
 
   useEffect(() => {
     ageRef.current = age
     weightKgRef.current = weightKg
-  }, [age, weightKg])
+    genderRef.current = gender
+  }, [age, weightKg, gender])
 
   const processHeartRate = useCallback((hr: number) => {
     const now = Date.now()
@@ -93,6 +101,7 @@ export const useCalorieTracker = ({ age, weightKg }: CalorieTrackerProps) => {
             age: ageRef.current,
             weightKg: weightKgRef.current,
             durationMinutes: dtMinutes,
+            gender: genderRef.current,
           }) / dtSeconds
 
         const caloriesBurnedThisInterval = caloriesPerSecond * dtSeconds

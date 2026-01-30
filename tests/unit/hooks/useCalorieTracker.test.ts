@@ -16,7 +16,7 @@ const mockedEstimateCaloriesBurned =
   calorieEstimation.estimateCaloriesBurned as jest.Mock
 
 describe('useCalorieTracker', () => {
-  const props = { age: 30, weightKg: 70 }
+  const props = { age: 30, weightKg: 70, gender: 'FEMALE' as const }
 
   beforeEach(() => {
     jest.useFakeTimers()
@@ -67,6 +67,25 @@ describe('useCalorieTracker', () => {
       expectedCaloriesPerSecond
     )
     expect(mockedEstimateCaloriesBurned).toHaveBeenCalledTimes(1)
+  })
+
+  it('should pass gender to the estimation function', () => {
+    const { result } = renderHook(() => useCalorieTracker(props))
+
+    act(() => {
+      result.current.processHeartRate(120) // First call to set timestamp
+    })
+
+    act(() => {
+      jest.advanceTimersByTime(1000)
+      result.current.processHeartRate(125)
+    })
+
+    expect(mockedEstimateCaloriesBurned).toHaveBeenCalledWith(
+      expect.objectContaining({
+        gender: 'FEMALE',
+      })
+    )
   })
 
   it('should reset the calorie tracker state', () => {

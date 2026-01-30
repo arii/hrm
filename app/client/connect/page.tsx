@@ -98,6 +98,7 @@ export default function ConnectPage() {
   } = useCalorieCalculator({
     age: userAge || 30,
     weightKg: userWeight || 70,
+    gender: gender,
   })
 
   // Throttled sender for WebSocket messages
