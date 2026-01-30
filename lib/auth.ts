@@ -5,7 +5,65 @@ import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '@/utils/logger'
 import { getAPIURL } from '../utils/urls'
 import { env } from './env'
-import { refreshSpotifyToken } from './spotify'
+import { SPOTIFY_TOKEN_URL } from '@/constants/spotify'
+
+/**
+ * Returns the Basic Auth header value for Spotify
+ */
+export function getSpotifyBasicAuth() {
+  return (
+    'Basic ' +
+    Buffer.from(
+      `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`
+    ).toString('base64')
+  )
+}
+
+/**
+ * Shared fetch wrapper for refreshing tokens
+ */
+export async function refreshSpotifyToken(refreshToken: string) {
+  const response = await fetch(SPOTIFY_TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: getSpotifyBasicAuth(),
+    },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    logger.error(
+      {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorBody,
+      },
+      'Failed to refresh Spotify token'
+    )
+
+    // Attempt to parse the error body as JSON, but fall back to a generic error
+    try {
+      const errorJson = JSON.parse(errorBody)
+      throw new Error(
+        errorJson.error_description ||
+          errorJson.error ||
+          'Spotify token refresh failed'
+      )
+    } catch (_e) {
+      // If parsing fails, throw a more generic error with the raw text
+      throw new Error(
+        `Spotify token refresh failed: ${response.status} ${response.statusText} - ${errorBody}`
+      )
+    }
+  }
+
+  return response.json()
+}
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {

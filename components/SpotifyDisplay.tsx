@@ -16,6 +16,7 @@ import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { signOut } from 'next-auth/react'
+import { SPOTIFY_VOLUME_GRACE_PERIOD_MS } from '@/constants/spotify'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
@@ -145,18 +146,21 @@ const SpotifyDisplay = () => {
   // Grace period prevents race conditions when volume commands are in flight
   useEffect(() => {
     const timeSinceLastSend = Date.now() - lastVolumeSendTimeRef.current
-    const GRACE_PERIOD_MS = 500 // Wait 500ms after sending before syncing from server
 
     // Only apply grace period if a send is pending and within the window
     const shouldRespectGracePeriod =
-      hasPendingSendRef.current && timeSinceLastSend < GRACE_PERIOD_MS
+      hasPendingSendRef.current &&
+      timeSinceLastSend < SPOTIFY_VOLUME_GRACE_PERIOD_MS
 
     if (state.isSliding || shouldRespectGracePeriod) {
       return
     }
 
     // Once grace period has elapsed, clear the pending send flag
-    if (hasPendingSendRef.current && timeSinceLastSend >= GRACE_PERIOD_MS) {
+    if (
+      hasPendingSendRef.current &&
+      timeSinceLastSend >= SPOTIFY_VOLUME_GRACE_PERIOD_MS
+    ) {
       hasPendingSendRef.current = false
     }
 

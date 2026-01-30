@@ -12,13 +12,11 @@ import VolumeDown from '@mui/icons-material/VolumeDown'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
+import { SIDE_COLUMN_WIDTH } from '@/constants/ui'
 import SideLabel from './SideLabel'
 import { useAudioContext } from '@/context/AudioContext'
 
 const pad = (n: number) => String(n).padStart(2, '0')
-
-// Define a constant for the side column width to avoid magic numbers
-const SIDE_COLUMN_WIDTH = '40px'
 
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()

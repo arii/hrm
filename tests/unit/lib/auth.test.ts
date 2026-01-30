@@ -1,15 +1,10 @@
 /**
  * @jest-environment node
  */
+import * as auth from '@/lib/auth'
 import { authOptions } from '@/lib/auth'
-import * as spotify from '@/lib/spotify'
 import { Account } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
-
-// Mock the spotify module
-jest.mock('@/lib/spotify', () => ({
-  refreshSpotifyToken: jest.fn(),
-}))
 
 // Mock the logger
 jest.mock('@/utils/logger', () => ({
@@ -24,6 +19,22 @@ jest.mock('@/utils/logger', () => ({
 global.fetch = jest.fn()
 
 describe('authOptions.callbacks.jwt', () => {
+  let refreshSpotifyTokenSpy: jest.SpyInstance
+
+  beforeEach(() => {
+    refreshSpotifyTokenSpy = jest
+      .spyOn(auth, 'refreshSpotifyToken')
+      .mockResolvedValue({
+        access_token: 'refreshed-access-token',
+        expires_in: 3600,
+        refresh_token: 'new-refresh-token',
+        scope: 'new-scope',
+      })
+  })
+
+  afterEach(() => {
+    refreshSpotifyTokenSpy.mockRestore()
+  })
   const jwtCallback = authOptions.callbacks?.jwt
 
   if (!jwtCallback) {
@@ -81,7 +92,7 @@ describe('authOptions.callbacks.jwt', () => {
     const result = await jwtCallback({ token, account: null })
 
     expect(result).toBe(token)
-    expect(spotify.refreshSpotifyToken).not.toHaveBeenCalled()
+    expect(refreshSpotifyTokenSpy).not.toHaveBeenCalled()
   })
 
   it('should refresh the token if it is expired and persist scope', async () => {
@@ -100,16 +111,14 @@ describe('authOptions.callbacks.jwt', () => {
       // No new scope returned from refresh
     }
 
-    ;(spotify.refreshSpotifyToken as jest.Mock).mockResolvedValue(
-      refreshedTokens
-    )
+    refreshSpotifyTokenSpy.mockResolvedValue(refreshedTokens)
     ;(fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
     })
 
     const result = await jwtCallback({ token, account: null })
 
-    expect(spotify.refreshSpotifyToken).toHaveBeenCalledWith(token.refreshToken)
+    expect(refreshSpotifyTokenSpy).toHaveBeenCalledWith(token.refreshToken)
     expect(result.accessToken).toBe(refreshedTokens.access_token)
     expect(result.refreshToken).toBe(refreshedTokens.refresh_token)
     expect(result.scope).toBe(token.scope) // Ensure scope is carried over
@@ -130,9 +139,7 @@ describe('authOptions.callbacks.jwt', () => {
       accessTokenExpires: Date.now() - 1000,
     }
 
-    ;(spotify.refreshSpotifyToken as jest.Mock).mockRejectedValue(
-      new Error('Refresh failed')
-    )
+    refreshSpotifyTokenSpy.mockRejectedValue(new Error('Refresh failed'))
 
     const result = await jwtCallback({ token, account: null })
 
@@ -154,9 +161,7 @@ describe('authOptions.callbacks.jwt', () => {
       scope: 'new-scope',
     }
 
-    ;(spotify.refreshSpotifyToken as jest.Mock).mockResolvedValue(
-      refreshedTokens
-    )
+    refreshSpotifyTokenSpy.mockResolvedValue(refreshedTokens)
     ;(fetch as jest.Mock).mockResolvedValueOnce({ ok: true })
 
     const result = await jwtCallback({ token, account: null })

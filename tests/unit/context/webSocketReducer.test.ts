@@ -3,9 +3,9 @@
  */
 import {
   reducer,
-  INITIAL_STATE,
   WebSocketState,
 } from '../../../context/webSocketReducer'
+import { INITIAL_STATE } from '../../../constants/webSocket'
 import { ServerMessage } from '../../../types/websocket'
 import { HrmStreamData } from '../../../types/core'
 

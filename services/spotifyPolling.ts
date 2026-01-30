@@ -19,6 +19,7 @@ import {
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
 import { env } from '../lib/env.js'
+import { SPOTIFY_POLLING_DELAY_MS } from '../constants/spotify.js'
 
 export interface SpotifyTokenResponse {
   access_token: string
@@ -356,7 +357,10 @@ export class SpotifyPolling implements SpotifyService {
     try {
       await this.executeSpotifyCommand(command, params)
       // Slight delay to allow Spotify API to update before we re-poll
-      setTimeout(() => this.getCurrentlyPlaying(), 500)
+      setTimeout(
+        () => this.getCurrentlyPlaying(),
+        SPOTIFY_POLLING_DELAY_MS
+      )
     } catch (error) {
       await logSpotifyCommandError(command, error)
     }

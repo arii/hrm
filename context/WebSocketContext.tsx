@@ -15,6 +15,14 @@ import {
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
+import {
+  THROTTLED_WARNING_TIMEOUT,
+  HEARTBEAT_INTERVAL,
+  PONG_TIMEOUT,
+  INITIAL_RECONNECT_DELAY,
+  JITTER_FACTOR,
+  MAX_RECONNECT_ATTEMPTS,
+} from '@/constants/webSocket'
 
 // Define a type for the test controls to avoid using 'any'
 interface TestControls {
@@ -22,7 +30,8 @@ interface TestControls {
   disconnect: () => void
   connect: () => void
 }
-import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
+import { WebSocketState } from './webSocketReducer'
+import { INITIAL_STATE } from '@/constants/webSocket'
 
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
@@ -165,13 +174,6 @@ export const WebSocketProvider = ({
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Configuration for exponential backoff
-  const MAX_RECONNECT_ATTEMPTS = 10
-  // The initial delay for the first reconnection attempt.
-  const INITIAL_RECONNECT_DELAY = 1000 // 1 second
-  // The factor by which the reconnection delay is randomized to prevent clients from reconnecting simultaneously.
-  const JITTER_FACTOR = 0.2 // 20% jitter
-
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
   const throttledDispatch = useRef(
@@ -214,7 +216,7 @@ export const WebSocketProvider = ({
             '[WebSocketProvider] Connection not open. Queuing action.'
           )
         },
-        5000, // Prevent log spam by throttling to once every 5 seconds
+        THROTTLED_WARNING_TIMEOUT,
         { leading: true, trailing: false } // Important: issue the warning on the first failed attempt
       ),
     []
@@ -247,9 +249,9 @@ export const WebSocketProvider = ({
             '[WebSocketProvider] Pong not received in time. Forcing reconnect.'
           )
           wsRef.current?.close() // Triggers the onclose reconnect logic
-        }, 15000)
+        }, PONG_TIMEOUT)
       }
-    }, 30000)
+    }, HEARTBEAT_INTERVAL)
   }, [stopHeartbeat])
 
   const connect = useCallback(() => {
