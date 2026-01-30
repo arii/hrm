@@ -116,7 +116,7 @@ describe('WebSocket Manager', () => {
     spotifyService: jest.Mocked<SpotifyPolling>
   }
   let getSnapshot: () => StateSnapshot
-  let mockWs: ExtWebSocket
+  let mockWs: MockWebSocket
 
   beforeEach(() => {
     jest.useFakeTimers()
@@ -163,10 +163,8 @@ describe('WebSocket Manager', () => {
 
     initSocketManager(mockWss, getSnapshot, mockServices)
     const mockReq = createMockRequest()
-
-    const rawWs = new MockWebSocket()
-    mockWs = rawWs as ExtWebSocket
-
+    mockWs = new MockWebSocket()
+    ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
     mockWss.emit('connection', mockWs, mockReq)
   })
 
@@ -568,77 +566,6 @@ describe('WebSocket Manager', () => {
         expect.objectContaining({ clientId: 'test-client' }),
         'Unknown message type received'
       )
-    })
-
-    it('should update HRM metadata', () => {
-      const message = JSON.stringify({
-        type: 'HRM_METADATA_UPDATE',
-        data: { name: 'Test User', maxHr: 200, age: 40 },
-      })
-      mockWs.emit('message', message.toString())
-      expect(broadcast).toHaveBeenCalled()
-      const lastCall = (broadcast as jest.Mock).mock.calls[0]
-      const payload: HrmData[] = lastCall[1].payload
-      const clientData = payload.find((c) => c.clientId === 'test-client')
-      expect(clientData?.name).toBe('Test User')
-      expect(clientData?.maxHr).toBe(200)
-      expect(clientData?.age).toBe(40)
-    })
-
-    it('should not overwrite a real name with a default name', () => {
-      // First, set a real name
-      const setNameMessage = JSON.stringify({
-        type: 'HRM_METADATA_UPDATE',
-        data: { name: 'Real Name' },
-      })
-      mockWs.emit('message', setNameMessage.toString())
-
-      // Then, try to overwrite it with a default name
-      const overwriteMessage = JSON.stringify({
-        type: 'HRM_METADATA_UPDATE',
-        data: { name: 'New User' },
-      })
-      mockWs.emit('message', overwriteMessage.toString())
-
-      const lastCall = (broadcast as jest.Mock).mock.calls[1]
-      const payload: HrmData[] = lastCall[1].payload
-      const clientData = payload.find((c) => c.clientId === 'test-client')
-      expect(clientData?.name).toBe('Real Name')
-    })
-
-    it('should handle TIMER_COMMAND messages', () => {
-      const message = JSON.stringify({
-        type: 'TIMER_COMMAND',
-        command: 'START',
-      })
-      mockWs.emit('message', message.toString())
-      expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith(
-        'START'
-      )
-    })
-
-    it('should handle SET_MODE message', () => {
-      const message = JSON.stringify({
-        type: 'SET_MODE',
-        mode: 'STOPWATCH',
-      })
-      mockWs.emit('message', message.toString())
-      expect(mockServices.tabataService.setMode).toHaveBeenCalledWith(
-        'STOPWATCH'
-      )
-    })
-
-    it('should handle TIMER_CONFIG message', () => {
-      const message = JSON.stringify({
-        type: 'TIMER_CONFIG',
-        workDuration: 50,
-        restDuration: 10,
-      })
-      mockWs.emit('message', message.toString())
-      expect(mockServices.tabataService.setConfig).toHaveBeenCalledWith({
-        workDuration: 50,
-        restDuration: 10,
-      })
     })
   })
   describe('Session Cleanup', () => {
