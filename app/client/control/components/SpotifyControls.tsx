@@ -18,7 +18,7 @@ import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PlaybackControls from './PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
-import VolumeSlider from '@/components/Spotify/VolumeSlider'
+import VolumeSlider from '@/components/shared/VolumeSlider'
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -263,6 +263,7 @@ const SpotifyControls = () => {
               muted={muted}
               onVolumeChange={setVolume}
               onToggleMute={toggleMute}
+              showValue={true}
             />
 
             {devices.length > 0 && (

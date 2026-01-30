@@ -10,7 +10,7 @@ import {
   mockBluetoothGattService,
   mockBluetoothRemoteGattServer,
   mockBluetoothDevice,
-} from './lib/bluetooth-test-utils'
+} from '@/tests/test-utils'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
