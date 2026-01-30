@@ -372,10 +372,7 @@ describe('useBluetoothHRM', () => {
       // Start the connection
       let connectPromise
       act(() => {
-        connectPromise = result.current.connect(
-          'Test User',
-          30
-        )
+        connectPromise = result.current.connect('Test User', 30)
       })
 
       // Abort the connection while it's in progress
