@@ -211,13 +211,19 @@ This ensures you can always get an on-demand review from the AI when needed.
 
 ##### Quality Gate Bot Configuration
 
-The AI review workflow can be configured to recognize quality gate reports from multiple CI bots. The `QUALITY_GATE_BOT_USERNAMES` environment variable in the `pr-quality.yml` workflow can be set to a single username or a space-separated list of usernames.
+The AI review workflow can be configured to recognize quality gate reports from multiple CI bots. The `QUALITY_GATE_BOT_USERNAMES` environment variable, used by the `decide-review-strategy.sh` script, can be set to a single username or a space-separated list of usernames.
 
-**Example:**
+**Example (in `.github/workflows/pr-quality.yml`):**
 
 ```yaml
 env:
   QUALITY_GATE_BOT_USERNAMES: 'github-actions[bot] another-bot'
+```
+
+**Example (in a shell environment):**
+
+```bash
+export QUALITY_GATE_BOT_USERNAMES="github-actions[bot] my-custom-bot"
 ```
 
 This allows the `decide-review-strategy.sh` script to correctly identify and parse quality reports from any of the specified bot accounts.
