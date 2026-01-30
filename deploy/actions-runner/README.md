@@ -36,12 +36,17 @@ The version of the GitHub Actions runner is managed by the `RUNNER_VERSION` vari
 
 3.  **Deploy the Runner:**
     -   Navigate to this directory (`deploy/actions-runner`).
-    -   Run the `deploy.sh` script:
-        ```bash
-        bash deploy.sh
-        ```
+    -   Run the `deploy.sh` script. You can specify the runner type as an argument:
+        -   For the Playwright runner (default):
+            ```bash
+            bash deploy.sh playwright
+            ```
+        -   For the generic runner:
+            ```bash
+            bash deploy.sh generic
+            ```
     -   The script will:
-        -   Build the Docker image.
+        -   Build the appropriate Docker image.
         -   Create the `/etc/hrm-actions-runner` directory.
         -   Copy the `.env.runner` file to `/etc/hrm-actions-runner/`.
         -   Copy the `hrm-actions-runner.service` file to `/etc/systemd/system/`.
