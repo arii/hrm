@@ -1,6 +1,6 @@
 // app/client/experimental/components/CalorieTracker.tsx
 import { Card, CardContent, Typography, Box } from '@mui/material'
-import { CalorieDataPoint } from '@/lib/sessionDataValidator'
+import { CalorieDataPoint } from '@/lib/workout-session-storage'
 import { useMemo } from 'react'
 
 interface CalorieTrackerProps {
@@ -9,16 +9,19 @@ interface CalorieTrackerProps {
 
 const CalorieTracker = ({ calorieHistory }: CalorieTrackerProps) => {
   const totalCalories = useMemo(() => {
-    return calorieHistory.reduce((total, dp) => total + dp.calories, 0)
+    if (calorieHistory.length === 0) return 0
+    // Get the latest total from the last data point
+    const lastPoint = calorieHistory[calorieHistory.length - 1]
+    return lastPoint?.totalToThisPoint ?? 0
   }, [calorieHistory])
 
   // Get the last data point for "current" burn rate
   const latestCalorieDataPoint =
     calorieHistory.length > 0 ? calorieHistory[calorieHistory.length - 1] : null
 
-  // The calorie value is per second, so multiply by 60 for kcal/min
+  // The caloriesPerSecond value is per second, so multiply by 60 for kcal/min
   const caloriesPerMinute = latestCalorieDataPoint
-    ? latestCalorieDataPoint.calories * 60
+    ? latestCalorieDataPoint.caloriesPerSecond * 60
     : 0
 
   return (

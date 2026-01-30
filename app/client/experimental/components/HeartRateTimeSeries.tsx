@@ -1,7 +1,7 @@
 // app/client/experimental/components/HeartRateTimeSeries.tsx
 'use client'
 import { Card, CardContent, Typography, Box } from '@mui/material'
-import { HrDataPoint } from '@/lib/sessionDataValidator'
+import { HrDataPoint } from '@/lib/workout-session-storage'
 import {
   LineChart,
   Line,

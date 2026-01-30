@@ -14,7 +14,7 @@ import {
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import VisibilityIcon from '@mui/icons-material/Visibility'
-import { WorkoutSessionData } from '@/lib/sessionDataValidator'
+import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { useState, useEffect } from 'react'
 
 interface SessionListProps {

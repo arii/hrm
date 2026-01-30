@@ -4,11 +4,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { Container, Box, Button } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useWorkoutSessionStorage } from '@/hooks/useWorkoutSessionStorage'
+import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { useUserSettings } from '@/context/UserSettingsContext'
-import { estimateCaloriesBurned } from '@/lib/calorieCalculation'
-import { WorkoutSessionData } from '@/lib/sessionDataValidator'
-import { HrZoneName } from '@/utils/hr-zones'
+import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
+import { WorkoutSessionData, HrZoneName } from '@/lib/workout-session-storage'
 
 const defaultTimeInZones: Record<HrZoneName, number> = {
   [HrZoneName.WarmUp]: 0,
@@ -37,15 +36,15 @@ const ExperimentalAnalyticsPage = () => {
   const { hrmData, sendData, connectionStatus } = useWebSocket()
   const [userSettings] = useUserSettings()
   const {
-    activeSession,
+    currentSession: activeSession,
     allSessions,
-    startNewWorkout,
-    endWorkout,
-    pauseWorkout,
-    resumeWorkout,
-    recordDataPoint,
+    startSession: startNewWorkout,
+    endSession: endWorkout,
+    pauseSession: pauseWorkout,
+    resumeSession: resumeWorkout,
+    addHrDataPoint: recordDataPoint,
     deleteSession,
-  } = useWorkoutSessionStorage()
+  } = useWorkoutSessionManager()
 
   const [view, setView] = useState<View>(() =>
     activeSession ? 'active' : 'list'

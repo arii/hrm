@@ -1,6 +1,6 @@
 // app/client/experimental/components/SessionDetail.tsx
 import { Card, CardContent, Typography, Button, Box } from '@mui/material'
-import { WorkoutSessionData } from '@/lib/sessionDataValidator'
+import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import ZoneDistribution from './ZoneDistribution'
 import HeartRateTimeSeries from './HeartRateTimeSeries'
 import { useUserSettings } from '@/context/UserSettingsContext'
