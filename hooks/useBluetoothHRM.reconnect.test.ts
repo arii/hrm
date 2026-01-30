@@ -40,7 +40,10 @@ describe('useBluetoothHRM Reconnection', () => {
       },
       addEventListener: jest.fn(),
     }
-    ;(navigator as any).bluetooth = {
+    interface MockBluetooth {
+      requestDevice: jest.Mock
+    }
+    ;(navigator.bluetooth as unknown as MockBluetooth) = {
       requestDevice: jest.fn().mockResolvedValue(mockDevice),
     }
 
@@ -70,8 +73,11 @@ describe('useBluetoothHRM Reconnection', () => {
         disconnect: jest.fn(),
       },
       addEventListener: jest.fn(),
-    };
-    (navigator as any).bluetooth = {
+    }
+    interface MockBluetooth {
+      requestDevice: jest.Mock
+    }
+    ;(navigator.bluetooth as unknown as MockBluetooth) = {
       requestDevice: jest.fn().mockResolvedValue(mockDevice),
     }
 
@@ -84,9 +90,10 @@ describe('useBluetoothHRM Reconnection', () => {
     // Simulate multiple disconnections
     for (let i = 0; i < 5; i++) {
       act(() => {
-        const disconnectedCallback = mockDevice.addEventListener.mock.calls.find(
-          (call) => call[0] === 'gattserverdisconnected'
-        )[1]
+        const disconnectedCallback =
+          mockDevice.addEventListener.mock.calls.find(
+            (call) => call[0] === 'gattserverdisconnected'
+          )[1]
         disconnectedCallback()
       })
 

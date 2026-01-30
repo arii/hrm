@@ -37,7 +37,9 @@ describe('TimerControls', () => {
 
   it('sends TIMER_CONFIG message on work duration change', async () => {
     render(<TimerControls />)
-    const workDurationInput = screen.getByTestId('work-duration-input').querySelector('input')
+    const workDurationInput = screen
+      .getByTestId('work-duration-input')
+      .querySelector('input')
     fireEvent.change(workDurationInput!, { target: { value: '30' } })
 
     await waitFor(() => {
@@ -51,7 +53,9 @@ describe('TimerControls', () => {
 
   it('sends TIMER_CONFIG message on rest duration change', async () => {
     render(<TimerControls />)
-    const restDurationInput = screen.getByTestId('rest-duration-input').querySelector('input')
+    const restDurationInput = screen
+      .getByTestId('rest-duration-input')
+      .querySelector('input')
     fireEvent.change(restDurationInput!, { target: { value: '20' } })
 
     await waitFor(() => {

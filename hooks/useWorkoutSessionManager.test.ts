@@ -57,7 +57,9 @@ describe('useWorkoutSessionManager', () => {
   })
 
   it('should reset a workout', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useWorkoutSessionManager())
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useWorkoutSessionManager()
+    )
 
     act(() => {
       result.current.startWorkout(30, 70)
@@ -88,9 +90,13 @@ describe('useWorkoutSessionManager', () => {
 
   it('should recover an incomplete session', async () => {
     const incompleteSession = { sessionId: '123', status: 'running' }
-    ;(workoutSessionStorage.getIncompleteSession as jest.Mock).mockResolvedValue(incompleteSession)
+    ;(
+      workoutSessionStorage.getIncompleteSession as jest.Mock
+    ).mockResolvedValue(incompleteSession)
 
-    const { result, waitForNextUpdate } = renderHook(() => useWorkoutSessionManager())
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useWorkoutSessionManager()
+    )
 
     await waitForNextUpdate()
 

@@ -11,7 +11,9 @@ describe('useCalorieTracker', () => {
   })
 
   it('should correctly process heart rate data and calculate calories', () => {
-    const { result } = renderHook(() => useCalorieTracker({ age: 30, weightKg: 70 }))
+    const { result } = renderHook(() =>
+      useCalorieTracker({ age: 30, weightKg: 70 })
+    )
 
     act(() => {
       result.current.processHeartRate(120)
@@ -30,7 +32,9 @@ describe('useCalorieTracker', () => {
   })
 
   it('should reset the calorie data', () => {
-    const { result } = renderHook(() => useCalorieTracker({ age: 30, weightKg: 70 }))
+    const { result } = renderHook(() =>
+      useCalorieTracker({ age: 30, weightKg: 70 })
+    )
 
     act(() => {
       result.current.processHeartRate(120)
