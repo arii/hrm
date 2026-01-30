@@ -5,7 +5,6 @@ import { useError } from '@/context/ErrorContext'
 import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
 import { fetchWithRetry, AppError } from '@/utils/network'
 
-// Define event data types for better type safety
 interface SpotifyDeviceEvent {
   device_id: string
 }
@@ -51,16 +50,7 @@ declare global {
   }
 }
 
-/**
- * A custom hook to manage the Spotify Web Playback SDK.
- *
- * This hook handles:
- * - Dynamically loading the Spotify Player SDK script.
- * - Initializing the player when user is authenticated.
- * - Fetching the OAuth token securely from our backend.
- * - Managing player state (ready, device ID, errors).
- * - Exposing the player instance and its state to components.
- */
+// Manages the Spotify Web Playback SDK lifecycle.
 const useSpotifyWebPlayback = () => {
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [isReady, setIsReady] = useState(false)

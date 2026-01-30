@@ -7,11 +7,7 @@ const STORAGE_KEY_MUTE = 'hrm-muted'
 export const clampVolume = (value: number): number =>
   Math.min(100, Math.max(0, Math.round(value)))
 
-/**
- * Manages user's volume and mute preferences with localStorage persistence.
- * This hook handles the logic of restoring volume after unmuting.
- * @param {number} defaultVolume - The default volume level (0-100).
- */
+// Manages user's volume and mute preferences with localStorage persistence.
 const useVolumePreference = (defaultVolume = 70) => {
   const sanitizedDefault = clampVolume(defaultVolume)
   const lastVolumeRef = useRef(sanitizedDefault)
