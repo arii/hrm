@@ -1,8 +1,4 @@
-// File: services/spotifyPlaylistService.ts
-/**
- * Spotify Playlist Service: Handles playlist-related operations for the standalone Spotify page.
- * This service is used by the standalone playlist selection page.
- */
+// Handles playlist-related operations for the standalone Spotify page.
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
 import { SpotifyPlaylistItem, SpotifyPlaylist } from '../types/core'
 import { presetPlaylists } from './seedData.js'

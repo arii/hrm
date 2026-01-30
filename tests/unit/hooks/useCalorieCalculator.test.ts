@@ -2,23 +2,14 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react'
+import { mockEstimateCaloriesBurned } from '../../mocks/calorie-estimation'
 import { useCalorieCalculator } from '../../../hooks/useCalorieCalculator'
-import * as CalorieEstimation from '../../../lib/calorie-estimation'
 
 jest.useFakeTimers()
 
 describe('useCalorieCalculator', () => {
-  let estimateCaloriesBurnedSpy: jest.SpyInstance
-
-  beforeEach(() => {
-    estimateCaloriesBurnedSpy = jest.spyOn(
-      CalorieEstimation,
-      'estimateCaloriesBurned'
-    )
-  })
-
   afterEach(() => {
-    estimateCaloriesBurnedSpy.mockRestore()
+    mockEstimateCaloriesBurned.mockReset()
     jest.clearAllTimers()
   })
 
@@ -31,7 +22,7 @@ describe('useCalorieCalculator', () => {
 
   it('should not calculate calories if HR is not processed', () => {
     renderHook(() => useCalorieCalculator({ age: 30, weightKg: 75 }))
-    expect(estimateCaloriesBurnedSpy).not.toHaveBeenCalled()
+    expect(mockEstimateCaloriesBurned).not.toHaveBeenCalled()
   })
 
   it('should process heart rate and accumulate calories over time', () => {
@@ -39,7 +30,7 @@ describe('useCalorieCalculator', () => {
       useCalorieCalculator({ age: 30, weightKg: 75 })
     )
 
-    estimateCaloriesBurnedSpy.mockReturnValue(1) // Mock return value
+    mockEstimateCaloriesBurned.mockReturnValue(1) // Mock return value
 
     act(() => {
       result.current.processHeartRate(120)
@@ -48,7 +39,7 @@ describe('useCalorieCalculator', () => {
     })
 
     expect(result.current.calories).toBeGreaterThan(0)
-    expect(estimateCaloriesBurnedSpy).toHaveBeenCalledTimes(1)
+    expect(mockEstimateCaloriesBurned).toHaveBeenCalledTimes(1)
   })
 
   it('should use smoothed heart rate for calculations', () => {
@@ -56,7 +47,7 @@ describe('useCalorieCalculator', () => {
       useCalorieCalculator({ age: 30, weightKg: 75, smoothingWindow: 3 })
     )
 
-    estimateCaloriesBurnedSpy.mockImplementation(({ heartRate }) => {
+    mockEstimateCaloriesBurned.mockImplementation(({ heartRate }) => {
       return heartRate
     })
 
@@ -70,8 +61,8 @@ describe('useCalorieCalculator', () => {
 
     const expectedSmoothedHr = (100 + 110 + 120) / 3
     const lastCall =
-      estimateCaloriesBurnedSpy.mock.calls[
-        estimateCaloriesBurnedSpy.mock.calls.length - 1
+      mockEstimateCaloriesBurned.mock.calls[
+        mockEstimateCaloriesBurned.mock.calls.length - 1
       ][0]
     expect(lastCall.heartRate).toBeCloseTo(expectedSmoothedHr)
   })
@@ -81,7 +72,7 @@ describe('useCalorieCalculator', () => {
       useCalorieCalculator({ age: 30, weightKg: 75 })
     )
 
-    estimateCaloriesBurnedSpy.mockReturnValue(1)
+    mockEstimateCaloriesBurned.mockReturnValue(1)
 
     act(() => {
       result.current.processHeartRate(120)
@@ -103,6 +94,6 @@ describe('useCalorieCalculator', () => {
 
     // After reset, the first processHeartRate should not calculate calories
     // as there's no previous timestamp.
-    expect(estimateCaloriesBurnedSpy).toHaveBeenCalledTimes(1)
+    expect(mockEstimateCaloriesBurned).toHaveBeenCalledTimes(1)
   })
 })
