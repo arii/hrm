@@ -381,7 +381,7 @@ When integrating with third-party libraries that may have incorrect or incomplet
 
 #### Web Bluetooth API Mocks
 
-To facilitate consistent and type-safe testing of Web Bluetooth API interactions, a set of mock utilities is available in `tests/unit/lib/bluetooth-test-utils.ts`. These utilities provide mock implementations for the following Web Bluetooth API objects:
+To facilitate consistent and type-safe testing of Web Bluetooth API interactions, a set of mock utilities is available in `tests/test-utils/bluetooth-test-utils.ts`. These utilities provide mock implementations for the following Web Bluetooth API objects:
 
 - `BluetoothDevice`
 - `BluetoothRemoteGATTServer`
