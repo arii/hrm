@@ -40,4 +40,28 @@ describe('ExperimentalAnalyticsPage', () => {
     expect(getByText('Time in Zones')).toBeInTheDocument()
     expect(getByText('Heart Rate Over Time')).toBeInTheDocument()
   })
+
+  it('sends HRM_METADATA_UPDATE when WebSocket is connected', () => {
+    const mockSendData = jest.fn()
+    mockUseWebSocket.mockReturnValue({
+      hrmData: [],
+      timerData: null,
+      sendData: mockSendData,
+      connectionStatus: 'Connected',
+    })
+    mockUseUserSettings.mockReturnValue([
+      { userName: 'Test User', userAge: 35 },
+      () => {},
+    ])
+
+    render(<ExperimentalAnalyticsPage />)
+
+    expect(mockSendData).toHaveBeenCalledWith({
+      type: 'HRM_METADATA_UPDATE',
+      data: {
+        name: 'Test User',
+        age: 35,
+      },
+    })
+  })
 })
