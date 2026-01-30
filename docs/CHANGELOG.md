@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.29.0](https://github.com/arii/hrm/compare/hrm-v0.28.0...hrm-v0.29.0) (2026-01-30)
+
+
+### Features
+
+* **large:** Consolidate Notification and Logging Systems ([#5046](https://github.com/arii/hrm/issues/5046)) ([fed1ad2](https://github.com/arii/hrm/commit/fed1ad268d2a23926b1228e710b4743a85b169b7))
+* **large:** Enhanced Independent Experimental Analytics with Persistent Calorie & HR Tracking ([#5128](https://github.com/arii/hrm/issues/5128)) ([3ea808d](https://github.com/arii/hrm/commit/3ea808d9b7adfe715b87d9ca331bf20fba5879db))
+* **large:** Implement Local Storage for Workout Session Data ([#5110](https://github.com/arii/hrm/issues/5110)) ([6d23ba3](https://github.com/arii/hrm/commit/6d23ba3685ce2af8fe9fc6207ec6f458396ad695))
+* **large:** Refactor: Consolidate duplicate VolumeSlider components ([#5108](https://github.com/arii/hrm/issues/5108)) ([929fc94](https://github.com/arii/hrm/commit/929fc94728b658b9a338dda0b687a0440b1f0466))
+* **large:** Refactor: Consolidate UI Component Patterns ([#5082](https://github.com/arii/hrm/issues/5082)) ([00e1fa0](https://github.com/arii/hrm/commit/00e1fa0c8fe673d36277662976367c1aaf66799b))
+* **medium:** Add Infinite Scroll and Playback to Spotify Playlist ([#5305](https://github.com/arii/hrm/issues/5305)) ([52203a7](https://github.com/arii/hrm/commit/52203a78e28b81aa26653eebab80650eaae93775))
+* **medium:** Code Cleanup and Refactoring ([#5095](https://github.com/arii/hrm/issues/5095)) ([d578b13](https://github.com/arii/hrm/commit/d578b13099dd8dba65f5f84c82bef6f61e68390e))
+* **medium:** Refactor Spotify Authentication to Handle Token Refresh Errors ([#5036](https://github.com/arii/hrm/issues/5036)) ([ecf4e67](https://github.com/arii/hrm/commit/ecf4e6718bd5936439b1297b285cb0eb86bf4a00))
+* **medium:** Refactor: Migrate /api/debug/ping usage to /api/health/simple ([#5091](https://github.com/arii/hrm/issues/5091)) ([5ce996c](https://github.com/arii/hrm/commit/5ce996cb913bbe3f16ea772acc57c35e213411b0))
+* **medium:** Refactor: Move DTOs to Types folder ([#5092](https://github.com/arii/hrm/issues/5092)) ([0e00b7e](https://github.com/arii/hrm/commit/0e00b7e102c542d05e4b89c7f67a1165a853253c))
+* **medium:** Refactor: Remove unused serviceContainer ([#5397](https://github.com/arii/hrm/issues/5397)) ([e6f0f38](https://github.com/arii/hrm/commit/e6f0f381b3285c132a4d7d787c2717744d8a38fb))
+* **medium:** Refactor: Streamline Null-Safety and Eliminate Redundant Null Checks ([#5078](https://github.com/arii/hrm/issues/5078)) ([41e08a4](https://github.com/arii/hrm/commit/41e08a46d6609b6578649aeeddf021d0b642ceeb))
+* **medium:** Standardize Hardcoded Colors to MUI Theme Palette ([#5350](https://github.com/arii/hrm/issues/5350)) ([0922b99](https://github.com/arii/hrm/commit/0922b99d7374df114ccc583cc7108a3b15eb0fd2))
+* **small:** Fix Spotify Playlist Track Display ([#5055](https://github.com/arii/hrm/issues/5055)) ([7f49d67](https://github.com/arii/hrm/commit/7f49d6771be35fa0eb81f8b9404c82bc4296b5cf))
+* **small:** Make Default Gender Female ([#5380](https://github.com/arii/hrm/issues/5380)) ([e7f3659](https://github.com/arii/hrm/commit/e7f365901ee72d463ec8f7baa8b93670f0cf9838))
+* **small:** Refactor: Flatten unnecessary directory nesting ([#5094](https://github.com/arii/hrm/issues/5094)) ([c0eee95](https://github.com/arii/hrm/commit/c0eee957951b210714f9f599db101aaacc2f790e))
+
+
+### Bug Fixes
+
+* **ci:** Prevent duplicate bot-generated issues ([#5039](https://github.com/arii/hrm/issues/5039)) ([7451b8b](https://github.com/arii/hrm/commit/7451b8b66127f5c6dd8365d2f8d75b5d7c14fe09))
+* **client:** Ensure experimental page receives live HRM data ([#5040](https://github.com/arii/hrm/issues/5040)) ([d9090cb](https://github.com/arii/hrm/commit/d9090cbc2ab31da7d0d027b7ec7f7f8f42950830))
+
 ## [0.28.0](https://github.com/arii/hrm/compare/hrm-v0.27.0...hrm-v0.28.0) (2026-01-29)
 
 
