@@ -17,7 +17,7 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
-import VolumeSlider from './Spotify/VolumeSlider'
+import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
 
 // 1. State Shape
@@ -428,6 +428,7 @@ const SpotifyDisplay = () => {
             onVolumeChange={handleVolumeChange}
             onVolumeChangeCommitted={handleVolumeChangeCommitted}
             onToggleMute={handleToggleMute}
+            showValue={true}
           />
           <SpotifyDeviceSelectorWrapper
             availableDevices={spotifyData.devices || []}
