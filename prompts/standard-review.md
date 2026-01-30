@@ -53,6 +53,31 @@
 
 ---
 
+## Guiding Principles for AI Reviewers (AI Slop Prevention)
+
+The Golden Rule: **Less code, more clarity.** Your feedback should actively simplify the codebase.
+
+1.  **Explain the "Why," Not Just the "What"**:
+    - **Avoid**: "Add a `try-catch` block."
+    - **Prefer**: "This function interacts with an external API and could fail. Wrap the call in a `try-catch` block to handle potential network errors gracefully and prevent the application from crashing."
+
+2.  **Reject Unnecessary Complexity**:
+    - **Challenge over-engineering**: If you see a factory pattern for a simple object, call it out. Question abstractions that don't provide significant value.
+    - **No useless wrappers**: Scrutinize functions that just wrap another function with the same signature. Ask if it's truly needed.
+    - **Consolidate**: If a new helper function is introduced that duplicates existing logic, recommend consolidating it.
+
+3.  **Be Pragmatic, Not Dogmatic**:
+    - **Adhere to project style**: If the project uses `for` loops, don't suggest `forEach` just based on personal preference.
+    - **Balance perfection and progress**: Don't block a PR for minor style nits if it delivers critical value. Use comments for non-blocking suggestions.
+
+4.  **Prioritize Readability**:
+    - **Simpler is better**: Prefer direct boolean returns over complex `if/else` chains.
+    - **Descriptive naming is key**: Feedback should encourage variable and function names that clearly describe their purpose.
+
+5.  **Actionable and Specific Feedback**:
+    - **Provide code examples**: Instead of describing a change, show it.
+    - **Reference lines**: Pinpoint the exact location for your suggested change.
+
 ## Review Instructions
 
 ### Re-Review Guidelines:

@@ -32,7 +32,7 @@ import {
   ConnectionMonitor,
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
-import { createMockRequest } from './test-data/request-data-factory'
+import { createMockRequest } from '@/tests/test-utils'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')

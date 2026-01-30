@@ -1,7 +1,6 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
-import { useError } from '@/context/ErrorContext'
-import { useSession, signOut } from 'next-auth/react'
+import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import { clampVolume } from '@/hooks/useVolumePreference'
@@ -16,9 +15,10 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
-import VolumeSlider from './Spotify/VolumeSlider'
-import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
+import VolumeSlider from './shared/VolumeSlider'
+import SpotifyDeviceSelector from './SpotifyDeviceSelector'
 
 // 1. State Shape
 interface SpotifyDisplayState {
@@ -117,22 +117,8 @@ const spotifyDisplayReducer = (
 }
 
 const SpotifyDisplay = () => {
-  const { data: session, status } = useSession()
-  const { addError } = useError()
-
-  // Effect to handle session-level errors, like token refresh failure
-  useEffect(() => {
-    if (session?.error === 'RefreshAccessTokenError') {
-      addError('Spotify session expired. Please log in again.', {
-        persist: true,
-      })
-      // Sign out to clear the invalid session
-      signOut()
-    }
-  }, [session, addError])
-
+  const { isLoggedIn } = useSpotifyAuth()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
-  const isLoggedIn = status === 'authenticated'
 
   // 5. Integrate useReducer
   const [state, dispatch] = useReducer(
@@ -150,12 +136,7 @@ const SpotifyDisplay = () => {
     window.location.reload()
   }
 
-  const {
-    player,
-    isReady,
-    deviceId,
-    isAuthenticated: spotifyAuthenticated,
-  } = useSpotifyWebPlayback()
+  const { player, isReady, deviceId } = useSpotifyWebPlayback()
 
   // Enable remote Spotify control from controllers
   useSpotifyRemoteExecution(player)
@@ -354,7 +335,7 @@ const SpotifyDisplay = () => {
           >
             {displayTrackName} {displayArtist}
           </Typography>
-          {spotifyAuthenticated && !isReady && (
+          {!isReady && (
             <Typography
               variant="caption"
               sx={{
@@ -447,8 +428,9 @@ const SpotifyDisplay = () => {
             onVolumeChange={handleVolumeChange}
             onVolumeChangeCommitted={handleVolumeChangeCommitted}
             onToggleMute={handleToggleMute}
+            showValue={true}
           />
-          <SpotifyDeviceSelectorWrapper
+          <SpotifyDeviceSelector
             availableDevices={spotifyData.devices || []}
             deviceMenuAnchor={deviceMenuAnchor}
             onDeviceSelect={handleDeviceSelect}

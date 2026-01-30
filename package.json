@@ -74,6 +74,7 @@
     "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.29.2",
     "idb": "^8.0.3",
+    "js-cookie": "^3.0.5",
     "lodash.isequal": "^4.5.0",
     "lodash.throttle": "^4.1.1",
     "next": "16.1.5",
@@ -106,15 +107,16 @@
     "@storybook/test": "^8.6.14",
     "@storybook/testing-library": "^0.2.2",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
+    "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",
-    "@types/express": "^5.0.5",
+    "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
+    "@types/js-cookie": "^3.0.6",
     "@types/lodash.isequal": "^4.5.8",
     "@types/lodash.throttle": "^4.1.9",
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",
-    "@types/react-dom": "^19.2.2",
+    "@types/react-dom": "^19.2.3",
     "@types/uuid": "^9.0.8",
     "@types/web-bluetooth": "^0.0.21",
     "@types/ws": "^8.18.1",
@@ -128,6 +130,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-storybook": "^10.2.0",
+    "eslint-plugin-unused-imports": "^4.3.0",
     "fake-indexeddb": "^6.2.5",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
@@ -144,7 +147,7 @@
     "pm2": "^6.0.14",
     "prettier": "^3.8.1",
     "storybook": "^8.6.15",
-    "ts-jest": "^29.4.5",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsx": "4.21.0",
     "typescript": "^5.9.3",
@@ -162,6 +165,7 @@
       "pm2-sysmonit"
     ],
     "overrides": {
+      "@testing-library/dom": "10.4.0",
       "loader-utils@<1.4.1": ">=1.4.1",
       "loader-utils@>=1.0.0 <1.4.2": ">=1.4.2",
       "node-fetch@<2.6.7": ">=2.6.7",
@@ -170,7 +174,8 @@
       "cookie@<0.7.0": ">=0.7.0",
       "on-headers@<1.1.0": ">=1.1.0",
       "send@<0.19.0": ">=0.19.0",
-      "next@>=16.0.0-canary.0 <16.0.7": ">=16.0.7"
+      "next@>=16.0.0-canary.0 <16.0.7": ">=16.0.7",
+      "@testing-library/dom": "^10.4.0"
     }
   }
 }
