@@ -29,7 +29,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   userAge: null,
   userWeight: null,
   autoConnect: false,
-  gender: 'MALE',
+  gender: 'FEMALE',
   unitSystem: 'IMPERIAL',
 }
 
