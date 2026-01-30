@@ -86,7 +86,6 @@
     "react-dom": "19.2.4",
     "react-infinite-scroll-component": "^6.1.1",
     "recharts": "^3.7.0",
-    "tsconfig-paths": "^4.2.0",
     "ws": "^8.19.0",
     "zod": "^4.3.6"
   },
@@ -153,6 +152,7 @@
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.16",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.0",
