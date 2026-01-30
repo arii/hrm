@@ -8,7 +8,7 @@ import { Track } from '../../../../types/spotify'
 global.fetch = jest.fn()
 
 describe('PlaylistDetails', () => {
-  const mockTracks: Track[] = [
+  const mockTracksAsArray: Track[] = [
     {
       id: '1',
       name: 'Track 1',
@@ -27,6 +27,11 @@ describe('PlaylistDetails', () => {
     },
   ]
 
+  const mockTracksAsString = mockTracksAsArray.map(track => ({
+    ...track,
+    artists: track.artists.map(a => a.name).join(', '),
+  }))
+
   beforeEach(() => {
     jest.clearAllMocks()
   })
@@ -40,7 +45,7 @@ describe('PlaylistDetails', () => {
             () =>
               resolve({
                 ok: true,
-                json: () => Promise.resolve({ tracks: mockTracks }),
+                json: () => Promise.resolve({ tracks: mockTracksAsArray }),
               }),
             100
           )
@@ -54,12 +59,44 @@ describe('PlaylistDetails', () => {
     await waitFor(() => expect(screen.queryByRole('progressbar')).toBeNull())
   })
 
-  it('displays the track list and handles play clicks', async () => {
+  it('displays the track list and handles play clicks when artists is an array', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(fetch as any).mockResolvedValue(
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ tracks: mockTracks, total: 2 }),
+        json: () => Promise.resolve({ tracks: mockTracksAsArray }),
+      })
+    )
+    const onTrackPlay = jest.fn()
+
+    render(
+      <PlaylistDetails
+        playlistId="test-playlist-id"
+        onTrackPlay={onTrackPlay}
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Track 1')).toBeInTheDocument()
+    })
+    expect(
+      screen.getByText('Artist 1 - Album 1', { exact: false })
+    ).toBeInTheDocument()
+    expect(screen.getByText('Track 2')).toBeInTheDocument()
+    expect(
+      screen.getByText('Artist 2 - Album 2', { exact: false })
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Track 1'))
+    expect(onTrackPlay).toHaveBeenCalledWith('spotify:track:1')
+  })
+
+  it('displays the track list and handles play clicks when artists is a string', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(fetch as any).mockResolvedValue(
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ tracks: mockTracksAsString, total: 2 }),
       })
     )
     const onTrackPlay = jest.fn()
