@@ -11,7 +11,7 @@ on:
         description: 'The branch to merge from'
         required: true
       pr_number:
-        description: 'The PR number to comment on'
+        description: 'The PR number to comment on (required for feedback)'
         required: true
 
 jobs:

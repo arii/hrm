@@ -63,6 +63,18 @@ jobs:
             exit 1
           fi
 
+      - name: Cleanup
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+        run: |
+          set -e
+          echo "Cleaning up PR and branch..."
+          gh pr close $PR_NUMBER
+          git push origin --delete $BRANCH_NAME
+
   test_conflict_resolver:
     runs-on: ubuntu-latest
     steps:
@@ -123,6 +135,18 @@ jobs:
             echo "❌ Conflict resolution failed: conflict-file.txt not found."
             exit 1
           fi
+
+      - name: Cleanup
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
+        run: |
+          set -e
+          echo "Cleaning up PR and branches..."
+          gh pr close $PR_NUMBER
+          git push origin --delete branch-a
+          git push origin --delete branch-b
 
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
@@ -187,3 +211,15 @@ jobs:
             echo "❌ Branch is not rebased on top of leader."
             exit 1
           fi
+
+      - name: Cleanup
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+        run: |
+          set -e
+          echo "Cleaning up PR and branch..."
+          gh pr close $PR_NUMBER
+          git push origin --delete $BRANCH_NAME
