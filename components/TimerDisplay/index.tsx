@@ -12,14 +12,9 @@ import VolumeSlider from '../shared/VolumeSlider'
 import PhaseBackground from './PhaseBackground'
 import AnimatedCounter from './AnimatedCounter'
 import ProgressRing from './ProgressRing'
-import { TimerData } from '@/types/core'
 import { PREPARE_DURATION, phaseProps } from '@/constants/timer'
 
 const pad = (n: number) => String(n).padStart(2, '0')
-
-const getPhaseProps = (phase: TimerData['currentPhase']) => {
-  return phaseProps[phase]
-}
 
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
@@ -33,7 +28,7 @@ const TimerDisplay = () => {
     restDuration = 1,
   } = timerData
 
-  const { color: phaseColor, label: phaseLabel } = getPhaseProps(currentPhase)
+  const { color: phaseColor, label: phaseLabel } = phaseProps[currentPhase]
 
   let displayTime: string
   let progressPercentage: number = 0
