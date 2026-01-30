@@ -1,7 +1,9 @@
 name: 'E2E CI Tests'
 
 on:
-  workflow_dispatch:
+  push:
+    paths:
+      - '.github/**'
 
 jobs:
   test_pr_squash:
