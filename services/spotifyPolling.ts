@@ -32,9 +32,6 @@ export interface SpotifyTokenResponse {
 }
 
 export class SpotifyPolling implements SpotifyService {
-  /**
-   * Public method to force a poll and broadcast current track state.
-   */
   public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
   }
@@ -45,17 +42,12 @@ export class SpotifyPolling implements SpotifyService {
 
   /**
    * @internal
-   * Test-only properties for inspecting internal state. This object is only defined
-   * when `process.env.NODE_ENV === 'test'`, ensuring it does not exist in production.
-   * This allows for type-safe access to private members during unit testing
-   * without compromising encapsulation.
+   * Test-only properties for inspecting internal state, defined only in 'test' env.
+   * See docs/TYPESCRIPT_PATTERNS.md for more info on this pattern.
    */
   public _test_ =
     process.env.NODE_ENV === 'test'
       ? {
-          /**
-           * @returns The internal poll interval timer.
-           */
           getPollInterval: () => this.pollInterval,
           getTokenRefreshInterval: () => this.tokenRefreshInterval,
           setPollInterval: (interval: NodeJS.Timeout | null) => {
@@ -163,22 +155,10 @@ export class SpotifyPolling implements SpotifyService {
     return { ...this.state }
   }
 
-  /**
-   * Public method to safely check if the SDK has been initialized.
-   * @returns {boolean} True if the SDK is ready, false otherwise.
-   */
   public isReady(): boolean {
     return this.sdk !== null
   }
 
-  // --- Token Management (Used by NextAuth route) ---
-
-  /**
-   * Asynchronously handles the token update signal by directly accepting the payload.
-   * This function updates the token manager, re-initializes the SDK,
-   * and immediately triggers a poll and broadcast.
-   * @param {SpotifyTokenPayload} tokens - The new token payload.
-   */
   public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
     logger.info(
       { tokens },
@@ -194,20 +174,15 @@ export class SpotifyPolling implements SpotifyService {
     await this.forcePollAndBroadcast()
   }
 
-  // --- Polling Logic ---
-
-  // Expose start/stop polling publicly (used by server to control lifecycle)
   public startPolling() {
-    if (this.pollInterval) return // Already running
+    if (this.pollInterval) return
 
-    // Interval for currently playing track
     const trackIntervalMs = env.SPOTIFY_POLLING_INTERVAL_MS
     this.pollInterval = setInterval(
       () => this.getCurrentlyPlaying(),
       trackIntervalMs
     )
 
-    // Interval for available devices (less frequent)
     const deviceIntervalMs = env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS
     this.devicePollInterval = setInterval(
       () => this.refreshDevices(),
@@ -316,8 +291,6 @@ export class SpotifyPolling implements SpotifyService {
       await handleSpotifyApiError(error, () => this.checkAndRefreshSdkToken())
     }
   }
-
-  // --- Command Handling (Used by socketManager) ---
 
   public async refreshDevices(): Promise<void> {
     if (!this.sdk) {

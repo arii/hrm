@@ -1,6 +1,6 @@
 // components/shared/VolumeSlider.tsx
 'use client'
-import { memo, useCallback } from 'react'
+import React, { memo, useCallback } from 'react'
 import { IconButton, Slider, Stack, Typography } from '@mui/material'
 import { VolumeUp, VolumeDown, VolumeOff } from '@mui/icons-material'
 
@@ -26,15 +26,17 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   size = 'small',
 }) => {
   const handleVolumeChange = useCallback(
-    (_event: Event, value: number | number[]) => {
+    (_: Event | React.SyntheticEvent, value: number | number[]) => {
       onVolumeChange(value as number)
     },
     [onVolumeChange]
   )
 
   const handleVolumeChangeCommitted = useCallback(
-    (_event: React.SyntheticEvent | Event, value: number | number[]) => {
-      onVolumeChangeCommitted?.(value as number)
+    (_: Event | React.SyntheticEvent, value: number | number[]) => {
+      if (onVolumeChangeCommitted) {
+        onVolumeChangeCommitted(value as number)
+      }
     },
     [onVolumeChangeCommitted]
   )
@@ -63,6 +65,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
           <VolumeDown fontSize={size} />
         )}
       </IconButton>
+
       <Slider
         value={muted ? 0 : volume}
         onChange={handleVolumeChange}

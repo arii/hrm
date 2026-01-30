@@ -5,7 +5,7 @@ import VolumeSlider from '@/components/shared/VolumeSlider'
 import '@testing-library/jest-dom'
 
 describe('components/shared/VolumeSlider', () => {
-  it('should render the slider and buttons', () => {
+  it('should render the slider and buttons with correct accessibility attributes', () => {
     render(
       <VolumeSlider
         volume={50}
@@ -14,9 +14,33 @@ describe('components/shared/VolumeSlider', () => {
         onToggleMute={() => {}}
       />
     )
+
+    // Check container and basic elements
     expect(screen.getByTestId('volume-slider-container')).toBeInTheDocument()
-    expect(screen.getByTestId('volume-slider-mute-button')).toBeInTheDocument()
-    expect(screen.getByTestId('volume-slider-input')).toBeInTheDocument()
+
+    // Check mute button
+    const muteButton = screen.getByRole('button', { name: /mute/i })
+    expect(muteButton).toBeInTheDocument()
+    expect(muteButton).toHaveAttribute('aria-label', 'Mute')
+
+    // Check slider
+    const slider = screen.getByRole('slider')
+    expect(slider).toBeInTheDocument()
+    expect(slider).toHaveAttribute('aria-label', 'Volume control')
+  })
+
+  it('should have the correct accessibility attributes when muted', () => {
+    render(
+      <VolumeSlider
+        volume={50}
+        muted={true}
+        onVolumeChange={() => {}}
+        onToggleMute={() => {}}
+      />
+    )
+
+    const unmuteButton = screen.getByRole('button', { name: /unmute/i })
+    expect(unmuteButton).toHaveAttribute('aria-label', 'Unmute')
   })
 
   it('should call onVolumeChange when the slider is moved', () => {
@@ -30,8 +54,8 @@ describe('components/shared/VolumeSlider', () => {
       />
     )
     const slider = screen.getByRole('slider')
-    fireEvent.mouseDown(slider, { clientX: 75, clientY: 0 })
-    expect(onVolumeChange).toHaveBeenCalled()
+    fireEvent.change(slider, { target: { value: '100' } })
+    expect(onVolumeChange).toHaveBeenCalledWith(100)
   })
 
   it('should call onToggleMute when the mute button is clicked', () => {
@@ -44,7 +68,7 @@ describe('components/shared/VolumeSlider', () => {
         onToggleMute={onToggleMute}
       />
     )
-    const muteButton = screen.getByTestId('volume-slider-mute-button')
+    const muteButton = screen.getByRole('button', { name: /mute/i })
     fireEvent.click(muteButton)
     expect(onToggleMute).toHaveBeenCalled()
   })
@@ -52,13 +76,14 @@ describe('components/shared/VolumeSlider', () => {
   it('should display the volume value when showValue is true', () => {
     render(
       <VolumeSlider
-        volume={50}
+        volume={75}
         muted={false}
         onVolumeChange={() => {}}
         onToggleMute={() => {}}
         showValue={true}
       />
     )
-    expect(screen.getByTestId('volume-slider-value')).toHaveTextContent('50')
+    expect(screen.getByText('75')).toBeInTheDocument()
+    expect(screen.getByTestId('volume-slider-value')).toHaveTextContent('75')
   })
 })
