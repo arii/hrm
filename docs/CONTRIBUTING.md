@@ -31,6 +31,16 @@ If you have an idea for a new feature or an improvement to an existing one, plea
 
 For detailed information on our development process, including our coding standards, PR process, and CI/CD pipeline, please refer to the [Development Overview](./DEVELOPMENT.md) and [Development Standards](./DEVELOPMENT_STANDARDS.md).
 
+### Documentation with MermaidJS
+
+We use [MermaidJS](https://mermaid-js.github.io/mermaid/#/) to create diagrams and flowcharts in our documentation. This allows us to maintain complex diagrams as code, making them easy to update and version control.
+
+When adding or editing a diagram:
+
+1.  **Write the Diagram Code**: Use MermaidJS syntax inside a `mermaid` code block within any `.md` file.
+2.  **Preview**: Use the [Mermaid Live Editor](https://mermaid.live/) to preview your diagram.
+3.  **Submit**: Paste the code block into the relevant documentation file. GitHub will render it automatically.
+
 ## Code of Conduct
 
 We have a [Code of Conduct](./CODE_OF_CONDUCT.md) that we expect all contributors to adhere to. Please be respectful and considerate of others when participating in our community.

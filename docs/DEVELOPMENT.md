@@ -40,7 +40,7 @@ To ensure connection stability and clean up "zombie" clients, the WebSocket serv
 3.  **Disconnection Logic**: If the server does not receive a `pong` response after a certain number of pings (configured by `WEBSOCKET_MAX_MISSED_PONGS`), it considers the client disconnected and terminates the connection.
 4.  **Grace Period**: After termination, a grace period (configured by `WEBSOCKET_GRACE_PERIOD_MS`) begins, allowing the client to reconnect and resume its session without data loss. If the client does not reconnect within this period, its resources are cleaned up from the server.
 
-This strategy ensures that server resources are not consumed by unresponsive clients and that legitimate clients can recover from temporary network disruptions.
+This strategy ensures that server resources are not consumed by unresponsive clients and that legitimate clients can recover from temporary network disruptions. The primary implementation for this logic can be found in `lib/websocket.ts`.
 
 ## Testing
 
