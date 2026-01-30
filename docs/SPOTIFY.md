@@ -57,11 +57,45 @@ SPOTIFY_DEVICE_POLLING_INTERVAL_MS=10000
 
 These credentials are obtained from the Spotify Developer Dashboard.
 
-### Token Management and Refresh
+### Token Management, Refresh, and Synchronization
 
--   **Frontend**: The `useSpotifyWebPlayback` hook (`hooks/useSpotifyWebPlayback.ts`) is responsible for fetching a short-lived access token from a dedicated Next.js API route. This token is used exclusively for the Web Playback SDK.
--   **Backend**: The `SpotifyTokenManager` service (`services/spotifyTokenManager.ts`) stores the access and refresh tokens. It's responsible for refreshing the access token using the refresh token whenever it expires. The `SpotifyPolling` service (`services/spotifyPolling.ts`) uses this manager to ensure it always has a valid token for its API calls.
--   **Synchronization**: When a user logs in or when a token is refreshed, the updated tokens are sent from the NextAuth session to the Next.js internal API route (`app/api/internal/token-delivery/route.ts`), which then securely forwards them to the persistent Node.js/Express backend's `SpotifyPolling` service (`services/spotifyPolling.ts`) to keep them in sync.
+The application maintains two separate Spotify token sets for security and stability: one for the client-side Web Playback SDK and another for the server-side Spotify API polling service.
+
+-   **Client-Side (Web Playback SDK)**: The `useSpotifyWebPlayback` hook (`hooks/useSpotifyWebPlayback.ts`) is responsible for fetching a short-lived access token from a dedicated Next.js API route. This token is used exclusively to authenticate the Web Playback SDK, which plays audio directly in the browser.
+
+-   **Server-Side (API Polling)**: The `SpotifyTokenManager` service (`services/spotifyTokenManager.ts`) on the persistent Node.js backend stores the long-lived access and refresh tokens. The `SpotifyPolling` service (`services/spotifyPolling.ts`) uses this manager to make authenticated calls to the Spotify API (e.g., to get the current track or available devices). When the access token expires, the manager automatically uses the refresh token to obtain a new one.
+
+#### Synchronization Flow
+
+Keeping the server-side tokens in sync with the user's NextAuth session is critical. This is achieved through a secure internal API.
+
+1.  **Login/Refresh**: When a user logs in or when NextAuth refreshes an expired token, the `jwt` callback in NextAuth (`app/api/auth/[...nextauth]/route.ts`) is triggered.
+2.  **Internal API Call**: Inside this callback, a `POST` request is made to an internal API endpoint (`/api/internal/token-delivery`). This request includes the user's latest access token, refresh token, and token expiration time.
+3.  **Secure Forwarding**: The `token-delivery` route handler (`app/api/internal/token-delivery/route.ts`) receives this payload and securely forwards it to the persistent Node.js/Express backend server. This communication is secured with a shared secret (`INTERNAL_TOKEN_DELIVERY_SECRET`) passed in the `Authorization` header.
+4.  **Backend Update**: The backend server receives the new tokens and updates its `SpotifyTokenManager`, ensuring the polling service always has the most current credentials.
+
+This one-way data flow (NextAuth -> Internal API -> Backend) ensures that the backend's state is always synchronized with the user's authentication session.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Next.js Frontend
+    participant NextAuth
+    participant Internal API
+    participant Node.js Backend
+
+    User->>Next.js Frontend: Clicks "Login with Spotify"
+    Next.js Frontend->>NextAuth: Initiates OAuth Flow
+    NextAuth-->>User: Redirects to Spotify for authorization
+    User-->>Spotify: Authorizes application
+    Spotify-->>NextAuth: Redirects with authorization code
+    NextAuth->>Spotify: Exchanges code for tokens
+    Spotify-->>NextAuth: Returns Access & Refresh Tokens
+    NextAuth->>NextAuth: Creates session, invokes JWT callback
+    NextAuth->>Internal API: POST /api/internal/token-delivery (with new tokens)
+    Internal API->>Node.js Backend: Forwards tokens securely
+    Node.js Backend->>Node.js Backend: Updates SpotifyTokenManager with new tokens
+```
 
 ### Security Considerations
 

@@ -69,3 +69,12 @@ To avoid naming collisions and to make the purpose of variables clear, use a con
 
 - **Good**: `SPOTIFY_CLIENT_ID`, `DATABASE_URL`
 - **Bad**: `ID`, `URL`
+
+## WebSocket Stability
+
+The following variables control the server's behavior for detecting and handling unresponsive WebSocket clients. The server sends periodic "ping" messages to each client, and clients are expected to respond with a "pong" message.
+
+-   `WEBSOCKET_MAX_MISSED_PONGS`: The number of consecutive missed pong responses from a client before the server considers the connection stale and terminates it.
+    -   **Default**: `3`
+-   `WEBSOCKET_GRACE_PERIOD_MS`: The time in milliseconds to wait after terminating a stale connection before cleaning up the client's resources. This allows a client that was only temporarily disconnected to reconnect and resume their session.
+    -   **Default**: `5000` (5 seconds)

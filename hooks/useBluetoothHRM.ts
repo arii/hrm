@@ -46,21 +46,46 @@ const parseHeartRate = (value: DataView): number => {
 }
 
 interface UseBluetoothHRMProps {
-  // The timeout in milliseconds for determining if the Bluetooth data stream is stale.
+  /**
+   * The timeout in milliseconds for determining if the Bluetooth data stream is stale.
+   * If no data is received within this period, the connection is considered stale,
+   * and a reconnection attempt is initiated.
+   * @default 10000
+   */
   dataLivenessTimeoutMs?: number
-  // The frequency in milliseconds at which to throttle heart rate updates.
-  throttleMs?: number
+  /** The user's name, used for display purposes and HRM metadata. */
   userName?: string | null
+  /** The user's age, used to calculate the maximum heart rate for HRM metadata. */
   userAge?: number | null
+  /**
+   * Callback function that is invoked with the latest heart rate value.
+   * @param heartRate - The current heart rate.
+   */
   onHeartRateUpdate?: (heartRate: number) => void
+  /**
+   * Callback function that is invoked when the device successfully connects.
+   */
   onConnect?: () => void
 }
 
 /**
- * Manages the entire lifecycle of a Bluetooth HRM device, including discovery,
- * connection, data streaming, and reconnection.
- * @returns An object with functions to manage the device and state properties
- * like connection status, battery level, and data staleness.
+ * Manages the entire lifecycle of a Bluetooth Heart Rate Monitor (HRM) device.
+ * This hook encapsulates logic for device discovery, connection, data streaming,
+ * and automatic reconnection. It provides a simple interface to interact with a
+ * Bluetooth HRM device and monitor its state.
+ *
+ * @param {UseBluetoothHRMProps} [props={}] - Configuration options for the hook.
+ * @returns {object} An object containing functions to manage the device and state properties.
+ * @property {function} connectAndStream - Initiates a scan and connection to a device.
+ * @property {function} autoConnect - Attempts to silently reconnect to a previously paired device.
+ * @property {function} disconnect - Disconnects from the current device.
+ * @property {function} forgetDevice - Disconnects and removes the device from saved devices.
+ * @property {string} deviceStatus - A user-friendly string representing the current connection status.
+ * @property {number | null} batteryLevel - The current battery level of the device, or null if not available.
+ * @property {boolean} isConnected - True if the device is currently connected.
+ * @property {boolean} isDataStale - True if the data stream from the device is considered stale.
+ * @property {boolean} isSupported - True if the browser supports the Web Bluetooth API.
+ * @property {number} signalPeriodMs - The rolling average time in milliseconds between heart rate packets.
  */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {

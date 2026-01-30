@@ -31,6 +31,17 @@ All changes are submitted via Pull Requests. We follow a strict process to ensur
 
 Our CI/CD pipeline automates many aspects of the development process, including linting, testing, and deployment. For detailed information on our automation workflows, deployment strategy, and WebSocket architecture, please see the [CI/CD and Automation section in the Development Standards](./DEVELOPMENT_STANDARDS.md#cicd-and-automation).
 
+### WebSocket Heartbeat Strategy
+
+To ensure connection stability and clean up "zombie" clients, the WebSocket server has a heartbeat mechanism.
+
+1.  **Ping/Pong**: The server periodically sends a `ping` message to each connected client.
+2.  **Client Response**: A healthy client immediately responds with a `pong` message.
+3.  **Disconnection Logic**: If the server does not receive a `pong` response after a certain number of pings (configured by `WEBSOCKET_MAX_MISSED_PONGS`), it considers the client disconnected and terminates the connection.
+4.  **Grace Period**: After termination, a grace period (configured by `WEBSOCKET_GRACE_PERIOD_MS`) begins, allowing the client to reconnect and resume its session without data loss. If the client does not reconnect within this period, its resources are cleaned up from the server.
+
+This strategy ensures that server resources are not consumed by unresponsive clients and that legitimate clients can recover from temporary network disruptions.
+
 ## Testing
 
 For a comprehensive guide on testing, including our testing structure, commands, and best practices, please refer to the [Testing Guide](./TESTING.md).
