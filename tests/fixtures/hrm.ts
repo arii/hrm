@@ -1,6 +1,6 @@
-import { HrmData } from '@/types/websocket'
+import { HrmStreamData } from '@/types/core'
 
-export const mockHrmData: HrmData[] = [
+export const mockHrmData: HrmStreamData[] = [
   {
     clientId: '1',
     name: 'Test User',
