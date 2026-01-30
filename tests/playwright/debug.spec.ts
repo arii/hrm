@@ -4,11 +4,11 @@ import { getBaseURL } from '../../utils/urls'
 const BASE = getBaseURL()
 
 test.describe('HRM debug endpoints', () => {
-  test('ping and session endpoints respond', async ({ request }) => {
-    const ping = await request.get(`${BASE}/api/debug/ping`)
-    expect(ping.ok()).toBeTruthy()
-    const pingJson = await ping.json()
-    expect(pingJson.ok).toBe(true)
+  test('health and session endpoints respond', async ({ request }) => {
+    const health = await request.get(`${BASE}/api/health/simple`)
+    expect(health.ok()).toBeTruthy()
+    const healthJson = await health.json()
+    expect(healthJson.status).toBe('ok')
 
     const session = await request.get(`${BASE}/api/debug/session`)
     // session may return 200 with session or 200+empty or 401; assert not 5xx
