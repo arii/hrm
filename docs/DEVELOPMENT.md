@@ -29,7 +29,19 @@ All changes are submitted via Pull Requests. We follow a strict process to ensur
 
 ## CI/CD, Deployment, and Automation
 
-Our CI/CD pipeline automates many aspects of the development process, including linting, testing, and deployment. For detailed information on our automation workflows, deployment strategy, and WebSocket architecture, please see the [CI/CD and Automation section in the Development Standards](./DEVELOPMENT_STANDARDS.md#cicd-and-automation).
+Our CI/CD pipeline automates many aspects of the development process. For detailed information on our automation workflows and standards, please see the [CI/CD and Automation section in the Development Standards](./DEVELOPMENT_STANDARDS.md#cicd-and-automation).
+
+### Production Deployment
+
+The production application is managed using [PM2](https://pm2.keymetrics.io/), a process manager for Node.js applications. The deployment process is orchestrated via GitHub Actions, which builds a production artifact, transfers it to the server, and starts the application.
+
+The application is started using the following command:
+
+```bash
+pnpm exec pm2 start ecosystem.config.cjs --env production
+```
+
+This command uses the project's `ecosystem.config.cjs` file to configure the PM2 process, ensuring a consistent startup environment.
 
 ## Testing
 

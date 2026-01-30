@@ -28,8 +28,8 @@ cp -r dist release_build/
 
 # 5. Copy Production Configuration & Scripts
 echo "📋 Adding production config and runtime scripts..."
-cp deploy/next.config.js release_build/
-cp deploy/ecosystem.config.cjs release_build/
+cp next.config.js release_build/
+cp ecosystem.config.cjs release_build/
 cp deploy/start-production.sh release_build/
 mkdir -p release_build/scripts
 # Only copy runtime scripts, exclude dev/test scripts if desired
