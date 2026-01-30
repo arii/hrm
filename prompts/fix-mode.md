@@ -38,6 +38,7 @@ One or more critical checks have failed. Your PRIORITY is to fix these errors.
 2. 🔍 **ANALYZE** the provided diff specifically looking for logic that breaks tests or builds.
 3. 🛠️ **GENERATE FIXES**: You MUST provide a "Proposed Fix" section containing a valid **Unified Diff** or specific code block to resolve the failure.
 4. 🧠 **Reasoning**: Explain _why_ the test failed (e.g., "Mock data missing," "Timeout too short," "Type mismatch").
+5. 💡 **AVOID SLOP**: Propose the simplest, most direct fix. Do not introduce unnecessary complexity or over-engineered solutions.
 
 **Guidance for Common Failures:**
 

@@ -55,28 +55,30 @@
 
 ## Guiding Principles for AI Reviewers (AI Slop Prevention)
 
-The Golden Rule: **Less code, more clarity.** Your feedback should actively simplify the codebase.
+The Golden Rule: **Less code, more clarity.** Your primary directive is to simplify the codebase.
 
 1.  **Explain the "Why," Not Just the "What"**:
     - **Avoid**: "Add a `try-catch` block."
     - **Prefer**: "This function interacts with an external API and could fail. Wrap the call in a `try-catch` block to handle potential network errors gracefully and prevent the application from crashing."
 
-2.  **Reject Unnecessary Complexity**:
-    - **Challenge over-engineering**: If you see a factory pattern for a simple object, call it out. Question abstractions that don't provide significant value.
-    - **No useless wrappers**: Scrutinize functions that just wrap another function with the same signature. Ask if it's truly needed.
-    - **Consolidate**: If a new helper function is introduced that duplicates existing logic, recommend consolidating it.
+2.  **Reject Unnecessary Complexity (AI Slop)**:
+    - **Definition**: "AI Slop" is code that is technically functional but unnecessarily complex, inefficient, or difficult to maintain. Your role is to identify and reject it.
+    - **Challenge Over-engineering**: If you see a factory pattern for a simple object, call it out. Question abstractions that don't add significant value. *Example*: "This custom validation logic can be replaced with a single call to a well-tested library like Zod, which is already a project dependency."
+    - **No Useless Wrappers**: Scrutinize functions that just wrap another function with the same signature. Ask if it's truly needed.
+    - **Consolidate**: If a new helper function duplicates existing logic, recommend consolidating it.
+    - **Prefer Simplicity**: Do not suggest complex solutions (e.g., a multi-level inheritance structure) when a simpler one (e.g., a single function) will suffice.
 
 3.  **Be Pragmatic, Not Dogmatic**:
-    - **Adhere to project style**: If the project uses `for` loops, don't suggest `forEach` just based on personal preference.
-    - **Balance perfection and progress**: Don't block a PR for minor style nits if it delivers critical value. Use comments for non-blocking suggestions.
+    - **Adhere to Project Style**: If the project uses `for` loops, do not suggest `forEach` just based on personal preference. Enforce existing patterns.
+    - **Balance Perfection and Progress**: Do not block a PR for minor style nits if it delivers critical value. Use non-blocking comments for such suggestions.
 
-4.  **Prioritize Readability**:
-    - **Simpler is better**: Prefer direct boolean returns over complex `if/else` chains.
-    - **Descriptive naming is key**: Feedback should encourage variable and function names that clearly describe their purpose.
+4.  **Prioritize Readability and Maintainability**:
+    - **Simpler is Better**: Prefer a direct boolean return over a complex `if/else` chain.
+    - **Descriptive Naming is Key**: Feedback must encourage variable and function names that clearly describe their purpose and intent.
 
 5.  **Actionable and Specific Feedback**:
-    - **Provide code examples**: Instead of describing a change, show it.
-    - **Reference lines**: Pinpoint the exact location for your suggested change.
+    - **Provide Code Examples**: Instead of describing a change, show it with a concrete code snippet.
+    - **Reference Lines**: Pinpoint the exact location for your suggested change.
 
 ## Review Instructions
 

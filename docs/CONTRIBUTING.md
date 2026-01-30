@@ -31,6 +31,10 @@ If you have an idea for a new feature or an improvement to an existing one, plea
 
 For detailed information on our development process, including our coding standards, PR process, and CI/CD pipeline, please refer to the [Development Overview](./DEVELOPMENT.md) and [Development Standards](./DEVELOPMENT_STANDARDS.md).
 
+### AI-Assisted Contributions
+
+We encourage the use of AI tools to accelerate development, but all contributors are responsible for the quality of their submissions. Please review our [Guidelines for AI-Assisted Contributions](./DEVELOPMENT_STANDARDS.md#guidelines-for-ai-assisted-contributions) before submitting AI-generated code.
+
 ## Code of Conduct
 
 We have a [Code of Conduct](./CODE_OF_CONDUCT.md) that we expect all contributors to adhere to. Please be respectful and considerate of others when participating in our community.
