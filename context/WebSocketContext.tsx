@@ -272,6 +272,9 @@ export const WebSocketProvider = ({
       // Set test flag for Playwright tests - use a more reliable method
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
+        if (process.env.NODE_ENV !== 'production') {
+          ;(window as any).webSocket = ws
+        }
       }
 
       // Explicitly request initial state from the server

@@ -29,6 +29,7 @@ import ZoneDistribution from './ZoneDistribution'
 import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
+import TimeSyncControls from './TimeSyncControls'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
@@ -51,6 +52,7 @@ const ExperimentalAnalyticsPage = () => {
     resumeWorkout,
     endWorkout,
     addHrData,
+    trimWorkoutSession,
   } = useWorkoutSessionManager()
 
   const { processHeartRate, totalCaloriesBurned, calorieHistory, reset } =
@@ -134,6 +136,21 @@ const ExperimentalAnalyticsPage = () => {
     reset()
     setView('active')
   }, [startWorkout, reset, userSettings])
+
+  // Auto-start workout when HR is detected
+  useEffect(() => {
+    const lastHrValue = hrmData[0]?.value
+    if (
+      status === 'idle' &&
+      lastHrValue &&
+      lastHrValue > 0 &&
+      userSettings.userAge &&
+      userSettings.userWeight
+    ) {
+      // Automatically start the workout session
+      handleStartWorkout()
+    }
+  }, [hrmData, status, userSettings, handleStartWorkout])
 
   const handlePauseWorkout = useCallback(() => {
     pauseWorkout()
@@ -235,7 +252,12 @@ const ExperimentalAnalyticsPage = () => {
               calories={summaryData.totalCalories}
               status={status}
             />
-
+            {activeSession && (
+              <TimeSyncControls
+                session={activeSession}
+                onTrim={trimWorkoutSession}
+              />
+            )}
             <CalorieTracker calorieHistory={calorieHistory} />
 
             <ZoneDistribution

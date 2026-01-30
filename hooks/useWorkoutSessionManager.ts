@@ -28,6 +28,10 @@ type SessionManagerAction =
   | { type: 'END' }
   | { type: 'RESET' }
   | { type: 'ADD_HR_DATA'; payload: HrDataPoint }
+  | {
+      type: 'TRIM_SESSION'
+      payload: { startTime: number; endTime: number }
+    }
 
 const initialState: SessionManagerState = {
   session: null,
@@ -39,6 +43,72 @@ function sessionManagerReducer(
   action: SessionManagerAction
 ): SessionManagerState {
   switch (action.type) {
+    case 'TRIM_SESSION': {
+      if (!state.session) return state
+
+      const { startTime, endTime } = action.payload
+      const { hrHistory, userSettings } = state.session
+
+      // Filter HR history based on the new time range
+      const trimmedHrHistory = hrHistory.filter(
+        (dp) => dp.time >= startTime && dp.time <= endTime
+      )
+
+      if (trimmedHrHistory.length === 0) {
+        // Handle case with no data in the new range
+        return {
+          ...state,
+          session: {
+            ...state.session,
+            startTime,
+            endTime,
+            hrHistory: [],
+            timeInZones: Object.fromEntries(
+              Object.values(HrZoneName).map((zone) => [zone, 0])
+            ) as Record<HrZoneName, number>,
+            averageHr: 0,
+            maxHr: 0,
+          },
+        }
+      }
+
+      // Recalculate stats based on the trimmed data
+      let newAverageHr = 0
+      let newMaxHr = 0
+      const newTimeInZones = Object.fromEntries(
+        Object.values(HrZoneName).map((zone) => [zone, 0])
+      ) as Record<HrZoneName, number>
+
+      trimmedHrHistory.forEach((dp, index) => {
+        newAverageHr += dp.hr
+        if (dp.hr > newMaxHr) {
+          newMaxHr = dp.hr
+        }
+
+        const previousDataPoint = trimmedHrHistory[index - 1]
+        const timeDelta =
+          index > 0 && previousDataPoint
+            ? (dp.time - previousDataPoint.time) / 1000
+            : 1
+        const { zoneName } = calculateHrZone(dp.hr, userSettings.maxHr)
+        newTimeInZones[zoneName] = (newTimeInZones[zoneName] || 0) + timeDelta
+      })
+
+      newAverageHr /= trimmedHrHistory.length
+
+      return {
+        ...state,
+        session: {
+          ...state.session,
+          startTime,
+          endTime,
+          hrHistory: trimmedHrHistory,
+          timeInZones: newTimeInZones,
+          averageHr: newAverageHr,
+          maxHr: newMaxHr,
+        },
+      }
+    }
     case 'SET_SESSION': {
       return {
         ...state,
@@ -211,6 +281,13 @@ export const useWorkoutSessionManager = () => {
     dispatch({ type: 'ADD_HR_DATA', payload: hrDataPoint })
   }, [])
 
+  const trimWorkoutSession = useCallback(
+    (startTime: number, endTime: number) => {
+      dispatch({ type: 'TRIM_SESSION', payload: { startTime, endTime } })
+    },
+    []
+  )
+
   const [duration, setDuration] = useState(0)
 
   useEffect(() => {
@@ -239,5 +316,6 @@ export const useWorkoutSessionManager = () => {
     endWorkout,
     resetWorkout,
     addHrData,
+    trimWorkoutSession,
   }
 }
