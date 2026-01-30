@@ -44,9 +44,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
         setTracks(
           isInitialLoad ? data.tracks : (prev) => [...prev, ...data.tracks]
         )
-        setOffset(
-          isInitialLoad ? limit : (prevOffset) => prevOffset + limit
-        )
+        setOffset(isInitialLoad ? limit : (prevOffset) => prevOffset + limit)
       }
 
       if (
@@ -58,9 +56,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
       }
     } catch (err) {
       console.error('Failed to fetch playlist tracks:', err)
-      setError(
-        err instanceof Error ? err.message : 'An unknown error occurred'
-      )
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
     }
   }
 
@@ -82,36 +78,36 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
       )}
       <Paper
         id="scrollable-playlist"
-      sx={{ maxHeight: '400px', overflow: 'auto', mt: 2 }}
-    >
-      <InfiniteScroll
-        dataLength={tracks.length}
-        next={fetchTracks}
-        hasMore={hasMore}
-        loader={
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-            <CircularProgress />
-          </Box>
-        }
-        scrollableTarget="scrollable-playlist"
+        sx={{ maxHeight: '400px', overflow: 'auto', mt: 2 }}
       >
-        <List dense>
-          {tracks.map((track) => (
-            <ListItem key={track.id} divider disablePadding>
-              <ListItemButton onClick={() => onTrackPlay(track.uri)}>
-                <MusicNote
-                  sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}
-                />
-                <ListItemText
-                  primary={track.name}
-                  secondary={`${(track.artists || []).map((a) => a.name).join(', ')} - ${track.album?.name || 'Unknown Album'}`}
-                />
-              </ListItemButton>
-          </ListItem>
-        ))}
-        </List>
-      </InfiniteScroll>
-    </Paper>
+        <InfiniteScroll
+          dataLength={tracks.length}
+          next={fetchTracks}
+          hasMore={hasMore}
+          loader={
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <CircularProgress />
+            </Box>
+          }
+          scrollableTarget="scrollable-playlist"
+        >
+          <List dense>
+            {tracks.map((track) => (
+              <ListItem key={track.id} divider disablePadding>
+                <ListItemButton onClick={() => onTrackPlay(track.uri)}>
+                  <MusicNote
+                    sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}
+                  />
+                  <ListItemText
+                    primary={track.name}
+                    secondary={`${(track.artists || []).map((a) => a.name).join(', ')} - ${track.album?.name || 'Unknown Album'}`}
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </InfiniteScroll>
+      </Paper>
     </>
   )
 }
