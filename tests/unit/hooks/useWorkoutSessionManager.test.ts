@@ -5,11 +5,16 @@
 
 import { renderHook, act } from '@testing-library/react'
 import { useWorkoutSessionManager } from '../../../hooks/useWorkoutSessionManager'
-import { workoutSessionStorage, HrZoneName } from '../../../lib/workout-session-storage'
+import {
+  workoutSessionStorage,
+  HrZoneName,
+} from '../../../lib/workout-session-storage'
 
 // Mock the storage module
 jest.mock('../../../lib/workout-session-storage', () => {
-  const originalModule = jest.requireActual('../../../lib/workout-session-storage')
+  const originalModule = jest.requireActual(
+    '../../../lib/workout-session-storage'
+  )
   return {
     ...originalModule,
     workoutSessionStorage: {
@@ -131,8 +136,14 @@ describe('useWorkoutSessionManager', () => {
       result.current.addHrData({ time: startTime + 3000, hr: 140 })
     })
 
-    expect(result.current.session?.timeInZones[HrZoneName.NoData]).toBeCloseTo(1)
-    expect(result.current.session?.timeInZones[HrZoneName.FatBurn]).toBeCloseTo(2)
-    expect(result.current.session?.timeInZones[HrZoneName.Cardio]).toBeCloseTo(1)
+    expect(result.current.session?.timeInZones[HrZoneName.NoData]).toBeCloseTo(
+      1
+    )
+    expect(result.current.session?.timeInZones[HrZoneName.FatBurn]).toBeCloseTo(
+      2
+    )
+    expect(result.current.session?.timeInZones[HrZoneName.Cardio]).toBeCloseTo(
+      1
+    )
   })
 })
