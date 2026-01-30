@@ -96,7 +96,10 @@ const SpotifySelectionPage = () => {
       </Card>
 
       {selectedPlaylistId && (
-        <PlaylistDetails playlistId={selectedPlaylistId} />
+        <PlaylistDetails
+          playlistId={selectedPlaylistId}
+          onTrackPlay={handlePlaylistPlay}
+        />
       )}
     </Container>
   )

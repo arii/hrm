@@ -6,6 +6,7 @@ export interface Track {
   artists: { name: string }[]
   album: { name: string }
   imageUrl?: string | null
+  uri: string
 }
 
 export interface Playlist {
