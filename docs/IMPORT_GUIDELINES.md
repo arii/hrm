@@ -7,7 +7,7 @@ To maintain consistency and leverage the centralized barrel exports, please foll
 ```typescript
 import { HrTile, BottomNavBar } from '@/components'
 import { useAudio, useLocalStorage } from '@/hooks'
-import { logger, dateUtils } from '@/utils'
+import { logger } from '@/utils'
 ```
 
 ### 2. Direct Imports (For specific modules not in barrel exports):

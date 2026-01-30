@@ -1,21 +1,9 @@
-// File: services/spotifyPlaylistService.ts
-/**
- * Spotify Playlist Service: Handles playlist-related operations for the standalone Spotify page.
- * This service is used by the standalone playlist selection page.
- */
+// Handles playlist-related operations for the standalone Spotify page.
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
 import { SpotifyPlaylistItem, SpotifyPlaylist } from '../types/core'
-import { presetPlaylists } from './seedData.js'
 
 // Re-export types for backward compatibility
 export type { SpotifyPlaylistItem, SpotifyPlaylist }
-
-/**
- * Returns a list of preset workout playlists.
- */
-export function getPresetPlaylists(): SpotifyPlaylistItem[] {
-  return presetPlaylists
-}
 
 /**
  * Fetches user playlists from Spotify API.

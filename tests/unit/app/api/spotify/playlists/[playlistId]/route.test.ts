@@ -18,7 +18,10 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
       description: 'A test playlist',
       images: [{ url: 'http://example.com/image.jpg' }],
       owner: { display_name: 'Test User' },
-      tracks: { total: 10 },
+      tracks: {
+        total: 10,
+        items: [{ track: { id: 't1', name: 'Track 1' } }],
+      },
     }
     const mockGetPlaylist = jest.fn().mockResolvedValue(mockPlaylist)
     ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue({
@@ -41,6 +44,7 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
       imageUrl: 'http://example.com/image.jpg',
       owner: 'Test User',
       trackCount: 10,
+      tracks: [{ id: 't1', name: 'Track 1' }],
     })
   })
 })
