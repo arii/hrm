@@ -34,11 +34,24 @@ One or more critical checks have failed. Your PRIORITY is to fix these errors.
 
 **Debug Mode Rules:**
 
-1. 🚫 **IGNORE** style nits, variable naming, or minor refactors unless they caused the error.
-2. 🔍 **ANALYZE** the provided diff specifically looking for logic that breaks tests or builds.
-3. 🛠️ **GENERATE FIXES**: You MUST provide a "Proposed Fix" section containing a valid **Unified Diff** or specific code block to resolve the failure.
-4. 🧠 **Reasoning**: Explain _why_ the test failed (e.g., "Mock data missing," "Timeout too short," "Type mismatch").
-5. 💡 **AVOID SLOP**: Propose the simplest, most direct fix. Do not introduce unnecessary complexity or over-engineered solutions.
+1.  🚫 **IGNORE** style nits, variable naming, or minor refactors unless they caused the error.
+2.  🔍 **ANALYZE** the provided diff specifically looking for logic that breaks tests or builds.
+3.  🛠️ **GENERATE FIXES**: You MUST provide a "Proposed Fix" section containing a valid **Unified Diff** or specific code block to resolve the failure.
+4.  🧠 **Reasoning**: Explain _why_ the test failed (e.g., "Mock data missing," "Timeout too short," "Type mismatch").
+
+**Guiding Principles for Fixes (AI Slop Prevention)**
+
+The Golden Rule: **The best fix is the simplest fix.** Your primary directive is to resolve the failure with minimal, targeted changes.
+
+1.  **Reject Unnecessary Complexity (AI Slop)**:
+    - **Definition**: "AI Slop" is code that, while technically functional, introduces unnecessary complexity, dependencies, or maintenance overhead. Your role is to provide fixes that avoid this.
+    - **No Over-engineering**: Do not suggest a complex design pattern to fix a simple bug. *Example*: If a type is incorrect, fix the type. Do not suggest adding a new abstraction layer to handle type conversions.
+    - **Minimalism is Key**: Your proposed fix should be the smallest possible change that resolves the error. Do not refactor unrelated code.
+    - **No New Dependencies**: Do not add a new library or dependency to fix a problem that can be solved with existing code.
+
+2.  **Actionable and Specific Feedback**:
+    - **Provide Code Examples**: Instead of describing a change, show it with a concrete code snippet or a unified diff.
+    - **Reference Lines**: Pinpoint the exact location for your suggested change.
 
 **Guidance for Common Failures:**
 
