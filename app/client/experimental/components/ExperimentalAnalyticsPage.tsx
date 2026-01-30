@@ -1,6 +1,6 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { Container, Box, Button } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -18,7 +18,7 @@ import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
 import { useUserSettings } from '@/context/UserSettingsContext'
 
 const ExperimentalAnalyticsPage = () => {
-  const { hrmData, timerData } = useWebSocket()
+  const { hrmData, timerData, sendData, connectionStatus } = useWebSocket()
   const timerStatus = timerData?.currentPhase
   const [userSettings] = useUserSettings()
 
@@ -29,6 +29,21 @@ const ExperimentalAnalyticsPage = () => {
     hrmData[0]?.value ?? 0,
     workoutStatus
   )
+
+  // Send user metadata when WebSocket connects to ensure this client is registered
+  // to receive live HRM data updates. This is crucial for pages that are opened
+  // after a connection is already established elsewhere in the application.
+  useEffect(() => {
+    if (connectionStatus === 'Connected') {
+      sendData({
+        type: 'HRM_METADATA_UPDATE',
+        data: {
+          name: userSettings.userName || 'User', // Use a default name if not set
+          age: userSettings.userAge || 30, // Use a default age if not set
+        },
+      })
+    }
+  }, [connectionStatus, userSettings, sendData])
 
   const totalDuration = workoutData.hrHistory.length
 
