@@ -16,8 +16,8 @@ We will proceed with the behavior from `utils/constants.ts` as the single source
 
 ## Consequences
 
--   **Pros**:
-    -   The `calculateMaxHr` function is now centralized and more robust, handling a wider range of inputs.
-    -   The codebase is cleaner and more maintainable with the removal of the duplicate function.
--   **Cons**:
-    -   The default maximum heart rate for users with an age of 0 or other invalid age data has changed from 200 to 185. This will affect HR zone calculations for these users. Given that a valid age is expected for accurate HR zone calculations, this change is deemed acceptable.
+- **Pros**:
+  - The `calculateMaxHr` function is now centralized and more robust, handling a wider range of inputs.
+  - The codebase is cleaner and more maintainable with the removal of the duplicate function.
+- **Cons**:
+  - The default maximum heart rate for users with an age of 0 or other invalid age data has changed from 200 to 185. This will affect HR zone calculations for these users. Given that a valid age is expected for accurate HR zone calculations, this change is deemed acceptable.
