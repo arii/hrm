@@ -29,14 +29,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs
 
 # 3. Create a non-root user 'runner' (GitHub Runners should not run as root)
-# The runner user is granted passwordless sudo privileges. This is a common requirement
-# for self-hosted runners, as many CI/CD workflows need to install system-level
-# dependencies (e.g., Playwright's browsers via `npx playwright install-deps`).
-# While this provides broad privileges, it is a necessary trade-off for the
-# flexibility required by the runner's operational environment.
-RUN useradd -m runner && \
-    usermod -aG sudo runner && \
-    echo "%sudo ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN useradd -m runner
+
+# Grant ownership of the home directory to the runner user. This allows it to
+# install necessary dependencies without requiring root access.
+RUN chown -R runner:runner /home/runner
 
 USER runner
 WORKDIR /home/runner
