@@ -154,11 +154,11 @@ describe('create-review-issues script', () => {
         commitHash: 'abcdefg',
         branchName: 'test-branch',
       }
-      ;(spawnSync as jest.Mock).mockImplementation((command, args) => {
-        if (args.includes('label' && 'list')) {
+      ;(spawnSync as jest.Mock).mockImplementation((_command, args) => {
+        if (args.includes('label') && args.includes('list')) {
           return { status: 0, stdout: '[]', stderr: '' }
         }
-        if (args.includes('issue' && 'create')) {
+        if (args.includes('issue') && args.includes('create')) {
           return {
             status: 0,
             stdout: 'https://github.com/test/repo/issues/1',
