@@ -49,9 +49,7 @@ describe('WebSocket Full Integration Test', () => {
     }
     ws.send(JSON.stringify(hrmInput))
     const hrUpdate = await hrUpdatePromise
-    const clientData = hrUpdate.hrmData?.find(
-      (c) => c.name === 'Workflow Test'
-    )
+    const clientData = hrUpdate.hrmData?.find((c) => c.name === 'Workflow Test')
     expect(clientData).toBeDefined()
     expect(clientData?.value).toBe(135)
 
