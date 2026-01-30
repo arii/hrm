@@ -5,7 +5,8 @@ import PlaylistDetails from '../../../../components/Spotify/PlaylistDetails'
 import { Track } from '../../../../types/spotify'
 
 // Mock the fetch API
-global.fetch = jest.fn()
+const mockFetch = jest.fn()
+global.fetch = mockFetch
 
 describe('PlaylistDetails', () => {
   const mockTracksAsArray: Track[] = [
@@ -37,8 +38,7 @@ describe('PlaylistDetails', () => {
   })
 
   it('displays a loading indicator while fetching data', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockImplementationOnce(
+    mockFetch.mockImplementationOnce(
       () =>
         new Promise((resolve) =>
           setTimeout(
@@ -60,13 +60,10 @@ describe('PlaylistDetails', () => {
   })
 
   it('displays the track list and handles play clicks when artists is an array', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValue(
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ tracks: mockTracksAsArray }),
-      })
-    )
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ tracks: mockTracksAsArray }),
+    })
     const onTrackPlay = jest.fn()
 
     render(
@@ -92,13 +89,10 @@ describe('PlaylistDetails', () => {
   })
 
   it('displays the track list and handles play clicks when artists is a string', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValue(
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ tracks: mockTracksAsString, total: 2 }),
-      })
-    )
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ tracks: mockTracksAsString, total: 2 }),
+    })
     const onTrackPlay = jest.fn()
 
     render(
@@ -124,12 +118,9 @@ describe('PlaylistDetails', () => {
   })
 
   it('displays an error message when the API call fails', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValue(
-      Promise.resolve({
-        ok: false,
-      })
-    )
+    mockFetch.mockResolvedValue({
+      ok: false,
+    })
     const consoleErrorSpy = jest
       .spyOn(console, 'error')
       .mockImplementation(() => {})
