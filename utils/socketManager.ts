@@ -1,9 +1,5 @@
-// File: utils/socketManager.ts (WebSocket Manager - Typed)
-/**
- * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
- */
 import { WebSocket, Server as WebSocketServer } from 'ws'
-import { z } from 'zod' // Import z from zod
+import { z } from 'zod'
 import { IncomingMessage } from 'http'
 import { TLSSocket } from 'tls'
 import {
@@ -17,7 +13,7 @@ import {
   ExtWebSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
+import { CALORIE_DEFAULTS } from './constants.js'
 import {
   broadcast,
   sendWebSocketMessage,
@@ -30,10 +26,7 @@ import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
 import { roundTo, objectFromEntries } from '../lib/utils.js'
 
-// Define service instances to be managed
-// New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
-// Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
@@ -44,42 +37,27 @@ let services: AppServices
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
 const hrmDataStore = new HrmDataStore()
 
-// Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
 
-// Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
   { lastUpdate: number; accumulatedCalories: number }
 >()
 
-// New: Map to hold cleanup timers for disconnected clients
 const clientCleanupTimers = new Map<string, NodeJS.Timeout>()
 
-/**
- * Safely parses the WebSocket request URL to extract search parameters.
- * Handles cases where headers or URL might be malformed.
- * @param req - The incoming HTTP request from the WebSocket upgrade.
- * @returns URLSearchParams object, which will be empty if parsing fails.
- */
 const getRequestParams = (req: IncomingMessage): URLSearchParams => {
   try {
-    // Fallback to localhost if host header is missing, which can happen in some proxy/test setups
     const host = req.headers.host || 'localhost'
-    const protocol = 'http' // WebSocket upgrades start as HTTP
+    const protocol = 'http'
     const url = new URL(req.url || '/', `${protocol}://${host}`)
     return url.searchParams
   } catch (error) {
     logger.error({ error }, 'Failed to parse WebSocket connection URL')
-    // Return empty params to prevent a crash on invalid URL
     return new URLSearchParams()
   }
 }
 
-/**
- * Centralized function to clean up a client's session data.
- * @param clientId The identifier of the client to clean up.
- */
 const cleanupClientSession = (clientId: string) => {
   logger.info({ clientId }, 'Session expired. Deleting data.')
   try {
@@ -92,18 +70,11 @@ const cleanupClientSession = (clientId: string) => {
       'Error during session cleanup'
     )
   } finally {
-    // Always remove the socket reference and cleanup timer to prevent leaks
     clientSockets.delete(clientId)
     clientCleanupTimers.delete(clientId)
   }
 }
 
-/**
- * Creates a metadata object for logging, with sensitive data redaction in production.
- * @param req - The incoming HTTP request.
- * @param clientId - The client's identifier.
- * @returns An object with connection details for logging.
- */
 const getLogMeta = (
   req: IncomingMessage,
   clientId: string
@@ -127,9 +98,6 @@ const getLogMeta = (
   }
 }
 
-/**
- * Initializes the WebSocket Server manager and registers the core services.
- */
 const initSocketManager = (
   wss: WebSocketServer,
   getSnapshot: () => StateSnapshot,
@@ -151,14 +119,11 @@ const initSocketManager = (
     const logMeta = getLogMeta(req, clientId)
     extWs.clientId = clientId
 
-    // New: If a cleanup timer exists for this client, clear it
     if (clientCleanupTimers.has(clientId)) {
       clearTimeout(clientCleanupTimers.get(clientId))
       clientCleanupTimers.delete(clientId)
       logger.info({ clientId }, 'Cleared cleanup timer for reconnected client.')
     }
-
-    // it's a stale or "zombie" connection. Overwrite it with the new socket.
 
     if (clientSockets.has(clientId)) {
       logger.warn(
@@ -183,7 +148,7 @@ const initSocketManager = (
         value: 0,
         maxHr: 185,
         age: 30,
-        calories: 0, // Initialize to 0
+        calories: 0,
       }
       hrmDataStore.save(newClient)
       clientSessionState.set(extWs.clientId, {
@@ -251,15 +216,11 @@ const broadcastState = () => {
   )
 }
 
-/**
- * Handles incoming JSON messages from client applications.
- */
 const handleIncomingMessage = (
   ws: ExtWebSocket,
   messageString: string,
   clientId: string
 ) => {
-  // Any message from the client indicates they are still alive.
   ws.isAlive = true
   try {
     const parsedJson = JSON.parse(messageString)
@@ -267,7 +228,6 @@ const handleIncomingMessage = (
 
     switch (message.type) {
       case 'PING': {
-        // Respond to client heartbeat pings to keep the connection alive
         logger.info({ clientId }, 'Received PING, sending PONG.')
         const pongMessage: ServerMessage = { type: 'PONG' }
         sendWebSocketMessage(ws, pongMessage, 'socketManager.PING')

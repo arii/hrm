@@ -27,7 +27,12 @@ const WorkoutSummary = ({
           </Box>
           <Box width="50%" p={1}>
             <Typography variant="h6">Duration</Typography>
-            <Typography variant="body1">{formatDuration(duration)}</Typography>
+            <Typography variant="body1">
+              {formatDuration(duration, {
+                unit: 'seconds',
+                format: 'HH:MM:SS',
+              })}
+            </Typography>
           </Box>
           <Box width="50%" p={1}>
             <Typography variant="h6">Calories Burned</Typography>
