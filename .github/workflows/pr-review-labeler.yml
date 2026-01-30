@@ -22,6 +22,7 @@ jobs:
             const managedLabels = [
               approvedLabel,
               changesRequestedLabel,
+              // The following are legacy labels that should be removed.
               'request-changes',
               'Changes Requested'
             ];
