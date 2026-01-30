@@ -18,6 +18,7 @@ jest.mock('@/utils/logger', () => ({
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
+    debug: jest.fn(),
   },
 }))
 
@@ -399,6 +400,19 @@ describe('useBluetoothHRM', () => {
 
   describe('Watchdog and Reconnection', () => {
     const WATCHDOG_INTERVAL_MS = HEARTBEAT_INTERVAL_MS * 2 // Watchdog runs every 2nd heartbeat
+    let onDisconnectedCallback: () => void = () => {}
+
+    beforeEach(() => {
+      // Capture the 'gattserverdisconnected' event listener
+      onDisconnectedCallback = () => {} // Reset before each test
+      mockDevice.addEventListener.mockImplementation(
+        (event: string, callback: () => void) => {
+          if (event === 'gattserverdisconnected') {
+            onDisconnectedCallback = callback
+          }
+        }
+      )
+    })
 
     it('should detect data staleness and attempt to reconnect', async () => {
       jest.useFakeTimers()
@@ -463,16 +477,6 @@ describe('useBluetoothHRM', () => {
       jest.useFakeTimers()
 
       const { result } = renderHook(() => useBluetoothHRM())
-      let onDisconnectedCallback: () => void = () => {}
-
-      // Capture the 'gattserverdisconnected' event listener
-      mockDevice.addEventListener.mockImplementation(
-        (event: string, callback: () => void) => {
-          if (event === 'gattserverdisconnected') {
-            onDisconnectedCallback = callback
-          }
-        }
-      )
 
       // First connection is successful
       await act(async () => {
@@ -547,15 +551,6 @@ describe('useBluetoothHRM', () => {
     it('should successfully reconnect after a disconnection', async () => {
       jest.useFakeTimers()
       const { result } = renderHook(() => useBluetoothHRM())
-      let onDisconnectedCallback: () => void = () => {}
-
-      mockDevice.addEventListener.mockImplementation(
-        (event: string, callback: () => void) => {
-          if (event === 'gattserverdisconnected') {
-            onDisconnectedCallback = callback
-          }
-        }
-      )
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -597,16 +592,8 @@ describe('useBluetoothHRM', () => {
 
     it('should not attempt to reconnect after a manual disconnect', async () => {
       jest.useFakeTimers()
+      const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
       const { result } = renderHook(() => useBluetoothHRM())
-      let onDisconnectedCallback: () => void = () => {}
-
-      mockDevice.addEventListener.mockImplementation(
-        (event: string, callback: () => void) => {
-          if (event === 'gattserverdisconnected') {
-            onDisconnectedCallback = callback
-          }
-        }
-      )
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -625,10 +612,11 @@ describe('useBluetoothHRM', () => {
       })
 
       // Ensure no timers are pending for reconnection
-      expect(setTimeout).not.toHaveBeenCalled()
+      expect(setTimeoutSpy).not.toHaveBeenCalled()
       expect(mockGatt.connect).not.toHaveBeenCalled()
       expect(result.current.deviceStatus).toBe('Disconnected')
 
+      setTimeoutSpy.mockRestore()
       jest.useRealTimers()
     })
 
@@ -645,15 +633,6 @@ describe('useBluetoothHRM', () => {
       mockGatt.connect.mockResolvedValue(mockGatt)
 
       // Manually trigger the disconnection event
-      let onDisconnectedCallback: () => void = () => {}
-      mockDevice.addEventListener.mockImplementation(
-        (event: string, callback: () => void) => {
-          if (event === 'gattserverdisconnected') {
-            onDisconnectedCallback = callback
-          }
-        }
-      )
-
       await act(async () => {
         onDisconnectedCallback()
       })
