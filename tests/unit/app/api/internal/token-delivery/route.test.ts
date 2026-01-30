@@ -20,16 +20,6 @@ const mockSpotifyService = {
   isReady: jest.fn(),
   handleTokenUpdate: jest.fn(),
 }
-jest.mock('@/lib/serviceContainer', () => ({
-  serviceContainer: {
-    get: jest.fn((serviceName: 'spotifyService') => {
-      if (serviceName === 'spotifyService') {
-        return mockSpotifyService
-      }
-      return null
-    }),
-  },
-}))
 
 describe('POST /api/internal/token-delivery', () => {
   const originalNextAuthSecret = process.env.NEXTAUTH_SECRET
@@ -40,10 +30,13 @@ describe('POST /api/internal/token-delivery', () => {
 
   afterAll(() => {
     process.env.NEXTAUTH_SECRET = originalNextAuthSecret
+    // @ts-expect-error - Deleting global for test isolation
+    delete global.spotifyService
   })
 
   beforeEach(() => {
     jest.clearAllMocks()
+    global.spotifyService = mockSpotifyService
   })
 
   it('should return 401 if secret header is missing or invalid', async () => {

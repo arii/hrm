@@ -1,13 +1,29 @@
+import { Dispatch, SetStateAction } from 'react'
+import { SpotifyService } from './interfaces'
+import { BluetoothConnectionStatus } from './bluetooth'
+import { ServerMessage } from './websocket'
+
+// Define a comprehensive interface for the global test controls
+// This allows various parts of the application to attach test-specific
+// functions to the window object in a type-safe manner.
+export interface TestControls {
+  // From useBluetoothHRM hook
+  setHrmStatus?: Dispatch<SetStateAction<BluetoothConnectionStatus>>
+  setCustomHrmStatusMessage?: Dispatch<SetStateAction<string | null>>
+
+  // From WebSocketProvider context
+  dispatch?: (message: ServerMessage) => void
+  disconnect?: () => void
+}
+
 declare global {
+  // eslint-disable-next-line no-var
+  var spotifyService: SpotifyService | undefined
+
   interface Window {
     __TEST_READY__?: boolean
     __TEST_WEBSOCKET_READY__?: boolean
-    TEST_CONTROLS?: {
-      setHrmStatus?: (
-        status: import('./bluetooth').BluetoothConnectionStatus
-      ) => void
-      setCustomHrmStatusMessage?: (message: string) => void
-    }
+    TEST_CONTROLS?: TestControls
   }
 }
 
