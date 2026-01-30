@@ -50,7 +50,7 @@ export const estimateCaloriesBurned = ({
     return 0
   }
 
-  // Karvonen formula - gender-specific coefficients
+  // Gender-specific calorie estimation formula
   const coeffs =
     gender === 'MALE' ? CALORIE_COEFFICIENTS.MALE : CALORIE_COEFFICIENTS.FEMALE
 
