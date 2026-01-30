@@ -1,11 +1,12 @@
 // lib/calorie-estimation.ts
+import { Gender } from '@/types/user'
 
 export interface CalorieEstimationParams {
   heartRate: number
   age: number
   weightKg: number
   durationMinutes: number
-  gender?: 'male' | 'female' | 'neutral'
+  gender?: Gender
 }
 
 /**
