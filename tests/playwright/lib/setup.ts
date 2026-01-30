@@ -18,7 +18,7 @@ import { waitForFontsLoaded, waitForPageReady } from './waits'
  */
 export const HRM_ROUTES = {
   /** Main dashboard/viewer page */
-  DASHBOARD: '/',
+  DASHBOARD: '/client/experimental',
   /** Control panel for timer and music */
   CONTROL: '/client/control',
   /** Mock HRM client for testing */

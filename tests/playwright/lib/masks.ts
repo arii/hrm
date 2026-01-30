@@ -20,6 +20,7 @@ export const VRT_MASK_SELECTORS = {
   hrTileGridItem: '[data-testid="hr-tile-grid-item"]',
   timerCountdown: '[data-testid="timer-countdown"]',
   timerPhaseLabel: '[data-testid="timer-phase-label"]',
+  hrTimeSeriesChart: '[data-testid="hr-time-series-chart"]',
 } as const
 
 /**
@@ -35,6 +36,7 @@ export function getDynamicContentMasks(page: Page): Locator[] {
     page.locator(VRT_MASK_SELECTORS.liveHrPercent),
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
+    page.locator(VRT_MASK_SELECTORS.hrTimeSeriesChart),
   ]
 }
 

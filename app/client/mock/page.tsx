@@ -140,7 +140,7 @@ export default function MockPage() {
             Simulate heart rate data for testing.
           </Typography>
 
-          <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid container spacing={2} sx={{ mb: 3 }} data-testid="mock-client-form">
             <Grid size={{ xs: 8 }}>
               <TextField
                 label="User Name"
