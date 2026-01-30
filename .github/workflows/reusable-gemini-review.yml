@@ -264,7 +264,7 @@ jobs:
         run: |
           pnpm tsx scripts/gemini-client.ts \
             --preset "review" \
-            --context "docs/DEVELOPMENT.md,docs/DESIGN_GUIDELINES.md,docs/TYPESCRIPT_PATTERNS.md" \
+            --context "docs/DEVELOPMENT.md,docs/DESIGN_GUIDELINES.md,docs/TYPESCRIPT_PATTERNS.md,docs/CODE_REVIEW_GUIDELINES.md" \
             --output "review_result.json"
 
       - name: Upload review result

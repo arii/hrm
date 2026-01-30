@@ -16,6 +16,7 @@ For detailed information on specific topics, please refer to the following docum
 - [Environment Variable Handling](./ENVIRONMENT_VARIABLES.md)
 - [Testing Guidelines](./TESTING_GUIDELINES.md)
 - [Hook Design Patterns](./HOOK_DESIGN_PATTERNS.md)
+- [Code Review Guidelines](./CODE_REVIEW_GUIDELINES.md)
 
 ## Architectural Decision Records (ADRs)
 
