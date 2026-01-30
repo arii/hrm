@@ -148,7 +148,7 @@ const ExperimentalAnalyticsPage = () => {
       userSettings.userWeight
     ) {
       // Automatically start the workout session
-      handleStartWorkout()
+      setTimeout(() => handleStartWorkout(), 0)
     }
   }, [hrmData, status, userSettings, handleStartWorkout])
 

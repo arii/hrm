@@ -273,7 +273,7 @@ export const WebSocketProvider = ({
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
         if (process.env.NODE_ENV !== 'production') {
-          ;(window as any).webSocket = ws
+          window.webSocket = ws
         }
       }
 

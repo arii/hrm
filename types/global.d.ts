@@ -17,13 +17,13 @@ export interface TestControls {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var spotifyService: SpotifyService | undefined
 
   interface Window {
     __TEST_READY__?: boolean
     __TEST_WEBSOCKET_READY__?: boolean
     TEST_CONTROLS?: TestControls
+    webSocket?: WebSocket
   }
 }
 

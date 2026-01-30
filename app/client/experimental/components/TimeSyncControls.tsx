@@ -1,13 +1,7 @@
 // app/client/experimental/components/TimeSyncControls.tsx
 'use client'
 import { useState, useEffect } from 'react'
-import {
-  TextField,
-  Button,
-  Typography,
-  Paper,
-  Box,
-} from '@mui/material'
+import { TextField, Button, Typography, Paper, Box } from '@mui/material'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatTimestamp, formatDuration } from '@/lib/time'
 
@@ -22,12 +16,14 @@ const TimeSyncControls = ({ session, onTrim }: TimeSyncControlsProps) => {
 
   useEffect(() => {
     if (session) {
-      setStartTime(formatTimestamp(session.startTime, 'HH:mm:ss'))
-      setEndTime(
-        session.endTime ? formatTimestamp(session.endTime, 'HH:mm:ss') : ''
-      )
+      setTimeout(() => {
+        setStartTime(formatTimestamp(session.startTime, 'HH:mm:ss'))
+        setEndTime(
+          session.endTime ? formatTimestamp(session.endTime, 'HH:mm:ss') : ''
+        )
+      }, 0)
     }
-  }, [session])
+  }, [session.startTime, session.endTime, session])
 
   const handleApplyTrim = () => {
     // Basic validation and conversion from HH:mm:ss to timestamp
