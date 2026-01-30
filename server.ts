@@ -15,6 +15,7 @@ import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
+import helmet from 'helmet'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -27,6 +28,20 @@ const expressApp = express()
 
 app.prepare().then(async () => {
   const server = createServer(expressApp)
+
+  // --- Security Middleware ---
+  expressApp.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          'img-src': ["'self'", '*.spotify.com', '*.scdn.co'],
+          'frame-src': ["'self'", 'accounts.spotify.com'],
+          'script-src': ["'self'", "'unsafe-inline'"],
+        },
+      },
+    })
+  )
 
   // --- Logger Setup ---
   // Must be the first middleware to capture all requests

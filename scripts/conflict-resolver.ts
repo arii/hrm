@@ -33,10 +33,11 @@ export async function runConflictResolution(
   contextFile: string,
   outputFile: string | null | undefined
 ) {
-  const conflictFilePaths = await readFile(contextFile, 'utf-8').then(
-    (content) => content.split('\0')
-  )
   let report = `# 🤖 Conflict Resolution Plan\n\n`
+  try {
+    const conflictFilePaths = await readFile(contextFile, 'utf-8').then(
+      (content) => content.split('\0')
+    )
   const unprocessedFiles: { file: string; error: string }[] = []
   let totalConflicts = 0
   const prCodeRoot = path.resolve(process.cwd(), 'pr-code')
@@ -141,5 +142,10 @@ ${unprocessedFiles
     return
   }
 
-  await writeOutput(report, outputFile)
+    await writeOutput(report, outputFile)
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    report += `\n\n### 🚨 Critical Error\nAn unexpected error occurred: ${errorMessage}`
+    await writeOutput(report, outputFile)
+  }
 }

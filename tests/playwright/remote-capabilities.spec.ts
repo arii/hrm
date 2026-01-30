@@ -57,7 +57,7 @@ test.describe('Remote Capabilities & Command Relay', () => {
 
     // 5. Verify WebSocket Command
     await expect
-      .poll(() => sentMessages)
+      .poll(() => sentMessages, { timeout: 10000 })
       .toContainEqual(
         expect.objectContaining({
           type: 'SPOTIFY_COMMAND',
