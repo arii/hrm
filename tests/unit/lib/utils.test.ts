@@ -71,16 +71,16 @@ describe('lib/utils', () => {
 
     it('should handle negative duration', () => {
       expect(formatDuration(-1, { unit: 'seconds' })).toBe('00:00:00')
-      expect(formatDuration(-1, { unit: 'milliseconds', format: 'MM:SS' })).toBe(
-        '00:00'
-      )
+      expect(
+        formatDuration(-1, { unit: 'milliseconds', format: 'MM:SS' })
+      ).toBe('00:00')
     })
 
     it('should handle NaN duration', () => {
       expect(formatDuration(NaN, { unit: 'seconds' })).toBe('00:00:00')
-      expect(formatDuration(NaN, { unit: 'milliseconds', format: 'MM:SS' })).toBe(
-        '00:00'
-      )
+      expect(
+        formatDuration(NaN, { unit: 'milliseconds', format: 'MM:SS' })
+      ).toBe('00:00')
     })
 
     it('should handle edge cases', () => {
