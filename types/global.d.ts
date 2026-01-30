@@ -17,7 +17,6 @@ export interface TestControls {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var spotifyService: SpotifyService | undefined
 
   interface Window {

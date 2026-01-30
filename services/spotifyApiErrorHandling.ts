@@ -44,38 +44,32 @@ export async function logSpotifyCommandError(
       return
     }
 
-    if (error && typeof error === 'object') {
-      if (
-        'response' in error &&
-        (error as { response?: { text?: () => Promise<string> } }).response
-      ) {
+    // Log error with response body if available
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (
+        error as { response?: { text?: () => Promise<string> } }
+      ).response
+      if (response && typeof response.text === 'function') {
         try {
-          let text = '[No response text available]'
-          if (
-            typeof (error as { response: { text?: unknown } }).response.text ===
-            'function'
-          ) {
-            text = await (
-              error as { response: { text: () => Promise<string> } }
-            ).response.text()
-          }
+          const text = await response.text()
           const parsed = safeParseJSON(text)
           logger.error(
             { command, response: parsed },
             'Error executing Spotify command'
           )
+          return
         } catch (e) {
           logger.error(
             { command, err: e },
             'Could not read response body for failed Spotify command'
           )
+          return
         }
-      } else {
-        logger.error({ command, err: error }, 'Error executing Spotify command')
       }
-    } else {
-      logger.error({ command, err: error }, 'Error executing Spotify command')
     }
+
+    // Default error logging
+    logger.error({ command, err: error }, 'Error executing Spotify command')
   } catch (loggingError) {
     logger.error(
       { command, err: loggingError },
