@@ -73,3 +73,9 @@ Each time you run the `deploy.sh` script, a new Docker image is created. Over ti
 ```bash
 docker image prune
 ```
+
+For a more comprehensive cleanup of unused images, containers, networks, and volumes, you can use:
+
+```bash
+docker system prune -a
+```
