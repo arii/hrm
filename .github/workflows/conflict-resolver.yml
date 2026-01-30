@@ -12,7 +12,7 @@ on:
         required: true
       pr_number:
         description: 'The PR number to comment on'
-        required: false
+        required: true
 
 jobs:
   merge_and_resolve:
@@ -30,6 +30,18 @@ jobs:
             ⏳ Attempting to automatically resolve conflicts for branch `${{ github.event.inputs.source_branch }}`...
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate branches
+        id: validate_branches
+        run: |
+          if ! git ls-remote --exit-code --heads origin ${{ github.event.inputs.target_branch }}; then
+            echo "::error::Target branch '${{ github.event.inputs.target_branch }}' not found."
+            exit 1
+          fi
+          if ! git ls-remote --exit-code --heads origin ${{ github.event.inputs.source_branch }}; then
+            echo "::error::Source branch '${{ github.event.inputs.source_branch }}' not found."
+            exit 1
+          fi
 
       - name: Checkout source branch
         uses: actions/checkout@v4
