@@ -99,6 +99,26 @@ This project uses a two-layered approach to commit message validation:
 
 For more details on the rules, please refer to the [official commitlint documentation](https://github.com/conventional-changelog/commitlint/#what-is-commitlint).
 
+### CI/CD and Automation
+
+Our CI/CD pipeline automates many aspects of the development process, including linting, testing, and deployment. We also have several automated workflows to help with tasks such as squashing and rebasing PRs, resolving conflicts, and analyzing technical debt.
+
+#### PR-Squash Behaviors
+
+To maintain a clean and linear Git history, we use a `pr-squash` command to squash all commits in a pull request into a single commit. This is done before merging to the `leader` branch.
+
+#### AI Review Throttling
+
+To prevent excessive notifications and redundant reviews, our AI code review workflow includes time-based throttling and comment count limits. A manual override is available for on-demand reviews.
+
+### WebSocket Architecture
+
+The application uses WebSockets for real-time communication between the client and server. The WebSocket implementation includes a heartbeat/ping-pong mechanism to ensure a stable connection. When the server hasn't received a message from a client for a certain period, it sends a "ping" message. The client then responds with a "pong" message to indicate that it's still connected.
+
+### Deployment Strategy
+
+The project is deployed to a self-hosted production environment using a GitHub Actions workflow. The deployment follows a "hard restart" strategy.
+
 ## Dependency Management and Code Hygiene with Knip
 
 To maintain a clean and efficient codebase, this project uses [Knip](https://knip.dev/) to detect unused files, dependencies, and exports. Knip is integrated into our CI/CD pipeline to ensure that all code additions are continuously monitored for unused code.

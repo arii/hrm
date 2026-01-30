@@ -27,31 +27,9 @@ We follow a set of core principles to ensure the quality and maintainability of 
 
 All changes are submitted via Pull Requests. We follow a strict process to ensure that all PRs are well-scoped, reviewed, and tested. For detailed information on the PR process, including scope, security and quality reviews, and automation, please see the [Pull Request (PR) Process section in the Development Standards](./DEVELOPMENT_STANDARDS.md#pull-request-pr-process).
 
-## CI/CD and Automation
+## CI/CD, Deployment, and Automation
 
-Our CI/CD pipeline automates many aspects of the development process, including linting, testing, and deployment. We also have several automated workflows to help with tasks such as squashing and rebasing PRs, resolving conflicts, and analyzing technical debt.
-
-### PR-Squash Behaviors
-
-To maintain a clean and linear Git history, we use a `pr-squash` command to squash all commits in a pull request into a single commit. This is done before merging to the `leader` branch.
-
-### AI Review Throttling
-
-To prevent excessive notifications and redundant reviews, our AI code review workflow includes time-based throttling and comment count limits. A manual override is available for on-demand reviews.
-
-### WebSocket Architecture
-
-The application uses WebSockets for real-time communication between the client and server. The WebSocket implementation includes a heartbeat/ping-pong mechanism to ensure a stable connection. When the server hasn't received a message from a client for a certain period, it sends a "ping" message. The client then responds with a "pong" message to indicate that it's still connected.
-
-## Deployment Strategy
-
-The project is deployed to a self-hosted production environment using a GitHub Actions workflow. The deployment follows a "hard restart" strategy.
-
-## Future Plans (Long Term)
-
-- Integrate guidelines into the CI/CD pipeline.
-- Create development setup scripts that enforce standards.
-- Build custom linting rules for project-specific patterns.
+Our CI/CD pipeline automates many aspects of the development process, including linting, testing, and deployment. For detailed information on our automation workflows, deployment strategy, and WebSocket architecture, please see the [CI/CD and Automation section in the Development Standards](./DEVELOPMENT_STANDARDS.md#cicd-and-automation).
 
 ## Testing
 
