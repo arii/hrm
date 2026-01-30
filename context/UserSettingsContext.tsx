@@ -1,7 +1,7 @@
 // context/UserSettingsContext.tsx
 'use client'
 import React, { createContext, useContext } from 'react'
-import useLocalStorage from '../hooks/useLocalStorage'
+import usePersistentStorage from '../hooks/usePersistentStorage'
 import { MeasurementSystem, Gender } from '../types/core'
 
 // Directly define the preferences interface and defaults here
@@ -47,8 +47,8 @@ export const UserSettingsContext = createContext<
 export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  // Use the useLocalStorage hook directly within the provider
-  const userPreferences = useLocalStorage<UserPreferences>(
+  // Use the usePersistentStorage hook directly within the provider
+  const userPreferences = usePersistentStorage<UserPreferences>(
     'user-prefs',
     DEFAULT_PREFERENCES
   )

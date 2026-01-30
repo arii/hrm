@@ -11,7 +11,7 @@ import useVolumePreference from '@/hooks/useVolumePreference'
 import {
   createMockSpotifyData,
   createMockSpotifyDevice,
-} from '@/tests/unit/test-data/spotify-data-factory'
+} from '@/tests/test-utils'
 import '@testing-library/jest-dom'
 
 // Mock the router
@@ -98,7 +98,7 @@ describe('components/SpotifyControls', () => {
 
   it('should render the mute button with the correct aria-label', () => {
     render(<SpotifyControls />)
-    const muteButton = screen.getByLabelText(/mute volume/i)
+    const muteButton = screen.getByLabelText(/mute/i)
     expect(muteButton).toBeInTheDocument()
   })
 

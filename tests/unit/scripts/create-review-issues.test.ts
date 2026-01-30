@@ -13,7 +13,7 @@ import { execSync } from 'child_process'
 
 // Mock the GitHubClient
 class MockGitHubClient implements IGitHubClient {
-  getOpenIssues = jest.fn().mockReturnValue([])
+  getRecentIssues = jest.fn().mockReturnValue([])
   createIssue = jest.fn()
 }
 
@@ -49,7 +49,7 @@ describe('create-review-issues script', () => {
     ;(readFileSync as jest.Mock).mockReturnValue(JSON.stringify(reviewResult))
 
     await expect(run(client, prNumber, reviewFilePath)).resolves.not.toThrow()
-    expect(client.getOpenIssues).not.toHaveBeenCalled()
+    expect(client.getRecentIssues).not.toHaveBeenCalled()
     expect(client.createIssue).not.toHaveBeenCalled()
   })
 
@@ -77,7 +77,7 @@ describe('create-review-issues script', () => {
 
     await run(client, prNumber, reviewFilePath)
 
-    expect(client.getOpenIssues).toHaveBeenCalledWith('bot-generated')
+    expect(client.getRecentIssues).toHaveBeenCalledWith('bot-generated')
     expect(client.createIssue).toHaveBeenCalledTimes(2)
     expect(client.createIssue).toHaveBeenCalledWith(
       reviewResult.suggestedIssues[0],
@@ -110,7 +110,7 @@ describe('create-review-issues script', () => {
       ],
     }
     ;(readFileSync as jest.Mock).mockReturnValue(JSON.stringify(reviewResult))
-    client.getOpenIssues.mockReturnValue([
+    client.getRecentIssues.mockReturnValue([
       {
         number: 1,
         title: 'Refactor the authentication service',
@@ -121,7 +121,7 @@ describe('create-review-issues script', () => {
 
     await run(client, prNumber, reviewFilePath)
 
-    expect(client.getOpenIssues).toHaveBeenCalledWith('bot-generated')
+    expect(client.getRecentIssues).toHaveBeenCalledWith('bot-generated')
     expect(client.createIssue).toHaveBeenCalledTimes(1)
     expect(client.createIssue).toHaveBeenCalledWith(
       reviewResult.suggestedIssues[1],
