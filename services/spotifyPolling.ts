@@ -20,9 +20,6 @@ import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
 import { env } from '../lib/env.js'
 
-// We use SDK types now, but keep internal state types as needed.
-// Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
-
 export interface SpotifyTokenResponse {
   access_token: string
   token_type: string
@@ -60,7 +57,6 @@ export class SpotifyPolling implements SpotifyService {
         }
       : undefined
 
-  // Internal auth/state values
   private readonly broadcastUpdate: (message: ServerMessage) => void
 
   private lastTrackId: string | null = null
@@ -165,7 +161,6 @@ export class SpotifyPolling implements SpotifyService {
       'Spotify token payload received. Updating SDK and forcing poll.'
     )
     this.tokenManager.updateToken(tokens)
-    // Re-initialize the SDK with the new in-memory token
     const sdkToken = this.tokenManager.getSdkAccessToken()
     if (sdkToken) {
       this.setupSdk(sdkToken)
