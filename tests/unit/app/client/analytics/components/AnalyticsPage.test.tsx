@@ -1,10 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-// tests/unit/components/ExperimentalAnalyticsPage.test.tsx
+// tests/unit/app/client/analytics/components/AnalyticsPage.test.tsx
 import React from 'react'
 import { render } from '@testing-library/react'
-import ExperimentalAnalyticsPage from '@/app/client/experimental/components/ExperimentalAnalyticsPage'
+import AnalyticsPage from '@/app/client/analytics/components/AnalyticsPage'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 
@@ -19,9 +19,14 @@ jest.mock('next/dynamic', () => () => {
 jest.mock('@/context/UserSettingsContext')
 jest.mock('@/context/WebSocketContext')
 
-describe('ExperimentalAnalyticsPage', () => {
+describe('AnalyticsPage', () => {
   const mockUseUserSettings = useUserSettings as jest.Mock
   const mockUseWebSocket = useWebSocket as jest.Mock
+
+  beforeAll(() => {
+    // Mock console.error to silence the useCookie error
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
 
   beforeEach(() => {
     mockUseUserSettings.mockReturnValue([
@@ -35,7 +40,7 @@ describe('ExperimentalAnalyticsPage', () => {
   })
 
   it('should render without crashing', () => {
-    const { getByText } = render(<ExperimentalAnalyticsPage />)
+    const { getByText } = render(<AnalyticsPage />)
     // The page shows "New Workout" button and "Workout History" when no active session
     expect(getByText('New Workout')).toBeInTheDocument()
     expect(getByText('Workout History')).toBeInTheDocument()
@@ -54,7 +59,7 @@ describe('ExperimentalAnalyticsPage', () => {
       () => {},
     ])
 
-    render(<ExperimentalAnalyticsPage />)
+    render(<AnalyticsPage />)
 
     // The component sends HRM_METADATA_UPDATE with age and maxHr
     expect(mockSendData).toHaveBeenCalledWith({

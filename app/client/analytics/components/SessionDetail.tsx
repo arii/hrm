@@ -1,7 +1,7 @@
-// app/client/experimental/components/SessionDetail.tsx
+// app/client/analytics/components/SessionDetail.tsx
 import { Card, CardContent, Typography, Button, Box } from '@mui/material'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
-import ZoneDistribution from './ZoneDistribution'
+import ZoneDistributionChart from '@/components/analytics/ZoneDistributionChart'
 import HeartRateTimeSeries from './HeartRateTimeSeries'
 
 interface SessionDetailProps {
@@ -54,9 +54,9 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
           </Box>
 
           <Box sx={{ flex: 1 }}>
-            <ZoneDistribution
+            <ZoneDistributionChart
               timeInZones={session.timeInZones}
-              totalDuration={durationInSeconds}
+              status={'idle'}
             />
           </Box>
         </Box>

@@ -1,4 +1,4 @@
-// app/client/experimental/components/ExperimentalAnalyticsPage.tsx
+// app/client/analytics/components/AnalyticsPage.tsx
 'use client'
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Container, Box, Button } from '@mui/material'
@@ -25,7 +25,7 @@ const defaultTimeInZones: Record<HrZoneName, number> = {
 
 // Components
 import WorkoutSummary from './WorkoutSummary'
-import ZoneDistribution from './ZoneDistribution'
+import ZoneDistributionChart from '@/components/analytics/ZoneDistributionChart'
 import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
@@ -36,7 +36,7 @@ const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
 
 type View = 'active' | 'list' | 'detail'
 
-const ExperimentalAnalyticsPage = () => {
+const AnalyticsPage = () => {
   const { hrmData, sendData, connectionStatus } = useWebSocket()
   const [userSettings] = useUserSettings()
 
@@ -238,11 +238,11 @@ const ExperimentalAnalyticsPage = () => {
 
             <CalorieTracker calorieHistory={calorieHistory} />
 
-            <ZoneDistribution
+            <ZoneDistributionChart
               timeInZones={
                 summaryData.timeInZones as Record<HrZoneName, number>
               }
-              totalDuration={duration}
+              status={status}
             />
 
             {activeSession && activeSession.hrHistory.length > 0 && (
@@ -274,4 +274,4 @@ const ExperimentalAnalyticsPage = () => {
   )
 }
 
-export default ExperimentalAnalyticsPage
+export default AnalyticsPage

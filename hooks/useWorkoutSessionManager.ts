@@ -13,7 +13,7 @@ import { estimateMaxHr } from '../lib/hrm/utils'
 
 // --- State, Actions, and Reducer ---
 
-type SessionStatus = 'idle' | 'running' | 'paused' | 'finished'
+export type SessionStatus = 'idle' | 'running' | 'paused' | 'finished'
 
 interface SessionManagerState {
   session: WorkoutSessionData | null
