@@ -1,22 +1,22 @@
 // app/client/experimental/components/ZoneDistribution.tsx
 'use client'
 import { Card, CardContent, Typography, Box } from '@mui/material'
-import { HrZoneName, getUserHrZones } from '@/utils/hr-zones'
-import { calculateMaxHr } from '@/utils/constants'
-import { getHrZoneProps } from '@/utils/visualization'
+import { HrZoneName } from '@/lib/workout-session-storage'
 
 interface ZoneDistributionProps {
   timeInZones: Record<HrZoneName, number>
-  userAge: number | null
+  totalDuration: number
 }
 
-const ZoneDistribution = ({ timeInZones, userAge }: ZoneDistributionProps) => {
-  const totalDuration = Object.values(timeInZones).reduce(
-    (sum, time) => sum + time,
-    0
-  )
-  const zones = getUserHrZones(userAge || 30)
-  const maxHr = calculateMaxHr(userAge || 30)
+const ZoneDistribution = ({
+  timeInZones,
+  totalDuration,
+}: ZoneDistributionProps) => {
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
 
   return (
     <Card>
@@ -33,11 +33,6 @@ const ZoneDistribution = ({ timeInZones, userAge }: ZoneDistributionProps) => {
             if (time === 0) return null
             const percentage =
               totalDuration > 0 ? ((time / totalDuration) * 100).toFixed(1) : 0
-            const zoneKey = (
-              zone.charAt(0).toLowerCase() + zone.slice(1)
-            ).replace(/\s+/g, '') as keyof typeof zones
-            const minHr = zones[zoneKey]?.min || 0
-            const zoneProps = getHrZoneProps(minHr, maxHr)
             return (
               <Box
                 key={zone}
@@ -48,19 +43,11 @@ const ZoneDistribution = ({ timeInZones, userAge }: ZoneDistributionProps) => {
                   my: 1,
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Box
-                    sx={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: '50%',
-                      backgroundColor: zoneProps.backgroundColor,
-                      mr: 1,
-                    }}
-                  />
-                  <Typography variant="body1">{zone}</Typography>
+                <Typography variant="body1">{zone}</Typography>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography variant="body2">{formatTime(time)}</Typography>
+                  <Typography variant="caption">{percentage}%</Typography>
                 </Box>
-                <Typography variant="body1">{`${time}s (${percentage}%)`}</Typography>
               </Box>
             )
           })}

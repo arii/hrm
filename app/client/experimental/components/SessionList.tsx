@@ -24,7 +24,10 @@ interface SessionListProps {
 }
 
 const getTotalCalories = (session: WorkoutSessionData) =>
-  session.calorieHistory.reduce((total, dp) => total + dp.calories, 0)
+  session.calorieHistory.length > 0
+    ? (session.calorieHistory[session.calorieHistory.length - 1]
+        ?.totalToThisPoint ?? 0)
+    : 0
 
 const getDurationInMinutes = (session: WorkoutSessionData, now: number) =>
   session.endTime
@@ -63,7 +66,7 @@ const SessionList = ({
           <List>
             {sessions.map((session) => (
               <ListItem
-                key={session.id}
+                key={session.sessionId}
                 secondaryAction={
                   <>
                     <IconButton
@@ -76,7 +79,7 @@ const SessionList = ({
                     <IconButton
                       edge="end"
                       aria-label="delete"
-                      onClick={() => handleDeleteClick(session.id)}
+                      onClick={() => handleDeleteClick(session.sessionId)}
                     >
                       <DeleteIcon />
                     </IconButton>

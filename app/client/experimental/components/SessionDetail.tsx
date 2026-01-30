@@ -3,7 +3,6 @@ import { Card, CardContent, Typography, Button, Box } from '@mui/material'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import ZoneDistribution from './ZoneDistribution'
 import HeartRateTimeSeries from './HeartRateTimeSeries'
-import { useUserSettings } from '@/context/UserSettingsContext'
 
 interface SessionDetailProps {
   session: WorkoutSessionData
@@ -11,12 +10,11 @@ interface SessionDetailProps {
 }
 
 const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
-  const [userSettings] = useUserSettings()
-
-  const totalCalories = session.calorieHistory.reduce(
-    (total, dp) => total + dp.calories,
-    0
-  )
+  const totalCalories =
+    session.calorieHistory.length > 0
+      ? (session.calorieHistory[session.calorieHistory.length - 1]
+          ?.totalToThisPoint ?? 0)
+      : 0
   const durationInSeconds = session.endTime
     ? (session.endTime - session.startTime) / 1000
     : 0
@@ -58,7 +56,7 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
           <Box sx={{ flex: 1 }}>
             <ZoneDistribution
               timeInZones={session.timeInZones}
-              userAge={userSettings.userAge}
+              totalDuration={durationInSeconds}
             />
           </Box>
         </Box>
