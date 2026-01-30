@@ -2,7 +2,6 @@ import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
 import { setupVisualRegressionTest } from './test-helpers'
 import { takeScreenshot } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
