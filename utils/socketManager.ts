@@ -24,7 +24,7 @@ import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataStore } from '../lib/hrm/HrmDataStore.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
-import { roundTo } from '../lib/utils.js'
+import { roundTo, objectFromEntries } from '../lib/utils.js'
 
 let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
@@ -257,8 +257,8 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataStore.findById(clientId)
         if (existingData) {
-          const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
+          const updateData: Partial<HrmStreamData> = objectFromEntries(
+            Object.entries(message.data)
           )
 
           // Prevent overwriting a real name with a default "Unknown" name

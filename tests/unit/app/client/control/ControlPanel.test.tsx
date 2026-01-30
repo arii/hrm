@@ -35,8 +35,7 @@ jest.mock('@/context/WebSocketContext', () => ({
 // Mock dynamic imports for child components to isolate the ControlPanel
 jest.mock('next/dynamic', () => () => {
   const MockedComponent = (props: Record<string, unknown>) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { loading, ...rest } = props
+    const { loading: _loading, ...rest } = props
     // A simple placeholder that includes any passed props
     return <div data-testid="mocked-dynamic-component" {...rest} />
   }
