@@ -10,6 +10,10 @@ This directory contains the necessary files to build and deploy a self-hosted Gi
 -   `hrm-actions-runner.service`: The `systemd` unit file that defines the runner service.
 -   `.env.runner`: An environment file template for storing the GitHub Actions runner token.
 
+## Version Management
+
+The version of the GitHub Actions runner is managed by the `RUNNER_VERSION` variable in `deploy.sh`. To update the runner, change this variable to the desired version tag (e.g., "2.317.0"). This version is passed as a build argument to the Dockerfile.
+
 ## Prerequisites
 
 -   Docker is installed and running on the host machine.

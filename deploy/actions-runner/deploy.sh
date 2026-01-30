@@ -2,9 +2,10 @@
 set -e
 
 # This script is intended to be run on the host machine that will run the Docker container.
+RUNNER_VERSION="2.317.0"
 
 # 1. Build the Docker image
-docker build -t hrm-actions-runner -f Dockerfile.runner .
+docker build --build-arg RUNNER_VERSION=${RUNNER_VERSION} -t hrm-actions-runner -f Dockerfile.runner .
 
 # 2. Create and install the systemd service
 # Note: This requires sudo privileges
