@@ -74,7 +74,17 @@ echo "::info::Passed initial checks (manual override, comment limit, throttling)
 # The first priority is to review PRs that have failed CI checks.
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
   # Use the dedicated QUALITY_GATE_BOT_USERNAMES to find the correct report.
-  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments | jq -r --arg bot_users "$QUALITY_GATE_BOT_USERNAMES" '.comments | map(select((.author.login? as $author | ($bot_users | split(" ") | index($author))) and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""')
+  # This query is broken down for readability:
+  #   1. `--arg bot_users "$QUALITY_GATE_BOT_USERNAMES"`: Pass the usernames as a variable.
+  #   2. `($bot_users | split(" ")) as $bot_list`: Split the string into an array of bot names.
+  #   3. `map(select(...))`: Filter the comments array.
+  #   4. `(.author.login? as $author | $bot_list | index($author))`: Check if the comment author is in our bot list.
+  #   5. `((.body // "") | contains("Quality Gate Results"))`: Check if the comment body contains the quality gate string.
+  #   6. `| .[-1].body // ""`: Get the body of the last matching comment, or an empty string if none matched.
+  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments | jq -r \
+    --arg bot_users "$QUALITY_GATE_BOT_USERNAMES" \
+    '($bot_users | split(" ")) as $bot_list | .comments | map(select(.author.login? as $author | ($bot_list | index($author)) and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""'
+  )
   
   if [ -z "$QUALITY_REPORT" ]; then
     NEEDS_REVIEW="false"
