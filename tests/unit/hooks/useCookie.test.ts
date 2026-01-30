@@ -49,11 +49,13 @@ describe('useCookie', () => {
   })
 
   it('should handle malformed JSON in the cookie and return the initial value', () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
     ;(Cookies.get as jest.Mock).mockReturnValue('{ not json }')
     const { result } = renderHook(() => useCookie(TEST_KEY, INITIAL_VALUE))
     expect(result.current[0]).toEqual(INITIAL_VALUE)
-    consoleErrorSpy.mockRestore();
+    consoleErrorSpy.mockRestore()
   })
 
   it('should handle functional updates', () => {

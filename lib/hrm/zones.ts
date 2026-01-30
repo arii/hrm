@@ -6,7 +6,7 @@
 
 import { HrZoneName } from '../shared/hr-zones'
 
-export { HrZoneName };
+export { HrZoneName }
 
 // --- Constants ---
 // Heart Rate Zone Boundaries (as percentage of Max HR)
