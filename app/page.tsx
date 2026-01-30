@@ -12,6 +12,8 @@ import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadi
 import { useEffect, useState } from 'react'
 import IconButton from '@mui/material/IconButton'
 import RefreshIcon from '@mui/icons-material/Refresh'
+import { useWebSocket } from '@/context/WebSocketContext'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
@@ -56,6 +58,18 @@ const Dashboard = () => {
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
+  const { connectionStatus: wsConnectionStatus } = useWebSocket()
+  const { connect: connectHRM, isConnected: isHrmConnected } = useBluetoothHRM()
+
+  useEffect(() => {
+    if (wsConnectionStatus === 'Connected' && !isHrmConnected) {
+      connectHRM(undefined, undefined, { silent: true }).catch(() => {
+        console.log(
+          'Auto-connect failed as no saved device was found. User can connect manually.'
+        )
+      })
+    }
+  }, [wsConnectionStatus, connectHRM, isHrmConnected])
 
   const handleRefresh = () => {
     setRefreshKey((prevKey) => prevKey + 1)

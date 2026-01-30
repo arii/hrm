@@ -75,7 +75,7 @@ describe('useBluetoothHRM', () => {
     result: { current: UseBluetoothHRMReturn }
   }) => {
     await act(async () => {
-      hook.result.current.connectAndStream('Test User', 30)
+      hook.result.current.connect('Test User', 30)
       await Promise.resolve() // Allow promises to resolve
     })
     // Simulate gatt connected state
@@ -278,7 +278,7 @@ describe('useBluetoothHRM', () => {
 
       // Simulate a re-render without prop changes
       act(() => {
-        result.current.connectAndStream('Test User', 30)
+        result.current.connect('Test User', 30)
       })
 
       // No new metadata should be sent
@@ -350,7 +350,7 @@ describe('useBluetoothHRM', () => {
       )
 
       await act(async () => {
-        result.current.connectAndStream('Test User', 30)
+        result.current.connect('Test User', 30)
         await Promise.resolve() // Allow promises to resolve
       })
 
@@ -370,9 +370,9 @@ describe('useBluetoothHRM', () => {
       const { result } = renderHook(() => useBluetoothHRM())
 
       // Start the connection
-      let connectAndStreamPromise
+      let connectPromise
       act(() => {
-        connectAndStreamPromise = result.current.connectAndStream(
+        connectPromise = result.current.connect(
           'Test User',
           30
         )
@@ -386,8 +386,8 @@ describe('useBluetoothHRM', () => {
       // Allow the connection promise to resolve
       resolveConnection(mockGattServer)
 
-      // Wait for the connectAndStream promise to settle
-      await connectAndStreamPromise.catch(() => {})
+      // Wait for the connect promise to settle
+      await connectPromise.catch(() => {})
 
       // Verify that the connection was not established
       await waitFor(() => {

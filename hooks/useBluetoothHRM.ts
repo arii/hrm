@@ -639,7 +639,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    * @param userAgeFromArgs The user's age, used to calculate max HR.
    * @throws If the connection fails (e.g., user cancellation, WebSocket disconnect).
    */
-  const connectAndStream = useCallback(
+  const connect = useCallback(
     async (
       userNameFromArgs?: string,
       userAgeFromArgs?: number,
@@ -750,31 +750,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     ]
   )
 
-  const autoConnect = useCallback(async (): Promise<void> => {
-    // Try to auto-connect to a saved device. This is a critical function for user experience.
-    // We want it to succeed silently if possible, but still provide feedback if it fails.
-    try {
-      logger.info('Starting auto-connect to saved device...')
-      setStatus(BluetoothConnectionStatus.CONNECTING)
-      setCustomStatusMessage(BLUETOOTH_MESSAGES.connectingToSavedDevice)
-      await connectAndStream(undefined, undefined, { silent: true })
-      logger.info('Auto-connect succeeded')
-    } catch (error) {
-      // Silent failure is OK - user can manually connect if needed
-      const errorMsg = error instanceof Error ? error.message : String(error)
-      logger.info(
-        { errorMsg },
-        'Auto-connect failed, user can connect manually'
-      )
-      // Set status back to allow manual connection
-      setStatus(BluetoothConnectionStatus.DISCONNECTED)
-      setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
-    }
-  }, [connectAndStream])
-
   return {
-    connectAndStream,
-    autoConnect,
+    connect,
     disconnect,
     forgetDevice,
     deviceStatus,

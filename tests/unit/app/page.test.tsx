@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */
 import { render, screen, fireEvent } from '@testing-library/react'
 import Dashboard from '../../../app/page'
+import { WebSocketProvider } from '../../../context/WebSocketContext'
 
 // Mock child components to isolate the Dashboard component
 jest.mock('../../../components/WorkoutTableViewer', () => {
@@ -38,6 +39,13 @@ jest.mock('../../../hooks/useAudio', () => ({
   }),
 }))
 
+jest.mock('../../../hooks/useBluetoothHRM', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    connect: jest.fn(),
+  })),
+}))
+
 describe('Dashboard', () => {
   const originalEnv = process.env
 
@@ -51,21 +59,33 @@ describe('Dashboard', () => {
 
   it('renders GoogleDocViewer when NEXT_PUBLIC_USE_NATIVE_TABLE is "false"', async () => {
     process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'false'
-    render(<Dashboard />)
+    render(
+      <WebSocketProvider>
+        <Dashboard />
+      </WebSocketProvider>
+    )
     expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
     expect(screen.queryByTestId('workout-table-viewer')).not.toBeInTheDocument()
   })
 
   it('renders GoogleDocViewer when NEXT_PUBLIC_USE_NATIVE_TABLE is not set', async () => {
     delete process.env.NEXT_PUBLIC_USE_NATIVE_TABLE
-    render(<Dashboard />)
+    render(
+      <WebSocketProvider>
+        <Dashboard />
+      </WebSocketProvider>
+    )
     expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
     expect(screen.queryByTestId('workout-table-viewer')).not.toBeInTheDocument()
   })
 
   it('renders WorkoutTableViewer when NEXT_PUBLIC_USE_NATIVE_TABLE is "true"', async () => {
     process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'true'
-    render(<Dashboard />)
+    render(
+      <WebSocketProvider>
+        <Dashboard />
+      </WebSocketProvider>
+    )
     expect(
       await screen.findByTestId('workout-table-viewer')
     ).toBeInTheDocument()
@@ -74,7 +94,11 @@ describe('Dashboard', () => {
 
   it('passes a new refreshKey to child components when refresh button is clicked', async () => {
     process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'true'
-    render(<Dashboard />)
+    render(
+      <WebSocketProvider>
+        <Dashboard />
+      </WebSocketProvider>
+    )
 
     const workoutTableViewer = await screen.findByTestId('workout-table-viewer')
     const initialRefreshKey =

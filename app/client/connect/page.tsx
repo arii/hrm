@@ -141,8 +141,7 @@ export default function ConnectPage() {
     [processHeartRate, workoutStatus, setCurrentHR]
   )
   const {
-    connectAndStream,
-    autoConnect,
+    connect,
     disconnect,
     forgetDevice,
     deviceStatus,
@@ -157,22 +156,6 @@ export default function ConnectPage() {
     onHeartRateUpdate: handleHeartRateUpdate,
     onConnect: startWorkout,
   })
-
-  useEffect(() => {
-    // Try to auto-connect when WebSocket is ready and we're not already connected.
-    // Wait a tick to ensure the component is fully initialized before attempting connection.
-    if (!isConnected && isSupported && connectionStatus === 'Connected') {
-      logger.info('WebSocket ready, attempting auto-connect...')
-      // Small delay to ensure component is fully mounted
-      const timeout = setTimeout(() => {
-        autoConnect().catch(() => {
-          logger.info('Auto-connect failed, user can connect manually')
-        })
-      }, 100)
-      return () => clearTimeout(timeout)
-    }
-    return undefined
-  }, [connectionStatus, isConnected, isSupported, autoConnect])
 
   useEffect(() => {
     // This effect synchronizes the local HR and calorie state with the server.
@@ -197,7 +180,7 @@ export default function ConnectPage() {
   }
 
   const handleConnect = () => {
-    connectAndStream(userName, userAge || 0)
+    connect(userName, userAge || 0)
   }
   const maxHr = userAge ? 220 - userAge : 190
   const hrZoneProps = useHrZone(currentHR, maxHr)
