@@ -6,11 +6,7 @@ import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 
 const CurrentSpotifyItemDisplay = () => {
   const { spotifyData, connectionStatus } = useWebSocket()
-  const {
-    isReady,
-    deviceId,
-    isAuthenticated: spotifyAuthenticated,
-  } = useSpotifyWebPlayback()
+  const { isReady, deviceId } = useSpotifyWebPlayback()
 
   if (connectionStatus === 'Connecting') {
     return (
@@ -80,7 +76,7 @@ const CurrentSpotifyItemDisplay = () => {
           {spotifyData.albumName}
         </Typography>
       </Box>
-      {spotifyAuthenticated && !isReady && (
+      {!isReady && (
         <Typography
           variant="caption"
           sx={{

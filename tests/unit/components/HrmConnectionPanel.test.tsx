@@ -2,27 +2,13 @@
  * @jest-environment jsdom
  */
 import { render, screen } from '@testing-library/react'
+import { mockUseWebSocket } from '../../mocks/contexts'
+import '../../mocks/components.tsx'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
-import { useWebSocket } from '@/context/WebSocketContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
-
-// Mocks
-jest.mock('@/components/HrTileWrapper', () => ({
-  __esModule: true,
-  default: ({ user }: { user: { name: string; value: number | null } }) => (
-    <div data-testid="mock-hr-tile">
-      <p>{user.name}</p>
-      <p>{user.value}</p>
-    </div>
-  ),
-}))
-jest.mock('@/context/WebSocketContext', () => ({
-  useWebSocket: jest.fn(),
-}))
+import { mockHrmData } from '../../fixtures/hrm'
 
 describe('HrmConnectionPanel', () => {
-  const mockUseWebSocket = useWebSocket as jest.Mock
-
   beforeEach(() => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
@@ -48,7 +34,7 @@ describe('HrmConnectionPanel', () => {
 
   it('renders HR tiles and no connect link when hrmData is available', () => {
     mockUseWebSocket.mockReturnValue({
-      hrmData: [{ clientId: '1', name: 'Test User', value: 120 }],
+      hrmData: mockHrmData,
       connectionStatus: 'Connected',
       activeAlerts: [],
     })
@@ -58,7 +44,8 @@ describe('HrmConnectionPanel', () => {
       </UserSettingsProvider>
     )
     // Check that the HR tile is rendered
-    expect(screen.getByTestId('mock-hr-tile')).toBeInTheDocument()
+    const tiles = screen.getAllByTestId('mock-hr-tile')
+    expect(tiles).toHaveLength(2)
     expect(screen.getByText('Test User')).toBeInTheDocument()
     expect(screen.getByText('120')).toBeInTheDocument()
 

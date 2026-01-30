@@ -93,7 +93,7 @@ function isExecExceptionWithStderr(
 }
 
 export interface IGitHubClient {
-  getOpenIssues(labelFilter?: string): ExistingIssue[]
+  getRecentIssues(labelFilter?: string): ExistingIssue[]
   createIssue(
     issue: SuggestedIssue,
     context: z.infer<typeof PRContextSchema>
@@ -117,9 +117,11 @@ export class GitHubClient implements IGitHubClient {
     }
   }
 
-  getOpenIssues(labelFilter?: string): ExistingIssue[] {
-    console.log('🔍 Fetching existing issues to prevent duplicates...')
-    let cmd = `gh issue list --state open --json number,title,state,body --limit 100`
+  getRecentIssues(labelFilter?: string): ExistingIssue[] {
+    console.log(
+      '🔍 Fetching recent issues (open and closed) to prevent duplicates...'
+    )
+    let cmd = `gh issue list --state all --json number,title,state,body --limit 100`
     if (labelFilter) {
       cmd += ` --label "${labelFilter}"`
     }
@@ -314,7 +316,7 @@ export async function run(
     return
   }
 
-  const existingIssues = client.getOpenIssues('bot-generated')
+  const existingIssues = client.getRecentIssues('bot-generated')
 
   let createdCount = 0
   let skippedCount = 0

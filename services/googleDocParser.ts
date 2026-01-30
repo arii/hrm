@@ -1,6 +1,6 @@
 // services/googleDocParser.ts
 import * as cheerio from 'cheerio'
-import { WorkoutTableDto } from '@/lib/dto/workout.dto'
+import { WorkoutTableDto } from '@/types/workout'
 
 /**
  * Parses raw HTML from a Google Doc export and extracts the first table.

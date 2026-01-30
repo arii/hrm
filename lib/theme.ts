@@ -8,6 +8,12 @@ declare module '@mui/material/styles' {
   interface ZIndex {
     loadingIndicator: number
   }
+  interface Palette {
+    spotify: Palette['primary']
+  }
+  interface PaletteOptions {
+    spotify: PaletteOptions['primary']
+  }
   interface TypeBackground {
     overlay: string
   }
@@ -33,6 +39,9 @@ const theme = createTheme({
       light: '#EF5350',
       dark: '#D32F2F',
       contrastText: '#FFFFFF',
+    },
+    spotify: {
+      main: '#1DB954', // Spotify green
     },
     secondary: {
       main: '#2196F3', // Blue - matches Warm-up zone
