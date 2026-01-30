@@ -27,6 +27,19 @@ if [ -f .env.production ]; then
   set +a
 fi
 
+# --- Runtime Environment Variable Validation ---
+echo "🔎 Validating critical environment variables..."
+if [ -z "$SPOTIFY_CLIENT_ID" ]; then
+  echo "❌ ERROR: SPOTIFY_CLIENT_ID is not set. This is required for the application to start."
+  exit 1
+fi
+
+if [ -z "$SPOTIFY_CLIENT_SECRET" ]; then
+  echo "❌ ERROR: SPOTIFY_CLIENT_SECRET is not set. This is required for the application to start."
+  exit 1
+fi
+echo "✅ Critical environment variables are present."
+
 # Verify critical files exist before starting
 # Use absolute paths for clarity in error messages
 if [ ! -f "$PROJECT_ROOT/dist/server.js" ]; then
