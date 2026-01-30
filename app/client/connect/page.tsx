@@ -85,11 +85,11 @@ export default function ConnectPage() {
         data: {
           name: userName || 'User', // Use default name if not set
           age: userAge || 30,
-          gender: gender,
+          gender: gender || 'MALE',
         },
       })
     }
-  }, [connectionStatus, userName, userAge, sendData])
+  }, [connectionStatus, userName, userAge, gender, sendData])
 
   // Centralized calorie calculation engine
   const {
@@ -99,7 +99,7 @@ export default function ConnectPage() {
   } = useCalorieCalculator({
     age: userAge || 30,
     weightKg: userWeight || 70,
-    gender: gender,
+    gender: gender || 'MALE',
   })
 
   // Throttled sender for WebSocket messages

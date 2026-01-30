@@ -23,7 +23,7 @@ export interface CalorieEstimationParams {
   age: number
   weightKg: number
   durationMinutes: number
-  gender: Gender
+  gender?: Gender
 }
 
 /**
