@@ -71,6 +71,9 @@ importers:
       lodash.throttle:
         specifier: ^4.1.1
         version: 4.1.1
+      module-alias:
+        specifier: ^2.2.3
+        version: 2.2.3
       next:
         specifier: 16.1.5
         version: 16.1.5(@babel/core@7.28.6)(@playwright/test@1.57.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -92,6 +95,9 @@ importers:
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
+      react-infinite-scroll-component:
+        specifier: ^6.1.1
+        version: 6.1.1(react@19.2.4)
       recharts:
         specifier: ^3.7.0
         version: 3.7.0(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react-is@19.2.3)(react@19.2.4)(redux@5.0.1)
@@ -201,6 +207,9 @@ importers:
       babel-plugin-react-compiler:
         specifier: 1.0.0
         version: 1.0.0
+      bats:
+        specifier: ^1.13.0
+        version: 1.13.0
       core-js:
         specifier: ^3.48.0
         version: 3.48.0
@@ -3460,6 +3469,10 @@ packages:
     resolution: {integrity: sha512-4Bcg1P8xhUuqcii/S0Z9wiHIrQVPMermM1any+MX5GeGD7faD3/msQUDGLol9wOcz4/jbg/WJnGqoJF6LiBdtg==}
     engines: {node: '>=10.0.0'}
 
+  bats@1.13.0:
+    resolution: {integrity: sha512-giSYKGTOcPZyJDbfbTtzAedLcNWdjCLbXYU3/MwPnjyvDXzu6Dgw8d2M+8jHhZXSmsCMSQqCp+YBsJ603UO4vQ==}
+    hasBin: true
+
   better-opn@3.0.2:
     resolution: {integrity: sha512-aVNobHnJqLiUelTaHat9DZ1qM2w0C0Eym4LPI/3JxOnSokGVdsl1T1kN7TFvsEAD8G47A6VKQ0TVHqbBnYMJlQ==}
     engines: {node: '>=12.0.0'}
@@ -5803,6 +5816,9 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  module-alias@2.2.3:
+    resolution: {integrity: sha512-23g5BFj4zdQL/b6tor7Ji+QY4pEfNH784BMslY9Qb0UnJWRAt+lQGLYmRaM0KDBwIG23ffEBELhZDP2rhi9f/Q==}
+
   module-details-from-path@1.0.4:
     resolution: {integrity: sha512-EGWKgxALGMgzvxYF1UyGTy0HXX/2vHLkw6+NvDKW2jypWbHpjQuj4UMcqQWXHERJhVGKikolT06G3bcKe4fi7w==}
 
@@ -6455,6 +6471,11 @@ packages:
     resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
     peerDependencies:
       react: ^19.2.4
+
+  react-infinite-scroll-component@6.1.1:
+    resolution: {integrity: sha512-R8YoOyiNDynSWmfVme5LHslsKrP+/xcRUWR2ies8UgUab9dtyw5ECnMCVPPmnmjjF4MWQmfVdRwRWcWaDgeyMA==}
+    peerDependencies:
+      react: '>=16.0.0'
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -7116,6 +7137,10 @@ packages:
   thread-stream@4.0.0:
     resolution: {integrity: sha512-4iMVL6HAINXWf1ZKZjIPcz5wYaOdPhtO8ATvZ+Xqp3BTdaqtAwQkNmKORqcIo5YkQqGXq5cwfswDwMqqQNrpJA==}
     engines: {node: '>=20'}
+
+  throttle-debounce@2.3.0:
+    resolution: {integrity: sha512-H7oLPV0P7+jgvrk+6mwwwBDmxTaxnu9HMXmloNLXwnNO0ZxZ31Orah2n8lU1eMPvsaowP2CX+USCgyovXfdOFQ==}
+    engines: {node: '>=8'}
 
   through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
@@ -11312,6 +11337,8 @@ snapshots:
 
   basic-ftp@5.0.5: {}
 
+  bats@1.13.0: {}
+
   better-opn@3.0.2:
     dependencies:
       open: 8.4.2
@@ -14140,6 +14167,8 @@ snapshots:
 
   mkdirp@1.0.4: {}
 
+  module-alias@2.2.3: {}
+
   module-details-from-path@1.0.4: {}
 
   motion-dom@12.29.2:
@@ -14946,6 +14975,11 @@ snapshots:
       react: 19.2.4
       scheduler: 0.27.0
 
+  react-infinite-scroll-component@6.1.1(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      throttle-debounce: 2.3.0
+
   react-is@16.13.1: {}
 
   react-is@17.0.2: {}
@@ -15706,6 +15740,8 @@ snapshots:
   thread-stream@4.0.0:
     dependencies:
       real-require: 0.2.0
+
+  throttle-debounce@2.3.0: {}
 
   through@2.3.8: {}
 

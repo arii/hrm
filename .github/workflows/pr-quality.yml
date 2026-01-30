@@ -271,15 +271,17 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+
       - name: Run Throttling Logic Integration Test
         id: script-tests
         shell: bash
         run: |
           set -o pipefail
           mkdir -p logs
-          chmod +x ./tests/integration/test-decide-review-strategy.sh
-          # Pipe stderr to stdout to capture all output in the log
-          ./tests/integration/test-decide-review-strategy.sh > >(tee -a logs/script-output.log) 2> >(tee -a logs/script-output.log >&2)
+          # Run the bats tests and tee output to a log file
+          ./node_modules/bats/bin/bats tests/unit/decide-review-strategy.bats > >(tee -a logs/script-output.log) 2> >(tee -a logs/script-output.log >&2)
         continue-on-error: true
 
       - name: Upload Script Test Logs

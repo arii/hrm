@@ -116,3 +116,20 @@ const primaryColor = theme.palette.primary.main // #F44336
 // Typography
 <Typography variant="h1" /> // Uses theme h1 styles
 ```
+
+### Color Manipulation with `alpha`
+
+For applying transparency to colors, use the `alpha` utility from `@mui/material/styles`. This ensures that transparent colors are derived from the theme palette, maintaining consistency.
+
+**Example:**
+
+```tsx
+import { alpha } from '@mui/material/styles'
+
+<Box
+  sx={{
+    backgroundColor: alpha(theme.palette.primary.main, 0.5), // 50% transparent primary color
+    color: alpha(theme.palette.common.white, 0.8), // 80% opaque white
+  }}
+/>
+```

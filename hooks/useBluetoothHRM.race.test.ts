@@ -3,7 +3,7 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM from './useBluetoothHRM'
-import { mockBluetooth } from 'tests/unit/mocks/webBluetooth'
+import { mockBluetooth } from '@/tests/unit/mocks/webBluetooth'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({

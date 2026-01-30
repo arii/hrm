@@ -22,27 +22,34 @@ import { PREPARE_DURATION } from '@/constants/timer'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
+import { useTheme, alpha, Theme } from '@mui/material/styles'
+
 type PhaseProps = {
   [key in TimerPhase]: {
-    color: string
+    color: 'prepare' | 'work' | 'rest' | 'running' | 'idle' | 'cooldown'
     label: string
   }
 }
 
 const phaseProps: PhaseProps = {
-  PREPARE: { color: '#f59e0b', label: 'GET READY' },
-  WORK: { color: '#ef4444', label: 'WORK' },
-  REST: { color: '#22c55e', label: 'REST' },
-  RUNNING: { color: '#3b82f6', label: 'RUNNING' },
-  IDLE: { color: '#6b7280', label: 'IDLE' },
-  COOLDOWN: { color: '#6b7280', label: 'COOLDOWN' },
+  PREPARE: { color: 'prepare', label: 'GET READY' },
+  WORK: { color: 'work', label: 'WORK' },
+  REST: { color: 'rest', label: 'REST' },
+  RUNNING: { color: 'running', label: 'RUNNING' },
+  IDLE: { color: 'idle', label: 'IDLE' },
+  COOLDOWN: { color: 'cooldown', label: 'COOLDOWN' },
 }
 
-const getPhaseProps = (phase: TimerData['currentPhase']) => {
-  return phaseProps[phase]
+const getPhaseProps = (phase: TimerData['currentPhase'], theme: Theme) => {
+  const { color, label } = phaseProps[phase]
+  return {
+    color: theme.palette.custom[color],
+    label,
+  }
 }
 
 const TimerDisplay = () => {
+  const theme = useTheme()
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
   const {
@@ -54,7 +61,10 @@ const TimerDisplay = () => {
     restDuration = 1,
   } = timerData
 
-  const { color: phaseColor, label: phaseLabel } = getPhaseProps(currentPhase)
+  const { color: phaseColor, label: phaseLabel } = getPhaseProps(
+    currentPhase,
+    theme
+  )
 
   let displayTime: string
   let progressPercentage: number = 0
@@ -88,7 +98,7 @@ const TimerDisplay = () => {
         borderRadius: 2,
         position: 'relative',
         overflow: 'hidden',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
       }}
     >
       <PhaseBackground phase={currentPhase} />
@@ -107,7 +117,7 @@ const TimerDisplay = () => {
       >
         <Typography
           variant="caption"
-          sx={{ color: '#fff' }}
+          sx={{ color: 'common.white' }}
           data-testid="ws-status-indicator"
         >
           {connectionStatus}
@@ -119,10 +129,10 @@ const TimerDisplay = () => {
             borderRadius: '50%',
             backgroundColor:
               connectionStatus === 'Connected'
-                ? '#10B981'
+                ? 'success.main'
                 : connectionStatus === 'Reconnecting...'
-                  ? '#F59E0B'
-                  : '#EF4444',
+                  ? 'warning.main'
+                  : 'error.main',
             animation:
               connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
           }}
@@ -143,12 +153,12 @@ const TimerDisplay = () => {
           <Typography
             variant="body2"
             sx={{
-              color: '#fff',
+              color: 'common.white',
               fontWeight: 700,
               letterSpacing: 2,
               whiteSpace: 'nowrap',
               fontSize: '0.9rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
+              backgroundColor: alpha(theme.palette.common.white, 0.1),
               px: 1,
               py: 0.5,
               borderRadius: 1,
@@ -174,12 +184,12 @@ const TimerDisplay = () => {
           <Typography
             variant="body2"
             sx={{
-              color: '#fff',
+              color: 'common.white',
               fontWeight: 700,
               letterSpacing: 1,
               whiteSpace: 'nowrap',
               fontSize: '0.8rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
+              backgroundColor: alpha(theme.palette.common.white, 0.1),
               px: 1,
               py: 0.5,
               borderRadius: 1,
@@ -201,7 +211,7 @@ const TimerDisplay = () => {
           justifyContent: 'center',
           position: 'relative',
           zIndex: 1,
-          backgroundColor: 'rgba(0,0,0,0.5)',
+          backgroundColor: alpha(theme.palette.common.black, 0.5),
           backdropFilter: 'blur(10px)',
         }}
       >
@@ -215,7 +225,7 @@ const TimerDisplay = () => {
             color: phaseColor,
             fontWeight: 700,
             letterSpacing: 2,
-            textShadow: '0 0 10px rgba(0,0,0,0.5)',
+            textShadow: `0 0 10px ${alpha(theme.palette.common.black, 0.5)}`,
           }}
         >
           {phaseLabel}
@@ -235,7 +245,7 @@ const TimerDisplay = () => {
           }}
           alignItems="center"
         >
-          <IconButton onClick={toggleMute} sx={{ color: 'white' }}>
+          <IconButton onClick={toggleMute} sx={{ color: 'common.white' }}>
             {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
           </IconButton>
           <Slider
@@ -243,13 +253,13 @@ const TimerDisplay = () => {
             value={muted ? 0 : volume}
             onChange={(_, newValue) => setVolume(newValue as number)}
             sx={{
-              color: 'white',
+              color: 'common.white',
               '& .MuiSlider-thumb': {
                 color: phaseColor,
               },
             }}
           />
-          <VolumeUp sx={{ color: 'white' }} />
+          <VolumeUp sx={{ color: 'common.white' }} />
         </Stack>
       </CardContent>
     </Card>

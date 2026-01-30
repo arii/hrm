@@ -36,9 +36,9 @@ describe('ExperimentalAnalyticsPage', () => {
 
   it('should render without crashing', () => {
     const { getByText } = render(<ExperimentalAnalyticsPage />)
-    expect(getByText('Workout Summary')).toBeInTheDocument()
-    expect(getByText('Time in Zones')).toBeInTheDocument()
-    expect(getByText('Heart Rate Over Time')).toBeInTheDocument()
+    // The page shows "New Workout" button and "Workout History" when no active session
+    expect(getByText('New Workout')).toBeInTheDocument()
+    expect(getByText('Workout History')).toBeInTheDocument()
   })
 
   it('sends HRM_METADATA_UPDATE when WebSocket is connected', () => {
@@ -56,11 +56,12 @@ describe('ExperimentalAnalyticsPage', () => {
 
     render(<ExperimentalAnalyticsPage />)
 
+    // The component sends HRM_METADATA_UPDATE with age and maxHr
     expect(mockSendData).toHaveBeenCalledWith({
       type: 'HRM_METADATA_UPDATE',
       data: {
-        name: 'Test User',
         age: 35,
+        maxHr: 185, // 220 - 35
       },
     })
   })

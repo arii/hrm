@@ -57,7 +57,11 @@ const config: KnipConfig = {
     entry: ['server.ts', 'proxy.ts'],
   },
   jest: {
-    config: ['jest.config.cjs', 'jest.config.components.cjs', 'jest.config.integration.cjs'],
+    config: [
+      'jest.config.cjs',
+      'jest.config.components.cjs',
+      'jest.config.integration.cjs',
+    ],
     entry: ['tests/**/*.ts', 'tests/**/*.tsx'],
   },
 }
