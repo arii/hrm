@@ -23,7 +23,6 @@ interface SessionManagerState {
 type SessionManagerAction =
   | { type: 'SET_SESSION'; payload: WorkoutSessionData }
   | { type: 'START'; payload: { age: number; weight: number; maxHr?: number } }
-  | { type: 'PAUSE' }
   | { type: 'RESUME' }
   | { type: 'END' }
   | { type: 'RESET' }
@@ -72,14 +71,6 @@ function sessionManagerReducer(
         ...state,
         session: newSession,
         status: 'running',
-      }
-    }
-    case 'PAUSE': {
-      if (!state.session) return state
-      return {
-        ...state,
-        session: { ...state.session, status: 'paused' },
-        status: 'paused',
       }
     }
     case 'RESUME': {
@@ -181,10 +172,6 @@ export const useWorkoutSessionManager = () => {
     []
   )
 
-  const pauseWorkout = useCallback(() => {
-    dispatch({ type: 'PAUSE' })
-  }, [])
-
   const resumeWorkout = useCallback(() => {
     dispatch({ type: 'RESUME' })
   }, [])
@@ -227,7 +214,6 @@ export const useWorkoutSessionManager = () => {
     isInitialized,
     duration,
     startWorkout,
-    pauseWorkout,
     resumeWorkout,
     endWorkout,
     resetWorkout,

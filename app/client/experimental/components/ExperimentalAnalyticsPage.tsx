@@ -47,7 +47,6 @@ const ExperimentalAnalyticsPage = () => {
     isInitialized,
     duration,
     startWorkout,
-    pauseWorkout,
     resumeWorkout,
     endWorkout,
     addHrData,
@@ -147,10 +146,6 @@ const ExperimentalAnalyticsPage = () => {
     setView('active')
   }, [startWorkout, reset, userSettings])
 
-  const handlePauseWorkout = useCallback(() => {
-    pauseWorkout()
-  }, [pauseWorkout])
-
   const handleResumeWorkout = useCallback(() => {
     resumeWorkout()
   }, [resumeWorkout])
@@ -213,7 +208,7 @@ const ExperimentalAnalyticsPage = () => {
               </Button>
             )}
             {status === 'running' && (
-              <Button variant="outlined" onClick={handlePauseWorkout}>
+              <Button variant="outlined" onClick={handleEndWorkout}>
                 Pause
               </Button>
             )}
@@ -223,14 +218,9 @@ const ExperimentalAnalyticsPage = () => {
                   Resume
                 </Button>
                 <Button variant="outlined" onClick={handleEndWorkout}>
-                  End Workout
+                  Finish Workout
                 </Button>
               </>
-            )}
-            {status === 'running' && (
-              <Button variant="outlined" onClick={handleEndWorkout}>
-                End Workout
-              </Button>
             )}
             <Button variant="text" onClick={() => setView('list')}>
               View History

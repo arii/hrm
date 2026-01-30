@@ -75,7 +75,7 @@ describe('useWorkoutSessionManager', () => {
       result.current.startWorkout(30, 70)
     })
     act(() => {
-      result.current.pauseWorkout()
+      result.current.endWorkout() // endWorkout now pauses
     })
     expect(result.current.status).toBe('paused')
     act(() => {
@@ -118,7 +118,7 @@ describe('useWorkoutSessionManager', () => {
     expect(workoutSessionStorage.saveSession).toHaveBeenCalledTimes(1)
 
     act(() => {
-      result.current.pauseWorkout()
+      result.current.endWorkout() // This pauses the workout
     })
     // Expect a save for the 'paused' state
     expect(workoutSessionStorage.saveSession).toHaveBeenCalledTimes(2)
