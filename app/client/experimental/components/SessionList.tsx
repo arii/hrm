@@ -15,7 +15,8 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
-import { useState, useEffect } from 'react'
+import LiveDuration from './LiveDuration'
+import { useState } from 'react'
 
 interface SessionListProps {
   sessions: WorkoutSessionData[]
@@ -29,23 +30,12 @@ const getTotalCalories = (session: WorkoutSessionData) =>
         ?.totalToThisPoint ?? 0)
     : 0
 
-const getDurationInMinutes = (session: WorkoutSessionData, now: number) =>
-  session.endTime
-    ? (session.endTime - session.startTime) / 60000
-    : (now - session.startTime) / 60000
-
 const SessionList = ({
   sessions,
   onSelectSession,
   onDeleteSession,
 }: SessionListProps) => {
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
-  const [now, setNow] = useState(() => Date.now())
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(interval)
-  }, [])
 
   const handleDeleteClick = (sessionId: string) => {
     setSessionToDelete(sessionId)
@@ -90,12 +80,17 @@ const SessionList = ({
                   primary={`Workout - ${new Date(
                     session.startTime
                   ).toLocaleDateString()}`}
-                  secondary={`Duration: ${getDurationInMinutes(
-                    session,
-                    now
-                  ).toFixed(1)} mins | Calories: ${getTotalCalories(
-                    session
-                  ).toFixed(0)} kCal`}
+                  secondary={
+                    <>
+                      <LiveDuration
+                        startTime={session.startTime}
+                        endTime={session.endTime}
+                      />
+                      <Typography variant="caption">
+                        Calories: {getTotalCalories(session).toFixed(0)} kCal
+                      </Typography>
+                    </>
+                  }
                 />
               </ListItem>
             ))}

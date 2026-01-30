@@ -144,7 +144,7 @@ const ExperimentalAnalyticsPage = () => {
   }, [resumeWorkout])
 
   const handleEndWorkout = useCallback(async () => {
-    endWorkout()
+    await endWorkout() // Await to ensure session is persisted
     // Reload sessions after ending
     const sessions = await workoutSessionStorage.getAllSessions()
     setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
