@@ -18,7 +18,7 @@ import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
-import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
+import SpotifyDeviceSelector from './SpotifyDeviceSelector'
 
 // 1. State Shape
 interface SpotifyDisplayState {
@@ -430,7 +430,7 @@ const SpotifyDisplay = () => {
             onToggleMute={handleToggleMute}
             showValue={true}
           />
-          <SpotifyDeviceSelectorWrapper
+          <SpotifyDeviceSelector
             availableDevices={spotifyData.devices || []}
             deviceMenuAnchor={deviceMenuAnchor}
             onDeviceSelect={handleDeviceSelect}

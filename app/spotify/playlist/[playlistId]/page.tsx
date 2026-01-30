@@ -20,8 +20,8 @@ const PlaylistTracksDisplay = dynamic(
   }
 )
 
-const SpotifyDeviceSelectorWrapper = dynamic(
-  () => import('../../../../components/SpotifyDeviceSelectorWrapper'),
+const SpotifyDeviceSelector = dynamic(
+  () => import('../../../../components/SpotifyDeviceSelector'),
   { ssr: false }
 )
 
@@ -135,7 +135,7 @@ const PlaylistPage = () => {
             <Typography variant="body2" color="text.secondary">
               Created by {playlist.owner} - {playlist.trackCount} tracks
             </Typography>
-            <SpotifyDeviceSelectorWrapper
+            <SpotifyDeviceSelector
               availableDevices={spotifyData.devices || []}
               deviceMenuAnchor={deviceMenuAnchor}
               onDeviceSelect={handleDeviceSelect}
