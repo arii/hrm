@@ -24,7 +24,7 @@ export default function MockPage() {
   const [age, setAge] = useState(30)
   const [weight, setWeight] = useState(70) // Add weight state
   const [height, setHeight] = useState(175) // Add height state
-  const [gender, setGender] = useState('male') // Add gender state
+  const [gender, setGender] = useState('female') // Add gender state
   const [intervalId, setIntervalId] = useState<number | null>(null)
 
   const isStreaming = intervalId !== null
