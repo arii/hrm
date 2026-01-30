@@ -40,6 +40,7 @@ describe('useBluetoothHRM', () => {
   beforeEach(() => {
     // Reset mocks before each test
     jest.clearAllMocks()
+    jest.useFakeTimers()
 
     // Mock WebSocket context
     jest.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue({
@@ -102,6 +103,10 @@ describe('useBluetoothHRM', () => {
       writable: true,
       configurable: true,
     })
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
   })
 
   it('should not attempt to auto-connect if no device is saved', async () => {
@@ -325,7 +330,6 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should proactively increase signal period on missed heartbeats', async () => {
-      jest.useFakeTimers()
       const { result } = renderHook(() => useBluetoothHRM())
       let characteristicValueChangedCallback: (event: {
         target: { value: DataView }
@@ -422,7 +426,6 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should detect data staleness and attempt to reconnect', async () => {
-      jest.useFakeTimers()
       const dataLivenessTimeoutMs = 5000
       const { result } = renderHook(() =>
         useBluetoothHRM({ dataLivenessTimeoutMs })
@@ -476,13 +479,9 @@ describe('useBluetoothHRM', () => {
       expect(result.current.isDataStale).toBe(true)
       expect(result.current.deviceStatus).toMatch(/reconnecting/i)
       expect(mockGatt.disconnect).toHaveBeenCalled()
-
-      jest.useRealTimers()
     })
 
     it(`should attempt to reconnect on disconnection and give up after ${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS} attempts`, async () => {
-      jest.useFakeTimers()
-
       const { result } = renderHook(() => useBluetoothHRM())
 
       // First connection is successful
@@ -551,12 +550,9 @@ describe('useBluetoothHRM', () => {
         '',
         -1
       )
-
-      jest.useRealTimers()
     })
 
     it('should successfully reconnect after a disconnection', async () => {
-      jest.useFakeTimers()
       const { result } = renderHook(() => useBluetoothHRM())
 
       await act(async () => {
@@ -593,12 +589,9 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.connect).toHaveBeenCalledTimes(2)
       expect(result.current.isConnected).toBe(true)
       expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
-
-      jest.useRealTimers()
     })
 
     it('should not attempt to reconnect after a manual disconnect', async () => {
-      jest.useFakeTimers();
       const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
       const { result } = renderHook(() => useBluetoothHRM());
 
@@ -606,6 +599,7 @@ describe('useBluetoothHRM', () => {
         await result.current.connectAndStream()
       })
       mockGatt.connect.mockClear()
+      jest.clearAllTimers();
 
       // Manually disconnect
       act(() => {
