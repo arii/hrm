@@ -43,12 +43,6 @@ const getZoneColor = (zone: HrZoneName, theme: Theme) => {
   return colors[zone] || theme.palette.grey[500]
 }
 
-const formatTime = (seconds: number) => {
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return `${mins}:${secs.toString().padStart(2, '0')}`
-}
-
 const ZoneDistributionChart = ({
   timeInZones,
   status,
