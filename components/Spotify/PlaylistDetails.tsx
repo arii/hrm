@@ -8,7 +8,7 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { Track } from '../../types/spotify'
 
@@ -25,49 +25,61 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
   const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const limit = 20 // Number of tracks to fetch per request
+  const limit = 20
 
-  const fetchTracks = async (isInitialLoad = false) => {
+  const fetchMoreTracks = useCallback(async () => {
     if (!playlistId) return
     setError(null)
 
     try {
       const response = await fetch(
-        `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${isInitialLoad ? 0 : offset}`
+        `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}`
       )
       if (!response.ok) {
         throw new Error('Failed to fetch playlist details')
       }
       const data = await response.json()
 
-      if (data.tracks.length > 0) {
-        setTracks(
-          isInitialLoad ? data.tracks : (prev) => [...prev, ...data.tracks]
-        )
-        setOffset(isInitialLoad ? limit : (prevOffset) => prevOffset + limit)
-      }
-
-      if (
-        isInitialLoad
-          ? data.tracks.length < limit
-          : tracks.length + data.tracks.length >= data.total
-      ) {
-        setHasMore(false)
-      }
+      setTracks((prev) => [...prev, ...data.tracks])
+      setOffset((prev) => prev + data.tracks.length)
+      setHasMore(data.tracks.length === limit)
     } catch (err) {
       console.error('Failed to fetch playlist tracks:', err)
-      setError(err instanceof Error ? err.message : 'An unknown error occurred')
+      setError(
+        err instanceof Error ? err.message : 'An unknown error occurred'
+      )
     }
-  }
+  }, [playlistId, offset, limit])
 
-  // Effect for initial load and when playlistId changes
   useEffect(() => {
-    setTracks([])
-    setOffset(0)
-    setHasMore(true)
-    fetchTracks(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playlistId])
+    const fetchInitialTracks = async () => {
+      if (!playlistId) return
+      setTracks([])
+      setOffset(0)
+      setHasMore(true)
+      setError(null)
+
+      try {
+        const response = await fetch(
+          `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=0`
+        )
+        if (!response.ok) {
+          throw new Error('Failed to fetch playlist details')
+        }
+        const data = await response.json()
+        setTracks(data.tracks)
+        setOffset(data.tracks.length)
+        setHasMore(data.tracks.length === limit)
+      } catch (err) {
+        console.error('Failed to fetch playlist tracks:', err)
+        setError(
+          err instanceof Error ? err.message : 'An unknown error occurred'
+        )
+      }
+    }
+
+    fetchInitialTracks()
+  }, [playlistId, limit])
 
   return (
     <>
@@ -82,7 +94,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
       >
         <InfiniteScroll
           dataLength={tracks.length}
-          next={fetchTracks}
+          next={fetchMoreTracks}
           hasMore={hasMore}
           loader={
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
@@ -92,8 +104,8 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
           scrollableTarget="scrollable-playlist"
         >
           <List dense>
-            {tracks.map((track) => (
-              <ListItem key={track.id} divider disablePadding>
+          {tracks.map((track, index) => (
+            <ListItem key={`${track.id}-${index}`} divider disablePadding>
                 <ListItemButton onClick={() => onTrackPlay(track.uri)}>
                   <MusicNote
                     sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}

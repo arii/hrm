@@ -1,6 +1,11 @@
 /** @jest-environment jsdom */
 import '@testing-library/jest-dom'
-import { render, screen, waitFor } from '@testing-library/react'
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import PlaylistDetails from '../../../../components/Spotify/PlaylistDetails'
 import { Track } from '../../../../types/spotify'
 
@@ -12,14 +17,18 @@ describe('PlaylistDetails', () => {
     {
       id: '1',
       name: 'Track 1',
+      uri: 'spotify:track:1',
       artists: [{ name: 'Artist 1' }],
       album: { name: 'Album 1' },
+      imageUrl: '',
     },
     {
       id: '2',
       name: 'Track 2',
+      uri: 'spotify:track:2',
       artists: [{ name: 'Artist 2' }],
       album: { name: 'Album 2' },
+      imageUrl: '',
     },
   ]
 
@@ -43,19 +52,33 @@ describe('PlaylistDetails', () => {
         )
     )
 
-    render(<PlaylistDetails playlistId="test-playlist-id" />)
+    render(
+      <PlaylistDetails
+        playlistId="test-playlist-id"
+        onTrackPlay={jest.fn()}
+      />
+    )
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByRole('progressbar')).toBeNull())
   })
 
-  it('displays the track list when data is fetched successfully', async () => {
+  it('displays the track list and handles play clicks', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ tracks: mockTracks }),
-    })
+    ;(fetch as any).mockResolvedValue(
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ tracks: mockTracks, total: 2 }),
+      })
+    )
+    const onTrackPlay = jest.fn()
 
-    render(<PlaylistDetails playlistId="test-playlist-id" />)
+    render(
+      <PlaylistDetails
+        playlistId="test-playlist-id"
+        onTrackPlay={onTrackPlay}
+      />
+    )
+
     await waitFor(() => {
       expect(screen.getByText('Track 1')).toBeInTheDocument()
     })
@@ -66,26 +89,33 @@ describe('PlaylistDetails', () => {
     expect(
       screen.getByText('Artist 2 - Album 2', { exact: false })
     ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Track 1'))
+    expect(onTrackPlay).toHaveBeenCalledWith('spotify:track:1')
   })
 
   it('displays an error message when the API call fails', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValueOnce({
-      ok: false,
-    })
-
-    // Suppress console.error for this test
+    ;(fetch as any).mockResolvedValue(
+      Promise.resolve({
+        ok: false,
+      })
+    )
     const consoleErrorSpy = jest
       .spyOn(console, 'error')
       .mockImplementation(() => {})
 
-    render(<PlaylistDetails playlistId="test-playlist-id" />)
+    render(
+      <PlaylistDetails
+        playlistId="test-playlist-id"
+        onTrackPlay={jest.fn()}
+      />
+    )
     await waitFor(() => {
       expect(
         screen.getByText('Failed to fetch playlist details')
       ).toBeInTheDocument()
     })
-
     consoleErrorSpy.mockRestore()
   })
 })
