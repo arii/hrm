@@ -135,6 +135,13 @@ const ExperimentalAnalyticsPage = () => {
     setView('active')
   }, [startWorkout, reset, userSettings])
 
+  // Auto-start workout when HR data is first received
+  useEffect(() => {
+    if (status === 'idle' && hrmData.length > 0 && hrmData[0] && hrmData[0].value > 0) {
+      handleStartWorkout()
+    }
+  }, [hrmData, status, handleStartWorkout])
+
   const handlePauseWorkout = useCallback(() => {
     pauseWorkout()
   }, [pauseWorkout])
