@@ -126,8 +126,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          git fetch origin branch-b
-          git checkout branch-b
+          git fetch origin branch-a
+          git checkout branch-a
           # Check if the conflict is resolved
           if git cat-file -e HEAD:conflict-file.txt; then
             echo "✅ Conflict resolved: conflict-file.txt exists."
