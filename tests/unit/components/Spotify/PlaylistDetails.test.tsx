@@ -5,7 +5,8 @@ import PlaylistDetails from '../../../../components/Spotify/PlaylistDetails'
 import { Track } from '../../../../types/spotify'
 
 // Mock the fetch API
-global.fetch = jest.fn()
+const mockFetch = jest.fn()
+global.fetch = mockFetch
 
 describe('PlaylistDetails', () => {
   const mockTracks: Track[] = [
@@ -29,7 +30,7 @@ describe('PlaylistDetails', () => {
 
   it('displays a loading indicator while fetching data', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockImplementationOnce(
+    mockFetch.mockImplementationOnce(
       () =>
         new Promise((resolve) =>
           setTimeout(
@@ -50,7 +51,7 @@ describe('PlaylistDetails', () => {
 
   it('displays the track list when data is fetched successfully', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ tracks: mockTracks }),
     })
@@ -70,7 +71,7 @@ describe('PlaylistDetails', () => {
 
   it('displays an error message when the API call fails', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: false,
     })
 
