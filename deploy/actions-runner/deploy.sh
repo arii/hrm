@@ -11,6 +11,7 @@ docker build --build-arg RUNNER_VERSION=${RUNNER_VERSION} -t hrm-actions-runner 
 # Note: This requires sudo privileges
 sudo mkdir -p /etc/hrm-actions-runner
 sudo cp .env.runner /etc/hrm-actions-runner/
+sudo chmod 600 /etc/hrm-actions-runner/.env.runner
 sudo cp hrm-actions-runner.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable hrm-actions-runner.service

@@ -29,6 +29,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs
 
 # 3. Create a non-root user 'runner' (GitHub Runners should not run as root)
+# The runner user is granted passwordless sudo privileges to allow it to install
+# system-level dependencies for tools like Playwright during workflow execution.
 RUN useradd -m runner && \
     usermod -aG sudo runner && \
     echo "%sudo ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers

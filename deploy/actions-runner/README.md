@@ -30,7 +30,7 @@ The version of the GitHub Actions runner is managed by the `RUNNER_VERSION` vari
     -   Copy the `.env.runner` file to a new file named `.env.runner` (if it doesn't exist).
     -   Open `.env.runner` and fill in the following values:
         -   `GITHUB_REPO_URL`: The full URL to your repository (e.g., `https://github.com/your-username/your-repo`).
-        -   `GITHUB_TOKEN`: A GitHub Personal Access Token (PAT) with `repo` scope. This is required for the `gh` CLI to authenticate.
+        -   `GITHUB_TOKEN`: A GitHub Personal Access Token (PAT). The `repo` scope is a common choice for broad access, but for enhanced security, use the most restrictive scope that meets your workflow needs (e.g., `workflow` for running jobs).
         -   `RUNNER_TOKEN`: The token you generated in the previous step.
 
 3.  **Deploy the Runner:**
