@@ -105,4 +105,13 @@ describe('UserSettingsContext', () => {
     )
     expect(storedSettings).not.toHaveProperty('zombieKey')
   })
+
+  it('should have default gender as FEMALE', () => {
+    const { result } = renderHook(() => useUserSettings(), {
+      wrapper: UserSettingsProvider,
+    })
+
+    const [settings] = result.current
+    expect(settings.gender).toBe('FEMALE')
+  })
 })
