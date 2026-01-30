@@ -66,6 +66,9 @@ diff.txt
 .env*
 .vercel
 
+# GitHub Actions Runner
+deploy/runner/.env.runner
+
 # IDE
 .gemini/*
 .vscode/*
