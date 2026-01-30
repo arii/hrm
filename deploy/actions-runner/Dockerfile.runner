@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install -y \
     git \
     sudo \
     tar \
+    # libicu-dev: for Node.js internationalization support
     libicu-dev \
+    # build-essential: for compiling native Node.js modules
     build-essential \
     gnupg \
     && rm -rf /var/lib/apt/lists/*
