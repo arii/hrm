@@ -26,14 +26,14 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   size = 'small',
 }) => {
   const handleVolumeChange = useCallback(
-    (_event: any, value: number | number[]) => {
+    (_event: Event, value: number | number[]) => {
       onVolumeChange(value as number)
     },
     [onVolumeChange]
   )
 
   const handleVolumeChangeCommitted = useCallback(
-    (_event: any, value: number | number[]) => {
+    (_event: React.SyntheticEvent | Event, value: number | number[]) => {
       onVolumeChangeCommitted?.(value as number)
     },
     [onVolumeChangeCommitted]
