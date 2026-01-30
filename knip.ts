@@ -21,6 +21,9 @@ const config: KnipConfig = {
     '.storybook/**/*.tsx',
   ],
   project: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs', '**/*.mjs'],
+  paths: {
+    '@/*': ['./*'],
+  },
   ignore: [
     '.github',
     'node_modules',
