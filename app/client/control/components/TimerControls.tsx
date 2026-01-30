@@ -17,7 +17,6 @@ import Timer from '@mui/icons-material/Timer'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
-import ControlCard from '@/components/shared/ControlCard'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -29,29 +28,32 @@ import {
 } from '../constants'
 import DurationStepper from './DurationStepper'
 
+import { useTheme, alpha, Theme } from '@mui/material/styles'
+
 const actionButtonBaseSx = {
   flex: 1,
   width: '100%',
   fontWeight: 'bold',
   py: 1,
   minHeight: '48px',
-  color: 'white',
+  color: 'common.white',
   borderRadius: 2,
 }
 
-const startButtonSx = {
+const startButtonSx = (theme: Theme) => ({
   ...actionButtonBaseSx,
-  background: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
-  boxShadow: '0 8px 24px rgba(34, 197, 94, 0.4)',
-}
+  background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
+  boxShadow: `0 8px 24px ${alpha(theme.palette.success.main, 0.4)}`,
+})
 
-const stopButtonSx = {
+const stopButtonSx = (theme: Theme) => ({
   ...actionButtonBaseSx,
-  background: 'linear-gradient(135deg, #F43F5E 0%, #E11D48 100%)',
-  boxShadow: '0 8px 24px rgba(244, 63, 94, 0.4)',
-}
+  background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
+  boxShadow: `0 8px 24px ${alpha(theme.palette.error.main, 0.4)}`,
+})
 
 const TimerControls = () => {
+  const theme = useTheme()
   const { timerData, sendData, connectionStatus } = useWebSocket()
   const { sendSpotifyCommand } = useSpotifyControls()
   const [workTime, setWorkTime] = useState(20)
@@ -154,14 +156,18 @@ const TimerControls = () => {
   const modes = ['TABATA', 'STOPWATCH']
 
   return (
-    <ControlCard
+    <Card
       data-testid="timer-controls"
       sx={{
         mb: 0,
         position: 'sticky',
         top: 8,
         zIndex: 1000,
-        background: 'rgba(30, 41, 59, 0.7)',
+        background: alpha(theme.palette.grey[800], 0.7),
+        backdropFilter: 'blur(20px) saturate(180%)',
+        border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+        borderRadius: 3,
+        boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.4)}`,
       }}
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
@@ -170,7 +176,7 @@ const TimerControls = () => {
             variant="subtitle1"
             data-testid="timer-mode-heading"
             sx={{
-              color: 'white',
+              color: 'common.white',
               fontWeight: 'medium',
               mb: 1,
               textAlign: 'center',
@@ -183,7 +189,7 @@ const TimerControls = () => {
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               position: 'relative',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              backgroundColor: alpha(theme.palette.common.white, 0.1),
               borderRadius: '24px',
               p: '4px',
             }}
@@ -200,7 +206,7 @@ const TimerControls = () => {
                 disabled={controlsDisabled}
                 startIcon={mode === 'TABATA' ? <FitnessCenter /> : <Timer />}
                 sx={{
-                  color: 'white',
+                  color: 'common.white',
                   zIndex: 1,
                   transition: 'color 0.3s',
                   borderRadius: '20px',
@@ -219,7 +225,7 @@ const TimerControls = () => {
                 left: timerData.mode === 'TABATA' ? '4px' : 'calc(50% - 4px)',
                 width: 'calc(50% - 4px)',
                 height: 'calc(100% - 8px)',
-                background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
                 borderRadius: '20px',
                 zIndex: 0,
               }}
@@ -230,12 +236,12 @@ const TimerControls = () => {
         <Box sx={{ textAlign: 'center', mb: 1.5 }}>
           <Typography
             variant="h6"
-            sx={{ color: 'white', mb: 0.5 }}
+            sx={{ color: 'common.white', mb: 0.5 }}
             data-testid={isRunning ? 'timer-running' : 'timer-stopped'}
           >
             {isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
-          <Typography variant="body2" sx={{ color: '#EF4444' }}>
+          <Typography variant="body2" sx={{ color: 'error.main' }}>
             {timerData.currentPhase}
           </Typography>
         </Box>
@@ -245,7 +251,7 @@ const TimerControls = () => {
             <Box>
               <Typography
                 sx={{
-                  color: 'white',
+                  color: 'common.white',
                   fontWeight: 'medium',
                   mb: 1,
                   fontSize: '0.9rem',
@@ -294,8 +300,8 @@ const TimerControls = () => {
               sx={{
                 p: 2,
                 borderRadius: 2,
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderColor: 'rgba(255, 255, 255, 0.1)',
+                background: alpha(theme.palette.common.white, 0.05),
+                borderColor: alpha(theme.palette.common.white, 0.1),
               }}
             >
               <Stack spacing={2}>
@@ -304,7 +310,7 @@ const TimerControls = () => {
                   value={workTime}
                   onChange={setWorkTime}
                   disabled={controlsDisabled}
-                  color="#EF4444"
+                  color={theme.palette.error.main}
                   data-testid="work-duration-input"
                 />
                 <DurationStepper
@@ -312,7 +318,7 @@ const TimerControls = () => {
                   value={restTime}
                   onChange={setRestTime}
                   disabled={controlsDisabled}
-                  color="#22C55E"
+                  color={theme.palette.success.main}
                   data-testid="rest-duration-input"
                 />
               </Stack>
@@ -332,7 +338,7 @@ const TimerControls = () => {
                 variant="contained"
                 onClick={() => sendTimerCommand('START')}
                 disabled={connectionStatus !== 'Connected'}
-                sx={startButtonSx}
+                sx={startButtonSx(theme)}
                 startIcon={<PlayArrow fontSize="large" />}
               >
                 START
@@ -343,7 +349,7 @@ const TimerControls = () => {
                 variant="contained"
                 onClick={() => sendTimerCommand('STOP')}
                 disabled={connectionStatus !== 'Connected'}
-                sx={stopButtonSx}
+                sx={stopButtonSx(theme)}
                 startIcon={<Stop fontSize="large" />}
               >
                 STOP
@@ -352,7 +358,7 @@ const TimerControls = () => {
           </motion.div>
         </Stack>
       </CardContent>
-    </ControlCard>
+    </Card>
   )
 }
 
