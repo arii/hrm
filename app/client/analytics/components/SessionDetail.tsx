@@ -57,6 +57,7 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
             <ZoneDistributionChart
               timeInZones={session.timeInZones}
               status={'idle'}
+              isLive={false}
             />
           </Box>
         </Box>

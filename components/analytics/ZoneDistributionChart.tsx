@@ -26,6 +26,7 @@ import { SessionStatus } from '@/hooks/useWorkoutSessionManager'
 interface ZoneDistributionChartProps {
   timeInZones: Record<HrZoneName, number>
   status: SessionStatus
+  isLive: boolean
 }
 
 // Define colors for the zones, using MUI theme for consistency
@@ -51,6 +52,7 @@ const formatTime = (seconds: number) => {
 const ZoneDistributionChart = ({
   timeInZones,
   status,
+  isLive,
 }: ZoneDistributionChartProps) => {
   const theme = useTheme()
 
@@ -67,7 +69,7 @@ const ZoneDistributionChart = ({
     )
     .sort((a, b) => b.time - a.time) // Sort for better visualization
 
-  const isPaused = status === 'paused'
+  const isPaused = isLive && status === 'paused'
 
   return (
     <Card

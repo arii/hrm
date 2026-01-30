@@ -243,6 +243,7 @@ const AnalyticsPage = () => {
                 summaryData.timeInZones as Record<HrZoneName, number>
               }
               status={status}
+              isLive={true}
             />
 
             {activeSession && activeSession.hrHistory.length > 0 && (

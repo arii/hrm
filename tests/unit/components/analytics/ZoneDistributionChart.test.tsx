@@ -45,7 +45,11 @@ describe('ZoneDistributionChart', () => {
   it('renders the chart with the correct title', () => {
     render(
       <ThemeProvider theme={theme}>
-        <ZoneDistributionChart timeInZones={mockTimeInZones} status="running" />
+        <ZoneDistributionChart
+          timeInZones={mockTimeInZones}
+          status="running"
+          isLive={true}
+        />
       </ThemeProvider>
     )
     expect(screen.getByText('Zone Distribution')).toBeInTheDocument()
@@ -54,35 +58,51 @@ describe('ZoneDistributionChart', () => {
   it('filters out zones with zero time', () => {
     const { container } = render(
       <ThemeProvider theme={theme}>
-        <ZoneDistributionChart timeInZones={mockTimeInZones} status="running" />
+        <ZoneDistributionChart
+          timeInZones={mockTimeInZones}
+          status="running"
+          isLive={true}
+        />
       </ThemeProvider>
     )
     // The chart should not render bars for Unknown or NoData zones
     expect(container.querySelectorAll('.recharts-bar').length).toBe(0) // As we are not rendering the bars
   })
 
-  it('displays the (Paused) label when the workout is paused', () => {
+  it('displays the (Paused) label when the workout is paused and live', () => {
     render(
       <ThemeProvider theme={theme}>
-        <ZoneDistributionChart timeInZones={mockTimeInZones} status="paused" />
+        <ZoneDistributionChart
+          timeInZones={mockTimeInZones}
+          status="paused"
+          isLive={true}
+        />
       </ThemeProvider>
     )
     expect(screen.getByText('(Paused)')).toBeInTheDocument()
   })
 
-  it('applies a lower opacity when paused', () => {
+  it('applies a lower opacity when paused and live', () => {
     const { container } = render(
       <ThemeProvider theme={theme}>
-        <ZoneDistributionChart timeInZones={mockTimeInZones} status="paused" />
+        <ZoneDistributionChart
+          timeInZones={mockTimeInZones}
+          status="paused"
+          isLive={true}
+        />
       </ThemeProvider>
     )
     expect(container.firstChild).toHaveStyle('opacity: 0.5')
   })
 
-  it('does not display the (Paused) label when running', () => {
+  it('does not display the (Paused) label when not live', () => {
     render(
       <ThemeProvider theme={theme}>
-        <ZoneDistributionChart timeInZones={mockTimeInZones} status="running" />
+        <ZoneDistributionChart
+          timeInZones={mockTimeInZones}
+          status="paused"
+          isLive={false}
+        />
       </ThemeProvider>
     )
     expect(screen.queryByText('(Paused)')).not.toBeInTheDocument()
