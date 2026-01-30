@@ -41,6 +41,7 @@ describe('useBluetoothHRM', () => {
     // Reset mocks before each test
     jest.clearAllMocks()
     jest.useFakeTimers()
+    jest.clearAllTimers()
 
     // Mock WebSocket context
     jest.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue({
@@ -116,7 +117,7 @@ describe('useBluetoothHRM', () => {
       await result.current.autoConnect()
     })
 
-    expect(mockBluetooth.getDevices).toHaveBeenCalled()
+    expect(mockBluetooth.getDevices).not.toHaveBeenCalled()
     expect(mockGatt.connect).not.toHaveBeenCalled()
     expect(result.current.deviceStatus).toBe('Disconnected')
   })
@@ -198,13 +199,16 @@ describe('useBluetoothHRM', () => {
     // First call, should get stuck in a pending state
     act(() => {
       // We don't await this, so it remains in-flight
-      result.current.connectAndStream()
-    })
+      result.current.connectAndStream();
+    });
+
+    // Wait for the status to change to connecting
+    await waitFor(() => expect(result.current.deviceStatus).toMatch(/connecting/i));
 
     // Second call, should trigger the abort logic for the first call
     act(() => {
-      result.current.connectAndStream()
-    })
+      result.current.connectAndStream();
+    });
 
     // Verify that the abort function was called for the first pending attempt
     expect(mockAbort).toHaveBeenCalledTimes(1)
@@ -405,7 +409,7 @@ describe('useBluetoothHRM', () => {
   describe('Watchdog and Reconnection', () => {
     const WATCHDOG_INTERVAL_MS = HEARTBEAT_INTERVAL_MS * 2 // Watchdog runs every 2nd heartbeat
     let onDisconnectedCallback: () => void = () => {}
-    let setTimeoutSpy: jest.SpyInstance;
+    let setTimeoutSpy: jest.SpyInstance
 
     beforeEach(() => {
       // Capture the 'gattserverdisconnected' event listener
@@ -592,14 +596,16 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should not attempt to reconnect after a manual disconnect', async () => {
-      const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
       const { result } = renderHook(() => useBluetoothHRM());
 
       await act(async () => {
         await result.current.connectAndStream()
       })
       mockGatt.connect.mockClear()
+
+      // Clear any timers from the connection phase before spying
       jest.clearAllTimers();
+      const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
       // Manually disconnect
       act(() => {

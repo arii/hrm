@@ -313,104 +313,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     logger.error({ error }, msg)
   }, [])
 
-  const onDisconnected = useCallback(() => {
-    setBatteryLevel(null)
-
-    // Also send a null HR value to signal immediate disconnection
-    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
-
-    if (
-      !isManualDisconnect.current &&
-      deviceRef.current &&
-      !isConnecting.current
-    ) {
-      reconnectAttempts.current += 1
-      const device = deviceRef.current
-      const attemptNum = reconnectAttempts.current
-
-      logger.info(
-        {
-          device: device.name,
-          attempt: attemptNum,
-          maxAttempts: MAX_RECONNECT_ATTEMPTS,
-        },
-        'Device disconnected, attempting auto-reconnect...'
-      )
-
-      if (attemptNum <= MAX_RECONNECT_ATTEMPTS) {
-        // Only set signal_loss if this wasn't a timeout disconnect
-        if (!isTimeoutDisconnect.current) {
-          // No longer need to set a reason
-        }
-        const reasonText = isTimeoutDisconnect.current
-          ? 'Timeout'
-          : 'Signal Lost'
-        setStatus(BluetoothConnectionStatus.RECONNECTING)
-        setCustomStatusMessage(
-          BLUETOOTH_MESSAGES.reconnectingAttempt(
-            reasonText,
-            attemptNum,
-            MAX_RECONNECT_ATTEMPTS
-          )
-        )
-
-        // Randomized backoff: increases with attempts
-        const baseDelay =
-          RECONNECT_BASE_DELAY_MS +
-          (attemptNum - 1) * RECONNECT_DELAY_INCREMENT_MS
-        const randomDelay =
-          baseDelay + Math.random() * RECONNECT_RANDOM_DELAY_MS
-
-        reconnectTimeoutRef.current = setTimeout(() => {
-          if (connectToGattRef.current) {
-            connectToGattRef.current(device).catch((error) => {
-              if (error.name !== 'AbortError') {
-                logger.error(
-                  { error, device: device.name, attempt: attemptNum },
-                  'Auto-reconnect attempt failed'
-                )
-              }
-            })
-          }
-        }, randomDelay)
-      } else {
-        // Max reconnection attempts reached - reset device and permissions
-        logger.error(
-          { device: device.name, maxAttempts: MAX_RECONNECT_ATTEMPTS },
-          'Max reconnection attempts reached. Resetting device.'
-        )
-        setStatus(BluetoothConnectionStatus.ERROR)
-        setCustomStatusMessage(
-          BLUETOOTH_MESSAGES.failedToReconnect(MAX_RECONNECT_ATTEMPTS)
-        )
-
-        // Trigger device reset after a brief delay to show the message
-        reconnectTimeoutRef.current = setTimeout(async () => {
-          isManualDisconnect.current = true
-          isTimeoutDisconnect.current = false
-          if (abortControllerRef.current) {
-            abortControllerRef.current.abort()
-          }
-          setCookie('hrm_device_id', '', -1)
-          setStatus(BluetoothConnectionStatus.DISCONNECTED)
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
-          setSavedDevice(null)
-          setBatteryLevel(null)
-          deviceRef.current = null
-          reconnectAttempts.current = 0
-        }, 2000)
-      }
-    } else {
-      logger.info('Device disconnected manually.')
-      setStatus(BluetoothConnectionStatus.DISCONNECTED)
-      setCustomStatusMessage(null)
-      reconnectAttempts.current = 0
-    }
-  }, [])
-
   const connectToGatt = useCallback(
-    async (device: BluetoothDevice) => {
-      // If a connection is already in progress, abort it before starting a new one
+    async (device: BluetoothDevice, isReconnect = false) => {
       if (isConnecting.current) {
         logger.warn(
           { device: device.name },
@@ -423,12 +327,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       try {
         isConnecting.current = true
         deviceRef.current = device
-        setStatus(BluetoothConnectionStatus.CONNECTING)
-        setCustomStatusMessage(
-          BLUETOOTH_MESSAGES.connectingToDevice(device.name || '')
-        )
 
-        // Create a new AbortController for this connection attempt
+        if (!isReconnect) {
+          setStatus(BluetoothConnectionStatus.CONNECTING)
+          setCustomStatusMessage(
+            BLUETOOTH_MESSAGES.connectingToDevice(device.name || '')
+          )
+        }
         abortControllerRef.current = new AbortController()
 
         // --- START NEW RETRY LOGIC ---
@@ -721,6 +626,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           await connectToGatt(device)
         } else {
           logger.info('No device to connect')
+          throw new Error('No device found or selected for connection.')
         }
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
