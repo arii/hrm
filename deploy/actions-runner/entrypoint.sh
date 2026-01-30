@@ -19,7 +19,7 @@ echo "Configuring GitHub Actions Runner..."
   --name "hrm-docker-runner-$(hostname)${RUNNER_NAME_SUFFIX}" \
   --work "_work" \
   --replace \
-  --labels "hrm-backend,playwright,docker"
+  --labels "${RUNNER_LABELS}"
 
 echo "Starting Runner..."
 # Runs the listener process
