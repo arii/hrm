@@ -16,7 +16,7 @@ const CALORIE_COEFFICIENTS = {
     AGE: 0.074,
   },
   CONVERSION_FACTOR: 4.184,
-}
+} as const
 
 export interface CalorieEstimationParams {
   heartRate: number

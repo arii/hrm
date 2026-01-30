@@ -85,6 +85,7 @@ export default function ConnectPage() {
         data: {
           name: userName || 'User', // Use default name if not set
           age: userAge || 30,
+          gender: gender,
         },
       })
     }
