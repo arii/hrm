@@ -165,7 +165,7 @@ describe('useBluetoothHRM', () => {
     await act(async () => {
       try {
         await result.current.connectAndStream()
-      } catch (_e) {
+      } catch {
         // ignore
       }
     })
@@ -199,16 +199,18 @@ describe('useBluetoothHRM', () => {
     // First call, should get stuck in a pending state
     act(() => {
       // We don't await this, so it remains in-flight
-      result.current.connectAndStream();
-    });
+      result.current.connectAndStream()
+    })
 
     // Wait for the status to change to connecting
-    await waitFor(() => expect(result.current.deviceStatus).toMatch(/connecting/i));
+    await waitFor(() =>
+      expect(result.current.deviceStatus).toMatch(/connecting/i)
+    )
 
     // Second call, should trigger the abort logic for the first call
     act(() => {
-      result.current.connectAndStream();
-    });
+      result.current.connectAndStream(undefined, undefined, { silent: true })
+    })
 
     // Verify that the abort function was called for the first pending attempt
     expect(mockAbort).toHaveBeenCalledTimes(1)
@@ -379,14 +381,23 @@ describe('useBluetoothHRM', () => {
       })
       expect(result.current.signalPeriodMs).toBe(1000)
 
-      // Advance time by 2 seconds without sending a packet
+      // Simulate first missed heartbeat check
       jest.spyOn(Date, 'now').mockReturnValue(now + 3000)
       await act(async () => {
-        jest.advanceTimersByTime(2000)
+        // Advance timers enough for the watchdog to run once
+        jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS)
+      })
+
+      // Simulate second missed heartbeat check
+      jest.spyOn(Date, 'now').mockReturnValue(now + 4000)
+      await act(async () => {
+        // Advance timers enough for the watchdog to run again
+        jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS)
       })
 
       // The heartbeat should have fired twice. The first time, it penalizes
-      // with the time since last data (2000ms), the second time with 3000ms.
+      // with the time since last data (2000ms from now+1000 to now+3000),
+      // the second time with 3000ms (from now+1000 to now+4000).
       // History: [1000, 2000, 3000] -> Avg: 2000
       expect(result.current.signalPeriodMs).toBe(2000)
 
@@ -424,9 +435,9 @@ describe('useBluetoothHRM', () => {
     })
 
     afterEach(() => {
-        if (setTimeoutSpy) {
-            setTimeoutSpy.mockClear()
-        }
+      if (setTimeoutSpy) {
+        setTimeoutSpy.mockClear()
+      }
     })
 
     it('should detect data staleness and attempt to reconnect', async () => {
@@ -596,7 +607,7 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should not attempt to reconnect after a manual disconnect', async () => {
-      const { result } = renderHook(() => useBluetoothHRM());
+      const { result } = renderHook(() => useBluetoothHRM())
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -604,8 +615,8 @@ describe('useBluetoothHRM', () => {
       mockGatt.connect.mockClear()
 
       // Clear any timers from the connection phase before spying
-      jest.clearAllTimers();
-      const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+      jest.clearAllTimers()
+      const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
 
       // Manually disconnect
       act(() => {
