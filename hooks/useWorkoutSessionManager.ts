@@ -189,19 +189,9 @@ export const useWorkoutSessionManager = () => {
     dispatch({ type: 'RESUME' })
   }, [])
 
-  const endWorkout = useCallback(async () => {
+  const endWorkout = useCallback(() => {
     dispatch({ type: 'END' })
-    // Ensure the ended session is persisted before returning
-    // This prevents race conditions when fetching session list immediately after
-    if (state.session) {
-      const endedSession = {
-        ...state.session,
-        status: 'finished' as const,
-        endTime: Date.now(),
-      }
-      await workoutSessionStorage.saveSession(endedSession)
-    }
-  }, [state.session])
+  }, [])
 
   const resetWorkout = useCallback(async () => {
     if (state.session) {

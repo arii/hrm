@@ -78,6 +78,18 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [isInitialized, activeSession?.endTime]) // Reload when session ends
 
+  // Effect to handle the end of a workout session
+  useEffect(() => {
+    if (status === 'finished') {
+      const reloadSessions = async () => {
+        const sessions = await workoutSessionStorage.getAllSessions()
+        setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
+        setView('list')
+      }
+      reloadSessions()
+    }
+  }, [status])
+
   // Send user metadata when WebSocket connects
   useEffect(() => {
     if (connectionStatus === 'Connected') {
@@ -143,12 +155,8 @@ const ExperimentalAnalyticsPage = () => {
     resumeWorkout()
   }, [resumeWorkout])
 
-  const handleEndWorkout = useCallback(async () => {
-    await endWorkout() // Await to ensure session is persisted
-    // Reload sessions after ending
-    const sessions = await workoutSessionStorage.getAllSessions()
-    setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
-    setView('list')
+  const handleEndWorkout = useCallback(() => {
+    endWorkout()
   }, [endWorkout])
 
   const handleViewSession = useCallback((session: WorkoutSessionData) => {
@@ -218,6 +226,11 @@ const ExperimentalAnalyticsPage = () => {
                   End Workout
                 </Button>
               </>
+            )}
+            {status === 'running' && (
+              <Button variant="outlined" onClick={handleEndWorkout}>
+                End Workout
+              </Button>
             )}
             <Button variant="text" onClick={() => setView('list')}>
               View History
