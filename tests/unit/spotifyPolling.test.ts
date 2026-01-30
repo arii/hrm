@@ -31,9 +31,14 @@ jest.mock('../../utils/logger.server.js', () => {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    child: jest.fn(() => mockLogger),
+    child: jest.fn(function () {
+      return this
+    }),
   }
-  return { default: mockLogger }
+  return {
+    __esModule: true,
+    default: mockLogger,
+  }
 })
 
 // Import the mocked logger

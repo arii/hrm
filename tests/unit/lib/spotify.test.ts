@@ -7,8 +7,11 @@ import logger from '@/utils/logger'
 import { env } from '@/lib/env'
 
 // Mock the logger to prevent console output during tests
-jest.mock('@/utils/logger.server', () => ({
-  error: jest.fn(),
+jest.mock('@/utils/logger', () => ({
+  __esModule: true,
+  default: {
+    error: jest.fn(),
+  },
 }))
 
 describe('lib/spotify', () => {

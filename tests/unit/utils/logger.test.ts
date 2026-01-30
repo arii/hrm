@@ -1,5 +1,27 @@
-// tests/unit/lib/logger.test.ts
+// tests/unit/utils/logger.test.ts
 /* eslint-disable @typescript-eslint/no-require-imports */
+
+// Mock pino and pino-http before imports
+jest.mock('pino', () => {
+  const pinoInstance = {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn().mockReturnThis(),
+  }
+  const pinoFn = jest.fn(() => pinoInstance)
+  return pinoFn
+})
+
+jest.mock('pino-http', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return jest.fn(() => (_req: any, _res: any, next: any) => {
+    if (next) {
+      next()
+    }
+  })
+})
 
 describe('Logger', () => {
   const OLD_ENV = process.env
@@ -11,13 +33,13 @@ describe('Logger', () => {
     delete global.window
   })
 
-  describe('Server-side Environment', () => {
+  describe('Server-side Environment (logger.server.ts)', () => {
     it('should use pino with pretty-print in development', () => {
       process.env.NODE_ENV = 'development'
       const pino = require('pino')
-      const { default: logger } = require('@/utils/logger')
+      const { default: logger } = require('@/utils/logger.server')
 
-      expect(logger.info).toBeInstanceOf(Function)
+      expect(typeof logger.info).toBe('function')
       expect(pino).toHaveBeenCalledWith(
         expect.objectContaining({
           transport: {
@@ -31,7 +53,7 @@ describe('Logger', () => {
     it('should use pino without pretty-print in production', () => {
       process.env.NODE_ENV = 'production'
       const pino = require('pino')
-      require('@/utils/logger')
+      require('@/utils/logger.server')
 
       expect(pino).toHaveBeenCalledWith(
         expect.not.objectContaining({
@@ -41,7 +63,7 @@ describe('Logger', () => {
     })
   })
 
-  describe('Client-side Environment', () => {
+  describe('Client-side Environment (logger.ts)', () => {
     beforeEach(() => {
       // @ts-expect-error - mock window object
       global.window = {}
@@ -65,25 +87,5 @@ describe('Logger', () => {
       httpLogger({}, {}, next)
       expect(next).toHaveBeenCalled()
     })
-  })
-})
-
-// Mock pino and pino-http
-jest.mock('pino', () => {
-  const pinoInstance = {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-    child: jest.fn().mockReturnThis(),
-  }
-  return jest.fn(() => pinoInstance)
-})
-
-jest.mock('pino-http', () => {
-  return jest.fn(() => (req, res, next) => {
-    if (next) {
-      next()
-    }
   })
 })
