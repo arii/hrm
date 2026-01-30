@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
 import * as WebSocketContext from '@/context/WebSocketContext'
 import * as cookieUtils from '@/utils/cookies'
@@ -401,6 +401,7 @@ describe('useBluetoothHRM', () => {
   describe('Watchdog and Reconnection', () => {
     const WATCHDOG_INTERVAL_MS = HEARTBEAT_INTERVAL_MS * 2 // Watchdog runs every 2nd heartbeat
     let onDisconnectedCallback: () => void = () => {}
+    let setTimeoutSpy: jest.SpyInstance;
 
     beforeEach(() => {
       // Capture the 'gattserverdisconnected' event listener
@@ -412,6 +413,12 @@ describe('useBluetoothHRM', () => {
           }
         }
       )
+    })
+
+    afterEach(() => {
+        if (setTimeoutSpy) {
+            setTimeoutSpy.mockClear()
+        }
     })
 
     it('should detect data staleness and attempt to reconnect', async () => {
@@ -591,9 +598,9 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should not attempt to reconnect after a manual disconnect', async () => {
-      jest.useFakeTimers()
-      const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
-      const { result } = renderHook(() => useBluetoothHRM())
+      jest.useFakeTimers();
+      const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+      const { result } = renderHook(() => useBluetoothHRM());
 
       await act(async () => {
         await result.current.connectAndStream()
