@@ -34,8 +34,8 @@ describe('estimateCaloriesBurned', () => {
       // gender defaults to 'male'
     })
     // Expected value based on a manual calculation of the formula
-    // ((-55.0969 + 0.6309 * 155 + 0.1988 * 75 + 0.2017 * 35) / 4.184) * 30 = 389.4
-    expect(calories).toBeCloseTo(389.4, 1)
+    // ((-55.0969 + 0.6309 * 155 + 0.1988 * 75 + 0.2017 * 35) / 4.184) * 30 = 463.64
+    expect(calories).toBeCloseTo(463.64, 1)
   })
 
   it('calculates calories correctly for explicit male', () => {
@@ -44,7 +44,7 @@ describe('estimateCaloriesBurned', () => {
       heartRate: 155,
       gender: 'male',
     })
-    expect(calories).toBeCloseTo(389.4, 1)
+    expect(calories).toBeCloseTo(463.64, 1)
   })
 
   it('calculates calories correctly for a female', () => {
@@ -54,8 +54,8 @@ describe('estimateCaloriesBurned', () => {
       gender: 'female',
     })
     // Expected value based on a manual calculation of the formula
-    // ((-20.4022 + 0.4472 * 155 - 0.1263 * 75 + 0.074 * 35) / 4.184) * 30 = 301.9
-    expect(calories).toBeCloseTo(301.9, 1)
+    // ((-20.4022 + 0.4472 * 155 - 0.1263 * 75 + 0.074 * 35) / 4.184) * 30 = 301.37
+    expect(calories).toBeCloseTo(301.37, 1)
   })
 
   it('should not return a negative number for calories', () => {

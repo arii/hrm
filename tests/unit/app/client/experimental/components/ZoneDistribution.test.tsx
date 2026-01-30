@@ -40,11 +40,14 @@ describe('ZoneDistribution', () => {
     }
     render(<ZoneDistribution timeInZones={timeInZones} userAge={30} />)
     expect(screen.getByText(HrZoneName.WarmUp)).toBeInTheDocument()
-    expect(screen.getByText('60s (60.0%)')).toBeInTheDocument()
+    expect(screen.getByText('1:00')).toBeInTheDocument() // 60s formatted as MM:SS
+    expect(screen.getByText('60%')).toBeInTheDocument()
     expect(screen.getByText(HrZoneName.FatBurn)).toBeInTheDocument()
-    expect(screen.getByText('30s (30.0%)')).toBeInTheDocument()
+    expect(screen.getByText('0:30')).toBeInTheDocument() // 30s formatted as MM:SS
+    expect(screen.getByText('30%')).toBeInTheDocument()
     expect(screen.getByText(HrZoneName.Cardio)).toBeInTheDocument()
-    expect(screen.getByText('10s (10.0%)')).toBeInTheDocument()
+    expect(screen.getByText('0:10')).toBeInTheDocument() // 10s formatted as MM:SS
+    expect(screen.getByText('10%')).toBeInTheDocument()
   })
 
   it('does not display zones with no time', () => {
@@ -75,6 +78,7 @@ describe('ZoneDistribution', () => {
     }
     render(<ZoneDistribution timeInZones={timeInZones} userAge={null} />)
     expect(screen.getByText(HrZoneName.FatBurn)).toBeInTheDocument()
-    expect(screen.getByText('120s (100.0%)')).toBeInTheDocument()
+    expect(screen.getByText('2:00')).toBeInTheDocument() // 120s formatted as MM:SS
+    expect(screen.getByText('100%')).toBeInTheDocument()
   })
 })
