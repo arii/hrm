@@ -27,8 +27,7 @@ The version of the GitHub Actions runner is managed by the `RUNNER_VERSION` vari
     -   Follow the instructions to create a new runner, and copy the generated token.
 
 2.  **Configure the Environment:**
-    -   Copy the `.env.runner` file to a new file named `.env.runner` (if it doesn't exist).
-    -   Open `.env.runner` and fill in the following values:
+    -   Create a `.env.runner` file in the `deploy/actions-runner` directory (if it doesn't exist) and fill in the following values:
         -   `GITHUB_REPO_URL`: The full URL to your repository (e.g., `https://github.com/your-username/your-repo`).
         -   `GITHUB_TOKEN`: A GitHub Personal Access Token (PAT). This token is used by the `gh` CLI inside the runner for actions like creating releases or commenting on pull requests. For enhanced security, use the most restrictive scope possible. The `workflow` scope is often sufficient for basic CI/CD operations. For more advanced interactions, you may need additional scopes like `repo` (for creating releases) or `pull_requests:write` (for commenting on pull requests).
         -   `RUNNER_TOKEN`: The token you generated in the previous step. This token is used only to register the runner with your repository.
