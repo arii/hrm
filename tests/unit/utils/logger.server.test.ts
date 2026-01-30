@@ -13,7 +13,7 @@ const pinoMock = jest.fn<
 const pinoHttpMock = jest.fn()
 
 // Provide a default mock return value for the pino instance to avoid undefined errors.
-pinoMock.mockReturnValue({
+const mockPinoLogger = Object.assign(jest.fn(), {
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
@@ -36,8 +36,8 @@ pinoMock.mockReturnValue({
     values: { trace: 10, debug: 20, info: 30, warn: 40, error: 50, fatal: 60 },
   },
   version: 'test',
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as any)
+})
+pinoMock.mockReturnValue(mockPinoLogger)
 
 describe('Server Logger', () => {
   let originalNodeEnv: string | undefined
