@@ -108,6 +108,25 @@ describe('useWorkoutSessionManager', () => {
     expect(result.current.session?.endTime).not.toBeNull()
   })
 
+  it('should persist session changes on pause and end', () => {
+    const { result } = renderHook(() => useWorkoutSessionManager())
+
+    act(() => {
+      result.current.startWorkout(30, 70)
+    })
+    // Expect the initial save for the 'running' state
+    expect(workoutSessionStorage.saveSession).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      result.current.pauseWorkout()
+    })
+    // Expect a save for the 'paused' state
+    expect(workoutSessionStorage.saveSession).toHaveBeenCalledTimes(2)
+    expect(
+      (workoutSessionStorage.saveSession as jest.Mock).mock.calls[1][0].status
+    ).toBe('paused')
+  })
+
   it('should reset a workout', async () => {
     const { result } = renderHook(() => useWorkoutSessionManager())
     act(() => {

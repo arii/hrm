@@ -172,7 +172,7 @@ export const useWorkoutSessionManager = () => {
     if (state.session) {
       workoutSessionStorage.saveSession(state.session)
     }
-  }, [state.session])
+  }, [state.session, state.session?.status])
 
   const startWorkout = useCallback(
     (age: number, weight: number, maxHr?: number) => {
