@@ -1,7 +1,6 @@
 import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
-import { serviceContainer } from '@/lib/serviceContainer'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 
 /**
@@ -33,17 +32,15 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Get the singleton instance of the Spotify service
-    const spotifyService = serviceContainer.get('spotifyService')
-
     // FIX: Removed `!spotifyService.isReady()` check.
     // The service might be uninitialized (not ready) because it's waiting for this very token to initialize.
     // This check created a circular dependency. We must allow the token delivery to proceed to bootstrap the SDK.
-    if (!spotifyService) {
+    if (!global.spotifyService) {
       throw new ApiError(503, 'Spotify service is not available.')
     }
 
     // 4. Directly and reliably update the service with the new token
-    await spotifyService.handleTokenUpdate({
+    await global.spotifyService.handleTokenUpdate({
       ...tokenData,
       provider: 'spotify',
       sub: '',
