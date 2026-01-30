@@ -1,8 +1,8 @@
 // components/shared/VolumeSlider.tsx
 'use client'
 import React, { memo, useCallback } from 'react'
-import { IconButton, Slider, Stack, Typography, Box } from '@mui/material'
-import { VolumeUp, VolumeOff } from '@mui/icons-material'
+import { IconButton, Slider, Stack, Typography } from '@mui/material'
+import { VolumeUp, VolumeDown, VolumeOff } from '@mui/icons-material'
 
 interface VolumeSliderProps {
   volume: number
@@ -11,6 +11,8 @@ interface VolumeSliderProps {
   onVolumeChangeCommitted?: (volume: number) => void
   onToggleMute: () => void
   showValue?: boolean
+  sliderColor?: string
+  size?: 'small' | 'medium'
 }
 
 const VolumeSlider: React.FC<VolumeSliderProps> = ({
@@ -20,6 +22,8 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   onVolumeChangeCommitted,
   onToggleMute,
   showValue = false,
+  sliderColor = '#1DB954', // Default to Spotify green
+  size = 'small',
 }) => {
   const handleVolumeChange = useCallback(
     (_: Event | React.SyntheticEvent, value: number | number[]) => {
@@ -42,11 +46,11 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       direction="row"
       spacing={1}
       alignItems="center"
-      sx={{ minWidth: 150, flexGrow: 1 }}
+      sx={{ flexGrow: 1, minWidth: 150 }}
       data-testid="volume-slider-container"
     >
       <IconButton
-        size="small"
+        size={size}
         onClick={onToggleMute}
         sx={{
           color: muted ? 'error.main' : 'grey.400',
@@ -56,40 +60,37 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         data-testid="volume-slider-mute-button"
       >
         {muted || volume === 0 ? (
-          <VolumeOff fontSize="small" />
+          <VolumeOff fontSize={size} />
         ) : (
-          <VolumeUp fontSize="small" />
+          <VolumeDown fontSize={size} />
         )}
       </IconButton>
-      <Box
-        sx={{
-          position: 'absolute',
-          width: 1,
-          height: 1,
-          overflow: 'hidden',
-          clip: 'rect(0 0 0 0)',
-          whiteSpace: 'nowrap',
-        }}
-        component="span"
-        id="volume-slider"
-      >
-        Volume
-      </Box>
+
       <Slider
         value={muted ? 0 : volume}
         onChange={handleVolumeChange}
         onChangeCommitted={handleVolumeChangeCommitted}
         min={0}
         max={100}
-        size="small"
-        sx={{ color: 'spotify.main' }}
-        aria-labelledby="volume-slider"
+        size={size}
+        sx={{
+          color: sliderColor,
+          '& .MuiSlider-thumb': {
+            backgroundColor: 'white',
+            width: size === 'small' ? 12 : 16,
+            height: size === 'small' ? 12 : 16,
+          },
+          '& .MuiSlider-track': { height: 3 },
+          '& .MuiSlider-rail': { height: 3 },
+        }}
+        aria-label="Volume control"
         data-testid="volume-slider-input"
       />
+      <VolumeUp sx={{ color: 'grey.400' }} fontSize={size} />
       {showValue && (
         <Typography
           variant="caption"
-          sx={{ minWidth: '3ch', textAlign: 'right' }}
+          sx={{ minWidth: '3ch', textAlign: 'right', color: 'common.white' }}
           data-testid="volume-slider-value"
         >
           {muted ? '0' : volume}

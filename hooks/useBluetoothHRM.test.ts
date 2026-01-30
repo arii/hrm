@@ -13,9 +13,12 @@ jest.mock('@/utils/cookies')
 
 // Mock logger
 jest.mock('@/utils/logger', () => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
 }))
 
 import {
