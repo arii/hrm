@@ -137,7 +137,12 @@ const ExperimentalAnalyticsPage = () => {
 
   // Auto-start workout when HR data is first received
   useEffect(() => {
-    if (status === 'idle' && hrmData.length > 0 && hrmData[0] && hrmData[0].value > 0) {
+    if (
+      status === 'idle' &&
+      hrmData.length > 0 &&
+      hrmData[0] &&
+      hrmData[0].value > 0
+    ) {
       // Defer state update to avoid synchronous call within effect body
       const timer = setTimeout(() => handleStartWorkout(), 0)
       return () => clearTimeout(timer)
