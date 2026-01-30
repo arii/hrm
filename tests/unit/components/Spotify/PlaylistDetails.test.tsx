@@ -1,11 +1,6 @@
 /** @jest-environment jsdom */
 import '@testing-library/jest-dom'
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import PlaylistDetails from '../../../../components/Spotify/PlaylistDetails'
 import { Track } from '../../../../types/spotify'
 
@@ -53,10 +48,7 @@ describe('PlaylistDetails', () => {
     )
 
     render(
-      <PlaylistDetails
-        playlistId="test-playlist-id"
-        onTrackPlay={jest.fn()}
-      />
+      <PlaylistDetails playlistId="test-playlist-id" onTrackPlay={jest.fn()} />
     )
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByRole('progressbar')).toBeNull())
@@ -106,10 +98,7 @@ describe('PlaylistDetails', () => {
       .mockImplementation(() => {})
 
     render(
-      <PlaylistDetails
-        playlistId="test-playlist-id"
-        onTrackPlay={jest.fn()}
-      />
+      <PlaylistDetails playlistId="test-playlist-id" onTrackPlay={jest.fn()} />
     )
     await waitFor(() => {
       expect(

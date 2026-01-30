@@ -12,11 +12,11 @@ import {
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import { ConnectionMonitor } from '../../utils/websocketUtils'
-import logger from '../../utils/logger'
+import logger from '@/utils/logger.server'
 import { ExtWebSocket } from '@/types/websocket'
 
 // Mock the logger to prevent console output during tests
-jest.mock('../../utils/logger', () => ({
+jest.mock('@/utils/logger.server', () => ({
   __esModule: true,
   default: {
     info: jest.fn(),

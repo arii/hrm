@@ -1,4 +1,4 @@
-// File: app/client/control/components/PlaybackControls.tsx
+// File: components/shared/PlaybackControls.tsx
 /**
  * @file PlaybackControls for Spotify with touch-friendly buttons.
  * @module PlaybackControls

@@ -52,7 +52,7 @@ const config = {
     '^recharts$': '<rootDir>/tests/__mocks__/recharts.tsx',
   },
   testTimeout: 10000,
-  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/jest-setup.js', '<rootDir>/tests/unit/jest.setup.js'],
 }
 
 module.exports = config

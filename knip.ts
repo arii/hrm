@@ -19,8 +19,6 @@ const config: KnipConfig = {
     'stories/**/*.tsx',
     '.storybook/**/*.ts',
     '.storybook/**/*.tsx',
-    'server.ts',
-    'proxy.ts',
   ],
   project: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs', '**/*.mjs'],
   ignore: [
@@ -34,13 +32,17 @@ const config: KnipConfig = {
     'storybook-static',
     'ecosystem.config.cjs',
     'scripts/get-available-port.mjs',
+    'public/assets',
+    'public/screenshots',
+    'public/**/*.wav',
+    'public/**/*.svg',
+    'public/**/*.json',
     'public/mockServiceWorker.js',
     'next.config.js',
     'jest.config.cjs',
     'commitlint.config.cjs',
     'playwright.config.ts',
     'eslint.config.mjs',
-    // This mock is dynamically imported in tests, so Knip cannot detect its usage.
     'tests/unit/mocks/webBluetooth.ts',
   ],
   ignoreDependencies: [
@@ -51,6 +53,17 @@ const config: KnipConfig = {
     'dotenv',
   ],
   ignoreBinaries: ['scripts/test-json-with-server.sh', 'python3'],
+  next: {
+    entry: ['server.ts', 'proxy.ts'],
+  },
+  jest: {
+    config: [
+      'jest.config.cjs',
+      'jest.config.components.cjs',
+      'jest.config.integration.cjs',
+    ],
+    entry: ['tests/**/*.ts', 'tests/**/*.tsx'],
+  },
 }
 
 export default config

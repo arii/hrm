@@ -45,9 +45,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
       setHasMore(data.tracks.length === limit)
     } catch (err) {
       console.error('Failed to fetch playlist tracks:', err)
-      setError(
-        err instanceof Error ? err.message : 'An unknown error occurred'
-      )
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
     }
   }, [playlistId, offset, limit])
 
@@ -104,8 +102,8 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
           scrollableTarget="scrollable-playlist"
         >
           <List dense>
-          {tracks.map((track, index) => (
-            <ListItem key={`${track.id}-${index}`} divider disablePadding>
+            {tracks.map((track, index) => (
+              <ListItem key={`${track.id}-${index}`} divider disablePadding>
                 <ListItemButton onClick={() => onTrackPlay(track.uri)}>
                   <MusicNote
                     sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}

@@ -4,7 +4,7 @@ import MusicNote from '@mui/icons-material/MusicNote'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import Card from '@mui/material/Card'
+import ControlCard from '@/components/shared/ControlCard'
 import CardContent from '@mui/material/CardContent'
 import FormControl from '@mui/material/FormControl'
 import MenuItem from '@mui/material/MenuItem'
@@ -16,7 +16,7 @@ import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
-import PlaybackControls from './PlaybackControls'
+import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
 
@@ -211,16 +211,12 @@ const SpotifyControls = () => {
   }, [volume, sendVolumeCommand])
 
   return (
-    <Card
+    <ControlCard
       data-testid="spotify-controls"
       sx={{
         mb: 3,
         color: 'white',
         background: 'rgba(30, 41, 59, 0.7)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: 3,
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       }}
     >
       <CardContent sx={{ p: 2 }}>
@@ -326,7 +322,7 @@ const SpotifyControls = () => {
           </Button>
         )}
       </CardContent>
-    </Card>
+    </ControlCard>
   )
 }
 

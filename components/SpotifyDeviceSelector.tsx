@@ -5,7 +5,7 @@ import SpeakerIcon from '@mui/icons-material/Speaker'
 import { MouseEvent } from 'react'
 import { SpotifyDevice } from '@/types/core'
 
-interface SpotifyDeviceSelectorWrapperProps {
+interface SpotifyDeviceSelectorProps {
   availableDevices: SpotifyDevice[]
   deviceMenuAnchor: HTMLElement | null
   onDeviceSelect: (deviceId: string) => void
@@ -13,13 +13,13 @@ interface SpotifyDeviceSelectorWrapperProps {
   onMenuClose: () => void
 }
 
-const SpotifyDeviceSelectorWrapper = ({
+const SpotifyDeviceSelector = ({
   availableDevices,
   deviceMenuAnchor,
   onDeviceSelect,
   onMenuOpen,
   onMenuClose,
-}: SpotifyDeviceSelectorWrapperProps) => {
+}: SpotifyDeviceSelectorProps) => {
   const deviceMenuOpen = Boolean(deviceMenuAnchor)
 
   return (
@@ -71,4 +71,4 @@ const SpotifyDeviceSelectorWrapper = ({
   )
 }
 
-export default SpotifyDeviceSelectorWrapper
+export default SpotifyDeviceSelector
