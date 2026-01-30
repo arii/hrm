@@ -27,9 +27,9 @@ describe('PlaylistDetails', () => {
     },
   ]
 
-  const mockTracksAsString = mockTracksAsArray.map(track => ({
+  const mockTracksAsString = mockTracksAsArray.map((track) => ({
     ...track,
-    artists: track.artists.map(a => a.name).join(', '),
+    artists: track.artists.map((a) => a.name).join(', '),
   }))
 
   beforeEach(() => {
