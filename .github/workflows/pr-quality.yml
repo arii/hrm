@@ -271,6 +271,9 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+
       - name: Run Throttling Logic Integration Test
         id: script-tests
         shell: bash
