@@ -33,7 +33,7 @@ For detailed information on our development process, including our coding standa
 
 ### AI-Assisted Contributions
 
-We encourage the use of AI tools to accelerate development, but all contributors are responsible for the quality of their submissions. Please review our [Guidelines for AI-Assisted Contributions](./DEVELOPMENT_STANDARDS.md#guidelines-for-ai-assisted-contributions) before submitting AI-generated code.
+While we encourage the use of AI tools to accelerate development, it is crucial that they are used responsibly and in alignment with our project's quality standards. All contributors are ultimately responsible for the code they submit. Please review our detailed [Guidelines for AI-Assisted Contributions](./DEVELOPMENT_STANDARDS.md#guidelines-for-ai-assisted-contributions) before submitting AI-generated code.
 
 ## Code of Conduct
 
