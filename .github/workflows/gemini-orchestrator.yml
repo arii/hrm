@@ -73,54 +73,6 @@ jobs:
         run: |
           set +e
 
-          # Quick check: Is the HEAD commit itself empty?
-          # This avoids expensive operations for the common case of empty commits
-          if git diff-tree --quiet --root HEAD 2>/dev/null; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "::notice::HEAD commit is empty (no file changes)"
-
-            # For empty commits, we still need to find the last non-empty commit
-            # but we can do this more efficiently by checking recent commits first
-            FOUND_NON_EMPTY=false
-            for i in {1..10}; do
-              PARENT_SHA=$(git rev-parse HEAD~$i 2>/dev/null)
-              if [ -z "$PARENT_SHA" ]; then
-                break
-              fi
-              if ! git diff-tree --quiet --root $PARENT_SHA 2>/dev/null; then
-                echo "last_non_empty_commit=$PARENT_SHA" >> $GITHUB_OUTPUT
-                echo "::notice::Found last non-empty commit at HEAD~$i: $PARENT_SHA"
-                FOUND_NON_EMPTY=true
-                break
-              fi
-            done
-
-            # If we haven't found a non-empty commit in the last 10, we need to do a deeper search
-            if [ "$FOUND_NON_EMPTY" = false ]; then
-              # Fetch the base branch to ensure it exists locally
-              git fetch origin ${{ github.base_ref }} --depth=100 2>/dev/null || true
-
-              # Get merge base between current branch and base branch
-              MERGE_BASE=$(git merge-base HEAD origin/${{ github.base_ref }} 2>/dev/null)
-
-              if [ -n "$MERGE_BASE" ]; then
-                # Find the last commit with file changes in the PR
-                for sha in $(git rev-list "$MERGE_BASE"..HEAD 2>/dev/null | head -100); do
-                  if git cat-file -e $sha^ &>/dev/null 2>/dev/null; then
-                    if ! git diff --quiet $sha^ $sha -- . ; then
-                      echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
-                      echo "::notice::Found last non-empty commit in PR: $sha"
-                      break
-                    fi
-                  fi
-                done
-              fi
-            fi
-
-            exit 0
-          fi
-
-          # If HEAD is not empty, we need to do the full check
           # Fetch the base branch to ensure it exists locally
           git fetch origin ${{ github.base_ref }} --depth=100 2>/dev/null || true
 
@@ -143,7 +95,7 @@ jobs:
           HAS_DIFF=$?
 
           if [ $HAS_DIFF -eq 0 ]; then
-            # No changes found
+            # No changes found in the entire PR
             echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "::notice::No file changes detected between $MERGE_BASE and HEAD"
 
@@ -157,10 +109,46 @@ jobs:
               fi
             done
           else
-            # Changes found
+            # Changes found in the PR
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
             echo "::notice::File changes detected between $MERGE_BASE and HEAD"
+
+            # Quick check: Is the HEAD commit itself empty?
+            # If so, find the last non-empty commit efficiently
+            if git diff-tree --quiet --root HEAD 2>/dev/null; then
+              echo "::notice::HEAD commit is empty, finding last non-empty commit"
+
+              # Check recent commits first (fast path, no network needed)
+              FOUND_NON_EMPTY=false
+              for i in {1..10}; do
+                PARENT_SHA=$(git rev-parse HEAD~$i 2>/dev/null)
+                if [ -z "$PARENT_SHA" ]; then
+                  break
+                fi
+                if ! git diff-tree --quiet --root $PARENT_SHA 2>/dev/null; then
+                  echo "last_non_empty_commit=$PARENT_SHA" >> $GITHUB_OUTPUT
+                  echo "::notice::Found last non-empty commit at HEAD~$i: $PARENT_SHA"
+                  FOUND_NON_EMPTY=true
+                  break
+                fi
+              done
+
+              # If not found in recent commits, do a deeper search
+              if [ "$FOUND_NON_EMPTY" = false ]; then
+                for sha in $(git rev-list "$MERGE_BASE"..HEAD 2>/dev/null | head -100); do
+                  if git cat-file -e $sha^ &>/dev/null 2>/dev/null; then
+                    if ! git diff --quiet $sha^ $sha -- . ; then
+                      echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
+                      echo "::notice::Found last non-empty commit in PR: $sha"
+                      break
+                    fi
+                  fi
+                done
+              fi
+            else
+              # HEAD has changes, use it as the last non-empty commit
+              echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+            fi
           fi
 
           exit 0
