@@ -1,43 +1,21 @@
-// File: services/genericTimer.ts
-/**
- * @file Implements a generic, reusable timer and stopwatch service.
- * @author Jules
- */
-
+// Implements a generic, reusable timer and stopwatch service.
 import { GenericTimerState, TimerMode } from '../types/genericTimer'
 
-/**
- * @callback TimerUpdateCallback
- * @param {Readonly<GenericTimerState>} state - The current state of the timer.
- */
 type TimerUpdateCallback = (state: Readonly<GenericTimerState>) => void
 
-/**
- * Configuration options for creating a GenericTimer instance.
- */
 interface GenericTimerOptions {
-  /** The operational mode of the timer. */
   mode: TimerMode
-  /** The total duration for a countdown timer, in milliseconds. Required for 'COUNTDOWN' mode. */
   durationMs?: number
-  /** An optional callback function that is invoked on every tick and state change. */
   onUpdate?: TimerUpdateCallback
 }
 
-/**
- * A flexible and reusable utility service for managing countdowns and stopwatches.
- * This service is designed to be highly accurate by using a self-adjusting `setTimeout`
- * loop, which compensates for potential drifts in JavaScript's timing functions.
- */
+// A flexible timer/stopwatch service that uses a self-adjusting `setTimeout`
+// to compensate for drift.
 class GenericTimer {
   private state: GenericTimerState
   private onUpdate: TimerUpdateCallback | undefined
   private timerId: NodeJS.Timeout | null = null
 
-  /**
-   * Creates an instance of the GenericTimer.
-   * @param {GenericTimerOptions} options - The configuration for the timer.
-   */
   constructor({ mode, durationMs = 0, onUpdate }: GenericTimerOptions) {
     if (mode === 'COUNTDOWN' && durationMs <= 0) {
       throw new Error('Countdown mode requires a positive durationMs.')
@@ -55,10 +33,8 @@ class GenericTimer {
     this.onUpdate = onUpdate
   }
 
-  /**
-   * The core timing loop. It calculates the elapsed time since the last tick
-   * and schedules the next tick with an adjusted delay to maintain accuracy.
-   */
+  // The core timing loop. It calculates elapsed time and schedules the next tick
+  // with an adjusted delay to maintain accuracy.
   private tick = (): void => {
     if (this.state.phase !== 'RUNNING' || this.state.startTime === null) {
       return
@@ -90,9 +66,6 @@ class GenericTimer {
     this.timerId = setTimeout(this.tick, nextTickDelay)
   }
 
-  /**
-   * Starts or resumes the timer.
-   */
   public start(): void {
     if (this.state.phase === 'RUNNING' || this.state.phase === 'FINISHED') {
       return
@@ -106,9 +79,6 @@ class GenericTimer {
     this.onUpdate?.(this.getState())
   }
 
-  /**
-   * Pauses the timer.
-   */
   public pause(): void {
     if (this.state.phase !== 'RUNNING') {
       return
@@ -120,9 +90,6 @@ class GenericTimer {
     this.onUpdate?.(this.getState())
   }
 
-  /**
-   * Stops and resets the timer to its initial state.
-   */
   public stop(): void {
     this.state.phase = 'IDLE'
     this.state.elapsedMs = 0
@@ -133,10 +100,6 @@ class GenericTimer {
     this.onUpdate?.(this.getState())
   }
 
-  /**
-   * Returns a read-only copy of the current timer state.
-   * @returns {Readonly<GenericTimerState>} The current state.
-   */
   public getState(): Readonly<GenericTimerState> {
     return Object.freeze({ ...this.state })
   }
