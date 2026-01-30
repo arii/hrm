@@ -19,7 +19,7 @@ import {
   sendWebSocketMessage,
   ConnectionMonitor,
 } from './websocketUtils.js'
-import logger from './logger.js'
+import logger from './logger.server.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataStore } from '../lib/hrm/HrmDataStore.js'
 import { AppServices } from '../lib/services.js'

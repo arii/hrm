@@ -1,53 +1,91 @@
 // tests/unit/utils/logger.test.ts
-/**
- * @jest-environment jsdom
- */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
-import type { Logger } from 'pino'
-import type { NextFunction, Request, Response } from 'express'
+// Mock pino and pino-http before imports
+jest.mock('pino', () => {
+  const pinoInstance = {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn().mockReturnThis(),
+  }
+  const pinoFn = jest.fn(() => pinoInstance)
+  return pinoFn
+})
 
-describe('Client Logger', () => {
+jest.mock('pino-http', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let logger: Logger<any>
-  let httpLogger: (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => void | Promise<void>
-
-  beforeAll(async () => {
-    // Dynamically import the logger module to test client-side execution
-    const loggerModule = await import('../../../utils/logger')
-    logger = loggerModule.default
-    httpLogger = loggerModule.httpLogger
+  return jest.fn(() => (_req: any, _res: any, next: any) => {
+    if (next) {
+      next()
+    }
   })
+})
+
+describe('Logger', () => {
+  const OLD_ENV = process.env
 
   afterEach(() => {
-    jest.restoreAllMocks()
+    jest.resetModules()
+    process.env = { ...OLD_ENV }
+    // @ts-expect-error - allow window to be deleted
+    delete global.window
   })
 
-  it('should use console.info for the info method', () => {
-    const infoSpy = jest.spyOn(console, 'info').mockImplementation(() => {})
-    logger.info('test message')
-    expect(infoSpy).toHaveBeenCalledWith('test message')
+  describe('Server-side Environment (logger.server.ts)', () => {
+    it('should use pino with pretty-print in development', () => {
+      process.env.NODE_ENV = 'development'
+      const pino = require('pino')
+      const { default: logger } = require('@/utils/logger.server')
+
+      expect(typeof logger.info).toBe('function')
+      expect(pino).toHaveBeenCalledWith(
+        expect.objectContaining({
+          transport: {
+            target: 'pino-pretty',
+            options: expect.any(Object),
+          },
+        })
+      )
+    })
+
+    it('should use pino without pretty-print in production', () => {
+      process.env.NODE_ENV = 'production'
+      const pino = require('pino')
+      require('@/utils/logger.server')
+
+      expect(pino).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          transport: expect.any(Object),
+        })
+      )
+    })
   })
 
-  it('should use console.warn for the warn method', () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
-    logger.warn('test warning')
-    expect(warnSpy).toHaveBeenCalledWith('test warning')
-  })
+  describe('Client-side Environment (logger.ts)', () => {
+    beforeEach(() => {
+      // @ts-expect-error - mock window object
+      global.window = {}
+    })
 
-  it('should use console.error for the error method', () => {
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-    logger.error('test error')
-    expect(errorSpy).toHaveBeenCalledWith('test error')
-  })
+    it('should use console methods on the client-side', () => {
+      const consoleInfoSpy = jest
+        .spyOn(console, 'info')
+        .mockImplementation(() => {})
+      const { default: logger } = require('@/utils/logger')
 
-  it('should return a mock httpLogger that calls next()', () => {
-    const next = jest.fn()
-    // The httpLogger on the client is a no-op middleware
-    httpLogger({} as Request, {} as Response, next)
-    expect(next).toHaveBeenCalled()
+      logger.info('test message')
+      expect(consoleInfoSpy).toHaveBeenCalledWith('test message')
+      consoleInfoSpy.mockRestore()
+    })
+
+    it('should return a no-op httpLogger on the client-side', () => {
+      const { httpLogger } = require('@/utils/logger')
+      const next = jest.fn()
+      // @ts-expect-error - mock req and res
+      httpLogger({}, {}, next)
+      expect(next).toHaveBeenCalled()
+    })
   })
 })

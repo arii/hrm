@@ -251,4 +251,52 @@ describe('TimerControls', () => {
       expect(screen.getByTestId('timer-running')).toBeInTheDocument()
     })
   })
+
+  it('sends TIMER_CONFIG when Work/Rest duration is updated via stepper', async () => {
+    const sendDataSpy = jest.spyOn(mockWebSocketContext, 'sendData')
+    render(
+      <WebSocketContext.Provider value={mockWebSocketContext}>
+        <TimerControls />
+      </WebSocketContext.Provider>
+    )
+
+    // Verify initial values (20s work, 10s rest)
+    expect(
+      screen.getByTestId('work duration (s)-duration-display')
+    ).toHaveTextContent('20')
+    expect(
+      screen.getByTestId('rest duration (s)-duration-display')
+    ).toHaveTextContent('10')
+
+    // Find stepper increment buttons
+    // The DurationStepper uses accessible labels like "Increase {label}"
+    const increaseWorkButton = screen.getByRole('button', {
+      name: /Increase Work Duration/i,
+    })
+    const increaseRestButton = screen.getByRole('button', {
+      name: /Increase Rest Duration/i,
+    })
+
+    // Increase Work Duration: 20 -> 25
+    act(() => {
+      fireEvent.click(increaseWorkButton)
+    })
+
+    // Increase Rest Duration: 10 -> 15
+    act(() => {
+      fireEvent.click(increaseRestButton)
+    })
+
+    // Wait for the debounce timeout (500ms in TimerControls)
+    act(() => {
+      jest.advanceTimersByTime(550)
+    })
+
+    // Check if the TIMER_CONFIG message was sent with updated values
+    expect(sendDataSpy).toHaveBeenCalledWith({
+      type: 'TIMER_CONFIG',
+      workDuration: 25,
+      restDuration: 15,
+    })
+  })
 })
