@@ -53,6 +53,7 @@ const ExperimentalAnalyticsPage = () => {
         heartRate: dataPoint.hr,
         age: userSettings.userAge || 30,
         weightKg: userSettings.userWeight || 70,
+        isMale: userSettings.gender === 'MALE',
         durationMinutes: 1 / 60,
       })
       return totalCalories + calories
