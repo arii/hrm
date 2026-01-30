@@ -135,6 +135,13 @@ const ExperimentalAnalyticsPage = () => {
     setView('active')
   }, [startWorkout, reset, userSettings])
 
+  // Auto-start workout when HR is detected
+  useEffect(() => {
+    if (status === 'idle' && hrmData.length > 0 && hrmData[0] && hrmData[0].value > 0) {
+      handleStartWorkout()
+    }
+  }, [status, hrmData, handleStartWorkout])
+
   const handlePauseWorkout = useCallback(() => {
     pauseWorkout()
   }, [pauseWorkout])
@@ -199,11 +206,6 @@ const ExperimentalAnalyticsPage = () => {
       {view === 'active' && (
         <>
           <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
-            {status === 'idle' && (
-              <Button variant="contained" onClick={handleStartWorkout}>
-                Start Workout
-              </Button>
-            )}
             {status === 'running' && (
               <Button variant="outlined" onClick={handlePauseWorkout}>
                 Pause
