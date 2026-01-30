@@ -4,8 +4,8 @@ import express, { type RequestHandler } from 'express'
 import { createServer } from 'http'
 import next from 'next'
 import { env } from './lib/env.js' // New import
-import { httpLogger } from './lib/logger.js'
-import logger from './lib/logger.js'
+import { httpLogger } from './utils/logger.server.js'
+import logger from './utils/logger.server.js'
 import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
 import { initSocketManager } from './utils/socketManager.js'

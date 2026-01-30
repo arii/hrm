@@ -3,7 +3,7 @@
  */
 import { refreshSpotifyToken, getSpotifyBasicAuth } from '@/lib/spotify'
 import { SPOTIFY_CONSTANTS } from '@/lib/spotify'
-import logger from '@/lib/logger'
+import logger from '@/utils/logger'
 import { env } from '@/lib/env'
 
 // Mock the logger to prevent console output during tests

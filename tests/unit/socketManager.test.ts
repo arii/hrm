@@ -31,8 +31,8 @@ import {
   sendWebSocketMessage,
   ConnectionMonitor,
 } from '../../utils/websocketUtils.js'
-import logger from '@/lib/logger'
-import { createMockRequest } from './test-data/request-data-factory'
+import logger from '@/utils/logger'
+import { createMockRequest } from '@/tests/test-utils'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -54,7 +54,7 @@ jest.mock('../../utils/websocketUtils.js', () => ({
 }))
 
 // Mock logger globally for the test file
-jest.mock('../../lib/logger', () => ({
+jest.mock('../../utils/logger', () => ({
   __esModule: true,
   default: {
     info: jest.fn(),

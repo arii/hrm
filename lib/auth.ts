@@ -2,7 +2,7 @@
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import logger from '@/lib/logger'
+import logger from '@/utils/logger'
 import { getAPIURL } from '../utils/urls'
 import { env } from './env'
 import { refreshSpotifyToken } from './spotify'
@@ -71,13 +71,10 @@ async function syncTokenWithBackend(token: JWT) {
 }
 
 /**
- * Safely extracts the hostname from the `NEXTAUTH_URL` environment variable to be used
- * as the domain for NextAuth cookies. This prevents cookie domain errors by returning
- * `undefined` for invalid URLs or for local development environments (`localhost`, `127.0.0.1`),
- * allowing the browser to default to the current domain.
- *
- * @returns {string | undefined} The hostname for the cookie domain, or `undefined` if it
- *                               should not be set.
+/**
+ * Safely extracts the hostname from `NEXTAUTH_URL` to set the cookie domain.
+ * Returns `undefined` for localhost to allow the browser to use the current domain,
+ * preventing cookie domain errors in local development.
  */
 function getCookieDomain(): string | undefined {
   if (!env.NEXTAUTH_URL) {
@@ -100,21 +97,8 @@ function getCookieDomain(): string | undefined {
 }
 
 /**
- * @file NextAuth configuration for Spotify authentication.
- * @module lib/auth
- */
-
-/**
- * Refreshes an expired Spotify access token using a refresh token.
- *
- * This function is invoked by the NextAuth JWT callback when an access token
- * is expired. It posts to Spotify's token endpoint to get a new access token
- * and updates the token object with the new credentials.
- *
- * @param {JWT} token The JWT from NextAuth containing the expired accessToken
- *                    and the valid refreshToken.
- * @returns {Promise<JWT>} The updated JWT with a new accessToken and expiry,
- *                         or the original token with an error flag if refresh fails.
+ * Refreshes an expired Spotify access token using the refresh token.
+ * Invoked by the NextAuth JWT callback when the access token is expired.
  */
 async function refreshAccessToken(token: JWT) {
   try {
@@ -157,7 +141,6 @@ const SPOTIFY_SCOPES = [
 
 // --- CRITICAL SECURITY CHECK ---
 // Ensure NEXTAUTH_SECRET is explicitly checked before configuration.
-// This prevents runtime errors and insecure defaults.
 const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET
 
 if (!NEXTAUTH_SECRET) {
@@ -165,16 +148,6 @@ if (!NEXTAUTH_SECRET) {
     'NEXTAUTH_SECRET environment variable is not defined. This is a critical security requirement.'
   )
 }
-
-/**
- * Configuration options for NextAuth.js.
- *
- * This object defines the authentication providers, callbacks, and other settings
- * for managing user sessions and authentication flows. It is configured to use the
- * Spotify provider with specific scopes required for the application's features.
- *
- * @type {AuthOptions}
- */
 
 const providers = []
 
@@ -252,32 +225,12 @@ export const authOptions: AuthOptions = {
   useSecureCookies: env.NODE_ENV === 'production',
   debug: env.NODE_ENV === 'development',
   callbacks: {
-    /**
-     * Callback executed on a successful sign-in.
-     *
-     * @returns {boolean} Always returns true to allow sign-in.
-     */
     async signIn() {
-      // Always allow Spotify sign-in
       return true
     },
-    /**
-     * Callback for creating and managing the JSON Web Token (JWT).
-     *
-     * This function is called whenever a JWT is created (i.e., at sign-in) or
-     * updated (i.e., whenever a session is accessed in the client). It is
-     * responsible for persisting the Spotify access token and refresh token
-     * in the JWT.
-     *
-     * @param {object} params - The parameters for the JWT callback.
-     * @param {JWT} params.token - The JWT token.
-     * @param {Account | null} params.account - The account object from the provider.
-     * @returns {Promise<JWT>} The updated JWT.
-     */
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
-      // 1. Initial sign-in
+      // 1. Initial sign-in: Augment the token with provider-specific details.
       if (account) {
-        // ... [Existing initial sign-in logic] ...
         // Ensure you preserve the 'sub' or providerAccountId for future syncs
         const initialToken = {
           ...token,
@@ -289,7 +242,6 @@ export const authOptions: AuthOptions = {
           scope: account.scope,
         }
 
-        // Sync on initial login
         syncTokenWithBackend(initialToken).catch((err) =>
           logger.error({ err }, 'Background token sync failed on initial login')
         )
@@ -297,20 +249,18 @@ export const authOptions: AuthOptions = {
         return initialToken
       }
 
-      // 2. Token is still valid
+      // 2. Token still valid: Return the token without modification.
       if (Date.now() < (token.accessTokenExpires as number) - 60000) {
         return token
       }
 
-      // 3. Token is expired - Refresh it
+      // 3. Token expired: Refresh the token and sync with the backend.
       logger.info('[AUTH] Access token expired, refreshing...')
 
-      // Perform the refresh
       const refreshedToken = await refreshAccessToken(token)
 
-      // CRITICAL FIX: Sync the NEW refreshed token to the backend
+      // CRITICAL FIX: Sync the NEW refreshed token to the backend in the background.
       if (!refreshedToken.error) {
-        // Run in background to not block the session response
         syncTokenWithBackend(refreshedToken).catch((err) =>
           logger.error({ err }, 'Background token sync failed')
         )
@@ -318,19 +268,7 @@ export const authOptions: AuthOptions = {
 
       return refreshedToken
     },
-    /**
-     * Callback for creating and managing the user session.
-     *
-     * This function is called whenever a session is checked. It passes the
-     * access token from the JWT to the client-side session object.
-     *
-     * @param {object} params - The parameters for the session callback.
-     * @param {Session} params.session - The session object.
-     * @param {JWT} params.token - The JWT token.
-     * @returns {Promise<Session>} The updated session object.
-     */
     async session({ session, token }: { session: Session; token: JWT }) {
-      // Pass the updated token and error info to the session object
       logger.debug({ tokenKeys: Object.keys(token) }, 'Creating session')
       if (typeof token.accessToken === 'string') {
         session.accessToken = token.accessToken

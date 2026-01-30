@@ -41,6 +41,7 @@ async function getPlaylistDetails(
         : null,
     owner: playlist.owner?.display_name ?? null,
     trackCount: playlist.tracks?.total ?? 0,
+    tracks: playlist.tracks.items.map((item) => item.track),
   })
 }
 

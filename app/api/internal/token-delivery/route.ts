@@ -1,6 +1,6 @@
 import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
-import logger from '@/lib/logger'
+import logger from '@/utils/logger'
 import { serviceContainer } from '@/lib/serviceContainer'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 

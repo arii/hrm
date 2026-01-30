@@ -1,5 +1,5 @@
 import { authOptions } from '@/lib/auth' // Using alias for cleaner imports
-import logger from '@/lib/logger'
+import logger from '@/utils/logger'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
