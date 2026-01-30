@@ -6,7 +6,7 @@ Requires=docker.service
 [Service]
 TimeoutStartSec=300s
 Restart=always
-ExecStartPre=-/usr/bin/docker exec %p stop
+ExecStartPre=-/usr/bin/docker stop %p
 ExecStartPre=-/usr/bin/docker rm %p
 ExecStart=/usr/bin/docker run --rm --name %p \
   --env-file /etc/hrm-actions-runner/.env.runner \
