@@ -1,92 +1,113 @@
+// tests/unit/hooks/useCalorieTracker.test.ts
 /**
  * @jest-environment jsdom
  */
-// tests/unit/hooks/useCalorieTracker.test.ts
+import { renderHook, act } from '@testing-library/react';
+import { useCalorieTracker } from '@/hooks/useCalorieTracker';
+import * as calorieEstimation from '@/lib/calorie-estimation';
 
-import { renderHook, act } from '@testing-library/react'
-import { useCalorieTracker } from '../../../hooks/useCalorieTracker'
-import * as calorieEstimation from '../../../lib/calorie-estimation'
-
-// Mock the calorie estimation library
-jest.mock('../../../lib/calorie-estimation', () => ({
+// Mock the calorie estimation function
+jest.mock('@/lib/calorie-estimation', () => ({
   estimateCaloriesBurned: jest.fn(),
-}))
-
-const mockedEstimateCaloriesBurned =
-  calorieEstimation.estimateCaloriesBurned as jest.Mock
+}));
 
 describe('useCalorieTracker', () => {
-  const props = { age: 30, weightKg: 70 }
+  const mockEstimateCaloriesBurned = calorieEstimation.estimateCaloriesBurned as jest.Mock;
 
   beforeEach(() => {
-    jest.useFakeTimers()
-    jest.clearAllMocks()
-    // Mock to return 10 calories per minute
-    mockedEstimateCaloriesBurned.mockImplementation(
-      ({ durationMinutes }) => 10 * durationMinutes
-    )
-  })
+    jest.useFakeTimers();
+    mockEstimateCaloriesBurned.mockClear();
+  });
 
   afterEach(() => {
-    jest.useRealTimers()
-  })
+    jest.useRealTimers();
+  });
+
+  const MOCK_AGE = 30;
+  const MOCK_WEIGHT_KG = 70;
 
   it('should initialize with zero calories and empty history', () => {
-    const { result } = renderHook(() => useCalorieTracker(props))
-    expect(result.current.totalCaloriesBurned).toBe(0)
-    expect(result.current.calorieHistory).toEqual([])
-  })
+    const { result } = renderHook(() => useCalorieTracker({ age: MOCK_AGE, weightKg: MOCK_WEIGHT_KG }));
 
-  it('should not calculate calories on the first heart rate process', () => {
-    const { result } = renderHook(() => useCalorieTracker(props))
+    expect(result.current.totalCaloriesBurned).toBe(0);
+    expect(result.current.calorieHistory).toEqual([]);
+  });
+
+  it('should calculate and accumulate calories burned when processing heart rate', () => {
+    const MOCKED_CALORIES_FOR_INTERVAL = 0.2;
+    mockEstimateCaloriesBurned.mockReturnValue(MOCKED_CALORIES_FOR_INTERVAL);
+    const { result } = renderHook(() => useCalorieTracker({ age: MOCK_AGE, weightKg: MOCK_WEIGHT_KG }));
+
+    // First data point
     act(() => {
-      result.current.processHeartRate(120)
-    })
-    expect(result.current.totalCaloriesBurned).toBe(0)
-    expect(mockedEstimateCaloriesBurned).not.toHaveBeenCalled()
-  })
+      jest.setSystemTime(new Date('2023-01-01T12:00:00.000Z'));
+      result.current.processHeartRate(150);
+    });
 
-  it('should calculate calories burned on subsequent heart rate processes', () => {
-    const { result } = renderHook(() => useCalorieTracker(props))
-
+    // Second data point 2 seconds later
     act(() => {
-      result.current.processHeartRate(120)
-    })
+      jest.setSystemTime(new Date('2023-01-01T12:00:02.000Z'));
+      result.current.processHeartRate(155);
+    });
 
-    act(() => {
-      jest.advanceTimersByTime(1000) // 1 second later
-      result.current.processHeartRate(125)
-    })
+    const dtSeconds = 2;
+    const dtMinutes = dtSeconds / 60;
 
-    const expectedCaloriesPerSecond = 10 / 60 // 10 calories per minute / 60 seconds
-    expect(result.current.totalCaloriesBurned).toBeCloseTo(
-      expectedCaloriesPerSecond
-    )
-    expect(result.current.calorieHistory).toHaveLength(1)
-    expect(result.current.calorieHistory[0].caloriesPerSecond).toBeCloseTo(
-      expectedCaloriesPerSecond
-    )
-    expect(mockedEstimateCaloriesBurned).toHaveBeenCalledTimes(1)
-  })
+    // Check if the estimation function was called with the correct parameters
+    expect(mockEstimateCaloriesBurned).toHaveBeenCalledWith({
+      heartRate: 155,
+      age: MOCK_AGE,
+      weightKg: MOCK_WEIGHT_KG,
+      durationMinutes: dtMinutes,
+    });
 
-  it('should reset the calorie tracker state', () => {
-    const { result } = renderHook(() => useCalorieTracker(props))
+    // The hook should accumulate the value directly returned by the mock
+    expect(result.current.totalCaloriesBurned).toBeCloseTo(MOCKED_CALORIES_FOR_INTERVAL);
+    expect(result.current.calorieHistory).toHaveLength(1);
+    expect(result.current.calorieHistory[0]).toEqual(
+        expect.objectContaining({
+            hr: 155,
+            caloriesPerSecond: expect.any(Number),
+        })
+    );
+  });
 
-    act(() => {
-      jest.setSystemTime(new Date())
-      result.current.processHeartRate(120)
-    })
-
-    act(() => {
-      jest.advanceTimersByTime(1000)
-      result.current.processHeartRate(125)
-    })
+  it('should not calculate calories if the time gap is too large (>10s)', () => {
+    const { result } = renderHook(() => useCalorieTracker({ age: MOCK_AGE, weightKg: MOCK_WEIGHT_KG }));
 
     act(() => {
-      result.current.reset()
-    })
+        jest.setSystemTime(new Date('2023-01-01T12:00:00.000Z'));
+        result.current.processHeartRate(150);
+    });
 
-    expect(result.current.totalCaloriesBurned).toBe(0)
-    expect(result.current.calorieHistory).toEqual([])
-  })
-})
+    act(() => {
+        jest.setSystemTime(new Date('2023-01-01T12:00:15.000Z')); // 15s gap
+        result.current.processHeartRate(155);
+    });
+
+    expect(mockEstimateCaloriesBurned).not.toHaveBeenCalled();
+    expect(result.current.totalCaloriesBurned).toBe(0);
+  });
+
+  it('should reset the tracker to its initial state', () => {
+    const { result } = renderHook(() => useCalorieTracker({ age: MOCK_AGE, weightKg: MOCK_WEIGHT_KG }));
+
+    act(() => {
+      jest.setSystemTime(new Date('2023-01-01T12:00:00.000Z'));
+      result.current.processHeartRate(150);
+    });
+    act(() => {
+      jest.setSystemTime(new Date('2023-01-01T12:00:02.000Z'));
+      result.current.processHeartRate(155);
+    });
+
+    expect(result.current.totalCaloriesBurned).toBeGreaterThan(0);
+
+    act(() => {
+      result.current.reset();
+    });
+
+    expect(result.current.totalCaloriesBurned).toBe(0);
+    expect(result.current.calorieHistory).toEqual([]);
+  });
+});

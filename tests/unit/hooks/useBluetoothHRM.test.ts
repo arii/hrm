@@ -2,10 +2,10 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react'
-import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from './useBluetoothHRM'
-import * as WebSocketContext from '../context/WebSocketContext'
-import * as cookieUtils from '../utils/cookies'
-import { env } from '../lib/env'
+import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
+import * as WebSocketContext from '@/context/WebSocketContext'
+import * as cookieUtils from '@/utils/cookies'
+import { env } from '@/lib/env'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
@@ -630,6 +630,48 @@ describe('useBluetoothHRM', () => {
       expect(result.current.deviceStatus).toBe('Disconnected')
 
       jest.useRealTimers()
+    })
+
+    it('should attempt to reconnect after an unexpected disconnection and succeed', async () => {
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // First connection is successful
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+      expect(result.current.isConnected).toBe(true)
+
+      // Mock the next connection attempt to be successful
+      mockGatt.connect.mockResolvedValue(mockGatt)
+
+      // Manually trigger the disconnection event
+      let onDisconnectedCallback: () => void = () => {}
+      mockDevice.addEventListener.mockImplementation(
+        (event: string, callback: () => void) => {
+          if (event === 'gattserverdisconnected') {
+            onDisconnectedCallback = callback
+          }
+        }
+      )
+
+      await act(async () => {
+        onDisconnectedCallback()
+      })
+
+      // Verify that the hook is now in a reconnecting state
+      expect(result.current.isConnected).toBe(false)
+      expect(result.current.deviceStatus).toContain('Reconnecting')
+
+      // Advance timers to trigger the reconnect attempt
+      await act(async () => {
+        jest.runOnlyPendingTimers()
+      })
+
+      // Verify that the connection was successful
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(true)
+        expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+      })
     })
   })
 

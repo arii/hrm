@@ -5,10 +5,10 @@ import {
   workoutSessionStorage,
   WorkoutSessionData,
   HrDataPoint,
-  HrZoneName,
 } from '../lib/workout-session-storage'
 import { v4 as uuidv4 } from 'uuid'
 import { calculateHrZone } from '../lib/hrm/zones'
+import { HrZoneName } from '../lib/shared/hr-zones'
 import { estimateMaxHr } from '../lib/hrm/utils'
 
 // --- State, Actions, and Reducer ---
