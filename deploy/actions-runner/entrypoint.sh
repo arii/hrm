@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-export GITHUB_REPOSITORY=arii/hrm
+
 # 1. Authenticate GH CLI using the PAT (Personal Access Token)
 # The CLI automatically picks up the GITHUB_TOKEN env var, but we explicitly export it just in case
 
@@ -14,7 +14,7 @@ echo "Configuring GitHub Actions Runner..."
 # --unattended: Don't ask for interaction
 # --replace: Replace any existing runner with the same name
 ./config.sh --unattended \
-  --url "${REPO_URL}" \
+  --url "${GITHUB_REPO_URL}" \
   --token "${RUNNER_TOKEN}" \
   --name "hrm-docker-runner-$(hostname)" \
   --work "_work" \

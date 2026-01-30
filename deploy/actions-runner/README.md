@@ -24,7 +24,10 @@ This directory contains the necessary files to build and deploy a self-hosted Gi
 
 2.  **Configure the Environment:**
     -   Copy the `.env.runner` file to a new file named `.env.runner` (if it doesn't exist).
-    -   Open `.env.runner` and replace `your_github_runner_token_here` with the token you generated in the previous step.
+    -   Open `.env.runner` and fill in the following values:
+        -   `GITHUB_REPO_URL`: The full URL to your repository (e.g., `https://github.com/your-username/your-repo`).
+        -   `GITHUB_TOKEN`: A GitHub Personal Access Token (PAT) with `repo` scope. This is required for the `gh` CLI to authenticate.
+        -   `RUNNER_TOKEN`: The token you generated in the previous step.
 
 3.  **Deploy the Runner:**
     -   Navigate to this directory (`deploy/actions-runner`).

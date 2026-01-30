@@ -26,8 +26,7 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
 # 2. Install Node.js (aligned with your Next.js 16 / types/node requirements)
 # Using NodeSource for the latest LTS (v20 or v22)
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g yarn pm2
+    && apt-get install -y nodejs
 
 # 3. Create a non-root user 'runner' (GitHub Runners should not run as root)
 RUN useradd -m runner && \
