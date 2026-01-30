@@ -128,7 +128,7 @@ const ZoneDistributionChart = ({
                 <LabelList
                   dataKey="time"
                   position="top"
-                  formatter={(value: number | undefined) =>
+                  formatter={(value: unknown) =>
                     typeof value === 'number' ? formatTime(value) : ''
                   }
                 />

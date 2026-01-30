@@ -11,15 +11,21 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 // Mock recharts components to avoid rendering the actual chart in tests
 jest.mock('recharts', () => {
   const OriginalModule = jest.requireActual('recharts')
+  const MockComponent = ({ children }: { children?: React.ReactNode }) => (
+    <div>{children}</div>
+  )
   return {
     ...OriginalModule,
-    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    BarChart: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    // Mock other components as needed
+    ResponsiveContainer: MockComponent,
+    BarChart: MockComponent,
+    Bar: MockComponent,
+    XAxis: MockComponent,
+    YAxis: MockComponent,
+    CartesianGrid: MockComponent,
+    Tooltip: MockComponent,
+    Legend: MockComponent,
+    LabelList: MockComponent,
+    Cell: MockComponent,
   }
 })
 
