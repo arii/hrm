@@ -30,7 +30,7 @@ describe('PlaylistDetails', () => {
   const mockTracksAsString = mockTracksAsArray.map((track) => ({
     ...track,
     artists: track.artists.map((a) => a.name).join(', '),
-  }))
+  })) as unknown as Track[]
 
   beforeEach(() => {
     jest.clearAllMocks()
