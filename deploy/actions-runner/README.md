@@ -30,7 +30,7 @@ The version of the GitHub Actions runner is managed by the `RUNNER_VERSION` vari
     -   Copy the `.env.runner` file to a new file named `.env.runner` (if it doesn't exist).
     -   Open `.env.runner` and fill in the following values:
         -   `GITHUB_REPO_URL`: The full URL to your repository (e.g., `https://github.com/your-username/your-repo`).
-        -   `GITHUB_TOKEN`: A GitHub Personal Access Token (PAT). This token is used by the `gh` CLI inside the runner for actions like creating releases or commenting on pull requests. The `repo` scope is a common choice for broad access, but for enhanced security, use the most restrictive scope that meets your workflow needs (e.g., `workflow` for running jobs).
+        -   `GITHUB_TOKEN`: A GitHub Personal Access Token (PAT). This token is used by the `gh` CLI inside the runner for actions like creating releases or commenting on pull requests. For enhanced security, use the most restrictive scope possible. The `workflow` scope is often sufficient for basic CI/CD operations. For more advanced interactions, you may need additional scopes like `repo` (for creating releases) or `pull_requests:write` (for commenting on pull requests).
         -   `RUNNER_TOKEN`: The token you generated in the previous step. This token is used only to register the runner with your repository.
 
 3.  **Deploy the Runner:**
@@ -57,3 +57,13 @@ The version of the GitHub Actions runner is managed by the `RUNNER_VERSION` vari
         journalctl -u hrm-actions-runner -f
         ```
     -   Finally, go back to your repository's `Settings > Actions > Runners` page on GitHub to see the new runner with a "Ready" status.
+
+## Maintenance
+
+### Docker Image Cleanup
+
+Each time you run the `deploy.sh` script, a new Docker image is created. Over time, this can lead to an accumulation of old, unused images. To clean up dangling images, you can run the following command periodically:
+
+```bash
+docker image prune
+```
