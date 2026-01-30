@@ -18,7 +18,9 @@ fi
 
 # Load environment variables from .env.runner
 echo "Loading configuration from .env.runner..."
-export $(grep -v '^#' .env.runner | xargs)
+set -a
+source .env.runner
+set +a
 
 # Validate required environment variables
 if [ -z "$RUNNER_TOKEN" ]; then
@@ -45,7 +47,7 @@ fi
 
 # Run the container
 echo "Starting GitHub Actions Runner container..."
-docker run -d --restart always \
+docker run -d --restart unless-stopped \
   --name hrm-runner \
   -e REPO_URL="$REPO_URL" \
   -e RUNNER_TOKEN="$RUNNER_TOKEN" \

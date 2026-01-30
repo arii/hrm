@@ -223,6 +223,34 @@ Common issues:
    docker start hrm-runner
    ```
 
+### Runner token expired
+
+Runner tokens expire after 1 hour. If the token expires:
+
+1. Generate a new token from GitHub (Settings → Actions → Runners)
+2. Update `.env.runner` with the new token
+3. Redeploy:
+   ```bash
+   ./deploy-runner.sh
+   ```
+
+The container uses `--restart unless-stopped` to prevent infinite restart loops when tokens expire.
+
+### Cleanup orphaned runner registrations
+
+If you have offline runners in GitHub that won't auto-cleanup:
+
+1. Go to GitHub Settings → Actions → Runners
+2. Find the offline runner
+3. Click the three dots menu → Remove
+
+Or, if you have the runner token, you can deregister manually:
+```bash
+docker exec -it hrm-runner bash
+cd /home/runner/actions-runner
+./config.sh remove --token YOUR_TOKEN
+```
+
 ### Need to update the runner
 
 1. Stop and remove the current container:
@@ -242,9 +270,16 @@ Common issues:
 
 - **Never commit `.env.runner`** - It contains sensitive tokens (already in `.gitignore`)
 - Runner tokens expire after 1 hour for security
-- The runner container runs as a non-root user (`runner`) for security
+- The runner container runs as a non-root user (`runner`), but has sudo access (requires password)
 - Consider using GitHub App authentication for long-lived runners in production
 - Regularly update the runner version to get security patches
+- The container restart policy is `unless-stopped` to prevent infinite restart loops when tokens expire
+
+### Important Security Limitations
+
+- **No Docker-in-Docker by default**: The container does not mount the Docker socket, so jobs that need to build Docker images will fail. If needed, add `-v /var/run/docker.sock:/var/run/docker.sock` to the docker run command, but be aware this grants significant privileges.
+- **Resource limits**: Consider adding `--memory` and `--cpus` flags to the docker run command to prevent resource exhaustion.
+- **Sudo access**: The runner user has sudo access (with password requirement). For maximum security, you may want to remove sudo access entirely if not needed by your workflows.
 
 ## Architecture
 

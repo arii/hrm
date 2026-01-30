@@ -18,6 +18,18 @@ fi
 
 cd /home/runner/actions-runner
 
+# Set up cleanup handler to deregister runner on shutdown
+cleanup() {
+  echo "Shutting down runner..."
+  if [ -f .runner ]; then
+    echo "Deregistering runner from GitHub..."
+    ./config.sh remove --token "${RUNNER_TOKEN}" || true
+  fi
+  exit 0
+}
+
+trap cleanup SIGTERM SIGINT
+
 echo "Configuring GitHub Actions Runner..."
 echo "Repository: ${REPO_URL}"
 echo "Runner name: hrm-docker-runner-$(hostname)"
@@ -35,4 +47,6 @@ echo "Runner name: hrm-docker-runner-$(hostname)"
 
 echo "Starting GitHub Actions Runner..."
 # Runs the listener process
-./run.sh
+./run.sh &
+wait $!
+

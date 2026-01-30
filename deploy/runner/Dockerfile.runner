@@ -34,7 +34,7 @@ RUN npm install -g pnpm pm2
 # 4. Create a non-root user 'runner' (GitHub Runners should not run as root)
 RUN useradd -m runner && \
     usermod -aG sudo runner && \
-    echo "%sudo ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    echo "%sudo ALL=(ALL) PASSWD: ALL" >> /etc/sudoers
 
 USER runner
 WORKDIR /home/runner
