@@ -23,7 +23,7 @@ import {
   MockBluetoothRemoteGATTServer,
   MockBluetoothRemoteGATTService,
   MockBluetoothRemoteGATTCharacteristic,
-} from '@/tests/unit/lib/bluetooth-test-utils'
+} from '@/tests/test-utils/bluetooth-test-utils'
 
 describe('useBluetoothHRM', () => {
   let mockGatt: MockBluetoothRemoteGATTServer
