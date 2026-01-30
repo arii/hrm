@@ -30,7 +30,6 @@ test.describe('Visual Regression Tests', () => {
   // Add a beforeEach hook to wait for the page to be ready before each test
   test.beforeEach(async () => {
     await waitForPageReady(controlPage)
-    await waitForPageReady(dashboardPage)
   })
 
   test.describe('TimerControls Component', () => {
