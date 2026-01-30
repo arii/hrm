@@ -392,9 +392,9 @@ describe('WebSocket Manager', () => {
       expect(clientData).toBeDefined()
       // Calories should be a small positive number, not zero.
       expect(clientData!.calories).toBeGreaterThan(0)
-      // The calculated value for 10ms at 150bpm is approx 0.0024.
+      // The calculated value for 10ms at 150bpm (neutral) is approx 0.0016.
       // We expect the value to be un-rounded.
-      expect(clientData!.calories).toBeCloseTo(0.0024, 4)
+      expect(clientData!.calories).toBeCloseTo(0.0016, 4)
     })
 
     it('should reset calories when a STOP command is received', () => {

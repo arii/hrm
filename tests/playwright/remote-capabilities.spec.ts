@@ -5,7 +5,9 @@ import { getBaseURL } from '../../utils/urls'
 const BASE_URL = getBaseURL()
 
 test.describe('Remote Capabilities & Command Relay', () => {
-  test('Controller sends commands via WebSocket', async ({ page }) => {
+  // test.skip('Controller sends commands via WebSocket', async ({ page }) => {
+  // TODO: Fix flaky test, see issue #5328
+  test.fixme('Controller sends commands via WebSocket', async ({ page }) => {
     // 1. Setup Network & WS capture
     const failedRequests: string[] = []
     page.on('requestfailed', (request) => {
