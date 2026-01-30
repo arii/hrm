@@ -5,6 +5,7 @@ import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import react from 'eslint-plugin-react' // Explicitly import the React plugin
+import unusedImports from 'eslint-plugin-unused-imports'
 
 export default defineConfig([
   // 1. GLOBAL IGNORES
@@ -47,14 +48,20 @@ export default defineConfig([
 
   // 5. Custom Rules: General Variables & Formatting
   {
+    plugins: {
+      'unused-imports': unusedImports,
+    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'warn',
         {
-          argsIgnorePattern: '^_',
+          vars: 'all',
           varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
         },
       ],
       // This rule is not purely stylistic and helps prevent VCS noise.

@@ -199,9 +199,11 @@ export class GitHubClient implements IGitHubClient {
       writeFileSync(bodyFile, body, 'utf-8')
 
       // FIX: The --title-file flag is not valid. Use --title with the title string directly.
-      // To prevent shell injection issues with complex titles, escape double quotes.
-      const escapedTitle = title.replace(/"/g, '\\"')
-      const cmd = `gh issue create --title "${escapedTitle}" --body-file "${bodyFile}" --label "${labels}"`
+      // To prevent shell injection issues with complex titles, escape single quotes
+      // and wrap the title in single quotes for the shell. This is a robust way
+      // to handle special characters like '!', '$', '`', etc.
+      const escapedTitle = title.replace(/'/g, "'\\''")
+      const cmd = `gh issue create --title '${escapedTitle}' --body-file "${bodyFile}" --label "${labels}"`
       const url = this.execute(cmd)
       console.log(`✅ Issue created: ${url}`)
     } finally {
