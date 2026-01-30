@@ -1,6 +1,28 @@
 /**
- * @fileoverview Shared utility functions.
+ * Creates an object from an array of key-value pairs, filtering out entries
+ * where the value is null or undefined. This is useful for cleaning up
+ * objects before updating state.
+ * @param entries An array of [key, value] pairs.
+ * @returns A new object with the null/undefined values removed.
  */
+export const objectFromEntries = <T>(
+  entries: [string, T | null | undefined][]
+): Record<string, T> => {
+  return Object.fromEntries(
+    entries.filter(([, value]) => value !== null && value !== undefined)
+  ) as Record<string, T>
+}
+
+/**
+ * Rounds a number to a specified number of decimal places.
+ * @param value The number to round.
+ * @param decimalPlaces The number of decimal places to round to.
+ * @returns The rounded number.
+ */
+export const roundTo = (value: number, decimalPlaces: number): number => {
+  const factor = Math.pow(10, decimalPlaces)
+  return Math.round((value + Number.EPSILON) * factor) / factor
+}
 
 /**
  * Formats a duration into a string.
@@ -45,16 +67,4 @@ export const formatDuration = (
     .toString()
     .padStart(2, '0')
   return `${h}:${m}:${s}`
-}
-
-/**
- * Rounds a number to a specified number of decimal places.
- * Includes a small epsilon to handle floating-point inaccuracies.
- * @param num The number to round.
- * @param decimals The number of decimal places to round to.
- * @returns The rounded number.
- */
-export const roundTo = (num: number, decimals: number): number => {
-  const factor = Math.pow(10, decimals)
-  return Math.round((num + Number.EPSILON) * factor) / factor
 }
