@@ -5,7 +5,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import PlaylistTracksDisplay from '@/components/Playlist/PlaylistTracksDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
-import { formatDuration } from '@/utils/formatters'
 
 // Mock fetch
 global.fetch = jest.fn()
@@ -90,7 +89,7 @@ describe('PlaylistTracksDisplay', () => {
 
     expect(await screen.findByText('Track 1')).toBeInTheDocument()
     expect(screen.getByText('Artist 1')).toBeInTheDocument()
-    expect(screen.getByText(formatDuration(180000))).toBeInTheDocument()
+    expect(screen.getByText('3:00')).toBeInTheDocument()
 
     // Test pagination
     const nextButton = screen.getByRole('button', { name: /next/i })
