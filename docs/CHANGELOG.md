@@ -23,6 +23,11 @@
 * **small:** Refactor: Flatten unnecessary directory nesting ([#5094](https://github.com/arii/hrm/issues/5094)) ([c0eee95](https://github.com/arii/hrm/commit/c0eee957951b210714f9f599db101aaacc2f790e))
 
 
+### Miscellaneous Chores
+
+* **refactor(hooks)**: Remove unused `throttleMs` prop from `useBluetoothHRM` hook
+
+
 ### Bug Fixes
 
 * **ci:** Prevent duplicate bot-generated issues ([#5039](https://github.com/arii/hrm/issues/5039)) ([7451b8b](https://github.com/arii/hrm/commit/7451b8b66127f5c6dd8365d2f8d75b5d7c14fe09))
