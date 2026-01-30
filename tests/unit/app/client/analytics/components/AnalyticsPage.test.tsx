@@ -24,7 +24,10 @@ describe('AnalyticsPage', () => {
   const mockUseWebSocket = useWebSocket as jest.Mock
 
   beforeAll(() => {
-    // Mock console.error to silence the useCookie error
+    // Mock console.error to silence an error from the useCookie hook.
+    // The useCookie hook intentionally throws an error in its tests
+    // when it encounters malformed JSON, which creates noise in the
+    // test logs. This mock silences that expected error.
     jest.spyOn(console, 'error').mockImplementation(() => {})
   })
 
