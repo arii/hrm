@@ -7,7 +7,7 @@ import logger from '@/utils/logger'
 import { env } from '@/lib/env'
 
 // Mock the logger to prevent console output during tests
-jest.mock('@/lib/logger', () => ({
+jest.mock('@/utils/logger.server', () => ({
   error: jest.fn(),
 }))
 
