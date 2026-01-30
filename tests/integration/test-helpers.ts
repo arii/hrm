@@ -14,9 +14,10 @@ export function startServer(port: number): Promise<ServerProcess> {
         ...process.env,
         PORT: `${port}`,
         NODE_ENV: 'production',
-        WS_MAX_CONNECTIONS: '2',
-        RATE_LIMIT_WINDOW_MS: '1000',
-        GENERAL_API_MAX_REQUESTS: '5',
+        NEXTAUTH_SECRET: 'a-valid-nextauth-secret-for-testing-purposes',
+        WS_MAX_CONNECTIONS: '10',
+        RATE_LIMIT_WINDOW_MS: '60000',
+        GENERAL_API_MAX_REQUESTS: '1000',
       },
       detached: true, // Run in a new process group
     })
