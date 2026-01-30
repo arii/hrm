@@ -1,0 +1,18 @@
+[Unit]
+Description=GitHub Actions Runner for hrm
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker exec %p stop
+ExecStartPre=-/usr/bin/docker rm %p
+ExecStart=/usr/bin/docker run --rm --name %p \
+  -e REPO_URL="https://github.com/arii/hrm" \
+  --env-file /etc/hrm-actions-runner/.env.runner \
+  hrm-actions-runner
+ExecStop=/usr/bin/docker stop %p
+
+[Install]
+WantedBy=multi-user.target
