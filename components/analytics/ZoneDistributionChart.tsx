@@ -32,7 +32,7 @@ interface ZoneDistributionChartProps {
 // Define colors for the zones, using MUI theme for consistency
 const getZoneColor = (zone: HrZoneName, theme: Theme) => {
   const colors: Record<HrZoneName, string> = {
-    [HrZoneName.Max]: theme.palette.error.main, // Not specified, keep as is
+    [HrZoneName.Max]: theme.palette.error.dark, // Darker red for max intensity
     [HrZoneName.Peak]: theme.palette.primary.main, // Red
     [HrZoneName.Cardio]: theme.palette.warning.main, // Yellow
     [HrZoneName.FatBurn]: theme.palette.success.main, // Green
