@@ -23,11 +23,6 @@ import { WorkoutStatus } from '../../../types/workout'
 import {
   ToggleButtonGroup,
   ToggleButton,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
 } from '@mui/material'
 
 interface ConnectViewProps {
@@ -234,29 +229,9 @@ export default function ConnectView({
               weightError={weightError}
               unit={unitSystem}
               setUnit={onUnitChange}
+              gender={gender}
+              setGender={setGender}
             />
-
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Gender</FormLabel>
-              <RadioGroup
-                row
-                aria-label="gender"
-                name="gender"
-                value={gender}
-                onChange={(e) => setGender(e.target.value as Gender)}
-              >
-                <FormControlLabel
-                  value="MALE"
-                  control={<Radio />}
-                  label="Male"
-                />
-                <FormControlLabel
-                  value="FEMALE"
-                  control={<Radio />}
-                  label="Female"
-                />
-              </RadioGroup>
-            </FormControl>
           </Stack>
         ) : (
           <Box

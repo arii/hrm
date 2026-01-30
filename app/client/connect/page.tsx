@@ -8,7 +8,7 @@ import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
-import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
+import { useCalorieTracker } from '@/hooks/useCalorieTracker'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
@@ -95,9 +95,10 @@ export default function ConnectPage() {
     calories,
     processHeartRate,
     reset: resetCalculator,
-  } = useCalorieCalculator({
+  } = useCalorieTracker({
     age: userAge || 30,
     weightKg: userWeight || 70,
+    gender: gender,
   })
 
   // Throttled sender for WebSocket messages

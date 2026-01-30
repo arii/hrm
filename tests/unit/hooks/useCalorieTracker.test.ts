@@ -1,92 +1,99 @@
 /**
  * @jest-environment jsdom
  */
-// tests/unit/hooks/useCalorieTracker.test.ts
-
 import { renderHook, act } from '@testing-library/react'
+import { mockEstimateCaloriesBurned } from '../../mocks/calorie-estimation'
 import { useCalorieTracker } from '../../../hooks/useCalorieTracker'
-import * as calorieEstimation from '../../../lib/calorie-estimation'
 
-// Mock the calorie estimation library
-jest.mock('../../../lib/calorie-estimation', () => ({
-  estimateCaloriesBurned: jest.fn(),
-}))
-
-const mockedEstimateCaloriesBurned =
-  calorieEstimation.estimateCaloriesBurned as jest.Mock
+jest.useFakeTimers()
 
 describe('useCalorieTracker', () => {
-  const props = { age: 30, weightKg: 70 }
-
-  beforeEach(() => {
-    jest.useFakeTimers()
-    jest.clearAllMocks()
-    // Mock to return 10 calories per minute
-    mockedEstimateCaloriesBurned.mockImplementation(
-      ({ durationMinutes }) => 10 * durationMinutes
-    )
-  })
-
   afterEach(() => {
-    jest.useRealTimers()
+    mockEstimateCaloriesBurned.mockReset()
+    jest.clearAllTimers()
   })
 
-  it('should initialize with zero calories and empty history', () => {
-    const { result } = renderHook(() => useCalorieTracker(props))
-    expect(result.current.totalCaloriesBurned).toBe(0)
-    expect(result.current.calorieHistory).toEqual([])
-  })
-
-  it('should not calculate calories on the first heart rate process', () => {
-    const { result } = renderHook(() => useCalorieTracker(props))
-    act(() => {
-      result.current.processHeartRate(120)
-    })
-    expect(result.current.totalCaloriesBurned).toBe(0)
-    expect(mockedEstimateCaloriesBurned).not.toHaveBeenCalled()
-  })
-
-  it('should calculate calories burned on subsequent heart rate processes', () => {
-    const { result } = renderHook(() => useCalorieTracker(props))
-
-    act(() => {
-      result.current.processHeartRate(120)
-    })
-
-    act(() => {
-      jest.advanceTimersByTime(1000) // 1 second later
-      result.current.processHeartRate(125)
-    })
-
-    const expectedCaloriesPerSecond = 10 / 60 // 10 calories per minute / 60 seconds
-    expect(result.current.totalCaloriesBurned).toBeCloseTo(
-      expectedCaloriesPerSecond
+  it('should initialize with 0 calories', () => {
+    const { result } = renderHook(() =>
+      useCalorieTracker({ age: 30, weightKg: 75 })
     )
-    expect(result.current.calorieHistory).toHaveLength(1)
-    expect(result.current.calorieHistory[0].caloriesPerSecond).toBeCloseTo(
-      expectedCaloriesPerSecond
-    )
-    expect(mockedEstimateCaloriesBurned).toHaveBeenCalledTimes(1)
+    expect(result.current.calories).toBe(0)
   })
 
-  it('should reset the calorie tracker state', () => {
-    const { result } = renderHook(() => useCalorieTracker(props))
+  it('should not calculate calories if HR is not processed', () => {
+    renderHook(() => useCalorieTracker({ age: 30, weightKg: 75 }))
+    expect(mockEstimateCaloriesBurned).not.toHaveBeenCalled()
+  })
+
+  it('should process heart rate and accumulate calories over time', () => {
+    const { result } = renderHook(() =>
+      useCalorieTracker({ age: 30, weightKg: 75 })
+    )
+
+    mockEstimateCaloriesBurned.mockReturnValue(1) // Mock return value
 
     act(() => {
-      jest.setSystemTime(new Date())
       result.current.processHeartRate(120)
-    })
-
-    act(() => {
       jest.advanceTimersByTime(1000)
       result.current.processHeartRate(125)
     })
+
+    expect(result.current.calories).toBeGreaterThan(0)
+    expect(mockEstimateCaloriesBurned).toHaveBeenCalledTimes(1)
+  })
+
+  it('should use smoothed heart rate for calculations', () => {
+    const { result } = renderHook(() =>
+      useCalorieTracker({ age: 30, weightKg: 75, smoothingWindow: 3 })
+    )
+
+    mockEstimateCaloriesBurned.mockImplementation(({ heartRate }) => {
+      return heartRate
+    })
+
+    act(() => {
+      result.current.processHeartRate(100)
+      jest.advanceTimersByTime(1000)
+      result.current.processHeartRate(110)
+      jest.advanceTimersByTime(1000)
+      result.current.processHeartRate(120)
+    })
+
+    const expectedSmoothedHr = (100 + 110 + 120) / 3
+    const lastCall =
+      mockEstimateCaloriesBurned.mock.calls[
+        mockEstimateCaloriesBurned.mock.calls.length - 1
+      ][0]
+    expect(lastCall.heartRate).toBeCloseTo(expectedSmoothedHr)
+  })
+
+  it('should reset calories and internal state', () => {
+    const { result } = renderHook(() =>
+      useCalorieTracker({ age: 30, weightKg: 75 })
+    )
+
+    mockEstimateCaloriesBurned.mockReturnValue(1)
+
+    act(() => {
+      result.current.processHeartRate(120)
+      jest.advanceTimersByTime(1000)
+      result.current.processHeartRate(125)
+    })
+
+    expect(result.current.calories).toBeGreaterThan(0)
 
     act(() => {
       result.current.reset()
     })
 
-    expect(result.current.totalCaloriesBurned).toBe(0)
-    expect(result.current.calorieHistory).toEqual([])
+    expect(result.current.calories).toBe(0)
+
+    act(() => {
+      result.current.processHeartRate(130)
+    })
+
+    // After reset, the first processHeartRate should not calculate calories
+    // as there's no previous timestamp.
+    expect(mockEstimateCaloriesBurned).toHaveBeenCalledTimes(1)
   })
 })

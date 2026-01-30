@@ -7,15 +7,27 @@ import {
 } from '@/lib/calorie-estimation'
 
 describe('Calorie Estimation', () => {
-  const testCases: Array<[string, CalorieEstimationParams, number]> = [
+  const maleTestCases: Array<[string, CalorieEstimationParams, number]> = [
     [
-      'realistic data',
-      { heartRate: 150, age: 30, weightKg: 70, durationMinutes: 30 },
+      'realistic male data',
+      {
+        heartRate: 150,
+        age: 30,
+        weightKg: 70,
+        durationMinutes: 30,
+        gender: 'male',
+      },
       426.7,
     ],
     [
       'zero duration',
-      { heartRate: 150, age: 30, weightKg: 70, durationMinutes: 0 },
+      {
+        heartRate: 150,
+        age: 30,
+        weightKg: 70,
+        durationMinutes: 0,
+        gender: 'male',
+      },
       0,
     ],
     [
@@ -45,15 +57,58 @@ describe('Calorie Estimation', () => {
     ],
   ]
 
-  test.each(testCases)(
-    'should calculate correctly for %s',
-    (description, params, expected) => {
-      const calories = estimateCaloriesBurned(params as CalorieEstimationParams)
-      if (expected === 0) {
-        expect(calories).toBe(0)
-      } else {
-        expect(calories).toBeCloseTo(expected, 1)
+  const femaleTestCases: Array<[string, CalorieEstimationParams, number]> = [
+    [
+      'realistic female data',
+      {
+        heartRate: 150,
+        age: 30,
+        weightKg: 60,
+        durationMinutes: 30,
+        gender: 'female',
+      },
+      296.3,
+    ],
+    [
+      'older, lighter female',
+      {
+        heartRate: 140,
+        age: 65,
+        weightKg: 55,
+        durationMinutes: 60,
+        gender: 'female',
+      },
+      574.6,
+    ],
+    [
+      'younger, heavier female',
+      {
+        heartRate: 160,
+        age: 22,
+        weightKg: 75,
+        durationMinutes: 45,
+        gender: 'female',
+      },
+      465.8,
+    ],
+  ]
+
+  describe.each([
+    ['male', maleTestCases],
+    ['female', femaleTestCases],
+  ])('for %s calculations', (gender, testCases) => {
+    test.each(testCases)(
+      `should calculate correctly for %s`,
+      (description, params, expected) => {
+        const calories = estimateCaloriesBurned(
+          params as CalorieEstimationParams
+        )
+        if (expected === 0) {
+          expect(calories).toBe(0)
+        } else {
+          expect(calories).toBeCloseTo(expected, 1)
+        }
       }
-    }
-  )
+    )
+  })
 })

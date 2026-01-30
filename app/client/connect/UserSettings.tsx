@@ -4,6 +4,14 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import {
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from '@mui/material'
+import { Gender } from '../../../types/core'
 
 interface UserSettingsProps {
   userName: string
@@ -24,6 +32,8 @@ interface UserSettingsProps {
   weightError: string | null
   unit: 'METRIC' | 'IMPERIAL'
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
+  gender: Gender
+  setGender: (gender: Gender) => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -43,6 +53,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   weightError,
   unit,
   setUnit,
+  gender,
+  setGender,
 }) => {
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
@@ -151,6 +163,19 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         error={!!weightError}
         helperText={weightError}
       />
+      <FormControl component="fieldset">
+        <FormLabel component="legend">Gender</FormLabel>
+        <RadioGroup
+          row
+          aria-label="gender"
+          name="gender"
+          value={gender}
+          onChange={(e) => setGender(e.target.value as Gender)}
+        >
+          <FormControlLabel value="MALE" control={<Radio />} label="Male" />
+          <FormControlLabel value="FEMALE" control={<Radio />} label="Female" />
+        </RadioGroup>
+      </FormControl>
     </Stack>
   )
 }
