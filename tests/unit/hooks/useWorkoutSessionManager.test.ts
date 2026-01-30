@@ -84,15 +84,28 @@ describe('useWorkoutSessionManager', () => {
     expect(result.current.status).toBe('running')
   })
 
-  it('should end a workout', () => {
+  it('should transition from running to paused, then to finished', () => {
     const { result } = renderHook(() => useWorkoutSessionManager())
+
+    // Start the workout
     act(() => {
       result.current.startWorkout(30, 70)
     })
+    expect(result.current.status).toBe('running')
+
+    // First call to endWorkout should pause the session
+    act(() => {
+      result.current.endWorkout()
+    })
+    expect(result.current.status).toBe('paused')
+    expect(result.current.session?.endTime).toBeNull()
+
+    // Second call to endWorkout should finish the session
     act(() => {
       result.current.endWorkout()
     })
     expect(result.current.status).toBe('finished')
+    expect(result.current.session?.endTime).not.toBeNull()
   })
 
   it('should reset a workout', async () => {

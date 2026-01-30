@@ -219,11 +219,6 @@ const ExperimentalAnalyticsPage = () => {
                 </Button>
               </>
             )}
-            {status === 'running' && (
-              <Button variant="outlined" onClick={handleEndWorkout}>
-                End Workout
-              </Button>
-            )}
             <Button variant="text" onClick={() => setView('list')}>
               View History
             </Button>

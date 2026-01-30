@@ -92,14 +92,17 @@ function sessionManagerReducer(
     }
     case 'END': {
       if (!state.session) return state
+      // If running, transition to 'paused'. If paused, transition to 'finished'.
+      const nextStatus = state.status === 'running' ? 'paused' : 'finished'
       return {
         ...state,
         session: {
           ...state.session,
-          status: 'finished',
-          endTime: Date.now(),
+          status: nextStatus,
+          // Only set endTime when the session is truly finished
+          endTime: nextStatus === 'finished' ? Date.now() : null,
         },
-        status: 'finished',
+        status: nextStatus,
       }
     }
     case 'RESET': {
