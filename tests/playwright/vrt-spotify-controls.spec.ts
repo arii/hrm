@@ -1,9 +1,6 @@
-
 import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
-import {
-  setupVisualRegressionTest,
-} from './test-helpers'
+import { setupVisualRegressionTest } from './test-helpers'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
@@ -13,7 +10,6 @@ test.describe.configure({ mode: 'serial' })
 // Reusable page objects
 let controlPage: Page
 let dashboardPage: Page
-let mockPage: Page
 let context: BrowserContext
 
 // Test suite for VRT
@@ -24,7 +20,6 @@ test.describe('Visual Regression Tests', () => {
     context = setup.context
     controlPage = setup.controlPage
     dashboardPage = setup.dashboardPage
-    mockPage = setup.mockPage
   })
 
   // Centralized cleanup hook

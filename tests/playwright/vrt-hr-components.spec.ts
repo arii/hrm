@@ -1,19 +1,16 @@
-
 import { type BrowserContext, type Page } from '@playwright/test'
-import { expect, test } from './fixtures'
+import { test } from './fixtures'
 import {
   getDynamicContentMasks,
   getHrMasks,
   setupVisualRegressionTest,
 } from './test-helpers'
 import { takeScreenshot } from './lib/visual'
-import { WAIT_TIMEOUTS, waitForPageReady } from './lib/waits'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
 
 // Reusable page objects
-let controlPage: Page
 let dashboardPage: Page
 let mockPage: Page
 let context: BrowserContext
@@ -24,7 +21,6 @@ test.describe('Visual Regression Tests', () => {
   test.beforeAll(async ({ browser }) => {
     const setup = await setupVisualRegressionTest(browser)
     context = setup.context
-    controlPage = setup.controlPage
     dashboardPage = setup.dashboardPage
     mockPage = setup.mockPage
   })
@@ -32,12 +28,6 @@ test.describe('Visual Regression Tests', () => {
   // Centralized cleanup hook
   test.afterAll(async () => {
     await context?.close()
-  })
-
-  // Add a beforeEach hook to wait for the page to be ready before each test
-  test.beforeEach(async () => {
-    await waitForPageReady(controlPage)
-    await waitForPageReady(dashboardPage)
   })
 
   test.describe('HR-Related Components', () => {
