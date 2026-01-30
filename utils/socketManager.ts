@@ -25,7 +25,7 @@ import {
 } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
-import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
+import { HrmDataStore } from '../lib/hrm/HrmDataStore.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
 import { roundTo, objectFromEntries } from '../lib/utils.js'
@@ -39,10 +39,10 @@ let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
 // State Management:
-// - hrmDataRepository: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
+// - hrmDataStore: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
 // - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
-const hrmDataRepository = new HrmDataRepository()
+const hrmDataStore = new HrmDataStore()
 
 // Track active sockets separately so we can handle "zombie" sockets during reconnects
 const clientSockets = new Map<string, WebSocket>()
@@ -83,7 +83,7 @@ const getRequestParams = (req: IncomingMessage): URLSearchParams => {
 const cleanupClientSession = (clientId: string) => {
   logger.info({ clientId }, 'Session expired. Deleting data.')
   try {
-    hrmDataRepository.deleteById(clientId)
+    hrmDataStore.deleteById(clientId)
     clientSessionState.delete(clientId)
     broadcastState()
   } catch (err) {
@@ -176,7 +176,7 @@ const initSocketManager = (
 
     logger.info(logMeta, 'WebSocket client connected')
 
-    if (!hrmDataRepository.findById(clientId)) {
+    if (!hrmDataStore.findById(clientId)) {
       // Initialize new client
       const newClient: HrmStreamData = {
         clientId: extWs.clientId,
@@ -185,7 +185,7 @@ const initSocketManager = (
         age: 30,
         calories: 0, // Initialize to 0
       }
-      hrmDataRepository.save(newClient)
+      hrmDataStore.save(newClient)
       clientSessionState.set(extWs.clientId, {
         lastUpdate: Date.now(),
         accumulatedCalories: 0,
@@ -236,7 +236,7 @@ const initSocketManager = (
  * Resets the socket manager state. Use this for testing purposes only.
  */
 export const resetSocketManager = () => {
-  hrmDataRepository.clear()
+  hrmDataStore.clear()
   clientSessionState.clear()
 }
 
@@ -245,7 +245,7 @@ const broadcastState = () => {
     wsServerInstance,
     {
       type: 'HRM_UPDATE',
-      payload: hrmDataRepository.findAll(),
+      payload: hrmDataStore.findAll(),
     },
     'socketManager.broadcastState'
   )
@@ -285,7 +285,7 @@ const handleIncomingMessage = (
         const stateSnapshot = getUnifiedStateSnapshot()
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: hrmDataRepository.findAll(),
+          hrmData: hrmDataStore.findAll(),
         }
         const initialStateMessage: ServerMessage = {
           type: 'INITIAL_STATE',
@@ -295,7 +295,7 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataRepository.findById(clientId)
+        const existingData = hrmDataStore.findById(clientId)
         if (existingData) {
           const updateData: Partial<HrmStreamData> = objectFromEntries(
             Object.entries(message.data)
@@ -313,13 +313,13 @@ const handleIncomingMessage = (
             delete updateData.name
           }
 
-          hrmDataRepository.save({ ...existingData, ...updateData })
+          hrmDataStore.save({ ...existingData, ...updateData })
         }
         broadcastState()
         break
       }
       case 'HRM_INPUT': {
-        const existingData = hrmDataRepository.findById(clientId)
+        const existingData = hrmDataStore.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
         if (existingData && sessionState) {
           let finalCalories = 0
@@ -366,7 +366,7 @@ const handleIncomingMessage = (
             finalCalories = currentAccumulated
           }
           // Update the repository with the latest data
-          hrmDataRepository.save({
+          hrmDataStore.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
             calories: roundTo(finalCalories, 4),

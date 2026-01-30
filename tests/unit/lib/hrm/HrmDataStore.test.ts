@@ -1,9 +1,9 @@
-// tests/unit/lib/repositories/HrmDataRepository.test.ts
-import { HrmDataRepository } from '../../../../lib/repositories/HrmDataRepository'
+// tests/unit/lib/hrm/HrmDataStore.test.ts
+import { HrmDataStore } from '../../../../lib/hrm/HrmDataStore'
 import { HrmStreamData } from '../../../../types/core'
 
-describe('HrmDataRepository', () => {
-  let repository: HrmDataRepository
+describe('HrmDataStore', () => {
+  let repository: HrmDataStore
   const client1: HrmStreamData = {
     clientId: 'client1',
     value: 80,
@@ -20,7 +20,7 @@ describe('HrmDataRepository', () => {
   }
 
   beforeEach(() => {
-    repository = new HrmDataRepository()
+    repository = new HrmDataStore()
   })
 
   it('should save and find a client by ID', () => {

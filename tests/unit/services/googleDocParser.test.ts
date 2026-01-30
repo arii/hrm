@@ -1,6 +1,6 @@
 // tests/unit/services/googleDocParser.test.ts
 import { parseGoogleDocTable } from '@/services/googleDocParser'
-import { WorkoutTableDto } from '@/lib/dto/workout.dto'
+import { WorkoutTableDto } from '@/types/workout'
 
 describe('parseGoogleDocTable', () => {
   it('should parse a simple HTML table into a WorkoutTableDto', () => {

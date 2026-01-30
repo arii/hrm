@@ -18,7 +18,7 @@ import React from 'react'
 import { SpotifyData } from '@/types/websocket'
 
 // Mock dependencies
-jest.mock('@/components/Spotify/VolumeSlider', () => ({
+jest.mock('@/components/shared/VolumeSlider', () => ({
   __esModule: true,
   default: ({
     volume,
