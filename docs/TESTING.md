@@ -68,6 +68,40 @@ The project uses a combination of Jest for unit tests and Playwright for end-to-
   - `mobile-assessment.spec.ts`: Contains tests specifically for mobile viewports.
 - **Snapshots**: Visual snapshots are stored in a `*-snapshots` directory alongside the test file.
 
+## Visual Regression Testing (VRT) Workflow
+
+Visual Regression Testing is a critical part of our quality assurance process. It helps us prevent unintended UI changes from reaching production.
+
+### Running VRT
+
+To run the visual regression tests, use the following command:
+
+```bash
+pnpm run test:visual
+```
+
+This command will run Playwright in headless mode and compare the latest screenshots with the snapshots stored in the repository. If there are any visual differences, the tests will fail.
+
+### Updating Snapshots
+
+If you've made intentional changes to the UI, you'll need to update the snapshots. To do this, run the following command:
+
+```bash
+pnpm run test:visual:update
+```
+
+This will generate new snapshots. Be sure to review the changes in the generated diffs to ensure they are intended.
+
+## `data-testid` Usage Guidelines
+
+To ensure that our tests are resilient to code refactoring and style changes, we use `data-testid` attributes to target elements in our tests.
+
+### Best Practices
+
+- **Use `data-testid` for elements that are not uniquely identifiable by other means**: For example, buttons, icons, and other interactive elements.
+- **Be specific and consistent with naming**: Use a consistent naming convention for `data-testid` attributes. For example, `[component-name]-[element-name]`.
+- **Avoid using `data-testid` for everything**: If an element can be uniquely identified by its text content, role, or other accessible attributes, use those instead.
+
 ## CI/CD Integration
 
 In our GitHub Actions workflows, we use `pnpm install --frozen-lockfile` to ensure that the exact versions of dependencies specified in `pnpm-lock.yaml` are installed. This guarantees a consistent and reproducible build environment for all test runs.
