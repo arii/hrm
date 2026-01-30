@@ -33,7 +33,6 @@ import { roundTo } from '../lib/utils.js'
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
-// Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
