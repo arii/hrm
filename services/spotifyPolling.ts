@@ -39,7 +39,8 @@ export class SpotifyPolling implements SpotifyService {
 
   /**
    * @internal
-   * Test-only properties for inspecting internal state.
+   * Test-only properties for inspecting internal state, defined only in 'test' env.
+   * See docs/TYPESCRIPT_PATTERNS.md for more info on this pattern.
    */
   public _test_ =
     process.env.NODE_ENV === 'test'
