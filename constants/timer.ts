@@ -8,7 +8,7 @@ type PhaseProps = {
   }
 }
 
-export const PREPARE_DURATION = 5
+export const PREPARE_DURATION = 10
 
 export const phaseProps: PhaseProps = {
   PREPARE: { color: '#f59e0b', label: 'GET READY' },
