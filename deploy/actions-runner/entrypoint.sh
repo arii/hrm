@@ -16,7 +16,7 @@ echo "Configuring GitHub Actions Runner..."
 ./config.sh --unattended \
   --url "${GITHUB_REPO_URL}" \
   --token "${RUNNER_TOKEN}" \
-  --name "hrm-docker-runner-$(hostname)" \
+  --name "hrm-docker-runner-$(hostname)${RUNNER_NAME_SUFFIX}" \
   --work "_work" \
   --replace \
   --labels "hrm-backend,playwright,docker"
