@@ -146,7 +146,7 @@ export default function MockPage() {
             sx={{ mb: 3 }}
             data-testid="mock-client-form"
           >
-            <Grid size={{ xs: 8 }} data-testid="mock-client-form-grid">
+            <Grid size={{ xs: 8 }}>
               <TextField
                 label="User Name"
                 placeholder="e.g., Mock User"
