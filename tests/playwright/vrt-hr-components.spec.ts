@@ -6,6 +6,7 @@ import {
   setupVisualRegressionTest,
 } from './test-helpers'
 import { takeScreenshot } from './lib/visual'
+import { waitForPageReady } from './lib/waits'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -28,6 +29,10 @@ test.describe('Visual Regression Tests', () => {
   // Centralized cleanup hook
   test.afterAll(async () => {
     await context?.close()
+  })
+
+  test.beforeEach(async () => {
+    await waitForPageReady(dashboardPage)
   })
 
   test.describe('HR-Related Components', () => {
