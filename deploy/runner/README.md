@@ -22,6 +22,23 @@ The runner is deployed as a Docker container to ensure isolation, reproducibilit
 
 ### 1. Configure the Runner
 
+#### Option A: Interactive Configuration (Recommended)
+
+Use the interactive configuration script:
+
+```bash
+cd deploy/runner
+./configure.sh
+```
+
+The script will guide you through:
+- Setting the repository URL
+- Configuring token generation (GitHub CLI, PAT, or manual)
+- Setting optional resource limits
+- Creating `.env.runner` with proper permissions
+
+#### Option B: Manual Configuration
+
 Create a `.env.runner` file from the example:
 
 ```bash
@@ -55,7 +72,7 @@ The deployment script can automatically generate runner tokens in three ways (in
 
 If `RUNNER_TOKEN` is not provided, the script will automatically attempt methods 1 and 2.
 
-### 2. Deploy the Runner Manually
+### 2. Deploy the Runner
 
 Run the deployment script:
 
@@ -350,6 +367,7 @@ cd /home/runner/actions-runner
 | ------------------------ | ------------------------------------------------- |
 | `Dockerfile.runner`      | Docker image definition for the runner            |
 | `entrypoint.sh`          | Container entrypoint - configures and starts runner |
+| `configure.sh`           | Interactive CLI for creating .env.runner configuration |
 | `deploy-runner.sh`       | Deployment script - builds and runs the container, auto-generates token if needed, applies resource limits |
 | `install-service.sh`     | Automated systemd service installation with path auto-detection |
 | `.env.runner.example`    | Configuration template with REPO_URL, RUNNER_TOKEN, GITHUB_PAT, and resource limits |
