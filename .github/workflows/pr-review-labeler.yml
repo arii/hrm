@@ -19,6 +19,13 @@ jobs:
             const prNumber = context.payload.pull_request.number;
             const approvedLabel = process.env.APPROVED_LABEL;
             const changesRequestedLabel = process.env.CHANGES_REQUESTED_LABEL;
+            const managedLabels = [
+              approvedLabel,
+              changesRequestedLabel,
+              // The following are legacy labels that should be removed.
+              'request-changes',
+              'Changes Requested'
+            ];
 
             async function removeLabelIfExists(labelName) {
               try {
@@ -32,6 +39,12 @@ jobs:
                 if (!error.message.includes("Label does not exist")) {
                   throw error;
                 }
+              }
+            }
+
+            async function removeAllManagedLabels() {
+              for (const label of managedLabels) {
+                await removeLabelIfExists(label);
               }
             }
 
@@ -60,13 +73,10 @@ jobs:
             const hasChangesRequested = Object.values(latestReviewsByUser).some(review => review.state === 'CHANGES_REQUESTED');
             const hasApproval = Object.values(latestReviewsByUser).some(review => review.state === 'APPROVED');
 
+            await removeAllManagedLabels();
+
             if (hasChangesRequested) {
               await addLabel(changesRequestedLabel);
-              await removeLabelIfExists(approvedLabel);
             } else if (hasApproval) {
               await addLabel(approvedLabel);
-              await removeLabelIfExists(changesRequestedLabel);
-            } else {
-              await removeLabelIfExists(approvedLabel);
-              await removeLabelIfExists(changesRequestedLabel);
             }
