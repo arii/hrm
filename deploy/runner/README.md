@@ -30,19 +30,28 @@ cp .env.runner.example .env.runner
 
 Edit `.env.runner` and set:
 
-- `REPO_URL`: The GitHub repository URL (default: `https://github.com/arii/hrm`)
-- `RUNNER_TOKEN`: Your runner registration token (see below)
+- `REPO_URL`: The GitHub repository URL (required, default: `https://github.com/arii/hrm`)
+- `RUNNER_TOKEN`: Runner registration token (optional - auto-generated if not provided)
+- `GITHUB_PAT`: GitHub Personal Access Token (optional - only needed if `gh` CLI is not authenticated)
 
-#### Getting a Runner Token
+#### Automatic Token Generation
 
-1. Go to your GitHub repository
-2. Navigate to: **Settings** → **Actions** → **Runners**
-3. Click **New self-hosted runner**
-4. Copy the token from the configuration command
+The deployment script can automatically generate runner tokens in three ways (in order of preference):
 
-**Note**: Runner tokens are short-lived (typically 1 hour). You'll need to regenerate the token when:
-- Setting up a new runner
-- Redeploying the runner after it's been removed from GitHub
+1. **GitHub CLI (Recommended)**: If you have `gh` CLI installed and authenticated
+   ```bash
+   gh auth login
+   ```
+
+2. **Personal Access Token**: Set `GITHUB_PAT` in `.env.runner` with a token that has `repo` scope
+   - Generate at: https://github.com/settings/tokens
+   - Required scopes: `repo` (or `public_repo` for public repositories)
+
+3. **Manual Token**: Set `RUNNER_TOKEN` in `.env.runner`
+   - Get from: **Settings** → **Actions** → **Runners** → **New self-hosted runner**
+   - **Note**: Tokens expire after 1 hour
+
+If `RUNNER_TOKEN` is not provided, the script will automatically attempt methods 1 and 2.
 
 ### 2. Deploy the Runner Manually
 
@@ -270,6 +279,7 @@ cd /home/runner/actions-runner
 
 - **Never commit `.env.runner`** - It contains sensitive tokens (already in `.gitignore`)
 - Runner tokens expire after 1 hour for security
+- Personal Access Tokens (PAT) do not expire automatically - store securely and rotate regularly
 - The runner container runs as a non-root user (`runner`), but has sudo access (requires password)
 - Consider using GitHub App authentication for long-lived runners in production
 - Regularly update the runner version to get security patches
@@ -280,6 +290,7 @@ cd /home/runner/actions-runner
 - **No Docker-in-Docker by default**: The container does not mount the Docker socket, so jobs that need to build Docker images will fail. If needed, add `-v /var/run/docker.sock:/var/run/docker.sock` to the docker run command, but be aware this grants significant privileges.
 - **Resource limits**: Consider adding `--memory` and `--cpus` flags to the docker run command to prevent resource exhaustion.
 - **Sudo access**: The runner user has sudo access (with password requirement). For maximum security, you may want to remove sudo access entirely if not needed by your workflows.
+- **GitHub PAT Storage**: If using `GITHUB_PAT` for automatic token generation, ensure `.env.runner` file permissions are restrictive (`chmod 600 .env.runner`).
 
 ## Architecture
 
@@ -314,8 +325,8 @@ cd /home/runner/actions-runner
 | ------------------------ | ------------------------------------------------- |
 | `Dockerfile.runner`      | Docker image definition for the runner            |
 | `entrypoint.sh`          | Container entrypoint - configures and starts runner |
-| `deploy-runner.sh`       | Deployment script - builds and runs the container |
-| `.env.runner.example`    | Configuration template                            |
+| `deploy-runner.sh`       | Deployment script - builds and runs the container, auto-generates token if needed |
+| `.env.runner.example`    | Configuration template with REPO_URL, RUNNER_TOKEN, and GITHUB_PAT |
 | `hrm-runner.service`     | Systemd service definition                        |
 | `README.md`              | This documentation                                |
 

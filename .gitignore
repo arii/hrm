@@ -64,6 +64,8 @@ diff.txt
 
 # Environment
 .env*
+!.env.example
+!.env*.example
 .vercel
 
 # GitHub Actions Runner
