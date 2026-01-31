@@ -11,6 +11,7 @@ import {
   ServerMessage,
   StateSnapshot,
   ExtWebSocket,
+  HrmInputMessage,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
 import {
@@ -277,6 +278,7 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_INPUT': {
+        const hrmMessage = message as HrmInputMessage
         const existingData = hrmDataStore.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
         if (existingData && sessionState) {
@@ -285,8 +287,8 @@ const handleIncomingMessage = (
           let finalCalories = sessionState.accumulatedCalories
 
           // Use the client-provided calories directly
-          if (typeof message.data.calories === 'number') {
-            const clientCalories = message.data.calories
+          if (typeof hrmMessage.data.calories === 'number') {
+            const clientCalories = hrmMessage.data.calories
             const serverCalories = sessionState.accumulatedCalories
             const diff = Math.abs(clientCalories - serverCalories)
 
@@ -312,7 +314,7 @@ const handleIncomingMessage = (
           // Update the repository with the latest data
           hrmDataStore.save({
             ...existingData,
-            value: message.data.value ?? existingData.value,
+            value: hrmMessage.data.value ?? existingData.value,
             calories: roundTo(finalCalories, 4),
             timestamp: now,
           })
