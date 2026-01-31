@@ -72,41 +72,44 @@ export const useCalorieTracker = ({ age, weightKg }: CalorieTrackerProps) => {
 
   const processHeartRate = useCallback((hr: number) => {
     const now = Date.now()
-    if (lastTimestampRef.current) {
-      const dtSeconds = (now - lastTimestampRef.current) / 1000
-      /**
-       * Time gap validation: Only process heart rate data if the gap is between 0 and 10 seconds.
-       *
-       * Rationale:
-       * - Gaps > 10 seconds likely indicate paused tracking, device disconnection, or other interruptions
-       * - Calculating calories over large gaps would produce inaccurate results
-       * - This threshold balances tolerance for normal variation while filtering out invalid data
-       *
-       * Configuration: If you need to adjust this threshold (e.g., for different update intervals),
-       * consider making it a configurable parameter.
-       */
-      if (dtSeconds > 0 && dtSeconds < 10) {
-        const dtMinutes = dtSeconds / 60
-        const caloriesPerSecond =
-          estimateCaloriesBurned({
-            heartRate: hr,
-            age: ageRef.current,
-            weightKg: weightKgRef.current,
-            durationMinutes: dtMinutes,
-          }) / dtSeconds
+    // On the first call, lastTimestampRef.current is null.
+    // Record a data point with zero calories to avoid gaps at the start.
+    if (!lastTimestampRef.current) {
+      dispatch({
+        type: 'PROCESS_HR',
+        payload: {
+          hr,
+          caloriesBurnedThisInterval: 0,
+          now,
+          caloriesPerSecond: 0,
+        },
+      })
+      lastTimestampRef.current = now
+      return
+    }
 
-        const caloriesBurnedThisInterval = caloriesPerSecond * dtSeconds
+    const dtSeconds = (now - lastTimestampRef.current) / 1000
+    if (dtSeconds > 0 && dtSeconds < 10) {
+      const dtMinutes = dtSeconds / 60
+      const caloriesPerSecond =
+        estimateCaloriesBurned({
+          heartRate: hr,
+          age: ageRef.current,
+          weightKg: weightKgRef.current,
+          durationMinutes: dtMinutes,
+        }) / dtSeconds
 
-        dispatch({
-          type: 'PROCESS_HR',
-          payload: {
-            hr,
-            caloriesBurnedThisInterval,
-            now,
-            caloriesPerSecond,
-          },
-        })
-      }
+      const caloriesBurnedThisInterval = caloriesPerSecond * dtSeconds
+
+      dispatch({
+        type: 'PROCESS_HR',
+        payload: {
+          hr,
+          caloriesBurnedThisInterval,
+          now,
+          caloriesPerSecond,
+        },
+      })
     }
     lastTimestampRef.current = now
   }, [])

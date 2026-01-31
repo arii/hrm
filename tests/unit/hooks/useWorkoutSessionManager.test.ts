@@ -75,7 +75,7 @@ describe('useWorkoutSessionManager', () => {
       result.current.startWorkout(30, 70)
     })
     act(() => {
-      result.current.pauseWorkout()
+      result.current.endWorkout() // endWorkout now pauses
     })
     expect(result.current.status).toBe('paused')
     act(() => {
@@ -84,15 +84,47 @@ describe('useWorkoutSessionManager', () => {
     expect(result.current.status).toBe('running')
   })
 
-  it('should end a workout', () => {
+  it('should transition from running to paused, then to finished', () => {
     const { result } = renderHook(() => useWorkoutSessionManager())
+
+    // Start the workout
     act(() => {
       result.current.startWorkout(30, 70)
     })
+    expect(result.current.status).toBe('running')
+
+    // First call to endWorkout should pause the session
+    act(() => {
+      result.current.endWorkout()
+    })
+    expect(result.current.status).toBe('paused')
+    expect(result.current.session?.endTime).toBeNull()
+
+    // Second call to endWorkout should finish the session
     act(() => {
       result.current.endWorkout()
     })
     expect(result.current.status).toBe('finished')
+    expect(result.current.session?.endTime).not.toBeNull()
+  })
+
+  it('should persist session changes on pause and end', () => {
+    const { result } = renderHook(() => useWorkoutSessionManager())
+
+    act(() => {
+      result.current.startWorkout(30, 70)
+    })
+    // Expect the initial save for the 'running' state
+    expect(workoutSessionStorage.saveSession).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      result.current.endWorkout() // This pauses the workout
+    })
+    // Expect a save for the 'paused' state
+    expect(workoutSessionStorage.saveSession).toHaveBeenCalledTimes(2)
+    expect(
+      (workoutSessionStorage.saveSession as jest.Mock).mock.calls[1][0].status
+    ).toBe('paused')
   })
 
   it('should reset a workout', async () => {

@@ -23,7 +23,6 @@ interface SessionManagerState {
 type SessionManagerAction =
   | { type: 'SET_SESSION'; payload: WorkoutSessionData }
   | { type: 'START'; payload: { age: number; weight: number; maxHr?: number } }
-  | { type: 'PAUSE' }
   | { type: 'RESUME' }
   | { type: 'END' }
   | { type: 'RESET' }
@@ -74,14 +73,6 @@ function sessionManagerReducer(
         status: 'running',
       }
     }
-    case 'PAUSE': {
-      if (!state.session) return state
-      return {
-        ...state,
-        session: { ...state.session, status: 'paused' },
-        status: 'paused',
-      }
-    }
     case 'RESUME': {
       if (!state.session) return state
       return {
@@ -92,14 +83,17 @@ function sessionManagerReducer(
     }
     case 'END': {
       if (!state.session) return state
+      // If running, transition to 'paused'. If paused, transition to 'finished'.
+      const nextStatus = state.status === 'running' ? 'paused' : 'finished'
       return {
         ...state,
         session: {
           ...state.session,
-          status: 'finished',
-          endTime: Date.now(),
+          status: nextStatus,
+          // Only set endTime when the session is truly finished
+          endTime: nextStatus === 'finished' ? Date.now() : null,
         },
-        status: 'finished',
+        status: nextStatus,
       }
     }
     case 'RESET': {
@@ -169,7 +163,7 @@ export const useWorkoutSessionManager = () => {
     if (state.session) {
       workoutSessionStorage.saveSession(state.session)
     }
-  }, [state.session])
+  }, [state.session, state.session?.status])
 
   const startWorkout = useCallback(
     (age: number, weight: number, maxHr?: number) => {
@@ -178,27 +172,13 @@ export const useWorkoutSessionManager = () => {
     []
   )
 
-  const pauseWorkout = useCallback(() => {
-    dispatch({ type: 'PAUSE' })
-  }, [])
-
   const resumeWorkout = useCallback(() => {
     dispatch({ type: 'RESUME' })
   }, [])
 
-  const endWorkout = useCallback(async () => {
+  const endWorkout = useCallback(() => {
     dispatch({ type: 'END' })
-    // Ensure the ended session is persisted before returning
-    // This prevents race conditions when fetching session list immediately after
-    if (state.session) {
-      const endedSession = {
-        ...state.session,
-        status: 'finished' as const,
-        endTime: Date.now(),
-      }
-      await workoutSessionStorage.saveSession(endedSession)
-    }
-  }, [state.session])
+  }, [])
 
   const resetWorkout = useCallback(async () => {
     if (state.session) {
@@ -234,7 +214,6 @@ export const useWorkoutSessionManager = () => {
     isInitialized,
     duration,
     startWorkout,
-    pauseWorkout,
     resumeWorkout,
     endWorkout,
     resetWorkout,
