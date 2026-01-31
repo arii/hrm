@@ -352,7 +352,7 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', baselineMessage.toString())
 
-      let mockBroadcast = broadcast as jest.Mock
+      const mockBroadcast = broadcast as jest.Mock
       let lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       let finalPayload: HrmData[] = lastCall[1].payload
@@ -436,7 +436,7 @@ describe('WebSocket Manager', () => {
         })
       )
 
-      let mockBroadcast = broadcast as jest.Mock
+      const mockBroadcast = broadcast as jest.Mock
       let lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       let finalPayload: HrmData[] = lastCall[1].payload
