@@ -22,7 +22,7 @@ import {
 } from '@mui/material'
 import { HrZoneName } from '@/lib/workout-session-storage'
 import { SessionStatus } from '@/hooks/useWorkoutSessionManager'
-import { formatTime } from '@/utils/time'
+import { formatTime } from '@/utils'
 
 interface ZoneDistributionChartProps {
   timeInZones: Record<HrZoneName, number>
