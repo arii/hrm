@@ -558,7 +558,7 @@ async function runReviewPreset(
       'PR is marked as "ready-for-approval" or "abandon". Skipping review.'
     )
     await writeOutput(
-      JSON.stringify({ reviewComment: '', labels: [] }),
+      JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
       outputFile
     )
     return
@@ -568,7 +568,7 @@ async function runReviewPreset(
   if (!diffFile) {
     console.error('Error: PR_DIFF_FILE env var is required for review preset')
     await writeOutput(
-      JSON.stringify({ reviewComment: '', labels: [] }),
+      JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
       outputFile
     )
     return
@@ -585,7 +585,7 @@ async function runReviewPreset(
   if (!diff || diff.trim().length === 0) {
     console.log('Diff is empty. Skipping review.')
     await writeOutput(
-      JSON.stringify({ reviewComment: '', labels: [] }),
+      JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
       outputFile
     )
     return
