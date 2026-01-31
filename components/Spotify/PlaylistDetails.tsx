@@ -110,7 +110,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
                   />
                   <ListItemText
                     primary={track.name}
-                    secondary={`${(track.artists || []).map((a) => a.name).join(', ')} - ${track.album?.name || 'Unknown Album'}`}
+                    secondary={`${Array.isArray(track.artists) ? track.artists.map((a) => a.name).join(', ') : track.artists} - ${track.album?.name || 'Unknown Album'}`}
                   />
                 </ListItemButton>
               </ListItem>
