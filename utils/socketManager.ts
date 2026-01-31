@@ -15,6 +15,10 @@ import {
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
 import {
+  MAX_CALORIE_JUMP_PER_UPDATE,
+  MAX_INITIAL_CALORIES,
+} from './constants.js'
+import {
   broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
@@ -292,22 +296,26 @@ const handleIncomingMessage = (
             const serverCalories = sessionState.accumulatedCalories
             const diff = Math.abs(clientCalories - serverCalories)
 
-            // Sanity check: a large calorie jump in one second is unlikely.
-            // This prevents a client from sending a bogus value (e.g., 99999).
-            // We allow the initial value to be set if the server's calories are zero.
-            if (diff > 50 && serverCalories > 0) {
+            // Sanity check to prevent anomalous calorie values from the client.
+            const isAnomalousJump =
+              diff > MAX_CALORIE_JUMP_PER_UPDATE && serverCalories > 0
+            const isAnomalousInitialValue =
+              serverCalories === 0 && clientCalories > MAX_INITIAL_CALORIES
+
+            if (isAnomalousJump || isAnomalousInitialValue) {
               logger.warn(
                 {
                   clientId,
                   clientCalories,
                   serverCalories,
+                  isInitialValue: isAnomalousInitialValue,
                 },
-                'Large calorie discrepancy detected. Using last known server value.'
+                'Anomalous calorie value detected. Using last known server value.'
               )
-              finalCalories = serverCalories
+              finalCalories = serverCalories // Reject the client's value
             } else {
               sessionState.accumulatedCalories = clientCalories
-              finalCalories = clientCalories
+              finalCalories = clientCalories // Accept the client's value
             }
           }
 

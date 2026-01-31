@@ -378,9 +378,38 @@ describe('WebSocket Manager', () => {
           clientCalories: 100,
           serverCalories: 10,
         }),
-        'Large calorie discrepancy detected. Using last known server value.'
+        'Anomalous calorie value detected. Using last known server value.'
       )
       expect(clientData!.calories).toBe(10)
+    })
+
+    it('should reject an anomalously high initial calorie value', () => {
+      // Server's initial calorie state for a new client is 0.
+      // Send an initial message with a calorie value that exceeds the MAX_CALORIE_JUMP_PER_UPDATE threshold.
+      const initialAnomalyMessage = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 120, calories: 1001 }, // 1001 > MAX_INITIAL_CALORIES (1000)
+      })
+      mockWs.emit('message', initialAnomalyMessage.toString())
+
+      const mockBroadcast = broadcast as jest.Mock
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const finalPayload: HrmData[] = lastCall[1].payload
+      const clientData = finalPayload.find((c) => c.clientId === 'test-client')
+
+      // The server should have rejected the anomalously high initial value and kept calories at 0.
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          clientId: 'test-client',
+          clientCalories: 1001,
+          serverCalories: 0,
+          isInitialValue: true,
+        }),
+        'Anomalous calorie value detected. Using last known server value.'
+      )
+      expect(clientData).toBeDefined()
+      expect(clientData!.calories).toBe(0) // Should remain at the initial 0
     })
 
     it('should accept a subsequent valid calorie update after an anomaly', () => {
