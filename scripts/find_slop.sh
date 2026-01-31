@@ -24,7 +24,7 @@ total_matches=0
 files_with_slop=()
 # Loop through each line in the wordlist
 while IFS= read -r term || [ -n "$term" ]; do
-# Remove carriage return if present (for DOS line endings)
+# Remove carriage return if present (for DOS line endings) - ensures cross-platform compatibility
 term=${term%$'\r'}
 # Skip empty lines and comments
 if [[ -z "$term" ]] || [[ ${term:0:1} == "#" ]]; then
