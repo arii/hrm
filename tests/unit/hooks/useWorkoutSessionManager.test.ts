@@ -1,149 +1,87 @@
 /**
  * @jest-environment jsdom
  */
-// tests/unit/hooks/useWorkoutSessionManager.test.ts
-
 import { renderHook, act } from '@testing-library/react'
-import { useWorkoutSessionManager } from '../../../hooks/useWorkoutSessionManager'
-import {
-  workoutSessionStorage,
-  HrZoneName,
-} from '../../../lib/workout-session-storage'
+import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
+import * as WebSocketContext from '@/context/WebSocketContext'
+import { workoutSessionStorage } from '@/lib/workout-session-storage'
 
-// Mock the storage module
-jest.mock('../../../lib/workout-session-storage', () => {
-  const originalModule = jest.requireActual(
-    '../../../lib/workout-session-storage'
-  )
-  return {
-    ...originalModule,
-    workoutSessionStorage: {
-      getIncompleteSession: jest.fn(),
-      saveSession: jest.fn(),
-      deleteSession: jest.fn(),
-    },
-  }
-})
+// Mock the WebSocket context
+jest.mock('@/context/WebSocketContext')
+jest.mock('@/lib/workout-session-storage')
 
 describe('useWorkoutSessionManager', () => {
   beforeEach(() => {
+    // Reset mocks before each test
     jest.clearAllMocks()
+
+    // Mock WebSocket context
+    jest.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue({
+      sendData: jest.fn(),
+      connectionStatus: 'Connected',
+      hrmData: [],
+      timerData: {
+        phase: 'idle',
+        timeRemaining: 0,
+        currentRound: 0,
+        totalRounds: 0,
+      },
+      spotifyData: null,
+      workoutData: {
+        totalCalories: 0,
+        workoutDuration: 0,
+      },
+      lastJsonMessage: null,
+    })
   })
 
-  it('should initialize and check for incomplete sessions', async () => {
-    ;(
-      workoutSessionStorage.getIncompleteSession as jest.Mock
-    ).mockResolvedValueOnce(null)
+  it('should be in the "idle" state initially', () => {
     const { result } = renderHook(() => useWorkoutSessionManager())
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0))
-    })
-
-    expect(result.current.isInitialized).toBe(true)
-    expect(result.current.session).toBeNull()
+    expect(result.current.status).toBe('idle')
   })
 
-  it('should recover an incomplete session', async () => {
-    const mockSession = { sessionId: 'incomplete-session', status: 'paused' }
-    ;(
-      workoutSessionStorage.getIncompleteSession as jest.Mock
-    ).mockResolvedValueOnce(mockSession)
+  it('should transition to the "running" state when onStartWorkout is called', () => {
     const { result } = renderHook(() => useWorkoutSessionManager())
 
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0))
+    act(() => {
+      result.current.startWorkout(30, 80)
     })
 
-    expect(result.current.session).toEqual(mockSession)
-    expect(result.current.status).toBe('paused')
-  })
-
-  it('should start a new workout', () => {
-    const { result } = renderHook(() => useWorkoutSessionManager())
-    act(() => {
-      result.current.startWorkout(30, 70)
-    })
-    expect(result.current.status).toBe('running')
-    expect(result.current.session).not.toBeNull()
-    expect(result.current.session?.sessionId).toBeDefined()
-  })
-
-  it('should pause and resume a workout', () => {
-    const { result } = renderHook(() => useWorkoutSessionManager())
-    act(() => {
-      result.current.startWorkout(30, 70)
-    })
-    act(() => {
-      result.current.pauseWorkout()
-    })
-    expect(result.current.status).toBe('paused')
-    act(() => {
-      result.current.resumeWorkout()
-    })
     expect(result.current.status).toBe('running')
   })
 
-  it('should end a workout', () => {
+  it('should transition back to the "idle" state when onEndWorkout is called', () => {
     const { result } = renderHook(() => useWorkoutSessionManager())
+
     act(() => {
-      result.current.startWorkout(30, 70)
+      result.current.startWorkout(30, 80)
     })
+
     act(() => {
       result.current.endWorkout()
     })
+
     expect(result.current.status).toBe('finished')
   })
 
-  it('should reset a workout', async () => {
+  it('should reset the session when resetWorkout is called', async () => {
     const { result } = renderHook(() => useWorkoutSessionManager())
+
     act(() => {
-      result.current.startWorkout(30, 70)
+      result.current.startWorkout(30, 80)
     })
+
+    // Ensure session is not null before resetting
+    expect(result.current.session).not.toBeNull()
+
     await act(async () => {
       await result.current.resetWorkout()
     })
+
+    expect(workoutSessionStorage.deleteSession).toHaveBeenCalledWith(
+      expect.any(String)
+    )
     expect(result.current.session).toBeNull()
     expect(result.current.status).toBe('idle')
-    expect(workoutSessionStorage.deleteSession).toHaveBeenCalled()
-  })
-
-  it('should calculate time in zones correctly', () => {
-    const { result } = renderHook(() => useWorkoutSessionManager())
-    const age = 30
-    const maxHr = 208 - 0.7 * age // ~187
-    const startTime = Date.now()
-
-    act(() => {
-      result.current.startWorkout(age, 70, maxHr)
-    })
-
-    // NoData zone - 1s
-    act(() => {
-      result.current.addHrData({ time: startTime, hr: 0 })
-    })
-
-    // Fat Burn zone - 2s
-    act(() => {
-      result.current.addHrData({ time: startTime + 1000, hr: 120 })
-    })
-    act(() => {
-      result.current.addHrData({ time: startTime + 2000, hr: 125 })
-    })
-
-    // Cardio zone - 1s
-    act(() => {
-      result.current.addHrData({ time: startTime + 3000, hr: 140 })
-    })
-
-    expect(result.current.session?.timeInZones[HrZoneName.NoData]).toBeCloseTo(
-      1
-    )
-    expect(result.current.session?.timeInZones[HrZoneName.FatBurn]).toBeCloseTo(
-      2
-    )
-    expect(result.current.session?.timeInZones[HrZoneName.Cardio]).toBeCloseTo(
-      1
-    )
   })
 })

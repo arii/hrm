@@ -546,12 +546,14 @@ describe('useBluetoothHRM', () => {
         jest.runOnlyPendingTimers()
       })
 
-      expect(result.current.deviceStatus).toMatch(
-        new RegExp(
-          `failed to reconnect after ${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS} attempts`,
-          'i'
+      await waitFor(() => {
+        expect(result.current.deviceStatus).toMatch(
+          new RegExp(
+            `failed to reconnect after ${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS} attempts`,
+            'i'
+          )
         )
-      )
+      })
       expect(mockGatt.connect).toHaveBeenCalledTimes(
         env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS
       ) // No more calls
