@@ -316,7 +316,7 @@ const handleIncomingMessage = (
             ...existingData,
             value: hrmMessage.data.value ?? existingData.value,
             calories: roundTo(finalCalories, 4),
-            timestamp: now,
+            updatedAt: now,
           })
         }
         broadcastState()
