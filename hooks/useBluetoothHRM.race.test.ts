@@ -4,6 +4,7 @@
 import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM from './useBluetoothHRM'
 import { mockBluetooth } from '@/tests/unit/mocks/webBluetooth'
+import * as cookieUtils from '@/utils/cookies'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
@@ -12,6 +13,14 @@ jest.mock('@/context/WebSocketContext', () => ({
     connectionStatus: 'Connected',
   }),
 }))
+
+// Mock cookie utilities
+jest.mock('@/utils/cookies', () => ({
+  getCookie: jest.fn(),
+  setCookie: jest.fn(),
+}))
+
+const mockedCookieUtils = cookieUtils as jest.Mocked<typeof cookieUtils>
 
 describe('useBluetoothHRM Race Conditions', () => {
   const originalNavigator = global.navigator
@@ -149,6 +158,45 @@ describe('useBluetoothHRM Race Conditions', () => {
     expect(mockGattConnect).toHaveBeenCalledTimes(2)
     // Abort should still be called as the hook cleans up previous attempts
     expect(mockAbort).toHaveBeenCalledTimes(1)
+    // The final status should be connected
+    expect(result.current.isConnected).toBe(true)
+  })
+
+  it('should only attempt to connect once when autoConnect is called multiple times concurrently', async () => {
+    // Simulate that a device has been previously connected and its ID is saved
+    mockedCookieUtils.getCookie.mockReturnValue('test-device-id')
+
+    // Simulate that the device is available to be re-connected to
+    const mockSavedDevice = {
+      id: 'test-device-id',
+      name: 'Saved HRM',
+      gatt: {
+        connect: mockGattConnect,
+      },
+    }
+    Object.defineProperty(global.navigator, 'bluetooth', {
+      value: {
+        ...mockBluetooth,
+        getDevices: jest.fn().mockResolvedValue([mockSavedDevice]),
+      },
+      writable: true,
+    })
+
+    const { result } = renderHook(() => useBluetoothHRM())
+
+    // Act: Call autoConnect multiple times in parallel to simulate a race condition
+    await act(async () => {
+      const autoConnectPromises = [
+        result.current.autoConnect(),
+        result.current.autoConnect(),
+        result.current.autoConnect(),
+      ]
+      // We don't care about the result of the promises, just that they complete
+      await Promise.allSettled(autoConnectPromises)
+    })
+
+    // Assert: Check that gatt.connect was only called once, proving the lock works
+    expect(mockGattConnect).toHaveBeenCalledTimes(1)
     // The final status should be connected
     expect(result.current.isConnected).toBe(true)
   })

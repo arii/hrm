@@ -3,7 +3,7 @@
 export interface Track {
   id: string
   name: string
-  artists: { name: string }[]
+  artists: { name: string }[] | string
   album: { name: string }
   imageUrl?: string | null
   uri: string
