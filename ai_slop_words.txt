@@ -2,12 +2,10 @@
 # This file contains a list of words and phrases that are often indicative of
 # low-density, AI-generated content. The find_slop.sh script uses this list
 # to identify potential "slop" in documentation and comments.
+# This list has been refined to focus on high-signal, low-noise terms
+# that are more unique to AI-generated text to avoid false positives.
 
-# Common AI Intros & Outros
-In conclusion
-Overall
-In summary
-To summarize
+# AI Clichés & Tropes
 delve
 robust
 leverage
@@ -18,86 +16,17 @@ pillar
 nuance
 tapestry
 landscape
-Furthermore
-Additionally
-Moreover
-However
-Therefore
-Thus
-Hence
-As such
-In essence
-Essentially
-Basically
-At its core
+deep dive
+game-changer
+In the grand scheme of things
+It's worth noting that
 At the end of the day
-It is important to note
-It should be noted
-Keep in mind
-It goes without saying
-Needless to say
-As a matter of fact
-In fact
-Actually
-To be honest
-Frankly
-Certainly
-Of course
-Indeed
-Absolutely
-Positively
-Without a doubt
-Undoubtedly
-Unquestionably
-Arguably
-Potentially
-Possibly
-Conceivably
-Theoretically
-Hypothetically
-For all intents and purposes
-By and large
-For the most part
-In general
-Generally speaking
-As a rule
-Typically
-Usually
-Characteristically
-As is often the case
-More often than not
-In many cases
-In some cases
-In certain cases
-In this case
-In this particular case
-In this specific case
-In this instance
-In this particular instance
-In this specific instance
-As you can see
-As you may know
-As you may have guessed
-As you may have noticed
-As you may be aware
-As you may already know
-believe
-I think
-I feel
-I imagine
-I suppose
-I guess
-I would say
-In my opinion
-In my humble opinion
-In my view
-From my perspective
-From my point of view
-As I see it
-The way I see it
-If you ask me
-It seems to me
-It appears to me
-It looks to me
-It sounds to me
-It feels to me
+elevate
+streamline
+meticulously
+cornerstone
+paradigm
+synergy
+journey
+unravel
+navigating the complexities
