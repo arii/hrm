@@ -33,6 +33,8 @@ Edit `.env.runner` and set:
 - `REPO_URL`: The GitHub repository URL (required, default: `https://github.com/arii/hrm`)
 - `RUNNER_TOKEN`: Runner registration token (optional - auto-generated if not provided)
 - `GITHUB_PAT`: GitHub Personal Access Token (optional - only needed if `gh` CLI is not authenticated)
+- `RUNNER_MEMORY_LIMIT`: Memory limit for container (optional, e.g., `2g` for 2GB, recommended for production)
+- `RUNNER_CPU_LIMIT`: CPU limit for container (optional, e.g., `2` for 2 CPUs, recommended for production)
 
 #### Automatic Token Generation
 
@@ -89,7 +91,30 @@ Verify in GitHub:
 
 For automatic startup on system boot and better management, set up the systemd service.
 
-### Installation
+### Automated Installation (Recommended)
+
+Use the provided installation script to automatically configure paths:
+
+```bash
+sudo ./install-service.sh
+```
+
+This script will:
+1. Detect the repository root path automatically
+2. Update the service file with correct paths
+3. Install the service to `/etc/systemd/system/`
+4. Reload systemd daemon
+
+After installation:
+
+```bash
+sudo systemctl enable hrm-runner.service
+sudo systemctl start hrm-runner.service
+```
+
+### Manual Installation
+
+If you prefer manual installation:
 
 1. Edit `hrm-runner.service` and replace `/path/to/hrm` with the actual path to your repository:
 
@@ -288,7 +313,7 @@ cd /home/runner/actions-runner
 ### Important Security Limitations
 
 - **No Docker-in-Docker by default**: The container does not mount the Docker socket, so jobs that need to build Docker images will fail. If needed, add `-v /var/run/docker.sock:/var/run/docker.sock` to the docker run command, but be aware this grants significant privileges.
-- **Resource limits**: Consider adding `--memory` and `--cpus` flags to the docker run command to prevent resource exhaustion.
+- **Resource limits**: Configure `RUNNER_MEMORY_LIMIT` and `RUNNER_CPU_LIMIT` in `.env.runner` to prevent resource exhaustion. Recommended for production deployments (e.g., `RUNNER_MEMORY_LIMIT=2g` and `RUNNER_CPU_LIMIT=2`).
 - **Sudo access**: The runner user has sudo access (with password requirement). For maximum security, you may want to remove sudo access entirely if not needed by your workflows.
 - **GitHub PAT Storage**: If using `GITHUB_PAT` for automatic token generation, ensure `.env.runner` file permissions are restrictive (`chmod 600 .env.runner`).
 
@@ -325,9 +350,10 @@ cd /home/runner/actions-runner
 | ------------------------ | ------------------------------------------------- |
 | `Dockerfile.runner`      | Docker image definition for the runner            |
 | `entrypoint.sh`          | Container entrypoint - configures and starts runner |
-| `deploy-runner.sh`       | Deployment script - builds and runs the container, auto-generates token if needed |
-| `.env.runner.example`    | Configuration template with REPO_URL, RUNNER_TOKEN, and GITHUB_PAT |
-| `hrm-runner.service`     | Systemd service definition                        |
+| `deploy-runner.sh`       | Deployment script - builds and runs the container, auto-generates token if needed, applies resource limits |
+| `install-service.sh`     | Automated systemd service installation with path auto-detection |
+| `.env.runner.example`    | Configuration template with REPO_URL, RUNNER_TOKEN, GITHUB_PAT, and resource limits |
+| `hrm-runner.service`     | Systemd service definition (template)             |
 | `README.md`              | This documentation                                |
 
 ## Related Documentation

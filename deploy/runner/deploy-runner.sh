@@ -142,11 +142,27 @@ fi
 
 # Run the container
 echo "Starting GitHub Actions Runner container..."
-docker run -d --restart unless-stopped \
-  --name hrm-runner \
-  -e REPO_URL="$REPO_URL" \
-  -e RUNNER_TOKEN="$RUNNER_TOKEN" \
-  hrm-actions-runner
+
+# Build docker run command with optional resource limits
+DOCKER_RUN_CMD="docker run -d --restart unless-stopped --name hrm-runner"
+
+# Add memory limit if specified
+if [ -n "$RUNNER_MEMORY_LIMIT" ]; then
+  echo "Setting memory limit: $RUNNER_MEMORY_LIMIT"
+  DOCKER_RUN_CMD="$DOCKER_RUN_CMD --memory=$RUNNER_MEMORY_LIMIT"
+fi
+
+# Add CPU limit if specified
+if [ -n "$RUNNER_CPU_LIMIT" ]; then
+  echo "Setting CPU limit: $RUNNER_CPU_LIMIT"
+  DOCKER_RUN_CMD="$DOCKER_RUN_CMD --cpus=$RUNNER_CPU_LIMIT"
+fi
+
+# Add environment variables and image
+DOCKER_RUN_CMD="$DOCKER_RUN_CMD -e REPO_URL=\"$REPO_URL\" -e RUNNER_TOKEN=\"$RUNNER_TOKEN\" hrm-actions-runner"
+
+# Execute the command
+eval $DOCKER_RUN_CMD
 
 echo ""
 echo "✓ GitHub Actions Runner deployed successfully!"
