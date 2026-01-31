@@ -9,7 +9,7 @@ import {
   SuggestedIssue,
   GitHubClient,
 } from '../../../scripts/create-review-issues'
-import { execSync } from 'child_process'
+import { spawnSync } from 'child_process'
 
 // Mock the GitHubClient
 class MockGitHubClient implements IGitHubClient {
@@ -23,10 +23,10 @@ jest.mock('fs', () => ({
   readFileSync: jest.fn(),
 }))
 
-// Mock child_process.execSync
+// Mock child_process.spawnSync
 jest.mock('child_process', () => ({
   ...jest.requireActual('child_process'),
-  execSync: jest.fn(),
+  spawnSync: jest.fn(),
 }))
 
 describe('create-review-issues script', () => {
@@ -134,6 +134,11 @@ describe('create-review-issues script', () => {
 
     beforeEach(() => {
       ghClient = new GitHubClient()
+      ;(spawnSync as jest.Mock).mockReturnValue({
+        status: 0,
+        stdout: '[]',
+        stderr: '',
+      })
     })
 
     it('should call gh issue create with the correct parameters', () => {
@@ -149,33 +154,54 @@ describe('create-review-issues script', () => {
         commitHash: 'abcdefg',
         branchName: 'test-branch',
       }
-
-      // Create a more sophisticated mock for execSync
-      ;(execSync as jest.Mock).mockImplementation((command: string) => {
-        if (command.startsWith('gh label list')) {
-          // Return an empty array for the label list to simulate no existing labels
-          return '[]'
+      ;(spawnSync as jest.Mock).mockImplementation((_command, args) => {
+        if (args.includes('label') && args.includes('list')) {
+          return { status: 0, stdout: '[]', stderr: '' }
         }
-        if (command.startsWith('gh issue create')) {
-          // Return a URL for the issue creation
-          return 'https://github.com/test/repo/issues/1'
+        if (args.includes('issue') && args.includes('create')) {
+          return {
+            status: 0,
+            stdout: 'https://github.com/test/repo/issues/1',
+            stderr: '',
+          }
         }
-        // Return an empty string for any other command to avoid unexpected behavior
-        return ''
+        return { status: 0, stdout: '', stderr: '' }
       })
 
       ghClient.createIssue(issue, context)
+      expect(spawnSync).toHaveBeenCalledWith(
+        'gh',
+        expect.arrayContaining(['issue', 'create']),
+        expect.any(Object)
+      )
+      expect(spawnSync).toHaveBeenCalledWith(
+        'gh',
+        expect.arrayContaining([
+          '--label',
+          'bot-generated,triage-needed,type-bug,priority-medium',
+        ]),
+        expect.any(Object)
+      )
+    })
 
-      expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining('gh issue create'),
-        expect.any(Object)
+    it('should handle titles with special characters safely', () => {
+      const issue: SuggestedIssue = {
+        title: "Fix: `rm -rf /` shouldn't run",
+        description: 'A very serious bug.',
+        type: 'security',
+        priority: 'high',
+      }
+      const context = { repo: 'test/repo', prNumber: '789' }
+      ghClient.createIssue(issue, context)
+
+      const lastCall = (spawnSync as jest.Mock).mock.calls.find(
+        (call) => call[1].includes('issue') && call[1].includes('create')
       )
-      expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining(
-          '--label "bot-generated,triage-needed,type-bug,priority-medium"'
-        ),
-        expect.any(Object)
-      )
+
+      expect(lastCall[0]).toBe('gh')
+      expect(lastCall[1]).toContain('--title')
+      const titleIndex = lastCall[1].indexOf('--title')
+      expect(lastCall[1][titleIndex + 1]).toBe(issue.title)
     })
   })
 })
