@@ -733,7 +733,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const autoConnect = useCallback(async (): Promise<void> => {
     // Try to auto-connect to a saved device. This is a critical function for user experience.
     // We want it to succeed silently if possible, but still provide feedback if it fails.
+    if (isConnecting.current) {
+      logger.info('Auto-connect call ignored, connection already in progress.')
+      return
+    }
     try {
+      isConnecting.current = true // Set lock immediately after guard
       logger.info('Starting auto-connect to saved device...')
       setStatus(BluetoothConnectionStatus.CONNECTING)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.connectingToSavedDevice)
@@ -749,6 +754,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // Set status back to allow manual connection
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
+    } finally {
+      isConnecting.current = false // Ensure lock is always released
     }
   }, [connectAndStream])
 
