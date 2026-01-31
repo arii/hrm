@@ -6,6 +6,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
@@ -126,6 +127,33 @@ export default function ConnectPage() {
     totalCalories: calories,
   })
 
+  // Add the workout session manager for data persistence
+  const {
+    addHrData,
+    startWorkout: startPersistentWorkout,
+    endWorkout: endPersistentWorkout,
+    resetWorkout: resetPersistentWorkout,
+  } = useWorkoutSessionManager()
+
+  // Create wrapper functions that sync both hooks
+  const handleStartWorkout = useCallback(() => {
+    startWorkout()
+    if (userAge && userWeight) {
+      startPersistentWorkout(userAge, userWeight)
+    }
+  }, [startWorkout, startPersistentWorkout, userAge, userWeight])
+
+  const handleEndWorkout = useCallback(() => {
+    endWorkout()
+    endPersistentWorkout()
+  }, [endWorkout, endPersistentWorkout])
+
+  const handleResetWorkout = useCallback(() => {
+    resetWorkoutSession()
+    resetCalculator()
+    resetPersistentWorkout()
+  }, [resetWorkoutSession, resetCalculator, resetPersistentWorkout])
+
   // Callback for raw heart rate updates from the Bluetooth hook
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
@@ -134,11 +162,19 @@ export default function ConnectPage() {
         'handleHeartRateUpdate called, updating local state'
       )
       setCurrentHR(heartRate)
+
+      // Process for calorie calculation
       if (workoutStatus === 'running') {
         processHeartRate(heartRate)
+
+        // CRITICAL: Persist HR data to IndexedDB
+        addHrData({
+          time: Date.now(),
+          hr: heartRate,
+        })
       }
     },
-    [processHeartRate, workoutStatus, setCurrentHR]
+    [processHeartRate, workoutStatus, setCurrentHR, addHrData]
   )
   const {
     connectAndStream,
@@ -155,7 +191,7 @@ export default function ConnectPage() {
     userName,
     userAge: userAge || 0,
     onHeartRateUpdate: handleHeartRateUpdate,
-    onConnect: startWorkout,
+    onConnect: handleStartWorkout, // Use the wrapped function
   })
 
   useEffect(() => {
@@ -201,10 +237,7 @@ export default function ConnectPage() {
   }
   const maxHr = userAge ? 220 - userAge : 190
   const hrZoneProps = useHrZone(currentHR, maxHr)
-  const resetWorkout = () => {
-    resetWorkoutSession()
-    resetCalculator()
-  }
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration, {
@@ -251,11 +284,11 @@ export default function ConnectPage() {
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}
-      onReset={resetWorkout}
+      onReset={handleResetWorkout}
       workoutStatus={workoutStatus}
-      onStartWorkout={startWorkout}
+      onStartWorkout={handleStartWorkout}
       onPauseWorkout={pauseWorkout}
-      onEndWorkout={endWorkout}
+      onEndWorkout={handleEndWorkout}
     />
   )
 }
