@@ -1,4 +1,4 @@
-import { execSync } from 'child_process'
+import { spawnSync } from 'child_process'
 import { readFileSync, writeFileSync, unlinkSync } from 'fs'
 import path from 'path'
 import os from 'os'
@@ -82,16 +82,6 @@ export type ExistingIssue = z.infer<typeof ExistingIssueSchema>
 
 // --- GitHub Client Abstraction ---
 
-interface ExecExceptionWithStderr extends Error {
-  stderr?: string
-}
-
-function isExecExceptionWithStderr(
-  error: unknown
-): error is ExecExceptionWithStderr {
-  return error instanceof Error && 'stderr' in error
-}
-
 export interface IGitHubClient {
   getRecentIssues(labelFilter?: string): ExistingIssue[]
   createIssue(
@@ -103,32 +93,41 @@ export interface IGitHubClient {
 export class GitHubClient implements IGitHubClient {
   private labelsEnsured = false
 
-  private execute(command: string): string {
-    try {
-      return execSync(command, {
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-      }).trim()
-    } catch (error: unknown) {
-      const stderr = isExecExceptionWithStderr(error)
-        ? error.stderr
-        : 'Unknown error'
-      throw new Error(`GitHub CLI Error: ${stderr}`)
+  private execute(command: string, args: string[]): string {
+    const result = spawnSync(command, args, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    })
+
+    if (result.status !== 0) {
+      throw new Error(`GitHub CLI Error: ${result.stderr || 'Unknown error'}`)
     }
+
+    return result.stdout.trim()
   }
 
   getRecentIssues(labelFilter?: string): ExistingIssue[] {
     console.log(
       '🔍 Fetching recent issues (open and closed) to prevent duplicates...'
     )
-    let cmd = `gh issue list --state all --json number,title,state,body --limit 100`
+
+    const args = [
+      'issue',
+      'list',
+      '--state',
+      'all',
+      '--json',
+      'number,title,state,body',
+      '--limit',
+      '1000',
+    ]
     if (labelFilter) {
-      cmd += ` --label "${labelFilter}"`
+      args.push('--label', labelFilter)
     }
 
     let output = ''
     try {
-      output = this.execute(cmd)
+      output = this.execute('gh', args)
       const parsed = JSON.parse(output)
       const validationResult = ExistingIssuesSchema.safeParse(parsed)
       if (!validationResult.success) {
@@ -197,14 +196,17 @@ export class GitHubClient implements IGitHubClient {
 
     try {
       writeFileSync(bodyFile, body, 'utf-8')
-
-      // FIX: The --title-file flag is not valid. Use --title with the title string directly.
-      // To prevent shell injection issues with complex titles, escape single quotes
-      // and wrap the title in single quotes for the shell. This is a robust way
-      // to handle special characters like '!', '$', '`', etc.
-      const escapedTitle = title.replace(/'/g, "'\\''")
-      const cmd = `gh issue create --title '${escapedTitle}' --body-file "${bodyFile}" --label "${labels}"`
-      const url = this.execute(cmd)
+      const args = [
+        'issue',
+        'create',
+        '--title',
+        title,
+        '--body-file',
+        bodyFile,
+        '--label',
+        labels,
+      ]
+      const url = this.execute('gh', args)
       console.log(`✅ Issue created: ${url}`)
     } finally {
       unlinkSync(bodyFile)
@@ -217,7 +219,12 @@ export class GitHubClient implements IGitHubClient {
     }
 
     console.log('🛡️ Verifying required labels exist...')
-    const existingLabelsRaw = this.execute('gh label list --json name')
+    const existingLabelsRaw = this.execute('gh', [
+      'label',
+      'list',
+      '--json',
+      'name',
+    ])
     const existingLabels = JSON.parse(existingLabelsRaw).map(
       (label: { name: string }) => label.name
     )
@@ -233,9 +240,15 @@ export class GitHubClient implements IGitHubClient {
         const config = LABEL_CONFIG[label]
         if (config) {
           try {
-            this.execute(
-              `gh label create "${label}" --color "${config.color}" --description "${config.description}"`
-            )
+            this.execute('gh', [
+              'label',
+              'create',
+              label,
+              '--color',
+              config.color,
+              '--description',
+              config.description,
+            ])
             console.log(`   - Created label: "${label}"`)
           } catch (e) {
             // Ignore errors if the label already exists (race condition)
