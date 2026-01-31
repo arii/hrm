@@ -11,7 +11,7 @@ declare module '@mui/material/styles' {
       rest: string
       running: string
       idle: string
-      cooldown:string
+      cooldown: string
     }
   }
   interface PaletteOptions {
