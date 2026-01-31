@@ -5,10 +5,11 @@ import PlaylistDetails from '../../../../components/Spotify/PlaylistDetails'
 import { Track } from '../../../../types/spotify'
 
 // Mock the fetch API
-global.fetch = jest.fn()
+const mockFetch = jest.fn()
+global.fetch = mockFetch
 
 describe('PlaylistDetails', () => {
-  const mockTracks: Track[] = [
+  const mockTracksAsArray: Track[] = [
     {
       id: '1',
       name: 'Track 1',
@@ -27,20 +28,24 @@ describe('PlaylistDetails', () => {
     },
   ]
 
+  const mockTracksAsString = mockTracksAsArray.map((track) => ({
+    ...track,
+    artists: track.artists.map((a) => a.name).join(', '),
+  })) as unknown as Track[]
+
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
   it('displays a loading indicator while fetching data', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockImplementationOnce(
+    mockFetch.mockImplementationOnce(
       () =>
         new Promise((resolve) =>
           setTimeout(
             () =>
               resolve({
                 ok: true,
-                json: () => Promise.resolve({ tracks: mockTracks }),
+                json: () => Promise.resolve({ tracks: mockTracksAsArray }),
               }),
             100
           )
@@ -54,14 +59,40 @@ describe('PlaylistDetails', () => {
     await waitFor(() => expect(screen.queryByRole('progressbar')).toBeNull())
   })
 
-  it('displays the track list and handles play clicks', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValue(
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ tracks: mockTracks, total: 2 }),
-      })
+  it('displays the track list and handles play clicks when artists is an array', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ tracks: mockTracksAsArray }),
+    })
+    const onTrackPlay = jest.fn()
+
+    render(
+      <PlaylistDetails
+        playlistId="test-playlist-id"
+        onTrackPlay={onTrackPlay}
+      />
     )
+
+    await waitFor(() => {
+      expect(screen.getByText('Track 1')).toBeInTheDocument()
+    })
+    expect(
+      screen.getByText('Artist 1 - Album 1', { exact: false })
+    ).toBeInTheDocument()
+    expect(screen.getByText('Track 2')).toBeInTheDocument()
+    expect(
+      screen.getByText('Artist 2 - Album 2', { exact: false })
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Track 1'))
+    expect(onTrackPlay).toHaveBeenCalledWith('spotify:track:1')
+  })
+
+  it('displays the track list and handles play clicks when artists is a string', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ tracks: mockTracksAsString, total: 2 }),
+    })
     const onTrackPlay = jest.fn()
 
     render(
@@ -87,12 +118,9 @@ describe('PlaylistDetails', () => {
   })
 
   it('displays an error message when the API call fails', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(fetch as any).mockResolvedValue(
-      Promise.resolve({
-        ok: false,
-      })
-    )
+    mockFetch.mockResolvedValue({
+      ok: false,
+    })
     const consoleErrorSpy = jest
       .spyOn(console, 'error')
       .mockImplementation(() => {})
