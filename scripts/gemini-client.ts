@@ -635,7 +635,7 @@ async function runReviewPreset(
               },
             },
           },
-          required: ['reviewComment', 'labels'],
+          required: ['reviewComment', 'labels', 'verdict'],
         },
       },
     },
@@ -655,6 +655,8 @@ async function runReviewPreset(
   if (result.success) {
     const reviewData = result.data as {
       reviewComment?: string
+      verdict?: string
+      labels?: string[]
       prContext?: unknown
     }
     reviewData.prContext = prContext
@@ -675,6 +677,14 @@ async function runReviewPreset(
     } else {
       // Add commit hash to the review comment
       reviewData.reviewComment += commitComment
+      // Ensure verdict field is present (required by downstream scripts)
+      if (!reviewData.verdict) {
+        reviewData.verdict = 'comment'
+      }
+      // Ensure labels field is present
+      if (!reviewData.labels) {
+        reviewData.labels = []
+      }
       // Output the original, valid JSON.
       await writeOutput(JSON.stringify(reviewData, null, 2), outputFile)
     }
