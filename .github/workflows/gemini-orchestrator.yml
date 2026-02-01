@@ -95,7 +95,7 @@ jobs:
           HAS_DIFF=$?
 
           if [ $HAS_DIFF -eq 0 ]; then
-            # No changes found in the entire PR
+            # No changes found
             echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "::notice::No file changes detected between $MERGE_BASE and HEAD"
 
@@ -109,46 +109,10 @@ jobs:
               fi
             done
           else
-            # Changes found in the PR
+            # Changes found
             echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
             echo "::notice::File changes detected between $MERGE_BASE and HEAD"
-
-            # Quick check: Is the HEAD commit itself empty?
-            # If so, find the last non-empty commit efficiently
-            if git diff-tree --quiet --root HEAD 2>/dev/null; then
-              echo "::notice::HEAD commit is empty, finding last non-empty commit"
-
-              # Check recent commits first (fast path, no network needed)
-              FOUND_NON_EMPTY=false
-              for i in {1..10}; do
-                PARENT_SHA=$(git rev-parse HEAD~$i 2>/dev/null)
-                if [ -z "$PARENT_SHA" ]; then
-                  break
-                fi
-                if ! git diff-tree --quiet --root $PARENT_SHA 2>/dev/null; then
-                  echo "last_non_empty_commit=$PARENT_SHA" >> $GITHUB_OUTPUT
-                  echo "::notice::Found last non-empty commit at HEAD~$i: $PARENT_SHA"
-                  FOUND_NON_EMPTY=true
-                  break
-                fi
-              done
-
-              # If not found in recent commits, do a deeper search
-              if [ "$FOUND_NON_EMPTY" = false ]; then
-                for sha in $(git rev-list "$MERGE_BASE"..HEAD 2>/dev/null | head -100); do
-                  if git cat-file -e $sha^ &>/dev/null 2>/dev/null; then
-                    if ! git diff --quiet $sha^ $sha -- . ; then
-                      echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
-                      echo "::notice::Found last non-empty commit in PR: $sha"
-                      break
-                    fi
-                  fi
-                done
-              fi
-            else
-              # HEAD has changes, use it as the last non-empty commit
-              echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-            fi
           fi
 
           exit 0
@@ -218,13 +182,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ github.event.issue.number }}/head
-          fetch-depth: 1
+          fetch-depth: 2
       - name: Check for file changes
         id: check_files
         run: |
-          # Use git diff-tree for more efficient empty commit detection
-          if git diff-tree --quiet --root HEAD 2>/dev/null; then
-            echo "No changes detected in HEAD commit (empty commit)."
+          if git diff --quiet HEAD HEAD~1; then
+            echo "No changes detected in HEAD commit."
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
             echo "Changes detected in HEAD commit."

@@ -61,27 +61,24 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  // 4. Update selection logic and volume sync
+  // 4. Sync selected device and volume with active device
   useEffect(() => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
 
-    // Sync Selected Device
-    if (prevActiveIdRef.current === undefined && activeId) {
-      // Initial sync
-      setSelectedDeviceId(activeId)
-    } else if (activeId && activeId !== prevActiveIdRef.current) {
-      // Active device changed externally, update selection
-      setSelectedDeviceId(activeId)
-    } else {
-      // Check if selected device is still valid
+    // Helper: determine if device should be updated to activeId
+    const shouldUpdateToActive = () => {
+      // Initial sync or active device changed externally
+      if (!prevActiveIdRef.current || activeId !== prevActiveIdRef.current) {
+        return Boolean(activeId)
+      }
+      // Selected device no longer exists or no device selected
       const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
-      if (selectedDeviceId && !selectedStillExists) {
-        setSelectedDeviceId(activeId ?? '')
-      }
-      if (!selectedDeviceId && activeId) {
-        setSelectedDeviceId(activeId)
-      }
+      return (!selectedDeviceId || !selectedStillExists) && Boolean(activeId)
+    }
+
+    if (shouldUpdateToActive()) {
+      setSelectedDeviceId(activeId!)
     }
     prevActiveIdRef.current = activeId
 
