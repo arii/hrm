@@ -1,4 +1,4 @@
-import { HrZoneName, UserHrZones } from '../lib/shared/hr-zones'
+import type { HrZoneName, UserHrZones } from '../lib/shared/hr-zones'
 
 export interface HrZone {
   zoneName: HrZoneName
