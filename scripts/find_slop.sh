@@ -1,7 +1,6 @@
 #!/bin/bash
 # Configuration
 WORDLIST="ai_slop_words.txt"
-SEARCH_DIR="."
 EXIT_ON_FAIL=1
 # ANSI Colors
 RED='\033[0;31m'
@@ -14,6 +13,14 @@ if [ ! -f "$WORDLIST" ]; then
 echo -e "${RED}Error: Wordlist file '$WORDLIST' not found.${NC}"
 exit 1
 fi
+
+# Determine search targets
+if [ "$#" -eq 0 ]; then
+    TARGETS=(".")
+else
+    TARGETS=("$@")
+fi
+
 echo -e "${BLUE}========================================================${NC}"
 echo -e "${BLUE}   AI Slop Detection Report                             ${NC}"
 echo -e "${BLUE}   Scanning for low-density, filler content...          ${NC}"
@@ -35,7 +42,7 @@ fi
 # -n: show line number
 # -i: case insensitive
 # Exclude node_modules, .git, and common binary/lock files
-matches=$(grep -rni "$term" "$SEARCH_DIR" \
+matches=$(grep -rni "$term" "${TARGETS[@]}" \
     --exclude-dir={node_modules,.git,.next,dist,build,coverage,.vercel} \
     --exclude={"ai_slop_words.txt","find_slop.sh","*.svg","*.lock","pnpm-lock.yaml","*.png","*.ico","*.json","*.map"} \
 )
