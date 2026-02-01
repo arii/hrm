@@ -158,7 +158,7 @@ describe('useBluetoothHRM', () => {
     await act(async () => {
       try {
         await result.current.connectAndStream()
-      } catch (_e) {
+      } catch {
         // ignore
       }
     })
