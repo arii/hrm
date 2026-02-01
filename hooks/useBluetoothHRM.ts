@@ -94,6 +94,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isConnecting = useRef(false)
+  const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
+    null
+  )
 
   // Centralized function to update the signal period history and state
   const updateSignalPeriod = useCallback((newPeriod: number) => {
@@ -168,37 +171,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   useEffect(() => {
     statusRef.current = status
   }, [status])
-
-  // Cleanup
-  useEffect(() => {
-    isManualDisconnect.current = false
-
-    if (
-      typeof window !== 'undefined' &&
-      process.env.NEXT_PUBLIC_TESTING === 'true'
-    ) {
-      window.TEST_CONTROLS = {
-        ...window.TEST_CONTROLS,
-        setHrmStatus: setStatus,
-        setCustomHrmStatusMessage: setCustomStatusMessage,
-      }
-    }
-
-    return () => {
-      // This allows auto-reconnect to work properly on component remount
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-
-      if (
-        typeof window !== 'undefined' &&
-        process.env.NEXT_PUBLIC_TESTING === 'true'
-      ) {
-        if (window.TEST_CONTROLS) {
-          delete window.TEST_CONTROLS.setHrmStatus
-          delete window.TEST_CONTROLS.setCustomHrmStatusMessage
-        }
-      }
-    }
-  }, [])
 
   useEffect(() => {
     let checkCounter = 0
@@ -379,6 +351,46 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     [reconnect]
   )
 
+  // Cleanup
+  useEffect(() => {
+    isManualDisconnect.current = false
+
+    if (
+      typeof window !== 'undefined' &&
+      process.env.NEXT_PUBLIC_TESTING === 'true'
+    ) {
+      window.TEST_CONTROLS = {
+        ...window.TEST_CONTROLS,
+        setHrmStatus: setStatus,
+        setCustomHrmStatusMessage: setCustomStatusMessage,
+      }
+    }
+
+    return () => {
+      // Clean up the disconnected listener to prevent leaks across remounts
+      if (deviceRef.current && activeDisconnectListenerRef.current) {
+        deviceRef.current.removeEventListener(
+          'gattserverdisconnected',
+          activeDisconnectListenerRef.current
+        )
+        activeDisconnectListenerRef.current = null
+      }
+
+      // This allows auto-reconnect to work properly on component remount
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+
+      if (
+        typeof window !== 'undefined' &&
+        process.env.NEXT_PUBLIC_TESTING === 'true'
+      ) {
+        if (window.TEST_CONTROLS) {
+          delete window.TEST_CONTROLS.setHrmStatus
+          delete window.TEST_CONTROLS.setCustomHrmStatusMessage
+        }
+      }
+    }
+  }, [])
+
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
       // Abort any existing connection attempts.
@@ -470,7 +482,26 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         // Attach disconnect listener immediately after successful GATT connection
         // This ensures we catch disconnections that might occur during service discovery
+        if (activeDisconnectListenerRef.current) {
+          // If we are connecting to a new device, we should remove the listener from the OLD device (deviceRef.current)
+          // or the current device if it's a reconnect. To be safe, try removing from both if they differ.
+          const oldDevice = deviceRef.current
+          if (oldDevice) {
+            oldDevice.removeEventListener(
+              'gattserverdisconnected',
+              activeDisconnectListenerRef.current
+            )
+          }
+          // Also try removing from the new device just in case
+          if (device !== oldDevice) {
+            device.removeEventListener(
+              'gattserverdisconnected',
+              activeDisconnectListenerRef.current
+            )
+          }
+        }
         device.addEventListener('gattserverdisconnected', onDisconnected)
+        activeDisconnectListenerRef.current = onDisconnected
 
         const service = await server!.getPrimaryService(HR_SERVICE_UUID)
         const characteristic = await service.getCharacteristic(
