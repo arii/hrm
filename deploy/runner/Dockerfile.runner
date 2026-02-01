@@ -56,6 +56,6 @@ RUN mkdir actions-runner && cd actions-runner && \
 
 # Copy the entrypoint script
 COPY --chown=runner:runner entrypoint.sh /home/runner/entrypoint.sh
-RUN sudo chmod +x /home/runner/entrypoint.sh
+RUN chmod +x /home/runner/entrypoint.sh
 
 ENTRYPOINT ["/home/runner/entrypoint.sh"]
