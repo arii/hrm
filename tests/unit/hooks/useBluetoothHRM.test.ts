@@ -209,11 +209,13 @@ describe('useBluetoothHRM', () => {
 
     // Second call, should trigger the abort logic for the first call
     act(() => {
-      result.current.connectAndStream(undefined, undefined, { silent: true })
+      result.current.connectAndStream(undefined, undefined, { silent: false })
     })
 
     // Verify that the abort function was called for the first pending attempt
-    expect(mockAbort).toHaveBeenCalledTimes(1)
+    await waitFor(() => {
+      expect(mockAbort).toHaveBeenCalledTimes(1)
+    })
 
     // Clean up by resolving the promise to avoid open handles
     await act(async () => {
@@ -543,7 +545,7 @@ describe('useBluetoothHRM', () => {
 
       // After max attempts, it should fail
       await act(async () => {
-        jest.runOnlyPendingTimers()
+        jest.advanceTimersByTime(100)
       })
 
       await waitFor(() => {
@@ -560,7 +562,7 @@ describe('useBluetoothHRM', () => {
 
       // It should also forget the device
       await act(async () => {
-        jest.runOnlyPendingTimers() // Run the final timer to forget the device
+        jest.advanceTimersByTime(2000) // Run the final timer to forget the device
       })
       expect(cookieUtils.setCookie).toHaveBeenCalledWith(
         'hrm_device_id',

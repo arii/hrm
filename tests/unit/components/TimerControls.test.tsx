@@ -25,6 +25,7 @@ describe('TimerControls', () => {
         timeRemaining: 0,
         currentRound: 0,
         totalRounds: 0,
+        isRunning: false,
       },
       spotifyData: null,
       workoutData: {
@@ -62,6 +63,7 @@ describe('TimerControls', () => {
         timeRemaining: 10,
         currentRound: 1,
         totalRounds: 10,
+        isRunning: true,
       },
       spotifyData: null,
       workoutData: {
