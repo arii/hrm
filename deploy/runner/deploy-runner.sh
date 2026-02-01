@@ -22,6 +22,11 @@ set -a
 source .env.runner
 set +a
 
+# Also check for GITHUB_TOKEN from parent environment if not in .env.runner
+if [ -z "$GITHUB_TOKEN" ] && [ -n "${GITHUB_TOKEN:-}" ]; then
+  export GITHUB_TOKEN="${GITHUB_TOKEN}"
+fi
+
 # Validate REPO_URL
 if [ -z "$REPO_URL" ]; then
   echo "Error: REPO_URL is not set in .env.runner"
@@ -30,29 +35,54 @@ fi
 
 # Function to generate runner token using GitHub CLI
 generate_token_with_gh() {
-  echo "Attempting to generate runner token using GitHub CLI..."
+  echo "Attempting to generate runner token using GitHub CLI..." >&2
   
   # Extract owner and repo from URL
   REPO_OWNER=$(echo "$REPO_URL" | sed -n 's#.*/\([^/]*\)/\([^/]*\)$#\1#p')
   REPO_NAME=$(echo "$REPO_URL" | sed -n 's#.*/\([^/]*\)/\([^/]*\)$#\2#p')
   
   if [ -z "$REPO_OWNER" ] || [ -z "$REPO_NAME" ]; then
-    echo "Error: Could not parse repository owner and name from REPO_URL"
+    echo "Error: Could not parse repository owner and name from REPO_URL" >&2
     return 1
   fi
   
   # Try using gh CLI
   if command -v gh &> /dev/null; then
-    echo "Using GitHub CLI to generate token..."
-    TOKEN=$(gh api --method POST \
-      -H "Accept: application/vnd.github+json" \
-      "/repos/$REPO_OWNER/$REPO_NAME/actions/runners/registration-token" \
-      --jq '.token' 2>/dev/null)
-    
-    if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
-      echo "✓ Token generated successfully using GitHub CLI"
-      echo "$TOKEN"
-      return 0
+    # Check if gh is authenticated or GITHUB_TOKEN is set
+    if gh auth status &> /dev/null || [ -n "$GITHUB_TOKEN" ]; then
+      echo "Using GitHub CLI to generate token..." >&2
+      
+      # If GITHUB_TOKEN is set but gh isn't authenticated, use it via GH_TOKEN
+      if [ -n "$GITHUB_TOKEN" ] && ! gh auth status &> /dev/null 2>&1; then
+        export GH_TOKEN="$GITHUB_TOKEN"
+      fi
+      
+      TOKEN=$(gh api --method POST \
+        -H "Accept: application/vnd.github+json" \
+        "/repos/$REPO_OWNER/$REPO_NAME/actions/runners/registration-token" \
+        --jq '.token' 2>&1)
+      EXIT_CODE=$?
+      
+      # Check if gh command succeeded and token is valid
+      if [ $EXIT_CODE -eq 0 ] && [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
+        # Basic validation: Token should not start with "{" (JSON error)
+        if [[ "$TOKEN" == "{"* ]]; then
+          echo "Error: GitHub API returned an error: $TOKEN" >&2
+          return 1
+        fi
+        
+        echo "✓ Token generated successfully using GitHub CLI" >&2
+        echo "$TOKEN"
+        return 0
+      else
+        echo "Warning: GitHub CLI API call failed (Exit code: $EXIT_CODE)" >&2
+        if [ -n "$TOKEN" ]; then
+          echo "Error message: $TOKEN" >&2
+        fi
+      fi
+    else
+      echo "Warning: GitHub CLI is not authenticated and GITHUB_TOKEN is not set." >&2
+      echo "         Run 'gh auth login' or set GITHUB_TOKEN environment variable." >&2
     fi
   fi
   
@@ -65,14 +95,14 @@ generate_token_with_pat() {
     return 1
   fi
   
-  echo "Attempting to generate runner token using GitHub PAT..."
+  echo "Attempting to generate runner token using GitHub PAT..." >&2
   
   # Extract owner and repo from URL
   REPO_OWNER=$(echo "$REPO_URL" | sed -n 's#.*/\([^/]*\)/\([^/]*\)$#\1#p')
   REPO_NAME=$(echo "$REPO_URL" | sed -n 's#.*/\([^/]*\)/\([^/]*\)$#\2#p')
   
   if [ -z "$REPO_OWNER" ] || [ -z "$REPO_NAME" ]; then
-    echo "Error: Could not parse repository owner and name from REPO_URL"
+    echo "Error: Could not parse repository owner and name from REPO_URL" >&2
     return 1
   fi
   
@@ -87,7 +117,7 @@ generate_token_with_pat() {
   TOKEN=$(echo "$RESPONSE" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
   
   if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
-    echo "✓ Token generated successfully using GitHub PAT"
+    echo "✓ Token generated successfully using GitHub PAT" >&2
     echo "$TOKEN"
     return 0
   fi
@@ -102,13 +132,11 @@ else
   echo "RUNNER_TOKEN not set, attempting to generate automatically..."
   
   # Try gh CLI first
-  GENERATED_TOKEN=$(generate_token_with_gh)
-  if [ $? -eq 0 ]; then
+  if GENERATED_TOKEN=$(generate_token_with_gh); then
     RUNNER_TOKEN="$GENERATED_TOKEN"
   else
     # Try PAT if gh CLI failed
-    GENERATED_TOKEN=$(generate_token_with_pat)
-    if [ $? -eq 0 ]; then
+    if GENERATED_TOKEN=$(generate_token_with_pat); then
       RUNNER_TOKEN="$GENERATED_TOKEN"
     else
       echo ""
@@ -143,26 +171,34 @@ fi
 # Run the container
 echo "Starting GitHub Actions Runner container..."
 
-# Build docker run command with optional resource limits
-DOCKER_RUN_CMD="docker run -d --restart=unless-stopped --name hrm-runner"
+# Build docker run command arguments array
+DOCKER_ARGS=(
+  "-d"
+  "--restart=unless-stopped"
+  "--name" "hrm-runner"
+)
 
 # Add memory limit if specified
 if [ -n "$RUNNER_MEMORY_LIMIT" ]; then
   echo "Setting memory limit: $RUNNER_MEMORY_LIMIT"
-  DOCKER_RUN_CMD="$DOCKER_RUN_CMD --memory=$RUNNER_MEMORY_LIMIT"
+  DOCKER_ARGS+=("--memory=$RUNNER_MEMORY_LIMIT")
 fi
 
 # Add CPU limit if specified
 if [ -n "$RUNNER_CPU_LIMIT" ]; then
   echo "Setting CPU limit: $RUNNER_CPU_LIMIT"
-  DOCKER_RUN_CMD="$DOCKER_RUN_CMD --cpus=$RUNNER_CPU_LIMIT"
+  DOCKER_ARGS+=("--cpus=$RUNNER_CPU_LIMIT")
 fi
 
 # Add environment variables and image
-DOCKER_RUN_CMD="$DOCKER_RUN_CMD -e REPO_URL=\"$REPO_URL\" -e RUNNER_TOKEN=\"$RUNNER_TOKEN\" hrm-actions-runner"
+DOCKER_ARGS+=(
+  "-e" "REPO_URL=$REPO_URL"
+  "-e" "RUNNER_TOKEN=$RUNNER_TOKEN"
+  "hrm-actions-runner"
+)
 
 # Execute the command
-eval $DOCKER_RUN_CMD
+docker run "${DOCKER_ARGS[@]}"
 
 echo ""
 echo "✓ GitHub Actions Runner deployed successfully!"
