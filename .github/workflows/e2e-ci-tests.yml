@@ -37,29 +37,18 @@ jobs:
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
-      - name: Trigger PR Squash and Wait
+      - name: Trigger PR Squash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
         run: |
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash"
-          echo "Waiting for squash to complete..."
-          for i in {1..30}; do
-            CHECKS_OUTPUT=$(gh pr checks $PR_NUMBER)
-            if echo "$CHECKS_OUTPUT" | grep -q "pending"; then
-              echo "⏳ Some checks are still pending..."
-            elif echo "$CHECKS_OUTPUT" | grep -q "fail"; then
-              echo "❌ Some checks failed"
-              exit 1
-            else
-              echo "✅ All checks successful"
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "❌ Timed out waiting for checks to complete"
-          exit 1
+      - name: Wait for checks
+        uses: ./.github/actions/wait-for-checks
+        with:
+          pr_number: ${{ steps.create_pr.outputs.pr_number }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify Squash
         env:
@@ -125,29 +114,18 @@ jobs:
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
-      - name: Trigger Conflict Resolver and Wait
+      - name: Trigger Conflict Resolver
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
         run: |
           set -e
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
-          echo "Waiting for conflict resolver to complete..."
-          for i in {1..30}; do
-            CHECKS_OUTPUT=$(gh pr checks $PR_NUMBER)
-            if echo "$CHECKS_OUTPUT" | grep -q "pending"; then
-              echo "⏳ Some checks are still pending..."
-            elif echo "$CHECKS_OUTPUT" | grep -q "fail"; then
-              echo "❌ Some checks failed"
-              exit 1
-            else
-              echo "✅ All checks successful"
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "❌ Timed out waiting for checks to complete"
-          exit 1
+      - name: Wait for checks
+        uses: ./.github/actions/wait-for-checks
+        with:
+          pr_number: ${{ steps.create_conflict.outputs.pr_number }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify Conflict Resolution
         env:
@@ -207,29 +185,18 @@ jobs:
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
-      - name: Trigger PR Squash and Rebase and Wait
+      - name: Trigger PR Squash and Rebase
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
         run: |
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
-          echo "Waiting for squash and rebase to complete..."
-          for i in {1..30}; do
-            CHECKS_OUTPUT=$(gh pr checks $PR_NUMBER)
-            if echo "$CHECKS_OUTPUT" | grep -q "pending"; then
-              echo "⏳ Some checks are still pending..."
-            elif echo "$CHECKS_OUTPUT" | grep -q "fail"; then
-              echo "❌ Some checks failed"
-              exit 1
-            else
-              echo "✅ All checks successful"
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "❌ Timed out waiting for checks to complete"
-          exit 1
+      - name: Wait for checks
+        uses: ./.github/actions/wait-for-checks
+        with:
+          pr_number: ${{ steps.create_pr.outputs.pr_number }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify Squash and Rebase
         env:

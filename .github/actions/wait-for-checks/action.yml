@@ -1,0 +1,34 @@
+name: 'Wait for PR Checks'
+description: 'Waits for all PR checks to complete'
+inputs:
+  pr_number:
+    description: 'The PR number to check'
+    required: true
+  github_token:
+    description: 'The GitHub token'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Wait for checks
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+      run: |
+        set -e
+        for i in {1..30}; do
+          CHECKS_OUTPUT=$(gh pr checks $PR_NUMBER --json state,conclusion)
+          if echo "$CHECKS_OUTPUT" | jq -e '.[] | select(.state != "completed")' > /dev/null; then
+            echo "⏳ Some checks are still pending..."
+          elif echo "$CHECKS_OUTPUT" | jq -e '.[] | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out" or .conclusion == "skipped")' > /dev/null; then
+            echo "❌ Some checks failed"
+            exit 1
+          else
+            echo "✅ All checks successful"
+            exit 0
+          fi
+          sleep 10
+        done
+        echo "❌ Timed out waiting for checks to complete"
+        exit 1
