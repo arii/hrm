@@ -144,7 +144,7 @@ fi
 echo "Starting GitHub Actions Runner container..."
 
 # Build docker run command with optional resource limits
-DOCKER_RUN_CMD="docker run -d --restart unless-stopped --name hrm-runner"
+DOCKER_RUN_CMD="docker run -d --restart=unless-stopped --name hrm-runner"
 
 # Add memory limit if specified
 if [ -n "$RUNNER_MEMORY_LIMIT" ]; then
