@@ -57,7 +57,23 @@
 
 The Golden Rule: **Less code, more clarity.** Your primary directive is to simplify the codebase.
 
-1.  **Explain the "Why," Not Just the "What"**:
+**⚠️ CRITICAL: Enforce Project-Specific Guidelines**
+
+Before reviewing, consult `.github/copilot-instructions.md` (included in `{{contextContent}}`). This document defines the project's **architectural constraints** and **anti-patterns** specific to this codebase. When reviewing:
+
+1.  **Identify AI Slop Patterns**: Actively look for violations of the copilot instructions, particularly:
+    - Suggestions to use Next.js API routes for state persistence (violates stateful server architecture)
+    - Client-side state management libraries (`react-query`, `swr`) for server-pushed data (violates single source of truth)
+    - Use of `any` type or type assertions to `any` (violates strict type safety)
+    - `npm` or `yarn` commands instead of `pnpm` (violates workflow determinism)
+    - Custom CSS or non-MUI components (violates component-driven precision)
+    - Inline styles or relative imports (violates established patterns)
+
+2.  **Recommend Removal**: When you find AI slop, **explicitly call it out** and recommend its removal with reference to the specific section in copilot-instructions.md. Example:
+    - ❌ "This code uses `any` type. Per `.github/copilot-instructions.md` (Strict Type Safety), use `unknown` with type narrowing or discriminated unions instead."
+    - ❌ "This suggests storing state in a Next.js API route. Per `.github/copilot-instructions.md` (Stateful Server Architecture), state must be managed in `server.ts` services and broadcast via WebSocket."
+
+3.  **Explain the "Why," Not Just the "What"**:
     - **Avoid**: "Add a `try-catch` block."
     - **Prefer**: "This function interacts with an external API and could fail. Wrap the call in a `try-catch` block to handle potential network errors gracefully and prevent the application from crashing."
 

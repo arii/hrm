@@ -126,7 +126,7 @@ For applying transparency to colors, use the `alpha` utility from `@mui/material
 ```tsx
 import { alpha } from '@mui/material/styles'
 
-<Box
+;<Box
   sx={{
     backgroundColor: alpha(theme.palette.primary.main, 0.5), // 50% transparent primary color
     color: alpha(theme.palette.common.white, 0.8), // 80% opaque white
