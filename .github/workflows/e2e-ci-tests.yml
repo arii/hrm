@@ -45,7 +45,7 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
-          gh pr checks $PR_NUMBER --watch --timeout 5m
+          timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash
         env:
@@ -134,15 +134,15 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
-          gh pr checks $PR_NUMBER --watch --timeout 5m
+          timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Conflict Resolution
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          git fetch origin branch-a
-          git checkout branch-a
+          git fetch origin $BRANCH_A
+          git checkout $BRANCH_A
           # Check if the conflict is resolved
           if git cat-file -e HEAD:conflict-file.txt; then
             echo "✅ Conflict resolved: conflict-file.txt exists."
@@ -160,8 +160,8 @@ jobs:
           set -e
           echo "Cleaning up PR and branches..."
           gh pr close $PR_NUMBER
-          git push origin --delete branch-a
-          git push origin --delete branch-b
+          git push origin --delete $BRANCH_A
+          git push origin --delete $BRANCH_B
 
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
@@ -202,7 +202,7 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
-          gh pr checks $PR_NUMBER --watch --timeout 5m
+          timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash and Rebase
         env:
