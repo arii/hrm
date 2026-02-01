@@ -100,9 +100,7 @@ export class GitHubClient implements IGitHubClient {
     })
 
     if (result.status !== 0) {
-      throw new Error(
-        `GitHub CLI Error: ${result.stderr || 'Unknown error'}`
-      )
+      throw new Error(`GitHub CLI Error: ${result.stderr || 'Unknown error'}`)
     }
 
     return result.stdout.trim()

@@ -123,7 +123,7 @@ export class SpotifyPolling implements SpotifyService {
     // Remove refresh_token to prevent SDK from attempting auto-refresh without client secret.
     // We handle refreshing manually via SpotifyTokenManager.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { refresh_token, ...tokenWithoutRefresh } = accessToken
+    const { refresh_token: _, ...tokenWithoutRefresh } = accessToken
     if (!env.SPOTIFY_CLIENT_ID) {
       logger.error('Spotify client ID not found, cannot initialize SDK.')
       return

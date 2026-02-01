@@ -4,7 +4,7 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import ZoneDistribution from '@/app/client/experimental/components/ZoneDistribution'
-import { HrZoneName } from '@/utils/hr-zones'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 describe('ZoneDistribution', () => {
   const baseTimeInZones = {

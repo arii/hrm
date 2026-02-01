@@ -54,7 +54,7 @@ test.describe('Frontend Performance', () => {
           LayoutCount: layoutCount,
           RecalculateStyleCount: recalculateStyleCount,
         })
-      } catch (_error) {
+      } catch {
         // Ignore errors if the session closes prematurely
       }
     }, SAMPLING_INTERVAL_MS)

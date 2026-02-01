@@ -9,3 +9,8 @@ export interface WorkoutTableDto {
   headers: string[]
   rows: string[][]
 }
+
+export interface WorkoutItem {
+  category: string
+  exercises: string[]
+}

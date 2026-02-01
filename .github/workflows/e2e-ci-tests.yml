@@ -1,0 +1,225 @@
+name: 'E2E CI Tests'
+
+on:
+  push:
+    paths:
+      - '.github/**'
+
+jobs:
+  test_pr_squash:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Test Branch and PR
+        id: create_pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          BRANCH_NAME="e2e-test-$(date +%s)"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git checkout -b $BRANCH_NAME
+          echo "test content" > test-file.txt
+          git add test-file.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "E2E Test Commit 1"
+          echo "another line" >> test-file.txt
+          git add test-file.txt
+          git commit -m "E2E Test Commit 2"
+          git push origin $BRANCH_NAME
+          PR_URL=$(gh pr create --title "E2E Test PR" --body "Test PR for E2E testing" --base leader --head $BRANCH_NAME)
+          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Trigger PR Squash and Wait
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+        run: |
+          set -e
+          gh pr comment $PR_NUMBER --body "@pr-squash"
+          echo "Waiting for squash and rebase to complete..."
+          gh pr checks $PR_NUMBER --watch --timeout 5m
+
+      - name: Verify Squash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+        run: |
+          set -e
+          git fetch origin $BRANCH_NAME
+          git checkout $BRANCH_NAME
+          COMMIT_COUNT=$(git rev-list --count HEAD ^leader)
+          if [ "$COMMIT_COUNT" -eq 1 ]; then
+            echo "✅ Squash successful: Branch has 1 commit."
+          else
+            echo "❌ Squash failed: Branch has $COMMIT_COUNT commits instead of 1."
+            exit 1
+          fi
+
+      - name: Cleanup
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+        run: |
+          set -e
+          echo "Cleaning up PR and branch..."
+          gh pr close $PR_NUMBER
+          git push origin --delete $BRANCH_NAME
+
+  test_conflict_resolver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Create Conflict
+        id: create_conflict
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          # Create two branches from the same commit
+          git checkout -b branch-a
+          echo "initial content" > conflict-file.txt
+          git add conflict-file.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "Initial commit"
+          git push origin branch-a
+
+          git checkout -b branch-b
+          echo "branch-b content" > conflict-file.txt
+          git add conflict-file.txt
+          git commit -m "Commit on branch-b"
+          git push origin branch-b
+
+          # Create a pull request to trigger the conflict resolver
+          PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base branch-a --head branch-b)
+          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Trigger Conflict Resolver and Wait
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
+        run: |
+          set -e
+          gh pr comment $PR_NUMBER --body "@conflict-resolve"
+          echo "Waiting for conflict resolver to complete..."
+          gh pr checks $PR_NUMBER --watch --timeout 5m
+
+      - name: Verify Conflict Resolution
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git fetch origin branch-a
+          git checkout branch-a
+          # Check if the conflict is resolved
+          if git cat-file -e HEAD:conflict-file.txt; then
+            echo "✅ Conflict resolved: conflict-file.txt exists."
+          else
+            echo "❌ Conflict resolution failed: conflict-file.txt not found."
+            exit 1
+          fi
+
+      - name: Cleanup
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
+        run: |
+          set -e
+          echo "Cleaning up PR and branches..."
+          gh pr close $PR_NUMBER
+          git push origin --delete branch-a
+          git push origin --delete branch-b
+
+  test_pr_squash_rebase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Test Branch and PR
+        id: create_pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          BRANCH_NAME="e2e-test-rebase-$(date +%s)"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git checkout -b $BRANCH_NAME
+          echo "test content" > test-file-rebase.txt
+          git add test-file-rebase.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "E2E Test Commit 1 (rebase)"
+          echo "another line" >> test-file-rebase.txt
+          git add test-file-rebase.txt
+          git commit -m "E2E Test Commit 2 (rebase)"
+          git push origin $BRANCH_NAME
+          PR_URL=$(gh pr create --title "E2E Test PR (rebase)" --body "Test PR for E2E testing (rebase)" --base leader --head $BRANCH_NAME)
+          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Trigger PR Squash and Rebase and Wait
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+        run: |
+          set -e
+          gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
+          echo "Waiting for squash and rebase to complete..."
+          gh pr checks $PR_NUMBER --watch --timeout 5m
+
+      - name: Verify Squash and Rebase
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+        run: |
+          set -e
+          git fetch origin $BRANCH_NAME
+          git checkout $BRANCH_NAME
+          COMMIT_COUNT=$(git rev-list --count HEAD ^leader)
+          if [ "$COMMIT_COUNT" -eq 1 ]; then
+            echo "✅ Squash and rebase successful: Branch has 1 commit."
+          else
+            echo "❌ Squash and rebase failed: Branch has $COMMIT_COUNT commits instead of 1."
+            exit 1
+          fi
+          # Verify that the branch is rebased on top of leader
+          if git merge-base --is-ancestor leader HEAD; then
+            echo "✅ Branch is rebased on top of leader."
+          else
+            echo "❌ Branch is not rebased on top of leader."
+            exit 1
+          fi
+
+      - name: Cleanup
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+        run: |
+          set -e
+          echo "Cleaning up PR and branch..."
+          gh pr close $PR_NUMBER
+          git push origin --delete $BRANCH_NAME

@@ -2,11 +2,10 @@
 // All other types should be defined in their respective files.
 
 import { TimerMode, TimerPhase } from './core'
+import { HrData } from './heart-rate'
 
-export interface HrTileProps {
+export interface HrTileProps extends HrData {
   name: string
-  bpm: number
-  percentMax: number // 0-100
   calories?: number
   isConnected?: boolean
   isDataStale?: boolean
@@ -43,10 +42,7 @@ export interface WorkoutColumnsProps {
 }
 
 // Correct WorkoutItem for the parser and WebSocket
-export interface WorkoutItem {
-  category: string
-  exercises: string[]
-}
+import { WorkoutItem } from './workout'
 
 export type WorkoutData = WorkoutItem[]
 

@@ -325,113 +325,170 @@ describe('WebSocket Manager', () => {
     })
   })
 
-  describe('Calorie Calculation', () => {
-    it('should accumulate calories correctly with small frequent updates', () => {
-      const sendHrmInput = (hr: number) => {
-        const message = JSON.stringify({
-          type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
-        })
-        mockWs.emit('message', message.toString())
-      }
+  describe('Calorie Processing', () => {
+    it('should accept and store client-calculated calories', () => {
+      const message = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 150, calories: 123.45 },
+      })
+      mockWs.emit('message', message.toString())
 
-      // Initial input
-      sendHrmInput(150)
-
-      // Send 100 updates, each 100ms apart
-      // Should accumulate significant calories even if each step < 0.1 kcal
-      for (let i = 0; i < 100; i++) {
-        jest.advanceTimersByTime(100) // 100ms
-        sendHrmInput(150)
-      }
-
-      // Check the last broadcasted state
       const mockBroadcast = broadcast as jest.Mock
-      jest.runOnlyPendingTimers()
       expect(mockBroadcast).toHaveBeenCalled()
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       const finalPayload: HrmData[] = lastCall[1].payload
-      const clientData = finalPayload.find((c) => c.calories > 0)
+      const clientData = finalPayload.find((c) => c.clientId === 'test-client')
 
       expect(clientData).toBeDefined()
-      expect(clientData!.calories).toBeGreaterThan(0.1)
-      // A more precise check based on the known formula for short duration.
-      // 100 updates * 100ms = 10 seconds = 0.1667 minutes.
-      // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
-      expect(clientData!.calories).toBeGreaterThan(1)
+      expect(clientData!.calories).toBe(123.45)
     })
 
-    it('should accumulate calories with high precision for very short intervals', () => {
-      const sendHrmInput = (hr: number) => {
-        const message = JSON.stringify({
-          type: 'HRM_INPUT',
-          data: { value: hr, age: 30, weightKg: 75 },
-        })
-        mockWs.emit('message', message.toString())
-      }
+    it('should ignore a large, anomalous calorie jump from the client', () => {
+      // First, set a reasonable baseline
+      const baselineMessage = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 150, calories: 10 },
+      })
+      mockWs.emit('message', baselineMessage.toString())
 
-      // Initial input
-      sendHrmInput(150)
+      let mockBroadcast = broadcast as jest.Mock
+      let lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      let finalPayload: HrmData[] = lastCall[1].payload
+      let clientData = finalPayload.find((c) => c.clientId === 'test-client')
+      expect(clientData!.calories).toBe(10)
 
-      // Send 10 updates, each 1ms apart.
-      for (let i = 0; i < 10; i++) {
-        jest.advanceTimersByTime(1) // 1ms
-        sendHrmInput(150)
-      }
+      // Now, send a message with a huge jump
+      const anomalyMessage = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 151, calories: 100 }, // A jump of 90 calories
+      })
+      mockWs.emit('message', anomalyMessage.toString())
 
-      // Check the last broadcasted state
+      mockBroadcast = broadcast as jest.Mock
+      lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      finalPayload = lastCall[1].payload
+      clientData = finalPayload.find((c) => c.clientId === 'test-client')
+
+      // The server should have rejected the new value and kept the old one.
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          clientId: 'test-client',
+          clientCalories: 100,
+          serverCalories: 10,
+        }),
+        'Anomalous calorie value detected. Using last known server value.'
+      )
+      expect(clientData!.calories).toBe(10)
+    })
+
+    it('should reject an anomalously high initial calorie value', () => {
+      // Server's initial calorie state for a new client is 0.
+      // Send an initial message with a calorie value that exceeds the MAX_CALORIE_JUMP_PER_UPDATE threshold.
+      const initialAnomalyMessage = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 120, calories: 1001 }, // 1001 > MAX_INITIAL_CALORIES (1000)
+      })
+      mockWs.emit('message', initialAnomalyMessage.toString())
+
       const mockBroadcast = broadcast as jest.Mock
-      jest.runOnlyPendingTimers()
-      expect(mockBroadcast).toHaveBeenCalled()
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       const finalPayload: HrmData[] = lastCall[1].payload
-      const clientData = finalPayload.find((c) => c.calories > 0)
+      const clientData = finalPayload.find((c) => c.clientId === 'test-client')
 
+      // The server should have rejected the anomalously high initial value and kept calories at 0.
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          clientId: 'test-client',
+          clientCalories: 1001,
+          serverCalories: 0,
+          isInitialValue: true,
+        }),
+        'Anomalous calorie value detected. Using last known server value.'
+      )
       expect(clientData).toBeDefined()
-      // Calories should be a small positive number, not zero.
-      expect(clientData!.calories).toBeGreaterThan(0)
-      // The calculated value for 10ms at 150bpm is approx 0.0024.
-      // We expect the value to be un-rounded.
-      expect(clientData!.calories).toBeCloseTo(0.0024, 4)
+      expect(clientData!.calories).toBe(0) // Should remain at the initial 0
     })
 
-    it('should reset calories when a STOP command is received', () => {
-      const sendHrmInput = (hr: number) => {
-        const message = JSON.stringify({
+    it('should accept a subsequent valid calorie update after an anomaly', () => {
+      // 1. Baseline
+      mockWs.emit(
+        'message',
+        JSON.stringify({
           type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
+          data: { value: 150, calories: 10 },
         })
-        mockWs.emit('message', message.toString())
-      }
+      )
 
-      // 1. Accumulate some calories
-      sendHrmInput(150)
-      jest.advanceTimersByTime(1000)
-      sendHrmInput(150)
+      // 2. Anomaly (rejected)
+      mockWs.emit(
+        'message',
+        JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: 151, calories: 100 },
+        })
+      )
 
-      // Verify calories have accumulated
       const mockBroadcast = broadcast as jest.Mock
       let lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      let payload: HrmData[] = lastCall[1].payload
-      expect(payload[0].calories).toBeGreaterThan(0)
+      let finalPayload: HrmData[] = lastCall[1].payload
+      let clientData = finalPayload.find((c) => c.clientId === 'test-client')
+      expect(clientData!.calories).toBe(10) // Still at 10
 
-      // 2. Send the STOP command
-      const stopMessage = JSON.stringify({
-        type: 'TIMER_COMMAND',
-        command: 'STOP',
-      })
-      mockWs.emit('message', stopMessage)
-
-      // 3. Verify calories are reset
-      expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith(
-        'STOP'
+      // 3. Valid update
+      mockWs.emit(
+        'message',
+        JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: 152, calories: 11.5 },
+        })
       )
+
       lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      payload = lastCall[1].payload
-      expect(payload[0].calories).toBeGreaterThan(0)
+      finalPayload = lastCall[1].payload
+      clientData = finalPayload.find((c) => c.clientId === 'test-client')
+
+      // The server should now accept the new, reasonable value.
+      expect(clientData!.calories).toBe(11.5)
+    })
+
+    it('should handle HRM_INPUT messages without a calories field gracefully', () => {
+      // Set a known calorie value first
+      mockWs.emit(
+        'message',
+        JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: 150, calories: 25 },
+        })
+      )
+
+      const mockBroadcast = broadcast as jest.Mock
+      let lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      let finalPayload: HrmData[] = lastCall[1].payload
+      let clientData = finalPayload.find((c) => c.clientId === 'test-client')
+      expect(clientData!.calories).toBe(25)
+
+      // Send a message without the calories field (like an old client would)
+      mockWs.emit(
+        'message',
+        JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: 155 },
+        })
+      )
+
+      lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      finalPayload = lastCall[1].payload
+      clientData = finalPayload.find((c) => c.clientId === 'test-client')
+
+      // The calorie value should remain unchanged from the last known value.
+      expect(clientData!.calories).toBe(25)
+      // The HR value should be updated.
+      expect(clientData!.value).toBe(155)
     })
   })
 
