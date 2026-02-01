@@ -30,7 +30,7 @@
     "test:components": "cross-env NEXTAUTH_SECRET=test-secret-unit jest --config jest.config.components.cjs",
     "test:unit:watch": "jest tests/unit --watch",
     "test:json": "scripts/test-json-with-server.sh",
-    "test:visual": "pnpm run build && playwright test tests/playwright/visual-regression.spec.ts tests/playwright/remote-capabilities.spec.ts tests/playwright/simple-smoke.spec.ts  tests/playwright/debug.spec.ts",
+    "test:visual": "pnpm run build && playwright test tests/playwright/vrt-*.spec.ts tests/playwright/remote-capabilities.spec.ts tests/playwright/simple-smoke.spec.ts tests/playwright/debug.spec.ts",
     "test:all": "pnpm run test:visual && pnpm run test:unit",
     "test:backend:port": "pnpm run build && PORT=3003 playwright test",
     "test:websocket:port": "pnpm run build && PORT=3004 playwright test",

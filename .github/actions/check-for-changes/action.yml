@@ -1,16 +1,27 @@
 name: 'Check for Changes'
-description: 'Checks for file changes between HEAD and HEAD~1'
+description: 'Checks for file changes against a specified base branch'
+inputs:
+  base_branch:
+    description: 'The base branch to compare against'
+    required: true
 outputs:
   has_changes:
     description: "Boolean indicating if changes were found"
 runs:
   using: "composite"
   steps:
+    - name: Fetch base branch
+      shell: bash
+      env:
+        BASE_BRANCH: ${{ inputs.base_branch }}
+      run: git fetch origin $BASE_BRANCH --depth=1
     - name: Check for file changes
       id: check_files
       shell: bash
+      env:
+        BASE_BRANCH: ${{ inputs.base_branch }}
       run: |
-        if git diff --quiet HEAD HEAD~1; then
+        if git diff --quiet origin/$BASE_BRANCH HEAD; then
           echo "No changes detected."
           echo "has_changes=false" >> $GITHUB_OUTPUT
         else

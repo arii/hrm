@@ -18,8 +18,8 @@ export const useSpotifyControls = () => {
   const { spotifyData, sendData } = useWebSocket()
 
   const spotifyDeviceId = useMemo(
-    () => resolveSpotifyDeviceId(spotifyData.devices || []),
-    [spotifyData.devices]
+    () => resolveSpotifyDeviceId(spotifyData?.devices || []),
+    [spotifyData?.devices]
   )
 
   const sendSpotifyCommand = useCallback(

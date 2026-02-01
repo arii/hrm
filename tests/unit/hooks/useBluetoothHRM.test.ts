@@ -1,11 +1,11 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react'
-import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from './useBluetoothHRM'
-import * as WebSocketContext from '../context/WebSocketContext'
-import * as cookieUtils from '../utils/cookies'
-import { env } from '../lib/env'
+import { renderHook, act, waitFor } from '@testing-library/react'
+import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
+import * as WebSocketContext from '@/context/WebSocketContext'
+import * as cookieUtils from '@/utils/cookies'
+import { env } from '@/lib/env'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
@@ -18,6 +18,7 @@ jest.mock('@/utils/logger', () => ({
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
+    debug: jest.fn(),
   },
 }))
 
@@ -39,6 +40,8 @@ describe('useBluetoothHRM', () => {
   beforeEach(() => {
     // Reset mocks before each test
     jest.clearAllMocks()
+    jest.useFakeTimers()
+    jest.clearAllTimers()
 
     // Mock WebSocket context
     jest.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue({
@@ -103,6 +106,10 @@ describe('useBluetoothHRM', () => {
     })
   })
 
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
   it('should not attempt to auto-connect if no device is saved', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
 
@@ -110,7 +117,7 @@ describe('useBluetoothHRM', () => {
       await result.current.autoConnect()
     })
 
-    expect(mockBluetooth.getDevices).toHaveBeenCalled()
+    expect(mockBluetooth.getDevices).not.toHaveBeenCalled()
     expect(mockGatt.connect).not.toHaveBeenCalled()
     expect(result.current.deviceStatus).toBe('Disconnected')
   })
@@ -170,61 +177,94 @@ describe('useBluetoothHRM', () => {
     // Mock AbortController to spy on the abort method
     const mockAbort = jest.fn()
     const OriginalAbortController = global.AbortController
-    global.AbortController = jest.fn(
-      () =>
-        ({
-          abort: mockAbort,
-          signal: new OriginalAbortController().signal,
-        }) as unknown as AbortController
-    )
 
-    // Make the connect call a promise that we can control, so it stays pending
-    let connectResolver: (value: MockBluetoothRemoteGATTServer) => void
-    const connectPromise = new Promise<MockBluetoothRemoteGATTServer>(
-      (resolve) => {
-        connectResolver = resolve
+    // Simplified Mock AbortController
+    class MockAbortController {
+      signal: {
+        aborted: boolean
+        addEventListener: (event: string, cb: () => void) => void
+        removeEventListener: jest.Mock
       }
-    )
-    mockGatt.connect.mockReturnValue(connectPromise)
-
-    const { result } = renderHook(() => useBluetoothHRM())
-
-    // First call, should get stuck in a pending state
-    act(() => {
-      // We don't await this, so it remains in-flight
-      result.current.connectAndStream()
-    })
-
-    // Second call, should trigger the abort logic for the first call
-    act(() => {
-      result.current.connectAndStream()
-    })
-
-    // Verify that the abort function was called for the first pending attempt
-    expect(mockAbort).toHaveBeenCalledTimes(1)
-
-    // Clean up by resolving the promise to avoid open handles
-    await act(async () => {
-      const mockChar: MockBluetoothRemoteGATTCharacteristic = {
-        startNotifications: jest.fn().mockResolvedValue(undefined),
-        stopNotifications: jest.fn().mockResolvedValue(undefined),
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
+      listeners: (() => void)[]
+      constructor() {
+        this.listeners = []
+        this.signal = {
+          aborted: false,
+          addEventListener: (_event: string, cb: () => void) => {
+            this.listeners.push(cb)
+          },
+          removeEventListener: jest.fn(),
+        }
       }
-      const mockSvc: MockBluetoothRemoteGATTService = {
-        getCharacteristic: jest.fn().mockResolvedValue(mockChar),
+      abort(reason?: unknown) {
+        this.signal.aborted = true
+        mockAbort(reason)
+        this.listeners.forEach((cb) => cb())
       }
-      const mockGattServer: MockBluetoothRemoteGATTServer = {
-        connect: jest.fn(),
-        disconnect: jest.fn(),
-        getPrimaryService: jest.fn().mockResolvedValue(mockSvc),
-      }
-      mockGattServer.connect.mockResolvedValue(mockGattServer)
-      connectResolver(mockGattServer)
-    })
+    }
 
-    // Restore original AbortController
-    global.AbortController = OriginalAbortController
+    // @ts-expect-error - Mocking a global
+    global.AbortController = MockAbortController
+    // @ts-expect-error - Mocking window property for JSDOM
+    if (typeof window !== 'undefined') {
+      window.AbortController =
+        MockAbortController as unknown as typeof AbortController
+    }
+
+    try {
+      // Make the connect call a promise that we can control
+      let connectResolver: (value: MockBluetoothRemoteGATTServer) => void
+      const connectPromise = new Promise<MockBluetoothRemoteGATTServer>(
+        (resolve, _reject) => {
+          connectResolver = resolve
+          // If the signal aborts while we are waiting, we should reject?
+          // The cancellablePromise utility wraps this, so the underlying promise doesn't STRICTLY need to handle abort,
+          // but it's good practice.
+        }
+      )
+      mockGatt.connect.mockReturnValue(connectPromise)
+
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // 1. Start the first connection attempt
+      // We do NOT await this, as we want it to be "in-flight"
+      await act(async () => {
+        result.current.connectAndStream().catch(() => {})
+      })
+
+      // 2. Wait for the hook to update state to "Connecting"
+      await waitFor(() => {
+        expect(result.current.deviceStatus).toMatch(/connecting/i)
+      })
+
+      // 3. Start the second connection attempt
+      // Ensure the silent connect finds a device so it proceeds to connectToGatt
+      jest.spyOn(cookieUtils, 'getCookie').mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+
+      await act(async () => {
+        // This should trigger the abort of the first one
+        result.current
+          .connectAndStream(undefined, undefined, { silent: true })
+          .catch(() => {})
+      })
+
+      // 4. Verify abort was called
+      // We expect it to be called once (cancelling the FIRST connection)
+      expect(mockAbort).toHaveBeenCalledTimes(1)
+
+      // Cleanup: Resolve the pending promise to let the test finish gracefully
+      await act(async () => {
+        connectResolver(mockGatt)
+      })
+    } finally {
+      // Restore original AbortController
+      global.AbortController = OriginalAbortController
+      if (typeof window !== 'undefined') {
+        window.AbortController =
+          OriginalAbortController as unknown as typeof AbortController
+      }
+    }
   })
 
   describe('Signal Quality Calculation', () => {
@@ -324,7 +364,6 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should proactively increase signal period on missed heartbeats', async () => {
-      jest.useFakeTimers()
       const { result } = renderHook(() => useBluetoothHRM())
       let characteristicValueChangedCallback: (event: {
         target: { value: DataView }
@@ -370,14 +409,23 @@ describe('useBluetoothHRM', () => {
       })
       expect(result.current.signalPeriodMs).toBe(1000)
 
-      // Advance time by 2 seconds without sending a packet
+      // Simulate first missed heartbeat check
       jest.spyOn(Date, 'now').mockReturnValue(now + 3000)
       await act(async () => {
-        jest.advanceTimersByTime(2000)
+        // Advance timers enough for the watchdog to run once
+        jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS)
+      })
+
+      // Simulate second missed heartbeat check
+      jest.spyOn(Date, 'now').mockReturnValue(now + 4000)
+      await act(async () => {
+        // Advance timers enough for the watchdog to run again
+        jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS)
       })
 
       // The heartbeat should have fired twice. The first time, it penalizes
-      // with the time since last data (2000ms), the second time with 3000ms.
+      // with the time since last data (2000ms from now+1000 to now+3000),
+      // the second time with 3000ms (from now+1000 to now+4000).
       // History: [1000, 2000, 3000] -> Avg: 2000
       expect(result.current.signalPeriodMs).toBe(2000)
 
@@ -399,9 +447,28 @@ describe('useBluetoothHRM', () => {
 
   describe('Watchdog and Reconnection', () => {
     const WATCHDOG_INTERVAL_MS = HEARTBEAT_INTERVAL_MS * 2 // Watchdog runs every 2nd heartbeat
+    let onDisconnectedCallback: () => void = () => {}
+    let setTimeoutSpy: jest.SpyInstance
+
+    beforeEach(() => {
+      // Capture the 'gattserverdisconnected' event listener
+      onDisconnectedCallback = () => {} // Reset before each test
+      mockDevice.addEventListener.mockImplementation(
+        (event: string, callback: () => void) => {
+          if (event === 'gattserverdisconnected') {
+            onDisconnectedCallback = callback
+          }
+        }
+      )
+    })
+
+    afterEach(() => {
+      if (setTimeoutSpy) {
+        setTimeoutSpy.mockClear()
+      }
+    })
 
     it('should detect data staleness and attempt to reconnect', async () => {
-      jest.useFakeTimers()
       const dataLivenessTimeoutMs = 5000
       const { result } = renderHook(() =>
         useBluetoothHRM({ dataLivenessTimeoutMs })
@@ -455,24 +522,10 @@ describe('useBluetoothHRM', () => {
       expect(result.current.isDataStale).toBe(true)
       expect(result.current.deviceStatus).toMatch(/reconnecting/i)
       expect(mockGatt.disconnect).toHaveBeenCalled()
-
-      jest.useRealTimers()
     })
 
     it(`should attempt to reconnect on disconnection and give up after ${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS} attempts`, async () => {
-      jest.useFakeTimers()
-
       const { result } = renderHook(() => useBluetoothHRM())
-      let onDisconnectedCallback: () => void = () => {}
-
-      // Capture the 'gattserverdisconnected' event listener
-      mockDevice.addEventListener.mockImplementation(
-        (event: string, callback: () => void) => {
-          if (event === 'gattserverdisconnected') {
-            onDisconnectedCallback = callback
-          }
-        }
-      )
 
       // First connection is successful
       await act(async () => {
@@ -500,8 +553,9 @@ describe('useBluetoothHRM', () => {
 
       // --- Reconnection attempts ---
       for (let i = 1; i <= env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS; i++) {
+        const delay = Math.pow(2, i) * 1000
         await act(async () => {
-          jest.runOnlyPendingTimers() // Run the setTimeout for reconnect
+          jest.advanceTimersByTime(delay)
         })
         expect(mockGatt.connect).toHaveBeenCalledTimes(i)
         if (i < env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS) {
@@ -518,44 +572,34 @@ describe('useBluetoothHRM', () => {
 
       // After max attempts, it should fail
       await act(async () => {
-        jest.runOnlyPendingTimers()
+        jest.advanceTimersByTime(100)
       })
 
-      expect(result.current.deviceStatus).toMatch(
-        new RegExp(
-          `failed to reconnect after ${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS} attempts`,
-          'i'
+      await waitFor(() => {
+        expect(result.current.deviceStatus).toMatch(
+          new RegExp(
+            `failed to reconnect after ${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS} attempts`,
+            'i'
+          )
         )
-      )
+      })
       expect(mockGatt.connect).toHaveBeenCalledTimes(
         env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS
       ) // No more calls
 
       // It should also forget the device
       await act(async () => {
-        jest.runOnlyPendingTimers() // Run the final timer to forget the device
+        jest.advanceTimersByTime(2000) // Run the final timer to forget the device
       })
       expect(cookieUtils.setCookie).toHaveBeenCalledWith(
         'hrm_device_id',
         '',
         -1
       )
-
-      jest.useRealTimers()
     })
 
     it('should successfully reconnect after a disconnection', async () => {
-      jest.useFakeTimers()
       const { result } = renderHook(() => useBluetoothHRM())
-      let onDisconnectedCallback: () => void = () => {}
-
-      mockDevice.addEventListener.mockImplementation(
-        (event: string, callback: () => void) => {
-          if (event === 'gattserverdisconnected') {
-            onDisconnectedCallback = callback
-          }
-        }
-      )
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -591,27 +635,19 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.connect).toHaveBeenCalledTimes(2)
       expect(result.current.isConnected).toBe(true)
       expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
-
-      jest.useRealTimers()
     })
 
     it('should not attempt to reconnect after a manual disconnect', async () => {
-      jest.useFakeTimers()
       const { result } = renderHook(() => useBluetoothHRM())
-      let onDisconnectedCallback: () => void = () => {}
-
-      mockDevice.addEventListener.mockImplementation(
-        (event: string, callback: () => void) => {
-          if (event === 'gattserverdisconnected') {
-            onDisconnectedCallback = callback
-          }
-        }
-      )
 
       await act(async () => {
         await result.current.connectAndStream()
       })
       mockGatt.connect.mockClear()
+
+      // Clear any timers from the connection phase before spying
+      jest.clearAllTimers()
+      const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
 
       // Manually disconnect
       act(() => {
@@ -625,11 +661,45 @@ describe('useBluetoothHRM', () => {
       })
 
       // Ensure no timers are pending for reconnection
-      expect(setTimeout).not.toHaveBeenCalled()
+      expect(setTimeoutSpy).not.toHaveBeenCalled()
       expect(mockGatt.connect).not.toHaveBeenCalled()
       expect(result.current.deviceStatus).toBe('Disconnected')
 
+      setTimeoutSpy.mockRestore()
       jest.useRealTimers()
+    })
+
+    it('should attempt to reconnect after an unexpected disconnection and succeed', async () => {
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // First connection is successful
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+      expect(result.current.isConnected).toBe(true)
+
+      // Mock the next connection attempt to be successful
+      mockGatt.connect.mockResolvedValue(mockGatt)
+
+      // Manually trigger the disconnection event
+      await act(async () => {
+        onDisconnectedCallback()
+      })
+
+      // Verify that the hook is now in a reconnecting state
+      expect(result.current.isConnected).toBe(false)
+      expect(result.current.deviceStatus).toContain('Reconnecting')
+
+      // Advance timers to trigger the reconnect attempt
+      await act(async () => {
+        jest.runOnlyPendingTimers()
+      })
+
+      // Verify that the connection was successful
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(true)
+        expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+      })
     })
   })
 
@@ -647,14 +717,14 @@ describe('useBluetoothHRM', () => {
 
     it('should use the default max reconnection attempts when the environment variable is not set', async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { env } = require('../lib/env')
+      const { env } = require('@/lib/env')
       expect(env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS).toBe(5)
     })
 
     it('should use the custom max reconnection attempts from the environment variable', async () => {
       process.env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS = '10'
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { env } = require('../lib/env')
+      const { env } = require('@/lib/env')
       expect(env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS).toBe(10)
     })
   })
