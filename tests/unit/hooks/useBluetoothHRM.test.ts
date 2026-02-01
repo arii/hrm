@@ -177,62 +177,84 @@ describe('useBluetoothHRM', () => {
     // Mock AbortController to spy on the abort method
     const mockAbort = jest.fn()
     const OriginalAbortController = global.AbortController
-    global.AbortController = jest.fn(
-      () =>
-        ({
-          abort: mockAbort,
-          signal: new OriginalAbortController().signal,
-        }) as unknown as AbortController
-    )
 
-    // Make the connect call a promise that we can control, so it stays pending
+    // Simplified Mock AbortController
+    class MockAbortController {
+      signal: {
+        aborted: boolean
+        addEventListener: (event: string, cb: () => void) => void
+        removeEventListener: jest.Mock
+      }
+      listeners: (() => void)[]
+      constructor() {
+        this.listeners = []
+        this.signal = {
+          aborted: false,
+          addEventListener: (_event: string, cb: () => void) => {
+            this.listeners.push(cb)
+          },
+          removeEventListener: jest.fn(),
+        }
+      }
+      abort(reason?: unknown) {
+        this.signal.aborted = true
+        mockAbort(reason)
+        this.listeners.forEach((cb) => cb())
+      }
+    }
+
+    // @ts-expect-error - Mocking a global
+    global.AbortController = MockAbortController
+    // @ts-expect-error - Mocking window property for JSDOM
+    if (typeof window !== 'undefined') {
+      window.AbortController =
+        MockAbortController as unknown as typeof AbortController
+    }
+
+    // Make the connect call a promise that we can control
     let connectResolver: (value: MockBluetoothRemoteGATTServer) => void
     const connectPromise = new Promise<MockBluetoothRemoteGATTServer>(
-      (resolve) => {
+      (resolve, _reject) => {
         connectResolver = resolve
+        // If the signal aborts while we are waiting, we should reject?
+        // The cancellablePromise utility wraps this, so the underlying promise doesn't STRICTLY need to handle abort,
+        // but it's good practice.
       }
     )
     mockGatt.connect.mockReturnValue(connectPromise)
 
     const { result } = renderHook(() => useBluetoothHRM())
 
-    // First call, should get stuck in a pending state
-    act(() => {
-      // We don't await this, so it remains in-flight
-      result.current.connectAndStream()
+    // 1. Start the first connection attempt
+    // We do NOT await this, as we want it to be "in-flight"
+    await act(async () => {
+      result.current.connectAndStream().catch(() => {})
     })
 
-    // Wait for the status to change to connecting
-    await waitFor(() =>
+    // 2. Wait for the hook to update state to "Connecting"
+    await waitFor(() => {
       expect(result.current.deviceStatus).toMatch(/connecting/i)
-    )
-
-    // Second call, should trigger the abort logic for the first call
-    act(() => {
-      result.current.connectAndStream(undefined, undefined, { silent: true })
     })
 
-    // Verify that the abort function was called for the first pending attempt
+    // 3. Start the second connection attempt
+    // Ensure the silent connect finds a device so it proceeds to connectToGatt
+    jest.spyOn(cookieUtils, 'getCookie').mockReturnValue('test-device-id')
+    mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+
+    await act(async () => {
+      // This should trigger the abort of the first one
+      result.current
+        .connectAndStream(undefined, undefined, { silent: true })
+        .catch(() => {})
+    })
+
+    // 4. Verify abort was called
+    // We expect it to be called once (cancelling the FIRST connection)
     expect(mockAbort).toHaveBeenCalledTimes(1)
 
-    // Clean up by resolving the promise to avoid open handles
+    // Cleanup: Resolve the pending promise to let the test finish gracefully
     await act(async () => {
-      const mockChar: MockBluetoothRemoteGATTCharacteristic = {
-        startNotifications: jest.fn().mockResolvedValue(undefined),
-        stopNotifications: jest.fn().mockResolvedValue(undefined),
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
-      }
-      const mockSvc: MockBluetoothRemoteGATTService = {
-        getCharacteristic: jest.fn().mockResolvedValue(mockChar),
-      }
-      const mockGattServer: MockBluetoothRemoteGATTServer = {
-        connect: jest.fn(),
-        disconnect: jest.fn(),
-        getPrimaryService: jest.fn().mockResolvedValue(mockSvc),
-      }
-      mockGattServer.connect.mockResolvedValue(mockGattServer)
-      connectResolver(mockGattServer)
+      connectResolver(mockGatt)
     })
 
     // Restore original AbortController
@@ -525,8 +547,9 @@ describe('useBluetoothHRM', () => {
 
       // --- Reconnection attempts ---
       for (let i = 1; i <= env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS; i++) {
+        const delay = Math.pow(2, i) * 1000
         await act(async () => {
-          jest.runOnlyPendingTimers() // Run the setTimeout for reconnect
+          jest.advanceTimersByTime(delay)
         })
         expect(mockGatt.connect).toHaveBeenCalledTimes(i)
         if (i < env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS) {
@@ -543,7 +566,7 @@ describe('useBluetoothHRM', () => {
 
       // After max attempts, it should fail
       await act(async () => {
-        jest.runOnlyPendingTimers()
+        jest.advanceTimersByTime(100)
       })
 
       await waitFor(() => {
