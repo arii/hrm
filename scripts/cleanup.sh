@@ -29,6 +29,7 @@ echo "🧹 Purging Node.js package caches..."
 npm cache clean --force
 if command -v yarn &> /dev/null; then yarn cache clean; fi
 if command -v bun &> /dev/null; then bun pm cache rm; fi
+if command -v pnpm &> /dev/null; then pnpm store prune; fi
 
 # 3. Process Management (PM2)
 # Flushes all logs and truncates current log files to 0 bytes
@@ -50,12 +51,6 @@ if command -v pip &> /dev/null; then
 fi
 
 
-# 5. Global User Cache (~11GB) - CI ONLY
-# This is a dangerous operation, so it is restricted to CI environments.
-if [ -n "$CI" ]; then
-    echo "🧹 Emptying ~/.cache directory..."
-    rm -rf ~/.cache/*
-fi
 
 # 6. GitHub Actions Runner Artifacts
 # Targets the _diag and _work directories in the workspace
@@ -65,10 +60,6 @@ if [ -d "$WORKSPACE_DIR/actions-runner" ]; then
     rm -rf "$WORKSPACE_DIR/actions-runner/_work/"*
 fi
 
-# 7. Real-time Log Vacuuming
-# Requires sudo for journalctl; fails gracefully if permissions are absent
-echo "🧹 Vacuuming system journals (>24h)..."
-sudo journalctl --vacuum-time=1d 2>/dev/null || echo "⚠️  Sudo unavailable: Skipping journal vacuuming."
 
 echo "--- ✨ CLEANUP COMPLETE ---"
 df -h "$APP_DIR" | awk 'NR==2 {print "📊 Available Storage: " $4}'
