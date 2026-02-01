@@ -38,6 +38,7 @@ jobs:
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Trigger PR Squash and Wait
+        timeout-minutes: 15
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
@@ -45,7 +46,8 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
-          gh pr checks $PR_NUMBER --watch --timeout 5m
+          sleep 10
+          gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash
         env:
@@ -112,6 +114,7 @@ jobs:
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Trigger Conflict Resolver and Wait
+        timeout-minutes: 15
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
@@ -119,7 +122,8 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
-          gh pr checks $PR_NUMBER --watch --timeout 5m
+          sleep 10
+          gh pr checks $PR_NUMBER --watch
 
       - name: Verify Conflict Resolution
         env:
@@ -180,6 +184,7 @@ jobs:
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Trigger PR Squash and Rebase and Wait
+        timeout-minutes: 15
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
@@ -187,7 +192,8 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
-          gh pr checks $PR_NUMBER --watch --timeout 5m
+          sleep 10
+          gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash and Rebase
         env:

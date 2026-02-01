@@ -5,6 +5,9 @@ import os from 'os'
 import crypto from 'crypto'
 import { z } from 'zod'
 
+// --- Constants ---
+const MIN_DESCRIPTION_LENGTH = 50
+
 // --- Label Configuration ---
 
 const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
@@ -276,6 +279,19 @@ function getIssueSignature(title: string, description: string): string {
   return crypto.createHash('sha256').update(content).digest('hex')
 }
 
+export function isLowQualityIssue(
+  issue: SuggestedIssue,
+  slopPattern: RegExp | null
+): boolean {
+  if (issue.description.trim().length < MIN_DESCRIPTION_LENGTH) {
+    return true
+  }
+  if (!slopPattern) return false
+
+  const combinedText = `${issue.title} ${issue.description}`
+  return slopPattern.test(combinedText)
+}
+
 export function isDuplicate(
   newIssue: SuggestedIssue,
   existingIssues: ExistingIssue[]
@@ -333,13 +349,41 @@ export async function run(
 
   const existingIssues = client.getRecentIssues('bot-generated')
 
+  // Read and compile the slop words from the file.
+  let slopPattern: RegExp | null = null
+  try {
+    const slopWords = readFileSync(
+      path.resolve(process.cwd(), 'ai_slop_words.txt'),
+      'utf-8'
+    )
+      .split('\n')
+      .map((w) => w.trim())
+      .filter((w) => w.length > 0)
+    if (slopWords.length > 0) {
+      const escapedWords = slopWords.map((w) =>
+        w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      )
+      const pattern = `\\b(?:${escapedWords.join('|')})\\b`
+      slopPattern = new RegExp(pattern, 'i')
+    }
+  } catch (e) {
+    console.warn('Could not read ai_slop_words.txt, skipping quality check.')
+  }
+
   let createdCount = 0
-  let skippedCount = 0
+  let skippedDuplicates = 0
+  let skippedLowQuality = 0
 
   for (const issue of result.suggestedIssues) {
     if (isDuplicate(issue, existingIssues)) {
       console.log(`⏭️  Skipping duplicate: "${issue.title}"`)
-      skippedCount++
+      skippedDuplicates++
+      continue
+    }
+
+    if (isLowQualityIssue(issue, slopPattern)) {
+      console.log(`🗑️  Skipping low-quality issue: "${issue.title}"`)
+      skippedLowQuality++
       continue
     }
 
@@ -355,7 +399,8 @@ export async function run(
 
   console.log(`\n--- Summary ---`)
   console.log(`Created: ${createdCount}`)
-  console.log(`Skipped: ${skippedCount}`)
+  console.log(`Skipped (Duplicate): ${skippedDuplicates}`)
+  console.log(`Skipped (Low Quality): ${skippedLowQuality}`)
 }
 
 // --- Main Execution ---

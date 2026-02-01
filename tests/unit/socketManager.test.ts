@@ -409,7 +409,8 @@ describe('WebSocket Manager', () => {
         'Anomalous calorie value detected. Using last known server value.'
       )
       expect(clientData).toBeDefined()
-      expect(clientData!.calories).toBe(0) // Should remain at the initial 0
+      // Calories should remain at the last known safe value (which is 0 initially).
+      expect(clientData!.calories).toBe(0)
     })
 
     it('should accept a subsequent valid calorie update after an anomaly', () => {

@@ -14,6 +14,20 @@ WORKSPACE_DIR="$(dirname "$APP_DIR")"
 echo "--- 🚀 INITIATING HRM INFRASTRUCTURE PURGE ---"
 echo "--- 📍 SCOPE: $APP_DIR"
 
+echo ""
+echo "--- 📊 DISK USAGE (BEFORE) ---"
+echo "--- Filesystem Usage ---"
+df -h "$APP_DIR"
+echo ""
+echo "--- Directory Usage ---"
+du -sh "$APP_DIR/.next" 2>/dev/null || echo "  - .next: Not found"
+du -sh "$APP_DIR/node_modules" 2>/dev/null || echo "  - node_modules: Not found"
+if [ -d "$WORKSPACE_DIR/actions-runner" ]; then
+    du -sh "$WORKSPACE_DIR/actions-runner" 2>/dev/null || echo "  - actions-runner: Not found"
+fi
+echo "---------------------------------"
+echo ""
+
 # 1. Next.js & TypeScript Build Artifacts
 # Purges the .next build folder and TS build info files
 if [ -d "$APP_DIR/.next" ]; then
@@ -27,8 +41,14 @@ find "$APP_DIR" -name "*.tsbuildinfo" -type f -delete
 # Deep clean of npm and optional package managers
 echo "🧹 Purging Node.js package caches..."
 npm cache clean --force
-if command -v yarn &> /dev/null; then yarn cache clean; fi
-if command -v bun &> /dev/null; then bun pm cache rm; fi
+if command -v yarn &> /dev/null; then
+    echo "Attempting to clean yarn cache..."
+    yarn cache clean || echo "Yarn cache clean failed or not applicable, continuing..."
+fi
+if command -v bun &> /dev/null; then
+    echo "Attempting to clean bun cache..."
+    bun pm cache rm || echo "Bun cache clean failed or not applicable, continuing..."
+fi
 if command -v pnpm &> /dev/null; then pnpm store prune; fi
 
 # 3. Process Management (PM2)
@@ -62,4 +82,15 @@ fi
 
 
 echo "--- ✨ CLEANUP COMPLETE ---"
-df -h "$APP_DIR" | awk 'NR==2 {print "📊 Available Storage: " $4}'
+echo ""
+echo "--- 📊 DISK USAGE (AFTER) ---"
+echo "--- Filesystem Usage ---"
+df -h "$APP_DIR"
+echo ""
+echo "--- Directory Usage ---"
+du -sh "$APP_DIR/.next" 2>/dev/null || echo "  - .next: Not found"
+du -sh "$APP_DIR/node_modules" 2>/dev/null || echo "  - node_modules: Not found"
+if [ -d "$WORKSPACE_DIR/actions-runner" ]; then
+    du -sh "$WORKSPACE_DIR/actions-runner" 2>/dev/null || echo "  - actions-runner: Not found"
+fi
+echo "--------------------------------"

@@ -4,6 +4,28 @@ set -e
 # HRM GitHub Actions Runner Entrypoint Script
 # This script configures and starts a GitHub Actions self-hosted runner in a Docker container
 
+# Provision SSH key at runtime if provided
+if [ -n "$SSH_PRIVATE_KEY" ]; then
+  echo "Provisioning SSH key..."
+  mkdir -p /home/runner/.ssh
+  echo "$SSH_PRIVATE_KEY" > /home/runner/.ssh/id_rsa
+  chmod 700 /home/runner/.ssh
+  chmod 600 /home/runner/.ssh/id_rsa
+
+  # Add remote host to known_hosts to avoid interactive prompts
+  if [ -n "$REMOTE_HOST" ]; then
+    echo "Scanning remote host: $REMOTE_HOST"
+    if ! ssh-keyscan -H "$REMOTE_HOST" >> /home/runner/.ssh/known_hosts 2>/dev/null; then
+      echo "Warning: ssh-keyscan for host $REMOTE_HOST failed. SSH connections may fail."
+    fi
+  fi
+
+  # Ensure the runner user owns the .ssh directory
+  chown -R runner:runner /home/runner/.ssh
+
+  echo "SSH key provisioned successfully."
+fi
+
 # Ensure REPO_URL and RUNNER_TOKEN are passed via environment variables
 if [ -z "$REPO_URL" ]; then
   echo "Error: REPO_URL environment variable is not set"
