@@ -340,6 +340,7 @@ jobs:
                 pr_number: String(context.issue.number),
               },
             });
+
   jules-command:
     if: |
       needs.comment-router.outputs.is_jules_command == 'true' &&
@@ -359,8 +360,9 @@ jobs:
 
       - name: 'Parse Command'
         id: parse_command
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
-          COMMENT_BODY="${{ github.event.comment.body }}"
           if [[ "$COMMENT_BODY" == "@jules-delete"* ]]; then
             echo "COMMAND=delete" >> $GITHUB_ENV
           elif [[ "$COMMENT_BODY" == "@jules-new"* ]]; then
@@ -580,15 +582,16 @@ jobs:
 
       - name: 'Find successful workflow run'
         id: find_run
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          BRANCH_NAME: ${{ steps.get_pr.outputs.branch }}
         run: |
-          run_id=$(gh run list --workflow="pr-quality.yml" --branch=${{ steps.get_pr.outputs.branch }} --status=success --json databaseId -q '.[0].databaseId' || echo "")
+          run_id=$(gh run list --workflow="pr-quality.yml" --branch="$BRANCH_NAME" --status=success --json databaseId -q '.[0].databaseId' || echo "")
           if [[ -z "$run_id" ]]; then
-            echo "::error::Could not find a successful workflow run for ${{ steps.get_pr.outputs.branch }}."
+            echo "::error::Could not find a successful workflow run for $BRANCH_NAME."
             exit 1
           fi
           echo "run_id=$run_id" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
 
   create-issues-from-comment:
     needs: prepare-comment-run
@@ -626,12 +629,13 @@ jobs:
 
       - name: 'Find successful workflow run'
         id: find_run
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          BRANCH_NAME: ${{ steps.get_pr.outputs.branch }}
         run: |
-          run_id=$(gh run list --workflow="pr-quality.yml" --branch=${{ steps.get_pr.outputs.branch }} --status=success --json databaseId -q '.[0].databaseId' || echo "")
+          run_id=$(gh run list --workflow="pr-quality.yml" --branch="$BRANCH_NAME" --status=success --json databaseId -q '.[0].databaseId' || echo "")
           if [[ -z "$run_id" ]]; then
-            echo "::error::Could not find a successful workflow run for ${{ steps.get_pr.outputs.branch }}."
+            echo "::error::Could not find a successful workflow run for $BRANCH_NAME."
             exit 1
           fi
           echo "run_id=$run_id" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
