@@ -389,7 +389,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       }
     }
-  }, [onDisconnected])
+  }, [])
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
