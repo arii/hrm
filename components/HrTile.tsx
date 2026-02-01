@@ -40,20 +40,30 @@ const HrTile = ({
   updatedAt,
 }: HrTileProps) => {
   const theme = useTheme()
-  const [now, setNow] = useState(() => Date.now())
+  const [now, setNow] = useState<number | null>(null)
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
 
   useEffect(() => {
+    setNow(Date.now())
     const intervalId = setInterval(() => setNow(Date.now()), 5000) // Update every 5 seconds
     return () => clearInterval(intervalId)
   }, [])
 
   const timeAgo = useMemo(() => {
-    if (!updatedAt) {
+    if (!updatedAt || now === null) {
       return ''
     }
-    const seconds = Math.floor((now - updatedAt) / 1000)
-    return seconds < 1 ? 'just now' : `${seconds}s ago`
+    const secondsDiff = (now - updatedAt) / 1000
+    const seconds = Math.max(0, Math.floor(secondsDiff)) // Clamp to 0
+
+    if (seconds < 1) {
+      return 'just now'
+    }
+    if (seconds < 60) {
+      return `${seconds}s ago`
+    }
+    const minutes = Math.floor(seconds / 60)
+    return `${minutes}m ago`
   }, [now, updatedAt])
 
   const tooltipTitle = isAlerting
