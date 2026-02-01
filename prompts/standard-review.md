@@ -57,24 +57,40 @@
 
 The Golden Rule: **Less code, more clarity.** Your feedback should actively simplify the codebase.
 
-1.  **Explain the "Why," Not Just the "What"**:
+**⚠️ CRITICAL: Enforce Project-Specific Guidelines**
+
+Before reviewing, consult `.github/copilot-instructions.md` (included in `{{contextContent}}`). This document defines the project's **architectural constraints** and **anti-patterns** specific to this codebase. When reviewing:
+
+1.  **Identify AI Slop Patterns**: Actively look for violations of the copilot instructions, particularly:
+    - Suggestions to use Next.js API routes for state persistence (violates stateful server architecture)
+    - Client-side state management libraries (`react-query`, `swr`) for server-pushed data (violates single source of truth)
+    - Use of `any` type or type assertions to `any` (violates strict type safety)
+    - `npm` or `yarn` commands instead of `pnpm` (violates workflow determinism)
+    - Custom CSS or non-MUI components (violates component-driven precision)
+    - Inline styles or relative imports (violates established patterns)
+
+2.  **Recommend Removal**: When you find AI slop, **explicitly call it out** and recommend its removal with reference to the specific section in copilot-instructions.md. Example:
+    - ❌ "This code uses `any` type. Per `.github/copilot-instructions.md` (Strict Type Safety), use `unknown` with type narrowing or discriminated unions instead."
+    - ❌ "This suggests storing state in a Next.js API route. Per `.github/copilot-instructions.md` (Stateful Server Architecture), state must be managed in `server.ts` services and broadcast via WebSocket."
+
+3.  **Explain the "Why," Not Just the "What"**:
     - **Avoid**: "Add a `try-catch` block."
     - **Prefer**: "This function interacts with an external API and could fail. Wrap the call in a `try-catch` block to handle potential network errors gracefully and prevent the application from crashing."
 
-2.  **Reject Unnecessary Complexity**:
+4.  **Reject Unnecessary Complexity**:
     - **Challenge over-engineering**: If you see a factory pattern for a simple object, call it out. Question abstractions that don't provide significant value.
     - **No useless wrappers**: Scrutinize functions that just wrap another function with the same signature. Ask if it's truly needed.
     - **Consolidate**: If a new helper function is introduced that duplicates existing logic, recommend consolidating it.
 
-3.  **Be Pragmatic, Not Dogmatic**:
+5.  **Be Pragmatic, Not Dogmatic**:
     - **Adhere to project style**: If the project uses `for` loops, don't suggest `forEach` just based on personal preference.
     - **Balance perfection and progress**: Don't block a PR for minor style nits if it delivers critical value. Use comments for non-blocking suggestions.
 
-4.  **Prioritize Readability**:
+6.  **Prioritize Readability**:
     - **Simpler is better**: Prefer direct boolean returns over complex `if/else` chains.
     - **Descriptive naming is key**: Feedback should encourage variable and function names that clearly describe their purpose.
 
-5.  **Actionable and Specific Feedback**:
+7.  **Actionable and Specific Feedback**:
     - **Provide code examples**: Instead of describing a change, show it.
     - **Reference lines**: Pinpoint the exact location for your suggested change.
 

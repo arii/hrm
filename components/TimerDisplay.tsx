@@ -14,8 +14,7 @@ import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 import SideLabel from './SideLabel'
 import { useAudioContext } from '@/context/AudioContext'
-
-const pad = (n: number) => String(n).padStart(2, '0')
+import { formatDuration } from '@/lib/utils'
 
 // Define a constant for the side column width to avoid magic numbers
 const SIDE_COLUMN_WIDTH = '40px'
@@ -44,9 +43,10 @@ const TimerDisplay = () => {
     phaseLabel = 'GET READY'
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
-    const mm = Math.floor(timeElapsed / 60)
-    const ss = timeElapsed % 60
-    displayTime = `${pad(mm)}:${pad(ss)}`
+    displayTime = formatDuration(timeElapsed, {
+      unit: 'seconds',
+      format: 'MM:SS',
+    })
     phaseColor = '#2563EB' // Blue/Primary
     phaseLabel = 'RUNNING'
   } else if (
@@ -56,9 +56,10 @@ const TimerDisplay = () => {
       currentPhase === 'COOLDOWN')
   ) {
     // TABATA: Show remaining time MM:SS
-    const mm = Math.floor(timeRemaining / 60)
-    const ss = timeRemaining % 60
-    displayTime = `${pad(mm)}:${pad(ss)}`
+    displayTime = formatDuration(timeRemaining, {
+      unit: 'seconds',
+      format: 'MM:SS',
+    })
 
     if (currentPhase === 'WORK') {
       phaseColor = '#EF4444' // Red
@@ -72,7 +73,7 @@ const TimerDisplay = () => {
     }
   } else {
     // IDLE or default
-    displayTime = '00:00'
+    displayTime = formatDuration(0, { unit: 'seconds', format: 'MM:SS' })
     phaseColor = '#6B7280' // Gray
     phaseLabel = 'READY'
   }

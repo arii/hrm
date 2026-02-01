@@ -53,7 +53,7 @@ export async function refreshSpotifyToken(refreshToken: string) {
           errorJson.error ||
           'Spotify token refresh failed'
       )
-    } catch (_e) {
+    } catch {
       // If parsing fails, throw a more generic error with the raw text
       throw new Error(
         `Spotify token refresh failed: ${response.status} ${response.statusText} - ${errorBody}`

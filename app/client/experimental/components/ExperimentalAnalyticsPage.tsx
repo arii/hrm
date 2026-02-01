@@ -10,8 +10,8 @@ import { useUserSettings } from '@/context/UserSettingsContext'
 import {
   workoutSessionStorage,
   WorkoutSessionData,
-  HrZoneName,
 } from '@/lib/workout-session-storage'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 const defaultTimeInZones: Record<HrZoneName, number> = {
   [HrZoneName.WarmUp]: 0,
@@ -198,7 +198,7 @@ const ExperimentalAnalyticsPage = () => {
   }, [activeSession, totalCaloriesBurned])
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
       {view === 'active' && (
         <>
           <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>

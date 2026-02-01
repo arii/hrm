@@ -95,7 +95,7 @@ test.describe('Infrastructure & Scripts', () => {
       // The `-` before devServer.pid is crucial; it kills the group, not just the parent process.
       try {
         if (devServer.pid) process.kill(-devServer.pid)
-      } catch (_e) {
+      } catch {
         // Ignore errors, likely "ESRCH" if the process already terminated.
       }
     }
@@ -137,7 +137,7 @@ test.describe('Infrastructure & Scripts', () => {
     } finally {
       try {
         if (prodServer.pid) process.kill(-prodServer.pid)
-      } catch (_e) {
+      } catch {
         // Ignore errors
       }
     }

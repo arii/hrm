@@ -15,7 +15,7 @@ const WorkoutSummary = ({
   status,
 }: WorkoutSummaryProps) => {
   return (
-    <Card>
+    <Card data-testid="workout-summary">
       <CardContent>
         <Typography variant="h5" gutterBottom>
           Workout Summary

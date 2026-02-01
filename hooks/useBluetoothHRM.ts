@@ -516,7 +516,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               setBatteryLevel(target.value!.getUint8(0))
             }
           )
-        } catch (_err) {
+        } catch {
           /* Battery service optional */
         }
 

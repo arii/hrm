@@ -45,6 +45,13 @@ export const CALORIE_DEFAULTS = {
   JOULE_CONVERSION: 4.184,
 }
 
+// The maximum plausible jump in calories between two consecutive HRM updates.
+// Used as a server-side sanity check to reject anomalous client values.
+export const MAX_CALORIE_JUMP_PER_UPDATE = 50
+
+// The maximum plausible initial calorie value for a new workout session.
+// Used as a server-side sanity check to reject anomalous initial client values.
+export const MAX_INITIAL_CALORIES = 1000
 // Server Constants
 export const DEFAULT_PORT = 3000
 export const DEFAULT_HOST_PRODUCTION = '0.0.0.0'

@@ -52,20 +52,20 @@ describe('lib/utils', () => {
 
     it('should format seconds into MM:SS format', () => {
       expect(formatDuration(61, { unit: 'seconds', format: 'MM:SS' })).toBe(
-        '1:01'
+        '01:01'
       )
     })
 
     it('should format milliseconds into MM:SS format', () => {
       expect(
         formatDuration(61000, { unit: 'milliseconds', format: 'MM:SS' })
-      ).toBe('1:01')
+      ).toBe('01:01')
     })
 
     it('should handle zero duration', () => {
       expect(formatDuration(0, { unit: 'seconds' })).toBe('00:00:00')
       expect(formatDuration(0, { unit: 'milliseconds', format: 'MM:SS' })).toBe(
-        '0:00'
+        '00:00'
       )
     })
 
