@@ -148,9 +148,11 @@ jobs:
           if [ -z "$SLOP_REPORT" ]; then # If no errors so far
             BASE_SHA=${{ github.event.pull_request.base.sha }}
             HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
-            CHANGED_FILES=$(git diff --name-only -z "${BASE_SHA}...${HEAD_SHA}")
 
-            if [ -z "$CHANGED_FILES" ]; then
+            # Add a check to ensure the git diff command succeeds
+            if ! CHANGED_FILES=$(git diff --name-only -z "${BASE_SHA}...${HEAD_SHA}" 2> /dev/null); then
+              SLOP_REPORT="❌ ERROR: Failed to generate a list of changed files. This can happen in shallow clone environments."
+            elif [ -z "$CHANGED_FILES" ]; then
               SLOP_REPORT="No analysis performed as no files were changed."
             else
               # Use a temp file to capture all script output (stdout and stderr).
@@ -172,10 +174,11 @@ jobs:
             fi
           fi
 
-          # Use heredoc for multi-line report
-          echo "SLOP_ANALYSIS<<EOF" >> $GITHUB_ENV
+          # Use a random delimiter to prevent injection attacks
+          DELIMITER="EOF_$(openssl rand -hex 8)"
+          echo "SLOP_ANALYSIS<<$DELIMITER" >> $GITHUB_ENV
           echo "$SLOP_REPORT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "$DELIMITER" >> $GITHUB_ENV
 
       - name: Get PR Checks & Logs
         id: checks
