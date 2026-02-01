@@ -39,7 +39,7 @@ export const useLocalWorkoutBuffer = (userData: HrmData) => {
         )
       })
     }
-  }, [userData, setHrHistory, setTimeInZone])
+  }, [userData])
 
   return { hrHistory, timeInZone }
 }
