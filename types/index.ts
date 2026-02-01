@@ -9,6 +9,8 @@ export interface HrTileProps extends HrData {
   calories?: number
   isConnected?: boolean
   isDataStale?: boolean
+  hrHistory?: { timestamp: number; value: number }[]
+  timeInZone?: Record<string, number>
 
   // NEW: Flag to trigger the visual diagnostic state
   isAlerting?: boolean

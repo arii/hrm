@@ -68,6 +68,7 @@
     "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
     "@mui/material-nextjs": "^7.3.7",
+    "@mui/x-charts": "^8.26.0",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "cheerio": "^1.1.2",
     "express": "^5.2.1",

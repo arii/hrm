@@ -28,6 +28,8 @@ const overlayStyles = {
   borderRadius: 'inherit', // Match card border radius from StyledCard
 }
 
+import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
+
 const HrTile = ({
   name,
   bpm,
@@ -37,6 +39,8 @@ const HrTile = ({
   isDataStale = false,
   isAlerting = false,
   alertMessage = 'Checking signal...',
+  hrHistory = [],
+  timeInZone = {},
 }: HrTileProps) => {
   const theme = useTheme()
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
@@ -165,6 +169,25 @@ const HrTile = ({
                 {name}
               </Typography>
             )}
+            {hrHistory.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <SparkLineChart
+                  data={hrHistory.map((h) => h.value)}
+                  height={50}
+                  color={textColor}
+                  sx={{ strokeOpacity: 0.5 }}
+                />
+              </Box>
+            )}
+            {Object.keys(timeInZone).length > 0 && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                  {Object.entries(timeInZone)
+                    .map(([zone, time]) => `${zone}: ${Math.floor(time)}s`)
+                    .join(' | ')}
+                </Typography>
+              </Box>
+            )}
           </CardContent>
         </Box>
       </ControlCard>
@@ -182,7 +205,9 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isDataStale === nextProps.isDataStale &&
     prevProps.isAlerting === nextProps.isAlerting &&
-    prevProps.alertMessage === nextProps.alertMessage
+    prevProps.alertMessage === nextProps.alertMessage &&
+    prevProps.hrHistory === nextProps.hrHistory &&
+    prevProps.timeInZone === nextProps.timeInZone
   )
 }
 
