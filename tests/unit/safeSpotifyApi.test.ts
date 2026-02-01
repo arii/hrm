@@ -41,10 +41,13 @@ describe('createSafeSpotifyApi', () => {
   })
 
   it('should call startResumePlayback with null deviceId when it is null', async () => {
-    await safeSdk.player.startResumePlayback(null as unknown as string)
-    expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
-      null as unknown as string
-    )
+    await safeSdk.player.startResumePlayback(null)
+    expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(null)
+  })
+
+  it('should call startResumePlayback with undefined deviceId when it is undefined', async () => {
+    await safeSdk.player.startResumePlayback(undefined)
+    expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(undefined)
   })
 
   it('should call pausePlayback with deviceId when provided', async () => {
@@ -54,10 +57,13 @@ describe('createSafeSpotifyApi', () => {
   })
 
   it('should call pausePlayback with undefined deviceId when it is undefined', async () => {
-    await safeSdk.player.pausePlayback(undefined as unknown as string)
-    expect(mockPlayer.pausePlayback).toHaveBeenCalledWith(
-      undefined as unknown as string
-    )
+    await safeSdk.player.pausePlayback(undefined)
+    expect(mockPlayer.pausePlayback).toHaveBeenCalledWith(undefined)
+  })
+
+  it('should call pausePlayback with null deviceId when it is null', async () => {
+    await safeSdk.player.pausePlayback(null)
+    expect(mockPlayer.pausePlayback).toHaveBeenCalledWith(null)
   })
 
   it('should call skipToNext with deviceId when provided', async () => {
@@ -71,6 +77,16 @@ describe('createSafeSpotifyApi', () => {
     expect(mockPlayer.skipToNext).toHaveBeenCalledWith('')
   })
 
+  it('should call skipToNext with null deviceId when it is null', async () => {
+    await safeSdk.player.skipToNext(null)
+    expect(mockPlayer.skipToNext).toHaveBeenCalledWith(null)
+  })
+
+  it('should call skipToNext with undefined deviceId when it is undefined', async () => {
+    await safeSdk.player.skipToNext(undefined)
+    expect(mockPlayer.skipToNext).toHaveBeenCalledWith(undefined)
+  })
+
   it('should call skipToPrevious with deviceId when provided', async () => {
     const deviceId = 'test-device'
     await safeSdk.player.skipToPrevious(deviceId)
@@ -78,7 +94,17 @@ describe('createSafeSpotifyApi', () => {
   })
 
   it('should call skipToPrevious without deviceId when it is not provided', async () => {
-    await (safeSdk.player.skipToPrevious as unknown as () => Promise<void>)()
+    await safeSdk.player.skipToPrevious()
     expect(mockPlayer.skipToPrevious).toHaveBeenCalledWith()
+  })
+
+  it('should call skipToPrevious with null deviceId when it is null', async () => {
+    await safeSdk.player.skipToPrevious(null)
+    expect(mockPlayer.skipToPrevious).toHaveBeenCalledWith(null)
+  })
+
+  it('should call skipToPrevious with undefined deviceId when it is undefined', async () => {
+    await safeSdk.player.skipToPrevious(undefined)
+    expect(mockPlayer.skipToPrevious).toHaveBeenCalledWith(undefined)
   })
 })
