@@ -5,4 +5,4 @@ export const HR_ZONE_SETTINGS = {
   Z3: { threshold: 80, color: '#90ee90' },
   Z4: { threshold: 90, color: '#ffd700' },
   Z5: { threshold: 100, color: '#fa8072' },
-};
+}

@@ -8,7 +8,7 @@ interface HrTileWrapperProps {
   user: HrmData & { isAlerting: boolean; alertMessage?: string }
 }
 
-import { useLocalWorkoutBuffer } from '@/hooks/useLocalWorkoutBuffer';
+import { useLocalWorkoutBuffer } from '@/hooks/useLocalWorkoutBuffer'
 
 const HrTileWrapper = ({ user }: HrTileWrapperProps) => {
   const hrZoneProps = useHrZone(user.value, user.maxHr)

@@ -28,7 +28,7 @@ const overlayStyles = {
   borderRadius: 'inherit', // Match card border radius from StyledCard
 }
 
-import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
+import { SparkLineChart } from '@mui/x-charts/SparkLineChart'
 
 const HrTile = ({
   name,

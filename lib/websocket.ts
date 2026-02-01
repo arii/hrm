@@ -7,8 +7,8 @@ import { ServerMessage } from '../types/websocket.js'
 export class WebSocketManager {
   public wss: WebSocketServer
 
-  constructor(port: number) {
-    this.wss = new WebSocketServer({ port })
+  constructor() {
+    this.wss = new WebSocketServer({ noServer: true })
   }
 
   public handleUpgrade(req: IncomingMessage, socket: Socket, head: Buffer) {

@@ -10,13 +10,12 @@ export const useLocalWorkoutBuffer = (userData: HrmData) => {
     { timestamp: number; value: number }[]
   >([])
   const [timeInZone, setTimeInZone] = useState<Record<string, number>>({})
-  const lastUpdateTime = useRef<number>(Date.now())
+  const lastUpdateTime = useRef<number | null>(null)
 
   useEffect(() => {
     if (userData && userData.value !== null) {
       const now = Date.now()
 
-      // Add new data to history, maintaining buffer size
       setHrHistory((prevHistory) => {
         const newEntry = { timestamp: now, value: userData.value }
         const updatedHistory = [...prevHistory, newEntry]
@@ -25,7 +24,9 @@ export const useLocalWorkoutBuffer = (userData: HrmData) => {
           : updatedHistory
       })
 
-      // Update time in zone
+      if (lastUpdateTime.current === null) {
+        lastUpdateTime.current = now
+      }
       const elapsedTime = (now - lastUpdateTime.current) / 1000 // in seconds
       lastUpdateTime.current = now
 
@@ -38,7 +39,7 @@ export const useLocalWorkoutBuffer = (userData: HrmData) => {
         )
       })
     }
-  }, [userData])
+  }, [userData, setHrHistory, setTimeInZone])
 
   return { hrHistory, timeInZone }
 }
