@@ -472,47 +472,9 @@ graph TD
 - **`spotifyPolling.ts`**: Polls the Spotify API every 3 seconds for the "Now Playing" status and handles playback commands. It loads tokens from `logs/spotify_tokens.json` for persistence.
 - **`spotifyTokenManager.ts`**: Automatically refreshes the Spotify access token every 55 minutes and saves it to the file system, ensuring the server can survive restarts without requiring re-authentication.
 
-## Development Guidelines
-
-1. **Run the custom server**: Always use `pnpm run dev` for development to ensure all background services are running.
-2. **State Management**: All global state is owned by the server. Client-side state should be ephemeral.
-3. **UI Components**: Use Material-UI (MUI) for all components.
-4. **Code Quality**: Git hooks (Husky) automatically enforce linting and formatting on commit. Use `pnpm run lint` only for full-project checks.
-5. **Visual Testing**:
-   - Run `pnpm run test:core` before committing UI changes.
-   - Use `pnpm run test:visual:update` only after verifying differences locally.
-   - Reach for `pnpm run test:visual:headed` or `pnpm run test:visual:ui` when debugging failures.
-   - For end-to-end validation, follow with `pnpm run test:clean` to exercise the dev server startup path.
-6. **Audio Testing**: Test timer sounds on both dashboard and control panel. Audio only plays on dashboard, not control panel.
-7. **Layout Consistency**: Timer always takes 50% width, HR tiles 25% each, Google Doc has fixed 500px height.
-
-For more detailed guidelines, especially for AI agents, see [.github/prompts/AGENTS.md](.github/prompts/AGENTS.md).
-
 ## Contributing
 
-We welcome contributions to the HRM Dashboard! Please follow these guidelines to ensure a smooth development process.
-
-### Code Style and Quality
-
-**Automated Code Quality:** To ensure consistency and prevent common errors, this project uses a pre-commit hook that automatically formats and lints your code. When you commit your changes, `lint-staged` will:
-
-1.  **Format your code** with Prettier.
-2.  **Lint your code** with ESLint and attempt to fix any auto-fixable issues.
-
-If ESLint finds errors that it cannot fix automatically, the commit will be aborted, and you will need to resolve the issues manually before you can commit again.
-
-- **Formatting**: This project uses Prettier for code formatting. You can run `pnpm run format` to manually trigger it.
-- **Linting**: We use ESLint for static analysis. Run `pnpm run lint` to check for any issues manually.
-
-### Commit Messages
-
-Please follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification for your commit messages.
-
-### Pull Request Process
-
-1.  Fork the repository and create your branch from `leader`.
-2.  Make your changes and ensure all tests pass (`pnpm test`).
-3.  Submit a pull request with a clear description of your changes.
+We welcome contributions to the HRM Dashboard! For a comprehensive guide on our development process, workflows, and standards, please see the [Development Guide](docs/DEVELOPMENT.md).
 
 ## Production Readiness Focus
 

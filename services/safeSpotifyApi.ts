@@ -15,15 +15,15 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 export type SafeSpotifyApi = Omit<SpotifyApi, 'player'> & {
   player: SpotifyApi['player'] & {
     startResumePlayback: (
-      deviceId?: string,
+      deviceId?: string | null,
       context_uri?: string,
       uris?: string[],
       offset?: object,
       position_ms?: number
     ) => Promise<void>
-    pausePlayback: (deviceId?: string) => Promise<void>
-    skipToNext: (deviceId?: string) => Promise<void>
-    skipToPrevious: (deviceId?: string) => Promise<void>
+    pausePlayback: (deviceId?: string | null) => Promise<void>
+    skipToNext: (deviceId?: string | null) => Promise<void>
+    skipToPrevious: (deviceId?: string | null) => Promise<void>
   }
 }
 

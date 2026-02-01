@@ -1,8 +1,6 @@
 // File: utils/constants.ts
 // Centralized constants for the application.
 
-export const MAX_HR_DEFAULT = 185
-
 // Battery level thresholds for UI icons
 export const BATTERY_LEVEL_FULL = 70
 export const BATTERY_LEVEL_HIGH = 40
@@ -17,23 +15,6 @@ export const CONNECT_HR_MONITOR_BUTTON_TEXT = 'Connect HR Monitor'
 export const DISCONNECT_HR_MONITOR_BUTTON_TEXT = 'Disconnect HR Monitor'
 
 // --- Heart Rate Calculation Constants ---
-export const MAX_HR_ESTIMATION_BASE = 220 // Fox formula constant
-
-/**
- * Calculates Max Heart Rate based on age using the standard Fox formula.
- * Falls back to MAX_HR_DEFAULT if age is invalid or not provided.
- */
-export const calculateMaxHr = (age?: number | string | null): number => {
-  if (!age) return MAX_HR_DEFAULT
-
-  const ageNum = typeof age === 'string' ? parseInt(age, 10) : age
-
-  if (isNaN(ageNum) || ageNum <= 0) {
-    return MAX_HR_DEFAULT
-  }
-
-  return MAX_HR_ESTIMATION_BASE - ageNum
-}
 
 // --- Heart Rate Zones Configuration ---
 export interface HeartRateZoneConfig {
