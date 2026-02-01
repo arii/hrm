@@ -11,7 +11,7 @@ const checkLocalStorage = () => {
     window.localStorage.setItem(testKey, 'test')
     window.localStorage.removeItem(testKey)
     return true
-  } catch (_e) {
+  } catch {
     return false
   }
 }

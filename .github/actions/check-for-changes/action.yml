@@ -1,0 +1,19 @@
+name: 'Check for Changes'
+description: 'Checks for file changes between HEAD and HEAD~1'
+outputs:
+  has_changes:
+    description: "Boolean indicating if changes were found"
+runs:
+  using: "composite"
+  steps:
+    - name: Check for file changes
+      id: check_files
+      shell: bash
+      run: |
+        if git diff --quiet HEAD HEAD~1; then
+          echo "No changes detected."
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+        else
+          echo "Changes detected."
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+        fi

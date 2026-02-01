@@ -47,7 +47,7 @@ test.describe('Timer UI Synchronization', () => {
       await expect(
         page.locator('[data-testid="start-timer-button"]')
       ).toBeVisible()
-    } catch (_e) {
+    } catch {
       // Timer is already stopped.
     }
   })

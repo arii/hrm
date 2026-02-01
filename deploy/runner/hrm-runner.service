@@ -1,0 +1,17 @@
+[Unit]
+Description=HRM GitHub Actions Runner (Docker Container)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/path/to/hrm/deploy/runner
+ExecStart=/bin/bash -c 'docker start hrm-runner || /path/to/hrm/deploy/runner/deploy-runner.sh'
+ExecStop=/usr/bin/docker stop hrm-runner
+ExecReload=/bin/bash -c '/usr/bin/docker stop hrm-runner && /path/to/hrm/deploy/runner/deploy-runner.sh'
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

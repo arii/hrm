@@ -11,16 +11,19 @@ import {
   ServerMessage,
   StateSnapshot,
   ExtWebSocket,
+  HrmInputMessage,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js'
+import {
+  MAX_CALORIE_JUMP_PER_UPDATE,
+  MAX_INITIAL_CALORIES,
+} from './constants.js'
 import {
   broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
 } from './websocketUtils.js'
 import logger from './logger.server.js'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataStore } from '../lib/hrm/HrmDataStore.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
@@ -279,57 +282,49 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_INPUT': {
+        const hrmMessage = message as HrmInputMessage
         const existingData = hrmDataStore.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
         if (existingData && sessionState) {
-          let finalCalories = 0
-          // Prioritize client-calculated calories if available
-          if (typeof message.data.calories === 'number') {
-            const clientCalories = message.data.calories
+          const now = Date.now()
+          sessionState.lastUpdate = now
+          let finalCalories = sessionState.accumulatedCalories
+
+          // Use the client-provided calories directly
+          if (typeof hrmMessage.data.calories === 'number') {
+            const clientCalories = hrmMessage.data.calories
             const serverCalories = sessionState.accumulatedCalories
             const diff = Math.abs(clientCalories - serverCalories)
 
-            // Sanity check: a 50-calorie jump in one second is unlikely.
-            if (diff > 50) {
+            // Sanity check to prevent anomalous calorie values from the client.
+            const isAnomalousJump =
+              diff > MAX_CALORIE_JUMP_PER_UPDATE && serverCalories > 0
+            const isAnomalousInitialValue =
+              serverCalories === 0 && clientCalories > MAX_INITIAL_CALORIES
+
+            if (isAnomalousJump || isAnomalousInitialValue) {
               logger.warn(
                 {
                   clientId,
                   clientCalories,
                   serverCalories,
+                  isInitialValue: isAnomalousInitialValue,
                 },
-                'Large calorie discrepancy detected. Rejecting client update.'
+                'Anomalous calorie value detected. Using last known server value.'
               )
-              finalCalories = serverCalories
+              finalCalories = serverCalories // Reject the client's value
             } else {
-              finalCalories = clientCalories
-              sessionState.accumulatedCalories = finalCalories
+              sessionState.accumulatedCalories = clientCalories
+              finalCalories = clientCalories // Accept the client's value
             }
-          } else {
-            // Fallback to server-side calculation for older clients
-            const now = Date.now()
-            const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
-            sessionState.lastUpdate = now
-
-            let currentAccumulated = sessionState.accumulatedCalories
-            const currentHr = message.data.value ?? existingData.value
-            const currentAge = existingData.age ?? 30
-            if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-              const caloriesBurned = estimateCaloriesBurned({
-                heartRate: currentHr,
-                age: currentAge,
-                weightKg: existingData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG,
-                durationMinutes: dtMinutes,
-              })
-              currentAccumulated += caloriesBurned
-            }
-            sessionState.accumulatedCalories = currentAccumulated
-            finalCalories = currentAccumulated
           }
+
           // Update the repository with the latest data
           hrmDataStore.save({
             ...existingData,
-            value: message.data.value ?? existingData.value,
+            value: hrmMessage.data.value ?? existingData.value,
             calories: roundTo(finalCalories, 4),
+            updatedAt: now,
           })
         }
         broadcastState()

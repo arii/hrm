@@ -67,7 +67,7 @@ export function startServer(port: number): Promise<ServerProcess> {
         try {
           // Kill the entire process group
           process.kill(-serverProcess.pid, 'SIGKILL')
-        } catch (_e) {
+        } catch {
           // Ignore errors if the process is already gone
         }
       }
