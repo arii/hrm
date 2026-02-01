@@ -19,6 +19,16 @@ This script will:
 
 > **⚠️ Important**: This project uses `pnpm` as its package manager. **Do not use `npm install`**, as this will create a `package-lock.json` file, causing conflicts with the official `pnpm-lock.yaml`. The pre-commit hooks will block any commits that include this file.
 
+## Reference Guides
+
+For detailed information on specific topics, please refer to the following documents:
+
+- [TypeScript Best Practices](./TYPESCRIPT_PATTERNS.md)
+- [Environment Variable Handling](./ENVIRONMENT_VARIABLES.md)
+- [Testing Guidelines](./TESTING_GUIDELINES.md)
+- [Hook Design Patterns](./HOOK_DESIGN_PATTERNS.md)
+- [Code Review Guidelines](./CODE_REVIEW_GUIDELINES.md)
+
 ## Core Principles
 
 - **Quality & Security First**: We prioritize writing high-quality, secure code. All contributions are subject to a thorough review process.
