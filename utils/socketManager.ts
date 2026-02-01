@@ -331,22 +331,9 @@ const handleIncomingMessage = (
         break
       }
 
-      case 'TIMER_COMMAND': {
+      case 'TIMER_COMMAND':
         services.tabataService.handleCommand(message.command)
-        // Reset calorie accumulation when the timer is stopped.
-        if (message.command === 'STOP') {
-          const sessionState = clientSessionState.get(clientId)
-          if (sessionState) {
-            sessionState.accumulatedCalories = 0
-          }
-          const hrmData = hrmDataStore.findById(clientId)
-          if (hrmData) {
-            hrmDataStore.save({ ...hrmData, calories: 0 })
-          }
-          broadcastState()
-        }
         break
-      }
 
       case 'SET_MODE':
         services.tabataService.setMode(message.mode)
