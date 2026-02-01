@@ -31,7 +31,16 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
 # 3. Install pnpm and PM2 globally
 RUN npm install -g pnpm pm2
 
-# 4. Create a non-root user 'runner' (GitHub Runners should not run as root)
+# 4. Install Playwright System Dependencies as root
+# We install these now so the runner is ready for 'pnpm run test:visual' immediately
+# This must be done as root before creating the runner user
+RUN cd /tmp && \
+    npm init -y && \
+    npm install @playwright/test@1.56.1 && \
+    npx playwright install --with-deps && \
+    rm -rf /tmp/package.json /tmp/package-lock.json /tmp/node_modules
+
+# 5. Create a non-root user 'runner' (GitHub Runners should not run as root)
 RUN useradd -m runner && \
     usermod -aG sudo runner && \
     echo "%sudo ALL=(ALL) PASSWD: ALL" >> /etc/sudoers
@@ -39,20 +48,11 @@ RUN useradd -m runner && \
 USER runner
 WORKDIR /home/runner
 
-# 5. Download and Extract the GitHub Actions Runner (v2.329.0)
+# 6. Download and Extract the GitHub Actions Runner (v2.329.0)
 RUN mkdir actions-runner && cd actions-runner && \
     curl -o actions-runner-linux-x64-2.329.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.329.0/actions-runner-linux-x64-2.329.0.tar.gz && \
     tar xzf ./actions-runner-linux-x64-2.329.0.tar.gz && \
     rm actions-runner-linux-x64-2.329.0.tar.gz
-
-# 6. Install Playwright System Dependencies
-# We install these now so the runner is ready for 'pnpm run test:visual' immediately
-# We temporarily use a dummy project to invoke install-deps
-RUN cd /home/runner && \
-    npm init -y && \
-    npm install @playwright/test@1.56.1 && \
-    npx playwright install-deps && \
-    rm -rf package.json package-lock.json node_modules
 
 # Copy the entrypoint script
 COPY --chown=runner:runner entrypoint.sh /home/runner/entrypoint.sh
