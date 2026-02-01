@@ -1,4 +1,3 @@
-// tests/unit/hooks/useLocalWorkoutBuffer.test.ts
 /**
  * @jest-environment jsdom
  */
