@@ -209,6 +209,33 @@ fi
 
 echo ""
 echo "═══════════════════════════════════════════════════════════"
+echo "  SSH Configuration (Optional)"
+echo "═══════════════════════════════════════════════════════════"
+echo ""
+echo "Inject an SSH private key into the runner to allow it to connect to other servers."
+echo "This is useful for deployment scripts that use SSH/SCP/rsync."
+echo ""
+
+REMOTE_HOST=""
+SSH_PRIVATE_KEY=""
+
+if prompt_yes_no "Add an SSH private key?" "n"; then
+  echo ""
+  prompt_with_default \
+    "Remote host (e.g., your-server.com):" \
+    "" \
+    "REMOTE_HOST"
+
+  echo ""
+  echo -e "${BLUE}Paste your SSH private key, then press Ctrl+D:${NC}"
+  SSH_PRIVATE_KEY=$(cat)
+  if [ -z "$SSH_PRIVATE_KEY" ]; then
+    echo -e "${YELLOW}Warning: SSH key is empty.${NC}"
+  fi
+fi
+
+echo ""
+echo "═══════════════════════════════════════════════════════════"
 echo "  Summary"
 echo "═══════════════════════════════════════════════════════════"
 echo ""
@@ -226,6 +253,9 @@ if [ -n "$RUNNER_MEMORY_LIMIT" ]; then
 fi
 if [ -n "$RUNNER_CPU_LIMIT" ]; then
   echo "  CPU limit: $RUNNER_CPU_LIMIT"
+fi
+if [ -n "$SSH_PRIVATE_KEY" ]; then
+  echo "  SSH Key: [provided for remote host: $REMOTE_HOST]"
 fi
 echo ""
 
@@ -257,6 +287,13 @@ RUNNER_TOKEN=__RUNNER_TOKEN__
 # Generate at: https://github.com/settings/tokens
 GITHUB_PAT=__GITHUB_PAT__
 
+# Optional: SSH key for runner to access other servers
+# This is injected into the Docker image at build time.
+# The key is stored in /home/runner/.ssh/id_rsa inside the container.
+REMOTE_HOST=__REMOTE_HOST__
+# SSH_PRIVATE_KEY is written separately to handle multi-line values
+SSH_PRIVATE_KEY=""
+
 # Optional: Resource limits for the Docker container
 # Recommended for production deployments to prevent resource exhaustion
 # Memory limit (e.g., 2g for 2 gigabytes, 512m for 512 megabytes)
@@ -271,8 +308,20 @@ sed -i "s|__GENERATED_DATE__|${GENERATED_DATE}|g" .env.runner
 sed -i "s|__REPO_URL__|${REPO_URL}|g" .env.runner
 sed -i "s|__RUNNER_TOKEN__|${RUNNER_TOKEN}|g" .env.runner
 sed -i "s|__GITHUB_PAT__|${GITHUB_PAT}|g" .env.runner
+sed -i "s|__REMOTE_HOST__|${REMOTE_HOST}|g" .env.runner
 sed -i "s|__RUNNER_MEMORY_LIMIT__|${RUNNER_MEMORY_LIMIT}|g" .env.runner
 sed -i "s|__RUNNER_CPU_LIMIT__|${RUNNER_CPU_LIMIT}|g" .env.runner
+
+# Append the SSH private key using a here document to preserve newlines
+if [ -n "$SSH_PRIVATE_KEY" ]; then
+  # Append the SSH private key using a here document to preserve newlines
+  # in a way that is compatible with shell's `source` command.
+  cat >> .env.runner <<EOF
+SSH_PRIVATE_KEY="
+$SSH_PRIVATE_KEY
+"
+EOF
+fi
 
 # Set restrictive permissions
 chmod 600 .env.runner
