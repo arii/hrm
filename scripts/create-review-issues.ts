@@ -276,6 +276,32 @@ function getIssueSignature(title: string, description: string): string {
   return crypto.createHash('sha256').update(content).digest('hex')
 }
 
+export function isLowQualityIssue(
+  issue: SuggestedIssue,
+  slopWords: string[]
+): boolean {
+  // Define a minimum description length to avoid trivial issues.
+  const MIN_DESCRIPTION_LENGTH = 50
+
+  if (issue.description.trim().length < MIN_DESCRIPTION_LENGTH) {
+    return true
+  }
+
+  const combinedText = `${issue.title.toLowerCase()} ${issue.description.toLowerCase()}`
+
+  // Check for the presence of "slop" words.
+  for (const word of slopWords) {
+    if (word.trim() === '') continue // Skip empty lines from wordlist
+    // Use word boundaries to avoid matching parts of words.
+    const regex = new RegExp(`\\b${word.toLowerCase()}\\b`)
+    if (regex.test(combinedText)) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export function isDuplicate(
   newIssue: SuggestedIssue,
   existingIssues: ExistingIssue[]
@@ -333,13 +359,31 @@ export async function run(
 
   const existingIssues = client.getRecentIssues('bot-generated')
 
+  // Read the slop words from the file.
+  let slopWords: string[] = []
+  try {
+    slopWords = readFileSync(
+      path.resolve(process.cwd(), 'ai_slop_words.txt'),
+      'utf-8'
+    ).split('\n')
+  } catch (e) {
+    console.warn('Could not read ai_slop_words.txt, skipping quality check.')
+  }
+
   let createdCount = 0
-  let skippedCount = 0
+  let skippedDuplicates = 0
+  let skippedLowQuality = 0
 
   for (const issue of result.suggestedIssues) {
     if (isDuplicate(issue, existingIssues)) {
       console.log(`⏭️  Skipping duplicate: "${issue.title}"`)
-      skippedCount++
+      skippedDuplicates++
+      continue
+    }
+
+    if (isLowQualityIssue(issue, slopWords)) {
+      console.log(`🗑️  Skipping low-quality issue: "${issue.title}"`)
+      skippedLowQuality++
       continue
     }
 
@@ -355,7 +399,8 @@ export async function run(
 
   console.log(`\n--- Summary ---`)
   console.log(`Created: ${createdCount}`)
-  console.log(`Skipped: ${skippedCount}`)
+  console.log(`Skipped (Duplicate): ${skippedDuplicates}`)
+  console.log(`Skipped (Low Quality): ${skippedLowQuality}`)
 }
 
 // --- Main Execution ---
