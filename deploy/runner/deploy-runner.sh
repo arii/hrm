@@ -159,7 +159,18 @@ fi
 
 # Build the Docker image
 echo "Building GitHub Actions Runner Docker image..."
-docker build -t hrm-actions-runner -f Dockerfile.runner .
+
+# Prepare build arguments
+BUILD_ARGS=()
+if [ -n "$SSH_PRIVATE_KEY" ]; then
+  echo "Injecting SSH private key for remote host: $REMOTE_HOST"
+  BUILD_ARGS+=("--build-arg" "SSH_PRIVATE_KEY=$SSH_PRIVATE_KEY")
+fi
+if [ -n "$REMOTE_HOST" ]; then
+  BUILD_ARGS+=("--build-arg" "REMOTE_HOST=$REMOTE_HOST")
+fi
+
+docker build -t hrm-actions-runner -f Dockerfile.runner "${BUILD_ARGS[@]}" .
 
 # Stop and remove existing container if it exists
 if docker ps -a --format '{{.Names}}' | grep -q '^hrm-runner$'; then
