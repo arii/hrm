@@ -492,9 +492,6 @@ describe('WebSocket Manager', () => {
     })
   })
 
-  describe('Calorie Processing', () => {
-  })
-
   describe('Message Handling', () => {
     it('should handle REGISTER_CLIENT message', () => {
       const message = JSON.stringify({
