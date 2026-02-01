@@ -32,11 +32,6 @@ export interface DualModeTimerState {
   _countdownMarker: string | null
 }
 
-/**
- * Factory function to create the initial state for the timer.
- * Ensures a consistent starting state.
- * @returns {DualModeTimerState} A new timer state object.
- */
 export function createInitialTimerState(): DualModeTimerState {
   return {
     mode: 'TABATA',

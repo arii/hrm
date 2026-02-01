@@ -100,48 +100,53 @@ export class WorkoutSessionStorage {
   }
 
   /**
+   * Executes an IndexedDB operation with automatic localStorage fallback.
+   */
+  private async withFallback<T>(
+    operation: string,
+    idbOperation: (db: IDBPDatabase<WorkoutDB>) => Promise<T>,
+    localStorageOperation: () => T
+  ): Promise<T> {
+    try {
+      if (this.isIndexedDBSupported && this.dbPromise) {
+        const db = await this.dbPromise
+        if (db) {
+          return await idbOperation(db)
+        }
+      }
+    } catch (error) {
+      console.warn(
+        `IndexedDB ${operation} failed, falling back to localStorage:`,
+        error
+      )
+    }
+    return localStorageOperation()
+  }
+
+  /**
    * Saves a workout session to persistent storage.
-   *
-   * **Error Handling:**
-   * - IndexedDB failures fall back to localStorage
-   * - Storage quota exceeded errors are caught and logged
    *
    * @param session - The workout session data to save
    * @throws {Error} If both IndexedDB and localStorage fail (e.g., quota exceeded)
    */
   public async saveSession(session: WorkoutSessionData): Promise<void> {
-    try {
-      if (this.isIndexedDBSupported && this.dbPromise) {
-        const db = await this.dbPromise
-        if (db) {
-          await db.put(STORE_NAME, session)
-          return
+    await this.withFallback(
+      'save',
+      async (db) => {
+        await db.put(STORE_NAME, session)
+      },
+      () => {
+        const index = this.getLocalStorageIndex()
+        if (!index.includes(session.sessionId)) {
+          index.push(session.sessionId)
+          localStorage.setItem(this.localStorageIndexKey, JSON.stringify(index))
         }
+        localStorage.setItem(
+          this.localStorageKeyPrefix + session.sessionId,
+          JSON.stringify(session)
+        )
       }
-    } catch (error) {
-      console.warn(
-        'IndexedDB save failed, falling back to localStorage:',
-        error
-      )
-    }
-
-    // Fallback to localStorage
-    try {
-      const index = this.getLocalStorageIndex()
-      if (!index.includes(session.sessionId)) {
-        index.push(session.sessionId)
-        localStorage.setItem(this.localStorageIndexKey, JSON.stringify(index))
-      }
-      localStorage.setItem(
-        this.localStorageKeyPrefix + session.sessionId,
-        JSON.stringify(session)
-      )
-    } catch (error) {
-      console.error('Failed to save session to localStorage:', error)
-      throw new Error(
-        `Storage failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
-    }
+    )
   }
 
   /**
@@ -153,28 +158,24 @@ export class WorkoutSessionStorage {
   public async getSession(
     sessionId: string
   ): Promise<WorkoutSessionData | null> {
-    try {
-      if (this.isIndexedDBSupported && this.dbPromise) {
-        const db = await this.dbPromise
-        if (db) {
-          const session = await db.get(STORE_NAME, sessionId)
-          return session || null
+    return this.withFallback(
+      'get',
+      async (db) => {
+        const session = await db.get(STORE_NAME, sessionId)
+        return session || null
+      },
+      () => {
+        try {
+          const sessionStr = localStorage.getItem(
+            this.localStorageKeyPrefix + sessionId
+          )
+          return sessionStr ? JSON.parse(sessionStr) : null
+        } catch (error) {
+          console.error('Failed to retrieve session from localStorage:', error)
+          return null
         }
       }
-    } catch (error) {
-      console.warn('IndexedDB get failed, falling back to localStorage:', error)
-    }
-
-    // Fallback to localStorage
-    try {
-      const sessionStr = localStorage.getItem(
-        this.localStorageKeyPrefix + sessionId
-      )
-      return sessionStr ? JSON.parse(sessionStr) : null
-    } catch (error) {
-      console.error('Failed to retrieve session from localStorage:', error)
-      return null
-    }
+    )
   }
 
   /**
@@ -183,40 +184,33 @@ export class WorkoutSessionStorage {
    * @returns Array of all stored workout sessions
    */
   public async getAllSessions(): Promise<WorkoutSessionData[]> {
-    try {
-      if (this.isIndexedDBSupported && this.dbPromise) {
-        const db = await this.dbPromise
-        if (db) {
-          return await db.getAll(STORE_NAME)
+    return this.withFallback(
+      'getAll',
+      async (db) => db.getAll(STORE_NAME),
+      () => {
+        try {
+          const index = this.getLocalStorageIndex()
+          return index
+            .map((id) => {
+              try {
+                const sessionStr = localStorage.getItem(
+                  this.localStorageKeyPrefix + id
+                )
+                return sessionStr ? JSON.parse(sessionStr) : null
+              } catch (parseError) {
+                console.warn(`Failed to parse session ${id}:`, parseError)
+                return null
+              }
+            })
+            .filter(
+              (session): session is WorkoutSessionData => session !== null
+            )
+        } catch (error) {
+          console.error('Failed to retrieve sessions from localStorage:', error)
+          return []
         }
       }
-    } catch (error) {
-      console.warn(
-        'IndexedDB getAll failed, falling back to localStorage:',
-        error
-      )
-    }
-
-    // Fallback to localStorage
-    try {
-      const index = this.getLocalStorageIndex()
-      return index
-        .map((id) => {
-          try {
-            const sessionStr = localStorage.getItem(
-              this.localStorageKeyPrefix + id
-            )
-            return sessionStr ? JSON.parse(sessionStr) : null
-          } catch (parseError) {
-            console.warn(`Failed to parse session ${id}:`, parseError)
-            return null
-          }
-        })
-        .filter((session): session is WorkoutSessionData => session !== null)
-    } catch (error) {
-      console.error('Failed to retrieve sessions from localStorage:', error)
-      return []
-    }
+    )
   }
 
   /**
@@ -225,75 +219,74 @@ export class WorkoutSessionStorage {
    * @param sessionId - The unique identifier of the session to delete
    */
   public async deleteSession(sessionId: string): Promise<void> {
-    try {
-      if (this.isIndexedDBSupported && this.dbPromise) {
-        const db = await this.dbPromise
-        if (db) {
-          await db.delete(STORE_NAME, sessionId)
-          return
+    await this.withFallback(
+      'delete',
+      async (db) => {
+        await db.delete(STORE_NAME, sessionId)
+      },
+      () => {
+        try {
+          const index = this.getLocalStorageIndex()
+          const newIndex = index.filter((id) => id !== sessionId)
+          localStorage.setItem(
+            this.localStorageIndexKey,
+            JSON.stringify(newIndex)
+          )
+          localStorage.removeItem(this.localStorageKeyPrefix + sessionId)
+        } catch (error) {
+          console.error('Failed to delete session from localStorage:', error)
         }
       }
-    } catch (error) {
-      console.warn(
-        'IndexedDB delete failed, falling back to localStorage:',
-        error
-      )
-    }
-
-    // Fallback to localStorage
-    try {
-      const index = this.getLocalStorageIndex()
-      const newIndex = index.filter((id) => id !== sessionId)
-      localStorage.setItem(this.localStorageIndexKey, JSON.stringify(newIndex))
-      localStorage.removeItem(this.localStorageKeyPrefix + sessionId)
-    } catch (error) {
-      console.error('Failed to delete session from localStorage:', error)
-    }
+    )
   }
 
   /**
    * Finds and returns any incomplete session (running or paused).
    *
-   * This is useful for resuming an interrupted workout session.
-   *
    * @returns The first incomplete session found, or null if none exist
    */
   public async getIncompleteSession(): Promise<WorkoutSessionData | null> {
-    try {
-      if (this.isIndexedDBSupported && this.dbPromise) {
-        const db = await this.dbPromise
-        if (db) {
-          const tx = db.transaction(STORE_NAME, 'readonly')
-          const index = tx.store.index('status')
-          const runningSession = await index.get('running')
-          if (runningSession) {
-            return runningSession
-          }
-          const pausedSession = await index.get('paused')
+    return this.withFallback(
+      'getIncomplete',
+      async (db) => {
+        const tx = db.transaction(STORE_NAME, 'readonly')
+        const index = tx.store.index('status')
+        const runningSession = await index.get('running')
+        if (runningSession) {
+          return runningSession
+        }
+        const pausedSession = await index.get('paused')
+        return pausedSession || null
+      },
+      () => {
+        try {
+          const allSessions = this.getLocalStorageIndex()
+            .map((id) => {
+              try {
+                const sessionStr = localStorage.getItem(
+                  this.localStorageKeyPrefix + id
+                )
+                return sessionStr ? JSON.parse(sessionStr) : null
+              } catch {
+                return null
+              }
+            })
+            .filter(
+              (session): session is WorkoutSessionData => session !== null
+            )
+          const runningSession = allSessions.find((s) => s.status === 'running')
+          if (runningSession) return runningSession
+          const pausedSession = allSessions.find((s) => s.status === 'paused')
           return pausedSession || null
+        } catch (error) {
+          console.error(
+            'Failed to get incomplete session from localStorage:',
+            error
+          )
+          return null
         }
       }
-    } catch (error) {
-      console.warn(
-        'IndexedDB getIncomplete failed, falling back to localStorage:',
-        error
-      )
-    }
-
-    // Fallback to localStorage
-    try {
-      const allSessions = await this.getAllSessions()
-      const runningSession = allSessions.find((s) => s.status === 'running')
-      if (runningSession) return runningSession
-      const pausedSession = allSessions.find((s) => s.status === 'paused')
-      return pausedSession || null
-    } catch (error) {
-      console.error(
-        'Failed to get incomplete session from localStorage:',
-        error
-      )
-      return null
-    }
+    )
   }
 }
 

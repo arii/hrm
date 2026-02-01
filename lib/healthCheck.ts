@@ -2,8 +2,13 @@
 import { WebSocket } from 'ws'
 import TabataTimer from '../services/tabataTimer'
 
+export type HealthCheckResult = {
+  healthy: boolean
+  details: Record<string, unknown>
+}
+
 // Individual health check functions
-export function checkMemoryUsage() {
+export function checkMemoryUsage(): HealthCheckResult {
   const memUsage = process.memoryUsage()
   const memUsageMB = memUsage.heapUsed / 1024 / 1024
   const memLimitMB = 512 // Adjust based on deployment
@@ -18,10 +23,7 @@ export function checkMemoryUsage() {
   }
 }
 
-export async function checkWebSocketService(): Promise<{
-  healthy: boolean
-  details: Record<string, unknown>
-}> {
+export async function checkWebSocketService(): Promise<HealthCheckResult> {
   try {
     const wsUrl = process.env.WS_URL || 'ws://localhost:3000' // Corrected default URL
     // Check if WebSocket server is accepting connections
@@ -63,10 +65,7 @@ export async function checkWebSocketService(): Promise<{
   }
 }
 
-export async function checkSpotifyAPI(): Promise<{
-  healthy: boolean
-  details: Record<string, unknown>
-}> {
+export async function checkSpotifyAPI(): Promise<HealthCheckResult> {
   try {
     // Test Spotify API connectivity (no auth required)
     const response = await fetch(
@@ -99,10 +98,7 @@ export async function checkSpotifyAPI(): Promise<{
   }
 }
 
-export function checkTimerService(tabataTimer: TabataTimer): {
-  healthy: boolean
-  details: Record<string, unknown>
-} {
+export function checkTimerService(tabataTimer: TabataTimer): HealthCheckResult {
   try {
     const timerCheck =
       typeof tabataTimer !== 'undefined' && tabataTimer.getState
