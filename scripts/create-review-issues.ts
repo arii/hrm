@@ -5,6 +5,9 @@ import os from 'os'
 import crypto from 'crypto'
 import { z } from 'zod'
 
+// --- Constants ---
+const MIN_DESCRIPTION_LENGTH = 50
+
 // --- Label Configuration ---
 
 const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
@@ -278,29 +281,15 @@ function getIssueSignature(title: string, description: string): string {
 
 export function isLowQualityIssue(
   issue: SuggestedIssue,
-  slopWords: string[]
+  slopPattern: RegExp | null
 ): boolean {
-  const MIN_DESCRIPTION_LENGTH = 50
-
   if (issue.description.trim().length < MIN_DESCRIPTION_LENGTH) {
     return true
   }
-
-  // Filter empty lines and escape special regex characters
-  const escapedWords = slopWords
-    .map((w) => w.trim())
-    .filter((w) => w.length > 0)
-    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-
-  if (escapedWords.length === 0) return false
-
-  // Create a single regex with the 'i' flag for case insensitivity
-  // Pattern: \b(?:word1|word2|word3)\b
-  const pattern = `\\b(?:${escapedWords.join('|')})\\b`
-  const regex = new RegExp(pattern, 'i')
+  if (!slopPattern) return false
 
   const combinedText = `${issue.title} ${issue.description}`
-  return regex.test(combinedText)
+  return slopPattern.test(combinedText)
 }
 
 export function isDuplicate(
@@ -360,13 +349,23 @@ export async function run(
 
   const existingIssues = client.getRecentIssues('bot-generated')
 
-  // Read the slop words from the file.
-  let slopWords: string[] = []
+  // Read and compile the slop words from the file.
+  let slopPattern: RegExp | null = null
   try {
-    slopWords = readFileSync(
-      path.join(__dirname, '..', 'ai_slop_words.txt'),
+    const slopWords = readFileSync(
+      path.resolve(process.cwd(), 'ai_slop_words.txt'),
       'utf-8'
-    ).split('\n')
+    )
+      .split('\n')
+      .map((w) => w.trim())
+      .filter((w) => w.length > 0)
+    if (slopWords.length > 0) {
+      const escapedWords = slopWords.map((w) =>
+        w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      )
+      const pattern = `\\b(?:${escapedWords.join('|')})\\b`
+      slopPattern = new RegExp(pattern, 'i')
+    }
   } catch (e) {
     console.warn('Could not read ai_slop_words.txt, skipping quality check.')
   }
@@ -382,7 +381,7 @@ export async function run(
       continue
     }
 
-    if (isLowQualityIssue(issue, slopWords)) {
+    if (isLowQualityIssue(issue, slopPattern)) {
       console.log(`🗑️  Skipping low-quality issue: "${issue.title}"`)
       skippedLowQuality++
       continue

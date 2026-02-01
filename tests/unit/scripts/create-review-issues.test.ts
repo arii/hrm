@@ -239,6 +239,7 @@ describe('create-review-issues script', () => {
 
 describe('isLowQualityIssue', () => {
   const slopWords = ['delve', 'robust', 'leverage']
+  const slopPattern = new RegExp(`\\b(?:${slopWords.join('|')})\\b`, 'i')
 
   it('should flag issues with "slop" words as low-quality', () => {
     const issue = {
@@ -248,7 +249,7 @@ describe('isLowQualityIssue', () => {
       type: 'technical-debt',
       priority: 'medium',
     }
-    expect(isLowQualityIssue(issue, slopWords)).toBe(true)
+    expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
   })
 
   it('should flag issues with short descriptions as low-quality', () => {
@@ -258,7 +259,7 @@ describe('isLowQualityIssue', () => {
       type: 'technical-debt',
       priority: 'medium',
     }
-    expect(isLowQualityIssue(issue, slopWords)).toBe(true)
+    expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
   })
 
   it('should not flag high-quality issues', () => {
@@ -269,6 +270,17 @@ describe('isLowQualityIssue', () => {
       type: 'technical-debt',
       priority: 'medium',
     }
-    expect(isLowQualityIssue(issue, slopWords)).toBe(false)
+    expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
+  })
+
+  it('should handle an empty slop words list', () => {
+    const issue = {
+      title: 'This is a high-quality issue',
+      description:
+        'This is a long and detailed description of the issue. It does not contain any "slop" words.',
+      type: 'technical-debt',
+      priority: 'medium',
+    }
+    expect(isLowQualityIssue(issue, null)).toBe(false)
   })
 })
