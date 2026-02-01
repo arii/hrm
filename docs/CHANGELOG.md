@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.30.0](https://github.com/arii/hrm/compare/hrm-v0.29.0...hrm-v0.30.0) (2026-02-01)
+
+
+### Features
+
+* **large:** [REFACTOR] Centralize Redundant Heart Rate and Workout Type Definitions ([#5677](https://github.com/arii/hrm/issues/5677)) ([aeeacd8](https://github.com/arii/hrm/commit/aeeacd81617cb497b009afd476039d768794ec80))
+* **large:** Refactor: Split vrt.spec.ts into Component-Specific Files ([#5476](https://github.com/arii/hrm/issues/5476)) ([c8e826c](https://github.com/arii/hrm/commit/c8e826c17c9bf60dfde3d46e480d7fedfdf6e7e2))
+* **medium:** [REFACTOR] Standardize Duration Formatting Utilities ([#5676](https://github.com/arii/hrm/issues/5676)) ([f7de43a](https://github.com/arii/hrm/commit/f7de43a6b34ced4f13b02fcc776ba6203d86af19))
+* **medium:** Fix Critical State Management and Data Recording Issues ([#5417](https://github.com/arii/hrm/issues/5417)) ([a1a84b1](https://github.com/arii/hrm/commit/a1a84b1d0a4a31656e3f2455a874cb8ed4094f41))
+* **small:** Enable Automatic Workout Data Persistence on /client/connect Page ([#5659](https://github.com/arii/hrm/issues/5659)) ([a7644c9](https://github.com/arii/hrm/commit/a7644c9ce803baf8784859b407ebe69b301a3748))
+* **small:** Fix Spotify Playlist Track Crash ([#5413](https://github.com/arii/hrm/issues/5413)) ([d716cbf](https://github.com/arii/hrm/commit/d716cbf26b0ce2acae1de49cdf85ca15555e6856))
+* **testing:** add unit tests for core utility functions ([#5435](https://github.com/arii/hrm/issues/5435)) ([d68649f](https://github.com/arii/hrm/commit/d68649f8512bd1d9217a6ff1100299887c718c56))
+
+
+### Bug Fixes
+
+* **critical:** Ensure verdict field always present in Gemini review results ([#5837](https://github.com/arii/hrm/issues/5837)) ([c2d9302](https://github.com/arii/hrm/commit/c2d93020f070596e62ff151bda57e02726039ac0))
+
 ## [0.29.0](https://github.com/arii/hrm/compare/hrm-v0.28.0...hrm-v0.29.0) (2026-01-30)
 
 
