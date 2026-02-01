@@ -1,5 +1,4 @@
 // server.ts (Refactored)
-import 'module-alias/register.js'
 import './lib/env.js' // Triggers validation immediately
 import express, { type RequestHandler } from 'express'
 import { createServer } from 'http'

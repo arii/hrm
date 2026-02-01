@@ -1,6 +1,11 @@
-# Deployment Configuration - Temporary Regression Prevention
+# Deployment Configuration
 
-This directory contains production configuration files and documentation for the HRM deployment strategy.
+This directory contains production configuration files, deployment scripts, and documentation for the HRM deployment strategy.
+
+## Directory Contents
+
+- **Production Deployment**: Configuration files for deploying the HRM application
+- **[runner/](./runner/)**: GitHub Actions self-hosted runner setup (Docker + systemd)
 
 ## Overview
 
@@ -123,3 +128,9 @@ For now, this folder serves as a temporary bridge to prevent regression while th
 ## Reference
 
 See [relevant_changes.log](./relevant_changes.log) for detailed diffs from the leader branch.
+
+## GitHub Actions Runner
+
+The `runner/` directory contains the setup for a self-hosted GitHub Actions runner that runs in a Docker container with systemd management. This allows the HRM project to run CI/CD workflows on dedicated infrastructure.
+
+See [runner/README.md](./runner/README.md) for detailed setup instructions.
