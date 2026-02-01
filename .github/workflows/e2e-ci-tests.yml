@@ -45,7 +45,7 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
-          gh pr checks $PR_NUMBER --watch --timeout 5m
+          gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash
         env:
@@ -119,7 +119,7 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
-          gh pr checks $PR_NUMBER --watch --timeout 5m
+          gh pr checks $PR_NUMBER --watch
 
       - name: Verify Conflict Resolution
         env:
@@ -187,7 +187,7 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
-          gh pr checks $PR_NUMBER --watch --timeout 5m
+          gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash and Rebase
         env:
