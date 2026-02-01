@@ -94,16 +94,21 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Use a unique identifier for branch names to avoid concurrency issues
-          UNIQUE_ID=$(date +%s)
+          UNIQUE_ID=${{ github.run_id }}
           BRANCH_A="branch-a-$UNIQUE_ID"
           BRANCH_B="branch-b-$UNIQUE_ID"
+          BASE_BRANCH="base-branch-$UNIQUE_ID"
+
+          echo "BRANCH_A=$BRANCH_A" >> $GITHUB_ENV
+          echo "BRANCH_B=$BRANCH_B" >> $GITHUB_ENV
+          echo "BASE_BRANCH=$BASE_BRANCH" >> $GITHUB_ENV
 
           # Create a base commit with a file
-          git checkout -b base-branch
+          git checkout -b $BASE_BRANCH
           echo "initial content" > conflict-file.txt
           git add conflict-file.txt
           git commit -m "Create conflict-file.txt"
-          git push origin base-branch
+          git push origin $BASE_BRANCH
 
           # Create branch A with a modification
           git checkout -b $BRANCH_A
@@ -113,7 +118,7 @@ jobs:
           git push origin $BRANCH_A
 
           # Create branch B from the base, with a conflicting modification
-          git checkout base-branch
+          git checkout $BASE_BRANCH
           git checkout -b $BRANCH_B
           echo "branch-b content" > conflict-file.txt
           git add conflict-file.txt
@@ -162,6 +167,7 @@ jobs:
           gh pr close $PR_NUMBER
           git push origin --delete $BRANCH_A
           git push origin --delete $BRANCH_B
+          git push origin --delete $BASE_BRANCH
 
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
