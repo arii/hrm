@@ -46,16 +46,20 @@ jobs:
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash to complete..."
           for i in {1..30}; do
-            STATUS=$(gh pr checks $PR_NUMBER --json status --jq '.status')
-            if [ "$STATUS" = "SUCCESS" ]; then
-              echo "✅ Checks successful"
-              break
-            elif [ "$STATUS" = "FAILURE" ]; then
-              echo "❌ Checks failed"
+            CHECKS=$(gh pr checks $PR_NUMBER --json state,conclusion)
+            if echo "$CHECKS" | jq -e '.[] | select(.state != "completed")' > /dev/null; then
+              echo "⏳ Some checks are still pending..."
+            elif echo "$CHECKS" | jq -e '.[] | select(.conclusion == "failure")' > /dev/null; then
+              echo "❌ Some checks failed"
               exit 1
+            else
+              echo "✅ All checks successful"
+              exit 0
             fi
             sleep 10
           done
+          echo "❌ Timed out waiting for checks to complete"
+          exit 1
 
       - name: Verify Squash
         env:
@@ -130,16 +134,20 @@ jobs:
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
           for i in {1..30}; do
-            STATUS=$(gh pr checks $PR_NUMBER --json status --jq '.status')
-            if [ "$STATUS" = "SUCCESS" ]; then
-              echo "✅ Checks successful"
-              break
-            elif [ "$STATUS" = "FAILURE" ]; then
-              echo "❌ Checks failed"
+            CHECKS=$(gh pr checks $PR_NUMBER --json state,conclusion)
+            if echo "$CHECKS" | jq -e '.[] | select(.state != "completed")' > /dev/null; then
+              echo "⏳ Some checks are still pending..."
+            elif echo "$CHECKS" | jq -e '.[] | select(.conclusion == "failure")' > /dev/null; then
+              echo "❌ Some checks failed"
               exit 1
+            else
+              echo "✅ All checks successful"
+              exit 0
             fi
             sleep 10
           done
+          echo "❌ Timed out waiting for checks to complete"
+          exit 1
 
       - name: Verify Conflict Resolution
         env:
@@ -208,16 +216,20 @@ jobs:
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
           for i in {1..30}; do
-            STATUS=$(gh pr checks $PR_NUMBER --json status --jq '.status')
-            if [ "$STATUS" = "SUCCESS" ]; then
-              echo "✅ Checks successful"
-              break
-            elif [ "$STATUS" = "FAILURE" ]; then
-              echo "❌ Checks failed"
+            CHECKS=$(gh pr checks $PR_NUMBER --json state,conclusion)
+            if echo "$CHECKS" | jq -e '.[] | select(.state != "completed")' > /dev/null; then
+              echo "⏳ Some checks are still pending..."
+            elif echo "$CHECKS" | jq -e '.[] | select(.conclusion == "failure")' > /dev/null; then
+              echo "❌ Some checks failed"
               exit 1
+            else
+              echo "✅ All checks successful"
+              exit 0
             fi
             sleep 10
           done
+          echo "❌ Timed out waiting for checks to complete"
+          exit 1
 
       - name: Verify Squash and Rebase
         env:
