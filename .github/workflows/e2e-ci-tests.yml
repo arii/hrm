@@ -90,20 +90,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          # Create two branches from the same commit
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create branch-a with initial content
           git checkout -b branch-a
           echo "initial content" > conflict-file.txt
           git add conflict-file.txt
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -m "Initial commit"
-          git push origin branch-a
+          git commit -m "Initial commit on branch-a"
+          git push --force origin branch-a
 
+          # Create branch-b from parent, with conflicting content
+          git checkout HEAD^
           git checkout -b branch-b
           echo "branch-b content" > conflict-file.txt
           git add conflict-file.txt
-          git commit -m "Commit on branch-b"
-          git push origin branch-b
+          git commit -m "Conflicting commit on branch-b"
+          git push --force origin branch-b
 
           # Create a pull request to trigger the conflict resolver
           PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base branch-a --head branch-b)
