@@ -43,20 +43,7 @@ type SpotifyDisplayAction =
       payload: { volume?: number; isMuted?: boolean }
     }
 
-// 3. Initial State Factory
-const initialStateFactory = (
-  volume: number | undefined,
-  isMuted: boolean
-): SpotifyDisplayState => ({
-  displayVolume: volume ?? 70,
-  isMuted: isMuted,
-  isSliding: false,
-  lastVolume: volume && volume > 0 ? volume : 70, // Store last non-zero volume
-  selectedDeviceId: '',
-  deviceMenuAnchor: null,
-})
-
-// 4. Reducer Logic
+// 3. Reducer Logic
 const spotifyDisplayReducer = (
   state: SpotifyDisplayState,
   action: SpotifyDisplayAction
@@ -120,11 +107,16 @@ const SpotifyDisplay = () => {
   const { isLoggedIn } = useSpotifyAuth()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
 
-  // 5. Integrate useReducer
-  const [state, dispatch] = useReducer(
-    spotifyDisplayReducer,
-    initialStateFactory(spotifyData.volume, spotifyData.isMuted ?? false)
-  )
+  // 4. Integrate useReducer
+  const [state, dispatch] = useReducer(spotifyDisplayReducer, {
+    displayVolume: spotifyData.volume ?? 70,
+    isMuted: spotifyData.isMuted ?? false,
+    isSliding: false,
+    lastVolume:
+      spotifyData.volume && spotifyData.volume > 0 ? spotifyData.volume : 70,
+    selectedDeviceId: '',
+    deviceMenuAnchor: null,
+  })
   const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
 
   // Track the last time volume command was sent to prevent sync race conditions
