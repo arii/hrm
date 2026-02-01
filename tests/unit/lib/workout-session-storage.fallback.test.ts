@@ -37,19 +37,6 @@ const mockSessionData: WorkoutSessionData = {
 
 describe('WorkoutSessionStorage', () => {
   let storage: WorkoutSessionStorage
-  const mockDb = {
-    put: jest.fn(),
-    get: jest.fn(),
-    getAll: jest.fn(),
-    delete: jest.fn(),
-    transaction: jest.fn(() => ({
-      store: {
-        index: jest.fn(() => ({
-          get: jest.fn(),
-        })),
-      },
-    })),
-  }
 
   describe('with IndexedDB failure (localStorage fallback)', () => {
     beforeEach(() => {

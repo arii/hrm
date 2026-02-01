@@ -1,8 +1,12 @@
 /**
  * @jest-environment jsdom
  */
-import 'fake-indexeddb/auto';
-import { WorkoutSessionStorage, WorkoutSessionData } from '../../../lib/workout-session-storage';
+import 'fake-indexeddb/auto'
+import {
+  WorkoutSessionStorage,
+  WorkoutSessionData,
+} from '../../../lib/workout-session-storage'
+import { IDBPDatabase } from 'idb'
 
 const mockSessionData: WorkoutSessionData = {
   sessionId: 'test-session-1',
@@ -24,46 +28,46 @@ const mockSessionData: WorkoutSessionData = {
   userSettings: { age: 30, weight: 70, maxHr: 190 },
   lastSyncTime: 0,
   syncStatus: 'pending',
-};
+}
 
 describe('WorkoutSessionStorage with fake-indexeddb', () => {
-  let storage: WorkoutSessionStorage;
+  let storage: WorkoutSessionStorage
 
   beforeEach(() => {
-    storage = new WorkoutSessionStorage();
-  });
+    storage = new WorkoutSessionStorage()
+  })
 
   afterEach(async () => {
     // Clear the database after each test
-    const db = await (storage as any).dbPromise;
+    const db = await ((storage as unknown) as { dbPromise: Promise<IDBPDatabase> }).dbPromise
     if (db) {
-      await db.clear('sessions');
+      await db.clear('sessions')
     }
-  });
+  })
 
   it('should save and retrieve a session', async () => {
-    await storage.saveSession(mockSessionData);
-    const session = await storage.getSession(mockSessionData.sessionId);
-    expect(session).toEqual(mockSessionData);
-  });
+    await storage.saveSession(mockSessionData)
+    const session = await storage.getSession(mockSessionData.sessionId)
+    expect(session).toEqual(mockSessionData)
+  })
 
   it('should retrieve all sessions', async () => {
-    await storage.saveSession(mockSessionData);
-    const sessions = await storage.getAllSessions();
-    expect(sessions).toEqual([mockSessionData]);
-  });
+    await storage.saveSession(mockSessionData)
+    const sessions = await storage.getAllSessions()
+    expect(sessions).toEqual([mockSessionData])
+  })
 
   it('should delete a session', async () => {
-    await storage.saveSession(mockSessionData);
-    await storage.deleteSession(mockSessionData.sessionId);
-    const session = await storage.getSession(mockSessionData.sessionId);
-    expect(session).toBeNull();
-  });
+    await storage.saveSession(mockSessionData)
+    await storage.deleteSession(mockSessionData.sessionId)
+    const session = await storage.getSession(mockSessionData.sessionId)
+    expect(session).toBeNull()
+  })
 
   it('should get an incomplete session', async () => {
-    const incompleteSession = { ...mockSessionData, status: 'paused' };
-    await storage.saveSession(incompleteSession);
-    const session = await storage.getIncompleteSession();
-    expect(session).toEqual(incompleteSession);
-  });
-});
+    const incompleteSession = { ...mockSessionData, status: 'paused' }
+    await storage.saveSession(incompleteSession)
+    const session = await storage.getIncompleteSession()
+    expect(session).toEqual(incompleteSession)
+  })
+})
