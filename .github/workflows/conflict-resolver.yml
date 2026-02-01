@@ -47,7 +47,7 @@ jobs:
 
       - name: Resolve conflicts
         id: resolve
-        uses: VeyronSakai/conflict-resolver@bf5816eeef0c15149d7288aef1a9c94a5218ee6f # pin to v0.4.0
+        uses: VeyronSakai/conflict-resolver@7d650534ba240658a381241823f8b4f13861c2ad # pin to v0.5.1
         with:
           config-path: .github/conflict-resolver.yml
 
