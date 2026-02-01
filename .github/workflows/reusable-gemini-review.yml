@@ -95,24 +95,48 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
+      - name: Validate Commit SHA
+        id: validate-sha
+        run: |
+          HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
+          echo "HEAD_SHA=$HEAD_SHA" >> $GITHUB_ENV
+
+          if [ -z "$HEAD_SHA" ]; then
+            echo "::error::HEAD_SHA is empty. Cannot proceed."
+            exit 1
+          fi
+
+          # The `git cat-file -e` command returns 0 if the object exists, and 1 otherwise.
+          # We redirect stdout and stderr to /dev/null to suppress output.
+          if git cat-file -e "$HEAD_SHA" >/dev/null 2>&1; then
+            echo "✅ Commit SHA ($HEAD_SHA) is valid and exists in the repository."
+          else
+            echo "::error::Commit SHA ($HEAD_SHA) does not exist in the repository."
+            exit 1
+          fi
+
       - name: Get PR Diff
         id: diff
+        needs: validate-sha
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # The PR's base commit SHA, for an accurate diff at the time of branching.
           BASE_SHA=${{ github.event.pull_request.base.sha }}
-          # The PR's head commit SHA. If a last_non_empty_commit is provided, use that instead.
-          HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
+          # The validated HEAD_SHA from the previous step.
+          HEAD_SHA=${{ env.HEAD_SHA }}
 
           echo "🔍 Generating diff between base commit ($BASE_SHA) and head commit ($HEAD_SHA)..."
 
           # Create a diff between the head and the true merge base.
-          # This ensures that the diff only contains changes from the PR,
-          # avoiding the inclusion of recent changes from the base branch (e.g., 'leader').
           git diff ${BASE_SHA}...${HEAD_SHA} > pr.diff
 
-          echo "✅ Diff generated and saved to pr.diff"
+          # -s checks if the file is empty.
+          if [ ! -s pr.diff ]; then
+            echo "::warning::The generated pr.diff file is empty."
+          else
+            echo "✅ Diff generated and saved to pr.diff"
+          fi
 
       - name: Gather PR Context
         id: context
