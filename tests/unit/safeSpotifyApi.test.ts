@@ -94,7 +94,7 @@ describe('createSafeSpotifyApi', () => {
   })
 
   it('should call skipToPrevious without deviceId when it is not provided', async () => {
-    await (safeSdk.player.skipToPrevious as unknown as () => Promise<void>)()
+    await safeSdk.player.skipToPrevious()
     expect(mockPlayer.skipToPrevious).toHaveBeenCalledWith()
   })
 
