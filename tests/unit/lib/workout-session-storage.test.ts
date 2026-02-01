@@ -86,7 +86,7 @@ describe('WorkoutSessionStorage', () => {
       index.get.mockResolvedValueOnce(incompleteSession)
       mockDb.transaction.mockReturnValue({
         store: { index: () => index },
-      } as any)
+      })
       const session = await storage.getIncompleteSession()
       expect(session).toEqual(incompleteSession)
     })
