@@ -10,8 +10,8 @@ import { useUserSettings } from '@/context/UserSettingsContext'
 import {
   workoutSessionStorage,
   WorkoutSessionData,
-  HrZoneName,
 } from '@/lib/workout-session-storage'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 const defaultTimeInZones: Record<HrZoneName, number> = {
   [HrZoneName.WarmUp]: 0,

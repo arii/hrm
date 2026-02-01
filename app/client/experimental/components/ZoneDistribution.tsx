@@ -1,7 +1,7 @@
 // app/client/experimental/components/ZoneDistribution.tsx
 'use client'
 import { Card, CardContent, Typography, Box } from '@mui/material'
-import { HrZoneName } from '@/lib/workout-session-storage'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 interface ZoneDistributionProps {
   timeInZones: Record<HrZoneName, number>
