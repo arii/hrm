@@ -2,9 +2,9 @@ name: 'Check for Changes'
 description: 'Checks for file changes between HEAD and HEAD~1'
 outputs:
   has_changes:
-    description: 'Boolean indicating if changes were found'
+    description: "Boolean indicating if changes were found"
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Check for file changes
       id: check_files
