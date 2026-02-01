@@ -1,5 +1,4 @@
-// types/heart-rate.ts
-import { HrZoneName } from '../lib/shared/hr-zones'
+import type { HrZoneName, UserHrZones } from '../lib/shared/hr-zones'
 
 export interface HrZone {
   zoneName: HrZoneName
@@ -7,13 +6,7 @@ export interface HrZone {
   bpm: number
 }
 
-export interface UserHrZones {
-  warmUp: { min: number }
-  fatBurn: { min: number }
-  cardio: { min: number }
-  peak: { min: number }
-  max: { min: number }
-}
+export type { UserHrZones }
 
 export interface HrData {
   bpm: number

@@ -9,7 +9,7 @@ import {
 import { HrZoneName } from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
 import { calculateHrZone } from '../lib/hrm/zones'
-import { estimateMaxHr } from '../lib/hrm/utils'
+import { calculateMaxHr } from '@/lib/shared/hr-zones'
 
 // --- State, Actions, and Reducer ---
 
@@ -47,7 +47,7 @@ function sessionManagerReducer(
     }
     case 'START': {
       const { age, weight, maxHr: providedMaxHr } = action.payload
-      const maxHr = providedMaxHr || estimateMaxHr(age)
+      const maxHr = providedMaxHr || calculateMaxHr(age)
       const initialTimeInZones = Object.fromEntries(
         Object.values(HrZoneName).map((zone) => [zone, 0])
       ) as Record<HrZoneName, number>
