@@ -483,10 +483,22 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         // Attach disconnect listener immediately after successful GATT connection
         // This ensures we catch disconnections that might occur during service discovery
         if (activeDisconnectListenerRef.current) {
-          device.removeEventListener(
-            'gattserverdisconnected',
-            activeDisconnectListenerRef.current
-          )
+          // If we are connecting to a new device, we should remove the listener from the OLD device (deviceRef.current)
+          // or the current device if it's a reconnect. To be safe, try removing from both if they differ.
+          const oldDevice = deviceRef.current
+          if (oldDevice) {
+            oldDevice.removeEventListener(
+              'gattserverdisconnected',
+              activeDisconnectListenerRef.current
+            )
+          }
+          // Also try removing from the new device just in case
+          if (device !== oldDevice) {
+            device.removeEventListener(
+              'gattserverdisconnected',
+              activeDisconnectListenerRef.current
+            )
+          }
         }
         device.addEventListener('gattserverdisconnected', onDisconnected)
         activeDisconnectListenerRef.current = onDisconnected
