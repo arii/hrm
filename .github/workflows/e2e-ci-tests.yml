@@ -45,6 +45,7 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
+          sleep 10
           timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash
@@ -139,6 +140,7 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
+          sleep 10
           timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Conflict Resolution
@@ -208,6 +210,7 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
+          sleep 10
           timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash and Rebase
