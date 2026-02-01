@@ -90,27 +90,38 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Create branch-a with initial content
-          git checkout -b branch-a
+          # Use a unique identifier for branch names to avoid concurrency issues
+          UNIQUE_ID=$(date +%s)
+          BRANCH_A="branch-a-$UNIQUE_ID"
+          BRANCH_B="branch-b-$UNIQUE_ID"
+
+          # Create a base commit with a file
+          git checkout -b base-branch
           echo "initial content" > conflict-file.txt
           git add conflict-file.txt
-          git commit -m "Initial commit on branch-a"
-          git push --force origin branch-a
+          git commit -m "Create conflict-file.txt"
+          git push origin base-branch
 
-          # Create branch-b from parent, with conflicting content
-          git checkout HEAD^
-          git checkout -b branch-b
+          # Create branch A with a modification
+          git checkout -b $BRANCH_A
+          echo "branch-a content" > conflict-file.txt
+          git add conflict-file.txt
+          git commit -m "Modify conflict-file.txt in branch-a"
+          git push origin $BRANCH_A
+
+          # Create branch B from the base, with a conflicting modification
+          git checkout base-branch
+          git checkout -b $BRANCH_B
           echo "branch-b content" > conflict-file.txt
           git add conflict-file.txt
-          git commit -m "Conflicting commit on branch-b"
-          git push --force origin branch-b
+          git commit -m "Modify conflict-file.txt in branch-b"
+          git push origin $BRANCH_B
 
           # Create a pull request to trigger the conflict resolver
-          PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base branch-a --head branch-b)
+          PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base $BRANCH_A --head $BRANCH_B)
           PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
