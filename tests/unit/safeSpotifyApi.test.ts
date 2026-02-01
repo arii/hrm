@@ -82,7 +82,9 @@ describe('createSafeSpotifyApi', () => {
 
   it('should call skipToNext with null deviceId when it is null', async () => {
     await safeSdk.player.skipToNext(null as unknown as string)
-    expect(mockPlayer.skipToNext).toHaveBeenCalledWith(null as unknown as string)
+    expect(mockPlayer.skipToNext).toHaveBeenCalledWith(
+      null as unknown as string
+    )
   })
 
   it('should call skipToNext with undefined deviceId when it is undefined', async () => {
