@@ -280,26 +280,27 @@ export function isLowQualityIssue(
   issue: SuggestedIssue,
   slopWords: string[]
 ): boolean {
-  // Define a minimum description length to avoid trivial issues.
   const MIN_DESCRIPTION_LENGTH = 50
 
   if (issue.description.trim().length < MIN_DESCRIPTION_LENGTH) {
     return true
   }
 
-  const combinedText = `${issue.title.toLowerCase()} ${issue.description.toLowerCase()}`
+  // Filter empty lines and escape special regex characters
+  const escapedWords = slopWords
+    .map((w) => w.trim())
+    .filter((w) => w.length > 0)
+    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
 
-  // Check for the presence of "slop" words.
-  for (const word of slopWords) {
-    if (word.trim() === '') continue // Skip empty lines from wordlist
-    // Use word boundaries to avoid matching parts of words.
-    const regex = new RegExp(`\\b${word.toLowerCase()}\\b`)
-    if (regex.test(combinedText)) {
-      return true
-    }
-  }
+  if (escapedWords.length === 0) return false
 
-  return false
+  // Create a single regex with the 'i' flag for case insensitivity
+  // Pattern: \b(?:word1|word2|word3)\b
+  const pattern = `\\b(?:${escapedWords.join('|')})\\b`
+  const regex = new RegExp(pattern, 'i')
+
+  const combinedText = `${issue.title} ${issue.description}`
+  return regex.test(combinedText)
 }
 
 export function isDuplicate(
@@ -363,7 +364,7 @@ export async function run(
   let slopWords: string[] = []
   try {
     slopWords = readFileSync(
-      path.resolve(process.cwd(), 'ai_slop_words.txt'),
+      path.join(__dirname, '..', 'ai_slop_words.txt'),
       'utf-8'
     ).split('\n')
   } catch (e) {
