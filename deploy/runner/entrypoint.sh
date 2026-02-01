@@ -15,8 +15,14 @@ if [ -n "$SSH_PRIVATE_KEY" ]; then
   # Add remote host to known_hosts to avoid interactive prompts
   if [ -n "$REMOTE_HOST" ]; then
     echo "Scanning remote host: $REMOTE_HOST"
-    ssh-keyscan -H "$REMOTE_HOST" >> /home/runner/.ssh/known_hosts
+    if ! ssh-keyscan -H "$REMOTE_HOST" >> /home/runner/.ssh/known_hosts 2>/dev/null; then
+      echo "Warning: ssh-keyscan for host $REMOTE_HOST failed. SSH connections may fail."
+    fi
   fi
+
+  # Ensure the runner user owns the .ssh directory
+  chown -R runner:runner /home/runner/.ssh
+
   echo "SSH key provisioned successfully."
 fi
 
