@@ -52,7 +52,7 @@ fi
 
 
 
-# 6. GitHub Actions Runner Artifacts
+# 5. GitHub Actions Runner Artifacts
 # Targets the _diag and _work directories in the workspace
 if [ -d "$WORKSPACE_DIR/actions-runner" ]; then
     echo "🧹 Cleaning CI/CD Runner diagnostics and work volumes..."
