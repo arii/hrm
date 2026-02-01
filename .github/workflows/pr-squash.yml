@@ -181,7 +181,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.squash-and-rebase.outputs.head_ref }}
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Check for file changes
         id: check_changes
         uses: ./.github/actions/check-for-changes
