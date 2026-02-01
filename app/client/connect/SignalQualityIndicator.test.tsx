@@ -70,4 +70,22 @@ describe('SignalQualityIndicator', () => {
     expect(screen.queryByText('1000ms')).not.toBeInTheDocument()
     expect(container.firstChild).toHaveAttribute('title', 'No Signal')
   })
+
+  it('should render the "stale" state when data is stale', () => {
+    const { container } = render(
+      <SignalQualityIndicator
+        periodMs={1000}
+        isConnected={true}
+        isDataStale={true}
+      />
+    )
+    expect(
+      screen.getByTestId('SignalCellularConnectedNoInternet0BarIcon')
+    ).toBeInTheDocument()
+    expect(screen.getByText('Stale')).toBeInTheDocument()
+    expect(container.firstChild).toHaveAttribute(
+      'title',
+      'Signal Quality: Stale Data'
+    )
+  })
 })

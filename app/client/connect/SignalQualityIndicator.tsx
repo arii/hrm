@@ -11,6 +11,7 @@ interface SignalQualityIndicatorProps {
    */
   periodMs: number
   isConnected: boolean
+  isDataStale?: boolean
 }
 
 /**
@@ -19,6 +20,7 @@ interface SignalQualityIndicatorProps {
 export const SignalQualityIndicator = ({
   periodMs,
   isConnected,
+  isDataStale = false,
 }: SignalQualityIndicatorProps) => {
   const theme = useTheme()
 
@@ -26,21 +28,26 @@ export const SignalQualityIndicator = ({
   // Ideally: ~1000ms.
   // Acceptable jitter: +/- 20% (800ms - 1200ms)
   // Dropped packet: > 1800ms
-  let quality: 'excellent' | 'good' | 'poor' | 'none' = 'none'
+  let quality: 'excellent' | 'good' | 'poor' | 'none' | 'stale' = 'none'
   let color = theme.palette.text.disabled
 
-  if (isConnected && periodMs > 0) {
-    if (periodMs < 1200) {
-      quality = 'excellent'
-      color = theme.palette.success.main
-    } else if (periodMs < 2200) {
-      // Likely missing every other packet
-      quality = 'good'
+  if (isConnected) {
+    if (isDataStale) {
+      quality = 'stale'
       color = theme.palette.warning.main
-    } else {
-      // Missing multiple packets in a row
-      quality = 'poor'
-      color = theme.palette.error.main
+    } else if (periodMs > 0) {
+      if (periodMs < 1200) {
+        quality = 'excellent'
+        color = theme.palette.success.main
+      } else if (periodMs < 2200) {
+        // Likely missing every other packet
+        quality = 'good'
+        color = theme.palette.warning.main
+      } else {
+        // Missing multiple packets in a row
+        quality = 'poor'
+        color = theme.palette.error.main
+      }
     }
   }
 
@@ -52,6 +59,8 @@ export const SignalQualityIndicator = ({
         return <SignalCellularAlt2BarIcon sx={{ color }} />
       case 'poor':
         return <SignalCellularAlt1BarIcon sx={{ color }} />
+      case 'stale':
+        return <SignalCellularConnectedNoInternet0BarIcon sx={{ color }} />
       default:
         return <SignalCellularConnectedNoInternet0BarIcon sx={{ color }} />
     }
@@ -65,15 +74,14 @@ export const SignalQualityIndicator = ({
     Math.round((1000 / periodMs) * 100)
   )
 
+  const tooltipText = !isConnected
+    ? 'No Signal'
+    : isDataStale
+      ? 'Signal Quality: Stale Data'
+      : `Signal Quality: ${periodMs}ms avg period (~${estimatedReliability}% capture)`
+
   return (
-    <Tooltip
-      title={
-        isConnected
-          ? `Signal Quality: ${periodMs}ms avg period (~${estimatedReliability}% capture)`
-          : 'No Signal'
-      }
-      arrow
-    >
+    <Tooltip title={tooltipText} arrow>
       <Box
         sx={{
           display: 'flex',
@@ -88,7 +96,7 @@ export const SignalQualityIndicator = ({
             variant="caption"
             sx={{ color: 'text.secondary', minWidth: 35 }}
           >
-            {periodMs}ms
+            {isDataStale ? 'Stale' : `${periodMs}ms`}
           </Typography>
         )}
       </Box>
