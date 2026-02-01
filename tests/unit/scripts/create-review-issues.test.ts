@@ -173,7 +173,8 @@ describe('create-review-issues script', () => {
     it('should call gh issue create with the correct parameters', () => {
       const issue: SuggestedIssue = {
         title: 'Test Issue',
-        description: 'Test Description that is long enough to pass the quality check.',
+        description:
+          'Test Description that is long enough to pass the quality check.',
         type: 'bug',
         priority: 'medium',
       }
@@ -216,7 +217,8 @@ describe('create-review-issues script', () => {
     it('should handle titles with special characters safely', () => {
       const issue: SuggestedIssue = {
         title: "Fix: `rm -rf /` shouldn't run",
-        description: 'A very serious bug that needs to be fixed right away because it is a security vulnerability.',
+        description:
+          'A very serious bug that needs to be fixed right away because it is a security vulnerability.',
         type: 'security',
         priority: 'high',
       }
@@ -241,7 +243,8 @@ describe('isLowQualityIssue', () => {
   it('should flag issues with "slop" words as low-quality', () => {
     const issue = {
       title: 'This is a robust solution',
-      description: 'We need to delve into this issue and leverage our resources to fix this problem.',
+      description:
+        'We need to delve into this issue and leverage our resources to fix this problem.',
       type: 'technical-debt',
       priority: 'medium',
     }
@@ -261,7 +264,8 @@ describe('isLowQualityIssue', () => {
   it('should not flag high-quality issues', () => {
     const issue = {
       title: 'This is a high-quality issue',
-      description: 'This is a long and detailed description of the issue. It does not contain any "slop" words.',
+      description:
+        'This is a long and detailed description of the issue. It does not contain any "slop" words.',
       type: 'technical-debt',
       priority: 'medium',
     }
