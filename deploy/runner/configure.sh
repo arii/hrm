@@ -215,11 +215,11 @@ echo ""
 echo "Configuration summary:"
 echo "  Repository: $REPO_URL"
 if [ -n "$RUNNER_TOKEN" ]; then
-  echo "  Runner token: [provided manually]"
+  echo "  Runner token: [provided manually - will expire in 1 hour]"
 elif [ -n "$GITHUB_PAT" ]; then
-  echo "  GitHub PAT: [provided - will auto-generate tokens]"
+  echo "  GitHub PAT: [provided - tokens will be generated at deployment]"
 else
-  echo "  Token: [will auto-generate using GitHub CLI]"
+  echo "  Token generation: GitHub CLI (automatic at deployment)"
 fi
 if [ -n "$RUNNER_MEMORY_LIMIT" ]; then
   echo "  Memory limit: $RUNNER_MEMORY_LIMIT"
@@ -274,6 +274,14 @@ echo ""
 echo "File: $(pwd)/.env.runner"
 echo "Permissions: 600 (read/write for owner only)"
 echo ""
+
+# Add clarification about token generation timing
+if [ -z "$RUNNER_TOKEN" ] && [ -z "$GITHUB_PAT" ]; then
+  echo -e "${BLUE}Note: Runner tokens will be auto-generated when you run deploy-runner.sh${NC}"
+  echo "      (Tokens are not stored in the config file for security)"
+  echo ""
+fi
+
 echo "Next steps:"
 echo "  1. Review the configuration: cat .env.runner"
 echo "  2. Deploy the runner: ./deploy-runner.sh"
