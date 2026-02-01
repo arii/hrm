@@ -146,38 +146,30 @@ jobs:
           fi
 
           if [ -z "$SLOP_REPORT" ]; then # If no errors so far
-              BASE_SHA=${{ github.event.pull_request.base.sha }}
-              HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
-              CHANGED_FILES=$(git diff --name-only -z "${BASE_SHA}...${HEAD_SHA}")
+            BASE_SHA=${{ github.event.pull_request.base.sha }}
+            HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
+            CHANGED_FILES=$(git diff --name-only -z "${BASE_SHA}...${HEAD_SHA}")
 
-              if [ -z "$CHANGED_FILES" ]; then
-                SLOP_REPORT="No analysis performed as no files were changed."
+            if [ -z "$CHANGED_FILES" ]; then
+              SLOP_REPORT="No analysis performed as no files were changed."
+            else
+              # Use a temp file to capture all script output (stdout and stderr).
+              TEMP_OUT=$(mktemp)
+              printf "%s" "$CHANGED_FILES" | xargs -0 "$SCRIPT_PATH" > "$TEMP_OUT" 2>&1
+              EXIT_CODE=$?
+
+              if [ $EXIT_CODE -eq 0 ]; then
+                # Exit code 0: Success, no slop found.
+                SLOP_REPORT=$(<"$TEMP_OUT")
+              elif [ $EXIT_CODE -eq 1 ]; then
+                # Exit code 1: Slop was found, which is an expected "failure".
+                SLOP_REPORT=$(<"$TEMP_OUT")
               else
-                # Use a temp file to capture output and handle exit codes robustly.
-                set -o pipefail
-                TEMP_OUT=$(mktemp)
-
-                # Run the command and check the exit code.
-                # Exit code 1 is expected if slop is found. Any other non-zero code is a real error.
-                if ! (printf "%s" "$CHANGED_FILES" | xargs -0 "$SCRIPT_PATH" > "$TEMP_OUT" 2>&1); then
-                    EXIT_CODE=$?
-                    if [ "$EXIT_CODE" -ne 1 ]; then
-                        SLOP_REPORT="❌ ERROR: Slop detector script failed with exit code $EXIT_CODE.\n\n$(<"$TEMP_OUT")"
-                    else
-                        # This is the "slop found" case. The output is the report.
-                        SLOP_REPORT=$(<"$TEMP_OUT")
-                    fi
-                else
-                    # Exit code 0 means success, no slop.
-                    SLOP_REPORT=$(<"$TEMP_OUT")
-                fi
-
-                # If the report is empty after all that, it means no slop was found.
-                if [ -z "$SLOP_REPORT" ]; then
-                    SLOP_REPORT="✅ No AI slop detected."
-                fi
-                rm "$TEMP_OUT"
+                # Any other exit code indicates an unexpected script error.
+                SLOP_REPORT="❌ ERROR: Slop detector script failed with unexpected exit code $EXIT_CODE.\n\n$(<"$TEMP_OUT")"
               fi
+              rm "$TEMP_OUT"
+            fi
           fi
 
           # Use heredoc for multi-line report
