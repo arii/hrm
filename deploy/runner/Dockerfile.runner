@@ -1,10 +1,6 @@
 # Use Ubuntu 22.04 as base for stability with GitHub Actions binaries
 FROM ubuntu:22.04
 
-# Build-time arguments for SSH key injection
-ARG SSH_PRIVATE_KEY
-ARG REMOTE_HOST
-
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -58,23 +54,6 @@ RUN mkdir actions-runner && cd actions-runner && \
     curl -o actions-runner-linux-x64-2.329.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.329.0/actions-runner-linux-x64-2.329.0.tar.gz && \
     tar xzf ./actions-runner-linux-x64-2.329.0.tar.gz && \
     rm actions-runner-linux-x64-2.329.0.tar.gz
-
-# 7. Inject SSH key if provided
-# This allows the runner to connect to other servers for deployment tasks.
-# We temporarily switch to root to ensure correct ownership and permissions.
-USER root
-RUN if [ -n "$SSH_PRIVATE_KEY" ]; then \
-      mkdir -p /home/runner/.ssh && \
-      echo "$SSH_PRIVATE_KEY" > /home/runner/.ssh/id_rsa && \
-      if [ -n "$REMOTE_HOST" ]; then \
-        ssh-keyscan -H "$REMOTE_HOST" >> /home/runner/.ssh/known_hosts; \
-      fi && \
-      chown -R runner:runner /home/runner/.ssh && \
-      chmod 700 /home/runner/.ssh && \
-      chmod 600 /home/runner/.ssh/id_rsa; \
-    fi
-# Switch back to the runner user for the rest of the build and for the container runtime
-USER runner
 
 # Copy the entrypoint script
 COPY --chown=runner:runner entrypoint.sh /home/runner/entrypoint.sh

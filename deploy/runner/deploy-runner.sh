@@ -159,18 +159,7 @@ fi
 
 # Build the Docker image
 echo "Building GitHub Actions Runner Docker image..."
-
-# Prepare build arguments
-BUILD_ARGS=()
-if [ -n "$SSH_PRIVATE_KEY" ]; then
-  echo "Injecting SSH private key for remote host: $REMOTE_HOST"
-  BUILD_ARGS+=("--build-arg" "SSH_PRIVATE_KEY=$SSH_PRIVATE_KEY")
-fi
-if [ -n "$REMOTE_HOST" ]; then
-  BUILD_ARGS+=("--build-arg" "REMOTE_HOST=$REMOTE_HOST")
-fi
-
-docker build -t hrm-actions-runner -f Dockerfile.runner "${BUILD_ARGS[@]}" .
+docker build -t hrm-actions-runner -f Dockerfile.runner .
 
 # Stop and remove existing container if it exists
 if docker ps -a --format '{{.Names}}' | grep -q '^hrm-runner$'; then
@@ -199,6 +188,15 @@ fi
 if [ -n "$RUNNER_CPU_LIMIT" ]; then
   echo "Setting CPU limit: $RUNNER_CPU_LIMIT"
   DOCKER_ARGS+=("--cpus=$RUNNER_CPU_LIMIT")
+fi
+
+# Add SSH key as environment variable if provided
+if [ -n "$SSH_PRIVATE_KEY" ]; then
+  echo "Injecting SSH private key at runtime..."
+  DOCKER_ARGS+=("-e" "SSH_PRIVATE_KEY=$SSH_PRIVATE_KEY")
+fi
+if [ -n "$REMOTE_HOST" ]; then
+  DOCKER_ARGS+=("-e" "REMOTE_HOST=$REMOTE_HOST")
 fi
 
 # Add environment variables and image
