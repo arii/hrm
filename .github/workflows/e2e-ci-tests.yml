@@ -46,10 +46,10 @@ jobs:
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash to complete..."
           for i in {1..30}; do
-            CHECKS=$(gh pr checks $PR_NUMBER --json state,conclusion)
-            if echo "$CHECKS" | jq -e '.[] | select(.state != "completed")' > /dev/null; then
+            CHECKS_OUTPUT=$(gh pr checks $PR_NUMBER)
+            if echo "$CHECKS_OUTPUT" | grep -q "pending"; then
               echo "⏳ Some checks are still pending..."
-            elif echo "$CHECKS" | jq -e '.[] | select(.conclusion == "failure")' > /dev/null; then
+            elif echo "$CHECKS_OUTPUT" | grep -q "fail"; then
               echo "❌ Some checks failed"
               exit 1
             else
@@ -134,10 +134,10 @@ jobs:
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
           for i in {1..30}; do
-            CHECKS=$(gh pr checks $PR_NUMBER --json state,conclusion)
-            if echo "$CHECKS" | jq -e '.[] | select(.state != "completed")' > /dev/null; then
+            CHECKS_OUTPUT=$(gh pr checks $PR_NUMBER)
+            if echo "$CHECKS_OUTPUT" | grep -q "pending"; then
               echo "⏳ Some checks are still pending..."
-            elif echo "$CHECKS" | jq -e '.[] | select(.conclusion == "failure")' > /dev/null; then
+            elif echo "$CHECKS_OUTPUT" | grep -q "fail"; then
               echo "❌ Some checks failed"
               exit 1
             else
@@ -216,10 +216,10 @@ jobs:
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
           for i in {1..30}; do
-            CHECKS=$(gh pr checks $PR_NUMBER --json state,conclusion)
-            if echo "$CHECKS" | jq -e '.[] | select(.state != "completed")' > /dev/null; then
+            CHECKS_OUTPUT=$(gh pr checks $PR_NUMBER)
+            if echo "$CHECKS_OUTPUT" | grep -q "pending"; then
               echo "⏳ Some checks are still pending..."
-            elif echo "$CHECKS" | jq -e '.[] | select(.conclusion == "failure")' > /dev/null; then
+            elif echo "$CHECKS_OUTPUT" | grep -q "fail"; then
               echo "❌ Some checks failed"
               exit 1
             else
