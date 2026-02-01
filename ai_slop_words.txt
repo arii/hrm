@@ -1,0 +1,32 @@
+# AI Slop Word List
+# This file contains a list of words and phrases that are often indicative of
+# low-density, AI-generated content. The find_slop.sh script uses this list
+# to identify potential "slop" in documentation and comments.
+# This list has been refined to focus on high-signal, low-noise terms
+# that are more unique to AI-generated text to avoid false positives.
+
+# AI Clichés & Tropes
+delve
+robust
+leverage
+seamless
+unleash
+harness
+pillar
+nuance
+tapestry
+landscape
+deep dive
+game-changer
+In the grand scheme of things
+It's worth noting that
+At the end of the day
+elevate
+streamline
+meticulously
+cornerstone
+paradigm
+synergy
+journey
+unravel
+navigating the complexities

@@ -6,11 +6,11 @@ This document provides a comprehensive overview of the Spotify integration withi
 
 ### Available Features
 
--   **User Authentication**: Securely log in using a Spotify account via OAuth2.
--   **Playback Control**: Play, pause, skip to the next/previous track, and adjust volume.
--   **Track Display**: Shows the currently playing track, artist, album, and album art.
--   **Device Selection**: View available Spotify devices and transfer playback between them.
--   **Web Playback**: Play music directly in the browser using the Spotify Web Playback SDK.
+- **User Authentication**: Securely log in using a Spotify account via OAuth2.
+- **Playback Control**: Play, pause, skip to the next/previous track, and adjust volume.
+- **Track Display**: Shows the currently playing track, artist, album, and album art.
+- **Device Selection**: View available Spotify devices and transfer playback between them.
+- **Web Playback**: Play music directly in the browser using the Spotify Web Playback SDK.
 
 ### User Journey
 
@@ -22,16 +22,16 @@ This document provides a comprehensive overview of the Spotify integration withi
 
 The integration follows a decoupled architecture:
 
--   **Frontend (Next.js)**:
-    -   Handles user interaction and displays playback information.
-    -   Uses **NextAuth.js** for the Spotify OAuth2 flow.
-    -   Communicates with the backend via **WebSockets** for real-time updates.
-    -   Integrates the **Spotify Web Playback SDK** to turn the browser into a Spotify device.
--   **Backend (Node.js/Express)**:
-    -   Maintains a persistent connection to the Spotify API.
-    -   **Polls** Spotify for the current playback state and available devices.
-    -   Manages Spotify API tokens and handles refreshing them.
-    -   Broadcasts updates to all connected clients via WebSockets.
+- **Frontend (Next.js)**:
+  - Handles user interaction and displays playback information.
+  - Uses **NextAuth.js** for the Spotify OAuth2 flow.
+  - Communicates with the backend via **WebSockets** for real-time updates.
+  - Integrates the **Spotify Web Playback SDK** to turn the browser into a Spotify device.
+- **Backend (Node.js/Express)**:
+  - Maintains a persistent connection to the Spotify API.
+  - **Polls** Spotify for the current playback state and available devices.
+  - Manages Spotify API tokens and handles refreshing them.
+  - Broadcasts updates to all connected clients via WebSockets.
 
 ## 2. Authentication & Setup
 
@@ -59,14 +59,14 @@ These credentials are obtained from the Spotify Developer Dashboard.
 
 ### Token Management and Refresh
 
--   **Frontend**: The `useSpotifyWebPlayback` hook (`hooks/useSpotifyWebPlayback.ts`) is responsible for fetching a short-lived access token from a dedicated Next.js API route. This token is used exclusively for the Web Playback SDK.
--   **Backend**: The `SpotifyTokenManager` service (`services/spotifyTokenManager.ts`) stores the access and refresh tokens. It's responsible for refreshing the access token using the refresh token whenever it expires. The `SpotifyPolling` service (`services/spotifyPolling.ts`) uses this manager to ensure it always has a valid token for its API calls.
--   **Synchronization**: When a user logs in or when a token is refreshed, the updated tokens are sent from the NextAuth session to the Next.js internal API route (`app/api/internal/token-delivery/route.ts`), which then securely forwards them to the persistent Node.js/Express backend's `SpotifyPolling` service (`services/spotifyPolling.ts`) to keep them in sync.
+- **Frontend**: The `useSpotifyWebPlayback` hook (`hooks/useSpotifyWebPlayback.ts`) is responsible for fetching a short-lived access token from a dedicated Next.js API route. This token is used exclusively for the Web Playback SDK.
+- **Backend**: The `SpotifyTokenManager` service (`services/spotifyTokenManager.ts`) stores the access and refresh tokens. It's responsible for refreshing the access token using the refresh token whenever it expires. The `SpotifyPolling` service (`services/spotifyPolling.ts`) uses this manager to ensure it always has a valid token for its API calls.
+- **Synchronization**: When a user logs in or when a token is refreshed, the updated tokens are sent from the NextAuth session to the Next.js internal API route (`app/api/internal/token-delivery/route.ts`), which then securely forwards them to the persistent Node.js/Express backend's `SpotifyPolling` service (`services/spotifyPolling.ts`) to keep them in sync.
 
 ### Security Considerations
 
--   The `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, and user refresh tokens are sensitive credentials and are only handled server-side.
--   The internal API endpoint for token delivery (`app/api/internal/token-delivery/route.ts`) is protected by a shared secret (`NEXTAUTH_SECRET`). The NextAuth backend includes this secret in the `x-internal-token-secret` header of its request, and the receiving endpoint middleware verifies that this header matches the server's environment variable. This ensures only NextAuth can send tokens to the backend.
+- The `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, and user refresh tokens are sensitive credentials and are only handled server-side.
+- The internal API endpoint for token delivery (`app/api/internal/token-delivery/route.ts`) is protected by a shared secret (`NEXTAUTH_SECRET`). The NextAuth backend includes this secret in the `x-internal-token-secret` header of its request, and the receiving endpoint middleware verifies that this header matches the server's environment variable. This ensures only NextAuth can send tokens to the backend.
 
 ## 3. Web Playback SDK
 
@@ -98,9 +98,9 @@ If the Web Playback SDK fails to initialize or connect (e.g., due to a browser t
 
 The `useSpotifyWebPlayback` hook listens for several error events from the player:
 
--   `initialization_error`: Fired if the SDK script fails to initialize.
--   `authentication_error`: Fired if the provided OAuth token is invalid or expired.
--   `account_error`: Fired for issues related to the user's Spotify account (e.g., not having a Premium subscription, which is required for Web Playback).
+- `initialization_error`: Fired if the SDK script fails to initialize.
+- `authentication_error`: Fired if the provided OAuth token is invalid or expired.
+- `account_error`: Fired for issues related to the user's Spotify account (e.g., not having a Premium subscription, which is required for Web Playback).
 
 These errors are caught and displayed to the user using the global error handling system.
 
@@ -120,11 +120,11 @@ The `SpotifyDevice` type, defined in `types/core.ts`, represents a single Spotif
 
 Spotify supports various device types, including:
 
--   `Computer`
--   `Speaker`
--   `Smartphone`
--   `Tablet`
--   `CastVideo` (Chromecast)
+- `Computer`
+- `Speaker`
+- `Smartphone`
+- `Tablet`
+- `CastVideo` (Chromecast)
 
 The Web Playback SDK registers the browser as a `Computer` device.
 
@@ -132,9 +132,9 @@ The Web Playback SDK registers the browser as a `Computer` device.
 
 Device management is tightly integrated with WebSockets:
 
--   The backend's `SpotifyPolling` service fetches the device list every `SPOTIFY_DEVICE_POLLING_INTERVAL_MS` milliseconds. This value is part of the environment variable schema defined in `lib/env.ts` (using Zod). It can be overridden via an environment variable but defaults to 10,000ms if not set.
--   Any changes to the device list are broadcast in a `SPOTIFY_UPDATE` message to all connected clients.
--   The frontend receives this message, updates its state, and re-renders the device selector UI to show the most current list of devices.
+- The backend's `SpotifyPolling` service fetches the device list every `SPOTIFY_DEVICE_POLLING_INTERVAL_MS` milliseconds. This value is part of the environment variable schema defined in `lib/env.ts` (using Zod). It can be overridden via an environment variable but defaults to 10,000ms if not set.
+- Any changes to the device list are broadcast in a `SPOTIFY_UPDATE` message to all connected clients.
+- The frontend receives this message, updates its state, and re-renders the device selector UI to show the most current list of devices.
 
 This architecture ensures that if a user starts or stops playing music on another device (like their phone), it will be reflected in the web dashboard automatically.
 
@@ -142,18 +142,18 @@ This architecture ensures that if a user starts or stops playing music on anothe
 
 ### Common Errors
 
--   **401 Unauthorized**: The access token is expired or invalid.
--   **403 Forbidden**: The user's account does not have the required permissions or subscription level (e.g., Spotify Premium is required for many actions).
--   **404 Not Found**: The requested resource (e.g., a device ID) could not be found.
+- **401 Unauthorized**: The access token is expired or invalid.
+- **403 Forbidden**: The user's account does not have the required permissions or subscription level (e.g., Spotify Premium is required for many actions).
+- **404 Not Found**: The requested resource (e.g., a device ID) could not be found.
 
 ### Expected API Responses
 
--   **204 No Content**: This is an expected success response for many playback commands (e.g., play, pause) that don't return any data. The code specifically handles this to prevent it from being treated as an error.
+- **204 No Content**: This is an expected success response for many playback commands (e.g., play, pause) that don't return any data. The code specifically handles this to prevent it from being treated as an error.
 
 ### Recovery Strategies
 
--   **Token Expiration**: The backend `SpotifyTokenManager` automatically uses the refresh token to get a new access token when a 401 error is detected. The `useSpotifyWebPlayback` hook on the frontend will also request a new token on subsequent initializations.
--   **API Errors**: The `handleSpotifyApiError` utility function (`services/spotifyApiErrorHandling.ts`) centralizes logging and handling of common Spotify API errors.
+- **Token Expiration**: The backend `SpotifyTokenManager` automatically uses the refresh token to get a new access token when a 401 error is detected. The `useSpotifyWebPlayback` hook on the frontend will also request a new token on subsequent initializations.
+- **API Errors**: The `handleSpotifyApiError` utility function (`services/spotifyApiErrorHandling.ts`) centralizes logging and handling of common Spotify API errors.
 
 ### User-Facing Messages
 
@@ -161,8 +161,8 @@ Errors are communicated to the user via the application's notification system (n
 
 ### Logging and Debugging
 
--   All significant Spotify-related actions, errors, and state changes are logged on the server with detailed context.
--   The `useSpotifyWebPlayback` hook includes extensive `console.log` and `console.error` messages to aid in client-side debugging.
+- All significant Spotify-related actions, errors, and state changes are logged on the server with detailed context.
+- The `useSpotifyWebPlayback` hook includes extensive `console.log` and `console.error` messages to aid in client-side debugging.
 
 ## 6. Type Documentation
 
@@ -172,21 +172,21 @@ The `SpotifyDevice` interface in `types/core.ts` is the primary type for device 
 
 ```typescript
 export interface SpotifyDevice {
-  id: string | null;
-  is_active: boolean;
-  is_private_session: boolean;
-  is_restricted: boolean;
-  name: string;
-  type: string; // e.g., "Computer", "Speaker", "Smartphone"
-  volume_percent: number;
+  id: string | null
+  is_active: boolean
+  is_private_session: boolean
+  is_restricted: boolean
+  name: string
+  type: string // e.g., "Computer", "Speaker", "Smartphone"
+  volume_percent: number
 }
 ```
 
 ### Related Types
 
--   `SpotifyData` (`types/websocket.ts`): Represents the complete state of the Spotify integration that is broadcast to the client, including track information and the list of devices.
--   `SpotifyTokenPayload` (`services/spotifyTokenManager.ts`): The structure of the token object passed from NextAuth to the backend.
--   **Official SDK Types**: For detailed data structures such as `Track`, `Artist`, and `Album`, developers should refer to the official `@spotify/web-api-ts-sdk` library, which is the source of truth for these types.
+- `SpotifyData` (`types/websocket.ts`): Represents the complete state of the Spotify integration that is broadcast to the client, including track information and the list of devices.
+- `SpotifyTokenPayload` (`services/spotifyTokenManager.ts`): The structure of the token object passed from NextAuth to the backend.
+- **Official SDK Types**: For detailed data structures such as `Track`, `Artist`, and `Album`, developers should refer to the official `@spotify/web-api-ts-sdk` library, which is the source of truth for these types.
 
 ## 7. Architecture Decisions
 
@@ -194,13 +194,13 @@ export interface SpotifyDevice {
 
 Moving device data fetching to the backend and broadcasting it via WebSockets was a key architectural decision.
 
--   **Rationale**: It centralizes the logic for fetching devices, reducing redundant API calls from multiple clients. It ensures a single source of truth for the device list and provides real-time updates to all connected clients automatically, creating a more responsive and synchronized user experience.
+- **Rationale**: It centralizes the logic for fetching devices, reducing redundant API calls from multiple clients. It ensures a single source of truth for the device list and provides real-time updates to all connected clients automatically, creating a more responsive and synchronized user experience.
 
 ### Pre-Auth Check Removal (Rationale)
 
--   **Rationale**: Removing a strict pre-authentication check before loading the Web Playback SDK simplifies the frontend logic. It allows the UI to load consistently for both authenticated and unauthenticated users. The authentication is handled gracefully at the point where the SDK requests an OAuth token, which aligns with a "progressive enhancement" approach.
+- **Rationale**: Removing a strict pre-authentication check before loading the Web Playback SDK simplifies the frontend logic. It allows the UI to load consistently for both authenticated and unauthenticated users. The authentication is handled gracefully at the point where the SDK requests an OAuth token, which aligns with a "progressive enhancement" approach.
 
 ### Unauthenticated Support (Design)
 
--   **Rationale**: The design for unauthenticated users focuses on providing a good "empty state" experience. Instead of showing broken or empty components, the UI clearly indicates that the user needs to log in to access Spotify features. This is achieved by letting the authentication flow fail silently within the `useSpotifyWebPlayback` hook and having the UI components react to the resulting unauthenticated state.
--   **Safe API Wrapper**: The backend SDK usage is wrapped in a `SafeSpotifyApi` (`services/safeSpotifyApi.ts`) to handle potential issues with Spotify's API, such as commands that succeed but return an empty response body. This aligns with the project's convention of creating type-safe wrappers for third-party APIs.
+- **Rationale**: The design for unauthenticated users focuses on providing a good "empty state" experience. Instead of showing broken or empty components, the UI clearly indicates that the user needs to log in to access Spotify features. This is achieved by letting the authentication flow fail silently within the `useSpotifyWebPlayback` hook and having the UI components react to the resulting unauthenticated state.
+- **Safe API Wrapper**: The backend SDK usage is wrapped in a `SafeSpotifyApi` (`services/safeSpotifyApi.ts`) to handle potential issues with Spotify's API, such as commands that succeed but return an empty response body. This aligns with the project's convention of creating type-safe wrappers for third-party APIs.
