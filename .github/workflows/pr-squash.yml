@@ -26,6 +26,7 @@ jobs:
     outputs:
       outcome: ${{ steps.squash_rebase.outcome }}
       head_ref: ${{ steps.pr_data.outputs.head_ref }}
+      base_ref: ${{ steps.pr_data.outputs.base_ref }}
     steps:
       - name: Acknowledge command
         uses: actions/github-script@v6
@@ -185,6 +186,8 @@ jobs:
       - name: Check for file changes
         id: check_changes
         uses: ./.github/actions/check-for-changes
+        with:
+          base_branch: ${{ needs.squash-and-rebase.outputs.base_ref }}
 
   trigger-quality-check:
     needs: [squash-and-rebase, check-for-changes-after-squash]
