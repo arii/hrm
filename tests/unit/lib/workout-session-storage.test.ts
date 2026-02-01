@@ -39,7 +39,9 @@ describe('WorkoutSessionStorage with fake-indexeddb', () => {
 
   afterEach(async () => {
     // Clear the database after each test
-    const db = await ((storage as unknown) as { dbPromise: Promise<IDBPDatabase> }).dbPromise
+    const db = await ((storage as unknown) as {
+      dbPromise: Promise<IDBPDatabase>
+    }).dbPromise
     if (db) {
       await db.clear('sessions')
     }
