@@ -6,6 +6,7 @@ import {
   WorkoutSessionStorage,
   WorkoutSessionData,
 } from '../../../lib/workout-session-storage'
+import { HrZoneName } from '../../../lib/shared/hr-zones'
 
 jest.mock('idb', () => ({
   openDB: jest.fn(() => ({
@@ -20,11 +21,13 @@ const mockSessionData: WorkoutSessionData = {
   status: 'running',
   hrHistory: [],
   timeInZones: {
-    Zone1: 0,
-    Zone2: 0,
-    Zone3: 0,
-    Zone4: 0,
-    Zone5: 0,
+    [HrZoneName.WarmUp]: 0,
+    [HrZoneName.FatBurn]: 0,
+    [HrZoneName.Cardio]: 0,
+    [HrZoneName.Peak]: 0,
+    [HrZoneName.Max]: 0,
+    [HrZoneName.NoData]: 0,
+    [HrZoneName.Unknown]: 0,
   },
   averageHr: 0,
   maxHr: 0,
@@ -42,18 +45,7 @@ describe('WorkoutSessionStorage', () => {
     beforeEach(() => {
       ;(openDB as jest.Mock).mockRejectedValue(new Error('IndexedDB failed'))
       storage = new WorkoutSessionStorage()
-      // Mock localStorage
-      let store: { [key: string]: string } = {}
-      global.Storage.prototype.setItem = jest.fn((key, value) => {
-        store[key] = value
-      })
-      global.Storage.prototype.getItem = jest.fn((key) => store[key])
-      global.Storage.prototype.removeItem = jest.fn((key) => {
-        delete store[key]
-      })
-      global.Storage.prototype.clear = jest.fn(() => {
-        store = {}
-      })
+      localStorage.clear()
     })
 
     it('should save and retrieve a session using localStorage', async () => {

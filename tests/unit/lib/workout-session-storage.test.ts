@@ -6,7 +6,7 @@ import {
   WorkoutSessionStorage,
   WorkoutSessionData,
 } from '../../../lib/workout-session-storage'
-import { IDBPDatabase } from 'idb'
+import { HrZoneName } from '../../../lib/shared/hr-zones'
 
 const mockSessionData: WorkoutSessionData = {
   sessionId: 'test-session-1',
@@ -15,11 +15,13 @@ const mockSessionData: WorkoutSessionData = {
   status: 'running',
   hrHistory: [],
   timeInZones: {
-    Zone1: 0,
-    Zone2: 0,
-    Zone3: 0,
-    Zone4: 0,
-    Zone5: 0,
+    [HrZoneName.WarmUp]: 0,
+    [HrZoneName.FatBurn]: 0,
+    [HrZoneName.Cardio]: 0,
+    [HrZoneName.Peak]: 0,
+    [HrZoneName.Max]: 0,
+    [HrZoneName.NoData]: 0,
+    [HrZoneName.Unknown]: 0,
   },
   averageHr: 0,
   maxHr: 0,
@@ -39,14 +41,8 @@ describe('WorkoutSessionStorage with fake-indexeddb', () => {
 
   afterEach(async () => {
     // Clear the database after each test
-    const db = await (
-      storage as unknown as {
-        dbPromise: Promise<IDBPDatabase>
-      }
-    ).dbPromise
-    if (db) {
-      await db.clear('sessions')
-    }
+    const sessions = await storage.getAllSessions()
+    await Promise.all(sessions.map((s) => storage.deleteSession(s.sessionId)))
   })
 
   it('should save and retrieve a session', async () => {
