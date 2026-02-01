@@ -87,7 +87,12 @@ export type ServerMessage =
 
 // --- Client Input Command Interfaces ---
 
-export type HrmInputData = {
+/**
+ * Represents the data payload for an incoming HRM_INPUT message.
+ * The `calories` field is optional to support older clients and handle
+ * cases where the client has not yet calculated a value.
+ */
+export interface IncomingHrmData {
   value: number | null
   maxHr?: number
   name?: string
@@ -97,7 +102,7 @@ export type HrmInputData = {
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'
-  data: HrmInputData
+  data: IncomingHrmData
 }
 
 export type HrmMetadataUpdateData = Omit<
@@ -176,14 +181,9 @@ import { z } from 'zod'
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
-export const HrmInputDataSchema = z.object({
+export const IncomingHrmDataSchema = z.object({
   value: z.number().nullable(),
   calories: z.number().optional(),
-})
-
-export const HrmInputMessageSchema = z.object({
-  type: z.literal('HRM_INPUT'),
-  data: HrmInputDataSchema,
 })
 
 export const HrmMetadataUpdateDataSchema = z.object({
@@ -245,6 +245,11 @@ export const ClientRegistrationMessageSchema = z.object({
 
 export const PingMessageSchema = z.object({
   type: z.literal('PING'),
+})
+
+export const HrmInputMessageSchema = z.object({
+  type: z.literal('HRM_INPUT'),
+  data: IncomingHrmDataSchema,
 })
 
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [

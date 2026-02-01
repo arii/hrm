@@ -18,11 +18,7 @@ export const HR_ZONE_DEFINITIONS = [
   { name: HrZoneName.Max, min: 0.95 },
 ]
 
-export interface HrZone {
-  zoneName: HrZoneName
-  percentage: number
-  bpm: number
-}
+import { HrZone } from '../../types/heart-rate'
 
 /**
  * Calculates the current heart rate zone, and percentage of max HR.

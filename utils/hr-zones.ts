@@ -1,25 +1,6 @@
 // utils/hr-zones.ts
 import { calculateMaxHr } from './constants'
-
-// Define the HrZoneName enum here
-export enum HrZoneName {
-  WarmUp = 'WarmUp',
-  FatBurn = 'FatBurn',
-  Cardio = 'Cardio',
-  Peak = 'Peak',
-  Max = 'Max',
-  NoData = 'No Data',
-  Unknown = 'Unknown',
-}
-
-// Define a type for the return value for clarity
-export type UserHrZones = {
-  warmUp: { min: number }
-  fatBurn: { min: number }
-  cardio: { min: number }
-  peak: { min: number }
-  max: { min: number }
-}
+import { UserHrZones } from '../types/heart-rate'
 
 export const getUserHrZones = (age: number): UserHrZones => {
   const maxHr = calculateMaxHr(age)
