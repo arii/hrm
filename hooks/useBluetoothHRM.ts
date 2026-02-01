@@ -6,7 +6,7 @@ import {
 } from '../types/websocket'
 import { BluetoothConnectionStatus } from '../types/bluetooth'
 import isEqual from 'lodash.isequal'
-import { calculateMaxHr } from '../utils/constants'
+import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
