@@ -145,7 +145,7 @@ export const WebSocketProvider = ({
   // Memoize the WebSocket URL to prevent re-computation on every render
   const wsUrl = useMemo(() => {
     const url = serverUrl || getWebSocketURL()
-    if (!clientId) return url // Return base URL if clientId isn't generated yet (SSR)
+    if (!clientId) return null // Return null if clientId isn't generated yet
 
     try {
       const urlObject = new URL(url)
