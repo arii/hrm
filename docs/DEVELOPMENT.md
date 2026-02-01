@@ -34,3 +34,20 @@ Our CI/CD pipeline automates many aspects of the development process, including 
 ## Testing
 
 For a comprehensive guide on testing, including our testing structure, commands, and best practices, please refer to the [Testing Guide](./TESTING.md).
+
+## Environment Cleanup
+
+Over time, your development environment may accumulate build artifacts, package manager caches, and other temporary files that can consume significant disk space. To help manage this, the project includes a cleanup script.
+
+To purge these files and reclaim disk space, run:
+
+```bash
+./scripts/cleanup.sh
+```
+
+This script will safely remove:
+- Next.js and TypeScript build artifacts.
+- Caches for `pnpm`, `npm`, `yarn`, and `bun`.
+- `pm2` logs.
+- Python-related caches from `conda` and `pip`.
+- GitHub Actions runner artifacts.
