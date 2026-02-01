@@ -48,6 +48,7 @@ const createClient = (id: number) => {
           name: `StressClient-${id}`,
           age: 30,
           maxHr: 190,
+          updatedAt: Date.now(),
         },
       }
       ws.send(JSON.stringify(message))

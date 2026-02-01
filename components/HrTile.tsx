@@ -8,7 +8,7 @@ import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
-import { memo } from 'react'
+import { memo, useState, useEffect } from 'react'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 
@@ -37,9 +37,29 @@ const HrTile = ({
   isDataStale = false,
   isAlerting = false,
   alertMessage = 'Checking signal...',
+  updatedAt,
 }: HrTileProps) => {
   const theme = useTheme()
+  const [timeAgo, setTimeAgo] = useState('')
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
+
+  useEffect(() => {
+    if (!updatedAt) {
+      setTimeAgo('')
+      return
+    }
+
+    const calculateTimeAgo = () => {
+      const seconds = Math.floor((Date.now() - updatedAt) / 1000)
+      setTimeAgo(seconds < 1 ? 'just now' : `${seconds}s ago`)
+    }
+
+    calculateTimeAgo()
+
+    const intervalId = setInterval(calculateTimeAgo, 5000) // Update every 5 seconds
+
+    return () => clearInterval(intervalId) // Cleanup on unmount or when updatedAt changes
+  }, [updatedAt])
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -165,6 +185,11 @@ const HrTile = ({
                 {name}
               </Typography>
             )}
+            {timeAgo && (
+              <Typography variant="caption" sx={{ opacity: 0.7, mt: 1 }}>
+                {timeAgo}
+              </Typography>
+            )}
           </CardContent>
         </Box>
       </ControlCard>
@@ -182,7 +207,8 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isDataStale === nextProps.isDataStale &&
     prevProps.isAlerting === nextProps.isAlerting &&
-    prevProps.alertMessage === nextProps.alertMessage
+    prevProps.alertMessage === nextProps.alertMessage &&
+    prevProps.updatedAt === nextProps.updatedAt
   )
 }
 
