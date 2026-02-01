@@ -190,6 +190,15 @@ if [ -n "$RUNNER_CPU_LIMIT" ]; then
   DOCKER_ARGS+=("--cpus=$RUNNER_CPU_LIMIT")
 fi
 
+# Add SSH key as environment variable if provided
+if [ -n "$SSH_PRIVATE_KEY" ]; then
+  echo "Injecting SSH private key at runtime..."
+  DOCKER_ARGS+=("-e" "SSH_PRIVATE_KEY=$SSH_PRIVATE_KEY")
+fi
+if [ -n "$REMOTE_HOST" ]; then
+  DOCKER_ARGS+=("-e" "REMOTE_HOST=$REMOTE_HOST")
+fi
+
 # Add environment variables and image
 DOCKER_ARGS+=(
   "-e" "REPO_URL=$REPO_URL"
