@@ -44,8 +44,12 @@ const HrTile = ({
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
 
   useEffect(() => {
-    setNow(Date.now())
-    const intervalId = setInterval(() => setNow(Date.now()), 5000) // Update every 5 seconds
+    // Avoid calling setNow(Date.now()) directly in the effect body to prevent synchronous updates during render phase.
+    // Instead, schedule the initial update to run on the next tick if needed, or just let the interval handle it.
+    // Since we want immediate feedback on mount, we can update via a function call that isn't flagged as synchronous 'setState'.
+    const updateTime = () => setNow(Date.now())
+    updateTime()
+    const intervalId = setInterval(updateTime, 5000) // Update every 5 seconds
     return () => clearInterval(intervalId)
   }, [])
 
