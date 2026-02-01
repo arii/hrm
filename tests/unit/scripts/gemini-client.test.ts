@@ -136,4 +136,16 @@ describe('buildReviewPrompt', () => {
     expect(prompt).toContain('You are now in **DEBUG MODE**')
     expect(prompt).toContain('- **test-check** (failure)')
   })
+
+  it('should include slop analysis in the prompt when provided', async () => {
+    const slopAnalysis = 'This is a test slop analysis.'
+    const contextWithSlop = createMockContext({ slopAnalysis })
+    const prompt = await buildReviewPrompt(
+      'test diff',
+      contextWithSlop,
+      'test context'
+    )
+    expect(prompt).toContain('## AI Slop Analysis')
+    expect(prompt).toContain(slopAnalysis)
+  })
 })
