@@ -150,11 +150,11 @@ jobs:
           set -e
           git fetch origin $BRANCH_A
           git checkout $BRANCH_A
-          # Check if the conflict is resolved
-          if git cat-file -e HEAD:conflict-file.txt; then
-            echo "✅ Conflict resolved: conflict-file.txt exists."
+          # Check if the conflict is resolved by verifying the content
+          if grep -q "branch-b content" conflict-file.txt; then
+            echo "✅ Conflict resolved: conflict-file.txt has the correct content."
           else
-            echo "❌ Conflict resolution failed: conflict-file.txt not found."
+            echo "❌ Conflict resolution failed: conflict-file.txt has incorrect content."
             exit 1
           fi
 
