@@ -21,6 +21,7 @@ describe('TimerControls', () => {
       connectionStatus: 'Connected',
       hrmData: [],
       timerData: {
+        isRunning: false,
         phase: 'idle',
         timeRemaining: 0,
         currentRound: 0,
@@ -59,6 +60,7 @@ describe('TimerControls', () => {
       connectionStatus: 'Connected',
       hrmData: [],
       timerData: {
+        isRunning: true,
         phase: 'work',
         timeRemaining: 10,
         currentRound: 1,
