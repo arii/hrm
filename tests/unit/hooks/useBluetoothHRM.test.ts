@@ -211,54 +211,60 @@ describe('useBluetoothHRM', () => {
         MockAbortController as unknown as typeof AbortController
     }
 
-    // Make the connect call a promise that we can control
-    let connectResolver: (value: MockBluetoothRemoteGATTServer) => void
-    const connectPromise = new Promise<MockBluetoothRemoteGATTServer>(
-      (resolve, _reject) => {
-        connectResolver = resolve
-        // If the signal aborts while we are waiting, we should reject?
-        // The cancellablePromise utility wraps this, so the underlying promise doesn't STRICTLY need to handle abort,
-        // but it's good practice.
+    try {
+      // Make the connect call a promise that we can control
+      let connectResolver: (value: MockBluetoothRemoteGATTServer) => void
+      const connectPromise = new Promise<MockBluetoothRemoteGATTServer>(
+        (resolve, _reject) => {
+          connectResolver = resolve
+          // If the signal aborts while we are waiting, we should reject?
+          // The cancellablePromise utility wraps this, so the underlying promise doesn't STRICTLY need to handle abort,
+          // but it's good practice.
+        }
+      )
+      mockGatt.connect.mockReturnValue(connectPromise)
+
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // 1. Start the first connection attempt
+      // We do NOT await this, as we want it to be "in-flight"
+      await act(async () => {
+        result.current.connectAndStream().catch(() => {})
+      })
+
+      // 2. Wait for the hook to update state to "Connecting"
+      await waitFor(() => {
+        expect(result.current.deviceStatus).toMatch(/connecting/i)
+      })
+
+      // 3. Start the second connection attempt
+      // Ensure the silent connect finds a device so it proceeds to connectToGatt
+      jest.spyOn(cookieUtils, 'getCookie').mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+
+      await act(async () => {
+        // This should trigger the abort of the first one
+        result.current
+          .connectAndStream(undefined, undefined, { silent: true })
+          .catch(() => {})
+      })
+
+      // 4. Verify abort was called
+      // We expect it to be called once (cancelling the FIRST connection)
+      expect(mockAbort).toHaveBeenCalledTimes(1)
+
+      // Cleanup: Resolve the pending promise to let the test finish gracefully
+      await act(async () => {
+        connectResolver(mockGatt)
+      })
+    } finally {
+      // Restore original AbortController
+      global.AbortController = OriginalAbortController
+      if (typeof window !== 'undefined') {
+        window.AbortController =
+          OriginalAbortController as unknown as typeof AbortController
       }
-    )
-    mockGatt.connect.mockReturnValue(connectPromise)
-
-    const { result } = renderHook(() => useBluetoothHRM())
-
-    // 1. Start the first connection attempt
-    // We do NOT await this, as we want it to be "in-flight"
-    await act(async () => {
-      result.current.connectAndStream().catch(() => {})
-    })
-
-    // 2. Wait for the hook to update state to "Connecting"
-    await waitFor(() => {
-      expect(result.current.deviceStatus).toMatch(/connecting/i)
-    })
-
-    // 3. Start the second connection attempt
-    // Ensure the silent connect finds a device so it proceeds to connectToGatt
-    jest.spyOn(cookieUtils, 'getCookie').mockReturnValue('test-device-id')
-    mockBluetooth.getDevices.mockResolvedValue([mockDevice])
-
-    await act(async () => {
-      // This should trigger the abort of the first one
-      result.current
-        .connectAndStream(undefined, undefined, { silent: true })
-        .catch(() => {})
-    })
-
-    // 4. Verify abort was called
-    // We expect it to be called once (cancelling the FIRST connection)
-    expect(mockAbort).toHaveBeenCalledTimes(1)
-
-    // Cleanup: Resolve the pending promise to let the test finish gracefully
-    await act(async () => {
-      connectResolver(mockGatt)
-    })
-
-    // Restore original AbortController
-    global.AbortController = OriginalAbortController
+    }
   })
 
   describe('Signal Quality Calculation', () => {

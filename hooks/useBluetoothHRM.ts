@@ -470,6 +470,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         // Attach disconnect listener immediately after successful GATT connection
         // This ensures we catch disconnections that might occur during service discovery
+        device.removeEventListener('gattserverdisconnected', onDisconnected)
         device.addEventListener('gattserverdisconnected', onDisconnected)
 
         const service = await server!.getPrimaryService(HR_SERVICE_UUID)
