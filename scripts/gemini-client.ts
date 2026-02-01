@@ -558,7 +558,7 @@ async function runReviewPreset(
       'PR is marked as "ready-for-approval" or "abandon". Skipping review.'
     )
     await writeOutput(
-      JSON.stringify({ reviewComment: '', labels: [] }),
+      JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
       outputFile
     )
     return
@@ -568,7 +568,7 @@ async function runReviewPreset(
   if (!diffFile) {
     console.error('Error: PR_DIFF_FILE env var is required for review preset')
     await writeOutput(
-      JSON.stringify({ reviewComment: '', labels: [] }),
+      JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
       outputFile
     )
     return
@@ -585,7 +585,7 @@ async function runReviewPreset(
   if (!diff || diff.trim().length === 0) {
     console.log('Diff is empty. Skipping review.')
     await writeOutput(
-      JSON.stringify({ reviewComment: '', labels: [] }),
+      JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
       outputFile
     )
     return
@@ -635,7 +635,7 @@ async function runReviewPreset(
               },
             },
           },
-          required: ['reviewComment', 'labels'],
+          required: ['reviewComment', 'labels', 'verdict'],
         },
       },
     },
@@ -655,6 +655,8 @@ async function runReviewPreset(
   if (result.success) {
     const reviewData = result.data as {
       reviewComment?: string
+      verdict?: string
+      labels?: string[]
       prContext?: unknown
     }
     reviewData.prContext = prContext
@@ -675,6 +677,14 @@ async function runReviewPreset(
     } else {
       // Add commit hash to the review comment
       reviewData.reviewComment += commitComment
+      // Ensure verdict field is present (required by downstream scripts)
+      if (!reviewData.verdict) {
+        reviewData.verdict = 'comment'
+      }
+      // Ensure labels field is present
+      if (!reviewData.labels) {
+        reviewData.labels = []
+      }
       // Output the original, valid JSON.
       await writeOutput(JSON.stringify(reviewData, null, 2), outputFile)
     }
