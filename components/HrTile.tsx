@@ -8,7 +8,7 @@ import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
-import { memo, useState, useEffect } from 'react'
+import { memo, useState, useEffect, useMemo } from 'react'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 
@@ -40,26 +40,21 @@ const HrTile = ({
   updatedAt,
 }: HrTileProps) => {
   const theme = useTheme()
-  const [timeAgo, setTimeAgo] = useState('')
+  const [now, setNow] = useState(() => Date.now())
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
 
   useEffect(() => {
+    const intervalId = setInterval(() => setNow(Date.now()), 5000) // Update every 5 seconds
+    return () => clearInterval(intervalId)
+  }, [])
+
+  const timeAgo = useMemo(() => {
     if (!updatedAt) {
-      setTimeAgo('')
-      return
+      return ''
     }
-
-    const calculateTimeAgo = () => {
-      const seconds = Math.floor((Date.now() - updatedAt) / 1000)
-      setTimeAgo(seconds < 1 ? 'just now' : `${seconds}s ago`)
-    }
-
-    calculateTimeAgo()
-
-    const intervalId = setInterval(calculateTimeAgo, 5000) // Update every 5 seconds
-
-    return () => clearInterval(intervalId) // Cleanup on unmount or when updatedAt changes
-  }, [updatedAt])
+    const seconds = Math.floor((now - updatedAt) / 1000)
+    return seconds < 1 ? 'just now' : `${seconds}s ago`
+  }, [now, updatedAt])
 
   const tooltipTitle = isAlerting
     ? alertMessage
