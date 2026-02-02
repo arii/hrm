@@ -149,10 +149,7 @@ export const useWorkoutSessionManager = () => {
   const { showInfo } = useAppSnackbar()
 
   const clearStaleSession = useCallback(
-    async (
-      session: WorkoutSessionData,
-      onStale: (message: string) => void
-    ) => {
+    async (session: WorkoutSessionData, onStale: (message: string) => void) => {
       const sessionDate = new Date(session.startTime)
       const currentDate = new Date()
 
@@ -199,7 +196,7 @@ export const useWorkoutSessionManager = () => {
     if (!isInitialized) {
       recoverSession()
     }
-  }, [isInitialized, showInfo])
+  }, [isInitialized, showInfo, clearStaleSession])
 
   // Validate session on window focus
   useEffect(() => {
