@@ -4,8 +4,16 @@ import Dashboard from '../../../app/page'
 
 // Mock child components to isolate the Dashboard component
 jest.mock('../../../components/WorkoutTableViewer', () => {
-  const WorkoutTableViewer = ({ refreshKey }: { refreshKey: number }) => (
-    <div data-testid="workout-table-viewer" data-refresh-key={refreshKey} />
+  const WorkoutTableViewer = ({
+    refreshKey,
+    onRefresh,
+  }: {
+    refreshKey: number
+    onRefresh?: () => void
+  }) => (
+    <div data-testid="workout-table-viewer" data-refresh-key={refreshKey}>
+      <button aria-label="refresh workout table" onClick={onRefresh} />
+    </div>
   )
   WorkoutTableViewer.displayName = 'WorkoutTableViewer'
   return WorkoutTableViewer
