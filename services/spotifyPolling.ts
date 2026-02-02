@@ -42,21 +42,6 @@ export class SpotifyPolling implements SpotifyService {
    * Test-only properties for inspecting internal state, defined only in 'test' env.
    * See docs/TYPESCRIPT_PATTERNS.md for more info on this pattern.
    */
-  public _test_ =
-    process.env.NODE_ENV === 'test'
-      ? {
-          getPollInterval: () => this.pollInterval,
-          getTokenRefreshInterval: () => this.tokenRefreshInterval,
-          setPollInterval: (interval: NodeJS.Timeout | null) => {
-            this.pollInterval = interval
-          },
-          setTokenRefreshInterval: (interval: NodeJS.Timeout | null) => {
-            this.tokenRefreshInterval = interval
-          },
-          isEmptyResponseError: this.isEmptyResponseError.bind(this),
-        }
-      : undefined
-
   private readonly broadcastUpdate: (message: ServerMessage) => void
 
   private lastTrackId: string | null = null
@@ -89,6 +74,106 @@ export class SpotifyPolling implements SpotifyService {
       env.SPOTIFY_CLIENT_SECRET
     )
   }
+
+  private getCurrentlyPlaying = async () => {
+    try {
+      if (!this.sdk) {
+        logger.debug('Spotify SDK not initialized, skipping poll')
+        return
+      }
+      const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
+
+      if (!playbackState || !playbackState.item) {
+        // Nothing playing, 204, or private session
+        if (this.lastPlaybackState !== false) {
+          this.lastPlaybackState = false
+          this.state = {
+            ...this.state,
+            trackId: null,
+            trackName: 'Nothing is currently playing.',
+            artist: '',
+            albumName: '',
+            albumArtUrl: '',
+            isPlaying: false,
+          }
+          this.broadcastUpdate({
+            type: 'SPOTIFY_UPDATE',
+            payload: this.getState(),
+          })
+        }
+        return
+      }
+
+      const item = playbackState.item
+      const isPlaying = playbackState.is_playing
+
+      // Only broadcast if track ID or playback state has changed
+      if (
+        item.id !== this.lastTrackId ||
+        isPlaying !== this.lastPlaybackState
+      ) {
+        this.lastTrackId = item.id
+        this.lastPlaybackState = isPlaying
+
+        const trackName = item.name
+        const trackId = item.id
+        let artistName = ''
+        let albumName = ''
+        let albumArtUrl = ''
+
+        if (item.type === 'track') {
+          const track = item as Track
+          artistName = track.artists.map((a) => a.name).join(', ')
+          albumName = track.album.name
+          albumArtUrl = track.album.images?.[0]?.url ?? ''
+        } else if (item.type === 'episode') {
+          const episode = item as Episode
+          artistName = episode.show.publisher
+          albumName = episode.show.name
+          albumArtUrl = episode.show.images?.[0]?.url ?? ''
+        }
+
+        this.state = {
+          ...this.state,
+          trackId,
+          trackName,
+          artist: artistName,
+          albumName,
+          albumArtUrl,
+          isPlaying,
+        }
+
+        this.broadcastUpdate({
+          type: 'SPOTIFY_UPDATE',
+          payload: this.getState(),
+        })
+      }
+    } catch (error) {
+      await handleSpotifyApiError(error, () => this.checkAndRefreshSdkToken())
+    }
+  }
+
+  /**
+   * @internal
+   * This is a public property for testing purposes.
+   * It is only defined in a test environment.
+   */
+  public _test_ =
+    process.env.NODE_ENV === 'test'
+      ? {
+          getPollInterval: () => this.pollInterval,
+          getTokenRefreshInterval: () => this.tokenRefreshInterval,
+          setPollInterval: (interval: NodeJS.Timeout | null) => {
+            this.pollInterval = interval
+          },
+          setTokenRefreshInterval: (interval: NodeJS.Timeout | null) => {
+            this.tokenRefreshInterval = interval
+          },
+          isEmptyResponseError: this.isEmptyResponseError.bind(this),
+          getSdk: this.getSdk.bind(this),
+          getCurrentlyPlaying: this.getCurrentlyPlaying.bind(this),
+        }
+      : undefined
 
   public static async create(
     broadcastUpdate: (message: ServerMessage) => void
@@ -229,84 +314,6 @@ export class SpotifyPolling implements SpotifyService {
       clearInterval(this.tokenRefreshInterval)
       this.tokenRefreshInterval = null
       logger.debug('Token refresh interval cleared.')
-    }
-  }
-
-  private getCurrentlyPlaying = async () => {
-    try {
-      if (!this.sdk) {
-        logger.debug('Spotify SDK not initialized, skipping poll')
-        return
-      }
-      const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
-
-      if (!playbackState || !playbackState.item) {
-        // Nothing playing, 204, or private session
-        if (this.lastPlaybackState !== false) {
-          this.lastPlaybackState = false
-          this.state = {
-            ...this.state,
-            trackId: null,
-            trackName: 'Nothing is currently playing.',
-            artist: '',
-            albumName: '',
-            albumArtUrl: '',
-            isPlaying: false,
-          }
-          this.broadcastUpdate({
-            type: 'SPOTIFY_UPDATE',
-            payload: this.getState(),
-          })
-        }
-        return
-      }
-
-      const item = playbackState.item
-      const isPlaying = playbackState.is_playing
-
-      // Only broadcast if track ID or playback state has changed
-      if (
-        item.id !== this.lastTrackId ||
-        isPlaying !== this.lastPlaybackState
-      ) {
-        this.lastTrackId = item.id
-        this.lastPlaybackState = isPlaying
-
-        const trackName = item.name
-        const trackId = item.id
-        let artistName = ''
-        let albumName = ''
-        let albumArtUrl = ''
-
-        if (item.type === 'track') {
-          const track = item as Track
-          artistName = track.artists.map((a) => a.name).join(', ')
-          albumName = track.album.name
-          albumArtUrl = track.album.images?.[0]?.url ?? ''
-        } else if (item.type === 'episode') {
-          const episode = item as Episode
-          artistName = episode.show.publisher
-          albumName = episode.show.name
-          albumArtUrl = episode.show.images?.[0]?.url ?? ''
-        }
-
-        this.state = {
-          ...this.state,
-          trackId,
-          trackName,
-          artist: artistName,
-          albumName,
-          albumArtUrl,
-          isPlaying,
-        }
-
-        this.broadcastUpdate({
-          type: 'SPOTIFY_UPDATE',
-          payload: this.getState(),
-        })
-      }
-    } catch (error) {
-      await handleSpotifyApiError(error, () => this.checkAndRefreshSdkToken())
     }
   }
 
