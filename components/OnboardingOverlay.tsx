@@ -1,24 +1,15 @@
 // components/OnboardingOverlay.tsx
-'use client';
+'use client'
 
-import { Alert, AlertTitle } from '@mui/material';
-import { checkOnboardingRequirements } from '@/utils/browserSupport';
-import { useEffect, useState } from 'react';
+import { Alert, AlertTitle } from '@mui/material'
+import { checkOnboardingRequirements } from '@/utils/browserSupport'
+import { useState } from 'react'
 
 export const OnboardingOverlay = () => {
-  const [support, setSupport] = useState({
-    bluetooth: true,
-    webSockets: true,
-    isSecure: true,
-    allSupported: true,
-  });
-
-  useEffect(() => {
-    setSupport(checkOnboardingRequirements());
-  }, []);
+  const [support] = useState(() => checkOnboardingRequirements())
 
   if (support.allSupported) {
-    return null;
+    return null
   }
 
   return (
@@ -31,17 +22,16 @@ export const OnboardingOverlay = () => {
         </p>
       )}
       {!support.isSecure && (
-        <p>
-          A secure connection (HTTPS) is required for Bluetooth features.
-        </p>
+        <p>A secure connection (HTTPS) is required for Bluetooth features.</p>
       )}
-       {!support.webSockets && (
+      {!support.webSockets && (
         <p>
-          Your browser does not support WebSockets, which are required for real-time communication.
+          Your browser does not support WebSockets, which are required for
+          real-time communication.
         </p>
       )}
     </Alert>
-  );
-};
+  )
+}
 
-export default OnboardingOverlay;
+export default OnboardingOverlay
