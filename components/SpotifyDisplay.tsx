@@ -40,7 +40,7 @@ type SpotifyDisplayAction =
   | { type: 'CLOSE_DEVICE_MENU' }
   | {
       type: 'SYNC_WITH_WEBSOCKET'
-      payload: { volume?: number; isMuted?: boolean }
+      payload: { volumePercent?: number }
     }
 
 // 3. Reducer Logic
@@ -51,12 +51,12 @@ const spotifyDisplayReducer = (
   switch (action.type) {
     case 'SYNC_WITH_WEBSOCKET': {
       if (state.isSliding) return state
-      const { volume, isMuted } = action.payload
-      const newVolume = volume ?? state.displayVolume
+      const { volumePercent } = action.payload
+      const newVolume = volumePercent ?? state.displayVolume
       return {
         ...state,
         displayVolume: newVolume,
-        isMuted: isMuted ?? state.isMuted,
+        isMuted: newVolume === 0,
         lastVolume: newVolume > 0 ? newVolume : state.lastVolume,
       }
     }
@@ -109,11 +109,13 @@ const SpotifyDisplay = () => {
 
   // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
-    displayVolume: spotifyData.volume ?? 70,
-    isMuted: spotifyData.isMuted ?? false,
+    displayVolume: spotifyData.volumePercent ?? 70,
+    isMuted: (spotifyData.volumePercent ?? 70) === 0,
     isSliding: false,
     lastVolume:
-      spotifyData.volume && spotifyData.volume > 0 ? spotifyData.volume : 70,
+      spotifyData.volumePercent && spotifyData.volumePercent > 0
+        ? spotifyData.volumePercent
+        : 70,
     selectedDeviceId: '',
     deviceMenuAnchor: null,
   })
@@ -154,9 +156,9 @@ const SpotifyDisplay = () => {
 
     dispatch({
       type: 'SYNC_WITH_WEBSOCKET',
-      payload: { volume: spotifyData.volume, isMuted: spotifyData.isMuted },
+      payload: { volumePercent: spotifyData.volumePercent },
     })
-  }, [spotifyData.volume, spotifyData.isMuted, state.isSliding])
+  }, [spotifyData.volumePercent, state.isSliding])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
