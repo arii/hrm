@@ -234,8 +234,11 @@ export class SpotifyPolling implements SpotifyService {
 
   private getCurrentlyPlaying = async () => {
     try {
-      const sdk = this.getSdk()
-      const playbackState = await sdk.player.getCurrentlyPlayingTrack()
+      if (!this.sdk) {
+        logger.debug('Spotify SDK not initialized, skipping poll')
+        return
+      }
+      const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
 
       if (!playbackState || !playbackState.item) {
         // Nothing playing, 204, or private session
