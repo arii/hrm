@@ -6,6 +6,7 @@ import {
   WorkoutSessionData,
   HrDataPoint,
 } from '../lib/workout-session-storage'
+import { useAppSnackbar } from './useAppSnackbar'
 import { HrZoneName } from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
 import { calculateHrZone } from '../lib/hrm/zones'
@@ -144,19 +145,55 @@ function sessionManagerReducer(
 export const useWorkoutSessionManager = () => {
   const [state, dispatch] = useReducer(sessionManagerReducer, initialState)
   const [isInitialized, setIsInitialized] = useState(false)
+  const { enqueueSnackbar } = useAppSnackbar()
 
-  // Auto-recovery of incomplete sessions
+  const checkAndRotateSession = useCallback(async () => {
+    if (!state.session) return
+
+    const sessionDate = new Date(state.session.startTime).toISOString().slice(0, 10)
+    const todayDate = new Date().toISOString().slice(0, 10)
+
+    if (sessionDate !== todayDate) {
+      await workoutSessionStorage.deleteSession(state.session.sessionId)
+      dispatch({ type: 'RESET' })
+      enqueueSnackbar('New day detected. A fresh workout session has started.', {
+        variant: 'info',
+      })
+    }
+  }, [state.session, enqueueSnackbar])
+
+  // Validate on mount and when window regains focus
   useEffect(() => {
     const recoverSession = async () => {
       const incompleteSession =
         await workoutSessionStorage.getIncompleteSession()
       if (incompleteSession) {
-        dispatch({ type: 'SET_SESSION', payload: incompleteSession })
+        const sessionDate = new Date(incompleteSession.startTime)
+          .toISOString()
+          .slice(0, 10)
+        const todayDate = new Date().toISOString().slice(0, 10)
+
+        if (sessionDate === todayDate) {
+          dispatch({ type: 'SET_SESSION', payload: incompleteSession })
+        } else {
+          await workoutSessionStorage.deleteSession(incompleteSession.sessionId)
+          dispatch({ type: 'RESET' })
+          enqueueSnackbar(
+            'New day detected. A fresh workout session has started.',
+            { variant: 'info' }
+          )
+        }
       }
       setIsInitialized(true)
     }
+
     recoverSession()
-  }, [])
+
+    window.addEventListener('focus', checkAndRotateSession)
+    return () => {
+      window.removeEventListener('focus', checkAndRotateSession)
+    }
+  }, [enqueueSnackbar, checkAndRotateSession])
 
   // Persist session changes to IndexedDB
   useEffect(() => {
