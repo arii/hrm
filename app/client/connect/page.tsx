@@ -184,7 +184,7 @@ export default function ConnectPage() {
     deviceStatus,
     batteryLevel,
     isConnected,
-    isDataStale,
+    lastUpdated,
     isSupported,
     signalPeriodMs,
   } = useBluetoothHRM({
@@ -268,7 +268,7 @@ export default function ConnectPage() {
       unitSystem={unitSystem}
       onUnitChange={handleUnitChange}
       isConnected={isConnected}
-      isDataStale={isDataStale}
+      lastUpdated={lastUpdated}
       deviceStatus={deviceStatus}
       batteryLevel={batteryLevel}
       onConnect={handleConnect}

@@ -7,6 +7,7 @@ export const mockHrmData: HrmData[] = [
     value: 120,
     maxHr: 190,
     calories: 100,
+    timestamp: Date.now(),
   },
   {
     clientId: '2',
@@ -14,5 +15,6 @@ export const mockHrmData: HrmData[] = [
     value: 130,
     maxHr: 185,
     calories: 110,
+    timestamp: Date.now(),
   },
 ]

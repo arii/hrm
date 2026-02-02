@@ -152,6 +152,7 @@ const initSocketManager = (
         maxHr: 185,
         age: 30,
         calories: 0,
+        timestamp: Date.now(),
       }
       hrmDataStore.save(newClient)
       clientSessionState.set(extWs.clientId, {
