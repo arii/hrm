@@ -40,6 +40,8 @@ test.describe('Spotify Authentication', () => {
     // We expect the login button to be visible on the dashboard
     await page.goto(BASE)
     // The text might be "Login with Spotify" or similar. Using case-insensitive regex.
-    await expect(page.getByText(/login with spotify/i)).toBeVisible()
+    await expect(
+      page.getByText(/login to spotify to select a playlist/i)
+    ).toBeVisible()
   })
 })

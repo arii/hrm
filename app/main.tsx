@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 import BottomNavBar from '@/components/BottomNavBar'
+import OnboardingOverlay from '@/components/OnboardingOverlay'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorFallback from '@/components/ErrorFallback'
 import Footer from '@/components/Footer'
@@ -19,6 +20,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   return (
     <ErrorBoundary fallback={<ErrorFallback />}>
+      <OnboardingOverlay />
       <ErrorProvider>
         <LoadingProvider>
           <NotificationProvider>

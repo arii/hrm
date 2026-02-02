@@ -28,6 +28,7 @@ interface SpotifyDisplayState {
   lastVolume: number // Last non-zero volume
   selectedDeviceId: string
   deviceMenuAnchor: null | HTMLElement
+  showLogin: boolean
 }
 
 // 2. Actions
@@ -42,6 +43,7 @@ type SpotifyDisplayAction =
       type: 'SYNC_WITH_WEBSOCKET'
       payload: { volume?: number; isMuted?: boolean }
     }
+  | { type: 'SHOW_LOGIN' }
 
 // 3. Reducer Logic
 const spotifyDisplayReducer = (
@@ -98,6 +100,8 @@ const spotifyDisplayReducer = (
       return { ...state, deviceMenuAnchor: action.payload }
     case 'CLOSE_DEVICE_MENU':
       return { ...state, deviceMenuAnchor: null }
+    case 'SHOW_LOGIN':
+      return { ...state, showLogin: true }
     default:
       return state
   }
@@ -116,8 +120,15 @@ const SpotifyDisplay = () => {
       spotifyData.volume && spotifyData.volume > 0 ? spotifyData.volume : 70,
     selectedDeviceId: '',
     deviceMenuAnchor: null,
+    showLogin: false,
   })
-  const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
+  const {
+    displayVolume,
+    isMuted,
+    selectedDeviceId,
+    deviceMenuAnchor,
+    showLogin,
+  } = state
 
   // Track the last time volume command was sent to prevent sync race conditions
   const lastVolumeSendTimeRef = useRef<number>(0)
@@ -276,7 +287,16 @@ const SpotifyDisplay = () => {
           width: '100%',
         }}
       >
-        <AuthButton providerId="spotify" providerName="Spotify" />
+        {showLogin ? (
+          <AuthButton providerId="spotify" providerName="Spotify" />
+        ) : (
+          <Button
+            variant="contained"
+            onClick={() => dispatch({ type: 'SHOW_LOGIN' })}
+          >
+            Login to Spotify to select a playlist
+          </Button>
+        )}
       </Box>
     )
   }
