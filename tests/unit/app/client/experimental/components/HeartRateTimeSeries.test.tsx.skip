@@ -1,0 +1,68 @@
+/**
+ * @jest-environment jsdom
+ */
+import React from 'react'
+import { render, screen, waitFor } from '@testing-library/react'
+import dynamic from 'next/dynamic'
+import { ThemeProvider } from '@mui/material/styles'
+import theme from '@/theme/theme'
+import { UserSettingsProvider } from '@/context/UserSettingsContext'
+
+// Mock ResizeObserver for Recharts
+jest.mock('recharts', () => {
+  const OriginalModule = jest.requireActual('recharts')
+  return {
+    ...OriginalModule,
+    ResponsiveContainer: ({ children }) => (
+      <div className="responsive-container">{children}</div>
+    ),
+  }
+})
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+const ConnectedHeartRateChart = dynamic(
+  () =>
+    import('@/app/client/experimental/components/HeartRateTimeSeries').then(
+      (mod) => mod.ConnectedHeartRateChart
+    ),
+  {
+    ssr: false,
+  }
+)
+
+describe('ConnectedHeartRateChart', () => {
+  const mockData = [
+    { timestamp: new Date('2023-01-01T10:00:00').getTime(), hr: 60 },
+    { timestamp: new Date('2023-01-01T10:00:05').getTime(), hr: 65 },
+  ]
+
+  it('renders the title', async () => {
+    render(
+      <UserSettingsProvider>
+        <ThemeProvider theme={theme}>
+          <ConnectedHeartRateChart data={mockData} />
+        </ThemeProvider>
+      </UserSettingsProvider>
+    )
+    await waitFor(() =>
+      expect(screen.getByText('Heart Rate Analysis')).toBeInTheDocument()
+    )
+  })
+
+  it('renders with the correct data-testid', async () => {
+    render(
+      <UserSettingsProvider>
+        <ThemeProvider theme={theme}>
+          <ConnectedHeartRateChart data={mockData} />
+        </ThemeProvider>
+      </UserSettingsProvider>
+    )
+    await waitFor(() =>
+      expect(screen.getByTestId('hr-time-series-chart')).toBeInTheDocument()
+    )
+  })
+})

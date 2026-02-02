@@ -30,9 +30,13 @@ import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
 
-const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
-  ssr: false,
-})
+const HeartRateTimeSeries = dynamic(
+  () =>
+    import('./HeartRateTimeSeries').then((mod) => mod.ConnectedHeartRateChart),
+  {
+    ssr: false,
+  }
+)
 
 type View = 'active' | 'list' | 'detail'
 
@@ -244,7 +248,12 @@ const ExperimentalAnalyticsPage = () => {
             />
 
             {activeSession && activeSession.hrHistory.length > 0 && (
-              <HeartRateTimeSeries hrHistory={activeSession.hrHistory} />
+              <HeartRateTimeSeries
+                data={activeSession.hrHistory.map((d) => ({
+                  timestamp: d.time,
+                  hr: d.hr,
+                }))}
+              />
             )}
           </Box>
         </>

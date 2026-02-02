@@ -2,7 +2,7 @@
 import { Card, CardContent, Typography, Button, Box } from '@mui/material'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import ZoneDistribution from './ZoneDistribution'
-import HeartRateTimeSeries from './HeartRateTimeSeries'
+import { ConnectedHeartRateChart } from './HeartRateTimeSeries'
 
 interface SessionDetailProps {
   session: WorkoutSessionData
@@ -60,7 +60,12 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
             />
           </Box>
         </Box>
-        <HeartRateTimeSeries hrHistory={session.hrHistory} />
+        <ConnectedHeartRateChart
+          data={session.hrHistory.map((d) => ({
+            timestamp: d.time,
+            hr: d.hr,
+          }))}
+        />
       </CardContent>
     </Card>
   )

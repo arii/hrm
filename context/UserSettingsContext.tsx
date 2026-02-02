@@ -6,6 +6,8 @@ import { MeasurementSystem, Gender } from '../types/core'
 
 // Directly define the preferences interface and defaults here
 export interface UserPreferences {
+  // ... existing fields
+  maxHeartRate: number // New Field
   theme: 'dark' | 'light'
   volumeLevel: number
   defaultWorkDuration: number
@@ -19,7 +21,10 @@ export interface UserPreferences {
   unitSystem: MeasurementSystem
 }
 
+// Update DEFAULT_PREFERENCES
 const DEFAULT_PREFERENCES: UserPreferences = {
+  // ... existing defaults
+  maxHeartRate: 190, // Default fallback
   theme: 'dark',
   volumeLevel: 70,
   defaultWorkDuration: 20,

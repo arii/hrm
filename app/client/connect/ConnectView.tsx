@@ -37,6 +37,8 @@ interface ConnectViewProps {
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
+  maxHr: string
+  setMaxHr: (hr: string) => void
   onAgeBlur: () => void
   ageError: string | null
   userHeight: { cm: string; feet: string; inches: string }
@@ -81,6 +83,8 @@ export default function ConnectView({
   setUserName,
   userAge,
   setUserAge,
+  maxHr,
+  setMaxHr,
   onAgeBlur,
   ageError,
   userHeight,
@@ -234,6 +238,8 @@ export default function ConnectView({
               weightError={weightError}
               unit={unitSystem}
               setUnit={onUnitChange}
+              maxHr={maxHr}
+              setMaxHr={setMaxHr}
             />
 
             <FormControl component="fieldset">
