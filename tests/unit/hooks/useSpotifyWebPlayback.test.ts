@@ -59,8 +59,12 @@ describe('useSpotifyWebPlayback', () => {
   })
 
   it('should call signOut and addError on 401 error from fetchWithRetry', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+    const consoleWarnSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {})
     const error: networkUtils.AppError = {
       message: 'Unauthorized',
       code: 'HTTP_ERROR_401',
@@ -87,7 +91,9 @@ describe('useSpotifyWebPlayback', () => {
   })
 
   it('should call addError but not signOut for non-401 errors', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
     const error: networkUtils.AppError = {
       message: 'Internal Server Error',
       code: 'HTTP_ERROR_500',
