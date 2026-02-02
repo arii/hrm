@@ -111,9 +111,9 @@ function sessionManagerReducer(
 
       const { hr } = action.payload
       const {
-        userSettings: { maxHr },
+        userSettings: { maxHeartRate },
       } = state.session
-      const { zoneName } = calculateHrZone(hr, maxHr)
+      const { zoneName } = calculateHrZone(hr, maxHeartRate)
       const newTimeInZones = {
         ...state.session.timeInZones,
         [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,

@@ -1,7 +1,14 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  useTheme,
+  alpha,
+} from '@mui/material'
 import {
   LineChart,
   Line,
@@ -17,13 +24,13 @@ import { format } from 'date-fns' // Ensure date-fns is installed
 import { useUserSettings } from '@/context/UserSettingsContext'
 
 // Accessibility: High contrast colors for zones (WCAG AA compliant when used as background)
-const ZONE_COLORS = {
-  zone1: 'rgba(189, 195, 199, 0.3)', // Grey - Warm Up
-  zone2: 'rgba(52, 152, 219, 0.3)', // Blue - Fat Burn
-  zone3: 'rgba(46, 204, 113, 0.3)', // Green - Aerobic
-  zone4: 'rgba(241, 196, 15, 0.3)', // Yellow - Anaerobic
-  zone5: 'rgba(231, 76, 60, 0.3)', // Red - Maximum
-}
+const getZoneColors = (theme) => ({
+  zone1: alpha(theme.palette.secondary.main, 0.3), // Blue - Warm Up
+  zone2: alpha(theme.palette.success.main, 0.3), // Green - Fat Burn
+  zone3: alpha(theme.palette.warning.main, 0.3), // Yellow - Cardio
+  zone4: alpha(theme.palette.error.main, 0.3), // Red - Peak
+  zone5: alpha(theme.palette.primary.main, 0.3), // Purple - Max
+})
 
 interface HeartRateDataPoint {
   timestamp: number | string // Date object or ISO string
@@ -40,6 +47,7 @@ export const HeartRateTimeSeries = ({
   maxHr = 190,
 }: HeartRateTimeSeriesProps) => {
   const theme = useTheme()
+  const ZONE_COLORS = getZoneColors(theme)
 
   // Calculate zone boundaries based on Max HR
   const zones = useMemo(
@@ -47,8 +55,8 @@ export const HeartRateTimeSeries = ({
       z1: maxHr * 0.5,
       z2: maxHr * 0.6,
       z3: maxHr * 0.7,
-      z4: maxHr * 0.8,
-      z5: maxHr * 0.9,
+      z4: maxHr * 0.85,
+      z5: maxHr * 0.95,
       max: maxHr,
     }),
     [maxHr]
