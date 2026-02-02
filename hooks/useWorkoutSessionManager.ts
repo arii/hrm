@@ -149,7 +149,11 @@ export const useWorkoutSessionManager = () => {
   const { showInfo } = useAppSnackbar()
 
   const clearStaleSession = useCallback(
-    async (session: WorkoutSessionData, onStale: (message: string) => void) => {
+    async (
+      session: WorkoutSessionData,
+      message: string,
+      onStale: (message: string) => void
+    ) => {
       const sessionDate = new Date(session.startTime)
       const currentDate = new Date()
 
@@ -158,7 +162,7 @@ export const useWorkoutSessionManager = () => {
           `[SessionManager] Stale session from ${sessionDate.toDateString()} detected. Clearing for new day ${currentDate.toDateString()}.`
         )
         await workoutSessionStorage.deleteSession(session.sessionId)
-        onStale('New day detected. Your previous session was cleared.')
+        onStale(message)
         return true // Indicates session was stale and cleared
       }
       return false // Indicates session was not stale
@@ -168,10 +172,14 @@ export const useWorkoutSessionManager = () => {
 
   const checkAndRotateSession = useCallback(async () => {
     if (state.session) {
-      await clearStaleSession(state.session, (message) => {
-        dispatch({ type: 'RESET' })
-        showInfo(message)
-      })
+      await clearStaleSession(
+        state.session,
+        'New day detected. A fresh workout session has started.',
+        (message) => {
+          dispatch({ type: 'RESET' })
+          showInfo(message)
+        }
+      )
     }
   }, [state.session, showInfo, clearStaleSession])
 
@@ -181,7 +189,11 @@ export const useWorkoutSessionManager = () => {
       let incompleteSession = await workoutSessionStorage.getIncompleteSession()
 
       if (incompleteSession) {
-        const wasStale = await clearStaleSession(incompleteSession, showInfo)
+        const wasStale = await clearStaleSession(
+          incompleteSession,
+          'New day detected. Your previous session was cleared.',
+          showInfo
+        )
         if (wasStale) {
           incompleteSession = null
         }
