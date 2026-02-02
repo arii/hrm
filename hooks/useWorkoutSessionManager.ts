@@ -178,9 +178,7 @@ export const useWorkoutSessionManager = () => {
         } else {
           await workoutSessionStorage.deleteSession(incompleteSession.sessionId)
           dispatch({ type: 'RESET' })
-          showInfo(
-            'New day detected. A fresh workout session has started.'
-          )
+          showInfo('New day detected. A fresh workout session has started.')
         }
       }
       setIsInitialized(true)
