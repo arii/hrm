@@ -987,90 +987,55 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
-      - name: Copy checks from parent commit
+      - name: Get parent commit SHA
+        id: get-parent-sha
+        run: echo "parent_sha=$(git rev-parse HEAD~1)" >> $GITHUB_OUTPUT
+
+      - name: Determine required checks
+        id: get-required-checks
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get the parent commit SHA, use HEAD~1 for compatibility
-          PARENT_SHA=$(git rev-parse HEAD~1)
-          # Get the current commit SHA
-          CURRENT_SHA=$(git rev-parse HEAD)
-
-          # --- Dynamically determine the list of jobs to copy ---
-          echo "🔎 Determining required checks for branch '${{ github.base_ref }}'..."
           REQUIRED_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/branches/${{ github.base_ref }}/protection/required_status_checks" --jq '.contexts' || echo "[]")
-
-          if [ "$(echo "$REQUIRED_CHECKS_JSON" | jq 'length')" -gt 0 ]; then
-            echo "Found protected branch rules. Required checks:"
-            echo "$REQUIRED_CHECKS_JSON" | jq -r '.[]'
-            # Convert JSON array to a bash array
-            mapfile -t JOBS_TO_COPY < <(echo "$REQUIRED_CHECKS_JSON" | jq -r '.[]')
-          else
-            echo "Branch is not protected or failed to fetch rules. Using fallback list."
-            JOBS_TO_COPY=(
-              "📝 Prepare Environment"
-              "🎒 Knip Check"
-              "🔍 Lint Check"
-              "🏗️ Build Check"
-              "🧪 Infrastructure Tests"
-              "🧪 Unit Tests"
-              "🧪 Component Tests"
-              "🧪 Performance Tests"
-              "🧪 Visual Tests"
-              "📊 Integration Tests Summary"
+          if [ "$(echo "$REQUIRED_CHECKS_JSON" | jq 'length')" -eq 0 ]; then
+            REQUIRED_CHECKS_JSON='[
+              "📝 Prepare Environment",
+              "🎒 Knip Check",
+              "🔍 Lint Check",
+              "🏗️ Build Check",
+              "🧪 Infrastructure Tests",
+              "🧪 Unit Tests",
+              "🧪 Component Tests",
+              "🧪 Performance Tests",
+              "🧪 Visual Tests",
+              "📊 Integration Tests Summary",
               "📊 Quality Report"
-            )
+            ]'
           fi
+          echo "required_checks=${REQUIRED_CHECKS_JSON}" >> $GITHUB_OUTPUT
 
-          # --- Polling for parent commit checks ---
-          echo "⏳ Waiting for checks on parent commit ($PARENT_SHA) to complete..."
-          TIMEOUT=600 # 10 minutes
-          INTERVAL=30 # 30 seconds
-          ELAPSED=0
-          CHECKS_JSON=""
+      - name: Wait for parent checks to complete
+        id: poll-checks
+        uses: ./.github/actions/get-pr-check-runs
+        with:
+          commit_sha: ${{ steps.get-parent-sha.outputs.parent_sha }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          required_checks: ${{ steps.get-required-checks.outputs.required_checks }}
 
-          while [ $ELAPSED -lt $TIMEOUT ]; do
-            # Fetch check runs for the parent commit
-            PARENT_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/commits/${PARENT_SHA}/check-runs" --jq '.check_runs')
-
-            # Filter for the specific jobs we care about
-            RELEVANT_CHECKS_JSON=$(echo "$PARENT_CHECKS_JSON" | jq -c --argjson jobs_to_copy "$(printf '%s\n' "${JOBS_TO_COPY[@]}" | jq -R . | jq -s .)" '[.[] | select(.name as $name | $jobs_to_copy | index($name))]')
-
-            # Count how many of the relevant checks are NOT completed
-            IN_PROGRESS_COUNT=$(echo "$RELEVANT_CHECKS_JSON" | jq '[.[] | select(.status != "completed")] | length')
-
-            # Count how many jobs we expect and how many we found
-            EXPECTED_COUNT=${#JOBS_TO_COPY[@]}
-            FOUND_COUNT=$(echo "$RELEVANT_CHECKS_JSON" | jq 'length')
-
-            if [ "$FOUND_COUNT" -gt 0 ] && [ "$IN_PROGRESS_COUNT" -eq 0 ]; then
-              echo "✅ All relevant checks on parent commit have completed."
-              CHECKS_JSON="$RELEVANT_CHECKS_JSON"
-              break
-            fi
-
-            echo "Still waiting... ($IN_PROGRESS_COUNT checks in progress, found $FOUND_COUNT of ~${EXPECTED_COUNT}). Elapsed: ${ELAPSED}s"
-            ELAPSED=$((ELAPSED + INTERVAL))
-            sleep $INTERVAL
-          done
-
-          if [ -z "$CHECKS_JSON" ]; then
-            echo "::error::Timed out waiting for parent commit checks to complete after ${TIMEOUT} seconds."
-            echo "Last fetched checks:"
-            echo "$PARENT_CHECKS_JSON"
-            exit 1
-          fi
-
-          # --- Create new checks for the current commit ---
+      - name: Copy checks from parent commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHECKS_JSON: ${{ steps.poll-checks.outputs.check_runs_json }}
+          REQUIRED_CHECKS: ${{ steps.get-required-checks.outputs.required_checks }}
+        run: |
+          CURRENT_SHA=$(git rev-parse HEAD)
           echo "✒️ Copying final check statuses to current commit ($CURRENT_SHA)..."
-          for JOB_NAME in "${JOBS_TO_COPY[@]}"; do
+
+          echo "$REQUIRED_CHECKS" | jq -r '.[]' | while IFS= read -r JOB_NAME; do
             CHECK=$(echo "${CHECKS_JSON}" | jq --arg name "${JOB_NAME}" '.[] | select(.name == $name)')
             if [ -n "$CHECK" ]; then
-              # Use jq's // operator to provide a default value if .conclusion is null or not present
               CONCLUSION=$(echo "${CHECK}" | jq -r '.conclusion // "skipped"')
-              # Also provide a default for the output object
               OUTPUT=$(echo "${CHECK}" | jq -c '.output // {title: "Check Skipped", summary: "The parent check conclusion was indeterminate."}')
-
               BODY=$(jq -n --arg name "$JOB_NAME" --arg head_sha "$CURRENT_SHA" --arg status "completed" --arg conclusion "$CONCLUSION" --argjson output "$OUTPUT" '{name: $name, head_sha: $head_sha, status: $status, conclusion: $conclusion, output: $output}')
               echo "Creating check: $JOB_NAME -> $CONCLUSION"
               gh api "repos/${{ github.repository }}/check-runs" --method POST --input - <<< "$BODY"

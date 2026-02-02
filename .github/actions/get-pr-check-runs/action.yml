@@ -1,0 +1,79 @@
+name: 'Get PR Check Runs'
+description: 'Polls for the completion of specified PR check runs.'
+inputs:
+  commit_sha:
+    description: 'The commit SHA to check for.'
+    required: true
+  github_token:
+    description: 'GitHub token for API calls.'
+    required: true
+  timeout:
+    description: 'Timeout in seconds for polling.'
+    required: false
+    default: '600'
+  interval:
+    description: 'Interval in seconds between polling attempts.'
+    required: false
+    default: '30'
+  required_checks:
+    description: 'A JSON array of required check names.'
+    required: false
+    default: '[]'
+outputs:
+  check_runs_json:
+    description: 'A JSON string of the completed check runs.'
+    value: ${{ steps.poll.outputs.check_runs_json }}
+  conclusion:
+    description: 'The overall conclusion of all checks (success, failure, skipped).'
+    value: ${{ steps.poll.outputs.conclusion }}
+runs:
+  using: "composite"
+  steps:
+    - name: Poll for Check Runs
+      id: poll
+      shell: bash
+      env:
+        COMMIT_SHA: ${{ inputs.commit_sha }}
+        GH_TOKEN: ${{ inputs.github_token }}
+        TIMEOUT: ${{ inputs.timeout }}
+        INTERVAL: ${{ inputs.interval }}
+        REQUIRED_CHECKS: ${{ inputs.required_checks }}
+      run: |
+        ELAPSED=0
+        while [ $ELAPSED -lt $TIMEOUT ]; do
+          CHECKS_JSON=$(gh api "repos/${{ github.repository }}/commits/${COMMIT_SHA}/check-runs" --jq '.check_runs')
+
+          if [ "$(echo "$REQUIRED_CHECKS" | jq 'length')" -gt 0 ]; then
+            RELEVANT_CHECKS_JSON=$(echo "$CHECKS_JSON" | jq -c --argjson jobs_to_copy "$REQUIRED_CHECKS" '[.[] | select(.name as $name | $jobs_to_copy | index($name))]')
+          else
+            RELEVANT_CHECKS_JSON=$CHECKS_JSON
+          fi
+
+          IN_PROGRESS_COUNT=$(echo "$RELEVANT_CHECKS_JSON" | jq '[.[] | select(.status != "completed")] | length')
+
+          if [ "$IN_PROGRESS_COUNT" -eq 0 ]; then
+            echo "::notice::All relevant checks have completed."
+            echo "check_runs_json=$(echo "$RELEVANT_CHECKS_JSON" | jq -c .)" >> $GITHUB_OUTPUT
+
+            CONCLUSIONS=$(echo "$RELEVANT_CHECKS_JSON" | jq -r '.[].conclusion')
+            FINAL_CONCLUSION="success"
+            for conclusion in $CONCLUSIONS; do
+              if [ "$conclusion" = "failure" ]; then
+                FINAL_CONCLUSION="failure"
+                break
+              elif [ "$conclusion" != "success" ] && [ "$conclusion" != "skipped" ]; then
+                FINAL_CONCLUSION="failure"
+              fi
+            done
+            echo "conclusion=$FINAL_CONCLUSION" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Still waiting... ($IN_PROGRESS_COUNT checks in progress). Elapsed: ${ELAPSED}s"
+          ELAPSED=$((ELAPSED + INTERVAL))
+          sleep $INTERVAL
+        done
+
+        echo "::error::Timed out waiting for checks to complete after ${TIMEOUT} seconds."
+        echo "conclusion=failure" >> $GITHUB_OUTPUT
+        exit 1

@@ -1,30 +1,58 @@
 name: 'Check for Changes'
-description: 'Checks for file changes against a specified base branch'
+description: 'Checks for file changes and finds the last non-empty commit.'
 inputs:
-  base_branch:
-    description: 'The base branch to compare against'
+  base_ref:
+    description: 'The base branch ref to compare against.'
+    required: true
+  head_ref:
+    description: 'The head branch ref to compare.'
     required: true
 outputs:
   has_changes:
-    description: "Boolean indicating if changes were found"
+    description: "Boolean indicating if changes were found."
+    value: ${{ steps.check_files.outputs.has_changes }}
+  last_non_empty_commit:
+    description: "The SHA of the last non-empty commit in the PR."
+    value: ${{ steps.check_files.outputs.last_non_empty_commit }}
 runs:
   using: "composite"
   steps:
-    - name: Fetch base branch
-      shell: bash
-      env:
-        BASE_BRANCH: ${{ inputs.base_branch }}
-      run: git fetch origin $BASE_BRANCH --depth=1
-    - name: Check for file changes
+    - name: Check for file changes and find last non-empty commit
       id: check_files
       shell: bash
       env:
-        BASE_BRANCH: ${{ inputs.base_branch }}
+        BASE_REF: ${{ inputs.base_ref }}
+        HEAD_REF: ${{ inputs.head_ref }}
       run: |
-        if git diff --quiet origin/$BASE_BRANCH HEAD; then
-          echo "No changes detected."
-          echo "has_changes=false" >> $GITHUB_OUTPUT
-        else
-          echo "Changes detected."
-          echo "has_changes=true" >> $GITHUB_OUTPUT
+        set +e
+        git fetch origin $BASE_REF --depth=100 2>/dev/null || true
+        MERGE_BASE=$(git merge-base $HEAD_REF origin/$BASE_REF 2>/dev/null)
+        if [ -z "$MERGE_BASE" ]; then
+          MERGE_BASE=$(git rev-parse HEAD~1 2>/dev/null)
         fi
+        if [ -z "$MERGE_BASE" ]; then
+          MERGE_BASE=$(git rev-parse HEAD)
+        fi
+
+        HAS_DIFF=0
+        git diff --quiet "$MERGE_BASE" $HEAD_REF -- .
+        HAS_DIFF=$?
+
+        if [ $HAS_DIFF -eq 0 ]; then
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+          echo "::notice::No file changes detected between $MERGE_BASE and $HEAD_REF"
+
+          for sha in $(git rev-list "$MERGE_BASE"..$HEAD_REF 2>/dev/null | head -100); do
+            if git cat-file -e $sha^ &>/dev/null 2>/dev/null; then
+              if ! git diff --quiet $sha^ $sha -- . ; then
+                echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
+                break
+              fi
+            fi
+          done
+        else
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "last_non_empty_commit=$(git rev-parse $HEAD_REF)" >> $GITHUB_OUTPUT
+          echo "::notice::File changes detected between $MERGE_BASE and $HEAD_REF"
+        fi
+        exit 0
