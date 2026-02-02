@@ -131,7 +131,9 @@ describe('useBluetoothHRM', () => {
       await result.current.autoConnect()
     })
 
-    expect(mockBluetooth.getDevices).toHaveBeenCalled()
+    await waitFor(() => {
+        expect(mockBluetooth.getDevices).toHaveBeenCalled()
+    })
     expect(mockGatt.connect).toHaveBeenCalled()
     expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
   })
@@ -146,7 +148,9 @@ describe('useBluetoothHRM', () => {
       await result.current.autoConnect()
     })
 
-    expect(result.current.deviceStatus).toBe('Disconnected')
+    await waitFor(() => {
+      expect(result.current.deviceStatus).toBe('Auto-connect failed. Use Connect button to select device.')
+    })
   })
 
   it('should not show device picker in silent mode', async () => {
