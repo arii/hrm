@@ -132,8 +132,8 @@ const TimerControls = () => {
       const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
       sendData(message)
 
-      if (command === 'START') sendSpotifyCommand('NEXT')
-      else if (command === 'STOP') sendSpotifyCommand('PAUSE')
+      if (command === 'START') sendSpotifyCommand('next')
+      else if (command === 'STOP') sendSpotifyCommand('pause')
     },
     [sendData, sendSpotifyCommand, connectionStatus, workTime, restTime]
   )
