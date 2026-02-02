@@ -1,3 +1,5 @@
+/** @jest-environment jsdom */
+
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useWorkoutSessionManager } from '../../../hooks/useWorkoutSessionManager'
 import { workoutSessionStorage } from '../../../lib/workout-session-storage'
