@@ -44,9 +44,8 @@ const HrTile = ({
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
 
   useEffect(() => {
-    const updateTime = () => setNow(Date.now())
-    updateTime()
-    const intervalId = setInterval(updateTime, 5000) // Update every 5 seconds
+    setNow(Date.now())
+    const intervalId = setInterval(() => setNow(Date.now()), 5000) // Update every 5 seconds
     return () => clearInterval(intervalId)
   }, [])
 
