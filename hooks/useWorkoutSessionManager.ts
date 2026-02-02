@@ -48,7 +48,7 @@ function sessionManagerReducer(
     }
     case 'START': {
       const { age, weight, maxHr: providedMaxHr } = action.payload
-      const maxHr = providedMaxHr || calculateMaxHr(age)
+      const maxHeartRate = providedMaxHr || calculateMaxHr(age)
       const initialTimeInZones = Object.fromEntries(
         Object.values(HrZoneName).map((zone) => [zone, 0])
       ) as Record<HrZoneName, number>
@@ -64,7 +64,7 @@ function sessionManagerReducer(
         maxHr: 0,
         calorieHistory: [],
         totalCaloriesBurned: 0,
-        userSettings: { age, weight, maxHr },
+        userSettings: { age, weight, maxHeartRate },
         lastSyncTime: Date.now(),
         syncStatus: 'pending',
       }

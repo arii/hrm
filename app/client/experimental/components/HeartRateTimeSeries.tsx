@@ -24,7 +24,7 @@ import { format } from 'date-fns' // Ensure date-fns is installed
 import { useUserSettings } from '@/context/UserSettingsContext'
 
 // Accessibility: High contrast colors for zones (WCAG AA compliant when used as background)
-const getZoneColors = (theme) => ({
+const getZoneColors = (theme: any) => ({
   zone1: alpha(theme.palette.secondary.main, 0.3), // Blue - Warm Up
   zone2: alpha(theme.palette.success.main, 0.3), // Green - Fat Burn
   zone3: alpha(theme.palette.warning.main, 0.3), // Yellow - Cardio
