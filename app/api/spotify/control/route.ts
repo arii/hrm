@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     if (error instanceof ApiError) {
       return NextResponse.json(
         { error: error.message },
-        { status: error.status }
+        { status: error.statusCode }
       )
     }
 

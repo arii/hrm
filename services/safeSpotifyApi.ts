@@ -2,15 +2,14 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 type Player = SpotifyApi['player']
 
-interface SafePlayer
-  extends Omit<
-    Player,
-    | 'startResumePlayback'
-    | 'pausePlayback'
-    | 'skipToNext'
-    | 'skipToPrevious'
-    | 'setPlaybackVolume'
-  > {
+interface SafePlayer extends Omit<
+  Player,
+  | 'startResumePlayback'
+  | 'pausePlayback'
+  | 'skipToNext'
+  | 'skipToPrevious'
+  | 'setPlaybackVolume'
+> {
   startResumePlayback(
     deviceId: string | undefined,
     context_uri?: string,

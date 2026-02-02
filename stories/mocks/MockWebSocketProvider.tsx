@@ -46,7 +46,7 @@ const DEFAULT_STATE: MockAppState = {
     albumArtUrl: '',
     isPlaying: false,
     devices: [],
-    volume: 70,
+    volumePercent: 70,
     isMuted: false,
   },
   activeAlerts: [],
