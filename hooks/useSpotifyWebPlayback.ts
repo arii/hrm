@@ -72,34 +72,38 @@ const useSpotifyWebPlayback = () => {
       try {
         const response = await fetchWithRetry(API_SPOTIFY_ACCESS_TOKEN)
 
-        if (response.status === 401) {
-          // Circuit Breaker: Use sessionStorage to detect rapid failures
-          const lastAuthFail = sessionStorage.getItem(
-            SPOTIFY_AUTH_LOOP_GUARD_KEY
-          )
-          const now = Date.now()
-
-          if (
-            lastAuthFail &&
-            now - parseInt(lastAuthFail) < SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT
-          ) {
-            console.error(
-              `[Spotify] Auth loop detected (${
-                SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT / 1000
-              }s threshold); aborting sign-out to prevent thrashing.`
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Circuit Breaker: Use sessionStorage to detect rapid failures
+            const lastAuthFail = sessionStorage.getItem(
+              SPOTIFY_AUTH_LOOP_GUARD_KEY
             )
-            return // Stop the loop here
+            const now = Date.now()
+
+            if (
+              lastAuthFail &&
+              now - parseInt(lastAuthFail) < SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT
+            ) {
+              console.error(
+                `[Spotify] Auth loop detected (${
+                  SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT / 1000
+                }s threshold); aborting sign-out to prevent thrashing.`
+              )
+              return // Stop the loop here, preventing further action.
+            }
+
+            sessionStorage.setItem(SPOTIFY_AUTH_LOOP_GUARD_KEY, now.toString())
+            addError('Spotify session expired. Please log in again.', {
+              persist: true,
+            })
+
+            // redirect: false prevents the page from automatically reloading/redirecting
+            await signOut({ redirect: false })
+            redirectTo('/?error=SpotifyAuthFailed') // Manual redirect to a safe landing
+            return // Explicitly return to stop processing
           }
-
-          sessionStorage.setItem(SPOTIFY_AUTH_LOOP_GUARD_KEY, now.toString())
-          addError('Spotify session expired. Please log in again.', {
-            persist: true,
-          })
-
-          // redirect: false prevents the page from automatically reloading/redirecting
-          await signOut({ redirect: false })
-          redirectTo('/?error=SpotifyAuthFailed') // Manual redirect to a safe landing
-          return
+          // For other non-ok responses, throw to be caught by the catch block.
+          throw new Error(`HTTP error! status: ${response.status}`)
         }
 
         const { accessToken } = await response.json()
