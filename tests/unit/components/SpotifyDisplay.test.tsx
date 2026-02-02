@@ -117,7 +117,6 @@ describe('SpotifyDisplay', () => {
 
     fireEvent.click(authButton)
 
-
     // Assert that signIn was called correctly
     expect(mockedSignIn).toHaveBeenCalledTimes(1)
     expect(mockedSignIn).toHaveBeenCalledWith('spotify', {
@@ -125,7 +124,6 @@ describe('SpotifyDisplay', () => {
       redirect: true,
     })
   })
-
   describe('when authenticated', () => {
     let mockSendData: jest.Mock
     let rerender: (ui: React.ReactElement) => void
