@@ -448,7 +448,6 @@ describe('useBluetoothHRM', () => {
   })
 
   describe('Watchdog and Reconnection', () => {
-    const WATCHDOG_INTERVAL_MS = HEARTBEAT_INTERVAL_MS * 2 // Watchdog runs every 2nd heartbeat
     let onDisconnectedCallback: () => void = () => {}
     let setTimeoutSpy: jest.SpyInstance
 
