@@ -160,9 +160,6 @@ export interface SpotifyPlaybackState {
   devices: SpotifyDevice[]
   volume: number
   isMuted: boolean
-  track?: {
-    uri: string
-  }
 }
 
 /**
