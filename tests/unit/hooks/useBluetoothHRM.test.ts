@@ -132,7 +132,7 @@ describe('useBluetoothHRM', () => {
     })
 
     await waitFor(() => {
-        expect(mockBluetooth.getDevices).toHaveBeenCalled()
+      expect(mockBluetooth.getDevices).toHaveBeenCalled()
     })
     expect(mockGatt.connect).toHaveBeenCalled()
     expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
@@ -149,7 +149,9 @@ describe('useBluetoothHRM', () => {
     })
 
     await waitFor(() => {
-      expect(result.current.deviceStatus).toBe('Auto-connect failed. Use Connect button to select device.')
+      expect(result.current.deviceStatus).toBe(
+        'Auto-connect failed. Use Connect button to select device.'
+      )
     })
   })
 
