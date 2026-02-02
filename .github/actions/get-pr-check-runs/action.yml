@@ -46,6 +46,7 @@ runs:
           if [ "$(echo "$REQUIRED_CHECKS" | jq 'length')" -gt 0 ]; then
             RELEVANT_CHECKS_JSON=$(echo "$CHECKS_JSON" | jq -c --argjson jobs_to_copy "$REQUIRED_CHECKS" '[.[] | select(.name as $name | $jobs_to_copy | index($name))]')
           else
+            # Exclude the current workflow run from the list of checks being polled
             RELEVANT_CHECKS_JSON=$(echo "$CHECKS_JSON" | jq -c --arg run_id "${{ github.run_id }}" '[.[] | select((.details_url // "") | contains($run_id) | not)]')
           fi
 
