@@ -30,7 +30,10 @@ const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
         <Box sx={{ minHeight: 300 }} data-testid="hr-time-series-chart">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={hrHistory} syncId="anyId">
-              <CartesianGrid stroke={theme.palette.divider} strokeDasharray="3 3" />
+              <CartesianGrid
+                stroke={theme.palette.divider}
+                strokeDasharray="3 3"
+              />
               <XAxis
                 dataKey="time"
                 tickFormatter={(time) => new Date(time).toLocaleTimeString()}

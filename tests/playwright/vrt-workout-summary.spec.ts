@@ -14,7 +14,10 @@ let context: BrowserContext
 test.describe('WorkoutSummary Component VRT', () => {
   // Centralized setup hook
   test.beforeAll(async ({ browser }) => {
-    const setup = await setupVisualRegressionTest(browser, '/client/experimental')
+    const setup = await setupVisualRegressionTest(
+      browser,
+      '/client/experimental'
+    )
     context = setup.context
     experimentalPage = setup.dashboardPage
   })
@@ -29,7 +32,9 @@ test.describe('WorkoutSummary Component VRT', () => {
     await experimentalPage.getByRole('button', { name: 'New Workout' }).click()
 
     // Wait for the component to be visible
-    await experimentalPage.waitForSelector('[data-testid="workout-summary"]', { timeout: 15000 });
+    await experimentalPage.waitForSelector('[data-testid="workout-summary"]', {
+      timeout: 15000,
+    })
 
     const workoutSummary = experimentalPage.getByTestId('workout-summary')
 
