@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render } from '@testing-library/react'
+import { render, act } from '@testing-library/react'
 import ControlPanel from '@/app/client/control/ControlPanel'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 
@@ -44,13 +44,17 @@ jest.mock('next/dynamic', () => () => {
 })
 
 describe('ControlPanel Component', () => {
-  it('should match snapshot', () => {
+  it('should match snapshot', async () => {
     const theme = createTheme()
-    const { asFragment } = render(
-      <ThemeProvider theme={theme}>
-        <ControlPanel />
-      </ThemeProvider>
-    )
+    let asFragment
+    await act(async () => {
+      const { asFragment: frag } = render(
+        <ThemeProvider theme={theme}>
+          <ControlPanel />
+        </ThemeProvider>
+      )
+      asFragment = frag
+    })
     expect(asFragment()).toMatchSnapshot()
   })
 })

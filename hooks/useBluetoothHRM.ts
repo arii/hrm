@@ -43,6 +43,8 @@ const parseHeartRate = (value: DataView): number => {
 interface UseBluetoothHRMProps {
   // The timeout in milliseconds for determining if the Bluetooth data stream is stale.
   dataLivenessTimeoutMs?: number
+  // The maximum delay in milliseconds for reconnection attempts.
+  maxReconnectDelayMs?: number
   // The frequency in milliseconds at which to throttle heart rate updates.
   throttleMs?: number
   userName?: string | null
@@ -60,6 +62,7 @@ interface UseBluetoothHRMProps {
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
     dataLivenessTimeoutMs = 10000,
+    maxReconnectDelayMs = 30000,
     userName,
     userAge,
     onHeartRateUpdate,
@@ -93,6 +96,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
   const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const stalenessTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const postConnectionStalenessCheckRef = useRef<NodeJS.Timeout | null>(null)
   const isConnecting = useRef(false)
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
@@ -173,7 +178,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [status])
 
   useEffect(() => {
-    let checkCounter = 0
     const interval = setInterval(() => {
       if (
         statusRef.current === BluetoothConnectionStatus.CONNECTED &&
@@ -192,33 +196,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           updateSignalPeriod(timeSinceLastData)
         }
       }
-
-      checkCounter++
-      if (checkCounter % 2 === 0 && dataLivenessTimeoutMs > 0) {
-        if (
-          statusRef.current === BluetoothConnectionStatus.CONNECTED &&
-          lastDataTime.current > 0
-        ) {
-          const timeSinceLastData = Date.now() - lastDataTime.current
-
-          if (timeSinceLastData > dataLivenessTimeoutMs && !isDataStale) {
-            setIsDataStale(true)
-            setStatus(BluetoothConnectionStatus.RECONNECTING)
-            setCustomStatusMessage(BLUETOOTH_MESSAGES.unstableConnection)
-            isTimeoutDisconnect.current = true
-            if (deviceRef.current?.gatt) deviceRef.current.gatt.disconnect()
-          } else if (
-            timeSinceLastData <= dataLivenessTimeoutMs &&
-            isDataStale
-          ) {
-            setIsDataStale(false)
-          }
-        }
-      }
     }, HEARTBEAT_INTERVAL_MS) // Runs every 1s
 
     return () => clearInterval(interval)
-  }, [dataLivenessTimeoutMs, isDataStale, updateSignalPeriod])
+  }, [isDataStale, updateSignalPeriod])
 
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
@@ -227,6 +208,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       abortControllerRef.current.abort()
     }
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+    if (stalenessTimerRef.current) clearTimeout(stalenessTimerRef.current)
+    if (postConnectionStalenessCheckRef.current)
+      clearTimeout(postConnectionStalenessCheckRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
     sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
@@ -295,7 +279,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
 
       reconnectAttempts.current++
-      const delay = Math.pow(2, reconnectAttempts.current) * 1000
+      // Exponential backoff, capped at maxReconnectDelayMs
+      const exponentialDelay =
+        Math.pow(2, reconnectAttempts.current - 1) * 1000 // 1s, 2s, 4s, 8s...
+      const delay = Math.min(exponentialDelay, maxReconnectDelayMs)
+      logger.info(
+        {
+          attempt: reconnectAttempts.current,
+          delay,
+          max: maxReconnectDelayMs,
+        },
+        'Scheduling reconnect attempt'
+      )
+
       setStatus(BluetoothConnectionStatus.RECONNECTING)
       setCustomStatusMessage(
         BLUETOOTH_MESSAGES.reconnectingAttempt(
@@ -314,11 +310,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       }, delay)
     },
-    [forgetDevice]
+    [forgetDevice, maxReconnectDelayMs]
   )
 
   const onDisconnected = useCallback(
     (event: Event | undefined) => {
+      // Clear any pending timers immediately on disconnect
+      if (stalenessTimerRef.current) clearTimeout(stalenessTimerRef.current)
+      if (postConnectionStalenessCheckRef.current)
+        clearTimeout(postConnectionStalenessCheckRef.current)
+
       const device = (event?.target as BluetoothDevice) ?? deviceRef.current
       if (!device) {
         logger.warn('onDisconnected called without a device reference.')
@@ -376,8 +377,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         activeDisconnectListenerRef.current = null
       }
 
-      // This allows auto-reconnect to work properly on component remount
+      // Clear all pending timers on unmount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+      if (stalenessTimerRef.current) clearTimeout(stalenessTimerRef.current)
+      if (postConnectionStalenessCheckRef.current)
+        clearTimeout(postConnectionStalenessCheckRef.current)
 
       if (
         typeof window !== 'undefined' &&
@@ -390,6 +394,27 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
     }
   }, [])
+
+  const handleStaleConnection = useCallback(() => {
+    logger.warn('HRM data is stale. Triggering reconnect.')
+    setIsDataStale(true)
+    setStatus(BluetoothConnectionStatus.RECONNECTING)
+    setCustomStatusMessage(BLUETOOTH_MESSAGES.unstableConnection)
+    isTimeoutDisconnect.current = true
+    if (deviceRef.current?.gatt) deviceRef.current.gatt.disconnect()
+  }, [])
+
+  const resetStalenessTimer = useCallback(() => {
+    if (stalenessTimerRef.current) {
+      clearTimeout(stalenessTimerRef.current)
+    }
+    if (dataLivenessTimeoutMs > 0) {
+      stalenessTimerRef.current = setTimeout(
+        handleStaleConnection,
+        dataLivenessTimeoutMs
+      )
+    }
+  }, [dataLivenessTimeoutMs, handleStaleConnection])
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
@@ -535,6 +560,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         characteristic.addEventListener(
           'characteristicvaluechanged',
           (event: unknown) => {
+            resetStalenessTimer() // Reset timer on each new data point
             const now = Date.now()
 
             // Calculate Delta (Period) for Signal Quality
@@ -571,6 +597,22 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
         reconnectAttempts.current = 0
+
+        // It's possible for a device to connect but never send data.
+        // This failsafe ensures we don't get stuck in a connected state with no data.
+        if (postConnectionStalenessCheckRef.current) {
+          clearTimeout(postConnectionStalenessCheckRef.current)
+        }
+        postConnectionStalenessCheckRef.current = setTimeout(() => {
+          if (lastDataTime.current === 0) {
+            logger.warn(
+              'No heart rate data received shortly after connection. Reconnecting.'
+            )
+            handleStaleConnection()
+          }
+        }, 5000) // 5s grace period after connection
+
+        resetStalenessTimer()
         onConnectRef.current?.()
         return true
       } catch (error) {
@@ -590,6 +632,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             { errorName, errorMsg, device: device.name },
             'GATT Connection failed'
           )
+        }
+
+        // Ensure post-connection check is cleared on failure
+        if (postConnectionStalenessCheckRef.current) {
+          clearTimeout(postConnectionStalenessCheckRef.current)
         }
 
         if (errorMsg.includes('timeout')) {
@@ -635,7 +682,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isConnecting.current = false
       }
     },
-    [onDisconnected, updateSignalPeriod]
+    [
+      onDisconnected,
+      updateSignalPeriod,
+      resetStalenessTimer,
+      handleStaleConnection,
+    ]
   )
 
   useEffect(() => {

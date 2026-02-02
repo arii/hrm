@@ -8,7 +8,7 @@ function useCookie<T>(
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = Cookies.get(key)
-      if (!item) return initialValue
+      if (item === null || item === undefined) return initialValue
 
       const parsed = JSON.parse(item)
 

@@ -34,6 +34,10 @@ describe('ExperimentalAnalyticsPage', () => {
     })
   })
 
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
   it('should render without crashing', () => {
     const { getByText } = render(<ExperimentalAnalyticsPage />)
     // The page shows "New Workout" button and "Workout History" when no active session
