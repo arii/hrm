@@ -166,13 +166,10 @@ export const useWorkoutSessionManager = () => {
   // Auto-recovery of incomplete sessions
   useEffect(() => {
     const recoverSession = async () => {
-      let incompleteSession =
-        await workoutSessionStorage.getIncompleteSession()
+      let incompleteSession = await workoutSessionStorage.getIncompleteSession()
 
       if (incompleteSession?.startTime) {
-        const sessionDate = new Date(
-          incompleteSession.startTime
-        ).toDateString()
+        const sessionDate = new Date(incompleteSession.startTime).toDateString()
         const currentDate = new Date().toDateString()
 
         if (sessionDate !== currentDate) {

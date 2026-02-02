@@ -108,7 +108,7 @@ describe('useWorkoutSessionManager', () => {
       static now() {
         return tomorrow.getTime()
       }
-    } as any
+    } as jest.MockedClass<typeof Date>
 
     // Act
     act(() => {
