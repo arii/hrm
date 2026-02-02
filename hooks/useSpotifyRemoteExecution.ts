@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 
-export const useSpotifyRemoteExecution = (player: any | null): void => {
+export const useSpotifyRemoteExecution = (player: object | null): void => {
   const { sendData } = useWebSocket()
 
   useEffect(() => {

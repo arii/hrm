@@ -81,7 +81,11 @@ export async function logSpotifyCommandError(
 }
 
 export function handleSpotifyApiError(error: unknown): NextResponse {
-  const spotifyError = error as { status?: number; message?: string; cause?: { reason?: string } };
+  const spotifyError = error as {
+    status?: number
+    message?: string
+    cause?: { reason?: string }
+  }
 
   if (spotifyError && spotifyError.status) {
     logger.error(
@@ -91,7 +95,7 @@ export function handleSpotifyApiError(error: unknown): NextResponse {
         reason: spotifyError.cause?.reason,
       },
       'Spotify API Error'
-    );
+    )
 
     // Handle specific error reasons
     if (
@@ -104,25 +108,24 @@ export function handleSpotifyApiError(error: unknown): NextResponse {
           details: 'Please start playback on a Spotify device.',
         },
         { status: 404 }
-      );
+      )
     }
 
     if (spotifyError.status === 401) {
       return NextResponse.json(
         { error: 'Authentication failed', details: 'Invalid access token.' },
         { status: 401 }
-      );
+      )
     }
 
     if (spotifyError.status === 403) {
       return NextResponse.json(
         {
           error: 'Permission denied',
-          details:
-            'You do not have the necessary permissions for this action.',
+          details: 'You do not have the necessary permissions for this action.',
         },
         { status: 403 }
-      );
+      )
     }
 
     // Generic Spotify error
@@ -132,11 +135,11 @@ export function handleSpotifyApiError(error: unknown): NextResponse {
         details: spotifyError.message || 'An unknown error occurred.',
       },
       { status: spotifyError.status || 500 }
-    );
+    )
   }
 
   // Handle non-SDK errors
-  logger.error({ error }, 'Internal Server Error');
+  logger.error({ error }, 'Internal Server Error')
   return NextResponse.json(
     {
       error: 'Internal server error',
@@ -144,5 +147,5 @@ export function handleSpotifyApiError(error: unknown): NextResponse {
         error instanceof Error ? error.message : 'An unknown error occurred.',
     },
     { status: 500 }
-  );
+  )
 }

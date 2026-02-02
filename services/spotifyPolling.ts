@@ -15,7 +15,7 @@ import logger from '../utils/logger.server.js'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyApiErrorHandling.js'
+} from './spotifyApiErrorHandling.server.js'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { env } from '../lib/env.js'
 
@@ -147,6 +147,12 @@ export class SpotifyPolling implements SpotifyService {
         })
       }
     } catch (error) {
+      const errObj = error as { status?: number }
+      if (errObj?.status === 401) {
+        logger.warn('Spotify token expired during polling. Attempting refresh.')
+        this.checkAndRefreshSdkToken()
+        return
+      }
       handleSpotifyApiError(error)
     }
   }
@@ -432,8 +438,7 @@ export class SpotifyPolling implements SpotifyService {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
           await this.executeSdkCommand(
             command,
-            () =>
-              sdk.player.setPlaybackVolume(clampedVolume, deviceId ?? ''),
+            () => sdk.player.setPlaybackVolume(clampedVolume, deviceId ?? ''),
             { deviceId, volume: clampedVolume }
           )
           this.state.volumePercent = clampedVolume
