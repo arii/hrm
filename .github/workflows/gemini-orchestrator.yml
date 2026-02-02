@@ -97,7 +97,7 @@ jobs:
               exit 0
             fi
 
-            mapfile -t COMMIT_SHAS < <(echo "$COMMIT_SHAS_JSON" | tac)
+            mapfile -t COMMIT_SHAS < <(echo "$COMMIT_SHAS_JSON")
 
             LAST_NON_EMPTY_COMMIT=""
             for sha in "${COMMIT_SHAS[@]}"; do
