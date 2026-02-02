@@ -131,7 +131,7 @@
     "eslint-config-next": "16.1.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
-    "eslint-plugin-storybook": "^10.2.0",
+    "eslint-plugin-storybook": "^10.2.4",
     "eslint-plugin-unused-imports": "^4.3.0",
     "fake-indexeddb": "^6.2.5",
     "husky": "^9.1.7",
