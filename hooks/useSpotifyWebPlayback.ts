@@ -57,7 +57,16 @@ const useSpotifyWebPlayback = () => {
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [deviceId, setDeviceId] = useState<string | null>(null)
-  const [initStatus, setInitStatus] = useState('idle')
+  /**
+   * Manages the Spotify player initialization lifecycle to prevent thrashing.
+   * - `idle`: The default state, waiting for conditions to be met.
+   * - `initializing`: The SDK is loading or the player is being created.
+   * - `ready`: The player has successfully initialized and is ready to be used.
+   * - `failed`: A non-recoverable error occurred during initialization.
+   */
+  const [initStatus, setInitStatus] = useState<
+    'idle' | 'initializing' | 'ready' | 'failed'
+  >('idle')
   const { addError } = useError()
   const { status } = useSpotifyAuth()
 
