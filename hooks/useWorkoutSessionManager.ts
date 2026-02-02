@@ -148,37 +148,44 @@ export const useWorkoutSessionManager = () => {
   const [isInitialized, setIsInitialized] = useState(false)
   const { showInfo } = useAppSnackbar()
 
+  const clearStaleSession = useCallback(
+    async (
+      session: WorkoutSessionData,
+      onStale: (message: string) => void
+    ) => {
+      const sessionDate = new Date(session.startTime)
+      const currentDate = new Date()
+
+      if (!isSameDay(sessionDate, currentDate)) {
+        console.info(
+          `[SessionManager] Stale session from ${sessionDate.toDateString()} detected. Clearing for new day ${currentDate.toDateString()}.`
+        )
+        await workoutSessionStorage.deleteSession(session.sessionId)
+        onStale('New day detected. Your previous session was cleared.')
+        return true // Indicates session was stale and cleared
+      }
+      return false // Indicates session was not stale
+    },
+    []
+  )
+
   const checkAndRotateSession = useCallback(async () => {
-    if (!state.session?.startTime) return
-
-    const sessionDate = new Date(state.session.startTime)
-    const currentDate = new Date()
-
-    if (!isSameDay(sessionDate, currentDate)) {
-      console.info(
-        `[SessionManager] Date change detected on window focus. Rotating session from ${sessionDate.toDateString()} to ${currentDate.toDateString()}.`
-      )
-      await workoutSessionStorage.deleteSession(state.session.sessionId)
-      dispatch({ type: 'RESET' })
-      showInfo('New day detected. A fresh workout session has started.')
+    if (state.session) {
+      await clearStaleSession(state.session, (message) => {
+        dispatch({ type: 'RESET' })
+        showInfo(message)
+      })
     }
-  }, [state.session, showInfo])
+  }, [state.session, showInfo, clearStaleSession])
 
   // Auto-recovery of incomplete sessions
   useEffect(() => {
     const recoverSession = async () => {
       let incompleteSession = await workoutSessionStorage.getIncompleteSession()
 
-      if (incompleteSession?.startTime) {
-        const sessionDate = new Date(incompleteSession.startTime)
-        const currentDate = new Date()
-
-        if (!isSameDay(sessionDate, currentDate)) {
-          console.info(
-            `[SessionManager] Stale session from ${sessionDate.toDateString()} detected on startup. Clearing for new day ${currentDate.toDateString()}.`
-          )
-          await workoutSessionStorage.deleteSession(incompleteSession.sessionId)
-          showInfo('New day detected. Your previous session was cleared.')
+      if (incompleteSession) {
+        const wasStale = await clearStaleSession(incompleteSession, showInfo)
+        if (wasStale) {
           incompleteSession = null
         }
       }
