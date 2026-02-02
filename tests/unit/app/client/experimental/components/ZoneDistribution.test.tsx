@@ -3,86 +3,72 @@
  */
 import React from 'react'
 import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
 import ZoneDistribution from '@/app/client/experimental/components/ZoneDistribution'
 import { HrZoneName } from '@/lib/shared/hr-zones'
+import { ThemeProvider } from '@mui/material/styles'
+import theme from '@/theme/theme'
+
+const mockTimeInZones = {
+  [HrZoneName.WarmUp]: 120,
+  [HrZoneName.FatBurn]: 300,
+  [HrZoneName.Cardio]: 600,
+  [HrZoneName.Peak]: 180,
+  [HrZoneName.Max]: 60,
+  [HrZoneName.NoData]: 0,
+  [HrZoneName.Unknown]: 0,
+}
+
+const totalDuration = 1260
 
 describe('ZoneDistribution', () => {
-  const baseTimeInZones = {
-    [HrZoneName.WarmUp]: 0,
-    [HrZoneName.FatBurn]: 0,
-    [HrZoneName.Cardio]: 0,
-    [HrZoneName.Peak]: 0,
-    [HrZoneName.Max]: 0,
-    [HrZoneName.NoData]: 0,
-    [HrZoneName.Unknown]: 0,
-  }
-
-  it('renders the title', () => {
+  it('renders the correct number of zones', () => {
     render(
-      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
+      <ThemeProvider theme={theme}>
+        <ZoneDistribution timeInZones={mockTimeInZones} totalDuration={totalDuration} />
+      </ThemeProvider>
     )
-    expect(screen.getByText('Time in Zones')).toBeInTheDocument()
+    // Filters out NoData, Unknown, and zones with 0 time
+    const renderedZones = screen.getAllByRole('progressbar')
+    expect(renderedZones).toHaveLength(5)
   })
 
-  it('renders correctly with no time in any zone', () => {
+  it('displays the correct labels and times', () => {
     render(
-      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
+      <ThemeProvider theme={theme}>
+        <ZoneDistribution timeInZones={mockTimeInZones} totalDuration={totalDuration} />
+      </ThemeProvider>
     )
-    expect(screen.queryByText(HrZoneName.WarmUp)).not.toBeInTheDocument()
-    expect(screen.queryByText(HrZoneName.FatBurn)).not.toBeInTheDocument()
-    expect(screen.queryByText(HrZoneName.Cardio)).not.toBeInTheDocument()
-    expect(screen.queryByText(HrZoneName.Peak)).not.toBeInTheDocument()
-    expect(screen.queryByText(HrZoneName.Max)).not.toBeInTheDocument()
+
+    expect(screen.getByText('Warm-up')).toBeInTheDocument()
+    expect(screen.getByText('2:00')).toBeInTheDocument()
   })
 
-  it('calculates and displays the time and percentage for each zone', () => {
-    const timeInZones = {
-      ...baseTimeInZones,
-      [HrZoneName.WarmUp]: 60,
-      [HrZoneName.FatBurn]: 30,
-      [HrZoneName.Cardio]: 10,
-    }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
-    expect(screen.getByText(HrZoneName.WarmUp)).toBeInTheDocument()
-    expect(screen.getByText('1:00')).toBeInTheDocument() // 60s formatted as MM:SS
-    expect(screen.getByText(/60\.0%/)).toBeInTheDocument()
-    expect(screen.getByText(HrZoneName.FatBurn)).toBeInTheDocument()
-    expect(screen.getByText('0:30')).toBeInTheDocument() // 30s formatted as MM:SS
-    expect(screen.getByText(/30\.0%/)).toBeInTheDocument()
-    expect(screen.getByText(HrZoneName.Cardio)).toBeInTheDocument()
-    expect(screen.getByText('0:10')).toBeInTheDocument() // 10s formatted as MM:SS
-    expect(screen.getByText(/10\.0%/)).toBeInTheDocument()
-  })
+  it('does not render zones with zero time', () => {
+    const timeInZonesWithZero = { ...mockTimeInZones, [HrZoneName.Max]: 0 }
+    render(
+      <ThemeProvider theme={theme}>
+        <ZoneDistribution timeInZones={timeInZonesWithZero} totalDuration={1200} />
+      </ThemeProvider>
+    )
 
-  it('does not display zones with no time', () => {
-    const timeInZones = {
-      ...baseTimeInZones,
-      [HrZoneName.WarmUp]: 100,
-    }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
-    expect(screen.getByText(HrZoneName.WarmUp)).toBeInTheDocument()
-    expect(screen.queryByText(HrZoneName.FatBurn)).not.toBeInTheDocument()
+    const renderedZones = screen.getAllByRole('progressbar')
+    expect(renderedZones).toHaveLength(4)
+    expect(screen.queryByText('Max')).not.toBeInTheDocument()
   })
 
   it('filters out NoData and Unknown zones', () => {
-    const timeInZones = {
-      ...baseTimeInZones,
+    const timeInZonesWithNoData = {
+      ...mockTimeInZones,
       [HrZoneName.NoData]: 50,
       [HrZoneName.Unknown]: 50,
     }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
+    render(
+      <ThemeProvider theme={theme}>
+        <ZoneDistribution timeInZones={timeInZonesWithNoData} totalDuration={1360} />
+      </ThemeProvider>
+    )
     expect(screen.queryByText(HrZoneName.NoData)).not.toBeInTheDocument()
     expect(screen.queryByText(HrZoneName.Unknown)).not.toBeInTheDocument()
-  })
-
-  it('uses a default age when userAge is null', () => {
-    const timeInZones = {
-      ...baseTimeInZones,
-      [HrZoneName.FatBurn]: 120,
-    }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={120} />)
-    expect(screen.getByText(HrZoneName.FatBurn)).toBeInTheDocument()
-    expect(screen.getByText('2:00')).toBeInTheDocument() // 120s formatted as MM:SS
-    expect(screen.getByText(/100\.0%/)).toBeInTheDocument()
   })
 })

@@ -11,19 +11,11 @@ import {
 } from '@mui/material'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 import { formatZoneDuration } from '../../../../utils/units'
+import { useTheme } from '@mui/material/styles'
 
 interface ZoneDistributionProps {
   timeInZones: Record<HrZoneName, number>
   totalDuration: number
-}
-
-// Map zones to specific HRM palette colors for immediate recognition
-const ZONE_COLORS = {
-  'Warm-up': '#3498db',
-  'Fat Burn': '#2ecc71',
-  Cardio: '#f1c40f',
-  Peak: '#e67e22',
-  Max: '#e74c3c',
 }
 
 const StyledProgress = styled(LinearProgress, {
@@ -42,9 +34,15 @@ interface ZoneItemProps {
   label: string
   seconds: number
   percentage: number
+  color: string
 }
 
-const ZoneRow: React.FC<ZoneItemProps> = ({ label, seconds, percentage }) => (
+const ZoneRow: React.FC<ZoneItemProps> = ({
+  label,
+  seconds,
+  percentage,
+  color,
+}) => (
   <Box sx={{ mb: 2 }}>
     <Stack
       direction="row"
@@ -71,7 +69,7 @@ const ZoneRow: React.FC<ZoneItemProps> = ({ label, seconds, percentage }) => (
     <StyledProgress
       variant="determinate"
       value={percentage}
-      barcolor={ZONE_COLORS[label as keyof typeof ZONE_COLORS] || '#999'}
+      barcolor={color || '#999'}
       aria-label={`${label} distribution`}
     />
   </Box>
@@ -81,11 +79,21 @@ const ZoneDistribution = ({
   timeInZones,
   totalDuration,
 }: ZoneDistributionProps) => {
+  const theme = useTheme()
+  const ZONE_COLORS: Record<string, string> = {
+    [HrZoneName.WarmUp]: theme.palette.custom.warmUp,
+    [HrZoneName.FatBurn]: theme.palette.custom.fatBurn,
+    [HrZoneName.Cardio]: theme.palette.custom.cardio,
+    [HrZoneName.Peak]: theme.palette.custom.peak,
+    [HrZoneName.Max]: theme.palette.custom.max,
+  }
+
   const zones = Object.entries(timeInZones)
     .map(([label, seconds]) => ({
       label,
       seconds,
       percentage: totalDuration > 0 ? (seconds / totalDuration) * 100 : 0,
+      color: ZONE_COLORS[label],
     }))
     .filter(
       (zone) =>
@@ -107,6 +115,7 @@ const ZoneDistribution = ({
               label={zone.label}
               seconds={zone.seconds}
               percentage={zone.percentage}
+              color={zone.color}
             />
           ))}
         </Stack>
