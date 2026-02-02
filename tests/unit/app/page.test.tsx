@@ -125,7 +125,8 @@ describe('Dashboard', () => {
     })
     fireEvent.click(refreshButton)
 
-    const updatedGoogleDocViewer = await screen.findByTestId('google-doc-viewer')
+    const updatedGoogleDocViewer =
+      await screen.findByTestId('google-doc-viewer')
     const updatedRefreshKey =
       updatedGoogleDocViewer.getAttribute('data-refresh-key')
 
