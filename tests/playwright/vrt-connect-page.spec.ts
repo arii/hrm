@@ -76,6 +76,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-connection-error.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
+      fullPage: false,
     })
   })
 
@@ -106,6 +107,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await expect(connectPage.getByText(/Auto-connect failed/)).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-auto-connect-failed.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
+      fullPage: false,
     })
   })
 })
