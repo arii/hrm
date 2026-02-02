@@ -1,6 +1,6 @@
 // File: components/ConnectHRMonitorButton.tsx
 'use client'
-import { memo, useState, useEffect } from 'react'
+import { memo } from 'react'
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
@@ -26,7 +26,9 @@ const ConnectHRMonitorButton = ({
   isConnected,
   isSupported,
 }: ConnectHRMonitorButtonProps) => {
-  const statusMessage = isConnected ? 'Device connected successfully.' : 'Device disconnected.';
+  const statusMessage = isConnected
+    ? 'Device connected successfully.'
+    : 'Device disconnected.'
 
   if (!isSupported) {
     return (

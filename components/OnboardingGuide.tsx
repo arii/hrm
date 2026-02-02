@@ -11,7 +11,7 @@ export const OnboardingGuide = () => {
   return (
     <Box sx={{ width: '100%', p: 3 }}>
       <Typography variant="h5" component="h2" gutterBottom align="center">
-            Welcome! Let&apos;s get you started.
+        Welcome! Let&apos;s get you started.
       </Typography>
       <Stepper activeStep={0} alternativeLabel>
         {steps.map((label) => (
