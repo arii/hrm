@@ -15,6 +15,7 @@ describe('SpotifyPolling', () => {
 
   it('should throw an error when getSdk is called before initialization', () => {
     // Directly accessing a private method for testing purposes.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(() => (spotifyPolling as any).getSdk()).toThrow(
       'Spotify SDK has not been initialized.'
     )
@@ -27,6 +28,7 @@ describe('SpotifyPolling', () => {
     // Act & Assert
     // The method should complete without throwing an error because of the guard clause.
     await expect(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (spotifyPolling as any).getCurrentlyPlaying()
     ).resolves.not.toThrow()
 
