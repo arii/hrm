@@ -3,10 +3,12 @@
 import { useCallback, useRef, useEffect, useReducer } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 import { CalorieDataPoint } from '../lib/workout-session-storage'
+import { Gender } from '@/types/user'
 
 interface CalorieTrackerProps {
   age: number
   weightKg: number
+  gender?: Gender
 }
 
 interface CalorieState {
@@ -58,17 +60,23 @@ function calorieReducer(
   }
 }
 
-export const useCalorieTracker = ({ age, weightKg }: CalorieTrackerProps) => {
+export const useCalorieTracker = ({
+  age,
+  weightKg,
+  gender = 'neutral',
+}: CalorieTrackerProps) => {
   const [state, dispatch] = useReducer(calorieReducer, initialState)
   const lastTimestampRef = useRef<number | null>(null)
 
   const ageRef = useRef(age)
   const weightKgRef = useRef(weightKg)
+  const genderRef = useRef(gender)
 
   useEffect(() => {
     ageRef.current = age
     weightKgRef.current = weightKg
-  }, [age, weightKg])
+    genderRef.current = gender
+  }, [age, weightKg, gender])
 
   const processHeartRate = useCallback((hr: number) => {
     const now = Date.now()
@@ -89,6 +97,17 @@ export const useCalorieTracker = ({ age, weightKg }: CalorieTrackerProps) => {
     }
 
     const dtSeconds = (now - lastTimestampRef.current) / 1000
+    /**
+     * Time gap validation: Only process heart rate data if the gap is between 0 and 10 seconds.
+     *
+     * Rationale:
+     * - Gaps > 10 seconds likely indicate paused tracking, device disconnection, or other interruptions
+     * - Calculating calories over large gaps would produce inaccurate results
+     * - This threshold balances tolerance for normal variation while filtering out invalid data
+     *
+     * Configuration: If you need to adjust this threshold (e.g., for different update intervals),
+     * consider making it a configurable parameter.
+     */
     if (dtSeconds > 0 && dtSeconds < 10) {
       const dtMinutes = dtSeconds / 60
       const caloriesPerSecond =
@@ -96,6 +115,7 @@ export const useCalorieTracker = ({ age, weightKg }: CalorieTrackerProps) => {
           heartRate: hr,
           age: ageRef.current,
           weightKg: weightKgRef.current,
+          gender: genderRef.current,
           durationMinutes: dtMinutes,
         }) / dtSeconds
 
