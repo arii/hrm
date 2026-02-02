@@ -164,6 +164,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             {data.map((item) => (
               <Box
                 key={item.name}
+                data-testid={`zone-row-${item.name}`}
                 display="flex"
                 alignItems="center"
                 justifyContent="space-between"
