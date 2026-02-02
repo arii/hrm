@@ -6,18 +6,22 @@ import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
-import { memo, useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
-  const [now, setNow] = useState(Date.now())
+  const [now, setNow] = useState<number | null>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(Date.now())
     const interval = setInterval(() => setNow(Date.now()), 10000) // Re-render every 10s
     return () => clearInterval(interval)
   }, [])
 
   const filteredTiles = useMemo(() => {
+    if (now === null) return []
+
     const STALE_THRESHOLD_MS = 30000 // 30 seconds
     const REMOVAL_THRESHOLD_MS = 60000 // 60 seconds
 
@@ -65,7 +69,7 @@ const HrmTiles = () => {
           </Grid>
         )
       })
-  }, [hrmData, activeAlerts])
+  }, [hrmData, activeAlerts, now])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
