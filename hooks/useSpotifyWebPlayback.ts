@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useError } from '@/context/ErrorContext'
 import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
+import {
+  SPOTIFY_AUTH_LOOP_GUARD_KEY,
+  SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT,
+} from '@/constants/spotify'
 import { fetchWithRetry, AppError } from '@/utils/network'
 import { signOut } from 'next-auth/react'
 import { redirectTo } from '@/utils/redirect'
@@ -70,17 +74,20 @@ const useSpotifyWebPlayback = () => {
 
         if (response.status === 401) {
           // Circuit Breaker: Use sessionStorage to detect rapid failures
-          const lastAuthFail = sessionStorage.getItem('spotify_auth_loop_guard')
+          const lastAuthFail = sessionStorage.getItem(SPOTIFY_AUTH_LOOP_GUARD_KEY)
           const now = Date.now()
 
-          if (lastAuthFail && now - parseInt(lastAuthFail) < 15000) {
+          if (
+            lastAuthFail &&
+            now - parseInt(lastAuthFail) < SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT
+          ) {
             console.error(
               '[Spotify] Auth loop detected; aborting sign-out to prevent thrashing.'
             )
             return // Stop the loop here
           }
 
-          sessionStorage.setItem('spotify_auth_loop_guard', now.toString())
+          sessionStorage.setItem(SPOTIFY_AUTH_LOOP_GUARD_KEY, now.toString())
           addError('Spotify session expired. Please log in again.', {
             persist: true,
           })
