@@ -72,24 +72,12 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     fetchTracks(offset)
   }, [fetchTracks, offset])
 
-  const handlePlayTrack = (
-    trackUri: string,
-    playlistUri: string,
-    position: number
-  ) => {
+  const handlePlayTrack = (playlistUri: string, position: number) => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
       command: 'PLAY',
       contextUri: playlistUri,
       offset: { position },
-    }
-    sendData(message)
-  }
-
-  const handlePause = () => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command: 'PAUSE',
     }
     sendData(message)
   }
@@ -151,9 +139,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                 <TableRow
                   key={track.id}
                   hover
-                  onClick={() =>
-                    handlePlayTrack(track.uri, playlistUri, index)
-                  }
+                  onClick={() => handlePlayTrack(playlistUri, index)}
                   sx={{
                     cursor: 'pointer',
                     backgroundColor: isPlaying ? 'action.selected' : 'inherit',
