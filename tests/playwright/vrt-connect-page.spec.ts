@@ -19,7 +19,9 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     // Simulate the app entering the "Connecting..." state
     await connectPage.evaluate((status) => {
       window.TEST_CONTROLS.setHrmStatus(status)
-      window.TEST_CONTROLS.setCustomHrmStatusMessage('Checking saved devices...')
+      window.TEST_CONTROLS.setCustomHrmStatusMessage(
+        'Checking saved devices...'
+      )
     }, BluetoothConnectionStatus.CONNECTING)
 
     // The UI state has changed, and this alert does not appear immediately.
@@ -94,9 +96,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
         'Auto-connect failed. Use Connect button to select device.'
       )
     }, BluetoothConnectionStatus.DISCONNECTED)
-    await expect(
-      connectPage.getByText(/Auto-connect failed/)
-    ).toBeVisible()
+    await expect(connectPage.getByText(/Auto-connect failed/)).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-auto-connect-failed.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
     })
