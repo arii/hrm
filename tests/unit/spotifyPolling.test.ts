@@ -2,10 +2,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'
-import {
-  setupSpotifyPollingService,
-  mockPlayer,
-} from './spotify-test-utils'
+import { setupSpotifyPollingService, mockPlayer } from './spotify-test-utils'
 import logger from '../../utils/logger.server'
 import { ServerMessage } from '../../types/websocket'
 
@@ -70,8 +67,8 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 
 describe('SpotifyPolling Service', () => {
   let spotifyService: SpotifyPolling
-  let broadcastMock: jest.Mock< (message: ServerMessage) => void>
-  let broadcastedStates: SpotifyData[] = []
+  let broadcastMock: jest.Mock<(message: ServerMessage) => void>
+  const broadcastedStates: SpotifyData[] = []
 
   beforeEach(async () => {
     jest.useFakeTimers()
@@ -502,6 +499,5 @@ describe('SpotifyPolling Service', () => {
         'Error executing Spotify command'
       )
     })
-
   })
 })

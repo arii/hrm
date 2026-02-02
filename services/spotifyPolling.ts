@@ -3,23 +3,23 @@ import {
   SpotifyApi,
   Track,
   Episode,
-} from "@spotify/web-api-ts-sdk"
-import { ServerMessage, SpotifyData } from "../types/websocket"
-import { SpotifyCommandParameters } from "../types/core"
+} from '@spotify/web-api-ts-sdk'
+import { ServerMessage, SpotifyData } from '../types/websocket'
+import { SpotifyCommandParameters } from '../types/core'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
-} from "./spotifyTokenManager.js"
-import logger from "../utils/logger.server.js"
+} from './spotifyTokenManager.js'
+import logger from '../utils/logger.server.js'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
-} from "./spotifyApiErrorHandling.js"
-import { SpotifyCommand, SpotifyService } from "../types/interfaces.js"
-import { SafeSpotifyApi, createSafeSpotifyApi } from "./safeSpotifyApi.js"
-import { env } from "../lib/env.js"
-import { SpotifyPlayerManager } from "./spotifyPlayerManager.js"
-import { SpotifyDeviceManager } from "./spotifyDeviceManager.js"
+} from './spotifyApiErrorHandling.js'
+import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
+import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
+import { env } from '../lib/env.js'
+import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
+import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
 
 export class SpotifyPolling implements SpotifyService {
   public forcePollAndBroadcast() {
@@ -39,10 +39,10 @@ export class SpotifyPolling implements SpotifyService {
 
   private state: SpotifyData = {
     trackId: null,
-    trackName: "Awaiting Login...",
-    artist: "",
-    albumName: "",
-    albumArtUrl: "",
+    trackName: 'Awaiting Login...',
+    artist: '',
+    albumName: '',
+    albumArtUrl: '',
     isPlaying: false,
     devices: [],
     volume: 70,
@@ -53,10 +53,10 @@ export class SpotifyPolling implements SpotifyService {
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
-    logger.debug("Spotify Polling Service Initialized.")
+    logger.debug('Spotify Polling Service Initialized.')
 
     if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
-      throw new Error("Spotify client ID or secret not configured.")
+      throw new Error('Spotify client ID or secret not configured.')
     }
 
     this.tokenManager = new SpotifyTokenManager(
@@ -68,7 +68,7 @@ export class SpotifyPolling implements SpotifyService {
   private setState = (
     update: SpotifyData | ((prevState: SpotifyData) => SpotifyData)
   ) => {
-    if (typeof update === "function") {
+    if (typeof update === 'function') {
       this.state = update(this.state)
     } else {
       this.state = update
@@ -78,7 +78,7 @@ export class SpotifyPolling implements SpotifyService {
   private getCurrentlyPlaying = async () => {
     try {
       if (!this.sdk) {
-        logger.debug("Spotify SDK not initialized, skipping poll")
+        logger.debug('Spotify SDK not initialized, skipping poll')
         return
       }
       const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
@@ -89,14 +89,14 @@ export class SpotifyPolling implements SpotifyService {
           this.setState({
             ...this.state,
             trackId: null,
-            trackName: "Nothing is currently playing.",
-            artist: "",
-            albumName: "",
-            albumArtUrl: "",
+            trackName: 'Nothing is currently playing.',
+            artist: '',
+            albumName: '',
+            albumArtUrl: '',
             isPlaying: false,
           })
           this.broadcastUpdate({
-            type: "SPOTIFY_UPDATE",
+            type: 'SPOTIFY_UPDATE',
             payload: this.getState(),
           })
         }
@@ -115,20 +115,20 @@ export class SpotifyPolling implements SpotifyService {
 
         const trackName = item.name
         const trackId = item.id
-        let artistName = ""
-        let albumName = ""
-        let albumArtUrl = ""
+        let artistName = ''
+        let albumName = ''
+        let albumArtUrl = ''
 
-        if (item.type === "track") {
+        if (item.type === 'track') {
           const track = item as Track
-          artistName = track.artists.map((a) => a.name).join(", ")
+          artistName = track.artists.map((a) => a.name).join(', ')
           albumName = track.album.name
-          albumArtUrl = track.album.images?.[0]?.url ?? ""
-        } else if (item.type === "episode") {
+          albumArtUrl = track.album.images?.[0]?.url ?? ''
+        } else if (item.type === 'episode') {
           const episode = item as Episode
           artistName = episode.show.publisher
           albumName = episode.show.name
-          albumArtUrl = episode.show.images?.[0]?.url ?? ""
+          albumArtUrl = episode.show.images?.[0]?.url ?? ''
         }
 
         this.setState({
@@ -142,7 +142,7 @@ export class SpotifyPolling implements SpotifyService {
         })
 
         this.broadcastUpdate({
-          type: "SPOTIFY_UPDATE",
+          type: 'SPOTIFY_UPDATE',
           payload: this.getState(),
         })
       }
@@ -152,7 +152,7 @@ export class SpotifyPolling implements SpotifyService {
   }
 
   public _test_ =
-    process.env.NODE_ENV === "test"
+    process.env.NODE_ENV === 'test'
       ? {
           getSdk: this.getSdk.bind(this),
           setSdk: (sdk: SafeSpotifyApi | null) => {
@@ -189,7 +189,7 @@ export class SpotifyPolling implements SpotifyService {
       if (sdkToken) {
         this.setupSdk(sdkToken)
         logger.debug(
-          "Loaded existing Spotify tokens from file. Starting polling."
+          'Loaded existing Spotify tokens from file. Starting polling.'
         )
         this.startPolling()
       }
@@ -200,7 +200,7 @@ export class SpotifyPolling implements SpotifyService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { refresh_token: _, ...tokenWithoutRefresh } = accessToken
     if (!env.SPOTIFY_CLIENT_ID) {
-      logger.error("Spotify client ID not found, cannot initialize SDK.")
+      logger.error('Spotify client ID not found, cannot initialize SDK.')
       return
     }
     const sdk = SpotifyApi.withAccessToken(
@@ -237,12 +237,16 @@ export class SpotifyPolling implements SpotifyService {
   }
 
   public isReady(): boolean {
-    return this.sdk !== null && this.playerManager !== null && this.deviceManager !== null
+    return (
+      this.sdk !== null &&
+      this.playerManager !== null &&
+      this.deviceManager !== null
+    )
   }
 
   private getSdk(): SafeSpotifyApi {
     if (!this.sdk) {
-      throw new Error("Spotify SDK has not been initialized.")
+      throw new Error('Spotify SDK has not been initialized.')
     }
     return this.sdk
   }
@@ -250,7 +254,7 @@ export class SpotifyPolling implements SpotifyService {
   public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
     logger.info(
       { tokens },
-      "Spotify token payload received. Updating SDK and forcing poll."
+      'Spotify token payload received. Updating SDK and forcing poll.'
     )
     this.tokenManager.updateToken(tokens)
     const sdkToken = this.tokenManager.getSdkAccessToken()
@@ -278,7 +282,7 @@ export class SpotifyPolling implements SpotifyService {
 
     logger.debug(
       { trackIntervalMs, deviceIntervalMs },
-      "Spotify polling started"
+      'Spotify polling started'
     )
   }
 
@@ -291,7 +295,7 @@ export class SpotifyPolling implements SpotifyService {
       clearInterval(this.devicePollInterval)
       this.devicePollInterval = null
     }
-    logger.debug("Spotify polling stopped.")
+    logger.debug('Spotify polling stopped.')
   }
 
   public cleanup() {
@@ -299,7 +303,7 @@ export class SpotifyPolling implements SpotifyService {
     if (this.tokenRefreshInterval) {
       clearInterval(this.tokenRefreshInterval)
       this.tokenRefreshInterval = null
-      logger.debug("Token refresh interval cleared.")
+      logger.debug('Token refresh interval cleared.')
     }
   }
 
@@ -308,18 +312,18 @@ export class SpotifyPolling implements SpotifyService {
     params: SpotifyCommandParameters
   ): Promise<void> {
     if (!this.isReady()) {
-      logger.warn("Spotify service not ready, command ignored.", { command })
+      logger.warn('Spotify service not ready, command ignored.', { command })
       return
     }
 
     try {
-      if (command === "GET_DEVICES") {
+      if (command === 'GET_DEVICES') {
         await this.deviceManager!.refreshDevices()
         return
       }
 
-      if (command === "LOGIN") {
-        logger.debug("Received LOGIN command")
+      if (command === 'LOGIN') {
+        logger.debug('Received LOGIN command')
         return
       }
 

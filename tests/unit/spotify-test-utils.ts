@@ -3,12 +3,13 @@ import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Fully typed mock for the SpotifyApi['player']
-export const mockPlayer: jest.Mocked<SpotifyApi['player']> = {
+export const mockPlayer = {
   addItemToPlaybackQueue: jest.fn(),
   getAvailableDevices: jest.fn(),
   getCurrentlyPlayingTrack: jest.fn(),
   getPlaybackState: jest.fn(),
   getRecentlyPlayedTracks: jest.fn(),
+  getUsersQueue: jest.fn(),
   pausePlayback: jest.fn(),
   seekToPosition: jest.fn(),
   setPlaybackVolume: jest.fn(),
@@ -18,7 +19,7 @@ export const mockPlayer: jest.Mocked<SpotifyApi['player']> = {
   startResumePlayback: jest.fn(),
   togglePlaybackShuffle: jest.fn(),
   transferPlayback: jest.fn(),
-}
+} as unknown as jest.Mocked<SpotifyApi['player']>
 
 // Mock the entire SpotifyApi with a mocked player
 export const mockSpotifyApi: jest.Mocked<SpotifyApi> = {

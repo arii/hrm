@@ -3,7 +3,7 @@ import { SpotifyDeviceManager } from '../../../services/spotifyDeviceManager'
 import { mockPlayer } from '../spotify-test-utils'
 import { SafeSpotifyApi } from '../../../services/safeSpotifyApi'
 import { createSafeSpotifyApi } from '../../../services/safeSpotifyApi'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { Devices, SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Mock the logger to prevent logs from appearing in test output
 jest.mock('../../../utils/logger.server.js', () => ({
@@ -97,7 +97,9 @@ describe('SpotifyDeviceManager', () => {
           { id: null, name: 'Invalid Device' },
         ],
       }
-      mockPlayer.getAvailableDevices.mockResolvedValue(mockDevices as any)
+      mockPlayer.getAvailableDevices.mockResolvedValue(
+        mockDevices as unknown as Devices
+      )
 
       await deviceManager.refreshDevices()
 

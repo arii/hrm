@@ -45,22 +45,30 @@ describe('SpotifyPlayerManager', () => {
 
   describe('executeSpotifyCommand', () => {
     it('should handle PLAY command', async () => {
-      await playerManager.executeSpotifyCommand('PLAY', { deviceId: 'test_device' })
+      await playerManager.executeSpotifyCommand('PLAY', {
+        deviceId: 'test_device',
+      })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith('test_device')
     })
 
     it('should handle PAUSE command', async () => {
-      await playerManager.executeSpotifyCommand('PAUSE', { deviceId: 'test_device' })
+      await playerManager.executeSpotifyCommand('PAUSE', {
+        deviceId: 'test_device',
+      })
       expect(mockPlayer.pausePlayback).toHaveBeenCalledWith('test_device')
     })
 
     it('should handle NEXT command', async () => {
-      await playerManager.executeSpotifyCommand('NEXT', { deviceId: 'test_device' })
+      await playerManager.executeSpotifyCommand('NEXT', {
+        deviceId: 'test_device',
+      })
       expect(mockPlayer.skipToNext).toHaveBeenCalledWith('test_device')
     })
 
     it('should handle PREVIOUS command', async () => {
-      await playerManager.executeSpotifyCommand('PREVIOUS', { deviceId: 'test_device' })
+      await playerManager.executeSpotifyCommand('PREVIOUS', {
+        deviceId: 'test_device',
+      })
       expect(mockPlayer.skipToPrevious).toHaveBeenCalledWith('test_device')
     })
 
@@ -90,7 +98,10 @@ describe('SpotifyPlayerManager', () => {
 
       it('should clamp volume to 100', async () => {
         await playerManager.executeSpotifyCommand('SET_VOLUME', { volume: 150 })
-        expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(100, undefined)
+        expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(
+          100,
+          undefined
+        )
         expect(setStateMock).toHaveBeenCalledWith({
           volume: 100,
           isMuted: false,

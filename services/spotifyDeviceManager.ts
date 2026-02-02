@@ -1,8 +1,8 @@
-import { Device } from "@spotify/web-api-ts-sdk"
-import { SpotifyDevice } from "../types/core"
-import { ServerMessage, SpotifyData } from "../types/websocket"
-import { SafeSpotifyApi } from "./safeSpotifyApi"
-import logger from "../utils/logger.server"
+import { Device } from '@spotify/web-api-ts-sdk'
+import { SpotifyDevice } from '../types/core'
+import { ServerMessage, SpotifyData } from '../types/websocket'
+import { SafeSpotifyApi } from './safeSpotifyApi'
+import logger from '../utils/logger.server'
 
 export class SpotifyDeviceManager {
   private sdk: SafeSpotifyApi
@@ -14,7 +14,7 @@ export class SpotifyDeviceManager {
     sdk: SafeSpotifyApi,
     broadcastUpdate: (message: ServerMessage) => void,
     getState: () => SpotifyData,
-    setState: (updateFn: (prevState: SpotifyData) => SpotifyData) => void,
+    setState: (updateFn: (prevState: SpotifyData) => SpotifyData) => void
   ) {
     this.sdk = sdk
     this.broadcastUpdate = broadcastUpdate
@@ -39,12 +39,12 @@ export class SpotifyDeviceManager {
 
       this.setState((prevState) => ({ ...prevState, devices: validDevices }))
       this.broadcastUpdate({
-        type: "SPOTIFY_UPDATE",
+        type: 'SPOTIFY_UPDATE',
         payload: this.getState(),
       })
-      logger.debug({ count: validDevices.length }, "Devices refreshed")
+      logger.debug({ count: validDevices.length }, 'Devices refreshed')
     } catch (error) {
-      logger.error({ err: error }, "Error fetching Spotify devices")
+      logger.error({ err: error }, 'Error fetching Spotify devices')
     }
   }
 }
