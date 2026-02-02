@@ -235,9 +235,11 @@ export const SpotifyCommandMessageSchema = z.object({
   playlistUri: z.string().optional(),
   contextUri: z.string().optional(),
   uri: z.string().optional(),
-  offset: z.object({
-    position: z.number(),
-  }).optional(),
+  offset: z
+    .object({
+      position: z.number(),
+    })
+    .optional(),
 })
 
 export const GetStateMessageSchema = z.object({

@@ -72,10 +72,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     fetchTracks(offset)
   }, [fetchTracks, offset])
 
-  const handlePlayTrack = (
-    playlistUri: string,
-    position: number
-  ) => {
+  const handlePlayTrack = (playlistUri: string, position: number) => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
       command: 'PLAY',
