@@ -25,7 +25,10 @@ describe('ZoneDistribution', () => {
   it('renders the correct number of zones', () => {
     render(
       <ThemeProvider theme={theme}>
-        <ZoneDistribution timeInZones={mockTimeInZones} totalDuration={totalDuration} />
+        <ZoneDistribution
+          timeInZones={mockTimeInZones}
+          totalDuration={totalDuration}
+        />
       </ThemeProvider>
     )
     // Filters out NoData, Unknown, and zones with 0 time
@@ -36,7 +39,10 @@ describe('ZoneDistribution', () => {
   it('displays the correct labels and times', () => {
     render(
       <ThemeProvider theme={theme}>
-        <ZoneDistribution timeInZones={mockTimeInZones} totalDuration={totalDuration} />
+        <ZoneDistribution
+          timeInZones={mockTimeInZones}
+          totalDuration={totalDuration}
+        />
       </ThemeProvider>
     )
 
@@ -48,7 +54,10 @@ describe('ZoneDistribution', () => {
     const timeInZonesWithZero = { ...mockTimeInZones, [HrZoneName.Max]: 0 }
     render(
       <ThemeProvider theme={theme}>
-        <ZoneDistribution timeInZones={timeInZonesWithZero} totalDuration={1200} />
+        <ZoneDistribution
+          timeInZones={timeInZonesWithZero}
+          totalDuration={1200}
+        />
       </ThemeProvider>
     )
 
@@ -65,7 +74,10 @@ describe('ZoneDistribution', () => {
     }
     render(
       <ThemeProvider theme={theme}>
-        <ZoneDistribution timeInZones={timeInZonesWithNoData} totalDuration={1360} />
+        <ZoneDistribution
+          timeInZones={timeInZonesWithNoData}
+          totalDuration={1360}
+        />
       </ThemeProvider>
     )
     expect(screen.queryByText(HrZoneName.NoData)).not.toBeInTheDocument()

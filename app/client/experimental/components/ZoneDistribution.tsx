@@ -93,7 +93,7 @@ const ZoneDistribution = ({
       label,
       seconds,
       percentage: totalDuration > 0 ? (seconds / totalDuration) * 100 : 0,
-      color: ZONE_COLORS[label],
+      color: ZONE_COLORS[label] || '#999',
     }))
     .filter(
       (zone) =>
