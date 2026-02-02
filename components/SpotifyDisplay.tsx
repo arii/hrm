@@ -21,7 +21,7 @@ import { useState } from 'react'
 
 const SpotifyDisplay = () => {
   const { isLoggedIn } = useSpotifyAuth()
-  const { player, isReady, deviceId: _deviceId } = useSpotifyWebPlayback()
+  const { player, isReady } = useSpotifyWebPlayback()
   const { execute, playback, hrmPlayer, activeDevice } = useSpotifyCommand()
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null

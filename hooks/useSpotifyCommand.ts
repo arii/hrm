@@ -3,7 +3,8 @@
 
 import { useCallback, useMemo } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
+import { SpotifyCommandMessage, SpotifyCommand } from '@/types/websocket'
+import { SpotifyCommandParameters } from '@/types/core'
 
 export const useSpotifyCommand = () => {
   const { spotifyData, sendData } = useWebSocket()
@@ -20,15 +21,13 @@ export const useSpotifyCommand = () => {
   )
 
   const execute = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (command: string, payload?: any) => {
+    (command: SpotifyCommand, payload?: Partial<SpotifyCommandParameters>) => {
       // Logic: Use active device, or fallback to HRM Web Player
-      const targetDeviceId = activeDevice?.id || hrmPlayer?.id || null
+      const targetDeviceId = activeDevice?.id || hrmPlayer?.id || undefined
 
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        command: command as any,
+        command: command,
         deviceId: targetDeviceId,
         ...payload,
       }
