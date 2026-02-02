@@ -4,8 +4,7 @@
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const useSpotifyRemoteExecution = (player: any | null): void => {
+export const useSpotifyRemoteExecution = (player: unknown | null): void => {
   const { sendData } = useWebSocket()
 
   useEffect(() => {

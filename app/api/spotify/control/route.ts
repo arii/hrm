@@ -72,10 +72,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Call the error handler as expected by tests.
-    // We provide a no-op for onTokenExpired since we can't refresh in this context.
+    // We provide a no-op for onTokenExpired since NextAuth handles token refresh automatically
+    // when getAuthenticatedSpotifyApi() calls getServerSession(). If we are here, we likely
+    // had a valid token at the start of the request.
     await handleSpotifyApiError(error, () => {})
 
     // Handle 204 No Content syntax error which might be thrown by SDK
+    // TODO: Track upstream issue in spotify-web-api-ts-sdk regarding 204 responses
     if (
       error instanceof SyntaxError &&
       /unexpected end of/i.test(error.message)
