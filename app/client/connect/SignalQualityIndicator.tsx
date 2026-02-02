@@ -3,6 +3,7 @@ import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt'
 import SignalCellularAlt2BarIcon from '@mui/icons-material/SignalCellularAlt2Bar'
 import SignalCellularAlt1BarIcon from '@mui/icons-material/SignalCellularAlt1Bar'
 import SignalCellularConnectedNoInternet0BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet0Bar'
+import AccessTimeIcon from '@mui/icons-material/AccessTime'
 
 interface SignalQualityIndicatorProps {
   /**
@@ -60,7 +61,7 @@ export const SignalQualityIndicator = ({
       case 'poor':
         return <SignalCellularAlt1BarIcon sx={{ color }} />
       case 'stale':
-        return <SignalCellularConnectedNoInternet0BarIcon sx={{ color }} />
+        return <AccessTimeIcon sx={{ color }} />
       default:
         return <SignalCellularConnectedNoInternet0BarIcon sx={{ color }} />
     }

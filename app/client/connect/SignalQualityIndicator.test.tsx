@@ -22,6 +22,10 @@ jest.mock('@mui/icons-material/SignalCellularConnectedNoInternet0Bar', () => ({
     <div data-testid="SignalCellularConnectedNoInternet0BarIcon" />
   ),
 }))
+jest.mock('@mui/icons-material/AccessTime', () => ({
+  __esModule: true,
+  default: () => <div data-testid="AccessTimeIcon" />,
+}))
 
 describe('SignalQualityIndicator', () => {
   it('should render the "excellent" state with correct tooltip', () => {
@@ -79,9 +83,7 @@ describe('SignalQualityIndicator', () => {
         isDataStale={true}
       />
     )
-    expect(
-      screen.getByTestId('SignalCellularConnectedNoInternet0BarIcon')
-    ).toBeInTheDocument()
+    expect(screen.getByTestId('AccessTimeIcon')).toBeInTheDocument()
     expect(screen.getByText('Stale')).toBeInTheDocument()
     expect(container.firstChild).toHaveAttribute(
       'title',
