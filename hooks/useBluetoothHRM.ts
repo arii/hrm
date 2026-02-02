@@ -393,6 +393,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
+      if (isConnecting.current && abortControllerRef.current) {
+        logger.warn(
+          { device: device.name },
+          'Connection already in progress. Skipping.'
+        )
+        return false
+      }
       // Abort any existing connection attempts.
       if (
         abortControllerRef.current &&
@@ -421,59 +428,32 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         abortControllerRef.current = new AbortController()
 
-        // --- START NEW RETRY LOGIC ---
+        // Enhanced Retry Logic for "Zombie" connections
         let server: BluetoothRemoteGATTServer | undefined
         let attempt = 0
         const maxRetries = 3
 
-        while (true) {
+        while (attempt < maxRetries) {
           try {
-            // Attempt the connection
             server = await cancellablePromise(device.gatt!.connect(), {
-              timeoutMs: 30000,
+              timeoutMs: 20000, // Reduced from 30s for faster recovery
               errorMessage: 'GATT connection timeout',
               signal: abortControllerRef.current.signal,
             })
-            // If we get here, connection succeeded!
             break
           } catch (error) {
-            const err = error as DOMException | Error
-            const errorName = 'name' in err ? err.name : 'Error'
-            const errorMsg = err.message || ''
-
-            // This is the specific error Android throws when the device is busy with the old page
-            // "Zombie" errors (NetworkError, busy, out of range) can occur on Android
-            // when the OS Bluetooth stack is slow to clear a previous connection.
-            // We use exponential backoff to give it time to recover.
-            const isZombieError =
-              errorName === 'NetworkError' ||
-              errorMsg.includes('range') ||
-              errorMsg.includes('busy')
-
-            if (
-              isZombieError &&
-              attempt < maxRetries &&
-              !abortControllerRef.current.signal.aborted
-            ) {
-              attempt++
-              const delayMs = Math.pow(2, attempt) * 1000
-              logger.warn(
-                { device: device.name, attempt, delayMs, errorMsg },
-                'Device likely busy (Zombie connection). Retrying with exponential backoff...'
-              )
-              setStatus(BluetoothConnectionStatus.CONNECTING)
-              setCustomStatusMessage(
-                BLUETOOTH_MESSAGES.deviceBusy(delayMs, attempt, maxRetries)
-              )
-
-              await new Promise((resolve) => setTimeout(resolve, delayMs))
+            attempt++
+            const isBusy =
+              String(error).includes('busy') ||
+              String(error).includes('NetworkError')
+            if (isBusy && attempt < maxRetries) {
+              const delay = Math.pow(2, attempt) * 1000
+              await new Promise((res) => setTimeout(res, delay))
               continue
-            } else {
-              throw error
             }
+            throw error
           }
         }
-        // --- END NEW RETRY LOGIC ---
 
         if (abortControllerRef.current?.signal.aborted) {
           server?.disconnect()
