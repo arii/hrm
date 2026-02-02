@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { calculateHrZone } from '../lib/hrm/zones'
 import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useAppSnackbar } from './useAppSnackbar'
+import { isSameDay } from '../lib/date'
 
 // --- State, Actions, and Reducer ---
 
@@ -150,12 +151,12 @@ export const useWorkoutSessionManager = () => {
   const checkAndRotateSession = useCallback(async () => {
     if (!state.session?.startTime) return
 
-    const sessionDate = new Date(state.session.startTime).toDateString()
-    const currentDate = new Date().toDateString()
+    const sessionDate = new Date(state.session.startTime)
+    const currentDate = new Date()
 
-    if (sessionDate !== currentDate) {
+    if (!isSameDay(sessionDate, currentDate)) {
       console.info(
-        `[SessionManager] Date change detected on window focus. Rotating session from ${sessionDate} to ${currentDate}.`
+        `[SessionManager] Date change detected on window focus. Rotating session from ${sessionDate.toDateString()} to ${currentDate.toDateString()}.`
       )
       await workoutSessionStorage.deleteSession(state.session.sessionId)
       dispatch({ type: 'RESET' })
@@ -169,12 +170,12 @@ export const useWorkoutSessionManager = () => {
       let incompleteSession = await workoutSessionStorage.getIncompleteSession()
 
       if (incompleteSession?.startTime) {
-        const sessionDate = new Date(incompleteSession.startTime).toDateString()
-        const currentDate = new Date().toDateString()
+        const sessionDate = new Date(incompleteSession.startTime)
+        const currentDate = new Date()
 
-        if (sessionDate !== currentDate) {
+        if (!isSameDay(sessionDate, currentDate)) {
           console.info(
-            `[SessionManager] Stale session from ${sessionDate} detected on startup. Clearing for new day ${currentDate}.`
+            `[SessionManager] Stale session from ${sessionDate.toDateString()} detected on startup. Clearing for new day ${currentDate.toDateString()}.`
           )
           await workoutSessionStorage.deleteSession(incompleteSession.sessionId)
           showInfo('New day detected. Your previous session was cleared.')
