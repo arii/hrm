@@ -1,7 +1,7 @@
 import { SpotifyCommandParameters } from '../types/core'
 import { ServerMessage, SpotifyCommand, SpotifyData } from '../types/websocket'
 import { SafeSpotifyApi } from './safeSpotifyApi'
-import logger from '../utils/logger.server'
+import logger from '../utils/logger.server.js'
 
 export class SpotifyPlayerManager {
   private sdk: SafeSpotifyApi
