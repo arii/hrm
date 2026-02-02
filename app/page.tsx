@@ -10,8 +10,6 @@ import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
-import IconButton from '@mui/material/IconButton'
-import RefreshIcon from '@mui/icons-material/Refresh'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
@@ -104,17 +102,12 @@ const Dashboard = () => {
         <HrmConnectionPanel />
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-end', mb: 1 }}>
-          <Box sx={{ flexGrow: 1 }} />
-          <IconButton
-            onClick={handleRefresh}
-            aria-label="refresh workout table"
-          >
-            <RefreshIcon />
-          </IconButton>
-        </Box>
         {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ? (
-          <WorkoutTableViewer docId={DOC_ID} refreshKey={refreshKey} />
+          <WorkoutTableViewer
+            docId={DOC_ID}
+            refreshKey={refreshKey}
+            onRefresh={handleRefresh}
+          />
         ) : (
           <GoogleDocViewer
             title="Today's Training Regimen"

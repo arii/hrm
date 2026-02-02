@@ -14,7 +14,9 @@ import {
   Typography,
   Alert,
   Box,
+  IconButton,
 } from '@mui/material'
+import RefreshIcon from '@mui/icons-material/Refresh'
 
 interface WorkoutData {
   headers: string[]
@@ -24,11 +26,13 @@ interface WorkoutData {
 interface WorkoutTableViewerProps {
   docId: string
   refreshKey?: number
+  onRefresh?: () => void
 }
 
 export default function WorkoutTableViewer({
   docId,
   refreshKey,
+  onRefresh,
 }: WorkoutTableViewerProps) {
   const [data, setData] = useState<WorkoutData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -74,51 +78,73 @@ export default function WorkoutTableViewer({
   }
 
   return (
-    <TableContainer
-      component={Paper}
-      elevation={2}
-      data-testid="workout-table-viewer"
-    >
-      <Table sx={{ minWidth: 650 }} aria-label="workout table">
-        {/* Render Headers */}
-        {data.headers.length > 0 && (
-          <TableHead>
-            <TableRow sx={{ backgroundColor: 'action.hover' }}>
-              {data.headers.map((header, index) => (
-                <TableCell key={index} sx={{ fontWeight: 'bold' }}>
-                  {header}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-        )}
+    <Box sx={{ position: 'relative', width: '100%' }}>
+      {onRefresh && (
+        <IconButton
+          onClick={onRefresh}
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            zIndex: 10,
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(4px)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            },
+          }}
+          aria-label="refresh workout table"
+        >
+          <RefreshIcon fontSize="small" />
+        </IconButton>
+      )}
+      <TableContainer
+        component={Paper}
+        elevation={2}
+        data-testid="workout-table-viewer"
+      >
+        <Table sx={{ minWidth: 650 }} aria-label="workout table">
+          {/* Render Headers */}
+          {data.headers.length > 0 && (
+            <TableHead>
+              <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                {data.headers.map((header, index) => (
+                  <TableCell key={index} sx={{ fontWeight: 'bold' }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+          )}
 
-        {/* Render Data Rows */}
-        <TableBody>
-          {data.rows.map((row, rowIndex) => (
-            <TableRow
-              key={rowIndex}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-            >
-              {row.map((cell, cellIndex) => (
-                <TableCell key={cellIndex} sx={{ verticalAlign: 'top' }}>
-                  <Typography
-                    variant="body2"
-                    component="pre"
-                    sx={{
-                      whiteSpace: 'pre-wrap',
-                      fontFamily: 'inherit',
-                      m: 0,
-                    }}
-                  >
-                    {cell}
-                  </Typography>
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          {/* Render Data Rows */}
+          <TableBody>
+            {data.rows.map((row, rowIndex) => (
+              <TableRow
+                key={rowIndex}
+                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+              >
+                {row.map((cell, cellIndex) => (
+                  <TableCell key={cellIndex} sx={{ verticalAlign: 'top' }}>
+                    <Typography
+                      variant="body2"
+                      component="pre"
+                      sx={{
+                        whiteSpace: 'pre-wrap',
+                        fontFamily: 'inherit',
+                        m: 0,
+                      }}
+                    >
+                      {cell}
+                    </Typography>
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   )
 }
