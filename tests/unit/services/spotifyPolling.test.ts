@@ -15,8 +15,22 @@ describe('SpotifyPolling', () => {
 
   it('should throw an error when getSdk is called before initialization', () => {
     // Directly accessing a private method for testing purposes.
-    expect(() => (spotifyPolling as { getSdk: () => void }).getSdk()).toThrow(
+    expect(() => (spotifyPolling as any).getSdk()).toThrow(
       'Spotify SDK has not been initialized.'
     )
+  })
+
+  it('should return early and not throw if getCurrentlyPlaying is called without an initialized SDK', async () => {
+    // Arrange: The beforeEach block creates an instance where the SDK is not initialized
+    // because the mocked SpotifyTokenManager doesn't provide a token.
+
+    // Act & Assert
+    // The method should complete without throwing an error because of the guard clause.
+    await expect(
+      (spotifyPolling as any).getCurrentlyPlaying()
+    ).resolves.not.toThrow()
+
+    // It should have returned early, so no broadcast should have been sent.
+    expect(broadcastUpdate).not.toHaveBeenCalled()
   })
 })
