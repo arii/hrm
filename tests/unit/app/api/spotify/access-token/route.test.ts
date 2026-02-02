@@ -10,6 +10,18 @@ jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn(),
 }))
 
+// Mock logger
+jest.mock('@/utils/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn().mockReturnThis(),
+  },
+}))
+
 // Type assertion for mocked function
 const mockedGetServerSession = getServerSession as jest.Mock
 
