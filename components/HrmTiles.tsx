@@ -1,5 +1,6 @@
 // File: app/components/dashboard/HrmTiles.tsx
 'use client'
+import { OnboardingGuide } from '@/components/OnboardingGuide'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
@@ -56,7 +57,7 @@ const HrmTiles = () => {
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 
-  if (isLoading || filteredTiles.length === 0) {
+  if (isLoading) {
     return (
       <>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
@@ -75,6 +76,10 @@ const HrmTiles = () => {
         </Grid>
       </>
     )
+  }
+
+  if (filteredTiles.length === 0) {
+    return <OnboardingGuide />
   }
 
   return <>{filteredTiles}</>

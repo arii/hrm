@@ -1,6 +1,6 @@
 // File: components/ConnectHRMonitorButton.tsx
 'use client'
-import { memo } from 'react'
+import { memo, useState, useEffect } from 'react'
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
@@ -26,6 +26,15 @@ const ConnectHRMonitorButton = ({
   isConnected,
   isSupported,
 }: ConnectHRMonitorButtonProps) => {
+  const [statusMessage, setStatusMessage] = useState('');
+  useEffect(() => {
+    if (isConnected) {
+      setStatusMessage('Device connected successfully.');
+    } else {
+        setStatusMessage('Device disconnected.');
+    }
+  }, [isConnected]);
+
   if (!isSupported) {
     return (
       <Tooltip title={UNSUPPORTED_BLUETOOTH_TOOLTIP}>
@@ -42,7 +51,14 @@ const ConnectHRMonitorButton = ({
     )
   }
 
-  return isConnected ? (
+  return <>
+    <div
+    aria-live="polite"
+    className="sr-only"
+    >
+        {statusMessage}
+    </div>
+    {isConnected ? (
     <Button
       variant="outlined"
       color="secondary"
@@ -64,7 +80,8 @@ const ConnectHRMonitorButton = ({
     >
       {CONNECT_HR_MONITOR_BUTTON_TEXT}
     </Button>
-  )
+  )}
+  </>
 }
 
 export default memo(ConnectHRMonitorButton)

@@ -9,6 +9,9 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
+import AuthButton from '@/components/AuthButton'
+import { SupportAlert } from '@/components/OnboardingOverlay'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const PlaylistSelector = dynamic(
@@ -30,6 +33,7 @@ const PlaylistDetails = dynamic(
 )
 
 const SpotifySelectionPage = () => {
+  const { data: session } = useSession()
   const { spotifyData, sendData } = useWebSocket()
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
     null
@@ -60,6 +64,7 @@ const SpotifySelectionPage = () => {
 
   return (
     <Container maxWidth="sm" sx={{ py: 3 }}>
+      <SupportAlert />
       <Typography variant="h4" component="h1" gutterBottom align="center">
         Spotify Playlist Selector
       </Typography>
@@ -88,10 +93,14 @@ const SpotifySelectionPage = () => {
           <Typography variant="h6" gutterBottom>
             Select a Playlist to view its tracks
           </Typography>
-          <PlaylistSelector
-            onPlaylistSelected={handlePlaylistSelected}
-            onPlaylistPlay={handlePlaylistPlay}
-          />
+          {session ? (
+            <PlaylistSelector
+              onPlaylistSelected={handlePlaylistSelected}
+              onPlaylistPlay={handlePlaylistPlay}
+            />
+          ) : (
+            <AuthButton providerId="spotify" providerName="Spotify" />
+          )}
         </CardContent>
       </Card>
 
