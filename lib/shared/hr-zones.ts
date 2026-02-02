@@ -57,3 +57,28 @@ export const getUserHrZones = (age: number): UserHrZones => {
     max: { min: calculateZoneBPM(0.95) },
   }
 }
+
+export const calculateHrZone = (
+  currentHr: number,
+  maxHr: number
+): { zoneName: HrZoneName; percentage: number; bpm: number } => {
+  const percentage = maxHr > 0 ? Math.round((currentHr / maxHr) * 100) : 0
+  const bpm = currentHr
+  let zoneName: HrZoneName
+
+  if (currentHr <= 0) {
+    zoneName = HrZoneName.NoData
+  } else if (percentage < 60) {
+    zoneName = HrZoneName.WarmUp
+  } else if (percentage < 70) {
+    zoneName = HrZoneName.FatBurn
+  } else if (percentage < 85) {
+    zoneName = HrZoneName.Cardio
+  } else if (percentage < 95) {
+    zoneName = HrZoneName.Peak
+  } else {
+    zoneName = HrZoneName.Max
+  }
+
+  return { zoneName, percentage, bpm }
+}

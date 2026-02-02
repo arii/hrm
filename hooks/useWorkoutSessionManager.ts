@@ -6,7 +6,7 @@ import {
   WorkoutSessionData,
   HrDataPoint,
 } from '../lib/workout-session-storage'
-import { HrZoneName } from '../lib/shared/hr-zones'
+import { HrZoneName, calculateHrZone } from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
 import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useAppSnackbar } from './useAppSnackbar'
@@ -113,14 +113,7 @@ function sessionManagerReducer(
       const {
         userSettings: { maxHr },
       } = state.session
-      const percentage = maxHr > 0 ? (hr / maxHr) * 100 : 0
-      let zoneName: HrZoneName
-      if (percentage < 50) zoneName = HrZoneName.Unknown
-      else if (percentage < 60) zoneName = HrZoneName.WarmUp
-      else if (percentage < 70) zoneName = HrZoneName.FatBurn
-      else if (percentage < 80) zoneName = HrZoneName.Cardio
-      else if (percentage < 90) zoneName = HrZoneName.Peak
-      else zoneName = HrZoneName.Max
+      const { zoneName } = calculateHrZone(hr, maxHr)
       const newTimeInZones = {
         ...state.session.timeInZones,
         [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,

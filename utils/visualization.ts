@@ -8,7 +8,7 @@ import { WorkoutData } from '../types'
 import { WorkoutItem } from '../types/workout'
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 import theme from '../lib/theme'
-import { HrZoneName } from '../lib/shared/hr-zones'
+import { HrZoneName, calculateHrZone } from '../lib/shared/hr-zones'
 
 // Define types for MUI color props
 type MuiColor =
@@ -84,33 +84,6 @@ export interface HrZoneProps {
   backgroundColor: string // Hex color for background
   textColor: string
   bpm: number
-}
-
-const calculateHrZone = (currentHr: number, maxHr: number) => {
-  const percentage = maxHr > 0 ? Math.round((currentHr / maxHr) * 100) : 0
-  const bpm = currentHr
-  let zoneName: HrZoneName
-
-  if (currentHr <= 0) {
-    zoneName = HrZoneName.NoData
-  } else if (percentage < 60) {
-    // 50-59% is Warm-up
-    zoneName = HrZoneName.WarmUp
-  } else if (percentage < 70) {
-    // 60-69% is Fat Burn
-    zoneName = HrZoneName.FatBurn
-  } else if (percentage < 85) {
-    // 70-84% is Cardio
-    zoneName = HrZoneName.Cardio
-  } else if (percentage < 95) {
-    // 85-94% is Peak
-    zoneName = HrZoneName.Peak
-  } else {
-    // >= 95% is Max
-    zoneName = HrZoneName.Max
-  }
-
-  return { zoneName, percentage, bpm }
 }
 
 /**

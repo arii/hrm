@@ -147,7 +147,7 @@ export const HeartRateTimeSeries = ({
               </XAxis>
 
               <YAxis
-                domain={['dataMin - 10', 'auto']} // Auto-scale but keep context
+                domain={['dataMin - 10', zones.max + 10]} // Auto-scale but keep context
                 stroke={theme.palette.text.secondary}
                 style={{ fontSize: '0.75rem' }}
                 width={40}
