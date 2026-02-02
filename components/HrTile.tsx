@@ -44,6 +44,7 @@ const HrTile = ({
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNow(Date.now())
     const intervalId = setInterval(() => setNow(Date.now()), 5000) // Update every 5 seconds
     return () => clearInterval(intervalId)
