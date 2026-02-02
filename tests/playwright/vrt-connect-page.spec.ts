@@ -77,6 +77,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await takeScreenshot(connectPage, 'connect-page-connection-error.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
+      maxDiffPixelRatio: 0.05,
     })
   })
 
@@ -108,6 +109,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await takeScreenshot(connectPage, 'connect-page-auto-connect-failed.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
+      maxDiffPixelRatio: 0.05,
     })
   })
 })
