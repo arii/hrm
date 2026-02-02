@@ -13,6 +13,13 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
     // Wait for the test controls to be initialized
     await connectPage.waitForFunction(() => window.TEST_CONTROLS?.setHrmStatus)
+
+    // Wait for the initial auto-connect attempt to finish (100ms debounce + execution time)
+    // This prevents the auto-connect logic from overwriting our manual state updates in the tests.
+    await connectPage.waitForTimeout(500)
+    await expect(
+      connectPage.getByRole('button', { name: 'Connect Bluetooth HRM' })
+    ).toBeVisible()
   })
 
   test('scanning state', async ({ connectPage }) => {
