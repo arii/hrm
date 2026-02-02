@@ -1,11 +1,11 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
-import { useWorkoutSessionManager } from '../../../../hooks/useWorkoutSessionManager'
-import { workoutSessionStorage } from '../../../../lib/workout-session-storage'
-import { useAppSnackbar } from '../../../../hooks/useAppSnackbar'
+import { useWorkoutSessionManager } from '../../../hooks/useWorkoutSessionManager'
+import { workoutSessionStorage } from '../../../lib/workout-session-storage'
+import { useAppSnackbar } from '../../../hooks/useAppSnackbar'
 
 // Mock dependencies
-jest.mock('../../../../lib/workout-session-storage')
-jest.mock('../../../../hooks/useAppSnackbar')
+jest.mock('../../../lib/workout-session-storage')
+jest.mock('../../../hooks/useAppSnackbar')
 
 const mockShowInfo = jest.fn()
 const mockGetIncompleteSession =
