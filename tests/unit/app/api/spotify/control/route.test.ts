@@ -2,62 +2,59 @@
 /** @jest-environment node */
 
 import { POST } from '@/app/api/spotify/control/route'
-import { getServerSession } from 'next-auth/next'
+import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
+import { ApiError } from '@/lib/errors'
+import { handleSpotifyApiError } from '@/services/spotifyApiErrorHandling'
 
-// Mock 'next-auth/next' for getServerSession
-jest.mock('next-auth/next', () => ({
-  getServerSession: jest.fn(),
+// Mock the dependencies
+jest.mock('@/lib/spotify/sdk', () => ({
+  getAuthenticatedSpotifyApi: jest.fn(),
+}))
+jest.mock('@/services/spotifyApiErrorHandling', () => ({
+  handleSpotifyApiError: jest.fn(),
 }))
 
-// Mock global fetch
-global.fetch = jest.fn()
+const mockedGetSpotifyApi = getAuthenticatedSpotifyApi as jest.Mock
+const mockedHandleError = handleSpotifyApiError as jest.Mock
 
-const mockedGetServerSession = getServerSession as jest.Mock
-const mockedFetch = global.fetch as jest.Mock
+// Mock player methods
+const mockPlayer = {
+  startResumePlayback: jest.fn(),
+  pausePlayback: jest.fn(),
+  skipToNext: jest.fn(),
+  skipToPrevious: jest.fn(),
+  setPlaybackVolume: jest.fn(),
+  transferPlayback: jest.fn(),
+}
 
-const createRequest = (body: object | string) => {
+const createRequest = (body: object) => {
   return new Request('http://localhost/api/spotify/control', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: typeof body === 'string' ? body : JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   })
 }
 
 describe('API Route: /api/spotify/control', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockedGetServerSession.mockResolvedValue({
-      accessToken: 'fake-access-token',
-    })
-    mockedFetch.mockResolvedValue({
-      ok: true,
-      status: 204, // Spotify often returns 204 No Content for success
-      text: () => Promise.resolve(''),
-    })
+    // Default successful mock for the SDK
+    mockedGetSpotifyApi.mockResolvedValue({ player: mockPlayer })
   })
 
-  it('should return 401 Unauthorized if no session is found', async () => {
-    mockedGetServerSession.mockResolvedValue(null)
+  it('should return 401 if getAuthenticatedSpotifyApi throws an auth error', async () => {
+    mockedGetSpotifyApi.mockRejectedValue(
+      new ApiError(401, 'Not authenticated')
+    )
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(401)
-    expect(data.error).toBe('Authorization required')
+    expect(data.error).toBe('Not authenticated')
   })
 
-  it('should return 400 Bad Request for invalid JSON', async () => {
-    const req = createRequest('{"command": "PLAY",}') // Invalid JSON
-    const response = await POST(req)
-    const data = await response.json()
-
-    expect(response.status).toBe(400)
-    expect(data.error).toBe('Invalid JSON body')
-  })
-
-  it('should return 400 Bad Request for an invalid command', async () => {
+  it('should return 400 for an invalid command', async () => {
     const req = createRequest({ command: 'INVALID_COMMAND' })
     const response = await POST(req)
     const data = await response.json()
@@ -67,89 +64,71 @@ describe('API Route: /api/spotify/control', () => {
   })
 
   it('should return 400 if SET_VOLUME is missing volume', async () => {
-    const req = createRequest({ command: 'SET_VOLUME' }) // Missing 'volume'
+    const req = createRequest({ command: 'SET_VOLUME' })
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe('Volume parameter is required for SET_VOLUME')
+    expect(data.error).toBe('Volume must be provided for SET_VOLUME')
   })
 
   it('should return 400 if TRANSFER_PLAYBACK is missing deviceId', async () => {
-    const req = createRequest({ command: 'TRANSFER_PLAYBACK' }) // Missing 'deviceId'
+    const req = createRequest({ command: 'TRANSFER_PLAYBACK' })
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe('Device ID required for TRANSFER_PLAYBACK')
+    expect(data.error).toBe('Device ID is required for TRANSFER_PLAYBACK')
   })
 
-  it('should handle PLAY command successfully', async () => {
+  it('should call startResumePlayback for PLAY command', async () => {
     const req = createRequest({ command: 'PLAY', deviceId: 'test-device' })
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-    expect(mockedFetch).toHaveBeenCalledWith(
-      'https://api.spotify.com/v1/me/player/play?device_id=test-device',
-      expect.any(Object)
-    )
+    expect(data.message).toContain('PLAY')
+    expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith('test-device')
   })
 
-  it('should handle SET_VOLUME command successfully', async () => {
-    const req = createRequest({ command: 'SET_VOLUME', volume: 50 })
+  it('should call setPlaybackVolume for SET_VOLUME command', async () => {
+    const req = createRequest({ command: 'SET_VOLUME', volume: 50, deviceId: 'test-device' })
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-    expect(mockedFetch).toHaveBeenCalledWith(
-      'https://api.spotify.com/v1/me/player/volume?volume_percent=50',
-      expect.any(Object)
-    )
+    expect(data.message).toContain('SET_VOLUME')
+    expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, 'test-device')
   })
 
-  it('should handle TRANSFER_PLAYBACK successfully', async () => {
-    const req = createRequest({
-      command: 'TRANSFER_PLAYBACK',
-      deviceId: 'new-device',
-    })
+  it('should call transferPlayback for TRANSFER_PLAYBACK command', async () => {
+    const req = createRequest({ command: 'TRANSFER_PLAYBACK', deviceId: 'new-device' })
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-    const fetchOptions = mockedFetch.mock.calls[0][1]
-    const body = JSON.parse(fetchOptions.body as string)
-    expect(body).toEqual({ device_ids: ['new-device'], play: true })
+    expect(data.message).toContain('TRANSFER_PLAYBACK')
+    expect(mockPlayer.transferPlayback).toHaveBeenCalledWith(['new-device'], true)
   })
 
-  it('should forward Spotify API errors', async () => {
-    mockedFetch.mockResolvedValue({
-      ok: false,
-      status: 404,
-      text: () =>
-        Promise.resolve(
-          JSON.stringify({ error: { message: 'Device not found' } })
-        ),
-    })
-    const req = createRequest({ command: 'PLAY' })
-    const response = await POST(req)
-    const data = await response.json()
+  it('should use handleSpotifyApiError when a player command fails', async () => {
+    const spotifyError = new Error('Spotify API blew up')
+    mockPlayer.pausePlayback.mockRejectedValue(spotifyError)
 
-    expect(response.status).toBe(404)
-    expect(data.error).toBe('Spotify API error')
-    expect(data.details).toBe('Device not found')
+    const req = createRequest({ command: 'PAUSE' })
+    await POST(req)
+
+    // Check that our centralized error handler was called
+    expect(mockedHandleError).toHaveBeenCalledWith(spotifyError)
   })
 
-  it('should return 500 if fetch throws an error', async () => {
-    mockedFetch.mockRejectedValue(new Error('Network error'))
+  it('should return 500 for unexpected errors', async () => {
+    mockedGetSpotifyApi.mockRejectedValue(new Error('Something unexpected happened'))
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe('Internal server error processing command.')
+    expect(data.error).toBe('An unexpected error occurred.')
   })
 })
