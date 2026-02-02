@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           )
         }
-        // @ts-ignore - SDK type definition for transferPlayback might expect strict string array
+        // @ts-expect-error - SDK type definition for transferPlayback might expect strict string array
         await sdk.player.transferPlayback([deviceId], true)
         break
       default:

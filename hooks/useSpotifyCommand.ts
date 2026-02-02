@@ -20,12 +20,14 @@ export const useSpotifyCommand = () => {
   )
 
   const execute = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (command: string, payload?: any) => {
       // Logic: Use active device, or fallback to HRM Web Player
       const targetDeviceId = activeDevice?.id || hrmPlayer?.id || null
 
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         command: command as any,
         deviceId: targetDeviceId,
         ...payload,
