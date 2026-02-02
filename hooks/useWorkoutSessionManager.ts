@@ -10,6 +10,7 @@ import { HrZoneName } from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
 import { calculateHrZone } from '../lib/hrm/zones'
 import { calculateMaxHr } from '@/lib/shared/hr-zones'
+import { useAppSnackbar } from './useAppSnackbar'
 
 // --- State, Actions, and Reducer ---
 
@@ -144,19 +145,64 @@ function sessionManagerReducer(
 export const useWorkoutSessionManager = () => {
   const [state, dispatch] = useReducer(sessionManagerReducer, initialState)
   const [isInitialized, setIsInitialized] = useState(false)
+  const { showInfo } = useAppSnackbar()
+
+  const checkAndRotateSession = useCallback(async () => {
+    if (!state.session?.startTime) return
+
+    const sessionDate = new Date(state.session.startTime).toDateString()
+    const currentDate = new Date().toDateString()
+
+    if (sessionDate !== currentDate) {
+      console.info(
+        `[SessionManager] Date change detected on window focus. Rotating session from ${sessionDate} to ${currentDate}.`
+      )
+      await workoutSessionStorage.deleteSession(state.session.sessionId)
+      dispatch({ type: 'RESET' })
+      showInfo('New day detected. A fresh workout session has started.')
+    }
+  }, [state.session, showInfo])
 
   // Auto-recovery of incomplete sessions
   useEffect(() => {
     const recoverSession = async () => {
-      const incompleteSession =
+      let incompleteSession =
         await workoutSessionStorage.getIncompleteSession()
+
+      if (incompleteSession?.startTime) {
+        const sessionDate = new Date(
+          incompleteSession.startTime
+        ).toDateString()
+        const currentDate = new Date().toDateString()
+
+        if (sessionDate !== currentDate) {
+          console.info(
+            `[SessionManager] Stale session from ${sessionDate} detected on startup. Clearing for new day ${currentDate}.`
+          )
+          await workoutSessionStorage.deleteSession(incompleteSession.sessionId)
+          showInfo('New day detected. Your previous session was cleared.')
+          incompleteSession = null
+        }
+      }
+
       if (incompleteSession) {
         dispatch({ type: 'SET_SESSION', payload: incompleteSession })
       }
       setIsInitialized(true)
     }
-    recoverSession()
-  }, [])
+
+    if (!isInitialized) {
+      recoverSession()
+    }
+  }, [isInitialized, showInfo])
+
+  // Validate session on window focus
+  useEffect(() => {
+    window.addEventListener('focus', checkAndRotateSession)
+    return () => {
+      window.removeEventListener('focus', checkAndRotateSession)
+    }
+  }, [checkAndRotateSession])
 
   // Persist session changes to IndexedDB
   useEffect(() => {
