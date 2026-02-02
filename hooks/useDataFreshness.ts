@@ -1,28 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useReducer } from 'react'
 
-const STALE_THRESHOLD = 15 * 1000; // 15 seconds
+const STALE_THRESHOLD = 15 * 1000 // 15 seconds
+
+const isTimestampStale = (timestamp: number | null): boolean => {
+  if (timestamp === null) {
+    return true
+  }
+  return Date.now() - timestamp > STALE_THRESHOLD
+}
 
 export const useDataFreshness = (timestamp: number | null): boolean => {
-  const [isStale, setIsStale] = useState(false);
+  const [, forceUpdate] = useReducer((x) => x + 1, 0)
 
   useEffect(() => {
-    if (timestamp === null) {
-      setIsStale(true);
-      return;
-    }
+    const intervalId = setInterval(() => {
+      forceUpdate()
+    }, 5000) // Check every 5 seconds
 
-    const checkStaleness = () => {
-      const now = Date.now();
-      const timeDiff = now - timestamp;
-      setIsStale(timeDiff > STALE_THRESHOLD);
-    };
+    return () => clearInterval(intervalId)
+  }, [])
 
-    checkStaleness(); // Initial check
-
-    const intervalId = setInterval(checkStaleness, 5000); // Check every 5 seconds
-
-    return () => clearInterval(intervalId);
-  }, [timestamp]);
-
-  return isStale;
-};
+  return isTimestampStale(timestamp)
+}

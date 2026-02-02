@@ -202,7 +202,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
           if (timeSinceLastData > dataLivenessTimeoutMs) {
             setStatus(BluetoothConnectionStatus.RECONNECTING)
-            setCustomStatusMessage(BLUETOETOOTH_MESSAGES.unstableConnection)
+            setCustomStatusMessage(BLUETOOTH_MESSAGES.unstableConnection)
             isTimeoutDisconnect.current = true
             if (deviceRef.current?.gatt) deviceRef.current.gatt.disconnect()
           }
