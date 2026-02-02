@@ -19,7 +19,7 @@ interface HeartRateTimeSeriesProps {
 }
 
 const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <Card elevation={2}>
