@@ -393,7 +393,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
-      if (isConnecting.current && abortControllerRef.current) {
+      if (isConnecting.current) {
         logger.warn(
           { device: device.name },
           'Connection already in progress. Skipping.'
