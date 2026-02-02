@@ -112,6 +112,38 @@ const initSocketManager = (
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
+  // --- Janitor Service ---
+  // Periodically cleans up stale client sessions. This is a crucial stability mechanism
+  // to prevent memory leaks from clients that disconnect without triggering the 'close' event
+  // (e.g., due to network loss).
+  const STALE_THRESHOLD_MS = 30000 // 30 seconds
+  const JANITOR_INTERVAL_MS = 10000 // 10 seconds
+
+  setInterval(() => {
+    const now = Date.now()
+    let hasChanged = false
+
+    for (const [clientId, session] of clientSessionState.entries()) {
+      if (now - session.lastUpdate > STALE_THRESHOLD_MS) {
+        logger.warn(
+          { clientId },
+          `Stale client detected. Last update was ${
+            (now - session.lastUpdate) / 1000
+          }s ago. Cleaning up.`
+        )
+        hrmDataStore.deleteById(clientId)
+        clientSessionState.delete(clientId)
+        clientSockets.delete(clientId) // Also remove the socket reference
+        hasChanged = true
+      }
+    }
+
+    if (hasChanged) {
+      broadcastState()
+    }
+  }, JANITOR_INTERVAL_MS)
+
+
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket
 

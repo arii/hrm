@@ -132,9 +132,8 @@ export default defineConfig({
 
   // Web Server Configuration
   webServer: {
-    command:
-      'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
-    url: `${baseURL}/api/health/simple`,
+    command: 'pnpm run dev',
+    url: `${baseURL}/api/health`,
     timeout: 120 * 1000, // 2 minutes
     reuseExistingServer: !process.env.CI,
     env: {

@@ -535,7 +535,7 @@ describe('WebSocket Manager', () => {
 
     it('should broadcast state on client disconnect', () => {
       mockWs.emit('close')
-      jest.runAllTimers()
+      jest.advanceTimersByTime(5000)
       expect(broadcast).toHaveBeenCalledWith(
         mockWss,
         {
@@ -637,7 +637,7 @@ describe('WebSocket Manager', () => {
       newWs.emit('close')
 
       // Advance timers to trigger cleanup
-      jest.runAllTimers()
+      jest.advanceTimersByTime(5000)
 
       // Verify that the cleanup logic was called
       expect(logger.info).toHaveBeenCalledWith(
@@ -670,7 +670,7 @@ describe('WebSocket Manager', () => {
       mockWss.emit('connection', secondWs, mockReq)
 
       // Advance timers past the grace period
-      jest.runAllTimers()
+      jest.advanceTimersByTime(5000)
 
       // Verify that the cleanup was NOT called for the original session
       expect(logger.info).not.toHaveBeenCalledWith(
@@ -685,7 +685,7 @@ describe('WebSocket Manager', () => {
 
       // Trigger a broadcast by having the other client disconnect
       mockWs.emit('close') // This is the 'test-client' from beforeEach
-      jest.runAllTimers()
+      jest.advanceTimersByTime(5000)
 
       // Verify that the client's data still exists in the broadcast from the *other* client's cleanup
       const mockBroadcast = broadcast as jest.Mock
@@ -697,6 +697,22 @@ describe('WebSocket Manager', () => {
       expect(payload.find((c) => c.clientId === clientId)).toBeDefined()
       // The payload should NOT contain the client that just disconnected to trigger the broadcast
       expect(payload.find((c) => c.clientId === 'test-client')).toBeUndefined()
+    })
+
+    it('should clean up stale client sessions via the janitor service', () => {
+      const clientId = 'test-client-stale'
+      const mockReq = createMockRequest(`/?clientId=${clientId}`)
+      const newWs = new MockWebSocket()
+      mockWss.emit('connection', newWs, mockReq)
+
+      // Advance timers to trigger janitor
+      jest.advanceTimersByTime(31000)
+
+      // Verify that the cleanup logic was called
+      expect(logger.warn).toHaveBeenCalledWith(
+        { clientId },
+        expect.stringContaining('Stale client detected')
+      )
     })
   })
 })

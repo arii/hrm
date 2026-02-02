@@ -9,6 +9,7 @@ import { HrmStreamData as ServerHrmData } from '../types/core'
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
+  lastUpdated: number
 }
 
 export interface WebSocketState {
@@ -49,7 +50,7 @@ export const INITIAL_STATE: WebSocketState = {
 
 export const reducer = (
   state: WebSocketState,
-  message: ServerMessage | { type: 'RESET_STATE' }
+  message: ServerMessage | { type: 'RESET_STATE' | 'CLEANUP_STALE_CONNECTIONS' }
 ): WebSocketState => {
   switch (message.type) {
     case 'RESET_STATE':
@@ -57,7 +58,11 @@ export const reducer = (
     case 'INITIAL_STATE': {
       // When the initial state is loaded, ensure all HRM data is marked as connected.
       const hrmDataWithConnection =
-        message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) || []
+        message.payload.hrmData?.map((d) => ({
+          ...d,
+          isConnected: true,
+          lastUpdated: Date.now(),
+        })) || []
       return {
         ...state,
         ...message.payload,
@@ -66,42 +71,35 @@ export const reducer = (
     }
     case 'HRM_UPDATE': {
       const payload = message.payload as ServerHrmData[]
-      // Create a map of incoming clientIds for efficient lookup
-      const incomingClients = new Set(payload.map((user) => user.clientId))
+      const now = Date.now()
 
-      // Create a new state array by merging existing and new data
-      const mergedHrmData = state.hrmData.map((existingUser) => {
-        if (incomingClients.has(existingUser.clientId)) {
-          const updatedUser = payload.find(
-            (newUser) => newUser.clientId === existingUser.clientId
-          )
-          // CRITICAL FIX: The order of spread operators is essential.
-          // By spreading existingUser first, then updatedUser, we ensure
-          // that any fields NOT present in the (potentially partial) `updatedUser`
-          // payload are preserved from the existing state.
-          return updatedUser
-            ? {
-                ...existingUser,
-                ...updatedUser,
-                isConnected: true,
-              }
-            : { ...existingUser, isConnected: true }
-        }
-        return { ...existingUser, isConnected: false }
-      })
+      // Efficiently update or add users from the payload
+      const updatedUsersMap = new Map(
+        state.hrmData.map((user) => [user.clientId, user])
+      )
 
-      // Add any brand-new users from the payload who were not in the previous state
       payload.forEach((newUser) => {
-        if (
-          !state.hrmData.some(
-            (existingUser) => existingUser.clientId === newUser.clientId
-          )
-        ) {
-          mergedHrmData.push({ ...newUser, isConnected: true })
-        }
+        const existingUser = updatedUsersMap.get(newUser.clientId)
+        updatedUsersMap.set(newUser.clientId, {
+          ...existingUser,
+          ...newUser,
+          isConnected: true,
+          lastUpdated: now,
+        })
       })
 
-      return { ...state, hrmData: mergedHrmData }
+      return { ...state, hrmData: Array.from(updatedUsersMap.values()) }
+    }
+    case 'CLEANUP_STALE_CONNECTIONS': {
+      const now = Date.now()
+      // 3 minutes threshold for client-side cleanup
+      const STALE_THRESHOLD_MS = 180000
+      return {
+        ...state,
+        hrmData: state.hrmData.filter(
+          (user) => now - user.lastUpdated < STALE_THRESHOLD_MS
+        ),
+      }
     }
     case 'TIMER_UPDATE':
       return {

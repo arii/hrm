@@ -88,20 +88,24 @@ describe('webSocketReducer', () => {
       calories: 10,
     }
 
-    it('should add a new user', () => {
+    it('should add a new user with a lastUpdated timestamp', () => {
       const action: ServerMessage = {
         type: 'HRM_UPDATE',
         payload: [baseUser],
       }
       const state = reducer(INITIAL_STATE, action)
       expect(state.hrmData).toHaveLength(1)
-      expect(state.hrmData[0]).toEqual({ ...baseUser, isConnected: true })
+      expect(state.hrmData[0]).toEqual({
+        ...baseUser,
+        isConnected: true,
+        lastUpdated: expect.any(Number),
+      })
     })
 
-    it('should update an existing user and keep them connected', () => {
+    it('should update an existing user and their lastUpdated timestamp', () => {
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
-        hrmData: [{ ...baseUser, isConnected: true }],
+        hrmData: [{ ...baseUser, isConnected: true, lastUpdated: 0 }],
       }
       const updatedUser = { ...baseUser, hrm: 150, zone: 'aerobic' }
       const action: ServerMessage = {
@@ -113,15 +117,16 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0].hrm).toBe(150)
       expect(state.hrmData[0].zone).toBe('aerobic')
       expect(state.hrmData[0].isConnected).toBe(true)
+      expect(state.hrmData[0].lastUpdated).not.toBe(0)
     })
 
-    it('should mark a user as disconnected if not in payload', () => {
+    it('should not mark a user as disconnected if not in payload', () => {
       const user2 = { ...baseUser, clientId: '2', userName: 'User B' }
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [
-          { ...baseUser, isConnected: true },
-          { ...user2, isConnected: true },
+          { ...baseUser, isConnected: true, lastUpdated: Date.now() },
+          { ...user2, isConnected: true, lastUpdated: Date.now() },
         ],
       }
       const action: ServerMessage = {
@@ -133,7 +138,7 @@ describe('webSocketReducer', () => {
       const updatedUser1 = state.hrmData.find((u) => u.clientId === '1')
       const updatedUser2 = state.hrmData.find((u) => u.clientId === '2')
       expect(updatedUser1?.isConnected).toBe(true)
-      expect(updatedUser2?.isConnected).toBe(false)
+      expect(updatedUser2?.isConnected).toBe(true)
     })
   })
 

@@ -6,24 +6,37 @@ import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState, useEffect } from 'react'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 10000) // Re-render every 10s
+    return () => clearInterval(interval)
+  }, [])
 
   const filteredTiles = useMemo(() => {
+    const STALE_THRESHOLD_MS = 30000 // 30 seconds
+    const REMOVAL_THRESHOLD_MS = 60000 // 60 seconds
+
     return hrmData
       .filter((user) => {
+        const timeSinceUpdate = now - user.lastUpdated
         const isZero = user.value === 0
-        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
-        return !(isZero || isPlaceholderName || hasNoIdentity)
+        const isStale = timeSinceUpdate > REMOVAL_THRESHOLD_MS
+
+        return !(isZero || hasNoIdentity || isStale)
       })
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
           user.maxHr || MAX_HR_DEFAULT
         )
+        const timeSinceUpdate = now - user.lastUpdated
+        const isDataStale = timeSinceUpdate > STALE_THRESHOLD_MS
 
         // Find the alert specific to this HR Monitor's clientId
         const matchingAlert = activeAlerts.find(
@@ -36,13 +49,15 @@ const HrmTiles = () => {
           <Grid
             size={{ xs: 12, sm: 6, lg: 3 }}
             key={user.clientId}
-            data-testid="hr-tile-grid-item"
+            data-testid={`hr-tile-${user.clientId}`}
           >
             <HrTile
               name={user.name || ''}
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
               calories={user.calories || 0} // Pass calories
+              isConnected={user.isConnected}
+              isDataStale={isDataStale}
               isAlerting={!!matchingAlert}
               // Conditionally add alertMessage to avoid passing `undefined`
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
@@ -80,8 +95,9 @@ const HrmTiles = () => {
   return <>{filteredTiles}</>
 }
 
-// Memoize HrmTiles to prevent re-renders when parent components update.
-// The component relies on the `useWebSocket` hook, which provides `hrmData` and `activeAlerts`.
-// The `useMemo` hook inside the component ensures that the `filteredTiles` are only recalculated
-// when `hrmData` or `activeAlerts` change, further optimizing performance.
-export default memo(HrmTiles)
+// Note: The `memo` wrapper was removed from this component.
+// The component now uses an internal `setInterval` to trigger re-renders,
+// which is necessary for the staleness detection logic. Memoization would
+// block these periodic updates, preventing the UI from reflecting the
+// real-time status of HR monitors.
+export default HrmTiles
