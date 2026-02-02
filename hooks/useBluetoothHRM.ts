@@ -448,6 +448,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               String(error).includes('NetworkError')
             if (isBusy && attempt < maxRetries) {
               const delay = Math.pow(2, attempt) * 1000
+              logger.warn(
+                { device: device.name, attempt, delay, error },
+                'Device likely busy (Zombie connection). Retrying...'
+              )
+              setStatus(BluetoothConnectionStatus.CONNECTING)
+              setCustomStatusMessage(
+                BLUETOOTH_MESSAGES.deviceBusy(delay, attempt, maxRetries)
+              )
               await new Promise((res) => setTimeout(res, delay))
               continue
             }
