@@ -60,21 +60,22 @@ test.describe('Remote Capabilities & Command Relay', () => {
       .poll(() => sentMessages)
       .toContainEqual(
         expect.objectContaining({
-          type: 'SPOTIFY_COMMAND',
-          command: 'NEXT',
+          type: 'TIMER_COMMAND',
+          command: 'START',
         })
       )
 
     expect(failedRequests).toEqual([])
-    await expect(stopButton).toBeVisible() // Wait for start button to appear
+    await expect(stopButton).toBeVisible() // Wait for stop button to appear
+    await page.waitForTimeout(500) // Add a small delay to prevent race conditions
     await stopButton.click()
-    // 5. Verify WebSocket Command
+    // 6. Verify Stop Command
     await expect
       .poll(() => sentMessages)
       .toContainEqual(
         expect.objectContaining({
-          type: 'SPOTIFY_COMMAND',
-          command: 'PAUSE',
+          type: 'TIMER_COMMAND',
+          command: 'STOP',
         })
       )
   })
