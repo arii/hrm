@@ -74,7 +74,9 @@ const useSpotifyWebPlayback = () => {
 
         if (response.status === 401) {
           // Circuit Breaker: Use sessionStorage to detect rapid failures
-          const lastAuthFail = sessionStorage.getItem(SPOTIFY_AUTH_LOOP_GUARD_KEY)
+          const lastAuthFail = sessionStorage.getItem(
+            SPOTIFY_AUTH_LOOP_GUARD_KEY
+          )
           const now = Date.now()
 
           if (
