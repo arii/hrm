@@ -26,14 +26,7 @@ const ConnectHRMonitorButton = ({
   isConnected,
   isSupported,
 }: ConnectHRMonitorButtonProps) => {
-  const [statusMessage, setStatusMessage] = useState('');
-  useEffect(() => {
-    if (isConnected) {
-      setStatusMessage('Device connected successfully.');
-    } else {
-        setStatusMessage('Device disconnected.');
-    }
-  }, [isConnected]);
+  const statusMessage = isConnected ? 'Device connected successfully.' : 'Device disconnected.';
 
   if (!isSupported) {
     return (
@@ -51,37 +44,36 @@ const ConnectHRMonitorButton = ({
     )
   }
 
-  return <>
-    <div
-    aria-live="polite"
-    className="sr-only"
-    >
+  return (
+    <>
+      <div aria-live="polite" className="sr-only">
         {statusMessage}
-    </div>
-    {isConnected ? (
-    <Button
-      variant="outlined"
-      color="secondary"
-      onClick={disconnect}
-      startIcon={<BluetoothDisabledIcon />}
-      aria-label="Disconnect Heart Rate Monitor"
-      sx={{ minHeight: '48px' }}
-    >
-      {DISCONNECT_HR_MONITOR_BUTTON_TEXT}
-    </Button>
-  ) : (
-    <Button
-      variant="contained"
-      color="primary"
-      onClick={connect}
-      startIcon={<BluetoothIcon />}
-      aria-label="Connect Heart Rate Monitor"
-      sx={{ minHeight: '48px' }}
-    >
-      {CONNECT_HR_MONITOR_BUTTON_TEXT}
-    </Button>
-  )}
-  </>
+      </div>
+      {isConnected ? (
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={disconnect}
+          startIcon={<BluetoothDisabledIcon />}
+          aria-label="Disconnect Heart Rate Monitor"
+          sx={{ minHeight: '48px' }}
+        >
+          {DISCONNECT_HR_MONITOR_BUTTON_TEXT}
+        </Button>
+      ) : (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={connect}
+          startIcon={<BluetoothIcon />}
+          aria-label="Connect Heart Rate Monitor"
+          sx={{ minHeight: '48px' }}
+        >
+          {CONNECT_HR_MONITOR_BUTTON_TEXT}
+        </Button>
+      )}
+    </>
+  )
 }
 
 export default memo(ConnectHRMonitorButton)

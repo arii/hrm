@@ -60,8 +60,8 @@ describe.skip('useCookie', () => {
       const { result } = renderHook(() => useCookie(TEST_KEY, INITIAL_VALUE))
       expect(result.current[0]).toEqual(INITIAL_VALUE)
     } catch (error) {
-      console.error("Error in test:", error);
-      throw error;
+      console.error('Error in test:', error)
+      throw error
     } finally {
       consoleErrorSpy.mockRestore()
     }
