@@ -39,9 +39,7 @@ describe('ZoneDistribution', () => {
         <ZoneDistribution timeInZones={timeInZones} totalDuration={1} />
       </ThemeProvider>
     )
-    expect(
-      screen.getByText('Heart Rate Zone Distribution')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Heart Rate Zone Distribution')).toBeInTheDocument()
   })
 
   it('returns null when there is no data to display', () => {
