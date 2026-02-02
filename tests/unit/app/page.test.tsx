@@ -19,8 +19,16 @@ jest.mock('../../../components/WorkoutTableViewer', () => {
   return WorkoutTableViewer
 })
 jest.mock('../../../components/GoogleDocViewer', () => {
-  const GoogleDocViewer = ({ refreshKey }: { refreshKey: number }) => (
-    <div data-testid="google-doc-viewer" data-refresh-key={refreshKey} />
+  const GoogleDocViewer = ({
+    refreshKey,
+    onRefresh,
+  }: {
+    refreshKey: number
+    onRefresh?: () => void
+  }) => (
+    <div data-testid="google-doc-viewer" data-refresh-key={refreshKey}>
+      <button aria-label="refresh workout table" onClick={onRefresh} />
+    </div>
   )
   GoogleDocViewer.displayName = 'GoogleDocViewer'
   return GoogleDocViewer
@@ -98,6 +106,28 @@ describe('Dashboard', () => {
     )
     const updatedRefreshKey =
       updatedWorkoutTableViewer.getAttribute('data-refresh-key')
+
+    expect(updatedRefreshKey).not.toBe(initialRefreshKey)
+    expect(parseInt(updatedRefreshKey as string)).toBe(
+      parseInt(initialRefreshKey as string) + 1
+    )
+  })
+
+  it('passes a new refreshKey to GoogleDocViewer when refresh button is clicked', async () => {
+    process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'false'
+    render(<Dashboard />)
+
+    const googleDocViewer = await screen.findByTestId('google-doc-viewer')
+    const initialRefreshKey = googleDocViewer.getAttribute('data-refresh-key')
+
+    const refreshButton = screen.getByRole('button', {
+      name: /refresh workout table/i,
+    })
+    fireEvent.click(refreshButton)
+
+    const updatedGoogleDocViewer = await screen.findByTestId('google-doc-viewer')
+    const updatedRefreshKey =
+      updatedGoogleDocViewer.getAttribute('data-refresh-key')
 
     expect(updatedRefreshKey).not.toBe(initialRefreshKey)
     expect(parseInt(updatedRefreshKey as string)).toBe(

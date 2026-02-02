@@ -5,6 +5,8 @@
  */
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import { alpha } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -20,6 +22,7 @@ interface GoogleDocViewerProps {
   isShrunk?: boolean // New prop
   onToggleShrink?: () => void // New callback prop
   refreshKey?: number
+  onRefresh?: () => void
 }
 
 const GoogleDocViewer = ({
@@ -29,6 +32,7 @@ const GoogleDocViewer = ({
   isShrunk = false, // Default to not shrunk
   onToggleShrink,
   refreshKey,
+  onRefresh,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
 
@@ -65,6 +69,26 @@ const GoogleDocViewer = ({
             position: 'relative',
           }}
         >
+          {onRefresh && (
+            <IconButton
+              onClick={onRefresh}
+              size="small"
+              sx={(theme) => ({
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                zIndex: 10,
+                backgroundColor: alpha(theme.palette.background.paper, 0.7),
+                backdropFilter: 'blur(4px)',
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.background.paper, 0.9),
+                },
+              })}
+              aria-label="refresh google doc"
+            >
+              <RefreshIcon fontSize="small" />
+            </IconButton>
+          )}
           {iframeLoading && (
             <Skeleton
               variant="rectangular"

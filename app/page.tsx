@@ -116,6 +116,7 @@ const Dashboard = () => {
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
             refreshKey={refreshKey}
+            onRefresh={handleRefresh}
           />
         )}
       </Box>
