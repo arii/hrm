@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   issues: write
   checks: write
@@ -260,41 +260,20 @@ jobs:
   update-pr-on-comment:
     if: needs.comment-router.outputs.is_update_pr == 'true'
     needs: [comment-router]
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Trigger PR Enrichment'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'pr-enrichment.yml',
-              ref: 'refs/pull/${{ github.event.issue.number }}/head'
-            });
+    uses: ./.github/workflows/pr-enrichment.yml
+    with:
+      pr_number: ${{ github.event.issue.number }}
+    secrets: inherit
 
   squash-on-comment:
     if: needs.comment-router.outputs.is_squash_comment == 'true'
     needs: [comment-router]
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Trigger PR Squash'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'pr-squash.yml',
-              ref: 'leader',
-              inputs: {
-                pr_number: `${{ github.event.issue.number }}`,
-                comment_body: `${{ github.event.comment.body }}`,
-                comment_id: `${{ github.event.comment.id }}`
-              }
-            });
+    uses: ./.github/workflows/pr-squash.yml
+    with:
+      pr_number: ${{ github.event.issue.number }}
+      comment_body: ${{ github.event.comment.body }}
+      comment_id: ${{ github.event.comment.id }}
+    secrets: inherit
 
   react-to-conflict-resolve-comment:
     if: needs.comment-router.outputs.is_conflict_resolve_comment == 'true'
@@ -308,12 +287,16 @@ jobs:
           comment-id: ${{ github.event.comment.id }}
           reaction: eyes
 
-  resolve-conflicts-on-comment:
+  prepare-conflict-resolution:
     if: needs.comment-router.outputs.is_conflict_resolve_comment == 'true'
     needs: [comment-router]
     runs-on: ubuntu-latest
+    outputs:
+      target_branch: ${{ steps.get_branches.outputs.target_branch }}
+      source_branch: ${{ steps.get_branches.outputs.source_branch }}
     steps:
-      - name: 'Trigger Conflict Resolver'
+      - name: Get PR Details
+        id: get_branches
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -323,23 +306,18 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number,
             });
+            core.setOutput('target_branch', pr.data.base.ref);
+            core.setOutput('source_branch', pr.data.head.ref);
 
-            const baseBranch = pr.data.base.ref;
-            const headBranch = pr.data.head.ref;
-
-            console.log(`Triggering conflict resolution for PR #${context.issue.number}: merging '${headBranch}' into '${baseBranch}'`);
-
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'conflict-resolver.yml',
-              ref: baseBranch,
-              inputs: {
-                target_branch: baseBranch,
-                source_branch: headBranch,
-                pr_number: String(context.issue.number),
-              },
-            });
+  resolve-conflicts-on-comment:
+    if: needs.comment-router.outputs.is_conflict_resolve_comment == 'true'
+    needs: [comment-router, prepare-conflict-resolution]
+    uses: ./.github/workflows/conflict-resolver.yml
+    with:
+      target_branch: ${{ needs.prepare-conflict-resolution.outputs.target_branch }}
+      source_branch: ${{ needs.prepare-conflict-resolution.outputs.source_branch }}
+      pr_number: ${{ github.event.issue.number }}
+    secrets: inherit
 
   jules-command:
     if: |
