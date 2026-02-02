@@ -20,18 +20,32 @@ jest.mock('@/components/Spotify/DeviceRecommendation', () => ({
   DeviceRecommendation: () => <div data-testid="device-recommendation" />,
 }))
 jest.mock('@/components/AuthButton', () => ({
-    __esModule: true,
-    default: ({ providerName }: { providerName: string}) => <button>Login with {providerName}</button>
+  __esModule: true,
+  default: ({ providerName }: { providerName: string }) => (
+    <button>Login with {providerName}</button>
+  ),
 }))
 jest.mock('@/components/shared/VolumeSlider', () => ({
-    __esModule: true,
-    default: ({ volume, onVolumeChange }: { volume: number, onVolumeChange: (v: number) => void}) => <input type="range" aria-label="Volume" value={volume} onChange={(e) => onVolumeChange(Number(e.target.value))} />
+  __esModule: true,
+  default: ({
+    volume,
+    onVolumeChange,
+  }: {
+    volume: number
+    onVolumeChange: (v: number) => void
+  }) => (
+    <input
+      type="range"
+      aria-label="Volume"
+      value={volume}
+      onChange={(e) => onVolumeChange(Number(e.target.value))}
+    />
+  ),
 }))
 jest.mock('@/components/SpotifyDeviceSelector', () => ({
-    __esModule: true,
-    default: () => <div data-testid="device-selector" />
+  __esModule: true,
+  default: () => <div data-testid="device-selector" />,
 }))
-
 
 const mockedUseSpotifyAuth = useSpotifyAuth as jest.Mock
 const mockedUseSpotifyCommand = useSpotifyCommand as jest.Mock
@@ -46,7 +60,7 @@ describe('SpotifyDisplay', () => {
     jest.clearAllMocks()
 
     mockedUseWebSocket.mockReturnValue({
-        sendData: jest.fn(),
+      sendData: jest.fn(),
     })
 
     // Default mocks for authenticated state
@@ -82,9 +96,9 @@ describe('SpotifyDisplay', () => {
   it('calls execute with PAUSE when pause button is clicked', () => {
     const execute = jest.fn()
     mockedUseSpotifyCommand.mockReturnValueOnce({
-        ...mockedUseSpotifyCommand(),
-        execute,
-        playback: { ...mockedUseSpotifyCommand().playback, isPlaying: true }
+      ...mockedUseSpotifyCommand(),
+      execute,
+      playback: { ...mockedUseSpotifyCommand().playback, isPlaying: true },
     })
     renderComponent()
 
@@ -95,9 +109,9 @@ describe('SpotifyDisplay', () => {
   it('calls execute with PLAY when play button is clicked', () => {
     const execute = jest.fn()
     mockedUseSpotifyCommand.mockReturnValueOnce({
-        ...mockedUseSpotifyCommand(),
-        execute,
-        playback: { ...mockedUseSpotifyCommand().playback, isPlaying: false }
+      ...mockedUseSpotifyCommand(),
+      execute,
+      playback: { ...mockedUseSpotifyCommand().playback, isPlaying: false },
     })
     renderComponent()
 
@@ -122,16 +136,16 @@ describe('SpotifyDisplay', () => {
   it('calls execute with SET_VOLUME when volume slider is changed', () => {
     const { execute } = mockedUseSpotifyCommand()
     renderComponent()
-    const slider = screen.getByLabelText('Volume')
+    const slider = screen.getByRole('slider')
     fireEvent.change(slider, { target: { value: '75' } })
     expect(execute).toHaveBeenCalledWith('SET_VOLUME', { volume: 75 })
   })
 
   it('renders DeviceRecommendation when no device is active but HRM player exists', () => {
     mockedUseSpotifyCommand.mockReturnValueOnce({
-        ...mockedUseSpotifyCommand(),
-        activeDevice: null,
-        hrmPlayer: { id: 'hrm-player', name: 'HRM Web Player' }
+      ...mockedUseSpotifyCommand(),
+      activeDevice: null,
+      hrmPlayer: { id: 'hrm-player', name: 'HRM Web Player' },
     })
     renderComponent()
     expect(screen.getByTestId('device-recommendation')).toBeInTheDocument()

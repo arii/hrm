@@ -9,13 +9,13 @@ export const useSpotifyCommand = () => {
   const { spotifyData, sendData } = useWebSocket()
 
   // Simplified state selectors from the unified bus
-  const activeDevice = useMemo(() =>
-    spotifyData.devices?.find((d) => d.is_active) || null,
+  const activeDevice = useMemo(
+    () => spotifyData.devices?.find((d) => d.is_active) || null,
     [spotifyData.devices]
   )
 
-  const hrmPlayer = useMemo(() =>
-    spotifyData.devices?.find((d) => d.name === 'HRM Web Player') || null,
+  const hrmPlayer = useMemo(
+    () => spotifyData.devices?.find((d) => d.name === 'HRM Web Player') || null,
     [spotifyData.devices]
   )
 
@@ -28,7 +28,7 @@ export const useSpotifyCommand = () => {
         type: 'SPOTIFY_COMMAND',
         command: command as any,
         deviceId: targetDeviceId,
-        ...payload
+        ...payload,
       }
 
       sendData(message)
@@ -41,6 +41,6 @@ export const useSpotifyCommand = () => {
     activeDevice,
     hrmPlayer,
     playback: spotifyData, // Pass the entire playback state
-    isHrmPlayerActive: activeDevice?.name === 'HRM Web Player'
+    isHrmPlayerActive: activeDevice?.name === 'HRM Web Player',
   }
 }

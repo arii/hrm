@@ -34,7 +34,7 @@ export async function createServices(
         albumName: '',
         albumArtUrl: '',
         devices: [],
-        volume: 0,
+        volumePercent: 0,
         isMuted: false,
       }),
       isReady: () => false,

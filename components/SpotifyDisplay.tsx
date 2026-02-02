@@ -182,9 +182,7 @@ const SpotifyDisplay = () => {
           muted={playback.isMuted}
           onVolumeChange={handleVolumeChange}
           onVolumeChangeCommitted={handleVolumeChange}
-          onToggleMute={() =>
-            handleVolumeChange(playback.isMuted ? 50 : 0)
-          }
+          onToggleMute={() => handleVolumeChange(playback.isMuted ? 50 : 0)}
           showValue={true}
         />
         <SpotifyDeviceSelector

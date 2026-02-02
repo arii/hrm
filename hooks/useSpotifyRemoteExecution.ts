@@ -26,7 +26,14 @@ export const useSpotifyRemoteExecution = (player: any | null): void => {
       })
     }
 
-    window.addEventListener('spotify-remote-command', handleRemoteCommand as EventListener)
-    return () => window.removeEventListener('spotify-remote-command', handleRemoteCommand as EventListener)
+    window.addEventListener(
+      'spotify-remote-command',
+      handleRemoteCommand as EventListener
+    )
+    return () =>
+      window.removeEventListener(
+        'spotify-remote-command',
+        handleRemoteCommand as EventListener
+      )
   }, [player, sendData])
 }

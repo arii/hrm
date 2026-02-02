@@ -43,8 +43,8 @@ describe('API Route: /api/spotify/control', () => {
   })
 
   it('should return 401 if getAuthenticatedSpotifyApi throws an auth error', async () => {
-    mockedGetSpotifyApi.mockRejectedValue(
-      new ApiError(401, 'Not authenticated')
+    mockedGetSpotifyApi.mockImplementation(() =>
+      Promise.reject(new ApiError(401, 'Not authenticated'))
     )
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
@@ -92,7 +92,11 @@ describe('API Route: /api/spotify/control', () => {
   })
 
   it('should call setPlaybackVolume for SET_VOLUME command', async () => {
-    const req = createRequest({ command: 'SET_VOLUME', volume: 50, deviceId: 'test-device' })
+    const req = createRequest({
+      command: 'SET_VOLUME',
+      volume: 50,
+      deviceId: 'test-device',
+    })
     const response = await POST(req)
     const data = await response.json()
 
@@ -102,13 +106,19 @@ describe('API Route: /api/spotify/control', () => {
   })
 
   it('should call transferPlayback for TRANSFER_PLAYBACK command', async () => {
-    const req = createRequest({ command: 'TRANSFER_PLAYBACK', deviceId: 'new-device' })
+    const req = createRequest({
+      command: 'TRANSFER_PLAYBACK',
+      deviceId: 'new-device',
+    })
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(200)
     expect(data.message).toContain('TRANSFER_PLAYBACK')
-    expect(mockPlayer.transferPlayback).toHaveBeenCalledWith(['new-device'], true)
+    expect(mockPlayer.transferPlayback).toHaveBeenCalledWith(
+      ['new-device'],
+      true
+    )
   })
 
   it('should use handleSpotifyApiError when a player command fails', async () => {
@@ -119,11 +129,16 @@ describe('API Route: /api/spotify/control', () => {
     await POST(req)
 
     // Check that our centralized error handler was called
-    expect(mockedHandleError).toHaveBeenCalledWith(spotifyError)
+    expect(mockedHandleError).toHaveBeenCalledWith(
+      spotifyError,
+      expect.any(Function)
+    )
   })
 
   it('should return 500 for unexpected errors', async () => {
-    mockedGetSpotifyApi.mockRejectedValue(new Error('Something unexpected happened'))
+    mockedGetSpotifyApi.mockRejectedValue(
+      new Error('Something unexpected happened')
+    )
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
     const data = await response.json()
