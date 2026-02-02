@@ -39,3 +39,16 @@ export const cmToFeetAndInches = (
   const inches = roundedTotalInches % FEET_TO_INCHES
   return { feet, inches }
 }
+
+/**
+ * Formats duration for HRM glanceability.
+ * Prioritizes minutes/seconds and handles overflow.
+ */
+export const formatZoneDuration = (seconds: number): string => {
+  const hrs = Math.floor(seconds / 3600)
+  const mins = Math.floor((seconds % 3600) / 60)
+  const secs = Math.floor(seconds % 60)
+  return hrs > 0
+    ? `${hrs}h ${mins}m ${secs}s`
+    : `${mins}:${secs.toString().padStart(2, '0')}`
+}
