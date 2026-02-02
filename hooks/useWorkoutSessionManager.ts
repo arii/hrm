@@ -145,22 +145,22 @@ function sessionManagerReducer(
 export const useWorkoutSessionManager = () => {
   const [state, dispatch] = useReducer(sessionManagerReducer, initialState)
   const [isInitialized, setIsInitialized] = useState(false)
-  const { enqueueSnackbar } = useAppSnackbar()
+  const { showInfo } = useAppSnackbar()
 
   const checkAndRotateSession = useCallback(async () => {
     if (!state.session) return
 
-    const sessionDate = new Date(state.session.startTime).toISOString().slice(0, 10)
+    const sessionDate = new Date(state.session.startTime)
+      .toISOString()
+      .slice(0, 10)
     const todayDate = new Date().toISOString().slice(0, 10)
 
     if (sessionDate !== todayDate) {
       await workoutSessionStorage.deleteSession(state.session.sessionId)
       dispatch({ type: 'RESET' })
-      enqueueSnackbar('New day detected. A fresh workout session has started.', {
-        variant: 'info',
-      })
+      showInfo('New day detected. A fresh workout session has started.')
     }
-  }, [state.session, enqueueSnackbar])
+  }, [state.session, showInfo])
 
   // Validate on mount and when window regains focus
   useEffect(() => {
@@ -178,9 +178,8 @@ export const useWorkoutSessionManager = () => {
         } else {
           await workoutSessionStorage.deleteSession(incompleteSession.sessionId)
           dispatch({ type: 'RESET' })
-          enqueueSnackbar(
-            'New day detected. A fresh workout session has started.',
-            { variant: 'info' }
+          showInfo(
+            'New day detected. A fresh workout session has started.'
           )
         }
       }
@@ -193,7 +192,7 @@ export const useWorkoutSessionManager = () => {
     return () => {
       window.removeEventListener('focus', checkAndRotateSession)
     }
-  }, [enqueueSnackbar, checkAndRotateSession])
+  }, [showInfo, checkAndRotateSession])
 
   // Persist session changes to IndexedDB
   useEffect(() => {

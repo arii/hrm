@@ -7,18 +7,25 @@
 
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { useWorkoutSessionManager } from './useWorkoutSessionManager'
-import { workoutSessionStorage, WorkoutSessionData } from '../lib/workout-session-storage'
+import {
+  workoutSessionStorage,
+  WorkoutSessionData,
+} from '../lib/workout-session-storage'
 import { useAppSnackbar } from './useAppSnackbar'
-import { HrZoneName } from '@/lib/shared/hr-zones'
 
 // Mock the dependencies
 jest.mock('../lib/workout-session-storage')
 jest.mock('./useAppSnackbar')
 
-const mockWorkoutSessionStorage = workoutSessionStorage as jest.Mocked<typeof workoutSessionStorage>
+const mockWorkoutSessionStorage = workoutSessionStorage as jest.Mocked<
+  typeof workoutSessionStorage
+>
 const mockUseAppSnackbar = useAppSnackbar as jest.Mock
 
-const createMockSession = (startTime: number, sessionId: string): WorkoutSessionData => ({
+const createMockSession = (
+  startTime: number,
+  sessionId: string
+): WorkoutSessionData => ({
   sessionId,
   startTime,
   status: 'paused',
@@ -56,8 +63,13 @@ describe('useWorkoutSessionManager', () => {
     const yesterday = new Date('2024-05-19T23:00:00Z')
     jest.setSystemTime(today)
 
-    const staleSession = createMockSession(yesterday.getTime(), 'stale-session-id')
-    mockWorkoutSessionStorage.getIncompleteSession.mockResolvedValue(staleSession)
+    const staleSession = createMockSession(
+      yesterday.getTime(),
+      'stale-session-id'
+    )
+    mockWorkoutSessionStorage.getIncompleteSession.mockResolvedValue(
+      staleSession
+    )
     mockWorkoutSessionStorage.deleteSession.mockResolvedValue(undefined)
 
     // Act
@@ -69,7 +81,9 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.status).toBe('idle')
     })
 
-    expect(mockWorkoutSessionStorage.deleteSession).toHaveBeenCalledWith(staleSession.sessionId)
+    expect(mockWorkoutSessionStorage.deleteSession).toHaveBeenCalledWith(
+      staleSession.sessionId
+    )
     expect(mockEnqueueSnackbar).toHaveBeenCalledWith(
       'New day detected. A fresh workout session has started.',
       { variant: 'info' }
@@ -82,8 +96,13 @@ describe('useWorkoutSessionManager', () => {
     const aFewHoursAgo = new Date('2024-05-20T08:00:00Z')
     jest.setSystemTime(today)
 
-    const todaySession = createMockSession(aFewHoursAgo.getTime(), 'today-session-id')
-    mockWorkoutSessionStorage.getIncompleteSession.mockResolvedValue(todaySession)
+    const todaySession = createMockSession(
+      aFewHoursAgo.getTime(),
+      'today-session-id'
+    )
+    mockWorkoutSessionStorage.getIncompleteSession.mockResolvedValue(
+      todaySession
+    )
 
     // Act
     const { result } = renderHook(() => useWorkoutSessionManager())
@@ -105,7 +124,9 @@ describe('useWorkoutSessionManager', () => {
     jest.setSystemTime(today)
 
     const todaySession = createMockSession(today.getTime(), 'today-session-id')
-    mockWorkoutSessionStorage.getIncompleteSession.mockResolvedValue(todaySession)
+    mockWorkoutSessionStorage.getIncompleteSession.mockResolvedValue(
+      todaySession
+    )
 
     const { result } = renderHook(() => useWorkoutSessionManager())
 
@@ -125,7 +146,9 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.status).toBe('idle')
     })
 
-    expect(mockWorkoutSessionStorage.deleteSession).toHaveBeenCalledWith(todaySession.sessionId)
+    expect(mockWorkoutSessionStorage.deleteSession).toHaveBeenCalledWith(
+      todaySession.sessionId
+    )
     expect(mockEnqueueSnackbar).toHaveBeenCalledWith(
       'New day detected. A fresh workout session has started.',
       { variant: 'info' }
