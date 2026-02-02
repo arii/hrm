@@ -237,7 +237,7 @@ jobs:
             mapfile -t NAMES < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].name')
             mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion // "failure"')
             mapfile -t URLS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url')
-            # FIX: Use a robust regex to extract job ID.
+            # FIX: Use a reliable regex to extract job ID.
             mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url | capture("(?<job_id>\\d+)$").job_id // ""')
 
             LOG_DIR=$(mktemp -d)
