@@ -71,7 +71,7 @@ jobs:
       - name: Check for file changes and find last non-empty commit
         id: check_files
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
 
