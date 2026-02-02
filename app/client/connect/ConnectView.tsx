@@ -340,6 +340,7 @@ export default function ConnectView({
                 <SignalQualityIndicator
                   periodMs={signalPeriodMs}
                   isConnected={isConnected}
+                  isDataStale={isDataStale}
                 />
               </Box>
               <Button

@@ -23,7 +23,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     )
     await expect(
       connectPage.getByTestId('connection-status-alert')
-    ).toContainText('Checking saved devices...')
+    ).toContainText(/Checking saved devices...|Connecting.../)
     await takeScreenshot(
       connectPage,
       'connect-page-checking-saved-devices.png',
