@@ -84,7 +84,9 @@ const useSpotifyWebPlayback = () => {
             now - parseInt(lastAuthFail) < SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT
           ) {
             console.error(
-              '[Spotify] Auth loop detected; aborting sign-out to prevent thrashing.'
+              `[Spotify] Auth loop detected (${
+                SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT / 1000
+              }s threshold); aborting sign-out to prevent thrashing.`
             )
             return // Stop the loop here
           }
