@@ -88,6 +88,9 @@ jobs:
             echo "::notice::No file changes detected between HEAD and merge base. Searching PR history..."
             echo "has_changes=false" >> $GITHUB_OUTPUT
 
+            # Even if HEAD has no changes, we find the last non-empty commit to ensure that
+            # downstream workflows (like gemini-review) have a valid commit SHA to analyze,
+            # especially in cases of reverts or empty commits.
             echo "::notice::Fetching commit list from GitHub API for PR #${{ github.event.pull_request.number }}..."
             COMMIT_SHAS_JSON=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --jq '.[].sha' || true)
 
