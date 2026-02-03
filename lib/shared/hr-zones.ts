@@ -3,7 +3,7 @@
  * Shared constants and types for Heart Rate (HR) zones to ensure consistency
  * across different modules (domain logic, UI, etc.).
  */
-export const MAX_HR_DEFAULT = 185
+export const MAX_HR_DEFAULT = 190
 
 /**
  * Enum for HR Zone names to provide compile-time safety and prevent string mismatches.

@@ -23,6 +23,7 @@ import {
 } from 'recharts'
 import { format } from 'date-fns' // Ensure date-fns is installed
 import { useUserSettings } from '@/context/UserSettingsContext'
+import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
 
 // Accessibility: High contrast colors for zones (WCAG AA compliant when used as background)
 const getZoneColors = (theme: Theme) => ({
@@ -45,7 +46,7 @@ interface HeartRateTimeSeriesProps {
 
 export const HeartRateTimeSeries = ({
   data,
-  maxHr = 190,
+  maxHr = MAX_HR_DEFAULT,
 }: HeartRateTimeSeriesProps) => {
   const theme = useTheme()
   const ZONE_COLORS = getZoneColors(theme)
@@ -209,6 +210,9 @@ export const ConnectedHeartRateChart = ({
 
   // Pass the user's specific Max HR to the chart
   return (
-    <HeartRateTimeSeries data={data} maxHr={preferences.maxHeartRate || 190} />
+    <HeartRateTimeSeries
+      data={data}
+      maxHr={preferences.maxHeartRate || MAX_HR_DEFAULT}
+    />
   )
 }

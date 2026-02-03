@@ -3,6 +3,7 @@
 import React, { createContext, useContext } from 'react'
 import usePersistentStorage from '../hooks/usePersistentStorage'
 import { MeasurementSystem, Gender } from '../types/core'
+import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
 
 // Directly define the preferences interface and defaults here
 export interface UserPreferences {
@@ -24,7 +25,7 @@ export interface UserPreferences {
 // Update DEFAULT_PREFERENCES
 const DEFAULT_PREFERENCES: UserPreferences = {
   // ... existing defaults
-  maxHeartRate: 190, // Default fallback
+  maxHeartRate: MAX_HR_DEFAULT, // Default fallback
   theme: 'dark',
   volumeLevel: 70,
   defaultWorkDuration: 20,
