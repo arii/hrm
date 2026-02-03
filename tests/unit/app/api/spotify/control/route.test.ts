@@ -118,7 +118,10 @@ describe('API Route: /api/spotify/control', () => {
     })
     const response = await POST(req)
     expect(response.status).toBe(200)
-    expect(mockPlayer.transferPlayback).toHaveBeenCalledWith(['new-device'], true)
+    expect(mockPlayer.transferPlayback).toHaveBeenCalledWith(
+      ['new-device'],
+      true
+    )
   })
 
   it('should return 400 if deviceId is missing for TRANSFER_PLAYBACK', async () => {

@@ -4,13 +4,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import logger from '@/utils/logger.server'
-import { handleSpotifyApiError } from '@/services/spotifyApiErrorHandling'
+import { handleSpotifyApiError } from '@/services/spotifyApiErrorHandling.server'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
 
   if (!session || !session.accessToken) {
-    return NextResponse.json({ error: 'Authorization required' }, { status: 401 })
+    return NextResponse.json(
+      { error: 'Authorization required' },
+      { status: 401 }
+    )
   }
 
   // The SDK needs a valid client ID.

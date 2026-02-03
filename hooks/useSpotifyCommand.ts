@@ -2,32 +2,35 @@
 
 import { useCallback, useMemo } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
+import { SpotifyCommandMessage, SpotifyCommand } from '@/types/websocket'
 
 export const useSpotifyCommand = () => {
   const { spotifyData, sendData } = useWebSocket()
 
   // Simplified state selectors from the unified bus
-  const activeDevice = useMemo(() =>
-    spotifyData.devices?.find((d) => d.is_active) || null,
+  const activeDevice = useMemo(
+    () => spotifyData.devices?.find((d) => d.is_active) || null,
     [spotifyData.devices]
   )
 
-  const hrmPlayer = useMemo(() =>
-    spotifyData.devices?.find((d) => d.name === 'HRM Web Player') || null,
+  const hrmPlayer = useMemo(
+    () => spotifyData.devices?.find((d) => d.name === 'HRM Web Player') || null,
     [spotifyData.devices]
   )
 
   const execute = useCallback(
-    (command: string, payload?: any) => {
+    (
+      command: SpotifyCommand,
+      payload?: Partial<Omit<SpotifyCommandMessage, 'type' | 'command'>>
+    ) => {
       // Logic: Use active device, or fallback to HRM Web Player
-      const targetDeviceId = activeDevice?.id || hrmPlayer?.id || null
+      const targetDeviceId = activeDevice?.id || hrmPlayer?.id || undefined
 
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
-        command: command as any,
+        command,
         deviceId: targetDeviceId,
-        ...payload
+        ...payload,
       }
 
       sendData(message)
@@ -40,6 +43,6 @@ export const useSpotifyCommand = () => {
     activeDevice,
     hrmPlayer,
     playback: spotifyData,
-    isHrmPlayerActive: activeDevice?.name === 'HRM Web Player'
+    isHrmPlayerActive: activeDevice?.name === 'HRM Web Player',
   }
 }
