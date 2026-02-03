@@ -4,7 +4,7 @@
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 
-export const useSpotifyRemoteExecution = (player: any | null): void => {
+export const useSpotifyRemoteExecution = (player: unknown | null): void => {
   const { sendData } = useWebSocket()
 
   useEffect(() => {
@@ -26,7 +26,14 @@ export const useSpotifyRemoteExecution = (player: any | null): void => {
       })
     }
 
-    window.addEventListener('spotify-remote-command', handleRemoteCommand as EventListener)
-    return () => window.removeEventListener('spotify-remote-command', handleRemoteCommand as EventListener)
+    window.addEventListener(
+      'spotify-remote-command',
+      handleRemoteCommand as unknown as EventListener
+    )
+    return () =>
+      window.removeEventListener(
+        'spotify-remote-command',
+        handleRemoteCommand as unknown as EventListener
+      )
   }, [player, sendData])
 }

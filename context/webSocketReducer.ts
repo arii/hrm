@@ -40,7 +40,7 @@ export const INITIAL_STATE: WebSocketState = {
     albumArtUrl: '',
     isPlaying: false,
     devices: [],
-    volume: 70,
+    volumePercent: 70,
     isMuted: false,
   },
   activeAlerts: [],

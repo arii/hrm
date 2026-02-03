@@ -21,7 +21,7 @@ import { useState } from 'react'
 
 const SpotifyDisplay = () => {
   const { isLoggedIn } = useSpotifyAuth()
-  const { player, isReady, deviceId } = useSpotifyWebPlayback()
+  const { player, isReady } = useSpotifyWebPlayback()
   const { execute, playback, hrmPlayer, activeDevice } = useSpotifyCommand()
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
@@ -182,9 +182,7 @@ const SpotifyDisplay = () => {
           muted={playback.isMuted}
           onVolumeChange={handleVolumeChange}
           onVolumeChangeCommitted={handleVolumeChange}
-          onToggleMute={() =>
-            handleVolumeChange(playback.isMuted ? 50 : 0)
-          }
+          onToggleMute={() => handleVolumeChange(playback.isMuted ? 50 : 0)}
           showValue={true}
         />
         <SpotifyDeviceSelector

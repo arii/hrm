@@ -55,7 +55,7 @@ export class SpotifyPolling implements SpotifyService {
     albumArtUrl: '',
     isPlaying: false,
     devices: [],
-    volume: 70,
+    volumePercent: 70,
     isMuted: false,
   }
 
@@ -441,7 +441,7 @@ export class SpotifyPolling implements SpotifyService {
             () => sdk.player.setPlaybackVolume(clampedVolume, deviceId),
             { deviceId, volume: clampedVolume }
           )
-          this.state.volume = clampedVolume
+          this.state.volumePercent = clampedVolume
           this.state.isMuted = clampedVolume === 0
           this.broadcastUpdate({
             type: 'SPOTIFY_UPDATE',
