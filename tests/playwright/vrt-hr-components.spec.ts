@@ -50,5 +50,42 @@ test.describe('Visual Regression Tests', () => {
         ],
       })
     })
+
+    test('heart rate zone distribution chart', async () => {
+      // Ensure we are in the active workout view
+      const newWorkoutBtn = dashboardPage.getByRole('button', {
+        name: 'New Workout',
+      })
+      if (await newWorkoutBtn.isVisible()) {
+        await newWorkoutBtn.click()
+      }
+
+      const startWorkoutBtn = dashboardPage.getByRole('button', {
+        name: 'Start Workout',
+      })
+      if (await startWorkoutBtn.isVisible()) {
+        await startWorkoutBtn.click()
+      }
+
+      // Inject data via mock page to populate zones
+      // Peak zone
+      await mockPage.getByLabel('Current BPM').fill('155')
+      await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+      await mockPage.getByTestId('streaming-start-button').click()
+
+      // Wait for data to be processed and chart to render
+      // We need to wait for at least one interval (1s) plus some buffer
+      await dashboardPage.waitForSelector(
+        '[data-testid="zone-distribution-card"]'
+      )
+      // Give it a moment for the chart animation
+      await dashboardPage.waitForTimeout(2000)
+
+      const zoneCard = dashboardPage.getByTestId('zone-distribution-card')
+
+      await takeScreenshot(zoneCard, 'hr-zone-distribution-chart.png', {
+        maxDiffPixelRatio: 0.02,
+      })
+    })
   })
 })

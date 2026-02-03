@@ -47,10 +47,6 @@ const getZoneColor = (zone: string, theme: Theme): string => {
   }
 }
 
-const formatTime = (seconds: number): string => {
-  return formatDuration(seconds, { unit: 'seconds', format: 'MM:SS' })
-}
-
 const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   timeInZones,
   totalDuration,
@@ -72,7 +68,10 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             name: zone,
             value: time,
             percentage: parseFloat(percentage.toFixed(1)),
-            formattedTime: formatTime(time),
+            formattedTime: formatDuration(time, {
+              unit: 'seconds',
+              format: 'MM:SS',
+            }),
             color: getZoneColor(zone, theme),
           }
         })
@@ -87,7 +86,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   }
 
   return (
-    <Card elevation={3}>
+    <Card elevation={3} data-testid="zone-distribution-card">
       <CardContent>
         <Typography variant="h6" component="h2" gutterBottom fontWeight="bold">
           Heart Rate Zone Distribution
@@ -123,7 +122,10 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                 </Pie>
                 <Tooltip
                   formatter={(value) => [
-                    formatTime(Number(value || 0)),
+                    formatDuration(Number(value || 0), {
+                      unit: 'seconds',
+                      format: 'MM:SS',
+                    }),
                     'Duration',
                   ]}
                   contentStyle={{
@@ -152,7 +154,10 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                 Total
               </Typography>
               <Typography variant="h6" fontWeight="bold">
-                {formatTime(totalDuration)}
+                {formatDuration(totalDuration, {
+                  unit: 'seconds',
+                  format: 'MM:SS',
+                })}
               </Typography>
             </Box>
           </Box>
