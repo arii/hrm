@@ -49,7 +49,7 @@ export const HeartRateTimeSeries = ({
   maxHr = MAX_HR_DEFAULT,
 }: HeartRateTimeSeriesProps) => {
   const theme = useTheme()
-  const ZONE_COLORS = getZoneColors(theme)
+  const ZONE_COLORS = useMemo(() => getZoneColors(theme), [theme])
 
   // Calculate zone boundaries based on Max HR
   const zones = useMemo(
@@ -65,9 +65,13 @@ export const HeartRateTimeSeries = ({
   )
 
   // Accessibility: Chart description for screen readers
-  const chartDescription = `Line chart showing heart rate over time.
-    Heart rate ranges from ${Math.min(...data.map((d) => d.hr))} to ${Math.max(...data.map((d) => d.hr))} BPM.
+  const chartDescription = useMemo(() => {
+    if (data.length === 0) return 'Heart rate chart with no data.'
+    const hrs = data.map((d) => d.hr)
+    return `Line chart showing heart rate over time.
+    Heart rate ranges from ${Math.min(...hrs)} to ${Math.max(...hrs)} BPM.
     Zones are marked in the background.`
+  }, [data])
 
   return (
     <Card

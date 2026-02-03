@@ -25,6 +25,7 @@ type HrZoneUi = {
   color: string
   progressColor: string
   bgColor: string
+  textColor: string
 }
 
 export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
@@ -32,37 +33,44 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
     color: 'text-blue-400',
     progressColor: theme.palette.secondary.main,
     bgColor: theme.palette.secondary.main,
+    textColor: theme.palette.getContrastText(theme.palette.secondary.main),
   },
   [HrZoneName.FatBurn]: {
     color: 'text-green-500',
     progressColor: theme.palette.success.main,
     bgColor: theme.palette.success.main,
+    textColor: '#FFFFFF', // Force white text for green zone
   },
   [HrZoneName.Cardio]: {
     color: 'text-yellow-500',
     progressColor: theme.palette.warning.dark,
     bgColor: theme.palette.warning.dark,
+    textColor: '#FFFFFF', // Force white text for yellow zone
   },
   [HrZoneName.Peak]: {
     color: 'text-red-500',
     progressColor: theme.palette.primary.main,
     bgColor: theme.palette.primary.main,
+    textColor: theme.palette.getContrastText(theme.palette.primary.main),
   },
   [HrZoneName.Max]: {
     color: 'text-purple-600',
     progressColor: '#9333ea',
     bgColor: '#9C27B0',
+    textColor: '#FFFFFF',
   },
   // Add placeholder properties for non-displayable zones
   [HrZoneName.NoData]: {
     color: 'text-gray-400',
     progressColor: '#9ca3af',
     bgColor: '#B0BEC5', // Lighter grey for better visibility
+    textColor: '#FFFFFF',
   },
   [HrZoneName.Unknown]: {
     color: 'text-gray-400',
     progressColor: '#9ca3af',
     bgColor: '#9ca3af',
+    textColor: '#FFFFFF',
   },
 }
 
@@ -101,24 +109,14 @@ export const getHrZoneProps = (
   // 2. Look up the UI properties from the map
   const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
 
-  // 3. Determine text color - force white for specific zones for better contrast
-  let textColor = theme.palette.getContrastText(zoneUiProps.bgColor)
-  if (
-    zoneName === HrZoneName.NoData ||
-    zoneName === HrZoneName.FatBurn ||
-    zoneName === HrZoneName.Cardio
-  ) {
-    textColor = '#FFFFFF' // Force white text for grey, green, and yellow zones
-  }
-
-  // 4. Combine domain data with UI properties
+  // 3. Combine domain data with UI properties
   return {
     zone: zoneName, // The enum member is a string at runtime
     percentage: percentage,
     color: zoneUiProps.color,
     progressColor: zoneUiProps.progressColor,
     backgroundColor: zoneUiProps.bgColor,
-    textColor: textColor,
+    textColor: zoneUiProps.textColor,
     bpm: bpm,
   }
 }
