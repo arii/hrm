@@ -63,13 +63,12 @@ const HeartRateTimeSeriesBase = ({
     }
     return ''
   }, [])
-  const tooltipValueFormatter = useCallback(
-    (value: number | string | (number | string)[]) =>
-      typeof value === 'number'
-        ? [`${value.toFixed(0)} BPM`, 'Heart Rate']
-        : [null, null],
-    []
-  )
+  const tooltipValueFormatter = useCallback((value: unknown) => {
+    if (typeof value === 'number') {
+      return [`${value.toFixed(0)} BPM`, 'Heart Rate']
+    }
+    return [null, null]
+  }, [])
 
   // Calculate zone boundaries based on Max HR
   const zones = useMemo(
