@@ -5,17 +5,20 @@ import {
   Track,
   Episode,
 } from '@spotify/web-api-ts-sdk'
-import { ServerMessage, SpotifyData } from '../types/websocket'
-import { SpotifyDevice, SpotifyCommandParameters } from '../types/core'
-import { SpotifyTokenManager, SpotifyTokenPayload } from './spotifyTokenManager'
-import logger from '../utils/logger.server'
+import { ServerMessage, SpotifyData } from '../types/websocket.js'
+import { SpotifyDevice, SpotifyCommandParameters } from '../types/core.js'
+import {
+  SpotifyTokenManager,
+  SpotifyTokenPayload,
+} from './spotifyTokenManager.js'
+import logger from '../utils/logger.server.js'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyApiErrorHandling'
-import { SpotifyCommand, SpotifyService } from '../types/interfaces'
-import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi'
-import { env } from '../lib/env'
+} from './spotifyApiErrorHandling.js'
+import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
+import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
+import { env } from '../lib/env.js'
 
 export interface SpotifyTokenResponse {
   access_token: string

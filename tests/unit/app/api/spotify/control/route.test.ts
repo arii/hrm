@@ -129,10 +129,7 @@ describe('API Route: /api/spotify/control', () => {
     await POST(req)
 
     // Check that our centralized error handler was called
-    expect(mockedHandleError).toHaveBeenCalledWith(
-      spotifyError,
-      expect.any(Function)
-    )
+    expect(mockedHandleError).toHaveBeenCalledWith(spotifyError)
   })
 
   it('should return 500 for unexpected errors', async () => {
