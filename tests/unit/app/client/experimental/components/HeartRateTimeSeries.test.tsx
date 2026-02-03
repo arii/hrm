@@ -3,15 +3,22 @@
  */
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import { ConnectedHeartRateChart, HeartRateTimeSeries } from '@/app/client/experimental/components/HeartRateTimeSeries'
+import {
+  ConnectedHeartRateChart,
+  HeartRateTimeSeries,
+} from '@/app/client/experimental/components/HeartRateTimeSeries'
 import { ThemeProvider } from '@mui/material/styles'
 import theme from '@/theme/theme'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 
 // Mock Recharts
 jest.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  LineChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  LineChart: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   Line: () => <div />,
   XAxis: () => <div />,
   YAxis: () => <div />,
