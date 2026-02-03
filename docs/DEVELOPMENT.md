@@ -119,10 +119,8 @@ This section clarifies when and why `package.json` and `pnpm-lock.yaml` should b
 
 ## Architectural Patterns
 
-### Type-Safe API Wrappers
+### Direct SDK Usage with Explicit Handling
 
-When integrating with third-party libraries that may have incorrect or incomplete TypeScript definitions, we use a type-safe wrapper pattern to ensure our application remains robust. A prime example of this is the `safeSpotifyApi.ts` module.
+When integrating with third-party libraries, we prefer direct usage of the SDK where possible, ensuring that inputs are explicitly handled to match the SDK's expectations.
 
-**Problem**: The `@spotify/web-api-ts-sdk` library does not correctly type the `deviceId` parameter as optional for several of its player methods. This can lead to runtime errors and requires unsafe type assertions in the application code.
-
-**Solution**: The `safeSpotifyApi.ts` module provides a `createSafeSpotifyApi` function that wraps the Spotify SDK instance in a `Proxy`. This proxy intercepts calls to the player methods and dynamically handles the `deviceId` parameter, ensuring that `undefined` values are not passed to the SDK. This encapsulates the workaround in a single, reusable module, eliminating the need for scattered type assertions and improving the overall type safety of the codebase.
+**Example**: For Spotify playback control, we explicitly handle `deviceId`. The Spotify Web API expects `undefined` (or omitting the parameter) to target the currently active device. Our API routes explicitly normalize missing or empty device IDs to `undefined` before calling the SDK, ensuring predictable behavior without the need for complex wrappers.
