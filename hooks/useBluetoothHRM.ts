@@ -280,8 +280,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       reconnectAttempts.current++
       // Exponential backoff, capped at maxReconnectDelayMs
-      const exponentialDelay =
-        Math.pow(2, reconnectAttempts.current - 1) * 1000 // 1s, 2s, 4s, 8s...
+      const exponentialDelay = Math.pow(2, reconnectAttempts.current - 1) * 1000 // 1s, 2s, 4s, 8s...
       const delay = Math.min(exponentialDelay, maxReconnectDelayMs)
       logger.info(
         {

@@ -82,7 +82,7 @@ exports[`ControlPanel Component should match snapshot 1`] = `
               Stopwatch
             </button>
             <div
-              style="position: absolute; top: 4px; left: calc(50% - 4px); width: calc(50% - 4px); height: calc(100% - 8px); background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); z-index: 0; border-radius: 20px;"
+              style="position: absolute; top: 4px; left: calc(50% - 4px); width: calc(50% - 4px); height: calc(100% - 8px); background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); z-index: 0; border-radius: 20px; opacity: 1;"
             />
           </div>
         </div>
