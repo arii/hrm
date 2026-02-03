@@ -4,6 +4,7 @@ import { alpha } from '@mui/material/styles'
 
 interface RefreshIconButtonProps extends Omit<IconButtonProps, 'size'> {
   onClick: () => void
+  'aria-label': string
 }
 
 const RefreshIconButton = ({ onClick, ...props }: RefreshIconButtonProps) => {
@@ -22,7 +23,6 @@ const RefreshIconButton = ({ onClick, ...props }: RefreshIconButtonProps) => {
           backgroundColor: alpha(theme.palette.background.paper, 0.9),
         },
       })}
-      aria-label="refresh"
       {...props}
     >
       <RefreshIcon fontSize="small" />
