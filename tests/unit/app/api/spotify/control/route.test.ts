@@ -94,6 +94,13 @@ describe('API Route: /api/spotify/control', () => {
     expect(mockPlayer.pausePlayback).toHaveBeenCalledWith('test-device')
   })
 
+  it('should call pausePlayback with undefined when deviceId is missing', async () => {
+    const req = createRequest({ command: 'PAUSE' })
+    const response = await POST(req)
+    expect(response.status).toBe(200)
+    expect(mockPlayer.pausePlayback).toHaveBeenCalledWith(undefined)
+  })
+
   it('should call setPlaybackVolume for SET_VOLUME command', async () => {
     const req = createRequest({
       command: 'SET_VOLUME',
@@ -103,6 +110,16 @@ describe('API Route: /api/spotify/control', () => {
     const response = await POST(req)
     expect(response.status).toBe(200)
     expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, 'test-device')
+  })
+
+  it('should call setPlaybackVolume with undefined when deviceId is missing', async () => {
+    const req = createRequest({
+      command: 'SET_VOLUME',
+      volume: 50,
+    })
+    const response = await POST(req)
+    expect(response.status).toBe(200)
+    expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
   })
 
   it('should return 400 if volume is not a number for SET_VOLUME', async () => {
