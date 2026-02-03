@@ -13,7 +13,6 @@ import {
   useMemo,
 } from 'react'
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
-import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
 
 // Define a type for the test controls to avoid using 'any'
@@ -26,7 +25,16 @@ import {
   INITIAL_STATE,
   WebSocketState,
   reducer,
+  HrmData,
 } from './webSocketReducer'
+
+export type { HrmData }
+export interface WebSocketContextType extends WebSocketState {
+  connectionStatus: string
+  sendData: (data: ClientCommandMessage) => void
+  connect: () => void
+  disconnect: () => void
+}
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 

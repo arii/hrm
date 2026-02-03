@@ -143,7 +143,6 @@ const initSocketManager = (
     }
   }, JANITOR_INTERVAL_MS)
 
-
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket
 
