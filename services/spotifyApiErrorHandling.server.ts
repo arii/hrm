@@ -1,86 +1,13 @@
-import logger from '../utils/logger.server.js'
 import { NextResponse } from 'next/server.js'
+import { logSpotifyApiError } from './spotifyErrorLogging.server.js'
 
-// Utility: Safely parse JSON, fallback to text
-function safeParseJSON(input: string): unknown {
-  try {
-    return JSON.parse(input)
-  } catch {
-    return input // Return raw text if not JSON
-  }
-}
-
-/**
- * Parses and logs detailed error information from a failed Spotify SDK command.
- * It handles different error shapes, including JSON bodies and plain text.
- * @param command The name of the command that failed (for logging).
- * @param error The error object caught.
- */
-export async function logSpotifyCommandError(
-  command: string,
-  error: unknown
-): Promise<void> {
-  try {
-    const errObj = error as { message?: string; status?: number }
-
-    // Check for "No active device" error (404)
-    if (
-      (errObj?.message &&
-        (errObj.message.includes('NO_ACTIVE_DEVICE') ||
-          errObj.message.includes('Device not found'))) ||
-      errObj?.status === 404
-    ) {
-      logger.warn(
-        { command },
-        'Spotify command failed: No active device found. Playback cannot be controlled.'
-      )
-      return
-    }
-
-    if (error instanceof SyntaxError) {
-      logger.warn(
-        { command },
-        'Command executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.'
-      )
-      return
-    }
-
-    // Log error with response body if available
-    if (error && typeof error === 'object' && 'response' in error) {
-      const response = (
-        error as { response?: { text?: () => Promise<string> } }
-      ).response
-      if (response && typeof response.text === 'function') {
-        try {
-          const text = await response.text()
-          const parsed = safeParseJSON(text)
-          logger.error(
-            { command, response: parsed },
-            'Error executing Spotify command'
-          )
-          return
-        } catch (e) {
-          logger.error(
-            { command, err: e },
-            'Could not read response body for failed Spotify command'
-          )
-          return
-        }
-      }
-    }
-
-    // Default error logging
-    logger.error({ command, err: error }, 'Error executing Spotify command')
-  } catch (loggingError) {
-    logger.error(
-      { command, err: loggingError },
-      'Error in logSpotifyCommandError'
-    )
-    logger.error({ command, originalError: error }, 'Original error')
-  }
-}
+// Re-export command logger for convenience, though direct import is preferred to avoid side-effects
+export { logSpotifyCommandError } from './spotifyErrorLogging.server.js'
 
 export function handleSpotifyApiError(error: unknown): NextResponse {
+  // Log the error using the shared logging logic
+  logSpotifyApiError(error)
+
   const spotifyError = error as {
     status?: number
     message?: string
@@ -88,15 +15,6 @@ export function handleSpotifyApiError(error: unknown): NextResponse {
   }
 
   if (spotifyError && spotifyError.status) {
-    logger.error(
-      {
-        status: spotifyError.status,
-        message: spotifyError.message,
-        reason: spotifyError.cause?.reason,
-      },
-      'Spotify API Error'
-    )
-
     // Handle specific error reasons
     if (
       spotifyError.message?.includes('NO_ACTIVE_DEVICE') ||
@@ -138,8 +56,6 @@ export function handleSpotifyApiError(error: unknown): NextResponse {
     )
   }
 
-  // Handle non-SDK errors
-  logger.error({ error }, 'Internal Server Error')
   return NextResponse.json(
     {
       error: 'Internal server error',

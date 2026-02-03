@@ -13,9 +13,9 @@ import {
 } from './spotifyTokenManager.js'
 import logger from '../utils/logger.server.js'
 import {
-  handleSpotifyApiError,
+  logSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyApiErrorHandling.server.js'
+} from './spotifyErrorLogging.server.js'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { env } from '../lib/env.js'
 
@@ -153,7 +153,7 @@ export class SpotifyPolling implements SpotifyService {
         this.checkAndRefreshSdkToken()
         return
       }
-      handleSpotifyApiError(error)
+      logSpotifyApiError(error)
     }
   }
 
