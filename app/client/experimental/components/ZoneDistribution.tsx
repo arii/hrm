@@ -25,8 +25,7 @@ interface ZoneDistributionProps {
 
 // Map your domain "HrZoneName" enum to the UI colors defined in the theme
 const getZoneColor = (zone: string, theme: Theme): string => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const hrZones = (theme.palette as any).custom?.hrZones
+  const hrZones = theme.palette.custom?.hrZones
   if (!hrZones) return theme.palette.grey[500]
 
   switch (zone) {
