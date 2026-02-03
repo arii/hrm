@@ -84,7 +84,9 @@ export const calculateHrZone = (
     return { zoneName: HrZoneName.NoData, percentage, bpm }
   }
 
-  const zoneDefinition = HR_ZONE_THRESHOLDS.find((z) => percentage < z.threshold)
+  const zoneDefinition = HR_ZONE_THRESHOLDS.find(
+    (z) => percentage < z.threshold
+  )
   const zoneName = zoneDefinition ? zoneDefinition.name : HrZoneName.Max
 
   return { zoneName, percentage, bpm }
