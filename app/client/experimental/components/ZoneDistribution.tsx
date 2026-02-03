@@ -1,4 +1,3 @@
-// app/client/experimental/components/ZoneDistribution.tsx
 'use client'
 
 import React, { useMemo } from 'react'
