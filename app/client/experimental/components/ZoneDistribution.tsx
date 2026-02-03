@@ -103,9 +103,11 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             width={{ xs: '100%', sm: '50%' }}
             minHeight={200}
             position="relative"
+            role="region"
+            aria-label="Heart rate zone distribution chart"
           >
             <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
+              <PieChart accessibilityLayer>
                 <Pie
                   data={data}
                   cx="50%"

@@ -1,4 +1,4 @@
-import { type BrowserContext, type Page } from '@playwright/test'
+import { type BrowserContext, type Page, expect } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
@@ -71,6 +71,10 @@ test.describe('Visual Regression Tests', () => {
       // Peak zone
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+
+      // Ensure mock client is connected before starting stream
+      await expect(mockPage.locator('text=Server Status: Connected')).toBeVisible({ timeout: 10000 })
+
       await mockPage.getByTestId('streaming-start-button').click()
 
       // Wait for data to be processed and chart to render

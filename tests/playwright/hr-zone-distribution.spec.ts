@@ -22,19 +22,29 @@ test.describe('HR Zone Distribution Interactivity', () => {
   test('should display zone distribution and show tooltip on hover', async () => {
     await dashboardPage.goto('/client/experimental')
     await waitForPageReady(dashboardPage)
+    await waitForPageReady(mockPage)
 
     // Switch to active workout view if necessary
-    const newWorkoutBtn = dashboardPage.getByRole('button', { name: 'New Workout' })
+    const newWorkoutBtn = dashboardPage.getByRole('button', {
+      name: 'New Workout',
+    })
     await expect(newWorkoutBtn).toBeVisible({ timeout: 10000 })
     await newWorkoutBtn.click()
 
     // Start streaming from mock
     // Use 165 BPM to ensure we are in the Peak zone
     await mockPage.getByLabel('Current BPM').fill('165')
+
+    // Ensure mock client is connected before starting stream
+    const serverStatus = mockPage.locator('text=Server Status: Connected')
+    await expect(serverStatus).toBeVisible({ timeout: 10000 })
+
     await mockPage.getByTestId('streaming-start-button').click()
 
     // Start workout
-    const startWorkoutBtn = dashboardPage.getByRole('button', { name: 'Start Workout' })
+    const startWorkoutBtn = dashboardPage.getByRole('button', {
+      name: 'Start Workout',
+    })
     await expect(startWorkoutBtn).toBeVisible({ timeout: 10000 })
     await startWorkoutBtn.click()
 
@@ -57,7 +67,18 @@ test.describe('HR Zone Distribution Interactivity', () => {
     await dashboardPage.waitForTimeout(1000)
 
     // Verify chart is rendered (has sectors)
-    const sectors = dashboardPage.getByTestId('zone-distribution-card').locator('.recharts-pie-sector')
+    const sectors = dashboardPage
+      .getByTestId('zone-distribution-card')
+      .locator('.recharts-pie-sector')
     await expect(sectors.first()).toBeVisible({ timeout: 10000 })
+
+    // Verify accessibility attributes
+    const chartRegion = dashboardPage.getByRole('region', {
+      name: /heart rate zone distribution chart/i,
+    })
+    await expect(chartRegion).toBeVisible()
+
+    // Take verification screenshot
+    await dashboardPage.screenshot({ path: 'final-verification.png' })
   })
 })

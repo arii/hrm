@@ -97,7 +97,6 @@ To purge these files and reclaim disk space, run:
 ```
 
 This script will safely remove:
-
 - Next.js and TypeScript build artifacts.
 - Caches for `pnpm`, `npm`, `yarn`, and `bun`.
 - `pm2` logs.

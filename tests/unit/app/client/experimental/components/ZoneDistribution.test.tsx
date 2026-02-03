@@ -42,6 +42,19 @@ describe('ZoneDistribution', () => {
     expect(screen.getByText('Heart Rate Zone Distribution')).toBeInTheDocument()
   })
 
+  it('renders the chart region with correct accessibility labels', () => {
+    const timeInZones = { ...baseTimeInZones, [HrZoneName.Cardio]: 1 }
+    render(
+      <ThemeProvider theme={theme}>
+        <ZoneDistribution timeInZones={timeInZones} totalDuration={1} />
+      </ThemeProvider>
+    )
+    const region = screen.getByRole('region', {
+      name: /heart rate zone distribution chart/i,
+    })
+    expect(region).toBeInTheDocument()
+  })
+
   it('returns null when there is no data to display', () => {
     const { container } = render(
       <ThemeProvider theme={theme}>
@@ -137,18 +150,28 @@ describe('ZoneDistribution', () => {
     const hrZones = theme.palette.custom.hrZones
 
     const warmUpRow = getByTestId(`zone-row-${HrZoneName.WarmUp}`)
-    expect(within(warmUpRow).getByTestId('zone-color-indicator')).toHaveStyle(`background-color: ${hrZones.warmUp}`)
+    expect(within(warmUpRow).getByTestId('zone-color-indicator')).toHaveStyle(
+      `background-color: ${hrZones.warmUp}`
+    )
 
     const fatBurnRow = getByTestId(`zone-row-${HrZoneName.FatBurn}`)
-    expect(within(fatBurnRow).getByTestId('zone-color-indicator')).toHaveStyle(`background-color: ${hrZones.fatBurn}`)
+    expect(within(fatBurnRow).getByTestId('zone-color-indicator')).toHaveStyle(
+      `background-color: ${hrZones.fatBurn}`
+    )
 
     const cardioRow = getByTestId(`zone-row-${HrZoneName.Cardio}`)
-    expect(within(cardioRow).getByTestId('zone-color-indicator')).toHaveStyle(`background-color: ${hrZones.cardio}`)
+    expect(within(cardioRow).getByTestId('zone-color-indicator')).toHaveStyle(
+      `background-color: ${hrZones.cardio}`
+    )
 
     const peakRow = getByTestId(`zone-row-${HrZoneName.Peak}`)
-    expect(within(peakRow).getByTestId('zone-color-indicator')).toHaveStyle(`background-color: ${hrZones.peak}`)
+    expect(within(peakRow).getByTestId('zone-color-indicator')).toHaveStyle(
+      `background-color: ${hrZones.peak}`
+    )
 
     const maxRow = getByTestId(`zone-row-${HrZoneName.Max}`)
-    expect(within(maxRow).getByTestId('zone-color-indicator')).toHaveStyle(`background-color: ${hrZones.max}`)
+    expect(within(maxRow).getByTestId('zone-color-indicator')).toHaveStyle(
+      `background-color: ${hrZones.max}`
+    )
   })
 })

@@ -13,7 +13,6 @@ The previous calorie estimation logic used a formula that defaulted to male-cent
 We will refactor the `estimateCaloriesBurned` function in `lib/calorie-estimation.ts` to accept a `gender` parameter, which can be 'male', 'female', or 'neutral'.
 
 The function will use the following formulas:
-
 - **Male:** `(-55.0969 + 0.6309 * HR + 0.1988 * weight + 0.2017 * age) / 4.184`
 - **Female:** `(-20.4022 + 0.4472 * HR - 0.1263 * weight + 0.074 * age) / 4.184`
 
