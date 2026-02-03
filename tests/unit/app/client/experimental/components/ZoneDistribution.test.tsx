@@ -117,4 +117,38 @@ describe('ZoneDistribution', () => {
     expect(within(cardioRow).getByText('02:00')).toBeInTheDocument()
     expect(within(cardioRow).getByText(/0%/)).toBeInTheDocument()
   })
+
+  it('uses correct colors for each zone from the theme', () => {
+    const timeInZones = {
+      [HrZoneName.WarmUp]: 10,
+      [HrZoneName.FatBurn]: 10,
+      [HrZoneName.Cardio]: 10,
+      [HrZoneName.Peak]: 10,
+      [HrZoneName.Max]: 10,
+      [HrZoneName.NoData]: 0,
+      [HrZoneName.Unknown]: 0,
+    }
+    const { getByTestId } = render(
+      <ThemeProvider theme={theme}>
+        <ZoneDistribution timeInZones={timeInZones} totalDuration={50} />
+      </ThemeProvider>
+    )
+
+    const hrZones = theme.palette.custom.hrZones
+
+    const warmUpRow = getByTestId(`zone-row-${HrZoneName.WarmUp}`)
+    expect(within(warmUpRow).getByTestId('zone-color-indicator')).toHaveStyle(`background-color: ${hrZones.warmUp}`)
+
+    const fatBurnRow = getByTestId(`zone-row-${HrZoneName.FatBurn}`)
+    expect(within(fatBurnRow).getByTestId('zone-color-indicator')).toHaveStyle(`background-color: ${hrZones.fatBurn}`)
+
+    const cardioRow = getByTestId(`zone-row-${HrZoneName.Cardio}`)
+    expect(within(cardioRow).getByTestId('zone-color-indicator')).toHaveStyle(`background-color: ${hrZones.cardio}`)
+
+    const peakRow = getByTestId(`zone-row-${HrZoneName.Peak}`)
+    expect(within(peakRow).getByTestId('zone-color-indicator')).toHaveStyle(`background-color: ${hrZones.peak}`)
+
+    const maxRow = getByTestId(`zone-row-${HrZoneName.Max}`)
+    expect(within(maxRow).getByTestId('zone-color-indicator')).toHaveStyle(`background-color: ${hrZones.max}`)
+  })
 })

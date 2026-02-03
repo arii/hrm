@@ -184,6 +184,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                     height={12}
                     borderRadius="50%"
                     bgcolor={item.color}
+                    data-testid="zone-color-indicator"
                   />
                   <Typography
                     variant="body2"
