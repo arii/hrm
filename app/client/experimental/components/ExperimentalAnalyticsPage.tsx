@@ -184,14 +184,21 @@ const ExperimentalAnalyticsPage = () => {
         totalCalories: 0,
       }
 
-    const hrValues = activeSession.hrHistory
-      .map((d) => d.hr)
-      .filter((hr) => hr > 0)
-    const avgHr =
-      hrValues.length > 0
-        ? hrValues.reduce((sum, hr) => sum + hr, 0) / hrValues.length
-        : 0
-    const maxHr = hrValues.length > 0 ? Math.max(...hrValues) : 0
+    const hrValues = activeSession.hrHistory.map((d) => d.hr)
+    let sumHr = 0
+    let validCount = 0
+    let maxHrValue = 0
+
+    for (const hr of hrValues) {
+      if (hr > 0) {
+        sumHr += hr
+        validCount++
+        if (hr > maxHrValue) maxHrValue = hr
+      }
+    }
+
+    const avgHr = validCount > 0 ? sumHr / validCount : 0
+    const maxHr = maxHrValue
 
     return {
       avgHr,
@@ -248,12 +255,7 @@ const ExperimentalAnalyticsPage = () => {
             />
 
             {activeSession && activeSession.hrHistory.length > 0 && (
-              <HeartRateTimeSeries
-                data={activeSession.hrHistory.map((d) => ({
-                  timestamp: d.time,
-                  hr: d.hr,
-                }))}
-              />
+              <HeartRateTimeSeries data={activeSession.hrHistory} />
             )}
           </Box>
         </>

@@ -26,6 +26,11 @@ jest.mock('recharts', () => ({
   Tooltip: () => <div />,
   ReferenceArea: () => <div />,
   Label: () => <div />,
+  defs: ({ children }: { children: React.ReactNode }) => <div data-testid="mock-defs">{children}</div>,
+  linearGradient: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="mock-linear-gradient">{children}</div>
+  ),
+  stop: () => <div data-testid="mock-stop" />,
 }))
 
 // Mock ResizeObserver for Recharts (though we mocked Recharts itself, some internals might still look for it)
@@ -37,8 +42,8 @@ global.ResizeObserver = class ResizeObserver {
 
 describe('HeartRateTimeSeries Components', () => {
   const mockData = [
-    { timestamp: new Date('2023-01-01T10:00:00').getTime(), hr: 60 },
-    { timestamp: new Date('2023-01-01T10:00:05').getTime(), hr: 65 },
+    { time: new Date('2023-01-01T10:00:00').getTime(), hr: 60 },
+    { time: new Date('2023-01-01T10:00:05').getTime(), hr: 65 },
   ]
 
   describe('HeartRateTimeSeries (Pure Component)', () => {

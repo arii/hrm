@@ -54,13 +54,18 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   // Use the usePersistentStorage hook directly within the provider
-  const userPreferences = usePersistentStorage<UserPreferences>(
+  const [preferences, setPreferences] = usePersistentStorage<UserPreferences>(
     'user-prefs',
     DEFAULT_PREFERENCES
   )
 
+  const value = React.useMemo(
+    () => [preferences, setPreferences] as const,
+    [preferences, setPreferences]
+  )
+
   return (
-    <UserSettingsContext.Provider value={userPreferences}>
+    <UserSettingsContext.Provider value={value}>
       {children}
     </UserSettingsContext.Provider>
   )

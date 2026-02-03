@@ -60,12 +60,7 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
             />
           </Box>
         </Box>
-        <ConnectedHeartRateChart
-          data={session.hrHistory.map((d) => ({
-            timestamp: d.time,
-            hr: d.hr,
-          }))}
-        />
+        <ConnectedHeartRateChart data={session.hrHistory} />
       </CardContent>
     </Card>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 import {
   Card,
   CardContent,
@@ -35,7 +35,7 @@ const getZoneColors = (theme: Theme) => ({
 })
 
 interface HeartRateDataPoint {
-  timestamp: number // Unix timestamp
+  time: number // Unix timestamp
   hr: number
 }
 
@@ -44,12 +44,30 @@ interface HeartRateTimeSeriesProps {
   maxHr?: number // Allow passing maxHr for accurate zones
 }
 
-export const HeartRateTimeSeries = ({
+import React from 'react'
+
+const HeartRateTimeSeriesBase = ({
   data,
   maxHr = MAX_HR_DEFAULT,
 }: HeartRateTimeSeriesProps) => {
   const theme = useTheme()
   const ZONE_COLORS = useMemo(() => getZoneColors(theme), [theme])
+
+  const xAxisTickFormatter = useCallback(
+    (tick: number) => format(new Date(tick), 'HH:mm:ss'),
+    []
+  )
+  const tooltipLabelFormatter = useCallback(
+    (label: number) => format(new Date(label), 'pp'),
+    []
+  )
+  const tooltipValueFormatter = useCallback(
+    (value: number | string | (number | string)[]) =>
+      typeof value === 'number'
+        ? [`${value.toFixed(0)} BPM`, 'Heart Rate']
+        : [null, null],
+    []
+  )
 
   // Calculate zone boundaries based on Max HR
   const zones = useMemo(
@@ -67,9 +85,14 @@ export const HeartRateTimeSeries = ({
   // Accessibility: Chart description for screen readers
   const chartDescription = useMemo(() => {
     if (data.length === 0) return 'Heart rate chart with no data.'
-    const hrs = data.map((d) => d.hr)
+    let minHr = data[0]!.hr
+    let maxHrValue = data[0]!.hr
+    for (let i = 1; i < data.length; i++) {
+      if (data[i]!.hr < minHr) minHr = data[i]!.hr
+      if (data[i]!.hr > maxHrValue) maxHrValue = data[i]!.hr
+    }
     return `Line chart showing heart rate over time.
-    Heart rate ranges from ${Math.min(...hrs)} to ${Math.max(...hrs)} BPM.
+    Heart rate ranges from ${minHr} to ${maxHrValue} BPM.
     Zones are marked in the background.`
   }, [data])
 
@@ -97,21 +120,6 @@ export const HeartRateTimeSeries = ({
               margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
               accessibilityLayer // Recharts v2.10+ feature
             >
-              <defs>
-                <linearGradient id="colorHr" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor={theme.palette.error.main}
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor={theme.palette.primary.main}
-                    stopOpacity={0.8}
-                  />
-                </linearGradient>
-              </defs>
-
               {/* Background Zones */}
               <ReferenceArea
                 y1={zones.z1}
@@ -144,6 +152,21 @@ export const HeartRateTimeSeries = ({
                 strokeOpacity={0.3}
               />
 
+              <defs>
+                <linearGradient id="colorHr" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="#9C27B0" // Purple - Max Intensity
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor={theme.palette.secondary.main} // Blue - Low Intensity
+                    stopOpacity={0.8}
+                  />
+                </linearGradient>
+              </defs>
+
               <CartesianGrid
                 strokeDasharray="3 3"
                 vertical={false}
@@ -151,8 +174,8 @@ export const HeartRateTimeSeries = ({
               />
 
               <XAxis
-                dataKey="timestamp"
-                tickFormatter={(tick) => format(new Date(tick), 'HH:mm:ss')}
+                dataKey="time"
+                tickFormatter={xAxisTickFormatter}
                 minTickGap={30}
                 stroke={theme.palette.text.secondary}
                 style={{ fontSize: '0.75rem' }}
@@ -180,16 +203,12 @@ export const HeartRateTimeSeries = ({
                   border: `1px solid ${theme.palette.divider}`,
                   borderRadius: 4,
                 }}
-                labelFormatter={(label) => format(new Date(label), 'pp')} // Localized time
-                formatter={(value) =>
-                  typeof value === 'number'
-                    ? [`${value.toFixed(0)} BPM`, 'Heart Rate']
-                    : [null, null]
-                }
+                labelFormatter={tooltipLabelFormatter} // Localized time
+                formatter={tooltipValueFormatter}
               />
 
               <Line
-                type="monotone"
+                type="linear"
                 dataKey="hr"
                 stroke="url(#colorHr)"
                 strokeWidth={3}
@@ -204,6 +223,8 @@ export const HeartRateTimeSeries = ({
     </Card>
   )
 }
+
+export const HeartRateTimeSeries = React.memo(HeartRateTimeSeriesBase)
 
 export const ConnectedHeartRateChart = ({
   data,

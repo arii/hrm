@@ -57,7 +57,7 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
     color: 'text-purple-600',
     progressColor: '#9333ea',
     bgColor: '#9C27B0',
-    textColor: '#FFFFFF',
+    textColor: theme.palette.getContrastText('#9C27B0'),
   },
   // Add placeholder properties for non-displayable zones
   [HrZoneName.NoData]: {
