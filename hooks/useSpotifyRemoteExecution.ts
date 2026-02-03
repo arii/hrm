@@ -2,8 +2,11 @@
 
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { SpotifyPlayer } from '@/types/spotify-web-playback'
 
-export const useSpotifyRemoteExecution = (player: object | null): void => {
+export const useSpotifyRemoteExecution = (
+  player: SpotifyPlayer | null
+): void => {
   const { sendData } = useWebSocket()
 
   useEffect(() => {
