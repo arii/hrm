@@ -5,14 +5,13 @@
  */
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import RefreshIcon from '@mui/icons-material/Refresh'
-import { alpha } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useEffect, useState } from 'react'
+import RefreshIconButton from './RefreshIconButton'
 
 interface GoogleDocViewerProps {
   title: string
@@ -70,24 +69,10 @@ const GoogleDocViewer = ({
           }}
         >
           {onRefresh && (
-            <IconButton
+            <RefreshIconButton
               onClick={onRefresh}
-              size="small"
-              sx={(theme) => ({
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                zIndex: 10,
-                backgroundColor: alpha(theme.palette.background.paper, 0.7),
-                backdropFilter: 'blur(4px)',
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.background.paper, 0.9),
-                },
-              })}
               aria-label="refresh google doc"
-            >
-              <RefreshIcon fontSize="small" />
-            </IconButton>
+            />
           )}
           {iframeLoading && (
             <Skeleton

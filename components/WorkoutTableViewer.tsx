@@ -14,10 +14,8 @@ import {
   Typography,
   Alert,
   Box,
-  IconButton,
 } from '@mui/material'
-import { alpha } from '@mui/material/styles'
-import RefreshIcon from '@mui/icons-material/Refresh'
+import RefreshIconButton from './RefreshIconButton'
 
 interface WorkoutData {
   headers: string[]
@@ -81,24 +79,10 @@ export default function WorkoutTableViewer({
   return (
     <Box sx={{ position: 'relative', width: '100%' }}>
       {onRefresh && (
-        <IconButton
+        <RefreshIconButton
           onClick={onRefresh}
-          size="small"
-          sx={(theme) => ({
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            zIndex: 10,
-            backgroundColor: alpha(theme.palette.background.paper, 0.7),
-            backdropFilter: 'blur(4px)',
-            '&:hover': {
-              backgroundColor: alpha(theme.palette.background.paper, 0.9),
-            },
-          })}
           aria-label="refresh workout table"
-        >
-          <RefreshIcon fontSize="small" />
-        </IconButton>
+        />
       )}
       <TableContainer
         component={Paper}
