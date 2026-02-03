@@ -18,9 +18,11 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
   const durationInSeconds = session.endTime
     ? (session.endTime - session.startTime) / 1000
     : 0
+  const hrValues = session.hrHistory.map((dp) => dp.hr).filter((hr) => hr > 0)
   const avgHr =
-    session.hrHistory.reduce((sum, dp) => sum + dp.hr, 0) /
-      session.hrHistory.length || 0
+    hrValues.length > 0
+      ? hrValues.reduce((sum, hr) => sum + hr, 0) / hrValues.length
+      : 0
 
   return (
     <Card>

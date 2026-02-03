@@ -184,21 +184,14 @@ const ExperimentalAnalyticsPage = () => {
         totalCalories: 0,
       }
 
-    const hrValues = activeSession.hrHistory.map((d) => d.hr)
-    let sumHr = 0
-    let validCount = 0
-    let maxHrValue = 0
-
-    for (const hr of hrValues) {
-      if (hr > 0) {
-        sumHr += hr
-        validCount++
-        if (hr > maxHrValue) maxHrValue = hr
-      }
-    }
-
-    const avgHr = validCount > 0 ? sumHr / validCount : 0
-    const maxHr = maxHrValue
+    const hrValues = activeSession.hrHistory
+      .map((d) => d.hr)
+      .filter((hr) => hr > 0)
+    const avgHr =
+      hrValues.length > 0
+        ? hrValues.reduce((sum, hr) => sum + hr, 0) / hrValues.length
+        : 0
+    const maxHr = hrValues.length > 0 ? Math.max(...hrValues) : 0
 
     return {
       avgHr,
