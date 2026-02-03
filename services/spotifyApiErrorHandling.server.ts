@@ -1,5 +1,5 @@
 import logger from '../utils/logger.server.js'
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server.js'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
