@@ -35,7 +35,7 @@ const getZoneColors = (theme: Theme) => ({
 })
 
 interface HeartRateDataPoint {
-  timestamp: number | string // Date object or ISO string
+  timestamp: number // Unix timestamp
   hr: number
 }
 
