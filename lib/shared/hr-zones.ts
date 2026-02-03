@@ -63,27 +63,29 @@ export const getUserHrZones = (age: number): UserHrZones => {
   }
 }
 
+/**
+ * Internal helper for HR zone threshold calculation.
+ */
+const HR_ZONE_THRESHOLDS: { threshold: number; name: HrZoneName }[] = [
+  { threshold: 60, name: HrZoneName.WarmUp },
+  { threshold: 70, name: HrZoneName.FatBurn },
+  { threshold: 85, name: HrZoneName.Cardio },
+  { threshold: 95, name: HrZoneName.Peak },
+]
+
 export const calculateHrZone = (
   currentHr: number,
   maxHr: number
 ): { zoneName: HrZoneName; percentage: number; bpm: number } => {
   const percentage = maxHr > 0 ? Math.round((currentHr / maxHr) * 100) : 0
   const bpm = currentHr
-  let zoneName: HrZoneName
 
   if (currentHr <= 0) {
-    zoneName = HrZoneName.NoData
-  } else if (percentage < 60) {
-    zoneName = HrZoneName.WarmUp
-  } else if (percentage < 70) {
-    zoneName = HrZoneName.FatBurn
-  } else if (percentage < 85) {
-    zoneName = HrZoneName.Cardio
-  } else if (percentage < 95) {
-    zoneName = HrZoneName.Peak
-  } else {
-    zoneName = HrZoneName.Max
+    return { zoneName: HrZoneName.NoData, percentage, bpm }
   }
+
+  const zoneDefinition = HR_ZONE_THRESHOLDS.find((z) => percentage < z.threshold)
+  const zoneName = zoneDefinition ? zoneDefinition.name : HrZoneName.Max
 
   return { zoneName, percentage, bpm }
 }
