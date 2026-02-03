@@ -7,7 +7,7 @@ This document outlines the design system, UI/UX improvements, and overall visual
 **Date**: November 9, 2025
 **Status**: ✅ Phase 1 Complete - Foundation Established
 
-### 1. Comprehensive MUI Theme (`lib/theme.ts`)
+### 1. Comprehensive MUI Theme (`theme/theme.ts`)
 
 A complete design system has been established to address all identified UI consistency issues.
 
