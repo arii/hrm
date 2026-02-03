@@ -16,16 +16,9 @@ export async function POST(req: NextRequest) {
     switch (command) {
       case 'PLAY':
         if (uri) {
-          await sdk.player.startResumePlayback(
-            deviceId,
-            undefined,
-            [uri]
-          )
+          await sdk.player.startResumePlayback(deviceId, undefined, [uri])
         } else if (contextUri) {
-          await sdk.player.startResumePlayback(
-            deviceId,
-            contextUri
-          )
+          await sdk.player.startResumePlayback(deviceId, contextUri)
         } else {
           await sdk.player.startResumePlayback(deviceId)
         }

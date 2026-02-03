@@ -5,10 +5,7 @@
  */
 import { ServerMessage } from '../../types/websocket'
 import { TimerMode } from '../../types/core'
-import {
-  START_COUNTDOWN_DURATION,
-  TIMER_INTERVAL,
-} from '../../utils/constants'
+import { START_COUNTDOWN_DURATION, TIMER_INTERVAL } from '../../utils/constants'
 import { DualModeTimerState } from './timerState'
 import { ConfigurationError } from '../../types/errors'
 import { TimerQueries } from './timerQueries'

@@ -7,10 +7,7 @@
  */
 import { ServerMessage } from '../types/websocket'
 import { TimerData, TimerMode } from '../types/core'
-import {
-  createInitialTimerState,
-  DualModeTimerState,
-} from './timer/timerState'
+import { createInitialTimerState, DualModeTimerState } from './timer/timerState'
 import { TimerQueries } from './timer/timerQueries'
 import { TimerCommands } from './timer/timerCommands'
 
