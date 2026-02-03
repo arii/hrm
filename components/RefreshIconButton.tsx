@@ -11,7 +11,6 @@ const RefreshIconButton = ({ onClick, ...props }: RefreshIconButtonProps) => {
   return (
     <IconButton
       onClick={onClick}
-      size="small"
       sx={(theme) => ({
         position: 'absolute',
         top: 8,
@@ -22,6 +21,8 @@ const RefreshIconButton = ({ onClick, ...props }: RefreshIconButtonProps) => {
         '&:hover': {
           backgroundColor: alpha(theme.palette.background.paper, 0.9),
         },
+        width: 48,
+        height: 48,
       })}
       {...props}
     >
