@@ -57,10 +57,12 @@ const HeartRateTimeSeriesBase = ({
     (tick: number) => format(new Date(tick), 'HH:mm:ss'),
     []
   )
-  const tooltipLabelFormatter = useCallback(
-    (label: number) => format(new Date(label), 'pp'),
-    []
-  )
+  const tooltipLabelFormatter = useCallback((label: unknown) => {
+    if (typeof label === 'number' || typeof label === 'string') {
+      return format(new Date(label), 'pp')
+    }
+    return ''
+  }, [])
   const tooltipValueFormatter = useCallback(
     (value: number | string | (number | string)[]) =>
       typeof value === 'number'

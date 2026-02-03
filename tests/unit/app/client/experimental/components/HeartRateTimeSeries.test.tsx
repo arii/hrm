@@ -26,7 +26,9 @@ jest.mock('recharts', () => ({
   Tooltip: () => <div />,
   ReferenceArea: () => <div />,
   Label: () => <div />,
-  defs: ({ children }: { children: React.ReactNode }) => <div data-testid="mock-defs">{children}</div>,
+  defs: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="mock-defs">{children}</div>
+  ),
   linearGradient: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="mock-linear-gradient">{children}</div>
   ),
