@@ -15,7 +15,7 @@ import {
   Alert,
   Box,
 } from '@mui/material'
-import RefreshIconButton from './RefreshIconButton'
+import RefreshIconButton from '@/components/RefreshIconButton'
 
 interface WorkoutData {
   headers: string[]

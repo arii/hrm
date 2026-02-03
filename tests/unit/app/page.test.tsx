@@ -1,9 +1,9 @@
 /** @jest-environment jsdom */
 import { render, screen, fireEvent } from '@testing-library/react'
-import Dashboard from '../../../app/page'
+import Dashboard from '@/app/page'
 
 // Mock child components to isolate the Dashboard component
-jest.mock('../../../components/WorkoutTableViewer', () => {
+jest.mock('@/components/WorkoutTableViewer', () => {
   const WorkoutTableViewer = ({
     refreshKey,
     onRefresh,
@@ -18,7 +18,7 @@ jest.mock('../../../components/WorkoutTableViewer', () => {
   WorkoutTableViewer.displayName = 'WorkoutTableViewer'
   return WorkoutTableViewer
 })
-jest.mock('../../../components/GoogleDocViewer', () => {
+jest.mock('@/components/GoogleDocViewer', () => {
   const GoogleDocViewer = ({
     refreshKey,
     onRefresh,
@@ -33,22 +33,22 @@ jest.mock('../../../components/GoogleDocViewer', () => {
   GoogleDocViewer.displayName = 'GoogleDocViewer'
   return GoogleDocViewer
 })
-jest.mock('../../../components/HrmConnectionPanel', () => {
+jest.mock('@/components/HrmConnectionPanel', () => {
   const HrmConnectionPanel = () => <div data-testid="hrm-connection-panel" />
   HrmConnectionPanel.displayName = 'HrmConnectionPanel'
   return HrmConnectionPanel
 })
-jest.mock('../../../components/TimerDisplay', () => {
+jest.mock('@/components/TimerDisplay', () => {
   const TimerDisplay = () => <div data-testid="timer-display" />
   TimerDisplay.displayName = 'TimerDisplay'
   return TimerDisplay
 })
-jest.mock('../../../components/SpotifyDisplay', () => {
+jest.mock('@/components/SpotifyDisplay', () => {
   const SpotifyDisplay = () => <div data-testid="spotify-display" />
   SpotifyDisplay.displayName = 'SpotifyDisplay'
   return SpotifyDisplay
 })
-jest.mock('../../../hooks/useAudio', () => ({
+jest.mock('@/hooks/useAudio', () => ({
   useAudio: () => ({
     initializeAudio: jest.fn(),
   }),

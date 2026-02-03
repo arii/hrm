@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import { render, screen, fireEvent } from '@testing-library/react'
-import RefreshIconButton from '../../../components/RefreshIconButton'
+import RefreshIconButton from '@/components/RefreshIconButton'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 
 const theme = createTheme()
