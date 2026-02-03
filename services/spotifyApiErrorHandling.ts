@@ -1,4 +1,4 @@
-import logger from '../utils/logger.server.js'
+import logger from '../utils/logger.server'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -90,7 +90,7 @@ export async function logSpotifyCommandError(
  */
 export async function handleSpotifyApiError(
   error: unknown,
-  onTokenExpired: () => void
+  onTokenExpired?: () => void
 ): Promise<boolean> {
   const err = error as {
     status?: number
@@ -104,7 +104,9 @@ export async function handleSpotifyApiError(
 
   if (err?.status === 401) {
     logger.warn('Spotify token expired during polling. Attempting refresh.')
-    onTokenExpired()
+    if (onTokenExpired) {
+      onTokenExpired()
+    }
     return true // Handled
   }
 

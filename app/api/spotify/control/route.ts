@@ -9,33 +9,35 @@ export async function POST(req: NextRequest) {
     const rawSdk = await getAuthenticatedSpotifyApi()
     const sdk = createSafeSpotifyApi(rawSdk)
     const body = await req.json()
-    const { command, deviceId, uri, contextUri, volume } = body
+    const { command, uri, contextUri, volume } = body
+    // Normalize deviceId to undefined if empty string or null
+    const deviceId = body.deviceId || undefined
 
     switch (command) {
       case 'PLAY':
         if (uri) {
           await sdk.player.startResumePlayback(
-            deviceId || undefined,
+            deviceId,
             undefined,
             [uri]
           )
         } else if (contextUri) {
           await sdk.player.startResumePlayback(
-            deviceId || undefined,
+            deviceId,
             contextUri
           )
         } else {
-          await sdk.player.startResumePlayback(deviceId || undefined)
+          await sdk.player.startResumePlayback(deviceId)
         }
         break
       case 'PAUSE':
-        await sdk.player.pausePlayback(deviceId || undefined)
+        await sdk.player.pausePlayback(deviceId)
         break
       case 'NEXT':
-        await sdk.player.skipToNext(deviceId || undefined)
+        await sdk.player.skipToNext(deviceId)
         break
       case 'PREVIOUS':
-        await sdk.player.skipToPrevious(deviceId || undefined)
+        await sdk.player.skipToPrevious(deviceId)
         break
       case 'SET_VOLUME':
         if (volume === undefined) {
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           )
         }
-        await sdk.player.setPlaybackVolume(volume, deviceId || undefined)
+        await sdk.player.setPlaybackVolume(volume, deviceId)
         break
       case 'TRANSFER_PLAYBACK':
         if (!deviceId) {
@@ -71,18 +73,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Call the error handler as expected by tests.
-    // We provide a no-op for onTokenExpired since NextAuth handles token refresh automatically
-    // when getAuthenticatedSpotifyApi() calls getServerSession(). If we are here, we likely
-    // had a valid token at the start of the request.
-    await handleSpotifyApiError(error, () => {})
+    await handleSpotifyApiError(error)
 
-    // Handle 204 No Content syntax error which might be thrown by SDK
-    // TODO: Track upstream issue in spotify-web-api-ts-sdk regarding 204 responses
     if (
       error instanceof SyntaxError &&
       /unexpected end of/i.test(error.message)
     ) {
+      // The SDK throws a SyntaxError when parsing a 204 No Content response (empty body).
+      // This is expected for successful playback control commands.
       return NextResponse.json({ message: 'Command processed (204)' })
     }
 

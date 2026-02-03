@@ -31,16 +31,5 @@ export type SafeSpotifyApi = Omit<SpotifyApi, 'player'> & {
 }
 
 export function createSafeSpotifyApi(sdk: SpotifyApi): SafeSpotifyApi {
-  return new Proxy(sdk, {
-    get(target, prop, receiver) {
-      if (prop === 'player') {
-        return new Proxy(Reflect.get(target, prop, receiver), {
-          get(playerTarget, playerProp, playerReceiver) {
-            return Reflect.get(playerTarget, playerProp, playerReceiver)
-          },
-        })
-      }
-      return Reflect.get(target, prop, receiver)
-    },
-  }) as unknown as SafeSpotifyApi
+  return sdk as unknown as SafeSpotifyApi
 }
