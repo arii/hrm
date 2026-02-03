@@ -9,11 +9,11 @@ import {
   Box,
   useTheme,
   Stack,
+  Theme,
 } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { HrZoneName } from '@/lib/shared/hr-zones'
-// Import global constants for consistent coloring
-import { HEART_RATE_ZONES } from '@/utils/constants'
+import { formatDuration } from '@/lib/utils'
 
 // --- Types ---
 interface ZoneDistributionProps {
@@ -21,31 +21,36 @@ interface ZoneDistributionProps {
   totalDuration: number
 }
 
-// --- Constants & Helpers ---
+// --- Helpers ---
 
-// Map your domain "HrZoneName" enum to the UI colors defined in HEART_RATE_ZONES
-// We map these explicitly to ensure domain names match visual expectations
-const ZONE_COLOR_MAP: Record<string, string> = {
-  [HrZoneName.Max]:
-    HEART_RATE_ZONES.find((z) => z.name === 'Zone 5')?.color || '#F44336',
-  [HrZoneName.Peak]:
-    HEART_RATE_ZONES.find((z) => z.name === 'Zone 4')?.color || '#FFEB3B',
-  [HrZoneName.Cardio]:
-    HEART_RATE_ZONES.find((z) => z.name === 'Zone 3')?.color || '#4CAF50',
-  [HrZoneName.FatBurn]:
-    HEART_RATE_ZONES.find((z) => z.name === 'Zone 2')?.color || '#2196F3',
-  [HrZoneName.WarmUp]:
-    HEART_RATE_ZONES.find((z) => z.name === 'Zone 1')?.color || '#9E9E9E',
-  [HrZoneName.NoData]: '#e0e0e0',
-  [HrZoneName.Unknown]: '#9e9e9e',
+// Map your domain "HrZoneName" enum to the UI colors defined in the theme
+const getZoneColor = (zone: string, theme: Theme): string => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hrZones = (theme.palette as any).custom?.hrZones
+  if (!hrZones) return theme.palette.grey[500]
+
+  switch (zone) {
+    case HrZoneName.Max:
+      return hrZones.max
+    case HrZoneName.Peak:
+      return hrZones.peak
+    case HrZoneName.Cardio:
+      return hrZones.cardio
+    case HrZoneName.FatBurn:
+      return hrZones.fatBurn
+    case HrZoneName.WarmUp:
+      return hrZones.warmUp
+    case HrZoneName.NoData:
+      return hrZones.noData
+    case HrZoneName.Unknown:
+      return hrZones.unknown
+    default:
+      return theme.palette.grey[500]
+  }
 }
 
-// Strict time formatter: "MM:SS" (e.g., "25:40")
 const formatTime = (seconds: number): string => {
-  const safeSeconds = Math.max(0, Math.floor(seconds))
-  const mins = Math.floor(safeSeconds / 60)
-  const secs = safeSeconds % 60
-  return `${mins}:${secs.toString().padStart(2, '0')}`
+  return formatDuration(seconds, { unit: 'seconds', format: 'MM:SS' })
 }
 
 const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
@@ -70,14 +75,14 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             value: time,
             percentage: parseFloat(percentage.toFixed(1)),
             formattedTime: formatTime(time),
-            color: ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
+            color: getZoneColor(zone, theme),
           }
         })
         // Sort by intensity usually makes sense, but data order might suffice.
         // Filter out zero values to keep the chart clean
         .filter((item) => item.value > 0)
     )
-  }, [timeInZones, totalDuration, theme.palette.grey])
+  }, [timeInZones, totalDuration, theme])
 
   if (data.length === 0) {
     return null

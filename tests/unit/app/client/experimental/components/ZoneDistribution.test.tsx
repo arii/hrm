@@ -65,15 +65,15 @@ describe('ZoneDistribution', () => {
     )
 
     const warmUpRow = getByTestId(`zone-row-${HrZoneName.WarmUp}`)
-    expect(within(warmUpRow).getByText('1:00')).toBeInTheDocument()
+    expect(within(warmUpRow).getByText('01:00')).toBeInTheDocument()
     expect(within(warmUpRow).getByText(/60%/)).toBeInTheDocument()
 
     const fatBurnRow = getByTestId(`zone-row-${HrZoneName.FatBurn}`)
-    expect(within(fatBurnRow).getByText('0:30')).toBeInTheDocument()
+    expect(within(fatBurnRow).getByText('00:30')).toBeInTheDocument()
     expect(within(fatBurnRow).getByText(/30%/)).toBeInTheDocument()
 
     const cardioRow = getByTestId(`zone-row-${HrZoneName.Cardio}`)
-    expect(within(cardioRow).getByText('0:10')).toBeInTheDocument()
+    expect(within(cardioRow).getByText('00:10')).toBeInTheDocument()
     expect(within(cardioRow).getByText(/10%/)).toBeInTheDocument()
   })
 
@@ -114,7 +114,7 @@ describe('ZoneDistribution', () => {
       </ThemeProvider>
     )
     const cardioRow = getByTestId(`zone-row-${HrZoneName.Cardio}`)
-    expect(within(cardioRow).getByText('2:00')).toBeInTheDocument()
+    expect(within(cardioRow).getByText('02:00')).toBeInTheDocument()
     expect(within(cardioRow).getByText(/0%/)).toBeInTheDocument()
   })
 })

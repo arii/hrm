@@ -12,6 +12,15 @@ declare module '@mui/material/styles' {
       running: string
       idle: string
       cooldown: string
+      hrZones: {
+        warmUp: string
+        fatBurn: string
+        cardio: string
+        peak: string
+        max: string
+        unknown: string
+        noData: string
+      }
     }
   }
   interface PaletteOptions {
@@ -22,6 +31,15 @@ declare module '@mui/material/styles' {
       running?: string
       idle?: string
       cooldown?: string
+      hrZones?: {
+        warmUp?: string
+        fatBurn?: string
+        cardio?: string
+        peak?: string
+        max?: string
+        unknown?: string
+        noData?: string
+      }
     }
   }
 }
@@ -35,6 +53,15 @@ const theme = createTheme(libTheme, {
       running: '#3b82f6',
       idle: '#6b7280',
       cooldown: '#6b7280',
+      hrZones: {
+        warmUp: '#9E9E9E',
+        fatBurn: '#2196F3',
+        cardio: '#4CAF50',
+        peak: '#FFEB3B',
+        max: '#F44336',
+        unknown: '#9e9e9e',
+        noData: '#e0e0e0',
+      },
     },
   },
 })
