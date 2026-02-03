@@ -3,6 +3,7 @@
  * Shared constants and types for Heart Rate (HR) zones to ensure consistency
  * across different modules (domain logic, UI, etc.).
  */
+// Default Max HR set to 190 to align with standard baseline setup for unconfigured profiles.
 export const MAX_HR_DEFAULT = 190
 
 /**
