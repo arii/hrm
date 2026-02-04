@@ -74,7 +74,7 @@ const useSpotifyWebPlayback = () => {
 
         if (!response.ok) {
           if (response.status === 401) {
-            // Circuit Breaker: Use sessionStorage to detect rapid failures
+            // Prevent infinite sign-out loop: check if we failed recently
             const lastAuthFail = sessionStorage.getItem(
               SPOTIFY_AUTH_LOOP_GUARD_KEY
             )
@@ -89,7 +89,7 @@ const useSpotifyWebPlayback = () => {
                   SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT / 1000
                 }s threshold); aborting sign-out to prevent thrashing.`
               )
-              return // Stop the loop here, preventing further action.
+              return
             }
 
             sessionStorage.setItem(SPOTIFY_AUTH_LOOP_GUARD_KEY, now.toString())
@@ -97,12 +97,11 @@ const useSpotifyWebPlayback = () => {
               persist: true,
             })
 
-            // redirect: false prevents the page from automatically reloading/redirecting
             await signOut({ redirect: false })
-            redirectTo('/?error=SpotifyAuthFailed') // Manual redirect to a safe landing
-            return // Explicitly return to stop processing
+            redirectTo('/?error=SpotifyAuthFailed') // Break loop: land on home with error flag
+            return
           }
-          // For other non-ok responses, throw to be caught by the catch block.
+          // Throw for other errors to trigger catch block
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 

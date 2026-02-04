@@ -15,7 +15,6 @@ import {
   Alert,
   Box,
 } from '@mui/material'
-import RefreshIconButton from '@/components/RefreshIconButton'
 
 interface WorkoutData {
   headers: string[]
@@ -25,13 +24,11 @@ interface WorkoutData {
 interface WorkoutTableViewerProps {
   docId: string
   refreshKey?: number
-  onRefresh?: () => void
 }
 
 export default function WorkoutTableViewer({
   docId,
   refreshKey,
-  onRefresh,
 }: WorkoutTableViewerProps) {
   const [data, setData] = useState<WorkoutData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -77,59 +74,51 @@ export default function WorkoutTableViewer({
   }
 
   return (
-    <Box sx={{ position: 'relative', width: '100%' }}>
-      {onRefresh && (
-        <RefreshIconButton
-          onClick={onRefresh}
-          aria-label="refresh workout table"
-        />
-      )}
-      <TableContainer
-        component={Paper}
-        elevation={2}
-        data-testid="workout-table-viewer"
-      >
-        <Table sx={{ minWidth: 650 }} aria-label="workout table">
-          {/* Render Headers */}
-          {data.headers.length > 0 && (
-            <TableHead>
-              <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                {data.headers.map((header, index) => (
-                  <TableCell key={index} sx={{ fontWeight: 'bold' }}>
-                    {header}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-          )}
+    <TableContainer
+      component={Paper}
+      elevation={2}
+      data-testid="workout-table-viewer"
+    >
+      <Table sx={{ minWidth: 650 }} aria-label="workout table">
+        {/* Render Headers */}
+        {data.headers.length > 0 && (
+          <TableHead>
+            <TableRow sx={{ backgroundColor: 'action.hover' }}>
+              {data.headers.map((header, index) => (
+                <TableCell key={index} sx={{ fontWeight: 'bold' }}>
+                  {header}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+        )}
 
-          {/* Render Data Rows */}
-          <TableBody>
-            {data.rows.map((row, rowIndex) => (
-              <TableRow
-                key={rowIndex}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-              >
-                {row.map((cell, cellIndex) => (
-                  <TableCell key={cellIndex} sx={{ verticalAlign: 'top' }}>
-                    <Typography
-                      variant="body2"
-                      component="pre"
-                      sx={{
-                        whiteSpace: 'pre-wrap',
-                        fontFamily: 'inherit',
-                        m: 0,
-                      }}
-                    >
-                      {cell}
-                    </Typography>
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
+        {/* Render Data Rows */}
+        <TableBody>
+          {data.rows.map((row, rowIndex) => (
+            <TableRow
+              key={rowIndex}
+              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+            >
+              {row.map((cell, cellIndex) => (
+                <TableCell key={cellIndex} sx={{ verticalAlign: 'top' }}>
+                  <Typography
+                    variant="body2"
+                    component="pre"
+                    sx={{
+                      whiteSpace: 'pre-wrap',
+                      fontFamily: 'inherit',
+                      m: 0,
+                    }}
+                  >
+                    {cell}
+                  </Typography>
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   )
 }
