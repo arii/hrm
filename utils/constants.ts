@@ -65,6 +65,8 @@ export const START_COUNTDOWN_DURATION = 5 // seconds
 export const TIMER_INTERVAL = 1000 // ms
 
 // --- Stale Client Detection ---
+// Note: UI thresholds (Display/Removal) are shorter to provide immediate feedback.
+// Server cleanup is longer (3 mins) to allow for network interruptions without destroying session state.
 export const STALE_TILE_DISPLAY_THRESHOLD_MS = 30000
 export const STALE_TILE_REMOVAL_THRESHOLD_MS = 60000
 export const STALE_CLIENT_CLEANUP_THRESHOLD_MS = 180000
