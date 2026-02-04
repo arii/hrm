@@ -17,6 +17,8 @@ import { HrmStreamData } from '../types/core.js'
 import {
   MAX_CALORIE_JUMP_PER_UPDATE,
   MAX_INITIAL_CALORIES,
+  STALE_CLIENT_CLEANUP_THRESHOLD_MS,
+  STALE_CHECK_INTERVAL_MS,
 } from './constants.js'
 import {
   broadcast,
@@ -112,19 +114,12 @@ const initSocketManager = (
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
-  // --- Janitor Service ---
-  // Periodically cleans up stale client sessions. This is a crucial stability mechanism
-  // to prevent memory leaks from clients that disconnect without triggering the 'close' event
-  // (e.g., due to network loss).
-  const STALE_THRESHOLD_MS = 30000 // 30 seconds
-  const JANITOR_INTERVAL_MS = 10000 // 10 seconds
-
   setInterval(() => {
     const now = Date.now()
     let hasChanged = false
 
     for (const [clientId, session] of clientSessionState.entries()) {
-      if (now - session.lastUpdate > STALE_THRESHOLD_MS) {
+      if (now - session.lastUpdate > STALE_CLIENT_CLEANUP_THRESHOLD_MS) {
         logger.warn(
           { clientId },
           `Stale client detected. Last update was ${
@@ -133,7 +128,7 @@ const initSocketManager = (
         )
         hrmDataStore.deleteById(clientId)
         clientSessionState.delete(clientId)
-        clientSockets.delete(clientId) // Also remove the socket reference
+        clientSockets.delete(clientId)
         hasChanged = true
       }
     }
@@ -141,7 +136,7 @@ const initSocketManager = (
     if (hasChanged) {
       broadcastState()
     }
-  }, JANITOR_INTERVAL_MS)
+  }, STALE_CHECK_INTERVAL_MS)
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket

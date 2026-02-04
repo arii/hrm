@@ -706,7 +706,7 @@ describe('WebSocket Manager', () => {
       mockWss.emit('connection', newWs, mockReq)
 
       // Advance timers to trigger janitor
-      jest.advanceTimersByTime(41000)
+      jest.advanceTimersByTime(190000)
 
       // Verify that the cleanup logic was called
       expect(logger.warn).toHaveBeenCalledWith(

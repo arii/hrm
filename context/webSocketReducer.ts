@@ -50,7 +50,7 @@ export const INITIAL_STATE: WebSocketState = {
 
 export const reducer = (
   state: WebSocketState,
-  message: ServerMessage | { type: 'RESET_STATE' | 'CLEANUP_STALE_CONNECTIONS' }
+  message: ServerMessage | { type: 'RESET_STATE' }
 ): WebSocketState => {
   switch (message.type) {
     case 'RESET_STATE':
@@ -89,17 +89,6 @@ export const reducer = (
       })
 
       return { ...state, hrmData: Array.from(updatedUsersMap.values()) }
-    }
-    case 'CLEANUP_STALE_CONNECTIONS': {
-      const now = Date.now()
-      // 3 minutes threshold for client-side cleanup
-      const STALE_THRESHOLD_MS = 180000
-      return {
-        ...state,
-        hrmData: state.hrmData.filter(
-          (user) => now - user.lastUpdated < STALE_THRESHOLD_MS
-        ),
-      }
     }
     case 'TIMER_UPDATE':
       return {

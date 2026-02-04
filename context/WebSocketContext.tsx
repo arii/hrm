@@ -338,18 +338,10 @@ export const WebSocketProvider = ({
       }
     }
 
-    // Set up a client-side janitor as a fallback mechanism.
-    // This cleans up stale connections from the UI even if the backend's
-    // cleanup message isn't received.
-    const janitorInterval = setInterval(() => {
-      dispatch({ type: 'CLEANUP_STALE_CONNECTIONS' })
-    }, 30000) // Run every 30 seconds
-
     return () => {
       disconnect()
-      clearInterval(janitorInterval) // Cleanup on unmount
     }
-  }, [connect, disconnect, dispatch])
+  }, [connect, disconnect])
 
   const sendData = useCallback(
     (data: ClientCommandMessage) => {

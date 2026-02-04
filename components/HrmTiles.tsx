@@ -7,30 +7,27 @@ import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { useMemo, useState, useEffect } from 'react'
+import {
+  STALE_TILE_DISPLAY_THRESHOLD_MS,
+  STALE_TILE_REMOVAL_THRESHOLD_MS,
+} from '@/utils/constants'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
-  const [now, setNow] = useState<number | null>(null)
+  const [now, setNow] = useState<number>(() => Date.now())
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setNow(Date.now())
-    const interval = setInterval(() => setNow(Date.now()), 10000) // Re-render every 10s
+    const interval = setInterval(() => setNow(Date.now()), 10000)
     return () => clearInterval(interval)
   }, [])
 
   const filteredTiles = useMemo(() => {
-    if (now === null) return []
-
-    const STALE_THRESHOLD_MS = 30000 // 30 seconds
-    const REMOVAL_THRESHOLD_MS = 60000 // 60 seconds
-
     return hrmData
       .filter((user) => {
         const timeSinceUpdate = now - user.lastUpdated
         const isZero = user.value === 0
         const hasNoIdentity = user.name == null
-        const isStale = timeSinceUpdate > REMOVAL_THRESHOLD_MS
+        const isStale = timeSinceUpdate > STALE_TILE_REMOVAL_THRESHOLD_MS
 
         return !(isZero || hasNoIdentity || isStale)
       })
@@ -40,7 +37,7 @@ const HrmTiles = () => {
           user.maxHr || MAX_HR_DEFAULT
         )
         const timeSinceUpdate = now - user.lastUpdated
-        const isDataStale = timeSinceUpdate > STALE_THRESHOLD_MS
+        const isDataStale = timeSinceUpdate > STALE_TILE_DISPLAY_THRESHOLD_MS
 
         // Find the alert specific to this HR Monitor's clientId
         const matchingAlert = activeAlerts.find(
@@ -99,9 +96,4 @@ const HrmTiles = () => {
   return <>{filteredTiles}</>
 }
 
-// Note: The `memo` wrapper was removed from this component.
-// The component now uses an internal `setInterval` to trigger re-renders,
-// which is necessary for the staleness detection logic. Memoization would
-// block these periodic updates, preventing the UI from reflecting the
-// real-time status of HR monitors.
 export default HrmTiles
