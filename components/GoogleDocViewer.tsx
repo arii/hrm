@@ -11,7 +11,6 @@ import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useEffect, useState } from 'react'
-import RefreshIconButton from '@/components/RefreshIconButton'
 
 interface GoogleDocViewerProps {
   title: string
@@ -21,7 +20,6 @@ interface GoogleDocViewerProps {
   isShrunk?: boolean // New prop
   onToggleShrink?: () => void // New callback prop
   refreshKey?: number
-  onRefresh?: () => void
 }
 
 const GoogleDocViewer = ({
@@ -31,7 +29,6 @@ const GoogleDocViewer = ({
   isShrunk = false, // Default to not shrunk
   onToggleShrink,
   refreshKey,
-  onRefresh,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
 
@@ -68,12 +65,6 @@ const GoogleDocViewer = ({
             position: 'relative',
           }}
         >
-          {onRefresh && (
-            <RefreshIconButton
-              onClick={onRefresh}
-              aria-label="refresh google doc"
-            />
-          )}
           {iframeLoading && (
             <Skeleton
               variant="rectangular"

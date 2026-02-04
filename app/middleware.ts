@@ -1,15 +1,23 @@
 // middleware.ts
 import { withAuth } from 'next-auth/middleware'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 export default withAuth(
   // `withAuth` augments your `Request` with the user's token.
-  function middleware(_req) {
+  function middleware(req: NextRequest) {
+    const url = req.nextUrl.clone()
+
+    // Allow error=SpotifyAuthFailed to land (breaks auth loop)
+    if (url.searchParams.get('error') === 'SpotifyAuthFailed') {
+      return NextResponse.next()
+    }
+
     return NextResponse.next()
   },
   {
     callbacks: {
-      authorized: () => true, // This allows all requests to pass through the middleware
+      // Return true to run middleware on all paths
+      authorized: () => true,
     },
   }
 )
