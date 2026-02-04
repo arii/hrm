@@ -79,6 +79,7 @@ const useSpotifyWebPlayback = () => {
           `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
         )
 
+        // Spotify SDK caches invalid tokens, so we must force sign-out to clear the session.
         if (appError.code === 'HTTP_ERROR_401') {
           setInitStatus('failed')
           console.warn(
@@ -182,6 +183,7 @@ const useSpotifyWebPlayback = () => {
       })
     }
 
+    // The Spotify SDK automatically calls this global function when the script loads.
     window.onSpotifyWebPlaybackSDKReady = initializePlayer
 
     initializeSDK()
@@ -192,6 +194,7 @@ const useSpotifyWebPlayback = () => {
         player.disconnect()
         setPlayer(null)
       }
+      // Prevent memory leaks by cleaning up the global callback.
       window.onSpotifyWebPlaybackSDKReady = () => {}
     }
   }, [status, initStatus, getOAuthToken, addError, player])
