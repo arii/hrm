@@ -400,7 +400,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
         return false
       }
-      // Abort any existing connection attempts.
       if (
         abortControllerRef.current &&
         !abortControllerRef.current.signal.aborted
@@ -413,7 +412,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
       isConnecting.current = true
 
-      // Create a new AbortController for the new connection attempt.
       const newAbortController = new AbortController()
       abortControllerRef.current = newAbortController
 
@@ -428,7 +426,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         abortControllerRef.current = new AbortController()
 
-        // Enhanced Retry Logic for "Zombie" connections
         let server: BluetoothRemoteGATTServer | undefined
         let attempt = 0
         const maxRetries = 3
@@ -436,13 +433,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         while (attempt < maxRetries) {
           try {
             server = await cancellablePromise(device.gatt!.connect(), {
-              timeoutMs: 20000, // Reduced from 30s for faster recovery
+              timeoutMs: 20000,
               errorMessage: 'GATT connection timeout',
               signal: abortControllerRef.current.signal,
             })
             break
           } catch (error) {
             attempt++
+            // Android zombie errors: NetworkError, busy, out of range
             const isBusy =
               String(error).includes('busy') ||
               String(error).includes('NetworkError')
@@ -645,7 +643,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     ): Promise<boolean> => {
       const { silent = false } = options
 
-      // Prioritize args, but fall back to props.
       userDetailsRef.current = {
         name: userNameFromArgs || userName || '',
         age: userAgeFromArgs || userAge || 0,
@@ -719,11 +716,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           await connectToGatt(device)
           return true
         } else if (!silent) {
-          // Only throw an error if not in silent mode
           logger.info('No device to connect')
           throw new Error('No device found or selected for connection.')
         }
-        return false // No device found and in silent mode
+        return false // Silent mode: no device available
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         if (error instanceof DOMException && error.name === 'AbortError') {
@@ -735,13 +731,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
           // Reset the status to allow for a manual connection attempt.
           setStatus(BluetoothConnectionStatus.DISCONNECTED)
-          // Re-throw the error so that the calling function knows about the failure.
           throw error
         }
         if (!silent) {
           throw error
         }
-        return false // Return false on caught errors in silent mode
+        return false
       }
     },
     [
@@ -775,7 +770,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         logger.info('Auto-connect succeeded')
       } else {
         logger.info('No saved device found to auto-connect.')
-        // If no device was found, reset to disconnected state
         setStatus(BluetoothConnectionStatus.DISCONNECTED)
         setCustomStatusMessage(null)
       }

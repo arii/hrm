@@ -131,6 +131,7 @@ describe('useBluetoothHRM', () => {
       await result.current.autoConnect()
     })
 
+    // autoConnect is async and may not call getDevices synchronously
     await waitFor(() => {
       expect(mockBluetooth.getDevices).toHaveBeenCalled()
     })
@@ -148,6 +149,7 @@ describe('useBluetoothHRM', () => {
       await result.current.autoConnect()
     })
 
+    // autoConnect is async and may not call getDevices synchronously
     await waitFor(() => {
       expect(result.current.deviceStatus).toBe(
         'Auto-connect failed. Use Connect button to select device.'
@@ -179,7 +181,7 @@ describe('useBluetoothHRM', () => {
     expect(mockBluetooth.requestDevice).toHaveBeenCalled()
   })
 
-  it('should ignore subsequent connection attempts while one is in progress', async () => {
+  it('ignores connection attempts while isConnecting lock is held', async () => {
     const mockAbort = jest.fn()
     const OriginalAbortController = global.AbortController
     global.AbortController = jest.fn().mockImplementation(() => ({
@@ -203,34 +205,27 @@ describe('useBluetoothHRM', () => {
 
       const { result } = renderHook(() => useBluetoothHRM())
 
-      // 1. Start the first connection attempt
       let firstPromise: Promise<void> | undefined
       act(() => {
-        // use catch to prevent unhandled promise rejection in test
         firstPromise = result.current.connectAndStream()
       })
 
-      // 2. Wait for the hook to update state to "Connecting"
       await waitFor(() => {
         expect(result.current.deviceStatus).toMatch(/connecting/i)
       })
 
-      // 3. Start the second connection attempt
       act(() => {
         result.current.connectAndStream()
       })
 
-      // 4. Verify abort was NOT called, and connect was only called once
       expect(mockAbort).not.toHaveBeenCalled()
       expect(mockGatt.connect).toHaveBeenCalledTimes(1)
 
-      // 5. Cleanup: Resolve the pending promise to let the test finish gracefully
       await act(async () => {
         connectResolver(mockGatt)
         await firstPromise
       })
 
-      // 6. Check final status
       expect(result.current.isConnected).toBe(true)
     } finally {
       // Restore original AbortController
