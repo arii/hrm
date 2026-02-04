@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render, act } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import ControlPanel from '@/app/client/control/ControlPanel'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 

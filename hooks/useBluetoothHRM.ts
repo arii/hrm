@@ -295,7 +295,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (statusRef.current !== BluetoothConnectionStatus.CONNECTED) {
           connectToGattRef.current?.(device, true).catch(() => {
             logger.warn(
-              { attempt: reconnectAttempts.current, max: MAX_RECONNECT_ATTEMPTS },
+              {
+                attempt: reconnectAttempts.current,
+                max: MAX_RECONNECT_ATTEMPTS,
+              },
               'Reconnect failed, retrying'
             )
             reconnect(device) // Recursive call to try again
@@ -584,7 +587,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         postConnectionStalenessCheckRef.current = setTimeout(() => {
           if (lastDataTime.current === 0) {
-            logger.warn('No data received within 5s of connection. Reconnecting.')
+            logger.warn(
+              'No data received within 5s of connection. Reconnecting.'
+            )
             handleStaleConnection()
           }
         }, 5000)
