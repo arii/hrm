@@ -57,23 +57,12 @@ const useSpotifyWebPlayback = () => {
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [deviceId, setDeviceId] = useState<string | null>(null)
-  /**
-   * Manages the Spotify player initialization lifecycle to prevent thrashing.
-   * - `idle`: The default state, waiting for conditions to be met.
-   * - `initializing`: The SDK is loading or the player is being created.
-   * - `ready`: The player has successfully initialized and is ready to be used.
-   * - `failed`: A non-recoverable error occurred during initialization.
-   */
   const [initStatus, setInitStatus] = useState<
     'idle' | 'initializing' | 'ready' | 'failed'
   >('idle')
   const { addError } = useError()
   const { status } = useSpotifyAuth()
 
-  /**
-   * Fetches the Spotify OAuth token from our secure backend API.
-   * This function is passed to the Spotify Player constructor.
-   */
   const getOAuthToken = useCallback(
     async (cb: (token: string) => void) => {
       try {
@@ -90,47 +79,31 @@ const useSpotifyWebPlayback = () => {
           `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
         )
 
-        // If the error is a 401 Unauthorized, it likely means the session is
-        // invalid or expired. The Spotify SDK will cache this failing token
-        // and stop asking for a new one. To force a re-auth flow, we must
-        // sign the user out, which will clear the session and prompt a new login.
         if (appError.code === 'HTTP_ERROR_401') {
-          setInitStatus('failed') // <-- Circuit breaker
+          setInitStatus('failed')
           console.warn(
             '[Spotify Web Playback] Received 401, signing out to force re-authentication.'
           )
           addError('Spotify session expired. Please log in again.', {
             persist: true,
           })
-          // Note: This is a redundant sign-out trigger. The `useSpotifyAuth`
-          // hook also handles the `RefreshAccessTokenError` and initiates a
-          // sign-out. While this is a safeguard, a future refactor could
-          // streamline this to rely on a single source of truth for session
-          // validity.
           await signOut()
         } else {
           setInitStatus('failed')
-          // For other errors, show a non-persistent error message to the user.
           addError(`Failed to authenticate with Spotify: ${appError.message}`, {
             persist: false,
           })
         }
-        // The SDK might retry on its own for certain errors.
       }
     },
     [addError, setInitStatus]
   )
 
-  // Effect to load the Spotify SDK script and initialize the player
   useEffect(() => {
-    // This is the "circuit breaker". It ensures that we only try to initialize
-    // the Spotify player if the user is authenticated and we haven't already
-    // started the process.
     if (status !== 'authenticated' || initStatus !== 'idle') {
       return
     }
 
-    // Mark as initializing to prevent this effect from running again.
     setInitStatus('initializing')
 
     const initializeSDK = () => {
@@ -140,8 +113,6 @@ const useSpotifyWebPlayback = () => {
         script.src = 'https://sdk.scdn.co/spotify-player.js'
         script.async = true
         document.body.appendChild(script)
-        // The SDK will call the global onSpotifyWebPlaybackSDKReady function
-        // once it's loaded.
       } else {
         console.log('[Spotify Web Playback] Spotify SDK already loaded')
         initializePlayer()
@@ -149,7 +120,6 @@ const useSpotifyWebPlayback = () => {
     }
 
     const initializePlayer = () => {
-      // Don't re-initialize if a player instance already exists
       if (player) {
         return
       }
@@ -161,7 +131,6 @@ const useSpotifyWebPlayback = () => {
         volume: 0.5,
       })
 
-      // --- Player Event Listeners ---
       spotifyPlayer.addListener('ready', ({ device_id }) => {
         console.log('[Spotify Web Playback] Ready with Device ID', device_id)
         setDeviceId(device_id)
@@ -213,19 +182,16 @@ const useSpotifyWebPlayback = () => {
       })
     }
 
-    // The SDK script will call this global function once loaded.
     window.onSpotifyWebPlaybackSDKReady = initializePlayer
 
     initializeSDK()
 
-    // Cleanup function
     return () => {
       if (player) {
         console.log('[Spotify Web Playback] Disconnecting player on cleanup')
         player.disconnect()
         setPlayer(null)
       }
-      // It's important to clean up the global callback as well.
       window.onSpotifyWebPlaybackSDKReady = () => {}
     }
   }, [status, initStatus, getOAuthToken, addError, player])
