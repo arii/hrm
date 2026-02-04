@@ -2,7 +2,10 @@
  * @jest-environment jsdom
  */
 import { renderHook, act, waitFor } from '@testing-library/react'
-import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
+import useBluetoothHRM, {
+  HEARTBEAT_INTERVAL_MS,
+  POST_CONNECTION_GRACE_PERIOD_MS,
+} from '@/hooks/useBluetoothHRM'
 import * as WebSocketContext from '@/context/WebSocketContext'
 import * as cookieUtils from '@/utils/cookies'
 import { env } from '@/lib/env'
@@ -661,7 +664,9 @@ describe('useBluetoothHRM', () => {
       setTimeoutSpy.mockRestore()
     })
 
-    it('reconnects after 5s if connected but no data received', async () => {
+    it(`reconnects after ${
+      POST_CONNECTION_GRACE_PERIOD_MS / 1000
+    }s if connected but no data received`, async () => {
       const { result } = renderHook(() => useBluetoothHRM())
 
       // Connect without sending data
@@ -674,7 +679,7 @@ describe('useBluetoothHRM', () => {
 
       // After 5s grace period
       await act(async () => {
-        jest.advanceTimersByTime(5001)
+        jest.advanceTimersByTime(POST_CONNECTION_GRACE_PERIOD_MS + 1)
       })
 
       expect(mockGatt.disconnect).toHaveBeenCalledTimes(1)

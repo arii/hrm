@@ -32,6 +32,7 @@ const ROLLING_AVG_HISTORY_LENGTH = 5
 const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
 const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 export const HEARTBEAT_INTERVAL_MS = 1000 // Exported for testing purposes
+export const POST_CONNECTION_GRACE_PERIOD_MS = 5000
 
 // Parses the heart rate value from the raw DataView received from a BLE device.
 const parseHeartRate = (value: DataView): number => {
@@ -589,11 +590,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         postConnectionStalenessCheckRef.current = setTimeout(() => {
           if (lastDataTime.current === 0) {
             logger.warn(
-              'No data received within 5s of connection. Reconnecting.'
+              `No data received within ${
+                POST_CONNECTION_GRACE_PERIOD_MS / 1000
+              }s of connection. Reconnecting.`
             )
             handleStaleConnection()
           }
-        }, 5000)
+        }, POST_CONNECTION_GRACE_PERIOD_MS)
 
         resetStalenessTimer()
         onConnectRef.current?.()
