@@ -33,6 +33,8 @@ const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
 const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 export const HEARTBEAT_INTERVAL_MS = 1000 // Exported for testing purposes
 export const POST_CONNECTION_GRACE_PERIOD_MS = 5000
+const GATT_CONNECT_TIMEOUT_MS = 30000
+const MAX_GATT_CONNECTION_RETRIES = 3
 
 // Parses the heart rate value from the raw DataView received from a BLE device.
 const parseHeartRate = (value: DataView): number => {
@@ -441,12 +443,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         let server: BluetoothRemoteGATTServer | undefined
         let attempt = 0
-        const maxRetries = 3
 
         while (true) {
           try {
             server = await cancellablePromise(device.gatt!.connect(), {
-              timeoutMs: 30000,
+              timeoutMs: GATT_CONNECT_TIMEOUT_MS,
               errorMessage: 'GATT connection timeout',
               signal: abortControllerRef.current.signal,
             })
@@ -465,7 +466,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
             if (
               isZombieError &&
-              attempt < maxRetries &&
+              attempt < MAX_GATT_CONNECTION_RETRIES &&
               !abortControllerRef.current.signal.aborted
             ) {
               attempt++
@@ -477,7 +478,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               )
               setStatus(BluetoothConnectionStatus.CONNECTING)
               setCustomStatusMessage(
-                BLUETOOTH_MESSAGES.deviceBusy(delayMs, attempt, maxRetries)
+                BLUETOOTH_MESSAGES.deviceBusy(
+                  delayMs,
+                  attempt,
+                  MAX_GATT_CONNECTION_RETRIES
+                )
               )
 
               await new Promise((resolve) => setTimeout(resolve, delayMs))
