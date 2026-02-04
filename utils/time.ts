@@ -1,8 +1,3 @@
-/**
- * Formats a timestamp into a human-readable "time ago" string.
- * @param timestamp The timestamp to format (in milliseconds).
- * @returns A string representing the time elapsed (e.g., "5s ago", "1m ago").
- */
 export const formatTimeAgo = (timestamp: number): string => {
   const now = Date.now()
   const secondsAgo = Math.floor((now - timestamp) / 1000)
