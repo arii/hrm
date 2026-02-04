@@ -13,6 +13,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Create Test Branch and PR
         id: create_pr
@@ -47,7 +48,7 @@ jobs:
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
           sleep 10
-          gh pr checks $PR_NUMBER --watch
+          timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash
         env:
@@ -57,7 +58,7 @@ jobs:
           set -e
           git fetch origin $BRANCH_NAME
           git checkout $BRANCH_NAME
-          COMMIT_COUNT=$(git rev-list --count HEAD ^leader)
+          COMMIT_COUNT=$(git rev-list --count HEAD ^origin/leader)
           if [ "$COMMIT_COUNT" -eq 1 ]; then
             echo "✅ Squash successful: Branch has 1 commit."
           else
@@ -92,23 +93,43 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          # Create two branches from the same commit
-          git checkout -b branch-a
-          echo "initial content" > conflict-file.txt
-          git add conflict-file.txt
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -m "Initial commit"
-          git push origin branch-a
 
-          git checkout -b branch-b
+          # Use a unique identifier for branch names to avoid concurrency issues
+          UNIQUE_ID=${{ github.run_id }}
+          BRANCH_A="branch-a-$UNIQUE_ID"
+          BRANCH_B="branch-b-$UNIQUE_ID"
+          BASE_BRANCH="base-branch-$UNIQUE_ID"
+
+          echo "BRANCH_A=$BRANCH_A" >> $GITHUB_ENV
+          echo "BRANCH_B=$BRANCH_B" >> $GITHUB_ENV
+          echo "BASE_BRANCH=$BASE_BRANCH" >> $GITHUB_ENV
+
+          # Create a base commit with a file
+          git checkout -b $BASE_BRANCH
+          echo "initial content" > conflict-file.txt
+          git add conflict-file.txt
+          git commit -m "Create conflict-file.txt"
+          git push origin $BASE_BRANCH
+
+          # Create branch A with a modification
+          git checkout -b $BRANCH_A
+          echo "branch-a content" > conflict-file.txt
+          git add conflict-file.txt
+          git commit -m "Modify conflict-file.txt in branch-a"
+          git push origin $BRANCH_A
+
+          # Create branch B from the base, with a conflicting modification
+          git checkout $BASE_BRANCH
+          git checkout -b $BRANCH_B
           echo "branch-b content" > conflict-file.txt
           git add conflict-file.txt
-          git commit -m "Commit on branch-b"
-          git push origin branch-b
+          git commit -m "Modify conflict-file.txt in branch-b"
+          git push origin $BRANCH_B
 
           # Create a pull request to trigger the conflict resolver
-          PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base branch-a --head branch-b)
+          PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base $BRANCH_A --head $BRANCH_B)
           PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
@@ -123,20 +144,20 @@ jobs:
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
           sleep 10
-          gh pr checks $PR_NUMBER --watch
+          timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Conflict Resolution
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          git fetch origin branch-a
-          git checkout branch-a
-          # Check if the conflict is resolved
-          if git cat-file -e HEAD:conflict-file.txt; then
-            echo "✅ Conflict resolved: conflict-file.txt exists."
+          git fetch origin $BRANCH_A
+          git checkout $BRANCH_A
+          # Check if the conflict is resolved by verifying the content
+          if grep -q "branch-b content" conflict-file.txt; then
+            echo "✅ Conflict resolved: conflict-file.txt has the correct content."
           else
-            echo "❌ Conflict resolution failed: conflict-file.txt not found."
+            echo "❌ Conflict resolution failed: conflict-file.txt has incorrect content."
             exit 1
           fi
 
@@ -149,8 +170,9 @@ jobs:
           set -e
           echo "Cleaning up PR and branches..."
           gh pr close $PR_NUMBER
-          git push origin --delete branch-a
-          git push origin --delete branch-b
+          git push origin --delete $BRANCH_A
+          git push origin --delete $BRANCH_B
+          git push origin --delete $BASE_BRANCH
 
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
@@ -159,6 +181,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Create Test Branch and PR
         id: create_pr
@@ -193,7 +216,7 @@ jobs:
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
           sleep 10
-          gh pr checks $PR_NUMBER --watch
+          timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash and Rebase
         env:
@@ -203,7 +226,7 @@ jobs:
           set -e
           git fetch origin $BRANCH_NAME
           git checkout $BRANCH_NAME
-          COMMIT_COUNT=$(git rev-list --count HEAD ^leader)
+          COMMIT_COUNT=$(git rev-list --count HEAD ^origin/leader)
           if [ "$COMMIT_COUNT" -eq 1 ]; then
             echo "✅ Squash and rebase successful: Branch has 1 commit."
           else
@@ -211,7 +234,7 @@ jobs:
             exit 1
           fi
           # Verify that the branch is rebased on top of leader
-          if git merge-base --is-ancestor leader HEAD; then
+          if git merge-base --is-ancestor origin/leader HEAD; then
             echo "✅ Branch is rebased on top of leader."
           else
             echo "❌ Branch is not rebased on top of leader."
