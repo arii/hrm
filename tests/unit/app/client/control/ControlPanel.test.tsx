@@ -46,15 +46,11 @@ jest.mock('next/dynamic', () => () => {
 describe('ControlPanel Component', () => {
   it('should match snapshot', async () => {
     const theme = createTheme()
-    let asFragment
-    await act(async () => {
-      const { asFragment: frag } = render(
-        <ThemeProvider theme={theme}>
-          <ControlPanel />
-        </ThemeProvider>
-      )
-      asFragment = frag
-    })
+    const { asFragment } = render(
+      <ThemeProvider theme={theme}>
+        <ControlPanel />
+      </ThemeProvider>
+    )
     expect(asFragment()).toMatchSnapshot()
   })
 })

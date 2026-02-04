@@ -469,7 +469,7 @@ describe('useBluetoothHRM', () => {
       }
     })
 
-    it('should use the setTimeout-based staleness detection', async () => {
+    it('detects stale data using setTimeout reset pattern', async () => {
       const dataLivenessTimeoutMs = 5000
       const { result } = renderHook(() =>
         useBluetoothHRM({ dataLivenessTimeoutMs })
@@ -537,7 +537,7 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.disconnect).toHaveBeenCalledTimes(1)
     })
 
-    it(`should attempt to reconnect on disconnection and give up after ${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS} attempts`, async () => {
+    it(`reconnects until ${env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS} attempts, then forgets device`, async () => {
       const { result } = renderHook(() => useBluetoothHRM())
 
       // First connection is successful
@@ -611,7 +611,7 @@ describe('useBluetoothHRM', () => {
       )
     })
 
-    it('should respect the maxReconnectDelayMs prop', async () => {
+    it('caps exponential backoff at maxReconnectDelayMs', async () => {
       const maxReconnectDelayMs = 2500 // 2.5 seconds
       const { result } = renderHook(() =>
         useBluetoothHRM({ maxReconnectDelayMs })
@@ -661,11 +661,10 @@ describe('useBluetoothHRM', () => {
       setTimeoutSpy.mockRestore()
     })
 
-    it('should trigger post-connection staleness check if no data is received', async () => {
+    it('reconnects after 5s if connected but no data received', async () => {
       const { result } = renderHook(() => useBluetoothHRM())
 
-      // We simulate a successful connection, but we DO NOT simulate any
-      // characteristicvaluechanged events.
+      // Connect without sending data
       await act(async () => {
         await result.current.connectAndStream()
       })
@@ -673,18 +672,17 @@ describe('useBluetoothHRM', () => {
       expect(result.current.isConnected).toBe(true)
       expect(mockGatt.disconnect).not.toHaveBeenCalled()
 
-      // Advance the timer past the 5-second grace period
+      // After 5s grace period
       await act(async () => {
         jest.advanceTimersByTime(5001)
       })
 
-      // The disconnect should now have been called by the failsafe
       expect(mockGatt.disconnect).toHaveBeenCalledTimes(1)
       expect(result.current.isDataStale).toBe(true)
       expect(result.current.deviceStatus).toMatch(/reconnecting/i)
     })
 
-    it('should not attempt to reconnect after a manual disconnect', async () => {
+    it('does not reconnect after manual disconnect', async () => {
       const { result } = renderHook(() => useBluetoothHRM())
 
       await act(async () => {
