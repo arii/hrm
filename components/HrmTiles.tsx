@@ -10,6 +10,7 @@ import { useMemo, useState, useEffect } from 'react'
 import {
   STALE_TILE_DISPLAY_THRESHOLD_MS,
   STALE_TILE_REMOVAL_THRESHOLD_MS,
+  STALE_CHECK_INTERVAL_MS,
 } from '@/utils/constants'
 
 const HrmTiles = () => {
@@ -17,7 +18,10 @@ const HrmTiles = () => {
   const [now, setNow] = useState<number>(() => Date.now())
 
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 10000)
+    const interval = setInterval(
+      () => setNow(Date.now()),
+      STALE_CHECK_INTERVAL_MS
+    )
     return () => clearInterval(interval)
   }, [])
 
