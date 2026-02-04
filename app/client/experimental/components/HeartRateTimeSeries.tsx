@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useCallback } from 'react'
+import React, { useMemo, useCallback } from 'react'
 import {
   Card,
   CardContent,
@@ -21,30 +21,27 @@ import {
   ReferenceArea,
   Label,
 } from 'recharts'
-import { format } from 'date-fns' // Ensure date-fns is installed
+import { format } from 'date-fns'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
 
-// Accessibility: High contrast colors for zones (WCAG AA compliant when used as background)
 const getZoneColors = (theme: Theme) => ({
-  zone1: alpha(theme.palette.secondary.main, 0.3), // Blue - Warm Up
-  zone2: alpha(theme.palette.success.main, 0.3), // Green - Fat Burn
-  zone3: alpha(theme.palette.warning.main, 0.3), // Yellow - Cardio
-  zone4: alpha(theme.palette.error.main, 0.3), // Red - Peak
-  zone5: alpha(theme.palette.primary.main, 0.3), // Purple - Max
+  zone1: alpha(theme.palette.secondary.main, 0.3),
+  zone2: alpha(theme.palette.success.main, 0.3),
+  zone3: alpha(theme.palette.warning.main, 0.3),
+  zone4: alpha(theme.palette.error.main, 0.3),
+  zone5: alpha(theme.palette.primary.main, 0.3),
 })
 
 interface HeartRateDataPoint {
-  time: number // Unix timestamp
+  time: number
   hr: number
 }
 
 interface HeartRateTimeSeriesProps {
   data: HeartRateDataPoint[]
-  maxHr?: number // Allow passing maxHr for accurate zones
+  maxHr?: number
 }
-
-import React from 'react'
 
 const HeartRateTimeSeriesBase = ({
   data,
@@ -70,7 +67,6 @@ const HeartRateTimeSeriesBase = ({
     return [null, null]
   }, [])
 
-  // Calculate zone boundaries based on Max HR
   const zones = useMemo(
     () => ({
       z1: maxHr * 0.5,
@@ -83,7 +79,6 @@ const HeartRateTimeSeriesBase = ({
     [maxHr]
   )
 
-  // Accessibility: Chart description for screen readers
   const chartDescription = useMemo(() => {
     if (data.length === 0) return 'Heart rate chart with no data.'
     let minHr = data[0]!.hr
@@ -119,7 +114,7 @@ const HeartRateTimeSeriesBase = ({
             <LineChart
               data={data}
               margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
-              accessibilityLayer // Recharts v2.10+ feature
+              accessibilityLayer
             >
               {/* Background Zones */}
               <ReferenceArea
@@ -155,14 +150,10 @@ const HeartRateTimeSeriesBase = ({
 
               <defs>
                 <linearGradient id="colorHr" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="#9C27B0" // Purple - Max Intensity
-                    stopOpacity={0.8}
-                  />
+                  <stop offset="5%" stopColor="#9C27B0" stopOpacity={0.8} />
                   <stop
                     offset="95%"
-                    stopColor={theme.palette.secondary.main} // Blue - Low Intensity
+                    stopColor={theme.palette.secondary.main}
                     stopOpacity={0.8}
                   />
                 </linearGradient>
@@ -185,7 +176,7 @@ const HeartRateTimeSeriesBase = ({
               </XAxis>
 
               <YAxis
-                domain={['dataMin - 10', zones.max + 10]} // Auto-scale but keep context
+                domain={['dataMin - 10', zones.max + 10]}
                 stroke={theme.palette.text.secondary}
                 style={{ fontSize: '0.75rem' }}
                 width={40}
@@ -204,7 +195,7 @@ const HeartRateTimeSeriesBase = ({
                   border: `1px solid ${theme.palette.divider}`,
                   borderRadius: 4,
                 }}
-                labelFormatter={tooltipLabelFormatter} // Localized time
+                labelFormatter={tooltipLabelFormatter}
                 formatter={tooltipValueFormatter}
               />
 
@@ -215,7 +206,7 @@ const HeartRateTimeSeriesBase = ({
                 strokeWidth={3}
                 dot={false}
                 activeDot={{ r: 6, strokeWidth: 0 }}
-                isAnimationActive={false} // Disable animation for real-time performance
+                isAnimationActive={false}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -234,7 +225,6 @@ export const ConnectedHeartRateChart = ({
 }) => {
   const [preferences] = useUserSettings()
 
-  // Pass the user's specific Max HR to the chart
   return (
     <HeartRateTimeSeries
       data={data}

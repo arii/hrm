@@ -10,7 +10,6 @@ import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 
-// 1. Update Interface
 interface UserSettingsProps {
   userName: string
   setUserName: (name: string) => void
@@ -54,7 +53,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   maxHr,
   setMaxHr,
 }) => {
-  // Auto-calculate handler
   const handleAutoCalculate = () => {
     const ageNum = parseInt(userAge, 10)
     if (!isNaN(ageNum)) {
@@ -64,7 +62,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
 
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
-      {/* ... Existing Name/Age Inputs ... */}
       <TextField
         fullWidth
         label="Your Name"
@@ -88,7 +85,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         helperText={ageError}
         inputProps={{ min: 1, max: 120 }}
       />
-      {/* NEW: Max Heart Rate Input */}
       <TextField
         fullWidth
         label="Max Heart Rate"
@@ -99,7 +95,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
-              <Tooltip title="Calculate based on Age (220 - Age)">
+              <Tooltip title="Auto-calculate from age">
                 <IconButton onClick={handleAutoCalculate} edge="end">
                   <AutoFixHighIcon />
                 </IconButton>
@@ -190,8 +186,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         error={!!weightError}
         helperText={weightError}
       />
-
-      {/* ... Rest of existing inputs ... */}
     </Stack>
   )
 }
