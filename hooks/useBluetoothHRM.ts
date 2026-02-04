@@ -468,7 +468,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               !abortControllerRef.current.signal.aborted
             ) {
               attempt++
-              const delayMs = Math.pow(2, attempt) * 1000
+              const exponentialDelay = Math.pow(2, attempt) * 1000
+              const delayMs = Math.min(exponentialDelay, maxReconnectDelayMs)
               logger.warn(
                 { device: device.name, attempt, delayMs, errorMsg },
                 'Android zombie connection. Retrying.'
@@ -667,6 +668,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       updateSignalPeriod,
       resetStalenessTimer,
       handleStaleConnection,
+      maxReconnectDelayMs,
     ]
   )
 
