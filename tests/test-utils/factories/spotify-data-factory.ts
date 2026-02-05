@@ -42,7 +42,6 @@ export const createMockSpotifyData = (
       is_active: false,
     }),
   ],
-  volume: 50,
-  isMuted: false,
+  volumePercent: 50,
   ...overrides,
 })

@@ -5,41 +5,10 @@ import { useError } from '@/context/ErrorContext'
 import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
 import { fetchWithRetry, AppError } from '@/utils/network'
 import { signOut } from 'next-auth/react'
-
-interface SpotifyDeviceEvent {
-  device_id: string
-}
-
-interface SpotifyErrorEvent {
-  message: string
-}
-
-// Define a minimal interface for the Spotify Player
-// This will be expanded as we integrate more features.
-interface SpotifyPlayer {
-  connect: () => Promise<boolean>
-  disconnect: () => void
-  setVolume: (volume: number) => Promise<void>
-  addListener(
-    event: 'ready' | 'not_ready',
-    callback: (data: SpotifyDeviceEvent) => void
-  ): void
-  addListener(
-    event: 'initialization_error' | 'authentication_error' | 'account_error',
-    callback: (data: SpotifyErrorEvent) => void
-  ): void
-  removeListener: (event: string) => void
-  _options: {
-    id: string
-    name: string
-  }
-}
-
-interface SpotifyPlayerOptions {
-  name: string
-  getOAuthToken: (cb: (token: string) => void) => void
-  volume: number
-}
+import {
+  SpotifyPlayer,
+  SpotifyPlayerOptions,
+} from '@/types/spotify-web-playback'
 
 // Define the structure for the window object to include the Spotify SDK properties
 declare global {

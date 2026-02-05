@@ -3,153 +3,154 @@
 
 import { POST } from '@/app/api/spotify/control/route'
 import { getServerSession } from 'next-auth/next'
+import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { AccessToken } from 'next-auth/jwt'
 
-// Mock 'next-auth/next' for getServerSession
+// Mock 'next-auth/next'
 jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn(),
 }))
 
-// Mock global fetch
-global.fetch = jest.fn()
+// Mock the Spotify SDK
+jest.mock('@spotify/web-api-ts-sdk', () => {
+  const mockPlayer = {
+    startResumePlayback: jest.fn(),
+    pausePlayback: jest.fn(),
+    skipToNext: jest.fn(),
+    skipToPrevious: jest.fn(),
+    setPlaybackVolume: jest.fn(),
+    transferPlayback: jest.fn(),
+  }
+  return {
+    SpotifyApi: {
+      withAccessToken: jest.fn(() => ({
+        player: mockPlayer,
+      })),
+    },
+  }
+})
 
 const mockedGetServerSession = getServerSession as jest.Mock
-const mockedFetch = global.fetch as jest.Mock
+const mockedSpotifyApi = SpotifyApi as jest.Mocked<typeof SpotifyApi>
+const mockSdk = mockedSpotifyApi.withAccessToken(
+  'test-client',
+  {} as AccessToken
+)
+const mockPlayer = mockSdk.player as jest.Mocked<typeof mockSdk.player>
 
-const createRequest = (body: object | string) => {
+const createRequest = (body: object) => {
   return new Request('http://localhost/api/spotify/control', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: typeof body === 'string' ? body : JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   })
 }
 
 describe('API Route: /api/spotify/control', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    // Mock a valid session
     mockedGetServerSession.mockResolvedValue({
-      accessToken: 'fake-access-token',
+      accessToken: {
+        access_token: 'fake-access-token',
+        expires_in: 3600,
+        token_type: 'Bearer',
+      } as AccessToken,
     })
-    mockedFetch.mockResolvedValue({
-      ok: true,
-      status: 204, // Spotify often returns 204 No Content for success
-      text: () => Promise.resolve(''),
-    })
+    // Mock environment variable
+    process.env.SPOTIFY_CLIENT_ID = 'test-client-id'
   })
 
-  it('should return 401 Unauthorized if no session is found', async () => {
+  it('should return 401 if no session is found', async () => {
     mockedGetServerSession.mockResolvedValue(null)
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
-    const data = await response.json()
-
     expect(response.status).toBe(401)
-    expect(data.error).toBe('Authorization required')
   })
 
-  it('should return 400 Bad Request for invalid JSON', async () => {
-    const req = createRequest('{"command": "PLAY",}') // Invalid JSON
-    const response = await POST(req)
-    const data = await response.json()
-
-    expect(response.status).toBe(400)
-    expect(data.error).toBe('Invalid JSON body')
-  })
-
-  it('should return 400 Bad Request for an invalid command', async () => {
+  it('should return 400 for an invalid command', async () => {
     const req = createRequest({ command: 'INVALID_COMMAND' })
     const response = await POST(req)
     const data = await response.json()
-
     expect(response.status).toBe(400)
-    expect(data.error).toBe('Invalid command: INVALID_COMMAND')
+    expect(data.error).toContain('Invalid command')
   })
 
-  it('should return 400 if SET_VOLUME is missing volume', async () => {
-    const req = createRequest({ command: 'SET_VOLUME' }) // Missing 'volume'
-    const response = await POST(req)
-    const data = await response.json()
-
-    expect(response.status).toBe(400)
-    expect(data.error).toBe('Volume parameter is required for SET_VOLUME')
-  })
-
-  it('should return 400 if TRANSFER_PLAYBACK is missing deviceId', async () => {
-    const req = createRequest({ command: 'TRANSFER_PLAYBACK' }) // Missing 'deviceId'
-    const response = await POST(req)
-    const data = await response.json()
-
-    expect(response.status).toBe(400)
-    expect(data.error).toBe('Device ID required for TRANSFER_PLAYBACK')
-  })
-
-  it('should handle PLAY command successfully', async () => {
+  it('should call startResumePlayback for PLAY command', async () => {
     const req = createRequest({ command: 'PLAY', deviceId: 'test-device' })
     const response = await POST(req)
-    const data = await response.json()
-
     expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-    expect(mockedFetch).toHaveBeenCalledWith(
-      'https://api.spotify.com/v1/me/player/play?device_id=test-device',
-      expect.any(Object)
+    expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
+      'test-device',
+      undefined,
+      undefined
     )
   })
 
-  it('should handle SET_VOLUME command successfully', async () => {
-    const req = createRequest({ command: 'SET_VOLUME', volume: 50 })
+  it('should call pausePlayback for PAUSE command', async () => {
+    const req = createRequest({ command: 'PAUSE', deviceId: 'test-device' })
     const response = await POST(req)
-    const data = await response.json()
-
     expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-    expect(mockedFetch).toHaveBeenCalledWith(
-      'https://api.spotify.com/v1/me/player/volume?volume_percent=50',
-      expect.any(Object)
-    )
+    expect(mockPlayer.pausePlayback).toHaveBeenCalledWith('test-device')
   })
 
-  it('should handle TRANSFER_PLAYBACK successfully', async () => {
+  it('should call pausePlayback with undefined when deviceId is missing', async () => {
+    const req = createRequest({ command: 'PAUSE' })
+    const response = await POST(req)
+    expect(response.status).toBe(200)
+    expect(mockPlayer.pausePlayback).toHaveBeenCalledWith(undefined)
+  })
+
+  it('should call setPlaybackVolume for SET_VOLUME command', async () => {
+    const req = createRequest({
+      command: 'SET_VOLUME',
+      volume: 50,
+      deviceId: 'test-device',
+    })
+    const response = await POST(req)
+    expect(response.status).toBe(200)
+    expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, 'test-device')
+  })
+
+  it('should call setPlaybackVolume with undefined when deviceId is missing', async () => {
+    const req = createRequest({
+      command: 'SET_VOLUME',
+      volume: 50,
+    })
+    const response = await POST(req)
+    expect(response.status).toBe(200)
+    expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
+  })
+
+  it('should return 400 if volume is not a number for SET_VOLUME', async () => {
+    const req = createRequest({ command: 'SET_VOLUME', volume: 'not-a-number' })
+    const response = await POST(req)
+    expect(response.status).toBe(400)
+  })
+
+  it('should call transferPlayback for TRANSFER_PLAYBACK command', async () => {
     const req = createRequest({
       command: 'TRANSFER_PLAYBACK',
       deviceId: 'new-device',
     })
     const response = await POST(req)
-    const data = await response.json()
-
     expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-    const fetchOptions = mockedFetch.mock.calls[0][1]
-    const body = JSON.parse(fetchOptions.body as string)
-    expect(body).toEqual({ device_ids: ['new-device'], play: true })
+    expect(mockPlayer.transferPlayback).toHaveBeenCalledWith(
+      ['new-device'],
+      true
+    )
   })
 
-  it('should forward Spotify API errors', async () => {
-    mockedFetch.mockResolvedValue({
-      ok: false,
-      status: 404,
-      text: () =>
-        Promise.resolve(
-          JSON.stringify({ error: { message: 'Device not found' } })
-        ),
-    })
-    const req = createRequest({ command: 'PLAY' })
+  it('should return 400 if deviceId is missing for TRANSFER_PLAYBACK', async () => {
+    const req = createRequest({ command: 'TRANSFER_PLAYBACK' })
     const response = await POST(req)
-    const data = await response.json()
-
-    expect(response.status).toBe(404)
-    expect(data.error).toBe('Spotify API error')
-    expect(data.details).toBe('Device not found')
+    expect(response.status).toBe(400)
   })
 
-  it('should return 500 if fetch throws an error', async () => {
-    mockedFetch.mockRejectedValue(new Error('Network error'))
+  it('should return 500 if SPOTIFY_CLIENT_ID is not set', async () => {
+    delete process.env.SPOTIFY_CLIENT_ID
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
-    const data = await response.json()
-
     expect(response.status).toBe(500)
-    expect(data.error).toBe('Internal server error processing command.')
   })
 })

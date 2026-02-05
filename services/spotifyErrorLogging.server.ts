@@ -1,4 +1,4 @@
-import logger from '../utils/logger'
+import logger from '../utils/logger.server.js'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -77,4 +77,32 @@ export async function logSpotifyCommandError(
     )
     logger.error({ command, originalError: error }, 'Original error')
   }
+}
+
+/**
+ * Logs a Spotify API error without returning a response.
+ * Useful for background services that don't respond to HTTP requests.
+ * @param error The error object.
+ */
+export function logSpotifyApiError(error: unknown): void {
+  const spotifyError = error as {
+    status?: number
+    message?: string
+    cause?: { reason?: string }
+  }
+
+  if (spotifyError && spotifyError.status) {
+    logger.error(
+      {
+        status: spotifyError.status,
+        message: spotifyError.message,
+        reason: spotifyError.cause?.reason,
+      },
+      'Spotify API Error'
+    )
+    return
+  }
+
+  // Handle non-SDK errors
+  logger.error({ error }, 'Internal Server Error')
 }
