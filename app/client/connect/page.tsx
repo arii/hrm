@@ -125,13 +125,6 @@ export default function ConnectPage() {
     userWeight: userWeight || 70,
   })
 
-  const {
-    addHrData,
-    startWorkout: startPersistentWorkout,
-    endWorkout: endPersistentWorkout,
-    resetWorkout: resetPersistentWorkout,
-  } = useWorkoutSessionManager()
-
   const handleStartWorkout = useCallback(() => {
     startWorkout()
   }, [startWorkout])
@@ -142,10 +135,8 @@ export default function ConnectPage() {
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
-  }, [endWorkout])
-    endPersistentWorkout()
-    resetCalculator() // Reset calories on workout end
-  }, [endWorkout, endPersistentWorkout, resetCalculator])
+    resetCalculator()
+  }, [endWorkout, resetCalculator])
 
   const handleResetWorkout = useCallback(() => {
     resetWorkoutSession()
@@ -161,17 +152,7 @@ export default function ConnectPage() {
       setCurrentHR(heartRate)
       if (workoutStatus === 'running') {
         processHeartRate(heartRate)
-
-        // Persist individual HR data points to IndexedDB
         addHrData(heartRate)
-
-      if (workoutStatus === 'running') {
-        processHeartRate(heartRate)
-
-        addHrData({
-          time: Date.now(),
-          hr: heartRate,
-        })
       }
     },
     [processHeartRate, workoutStatus, setCurrentHR, addHrData]
@@ -204,7 +185,6 @@ export default function ConnectPage() {
   }, [isConnected, workoutStatus, handlePauseWorkout])
 
   useEffect(() => {
-    if (!isConnected && isSupported && connectionStatus === 'Connected') {
     if (
       !isConnected &&
       isSupported &&

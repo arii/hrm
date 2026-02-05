@@ -1,6 +1,9 @@
 // hooks/useWorkoutSession.ts
-import { useEffect, useReducer, useCallback, useMemo } from 'react'
-import { workoutSessionStorage } from '@/lib/workout-session-storage'
+import { useEffect, useReducer, useCallback, useMemo, useRef } from 'react'
+import {
+  workoutSessionStorage,
+  HrDataPoint,
+} from '@/lib/workout-session-storage'
 import { v4 as uuidv4 } from 'uuid'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 import { calculateHrZone } from '@/lib/hrm/zones'
@@ -170,6 +173,9 @@ export const useWorkoutSession = ({
   // Initialize from storage instead of default initialState
   const [state, dispatch] = useReducer(sessionReducer, initialState, loadState)
 
+  // Buffer for HR data points to reduce IndexedDB writes
+  const hrDataBuffer = useRef<HrDataPoint[]>([])
+
   // Side Effect: Save to Storage
   // Move side effects out of the reducer to maintain purity.
   useEffect(() => {
@@ -210,6 +216,67 @@ export const useWorkoutSession = ({
       if (interval) clearInterval(interval)
     }
   }, [state.status, state.startTime, state.totalPaused])
+
+  const flushData = useCallback(async () => {
+    if (hrDataBuffer.current.length === 0 || !state.sessionId) return
+
+    const bufferToFlush = [...hrDataBuffer.current]
+    hrDataBuffer.current = [] // Clear buffer immediately
+
+    try {
+      const session = await workoutSessionStorage.getSession(state.sessionId)
+      if (!session) return
+
+      const newHrHistory = [...session.hrHistory]
+      const newTimeInZones = { ...session.timeInZones }
+      let newMaxHr = session.maxHr
+      let currentAverageHr = session.averageHr
+      let currentCount = session.hrHistory.length
+
+      for (const point of bufferToFlush) {
+        const lastPoint =
+          newHrHistory.length > 0 ? newHrHistory[newHrHistory.length - 1] : null
+        const timeDelta = lastPoint ? (point.time - lastPoint.time) / 1000 : 1
+
+        const { zoneName } = calculateHrZone(
+          point.hr,
+          session.userSettings.maxHr
+        )
+        newTimeInZones[zoneName] = (newTimeInZones[zoneName] || 0) + timeDelta
+
+        newMaxHr = Math.max(newMaxHr, point.hr)
+        currentAverageHr =
+          (currentAverageHr * currentCount + point.hr) / (currentCount + 1)
+        currentCount++
+
+        newHrHistory.push(point)
+      }
+
+      await workoutSessionStorage.saveSession({
+        ...session,
+        hrHistory: newHrHistory,
+        timeInZones: newTimeInZones,
+        maxHr: newMaxHr,
+        averageHr: currentAverageHr,
+      })
+    } catch (e) {
+      console.error('Failed to flush HR data to storage', e)
+    }
+  }, [state.sessionId])
+
+  // Periodic flush
+  useEffect(() => {
+    if (state.status !== 'running') return
+
+    const interval = setInterval(() => {
+      flushData()
+    }, 30000) // Flush every 30 seconds
+
+    return () => {
+      clearInterval(interval)
+      flushData() // Flush on unmount/status change
+    }
+  }, [state.status, flushData])
 
   const resetWorkout = useCallback(() => {
     dispatch({ type: 'RESET' })
@@ -254,12 +321,14 @@ export const useWorkoutSession = ({
 
   const pauseWorkout = useCallback(() => {
     if (state.status === 'running') {
+      flushData()
       dispatch({ type: 'PAUSE_WORKOUT', payload: { now: Date.now() } })
     }
-  }, [state.status])
+  }, [state.status, flushData])
 
   const endWorkout = useCallback(async () => {
     if (state.status !== 'idle') {
+      await flushData()
       const now = Date.now()
       if (state.sessionId) {
         const session = await workoutSessionStorage.getSession(state.sessionId)
@@ -273,41 +342,12 @@ export const useWorkoutSession = ({
       }
       dispatch({ type: 'END_WORKOUT', payload: { now } })
     }
-  }, [state.status, state.sessionId])
+  }, [state.status, state.sessionId, flushData])
 
   const addHrData = useCallback(
-    async (hr: number) => {
+    (hr: number) => {
       if (state.status === 'running' && state.sessionId) {
-        const session = await workoutSessionStorage.getSession(state.sessionId)
-        if (session) {
-          const now = Date.now()
-          const dataPoint = { time: now, hr }
-
-          const lastDataPoint = session.hrHistory[session.hrHistory.length - 1]
-          const timeDelta = lastDataPoint
-            ? (now - lastDataPoint.time) / 1000
-            : 1
-
-          const { zoneName } = calculateHrZone(hr, session.userSettings.maxHr)
-          const newTimeInZones = {
-            ...session.timeInZones,
-            [zoneName]: (session.timeInZones[zoneName] || 0) + timeDelta,
-          }
-
-          const newHrHistory = [...session.hrHistory, dataPoint]
-          const newMaxHr = Math.max(session.maxHr, hr)
-          const newAverageHr =
-            (session.averageHr * session.hrHistory.length + hr) /
-            (session.hrHistory.length + 1)
-
-          await workoutSessionStorage.saveSession({
-            ...session,
-            hrHistory: newHrHistory,
-            maxHr: newMaxHr,
-            averageHr: newAverageHr,
-            timeInZones: newTimeInZones,
-          })
-        }
+        hrDataBuffer.current.push({ time: Date.now(), hr })
       }
     },
     [state.status, state.sessionId]
