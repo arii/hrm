@@ -158,7 +158,7 @@ export interface SpotifyPlaybackState {
   albumArtUrl: string
   isPlaying: boolean
   devices: SpotifyDevice[]
-  volume: number
+  volumePercent: number
   isMuted: boolean
 }
 
