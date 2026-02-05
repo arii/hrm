@@ -12,7 +12,11 @@ import {
   useReducer,
   useMemo,
 } from 'react'
-import { ClientCommandMessage, ServerMessage } from '../types/websocket'
+import {
+  ClientCommandMessage,
+  ServerMessage,
+  WebSocketState,
+} from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
 
@@ -22,7 +26,6 @@ interface TestControls {
   disconnect: () => void
   connect: () => void
 }
-import { INITIAL_STATE, WebSocketState } from './webSocketReducer'
 
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
@@ -34,6 +37,34 @@ export interface WebSocketContextType extends WebSocketState {
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
   disconnect: () => void
+}
+
+export const INITIAL_STATE: WebSocketState = {
+  hrmData: [],
+  timerData: {
+    isRunning: false,
+    currentPhase: 'IDLE',
+    timeRemaining: 0,
+    timeElapsed: 0,
+    caloriesBurned: 0,
+    mode: 'TABATA',
+    workDuration: 30,
+    restDuration: 10,
+    soundEventId: 0,
+  },
+  spotifyData: {
+    trackId: null,
+    trackName: 'Awaiting Login...',
+    artist: '',
+    albumName: '',
+    albumArtUrl: '',
+    isPlaying: false,
+    devices: [],
+    volume: 70,
+    isMuted: false,
+  },
+  activeAlerts: [],
+  spotifyServiceInitialized: false,
 }
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)

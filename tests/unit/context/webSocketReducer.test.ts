@@ -4,9 +4,9 @@
 import {
   reducer,
   INITIAL_STATE,
-  WebSocketState,
-} from '../../../context/webSocketReducer'
-import { ServerMessage } from '../../../types/websocket'
+  WebSocketContextType,
+} from '../../../context/WebSocketContext'
+import { ServerMessage, WebSocketState } from '../../../types/websocket'
 import { HrmStreamData } from '../../../types/core'
 
 describe('webSocketReducer', () => {

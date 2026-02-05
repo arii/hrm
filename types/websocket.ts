@@ -31,6 +31,11 @@ export interface InitialStateSnapshotPayload {
   spotifyServiceInitialized?: boolean
 }
 
+// Ensure WebSocketState is defined for the reducer state
+export interface WebSocketState extends InitialStateSnapshotPayload {
+  activeAlerts: ActiveAlert[]
+}
+
 export type StateSnapshot = Omit<InitialStateSnapshotPayload, 'hrmData'>
 
 export interface ActiveAlert {
