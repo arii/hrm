@@ -35,10 +35,19 @@ if [ -z "$REPO_ROOT" ]; then
 else
     SLOP_IGNORE_PATH="$REPO_ROOT/.slop-ignore"
     if [ -f "$SLOP_IGNORE_PATH" ]; then
-        IGNORE_PATTERNS=$(cat "$SLOP_IGNORE_PATH" | sed 's/#.*//' | sed '/^$/d' | tr '\n' ',' | sed 's/,$//')
-        if [ -n "$IGNORE_PATTERNS" ]; then
-            EXCLUDE_FILES="$EXCLUDE_FILES,$IGNORE_PATTERNS"
-        fi
+        while IFS= read -r pattern || [ -n "$pattern" ]; do
+            # Remove comments and trim whitespace
+            pattern=$(echo "$pattern" | sed 's/#.*//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [ -n "$pattern" ]; then
+                if [[ "$pattern" == */ ]]; then
+                    # It's a directory
+                    dir_pattern="${pattern%/}"
+                    EXCLUDE_DIRS="$EXCLUDE_DIRS,$dir_pattern"
+                else
+                    EXCLUDE_FILES="$EXCLUDE_FILES,$pattern"
+                fi
+            fi
+        done < "$SLOP_IGNORE_PATH"
     fi
 fi
 
