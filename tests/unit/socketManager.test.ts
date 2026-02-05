@@ -64,8 +64,8 @@ jest.mock('../../utils/logger.server.js', () => ({
 // Simplified MockWebSocket
 class MockWebSocket extends EventEmitter {
   isAlive = true
-  clientType?: string
-  clientId?: string
+  clientType?: 'dashboard' | 'controller'
+  clientId: string = '' // Initialize as required by ExtWebSocket
   terminate = jest.fn()
   ping = jest.fn()
   send = jest.fn()
@@ -145,14 +145,17 @@ describe('WebSocket Manager', () => {
     initSocketManager(mockWss, getSnapshot, mockServices)
     const mockReq = createMockRequest()
     mockWs = new MockWebSocket()
-    ;(mockWss.clients as unknown as Set<MockWebSocket>).add(mockWs)
+    // Type assertion removed as MockWebSocket now conforms to ExtWebSocket
+    ;(mockWss.clients as unknown as Set<ExtWebSocket>).add(
+      mockWs as ExtWebSocket
+    )
     mockWss.emit('connection', mockWs, mockReq)
   })
 
   afterEach(() => {
     jest.useRealTimers()
     jest.clearAllMocks()
-    ;(mockWss.clients as unknown as Set<MockWebSocket>).clear()
+    ;(mockWss.clients as unknown as Set<ExtWebSocket>).clear()
     resetSocketManager()
   })
 
@@ -270,14 +273,14 @@ describe('WebSocket Manager', () => {
     })
 
     it('should set isAlive to true on new connection', () => {
-      const newWs = new MockWebSocket() as unknown as ExtWebSocket
+      const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       expect(newWs.isAlive).toBe(true)
     })
 
     it('should set isAlive to true on pong', () => {
-      const newWs = new MockWebSocket() as unknown as ExtWebSocket
+      const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       newWs.isAlive = false
@@ -293,7 +296,7 @@ describe('WebSocket Manager', () => {
     })
 
     it('should set isAlive to true on any message', () => {
-      const newWs = new MockWebSocket() as unknown as ExtWebSocket
+      const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       newWs.isAlive = false
@@ -463,7 +466,7 @@ describe('WebSocket Manager', () => {
         role: 'dashboard',
       })
       mockWs.emit('message', message.toString())
-      expect((mockWs as unknown as ExtWebSocket).clientType).toBe('dashboard')
+      expect((mockWs as ExtWebSocket).clientType).toBe('dashboard')
     })
 
     it('should send initial state on GET_STATE message', () => {
@@ -510,12 +513,12 @@ describe('WebSocket Manager', () => {
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
-      const dashboardWs = new MockWebSocket() as unknown as ExtWebSocket
+      const dashboardWs = new MockWebSocket() as ExtWebSocket
       dashboardWs.clientType = 'dashboard'
-      const controllerWs = new MockWebSocket() as unknown as ExtWebSocket
+      const controllerWs = new MockWebSocket() as ExtWebSocket
       controllerWs.clientType = 'controller'
-      ;(mockWss.clients as unknown as Set<MockWebSocket>).add(dashboardWs)
-      ;(mockWss.clients as unknown as Set<MockWebSocket>).add(controllerWs)
+      ;(mockWss.clients as unknown as Set<ExtWebSocket>).add(dashboardWs)
+      ;(mockWss.clients as unknown as Set<ExtWebSocket>).add(controllerWs)
 
       const message = JSON.stringify({
         type: 'SPOTIFY_COMMAND',
