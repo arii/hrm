@@ -148,6 +148,9 @@ interface WorkoutSessionOptions {
 
 /**
  * Manages the local workout lifecycle and persists session metadata to localStorage.
+ *
+ * NOTE: The server is the Single Source of Truth (SSOT) for cumulative `totalCalories`.
+ * The UI calculates `caloriesBurned` as a session-level delta to prevent state divergence.
  */
 export const useWorkoutSession = ({
   totalCalories = 0,

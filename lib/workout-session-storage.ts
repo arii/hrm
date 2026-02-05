@@ -47,6 +47,10 @@ const STORE_NAME = 'sessions'
 
 /**
  * Manages persistent storage of workout session data using IndexedDB with localStorage fallback.
+ *
+ * Strategies:
+ * - Primary: IndexedDB for performance and larger datasets.
+ * - Fallback: localStorage if IndexedDB is unavailable or fails (graceful degradation).
  */
 export class WorkoutSessionStorage {
   private dbPromise: Promise<IDBPDatabase<WorkoutDB>> | null = null
