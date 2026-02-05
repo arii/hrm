@@ -232,6 +232,10 @@ const ExperimentalAnalyticsPage = () => {
               duration={duration}
               calories={summaryData.totalCalories}
               status={status}
+              userName={userSettings.userName || 'Guest User'}
+              date={
+                activeSession ? new Date(activeSession.startTime) : new Date()
+              }
             />
 
             <CalorieTracker calorieHistory={calorieHistory} />

@@ -1,6 +1,7 @@
 // app/client/experimental/components/SessionDetail.tsx
 import { Card, CardContent, Typography, Button, Box } from '@mui/material'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
+import { formatDate } from '@/lib/utils'
 import ZoneDistribution from './ZoneDistribution'
 import HeartRateTimeSeries from './HeartRateTimeSeries'
 
@@ -41,9 +42,7 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
         >
           <Box sx={{ flex: 1 }}>
             <Typography variant="h6">Summary</Typography>
-            <Typography>
-              Date: {new Date(session.startTime).toLocaleDateString()}
-            </Typography>
+            <Typography>Date: {formatDate(session.startTime)}</Typography>
             <Typography>
               Duration: {(durationInSeconds / 60).toFixed(1)} mins
             </Typography>
