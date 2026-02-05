@@ -38,6 +38,7 @@ export const CALORIE_DEFAULTS = {
 export const MAX_CALORIE_JUMP_PER_UPDATE = 50
 export const MAX_INITIAL_CALORIES = 1000
 
+// The maximum plausible initial calorie value for a new workout session
 // Server Constants
 export const DEFAULT_PORT = 3000
 export const DEFAULT_HOST_PRODUCTION = '0.0.0.0'
@@ -49,7 +50,3 @@ export const DEFAULT_WORK_DURATION = 20 // seconds
 export const DEFAULT_REST_DURATION = 10 // seconds
 export const START_COUNTDOWN_DURATION = 5 // seconds
 export const TIMER_INTERVAL = 1000 // ms
-
-// --- Heart Rate Monitoring (HRM) Constants ---
-export const HRM_STALE_THRESHOLD_MS = 30000 // 30 seconds
-export const HRM_WARNING_THRESHOLD_MS = 10000 // 10 seconds
