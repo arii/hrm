@@ -71,11 +71,6 @@ describe('useSpotifyWebPlayback', () => {
     const consoleWarnSpy = jest
       .spyOn(console, 'warn')
       .mockImplementation(() => {})
-    const error: networkUtils.AppError = {
-      message: 'Unauthorized',
-      code: 'HTTP_ERROR_401',
-      retryable: false,
-    }
     mockFetchWithRetry.mockResolvedValue({
       ok: false,
       status: 401,
