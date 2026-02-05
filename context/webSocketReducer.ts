@@ -56,14 +56,13 @@ export const reducer = (
     case 'RESET_STATE':
       return INITIAL_STATE
     case 'INITIAL_STATE': {
-      // When the initial state is loaded, ensure all HRM data is marked as connected
-      // and has a fresh lastUpdated timestamp to avoid immediate staleness.
-      const now = Date.now()
+      // When the initial state is loaded, ensure all HRM data is marked as connected.
+      // We rely on the server-provided updatedAt timestamp for lastUpdated.
       const hrmDataWithConnection =
         message.payload.hrmData?.map((d) => ({
           ...d,
           isConnected: true,
-          lastUpdated: now,
+          lastUpdated: d.updatedAt,
         })) || []
       return {
         ...state,
@@ -72,7 +71,6 @@ export const reducer = (
       }
     }
     case 'HRM_UPDATE': {
-      const now = Date.now()
       const payload = message.payload as ServerHrmData[]
 
       // Simplify: The HRM_UPDATE payload from the server is the single source of truth.
@@ -87,7 +85,7 @@ export const reducer = (
           ...existingUser,
           ...newUser,
           isConnected: true,
-          lastUpdated: now,
+          lastUpdated: newUser.updatedAt || existingUser?.lastUpdated,
         }
       })
 
