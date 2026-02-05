@@ -5,7 +5,11 @@ import HrTile from '@/components/HrTile'
 import { HrmData } from '@/types/websocket'
 
 interface HrTileWrapperProps {
-  user: HrmData & { isAlerting: boolean; alertMessage?: string }
+  user: HrmData & {
+    isAlerting: boolean
+    alertMessage?: string
+    isDataStale?: boolean
+  }
 }
 
 const HrTileWrapper = ({ user }: HrTileWrapperProps) => {
@@ -17,6 +21,7 @@ const HrTileWrapper = ({ user }: HrTileWrapperProps) => {
       percentMax={hrZoneProps.percentage}
       calories={user.calories}
       isConnected={user.value !== null}
+      isDataStale={user.isDataStale}
       isAlerting={user.isAlerting}
       {...(user.alertMessage && { alertMessage: user.alertMessage })}
     />

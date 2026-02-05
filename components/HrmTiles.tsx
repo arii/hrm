@@ -7,17 +7,19 @@ import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useMemo } from 'react'
+import { useHeartRateLiveness } from '@/hooks/useHeartRateLiveness'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const usersWithLiveness = useHeartRateLiveness(hrmData)
 
   const filteredTiles = useMemo(() => {
-    return hrmData
+    return usersWithLiveness
       .filter((user) => {
         const isZero = user.value === 0
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
-        return !(isZero || isPlaceholderName || hasNoIdentity)
+        return !(isZero || isPlaceholderName || hasNoIdentity || user.isExpired)
       })
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
@@ -43,6 +45,7 @@ const HrmTiles = () => {
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
               calories={user.calories || 0} // Pass calories
+              isDataStale={user.isDataStale}
               isAlerting={!!matchingAlert}
               // Conditionally add alertMessage to avoid passing `undefined`
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
@@ -50,7 +53,7 @@ const HrmTiles = () => {
           </Grid>
         )
       })
-  }, [hrmData, activeAlerts])
+  }, [usersWithLiveness, activeAlerts])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||

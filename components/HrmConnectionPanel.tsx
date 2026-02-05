@@ -6,17 +6,19 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import HrTileWrapper from '@/components/HrTileWrapper'
+import { useHeartRateLiveness } from '@/hooks/useHeartRateLiveness'
 
 const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const usersWithLiveness = useHeartRateLiveness(hrmData)
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity
-    return hrmData
+    return usersWithLiveness
       .filter((user) => {
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
-        return !(isPlaceholderName || hasNoIdentity)
+        return !(isPlaceholderName || hasNoIdentity || user.isExpired)
       })
       .map((user) => {
         const matchingAlert = activeAlerts.find(
@@ -31,7 +33,7 @@ const HrmConnectionPanel = () => {
           alertMessage: matchingAlert?.message,
         }
       })
-  }, [hrmData, activeAlerts])
+  }, [usersWithLiveness, activeAlerts])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||

@@ -55,7 +55,11 @@ const HrTile = ({
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
-          isConnected ? `${bpm} beats per minute` : 'Disconnected'
+          isDataStale
+            ? 'Data signal lost'
+            : isConnected
+              ? `${bpm} beats per minute`
+              : 'Disconnected'
         }, ${percentMax}% of maximum`}
         sx={{
           backgroundColor: backgroundColor,
