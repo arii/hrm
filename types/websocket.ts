@@ -77,6 +77,7 @@ export type ServerMessage =
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
   | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
+  | { type: 'DEVICE_OFFLINE'; payload: { deviceId: string } }
   | SpotifyExecutionMessage
 
 /**
@@ -143,6 +144,9 @@ export interface SpotifyCommandMessage {
   playlistUri?: string // Added to support your incoming message
   contextUri?: string // Generic support for albums/artists
   uri?: string
+  offset?: {
+    position: number
+  }
 }
 
 export interface GetStateMessage {
@@ -232,6 +236,11 @@ export const SpotifyCommandMessageSchema = z.object({
   playlistUri: z.string().optional(),
   contextUri: z.string().optional(),
   uri: z.string().optional(),
+  offset: z
+    .object({
+      position: z.number(),
+    })
+    .optional(),
 })
 
 export const GetStateMessageSchema = z.object({
