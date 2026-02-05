@@ -2,7 +2,6 @@
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
@@ -130,10 +129,7 @@ const SpotifyDisplay = () => {
     window.location.reload()
   }
 
-  const { player, isReady, deviceId } = useSpotifyWebPlayback()
-
-  // Enable remote Spotify control from controllers
-  useSpotifyRemoteExecution(player)
+  const { isReady, deviceId } = useSpotifyWebPlayback()
 
   // Synchronize with WebSocket data whenever it changes
   // Grace period prevents race conditions when volume commands are in flight
