@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@testing-library/react'
 import { signOut } from 'next-auth/react'
 import { useError } from '@/context/ErrorContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
@@ -107,5 +107,49 @@ describe('useSpotifyWebPlayback', () => {
       )
       expect(mockSignOut).not.toHaveBeenCalled()
     })
+  })
+
+  it('should update state when "ready" and "not_ready" events are fired', async () => {
+    mockFetchWithRetry.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ accessToken: 'fake-token' }),
+    })
+
+    const { result } = renderHook(() => useSpotifyWebPlayback())
+
+    // Wait for player to be initialized
+    await waitFor(() => {
+      expect(window.Spotify.Player).toHaveBeenCalled()
+    })
+
+    // Find the 'ready' listener
+    const readyCall = mockPlayer.addListener.mock.calls.find(
+      (call: any[]) => call[0] === 'ready'
+    )
+    expect(readyCall).toBeDefined()
+    const readyCallback = readyCall[1]
+
+    // Simulate ready event
+    await act(async () => {
+      readyCallback({ device_id: 'test-device-id' })
+    })
+
+    expect(result.current.isReady).toBe(true)
+    expect(result.current.deviceId).toBe('test-device-id')
+
+    // Find the 'not_ready' listener
+    const notReadyCall = mockPlayer.addListener.mock.calls.find(
+      (call: any[]) => call[0] === 'not_ready'
+    )
+    expect(notReadyCall).toBeDefined()
+    const notReadyCallback = notReadyCall[1]
+
+    // Simulate not_ready event
+    await act(async () => {
+      notReadyCallback({ device_id: 'test-device-id' })
+    })
+
+    expect(result.current.isReady).toBe(false)
+    expect(result.current.deviceId).toBeNull()
   })
 })
