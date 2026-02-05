@@ -129,18 +129,57 @@ export class JsonProcessor {
       return data
     }
 
+    const tryRepair = (jsonStr: string): unknown | null => {
+      let repaired = jsonStr.trim()
+      if (repaired.length === 0) return null
+
+      // Check for truncation
+      if (!repaired.endsWith('}')) {
+        console.warn('Detected truncated JSON. Attempting emergency recovery...')
+
+        // Try to close a trailing string if odd number of unescaped quotes
+        const unescapedQuotes = repaired.match(/(^|[^\\])"/g) || []
+        if (unescapedQuotes.length % 2 !== 0) {
+          repaired += '"'
+        }
+
+        // Potential closing sequences for a PR review JSON structure
+        const closers = ['}', ']}', '"]}']
+        for (const closer of closers) {
+          try {
+            return JSON.parse(repaired + closer)
+          } catch {
+            // Continue to next closer
+          }
+        }
+      }
+      return null
+    }
+
     try {
       // First, try parsing the text directly.
       const parsedData = JSON.parse(text)
       return { success: true, data: ensureLabels(parsedData) }
     } catch {
-      // If direct parsing fails, try to extract JSON from a markdown code block.
+      // Try emergency recovery on the raw text
+      const repairedDirect = tryRepair(text)
+      if (repairedDirect) {
+        return { success: true, data: ensureLabels(repairedDirect) }
+      }
+
+      // If direct parsing and repair fails, try to extract JSON from a markdown code block.
       const jsonBlock = this.extractJsonBlock(text)
       if (jsonBlock) {
         try {
           const parsedData = JSON.parse(jsonBlock)
           return { success: true, data: ensureLabels(parsedData) }
         } catch (e) {
+          // Try emergency recovery on the extracted block
+          const repairedBlock = tryRepair(jsonBlock)
+          if (repairedBlock) {
+            return { success: true, data: ensureLabels(repairedBlock) }
+          }
+
           console.error('Error parsing JSON block:', e)
           // If parsing the extracted block fails, return a structured error.
           return {
@@ -465,7 +504,7 @@ export async function buildReviewPrompt(
     : 'Initial Review'
 
   // --- Diff Section ---
-  const maxDiffLength = 60000 // Increased context window for 2.0 Flash
+  const maxDiffLength = 30000 // Reduced from 60k to allocate more token budget for the generation output
   const truncatedDiff =
     diff.length > maxDiffLength
       ? diff.substring(0, diff.lastIndexOf('\n', maxDiffLength)) +
@@ -554,6 +593,12 @@ If you spot Technical Debt, Refactoring opportunities, or Frontend Improvements 
    - **Type**: Must be one of \`technical-debt\`, \`frontend-improvement\`, \`security\`, or \`bug\`.
    - **Priority**: Must be one of \`high\`, \`medium\`, or \`low\`.
    - Examples: "Extract WebSocket reconnection logic to custom hook", "Implement error boundary for Spotify player".
+
+## 📏 Style Constraint
+Keep the 'reviewComment' under 1000 words.
+Use bullet points for strengths and weaknesses.
+Focus on high-density technical feedback.
+Ensure the JSON is structurally complete.
 `
 
   return promptTemplate
@@ -613,7 +658,8 @@ async function runReviewPreset(
     prompt,
     config: {
       generationConfig: {
-        maxOutputTokens: 8192,
+        maxOutputTokens: 4096,
+        temperature: 0.2,
         responseMimeType: 'application/json',
         responseSchema: {
           type: SchemaType.OBJECT,
