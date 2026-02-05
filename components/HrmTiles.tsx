@@ -7,23 +7,27 @@ import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useMemo } from 'react'
+import { STALE_TILE_DISPLAY_THRESHOLD_MS } from '@/utils/constants'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
 
   const filteredTiles = useMemo(() => {
+    const now = Date.now()
     return hrmData
       .filter((user) => {
         const isZero = user.value === 0
-        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
-        return !(isZero || isPlaceholderName || hasNoIdentity)
+        // Reducer already filters stale tiles, no need to check here
+        return !(isZero || hasNoIdentity)
       })
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
           user.maxHr || MAX_HR_DEFAULT
         )
+        const timeSinceUpdate = now - user.lastUpdated
+        const isDataStale = timeSinceUpdate > STALE_TILE_DISPLAY_THRESHOLD_MS
 
         // Find the alert specific to this HR Monitor's clientId
         const matchingAlert = activeAlerts.find(
@@ -36,13 +40,15 @@ const HrmTiles = () => {
           <Grid
             size={{ xs: 12, sm: 6, lg: 3 }}
             key={user.clientId}
-            data-testid="hr-tile-grid-item"
+            data-testid={`hr-tile-${user.clientId}`}
           >
             <HrTile
               name={user.name || ''}
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
               calories={user.calories || 0} // Pass calories
+              isConnected={user.isConnected}
+              isDataStale={isDataStale}
               isAlerting={!!matchingAlert}
               // Conditionally add alertMessage to avoid passing `undefined`
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
@@ -80,8 +86,6 @@ const HrmTiles = () => {
   return <>{filteredTiles}</>
 }
 
-// Memoize HrmTiles to prevent re-renders when parent components update.
-// The component relies on the `useWebSocket` hook, which provides `hrmData` and `activeAlerts`.
-// The `useMemo` hook inside the component ensures that the `filteredTiles` are only recalculated
-// when `hrmData` or `activeAlerts` change, further optimizing performance.
+// Memoize HrmTiles to prevent re-renders.
+// Reducer handles stale tile removal (35s TTL), this component adds visual indicators.
 export default memo(HrmTiles)

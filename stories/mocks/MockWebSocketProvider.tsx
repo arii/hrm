@@ -99,6 +99,7 @@ export const MockWebSocketProvider = ({
               ).map((d) => ({
                 ...d,
                 isConnected: true,
+                lastUpdated: Date.now(),
               }))
               return { ...prev, hrmData: payloadWithConnection }
             }
@@ -113,6 +114,7 @@ export const MockWebSocketProvider = ({
                 message.payload.hrmData?.map((d: ServerHrmData) => ({
                   ...d,
                   isConnected: true,
+                  lastUpdated: Date.now(),
                 })) || []
               return {
                 ...prev,

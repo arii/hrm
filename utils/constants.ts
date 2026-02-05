@@ -63,3 +63,8 @@ export const DEFAULT_WORK_DURATION = 20 // seconds
 export const DEFAULT_REST_DURATION = 10 // seconds
 export const START_COUNTDOWN_DURATION = 5 // seconds
 export const TIMER_INTERVAL = 1000 // ms
+
+// --- Stale Tile Display ---
+// Visual indicator threshold (show "waiting for data" state before removal)
+export const STALE_TILE_DISPLAY_THRESHOLD_MS = 20000 // 20 seconds
+// Note: Tile removal is handled by reducer at 35 seconds (see context/webSocketReducer.ts)
