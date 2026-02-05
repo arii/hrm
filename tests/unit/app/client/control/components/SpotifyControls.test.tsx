@@ -34,6 +34,12 @@ jest.mock('@/hooks/useVolumePreference', () => {
   }
 })
 
+// Mock the spotify constants
+jest.mock('@/constants/spotify', () => ({
+  ...jest.requireActual('@/constants/spotify'),
+  HRM_WEB_PLAYER_NAME: 'HRM Web Player',
+}))
+
 describe('components/SpotifyControls', () => {
   let mockSendData: jest.Mock
 

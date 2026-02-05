@@ -9,6 +9,7 @@ import { HrmStreamData as ServerHrmData } from '../types/core'
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
+  lastUpdated?: number
 }
 
 export interface WebSocketState {
@@ -65,43 +66,56 @@ export const reducer = (
       }
     }
     case 'HRM_UPDATE': {
+      const now = Date.now()
       const payload = message.payload as ServerHrmData[]
-      // Create a map of incoming clientIds for efficient lookup
       const incomingClients = new Set(payload.map((user) => user.clientId))
 
-      // Create a new state array by merging existing and new data
+      // Merge and update existing users
       const mergedHrmData = state.hrmData.map((existingUser) => {
         if (incomingClients.has(existingUser.clientId)) {
           const updatedUser = payload.find(
             (newUser) => newUser.clientId === existingUser.clientId
           )
-          // CRITICAL FIX: The order of spread operators is essential.
-          // By spreading existingUser first, then updatedUser, we ensure
-          // that any fields NOT present in the (potentially partial) `updatedUser`
-          // payload are preserved from the existing state.
           return updatedUser
             ? {
                 ...existingUser,
                 ...updatedUser,
                 isConnected: true,
+                lastUpdated: now,
               }
-            : { ...existingUser, isConnected: true }
+            : { ...existingUser, isConnected: true, lastUpdated: now }
         }
-        return { ...existingUser, isConnected: false }
+        return existingUser // Keep existing user as is for now
       })
 
-      // Add any brand-new users from the payload who were not in the previous state
+      // Add new users
       payload.forEach((newUser) => {
         if (
-          !state.hrmData.some(
+          !mergedHrmData.some(
             (existingUser) => existingUser.clientId === newUser.clientId
           )
         ) {
-          mergedHrmData.push({ ...newUser, isConnected: true })
+          mergedHrmData.push({
+            ...newUser,
+            isConnected: true,
+            lastUpdated: now,
+          })
         }
       })
 
-      return { ...state, hrmData: mergedHrmData }
+      // Filter out stale users who haven't updated in 35 seconds
+      const filteredHrmData = mergedHrmData.filter(
+        (user) => now - (user.lastUpdated || 0) < 35000
+      )
+
+      return { ...state, hrmData: filteredHrmData }
+    }
+    case 'DEVICE_OFFLINE': {
+      const { deviceId } = message.payload
+      return {
+        ...state,
+        hrmData: state.hrmData.filter((device) => device.clientId !== deviceId),
+      }
     }
     case 'TIMER_UPDATE':
       return {
