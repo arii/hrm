@@ -2,12 +2,12 @@
 'use client'
 import { useHrZone } from '@/hooks/useHrZone'
 import HrTile from '@/components/HrTile'
-import { HrmData } from '@/context/webSocketReducer'
+import { ClientHrmData } from '@/context/webSocketReducer'
 import { useNow } from '@/hooks/useNow'
 import { HRM_WARNING_THRESHOLD_MS } from '@/utils/constants'
 
 interface HrTileWrapperProps {
-  user: HrmData & { isAlerting: boolean; alertMessage?: string }
+  user: ClientHrmData
 }
 
 const HrTileWrapper = ({ user }: HrTileWrapperProps) => {

@@ -12,6 +12,15 @@ export interface HrmData extends ServerHrmData {
   lastUpdated?: number
 }
 
+/**
+ * Comprehensive client-side HRM data type including joined alert state.
+ * Used primarily for component props where HRM data and active alerts are merged.
+ */
+export interface ClientHrmData extends HrmData {
+  isAlerting: boolean
+  alertMessage?: string
+}
+
 export interface WebSocketState {
   hrmData: HrmData[]
   timerData: TimerData
