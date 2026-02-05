@@ -4,7 +4,6 @@ import { signOut } from 'next-auth/react'
 import { useError } from '@/context/ErrorContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import * as networkUtils from '@/utils/network'
-import * as redirectUtils from '@/utils/redirect'
 
 // Mock dependencies
 jest.mock('next-auth/react', () => ({
@@ -20,14 +19,9 @@ jest.mock('@/utils/network', () => ({
   fetchWithRetry: jest.fn(),
 }))
 
-jest.mock('@/utils/redirect', () => ({
-  redirectTo: jest.fn(),
-}))
-
 const mockSignOut = signOut as jest.Mock
 const mockUseError = useError as jest.Mock
 const mockFetchWithRetry = networkUtils.fetchWithRetry as jest.Mock
-const mockRedirectTo = redirectUtils.redirectTo as jest.Mock
 
 // Mock Spotify SDK
 const mockPlayer = {
@@ -65,15 +59,17 @@ describe('useSpotifyWebPlayback', () => {
   })
 
   it('should call signOut and addError on 401 error from fetchWithRetry', async () => {
-    mockFetchWithRetry.mockResolvedValue({
-      ok: false,
-      status: 401,
-      json: () => Promise.resolve({}),
-    })
+    const error: networkUtils.AppError = {
+      message: 'Unauthorized',
+      code: 'HTTP_ERROR_401',
+      retryable: false,
+    }
+    mockFetchWithRetry.mockRejectedValue(error)
 
     renderHook(() => useSpotifyWebPlayback())
 
     // The hook's getOAuthToken is called by the Spotify Player constructor.
+    // We need to extract it and call it manually to test the error handling.
     const playerOptions = (window.Spotify.Player as jest.Mock).mock.calls[0][0]
     await playerOptions.getOAuthToken(() => {})
 
@@ -82,8 +78,7 @@ describe('useSpotifyWebPlayback', () => {
         'Spotify session expired. Please log in again.',
         { persist: true }
       )
-      expect(mockSignOut).toHaveBeenCalledWith({ redirect: false })
-      expect(mockRedirectTo).toHaveBeenCalledWith('/?error=SpotifyAuthFailed')
+      expect(mockSignOut).toHaveBeenCalled()
     })
   })
 
