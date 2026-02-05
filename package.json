@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "clean": "rm -rf .next dist coverage test-results playwright-report *.log *.backup nohup.out diff.txt",
+    "clean": "bash scripts/cleanup.sh",
+    "clean:global": "bash scripts/cleanup.sh --global --pnpm-cache",
     "prebuild": "pnpm run clean",
     "dev": "cross-env NODE_ENV=development tsx --env-file=.env.local server.ts | pnpm exec pino-pretty",
     "seed": "tsx scripts/seed-dev-data.ts",
