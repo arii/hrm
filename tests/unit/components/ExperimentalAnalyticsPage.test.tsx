@@ -18,6 +18,19 @@ jest.mock('next/dynamic', () => () => {
 // Mock hooks
 jest.mock('@/context/UserSettingsContext')
 jest.mock('@/context/WebSocketContext')
+jest.mock('@/hooks/useWorkoutSessionManager', () => ({
+  useWorkoutSessionManager: jest.fn(() => ({
+    session: null,
+    status: 'idle',
+    isInitialized: false, // Prevents loading effect
+    duration: 0,
+    startWorkout: jest.fn(),
+    resumeWorkout: jest.fn(),
+    endWorkout: jest.fn(),
+    resetWorkout: jest.fn(),
+    addHrData: jest.fn(),
+  })),
+}))
 
 describe('ExperimentalAnalyticsPage', () => {
   const mockUseUserSettings = useUserSettings as jest.Mock
