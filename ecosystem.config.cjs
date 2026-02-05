@@ -5,6 +5,7 @@ module.exports = {
       name: 'hrm-server',
       script: './scripts/start-production.sh',
       interpreter: 'bash',
+      time: true,
       instances: 1,
       autorestart: true,
       watch: false,

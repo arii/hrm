@@ -394,6 +394,58 @@ jobs:
           retention-days: 2
           if-no-files-found: ignore
 
+  slop-check:
+    name: 🧹 Slop Check
+    needs: [prepare-env]
+    if: inputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+
+      - name: Run Slop Check
+        id: slop
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          pnpm run lint:slop 2>&1 | tee logs/slop-output.log
+        continue-on-error: true
+
+      - name: Report Slop Failure
+        if: failure() && steps.slop.outcome == 'failure'
+        run: |
+          echo "### 🧹 AI Slop Detection Report" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          cat logs/slop-output.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Check Slop Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.slop.outcome }}" = 'failure' ]; then
+            echo "::error::AI Slop detected"
+            exit 1
+          fi
+
+      - name: Upload Slop Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: slop-report
+          path: logs/slop-output.log
+          retention-days: 2
+          if-no-files-found: ignore
+
   build-check:
     name: 🏗️ Build Check
     needs: [prepare-env]
@@ -1095,12 +1147,13 @@ jobs:
 
   quality-report:
     name: 📊 Quality Report
-    if: always() && inputs.has_changes == 'true' && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
+    if: always() && inputs.has_changes == 'true' && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.slop-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
     needs:
       [
         prepare-env,
         knip-check,
         lint-check,
+        slop-check,
         build-check,
         script-tests,
         integration-tests,
@@ -1116,6 +1169,12 @@ jobs:
         with:
           path: artifacts/
         continue-on-error: true
+
+      - name: Inspect Downloaded Artifacts
+        if: always()
+        run: |
+          echo "🔍 Listing all files in artifacts/ directory:"
+          ls -R artifacts/ || echo "artifacts/ directory not found or empty"
 
       - name: Create test-results directory
         run: mkdir -p test-results
@@ -1179,7 +1238,7 @@ jobs:
           }
 
           # Check standalone jobs
-          for job in "knip-check" "lint-check" "build-check"; do
+          for job in "knip-check" "lint-check" "slop-check" "build-check"; do
             # Safely get job result, default to "skipped" if not found
             result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result // "skipped"')
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
@@ -1187,6 +1246,7 @@ jobs:
               case $job in
                 "knip-check") log_file="artifacts/knip-report/knip-output.txt" ;;
                 "lint-check") log_file="artifacts/lint-report/lint-output.log" ;;
+                "slop-check") log_file="artifacts/slop-report/slop-output.log" ;;
                 "build-check") log_file="artifacts/build-report/build-output.log" ;;
               esac
               add_failure "$job" "$result" "$log_file"
@@ -1268,6 +1328,7 @@ jobs:
           COMMENT_BODY+="|-------|--------|\n"
           COMMENT_BODY+="| Knip | $([ "$KNIP_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$KNIP_RESULT) |\n"
           COMMENT_BODY+="| Lint | $([ "$LINT_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$LINT_RESULT) |\n"
+          COMMENT_BODY+="| Slop | $([ "${{ needs.slop-check.result }}" = "success" ] && echo '✅ success' || echo '❌ '${{ needs.slop-check.result }}) |\n"
           COMMENT_BODY+="| Build | $([ "$BUILD_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$BUILD_RESULT) |\n"
           COMMENT_BODY+="| Infra Tests | $([ "$INFRA_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_TESTS_OUTCOME) |\n"
           COMMENT_BODY+="| Unit Tests | $([ "$UNIT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$UNIT_TESTS_OUTCOME) |\n"
@@ -1282,6 +1343,9 @@ jobs:
           fi
           if [ "$LINT_RESULT" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Lint Failure Details" "artifacts/lint-report/lint-output.log" 50)
+          fi
+          if [ "${{ needs.slop-check.result }}" != "success" ]; then
+            LOG_DETAILS+=$(add_log_details "Slop Failure Details" "artifacts/slop-report/slop-output.log" 50)
           fi
           if [ "$BUILD_RESULT" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Build Failure Details" "artifacts/build-report/build-output.log" 50)
