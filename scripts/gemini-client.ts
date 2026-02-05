@@ -237,6 +237,7 @@ export interface ReviewContext {
   missingTests: boolean
   testFiles?: string | undefined
   failedChecks: FailedCheck[]
+  slopAnalysis?: string
 }
 
 async function main() {
@@ -481,6 +482,7 @@ function getReviewContextFromEnv(): ReviewContext {
     missingTests: process.env.MISSING_TESTS === 'true',
     testFiles: process.env.TEST_FILES,
     failedChecks,
+    slopAnalysis: process.env.SLOP_ANALYSIS || 'Not available.',
   }
 }
 
@@ -550,6 +552,12 @@ export async function buildReviewPrompt(
     testCoverageAlert = `\n\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`
   }
 
+  const maxSlopLength = 2000
+  const truncatedSlopAnalysis =
+    context.slopAnalysis && context.slopAnalysis.length > maxSlopLength
+      ? context.slopAnalysis.substring(0, maxSlopLength) + '\n...[TRUNCATED]'
+      : context.slopAnalysis || 'Not available.'
+
   const placeholders: { [key: string]: string } = {
     reviewIteration,
     prNumber: context.prNumber,
@@ -573,6 +581,7 @@ export async function buildReviewPrompt(
     truncatedDiff,
     failureList,
     testCoverageAlert,
+    slopAnalysis: truncatedSlopAnalysis,
   }
 
   for (const [key, value] of Object.entries(placeholders)) {

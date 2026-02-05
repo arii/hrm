@@ -43,6 +43,12 @@ describe('JsonProcessor', () => {
     })
   })
 
+  it('should return an error for invalid JSON', () => {
+    const input = '{"reviewComment": "Missing quote}'
+    const result = processor.process(input)
+    expect(result.success).toBe(false)
+    expect(result.data).toHaveProperty('error')
+  })
   it('should return an error for invalid JSON that is not just truncated', () => {
     // Note: My current tryRepair might actually fix this if it's at the end of the string
     // Let's use something truly broken
@@ -201,5 +207,17 @@ describe('buildReviewPrompt', () => {
     expect(prompt).toContain('IMMEDIATE ACTION REQUIRED')
     expect(prompt).toContain('You are now in **DEBUG MODE**')
     expect(prompt).toContain('- **test-check** (failure)')
+  })
+
+  it('should include slop analysis in the prompt when provided', async () => {
+    const slopAnalysis = 'This is a test slop analysis.'
+    const contextWithSlop = createMockContext({ slopAnalysis })
+    const prompt = await buildReviewPrompt(
+      'test diff',
+      contextWithSlop,
+      'test context'
+    )
+    expect(prompt).toContain('## AI Slop Analysis')
+    expect(prompt).toContain(slopAnalysis)
   })
 })
