@@ -12,7 +12,6 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
 import { fireEvent, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { useSession, signIn } from 'next-auth/react'
 import React from 'react'
 import { SpotifyData } from '@/types/websocket'
@@ -84,7 +83,7 @@ describe('SpotifyDisplay', () => {
     ) as jest.Mock
   })
 
-  it('should render login button and call signIn with correct provider on click', async () => {
+  it('should render auth button and call signIn with correct provider on click', async () => {
     mockedUseSession.mockReturnValue({ data: null, status: 'unauthenticated' })
     mockedUseWebSocket.mockReturnValue({
       spotifyData: {
@@ -103,17 +102,11 @@ describe('SpotifyDisplay', () => {
 
     renderWithProviders(<SpotifyDisplay />)
 
-    const loginButton = await screen.findByRole('button', {
-      name: /login to spotify to select a playlist/i,
-    })
-    expect(loginButton).toBeInTheDocument()
-
-    // Simulate user click
-    await userEvent.click(loginButton)
-
+    // Auth button should be visible immediately
     const authButton = await screen.findByRole('button', {
       name: /login with spotify/i,
     })
+    expect(authButton).toBeInTheDocument()
 
     fireEvent.click(authButton)
 
@@ -124,6 +117,7 @@ describe('SpotifyDisplay', () => {
       redirect: true,
     })
   })
+
   describe('when authenticated', () => {
     let mockSendData: jest.Mock
     let rerender: (ui: React.ReactElement) => void
