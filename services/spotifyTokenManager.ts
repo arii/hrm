@@ -1,14 +1,7 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
-
-interface SpotifyTokenResponse {
-  access_token: string
-  token_type: string
-  scope: string
-  expires_in: number
-  refresh_token?: string
-}
+import { SpotifyTokenResponse } from '../types/spotify'
 
 /**
  * Helper for atomic writes to prevent file corruption.

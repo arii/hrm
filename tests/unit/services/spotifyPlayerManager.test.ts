@@ -8,13 +8,8 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 // Mock the logger to prevent logs from appearing in test output
 jest.mock('../../../utils/logger.server.js', () => ({
   __esModule: true,
-  default: {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    child: jest.fn().mockReturnThis(),
-  },
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  default: require('../spotify-mocks').mockLogger,
 }))
 
 describe('SpotifyPlayerManager', () => {
@@ -86,7 +81,10 @@ describe('SpotifyPlayerManager', () => {
       it('should set volume and update state', async () => {
         await playerManager.executeSpotifyCommand('SET_VOLUME', { volume: 75 })
         expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(75, undefined)
-        expect(setStateMock).toHaveBeenCalledWith({
+        expect(setStateMock).toHaveBeenCalledWith(expect.any(Function))
+        const updateFn = setStateMock.mock.calls[0][0]
+        const newState = updateFn({ volume: 50, isMuted: false })
+        expect(newState).toEqual({
           volume: 75,
           isMuted: false,
         })
@@ -102,7 +100,10 @@ describe('SpotifyPlayerManager', () => {
           100,
           undefined
         )
-        expect(setStateMock).toHaveBeenCalledWith({
+        expect(setStateMock).toHaveBeenCalledWith(expect.any(Function))
+        const updateFn = setStateMock.mock.calls[0][0]
+        const newState = updateFn({ volume: 50, isMuted: false })
+        expect(newState).toEqual({
           volume: 100,
           isMuted: false,
         })
@@ -111,7 +112,10 @@ describe('SpotifyPlayerManager', () => {
       it('should clamp volume to 0', async () => {
         await playerManager.executeSpotifyCommand('SET_VOLUME', { volume: -10 })
         expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(0, undefined)
-        expect(setStateMock).toHaveBeenCalledWith({
+        expect(setStateMock).toHaveBeenCalledWith(expect.any(Function))
+        const updateFn = setStateMock.mock.calls[0][0]
+        const newState = updateFn({ volume: 50, isMuted: false })
+        expect(newState).toEqual({
           volume: 0,
           isMuted: true,
         })

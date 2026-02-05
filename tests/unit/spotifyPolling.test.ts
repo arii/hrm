@@ -25,15 +25,8 @@ jest.mock('../../lib/env.js', () => ({
 
 jest.mock('../../utils/logger.server.js', () => ({
   __esModule: true,
-  default: {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    child: jest.fn(function () {
-      return this
-    }),
-  },
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  default: require('./spotify-mocks').mockLogger,
 }))
 
 // Mock the SpotifyTokenManager module
