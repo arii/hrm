@@ -2,7 +2,12 @@
 'use client'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useNow } from '@/hooks/useNow'
 import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
+import {
+  HRM_STALE_THRESHOLD_MS,
+  HRM_WARNING_THRESHOLD_MS,
+} from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
@@ -10,6 +15,7 @@ import { memo, useMemo } from 'react'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const now = useNow()
 
   const filteredTiles = useMemo(() => {
     return hrmData
@@ -17,7 +23,12 @@ const HrmTiles = () => {
         const isZero = user.value === 0
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
-        return !(isZero || isPlaceholderName || hasNoIdentity)
+
+        // Forceful removal of stale tiles if data hasn't been seen within the threshold
+        const isStale =
+          user.lastUpdated && now - user.lastUpdated > HRM_STALE_THRESHOLD_MS
+
+        return !(isZero || isPlaceholderName || hasNoIdentity || isStale)
       })
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
@@ -43,6 +54,14 @@ const HrmTiles = () => {
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
               calories={user.calories || 0} // Pass calories
+              isConnected={user.isConnected}
+              // Data is considered stale if not seen within threshold (visual warning)
+              isDataStale={
+                !!(
+                  user.lastUpdated &&
+                  now - user.lastUpdated > HRM_WARNING_THRESHOLD_MS
+                )
+              }
               isAlerting={!!matchingAlert}
               // Conditionally add alertMessage to avoid passing `undefined`
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
@@ -50,7 +69,7 @@ const HrmTiles = () => {
           </Grid>
         )
       })
-  }, [hrmData, activeAlerts])
+  }, [hrmData, activeAlerts, now])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||

@@ -63,3 +63,12 @@ export const DEFAULT_WORK_DURATION = 20 // seconds
 export const DEFAULT_REST_DURATION = 10 // seconds
 export const START_COUNTDOWN_DURATION = 5 // seconds
 export const TIMER_INTERVAL = 1000 // ms
+
+// --- Heart Rate Monitoring (HRM) Constants ---
+// The amount of time in milliseconds after which a heart rate monitor is considered stale
+// and should be removed or marked as disconnected.
+export const HRM_STALE_THRESHOLD_MS = 30000 // 30 seconds
+
+// The amount of time in milliseconds after which a heart rate monitor is considered
+// to have stale data (visual warning).
+export const HRM_WARNING_THRESHOLD_MS = 10000 // 10 seconds

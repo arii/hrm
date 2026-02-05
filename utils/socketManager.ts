@@ -17,6 +17,7 @@ import { HrmStreamData } from '../types/core.js'
 import {
   MAX_CALORIE_JUMP_PER_UPDATE,
   MAX_INITIAL_CALORIES,
+  HRM_STALE_THRESHOLD_MS,
 } from './constants.js'
 import {
   broadcast,
@@ -121,11 +122,10 @@ const initSocketManager = (
   connectionMonitor.start()
 
   // Janitor process to clean up stale connections
-  const STALE_THRESHOLD_MS = 30000 // 30 seconds
   setInterval(() => {
     const now = Date.now()
     for (const [clientId, session] of clientSessionState.entries()) {
-      if (now - session.lastUpdate > STALE_THRESHOLD_MS) {
+      if (now - session.lastUpdate > HRM_STALE_THRESHOLD_MS) {
         logger.info({ clientId }, 'Stale client detected. Cleaning up.')
         cleanupClientSession(clientId)
       }

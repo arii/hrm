@@ -5,18 +5,23 @@ import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useNow } from '@/hooks/useNow'
 import HrTileWrapper from '@/components/HrTileWrapper'
+import { HRM_STALE_THRESHOLD_MS } from '@/utils/constants'
 
 const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const now = useNow()
 
   const tileData = useMemo(() => {
-    // Filter out users with placeholder names or no identity
+    // Filter out users with placeholder names, no identity, or stale data
     return hrmData
       .filter((user) => {
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
-        return !(isPlaceholderName || hasNoIdentity)
+        const isStale =
+          user.lastUpdated && now - user.lastUpdated > HRM_STALE_THRESHOLD_MS
+        return !(isPlaceholderName || hasNoIdentity || isStale)
       })
       .map((user) => {
         const matchingAlert = activeAlerts.find(
@@ -31,7 +36,7 @@ const HrmConnectionPanel = () => {
           alertMessage: matchingAlert?.message,
         }
       })
-  }, [hrmData, activeAlerts])
+  }, [hrmData, activeAlerts, now])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
