@@ -36,6 +36,8 @@ else
     SLOP_IGNORE_PATH="$REPO_ROOT/.slop-ignore"
     if [ -f "$SLOP_IGNORE_PATH" ]; then
         while IFS= read -r pattern || [ -n "$pattern" ]; do
+            # Remove carriage return if present (for DOS line endings)
+            pattern=${pattern%$'\r'}
             # Remove comments and trim whitespace
             pattern=$(echo "$pattern" | sed 's/#.*//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
             if [ -n "$pattern" ]; then

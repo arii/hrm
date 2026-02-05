@@ -15,3 +15,8 @@ pnpm-lock.yaml
 gh_2.63.0_linux_amd64/
 gh_*/
 gh.1
+.next_prod/
+.next/
+dist/
+build/
+coverage/
