@@ -125,6 +125,13 @@ export default function ConnectPage() {
     userWeight: userWeight || 70,
   })
 
+  const {
+    addHrData,
+    startWorkout: startPersistentWorkout,
+    endWorkout: endPersistentWorkout,
+    resetWorkout: resetPersistentWorkout,
+  } = useWorkoutSessionManager()
+
   const handleStartWorkout = useCallback(() => {
     startWorkout()
   }, [startWorkout])
@@ -136,6 +143,9 @@ export default function ConnectPage() {
   const handleEndWorkout = useCallback(() => {
     endWorkout()
   }, [endWorkout])
+    endPersistentWorkout()
+    resetCalculator() // Reset calories on workout end
+  }, [endWorkout, endPersistentWorkout, resetCalculator])
 
   const handleResetWorkout = useCallback(() => {
     resetWorkoutSession()
@@ -154,6 +164,14 @@ export default function ConnectPage() {
 
         // Persist individual HR data points to IndexedDB
         addHrData(heartRate)
+
+      if (workoutStatus === 'running') {
+        processHeartRate(heartRate)
+
+        addHrData({
+          time: Date.now(),
+          hr: heartRate,
+        })
       }
     },
     [processHeartRate, workoutStatus, setCurrentHR, addHrData]
@@ -170,6 +188,7 @@ export default function ConnectPage() {
     isDataStale,
     isSupported,
     signalPeriodMs,
+    connectionAttempted,
   } = useBluetoothHRM({
     userName,
     userAge: userAge || 0,
@@ -186,6 +205,12 @@ export default function ConnectPage() {
 
   useEffect(() => {
     if (!isConnected && isSupported && connectionStatus === 'Connected') {
+    if (
+      !isConnected &&
+      isSupported &&
+      connectionStatus === 'Connected' &&
+      !connectionAttempted
+    ) {
       logger.info('WebSocket ready, attempting auto-connect...')
       const timeout = setTimeout(() => {
         autoConnect().catch(() => {
@@ -195,7 +220,13 @@ export default function ConnectPage() {
       return () => clearTimeout(timeout)
     }
     return undefined
-  }, [connectionStatus, isConnected, isSupported, autoConnect])
+  }, [
+    connectionStatus,
+    isConnected,
+    isSupported,
+    autoConnect,
+    connectionAttempted,
+  ])
 
   useEffect(() => {
     throttledSend({
