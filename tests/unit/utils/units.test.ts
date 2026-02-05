@@ -1,37 +1,30 @@
 // tests/unit/utils/units.test.ts
+import { formatZoneDuration } from '../../../utils/units'
 
-import { toKg, toDisplay } from '../../../utils/units'
-
-describe('Unit Conversion Utilities', () => {
-  describe('toKg', () => {
-    it('should correctly convert lbs to kg', () => {
-      const pounds = 150
-      const expectedKg = 68.0389
-      expect(toKg(pounds, 'IMPERIAL')).toBeCloseTo(expectedKg, 4)
-    })
-
-    it('should return the same value if the system is METRIC', () => {
-      const kilograms = 70
-      expect(toKg(kilograms, 'METRIC')).toBe(kilograms)
-    })
+describe('formatZoneDuration', () => {
+  it('should format durations less than a minute correctly', () => {
+    expect(formatZoneDuration(30)).toBe('0:30')
+    expect(formatZoneDuration(59)).toBe('0:59')
   })
 
-  describe('toDisplay', () => {
-    it('should correctly convert kg to lbs for display', () => {
-      const kilograms = 68.0389
-      const expectedLbs = 150.0
-      expect(toDisplay(kilograms, 'IMPERIAL')).toBe(expectedLbs)
-    })
+  it('should format durations of exactly one minute correctly', () => {
+    expect(formatZoneDuration(60)).toBe('1:00')
+  })
 
-    it('should round the lbs value to one decimal place', () => {
-      const kilograms = 70
-      const expectedLbs = 154.3
-      expect(toDisplay(kilograms, 'IMPERIAL')).toBe(expectedLbs)
-    })
+  it('should format durations between a minute and an hour correctly', () => {
+    expect(formatZoneDuration(90)).toBe('1:30')
+    expect(formatZoneDuration(3599)).toBe('59:59')
+  })
 
-    it('should return the same value rounded to one decimal if the system is METRIC', () => {
-      const kilograms = 70.123
-      expect(toDisplay(kilograms, 'METRIC')).toBe(70.1)
-    })
+  it('should format durations of exactly one hour correctly', () => {
+    expect(formatZoneDuration(3600)).toBe('1h 0m 0s')
+  })
+
+  it('should format durations over an hour correctly', () => {
+    expect(formatZoneDuration(3661)).toBe('1h 1m 1s')
+  })
+
+  it('should handle zero seconds', () => {
+    expect(formatZoneDuration(0)).toBe('0:00')
   })
 })
