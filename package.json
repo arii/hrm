@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "clean": "rm -rf .next dist coverage test-results playwright-report *.log *.backup nohup.out diff.txt",
+    "clean": "bash scripts/cleanup.sh",
+    "clean:global": "bash scripts/cleanup.sh --global --pnpm-cache",
     "prebuild": "pnpm run clean",
     "dev": "cross-env NODE_ENV=development tsx --env-file=.env.local server.ts | pnpm exec pino-pretty",
     "seed": "tsx scripts/seed-dev-data.ts",
@@ -32,6 +33,7 @@
     "test:json": "scripts/test-json-with-server.sh",
     "test:visual": "pnpm run build && playwright test tests/playwright/vrt-*.spec.ts tests/playwright/remote-capabilities.spec.ts tests/playwright/simple-smoke.spec.ts tests/playwright/debug.spec.ts",
     "test:all": "pnpm run test:visual && pnpm run test:unit",
+    "test:slop": "./scripts/run_slop_tests.sh",
     "test:backend:port": "pnpm run build && PORT=3003 playwright test",
     "test:websocket:port": "pnpm run build && PORT=3004 playwright test",
     "test:quick": "pnpm run build && playwright test --reporter=dot",

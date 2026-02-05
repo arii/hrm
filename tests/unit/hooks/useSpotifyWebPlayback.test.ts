@@ -5,10 +5,16 @@ import { useError } from '@/context/ErrorContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import * as networkUtils from '@/utils/network'
 import * as redirectUtils from '@/utils/redirect'
+import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 
 // Mock dependencies
 jest.mock('next-auth/react', () => ({
   signOut: jest.fn(),
+  useSession: jest.fn(() => ({ data: null, status: 'authenticated' })),
+}))
+
+jest.mock('@/hooks/useSpotifyAuth', () => ({
+  useSpotifyAuth: jest.fn(() => ({ status: 'authenticated' })),
 }))
 
 jest.mock('@/context/ErrorContext', () => ({
@@ -28,6 +34,7 @@ const mockSignOut = signOut as jest.Mock
 const mockUseError = useError as jest.Mock
 const mockFetchWithRetry = networkUtils.fetchWithRetry as jest.Mock
 const mockRedirectTo = redirectUtils.redirectTo as jest.Mock
+const mockUseSpotifyAuth = useSpotifyAuth as jest.Mock
 
 // Mock Spotify SDK
 const mockPlayer = {
@@ -48,6 +55,7 @@ describe('useSpotifyWebPlayback', () => {
     jest.clearAllMocks()
     mockAddError = jest.fn()
     mockUseError.mockReturnValue({ addError: mockAddError })
+    mockUseSpotifyAuth.mockReturnValue({ status: 'authenticated' })
   })
 
   it('should initialize the SDK and connect the player on mount', async () => {
@@ -107,5 +115,13 @@ describe('useSpotifyWebPlayback', () => {
       )
       expect(mockSignOut).not.toHaveBeenCalled()
     })
+  })
+
+  it('should not initialize the player if the user is not authenticated', () => {
+    mockUseSpotifyAuth.mockReturnValue({ status: 'unauthenticated' })
+
+    renderHook(() => useSpotifyWebPlayback())
+
+    expect(window.Spotify.Player).not.toHaveBeenCalled()
   })
 })
