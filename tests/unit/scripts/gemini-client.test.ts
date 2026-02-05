@@ -49,6 +49,32 @@ describe('JsonProcessor', () => {
     expect(result.success).toBe(false)
     expect(result.data).toHaveProperty('error')
   })
+  it('should return an error for invalid JSON that is not just truncated', () => {
+    // Note: My current tryRepair might actually fix this if it's at the end of the string
+    // Let's use something truly broken
+    const brokenInput = '{"reviewComment": "valid", [broken]}'
+    const result = processor.process(brokenInput)
+    expect(result.success).toBe(false)
+    expect(result.data).toHaveProperty('error')
+  })
+
+  it('should attempt recovery for truncated JSON', () => {
+    const input = '{"reviewComment": "This comment was cut off'
+    const result = processor.process(input)
+    expect(result.success).toBe(true)
+    const data = result.data as { reviewComment: string; labels: string[] }
+    expect(data.reviewComment).toBe('This comment was cut off')
+    expect(data.labels).toEqual([])
+  })
+
+  it('should attempt recovery for truncated JSON with partial labels', () => {
+    const input = '{"reviewComment": "Good", "labels": ["bug"'
+    const result = processor.process(input)
+    expect(result.success).toBe(true)
+    const data = result.data as { reviewComment: string; labels: string[] }
+    expect(data.reviewComment).toBe('Good')
+    expect(data.labels).toEqual(['bug'])
+  })
 })
 
 describe('cleanJsonOutput', () => {

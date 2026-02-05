@@ -232,7 +232,9 @@ jobs:
             echo '```' >> $GITHUB_STEP_SUMMARY
 
             # FIX: Filter checks to ensure details_url is not null and not empty.
-            FAILED_CHECKS_RAW_JSON=$(echo "$RAW_CHECKS_JSON" | jq -c 'map(select(.status == "completed" and (.conclusion == "failure" or .conclusion == "cancelled") and .details_url != null and .details_url != ""))')
+            # EXCLUDE: 'Slop Check' from being injected into the prompt as it is redundant with AI instructions
+            # and can be very large, consuming unnecessary tokens.
+            FAILED_CHECKS_RAW_JSON=$(echo "$RAW_CHECKS_JSON" | jq -c 'map(select(.status == "completed" and (.conclusion == "failure" or .conclusion == "cancelled") and .details_url != null and .details_url != "" and (.name | contains("Slop Check") | not)))')
 
             mapfile -t NAMES < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].name')
             mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion // "failure"')
