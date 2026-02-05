@@ -12,6 +12,7 @@ export const HRM_STALE_WARNING_MS = 20000
 /**
  * Threshold in milliseconds after which a heart rate monitor is considered expired.
  * The tile is removed from the dashboard at this point.
+ * This constant is also used by the reducer to purge stale state.
  */
 export const HRM_STALE_THRESHOLD_MS = 35000
 

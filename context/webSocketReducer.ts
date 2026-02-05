@@ -6,7 +6,7 @@ import {
   HrmData,
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
-import { STALE_TILE_REMOVAL_THRESHOLD_MS } from '@/utils/constants'
+import { HRM_STALE_THRESHOLD_MS } from '@/constants/hrm'
 
 export interface WebSocketState {
   hrmData: HrmData[]
@@ -63,7 +63,12 @@ export const reducer = (
     }
     case 'HRM_UPDATE': {
       const now = Date.now()
-      const payload = message.payload as ServerHrmData[]
+      // Filter incoming payload for fresh data only
+      const payload = (message.payload as ServerHrmData[]).filter((user) => {
+        const lastSeen = user.updatedAt || now
+        return now - lastSeen < HRM_STALE_THRESHOLD_MS
+      })
+
       const incomingClients = new Set(payload.map((user) => user.clientId))
 
       // THE FIX: Immediately filter out any devices that are NOT in the incoming payload.
@@ -73,7 +78,7 @@ export const reducer = (
       const activeHrmData = state.hrmData.filter((existing) => {
         const isPresent = incomingClients.has(existing.clientId)
         const lastSeen = existing.updatedAt || existing.lastUpdate || now
-        const isFresh = now - lastSeen < STALE_TILE_REMOVAL_THRESHOLD_MS
+        const isFresh = now - lastSeen < HRM_STALE_THRESHOLD_MS
         return isPresent && isFresh
       })
 

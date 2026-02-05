@@ -9,6 +9,7 @@ import {
 } from '../../../context/webSocketReducer'
 import { ServerMessage } from '../../../types/websocket'
 import { HrmStreamData } from '../../../types/core'
+import { HRM_STALE_THRESHOLD_MS } from '../../../constants/hrm'
 
 describe('webSocketReducer', () => {
   const baseUser: HrmData = {
@@ -143,6 +144,36 @@ describe('webSocketReducer', () => {
       expect(state.hrmData).toHaveLength(1)
       expect(state.hrmData.find((d) => d.clientId === '2')).toBeUndefined()
       expect(state.hrmData[0].clientId).toBe('1')
+    })
+
+    it('should filter out users with expired timestamps during HRM_UPDATE', () => {
+      const now = Date.now()
+      const expiredUser = {
+        ...baseUser,
+        clientId: 'expired-1',
+        updatedAt: now - (HRM_STALE_THRESHOLD_MS + 1000),
+      }
+      const freshUser = {
+        ...baseUser,
+        clientId: 'fresh-1',
+        updatedAt: now - 1000,
+      }
+
+      const initialState: WebSocketState = {
+        ...INITIAL_STATE,
+        hrmData: [expiredUser, freshUser],
+      }
+
+      const action: ServerMessage = {
+        type: 'HRM_UPDATE',
+        payload: [expiredUser, freshUser],
+      }
+
+      const state = reducer(initialState, action)
+
+      // The expired user should be filtered out by the pre-merge check
+      expect(state.hrmData).toHaveLength(1)
+      expect(state.hrmData[0].clientId).toBe('fresh-1')
     })
   })
 
