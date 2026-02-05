@@ -1,5 +1,6 @@
 import { spawn, ChildProcess } from 'child_process'
 import http from 'http'
+import { WebSocket } from 'ws'
 
 export interface ServerProcess {
   process: ChildProcess
@@ -81,7 +82,7 @@ export function startServer(port: number): Promise<ServerProcess> {
 }
 
 export function waitForMessage<T>(
-  ws: any,
+  ws: WebSocket,
   predicate: (msg: T) => boolean,
   timeoutMs: number = 5000
 ): Promise<T> {

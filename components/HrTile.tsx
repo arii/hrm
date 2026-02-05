@@ -193,8 +193,9 @@ const HrTile = ({
                 />
                 <Typography variant="caption" sx={{ fontWeight: 800 }}>
                   ZONE {zone}:{' '}
-                  {HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG]
-                    ?.label || 'IDLE'}
+                  {HR_ZONE_VISUAL_CONFIG[
+                    zone as keyof typeof HR_ZONE_VISUAL_CONFIG
+                  ]?.label || 'IDLE'}
                 </Typography>
               </Box>
             )}
