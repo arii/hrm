@@ -9,6 +9,7 @@ import WifiOffIcon from '@mui/icons-material/WifiOff'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
+import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 
@@ -28,15 +29,6 @@ const overlayStyles = {
   borderRadius: 'inherit', // Match card border radius from StyledCard
 }
 
-const zoneConfig = {
-  5: { color: '#ff0000', label: 'Peak' },
-  4: { color: '#ff8000', label: 'Cardio' },
-  3: { color: '#ffff00', label: 'Aerobic' },
-  2: { color: '#00ff00', label: 'Warm Up' },
-  1: { color: '#00ffff', label: 'Recovery' },
-  0: { color: '#cccccc', label: 'Idle' },
-}
-
 const HrTile = ({
   name,
   bpm,
@@ -51,7 +43,8 @@ const HrTile = ({
   const theme = useTheme()
   const currentZone =
     zone !== undefined
-      ? zoneConfig[zone as keyof typeof zoneConfig] || zoneConfig[0]
+      ? HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
+        HR_ZONE_VISUAL_CONFIG[0]
       : null
 
   const { backgroundColor: fallbackBg, textColor: fallbackText } =
@@ -80,7 +73,8 @@ const HrTile = ({
         }, ${percentMax}% of maximum${
           zone !== undefined
             ? `, Zone ${zone}: ${
-                zoneConfig[zone as keyof typeof zoneConfig]?.label || 'Idle'
+                HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG]
+                  ?.label || 'Idle'
               }`
             : ''
         }`}
@@ -199,7 +193,8 @@ const HrTile = ({
                 />
                 <Typography variant="caption" sx={{ fontWeight: 800 }}>
                   ZONE {zone}:{' '}
-                  {zoneConfig[zone as keyof typeof zoneConfig]?.label || 'IDLE'}
+                  {HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG]
+                    ?.label || 'IDLE'}
                 </Typography>
               </Box>
             )}

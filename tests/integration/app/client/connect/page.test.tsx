@@ -10,9 +10,23 @@ import { useWebSocket } from '@/context/WebSocketContext'
 
 // Mocks
 jest.mock('@/hooks/useBluetoothHRM')
-jest.mock('@/context/WebSocketContext')
+jest.mock('@/context/WebSocketContext', () => ({
+  ...jest.requireActual('@/context/WebSocketContext'),
+  useWebSocket: jest.fn(),
+  WebSocketProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+}))
 
 describe('ConnectPage Integration', () => {
+  beforeAll(() => {
+    jest.useFakeTimers()
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
+
   const mockUseBluetoothHRM = useBluetoothHRM as jest.Mock
   const mockUseWebSocket = useWebSocket as jest.Mock
   let mockSendData: jest.Mock
@@ -55,13 +69,19 @@ describe('ConnectPage Integration', () => {
     act(() => {
       onHeartRateUpdateCallback(120)
     })
+
+    // Advance time for throttle
+    act(() => {
+      jest.advanceTimersByTime(300)
+    })
+
     act(() => {
       onHeartRateUpdateCallback(125)
     })
 
-    // Fast-forward timers
-    await act(async () => {
-      jest.runAllTimers()
+    // Advance time for throttle again
+    act(() => {
+      jest.advanceTimersByTime(300)
     })
 
     // Verify that sendData was called with the correct payload
