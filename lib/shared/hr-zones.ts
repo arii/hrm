@@ -32,7 +32,7 @@ export const calculateMaxHr = (age?: number | string | null): number => {
     return MAX_HR_DEFAULT
   }
 
-  return 208 - 0.7 * ageNum
+  return 220 - ageNum
 }
 
 // Define a type for the return value for clarity

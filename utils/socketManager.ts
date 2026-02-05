@@ -352,7 +352,10 @@ const handleIncomingMessage = (
             ...existingData,
             value: hrmMessage.data.value ?? existingData.value,
             calories: roundTo(finalCalories, 4),
-            percentage: hrmMessage.data.percentage,
+            percentage:
+              hrmMessage.data.percentage !== undefined
+                ? roundTo(hrmMessage.data.percentage, 4)
+                : undefined,
             zone: hrmMessage.data.zone,
             updatedAt: now,
           })

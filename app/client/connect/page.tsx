@@ -11,6 +11,7 @@ import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
 import { useHrZone } from '@/hooks/useHrZone'
+import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -213,7 +214,7 @@ export default function ConnectPage() {
 
   const { percentage, zone } = useMemo(() => {
     const age = userAge || 30
-    const maxHr = 220 - age
+    const maxHr = calculateMaxHr(age)
     const percentage =
       currentHR > 0 ? Math.min(100, Math.round((currentHR / maxHr) * 100)) : 0
     let zone = 0
@@ -247,7 +248,7 @@ export default function ConnectPage() {
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
-  const maxHr = userAge ? 220 - userAge : 190
+  const maxHr = calculateMaxHr(userAge)
   const hrZoneProps = useHrZone(currentHR, maxHr)
 
   return (
