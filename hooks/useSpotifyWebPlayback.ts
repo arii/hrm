@@ -83,6 +83,8 @@ const useSpotifyWebPlayback = () => {
       return
     }
 
+    // Defer initialization to the next tick to avoid synchronous state updates (setInitStatus)
+    // within the effect, which can cause React warnings about cascading renders.
     const initTimer = setTimeout(() => {
       setInitStatus('initializing')
 
