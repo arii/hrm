@@ -195,9 +195,13 @@ const initSocketManager = (
       // A more robust solution might involve a separate cleanup process
       // or a maximum number of inactive sessions.
       const timer = setTimeout(() => {
+        // Only cleanup if the client has not reconnected.
+        // We verify this by checking if the socket associated with the clientId is the one that just closed.
+        // If they are different, it means a new connection has been established.
         if (clientSockets.get(clientId) === extWs) {
           cleanupClientSession(clientId)
         } else {
+          // If the client has reconnected, we can safely remove the timer without taking further action.
           clientCleanupTimers.delete(clientId)
           logger.info(
             { clientId },
@@ -286,6 +290,7 @@ const handleIncomingMessage = (
             Object.entries(message.data)
           )
 
+          // Prevent overwriting a real name with a default "Unknown" name
           if (
             existingData.name &&
             !/^(user|new user|unknown|bluetooth hrm)/i.test(

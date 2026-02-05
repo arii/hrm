@@ -75,6 +75,12 @@ export type ServerMessage =
   | { type: 'DEVICE_OFFLINE'; payload: { deviceId: string } }
   | SpotifyExecutionMessage
 
+/**
+ * BroadcastData: a small, optional-shaped payload that services may send to
+ * the socket broadcaster. This mirrors the ad-hoc interface previously found
+ * inside the compiled `server.js` and centralizes it here for reuse.
+ */
+
 // --- Client Input Command Interfaces ---
 
 /**
