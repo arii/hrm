@@ -19,10 +19,13 @@ describe('useLocalWorkoutBuffer', () => {
 
     expect(result.current.hrHistory).toEqual([])
     expect(result.current.timeInZones).toEqual({
+      [HrZoneName.Idle]: 0,
+      [HrZoneName.Recovery]: 0,
       [HrZoneName.WarmUp]: 0,
-      [HrZoneName.FatBurn]: 0,
+      [HrZoneName.Aerobic]: 0,
       [HrZoneName.Cardio]: 0,
       [HrZoneName.Peak]: 0,
+      [HrZoneName.FatBurn]: 0,
       [HrZoneName.Max]: 0,
       [HrZoneName.NoData]: 0,
       [HrZoneName.Unknown]: 0,
@@ -56,9 +59,9 @@ describe('useLocalWorkoutBuffer', () => {
       hr: 150,
     })
 
-    // The first data point establishes the start time, but doesn't add to a zone.
-    // The second data point adds 2 seconds to FatBurn (the zone of the *first* point).
-    expect(result.current.timeInZones[HrZoneName.FatBurn]).toBeCloseTo(2)
+    // The first data point (HR 120 -> 60% -> Warm Up)
+    // The second data point (HR 120) adds 2 seconds to Warm Up.
+    expect(result.current.timeInZones[HrZoneName.WarmUp]).toBeCloseTo(2)
     expect(result.current.timeInZones[HrZoneName.Cardio]).toBe(0)
 
     // Third data point, 3 seconds later
@@ -67,8 +70,8 @@ describe('useLocalWorkoutBuffer', () => {
       result.current.addHrData(170, maxHr) // Peak
     })
 
-    // This adds 3 seconds to Cardio (the zone of the *second* point).
-    expect(result.current.timeInZones[HrZoneName.Cardio]).toBeCloseTo(3)
+    // This adds 3 seconds to Aerobic (the zone of the *second* point, 78.9%).
+    expect(result.current.timeInZones[HrZoneName.Aerobic]).toBeCloseTo(3)
   })
 
   it('should not add data if the time delta is too large (greater than 10s)', () => {
@@ -112,10 +115,13 @@ describe('useLocalWorkoutBuffer', () => {
 
     expect(result.current.hrHistory).toEqual([])
     expect(result.current.timeInZones).toEqual({
+      [HrZoneName.Idle]: 0,
+      [HrZoneName.Recovery]: 0,
       [HrZoneName.WarmUp]: 0,
-      [HrZoneName.FatBurn]: 0,
+      [HrZoneName.Aerobic]: 0,
       [HrZoneName.Cardio]: 0,
       [HrZoneName.Peak]: 0,
+      [HrZoneName.FatBurn]: 0,
       [HrZoneName.Max]: 0,
       [HrZoneName.NoData]: 0,
       [HrZoneName.Unknown]: 0,
