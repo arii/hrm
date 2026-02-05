@@ -4,6 +4,7 @@ import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
+import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
@@ -231,7 +232,7 @@ export default function ConnectPage() {
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
-  const maxHr = userAge ? 220 - userAge : 190
+  const maxHr = calculateMaxHr(userAge)
   const hrZoneProps = useHrZone(currentHR, maxHr)
 
   return (
