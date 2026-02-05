@@ -73,7 +73,9 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
       // Ensure mock client is connected before starting stream
-      await expect(mockPage.locator('text=Server Status: Connected')).toBeVisible({ timeout: 10000 })
+      await expect(
+        mockPage.locator('text=Server Status: Connected')
+      ).toBeVisible({ timeout: 10000 })
 
       await mockPage.getByTestId('streaming-start-button').click()
 
