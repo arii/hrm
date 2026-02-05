@@ -17,19 +17,15 @@ describe('HrmConnectionPanel', () => {
     })
   })
 
-  it('renders a placeholder message and no connect link when no data is available', () => {
+  it('renders the onboarding guide when no data is available', () => {
     render(
       <UserSettingsProvider>
         <HrmConnectionPanel />
       </UserSettingsProvider>
     )
-    expect(screen.getByText('No Heart Rate Data')).toBeInTheDocument()
-    expect(
-      screen.queryByRole('link', { name: /Connect/i })
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: /Connect/i })
-    ).not.toBeInTheDocument()
+    expect(screen.getByText('Connect a Device')).toBeInTheDocument()
+    expect(screen.getByText('Start Streaming')).toBeInTheDocument()
+    expect(screen.getByText('View Live Data')).toBeInTheDocument()
   })
 
   it('renders HR tiles and no connect link when hrmData is available', () => {
@@ -58,18 +54,17 @@ describe('HrmConnectionPanel', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('renders skeletons when loading', () => {
+  it('renders the onboarding guide when loading', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
       connectionStatus: 'Connecting...',
       activeAlerts: [],
     })
-    const { container } = render(
+    render(
       <UserSettingsProvider>
         <HrmConnectionPanel />
       </UserSettingsProvider>
     )
-    // Expect one skeleton to be present for the placeholder
-    expect(container.querySelectorAll('.MuiSkeleton-root').length).toBe(1)
+    expect(screen.getByText('Connect a Device')).toBeInTheDocument()
   })
 })

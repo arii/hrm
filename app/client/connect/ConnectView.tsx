@@ -16,7 +16,7 @@ import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
@@ -116,6 +116,14 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
+
+  const liveRegionMessage = useMemo(() => {
+    if (deviceStatus.includes('Connecting')) return 'Connecting to device'
+    if (isConnected) return 'Device connected successfully'
+    if (deviceStatus.includes('Failed')) return 'Device connection failed'
+    if (deviceStatus.includes('Disconnected')) return 'Device disconnected'
+    return '' // No announcement otherwise
+  }, [deviceStatus, isConnected])
 
   useEffect(() => {
     if (isConnected) {
@@ -406,6 +414,24 @@ export default function ConnectView({
         </Typography>
 
         <ResetSection />
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            margin: '-1px',
+            padding: '0',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            border: '0',
+          }}
+        >
+          {liveRegionMessage}
+        </div>
       </Container>
       <BottomNavBar />
     </>

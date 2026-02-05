@@ -7,6 +7,7 @@ import { render } from '@testing-library/react'
 import ExperimentalAnalyticsPage from '@/app/client/experimental/components/ExperimentalAnalyticsPage'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 
 // Mock the HeartRateTimeSeries component by mocking the dynamic import
 jest.mock('next/dynamic', () => () => {
@@ -18,10 +19,12 @@ jest.mock('next/dynamic', () => () => {
 // Mock hooks
 jest.mock('@/context/UserSettingsContext')
 jest.mock('@/context/WebSocketContext')
+jest.mock('@/hooks/useWorkoutSessionManager')
 
 describe('ExperimentalAnalyticsPage', () => {
   const mockUseUserSettings = useUserSettings as jest.Mock
   const mockUseWebSocket = useWebSocket as jest.Mock
+  const mockUseWorkoutSessionManager = useWorkoutSessionManager as jest.Mock
 
   beforeEach(() => {
     mockUseUserSettings.mockReturnValue([
@@ -31,6 +34,17 @@ describe('ExperimentalAnalyticsPage', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
       timerData: { currentPhase: 'IDLE' },
+    })
+    mockUseWorkoutSessionManager.mockReturnValue({
+      session: null,
+      status: 'idle',
+      isInitialized: false, // Set to false to prevent async loadSessions call
+      duration: 0,
+      startWorkout: jest.fn(),
+      resumeWorkout: jest.fn(),
+      endWorkout: jest.fn(),
+      resetWorkout: jest.fn(),
+      addHrData: jest.fn(),
     })
   })
 

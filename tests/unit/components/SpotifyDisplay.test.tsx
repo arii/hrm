@@ -104,12 +104,18 @@ describe('SpotifyDisplay', () => {
     renderWithProviders(<SpotifyDisplay />)
 
     const loginButton = await screen.findByRole('button', {
-      name: /login with spotify/i,
+      name: /login to spotify to select a playlist/i,
     })
     expect(loginButton).toBeInTheDocument()
 
     // Simulate user click
     await userEvent.click(loginButton)
+
+    const authButton = await screen.findByRole('button', {
+      name: /login with spotify/i,
+    })
+
+    fireEvent.click(authButton)
 
     // Assert that signIn was called correctly
     expect(mockedSignIn).toHaveBeenCalledTimes(1)
@@ -118,7 +124,6 @@ describe('SpotifyDisplay', () => {
       redirect: true,
     })
   })
-
   describe('when authenticated', () => {
     let mockSendData: jest.Mock
     let rerender: (ui: React.ReactElement) => void
