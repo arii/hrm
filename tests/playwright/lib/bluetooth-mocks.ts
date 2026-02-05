@@ -30,6 +30,15 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.listeners[type].push(listener)
       }
 
+      removeEventListener(type: string, listener: MockEventListener) {
+        if (this.listeners[type]) {
+          const index = this.listeners[type].indexOf(listener)
+          if (index > -1) {
+            this.listeners[type].splice(index, 1)
+          }
+        }
+      }
+
       // Helper to simulate data arriving
       emitValue(uint8Value: number) {
         const buffer = new ArrayBuffer(2)
@@ -115,6 +124,15 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.listeners[type].push(listener)
       }
 
+      removeEventListener(type: string, listener: (event: Event) => void) {
+        if (this.listeners[type]) {
+          const index = this.listeners[type].indexOf(listener)
+          if (index > -1) {
+            this.listeners[type].splice(index, 1)
+          }
+        }
+      }
+
       async forget() {
         const index = _pairedDevices.findIndex((d) => d.id === this.id)
         if (index > -1) {
@@ -145,7 +163,10 @@ export const injectBluetoothMocks = async (page: Page) => {
     }
 
     // Inject
-    navigator.bluetooth = mockBluetooth
+    Object.defineProperty(navigator, 'bluetooth', {
+      value: mockBluetooth,
+      writable: true,
+    })
     window.MockBluetoothDevice = MockBluetoothDevice
     window.bluetoothTestHelpers = {
       simulateHeartRate: async (bpm: number) => {
