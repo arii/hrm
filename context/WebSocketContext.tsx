@@ -126,14 +126,17 @@ export const WebSocketProvider = ({
       // Allow tests to inject messages via postMessage
       const handleMessage = (event: MessageEvent) => {
         const data = event.data as unknown
+        // Narrow down the type safely before accessing properties
         if (
           data &&
           typeof data === 'object' &&
           'type' in data &&
-          ((data as ServerMessage).type === 'HRM_UPDATE' ||
-            (data as ServerMessage).type === 'DEVICE_OFFLINE')
+          typeof (data as { type: unknown }).type === 'string'
         ) {
-          dispatch(data as ServerMessage)
+          const messageType = (data as { type: string }).type
+          if (messageType === 'HRM_UPDATE' || messageType === 'DEVICE_OFFLINE') {
+            dispatch(data as ServerMessage)
+          }
         }
       }
       window.addEventListener('message', handleMessage)
