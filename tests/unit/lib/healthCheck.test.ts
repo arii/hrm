@@ -28,9 +28,18 @@ describe('Health Check Logic', () => {
 
   describe('checkMemoryUsage', () => {
     it('should return healthy if memory usage is within limits', () => {
+      // Mock process.memoryUsage to return a safe value (e.g., 100MB used)
+      jest.spyOn(process, 'memoryUsage').mockReturnValue({
+        rss: 0,
+        heapTotal: 0,
+        heapUsed: 100 * 1024 * 1024,
+        external: 0,
+        arrayBuffers: 0,
+      })
+
       const result = checkMemoryUsage()
       expect(result.healthy).toBe(true)
-      expect(result.details.usedMB).toBeGreaterThan(0)
+      expect(result.details.usedMB).toBe(100)
     })
   })
 
