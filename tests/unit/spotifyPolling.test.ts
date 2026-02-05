@@ -194,8 +194,7 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', { playlistUri })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
         undefined,
-        undefined,
-        [playlistUri]
+        playlistUri
       )
     })
 
