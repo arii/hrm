@@ -51,7 +51,12 @@ describe('Environment Variables', () => {
     process.env.NEXTAUTH_SECRET = 'secret'
     process.env.SPOTIFY_CLIENT_ID = 'id'
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
-    await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
+    try {
+      await import('../../../lib/env')
+      throw new Error('Should have thrown')
+    } catch (e: any) {
+      expect(e.constructor.name).toBe('ZodError')
+    }
   })
 
   it('should derive SPOTIFY_CALLBACK_URL from NEXTAUTH_URL if not provided', async () => {
@@ -72,6 +77,11 @@ describe('Environment Variables', () => {
     process.env.SPOTIFY_CLIENT_ID = 'id'
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
     delete process.env.NEXTAUTH_URL
-    await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
+    try {
+      await import('../../../lib/env')
+      throw new Error('Should have thrown')
+    } catch (e: any) {
+      expect(e.constructor.name).toBe('ZodError')
+    }
   })
 })

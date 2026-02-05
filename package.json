@@ -80,6 +80,7 @@
     "js-cookie": "^3.0.5",
     "lodash.isequal": "^4.5.0",
     "lodash.throttle": "^4.1.1",
+    "lucide-react": "0.473.0",
     "next": "16.1.5",
     "next-auth": "^4.24.13",
     "notistack": "^3.0.2",
@@ -90,7 +91,7 @@
     "react-infinite-scroll-component": "^6.1.1",
     "recharts": "^3.7.0",
     "ws": "^8.19.0",
-    "zod": "^4.3.6"
+    "zod": "3.24.2"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",
@@ -166,7 +167,7 @@
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@9.15.4",
   "pnpm": {
     "neverBuiltDependencies": [
       "pm2-sysmonit"
@@ -181,7 +182,8 @@
       "cookie@<0.7.0": ">=0.7.0",
       "on-headers@<1.1.0": ">=1.1.0",
       "send@<0.19.0": ">=0.19.0",
-      "next@>=16.0.0-canary.0 <16.0.7": ">=16.0.7"
+      "next@>=16.0.0-canary.0 <16.0.7": ">=16.0.7",
+      "zod": "3.24.2"
     }
   }
 }
