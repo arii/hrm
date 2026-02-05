@@ -96,21 +96,21 @@ describe('useWorkoutSessionManager', () => {
     const tomorrow = new realDate()
     tomorrow.setDate(tomorrow.getDate() + 1)
 
-    global.Date = class extends realDate {
-      constructor(dateString?: string | number | Date) {
-        // If a date string is provided, use the original constructor
-        if (dateString) {
-          super(dateString)
-        } else {
-          // Otherwise, return 'tomorrow'
-          super(tomorrow)
+    // Helper to mock Date
+    const mockDate = class extends realDate {
+        constructor(dateString?: string | number | Date) {
+            if (dateString) {
+                super(dateString)
+            } else {
+                super(tomorrow)
+            }
         }
-      }
+        static now() {
+            return tomorrow.getTime()
+        }
+    } as unknown as typeof Date
 
-      static now() {
-        return tomorrow.getTime()
-      }
-    } as jest.MockedClass<typeof Date>
+    global.Date = mockDate
 
     // Act
     act(() => {
@@ -128,5 +128,85 @@ describe('useWorkoutSessionManager', () => {
 
     // Restore Date mock
     global.Date = realDate
+  })
+
+  it('should handle workout lifecycle: start, pause, resume, finish', async () => {
+    mockGetIncompleteSession.mockResolvedValue(null)
+    const { result } = renderHook(() => useWorkoutSessionManager())
+
+    await waitFor(() => {
+      expect(result.current.isInitialized).toBe(true)
+    })
+
+    // START
+    const startTime = 1000
+    jest.spyOn(Date, 'now').mockReturnValue(startTime)
+
+    act(() => {
+      result.current.startWorkout(30, 70)
+    })
+
+    expect(result.current.status).toBe('running')
+    expect(result.current.session).not.toBeNull()
+    expect(result.current.session?.status).toBe('running')
+    expect(result.current.session?.startTime).toBe(startTime)
+
+    // PAUSE
+    const pauseTime = 2000
+    jest.spyOn(Date, 'now').mockReturnValue(pauseTime)
+
+    act(() => {
+      result.current.pauseWorkout()
+    })
+
+    expect(result.current.status).toBe('paused')
+    expect(result.current.session?.status).toBe('paused')
+    expect(result.current.session?.lastPauseStartTime).toBe(pauseTime)
+
+    // RESUME
+    const resumeTime = 3000 // Paused for 1000ms
+    jest.spyOn(Date, 'now').mockReturnValue(resumeTime)
+
+    act(() => {
+      result.current.resumeWorkout()
+    })
+
+    expect(result.current.status).toBe('running')
+    expect(result.current.session?.status).toBe('running')
+    expect(result.current.session?.lastPauseStartTime).toBeNull()
+    expect(result.current.session?.totalPausedTime).toBe(1000)
+
+    // FINISH
+    const finishTime = 4000
+    jest.spyOn(Date, 'now').mockReturnValue(finishTime)
+
+    act(() => {
+      result.current.endWorkout()
+    })
+
+    expect(result.current.status).toBe('finished')
+    expect(result.current.session?.status).toBe('finished')
+    expect(result.current.session?.endTime).toBe(finishTime)
+
+    jest.restoreAllMocks()
+  })
+
+  it('should update calories', async () => {
+    mockGetIncompleteSession.mockResolvedValue(null)
+    const { result } = renderHook(() => useWorkoutSessionManager())
+    await waitFor(() => {
+      expect(result.current.isInitialized).toBe(true)
+    })
+
+    act(() => {
+      result.current.startWorkout(30, 70)
+    })
+
+    act(() => {
+      result.current.updateCalories(150)
+    })
+
+    expect(result.current.caloriesBurned).toBe(150)
+    expect(result.current.session?.totalCaloriesBurned).toBe(150)
   })
 })

@@ -26,9 +26,11 @@ type SessionManagerAction =
   | { type: 'SET_SESSION'; payload: WorkoutSessionData }
   | { type: 'START'; payload: { age: number; weight: number; maxHr?: number } }
   | { type: 'RESUME' }
+  | { type: 'PAUSE' }
   | { type: 'END' }
   | { type: 'RESET' }
   | { type: 'ADD_HR_DATA'; payload: HrDataPoint }
+  | { type: 'UPDATE_CALORIES'; payload: number }
 
 const initialState: SessionManagerState = {
   session: null,
@@ -68,6 +70,8 @@ function sessionManagerReducer(
         userSettings: { age, weight, maxHr },
         lastSyncTime: Date.now(),
         syncStatus: 'pending',
+        totalPausedTime: 0,
+        lastPauseStartTime: null,
       }
       return {
         ...state,
@@ -76,26 +80,53 @@ function sessionManagerReducer(
       }
     }
     case 'RESUME': {
-      if (!state.session) return state
-      return {
-        ...state,
-        session: { ...state.session, status: 'running' },
-        status: 'running',
-      }
-    }
-    case 'END': {
-      if (!state.session) return state
-      // If running, transition to 'paused'. If paused, transition to 'finished'.
-      const nextStatus = state.status === 'running' ? 'paused' : 'finished'
+      if (!state.session || state.status !== 'paused') return state
+      const now = Date.now()
+      const pauseDuration = state.session.lastPauseStartTime
+        ? now - state.session.lastPauseStartTime
+        : 0
+
       return {
         ...state,
         session: {
           ...state.session,
-          status: nextStatus,
-          // Only set endTime when the session is truly finished
-          endTime: nextStatus === 'finished' ? Date.now() : null,
+          status: 'running',
+          lastPauseStartTime: null,
+          totalPausedTime: state.session.totalPausedTime + pauseDuration,
         },
-        status: nextStatus,
+        status: 'running',
+      }
+    }
+    case 'PAUSE': {
+      if (!state.session || state.status !== 'running') return state
+      return {
+        ...state,
+        session: {
+          ...state.session,
+          status: 'paused',
+          lastPauseStartTime: Date.now(),
+        },
+        status: 'paused',
+      }
+    }
+    case 'END': {
+      if (!state.session) return state
+
+      let finalTotalPausedTime = state.session.totalPausedTime
+      if (state.status === 'paused' && state.session.lastPauseStartTime) {
+        finalTotalPausedTime += Date.now() - state.session.lastPauseStartTime
+      }
+
+      return {
+        ...state,
+        session: {
+          ...state.session,
+          status: 'finished',
+          endTime: Date.now(),
+          totalPausedTime: finalTotalPausedTime,
+          lastPauseStartTime: null,
+        },
+        status: 'finished',
       }
     }
     case 'RESET': {
@@ -133,6 +164,16 @@ function sessionManagerReducer(
           maxHr: newMaxHr,
           averageHr: newAverageHr,
           timeInZones: newTimeInZones,
+        },
+      }
+    }
+    case 'UPDATE_CALORIES': {
+      if (!state.session) return state
+      return {
+        ...state,
+        session: {
+          ...state.session,
+          totalCaloriesBurned: action.payload,
         },
       }
     }
@@ -236,8 +277,16 @@ export const useWorkoutSessionManager = () => {
     dispatch({ type: 'RESUME' })
   }, [])
 
+  const pauseWorkout = useCallback(() => {
+    dispatch({ type: 'PAUSE' })
+  }, [])
+
   const endWorkout = useCallback(() => {
     dispatch({ type: 'END' })
+  }, [])
+
+  const updateCalories = useCallback((calories: number) => {
+    dispatch({ type: 'UPDATE_CALORIES', payload: calories })
   }, [])
 
   const resetWorkout = useCallback(async () => {
@@ -254,19 +303,52 @@ export const useWorkoutSessionManager = () => {
   const [duration, setDuration] = useState(0)
 
   useEffect(() => {
-    if (state.status !== 'running') {
+    if (state.status === 'idle') {
+      setDuration(0)
       return
     }
 
-    const interval = setInterval(() => {
+    const updateDuration = () => {
       if (state.session?.startTime) {
         const now = Date.now()
-        setDuration(Math.floor((now - state.session.startTime) / 1000))
-      }
-    }, 1000)
+        // If running: duration = now - startTime - totalPausedTime
+        // If paused: duration = lastPauseStartTime - startTime - totalPausedTime
+        // If finished: duration = endTime - startTime - totalPausedTime (endTime handled by reducer to effectively be 'end')
 
-    return () => clearInterval(interval)
-  }, [state.status, state.session?.startTime])
+        let effectiveEndTime = now
+        if (state.status === 'paused' && state.session.lastPauseStartTime) {
+          effectiveEndTime = state.session.lastPauseStartTime
+        } else if (state.status === 'finished' && state.session.endTime) {
+          effectiveEndTime = state.session.endTime
+        }
+
+        const calculatedDuration = Math.floor(
+          (effectiveEndTime -
+            state.session.startTime -
+            (state.session.totalPausedTime || 0)) /
+            1000
+        )
+        setDuration(Math.max(0, calculatedDuration))
+      }
+    }
+
+    updateDuration() // Initial call
+
+    let interval: NodeJS.Timeout | null = null
+    if (state.status === 'running') {
+      interval = setInterval(updateDuration, 1000)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [
+    state.status,
+    state.session?.startTime,
+    state.session?.totalPausedTime,
+    state.session?.lastPauseStartTime,
+    state.session?.endTime,
+  ])
 
   return {
     session: state.session,
@@ -275,8 +357,11 @@ export const useWorkoutSessionManager = () => {
     duration,
     startWorkout,
     resumeWorkout,
+    pauseWorkout,
     endWorkout,
     resetWorkout,
     addHrData,
+    updateCalories,
+    caloriesBurned: state.session?.totalCaloriesBurned || 0,
   }
 }

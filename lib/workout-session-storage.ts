@@ -33,6 +33,8 @@ export interface WorkoutSessionData {
   userSettings: { age: number; weight: number; maxHr: number }
   lastSyncTime: number
   syncStatus: 'pending' | 'synced' | 'failed'
+  totalPausedTime: number
+  lastPauseStartTime: number | null
 }
 
 interface WorkoutDB extends DBSchema {
