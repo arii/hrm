@@ -69,25 +69,26 @@ export const reducer = (
       const payload = message.payload as ServerHrmData[]
       const incomingClients = new Set(payload.map((user) => user.clientId))
 
-      // Merge and update existing users
-      const mergedHrmData = state.hrmData.map((existingUser) => {
-        if (incomingClients.has(existingUser.clientId)) {
-          const updatedUser = payload.find(
-            (newUser) => newUser.clientId === existingUser.clientId
-          )
-          return updatedUser
-            ? {
-                ...existingUser,
-                ...updatedUser,
-                isConnected: true,
-                lastUpdated: now,
-              }
-            : { ...existingUser, isConnected: true, lastUpdated: now }
+      // THE FIX: Immediately filter out any devices that are NOT in the incoming payload.
+      // This ensures the client state perfectly mirrors the server's HrmDataStore.
+      const activeHrmData = state.hrmData.filter((existing) =>
+        incomingClients.has(existing.clientId)
+      )
+
+      // Update existing users with new data
+      const mergedHrmData = activeHrmData.map((existingUser) => {
+        const updatedUser = payload.find(
+          (newUser) => newUser.clientId === existingUser.clientId
+        )
+        return {
+          ...existingUser,
+          ...updatedUser,
+          isConnected: true,
+          lastUpdated: now,
         }
-        return existingUser // Keep existing user as is for now
       })
 
-      // Add new users
+      // Add brand-new users from the payload
       payload.forEach((newUser) => {
         if (
           !mergedHrmData.some(
@@ -102,12 +103,7 @@ export const reducer = (
         }
       })
 
-      // Filter out stale users who haven't updated in 35 seconds
-      const filteredHrmData = mergedHrmData.filter(
-        (user) => now - (user.lastUpdated || 0) < 35000
-      )
-
-      return { ...state, hrmData: filteredHrmData }
+      return { ...state, hrmData: mergedHrmData }
     }
     case 'DEVICE_OFFLINE': {
       const { deviceId } = message.payload
