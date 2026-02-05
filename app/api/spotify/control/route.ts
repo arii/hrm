@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // The SDK needs a valid client ID.
   const clientId = process.env.SPOTIFY_CLIENT_ID
   if (!clientId) {
     logger.error('SPOTIFY_CLIENT_ID is not set in the environment variables.')
@@ -29,7 +28,7 @@ export async function POST(req: NextRequest) {
   const sdk = SpotifyApi.withAccessToken(clientId, {
     access_token: session.accessToken,
     token_type: 'Bearer',
-    expires_in: 3600, // Assuming 1 hour validity
+    expires_in: 3600,
     refresh_token: session.refreshToken || '',
   })
 
