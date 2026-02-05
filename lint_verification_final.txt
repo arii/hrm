@@ -1,0 +1,12 @@
+
+> hrm@0.30.0 lint /app
+> eslint app/ components/ constants/ context/ hooks/ lib/ services/ tests/ types/ utils/ server.ts proxy.ts --cache
+
+
+/app/tests/integration/test-helpers.ts
+   5:36  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  25:16  warning  'err' is defined but never used           unused-imports/no-unused-vars
+
+✖ 2 problems (1 error, 1 warning)
+
+ ELIFECYCLE  Command failed with exit code 1.

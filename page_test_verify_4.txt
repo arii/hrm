@@ -1,0 +1,34 @@
+  console.log
+    { currentHR: 0, isDataStale: false, userName: '' } HrTile rendering with currentHR
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { heartRate: 120 } handleHeartRateUpdate called, updating local state
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { currentHR: 120, isDataStale: false, userName: '' } HrTile rendering with currentHR
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { heartRate: 125 } handleHeartRateUpdate called, updating local state
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { currentHR: 125, isDataStale: false, userName: '' } HrTile rendering with currentHR
+
+      at Object.debug (utils/logger.ts:16:56)
+
+PASS tests/integration/app/client/connect/page.test.tsx
+  ConnectPage Integration
+    ✓ should process heart rate updates, calculate calories, and send data to WebSocket (573 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        4.096 s, estimated 5 s
+Ran all test suites matching tests/integration/app/client/connect/page.test.tsx.

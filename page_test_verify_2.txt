@@ -1,0 +1,93 @@
+  console.log
+    { currentHR: 0, isDataStale: false, userName: '' } HrTile rendering with currentHR
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { heartRate: 120 } handleHeartRateUpdate called, updating local state
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { currentHR: 120, isDataStale: false, userName: '' } HrTile rendering with currentHR
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { heartRate: 125 } handleHeartRateUpdate called, updating local state
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { currentHR: 125, isDataStale: false, userName: '' } HrTile rendering with currentHR
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+
+          67 |     // Fast-forward timers
+          68 |     await act(async () => {
+        > 69 |       jest.runAllTimers()
+             |            ^
+          70 |     })
+          71 |
+          72 |     // Verify that sendData was called with the correct payload
+
+          Error:
+          at FakeTimers._checkFakeTimers (node_modules/.pnpm/@jest+fake-timers@30.2.0/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runAllTimers (node_modules/.pnpm/@jest+fake-timers@30.2.0/node_modules/@jest/fake-timers/build/index.js:531:14)
+          at tests/integration/app/client/connect/page.test.tsx:69:12
+          at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:47:24
+          at process.env.NODE_ENV.exports.act (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:814:22)
+          at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:46:25
+          at Object.<anonymous> (tests/integration/app/client/connect/page.test.tsx:68:14)
+
+      67 |     // Fast-forward timers
+      68 |     await act(async () => {
+    > 69 |       jest.runAllTimers()
+         |            ^
+      70 |     })
+      71 |
+      72 |     // Verify that sendData was called with the correct payload
+
+      at FakeTimers._checkFakeTimers (node_modules/.pnpm/@jest+fake-timers@30.2.0/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runAllTimers (node_modules/.pnpm/@jest+fake-timers@30.2.0/node_modules/@jest/fake-timers/build/index.js:531:14)
+      at tests/integration/app/client/connect/page.test.tsx:69:12
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:47:24
+      at process.env.NODE_ENV.exports.act (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:814:22)
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at Object.<anonymous> (tests/integration/app/client/connect/page.test.tsx:68:14)
+
+FAIL tests/integration/app/client/connect/page.test.tsx
+  ConnectPage Integration
+    ✕ should process heart rate updates, calculate calories, and send data to WebSocket (621 ms)
+
+  ● ConnectPage Integration › should process heart rate updates, calculate calories, and send data to WebSocket
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: ObjectContaining {"data": ObjectContaining {"calories": Any<Number>, "value": 125}, "type": "HRM_INPUT"}
+    Received
+           1: {"data": {"age": 30, "name": "User"}, "type": "HRM_METADATA_UPDATE"}
+           2: {"data": {"calories": 0, "value": 0}, "type": "HRM_INPUT"}
+           3: {"data": {"calories": 0, "value": 120}, "type": "HRM_INPUT"}
+
+    Number of calls: 3
+
+      71 |
+      72 |     // Verify that sendData was called with the correct payload
+    > 73 |     expect(mockSendData).toHaveBeenCalledWith(
+         |                          ^
+      74 |       expect.objectContaining({
+      75 |         type: 'HRM_INPUT',
+      76 |         data: expect.objectContaining({
+
+      at Object.<anonymous> (tests/integration/app/client/connect/page.test.tsx:73:26)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        3.206 s
+Ran all test suites matching tests/integration/app/client/connect/page.test.tsx.

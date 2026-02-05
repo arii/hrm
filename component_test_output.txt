@@ -1,0 +1,422 @@
+
+> hrm@0.30.0 test:components /app
+> cross-env NEXTAUTH_SECRET=test-secret-unit jest --config jest.config.components.cjs
+
+PASS tests/unit/hooks/useBluetoothHRM.test.ts
+PASS tests/unit/components/Spotify/CurrentSpotifyItemDisplay.test.tsx
+PASS tests/unit/components/SpotifyDisplay.test.tsx (5.088 s)
+  ● Console
+
+    console.log
+      [AuthButton] Clicking login for Spotify, calling signIn()...
+
+      at handleLogin (components/AuthButton.tsx:19:15)
+
+    console.log
+      [AuthButton] signIn() result for Spotify: undefined
+
+      at handleLogin (components/AuthButton.tsx:26:15)
+
+PASS tests/unit/components/TimerDisplay.test.tsx
+PASS tests/unit/hooks/useWorkoutSession.test.ts
+PASS tests/unit/hooks/useWorkoutSessionManager.test.ts
+  ● Console
+
+    console.info
+      [SessionManager] Stale session from Mon Feb 02 2026 detected. Clearing for new day Tue Feb 03 2026.
+
+      at hooks/useWorkoutSessionManager.ts:161:17
+
+    console.info
+      [SessionManager] Stale session from Tue Feb 03 2026 detected. Clearing for new day Wed Feb 04 2026.
+
+      at hooks/useWorkoutSessionManager.ts:161:17
+
+PASS tests/unit/components/HrTile.test.tsx
+PASS tests/unit/components/Spotify/PlaylistSelector.test.tsx
+PASS tests/unit/hooks/useLocalWorkoutBuffer.test.ts
+PASS tests/unit/hooks/useLocalStorage.test.ts
+PASS tests/unit/components/Spotify/PlaylistDetails.test.tsx
+PASS tests/unit/hooks/useSpotifyAuth.test.ts
+PASS tests/unit/hooks/useSpotifyWebPlayback.test.ts
+  ● Console
+
+    console.log
+      [Spotify Web Playback] Hook initialized, checking prerequisites...
+
+      at hooks/useSpotifyWebPlayback.ts:112:13
+
+    console.log
+      [Spotify Web Playback] Spotify SDK already loaded
+
+      at initializeSDK (hooks/useSpotifyWebPlayback.ts:133:17)
+
+    console.log
+      [Spotify Web Playback] Initializing player...
+
+      at initializePlayer (hooks/useSpotifyWebPlayback.ts:154:15)
+
+    console.log
+      [Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!
+
+      at hooks/useSpotifyWebPlayback.ts:202:19
+
+    console.log
+      [Spotify Web Playback] Hook initialized, checking prerequisites...
+
+      at hooks/useSpotifyWebPlayback.ts:112:13
+
+    console.log
+      [Spotify Web Playback] Spotify SDK already loaded
+
+      at initializeSDK (hooks/useSpotifyWebPlayback.ts:133:17)
+
+    console.log
+      [Spotify Web Playback] Initializing player...
+
+      at initializePlayer (hooks/useSpotifyWebPlayback.ts:154:15)
+
+    console.log
+      [Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!
+
+      at hooks/useSpotifyWebPlayback.ts:202:19
+
+    console.error
+      [Spotify Web Playback] Failed to get OAuth token: Unauthorized
+
+      75 |       } catch (error) {
+      76 |         const appError = error as AppError
+    > 77 |         console.error(
+         |                 ^
+      78 |           `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
+      79 |         )
+      80 |
+
+      at Object.getOAuthToken (hooks/useSpotifyWebPlayback.ts:77:17)
+      at Object.<anonymous> (tests/unit/hooks/useSpotifyWebPlayback.test.ts:74:5)
+
+    console.warn
+      [Spotify Web Playback] Received 401, signing out to force re-authentication.
+
+      84 |         // sign the user out, which will clear the session and prompt a new login.
+      85 |         if (appError.code === 'HTTP_ERROR_401') {
+    > 86 |           console.warn(
+         |                   ^
+      87 |             '[Spotify Web Playback] Received 401, signing out to force re-authentication.'
+      88 |           )
+      89 |           addError('Spotify session expired. Please log in again.', {
+
+      at Object.getOAuthToken (hooks/useSpotifyWebPlayback.ts:86:19)
+      at Object.<anonymous> (tests/unit/hooks/useSpotifyWebPlayback.test.ts:74:5)
+
+    console.log
+      [Spotify Web Playback] Hook initialized, checking prerequisites...
+
+      at hooks/useSpotifyWebPlayback.ts:112:13
+
+    console.log
+      [Spotify Web Playback] Spotify SDK already loaded
+
+      at initializeSDK (hooks/useSpotifyWebPlayback.ts:133:17)
+
+    console.log
+      [Spotify Web Playback] Initializing player...
+
+      at initializePlayer (hooks/useSpotifyWebPlayback.ts:154:15)
+
+    console.log
+      [Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!
+
+      at hooks/useSpotifyWebPlayback.ts:202:19
+
+    console.error
+      [Spotify Web Playback] Failed to get OAuth token: Internal Server Error
+
+      75 |       } catch (error) {
+      76 |         const appError = error as AppError
+    > 77 |         console.error(
+         |                 ^
+      78 |           `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
+      79 |         )
+      80 |
+
+      at Object.getOAuthToken (hooks/useSpotifyWebPlayback.ts:77:17)
+      at Object.<anonymous> (tests/unit/hooks/useSpotifyWebPlayback.test.ts:96:5)
+
+PASS tests/unit/hooks/useCalorieTracker.test.ts
+PASS tests/unit/hooks/useCalorieCalculator.test.ts
+PASS tests/unit/components/Playlist/PlaylistTracksDisplay.test.tsx
+  ● Console
+
+    console.error
+      An update to PlaylistTracksDisplay inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      60 |         setLoading(false)
+      61 |       } catch (err) {
+    > 62 |         setError(
+         |         ^
+      63 |           err instanceof Error ? err.message : 'An unknown error occurred'
+      64 |         )
+      65 |         setLoading(false)
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at components/Playlist/PlaylistTracksDisplay.tsx:62:9
+
+    console.error
+      An update to PlaylistTracksDisplay inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      63 |           err instanceof Error ? err.message : 'An unknown error occurred'
+      64 |         )
+    > 65 |         setLoading(false)
+         |         ^
+      66 |       }
+      67 |     },
+      68 |     [playlistId]
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at components/Playlist/PlaylistTracksDisplay.tsx:65:9
+
+    console.error
+      An update to PlaylistTracksDisplay inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      60 |         setLoading(false)
+      61 |       } catch (err) {
+    > 62 |         setError(
+         |         ^
+      63 |           err instanceof Error ? err.message : 'An unknown error occurred'
+      64 |         )
+      65 |         setLoading(false)
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at components/Playlist/PlaylistTracksDisplay.tsx:62:9
+
+    console.error
+      An update to PlaylistTracksDisplay inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      63 |           err instanceof Error ? err.message : 'An unknown error occurred'
+      64 |         )
+    > 65 |         setLoading(false)
+         |         ^
+      66 |       }
+      67 |     },
+      68 |     [playlistId]
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at components/Playlist/PlaylistTracksDisplay.tsx:65:9
+
+PASS tests/unit/components/shared/PlaybackControls.test.tsx
+PASS tests/unit/hooks/usePersistentStorage.test.ts
+PASS tests/unit/hooks/useFetchWithRetry.test.ts
+PASS tests/unit/components/TimerControls.test.tsx
+PASS tests/unit/hooks/useCookie.test.ts
+  ● Console
+
+    console.error
+      Error reading or parsing cookie key “test-cookie”: SyntaxError: Expected property name or '}' in JSON at position 2 (line 1 column 3)
+          at JSON.parse (<anonymous>)
+          at /app/hooks/useCookie.ts:13:27
+          at mountStateImpl (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:8268:24)
+          at mountState (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:8289:22)
+          at Object.useState (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:26243:18)
+          at process.env.NODE_ENV.exports.useState (/app/node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:1263:34)
+          at useCookie (/app/hooks/useCookie.ts:8:49)
+          at /app/tests/unit/hooks/useCookie.test.ts:62:50
+          at TestComponent (/app/node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:330:27)
+          at Object.react_stack_bottom_frame (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20)
+          at renderWithHooks (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22)
+          at updateFunctionComponent (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19)
+          at beginWork (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18)
+          at runWithFiberInDEV (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+          at performUnitOfWork (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22)
+          at workLoopSync (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41)
+          at renderRootSync (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11)
+          at performWorkOnRoot (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16504:11)
+          at performWorkOnRootViaSchedulerTask (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18957:7)
+          at flushActQueue (/app/node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:590:34)
+          at process.env.NODE_ENV.exports.act (/app/node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:884:10)
+          at /app/node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:46:25
+          at renderRoot (/app/node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:189:26)
+          at render (/app/node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:291:10)
+          at renderHook (/app/node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:339:7)
+          at Object.<anonymous> (/app/tests/unit/hooks/useCookie.test.ts:62:34)
+          at Promise.finally.completed (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1497:10)
+          at _callCircusTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:947:3)
+          at /app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+          at run (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1918:21)
+          at jestAdapter (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/runner.js:101:19)
+          at runTestInternal (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:275:16)
+          at runTest (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:343:7)
+          at Object.worker (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:497:12)
+
+      31 |       return initialValue
+      32 |     } catch (error) {
+    > 33 |       console.error(`Error reading or parsing cookie key “${key}”:`, error)
+         |               ^
+      34 |       return initialValue
+      35 |     }
+      36 |   })
+
+      at hooks/useCookie.ts:33:15
+      at mountStateImpl (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:8268:24)
+      at mountState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:8289:22)
+      at Object.useState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:26243:18)
+      at process.env.NODE_ENV.exports.useState (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:1263:34)
+      at useCookie (hooks/useCookie.ts:8:49)
+      at tests/unit/hooks/useCookie.test.ts:62:50
+      at TestComponent (node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:330:27)
+      at Object.react_stack_bottom_frame (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20)
+      at renderWithHooks (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22)
+      at updateFunctionComponent (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19)
+      at beginWork (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18)
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at performUnitOfWork (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22)
+      at workLoopSync (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41)
+      at renderRootSync (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11)
+      at performWorkOnRoot (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16504:11)
+      at performWorkOnRootViaSchedulerTask (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18957:7)
+      at flushActQueue (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:590:34)
+      at process.env.NODE_ENV.exports.act (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:884:10)
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at renderRoot (node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:189:26)
+      at render (node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:291:10)
+      at renderHook (node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:339:7)
+      at Object.<anonymous> (tests/unit/hooks/useCookie.test.ts:62:34)
+
+PASS tests/unit/components/HrmConnectionPanel.test.tsx
+PASS tests/unit/hooks/useHrZone.test.ts
+PASS tests/unit/hooks/useUserWeight.test.ts
+PASS tests/unit/components/DashboardSectionLoadingSkeleton.test.tsx
+PASS tests/unit/components/WorkoutTableViewer.test.tsx
+PASS tests/unit/components/LoadingIndicator.test.tsx
+PASS tests/unit/components/GoogleDocViewer.test.tsx
+PASS tests/unit/components/shared/ControlCard.test.tsx
+PASS tests/unit/components/AuthButton.test.tsx
+PASS tests/unit/components/shared/VolumeSlider.test.tsx (15.203 s)
+PASS tests/unit/components/ExperimentalAnalyticsPage.test.tsx (13.738 s)
+  ● Console
+
+    console.error
+      An update to ExperimentalAnalyticsPage inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      203 |         dispatch({ type: 'SET_SESSION', payload: incompleteSession })
+      204 |       }
+    > 205 |       setIsInitialized(true)
+          |       ^
+      206 |     }
+      207 |
+      208 |     if (!isInitialized) {
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at recoverSession (hooks/useWorkoutSessionManager.ts:205:7)
+
+    console.error
+      An update to ExperimentalAnalyticsPage inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      203 |         dispatch({ type: 'SET_SESSION', payload: incompleteSession })
+      204 |       }
+    > 205 |       setIsInitialized(true)
+          |       ^
+      206 |     }
+      207 |
+      208 |     if (!isInitialized) {
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at recoverSession (hooks/useWorkoutSessionManager.ts:205:7)
+
+
+Test Suites: 32 passed, 32 total
+Tests:       137 passed, 137 total
+Snapshots:   4 passed, 4 total
+Time:        27.352 s
+Ran all test suites.

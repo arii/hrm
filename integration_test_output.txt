@@ -1,0 +1,315 @@
+
+> hrm@0.30.0 test:integration /app
+> pnpm run build && cross-env NEXTAUTH_SECRET=test-secret-integration jest --config jest.config.integration.cjs --runInBand
+
+
+> hrm@0.30.0 prebuild /app
+> pnpm run clean
+
+
+> hrm@0.30.0 clean /app
+> rm -rf .next dist coverage test-results playwright-report *.log *.backup nohup.out diff.txt
+
+
+> hrm@0.30.0 build /app
+> pnpm run build:server && next build --webpack
+
+
+> hrm@0.30.0 build:server /app
+> pnpm exec tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json
+
+▲ Next.js 16.1.5 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 37.9s
+  Running TypeScript ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/27) ...
+  Generating static pages using 3 workers (6/27)
+  Generating static pages using 3 workers (13/27)
+  Generating static pages using 3 workers (20/27)
+✓ Generating static pages using 3 workers (27/27) in 857.2ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/debug/auth-check
+├ ƒ /api/debug/reset
+├ ƒ /api/debug/session
+├ ƒ /api/debug/spotify-token
+├ ƒ /api/debug/spotify-token-status
+├ ƒ /api/health/detailed
+├ ƒ /api/health/simple
+├ ƒ /api/internal/clear-token
+├ ƒ /api/internal/token-delivery
+├ ƒ /api/spotify/access-token
+├ ƒ /api/spotify/control
+├ ƒ /api/spotify/devices
+├ ƒ /api/spotify/playlists
+├ ƒ /api/spotify/playlists/[playlistId]
+├ ƒ /api/spotify/playlists/[playlistId]/tracks
+├ ƒ /api/spotify/playlists/search
+├ ƒ /api/spotify/search
+├ ƒ /api/users
+├ ƒ /api/workout
+├ ○ /client/connect
+├ ○ /client/control
+├ ○ /client/experimental
+├ ○ /client/mock
+├ ○ /client/spotify-selection
+├ ○ /debug/spotify
+└ ƒ /spotify/playlist/[playlistId]
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+FAIL tests/integration/socketManager.test.ts
+  ● Console
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098270557,"pid":8488,"hostname":"devbox","interval":30000,"msg":"ConnectionMonitor started."}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098271011,"pid":8488,"hostname":"devbox","msg":"> Ready on http://0.0.0.0:3005"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      Server is healthy on port 3005
+
+      at ClientRequest.<anonymous> (tests/integration/test-helpers.ts:41:19)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098271534,"pid":8488,"hostname":"devbox","req":{"id":"a7b9e3e0-5439-4648-96a5-1a445619cb22","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3005","connection":"keep-alive"},"remoteAddress":"::ffff:127.0.0.1","remotePort":58420},"res":{"statusCode":200},"responseTime":8,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098271548,"pid":8488,"hostname":"devbox","clientId":"[GENERATED]-user-570qzd7","ip":"[REDACTED]","isSecure":false,"origin":"[REDACTED]","userAgent":"[REDACTED]","host":"127.0.0.1:3005","msg":"WebSocket client connected"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098271576,"pid":8488,"hostname":"devbox","clientId":"grace-period-test-client","ip":"[REDACTED]","isSecure":false,"origin":"[REDACTED]","userAgent":"[REDACTED]","host":"127.0.0.1:3005","msg":"WebSocket client connected"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+  ● WebSocket Full Integration Test › should handle a full user workflow: connect, send HR, start timer, receive updates, stop timer
+
+    TypeError: (0 , test_helpers_1.waitForMessage) is not a function
+
+      28 |
+      29 |     // 1. Get initial state
+    > 30 |     const initialStatePromise = waitForMessage<UnifiedStateMessage>(
+         |                                               ^
+      31 |       ws,
+      32 |       (msg) => msg.type === 'INITIAL_STATE'
+      33 |     )
+
+      at Object.<anonymous> (tests/integration/socketManager.test.ts:30:47)
+
+  ● WebSocket Full Integration Test › should retain session if client reconnects within grace period
+
+    TypeError: (0 , test_helpers_1.waitForMessage) is not a function
+
+       98 |
+       99 |     // Send some data to establish the session
+    > 100 |     const ackPromise = waitForMessage<UnifiedStateMessage>(
+          |                                      ^
+      101 |       ws1,
+      102 |       (msg) => !!msg.hrmData?.some((c) => c.clientId === clientId)
+      103 |     )
+
+      at Object.<anonymous> (tests/integration/socketManager.test.ts:100:38)
+
+  ● WebSocket Full Integration Test › should delete session if client fails to reconnect within grace period
+
+    TypeError: (0 , test_helpers_1.waitForMessage) is not a function
+
+      146 |     const ws1 = new WebSocket(wsUrlWithId)
+      147 |     await new Promise((resolve) => ws1.on('open', resolve))
+    > 148 |     const ackPromise = waitForMessage<UnifiedStateMessage>(
+          |                                      ^
+      149 |       ws1,
+      150 |       (msg) => !!msg.hrmData?.some((c) => c.clientId === clientId)
+      151 |     )
+
+      at Object.<anonymous> (tests/integration/socketManager.test.ts:148:38)
+
+
+  ●  Cannot log after tests are done. Did you forget to wait for something async in your test?
+    Attempted to log "[Server STDOUT]: {"level":30,"time":1770098271583,"pid":8488,"hostname":"devbox","clientId":"cleanup-test-client","ip":"[REDACTED]","isSecure":false,"origin":"[REDACTED]","userAgent":"[REDACTED]","host":"127.0.0.1:3005","msg":"WebSocket client connected"}".
+
+      24 |
+      25 |     serverProcess.stdout?.on('data', (data: Buffer) => {
+    > 26 |       console.log(`[Server STDOUT]: ${data.toString().trim()}`)
+         |               ^
+      27 |     })
+      28 |
+      29 |     serverProcess.stderr?.on('data', (data: Buffer) => {
+
+      at console.log (node_modules/.pnpm/@jest+console@30.2.0/node_modules/@jest/console/build/index.js:147:10)
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+FAIL tests/integration/app/client/connect/page.test.tsx
+  ● ConnectPage Integration › should process heart rate updates, calculate calories, and send data to WebSocket
+
+    TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Start Workout/i`
+
+    There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div />[39m
+    [36m</body>[39m
+
+      49 |     // Start the workout
+      50 |     act(() => {
+    > 51 |       screen.getByRole('button', { name: /Start Workout/i }).click()
+         |              ^
+      52 |     })
+      53 |
+      54 |     // Simulate heart rate updates
+
+      at Object.getElementError (node_modules/.pnpm/@testing-library+dom@10.4.0/node_modules/@testing-library/dom/dist/config.js:37:19)
+      at node_modules/.pnpm/@testing-library+dom@10.4.0/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+      at node_modules/.pnpm/@testing-library+dom@10.4.0/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/.pnpm/@testing-library+dom@10.4.0/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at tests/integration/app/client/connect/page.test.tsx:51:14
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:47:24
+      at process.env.NODE_ENV.exports.act (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:814:22)
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at Object.<anonymous> (tests/integration/app/client/connect/page.test.tsx:50:8)
+
+FAIL tests/integration/server.test.ts (62.32 s)
+  ● Console
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098275758,"pid":8499,"hostname":"devbox","interval":30000,"msg":"ConnectionMonitor started."}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098276176,"pid":8499,"hostname":"devbox","msg":"> Ready on http://0.0.0.0:3006"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      Server is healthy on port 3006
+
+      at ClientRequest.<anonymous> (tests/integration/test-helpers.ts:41:19)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098276190,"pid":8499,"hostname":"devbox","req":{"id":"ff9aba39-11b6-462b-a2f3-8497b3490a78","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3006","connection":"keep-alive"},"remoteAddress":"::ffff:127.0.0.1","remotePort":58914},"res":{"statusCode":200},"responseTime":7,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098276200,"pid":8499,"hostname":"devbox","clientId":"[GENERATED]-user-fxx6fd7","ip":"[REDACTED]","isSecure":false,"origin":"[REDACTED]","userAgent":"[REDACTED]","host":"127.0.0.1:3006","msg":"WebSocket client connected"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098276201,"pid":8499,"hostname":"devbox","clientId":"[GENERATED]-user-zdbs33z","ip":"[REDACTED]","isSecure":false,"origin":"[REDACTED]","userAgent":"[REDACTED]","host":"127.0.0.1:3006","msg":"WebSocket client connected"}
+      {"level":30,"time":1770098276202,"pid":8499,"hostname":"devbox","clientId":"[GENERATED]-user-y5dmpm1","ip":"[REDACTED]","isSecure":false,"origin":"[REDACTED]","userAgent":"[REDACTED]","host":"127.0.0.1:3006","msg":"WebSocket client connected"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098336221,"pid":8499,"hostname":"devbox","req":{"id":"38db6596-1684-4fc8-bd9c-e439e545b103","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3006","connection":"keep-alive","accept":"*/*","accept-language":"*","sec-fetch-mode":"cors","user-agent":"node","accept-encoding":"gzip, deflate"},"remoteAddress":"::ffff:127.0.0.1","remotePort":33512},"res":{"statusCode":200},"responseTime":2,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098336313,"pid":8499,"hostname":"devbox","req":{"id":"3a7f295d-457c-4c55-8ea9-697c98955b6c","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3006","connection":"keep-alive","accept":"*/*","accept-language":"*","sec-fetch-mode":"cors","user-agent":"node","accept-encoding":"gzip, deflate"},"remoteAddress":"::ffff:127.0.0.1","remotePort":33512},"res":{"statusCode":200},"responseTime":1,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098336415,"pid":8499,"hostname":"devbox","req":{"id":"f595be48-0217-4683-b164-1f033bfbac7a","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3006","connection":"keep-alive","accept":"*/*","accept-language":"*","sec-fetch-mode":"cors","user-agent":"node","accept-encoding":"gzip, deflate"},"remoteAddress":"::ffff:127.0.0.1","remotePort":33512},"res":{"statusCode":200},"responseTime":1,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098336518,"pid":8499,"hostname":"devbox","req":{"id":"0eb3b124-aa3c-4797-b0f6-2fd280fcd3dd","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3006","connection":"keep-alive","accept":"*/*","accept-language":"*","sec-fetch-mode":"cors","user-agent":"node","accept-encoding":"gzip, deflate"},"remoteAddress":"::ffff:127.0.0.1","remotePort":33512},"res":{"statusCode":200},"responseTime":1,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098336619,"pid":8499,"hostname":"devbox","req":{"id":"79d4843e-cd47-4558-b3d1-60d3b1e0bb1c","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3006","connection":"keep-alive","accept":"*/*","accept-language":"*","sec-fetch-mode":"cors","user-agent":"node","accept-encoding":"gzip, deflate"},"remoteAddress":"::ffff:127.0.0.1","remotePort":33512},"res":{"statusCode":200},"responseTime":2,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098336719,"pid":8499,"hostname":"devbox","req":{"id":"3c471841-e5a2-4359-806f-7afcae8ec6b5","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3006","connection":"keep-alive","accept":"*/*","accept-language":"*","sec-fetch-mode":"cors","user-agent":"node","accept-encoding":"gzip, deflate"},"remoteAddress":"::ffff:127.0.0.1","remotePort":33512},"res":{"statusCode":200},"responseTime":1,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098336822,"pid":8499,"hostname":"devbox","req":{"id":"86bfd535-6edc-4641-a120-92c97d5c3209","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3006","connection":"keep-alive","accept":"*/*","accept-language":"*","sec-fetch-mode":"cors","user-agent":"node","accept-encoding":"gzip, deflate"},"remoteAddress":"::ffff:127.0.0.1","remotePort":33512},"res":{"statusCode":200},"responseTime":2,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098336923,"pid":8499,"hostname":"devbox","req":{"id":"ea823f5e-c2ef-4aa8-b1ab-9688768b84d4","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3006","connection":"keep-alive","accept":"*/*","accept-language":"*","sec-fetch-mode":"cors","user-agent":"node","accept-encoding":"gzip, deflate"},"remoteAddress":"::ffff:127.0.0.1","remotePort":33512},"res":{"statusCode":200},"responseTime":2,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098337024,"pid":8499,"hostname":"devbox","req":{"id":"4f497913-30ac-4d13-852c-4a27d512cf22","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3006","connection":"keep-alive","accept":"*/*","accept-language":"*","sec-fetch-mode":"cors","user-agent":"node","accept-encoding":"gzip, deflate"},"remoteAddress":"::ffff:127.0.0.1","remotePort":33512},"res":{"statusCode":200},"responseTime":1,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+    console.log
+      [Server STDOUT]: {"level":30,"time":1770098337125,"pid":8499,"hostname":"devbox","req":{"id":"4bf5e353-d70f-4537-b1f8-0beb35b9752a","method":"GET","url":"/api/health","query":{},"params":{},"headers":{"host":"127.0.0.1:3006","connection":"keep-alive","accept":"*/*","accept-language":"*","sec-fetch-mode":"cors","user-agent":"node","accept-encoding":"gzip, deflate"},"remoteAddress":"::ffff:127.0.0.1","remotePort":33512},"res":{"statusCode":200},"responseTime":1,"msg":"GET /api/health completed"}
+
+      at Socket.<anonymous> (tests/integration/test-helpers.ts:26:15)
+
+  ● Server Integration Test › should enforce WebSocket connection limit
+
+    thrown: "Exceeded timeout of 60000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      17 |   })
+      18 |
+    > 19 |   it('should enforce WebSocket connection limit', (done) => {
+         |   ^
+      20 |     const sockets: WebSocket[] = []
+      21 |     const connectionLimit = 2
+      22 |     let errors = 0
+
+      at tests/integration/server.test.ts:19:3
+      at Object.<anonymous> (tests/integration/server.test.ts:6:1)
+
+  ● Server Integration Test › should enforce rate limiting
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 5
+    Received: 10
+
+      56 |     ).length
+      57 |
+    > 58 |     expect(successfulRequests).toBe(5)
+         |                                ^
+      59 |     expect(rateLimitedRequests).toBe(5)
+      60 |   }, 10000)
+      61 | })
+
+      at Object.<anonymous> (tests/integration/server.test.ts:58:32)
+
+Test Suites: 3 failed, 3 total
+Tests:       6 failed, 6 total
+Snapshots:   0 total
+Time:        69.786 s
+Ran all test suites.
+ ELIFECYCLE  Command failed with exit code 1.

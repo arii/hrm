@@ -1,0 +1,55 @@
+  console.log
+    { currentHR: 0, isDataStale: false, userName: '' } HrTile rendering with currentHR
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { heartRate: 120 } handleHeartRateUpdate called, updating local state
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { currentHR: 120, isDataStale: false, userName: '' } HrTile rendering with currentHR
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { heartRate: 125 } handleHeartRateUpdate called, updating local state
+
+      at Object.debug (utils/logger.ts:16:56)
+
+  console.log
+    { currentHR: 125, isDataStale: false, userName: '' } HrTile rendering with currentHR
+
+      at Object.debug (utils/logger.ts:16:56)
+
+FAIL tests/integration/app/client/connect/page.test.tsx
+  ConnectPage Integration
+    ✕ should process heart rate updates, calculate calories, and send data to WebSocket (949 ms)
+
+  ● ConnectPage Integration › should process heart rate updates, calculate calories, and send data to WebSocket
+
+    Aborting after running 100000 timers, assuming an infinite loop!
+
+      68 |     // Fast-forward timers
+      69 |     await act(async () => {
+    > 70 |       jest.runAllTimers()
+         |            ^
+      71 |     })
+      72 |
+      73 |     // Verify that sendData was called with the correct payload
+
+      at getInfiniteLoopError (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:364:35)
+      at Object.runAll (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1597:19)
+      at FakeTimers.runAllTimers (node_modules/.pnpm/@jest+fake-timers@30.2.0/node_modules/@jest/fake-timers/build/index.js:532:19)
+      at tests/integration/app/client/connect/page.test.tsx:70:12
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:47:24
+      at process.env.NODE_ENV.exports.act (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:814:22)
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at Object.<anonymous> (tests/integration/app/client/connect/page.test.tsx:69:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        7.168 s
+Ran all test suites matching tests/integration/app/client/connect/page.test.tsx.

@@ -232,6 +232,7 @@ const ExperimentalAnalyticsPage = () => {
               duration={duration}
               calories={summaryData.totalCalories}
               status={status}
+              userName={userSettings.userName}
             />
 
             <CalorieTracker calorieHistory={calorieHistory} />

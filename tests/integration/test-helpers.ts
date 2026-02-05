@@ -1,5 +1,35 @@
 import { spawn, ChildProcess } from 'child_process'
 import http from 'http'
+import WebSocket from 'ws'
+
+export function waitForMessage<T>(
+  ws: WebSocket,
+  predicate: (msg: T) => boolean,
+  timeoutMs = 5000
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      ws.off('message', handler)
+      reject(new Error('waitForMessage timed out'))
+    }, timeoutMs)
+
+    const handler = (data: WebSocket.RawData) => {
+      try {
+        const str = data.toString()
+        const parsed = JSON.parse(str) as T
+        if (predicate(parsed)) {
+          clearTimeout(timeout)
+          ws.off('message', handler)
+          resolve(parsed)
+        }
+      } catch {
+        // Ignore parse errors or unrelated messages
+      }
+    }
+
+    ws.on('message', handler)
+  })
+}
 
 export interface ServerProcess {
   process: ChildProcess

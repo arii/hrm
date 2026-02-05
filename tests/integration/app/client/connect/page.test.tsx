@@ -10,7 +10,12 @@ import { useWebSocket } from '@/context/WebSocketContext'
 
 // Mocks
 jest.mock('@/hooks/useBluetoothHRM')
-jest.mock('@/context/WebSocketContext')
+jest.mock('@/context/WebSocketContext', () => ({
+  useWebSocket: jest.fn(),
+  WebSocketProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+}))
 
 describe('ConnectPage Integration', () => {
   const mockUseBluetoothHRM = useBluetoothHRM as jest.Mock
@@ -19,6 +24,7 @@ describe('ConnectPage Integration', () => {
   let onHeartRateUpdateCallback: (hr: number) => void
 
   beforeEach(() => {
+    jest.useFakeTimers()
     mockSendData = jest.fn()
     mockUseWebSocket.mockReturnValue({
       sendData: mockSendData,
@@ -61,7 +67,7 @@ describe('ConnectPage Integration', () => {
 
     // Fast-forward timers
     await act(async () => {
-      jest.runAllTimers()
+      jest.runOnlyPendingTimers()
     })
 
     // Verify that sendData was called with the correct payload
