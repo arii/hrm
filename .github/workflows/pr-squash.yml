@@ -12,6 +12,20 @@ on:
       comment_id:
         description: 'The ID of the comment that triggered the squash'
         required: true
+  workflow_call:
+    inputs:
+      pr_number:
+        description: 'The PR number to squash'
+        required: true
+        type: string
+      comment_body:
+        description: 'The body of the comment that triggered the squash'
+        required: true
+        type: string
+      comment_id:
+        description: 'The ID of the comment that triggered the squash'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -36,7 +50,7 @@ jobs:
             github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: ${{ github.event.inputs.comment_id }},
+              comment_id: ${{ inputs.comment_id }},
               content: 'rocket'
             });
 
@@ -48,7 +62,7 @@ jobs:
             const response = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: ${{ github.event.inputs.pr_number }}
+              pull_number: ${{ inputs.pr_number }}
             });
             core.setOutput('head_ref', response.data.head.ref);
             core.setOutput('base_ref', response.data.base.ref);
@@ -71,7 +85,7 @@ jobs:
               core.setFailed(`Error determining command: ${error.message}`);
             }
         env:
-          COMMENT_BODY: ${{ github.event.inputs.comment_body }}
+          COMMENT_BODY: ${{ inputs.comment_body }}
 
       - name: Checkout PR branch
         uses: actions/checkout@v4
@@ -134,13 +148,13 @@ jobs:
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: ${{ github.event.inputs.comment_id }},
+              comment_id: ${{ inputs.comment_id }},
               content: 'confused'
             });
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: ${{ github.event.inputs.pr_number }},
+              issue_number: ${{ inputs.pr_number }},
               body: '❌ Automatic squash and rebase failed. The branch has conflicts with `${{ steps.pr_data.outputs.base_ref }}`. Please resolve the conflicts manually and try again.'
             });
 
@@ -161,13 +175,13 @@ jobs:
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: ${{ github.event.inputs.comment_id }},
+              comment_id: ${{ inputs.comment_id }},
               content: 'hooray'
             });
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: ${{ github.event.inputs.pr_number }},
+              issue_number: ${{ inputs.pr_number }},
               body: messageBody
             });
 
@@ -195,5 +209,5 @@ jobs:
     uses: ./.github/workflows/pr-quality.yml
     with:
       branch: ${{ needs.squash-and-rebase.outputs.head_ref }}
-      pr_number: ${{ github.event.inputs.pr_number }}
+      pr_number: ${{ inputs.pr_number }}
       has_changes: ${{ needs.check-for-changes-after-squash.outputs.has_changes }}
