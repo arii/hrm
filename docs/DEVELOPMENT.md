@@ -88,41 +88,20 @@ For a comprehensive guide on testing, including our testing structure, commands,
 
 ## Environment Cleanup
 
-Over time, your development environment may accumulate build artifacts, package manager caches, and other temporary files that can consume significant disk space. The project provides a set of scripts to manage this, offering different levels of cleaning depending on your needs.
+Over time, your development environment may accumulate build artifacts, package manager caches, and other temporary files that can consume significant disk space. To help manage this, the project includes a cleanup script.
 
-### Project-Specific Cleanup (Recommended for most cases)
-
-To remove only the files generated within this project (such as build artifacts, logs, and test results), run the following command:
+To purge these files and reclaim disk space, run:
 
 ```bash
-pnpm run clean
+./scripts/cleanup.sh
 ```
 
-This is the safest and most common cleanup task you will need. It removes:
-- `.next/`, `dist/`, `coverage/`, `playwright-report/` directories
-- Log files and local test results
-
-### Global Cache Cleanup (Use when needed)
-
-If you need to perform a more thorough cleanup that includes global package manager caches, you can use the `clean:global` command. This is useful when you suspect caches are corrupted or wish to free up a large amount of disk space.
-
-```bash
-pnpm run clean:global
-```
-
-This command does everything `pnpm run clean` does, plus:
-- Purges global caches for `pnpm`, `npm`, `yarn`, and `bun`.
-- Clears `pm2` logs.
-- Removes Python-related caches from `conda` and `pip`.
-- Cleans up GitHub Actions runner artifacts.
-
-### System-Level Cleanup (Advanced)
-
-For system administrators or developers running this project on a dedicated machine, a script is available to clean up systemd journal logs. This can reclaim a significant amount of disk space but requires root privileges.
-
-```bash
-sudo ./scripts/vacuum-system-journal.sh
-```
+This script will safely remove:
+- Next.js and TypeScript build artifacts.
+- Caches for `pnpm`, `npm`, `yarn`, and `bun`.
+- `pm2` logs.
+- Python-related caches from `conda` and `pip`.
+- GitHub Actions runner artifacts.
 
 ## Architectural Decision Records (ADRs)
 

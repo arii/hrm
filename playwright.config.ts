@@ -140,7 +140,6 @@ export default defineConfig({
     env: {
       PORT: port.toString(),
       TESTING: 'true',
-      NEXT_PUBLIC_TESTING: 'true',
       NEXTAUTH_SECRET: 'a-super-long-and-secure-secret-for-ci-tests',
       NEXTAUTH_URL: baseURL,
       SPOTIFY_CLIENT_ID: 'test_client_id',

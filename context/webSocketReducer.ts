@@ -8,7 +8,6 @@ import { HrmStreamData as ServerHrmData } from '../types/core'
 
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
-  lastUpdated?: number
 }
 
 export interface WebSocketState {
@@ -64,7 +63,6 @@ export const reducer = (
       }
     }
     case 'HRM_UPDATE': {
-      const now = Date.now()
       const payload = message.payload as ServerHrmData[]
       const incomingClients = new Set(payload.map((user) => user.clientId))
 
@@ -81,30 +79,20 @@ export const reducer = (
               }
             : { ...existingUser, isConnected: true }
         }
+        return { ...existingUser, isConnected: false }
       })
 
       payload.forEach((newUser) => {
         if (
-          !mergedHrmData.some(
+          !state.hrmData.some(
             (existingUser) => existingUser.clientId === newUser.clientId
           )
         ) {
-          mergedHrmData.push({
-            ...newUser,
-            isConnected: true,
-            lastUpdated: now,
-          })
+          mergedHrmData.push({ ...newUser, isConnected: true })
         }
       })
 
       return { ...state, hrmData: mergedHrmData }
-    }
-    case 'DEVICE_OFFLINE': {
-      const { deviceId } = message.payload
-      return {
-        ...state,
-        hrmData: state.hrmData.filter((device) => device.clientId !== deviceId),
-      }
     }
     case 'TIMER_UPDATE':
       return {
