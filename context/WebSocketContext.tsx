@@ -134,7 +134,10 @@ export const WebSocketProvider = ({
           typeof (data as { type: unknown }).type === 'string'
         ) {
           const messageType = (data as { type: string }).type
-          if (messageType === 'HRM_UPDATE' || messageType === 'DEVICE_OFFLINE') {
+          if (
+            messageType === 'HRM_UPDATE' ||
+            messageType === 'DEVICE_OFFLINE'
+          ) {
             dispatch(data as ServerMessage)
           }
         }
