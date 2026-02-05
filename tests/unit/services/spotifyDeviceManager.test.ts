@@ -8,13 +8,8 @@ import { Devices, SpotifyApi } from '@spotify/web-api-ts-sdk'
 // Mock the logger to prevent logs from appearing in test output
 jest.mock('../../../utils/logger.server.js', () => ({
   __esModule: true,
-  default: {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    child: jest.fn().mockReturnThis(),
-  },
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  default: require('../spotify-mocks').mockLogger,
 }))
 
 describe('SpotifyDeviceManager', () => {

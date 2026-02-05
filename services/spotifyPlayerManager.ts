@@ -7,13 +7,17 @@ export class SpotifyPlayerManager {
   private sdk: SafeSpotifyApi
   private broadcastUpdate: (message: ServerMessage) => void
   private getState: () => SpotifyData
-  private setState: (newState: SpotifyData) => void
+  private setState: (
+    update: SpotifyData | ((prevState: SpotifyData) => SpotifyData)
+  ) => void
 
   constructor(
     sdk: SafeSpotifyApi,
     broadcastUpdate: (message: ServerMessage) => void,
     getState: () => SpotifyData,
-    setState: (newState: SpotifyData) => void
+    setState: (
+      update: SpotifyData | ((prevState: SpotifyData) => SpotifyData)
+    ) => void
   ) {
     this.sdk = sdk
     this.broadcastUpdate = broadcastUpdate
@@ -86,12 +90,11 @@ export class SpotifyPlayerManager {
             () => sdk.player.setPlaybackVolume(clampedVolume, deviceId),
             { deviceId, volume: clampedVolume }
           )
-          const state = this.getState()
-          this.setState({
-            ...state,
+          this.setState((prevState) => ({
+            ...prevState,
             volume: clampedVolume,
             isMuted: clampedVolume === 0,
-          })
+          }))
           this.broadcastUpdate({
             type: 'SPOTIFY_UPDATE',
             payload: this.getState(),
