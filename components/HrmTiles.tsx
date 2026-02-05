@@ -73,8 +73,8 @@ const HrmTiles = () => {
       })
   }, [hrmData, activeAlerts, now])
 
-  // Show filtered tiles if available, otherwise show loading skeleton
-  // Only show loading if we are connecting AND have no data
+  // Show filtered tiles if available, otherwise show loading skeleton.
+  // This prioritizes data visibility over connection status messaging.
   if (filteredTiles.length === 0) {
     return (
       <>
