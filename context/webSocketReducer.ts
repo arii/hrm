@@ -5,7 +5,6 @@ import {
   ActiveAlert,
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
-import { STALE_TILE_REMOVAL_THRESHOLD_MS } from '../constants/hrm'
 
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
@@ -50,20 +49,9 @@ export const INITIAL_STATE: WebSocketState = {
 
 export const reducer = (
   state: WebSocketState,
-  message: ServerMessage | { type: 'RESET_STATE' } | { type: 'PRUNE_STALE' }
+  message: ServerMessage | { type: 'RESET_STATE' }
 ): WebSocketState => {
   switch (message.type) {
-    case 'PRUNE_STALE': {
-      const now = Date.now()
-      const filteredHrmData = state.hrmData.filter(
-        (user) =>
-          now - (user.lastUpdated || 0) < STALE_TILE_REMOVAL_THRESHOLD_MS
-      )
-      if (filteredHrmData.length === state.hrmData.length) {
-        return state
-      }
-      return { ...state, hrmData: filteredHrmData }
-    }
     case 'RESET_STATE':
       return INITIAL_STATE
     case 'INITIAL_STATE': {
@@ -112,8 +100,7 @@ export const reducer = (
       })
 
       const filteredHrmData = mergedHrmData.filter(
-        (user) =>
-          now - (user.lastUpdated || 0) < STALE_TILE_REMOVAL_THRESHOLD_MS
+        (user) => now - (user.lastUpdated || 0) < 35000
       )
 
       return { ...state, hrmData: filteredHrmData }

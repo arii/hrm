@@ -9,7 +9,6 @@ import {
 } from '../../../context/webSocketReducer'
 import { ServerMessage } from '../../../types/websocket'
 import { HrmStreamData } from '../../../types/core'
-import { STALE_TILE_REMOVAL_THRESHOLD_MS } from '../../../constants/hrm'
 
 describe('webSocketReducer', () => {
   const baseUser: HrmData = {
@@ -121,7 +120,7 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0].lastUpdated).not.toBe(12345)
     })
 
-    it('removes users that have not been updated in the last threshold period', () => {
+    it('removes users that have not been updated in the last 3 minutes', () => {
       const now = Date.now()
       const staleUser = {
         ...baseUser,
@@ -132,11 +131,7 @@ describe('webSocketReducer', () => {
         ...INITIAL_STATE,
         hrmData: [
           { ...baseUser, isConnected: true, lastUpdated: now },
-          {
-            ...staleUser,
-            isConnected: true,
-            lastUpdated: now - STALE_TILE_REMOVAL_THRESHOLD_MS - 1000,
-          },
+          { ...staleUser, isConnected: true, lastUpdated: now },
         ],
       }
       const action: ServerMessage = {

@@ -115,10 +115,7 @@ export const WebSocketProvider = ({
       pendingActions.current = JSON.parse(savedActions)
     }
 
-    if (
-      process.env.NODE_ENV !== 'production' ||
-      process.env.NEXT_PUBLIC_TESTING === 'true'
-    ) {
+    if (process.env.NODE_ENV !== 'production') {
       ;(
         window as Window & { __TEST_CONTROLS__?: TestControls }
       ).__TEST_CONTROLS__ = {
@@ -129,32 +126,18 @@ export const WebSocketProvider = ({
     }
 
     // Allow injecting messages via postMessage for E2E testing
-    if (
-      process.env.NODE_ENV !== 'production' ||
-      process.env.NEXT_PUBLIC_TESTING === 'true'
-    ) {
-      const handleMessage = (event: MessageEvent) => {
-        if (
-          event.source === window &&
-          event.data &&
-          (event.data.type === 'HRM_UPDATE' ||
-            event.data.type === 'DEVICE_OFFLINE')
-        ) {
-          dispatch(event.data)
-        }
+    const handleMessage = (event: MessageEvent) => {
+      if (
+        event.source === window &&
+        event.data &&
+        (event.data.type === 'HRM_UPDATE' ||
+          event.data.type === 'DEVICE_OFFLINE')
+      ) {
+        dispatch(event.data)
       }
-      window.addEventListener('message', handleMessage)
-      return () => window.removeEventListener('message', handleMessage)
     }
-    return undefined
-  }, [dispatch])
-
-  // Periodically prune stale data
-  useEffect(() => {
-    const interval = setInterval(() => {
-      dispatch({ type: 'PRUNE_STALE' })
-    }, 1000)
-    return () => clearInterval(interval)
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
   }, [dispatch])
 
   // Throttled warning for connection issues
