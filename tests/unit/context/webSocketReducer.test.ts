@@ -1,11 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {
-  reducer,
-  INITIAL_STATE,
-  WebSocketContextType,
-} from '../../../context/WebSocketContext'
+import { reducer, INITIAL_STATE } from '../../../context/WebSocketContext'
 import { ServerMessage, WebSocketState } from '../../../types/websocket'
 import { HrmStreamData } from '../../../types/core'
 
