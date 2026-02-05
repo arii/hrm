@@ -56,12 +56,17 @@ export const sendWebSocketMessage = (
 export const broadcast = (
   wss: WebSocketServer,
   message: ServerMessage,
-  origin?: string
+  origin?: string,
+  targetRole?: 'dashboard' | 'controller'
 ): void => {
   const messageString = JSON.stringify(message)
   wss.clients.forEach((client) => {
     const extClient = client as ExtWebSocket
     if (extClient.readyState === WebSocket.OPEN) {
+      // If a targetRole is specified, skip clients that don't match the role.
+      if (targetRole && extClient.clientType !== targetRole) {
+        return
+      }
       try {
         extClient.send(messageString)
       } catch (error) {

@@ -5,11 +5,24 @@ import {
   reducer,
   INITIAL_STATE,
   WebSocketState,
+  HrmData,
 } from '../../../context/webSocketReducer'
 import { ServerMessage } from '../../../types/websocket'
 import { HrmStreamData } from '../../../types/core'
 
 describe('webSocketReducer', () => {
+  const baseUser: HrmData = {
+    clientId: '1',
+    name: 'User A',
+    age: 30,
+    maxHr: 190,
+    restingHr: 60,
+    value: 100,
+    zone: 'warmup',
+    calories: 10,
+    isConnected: true,
+  }
+
   it('should return the initial state if no action is matched', () => {
     const action = { type: 'UNKNOWN_ACTION' } as unknown as ServerMessage
     const state = reducer(INITIAL_STATE, action)
@@ -22,11 +35,11 @@ describe('webSocketReducer', () => {
       hrmData: [
         {
           clientId: '1',
-          userName: 'Test',
-          userAge: 30,
+          name: 'Test',
+          age: 30,
           maxHr: 190,
           restingHr: 60,
-          hrm: 120,
+          value: 120,
           zone: 'aerobic',
           calories: 100,
           isConnected: true,
@@ -44,11 +57,11 @@ describe('webSocketReducer', () => {
         hrmData: [
           {
             clientId: '1',
-            userName: 'Test',
-            userAge: 30,
+            name: 'Test',
+            age: 30,
             maxHr: 190,
             restingHr: 60,
-            hrm: 120,
+            value: 120,
             zone: 'aerobic',
             calories: 100,
           },
@@ -76,46 +89,65 @@ describe('webSocketReducer', () => {
   })
 
   describe('HRM_UPDATE action', () => {
-    const baseUser: HrmStreamData = {
-      clientId: '1',
-      userName: 'User A',
-      userAge: 30,
-      maxHr: 190,
-      restingHr: 60,
-      hrm: 100,
-      zone: 'warmup',
-      calories: 10,
-    }
-
-    it('should add a new user', () => {
+    it('should add a new user with a lastUpdated timestamp', () => {
       const action: ServerMessage = {
         type: 'HRM_UPDATE',
         payload: [baseUser],
       }
       const state = reducer(INITIAL_STATE, action)
       expect(state.hrmData).toHaveLength(1)
-      expect(state.hrmData[0]).toEqual({ ...baseUser, isConnected: true })
+      expect(state.hrmData[0]).toEqual(
+        expect.objectContaining({ ...baseUser, isConnected: true })
+      )
+      expect(state.hrmData[0].lastUpdated).toBeDefined()
     })
 
-    it('should update an existing user and keep them connected', () => {
+    it('should update an existing user and their lastUpdated timestamp', () => {
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
-        hrmData: [{ ...baseUser, isConnected: true }],
+        hrmData: [{ ...baseUser, isConnected: true, lastUpdated: 12345 }],
       }
-      const updatedUser = { ...baseUser, hrm: 150, zone: 'aerobic' }
+      const updatedUser = { ...baseUser, value: 150, zone: 'aerobic' }
       const action: ServerMessage = {
         type: 'HRM_UPDATE',
         payload: [updatedUser],
       }
       const state = reducer(initialState, action)
       expect(state.hrmData).toHaveLength(1)
-      expect(state.hrmData[0].hrm).toBe(150)
+      expect(state.hrmData[0].value).toBe(150)
       expect(state.hrmData[0].zone).toBe('aerobic')
       expect(state.hrmData[0].isConnected).toBe(true)
+      expect(state.hrmData[0].lastUpdated).not.toBe(12345)
     })
 
-    it('should mark a user as disconnected if not in payload', () => {
-      const user2 = { ...baseUser, clientId: '2', userName: 'User B' }
+    it('should remove users that are not in the payload immediately', () => {
+      const now = Date.now()
+      const staleUser = {
+        ...baseUser,
+        clientId: '2',
+        name: 'Stale User',
+      }
+      const initialState: WebSocketState = {
+        ...INITIAL_STATE,
+        hrmData: [
+          { ...baseUser, isConnected: true, lastUpdated: now },
+          { ...staleUser, isConnected: true, lastUpdated: now },
+        ],
+      }
+      const action: ServerMessage = {
+        type: 'HRM_UPDATE',
+        payload: [baseUser],
+      }
+      const state = reducer(initialState, action)
+      expect(state.hrmData).toHaveLength(1)
+      expect(state.hrmData.find((d) => d.clientId === '2')).toBeUndefined()
+      expect(state.hrmData[0].clientId).toBe('1')
+    })
+  })
+
+  describe('DEVICE_OFFLINE action', () => {
+    it('should remove the specified device from the state', () => {
+      const user2 = { ...baseUser, clientId: '2', name: 'User B' }
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [
@@ -124,15 +156,13 @@ describe('webSocketReducer', () => {
         ],
       }
       const action: ServerMessage = {
-        type: 'HRM_UPDATE',
-        payload: [baseUser], // Only user 1 is in the update
+        type: 'DEVICE_OFFLINE',
+        payload: { deviceId: '1' },
       }
       const state = reducer(initialState, action)
-      expect(state.hrmData).toHaveLength(2)
-      const updatedUser1 = state.hrmData.find((u) => u.clientId === '1')
-      const updatedUser2 = state.hrmData.find((u) => u.clientId === '2')
-      expect(updatedUser1?.isConnected).toBe(true)
-      expect(updatedUser2?.isConnected).toBe(false)
+      expect(state.hrmData).toHaveLength(1)
+      expect(state.hrmData.find((d) => d.clientId === '1')).toBeUndefined()
+      expect(state.hrmData[0].clientId).toBe('2')
     })
   })
 

@@ -510,7 +510,7 @@ describe('WebSocket Manager', () => {
 
     it('should broadcast state on client disconnect', () => {
       mockWs.emit('close')
-      jest.runAllTimers()
+      jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalledWith(
         mockWss,
         {

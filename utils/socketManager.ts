@@ -62,6 +62,14 @@ const cleanupClientSession = (clientId: string) => {
   try {
     hrmDataStore.deleteById(clientId)
     clientSessionState.delete(clientId)
+    broadcast(
+      wsServerInstance,
+      {
+        type: 'DEVICE_OFFLINE',
+        payload: { deviceId: clientId },
+      },
+      'socketManager.cleanupClientSession'
+    )
     broadcastState()
   } catch (err) {
     logger.error(
@@ -104,6 +112,18 @@ const initSocketManager = (
   services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
+
+  // Janitor process to clean up stale connections
+  const STALE_THRESHOLD_MS = 30000 // 30 seconds
+  setInterval(() => {
+    const now = Date.now()
+    for (const [clientId, session] of clientSessionState.entries()) {
+      if (now - session.lastUpdate > STALE_THRESHOLD_MS) {
+        logger.info({ clientId }, 'Stale client detected. Cleaning up.')
+        cleanupClientSession(clientId)
+      }
+    }
+  }, 10000) // Run every 10 seconds
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket
@@ -207,6 +227,14 @@ const handleIncomingMessage = (
   clientId: string
 ) => {
   ws.isAlive = true
+
+  // Refresh the lastUpdate timestamp for the client
+  const sessionState = clientSessionState.get(clientId)
+  if (sessionState) {
+    sessionState.lastUpdate = Date.now()
+    clientSessionState.set(clientId, sessionState)
+  }
+
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)

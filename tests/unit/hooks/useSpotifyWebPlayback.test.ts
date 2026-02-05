@@ -103,4 +103,12 @@ describe('useSpotifyWebPlayback', () => {
       expect(window.Spotify.Player).not.toHaveBeenCalled()
     })
   })
+
+  it('should not initialize the player if the user is not authenticated', () => {
+    mockUseSpotifyAuth.mockReturnValue({ status: 'unauthenticated' })
+
+    renderHook(() => useSpotifyWebPlayback())
+
+    expect(window.Spotify.Player).not.toHaveBeenCalled()
+  })
 })
