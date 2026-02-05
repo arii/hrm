@@ -85,6 +85,34 @@ describe('webSocketReducer', () => {
       expect(state.timerData.isRunning).toBe(true)
       expect(state.spotifyData.trackName).toBe('Test Track')
     })
+
+    it('should initialize lastUpdated with a recent timestamp for all users', () => {
+      const serverState = {
+        hrmData: [
+          {
+            clientId: '1',
+            userName: 'Test',
+            userAge: 30,
+            maxHr: 190,
+            restingHr: 60,
+            hrm: 120,
+            zone: 'aerobic',
+            calories: 100,
+          },
+        ] as HrmStreamData[],
+        timerData: INITIAL_STATE.timerData,
+        spotifyData: INITIAL_STATE.spotifyData,
+      }
+
+      const action: ServerMessage = {
+        type: 'INITIAL_STATE',
+        payload: serverState,
+      }
+      const state = reducer(INITIAL_STATE, action)
+
+      expect(state.hrmData[0].lastUpdated).toBeDefined()
+      expect(state.hrmData[0].lastUpdated).toBeGreaterThan(Date.now() - 5000)
+    })
   })
 
   describe('HRM_UPDATE action', () => {
@@ -119,7 +147,7 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0].lastUpdated).not.toBe(12345)
     })
 
-    it('should remove users that have not been updated in the last 3 minutes', () => {
+    it('should remove users that have not been updated in the last 35 seconds', () => {
       const now = Date.now()
       const staleUser = {
         ...baseUser,
@@ -130,7 +158,7 @@ describe('webSocketReducer', () => {
         ...INITIAL_STATE,
         hrmData: [
           { ...baseUser, isConnected: true, lastUpdated: now },
-          { ...staleUser, isConnected: true, lastUpdated: now - 180001 },
+          { ...staleUser, isConnected: true, lastUpdated: now - 35001 },
         ],
       }
       const action: ServerMessage = {

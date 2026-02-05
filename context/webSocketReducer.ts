@@ -5,6 +5,7 @@ import {
   ActiveAlert,
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
+import logger from '../utils/logger'
 
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
@@ -57,8 +58,13 @@ export const reducer = (
       return INITIAL_STATE
     case 'INITIAL_STATE': {
       // When the initial state is loaded, ensure all HRM data is marked as connected.
+      const now = Date.now()
       const hrmDataWithConnection =
-        message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) || []
+        message.payload.hrmData?.map((d) => ({
+          ...d,
+          isConnected: true,
+          lastUpdated: now,
+        })) || []
       return {
         ...state,
         ...message.payload,
@@ -85,7 +91,8 @@ export const reducer = (
               }
             : { ...existingUser, isConnected: true, lastUpdated: now }
         }
-        return existingUser // Keep existing user as is for now
+        // If not in payload, mark as disconnected but keep in state for grace period removal
+        return { ...existingUser, isConnected: false }
       })
 
       // Add new users
@@ -112,6 +119,7 @@ export const reducer = (
     }
     case 'DEVICE_OFFLINE': {
       const { deviceId } = message.payload
+      logger.info({ deviceId }, 'Device going offline, removing from state.')
       return {
         ...state,
         hrmData: state.hrmData.filter((device) => device.clientId !== deviceId),

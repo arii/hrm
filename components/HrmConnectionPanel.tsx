@@ -11,12 +11,13 @@ const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
 
   const tileData = useMemo(() => {
-    // Filter out users with placeholder names or no identity
+    // Filter out users with placeholder names, no identity, or 0 BPM
     return hrmData
       .filter((user) => {
+        const isZero = user.value === 0
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
-        return !(isPlaceholderName || hasNoIdentity)
+        return !(isZero || isPlaceholderName || hasNoIdentity)
       })
       .map((user) => {
         const matchingAlert = activeAlerts.find(
