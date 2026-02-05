@@ -132,43 +132,33 @@ jobs:
           echo "$PR_BODY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Get PR Checks & Logs
-        id: checks
+      - name: Get PR Checks
+        id: get-checks
+        if: inputs.failure_report_json == '' || inputs.failure_report_json == '[]'
+        uses: ./.github/actions/get-pr-check-runs
+        with:
+          commit_sha: ${{ github.event.pull_request.head.sha }}
+          github_token: ${{ secrets.ARI_PAT }}
+          timeout: 600
+          interval: 30
+
+      - name: Process PR Checks & Get Logs
+        id: process-checks
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           ARI_PAT: ${{ secrets.ARI_PAT }} # Pass for redaction
           FAILURE_REPORT_JSON: ${{ inputs.failure_report_json }}
+          CHECKS_JSON: ${{ steps.get-checks.outputs.check_runs_json }}
         run: |
           FINAL_CHECKS_JSON="[]"
           # OPTION 1: Use the pre-compiled failure report from the caller if available and not empty
           if [ -n "$FAILURE_REPORT_JSON" ] && [ "$FAILURE_REPORT_JSON" != "[]" ]; then
             echo "::notice::Using pre-compiled failure report from workflow input."
-            # The JSON is already in the correct format, just needs validation/sanitization
-            # We trust the source here as it's from our own CI pipeline
             FINAL_CHECKS_JSON="$FAILURE_REPORT_JSON"
-          # OPTION 2: Fallback to fetching checks live if no report is provided
+          # OPTION 2: Fallback to using the fetched checks if no report is provided
           else
-            echo "::notice::No pre-compiled report found. Fetching live PR checks."
-
-            # Retry logic for fetching checks
-            MAX_RETRIES=3
-            RETRY_DELAY=5
-            for ((i=1; i<=MAX_RETRIES; i++)); do
-              RAW_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}/check-runs" --jq '.check_runs' 2>/dev/null)
-              if [ -n "$RAW_CHECKS_JSON" ]; then
-                echo "::notice::Successfully fetched check runs on attempt $i."
-                break
-              else
-                echo "::warning::Attempt $i of $MAX_RETRIES to fetch check runs failed. Retrying in ${RETRY_DELAY}s..."
-                sleep $RETRY_DELAY
-              fi
-            done
-
-            if [ -z "$RAW_CHECKS_JSON" ]; then
-              echo "::error::Failed to fetch check runs after $MAX_RETRIES attempts."
-              # Fallback to an empty JSON array to avoid script failure
-              RAW_CHECKS_JSON="[]"
-            fi
+            echo "::notice::No pre-compiled report found. Processing fetched PR checks."
+            RAW_CHECKS_JSON=${CHECKS_JSON:-"[]"}
 
             # For debugging, output the raw JSON to the step summary
             echo "### Raw Checks JSON" >> $GITHUB_STEP_SUMMARY
@@ -176,17 +166,17 @@ jobs:
             echo "$RAW_CHECKS_JSON" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
 
-            # FIX: Filter checks to ensure details_url is not null and not empty.
             FAILED_CHECKS_RAW_JSON=$(echo "$RAW_CHECKS_JSON" | jq -c 'map(select(.status == "completed" and (.conclusion == "failure" or .conclusion == "cancelled") and .details_url != null and .details_url != ""))')
 
             mapfile -t NAMES < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].name')
             mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion // "failure"')
             mapfile -t URLS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url')
-            # FIX: Use a robust regex to extract job ID.
             mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url | capture("(?<job_id>\\d+)$").job_id // ""')
 
             LOG_DIR=$(mktemp -d)
             trap 'rm -rf "$LOG_DIR"' EXIT
+            MAX_RETRIES=3
+            RETRY_DELAY=5
 
             process_job() {
               local i=$1
@@ -196,11 +186,9 @@ jobs:
 
               touch "$redacted_log_file"
 
-              # FIX: Improved error handling for Job ID parsing
               if ! [[ "$job_id" =~ ^[0-9]+$ ]]; then
                 echo "Error: Could not parse Job ID from URL: ${URLS[i]}" > "$redacted_log_file"
               else
-                 # Retry logic for fetching job logs
                 for ((j=1; j<=MAX_RETRIES; j++)); do
                   gh job view "$job_id" --log > "$raw_log_file" 2>&1
                   if [ $? -eq 0 ]; then
@@ -234,7 +222,6 @@ jobs:
                 seq 0 $((${#JOB_IDS[@]} - 1)) | xargs -P 4 -I {} bash -c 'process_job "{}"'
             fi
 
-            # Combine results into the final JSON
             if [ ${#NAMES[@]} -gt 0 ]; then
                 for i in $(seq 0 $((${#NAMES[@]} - 1))); do
                   LOGS=$(<"$LOG_DIR/redacted_log_${i}.txt")
@@ -249,10 +236,11 @@ jobs:
             fi
           fi
 
-          # Use heredoc syntax to safely set the multiline JSON as an environment variable
-          echo "FAILED_CHECKS_JSON<<EOF" >> $GITHUB_ENV
-          echo "$FINAL_CHECKS_JSON" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          {
+            echo "FAILED_CHECKS_JSON<<EOF"
+            echo "$FINAL_CHECKS_JSON"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
 
       - name: Run Gemini Review
         env:
