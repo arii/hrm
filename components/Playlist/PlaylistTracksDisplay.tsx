@@ -72,11 +72,12 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     fetchTracks(offset)
   }, [fetchTracks, offset])
 
-  const handlePlayTrack = (trackUri: string) => {
+  const handlePlayTrack = (playlistUri: string, position: number) => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
       command: 'PLAY',
-      playlistUri: trackUri,
+      contextUri: playlistUri,
+      offset: { position },
     }
     sendData(message)
   }
@@ -138,9 +139,10 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {tracks.map((track) => {
+            {tracks.map((track, index) => {
               const isPlaying =
                 spotifyData.isPlaying && spotifyData.trackId === track.id
+              const playlistUri = `spotify:playlist:${playlistId}`
               return (
                 <TableRow
                   key={track.id}
@@ -151,7 +153,9 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                   <TableCell>
                     <IconButton
                       onClick={() =>
-                        isPlaying ? handlePause() : handlePlayTrack(track.uri)
+                        isPlaying
+                          ? handlePause()
+                          : handlePlayTrack(playlistUri, index)
                       }
                     >
                       {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
