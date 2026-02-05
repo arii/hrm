@@ -112,7 +112,7 @@ describe('useBluetoothHRM Race Conditions', () => {
       .mockAbortControllerSignal
   })
 
-  it('should abort the previous connection attempt when a new one starts', async () => {
+  it('should ignore subsequent connection attempts while one is in progress', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
 
     // Start the first connection attempt
@@ -127,15 +127,17 @@ describe('useBluetoothHRM Race Conditions', () => {
       secondPromise = result.current.connectAndStream()
     })
 
-    // The first promise should reject with an AbortError because the second call cancels it
-    await expect(firstPromise).rejects.toThrow('Connection cancelled')
-    // The second promise should resolve successfully
+    // Both promises should resolve successfully. The first one establishes the connection,
+    // and the second one is ignored due to the connection lock.
+    await expect(firstPromise).resolves.toBeUndefined()
     await expect(secondPromise).resolves.toBeUndefined()
 
-    // Verify that gatt.connect was called twice
-    expect(mockGattConnect).toHaveBeenCalledTimes(2)
-    // Crucially, verify that abort() was called once to cancel the first attempt
-    expect(mockAbort).toHaveBeenCalledTimes(1)
+    // Verify that gatt.connect was only called ONCE for the first attempt.
+    expect(mockGattConnect).toHaveBeenCalledTimes(1)
+    // Crucially, verify that abort() was NOT called, as the second attempt was ignored, not aborted.
+    expect(mockAbort).not.toHaveBeenCalled()
+    // The final status should be connected
+    expect(result.current.isConnected).toBe(true)
   })
 
   it('should not throw an error if a new connection is initiated after the first one is complete', async () => {
