@@ -7,16 +7,19 @@ import { takeScreenshot } from './lib/visual'
 test.describe.configure({ mode: 'serial' })
 
 // Reusable page objects
-let dashboardPage: Page
+let experimentalPage: Page
 let context: BrowserContext
 
 // Test suite for VRT
 test.describe('WorkoutSummary Component VRT', () => {
   // Centralized setup hook
   test.beforeAll(async ({ browser }) => {
-    const setup = await setupVisualRegressionTest(browser)
+    const setup = await setupVisualRegressionTest(
+      browser,
+      '/client/experimental'
+    )
     context = setup.context
-    dashboardPage = setup.dashboardPage
+    experimentalPage = setup.dashboardPage
   })
 
   // Centralized cleanup hook
@@ -25,13 +28,19 @@ test.describe('WorkoutSummary Component VRT', () => {
   })
 
   test('active state', async () => {
-    // The dashboard starts in a "list" view. Click "New Workout" to show the summary.
-    await dashboardPage.getByRole('button', { name: 'New Workout' }).click()
-    const workoutSummary = dashboardPage.getByTestId('workout-summary')
+    // Click "New Workout" to show the summary.
+    await experimentalPage.getByRole('button', { name: 'New Workout' }).click()
+
+    // Wait for the component to be visible
+    await experimentalPage.waitForSelector('[data-testid="workout-summary"]', {
+      timeout: 15000,
+    })
+
+    const workoutSummary = experimentalPage.getByTestId('workout-summary')
 
     // Mask the duration, since it's dynamic
     await takeScreenshot(workoutSummary, 'workout-summary-active.png', {
-      mask: [dashboardPage.getByText(/\d{2}:\d{2}:\d{2}/)],
+      mask: [experimentalPage.getByText(/\d{2}:\d{2}:\d{2}/)],
     })
   })
 })

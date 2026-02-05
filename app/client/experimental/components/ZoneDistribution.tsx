@@ -1,6 +1,12 @@
 // app/client/experimental/components/ZoneDistribution.tsx
 'use client'
-import { Card, CardContent, Typography, Box } from '@mui/material'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  LinearProgress,
+} from '@mui/material'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 
 interface ZoneDistributionProps {
@@ -12,42 +18,40 @@ const ZoneDistribution = ({
   timeInZones,
   totalDuration,
 }: ZoneDistributionProps) => {
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
   return (
-    <Card>
+    <Card elevation={2} data-testid="zone-distribution">
       <CardContent>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h6" fontWeight="bold" gutterBottom>
           Time in Zones
         </Typography>
         {Object.entries(timeInZones)
           .filter(
             ([zone]) =>
-              zone !== HrZoneName.NoData && zone !== HrZoneName.Unknown
+              ![HrZoneName.NoData, HrZoneName.Unknown].includes(
+                zone as HrZoneName
+              )
           )
           .map(([zone, time]) => {
-            if (time === 0) return null
             const percentage =
-              totalDuration > 0 ? ((time / totalDuration) * 100).toFixed(1) : 0
+              totalDuration > 0 ? (time / totalDuration) * 100 : 0
+            if (percentage < 1) return null // Hide negligible data
+
             return (
-              <Box
-                key={zone}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  my: 1,
-                }}
-              >
-                <Typography variant="body1">{zone}</Typography>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="body2">{formatTime(time)}</Typography>
-                  <Typography variant="caption">{percentage}%</Typography>
+              <Box key={zone} mb={2}>
+                <Box display="flex" justifyContent="space-between" mb={0.5}>
+                  <Typography variant="body2" fontWeight="medium">
+                    {zone}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {Math.floor(time / 60)}m {Math.floor(time % 60)}s (
+                    {percentage.toFixed(1)}%)
+                  </Typography>
                 </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={percentage}
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
               </Box>
             )
           })}

@@ -12,22 +12,28 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { useTheme } from '@mui/material/styles'
 
 interface HeartRateTimeSeriesProps {
   hrHistory: HrDataPoint[]
 }
 
 const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
+  const theme = useTheme()
+
   return (
-    <Card>
+    <Card elevation={2}>
       <CardContent>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h6" fontWeight="bold" gutterBottom>
           Heart Rate Over Time
         </Typography>
-        <Box sx={{ height: 300 }} data-testid="hr-time-series-chart">
+        <Box sx={{ minHeight: 300 }} data-testid="hr-time-series-chart">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={hrHistory} syncId="anyId">
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid
+                stroke={theme.palette.divider}
+                strokeDasharray="3 3"
+              />
               <XAxis
                 dataKey="time"
                 tickFormatter={(time) => new Date(time).toLocaleTimeString()}
@@ -38,7 +44,9 @@ const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
               <Line
                 type="monotone"
                 dataKey="hr"
-                stroke="#8884d8"
+                stroke={theme.palette.custom.work}
+                strokeWidth={2}
+                dot={false}
                 activeDot={{ r: 8 }}
               />
             </LineChart>

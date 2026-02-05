@@ -1,6 +1,7 @@
 // app/client/experimental/components/WorkoutSummary.tsx
 'use client'
-import { Card, CardContent, Typography, Box } from '@mui/material'
+import { Card, CardContent, Typography, Box, Chip } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { formatDuration } from '@/lib/utils'
 
 interface WorkoutSummaryProps {
@@ -14,29 +15,57 @@ const WorkoutSummary = ({
   calories,
   status,
 }: WorkoutSummaryProps) => {
+  const theme = useTheme()
+
+  const statusColors = {
+    idle: theme.palette.custom.idle,
+    running: theme.palette.custom.running,
+    paused: theme.palette.custom.prepare,
+    finished: theme.palette.custom.cooldown,
+  }
+
+  const statusColor = statusColors[status] || theme.palette.custom.idle
+
   return (
-    <Card data-testid="workout-summary">
+    <Card elevation={2} data-testid="workout-summary">
       <CardContent>
-        <Typography variant="h5" gutterBottom>
-          Workout Summary
-        </Typography>
-        <Box display="flex" flexWrap="wrap" mx={-1}>
-          <Box width="50%" p={1}>
-            <Typography variant="h6">Status</Typography>
-            <Typography variant="body1">{status}</Typography>
-          </Box>
-          <Box width="50%" p={1}>
-            <Typography variant="h6">Duration</Typography>
-            <Typography variant="body1">
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
+          <Typography variant="h6" fontWeight="bold">
+            Workout Summary
+          </Typography>
+          <Chip
+            label={status.toUpperCase()}
+            sx={{
+              backgroundColor: statusColor,
+              color: '#fff',
+              fontWeight: 'bold',
+            }}
+          />
+        </Box>
+        <Box display="flex" justifyContent="space-between">
+          <Box>
+            <Typography variant="caption" color="textSecondary">
+              Duration
+            </Typography>
+            <Typography variant="h5" sx={{ fontFamily: 'Monospace' }}>
               {formatDuration(duration, {
                 unit: 'seconds',
                 format: 'HH:MM:SS',
               })}
             </Typography>
           </Box>
-          <Box width="50%" p={1}>
-            <Typography variant="h6">Calories Burned</Typography>
-            <Typography variant="body1">{calories.toFixed(2)}</Typography>
+          <Box>
+            <Typography variant="caption" color="textSecondary">
+              Calories
+            </Typography>
+            <Typography variant="h5">
+              {calories.toFixed(0)} <small>kcal</small>
+            </Typography>
           </Box>
         </Box>
       </CardContent>
