@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { ServerMessage } from '../../types/websocket'
 
 test('removes tile after 35 seconds of inactivity', async ({ page }) => {
   await page.clock.install({ time: new Date() })
@@ -13,14 +14,25 @@ test('removes tile after 35 seconds of inactivity', async ({ page }) => {
       window as unknown as {
         postMessage: (message: unknown, targetOrigin: string) => void
       }
-    ).postMessage(
+    }, message)
+  }
+
+  // 1. Simulate active data
+  await dispatch({
+    type: 'HRM_UPDATE',
+    payload: [
       {
-        type: 'HRM_UPDATE',
-        payload: [{ clientId: 'test-1', hrm: 75, userName: 'test-1' }],
+        clientId: 'test-1',
+        value: 75,
+        name: 'test-1',
+        age: 30,
+        maxHr: 190,
+        restingHr: 60,
+        zone: 'warmup',
+        calories: 10,
       },
-      '*'
-    )
-  )
+    ],
+  })
   await expect(page.locator('text=test-1')).toBeVisible()
 
   await page.clock.fastForward(35000)

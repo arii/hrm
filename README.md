@@ -283,17 +283,15 @@ pnpm run lint                # Run ESLint
 pnpm run lint:fix            # Auto-fix lint issues
 pnpm run format              # Format codebase with Prettier
 pnpm run format:check        # Verify formatting without writing
-pnpm run test:core           # Canonical Playwright suite (chromium baseline screenshots)
-pnpm run test:quick          # Fast smoke run (Playwright, dot reporter)
-pnpm run test:visual:update  # Regenerate baseline screenshots after intentional UI changes
-pnpm run test:visual:headed  # Run Playwright in headed mode for debugging
-pnpm run test:visual:ui      # Launch Playwright interactive UI
-pnpm run test:visual:report  # View the latest Playwright HTML report
-pnpm run test:clean          # Kill stray processes, boot dev server, run baseline tests
-pnpm run test:clean:update   # Clean start + regenerate baseline screenshots
-pnpm run verify:spotify      # Automated Spotify integration health check
-pnpm run kill-all            # Force-stop lingering Node/Chrome processes
-pnpm run mcp:chrome-devtools # Start Chrome DevTools MCP (isolated profile)
+pnpm run clean               # Remove all build artifacts and log files
+```
+
+### Housekeeping
+
+```bash
+pnpm run clean               # Safely remove all project-specific build artifacts and log files.
+pnpm run clean:global        # Perform a deep clean of global caches (npm, pnpm, etc.).
+sudo ./scripts/vacuum-system-journal.sh # Vacuum the systemd journal to free up disk space.
 ```
 
 For production, create `.env.production` alongside `.env.local`. The start script refuses to run

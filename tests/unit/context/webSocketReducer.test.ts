@@ -5,20 +5,22 @@ import {
   reducer,
   INITIAL_STATE,
   WebSocketState,
+  HrmData,
 } from '../../../context/webSocketReducer'
 import { ServerMessage } from '../../../types/websocket'
 import { HrmStreamData } from '../../../types/core'
 
 describe('webSocketReducer', () => {
-  const baseUser: HrmStreamData = {
+  const baseUser: HrmData = {
     clientId: '1',
-    userName: 'User A',
-    userAge: 30,
+    name: 'User A',
+    age: 30,
     maxHr: 190,
     restingHr: 60,
-    hrm: 100,
+    value: 100,
     zone: 'warmup',
     calories: 10,
+    isConnected: true,
   }
 
   it('returns the initial state if no action is matched', () => {
@@ -33,11 +35,11 @@ describe('webSocketReducer', () => {
       hrmData: [
         {
           clientId: '1',
-          userName: 'Test',
-          userAge: 30,
+          name: 'Test',
+          age: 30,
           maxHr: 190,
           restingHr: 60,
-          hrm: 120,
+          value: 120,
           zone: 'aerobic',
           calories: 100,
           isConnected: true,
@@ -55,11 +57,11 @@ describe('webSocketReducer', () => {
         hrmData: [
           {
             clientId: '1',
-            userName: 'Test',
-            userAge: 30,
+            name: 'Test',
+            age: 30,
             maxHr: 190,
             restingHr: 60,
-            hrm: 120,
+            value: 120,
             zone: 'aerobic',
             calories: 100,
           },
@@ -105,14 +107,14 @@ describe('webSocketReducer', () => {
         ...INITIAL_STATE,
         hrmData: [{ ...baseUser, isConnected: true, lastUpdated: 12345 }],
       }
-      const updatedUser = { ...baseUser, hrm: 150, zone: 'aerobic' }
+      const updatedUser = { ...baseUser, value: 150, zone: 'aerobic' }
       const action: ServerMessage = {
         type: 'HRM_UPDATE',
         payload: [updatedUser],
       }
       const state = reducer(initialState, action)
       expect(state.hrmData).toHaveLength(1)
-      expect(state.hrmData[0].hrm).toBe(150)
+      expect(state.hrmData[0].value).toBe(150)
       expect(state.hrmData[0].zone).toBe('aerobic')
       expect(state.hrmData[0].isConnected).toBe(true)
       expect(state.hrmData[0].lastUpdated).not.toBe(12345)
@@ -123,13 +125,13 @@ describe('webSocketReducer', () => {
       const staleUser = {
         ...baseUser,
         clientId: '2',
-        userName: 'Stale User',
+        name: 'Stale User',
       }
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [
           { ...baseUser, isConnected: true, lastUpdated: now },
-          { ...staleUser, isConnected: true, lastUpdated: now - 180001 },
+          { ...staleUser, isConnected: true, lastUpdated: now },
         ],
       }
       const action: ServerMessage = {
