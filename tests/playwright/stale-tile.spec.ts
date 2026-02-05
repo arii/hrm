@@ -6,7 +6,6 @@ test('should remove tile immediately when missing from HRM_UPDATE', async ({
 }) => {
   await page.goto('/')
 
-  // Helper to dispatch messages to the reducer
   const dispatch = async (message: ServerMessage | { type: 'RESET_STATE' }) => {
     await page.evaluate((msg) => {
       const win = window as unknown as {
@@ -23,7 +22,6 @@ test('should remove tile immediately when missing from HRM_UPDATE', async ({
     }, message)
   }
 
-  // 1. Simulate active data
   await dispatch({
     type: 'HRM_UPDATE',
     payload: [
@@ -41,12 +39,10 @@ test('should remove tile immediately when missing from HRM_UPDATE', async ({
   })
   await expect(page.locator('text=test-1')).toBeVisible()
 
-  // 2. Send update without the user
   await dispatch({
     type: 'HRM_UPDATE',
     payload: [],
   })
 
-  // 3. Assert immediate removal
   await expect(page.locator('text=test-1')).not.toBeVisible()
 })

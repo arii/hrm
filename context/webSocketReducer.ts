@@ -6,7 +6,6 @@ import {
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 
-// Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
   lastUpdated?: number
@@ -56,7 +55,6 @@ export const reducer = (
     case 'RESET_STATE':
       return INITIAL_STATE
     case 'INITIAL_STATE': {
-      // When the initial state is loaded, ensure all HRM data is marked as connected.
       const hrmDataWithConnection =
         message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) || []
       return {
@@ -70,13 +68,10 @@ export const reducer = (
       const payload = message.payload as ServerHrmData[]
       const incomingClients = new Set(payload.map((user) => user.clientId))
 
-      // THE FIX: Immediately filter out any devices that are NOT in the incoming payload.
-      // This ensures the client state perfectly mirrors the server's HrmDataStore.
       const activeHrmData = state.hrmData.filter((existing) =>
         incomingClients.has(existing.clientId)
       )
 
-      // Update existing users with new data
       const mergedHrmData = activeHrmData.map((existingUser) => {
         const updatedUser = payload.find(
           (newUser) => newUser.clientId === existingUser.clientId
@@ -89,7 +84,6 @@ export const reducer = (
         }
       })
 
-      // Add brand-new users from the payload
       payload.forEach((newUser) => {
         if (
           !mergedHrmData.some(
@@ -128,8 +122,6 @@ export const reducer = (
     case 'SPOTIFY_SERVICE_INIT_UPDATE':
       return { ...state, spotifyServiceInitialized: message.payload }
     case 'EXECUTE_SPOTIFY':
-      // This message type is handled by useSpotifyRemoteExecution hook
-      // We don't need to update state here, just pass it through
       return state
     default:
       return state

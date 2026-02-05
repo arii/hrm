@@ -7,7 +7,6 @@ import * as networkUtils from '@/utils/network'
 import * as redirectUtils from '@/utils/redirect'
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 
-// Mock dependencies
 jest.mock('next-auth/react', () => ({
   signOut: jest.fn(),
   useSession: jest.fn(() => ({ data: null, status: 'authenticated' })),
@@ -36,7 +35,6 @@ const mockFetchWithRetry = networkUtils.fetchWithRetry as jest.Mock
 const mockRedirectTo = redirectUtils.redirectTo as jest.Mock
 const mockUseSpotifyAuth = useSpotifyAuth as jest.Mock
 
-// Mock Spotify SDK
 const mockPlayer = {
   connect: jest.fn().mockResolvedValue(true),
   disconnect: jest.fn(),
@@ -81,7 +79,6 @@ describe('useSpotifyWebPlayback', () => {
 
     renderHook(() => useSpotifyWebPlayback())
 
-    // The hook's getOAuthToken is called by the Spotify Player constructor.
     const playerOptions = (window.Spotify.Player as jest.Mock).mock.calls[0][0]
     await playerOptions.getOAuthToken(() => {})
 
