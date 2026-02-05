@@ -58,15 +58,14 @@ const ExperimentalAnalyticsPage = () => {
     addHrData,
     workoutStatus,
     sessionId,
+    currentSession,
   } = useWorkoutSession({
     totalCalories: totalCaloriesBurned,
     userAge: userSettings.userAge || 30,
     userWeight: userSettings.userWeight || 70,
   })
 
-  const [activeSession, setActiveSession] = useState<WorkoutSessionData | null>(
-    null
-  )
+  const activeSession = currentSession
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
   const [view, setView] = useState<View>(() =>
     workoutStatus !== 'idle' ? 'active' : 'list'
@@ -88,17 +87,6 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [workoutStatus])
 
-  // Load Active Session from Storage when sessionId is available
-  useEffect(() => {
-    if (sessionId) {
-      workoutSessionStorage.getSession(sessionId).then((session) => {
-        if (session) setActiveSession(session)
-      })
-    } else {
-      // Defer state update to avoid synchronous render cycle issues
-      setTimeout(() => setActiveSession(null), 0)
-    }
-  }, [sessionId])
 
   useEffect(() => {
     // Load sessions asynchronously
@@ -135,36 +123,8 @@ const ExperimentalAnalyticsPage = () => {
 
     const intervalId = setInterval(() => {
       const currentHr = latestHrRef.current
-      const now = Date.now()
-
       processHeartRate(currentHr)
       addHrData(currentHr)
-
-      setActiveSession((prev) => {
-        if (!prev) return null
-        const dataPoint = { time: now, hr: currentHr }
-        const lastDataPoint = prev.hrHistory[prev.hrHistory.length - 1]
-        const timeDelta = lastDataPoint ? (now - lastDataPoint.time) / 1000 : 1
-
-        const { zoneName } = calculateHrZone(currentHr, prev.userSettings.maxHr)
-        const newTimeInZones = {
-          ...prev.timeInZones,
-          [zoneName]: (prev.timeInZones[zoneName] || 0) + timeDelta,
-        }
-        const newHrHistory = [...prev.hrHistory, dataPoint]
-        const newMaxHr = Math.max(prev.maxHr, currentHr)
-        const newAverageHr =
-          (prev.averageHr * prev.hrHistory.length + currentHr) /
-          (prev.hrHistory.length + 1)
-
-        return {
-          ...prev,
-          hrHistory: newHrHistory,
-          timeInZones: newTimeInZones,
-          maxHr: newMaxHr,
-          averageHr: newAverageHr,
-        }
-      })
     }, 1000)
 
     return () => clearInterval(intervalId)
