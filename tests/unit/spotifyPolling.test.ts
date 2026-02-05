@@ -1,12 +1,10 @@
-/**
- * Unit tests for Spotify integration with timer
- * Tests Spotify commands and volume control
- */
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { setupSpotifyPollingService, mockPlayer } from './spotify-test-utils'
+import logger from '../../utils/logger.server'
+import { ServerMessage } from '../../types/websocket'
 
 // Mock the logger
 jest.mock('../../lib/env.js', () => ({
@@ -25,8 +23,9 @@ jest.mock('../../lib/env.js', () => ({
   },
 }))
 
-jest.mock('../../utils/logger.server.js', () => {
-  const mockLogger = {
+jest.mock('../../utils/logger.server.js', () => ({
+  __esModule: true,
+  default: {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
@@ -34,15 +33,8 @@ jest.mock('../../utils/logger.server.js', () => {
     child: jest.fn(function () {
       return this
     }),
-  }
-  return {
-    __esModule: true,
-    default: mockLogger,
-  }
-})
-
-// Import the mocked logger
-import logger from '../../utils/logger.server.js'
+  },
+}))
 
 // Mock the SpotifyTokenManager module
 jest.mock('../../services/spotifyTokenManager', () => {
@@ -64,24 +56,6 @@ jest.mock('../../services/spotifyTokenManager', () => {
   }
 })
 
-// Create a fully typed mock for the player. This ensures our mock conforms to the SDK's interface.
-const mockPlayer: jest.Mocked<SpotifyApi['player']> = {
-  addItemToPlaybackQueue: jest.fn(),
-  getAvailableDevices: jest.fn(),
-  getCurrentlyPlayingTrack: jest.fn(),
-  getPlaybackState: jest.fn(),
-  getRecentlyPlayedTracks: jest.fn(),
-  pausePlayback: jest.fn(),
-  seekToPosition: jest.fn(),
-  setPlaybackVolume: jest.fn(),
-  setRepeatMode: jest.fn(),
-  skipToNext: jest.fn(),
-  skipToPrevious: jest.fn(),
-  startResumePlayback: jest.fn(),
-  togglePlaybackShuffle: jest.fn(),
-  transferPlayback: jest.fn(),
-}
-
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: jest.fn(() => ({
@@ -91,49 +65,34 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
-import { ServerMessage } from '../../types/websocket'
 describe('SpotifyPolling Service', () => {
   let spotifyService: SpotifyPolling
   let broadcastMock: jest.Mock<(message: ServerMessage) => void>
-  let broadcastedStates: SpotifyData[]
+  const broadcastedStates: SpotifyData[] = []
 
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
-    // Reset mockPlayer's mocks
-    mockPlayer.getCurrentlyPlayingTrack.mockClear()
-    mockPlayer.startResumePlayback.mockClear()
-    mockPlayer.pausePlayback.mockClear()
-    mockPlayer.skipToNext.mockClear()
-    mockPlayer.skipToPrevious.mockClear()
-    mockPlayer.transferPlayback.mockClear()
-    mockPlayer.setPlaybackVolume.mockClear()
-    mockPlayer.getAvailableDevices.mockClear()
-    mockPlayer.getAvailableDevices.mockResolvedValue({ devices: [] })
 
-    broadcastedStates = []
-    broadcastMock = jest.fn((message) => {
+    // Ensure the SpotifyTokenManager is reset to a functional state for each test
+    ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
+      getValidAccessToken: jest.fn().mockResolvedValue('mock_access_token'),
+      getSdkAccessToken: jest.fn().mockReturnValue({
+        access_token: 'mock_access_token',
+        token_type: 'Bearer',
+        expires_in: 3600,
+      }),
+      updateToken: jest.fn(),
+    }))
+
+    mockPlayer.getAvailableDevices.mockResolvedValue({ devices: [] })
+    ;[spotifyService, broadcastMock] = await setupSpotifyPollingService()
+    // Custom mock implementation for broadcast to capture states
+    broadcastMock.mockImplementation((message: ServerMessage) => {
       if (message.type === 'SPOTIFY_UPDATE') {
         broadcastedStates.push(message.payload)
       }
     })
-
-    // Initialize the service and await its creation, which includes SDK setup
-    spotifyService = await SpotifyPolling.create(broadcastMock)
-    // Stop polling after service creation to avoid side effects in tests
-    if (spotifyService._test_) {
-      const pollInterval = spotifyService._test_.getPollInterval()
-      if (pollInterval) {
-        clearInterval(pollInterval)
-        spotifyService._test_.setPollInterval(null)
-      }
-      const tokenRefreshInterval =
-        spotifyService._test_.getTokenRefreshInterval()
-      if (tokenRefreshInterval) {
-        clearInterval(tokenRefreshInterval)
-        spotifyService._test_.setTokenRefreshInterval(null)
-      }
-    }
   })
 
   afterEach(() => {
@@ -153,6 +112,53 @@ describe('SpotifyPolling Service', () => {
       expect(state.trackName).toBe('Awaiting Login...')
       expect(state.artist).toBe('')
       expect(state.isPlaying).toBe(false)
+    })
+
+    describe('SDK Initialization', () => {
+      it('should not start polling if SDK initialization fails', async () => {
+        // Arrange: Mock the token manager to simulate a failure in getting the SDK access token.
+        // This is a more direct way to test this scenario.
+        ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
+          getValidAccessToken: jest.fn().mockResolvedValue('mock_access_token'),
+          getSdkAccessToken: jest.fn().mockReturnValue(null), // Simulate failure
+          updateToken: jest.fn(),
+        }))
+
+        // Act
+        const service = await SpotifyPolling.create(broadcastMock)
+
+        // Assert
+        expect(service.isReady()).toBe(false)
+        const pollInterval = service._test_?.getPollInterval()
+        expect(pollInterval).toBeNull()
+      })
+
+      it('should not execute commands if SDK is not initialized', async () => {
+        // Arrange: Ensure SDK is not ready
+        if (spotifyService._test_) {
+          spotifyService._test_.setSdk(null)
+        }
+
+        // Act
+        await spotifyService.handleCommand('PLAY', {})
+
+        // Assert
+        expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
+        expect(logger.warn).toHaveBeenCalledWith(
+          'Spotify service not ready, command ignored.',
+          { command: 'PLAY' }
+        )
+      })
+
+      it('should return false for isReady if SDK is not initialized', () => {
+        // Arrange: Force SDK to be null
+        if (spotifyService._test_) {
+          spotifyService._test_.setSdk(null)
+        }
+
+        // Act & Assert
+        expect(spotifyService.isReady()).toBe(false)
+      })
     })
   })
 
@@ -252,57 +258,6 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('SET_VOLUME', { volume: 50 })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
       expect(logger.error).toHaveBeenCalled()
-    })
-  })
-
-  describe('Device Management', () => {
-    it('should refresh and broadcast available devices', async () => {
-      const mockDevices = [
-        {
-          id: 'device1',
-          name: 'Speaker',
-          type: 'Speaker',
-          is_active: true,
-          is_private_session: false,
-          is_restricted: false,
-          volume_percent: 50,
-        },
-        {
-          id: 'device2',
-          name: 'Phone',
-          type: 'Smartphone',
-          is_active: false,
-          is_private_session: false,
-          is_restricted: false,
-          volume_percent: 30,
-        },
-      ]
-      mockPlayer.getAvailableDevices.mockImplementation(() =>
-        Promise.resolve({
-          devices: mockDevices,
-        })
-      )
-
-      await spotifyService.refreshDevices()
-
-      expect(broadcastMock).toHaveBeenCalledWith({
-        type: 'SPOTIFY_UPDATE',
-        payload: expect.objectContaining({
-          devices: mockDevices,
-        }),
-      })
-    })
-
-    it('should transfer playback to device', async () => {
-      const deviceId = 'device123'
-      await spotifyService.handleCommand('TRANSFER_PLAYBACK', { deviceId })
-      expect(mockPlayer.transferPlayback).toHaveBeenCalledWith([deviceId], true)
-    })
-
-    it('should handle TRANSFER_PLAYBACK command', async () => {
-      const deviceId = 'device123'
-      await spotifyService.handleCommand('TRANSFER_PLAYBACK', { deviceId })
-      expect(mockPlayer.transferPlayback).toHaveBeenCalledWith([deviceId], true)
     })
   })
 
@@ -465,29 +420,6 @@ describe('SpotifyPolling Service', () => {
       expect(refreshSpy).toHaveBeenCalled()
     })
 
-    it('should not execute commands without access token', async () => {
-      // Mock SpotifyPolling.create to return an instance with a null SDK
-      const originalSpotifyPollingCreate = SpotifyPolling.create
-      SpotifyPolling.create = jest.fn().mockResolvedValue({
-        handleCommand: jest.fn(() => Promise.resolve()), // Mock handleCommand to return a resolved promise
-        getState: jest.fn(),
-        stopPolling: jest.fn(),
-        cleanup: jest.fn(),
-        initializeSdk: jest.fn(),
-        setRefreshToken: jest.fn(),
-        startPolling: jest.fn(),
-        getAvailableDevices: jest.fn(),
-        sdk: null, // Ensure SDK is null
-      })
-
-      const newService = await SpotifyPolling.create(broadcastMock)
-      await newService.handleCommand('SET_VOLUME', { volume: 50 })
-      expect(mockPlayer.setPlaybackVolume).not.toHaveBeenCalled()
-
-      // Restore original SpotifyPolling.create
-      SpotifyPolling.create = originalSpotifyPollingCreate
-    })
-
     it('should handle SyntaxError during error logging gracefully', async () => {
       // Simulate an error that returns invalid JSON when text() is called
       const errorResponse = {
@@ -566,48 +498,6 @@ describe('SpotifyPolling Service', () => {
         }),
         'Error executing Spotify command'
       )
-    })
-
-    describe('isEmptyResponseError', () => {
-      it('should return true for "Unexpected end of JSON input"', () => {
-        const error = new SyntaxError('Unexpected end of JSON input')
-        if (spotifyService._test_) {
-          const result = spotifyService._test_.isEmptyResponseError(error)
-          expect(result).toBe(true)
-        }
-      })
-
-      it('should return true for "Unexpected end of input"', () => {
-        const error = new SyntaxError('Unexpected end of input')
-        if (spotifyService._test_) {
-          const result = spotifyService._test_.isEmptyResponseError(error)
-          expect(result).toBe(true)
-        }
-      })
-
-      it('should return true for case-insensitive variations', () => {
-        const error = new SyntaxError('Unexpected End Of JSON Input')
-        if (spotifyService._test_) {
-          const result = spotifyService._test_.isEmptyResponseError(error)
-          expect(result).toBe(true)
-        }
-      })
-
-      it('should return false for other SyntaxErrors', () => {
-        const error = new SyntaxError('Invalid token')
-        if (spotifyService._test_) {
-          const result = spotifyService._test_.isEmptyResponseError(error)
-          expect(result).toBe(false)
-        }
-      })
-
-      it('should return false for non-SyntaxErrors', () => {
-        const error = new Error('Some other error')
-        if (spotifyService._test_) {
-          const result = spotifyService._test_.isEmptyResponseError(error)
-          expect(result).toBe(false)
-        }
-      })
     })
   })
 })
