@@ -44,6 +44,7 @@ const HrmTiles = () => {
               percentMax={hrZoneProps.percentage}
               calories={user.calories || 0} // Pass calories
               isAlerting={!!matchingAlert}
+              updatedAt={user.updatedAt}
               // Conditionally add alertMessage to avoid passing `undefined`
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
             />

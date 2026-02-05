@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
+import { useTimeAgo } from '@/hooks/useTimeAgo'
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -37,9 +38,11 @@ const HrTile = ({
   isDataStale = false,
   isAlerting = false,
   alertMessage = 'Checking signal...',
+  updatedAt,
 }: HrTileProps) => {
   const theme = useTheme()
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
+  const timeAgo = useTimeAgo(updatedAt)
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -163,6 +166,11 @@ const HrTile = ({
                 }}
               >
                 {name}
+              </Typography>
+            )}
+            {timeAgo && (
+              <Typography variant="caption" sx={{ opacity: 0.7, mt: 1 }}>
+                Updated: {timeAgo}
               </Typography>
             )}
           </CardContent>

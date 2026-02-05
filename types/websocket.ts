@@ -98,6 +98,7 @@ export interface IncomingHrmData {
   name?: string
   age?: number
   calories?: number
+  updatedAt?: number
 }
 
 export interface HrmInputMessage {

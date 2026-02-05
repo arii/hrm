@@ -48,6 +48,7 @@ export default function MockPage() {
         type: 'HRM_INPUT',
         data: {
           value: hr,
+          updatedAt: Date.now(),
         },
       }
       sendData(message)

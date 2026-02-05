@@ -69,6 +69,13 @@ export const reducer = (
           (newUser) => newUser.clientId === existingUser.clientId
         )
         if (updatedUser) {
+          if (
+            updatedUser.updatedAt &&
+            existingUser.updatedAt &&
+            updatedUser.updatedAt < existingUser.updatedAt
+          ) {
+            return existingUser // Discard stale data
+          }
           // CRITICAL FIX: The order of spread operators is essential.
           // By spreading existingUser first, then updatedUser, we ensure
           // that any fields NOT present in the (potentially partial) `updatedUser`

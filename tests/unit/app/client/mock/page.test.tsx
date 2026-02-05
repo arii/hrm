@@ -51,7 +51,7 @@ describe('app/client/mock/page', () => {
     expect(mockSendData).toHaveBeenCalledTimes(2)
     expect(mockSendData).toHaveBeenCalledWith({
       type: 'HRM_INPUT',
-      data: { value: 125 },
+      data: { value: 125, updatedAt: expect.any(Number) },
     })
   })
 
@@ -68,7 +68,7 @@ describe('app/client/mock/page', () => {
     // It should send an initial HR packet immediately
     expect(mockSendData).toHaveBeenCalledWith({
       type: 'HRM_INPUT',
-      data: { value: 100 },
+      data: { value: 100, updatedAt: expect.any(Number) },
     })
 
     // Advance time to trigger the interval
