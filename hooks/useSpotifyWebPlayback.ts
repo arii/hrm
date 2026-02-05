@@ -5,6 +5,7 @@ import { useError } from '@/context/ErrorContext'
 import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
 import { fetchWithRetry, AppError } from '@/utils/network'
 import { signOut } from 'next-auth/react'
+import { useSpotifyAuth } from './useSpotifyAuth'
 
 interface SpotifyDeviceEvent {
   device_id: string
@@ -56,12 +57,12 @@ const useSpotifyWebPlayback = () => {
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [deviceId, setDeviceId] = useState<string | null>(null)
+  const [initStatus, setInitStatus] = useState<
+    'idle' | 'initializing' | 'ready' | 'failed'
+  >('idle')
   const { addError } = useError()
+  const { status } = useSpotifyAuth()
 
-  /**
-   * Fetches the Spotify OAuth token from our secure backend API.
-   * This function is passed to the Spotify Player constructor.
-   */
   const getOAuthToken = useCallback(
     async (cb: (token: string) => void) => {
       try {
@@ -78,51 +79,35 @@ const useSpotifyWebPlayback = () => {
           `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
         )
 
-        // If the error is a 401 Unauthorized, it likely means the session is
-        // invalid or expired. The Spotify SDK will cache this failing token
-        // and stop asking for a new one. To force a re-auth flow, we must
-        // sign the user out, which will clear the session and prompt a new login.
+        // Spotify SDK caches invalid tokens, so we must force sign-out to clear the session.
         if (appError.code === 'HTTP_ERROR_401') {
+          setInitStatus('failed')
           console.warn(
             '[Spotify Web Playback] Received 401, signing out to force re-authentication.'
           )
           addError('Spotify session expired. Please log in again.', {
             persist: true,
           })
-          // Note: This is a redundant sign-out trigger. The `useSpotifyAuth`
-          // hook also handles the `RefreshAccessTokenError` and initiates a
-          // sign-out. While this is a safeguard, a future refactor could
-          // streamline this to rely on a single source of truth for session
-          // validity.
           await signOut()
         } else {
-          // For other errors, show a non-persistent error message to the user.
+          setInitStatus('failed')
           addError(`Failed to authenticate with Spotify: ${appError.message}`, {
             persist: false,
           })
         }
-        // The SDK might retry on its own for certain errors.
       }
     },
-    [addError]
+    [addError, setInitStatus]
   )
 
-  // Effect to load the Spotify SDK script and initialize the player
   useEffect(() => {
-    console.log(
-      '[Spotify Web Playback] Hook initialized, checking prerequisites...'
-    )
-
-    // Prevent re-initialization if player already exists and is ready
-    if (player && isReady) {
-      console.log('[Spotify Web Playbook] Player already initialized and ready')
+    if (status !== 'authenticated' || initStatus !== 'idle') {
       return
     }
 
-    initializeSDK()
+    setInitStatus('initializing')
 
-    function initializeSDK() {
-      // Load the SDK script if not already loaded
+    const initializeSDK = () => {
       if (!window.Spotify) {
         console.log('[Spotify Web Playback] Loading Spotify SDK script...')
         const script = document.createElement('script')
@@ -131,41 +116,27 @@ const useSpotifyWebPlayback = () => {
         document.body.appendChild(script)
       } else {
         console.log('[Spotify Web Playback] Spotify SDK already loaded')
-        // SDK already loaded, initialize immediately
-        initializePlayer()
-      }
-
-      // This function is called by the Spotify SDK once it's loaded.
-      window.onSpotifyWebPlaybackSDKReady = () => {
-        console.log('[Spotify Web Playback] SDK ready callback triggered')
         initializePlayer()
       }
     }
 
-    function initializePlayer() {
-      // Don't initialize if we already have a player
+    const initializePlayer = () => {
       if (player) {
-        console.log(
-          '[Spotify Web Playback] Player already exists, skipping initialization'
-        )
         return
       }
 
-      console.log('[Spotify Web Playback] Initializing player...')
+      console.log('[Spotify Web Playback] Initializing new player instance...')
       const spotifyPlayer = new window.Spotify.Player({
         name: 'HRM Web Player',
         getOAuthToken,
         volume: 0.5,
       })
 
-      // --- Player Event Listeners ---
-
       spotifyPlayer.addListener('ready', ({ device_id }) => {
         console.log('[Spotify Web Playback] Ready with Device ID', device_id)
         setDeviceId(device_id)
         setIsReady(true)
-        // No singular error state to clear, errors are managed in a list
-        // addError functions manages individual errors with an id
+        setInitStatus('ready')
       })
 
       spotifyPlayer.addListener('not_ready', ({ device_id }) => {
@@ -180,11 +151,13 @@ const useSpotifyWebPlayback = () => {
       spotifyPlayer.addListener('initialization_error', ({ message }) => {
         console.error('[Spotify Web Playback] Initialization Error:', message)
         addError(`Initialization failed: ${message}`, { persist: true })
+        setInitStatus('failed')
       })
 
       spotifyPlayer.addListener('authentication_error', ({ message }) => {
         console.error('[Spotify Web Playback] Authentication Error:', message)
         addError(`Authentication failed: ${message}`, { persist: true })
+        setInitStatus('failed')
       })
 
       spotifyPlayer.addListener('account_error', ({ message }) => {
@@ -192,36 +165,39 @@ const useSpotifyWebPlayback = () => {
         addError(`Account error: ${message}. A Premium account is required.`, {
           persist: true,
         })
+        setInitStatus('failed')
       })
 
       setPlayer(spotifyPlayer)
 
-      // --- Connect the Player ---
       spotifyPlayer.connect().then((success) => {
         if (success) {
           console.log(
             '[Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!'
           )
         } else {
-          // Note: connect() can return false even when connection succeeds
-          // We'll rely on the 'ready' event to confirm actual connection status
           console.warn(
-            '[Spotify Web Playback] connect() returned false, but this may be a false negative'
+            '[Spotify Web Playback] connect() returned false, but this is often a false negative.'
           )
         }
       })
     }
 
-    // Cleanup function to disconnect the player when component unmounts
+    // The Spotify SDK automatically calls this global function when the script loads.
+    window.onSpotifyWebPlaybackSDKReady = initializePlayer
+
+    initializeSDK()
+
     return () => {
-      if (player && typeof player.disconnect === 'function') {
+      if (player) {
         console.log('[Spotify Web Playback] Disconnecting player on cleanup')
         player.disconnect()
+        setPlayer(null)
       }
+      // Prevent memory leaks by cleaning up the global callback.
+      window.onSpotifyWebPlaybackSDKReady = () => {}
     }
-    // We intentionally include player and isReady to control re-initialization
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getOAuthToken])
+  }, [status, initStatus, getOAuthToken, addError, player])
 
   return { player, isReady, deviceId }
 }
