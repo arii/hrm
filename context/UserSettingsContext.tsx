@@ -4,7 +4,6 @@ import React, { createContext, useContext } from 'react'
 import usePersistentStorage from '../hooks/usePersistentStorage'
 import { MeasurementSystem, Gender } from '../types/core'
 
-// Directly define the preferences interface and defaults here
 export interface UserPreferences {
   theme: 'dark' | 'light'
   volumeLevel: number
@@ -13,7 +12,7 @@ export interface UserPreferences {
   favoritePlaylist: string
   userName: string
   userAge: number | null
-  userWeight: number | null // Note: userWeight is always stored in KG
+  userWeight: number | null
   autoConnect: boolean
   gender: Gender
   unitSystem: MeasurementSystem
@@ -47,7 +46,6 @@ export const UserSettingsContext = createContext<
 export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  // Use the usePersistentStorage hook directly within the provider
   const userPreferences = usePersistentStorage<UserPreferences>(
     'user-prefs',
     DEFAULT_PREFERENCES

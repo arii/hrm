@@ -3,8 +3,6 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
 import { HrZoneName } from './shared/hr-zones'
 
-// --- TypeScript Interfaces ---
-
 export { HrZoneName }
 
 export interface HrDataPoint {
@@ -43,32 +41,12 @@ interface WorkoutDB extends DBSchema {
   }
 }
 
-// --- Constants ---
-
 const DB_NAME = 'WorkoutSessionDB'
 const DB_VERSION = 1
 const STORE_NAME = 'sessions'
 
-// --- WorkoutSessionStorage Class ---
-
 /**
  * Manages persistent storage of workout session data using IndexedDB with localStorage fallback.
- *
- * **Storage Strategy:**
- * - Primary: IndexedDB for larger data sets and better performance
- * - Fallback: localStorage when IndexedDB is unavailable (e.g., private browsing)
- *
- * **Error Handling:**
- * - All operations gracefully degrade to localStorage on IndexedDB failures
- * - Storage quota exceeded errors are caught and logged
- * - Corrupted data is handled with validation and fallback mechanisms
- *
- * @example
- * ```typescript
- * const storage = new WorkoutSessionStorage()
- * await storage.saveSession(sessionData)
- * const session = await storage.getSession(sessionId)
- * ```
  */
 export class WorkoutSessionStorage {
   private dbPromise: Promise<IDBPDatabase<WorkoutDB>> | null = null

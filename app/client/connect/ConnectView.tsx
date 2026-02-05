@@ -34,9 +34,9 @@ import {
 } from '@mui/material'
 
 interface ConnectViewProps {
-  workoutDuration: number // Changed: Raw number for better internal handling
+  workoutDuration: number
   caloriesBurned: number
-  startTime: number | null // Added: For persistence
+  startTime: number | null
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -167,7 +167,6 @@ export default function ConnectView({
         spacing={2}
         justifyContent="center"
       >
-        {/* Button 1: Clear Session Only */}
         <Button
           variant="outlined"
           color="warning"
@@ -178,7 +177,6 @@ export default function ConnectView({
           Clear Session Data
         </Button>
 
-        {/* Button 2: Full Reset */}
         <Button
           variant="outlined"
           color="error"

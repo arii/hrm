@@ -7,7 +7,6 @@ import { calculateHrZone } from '@/lib/hrm/zones'
 
 const STORAGE_KEY = 'hrm_dashboard:active_session'
 
-// --- State Definitions ---
 type SessionStatus = 'idle' | 'running' | 'paused'
 
 interface SessionState {
@@ -32,7 +31,6 @@ const initialState: SessionState = {
   sessionId: null,
 }
 
-// --- Helper for state validation ---
 const isValidSessionState = (parsed: unknown): parsed is SessionState => {
   if (!parsed || typeof parsed !== 'object') return false
   const p = parsed as Record<string, unknown>
@@ -55,7 +53,6 @@ const isValidSessionState = (parsed: unknown): parsed is SessionState => {
   return hasRequiredFields && hasValidOptionalFields
 }
 
-// --- Helper to load from storage ---
 const loadState = (): SessionState => {
   if (typeof window === 'undefined') return initialState
   try {
@@ -143,35 +140,22 @@ function sessionReducer(
   return newState
 }
 
-// --- Hook Implementation ---
 interface WorkoutSessionOptions {
-  /**
-   * The total cumulative calories reported by the server.
-   * Boundary: The server is the Single Source of Truth for total lifetime calories.
-   */
   totalCalories?: number
   userAge?: number
   userWeight?: number
 }
 
 /**
- * useWorkoutSession manages the local workout lifecycle and persists session metadata
- * to localStorage.
- *
- * Note: While session duration and deltas (calories burned) are persisted locally for UX,
- * authoritative HRM data and cumulative totals should always be sourced from the server
- * to prevent state divergence.
+ * Manages the local workout lifecycle and persists session metadata to localStorage.
  */
 export const useWorkoutSession = ({
   totalCalories = 0,
   userAge = 30,
   userWeight = 70,
 }: WorkoutSessionOptions) => {
-  // Initialize from storage instead of default initialState
   const [state, dispatch] = useReducer(sessionReducer, initialState, loadState)
 
-  // Side Effect: Save to Storage
-  // Move side effects out of the reducer to maintain purity.
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
@@ -185,14 +169,12 @@ export const useWorkoutSession = ({
     }
   }, [state])
 
-  // Sync total calories
   useEffect(() => {
     const isWorkoutOver = state.status === 'idle' && state.startCalories > 0
     if (isWorkoutOver) return
     dispatch({ type: 'UPDATE_CALORIES', payload: totalCalories })
   }, [totalCalories, state.status, state.startCalories])
 
-  // Timer Logic
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
 
@@ -220,7 +202,6 @@ export const useWorkoutSession = ({
       const now = Date.now()
       const sessionId = uuidv4()
 
-      // Initial IndexedDB entry
       workoutSessionStorage.saveSession({
         sessionId,
         startTime: now,
@@ -315,9 +296,6 @@ export const useWorkoutSession = ({
 
   const caloriesBurned = useMemo(() => {
     if (state.startCalories === 0) return 0
-    // Boundary: Single Source of Truth Principle.
-    // The server provides 'totalCalories' (authoritative).
-    // We calculate 'caloriesBurned' as a client-side derivation for the current session.
     const burned = Math.round(state.calories - state.startCalories)
     return burned > 0 ? burned : 0
   }, [state.calories, state.startCalories])

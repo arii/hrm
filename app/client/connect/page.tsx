@@ -70,7 +70,6 @@ export default function ConnectPage() {
         setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
       }
     }
-    // Reset local state to show the canonical value from context
     setLocalDisplayWeight(null)
   }
 
@@ -111,7 +110,7 @@ export default function ConnectPage() {
 
   const {
     workoutDuration,
-    startTime, // Destructure persistent start time
+    startTime,
     resetWorkout: resetWorkoutSession,
     hasStarted,
     startWorkout,
@@ -151,8 +150,6 @@ export default function ConnectPage() {
       setCurrentHR(heartRate)
       if (workoutStatus === 'running') {
         processHeartRate(heartRate)
-
-        // Persist individual HR data points to IndexedDB
         addHrData(heartRate)
       }
     },
@@ -177,7 +174,6 @@ export default function ConnectPage() {
     onConnect: handleStartWorkout,
   })
 
-  // Auto-pause workout if device disconnects
   useEffect(() => {
     if (!isConnected && workoutStatus === 'running') {
       handlePauseWorkout()
@@ -222,8 +218,8 @@ export default function ConnectPage() {
 
   return (
     <ConnectView
-      workoutDuration={workoutDuration} // Pass raw number
-      startTime={startTime} // Pass start time
+      workoutDuration={workoutDuration}
+      startTime={startTime}
       caloriesBurned={calories}
       userName={userName}
       setUserName={(name) =>

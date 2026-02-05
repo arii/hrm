@@ -4,8 +4,6 @@ import { useReducer, useCallback } from 'react'
 import { HrZoneName, calculateHrZone } from '../lib/hrm/zones'
 import { HrDataPoint } from '../lib/workout-session-storage'
 
-// --- State, Actions, and Reducer ---
-
 export interface WorkoutBufferState {
   hrHistory: HrDataPoint[]
   timeInZones: Record<HrZoneName, number>
@@ -41,7 +39,6 @@ function workoutBufferReducer(
     case 'ADD_HR_DATA': {
       const { hr, time, maxHr } = action.payload
 
-      // If this is the first data point, just add it to history and set the time.
       if (!state.lastDataPointTime) {
         return {
           ...state,
@@ -53,17 +50,15 @@ function workoutBufferReducer(
       const timeDeltaSeconds = (time - state.lastDataPointTime) / 1000
       const newHrHistory = [...state.hrHistory, { time, hr }]
 
-      // Ignore invalid deltas for zone calculation, but still record the HR data point.
       if (timeDeltaSeconds <= 0 || timeDeltaSeconds > 10) {
         return {
           ...state,
           hrHistory: newHrHistory,
-          lastDataPointTime: time, // Update time to prevent huge gaps in next calculation
+          lastDataPointTime: time,
         }
       }
 
       const previousHrDataPoint = state.hrHistory[state.hrHistory.length - 1]
-      // This should not happen if lastDataPointTime is set, but as a safeguard:
       if (!previousHrDataPoint) return state
 
       const { zoneName } = calculateHrZone(previousHrDataPoint.hr, maxHr)
@@ -86,8 +81,6 @@ function workoutBufferReducer(
       return state
   }
 }
-
-// --- The Hook ---
 
 export const useLocalWorkoutBuffer = () => {
   const [state, dispatch] = useReducer(workoutBufferReducer, initialState)

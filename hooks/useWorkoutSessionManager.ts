@@ -13,8 +13,6 @@ import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useAppSnackbar } from './useAppSnackbar'
 import { isSameDay } from '../lib/date'
 
-// --- State, Actions, and Reducer ---
-
 type SessionStatus = 'idle' | 'running' | 'paused' | 'finished'
 
 interface SessionManagerState {
@@ -85,14 +83,12 @@ function sessionManagerReducer(
     }
     case 'END': {
       if (!state.session) return state
-      // If running, transition to 'paused'. If paused, transition to 'finished'.
       const nextStatus = state.status === 'running' ? 'paused' : 'finished'
       return {
         ...state,
         session: {
           ...state.session,
           status: nextStatus,
-          // Only set endTime when the session is truly finished
           endTime: nextStatus === 'finished' ? Date.now() : null,
         },
         status: nextStatus,
@@ -141,8 +137,6 @@ function sessionManagerReducer(
   }
 }
 
-// --- The Hook ---
-
 export const useWorkoutSessionManager = () => {
   const [state, dispatch] = useReducer(sessionManagerReducer, initialState)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -163,9 +157,9 @@ export const useWorkoutSessionManager = () => {
         )
         await workoutSessionStorage.deleteSession(session.sessionId)
         onStale(message)
-        return true // Indicates session was stale and cleared
+        return true
       }
-      return false // Indicates session was not stale
+      return false
     },
     []
   )
@@ -183,7 +177,6 @@ export const useWorkoutSessionManager = () => {
     }
   }, [state.session, showInfo, clearStaleSession])
 
-  // Auto-recovery of incomplete sessions
   useEffect(() => {
     const recoverSession = async () => {
       let incompleteSession = await workoutSessionStorage.getIncompleteSession()
@@ -210,7 +203,6 @@ export const useWorkoutSessionManager = () => {
     }
   }, [isInitialized, showInfo, clearStaleSession])
 
-  // Validate session on window focus
   useEffect(() => {
     window.addEventListener('focus', checkAndRotateSession)
     return () => {
@@ -218,7 +210,6 @@ export const useWorkoutSessionManager = () => {
     }
   }, [checkAndRotateSession])
 
-  // Persist session changes to IndexedDB
   useEffect(() => {
     if (state.session) {
       workoutSessionStorage.saveSession(state.session)

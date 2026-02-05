@@ -17,7 +17,7 @@ import {
 import { formatDuration } from '@/lib/utils'
 
 interface WorkoutSummaryProps {
-  duration: number // Changed from string to number for raw formatting
+  duration: number
   calories: number
   status: 'idle' | 'running' | 'paused' | 'finished'
   userName?: string
@@ -33,7 +33,6 @@ const WorkoutSummary = ({
 }: WorkoutSummaryProps) => {
   const theme = useTheme()
 
-  // Helper to determine status color
   const getStatusColor = (s: string) => {
     switch (s) {
       case 'running':
@@ -66,7 +65,6 @@ const WorkoutSummary = ({
         mt: 2,
       }}
     >
-      {/* Header Section */}
       <Box
         sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', p: 2 }}
       >
@@ -117,7 +115,6 @@ const WorkoutSummary = ({
           spacing={2}
           justifyContent="space-around"
         >
-          {/* Duration Block */}
           <Box sx={{ textAlign: 'center', flex: 1 }}>
             <Stack
               direction="row"
@@ -143,7 +140,6 @@ const WorkoutSummary = ({
             </Typography>
           </Box>
 
-          {/* Calories Block */}
           <Box sx={{ textAlign: 'center', flex: 1 }}>
             <Stack
               direction="row"

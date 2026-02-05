@@ -8,7 +8,6 @@ import { HrZoneName } from '../shared/hr-zones'
 
 export { HrZoneName }
 
-// --- Constants ---
 // Heart Rate Zone Boundaries (as percentage of Max HR)
 export const HR_ZONE_DEFINITIONS = [
   { name: HrZoneName.WarmUp, min: 0.5 },

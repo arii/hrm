@@ -40,7 +40,6 @@ const ExperimentalAnalyticsPage = () => {
   const { hrmData, sendData, connectionStatus } = useWebSocket()
   const [userSettings] = useUserSettings()
 
-  // Use #5110's hooks
   const {
     session: activeSession,
     status,
@@ -58,7 +57,6 @@ const ExperimentalAnalyticsPage = () => {
       weightKg: userSettings.userWeight || 70,
     })
 
-  // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
   const [view, setView] = useState<View>(() =>
     activeSession ? 'active' : 'list'
@@ -66,7 +64,6 @@ const ExperimentalAnalyticsPage = () => {
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
 
-  // Load all sessions
   useEffect(() => {
     const loadSessions = async () => {
       const sessions = await workoutSessionStorage.getAllSessions()
@@ -75,9 +72,8 @@ const ExperimentalAnalyticsPage = () => {
     if (isInitialized) {
       loadSessions()
     }
-  }, [isInitialized, activeSession?.endTime]) // Reload when session ends
+  }, [isInitialized, activeSession?.endTime])
 
-  // Effect to handle the end of a workout session
   useEffect(() => {
     if (status === 'finished') {
       const reloadSessions = async () => {
@@ -89,11 +85,10 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [status])
 
-  // Send user metadata when WebSocket connects
   useEffect(() => {
     if (connectionStatus === 'Connected') {
       const age = userSettings.userAge || 30
-      const maxHr = 220 - age // Simple formula for max HR
+      const maxHr = 220 - age
       sendData({
         type: 'HRM_METADATA_UPDATE',
         data: {
@@ -104,27 +99,20 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [connectionStatus, userSettings, sendData])
 
-  /**
-   * FIX: Use ref to avoid interval reset on HR updates (addresses audit issue #1)
-   * This prevents the interval from being recreated on every hrmData change
-   */
   const latestHrRef = useRef(0)
 
   useEffect(() => {
     latestHrRef.current = hrmData[0]?.value ?? 0
   }, [hrmData])
 
-  // Recording interval - only depends on status, not hrmData
   useEffect(() => {
     if (status !== 'running') return
 
     const intervalId = setInterval(() => {
       const currentHr = latestHrRef.current
 
-      // Process calories (uses time-gap validation internally)
       processHeartRate(currentHr)
 
-      // Add HR data point with zone calculation
       const dataPoint = {
         time: Date.now(),
         hr: currentHr,
@@ -136,11 +124,10 @@ const ExperimentalAnalyticsPage = () => {
     return () => clearInterval(intervalId)
   }, [status, processHeartRate, addHrData])
 
-  // Handlers
   const handleStartWorkout = useCallback(() => {
     const age = userSettings.userAge || 30
     const weight = userSettings.userWeight || 70
-    const maxHr = 220 - age // Calculate max HR from age
+    const maxHr = 220 - age
     startWorkout(age, weight, maxHr)
     reset()
     setView('active')
@@ -170,7 +157,6 @@ const ExperimentalAnalyticsPage = () => {
     setView('list')
   }, [])
 
-  // Compute summary stats
   const summaryData = useMemo(() => {
     if (!activeSession)
       return {
