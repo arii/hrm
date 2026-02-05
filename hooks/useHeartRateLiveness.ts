@@ -1,6 +1,5 @@
 'use client'
-import { useMemo } from 'react'
-import { useNow } from './useNow'
+import { useState, useEffect, useMemo } from 'react'
 import { HrmData } from '@/types/websocket'
 import {
   HRM_STALE_WARNING_MS,
@@ -16,7 +15,15 @@ export interface HeartRateLivenessResult extends HrmData {
 export const useHeartRateLiveness = (
   hrmData: HrmData[]
 ): HeartRateLivenessResult[] => {
-  const now = useNow(HRM_LIVENESS_POLL_INTERVAL_MS)
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Date.now())
+    }, HRM_LIVENESS_POLL_INTERVAL_MS)
+
+    return () => clearInterval(interval)
+  }, [])
 
   return useMemo(() => {
     return hrmData.map((user) => {

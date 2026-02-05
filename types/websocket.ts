@@ -1,4 +1,5 @@
 import { WebSocket } from 'ws'
+import { z } from 'zod'
 import type {
   HrmStreamData as ServerHrmData,
   TimerData,
@@ -59,13 +60,7 @@ export type ServerMessage =
   | { type: 'DEVICE_OFFLINE'; payload: { deviceId: string } }
   | SpotifyExecutionMessage
 
-export interface IncomingHrmData {
-  value: number | null
-  maxHr?: number
-  name?: string
-  age?: number
-  calories?: number
-}
+export type IncomingHrmData = z.infer<typeof IncomingHrmDataSchema>
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'
@@ -144,10 +139,11 @@ export type ClientCommandMessage =
   | ClientRegistrationMessage
   | PingMessage
 
-import { z } from 'zod'
-
 export const IncomingHrmDataSchema = z.object({
   value: z.number().nullable(),
+  maxHr: z.number().optional(),
+  name: z.string().optional(),
+  age: z.number().optional(),
   calories: z.number().optional(),
 })
 

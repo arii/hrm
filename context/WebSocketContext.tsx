@@ -170,6 +170,7 @@ export const WebSocketProvider = ({
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ type: 'PING' }))
 
+        // 15s provides ample buffer for network latency (3x standard RTT) before forcing reconnect
         pongTimeoutRef.current = setTimeout(() => {
           logger.warn(
             '[WebSocketProvider] Pong not received in time. Forcing reconnect.'
