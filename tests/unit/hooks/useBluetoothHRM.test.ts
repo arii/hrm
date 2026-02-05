@@ -173,6 +173,54 @@ describe('useBluetoothHRM', () => {
     expect(mockBluetooth.requestDevice).toHaveBeenCalled()
   })
 
+  it('should abort an in-flight retry attempt if connection is cancelled externally', async () => {
+    // 1. Setup mocks
+    const { result } = renderHook(() => useBluetoothHRM())
+
+    // Mock the first connection attempt to fail with a "zombie" error
+    const zombieError = new DOMException('NetworkError', 'NetworkError')
+    mockGatt.connect.mockRejectedValueOnce(zombieError)
+
+    // Mock the second connection attempt (retry) to hang indefinitely
+    let retryResolve: (value: MockBluetoothRemoteGATTServer) => void
+    const retryPromise = new Promise<MockBluetoothRemoteGATTServer>(
+      (resolve) => {
+        retryResolve = resolve
+      }
+    )
+    mockGatt.connect.mockReturnValueOnce(retryPromise)
+
+    // 2. Start connection
+    let connectPromise: Promise<void>
+    await act(async () => {
+      connectPromise = result.current.connectAndStream()
+    })
+
+    // 3. Advance time to trigger the retry logic
+    // The first attempt failed immediately. The retry logic waits for delayMs (2000ms for attempt 1)
+    await act(async () => {
+      jest.advanceTimersByTime(2000)
+    })
+
+    // Now we are "inside" the retry attempt (the hung promise)
+    expect(result.current.deviceStatus).toMatch(/device busy/i)
+
+    // 4. Cancel the connection externally and verify
+    // We set up the expectation before triggering the disconnect to catch the rejection
+    const validationPromise = expect(connectPromise!).rejects.toThrow(
+      'Connection cancelled'
+    )
+
+    await act(async () => {
+      result.current.disconnect()
+    })
+
+    await validationPromise
+
+    // Cleanup hanging promise
+    retryResolve!(mockGatt)
+  })
+
   it('should abort a pending connection attempt when a new one is initiated', async () => {
     // Mock AbortController to spy on the abort method
     const mockAbort = jest.fn()

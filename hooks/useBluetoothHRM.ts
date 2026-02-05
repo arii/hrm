@@ -419,7 +419,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             BLUETOOTH_MESSAGES.connectingToDevice(device.name || '')
           )
         }
-        abortControllerRef.current = new AbortController()
 
         // --- START NEW RETRY LOGIC ---
         let server: BluetoothRemoteGATTServer | undefined
