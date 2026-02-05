@@ -187,6 +187,7 @@ export default function ConnectPage() {
     isDataStale,
     isSupported,
     signalPeriodMs,
+    connectionAttempted,
   } = useBluetoothHRM({
     userName,
     userAge: userAge || 0,
@@ -197,7 +198,12 @@ export default function ConnectPage() {
   useEffect(() => {
     // Try to auto-connect when WebSocket is ready and we're not already connected.
     // Wait a tick to ensure the component is fully initialized before attempting connection.
-    if (!isConnected && isSupported && connectionStatus === 'Connected') {
+    if (
+      !isConnected &&
+      isSupported &&
+      connectionStatus === 'Connected' &&
+      !connectionAttempted
+    ) {
       logger.info('WebSocket ready, attempting auto-connect...')
       // Small delay to ensure component is fully mounted
       const timeout = setTimeout(() => {
@@ -208,7 +214,13 @@ export default function ConnectPage() {
       return () => clearTimeout(timeout)
     }
     return undefined
-  }, [connectionStatus, isConnected, isSupported, autoConnect])
+  }, [
+    connectionStatus,
+    isConnected,
+    isSupported,
+    autoConnect,
+    connectionAttempted,
+  ])
 
   useEffect(() => {
     // This effect synchronizes the local HR and calorie state with the server.

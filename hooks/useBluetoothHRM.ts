@@ -76,6 +76,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
+  const [connectionAttempted, setConnectionAttempted] = useState(false)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
@@ -235,6 +236,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setCustomStatusMessage(null)
     setSavedDevice(null)
     setBatteryLevel(null)
+    setConnectionAttempted(false)
     deviceRef.current = null
     periodHistory.current = []
     avgPeriodMs.current = 0
@@ -244,6 +246,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
     disconnect()
+    setConnectionAttempted(false)
     try {
       setCookie('hrm_device_id', '', -1)
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
@@ -681,6 +684,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (!device) {
           const savedDeviceId = getCookie('hrm_device_id')
+
+          // Abort silent connection if no device ID is found, to prevent looping.
+          if (silent && !savedDeviceId) {
+            logger.warn(
+              { savedDeviceId },
+              'Aborting silent connect: No saved device ID.'
+            )
+            throw new Error('No saved device ID for silent connection.')
+          }
+
           logger.info(
             { savedDeviceId, hasGetDevices: !!navigator.bluetooth?.getDevices },
             'Looking for saved device'
@@ -769,6 +782,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       return
     }
     try {
+      setConnectionAttempted(true)
       isConnecting.current = true // Set lock immediately after guard
       logger.info('Starting auto-connect to saved device...')
       setStatus(BluetoothConnectionStatus.CONNECTING)
@@ -801,6 +815,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isDataStale,
     isSupported, // Export this flag
     signalPeriodMs,
+    connectionAttempted,
   }
 }
 
