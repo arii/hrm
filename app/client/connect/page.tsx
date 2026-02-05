@@ -211,15 +211,31 @@ export default function ConnectPage() {
     connectionAttempted,
   ])
 
+  const { percentage, zone } = useMemo(() => {
+    const age = userAge || 30
+    const maxHr = 220 - age
+    const percentage =
+      currentHR > 0 ? Math.min(100, Math.round((currentHR / maxHr) * 100)) : 0
+    let zone = 0
+    if (percentage >= 90) zone = 5
+    else if (percentage >= 80) zone = 4
+    else if (percentage >= 70) zone = 3
+    else if (percentage >= 60) zone = 2
+    else if (percentage >= 50) zone = 1
+    return { percentage, zone }
+  }, [currentHR, userAge])
+
   useEffect(() => {
     throttledSend({
       type: 'HRM_INPUT',
       data: {
         value: currentHR,
         calories: calories,
+        percentage,
+        zone,
       },
     })
-  }, [currentHR, calories, throttledSend])
+  }, [currentHR, calories, percentage, zone, throttledSend])
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {

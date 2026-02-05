@@ -99,6 +99,8 @@ export interface IncomingHrmData {
   name?: string
   age?: number
   calories?: number
+  percentage?: number
+  zone?: number
 }
 
 export interface HrmInputMessage {
@@ -188,6 +190,8 @@ import { z } from 'zod'
 export const IncomingHrmDataSchema = z.object({
   value: z.number().nullable(),
   calories: z.number().optional(),
+  percentage: z.number().optional(),
+  zone: z.number().optional(),
 })
 
 export const HrmMetadataUpdateDataSchema = z.object({
