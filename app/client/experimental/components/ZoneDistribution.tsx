@@ -14,37 +14,26 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 import { formatDuration } from '@/lib/utils'
 
-// --- Types ---
 interface ZoneDistributionProps {
   timeInZones: Record<HrZoneName, number>
   totalDuration: number
 }
 
-// --- Helpers ---
-
-// Map your domain "HrZoneName" enum to the UI colors defined in the theme
 const getZoneColor = (zone: string, theme: Theme): string => {
   const hrZones = theme.palette.custom?.hrZones
   if (!hrZones) return theme.palette.grey[500]
 
-  switch (zone) {
-    case HrZoneName.Max:
-      return hrZones.max
-    case HrZoneName.Peak:
-      return hrZones.peak
-    case HrZoneName.Cardio:
-      return hrZones.cardio
-    case HrZoneName.FatBurn:
-      return hrZones.fatBurn
-    case HrZoneName.WarmUp:
-      return hrZones.warmUp
-    case HrZoneName.NoData:
-      return hrZones.noData
-    case HrZoneName.Unknown:
-      return hrZones.unknown
-    default:
-      return theme.palette.grey[500]
+  const zoneColorMap: Record<string, string | undefined> = {
+    [HrZoneName.Max]: hrZones.max,
+    [HrZoneName.Peak]: hrZones.peak,
+    [HrZoneName.Cardio]: hrZones.cardio,
+    [HrZoneName.FatBurn]: hrZones.fatBurn,
+    [HrZoneName.WarmUp]: hrZones.warmUp,
+    [HrZoneName.NoData]: hrZones.noData,
+    [HrZoneName.Unknown]: hrZones.unknown,
   }
+
+  return zoneColorMap[zone] || theme.palette.grey[500]
 }
 
 const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
@@ -58,9 +47,6 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   const data = useMemo(() => {
     return (
       Object.entries(timeInZones)
-        .filter(
-          ([zone]) => zone !== HrZoneName.NoData && zone !== HrZoneName.Unknown
-        )
         .map(([zone, time]) => {
           const percentage =
             totalDuration > 0 ? (time / totalDuration) * 100 : 0
