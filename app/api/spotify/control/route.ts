@@ -1,149 +1,85 @@
-// File: app/api/spotify/control/route.ts
-import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
-import { authOptions } from '@/lib/auth'
-import logger from '@/utils/logger'
+import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
+import { ApiError } from '@/lib/errors'
+import { createSafeSpotifyApi } from '@/services/safeSpotifyApi'
+import { handleSpotifyApiError } from '@/services/spotifyApiErrorHandling'
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-
-  if (!session || !session.accessToken) {
-    return NextResponse.json(
-      { error: 'Authorization required' },
-      { status: 401 }
-    )
-  }
-
-  // Parse body safely
-  let body
   try {
-    body = await req.json()
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
-  }
-
-  const { command, volume, deviceId } = body
-
-  // Allowed commands
-  const VALID_COMMANDS = [
-    'PLAY',
-    'PAUSE',
-    'NEXT',
-    'PREVIOUS',
-    'SET_VOLUME',
-    'TRANSFER_PLAYBACK',
-  ]
-  if (!VALID_COMMANDS.includes(command)) {
-    return NextResponse.json(
-      { error: `Invalid command: ${command}` },
-      { status: 400 }
-    )
-  }
-
-  try {
-    const SPOTIFY_API_BASE = 'https://api.spotify.com/v1/me/player' // Corrected Base URL
-    let url = ''
-    let method = ''
-
-    // Construct Query Parameters if needed (e.g. device_id)
-    const queryParams = deviceId ? `?device_id=${deviceId}` : ''
+    const rawSdk = await getAuthenticatedSpotifyApi()
+    const sdk = createSafeSpotifyApi(rawSdk)
+    const body = await req.json()
+    const { command, uri, contextUri, volume } = body
+    // Normalize deviceId to undefined if empty string or null
+    const deviceId = body.deviceId || undefined
 
     switch (command) {
       case 'PLAY':
-        url = `${SPOTIFY_API_BASE}/play${queryParams}`
-        method = 'PUT'
+        if (uri) {
+          await sdk.player.startResumePlayback(deviceId, undefined, [uri])
+        } else if (contextUri) {
+          await sdk.player.startResumePlayback(deviceId, contextUri)
+        } else {
+          await sdk.player.startResumePlayback(deviceId)
+        }
         break
       case 'PAUSE':
-        url = `${SPOTIFY_API_BASE}/pause${queryParams}`
-        method = 'PUT'
+        await sdk.player.pausePlayback(deviceId)
         break
       case 'NEXT':
-        url = `${SPOTIFY_API_BASE}/next${queryParams}`
-        method = 'POST'
+        await sdk.player.skipToNext(deviceId)
         break
       case 'PREVIOUS':
-        url = `${SPOTIFY_API_BASE}/previous${queryParams}`
-        method = 'POST'
+        await sdk.player.skipToPrevious(deviceId)
         break
       case 'SET_VOLUME':
-        // Volume requires a query param 'volume_percent'
         if (volume === undefined) {
           return NextResponse.json(
-            { error: 'Volume parameter is required for SET_VOLUME' },
+            { error: 'Volume must be provided for SET_VOLUME' },
             { status: 400 }
           )
         }
-        url = `${SPOTIFY_API_BASE}/volume?volume_percent=${volume}${deviceId ? `&device_id=${deviceId}` : ''}`
-        method = 'PUT'
+        await sdk.player.setPlaybackVolume(volume, deviceId)
         break
       case 'TRANSFER_PLAYBACK':
         if (!deviceId) {
           return NextResponse.json(
-            { error: 'Device ID required for TRANSFER_PLAYBACK' },
+            { error: 'Device ID is required for TRANSFER_PLAYBACK' },
             { status: 400 }
           )
         }
-        url = `${SPOTIFY_API_BASE}`
-        method = 'PUT'
-        // Transfer requires a specific body structure
+        await sdk.player.transferPlayback([deviceId], true)
         break
+      default:
+        return NextResponse.json(
+          { error: `Invalid command: ${command}` },
+          { status: 400 }
+        )
     }
 
-    // Special handling for Transfer Playback body
-    const fetchOptions: RequestInit = {
-      method: method,
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    }
-
-    if (command === 'TRANSFER_PLAYBACK') {
-      fetchOptions.body = JSON.stringify({ device_ids: [deviceId], play: true })
-    }
-
-    const response = await fetch(url, fetchOptions)
-
-    // Handle 204 No Content (Success) explicitly
-    if (response.status === 204) {
-      return NextResponse.json({
-        success: true,
-        message: `Command '${command}' executed.`,
-      })
-    }
-
-    // Handle other statuses
-    // Attempt to parse JSON only if content-type is json or text exists
-    const text = await response.text()
-    if (!response.ok) {
-      let errorDetails = text
-      try {
-        const json = JSON.parse(text)
-        errorDetails = json.error?.message || text
-      } catch {
-        // Text was not JSON
-      }
-      logger.error(
-        { status: response.status, details: errorDetails },
-        'Spotify API Error'
-      )
-      return NextResponse.json(
-        { error: 'Spotify API error', details: errorDetails },
-        { status: response.status }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: `Command '${command}' executed.`,
-    })
+    return NextResponse.json({ message: `Command ${command} processed` })
   } catch (error) {
-    logger.error({ error }, 'REST control failed')
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      )
+    }
+
+    await handleSpotifyApiError(error)
+
+    if (
+      error instanceof SyntaxError &&
+      /unexpected end of/i.test(error.message)
+    ) {
+      // The SDK throws a SyntaxError when parsing a 204 No Content response (empty body).
+      // This is expected for successful playback control commands.
+      return NextResponse.json({ message: 'Command processed (204)' })
+    }
+
+    console.error('Spotify control error:', error)
     return NextResponse.json(
-      {
-        error: 'Internal server error processing command.',
-        details: error instanceof Error ? error.message : String(error),
-      },
+      { error: 'An unexpected error occurred.' },
       { status: 500 }
     )
   }

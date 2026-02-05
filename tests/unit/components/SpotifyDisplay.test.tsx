@@ -1,237 +1,159 @@
 /** @jest-environment jsdom */
 
 import { jest } from '@jest/globals'
-// Mock the uuid module at the top level BEFORE any other imports
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid-1234',
-}))
-
 import SpotifyDisplay from '@/components/SpotifyDisplay'
-import { ErrorProvider } from '@/context/ErrorContext'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
-import { fireEvent, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { useSession, signIn } from 'next-auth/react'
-import React from 'react'
-import { SpotifyData } from '@/types/websocket'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { signOut } from 'next-auth/react'
+import { useWebSocket } from '@/context/WebSocketContext'
 
 // Mock dependencies
+jest.mock('@/context/WebSocketContext')
+jest.mock('@/hooks/useSpotifyAuth')
+jest.mock('@/hooks/useSpotifyCommand')
+jest.mock('@/hooks/useSpotifyWebPlayback')
+jest.mock('next-auth/react')
+jest.mock('@/components/Spotify/DeviceRecommendation', () => ({
+  DeviceRecommendation: () => <div data-testid="device-recommendation" />,
+}))
+jest.mock('@/components/AuthButton', () => ({
+  __esModule: true,
+  default: ({ providerName }: { providerName: string }) => (
+    <button>Login with {providerName}</button>
+  ),
+}))
 jest.mock('@/components/shared/VolumeSlider', () => ({
   __esModule: true,
   default: ({
     volume,
     onVolumeChange,
-    onVolumeChangeCommitted,
   }: {
     volume: number
-    onVolumeChange: (value: number) => void
-    onVolumeChangeCommitted: (value: number) => void
+    onVolumeChange: (v: number) => void
   }) => (
     <input
       type="range"
-      aria-label="Volume control"
+      aria-label="Volume"
       value={volume}
-      onChange={(e) => onVolumeChange(parseInt(e.target.value, 10))}
-      onMouseUp={(e) =>
-        onVolumeChangeCommitted(
-          parseInt((e.target as HTMLInputElement).value, 10)
-        )
-      }
+      onChange={(e) => onVolumeChange(Number(e.target.value))}
     />
   ),
 }))
-jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
+jest.mock('@/components/SpotifyDeviceSelector', () => ({
   __esModule: true,
-  default: () => <div data-testid="current-spotify-item-display" />,
-}))
-jest.mock('@/context/WebSocketContext')
-jest.mock('next-auth/react', () => ({
-  ...jest.requireActual('next-auth/react'), // Keep original functionality
-  useSession: jest.fn(), // Mock useSession specifically
-  signIn: jest.fn(), // Mock signIn specifically
-}))
-jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
-  __esModule: true,
-  default: jest.fn(),
+  default: () => <div data-testid="device-selector" />,
 }))
 
-const mockedUseWebSocket = useWebSocket as jest.Mock
-const mockedUseSession = useSession as jest.Mock
-const mockedSignIn = signIn as jest.Mock
+const mockedUseSpotifyAuth = useSpotifyAuth as jest.Mock
+const mockedUseSpotifyCommand = useSpotifyCommand as jest.Mock
 const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
+const mockedSignOut = signOut as jest.Mock
+const mockedUseWebSocket = useWebSocket as jest.Mock
 
-// Custom renderer to wrap component with required providers
-const renderWithProviders = (ui: React.ReactElement) => {
-  return render(ui, { wrapper: ErrorProvider })
-}
+const renderComponent = () => render(<SpotifyDisplay />)
 
 describe('SpotifyDisplay', () => {
   beforeEach(() => {
-    jest.resetAllMocks()
-    mockedUseSpotifyWebPlayback.mockReturnValue({
-      isReady: true,
-      deviceId: 'mock-device-id',
-      player: null,
-      isAuthenticated: true,
-    })
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([]),
-      })
-    ) as jest.Mock
-  })
+    jest.clearAllMocks()
 
-  it('should render login button and call signIn with correct provider on click', async () => {
-    mockedUseSession.mockReturnValue({ data: null, status: 'unauthenticated' })
     mockedUseWebSocket.mockReturnValue({
-      spotifyData: {
-        trackName: '',
-        artist: '',
-        albumName: '',
-        albumArtUrl: '',
-        isPlaying: false,
-      },
-      connectionStatus: 'Connected',
-      spotifyServiceInitialized: true,
-    })
-    mockedUseSpotifyWebPlayback.mockReturnValue({
-      isAuthenticated: false,
+      sendData: jest.fn(),
     })
 
-    renderWithProviders(<SpotifyDisplay />)
-
-    const loginButton = await screen.findByRole('button', {
-      name: /login with spotify/i,
-    })
-    expect(loginButton).toBeInTheDocument()
-
-    // Simulate user click
-    await userEvent.click(loginButton)
-
-    // Assert that signIn was called correctly
-    expect(mockedSignIn).toHaveBeenCalledTimes(1)
-    expect(mockedSignIn).toHaveBeenCalledWith('spotify', {
-      callbackUrl: '/',
-      redirect: true,
-    })
-  })
-
-  describe('when authenticated', () => {
-    let mockSendData: jest.Mock
-    let rerender: (ui: React.ReactElement) => void
-    let initialSpotifyData: SpotifyData
-
-    beforeEach(() => {
-      jest.useFakeTimers()
-      mockSendData = jest.fn()
-      initialSpotifyData = {
+    // Default mocks for authenticated state
+    mockedUseSpotifyAuth.mockReturnValue({ isLoggedIn: true })
+    mockedUseSpotifyWebPlayback.mockReturnValue({ player: {}, isReady: true })
+    mockedUseSpotifyCommand.mockReturnValue({
+      execute: jest.fn(),
+      playback: {
         trackName: 'Test Track',
         artist: 'Test Artist',
-        albumName: 'Test Album',
-        albumArtUrl: '',
         isPlaying: true,
-        volume: 50,
+        volumePercent: 50,
         isMuted: false,
-        devices: [
-          { id: 'mock-device-1', name: 'Test Device', is_active: true },
-        ],
-      }
-
-      mockedUseSession.mockReturnValue({
-        data: { accessToken: 'fake-token' },
-        status: 'authenticated',
-      })
-      mockedUseWebSocket.mockReturnValue({
-        spotifyData: initialSpotifyData,
-        sendData: mockSendData,
-        connectionStatus: 'Connected',
-        spotifyServiceInitialized: true,
-      })
-
-      const { rerender: rerenderComponent } = renderWithProviders(
-        <SpotifyDisplay />
-      )
-      rerender = (ui: React.ReactElement) => rerenderComponent(ui)
+        devices: [],
+      },
+      hrmPlayer: null,
+      activeDevice: { id: '1', name: 'Test Device', is_active: true },
     })
+  })
 
-    afterEach(() => {
-      jest.useRealTimers()
+  it('renders AuthButton when not logged in', () => {
+    mockedUseSpotifyAuth.mockReturnValue({ isLoggedIn: false })
+    renderComponent()
+    expect(screen.getByText('Login with Spotify')).toBeInTheDocument()
+  })
+
+  it('renders playback controls when logged in', () => {
+    renderComponent()
+    expect(screen.getByText(/Test Track/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Pause')).toBeInTheDocument()
+  })
+
+  it('calls execute with PAUSE when pause button is clicked', () => {
+    const execute = jest.fn()
+    mockedUseSpotifyCommand.mockReturnValueOnce({
+      ...mockedUseSpotifyCommand(),
+      execute,
+      playback: { ...mockedUseSpotifyCommand().playback, isPlaying: true },
     })
+    renderComponent()
 
-    it('updates volume on external change when user is not sliding', () => {
-      const slider = screen.getByRole('slider', { name: /volume control/i })
-      expect(slider).toHaveValue('50')
+    fireEvent.click(screen.getByLabelText('Pause'))
+    expect(execute).toHaveBeenCalledWith('PAUSE')
+  })
 
-      // Simulate external update
-      const updatedSpotifyData = { ...initialSpotifyData, volume: 80 }
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
-      })
-      rerender(<SpotifyDisplay />)
-
-      expect(slider).toHaveValue('80')
+  it('calls execute with PLAY when play button is clicked', () => {
+    const execute = jest.fn()
+    mockedUseSpotifyCommand.mockReturnValueOnce({
+      ...mockedUseSpotifyCommand(),
+      execute,
+      playback: { ...mockedUseSpotifyCommand().playback, isPlaying: false },
     })
+    renderComponent()
 
-    it('does not update volume on external change while user is sliding', () => {
-      const slider = screen.getByRole('slider', { name: /volume control/i })
-      expect(slider).toHaveValue('50')
+    fireEvent.click(screen.getByLabelText('Play'))
+    expect(execute).toHaveBeenCalledWith('PLAY')
+  })
 
-      // Simulate user starting to slide
-      fireEvent.change(slider, { target: { value: '70' } })
-      expect(slider).toHaveValue('70')
+  it('calls execute with NEXT when next button is clicked', () => {
+    const { execute } = mockedUseSpotifyCommand()
+    renderComponent()
+    fireEvent.click(screen.getByLabelText('Next track'))
+    expect(execute).toHaveBeenCalledWith('NEXT')
+  })
 
-      // Simulate external update while sliding
-      const updatedSpotifyData = { ...initialSpotifyData, volume: 90 }
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
-      })
-      rerender(<SpotifyDisplay />)
+  it('calls execute with PREVIOUS when previous button is clicked', () => {
+    const { execute } = mockedUseSpotifyCommand()
+    renderComponent()
+    fireEvent.click(screen.getByLabelText('Previous track'))
+    expect(execute).toHaveBeenCalledWith('PREVIOUS')
+  })
 
-      // Volume should not change because user is sliding
-      expect(slider).toHaveValue('70')
+  it('calls execute with SET_VOLUME when volume slider is changed', () => {
+    const { execute } = mockedUseSpotifyCommand()
+    renderComponent()
+    const slider = screen.getByRole('slider')
+    fireEvent.change(slider, { target: { value: '75' } })
+    expect(execute).toHaveBeenCalledWith('SET_VOLUME', { volume: 75 })
+  })
+
+  it('renders DeviceRecommendation when no device is active but HRM player exists', () => {
+    mockedUseSpotifyCommand.mockReturnValueOnce({
+      ...mockedUseSpotifyCommand(),
+      activeDevice: null,
+      hrmPlayer: { id: 'hrm-player', name: 'HRM Web Player' },
     })
+    renderComponent()
+    expect(screen.getByTestId('device-recommendation')).toBeInTheDocument()
+  })
 
-    it('re-enables external updates after sliding is committed', () => {
-      jest.useFakeTimers()
-      try {
-        const slider = screen.getByRole('slider', { name: /volume control/i })
-        expect(slider).toHaveValue('50')
-
-        // Simulate user sliding
-        fireEvent.change(slider, { target: { value: '75' } })
-        expect(slider).toHaveValue('75')
-
-        // Simulate external update while sliding (should be ignored)
-        let updatedSpotifyData = { ...initialSpotifyData, volume: 100 }
-        mockedUseWebSocket.mockReturnValue({
-          ...mockedUseWebSocket(),
-          spotifyData: updatedSpotifyData,
-        })
-        rerender(<SpotifyDisplay />)
-        expect(slider).toHaveValue('75')
-
-        // Simulate user releasing the slider
-        fireEvent.mouseUp(slider)
-
-        // Advance time past the grace period (500ms) to allow syncing
-        jest.advanceTimersByTime(600)
-
-        // Simulate another external update (should now be applied)
-        updatedSpotifyData = { ...initialSpotifyData, volume: 10 } // Ensure new volume to trigger effect
-        mockedUseWebSocket.mockReturnValue({
-          ...mockedUseWebSocket(),
-          spotifyData: updatedSpotifyData,
-        })
-        rerender(<SpotifyDisplay />)
-        expect(slider).toHaveValue('10')
-      } finally {
-        jest.useRealTimers()
-      }
-    })
+  it('calls signOut when logout button is clicked', () => {
+    renderComponent()
+    fireEvent.click(screen.getByText('Logout'))
+    expect(mockedSignOut).toHaveBeenCalledWith({ redirect: false })
   })
 })
