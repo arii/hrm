@@ -61,7 +61,7 @@ fi
 
 # Determine search targets
 if [ "$#" -eq 0 ]; then
-    TARGETS=(".")
+    TARGETS=("$SEARCH_DIR")
 else
     TARGETS=("$@")
 fi
@@ -71,6 +71,24 @@ echo -e "${BLUE}   AI Slop Detection Report                             ${NC}"
 echo -e "${BLUE}   Scanning for low-density, filler content...          ${NC}"
 echo -e "${BLUE}========================================================${NC}"
 echo ""
+
+# Build base grep args
+# -r: recursive
+# -n: show line number
+# -i: case insensitive
+# -H: always print filename (needed when scanning a single file)
+BASE_GREP_ARGS=(-rniH)
+
+IFS=',' read -ra DIRS_TO_EXCLUDE <<< "$EXCLUDE_DIRS"
+for dir in "${DIRS_TO_EXCLUDE[@]}"; do
+    BASE_GREP_ARGS+=(--exclude-dir="$dir")
+done
+
+IFS=',' read -ra FILES_TO_EXCLUDE <<< "$EXCLUDE_FILES"
+for file in "${FILES_TO_EXCLUDE[@]}"; do
+    BASE_GREP_ARGS+=(--exclude="$file")
+done
+
 # Counter for total matches
 total_matches=0
 files_with_slop=()
@@ -86,24 +104,7 @@ fi
 # -r: recursive
 # -n: show line number
 # -i: case insensitive
-# Exclude node_modules, .git, and common binary/lock files
-matches=$(grep -rni "$term" "${TARGETS[@]}" \
-    --exclude-dir={node_modules,.git,.next,dist,build,coverage,.vercel} \
-    --exclude={"ai_slop_words.txt","find_slop.sh","*.svg","*.lock","pnpm-lock.yaml","*.png","*.ico","*.json","*.map"} \
-)
-grep_args=(-rni "$term" "$SEARCH_DIR")
-
-IFS=',' read -ra DIRS_TO_EXCLUDE <<< "$EXCLUDE_DIRS"
-for dir in "${DIRS_TO_EXCLUDE[@]}"; do
-    grep_args+=(--exclude-dir="$dir")
-done
-
-IFS=',' read -ra FILES_TO_EXCLUDE <<< "$EXCLUDE_FILES"
-for file in "${FILES_TO_EXCLUDE[@]}"; do
-    grep_args+=(--exclude="$file")
-done
-
-matches=$(grep "${grep_args[@]}")
+matches=$(grep "${BASE_GREP_ARGS[@]}" "$term" "${TARGETS[@]}")
 
 if [ -n "$matches" ]; then
     count=$(echo "$matches" | wc -l)

@@ -29,5 +29,29 @@ else
     echo -e "${RED}Test 2 Failed: Expected a zero exit code, but got a non-zero exit code.${NC}"
     exit 1
 fi
+
+# Test 3: Should find slop when specific file is passed as argument
+echo "Test 3: Should find slop when specific file is passed as argument..."
+exit_code=0
+output=$(./scripts/find_slop.sh -w scripts/test_data/test_slop_words.txt scripts/test_data/another_dir/file_with_slop.txt) || exit_code=$?
+if [ $exit_code -eq 0 ]; then
+    echo -e "${RED}Test 3 Failed: Expected a non-zero exit code, but got 0.${NC}"
+    exit 1
+fi
+if ! echo "$output" | grep -q "file_with_slop.txt"; then
+    echo -e "${RED}Test 3 Failed: Did not find slop in the specified file.${NC}"
+    exit 1
+fi
+echo -e "${GREEN}Test 3 Passed.${NC}"
+
+# Test 4: Should not find slop when specific clean file is passed
+echo "Test 4: Should not find slop when specific clean file is passed..."
+if ./scripts/find_slop.sh -w scripts/test_data/test_slop_words.txt scripts/test_data/file_with_no_slop.txt; then
+    echo -e "${GREEN}Test 4 Passed.${NC}"
+else
+    echo -e "${RED}Test 4 Failed: Expected a zero exit code, but got non-zero.${NC}"
+    exit 1
+fi
+
 echo -e "${GREEN}All tests passed.${NC}"
 exit 0
