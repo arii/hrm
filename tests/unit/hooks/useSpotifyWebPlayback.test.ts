@@ -124,7 +124,7 @@ describe('useSpotifyWebPlayback', () => {
 
     // Find the 'ready' listener
     const readyCall = mockPlayer.addListener.mock.calls.find(
-      (call: any[]) => call[0] === 'ready'
+      (call: unknown[]) => call[0] === 'ready'
     )
     expect(readyCall).toBeDefined()
     const readyCallback = readyCall[1]
@@ -139,7 +139,7 @@ describe('useSpotifyWebPlayback', () => {
 
     // Find the 'not_ready' listener
     const notReadyCall = mockPlayer.addListener.mock.calls.find(
-      (call: any[]) => call[0] === 'not_ready'
+      (call: unknown[]) => call[0] === 'not_ready'
     )
     expect(notReadyCall).toBeDefined()
     const notReadyCallback = notReadyCall[1]
