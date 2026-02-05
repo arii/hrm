@@ -210,6 +210,20 @@ export default function ConnectPage() {
     return undefined
   }, [connectionStatus, isConnected, isSupported, autoConnect])
 
+  const { percentage, zone } = useMemo(() => {
+    const age = userAge || 30
+    const maxHr = 220 - age
+    const percentage =
+      currentHR > 0 ? Math.min(100, Math.round((currentHR / maxHr) * 100)) : 0
+    let zone = 0
+    if (percentage >= 90) zone = 5
+    else if (percentage >= 80) zone = 4
+    else if (percentage >= 70) zone = 3
+    else if (percentage >= 60) zone = 2
+    else if (percentage >= 50) zone = 1
+    return { percentage, zone }
+  }, [currentHR, userAge])
+
   useEffect(() => {
     // This effect synchronizes the local HR and calorie state with the server.
     // It triggers whenever the local `currentHR` or `calories` state changes.
@@ -218,9 +232,11 @@ export default function ConnectPage() {
       data: {
         value: currentHR,
         calories: calories,
+        percentage,
+        zone,
       },
     })
-  }, [currentHR, calories, throttledSend])
+  }, [currentHR, calories, percentage, zone, throttledSend])
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {

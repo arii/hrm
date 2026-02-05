@@ -105,4 +105,26 @@ describe('HrTile', () => {
     rerender(<HrTile name="Test" bpm={120} percentMax={65} calories={150} />)
     expect(screen.getByText('150')).toBeInTheDocument()
   })
+
+  it('displays the correct zone information when zone prop is provided', () => {
+    render(<HrTile name="Test" bpm={180} percentMax={95} zone={5} />)
+    expect(screen.getByText(/ZONE 5: PEAK/i)).toBeInTheDocument()
+    const card = screen.getByTestId('hr-tile-card')
+    // Color should match zoneConfig[5].color = '#ff0000'
+    expect(card).toHaveStyle('background-color: #ff0000')
+  })
+
+  it('displays "IDLE" for zone 0', () => {
+    render(<HrTile name="Test" bpm={60} percentMax={30} zone={0} />)
+    expect(screen.getByText(/ZONE 0: IDLE/i)).toBeInTheDocument()
+  })
+
+  it('updates aria-label to include zone information', () => {
+    render(<HrTile name="Test" bpm={150} percentMax={80} zone={4} />)
+    const card = screen.getByTestId('hr-tile-card')
+    expect(card).toHaveAttribute(
+      'aria-label',
+      'Heart rate monitor for Test: 150 beats per minute, 80% of maximum, Zone 4: Cardio'
+    )
+  })
 })
