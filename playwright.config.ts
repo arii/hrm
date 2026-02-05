@@ -144,6 +144,7 @@ export default defineConfig({
       NEXTAUTH_URL: baseURL,
       SPOTIFY_CLIENT_ID: 'test_client_id',
       SPOTIFY_CLIENT_SECRET: 'test_client_secret',
+      IS_DEPLOYMENT: 'true',
     },
   },
 
