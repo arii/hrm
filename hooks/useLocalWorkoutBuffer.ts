@@ -22,10 +22,13 @@ type WorkoutBufferAction =
 const initialState: WorkoutBufferState = {
   hrHistory: [],
   timeInZones: {
+    [HrZoneName.Idle]: 0,
+    [HrZoneName.Recovery]: 0,
     [HrZoneName.WarmUp]: 0,
-    [HrZoneName.FatBurn]: 0,
+    [HrZoneName.Aerobic]: 0,
     [HrZoneName.Cardio]: 0,
     [HrZoneName.Peak]: 0,
+    [HrZoneName.FatBurn]: 0,
     [HrZoneName.Max]: 0,
     [HrZoneName.NoData]: 0,
     [HrZoneName.Unknown]: 0,

@@ -73,8 +73,9 @@ const HrTile = ({
         }, ${percentMax}% of maximum${
           zone !== undefined
             ? `, Zone ${zone}: ${
-                HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG]
-                  ?.label || 'Idle'
+                HR_ZONE_VISUAL_CONFIG[
+                  zone as keyof typeof HR_ZONE_VISUAL_CONFIG
+                ]?.label || 'Idle'
               }`
             : ''
         }`}

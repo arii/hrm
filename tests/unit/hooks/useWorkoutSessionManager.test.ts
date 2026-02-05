@@ -117,26 +117,26 @@ describe('useWorkoutSessionManager', () => {
         result.current.startWorkout(35, 75) // maxHr will be calculated as ~185
       })
 
-      // Add first data point (HR 120 -> ~65% -> Zone 2 / Fat Burn)
+      // Add first data point (HR 120 -> ~65% -> Zone 2 / Warm Up)
       act(() => {
         result.current.addHrData({ time: 1001000, hr: 120 })
       })
       expect(result.current.session?.hrHistory.length).toBe(1)
       expect(result.current.session?.maxHr).toBe(120)
       expect(result.current.session?.averageHr).toBe(120)
-      expect(result.current.session?.timeInZones[HrZoneName.FatBurn]).toBe(1)
+      expect(result.current.session?.timeInZones[HrZoneName.WarmUp]).toBe(1)
 
-      // Add second data point (HR 150 -> ~81% -> Zone 3 / Cardio)
+      // Add second data point (HR 150 -> ~81% -> Zone 4 / Cardio)
       act(() => {
         result.current.addHrData({ time: 1002000, hr: 150 })
       })
       expect(result.current.session?.hrHistory.length).toBe(2)
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBe(135)
-      expect(result.current.session?.timeInZones[HrZoneName.FatBurn]).toBe(1)
+      expect(result.current.session?.timeInZones[HrZoneName.WarmUp]).toBe(1)
       expect(result.current.session?.timeInZones[HrZoneName.Cardio]).toBe(1)
 
-      // Add third data point (HR 100 -> ~54% -> Zone 1 / Warm-up)
+      // Add third data point (HR 100 -> ~54% -> Zone 1 / Recovery)
       act(() => {
         result.current.addHrData({ time: 1004000, hr: 100 })
       })
@@ -144,7 +144,7 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBeCloseTo(123.33)
       expect(result.current.session?.timeInZones[HrZoneName.Cardio]).toBe(1)
-      expect(result.current.session?.timeInZones[HrZoneName.WarmUp]).toBe(2)
+      expect(result.current.session?.timeInZones[HrZoneName.Recovery]).toBe(2)
     })
 
     it('should not add HR data if the session is not running', async () => {

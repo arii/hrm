@@ -92,7 +92,7 @@ export function waitForMessage<T>(
       reject(new Error('Timeout waiting for message matching predicate'))
     }, timeoutMs)
 
-    function onMessage(data: any) {
+    function onMessage(data: { toString: () => string }) {
       try {
         const msg = JSON.parse(data.toString()) as T
         if (predicate(msg)) {
@@ -100,7 +100,7 @@ export function waitForMessage<T>(
           ws.removeListener('message', onMessage)
           resolve(msg)
         }
-      } catch (e) {
+      } catch {
         // Ignore parse errors
       }
     }
