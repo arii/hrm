@@ -109,6 +109,9 @@ const getLogMeta = (
   }
 }
 
+// Extract to module scope
+const STALE_THRESHOLD_MS = 30000
+
 const initSocketManager = (
   wss: WebSocketServer,
   getSnapshot: () => StateSnapshot,
@@ -120,7 +123,6 @@ const initSocketManager = (
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
-  const STALE_THRESHOLD_MS = 30000
   setInterval(() => {
     const now = Date.now()
     for (const [clientId, session] of clientSessionState.entries()) {
