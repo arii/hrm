@@ -70,6 +70,13 @@ The dashboard layout has been improved with consistent proportions, rotated side
 
 Some ARIA labels and improved color contrast have been implemented. Further work is in progress to improve keyboard navigation and screen reader support.
 
+#### Data Signal Liveness Awareness
+
+To maintain a truthful UI and comply with WCAG 2.1 AA standards for status communication, the application explicitly handles and communicates heart rate data signal loss.
+
+- **Stale State (Warning)**: Triggered after 20 seconds of data inactivity. The tile opacity is reduced to `0.5`, and a "Signal Lost" icon (`SignalCellularConnectedNoInternet0BarIcon`) is displayed. The ARIA label is updated to "Data signal lost" to inform screen reader users.
+- **Expired State (Removal)**: After 35 seconds of inactivity, the tile is automatically removed from the dashboard to prevent confusing the trainer with stagnant information.
+
 #### Automated Accessibility Testing
 
 To ensure ongoing compliance and prevent regressions, automated accessibility checks have been integrated into the Playwright visual regression test (VRT) suite. These tests use `axe-core` to analyze the application's UI and report any violations of the WCAG 2.1 AA standard.
