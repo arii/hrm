@@ -13,7 +13,7 @@ import {
 } from '@/utils/constants'
 
 const HrmTiles = () => {
-  const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const { hrmData, activeAlerts } = useWebSocket()
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -73,11 +73,9 @@ const HrmTiles = () => {
       })
   }, [hrmData, activeAlerts, now])
 
-  const isLoading =
-    connectionStatus === 'Connecting...' ||
-    connectionStatus === 'Reconnecting...'
-
-  if (isLoading || filteredTiles.length === 0) {
+  // Show filtered tiles if available, otherwise show loading skeleton
+  // Only show loading if we are connecting AND have no data
+  if (filteredTiles.length === 0) {
     return (
       <>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">

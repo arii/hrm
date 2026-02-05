@@ -1,0 +1,9 @@
+
+> hrm@0.30.0 lint /app
+> eslint app/ components/ constants/ context/ hooks/ lib/ services/ tests/ types/ utils/ server.ts proxy.ts --cache
+
+
+/app/components/HrmTiles.tsx
+  16:20  warning  'connectionStatus' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+✖ 1 problem (0 errors, 1 warning)
