@@ -1,15 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { useError } from '@/context/ErrorContext'
-import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
-import {
-  SPOTIFY_AUTH_LOOP_GUARD_KEY,
-  SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT,
-} from '@/constants/spotify'
-import { fetchWithRetry, AppError } from '@/utils/network'
-import { signOut } from 'next-auth/react'
-import { redirectTo } from '@/utils/redirect'
 import { useSpotifyAuth } from './useSpotifyAuth'
 
 interface SpotifyDeviceEvent {
@@ -20,8 +12,6 @@ interface SpotifyErrorEvent {
   message: string
 }
 
-// Define a minimal interface for the Spotify Player
-// This will be expanded as we integrate more features.
 interface SpotifyPlayer {
   connect: () => Promise<boolean>
   disconnect: () => void
@@ -47,7 +37,6 @@ interface SpotifyPlayerOptions {
   volume: number
 }
 
-// Define the structure for the window object to include the Spotify SDK properties
 declare global {
   interface Window {
     Spotify: {
@@ -57,7 +46,6 @@ declare global {
   }
 }
 
-// Manages the Spotify Web Playback SDK lifecycle.
 const useSpotifyWebPlayback = () => {
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [isReady, setIsReady] = useState(false)
@@ -66,60 +54,23 @@ const useSpotifyWebPlayback = () => {
     'idle' | 'initializing' | 'ready' | 'failed'
   >('idle')
   const { addError } = useError()
-  const { status } = useSpotifyAuth()
+  const { status, session } = useSpotifyAuth()
+
+  const sessionRef = useRef(session)
+
+  useEffect(() => {
+    sessionRef.current = session
+  }, [session])
 
   const getOAuthToken = useCallback(
-    async (cb: (token: string) => void) => {
-      try {
-        const response = await fetchWithRetry(API_SPOTIFY_ACCESS_TOKEN)
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            // Circuit Breaker: Use sessionStorage to detect rapid failures
-            const lastAuthFail = sessionStorage.getItem(
-              SPOTIFY_AUTH_LOOP_GUARD_KEY
-            )
-            const now = Date.now()
-
-            if (
-              lastAuthFail &&
-              now - parseInt(lastAuthFail) < SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT
-            ) {
-              console.error(
-                `[Spotify] Auth loop detected (${
-                  SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT / 1000
-                }s threshold); aborting sign-out to prevent thrashing.`
-              )
-              setInitStatus('failed')
-              return
-            }
-
-            sessionStorage.setItem(SPOTIFY_AUTH_LOOP_GUARD_KEY, now.toString())
-            addError('Spotify session expired. Please log in again.', {
-              persist: true,
-            })
-
-            setInitStatus('failed')
-            await signOut({ redirect: false })
-            redirectTo('/?error=SpotifyAuthFailed')
-            return
-          }
-          // For other non-ok responses, throw to be caught by the catch block.
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const { accessToken } = await response.json()
-        if (!accessToken) {
-          throw new Error('Access token was not found in the response.')
-        }
-        cb(accessToken)
-      } catch (error) {
-        const appError = error as AppError
-        console.error(
-          `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
-        )
+    (cb: (token: string) => void) => {
+      const token = sessionRef.current?.accessToken
+      if (token) {
+        cb(token)
+      } else {
+        console.error('[Spotify Web Playback] No access token available')
         setInitStatus('failed')
-        addError(`Failed to authenticate with Spotify: ${appError.message}`, {
+        addError('Failed to authenticate with Spotify: No access token', {
           persist: false,
         })
       }
@@ -132,91 +83,97 @@ const useSpotifyWebPlayback = () => {
       return
     }
 
-    setInitStatus('initializing')
+    const initTimer = setTimeout(() => {
+      setInitStatus('initializing')
 
-    const initializeSDK = () => {
-      if (!window.Spotify) {
-        console.log('[Spotify Web Playback] Loading Spotify SDK script...')
-        const script = document.createElement('script')
-        script.src = 'https://sdk.scdn.co/spotify-player.js'
-        script.async = true
-        document.body.appendChild(script)
-      } else {
-        console.log('[Spotify Web Playback] Spotify SDK already loaded')
-        initializePlayer()
-      }
-    }
-
-    const initializePlayer = () => {
-      if (player) {
-        return
-      }
-
-      console.log('[Spotify Web Playback] Initializing new player instance...')
-      const spotifyPlayer = new window.Spotify.Player({
-        name: 'HRM Web Player',
-        getOAuthToken,
-        volume: 0.5,
-      })
-
-      // --- Player Event Listeners ---
-
-      spotifyPlayer.addListener('ready', ({ device_id }) => {
-        console.log('[Spotify Web Playback] Ready with Device ID', device_id)
-        setDeviceId(device_id)
-        setIsReady(true)
-        setInitStatus('ready')
-      })
-
-      spotifyPlayer.addListener('not_ready', ({ device_id }) => {
-        console.log(
-          '[Spotify Web Playback] Device ID has gone offline',
-          device_id
-        )
-        setIsReady(false)
-        setDeviceId(null)
-      })
-
-      spotifyPlayer.addListener('initialization_error', ({ message }) => {
-        console.error('[Spotify Web Playback] Initialization Error:', message)
-        addError(`Initialization failed: ${message}`, { persist: true })
-        setInitStatus('failed')
-      })
-
-      spotifyPlayer.addListener('authentication_error', ({ message }) => {
-        console.error('[Spotify Web Playback] Authentication Error:', message)
-        addError(`Authentication failed: ${message}`, { persist: true })
-        setInitStatus('failed')
-      })
-
-      spotifyPlayer.addListener('account_error', ({ message }) => {
-        console.error('[Spotify Web Playback] Account Error:', message)
-        addError(`Account error: ${message}. A Premium account is required.`, {
-          persist: true,
-        })
-        setInitStatus('failed')
-      })
-
-      setPlayer(spotifyPlayer)
-
-      spotifyPlayer.connect().then((success) => {
-        if (success) {
-          console.log(
-            '[Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!'
-          )
+      const initializeSDK = () => {
+        if (!window.Spotify) {
+          console.log('[Spotify Web Playback] Loading Spotify SDK script...')
+          const script = document.createElement('script')
+          script.src = 'https://sdk.scdn.co/spotify-player.js'
+          script.async = true
+          document.body.appendChild(script)
         } else {
-          console.warn(
-            '[Spotify Web Playback] connect() returned false, but this is often a false negative.'
-          )
+          console.log('[Spotify Web Playback] Spotify SDK already loaded')
+          initializePlayer()
         }
-      })
-    }
+      }
 
-    window.onSpotifyWebPlaybackSDKReady = initializePlayer
+      const initializePlayer = () => {
+        if (player) {
+          return
+        }
 
-    initializeSDK()
+        console.log(
+          '[Spotify Web Playback] Initializing new player instance...'
+        )
+        const spotifyPlayer = new window.Spotify.Player({
+          name: 'HRM Web Player',
+          getOAuthToken,
+          volume: 0.5,
+        })
+
+        spotifyPlayer.addListener('ready', ({ device_id }) => {
+          console.log('[Spotify Web Playback] Ready with Device ID', device_id)
+          setDeviceId(device_id)
+          setIsReady(true)
+          setInitStatus('ready')
+        })
+
+        spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+          console.log(
+            '[Spotify Web Playback] Device ID has gone offline',
+            device_id
+          )
+          setIsReady(false)
+          setDeviceId(null)
+        })
+
+        spotifyPlayer.addListener('initialization_error', ({ message }) => {
+          console.error('[Spotify Web Playback] Initialization Error:', message)
+          addError(`Initialization failed: ${message}`, { persist: true })
+          setInitStatus('failed')
+        })
+
+        spotifyPlayer.addListener('authentication_error', ({ message }) => {
+          console.error('[Spotify Web Playback] Authentication Error:', message)
+          addError(`Authentication failed: ${message}`, { persist: true })
+          setInitStatus('failed')
+        })
+
+        spotifyPlayer.addListener('account_error', ({ message }) => {
+          console.error('[Spotify Web Playback] Account Error:', message)
+          addError(
+            `Account error: ${message}. A Premium account is required.`,
+            {
+              persist: true,
+            }
+          )
+          setInitStatus('failed')
+        })
+
+        setPlayer(spotifyPlayer)
+
+        spotifyPlayer.connect().then((success) => {
+          if (success) {
+            console.log(
+              '[Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!'
+            )
+          } else {
+            console.warn(
+              '[Spotify Web Playback] connect() returned false, but this is often a false negative.'
+            )
+          }
+        })
+      }
+
+      window.onSpotifyWebPlaybackSDKReady = initializePlayer
+
+      initializeSDK()
+    }, 0)
 
     return () => {
+      clearTimeout(initTimer)
       if (player) {
         console.log('[Spotify Web Playback] Disconnecting player on cleanup')
         player.disconnect()

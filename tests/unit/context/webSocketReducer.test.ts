@@ -11,7 +11,6 @@ import { HrmStreamData } from '../../../types/core'
 
 describe('webSocketReducer', () => {
   it('should return the initial state if no action is matched', () => {
-    // This is an unconventional action to test the default case.
     const action = { type: 'UNKNOWN_ACTION' } as unknown as ServerMessage
     const state = reducer(INITIAL_STATE, action)
     expect(state).toEqual(INITIAL_STATE)

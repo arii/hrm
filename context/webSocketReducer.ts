@@ -6,7 +6,6 @@ import {
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 
-// Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
 }
@@ -55,7 +54,6 @@ export const reducer = (
     case 'RESET_STATE':
       return INITIAL_STATE
     case 'INITIAL_STATE': {
-      // When the initial state is loaded, ensure all HRM data is marked as connected.
       const hrmDataWithConnection =
         message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) || []
       return {
@@ -66,19 +64,13 @@ export const reducer = (
     }
     case 'HRM_UPDATE': {
       const payload = message.payload as ServerHrmData[]
-      // Create a map of incoming clientIds for efficient lookup
       const incomingClients = new Set(payload.map((user) => user.clientId))
 
-      // Create a new state array by merging existing and new data
       const mergedHrmData = state.hrmData.map((existingUser) => {
         if (incomingClients.has(existingUser.clientId)) {
           const updatedUser = payload.find(
             (newUser) => newUser.clientId === existingUser.clientId
           )
-          // CRITICAL FIX: The order of spread operators is essential.
-          // By spreading existingUser first, then updatedUser, we ensure
-          // that any fields NOT present in the (potentially partial) `updatedUser`
-          // payload are preserved from the existing state.
           return updatedUser
             ? {
                 ...existingUser,
@@ -90,7 +82,6 @@ export const reducer = (
         return { ...existingUser, isConnected: false }
       })
 
-      // Add any brand-new users from the payload who were not in the previous state
       payload.forEach((newUser) => {
         if (
           !state.hrmData.some(
@@ -118,8 +109,6 @@ export const reducer = (
     case 'SPOTIFY_SERVICE_INIT_UPDATE':
       return { ...state, spotifyServiceInitialized: message.payload }
     case 'EXECUTE_SPOTIFY':
-      // This message type is handled by useSpotifyRemoteExecution hook
-      // We don't need to update state here, just pass it through
       return state
     default:
       return state
