@@ -42,6 +42,13 @@ const HrTile = ({
   const theme = useTheme()
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
 
+  // Status strings for accessibility and tooltips
+  const statusLabel = isDataStale
+    ? 'Data signal lost'
+    : isConnected
+      ? `${bpm} beats per minute`
+      : 'Disconnected'
+
   const tooltipTitle = isAlerting
     ? alertMessage
     : !isConnected
@@ -55,13 +62,7 @@ const HrTile = ({
       <ControlCard
         data-testid="hr-tile-card"
         role="region"
-        aria-label={`Heart rate monitor for ${name}: ${
-          isDataStale
-            ? 'Data signal lost'
-            : isConnected
-              ? `${bpm} beats per minute`
-              : 'Disconnected'
-        }, ${percentMax}% of maximum`}
+        aria-label={`Heart rate for ${name}: ${statusLabel}, ${percentMax}% of maximum`}
         sx={{
           backgroundColor: backgroundColor,
           color: textColor,

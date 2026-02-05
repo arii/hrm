@@ -105,4 +105,28 @@ describe('HrTile', () => {
     rerender(<HrTile name="Test" bpm={120} percentMax={65} calories={150} />)
     expect(screen.getByText('150')).toBeInTheDocument()
   })
+
+  it('displays the correct aria-label and icon when stale', () => {
+    render(
+      <HrTile name="Stale User" bpm={140} percentMax={70} isDataStale={true} />
+    )
+    const card = screen.getByTestId('hr-tile-card')
+    expect(card).toHaveAttribute(
+      'aria-label',
+      'Heart rate for Stale User: Data signal lost, 70% of maximum'
+    )
+    expect(card).toHaveStyle('opacity: 0.5')
+  })
+
+  it('displays the correct aria-label when fresh', () => {
+    render(
+      <HrTile name="Fresh User" bpm={75} percentMax={42} isDataStale={false} />
+    )
+    const card = screen.getByTestId('hr-tile-card')
+    expect(card).toHaveAttribute(
+      'aria-label',
+      'Heart rate for Fresh User: 75 beats per minute, 42% of maximum'
+    )
+    expect(card).toHaveStyle('opacity: 1')
+  })
 })

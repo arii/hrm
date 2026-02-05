@@ -2,7 +2,11 @@
 import { useMemo } from 'react'
 import { useNow } from './useNow'
 import { HrmData } from '@/types/websocket'
-import { HRM_STALE_WARNING_MS, HRM_STALE_THRESHOLD_MS } from '@/constants/hrm'
+import {
+  HRM_STALE_WARNING_MS,
+  HRM_STALE_THRESHOLD_MS,
+  HRM_LIVENESS_POLL_INTERVAL_MS,
+} from '@/constants/hrm'
 
 export interface HeartRateLivenessResult extends HrmData {
   isDataStale: boolean
@@ -20,9 +24,9 @@ export interface HeartRateLivenessResult extends HrmData {
 export const useHeartRateLiveness = (
   hrmData: HrmData[]
 ): HeartRateLivenessResult[] => {
-  // Update every 5 seconds to ensure tiles transition to stale/expired
+  // Update at a regular interval to ensure tiles transition to stale/expired
   // even if no new messages are received from the WebSocket.
-  const now = useNow(5000)
+  const now = useNow(HRM_LIVENESS_POLL_INTERVAL_MS)
 
   return useMemo(() => {
     return hrmData.map((user) => {

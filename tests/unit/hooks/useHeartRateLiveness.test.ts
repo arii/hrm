@@ -4,7 +4,7 @@
 import { renderHook, act } from '@testing-library/react'
 import { useHeartRateLiveness } from '@/hooks/useHeartRateLiveness'
 import { HRM_STALE_WARNING_MS, HRM_STALE_THRESHOLD_MS } from '@/constants/hrm'
-import { HrmData } from '@/context/webSocketReducer'
+import { HrmData } from '@/types/websocket'
 
 describe('useHeartRateLiveness', () => {
   beforeEach(() => {
