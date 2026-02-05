@@ -1,5 +1,3 @@
-import { z } from 'zod'
-
 describe('Environment Variables', () => {
   const OLD_ENV = process.env
 
@@ -54,8 +52,8 @@ describe('Environment Variables', () => {
     try {
       await import('../../../lib/env')
       throw new Error('Should have thrown')
-    } catch (e: any) {
-      expect(e.constructor.name).toBe('ZodError')
+    } catch (e) {
+      expect((e as Error).constructor.name).toBe('ZodError')
     }
   })
 
@@ -80,8 +78,8 @@ describe('Environment Variables', () => {
     try {
       await import('../../../lib/env')
       throw new Error('Should have thrown')
-    } catch (e: any) {
-      expect(e.constructor.name).toBe('ZodError')
+    } catch (e) {
+      expect((e as Error).constructor.name).toBe('ZodError')
     }
   })
 })
