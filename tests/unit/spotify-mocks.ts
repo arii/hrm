@@ -1,5 +1,4 @@
 import { jest } from '@jest/globals'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Fully typed mock for the SpotifyApi['player']
 export const mockPlayer = {
@@ -18,12 +17,12 @@ export const mockPlayer = {
   startResumePlayback: jest.fn(),
   togglePlaybackShuffle: jest.fn(),
   transferPlayback: jest.fn(),
-} as unknown as jest.Mocked<SpotifyApi['player']>
+}
 
 // Mock the entire SpotifyApi with a mocked player
-export const mockSpotifyApi: jest.Mocked<SpotifyApi> = {
+export const mockSpotifyApi = {
   player: mockPlayer,
-} as jest.Mocked<SpotifyApi>
+}
 
 export const mockLogger = {
   debug: jest.fn(),
