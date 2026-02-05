@@ -84,8 +84,8 @@ export default function ConnectPage() {
       sendData({
         type: 'HRM_METADATA_UPDATE',
         data: {
-          name: userName || 'User', // Use default name if not set
-          age: userAge || 30,
+          name: userName || 'User',
+          age: userAge ?? undefined,
         },
       })
     }
@@ -97,8 +97,8 @@ export default function ConnectPage() {
     processHeartRate,
     reset: resetCalculator,
   } = useCalorieCalculator({
-    age: userAge || 30,
-    weightKg: userWeight || 70,
+    age: userAge || 0, // 0 will be handled by the calculator or defaults
+    weightKg: userWeight || 0,
   })
 
   // Throttled sender for WebSocket messages
@@ -211,7 +211,7 @@ export default function ConnectPage() {
   }, [connectionStatus, isConnected, isSupported, autoConnect])
 
   const { percentage, zone } = useMemo(
-    () => calculateHrZoneInfo(currentHR, userAge || 30),
+    () => calculateHrZoneInfo(currentHR, userAge || 0),
     [currentHR, userAge]
   )
 

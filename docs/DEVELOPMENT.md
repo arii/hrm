@@ -99,7 +99,6 @@ pnpm run clean
 ```
 
 This is the safest and most common cleanup task you will need. It removes:
-
 - `.next/`, `dist/`, `coverage/`, `playwright-report/` directories
 - Log files and local test results
 
@@ -112,7 +111,6 @@ pnpm run clean:global
 ```
 
 This command does everything `pnpm run clean` does, plus:
-
 - Purges global caches for `pnpm`, `npm`, `yarn`, and `bun`.
 - Clears `pm2` logs.
 - Removes Python-related caches from `conda` and `pip`.
