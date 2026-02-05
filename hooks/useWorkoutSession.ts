@@ -31,26 +31,10 @@ const initialState: SessionState = {
   sessionId: null,
 }
 
-const isValidSessionState = (parsed: unknown): parsed is SessionState => {
-  if (!parsed || typeof parsed !== 'object') return false
-  const p = parsed as Record<string, unknown>
-
-  const hasRequiredFields =
-    typeof p.status === 'string' &&
-    ['idle', 'running', 'paused'].includes(p.status) &&
-    typeof p.duration === 'number'
-
-  const hasValidOptionalFields =
-    (p.startTime === null || typeof p.startTime === 'number') &&
-    (p.totalPaused === null || typeof p.totalPaused === 'number') &&
-    (p.pauseTime === null || typeof p.pauseTime === 'number') &&
-    (p.sessionId === null || typeof p.sessionId === 'string') &&
-    (p.calories === undefined ||
-      p.calories === null ||
-      typeof p.calories === 'number') &&
-    (p.startCalories === undefined || typeof p.startCalories === 'number')
-
-  return hasRequiredFields && hasValidOptionalFields
+const isValidSessionState = (data: unknown): data is SessionState => {
+  if (!data || typeof data !== 'object') return false
+  const p = data as Record<string, unknown>
+  return typeof p.sessionId === 'string' && typeof p.startTime === 'number'
 }
 
 const loadState = (): SessionState => {
@@ -314,5 +298,6 @@ export const useWorkoutSession = ({
     addHrData,
     workoutStatus: state.status,
     hasStarted: state.startTime !== null,
+    sessionId: state.sessionId,
   }
 }

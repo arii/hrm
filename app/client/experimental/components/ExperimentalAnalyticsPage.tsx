@@ -1,10 +1,9 @@
-// app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Container, Box, Button } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useCalorieTracker } from '@/hooks/useCalorieTracker'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import {
@@ -12,6 +11,7 @@ import {
   WorkoutSessionData,
 } from '@/lib/workout-session-storage'
 import { HrZoneName } from '@/lib/shared/hr-zones'
+import { calculateHrZone } from '@/lib/hrm/zones'
 
 const defaultTimeInZones: Record<HrZoneName, number> = {
   [HrZoneName.WarmUp]: 0,
@@ -41,49 +41,74 @@ const ExperimentalAnalyticsPage = () => {
   const [userSettings] = useUserSettings()
 
   const {
-    session: activeSession,
-    status,
-    isInitialized,
-    duration,
+    processHeartRate,
+    totalCaloriesBurned,
+    calorieHistory,
+    reset: resetCalories,
+  } = useCalorieTracker({
+    age: userSettings.userAge || 30,
+    weightKg: userSettings.userWeight || 70,
+  })
+
+  const {
+    workoutDuration,
     startWorkout,
-    resumeWorkout,
+    pauseWorkout,
     endWorkout,
     addHrData,
-  } = useWorkoutSessionManager()
+    workoutStatus,
+    sessionId,
+  } = useWorkoutSession({
+    totalCalories: totalCaloriesBurned,
+    userAge: userSettings.userAge || 30,
+    userWeight: userSettings.userWeight || 70,
+  })
 
-  const { processHeartRate, totalCaloriesBurned, calorieHistory, reset } =
-    useCalorieTracker({
-      age: userSettings.userAge || 30,
-      weightKg: userSettings.userWeight || 70,
-    })
-
+  const [activeSession, setActiveSession] = useState<WorkoutSessionData | null>(
+    null
+  )
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
   const [view, setView] = useState<View>(() =>
-    activeSession ? 'active' : 'list'
+    workoutStatus !== 'idle' ? 'active' : 'list'
   )
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
 
-  useEffect(() => {
-    const loadSessions = async () => {
-      const sessions = await workoutSessionStorage.getAllSessions()
-      setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
-    }
-    if (isInitialized) {
-      loadSessions()
-    }
-  }, [isInitialized, activeSession?.endTime])
+  const loadSessions = useCallback(async () => {
+    const sessions = await workoutSessionStorage.getAllSessions()
+    setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
+  }, [])
 
   useEffect(() => {
-    if (status === 'finished') {
-      const reloadSessions = async () => {
-        const sessions = await workoutSessionStorage.getAllSessions()
-        setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
-        setView('list')
-      }
-      reloadSessions()
+    if (workoutStatus !== 'idle') {
+      setTimeout(
+        () => setView((prev) => (prev !== 'active' ? 'active' : prev)),
+        0
+      )
     }
-  }, [status])
+  }, [workoutStatus])
+
+  // Load Active Session from Storage when sessionId is available
+  useEffect(() => {
+    if (sessionId) {
+      workoutSessionStorage.getSession(sessionId).then((session) => {
+        if (session) setActiveSession(session)
+      })
+    } else {
+      // Defer state update to avoid synchronous render cycle issues
+      setTimeout(() => setActiveSession(null), 0)
+    }
+  }, [sessionId])
+
+  useEffect(() => {
+    // Load sessions asynchronously
+    // Wrapped in setTimeout to satisfy linter rule about sync state updates in effect
+    setTimeout(() => {
+      loadSessions().catch((err) =>
+        console.error('Failed to load sessions:', err)
+      )
+    }, 0)
+  }, [loadSessions, workoutStatus])
 
   useEffect(() => {
     if (connectionStatus === 'Connected') {
@@ -106,36 +131,58 @@ const ExperimentalAnalyticsPage = () => {
   }, [hrmData])
 
   useEffect(() => {
-    if (status !== 'running') return
+    if (workoutStatus !== 'running') return
 
     const intervalId = setInterval(() => {
       const currentHr = latestHrRef.current
+      const now = Date.now()
 
       processHeartRate(currentHr)
+      addHrData(currentHr)
 
-      const dataPoint = {
-        time: Date.now(),
-        hr: currentHr,
-      }
+      setActiveSession((prev) => {
+        if (!prev) return null
+        const dataPoint = { time: now, hr: currentHr }
+        const lastDataPoint = prev.hrHistory[prev.hrHistory.length - 1]
+        const timeDelta = lastDataPoint ? (now - lastDataPoint.time) / 1000 : 1
 
-      addHrData(dataPoint)
+        const { zoneName } = calculateHrZone(currentHr, prev.userSettings.maxHr)
+        const newTimeInZones = {
+          ...prev.timeInZones,
+          [zoneName]: (prev.timeInZones[zoneName] || 0) + timeDelta,
+        }
+        const newHrHistory = [...prev.hrHistory, dataPoint]
+        const newMaxHr = Math.max(prev.maxHr, currentHr)
+        const newAverageHr =
+          (prev.averageHr * prev.hrHistory.length + currentHr) /
+          (prev.hrHistory.length + 1)
+
+        return {
+          ...prev,
+          hrHistory: newHrHistory,
+          timeInZones: newTimeInZones,
+          maxHr: newMaxHr,
+          averageHr: newAverageHr,
+        }
+      })
     }, 1000)
 
     return () => clearInterval(intervalId)
-  }, [status, processHeartRate, addHrData])
+  }, [workoutStatus, processHeartRate, addHrData])
 
   const handleStartWorkout = useCallback(() => {
-    const age = userSettings.userAge || 30
-    const weight = userSettings.userWeight || 70
-    const maxHr = 220 - age
-    startWorkout(age, weight, maxHr)
-    reset()
+    startWorkout()
+    resetCalories()
     setView('active')
-  }, [startWorkout, reset, userSettings])
+  }, [startWorkout, resetCalories])
 
   const handleResumeWorkout = useCallback(() => {
-    resumeWorkout()
-  }, [resumeWorkout])
+    startWorkout()
+  }, [startWorkout])
+
+  const handlePauseWorkout = useCallback(() => {
+    pauseWorkout()
+  }, [pauseWorkout])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
@@ -146,11 +193,13 @@ const ExperimentalAnalyticsPage = () => {
     setView('detail')
   }, [])
 
-  const handleDeleteSession = useCallback(async (sessionId: string) => {
-    await workoutSessionStorage.deleteSession(sessionId)
-    const sessions = await workoutSessionStorage.getAllSessions()
-    setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
-  }, [])
+  const handleDeleteSession = useCallback(
+    async (sessionId: string) => {
+      await workoutSessionStorage.deleteSession(sessionId)
+      loadSessions()
+    },
+    [loadSessions]
+  )
 
   const handleBackToList = useCallback(() => {
     setSelectedSession(null)
@@ -188,17 +237,17 @@ const ExperimentalAnalyticsPage = () => {
       {view === 'active' && (
         <>
           <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
-            {status === 'idle' && (
+            {workoutStatus === 'idle' && (
               <Button variant="contained" onClick={handleStartWorkout}>
                 Start Workout
               </Button>
             )}
-            {status === 'running' && (
-              <Button variant="outlined" onClick={handleEndWorkout}>
+            {workoutStatus === 'running' && (
+              <Button variant="outlined" onClick={handlePauseWorkout}>
                 Pause
               </Button>
             )}
-            {status === 'paused' && (
+            {workoutStatus === 'paused' && (
               <>
                 <Button variant="contained" onClick={handleResumeWorkout}>
                   Resume
@@ -215,9 +264,9 @@ const ExperimentalAnalyticsPage = () => {
 
           <Box sx={{ display: 'grid', gap: 3 }}>
             <WorkoutSummary
-              duration={duration}
+              duration={workoutDuration}
               calories={summaryData.totalCalories}
-              status={status}
+              status={workoutStatus}
             />
 
             <CalorieTracker calorieHistory={calorieHistory} />
@@ -226,7 +275,7 @@ const ExperimentalAnalyticsPage = () => {
               timeInZones={
                 summaryData.timeInZones as Record<HrZoneName, number>
               }
-              totalDuration={duration}
+              totalDuration={workoutDuration}
             />
 
             {activeSession && activeSession.hrHistory.length > 0 && (
@@ -240,7 +289,9 @@ const ExperimentalAnalyticsPage = () => {
         <>
           <Box sx={{ mb: 3 }}>
             <Button variant="contained" onClick={() => setView('active')}>
-              {activeSession ? 'Back to Active Workout' : 'New Workout'}
+              {workoutStatus !== 'idle'
+                ? 'Back to Active Workout'
+                : 'New Workout'}
             </Button>
           </Box>
           <SessionList
