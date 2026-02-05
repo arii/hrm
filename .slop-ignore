@@ -12,3 +12,6 @@ README.md
 ai_slop_words.txt
 find_slop.sh
 pnpm-lock.yaml
+gh_2.63.0_linux_amd64/
+gh_*/
+gh.1
