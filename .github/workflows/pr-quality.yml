@@ -1043,10 +1043,29 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get the parent commit SHA, use HEAD~1 for compatibility
-          PARENT_SHA=$(git rev-parse HEAD~1)
-          # Get the current commit SHA
+          set -e
           CURRENT_SHA=$(git rev-parse HEAD)
+
+          echo "🔎 Searching for the last successful 'PR Quality Gate' workflow run on branch '${{ github.head_ref || github.ref_name }}'..."
+          # Fetch the SHA of the head commit from the most recent successful run of this workflow on this branch.
+          # Exclude the current run_id to prevent finding ourselves in a race condition.
+          WORKFLOW_RUN_JSON=$(gh run list --workflow "pr-quality.yml" --branch "${{ github.head_ref || github.ref_name }}" --status "success" -L 5 --json headSha,databaseId)
+          PARENT_SHA=$(echo "$WORKFLOW_RUN_JSON" | jq -r --argjson current_run_id ${{ github.run_id }} '.[] | select(.databaseId != $current_run_id) | .headSha' | head -n 1)
+
+          if [ -z "$PARENT_SHA" ]; then
+            echo "::warning::Could not find a recent successful workflow run to copy checks from. Falling back to the commit before HEAD (${{ github.event.before }})."
+            PARENT_SHA="${{ github.event.before }}"
+          fi
+
+          if [ -z "$PARENT_SHA" ] || [ "$PARENT_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "::warning::No valid previous commit SHA found. Falling back to HEAD~1."
+            PARENT_SHA=$(git rev-parse HEAD~1)
+          fi
+
+          echo "::notice::Will copy checks from commit: ${PARENT_SHA}"
+
+          # Fetch the parent commit to ensure it's available locally for the polling logic.
+          git fetch origin "$PARENT_SHA" --depth=1 || (echo "::error::Could not fetch commit ${PARENT_SHA}." && exit 1)
 
           # --- Dynamically determine the list of jobs to copy ---
           echo "🔎 Determining required checks for branch '${{ github.base_ref }}'..."
