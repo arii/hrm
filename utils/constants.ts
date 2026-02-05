@@ -25,11 +25,13 @@ export interface HeartRateZoneConfig {
 }
 
 export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
-  { name: 'Zone 5', minPercent: 90, maxPercent: 100, color: '#F44336' },
-  { name: 'Zone 4', minPercent: 80, maxPercent: 90, color: '#FFEB3B' },
-  { name: 'Zone 3', minPercent: 70, maxPercent: 80, color: '#4CAF50' },
-  { name: 'Zone 2', minPercent: 60, maxPercent: 70, color: '#2196F3' },
-  { name: 'Zone 1', minPercent: 50, maxPercent: 60, color: '#9E9E9E' },
+  // Colors aligned with docs/DESIGN_GUIDELINES.md.
+  // Note: Ranges kept as 90, 80, 70, 60, 50 to maintain backward compatibility with global categorized data.
+  { name: 'Zone 5', minPercent: 90, maxPercent: 100, color: '#D32F2F' }, // Max - Primary Dark
+  { name: 'Zone 4', minPercent: 80, maxPercent: 90, color: '#F44336' }, // Peak - Primary
+  { name: 'Zone 3', minPercent: 70, maxPercent: 80, color: '#FFEB3B' }, // Cardio - Warning
+  { name: 'Zone 2', minPercent: 60, maxPercent: 70, color: '#4CAF50' }, // Fat Burn - Success
+  { name: 'Zone 1', minPercent: 50, maxPercent: 60, color: '#2196F3' }, // Warm up - Secondary
 ]
 
 // --- Calorie Calculation Constants ---
