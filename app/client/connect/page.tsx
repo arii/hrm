@@ -1,12 +1,11 @@
+// app/client/connect/page.tsx
 'use client'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
@@ -77,21 +76,18 @@ export default function ConnectPage() {
 
   const { connectionStatus, sendData } = useWebSocket()
 
-  // Send user metadata when WebSocket connects
-  // Always send metadata even if userName is empty, to ensure HRM data appears on dashboard
   useEffect(() => {
     if (connectionStatus === 'Connected') {
       sendData({
         type: 'HRM_METADATA_UPDATE',
         data: {
-          name: userName || 'User', // Use default name if not set
+          name: userName || 'User',
           age: userAge || 30,
         },
       })
     }
   }, [connectionStatus, userName, userAge, sendData])
 
-  // Centralized calorie calculation engine
   const {
     calories,
     processHeartRate,
@@ -101,7 +97,6 @@ export default function ConnectPage() {
     weightKg: userWeight || 70,
   })
 
-  // Throttled sender for WebSocket messages
   const throttledSend = useMemo(
     () =>
       throttle((message: HrmInputMessage) => {
@@ -116,45 +111,37 @@ export default function ConnectPage() {
 
   const {
     workoutDuration,
+    startTime, // Destructure persistent start time
     resetWorkout: resetWorkoutSession,
     hasStarted,
     startWorkout,
     pauseWorkout,
     endWorkout,
+    addHrData,
     workoutStatus,
   } = useWorkoutSession({
-    isConnected: false, // This will be updated by the useBluetoothHRM hook
     totalCalories: calories,
+    userAge: userAge || 30,
+    userWeight: userWeight || 70,
   })
 
-  // Add the workout session manager for data persistence
-  const {
-    addHrData,
-    startWorkout: startPersistentWorkout,
-    endWorkout: endPersistentWorkout,
-    resetWorkout: resetPersistentWorkout,
-  } = useWorkoutSessionManager()
-
-  // Create wrapper functions that sync both hooks
   const handleStartWorkout = useCallback(() => {
     startWorkout()
-    if (userAge && userWeight) {
-      startPersistentWorkout(userAge, userWeight)
-    }
-  }, [startWorkout, startPersistentWorkout, userAge, userWeight])
+  }, [startWorkout])
+
+  const handlePauseWorkout = useCallback(() => {
+    pauseWorkout()
+  }, [pauseWorkout])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
-    endPersistentWorkout()
-  }, [endWorkout, endPersistentWorkout])
+  }, [endWorkout])
 
   const handleResetWorkout = useCallback(() => {
     resetWorkoutSession()
     resetCalculator()
-    resetPersistentWorkout()
-  }, [resetWorkoutSession, resetCalculator, resetPersistentWorkout])
+  }, [resetWorkoutSession, resetCalculator])
 
-  // Callback for raw heart rate updates from the Bluetooth hook
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
       logger.debug(
@@ -162,20 +149,16 @@ export default function ConnectPage() {
         'handleHeartRateUpdate called, updating local state'
       )
       setCurrentHR(heartRate)
-
-      // Process for calorie calculation
       if (workoutStatus === 'running') {
         processHeartRate(heartRate)
 
-        // CRITICAL: Persist HR data to IndexedDB
-        addHrData({
-          time: Date.now(),
-          hr: heartRate,
-        })
+        // Persist individual HR data points to IndexedDB
+        addHrData(heartRate)
       }
     },
     [processHeartRate, workoutStatus, setCurrentHR, addHrData]
   )
+
   const {
     connectAndStream,
     autoConnect,
@@ -191,15 +174,19 @@ export default function ConnectPage() {
     userName,
     userAge: userAge || 0,
     onHeartRateUpdate: handleHeartRateUpdate,
-    onConnect: handleStartWorkout, // Use the wrapped function
+    onConnect: handleStartWorkout,
   })
 
+  // Auto-pause workout if device disconnects
   useEffect(() => {
-    // Try to auto-connect when WebSocket is ready and we're not already connected.
-    // Wait a tick to ensure the component is fully initialized before attempting connection.
+    if (!isConnected && workoutStatus === 'running') {
+      handlePauseWorkout()
+    }
+  }, [isConnected, workoutStatus, handlePauseWorkout])
+
+  useEffect(() => {
     if (!isConnected && isSupported && connectionStatus === 'Connected') {
       logger.info('WebSocket ready, attempting auto-connect...')
-      // Small delay to ensure component is fully mounted
       const timeout = setTimeout(() => {
         autoConnect().catch(() => {
           logger.info('Auto-connect failed, user can connect manually')
@@ -211,8 +198,6 @@ export default function ConnectPage() {
   }, [connectionStatus, isConnected, isSupported, autoConnect])
 
   useEffect(() => {
-    // This effect synchronizes the local HR and calorie state with the server.
-    // It triggers whenever the local `currentHR` or `calories` state changes.
     throttledSend({
       type: 'HRM_INPUT',
       data: {
@@ -225,9 +210,6 @@ export default function ConnectPage() {
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
       setUserSettings((prev) => ({ ...prev, unitSystem: newUnit }))
-      // When the unit changes, the displayed weight needs to be re-calculated.
-      // Resetting localDisplayWeight will cause the useMemo to re-calculate
-      // based on the new unit system.
       setLocalDisplayWeight(null)
     }
   }
@@ -240,10 +222,8 @@ export default function ConnectPage() {
 
   return (
     <ConnectView
-      duration={formatDuration(workoutDuration, {
-        unit: 'seconds',
-        format: 'HH:MM:SS',
-      })}
+      workoutDuration={workoutDuration} // Pass raw number
+      startTime={startTime} // Pass start time
       caloriesBurned={calories}
       userName={userName}
       setUserName={(name) =>
@@ -287,7 +267,7 @@ export default function ConnectPage() {
       onReset={handleResetWorkout}
       workoutStatus={workoutStatus}
       onStartWorkout={handleStartWorkout}
-      onPauseWorkout={pauseWorkout}
+      onPauseWorkout={handlePauseWorkout}
       onEndWorkout={handleEndWorkout}
     />
   )

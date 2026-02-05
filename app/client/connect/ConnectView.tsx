@@ -1,3 +1,4 @@
+// app/client/connect/ConnectView.tsx
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -10,6 +11,8 @@ import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
+import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
@@ -31,8 +34,9 @@ import {
 } from '@mui/material'
 
 interface ConnectViewProps {
-  duration: string
+  workoutDuration: number // Changed: Raw number for better internal handling
   caloriesBurned: number
+  startTime: number | null // Added: For persistence
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -75,8 +79,9 @@ interface ConnectViewProps {
 }
 
 export default function ConnectView({
-  duration,
+  workoutDuration,
   caloriesBurned,
+  startTime,
   userName,
   setUserName,
   userAge,
@@ -149,25 +154,48 @@ export default function ConnectView({
     <Box
       sx={{
         textAlign: 'center',
-        mt: 4,
+        mt: 6,
         pt: 4,
         borderTop: '1px solid #eee',
       }}
     >
-      <Button
-        variant="contained"
-        color="error"
-        onClick={handleFullReset}
-        disabled={isResetting}
+      <Typography variant="overline" color="text.secondary" gutterBottom>
+        Session Management
+      </Typography>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        justifyContent="center"
       >
-        {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
-      </Button>
+        {/* Button 1: Clear Session Only */}
+        <Button
+          variant="outlined"
+          color="warning"
+          startIcon={<RestartAltIcon />}
+          onClick={onReset}
+          disabled={!hasStarted}
+        >
+          Clear Session Data
+        </Button>
+
+        {/* Button 2: Full Reset */}
+        <Button
+          variant="outlined"
+          color="error"
+          startIcon={<DeleteSweepIcon />}
+          onClick={handleFullReset}
+          disabled={isResetting}
+        >
+          {isResetting ? 'Resetting...' : 'Forget Device & Reset All'}
+        </Button>
+      </Stack>
       <Typography
         variant="caption"
         display="block"
         sx={{ mt: 1, color: 'text.secondary' }}
       >
-        Resets server state AND forgets Bluetooth device connection.
+        &quot;Forget Device&quot; removes Bluetooth permissions. &quot;Clear
+        Session&quot; resets the timer/calories.
       </Typography>
     </Box>
   )
@@ -195,7 +223,7 @@ export default function ConnectView({
 
   return (
     <>
-      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
+      <Container maxWidth="sm" sx={{ py: 3, pb: 12 }}>
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Connect Heart Rate Monitor
         </Typography>
@@ -393,19 +421,22 @@ export default function ConnectView({
         />
 
         {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+          <WorkoutSummary
+            duration={workoutDuration}
+            calories={caloriesBurned}
+            status={workoutStatus}
+            userName={userName}
+            date={startTime ? new Date(startTime) : undefined}
+          />
         )}
 
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
-          sx={{ mt: 2 }}
-        >
-          WebSocket: {connectionStatus}
-        </Typography>
-
         <ResetSection />
+
+        <Box sx={{ mt: 4, textAlign: 'center', opacity: 0.5 }}>
+          <Typography variant="caption">
+            WebSocket: {connectionStatus}
+          </Typography>
+        </Box>
       </Container>
       <BottomNavBar />
     </>
