@@ -55,6 +55,7 @@ describe('useCookie', () => {
     ;(Cookies.get as jest.Mock).mockReturnValue('{ not json }')
     const { result } = renderHook(() => useCookie(TEST_KEY, INITIAL_VALUE))
     expect(result.current[0]).toEqual(INITIAL_VALUE)
+    expect(consoleErrorSpy).toHaveBeenCalled()
     consoleErrorSpy.mockRestore()
   })
 

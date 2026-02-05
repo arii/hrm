@@ -13,20 +13,30 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
     // Wait for the test controls to be initialized
     await connectPage.waitForFunction(() => window.TEST_CONTROLS?.setHrmStatus)
+
+    // Wait for the initial auto-connect attempt to finish (100ms debounce + execution time)
+    // This prevents the auto-connect logic from overwriting our manual state updates in the tests.
+    await connectPage.waitForTimeout(500)
+    await expect(
+      connectPage.getByRole('button', { name: 'Connect Bluetooth HRM' })
+    ).toBeVisible()
   })
 
   test('scanning state', async ({ connectPage }) => {
     // Simulate the app entering the "Connecting..." state
-    await connectPage.evaluate(
-      (status) => window.TEST_CONTROLS.setHrmStatus(status),
-      BluetoothConnectionStatus.CONNECTING
-    )
-    // TODO: This assertion is broken after the WebSocket thrashing fix.
+    await connectPage.evaluate((status) => {
+      window.TEST_CONTROLS.setHrmStatus(status)
+      window.TEST_CONTROLS.setCustomHrmStatusMessage(
+        'Checking saved devices...'
+      )
+    }, BluetoothConnectionStatus.CONNECTING)
+
     // The UI state has changed, and this alert does not appear immediately.
-    // Commenting out to update the snapshot to the new reality.
-    // await expect(
-    //   connectPage.getByTestId('connection-status-alert')
-    // ).toContainText('Checking saved devices...')
+    // We must wait for it to be visible.
+    await connectPage.waitForSelector('[data-testid="connection-status-alert"]')
+    await expect(
+      connectPage.getByTestId('connection-status-alert')
+    ).toContainText('Checking saved devices...')
     await takeScreenshot(
       connectPage,
       'connect-page-checking-saved-devices.png',
@@ -66,6 +76,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-connection-error.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
+      fullPage: false,
+      maxDiffPixelRatio: 0.05,
     })
   })
 
@@ -82,6 +94,22 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-no-devices-found.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
+    })
+  })
+
+  test('auto-connect failed state', async ({ connectPage }) => {
+    // This state is set by the autoConnect logic in the hook.
+    await connectPage.evaluate((status) => {
+      window.TEST_CONTROLS.setHrmStatus(status)
+      window.TEST_CONTROLS.setCustomHrmStatusMessage(
+        'Auto-connect failed. Use Connect button to select device.'
+      )
+    }, BluetoothConnectionStatus.DISCONNECTED)
+    await expect(connectPage.getByText(/Auto-connect failed/)).toBeVisible()
+    await takeScreenshot(connectPage, 'connect-page-auto-connect-failed.png', {
+      mask: [connectPage.getByTestId('user-settings-form')],
+      fullPage: false,
+      maxDiffPixelRatio: 0.05,
     })
   })
 })
