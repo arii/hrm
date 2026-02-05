@@ -19,7 +19,6 @@ import {
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
-// Define a type for the test controls to avoid using 'any'
 interface TestControls {
   dispatch: (message: ServerMessage) => void
   disconnect: () => void
@@ -62,10 +61,9 @@ export const WebSocketProvider = ({
     }
   })
 
-  // Memoize the WebSocket URL to prevent re-computation on every render
   const wsUrl = useMemo(() => {
     const url = serverUrl || getWebSocketURL()
-    if (!clientId) return null // Return null if clientId isn't generated yet
+    if (!clientId) return null
 
     try {
       const urlObject = new URL(url)
@@ -73,7 +71,7 @@ export const WebSocketProvider = ({
       return urlObject.toString()
     } catch (_error) {
       logger.error('Invalid WebSocket URL', { url, error: _error })
-      return url // Fallback to the original URL on error
+      return url
     }
   }, [serverUrl, clientId])
 
@@ -81,16 +79,12 @@ export const WebSocketProvider = ({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
   const pendingActions = useRef<ClientCommandMessage[]>([])
-  // Refs for heartbeat mechanism
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Configuration for exponential backoff
   const MAX_RECONNECT_ATTEMPTS = 10
-  // The initial delay for the first reconnection attempt.
-  const INITIAL_RECONNECT_DELAY = 1000 // 1 second
-  // The factor by which the reconnection delay is randomized to prevent clients from reconnecting simultaneously.
-  const JITTER_FACTOR = 0.2 // 20% jitter
+  const INITIAL_RECONNECT_DELAY = 1000
+  const JITTER_FACTOR = 0.2
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
@@ -103,7 +97,6 @@ export const WebSocketProvider = ({
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
 
-  // Ref to hold the connect function, ensuring it's always up-to-date
   const connectRef = useRef<() => void>(() => {})
 
   useEffect(() => {
@@ -126,12 +119,8 @@ export const WebSocketProvider = ({
         connect: () => {},
       }
 
-      // THE FIX: Implement a bridge for E2E tests to inject WebSocket messages
-      // via postMessage. This allows testing in production builds where
-      // __TEST_CONTROLS__ might be disabled or restricted.
       const handleMessage = (event: MessageEvent) => {
         const data = event.data
-        // Robust type guard for ServerMessage as recommended in feedback
         if (typeof data === 'object' && data !== null && 'type' in data) {
           const message = data as { type: unknown }
           if (
@@ -140,7 +129,6 @@ export const WebSocketProvider = ({
               message.type === 'TIMER_UPDATE' ||
               message.type === 'DEVICE_OFFLINE')
           ) {
-            // Safe to dispatch as ServerMessage now
             dispatch(data as ServerMessage)
           }
         }
@@ -152,7 +140,6 @@ export const WebSocketProvider = ({
     return undefined
   }, [dispatch])
 
-  // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
     () =>
       throttle(
@@ -161,8 +148,8 @@ export const WebSocketProvider = ({
             '[WebSocketProvider] Connection not open. Queuing action.'
           )
         },
-        5000, // Prevent log spam by throttling to once every 5 seconds
-        { leading: true, trailing: false } // Important: issue the warning on the first failed attempt
+        5000,
+        { leading: true, trailing: false }
       ),
     []
   )
@@ -177,23 +164,17 @@ export const WebSocketProvider = ({
   }, [])
 
   const startHeartbeat = useCallback(() => {
-    stopHeartbeat() // Ensure no existing timers are running
+    stopHeartbeat()
 
     heartbeatIntervalRef.current = setInterval(() => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ type: 'PING' }))
 
-        // The pong timeout is set to 15 seconds. This is a tripling of the
-        // original 5-second timeout and provides a more generous buffer for
-        // temporary network latency or server-side processing delays. This value
-        // was chosen to be significantly longer than a typical network round-trip
-        // time, but not so long that a genuinely stale connection would persist
-        // for an excessive period.
         pongTimeoutRef.current = setTimeout(() => {
           logger.warn(
             '[WebSocketProvider] Pong not received in time. Forcing reconnect.'
           )
-          wsRef.current?.close() // Triggers the onclose reconnect logic
+          wsRef.current?.close()
         }, 15000)
       }
     }, 30000)
@@ -203,7 +184,7 @@ export const WebSocketProvider = ({
     if (
       typeof window === 'undefined' ||
       wsRef.current?.readyState === WebSocket.OPEN ||
-      !wsUrl // Do not connect if the URL is not ready
+      !wsUrl
     ) {
       return
     }
@@ -216,12 +197,10 @@ export const WebSocketProvider = ({
       logger.info('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
-      // Set test flag for Playwright tests - use a more reliable method
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
       }
 
-      // Explicitly request initial state from the server
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
 
       if (pendingActions.current.length > 0) {
@@ -235,15 +214,12 @@ export const WebSocketProvider = ({
         localStorage.setItem('pendingActions', '[]')
       }
 
-      // Reset reconnect attempts on successful connection
       reconnectAttempts.current = 0
 
-      // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
-      // Start the client-side heartbeat
       startHeartbeat()
     }
 
@@ -257,12 +233,8 @@ export const WebSocketProvider = ({
         window.__TEST_WEBSOCKET_READY__ = false
       }
 
-      // Stop heartbeat on disconnect
       stopHeartbeat()
 
-      // To prevent the UI from flashing stale data from a previous session on
-      // reconnect, we dispatch a RESET_STATE action. This clears all
-      // session-specific data and ensures the UI starts clean.
       dispatch({ type: 'RESET_STATE' })
 
       if (shouldReconnect.current) {
@@ -299,17 +271,14 @@ export const WebSocketProvider = ({
       try {
         const message: ServerMessage = JSON.parse(event.data)
 
-        // Heartbeat pong check
         if (message.type === 'PONG') {
           if (pongTimeoutRef.current) {
             clearTimeout(pongTimeoutRef.current)
           }
-          return // Pong message is handled, no state dispatch needed
+          return
         }
 
-        // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
         if (message.type === 'EXECUTE_SPOTIFY') {
-          // Dispatch a custom event that the remote execution hook can listen to
           window.dispatchEvent(
             new CustomEvent('spotify-remote-command', {
               detail: message,
@@ -318,11 +287,9 @@ export const WebSocketProvider = ({
           return
         }
 
-        // Throttle high-frequency messages
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
           throttledDispatch(message)
         } else {
-          // Dispatch critical messages immediately
           dispatch(message)
         }
       } catch (e) {
@@ -336,7 +303,6 @@ export const WebSocketProvider = ({
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
-    // Stop heartbeat on manual disconnect
     stopHeartbeat()
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
@@ -377,8 +343,7 @@ export const WebSocketProvider = ({
         const jsonStr = JSON.stringify(data)
         ws.send(jsonStr)
       } else {
-        throttledConnectionWarning() // Use the throttled warning
-        // Queue the action for when connection is restored
+        throttledConnectionWarning()
         pendingActions.current.push(data)
         localStorage.setItem(
           'pendingActions',

@@ -25,7 +25,7 @@ describe('useHeartRateLiveness', () => {
         maxHr: 180,
         calories: 100,
         isConnected: true,
-        updatedAt: now - 1000, // 1s ago
+        updatedAt: now - 1000,
       },
     ]
 
@@ -90,7 +90,6 @@ describe('useHeartRateLiveness', () => {
 
     expect(result.current[0].isDataStale).toBe(false)
 
-    // Advance time by 25 seconds
     act(() => {
       jest.advanceTimersByTime(25000)
     })
@@ -98,7 +97,6 @@ describe('useHeartRateLiveness', () => {
     expect(result.current[0].isDataStale).toBe(true)
     expect(result.current[0].isExpired).toBe(false)
 
-    // Advance time to 36 seconds total
     act(() => {
       jest.advanceTimersByTime(15000)
     })

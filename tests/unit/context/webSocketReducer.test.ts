@@ -25,7 +25,6 @@ describe('webSocketReducer', () => {
   }
 
   it('should return the initial state if no action is matched', () => {
-    // This is an unconventional action to test the default case.
     const action = { type: 'UNKNOWN_ACTION' } as unknown as ServerMessage
     const state = reducer(INITIAL_STATE, action)
     expect(state).toEqual(INITIAL_STATE)
@@ -171,7 +170,6 @@ describe('webSocketReducer', () => {
 
       const state = reducer(initialState, action)
 
-      // The expired user should be filtered out by the pre-merge check
       expect(state.hrmData).toHaveLength(1)
       expect(state.hrmData[0].clientId).toBe('fresh-1')
     })

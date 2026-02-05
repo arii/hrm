@@ -52,7 +52,6 @@ export const reducer = (
     case 'RESET_STATE':
       return INITIAL_STATE
     case 'INITIAL_STATE': {
-      // When the initial state is loaded, ensure all HRM data is marked as connected.
       const hrmDataWithConnection =
         message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) || []
       return {
@@ -63,7 +62,6 @@ export const reducer = (
     }
     case 'HRM_UPDATE': {
       const now = Date.now()
-      // Filter incoming payload for fresh data only
       const payload = (message.payload as ServerHrmData[]).filter((user) => {
         const lastSeen = user.updatedAt || now
         return now - lastSeen < HRM_STALE_THRESHOLD_MS
@@ -71,10 +69,6 @@ export const reducer = (
 
       const incomingClients = new Set(payload.map((user) => user.clientId))
 
-      // THE FIX: Immediately filter out any devices that are NOT in the incoming payload.
-      // This ensures the client state perfectly mirrors the server's HrmDataStore.
-      // Additionally, filter out any devices that are genuinely stale (> 35s),
-      // as requested in review feedback to make the reducer the single source of truth.
       const activeHrmData = state.hrmData.filter((existing) => {
         const isPresent = incomingClients.has(existing.clientId)
         const lastSeen = existing.updatedAt || existing.lastUpdate || now
@@ -82,7 +76,6 @@ export const reducer = (
         return isPresent && isFresh
       })
 
-      // Update existing users with new data
       const mergedHrmData = activeHrmData.map((existingUser) => {
         const updatedUser = payload.find(
           (newUser) => newUser.clientId === existingUser.clientId
@@ -95,7 +88,6 @@ export const reducer = (
         }
       })
 
-      // Add brand-new users from the payload
       payload.forEach((newUser) => {
         if (
           !mergedHrmData.some(
@@ -134,8 +126,6 @@ export const reducer = (
     case 'SPOTIFY_SERVICE_INIT_UPDATE':
       return { ...state, spotifyServiceInitialized: message.payload }
     case 'EXECUTE_SPOTIFY':
-      // This message type is handled by useSpotifyRemoteExecution hook
-      // We don't need to update state here, just pass it through
       return state
     default:
       return state

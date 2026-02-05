@@ -1,7 +1,6 @@
 /**
  * @jest-environment jsdom
  */
-// tests/unit/components/HrTile.test.tsx
 import { jest } from '@jest/globals'
 import HrTile from '@/components/HrTile'
 import { render, screen } from '@testing-library/react'
@@ -9,7 +8,6 @@ import '@testing-library/jest-dom'
 import { ZONE_COLORS } from '@/utils/visualization'
 import theme from '@/lib/theme'
 
-// Mock the getHrZoneProps function to control the test cases
 jest.mock('@/utils/visualization', () => ({
   ...jest.requireActual('@/utils/visualization'),
   getHrZoneProps: (percentMax: number) => {

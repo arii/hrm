@@ -1,4 +1,3 @@
-// File: app/components/dashboard/HrmTiles.tsx
 'use client'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -20,7 +19,6 @@ const HrmTiles = () => {
         user.maxHr || MAX_HR_DEFAULT
       )
 
-      // Find the alert specific to this HR Monitor's clientId
       const matchingAlert = activeAlerts.find(
         (alert) =>
           alert.clientId === user.clientId &&
@@ -37,10 +35,9 @@ const HrmTiles = () => {
             name={user.name || ''}
             bpm={user.value}
             percentMax={hrZoneProps.percentage}
-            calories={user.calories || 0} // Pass calories
+            calories={user.calories || 0}
             isDataStale={user.isDataStale}
             isAlerting={!!matchingAlert}
-            // Conditionally add alertMessage to avoid passing `undefined`
             {...(matchingAlert && { alertMessage: matchingAlert.message })}
           />
         </Grid>
@@ -76,8 +73,4 @@ const HrmTiles = () => {
   return <>{tileElements}</>
 }
 
-// Memoize HrmTiles to prevent re-renders when parent components update.
-// The component relies on the `useWebSocket` hook, which provides `hrmData` and `activeAlerts`.
-// The `useMemo` hook inside the component ensures that the `filteredTiles` are only recalculated
-// when `hrmData` or `activeAlerts` change, further optimizing performance.
 export default memo(HrmTiles)

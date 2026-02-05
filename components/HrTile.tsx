@@ -1,4 +1,3 @@
-// File: components/HrTile.tsx
 'use client'
 import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
@@ -13,28 +12,27 @@ import { memo } from 'react'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 
-// Define the style for the centered overlay
 const overlayStyles = {
   position: 'absolute',
   top: 0,
   left: 0,
   width: '100%',
   height: '100%',
-  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
+  backgroundColor: 'rgba(0, 0, 0, 0.7)',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
   zIndex: 10,
-  borderRadius: 'inherit', // Match card border radius from StyledCard
+  borderRadius: 'inherit',
 }
 
 const HrTile = ({
   name,
   bpm,
   percentMax,
-  calories = 0, // Default to 0 to prevent NaN
-  isConnected = true, // Default to connected
+  calories = 0,
+  isConnected = true,
   isDataStale = false,
   isAlerting = false,
   alertMessage = 'Checking signal...',
@@ -42,7 +40,6 @@ const HrTile = ({
   const theme = useTheme()
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
 
-  // Status strings for accessibility and tooltips
   const statusLabel = isDataStale
     ? 'Data signal lost'
     : isConnected
@@ -75,11 +72,10 @@ const HrTile = ({
           position: 'relative',
           opacity: isConnected && !isDataStale ? 1 : 0.5,
           transition: theme.transitions.create('opacity', {
-            duration: theme.transitions.duration.short, // Approx 300ms
+            duration: theme.transitions.duration.short,
           }),
         }}
       >
-        {/* --- Status Icons --- */}
         {!isConnected ? (
           <WifiOffIcon
             sx={{
@@ -104,7 +100,6 @@ const HrTile = ({
           )
         )}
 
-        {/* --- Alerting Overlay --- */}
         {isAlerting && (
           <Box sx={overlayStyles} data-testid="hr-tile-alert-overlay">
             <CircularProgress size={30} sx={{ color: 'white' }} />
@@ -139,7 +134,6 @@ const HrTile = ({
                 mt: 1,
               }}
             >
-              {/* BPM Display */}
               <Typography
                 data-testid="bpm-value"
                 variant="h6"
@@ -155,7 +149,6 @@ const HrTile = ({
                 </Typography>
               </Typography>
 
-              {/* Calorie Display */}
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 {Math.floor(calories)}{' '}
                 <Typography
@@ -190,7 +183,6 @@ const HrTile = ({
   )
 }
 
-// Custom comparison function for React.memo
 const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
   return (
     prevProps.name === nextProps.name &&

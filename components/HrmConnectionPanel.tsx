@@ -1,4 +1,3 @@
-// File: app/components/dashboard/HrmConnectionPanel.tsx
 'use client'
 import { useMemo } from 'react'
 import Box from '@mui/material/Box'
@@ -51,7 +50,7 @@ const HrmConnectionPanel = () => {
               justifyContent: 'center',
               alignItems: 'center',
               width: { xs: '100%', sm: 'calc(50% - 8px)' },
-              height: '100%', // Ensure the container fills the grid cell
+              height: '100%',
               gap: 2,
               p: 2,
               border: 1,
@@ -89,7 +88,7 @@ const HrmConnectionPanel = () => {
             sx={{
               width: {
                 xs: '100%',
-                sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
+                sm: 'calc(50% - 8px)',
               },
             }}
           >
