@@ -10,8 +10,7 @@ import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-import { useHrZone } from '@/hooks/useHrZone'
-import { calculateMaxHr, calculateHrZoneInfo } from '@/lib/shared/hr-zones'
+import { calculateHrZoneInfo } from '@/lib/shared/hr-zones'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -243,8 +242,6 @@ export default function ConnectPage() {
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
-  const maxHr = calculateMaxHr(userAge)
-  const hrZoneProps = useHrZone(currentHR, maxHr)
 
   return (
     <ConnectView
@@ -286,9 +283,9 @@ export default function ConnectPage() {
       signalPeriodMs={signalPeriodMs}
       currentHR={currentHR}
       hrZoneProps={{
-        percentage: hrZoneProps.percentage,
-        progressColor: hrZoneProps.progressColor,
+        percentage,
       }}
+      zone={zone}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}
