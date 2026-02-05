@@ -34,10 +34,6 @@ let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
-// State Management:
-// - hrmDataStore: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
-// - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
-// - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
 const hrmDataStore = new HrmDataStore()
 
 const clientSockets = new Map<string, WebSocket>()
@@ -90,9 +86,6 @@ const getLogMeta = (
   req: IncomingMessage,
   clientId: string
 ): Record<string, unknown> => {
-  // DEV-NOTE: Be mindful of logging sensitive data. In a real-world scenario,
-  // IP addresses and user-agents might be considered PII and should be
-  // handled according to privacy policies. Redacting in production is a safeguard.
   const isProduction = process.env.NODE_ENV === 'production'
 
   const ip = req.socket.remoteAddress
@@ -120,7 +113,6 @@ const initSocketManager = (
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
-  // Janitor process to clean up stale connections
   const STALE_THRESHOLD_MS = 30000 // 30 seconds
   setInterval(() => {
     const now = Date.now()
@@ -130,7 +122,7 @@ const initSocketManager = (
         cleanupClientSession(clientId)
       }
     }
-  }, 10000) // Run every 10 seconds
+  }, 10000)
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const extWs = ws as ExtWebSocket
@@ -165,7 +157,6 @@ const initSocketManager = (
     logger.info(logMeta, 'WebSocket client connected')
 
     if (!hrmDataStore.findById(clientId)) {
-      // Initialize new client
       const newClient: HrmStreamData = {
         clientId: extWs.clientId,
         value: 0,
@@ -189,20 +180,10 @@ const initSocketManager = (
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
 
-      // CRITICAL: Do NOT immediately delete clientData.
-      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
-      // NOTE: In a high-traffic production environment, this could lead to
-      // memory pressure if many clients disconnect and don't reconnect.
-      // A more robust solution might involve a separate cleanup process
-      // or a maximum number of inactive sessions.
       const timer = setTimeout(() => {
-        // Only cleanup if the client has not reconnected.
-        // We verify this by checking if the socket associated with the clientId is the one that just closed.
-        // If they are different, it means a new connection has been established.
         if (clientSockets.get(clientId) === extWs) {
           cleanupClientSession(clientId)
         } else {
-          // If the client has reconnected, we can safely remove the timer without taking further action.
           clientCleanupTimers.delete(clientId)
           logger.info(
             { clientId },
@@ -246,7 +227,6 @@ const handleIncomingMessage = (
 ) => {
   ws.isAlive = true
 
-  // Refresh the lastUpdate timestamp for the client
   const sessionState = clientSessionState.get(clientId)
   if (sessionState) {
     sessionState.lastUpdate = Date.now()
@@ -292,7 +272,6 @@ const handleIncomingMessage = (
             Object.entries(message.data)
           )
 
-          // Prevent overwriting a real name with a default "Unknown" name
           if (
             existingData.name &&
             !/^(user|new user|unknown|bluetooth hrm)/i.test(
@@ -318,13 +297,11 @@ const handleIncomingMessage = (
           sessionState.lastUpdate = now
           let finalCalories = sessionState.accumulatedCalories
 
-          // Use the client-provided calories directly
           if (typeof hrmMessage.data.calories === 'number') {
             const clientCalories = hrmMessage.data.calories
             const serverCalories = sessionState.accumulatedCalories
             const diff = Math.abs(clientCalories - serverCalories)
 
-            // Sanity check to prevent anomalous calorie values from the client.
             const isAnomalousJump =
               diff > MAX_CALORIE_JUMP_PER_UPDATE && serverCalories > 0
             const isAnomalousInitialValue =
@@ -340,14 +317,13 @@ const handleIncomingMessage = (
                 },
                 'Anomalous calorie value detected. Using last known server value.'
               )
-              finalCalories = serverCalories // Reject the client's value
+              finalCalories = serverCalories
             } else {
               sessionState.accumulatedCalories = clientCalories
-              finalCalories = clientCalories // Accept the client's value
+              finalCalories = clientCalories
             }
           }
 
-          // Update the repository with the latest data
           hrmDataStore.save({
             ...existingData,
             value: hrmMessage.data.value ?? existingData.value,

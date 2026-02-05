@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test'
 
-test('should remove tile after 35 seconds of inactivity', async ({ page }) => {
-  // Install mock clock
+test('removes tile after 35 seconds of inactivity', async ({ page }) => {
   await page.clock.install({ time: new Date() })
 
-  await page.goto('/client/control')
-  // 1. Simulate active data
+  await page.goto('/')
+
+  // Wait for the page to be hydrated and listener attached
+  await page.waitForTimeout(1000)
+
   await page.evaluate(() =>
     (
       window as unknown as {
@@ -21,9 +23,7 @@ test('should remove tile after 35 seconds of inactivity', async ({ page }) => {
   )
   await expect(page.locator('text=test-1')).toBeVisible()
 
-  // 2. Fast-forward time
   await page.clock.fastForward(35000)
 
-  // 3. Assert removal
   await expect(page.locator('text=test-1')).not.toBeVisible()
 })

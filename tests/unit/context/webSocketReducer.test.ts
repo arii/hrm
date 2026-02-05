@@ -21,14 +21,13 @@ describe('webSocketReducer', () => {
     calories: 10,
   }
 
-  it('should return the initial state if no action is matched', () => {
-    // This is an unconventional action to test the default case.
+  it('returns the initial state if no action is matched', () => {
     const action = { type: 'UNKNOWN_ACTION' } as unknown as ServerMessage
     const state = reducer(INITIAL_STATE, action)
     expect(state).toEqual(INITIAL_STATE)
   })
 
-  it('should handle RESET_STATE action', () => {
+  it('handles RESET_STATE action', () => {
     const currentState: WebSocketState = {
       ...INITIAL_STATE,
       hrmData: [
@@ -51,7 +50,7 @@ describe('webSocketReducer', () => {
   })
 
   describe('INITIAL_STATE action', () => {
-    it('should handle INITIAL_STATE action and mark hrmData as connected', () => {
+    it('handles INITIAL_STATE action and marks hrmData as connected', () => {
       const serverState = {
         hrmData: [
           {
@@ -88,7 +87,7 @@ describe('webSocketReducer', () => {
   })
 
   describe('HRM_UPDATE action', () => {
-    it('should add a new user with a lastUpdated timestamp', () => {
+    it('adds a new user with a lastUpdated timestamp', () => {
       const action: ServerMessage = {
         type: 'HRM_UPDATE',
         payload: [baseUser],
@@ -101,7 +100,7 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0].lastUpdated).toBeDefined()
     })
 
-    it('should update an existing user and their lastUpdated timestamp', () => {
+    it('updates an existing user and their lastUpdated timestamp', () => {
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [{ ...baseUser, isConnected: true, lastUpdated: 12345 }],
@@ -119,7 +118,7 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0].lastUpdated).not.toBe(12345)
     })
 
-    it('should remove users that have not been updated in the last 3 minutes', () => {
+    it('removes users that have not been updated in the last 3 minutes', () => {
       const now = Date.now()
       const staleUser = {
         ...baseUser,
@@ -145,7 +144,7 @@ describe('webSocketReducer', () => {
   })
 
   describe('DEVICE_OFFLINE action', () => {
-    it('should remove the specified device from the state', () => {
+    it('removes the specified device from the state', () => {
       const user2 = { ...baseUser, clientId: '2', userName: 'User B' }
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
@@ -165,7 +164,7 @@ describe('webSocketReducer', () => {
     })
   })
 
-  it('should handle TIMER_UPDATE action', () => {
+  it('handles TIMER_UPDATE action', () => {
     const payload = { timeRemaining: 20, isRunning: true }
     const action: ServerMessage = { type: 'TIMER_UPDATE', payload }
     const state = reducer(INITIAL_STATE, action)
@@ -173,7 +172,7 @@ describe('webSocketReducer', () => {
     expect(state.timerData.isRunning).toBe(true)
   })
 
-  it('should handle SPOTIFY_UPDATE action', () => {
+  it('handles SPOTIFY_UPDATE action', () => {
     const payload = { trackName: 'New Song', isPlaying: true }
     const action: ServerMessage = { type: 'SPOTIFY_UPDATE', payload }
     const state = reducer(INITIAL_STATE, action)
