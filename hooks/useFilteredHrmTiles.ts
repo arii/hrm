@@ -8,7 +8,6 @@ import { useHeartRateLiveness } from './useHeartRateLiveness'
  * - Users with no data (value === 0)
  * - Users with placeholder names (e.g., "new user")
  * - Users with no identity (name is null)
- * - Users whose data has expired (> 35s inactivity)
  */
 export const useFilteredHrmTiles = () => {
   const { hrmData } = useWebSocket()
@@ -19,7 +18,11 @@ export const useFilteredHrmTiles = () => {
       const isZero = user.value === 0
       const isPlaceholderName = !!user.name && /new user/i.test(user.name)
       const hasNoIdentity = user.name == null
-      return !(isZero || isPlaceholderName || hasNoIdentity || user.isExpired)
+
+      // THE FIX: Redundant expiration filter removed.
+      // The webSocketReducer is now the single source of truth for removing
+      // expired tiles (> 35s). This hook only handles logical filters.
+      return !(isZero || isPlaceholderName || hasNoIdentity)
     })
   }, [usersWithLiveness])
 

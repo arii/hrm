@@ -63,3 +63,6 @@ export const DEFAULT_WORK_DURATION = 20 // seconds
 export const DEFAULT_REST_DURATION = 10 // seconds
 export const START_COUNTDOWN_DURATION = 5 // seconds
 export const TIMER_INTERVAL = 1000 // ms
+
+// Stale Tile Thresholds
+export const STALE_TILE_REMOVAL_THRESHOLD_MS = 35000

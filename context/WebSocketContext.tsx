@@ -107,25 +107,49 @@ export const WebSocketProvider = ({
   const connectRef = useRef<() => void>(() => {})
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedActions = localStorage.getItem('pendingActions')
-      if (savedActions) {
-        pendingActions.current = JSON.parse(savedActions)
+    if (typeof window === 'undefined') return
+
+    const savedActions = localStorage.getItem('pendingActions')
+    if (savedActions) {
+      pendingActions.current = JSON.parse(savedActions)
+    }
+
+    if (
+      process.env.NODE_ENV !== 'production' ||
+      process.env.NEXT_PUBLIC_TESTING === 'true'
+    ) {
+      ;(
+        window as Window & { __TEST_CONTROLS__?: TestControls }
+      ).__TEST_CONTROLS__ = {
+        dispatch,
+        disconnect: () => {},
+        connect: () => {},
       }
 
-      if (
-        process.env.NODE_ENV !== 'production' ||
-        process.env.NEXT_PUBLIC_TESTING === 'true'
-      ) {
-        ;(
-          window as Window & { __TEST_CONTROLS__?: TestControls }
-        ).__TEST_CONTROLS__ = {
-          dispatch,
-          disconnect: () => {},
-          connect: () => {},
+      // THE FIX: Implement a bridge for E2E tests to inject WebSocket messages
+      // via postMessage. This allows testing in production builds where
+      // __TEST_CONTROLS__ might be disabled or restricted.
+      const handleMessage = (event: MessageEvent) => {
+        const data = event.data
+        // Robust type guard for ServerMessage as recommended in feedback
+        if (typeof data === 'object' && data !== null && 'type' in data) {
+          const message = data as { type: unknown }
+          if (
+            typeof message.type === 'string' &&
+            (message.type === 'HRM_UPDATE' ||
+              message.type === 'TIMER_UPDATE' ||
+              message.type === 'DEVICE_OFFLINE')
+          ) {
+            // Safe to dispatch as ServerMessage now
+            dispatch(data as ServerMessage)
+          }
         }
       }
+
+      window.addEventListener('message', handleMessage)
+      return () => window.removeEventListener('message', handleMessage)
     }
+    return undefined
   }, [dispatch])
 
   // Throttled warning for connection issues

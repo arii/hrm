@@ -6,6 +6,7 @@ import {
   HrmData,
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
+import { STALE_TILE_REMOVAL_THRESHOLD_MS } from '@/utils/constants'
 
 export interface WebSocketState {
   hrmData: HrmData[]
@@ -67,9 +68,14 @@ export const reducer = (
 
       // THE FIX: Immediately filter out any devices that are NOT in the incoming payload.
       // This ensures the client state perfectly mirrors the server's HrmDataStore.
-      const activeHrmData = state.hrmData.filter((existing) =>
-        incomingClients.has(existing.clientId)
-      )
+      // Additionally, filter out any devices that are genuinely stale (> 35s),
+      // as requested in review feedback to make the reducer the single source of truth.
+      const activeHrmData = state.hrmData.filter((existing) => {
+        const isPresent = incomingClients.has(existing.clientId)
+        const lastSeen = existing.updatedAt || existing.lastUpdate || now
+        const isFresh = now - lastSeen < STALE_TILE_REMOVAL_THRESHOLD_MS
+        return isPresent && isFresh
+      })
 
       // Update existing users with new data
       const mergedHrmData = activeHrmData.map((existingUser) => {
