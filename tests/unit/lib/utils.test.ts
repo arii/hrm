@@ -1,5 +1,10 @@
 // tests/unit/lib/utils.test.ts
-import { objectFromEntries, roundTo, formatDuration } from '@/lib/utils'
+import {
+  objectFromEntries,
+  roundTo,
+  formatDuration,
+  formatDate,
+} from '@/lib/utils'
 
 describe('lib/utils', () => {
   describe('objectFromEntries', () => {
@@ -89,6 +94,13 @@ describe('lib/utils', () => {
       expect(formatDuration(60, { unit: 'seconds' })).toBe('00:01:00')
       expect(formatDuration(3599, { unit: 'seconds' })).toBe('00:59:59')
       expect(formatDuration(3600, { unit: 'seconds' })).toBe('01:00:00')
+    })
+  })
+
+  describe('formatDate', () => {
+    it('should format a date into a localized string', () => {
+      const date = new Date('2025-02-13T12:00:00')
+      expect(formatDate(date)).toBe('Feb 13, 2025')
     })
   })
 })

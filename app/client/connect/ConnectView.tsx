@@ -30,8 +30,11 @@ import {
   Radio,
 } from '@mui/material'
 
+// Ensure this imports the UPDATED WorkoutSummary component
+
 interface ConnectViewProps {
-  duration: string
+  workoutDuration: number
+  startTime: number | null
   caloriesBurned: number
   userName: string
   setUserName: (name: string) => void
@@ -75,7 +78,8 @@ interface ConnectViewProps {
 }
 
 export default function ConnectView({
-  duration,
+  workoutDuration,
+  startTime,
   caloriesBurned,
   userName,
   setUserName,
@@ -393,7 +397,14 @@ export default function ConnectView({
         />
 
         {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+          <Box sx={{ mt: 4 }}>
+            <WorkoutSummary
+              workoutDuration={workoutDuration}
+              caloriesBurned={caloriesBurned}
+              userName={userName}
+              date={startTime ? new Date(startTime) : undefined} // Pass Date object
+            />
+          </Box>
         )}
 
         <Typography

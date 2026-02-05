@@ -4,13 +4,28 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import WatchLaterIcon from '@mui/icons-material/WatchLater'
 import WhatshotIcon from '@mui/icons-material/Whatshot'
+import { formatDuration, formatDate } from '@/lib/utils'
+import EventIcon from '@mui/icons-material/Event'
+import PersonIcon from '@mui/icons-material/Person'
 
 interface WorkoutSummaryProps {
-  duration: string
+  workoutDuration: number
   caloriesBurned: number
+  userName: string
+  date?: Date
 }
 
-const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
+const WorkoutSummary = ({
+  workoutDuration,
+  caloriesBurned,
+  userName,
+  date,
+}: WorkoutSummaryProps) => {
+  const formattedDuration = formatDuration(workoutDuration, {
+    format: 'HH:MM:SS',
+    unit: 'seconds',
+  })
+
   return (
     <Paper
       elevation={3}
@@ -27,16 +42,20 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
         </Typography>
         <Box
           sx={{
-            display: 'flex',
-            justifyContent: 'space-around',
-            alignItems: 'center',
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(1, 1fr)',
+              sm: 'repeat(2, 1fr)',
+            },
+            gap: 2,
             textAlign: 'center',
+            alignItems: 'start',
           }}
         >
           <Stack spacing={1} alignItems="center">
             <WatchLaterIcon color="action" sx={{ fontSize: 30 }} />
             <Typography variant="h5" component="p" fontWeight="bold">
-              {duration}
+              {formattedDuration}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Duration
@@ -45,12 +64,32 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
           <Stack spacing={1} alignItems="center">
             <WhatshotIcon color="error" sx={{ fontSize: 30 }} />
             <Typography variant="h5" component="p" fontWeight="bold">
-              {(Number(caloriesBurned) || 0).toFixed(1)}
+              {caloriesBurned.toFixed(1)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Calories Burned
             </Typography>
           </Stack>
+          <Stack spacing={1} alignItems="center">
+            <PersonIcon sx={{ fontSize: 30 }} />
+            <Typography variant="body1" component="p" fontWeight="bold">
+              {userName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              User
+            </Typography>
+          </Stack>
+          {date && (
+            <Stack spacing={1} alignItems="center">
+              <EventIcon sx={{ fontSize: 30 }} />
+              <Typography variant="body1" component="p" fontWeight="bold">
+                {formatDate(date)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Date
+              </Typography>
+            </Stack>
+          )}
         </Box>
       </Stack>
     </Paper>

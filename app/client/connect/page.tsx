@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
@@ -116,6 +115,8 @@ export default function ConnectPage() {
 
   const {
     workoutDuration,
+    caloriesBurned,
+    startTime,
     resetWorkout: resetWorkoutSession,
     hasStarted,
     startWorkout,
@@ -240,11 +241,9 @@ export default function ConnectPage() {
 
   return (
     <ConnectView
-      duration={formatDuration(workoutDuration, {
-        unit: 'seconds',
-        format: 'HH:MM:SS',
-      })}
-      caloriesBurned={calories}
+      workoutDuration={workoutDuration}
+      startTime={startTime}
+      caloriesBurned={caloriesBurned}
       userName={userName}
       setUserName={(name) =>
         setUserSettings((prev) => ({ ...prev, userName: name }))

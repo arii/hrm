@@ -70,3 +70,16 @@ export const formatDuration = (
     .padStart(2, '0')
   return `${h}:${m}:${s}`
 }
+
+/**
+ * Formats a date into a localized string.
+ * @param date The date to format.
+ * @returns The formatted date string.
+ */
+export const formatDate = (date: Date): string => {
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
