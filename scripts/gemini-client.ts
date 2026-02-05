@@ -504,7 +504,7 @@ export async function buildReviewPrompt(
     : 'Initial Review'
 
   // --- Diff Section ---
-  const maxDiffLength = 30000 // Reduced from 60k to preserve more output context
+  const maxDiffLength = 30000 // Reduced from 60k to allocate more token budget for the generation output
   const truncatedDiff =
     diff.length > maxDiffLength
       ? diff.substring(0, diff.lastIndexOf('\n', maxDiffLength)) +
