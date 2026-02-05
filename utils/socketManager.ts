@@ -34,6 +34,10 @@ let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
+// State Management:
+// - hrmDataStore: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
+// - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
+// - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
 const hrmDataStore = new HrmDataStore()
 
 const clientSockets = new Map<string, WebSocket>()
@@ -86,6 +90,9 @@ const getLogMeta = (
   req: IncomingMessage,
   clientId: string
 ): Record<string, unknown> => {
+  // DEV-NOTE: Be mindful of logging sensitive data. In a real-world scenario,
+  // IP addresses and user-agents might be considered PII and should be
+  // handled according to privacy policies. Redacting in production is a safeguard.
   const isProduction = process.env.NODE_ENV === 'production'
 
   const ip = req.socket.remoteAddress

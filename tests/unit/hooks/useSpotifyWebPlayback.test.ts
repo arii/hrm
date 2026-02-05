@@ -79,6 +79,7 @@ describe('useSpotifyWebPlayback', () => {
 
     renderHook(() => useSpotifyWebPlayback())
 
+    // The hook's getOAuthToken is called by the Spotify Player constructor.
     const playerOptions = (window.Spotify.Player as jest.Mock).mock.calls[0][0]
     await playerOptions.getOAuthToken(() => {})
 
