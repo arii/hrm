@@ -181,6 +181,12 @@ const initSocketManager = (
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
 
+      // CRITICAL: Do NOT immediately delete clientData.
+      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
+      // NOTE: In a high-traffic production environment, this could lead to
+      // memory pressure if many clients disconnect and don't reconnect.
+      // A more robust solution might involve a separate cleanup process
+      // or a maximum number of inactive sessions.
       const timer = setTimeout(() => {
         if (clientSockets.get(clientId) === extWs) {
           cleanupClientSession(clientId)
@@ -202,6 +208,9 @@ const initSocketManager = (
   })
 }
 
+/**
+ * Resets the socket manager state. Use this for testing purposes only.
+ */
 export const resetSocketManager = () => {
   hrmDataStore.clear()
   clientSessionState.clear()
@@ -295,11 +304,13 @@ const handleIncomingMessage = (
           sessionState.lastUpdate = now
           let finalCalories = sessionState.accumulatedCalories
 
+          // Use the client-provided calories directly
           if (typeof hrmMessage.data.calories === 'number') {
             const clientCalories = hrmMessage.data.calories
             const serverCalories = sessionState.accumulatedCalories
             const diff = Math.abs(clientCalories - serverCalories)
 
+            // Sanity check to prevent anomalous calorie values from the client.
             const isAnomalousJump =
               diff > MAX_CALORIE_JUMP_PER_UPDATE && serverCalories > 0
             const isAnomalousInitialValue =
@@ -315,10 +326,10 @@ const handleIncomingMessage = (
                 },
                 'Anomalous calorie value detected. Using last known server value.'
               )
-              finalCalories = serverCalories
+              finalCalories = serverCalories // Reject the client's value
             } else {
               sessionState.accumulatedCalories = clientCalories
-              finalCalories = clientCalories
+              finalCalories = clientCalories // Accept the client's value
             }
           }
 
