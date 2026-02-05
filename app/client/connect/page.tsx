@@ -140,7 +140,8 @@ export default function ConnectPage() {
   const handleEndWorkout = useCallback(() => {
     endWorkout()
     endPersistentWorkout()
-  }, [endWorkout, endPersistentWorkout])
+    resetCalculator() // Reset calories on workout end
+  }, [endWorkout, endPersistentWorkout, resetCalculator])
 
   const handleResetWorkout = useCallback(() => {
     resetWorkoutSession()
