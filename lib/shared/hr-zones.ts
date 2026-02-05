@@ -35,6 +35,39 @@ export const calculateMaxHr = (age?: number | string | null): number => {
   return 220 - ageNum
 }
 
+export const HR_ZONE_VISUAL_CONFIG = {
+  5: { color: '#ff0000', label: 'Peak' },
+  4: { color: '#ff8000', label: 'Cardio' },
+  3: { color: '#ffff00', label: 'Aerobic' },
+  2: { color: '#00ff00', label: 'Warm Up' },
+  1: { color: '#00ffff', label: 'Recovery' },
+  0: { color: '#cccccc', label: 'Idle' },
+} as const
+
+/**
+ * Calculates the percentage of max HR and the corresponding zone (0-5).
+ * @param currentHr - Current heart rate in BPM.
+ * @param age - User's age.
+ * @returns An object containing the calculated percentage and zone.
+ */
+export const calculateHrZoneInfo = (
+  currentHr: number,
+  age: number
+): { percentage: number; zone: number } => {
+  const maxHr = calculateMaxHr(age)
+  const percentage =
+    currentHr > 0 ? Math.min(100, Math.round((currentHr / maxHr) * 100)) : 0
+
+  let zone = 0
+  if (percentage >= 90) zone = 5
+  else if (percentage >= 80) zone = 4
+  else if (percentage >= 70) zone = 3
+  else if (percentage >= 60) zone = 2
+  else if (percentage >= 50) zone = 1
+
+  return { percentage, zone }
+}
+
 // Define a type for the return value for clarity
 export type UserHrZones = {
   warmUp: { min: number }

@@ -2,8 +2,7 @@
 'use client'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
-import { getHrZoneProps } from '@/utils/visualization'
+import { calculateHrZoneInfo } from '@/lib/shared/hr-zones'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useMemo } from 'react'
@@ -20,9 +19,10 @@ const HrmTiles = () => {
         return !(isZero || isPlaceholderName || hasNoIdentity)
       })
       .map((user) => {
-        const hrZoneProps = getHrZoneProps(
+        // Standardize fallback logic to use the same formula/mapping
+        const fallbackZoneData = calculateHrZoneInfo(
           user.value,
-          user.maxHr || MAX_HR_DEFAULT
+          user.age || 30 // Default age if not provided
         )
 
         // Find the alert specific to this HR Monitor's clientId
@@ -41,8 +41,8 @@ const HrmTiles = () => {
             <HrTile
               name={user.name || ''}
               bpm={user.value}
-              percentMax={user.percentage ?? hrZoneProps.percentage}
-              zone={user.zone}
+              percentMax={user.percentage ?? fallbackZoneData.percentage}
+              zone={user.zone ?? fallbackZoneData.zone}
               calories={user.calories || 0} // Pass calories
               isAlerting={!!matchingAlert}
               // Conditionally add alertMessage to avoid passing `undefined`

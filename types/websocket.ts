@@ -189,6 +189,9 @@ import { z } from 'zod'
 
 export const IncomingHrmDataSchema = z.object({
   value: z.number().nullable(),
+  maxHr: z.number().optional(),
+  name: z.string().optional(),
+  age: z.number().optional(),
   calories: z.number().optional(),
   percentage: z.number().optional(),
   zone: z.number().optional(),
