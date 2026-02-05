@@ -4,7 +4,20 @@
 import { renderHook, act } from '@testing-library/react'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 
+jest.mock('@/lib/workout-session-storage', () => ({
+  workoutSessionStorage: {
+    saveSession: jest.fn().mockResolvedValue(undefined),
+    getSession: jest.fn().mockResolvedValue(null),
+    deleteSession: jest.fn().mockResolvedValue(undefined),
+  },
+}))
+
 describe('useWorkoutSession calorie logic', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    jest.clearAllMocks()
+  })
+
   it('should initialize with zero calories burned', () => {
     const { result } = renderHook(() =>
       useWorkoutSession({ isConnected: false, totalCalories: 0 })
@@ -67,7 +80,7 @@ describe('useWorkoutSession calorie logic', () => {
     expect(result.current.caloriesBurned).toBe(0)
   })
 
-  it('should preserve the last calculated calories when the workout ends', () => {
+  it('should preserve the last calculated calories when the workout ends', async () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
         useWorkoutSession({ isConnected: true, totalCalories }),
@@ -81,8 +94,8 @@ describe('useWorkoutSession calorie logic', () => {
     rerender({ totalCalories: 250 })
     expect(result.current.caloriesBurned).toBe(50)
 
-    act(() => {
-      result.current.endWorkout()
+    await act(async () => {
+      await result.current.endWorkout()
     })
 
     expect(result.current.caloriesBurned).toBe(50)
@@ -90,7 +103,7 @@ describe('useWorkoutSession calorie logic', () => {
     expect(result.current.caloriesBurned).toBe(50)
   })
 
-  it('should reset caloriesBurned to zero on resetWorkout', () => {
+  it('should reset caloriesBurned to zero on resetWorkout', async () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
         useWorkoutSession({ isConnected: true, totalCalories }),
@@ -104,8 +117,8 @@ describe('useWorkoutSession calorie logic', () => {
     rerender({ totalCalories: 320 })
     expect(result.current.caloriesBurned).toBe(20)
 
-    act(() => {
-      result.current.resetWorkout()
+    await act(async () => {
+      await result.current.resetWorkout()
     })
 
     expect(result.current.caloriesBurned).toBe(0)

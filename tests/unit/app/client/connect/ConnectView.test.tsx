@@ -7,8 +7,9 @@ import '@testing-library/jest-dom'
 
 describe('ConnectView', () => {
   const mockProps = {
-    duration: '00:00',
+    workoutDuration: 0,
     caloriesBurned: 0,
+    startTime: null,
     userName: 'Test User',
     setUserName: jest.fn(),
     userAge: '30',
@@ -42,13 +43,14 @@ describe('ConnectView', () => {
     onReset: jest.fn(),
     workoutStatus: 'idle' as const,
     onStartWorkout: jest.fn(),
+    onPauseWorkout: jest.fn(),
     onEndWorkout: jest.fn(),
   }
 
   it('renders the reset button when bluetooth is not supported', () => {
     render(<ConnectView {...mockProps} isSupported={false} />)
     const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
+      name: /Forget Device & Reset All/i,
     })
     expect(resetButton).toBeInTheDocument()
   })
@@ -56,7 +58,7 @@ describe('ConnectView', () => {
   it('renders the reset button as enabled by default', () => {
     render(<ConnectView {...mockProps} />)
     const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
+      name: /Forget Device & Reset All/i,
     })
     expect(resetButton).toBeEnabled()
   })
@@ -64,7 +66,7 @@ describe('ConnectView', () => {
   it('calls onForgetDevice and onReset when the reset button is clicked', async () => {
     render(<ConnectView {...mockProps} />)
     const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
+      name: /Forget Device & Reset All/i,
     })
     fireEvent.click(resetButton)
 
@@ -72,5 +74,14 @@ describe('ConnectView', () => {
       expect(mockProps.onForgetDevice).toHaveBeenCalled()
       expect(mockProps.onReset).toHaveBeenCalled()
     })
+  })
+
+  it('calls onReset when the clear session button is clicked', () => {
+    render(<ConnectView {...mockProps} hasStarted={true} />)
+    const clearButton = screen.getByRole('button', {
+      name: /Clear Session Data/i,
+    })
+    fireEvent.click(clearButton)
+    expect(mockProps.onReset).toHaveBeenCalled()
   })
 })

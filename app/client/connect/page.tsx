@@ -1,12 +1,11 @@
+// app/client/connect/page.tsx
 'use client'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
@@ -112,17 +111,21 @@ export default function ConnectPage() {
 
   const {
     workoutDuration,
+    startTime, // Destructure persistent start time
     resetWorkout: resetWorkoutSession,
     hasStarted,
     startWorkout,
     pauseWorkout,
     endWorkout,
+    addHrData,
     workoutStatus,
   } = useWorkoutSession({
-    isConnected: false, // This will be updated by the useBluetoothHRM hook
     totalCalories: calories,
+    userAge: userAge || 30,
+    userWeight: userWeight || 70,
   })
 
+<<<<<<< HEAD
   const {
     addHrData,
     startWorkout: startPersistentWorkout,
@@ -130,24 +133,30 @@ export default function ConnectPage() {
     resetWorkout: resetPersistentWorkout,
   } = useWorkoutSessionManager()
 
+=======
+>>>>>>> feat(medium): Persist Workout Session Across Page Navigation
   const handleStartWorkout = useCallback(() => {
     startWorkout()
-    if (userAge && userWeight) {
-      startPersistentWorkout(userAge, userWeight)
-    }
-  }, [startWorkout, startPersistentWorkout, userAge, userWeight])
+  }, [startWorkout])
+
+  const handlePauseWorkout = useCallback(() => {
+    pauseWorkout()
+  }, [pauseWorkout])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
+<<<<<<< HEAD
     endPersistentWorkout()
     resetCalculator() // Reset calories on workout end
   }, [endWorkout, endPersistentWorkout, resetCalculator])
+=======
+  }, [endWorkout])
+>>>>>>> feat(medium): Persist Workout Session Across Page Navigation
 
   const handleResetWorkout = useCallback(() => {
     resetWorkoutSession()
     resetCalculator()
-    resetPersistentWorkout()
-  }, [resetWorkoutSession, resetCalculator, resetPersistentWorkout])
+  }, [resetWorkoutSession, resetCalculator])
 
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
@@ -156,6 +165,7 @@ export default function ConnectPage() {
         'handleHeartRateUpdate called, updating local state'
       )
       setCurrentHR(heartRate)
+<<<<<<< HEAD
 
       if (workoutStatus === 'running') {
         processHeartRate(heartRate)
@@ -164,10 +174,18 @@ export default function ConnectPage() {
           time: Date.now(),
           hr: heartRate,
         })
+=======
+      if (workoutStatus === 'running') {
+        processHeartRate(heartRate)
+
+        // Persist individual HR data points to IndexedDB
+        addHrData(heartRate)
+>>>>>>> feat(medium): Persist Workout Session Across Page Navigation
       }
     },
     [processHeartRate, workoutStatus, setCurrentHR, addHrData]
   )
+
   const {
     connectAndStream,
     autoConnect,
@@ -184,16 +202,27 @@ export default function ConnectPage() {
     userName,
     userAge: userAge || 0,
     onHeartRateUpdate: handleHeartRateUpdate,
-    onConnect: handleStartWorkout, // Use the wrapped function
+    onConnect: handleStartWorkout,
   })
 
+  // Auto-pause workout if device disconnects
   useEffect(() => {
+    if (!isConnected && workoutStatus === 'running') {
+      handlePauseWorkout()
+    }
+  }, [isConnected, workoutStatus, handlePauseWorkout])
+
+  useEffect(() => {
+<<<<<<< HEAD
     if (
       !isConnected &&
       isSupported &&
       connectionStatus === 'Connected' &&
       !connectionAttempted
     ) {
+=======
+    if (!isConnected && isSupported && connectionStatus === 'Connected') {
+>>>>>>> feat(medium): Persist Workout Session Across Page Navigation
       logger.info('WebSocket ready, attempting auto-connect...')
       const timeout = setTimeout(() => {
         autoConnect().catch(() => {
@@ -236,10 +265,8 @@ export default function ConnectPage() {
 
   return (
     <ConnectView
-      duration={formatDuration(workoutDuration, {
-        unit: 'seconds',
-        format: 'HH:MM:SS',
-      })}
+      workoutDuration={workoutDuration} // Pass raw number
+      startTime={startTime} // Pass start time
       caloriesBurned={calories}
       userName={userName}
       setUserName={(name) =>
@@ -283,7 +310,7 @@ export default function ConnectPage() {
       onReset={handleResetWorkout}
       workoutStatus={workoutStatus}
       onStartWorkout={handleStartWorkout}
-      onPauseWorkout={pauseWorkout}
+      onPauseWorkout={handlePauseWorkout}
       onEndWorkout={handleEndWorkout}
     />
   )
