@@ -3,8 +3,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useError } from '@/context/ErrorContext'
 import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
+import {
+  SPOTIFY_AUTH_LOOP_GUARD_KEY,
+  SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT,
+} from '@/constants/spotify'
 import { fetchWithRetry, AppError } from '@/utils/network'
 import { signOut } from 'next-auth/react'
+import { redirectTo } from '@/utils/redirect'
 
 interface SpotifyDeviceEvent {
   device_id: string
@@ -66,8 +71,41 @@ const useSpotifyWebPlayback = () => {
     async (cb: (token: string) => void) => {
       try {
         const response = await fetchWithRetry(API_SPOTIFY_ACCESS_TOKEN)
-        const { accessToken } = await response.json()
 
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Prevent infinite sign-out loop: check if we failed recently
+            const lastAuthFail = sessionStorage.getItem(
+              SPOTIFY_AUTH_LOOP_GUARD_KEY
+            )
+            const now = Date.now()
+
+            if (
+              lastAuthFail &&
+              now - parseInt(lastAuthFail) < SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT
+            ) {
+              console.error(
+                `[Spotify] Auth loop detected (${
+                  SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT / 1000
+                }s threshold); aborting sign-out to prevent thrashing.`
+              )
+              return
+            }
+
+            sessionStorage.setItem(SPOTIFY_AUTH_LOOP_GUARD_KEY, now.toString())
+            addError('Spotify session expired. Please log in again.', {
+              persist: true,
+            })
+
+            await signOut({ redirect: false })
+            redirectTo('/?error=SpotifyAuthFailed') // Break loop: land on home with error flag
+            return
+          }
+          // Throw for other errors to trigger catch block
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const { accessToken } = await response.json()
         if (!accessToken) {
           throw new Error('Access token was not found in the response.')
         }
@@ -77,31 +115,9 @@ const useSpotifyWebPlayback = () => {
         console.error(
           `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
         )
-
-        // If the error is a 401 Unauthorized, it likely means the session is
-        // invalid or expired. The Spotify SDK will cache this failing token
-        // and stop asking for a new one. To force a re-auth flow, we must
-        // sign the user out, which will clear the session and prompt a new login.
-        if (appError.code === 'HTTP_ERROR_401') {
-          console.warn(
-            '[Spotify Web Playback] Received 401, signing out to force re-authentication.'
-          )
-          addError('Spotify session expired. Please log in again.', {
-            persist: true,
-          })
-          // Note: This is a redundant sign-out trigger. The `useSpotifyAuth`
-          // hook also handles the `RefreshAccessTokenError` and initiates a
-          // sign-out. While this is a safeguard, a future refactor could
-          // streamline this to rely on a single source of truth for session
-          // validity.
-          await signOut()
-        } else {
-          // For other errors, show a non-persistent error message to the user.
-          addError(`Failed to authenticate with Spotify: ${appError.message}`, {
-            persist: false,
-          })
-        }
-        // The SDK might retry on its own for certain errors.
+        addError(`Failed to authenticate with Spotify: ${appError.message}`, {
+          persist: false,
+        })
       }
     },
     [addError]

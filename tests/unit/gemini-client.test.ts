@@ -10,7 +10,7 @@ describe('JsonProcessor', () => {
     const jsonString = '{"key": "value", "number": 123}'
     const result = processor.process(jsonString)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({ key: 'value', number: 123, labels: [] })
+    expect(result.data).toEqual({ key: 'value', number: 123 })
   })
 
   it('should extract and parse a JSON block from markdown', () => {
@@ -18,7 +18,7 @@ describe('JsonProcessor', () => {
       'Some text before\n```json\n{"key": "value"}\n```\nSome text after'
     const result = processor.process(markdownString)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({ key: 'value', labels: [] })
+    expect(result.data).toEqual({ key: 'value' })
   })
 
   it('should return an error for invalid JSON', () => {
