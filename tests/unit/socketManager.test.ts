@@ -75,7 +75,8 @@ class MockWebSocket extends EventEmitter {
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
     const wss = new EventEmitter() as unknown as WebSocketServer
-    wss.clients = new Set<MockWebSocket>() as unknown as Set<
+    // Correctly type clients as Set<ExtWebSocket> to avoid casts in tests
+    wss.clients = new Set<ExtWebSocket>() as unknown as Set<
       import('ws').WebSocket
     >
     // Spy on methods instead of manual wrapping
