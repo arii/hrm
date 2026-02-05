@@ -7,26 +7,38 @@ import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useMemo } from 'react'
-import { STALE_TILE_DISPLAY_THRESHOLD_MS } from '@/utils/constants'
+import {
+  STALE_TILE_DISPLAY_THRESHOLD_MS,
+  STALE_TILE_REMOVAL_THRESHOLD_MS,
+} from '@/utils/constants'
+import { useNow } from '@/hooks/useNow'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const now = useNow()
 
   const filteredTiles = useMemo(() => {
-    const now = Date.now()
     return hrmData
       .filter((user) => {
         const isZero = user.value === 0
         const hasNoIdentity = user.name == null
-        // Reducer already filters stale tiles, no need to check here
-        return !(isZero || hasNoIdentity)
+
+        // Handle undefined lastUpdated
+        // Prioritize lastUpdated, then updatedAt, then assume fresh (now) if both missing (e.g. initial load)
+        const lastUpdated = user.lastUpdated ?? user.updatedAt ?? now
+        const isStale = now - lastUpdated > STALE_TILE_REMOVAL_THRESHOLD_MS
+
+        // Reducer handles stale tile removal, but we double check here for UI responsiveness
+        return !(isZero || hasNoIdentity || isStale)
       })
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
           user.maxHr || MAX_HR_DEFAULT
         )
-        const timeSinceUpdate = now - user.lastUpdated
+        // Recalculate lastUpdated for display logic
+        const lastUpdated = user.lastUpdated ?? user.updatedAt ?? now
+        const timeSinceUpdate = now - lastUpdated
         const isDataStale = timeSinceUpdate > STALE_TILE_DISPLAY_THRESHOLD_MS
 
         // Find the alert specific to this HR Monitor's clientId
@@ -56,7 +68,7 @@ const HrmTiles = () => {
           </Grid>
         )
       })
-  }, [hrmData, activeAlerts])
+  }, [hrmData, activeAlerts, now])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
