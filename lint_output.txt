@@ -1,0 +1,22 @@
+
+> hrm@0.30.0 lint /app
+> eslint app/ components/ constants/ context/ hooks/ lib/ services/ tests/ types/ utils/ server.ts proxy.ts --cache
+
+
+/app/components/HrmTiles.tsx
+  16:17  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/app/components/HrmTiles.tsx:16:17
+  14 |
+  15 |   const filteredTiles = useMemo(() => {
+> 16 |     const now = Date.now()
+     |                 ^^^^^^^^^^ Cannot call impure function
+  17 |     return hrmData
+  18 |       .filter((user) => {
+  19 |         const isZero = user.value === 0  react-hooks/purity
+
+✖ 1 problem (1 error, 0 warnings)
+
+ ELIFECYCLE  Command failed with exit code 1.

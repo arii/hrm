@@ -6,27 +6,42 @@ import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
-import { memo, useMemo } from 'react'
-import { STALE_TILE_DISPLAY_THRESHOLD_MS } from '@/utils/constants'
+import { memo, useMemo, useState, useEffect } from 'react'
+import {
+  STALE_TILE_DISPLAY_THRESHOLD_MS,
+  STALE_TILE_REMOVAL_THRESHOLD_MS,
+} from '@/utils/constants'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Date.now())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   const filteredTiles = useMemo(() => {
-    const now = Date.now()
     return hrmData
       .filter((user) => {
         const isZero = user.value === 0
         const hasNoIdentity = user.name == null
-        // Reducer already filters stale tiles, no need to check here
-        return !(isZero || hasNoIdentity)
+
+        // Filter out stale users based on removal threshold
+        const timeSinceUpdate = now - (user.lastUpdated || 0)
+        const isStale = timeSinceUpdate > STALE_TILE_REMOVAL_THRESHOLD_MS
+
+        // Reducer already filters stale tiles, but we double check here for reactivity
+        return !(isZero || hasNoIdentity || isStale)
       })
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
           user.maxHr || MAX_HR_DEFAULT
         )
-        const timeSinceUpdate = now - user.lastUpdated
+        const timeSinceUpdate = now - (user.lastUpdated || 0)
         const isDataStale = timeSinceUpdate > STALE_TILE_DISPLAY_THRESHOLD_MS
 
         // Find the alert specific to this HR Monitor's clientId
@@ -56,7 +71,7 @@ const HrmTiles = () => {
           </Grid>
         )
       })
-  }, [hrmData, activeAlerts])
+  }, [hrmData, activeAlerts, now])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||

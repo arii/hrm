@@ -1,0 +1,1213 @@
+
+> hrm@0.30.0 test:unit /app
+> cross-env NEXTAUTH_SECRET=test-secret-unit jest tests/unit --coverage
+
+PASS tests/unit/components/HrmTiles.test.tsx
+PASS tests/unit/services/spotifyTokenManager.test.ts
+  ● Console
+
+    console.error
+      Failed to write token file safely: Error: Disk full
+
+      18 |     fs.renameSync(tempPath, filePath) // Atomic rename
+      19 |   } catch (error) {
+    > 20 |     console.error(`Failed to write token file safely: ${error}`)
+         |             ^
+      21 |     // Clean up temp file if it exists
+      22 |     if (fs.existsSync(tempPath)) {
+      23 |       fs.unlinkSync(tempPath)
+
+      at error (services/spotifyTokenManager.ts:20:13)
+      at SpotifyTokenManager.writeTokenFileSafe [as setAccessToken] (services/spotifyTokenManager.ts:67:7)
+      at Object.<anonymous> (tests/unit/services/spotifyTokenManager.test.ts:269:18)
+
+PASS tests/unit/components/Spotify/PlaylistSelector.test.tsx
+PASS tests/unit/components/shared/VolumeSlider.test.tsx (7.222 s)
+PASS tests/unit/socketManager.test.ts
+PASS tests/unit/app/client/connect/page.test.tsx
+  ● Console
+
+    console.info
+      WebSocket ready, attempting auto-connect...
+
+      at Object.info (utils/logger.ts:17:55)
+
+    console.info
+      WebSocket ready, attempting auto-connect...
+
+      at Object.info (utils/logger.ts:17:55)
+
+    console.info
+      WebSocket ready, attempting auto-connect...
+
+      at Object.info (utils/logger.ts:17:55)
+
+    console.info
+      WebSocket ready, attempting auto-connect...
+
+      at Object.info (utils/logger.ts:17:55)
+
+    console.info
+      WebSocket ready, attempting auto-connect...
+
+      at Object.info (utils/logger.ts:17:55)
+
+    console.info
+      WebSocket ready, attempting auto-connect...
+
+      at Object.info (utils/logger.ts:17:55)
+
+PASS tests/unit/spotifyPolling.test.ts
+PASS tests/unit/app/client/control/components/SpotifyControls.test.tsx (8.208 s)
+PASS tests/unit/hooks/useBluetoothHRM.test.ts
+PASS tests/unit/components/SpotifyDisplay.test.tsx
+  ● Console
+
+    console.log
+      [AuthButton] Clicking login for Spotify, calling signIn()...
+
+      at handleLogin (components/AuthButton.tsx:19:15)
+
+    console.log
+      [AuthButton] signIn() result for Spotify: undefined
+
+      at handleLogin (components/AuthButton.tsx:26:15)
+
+PASS tests/unit/hooks/useFetchWithRetry.test.ts
+PASS tests/unit/components/Spotify/CurrentSpotifyItemDisplay.test.tsx
+PASS tests/unit/app/client/control/components/TimerControls.test.tsx
+  ● Console
+
+    console.warn
+      [TimerControls] Optimistic action "START" timed out. Reverting UI.
+
+      84 |     if (optimisticAction) {
+      85 |       const timer = setTimeout(() => {
+    > 86 |         console.warn(
+         |                 ^
+      87 |           `[TimerControls] Optimistic action "${optimisticAction}" timed out. Reverting UI.`
+      88 |         )
+      89 |         setOptimisticAction(null)
+
+      at app/client/control/components/TimerControls.tsx:86:17
+      at callTimer (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:806:24)
+      at doTickInner (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1413:29)
+      at doTick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1494:20)
+      at Object.tick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1502:20)
+      at FakeTimers.advanceTimersByTime (node_modules/.pnpm/@jest+fake-timers@30.2.0/node_modules/@jest/fake-timers/build/index.js:576:19)
+      at tests/unit/app/client/control/components/TimerControls.test.tsx:170:12
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:47:24
+      at process.env.NODE_ENV.exports.act (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:814:22)
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at Object.<anonymous> (tests/unit/app/client/control/components/TimerControls.test.tsx:169:8)
+
+    console.warn
+      [TimerControls] Optimistic action "STOP" timed out. Reverting UI.
+
+      84 |     if (optimisticAction) {
+      85 |       const timer = setTimeout(() => {
+    > 86 |         console.warn(
+         |                 ^
+      87 |           `[TimerControls] Optimistic action "${optimisticAction}" timed out. Reverting UI.`
+      88 |         )
+      89 |         setOptimisticAction(null)
+
+      at app/client/control/components/TimerControls.tsx:86:17
+      at callTimer (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:806:24)
+      at doTickInner (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1413:29)
+      at doTick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1494:20)
+      at Object.tick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1502:20)
+      at FakeTimers.advanceTimersByTime (node_modules/.pnpm/@jest+fake-timers@30.2.0/node_modules/@jest/fake-timers/build/index.js:576:19)
+      at tests/unit/app/client/control/components/TimerControls.test.tsx:205:12
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:47:24
+      at process.env.NODE_ENV.exports.act (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:814:22)
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at Object.<anonymous> (tests/unit/app/client/control/components/TimerControls.test.tsx:204:8)
+
+PASS tests/unit/components/WorkoutTableViewer.test.tsx
+PASS tests/unit/components/TimerDisplay.test.tsx
+PASS tests/unit/app/client/connect/ConnectView.test.tsx
+PASS tests/unit/app/page.test.tsx
+PASS tests/unit/components/RefreshIconButton.test.tsx
+PASS tests/unit/app/client/mock/page.test.tsx
+  ● Console
+
+    console.error
+      An update to ForwardRef(LinkComponent) inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      73 |
+      74 |     // Advance time to trigger the interval
+    > 75 |     jest.advanceTimersByTime(2000)
+         |          ^
+      76 |
+      77 |     // The mock implementation fluctuates the HR, so we check that it was called again
+      78 |     // The exact value is random, so we just check the type
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setVisible (node_modules/.pnpm/next@16.1.5_@babel+core@7.28.6_@playwright+test@1.57.0_babel-plugin-macros@3.1.0_babel-plugin_434x2tdxa4dcsjzmfdy2wmpfvy/node_modules/next/src/client/use-intersection.tsx:125:56)
+      at cb (node_modules/.pnpm/next@16.1.5_@babel+core@7.28.6_@playwright+test@1.57.0_babel-plugin-macros@3.1.0_babel-plugin_434x2tdxa4dcsjzmfdy2wmpfvy/node_modules/next/src/client/request-idle-callback.ts:8:7)
+      at callTimer (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:806:24)
+      at doTickInner (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1413:29)
+      at doTick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1494:20)
+      at Object.tick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1502:20)
+      at FakeTimers.advanceTimersByTime (node_modules/.pnpm/@jest+fake-timers@30.2.0/node_modules/@jest/fake-timers/build/index.js:576:19)
+      at Object.<anonymous> (tests/unit/app/client/mock/page.test.tsx:75:10)
+
+    console.error
+      An update to ForwardRef(LinkComponent) inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      73 |
+      74 |     // Advance time to trigger the interval
+    > 75 |     jest.advanceTimersByTime(2000)
+         |          ^
+      76 |
+      77 |     // The mock implementation fluctuates the HR, so we check that it was called again
+      78 |     // The exact value is random, so we just check the type
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setVisible (node_modules/.pnpm/next@16.1.5_@babel+core@7.28.6_@playwright+test@1.57.0_babel-plugin-macros@3.1.0_babel-plugin_434x2tdxa4dcsjzmfdy2wmpfvy/node_modules/next/src/client/use-intersection.tsx:125:56)
+      at cb (node_modules/.pnpm/next@16.1.5_@babel+core@7.28.6_@playwright+test@1.57.0_babel-plugin-macros@3.1.0_babel-plugin_434x2tdxa4dcsjzmfdy2wmpfvy/node_modules/next/src/client/request-idle-callback.ts:8:7)
+      at callTimer (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:806:24)
+      at doTickInner (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1413:29)
+      at doTick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1494:20)
+      at Object.tick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1502:20)
+      at FakeTimers.advanceTimersByTime (node_modules/.pnpm/@jest+fake-timers@30.2.0/node_modules/@jest/fake-timers/build/index.js:576:19)
+      at Object.<anonymous> (tests/unit/app/client/mock/page.test.tsx:75:10)
+
+    console.error
+      An update to ForwardRef(LinkComponent) inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      73 |
+      74 |     // Advance time to trigger the interval
+    > 75 |     jest.advanceTimersByTime(2000)
+         |          ^
+      76 |
+      77 |     // The mock implementation fluctuates the HR, so we check that it was called again
+      78 |     // The exact value is random, so we just check the type
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at setVisible (node_modules/.pnpm/next@16.1.5_@babel+core@7.28.6_@playwright+test@1.57.0_babel-plugin-macros@3.1.0_babel-plugin_434x2tdxa4dcsjzmfdy2wmpfvy/node_modules/next/src/client/use-intersection.tsx:125:56)
+      at cb (node_modules/.pnpm/next@16.1.5_@babel+core@7.28.6_@playwright+test@1.57.0_babel-plugin-macros@3.1.0_babel-plugin_434x2tdxa4dcsjzmfdy2wmpfvy/node_modules/next/src/client/request-idle-callback.ts:8:7)
+      at callTimer (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:806:24)
+      at doTickInner (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1413:29)
+      at doTick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1494:20)
+      at Object.tick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1502:20)
+      at FakeTimers.advanceTimersByTime (node_modules/.pnpm/@jest+fake-timers@30.2.0/node_modules/@jest/fake-timers/build/index.js:576:19)
+      at Object.<anonymous> (tests/unit/app/client/mock/page.test.tsx:75:10)
+
+    console.error
+      An update to MockPage inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      86 |         hrValue + Math.floor(Math.random() * 5) - 2
+      87 |       )
+    > 88 |       setHrValue(fluctuatedHr)
+         |       ^
+      89 |       sendHrPacket(fluctuatedHr)
+      90 |     }, 2000)
+      91 |     setIntervalId(id)
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at app/client/mock/page.tsx:88:7
+      at callTimer (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:806:24)
+      at doTickInner (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1413:29)
+      at doTick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1494:20)
+      at Object.tick (node_modules/.pnpm/@sinonjs+fake-timers@13.0.5/node_modules/@sinonjs/fake-timers/src/fake-timers-src.js:1502:20)
+      at FakeTimers.advanceTimersByTime (node_modules/.pnpm/@jest+fake-timers@30.2.0/node_modules/@jest/fake-timers/build/index.js:576:19)
+      at Object.<anonymous> (tests/unit/app/client/mock/page.test.tsx:75:10)
+
+PASS tests/unit/services.test.ts
+PASS tests/unit/components/ExperimentalAnalyticsPage.test.tsx
+  ● Console
+
+    console.error
+      An update to ExperimentalAnalyticsPage inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      203 |         dispatch({ type: 'SET_SESSION', payload: incompleteSession })
+      204 |       }
+    > 205 |       setIsInitialized(true)
+          |       ^
+      206 |     }
+      207 |
+      208 |     if (!isInitialized) {
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at recoverSession (hooks/useWorkoutSessionManager.ts:205:7)
+
+    console.error
+      An update to ExperimentalAnalyticsPage inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      203 |         dispatch({ type: 'SET_SESSION', payload: incompleteSession })
+      204 |       }
+    > 205 |       setIsInitialized(true)
+          |       ^
+      206 |     }
+      207 |
+      208 |     if (!isInitialized) {
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at recoverSession (hooks/useWorkoutSessionManager.ts:205:7)
+
+PASS tests/unit/components/GoogleDocViewer.test.tsx
+PASS tests/unit/components/TimerControls.test.tsx
+PASS tests/unit/context/LoadingContext.test.tsx
+PASS tests/unit/app/api/spotify/playlists/[playlistId]/tracks/route.test.ts
+PASS tests/unit/app/api/spotify/playlists/[playlistId]/route.test.ts
+PASS tests/unit/services/genericTimer.test.ts
+PASS tests/unit/app/client/control/ControlPanel.test.tsx
+  ● Console
+
+    console.log
+      [ControlPanel] Registering as controller
+
+      at app/client/control/ControlPanel.tsx:34:15
+
+PASS tests/unit/components/Playlist/PlaylistTracksDisplay.test.tsx
+  ● Console
+
+    console.error
+      An update to PlaylistTracksDisplay inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      60 |         setLoading(false)
+      61 |       } catch (err) {
+    > 62 |         setError(
+         |         ^
+      63 |           err instanceof Error ? err.message : 'An unknown error occurred'
+      64 |         )
+      65 |         setLoading(false)
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at components/Playlist/PlaylistTracksDisplay.tsx:62:9
+
+    console.error
+      An update to PlaylistTracksDisplay inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      63 |           err instanceof Error ? err.message : 'An unknown error occurred'
+      64 |         )
+    > 65 |         setLoading(false)
+         |         ^
+      66 |       }
+      67 |     },
+      68 |     [playlistId]
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at components/Playlist/PlaylistTracksDisplay.tsx:65:9
+
+    console.error
+      An update to PlaylistTracksDisplay inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      60 |         setLoading(false)
+      61 |       } catch (err) {
+    > 62 |         setError(
+         |         ^
+      63 |           err instanceof Error ? err.message : 'An unknown error occurred'
+      64 |         )
+      65 |         setLoading(false)
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at components/Playlist/PlaylistTracksDisplay.tsx:62:9
+
+    console.error
+      An update to PlaylistTracksDisplay inside a test was not wrapped in act(...).
+
+      When testing, code that causes React state updates should be wrapped into act(...):
+
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+      63 |           err instanceof Error ? err.message : 'An unknown error occurred'
+      64 |         )
+    > 65 |         setLoading(false)
+         |         ^
+      66 |       }
+      67 |     },
+      68 |     [playlistId]
+
+      at node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18758:19
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18757:9)
+      at scheduleUpdateOnFiber (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16409:11)
+      at dispatchSetStateInternal (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9170:13)
+      at dispatchSetState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:9127:7)
+      at components/Playlist/PlaylistTracksDisplay.tsx:65:9
+
+PASS tests/unit/app/api/workout/route.test.ts
+  ● Console
+
+    console.warn
+      { docId: 'test-doc-id', status: 404 } Google Doc not found. Ensure the document is publicly accessible.
+
+      16 |   debug: (msg: unknown, ...args: unknown[]) => console.log(msg, ...args),
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+    > 18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+         |                                                       ^
+      19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+      20 |   child: function () {
+      21 |     return this
+
+      at Object.warn (utils/logger.ts:18:55)
+      at GET (app/api/workout/route.ts:28:16)
+      at Object.<anonymous> (tests/unit/app/api/workout/route.test.ts:55:26)
+
+    console.warn
+      { docId: 'test-doc-id', status: 503 } Google Docs service temporarily unavailable.
+
+      16 |   debug: (msg: unknown, ...args: unknown[]) => console.log(msg, ...args),
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+    > 18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+         |                                                       ^
+      19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+      20 |   child: function () {
+      21 |     return this
+
+      at Object.warn (utils/logger.ts:18:55)
+      at GET (app/api/workout/route.ts:42:16)
+      at Object.<anonymous> (tests/unit/app/api/workout/route.test.ts:70:26)
+
+PASS tests/unit/app/client/experimental/components/HeartRateTimeSeries.test.tsx
+PASS tests/unit/components/HrmConnectionPanel.test.tsx
+PASS tests/unit/components/Spotify/PlaylistDetails.test.tsx
+PASS tests/unit/app/client/control/page.test.tsx
+  ● Console
+
+    console.info
+      [useWebSocket] Manually disconnected.
+
+      at Object.info (utils/logger.ts:17:55)
+          at Array.forEach (<anonymous>)
+
+PASS tests/unit/app/client/experimental/components/ZoneDistribution.test.tsx
+PASS tests/unit/gemini-client.test.ts
+PASS tests/unit/components/HrTile.test.tsx
+PASS tests/unit/components/shared/PlaybackControls.test.tsx
+PASS tests/unit/lib/env.test.ts
+  ● Console
+
+    console.error
+      ❌ Invalid environment variables: { _errors: [], NEXTAUTH_URL: { _errors: [ 'Invalid URL' ] } }
+
+       98 |
+       99 | if (!parsedEnv.success) {
+    > 100 |   console.error('❌ Invalid environment variables:', parsedEnv.error.format())
+          |           ^
+      101 |   throw parsedEnv.error
+      102 | }
+      103 |
+
+      at Object.<anonymous> (lib/env.ts:100:11)
+      at tests/unit/lib/env.test.ts:54:17
+      at Object.<anonymous> (tests/unit/lib/env.test.ts:54:5)
+
+    console.error
+      ❌ Invalid environment variables: {
+        _errors: [],
+        NEXTAUTH_URL: { _errors: [ 'Invalid input: expected string, received undefined' ] }
+      }
+
+       98 |
+       99 | if (!parsedEnv.success) {
+    > 100 |   console.error('❌ Invalid environment variables:', parsedEnv.error.format())
+          |           ^
+      101 |   throw parsedEnv.error
+      102 | }
+      103 |
+
+      at Object.<anonymous> (lib/env.ts:100:11)
+      at tests/unit/lib/env.test.ts:75:17
+      at Object.<anonymous> (tests/unit/lib/env.test.ts:75:5)
+
+PASS tests/unit/components/LoadingIndicator.test.tsx
+PASS tests/unit/useVolumePreference.test.ts
+PASS tests/unit/hooks/useHrZone.test.ts
+PASS tests/unit/services/spotifyPolling.test.ts
+PASS tests/unit/lib/healthCheck.test.ts
+PASS tests/unit/hooks/useWorkoutSessionManager.test.ts
+  ● Console
+
+    console.info
+      [SessionManager] Stale session from Wed Feb 04 2026 detected. Clearing for new day Thu Feb 05 2026.
+
+      at hooks/useWorkoutSessionManager.ts:161:17
+
+    console.info
+      [SessionManager] Stale session from Thu Feb 05 2026 detected. Clearing for new day Fri Feb 06 2026.
+
+      at hooks/useWorkoutSessionManager.ts:161:17
+
+PASS tests/unit/hooks/useCookie.test.ts
+  ● Console
+
+    console.error
+      Error reading or parsing cookie key “test-cookie”: SyntaxError: Expected property name or '}' in JSON at position 2 (line 1 column 3)
+          at JSON.parse (<anonymous>)
+          at /app/hooks/useCookie.ts:13:27
+          at mountStateImpl (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:8268:24)
+          at mountState (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:8289:22)
+          at Object.useState (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:26243:18)
+          at process.env.NODE_ENV.exports.useState (/app/node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:1263:34)
+          at useCookie (/app/hooks/useCookie.ts:8:49)
+          at /app/tests/unit/hooks/useCookie.test.ts:62:50
+          at TestComponent (/app/node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:330:27)
+          at Object.react_stack_bottom_frame (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20)
+          at renderWithHooks (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22)
+          at updateFunctionComponent (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19)
+          at beginWork (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18)
+          at runWithFiberInDEV (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+          at performUnitOfWork (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22)
+          at workLoopSync (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41)
+          at renderRootSync (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11)
+          at performWorkOnRoot (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16504:11)
+          at performWorkOnRootViaSchedulerTask (/app/node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18957:7)
+          at flushActQueue (/app/node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:590:34)
+          at process.env.NODE_ENV.exports.act (/app/node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:884:10)
+          at /app/node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:46:25
+          at renderRoot (/app/node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:189:26)
+          at render (/app/node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:291:10)
+          at renderHook (/app/node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:339:7)
+          at Object.<anonymous> (/app/tests/unit/hooks/useCookie.test.ts:62:34)
+          at Promise.finally.completed (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1497:10)
+          at _callCircusTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:947:3)
+          at /app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+          at run (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1918:21)
+          at jestAdapter (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/runner.js:101:19)
+          at runTestInternal (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:275:16)
+          at runTest (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:343:7)
+          at Object.worker (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:497:12)
+
+      31 |       return initialValue
+      32 |     } catch (error) {
+    > 33 |       console.error(`Error reading or parsing cookie key “${key}”:`, error)
+         |               ^
+      34 |       return initialValue
+      35 |     }
+      36 |   })
+
+      at hooks/useCookie.ts:33:15
+      at mountStateImpl (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:8268:24)
+      at mountState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:8289:22)
+      at Object.useState (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:26243:18)
+      at process.env.NODE_ENV.exports.useState (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:1263:34)
+      at useCookie (hooks/useCookie.ts:8:49)
+      at tests/unit/hooks/useCookie.test.ts:62:50
+      at TestComponent (node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:330:27)
+      at Object.react_stack_bottom_frame (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20)
+      at renderWithHooks (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22)
+      at updateFunctionComponent (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19)
+      at beginWork (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18)
+      at runWithFiberInDEV (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+      at performUnitOfWork (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22)
+      at workLoopSync (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41)
+      at renderRootSync (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11)
+      at performWorkOnRoot (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:16504:11)
+      at performWorkOnRootViaSchedulerTask (node_modules/.pnpm/react-dom@19.2.4_react@19.2.4/node_modules/react-dom/cjs/react-dom-client.development.js:18957:7)
+      at flushActQueue (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:590:34)
+      at process.env.NODE_ENV.exports.act (node_modules/.pnpm/react@19.2.4/node_modules/react/cjs/react.development.js:884:10)
+      at node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at renderRoot (node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:189:26)
+      at render (node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:291:10)
+      at renderHook (node_modules/.pnpm/@testing-library+react@16.3.1_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_aofrucnagnb4hhgizjsq6wezca/node_modules/@testing-library/react/dist/pure.js:339:7)
+      at Object.<anonymous> (tests/unit/hooks/useCookie.test.ts:62:34)
+
+PASS tests/unit/app/api/users/route.test.ts
+PASS tests/unit/app/api/spotify/control/route.test.ts
+  ● Console
+
+    console.error
+      { status: 404, details: 'Device not found' } Spotify API Error
+
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+      18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+    > 19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+         |                                                        ^
+      20 |   child: function () {
+      21 |     return this
+      22 |   }, // Return self for child logger on client
+
+      at Object.error (utils/logger.ts:19:56)
+      at POST (app/api/spotify/control/route.ts:126:14)
+      at Object.<anonymous> (tests/unit/app/api/spotify/control/route.test.ts:138:22)
+
+    console.error
+      {
+        error: Error: Network error
+            at Object.<anonymous> (/app/tests/unit/app/api/spotify/control/route.test.ts:147:35)
+            at Promise.finally.completed (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1557:28)
+            at new Promise (<anonymous>)
+            at callAsyncCircusFn (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1497:10)
+            at _callCircusTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1007:40)
+            at processTicksAndRejections (node:internal/process/task_queues:105:5)
+            at _runTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:947:3)
+            at /app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:849:7
+            at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:862:11)
+            at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+            at run (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:761:3)
+            at runAndTransformResultsToJestFormat (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1918:21)
+            at jestAdapter (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/runner.js:101:19)
+            at runTestInternal (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:275:16)
+            at runTest (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:343:7)
+            at Object.worker (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:497:12)
+      } REST control failed
+
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+      18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+    > 19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+         |                                                        ^
+      20 |   child: function () {
+      21 |     return this
+      22 |   }, // Return self for child logger on client
+
+      at Object.error (utils/logger.ts:19:56)
+      at POST (app/api/spotify/control/route.ts:141:12)
+      at Object.<anonymous> (tests/unit/app/api/spotify/control/route.test.ts:149:22)
+
+PASS tests/unit/hooks/useUserWeight.test.ts
+PASS tests/unit/services/spotifyPlaylistService.test.ts
+PASS tests/unit/app/api/spotify/access-token/route.test.ts
+  ● Console
+
+    console.error
+      No session or access token found.
+
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+      18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+    > 19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+         |                                                        ^
+      20 |   child: function () {
+      21 |     return this
+      22 |   }, // Return self for child logger on client
+
+      at Object.error (utils/logger.ts:19:56)
+      at GET (app/api/spotify/access-token/route.ts:24:14)
+      at Object.<anonymous> (tests/unit/app/api/spotify/access-token/route.test.ts:24:22)
+
+    console.error
+      Token refresh failed in NextAuth
+
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+      18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+    > 19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+         |                                                        ^
+      20 |   child: function () {
+      21 |     return this
+      22 |   }, // Return self for child logger on client
+
+      at Object.error (utils/logger.ts:19:56)
+      at GET (app/api/spotify/access-token/route.ts:33:14)
+      at Object.<anonymous> (tests/unit/app/api/spotify/access-token/route.test.ts:40:22)
+
+    console.error
+      { error: 'Test error' } Internal Server Error
+
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+      18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+    > 19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+         |                                                        ^
+      20 |   child: function () {
+      21 |     return this
+      22 |   }, // Return self for child logger on client
+
+      at Object.error (utils/logger.ts:19:56)
+      at GET (app/api/spotify/access-token/route.ts:47:12)
+      at Object.<anonymous> (tests/unit/app/api/spotify/access-token/route.test.ts:67:22)
+
+PASS tests/unit/services/tabataTimer.test.ts
+PASS tests/unit/app/api/spotify/devices/route.test.ts
+  ● Console
+
+    console.info
+      No user session found, attempting system token fallback.
+
+      at Object.info (utils/logger.ts:17:55)
+
+    console.info
+      No user session found, attempting system token fallback.
+
+      at Object.info (utils/logger.ts:17:55)
+
+    console.error
+      { status: 403, error: 'Forbidden' } Spotify API error
+
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+      18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+    > 19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+         |                                                        ^
+      20 |   child: function () {
+      21 |     return this
+      22 |   }, // Return self for child logger on client
+
+      at Object.error (utils/logger.ts:19:56)
+      at GET (app/api/spotify/devices/route.ts:55:14)
+      at Object.<anonymous> (tests/unit/app/api/spotify/devices/route.test.ts:118:22)
+
+    console.error
+      { error: 'Unexpected DB error' } Internal Server Error
+
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+      18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+    > 19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+         |                                                        ^
+      20 |   child: function () {
+      21 |     return this
+      22 |   }, // Return self for child logger on client
+
+      at Object.error (utils/logger.ts:19:56)
+      at GET (app/api/spotify/devices/route.ts:76:12)
+      at Object.<anonymous> (tests/unit/app/api/spotify/devices/route.test.ts:129:22)
+
+PASS tests/unit/scripts/create-review-issues.test.ts
+  ● Console
+
+    console.log
+      ✨ No suggested issues found in the review result.
+
+      at run (scripts/create-review-issues.ts:346:13)
+
+    console.log
+
+      --- Summary ---
+
+      at run (scripts/create-review-issues.ts:400:11)
+
+    console.log
+      Created: 2
+
+      at run (scripts/create-review-issues.ts:401:11)
+
+    console.log
+      Skipped (Duplicate): 0
+
+      at run (scripts/create-review-issues.ts:402:11)
+
+    console.log
+      Skipped (Low Quality): 0
+
+      at run (scripts/create-review-issues.ts:403:11)
+
+    console.log
+      ⏭️  Skipping duplicate: "Refactor the authentication service"
+
+      at run (scripts/create-review-issues.ts:379:15)
+
+    console.log
+
+      --- Summary ---
+
+      at run (scripts/create-review-issues.ts:400:11)
+
+    console.log
+      Created: 1
+
+      at run (scripts/create-review-issues.ts:401:11)
+
+    console.log
+      Skipped (Duplicate): 1
+
+      at run (scripts/create-review-issues.ts:402:11)
+
+    console.log
+      Skipped (Low Quality): 0
+
+      at run (scripts/create-review-issues.ts:403:11)
+
+    console.log
+      🛡️ Verifying required labels exist...
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:224:13)
+
+    console.log
+      ✨ Found missing labels: bot-generated, triage-needed, type-bug, priority-medium. Creating them...
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:239:15)
+
+    console.log
+         - Created label: "bot-generated"
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:255:21)
+
+    console.log
+         - Created label: "triage-needed"
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:255:21)
+
+    console.log
+         - Created label: "type-bug"
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:255:21)
+
+    console.log
+         - Created label: "priority-medium"
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:255:21)
+
+    console.log
+      🚀 Creating issue: "Test Issue"...
+
+      at GitHubClient.createIssue (scripts/create-review-issues.ts:195:13)
+
+    console.log
+      ✅ Issue created: https://github.com/test/repo/issues/1
+
+      at GitHubClient.createIssue (scripts/create-review-issues.ts:213:15)
+
+    console.log
+      🛡️ Verifying required labels exist...
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:224:13)
+
+    console.log
+      ✨ Found missing labels: bot-generated, triage-needed, type-security, priority-high. Creating them...
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:239:15)
+
+    console.log
+         - Created label: "bot-generated"
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:255:21)
+
+    console.log
+         - Created label: "triage-needed"
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:255:21)
+
+    console.log
+         - Created label: "type-security"
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:255:21)
+
+    console.log
+         - Created label: "priority-high"
+
+      at GitHubClient.ensureLabelsExist (scripts/create-review-issues.ts:255:21)
+
+    console.log
+      🚀 Creating issue: "Fix: `rm -rf /` shouldn't run"...
+
+      at GitHubClient.createIssue (scripts/create-review-issues.ts:195:13)
+
+    console.log
+      ✅ Issue created: []
+
+      at GitHubClient.createIssue (scripts/create-review-issues.ts:213:15)
+
+PASS tests/unit/hooks/useWorkoutSession.test.ts
+PASS tests/unit/components/DashboardSectionLoadingSkeleton.test.tsx
+PASS tests/unit/lib/calorie-estimation.test.ts
+PASS tests/unit/components/AuthButton.test.tsx
+PASS tests/unit/hooks/usePersistentStorage.test.ts
+PASS tests/unit/utils/logger-redaction.test.ts
+PASS tests/unit/app/api/health/detailed/route.test.ts
+PASS tests/unit/app/api/spotify/playlists/route.test.ts
+  ● Console
+
+    console.warn
+      {
+        err: ApiError: Not authenticated or token is missing.
+            at getAuthenticatedSpotifyApi (/app/lib/spotify/sdk.ts:23:11)
+            at processTicksAndRejections (node:internal/process/task_queues:105:5)
+            at getPlaylists (/app/app/api/spotify/playlists/route.ts:21:19)
+            at /app/lib/middleware/errorHandler.ts:28:14
+            at Object.<anonymous> (/app/tests/unit/app/api/spotify/playlists/route.test.ts:63:22) {
+          statusCode: 401
+        }
+      } API Error: Not authenticated or token is missing.
+
+      16 |   debug: (msg: unknown, ...args: unknown[]) => console.log(msg, ...args),
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+    > 18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+         |                                                       ^
+      19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+      20 |   child: function () {
+      21 |     return this
+
+      at Object.warn (utils/logger.ts:18:55)
+      at lib/middleware/errorHandler.ts:31:16
+      at Object.<anonymous> (tests/unit/app/api/spotify/playlists/route.test.ts:63:22)
+
+    console.error
+      {
+        err: Error: Spotify API failed
+            at Object.<anonymous> (/app/tests/unit/app/api/spotify/playlists/route.test.ts:104:32)
+            at Promise.finally.completed (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1557:28)
+            at new Promise (<anonymous>)
+            at callAsyncCircusFn (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1497:10)
+            at _callCircusTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1007:40)
+            at processTicksAndRejections (node:internal/process/task_queues:105:5)
+            at _runTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:947:3)
+            at /app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:849:7
+            at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:862:11)
+            at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+            at run (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:761:3)
+            at runAndTransformResultsToJestFormat (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1918:21)
+            at jestAdapter (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/runner.js:101:19)
+            at runTestInternal (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:275:16)
+            at runTest (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:343:7)
+            at Object.worker (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:497:12)
+      } Internal Server Error: Spotify API failed
+
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+      18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+    > 19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+         |                                                        ^
+      20 |   child: function () {
+      21 |     return this
+      22 |   }, // Return self for child logger on client
+
+      at Object.error (utils/logger.ts:19:56)
+      at lib/middleware/errorHandler.ts:40:14
+      at Object.<anonymous> (tests/unit/app/api/spotify/playlists/route.test.ts:113:22)
+
+PASS tests/unit/lib/workout-session-storage.test.ts
+PASS tests/unit/services/googleDocParser.test.ts
+PASS tests/unit/context/ErrorContext.test.tsx
+PASS tests/unit/utils/logger.test.ts
+PASS tests/unit/utils/promise.test.ts
+PASS tests/unit/lib/auth.test.ts
+PASS tests/unit/websocketUtils.test.ts
+PASS tests/unit/lib/hrm/zones.test.ts
+PASS tests/unit/components/shared/ControlCard.test.tsx
+PASS tests/unit/utils/visualization.test.ts
+PASS tests/unit/constants/bluetooth-messages.test.ts
+PASS tests/unit/scripts/utils/git-conflicts.test.ts
+  ● Console
+
+    console.warn
+      Skipping large file: large-file.ts (2.00 MB)
+
+      39 |     if (fileSizeInMB > 1) {
+      40 |       // 1 MB limit
+    > 41 |       console.warn(
+         |               ^
+      42 |         `Skipping large file: ${filePath} (${fileSizeInMB.toFixed(2)} MB)`
+      43 |       )
+      44 |       return []
+
+      at parseConflicts (scripts/utils/git-conflicts.ts:41:15)
+      at Object.<anonymous> (tests/unit/scripts/utils/git-conflicts.test.ts:80:23)
+
+PASS tests/unit/lib/hrm/HrmDataStore.test.ts
+PASS tests/unit/app/api/internal/token-delivery/route.test.ts
+  ● Console
+
+    console.warn
+      API Error in token-delivery: Unauthorized: Missing or invalid secret.
+
+      16 |   debug: (msg: unknown, ...args: unknown[]) => console.log(msg, ...args),
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+    > 18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+         |                                                       ^
+      19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+      20 |   child: function () {
+      21 |     return this
+
+      at Object.warn (utils/logger.ts:18:55)
+      at POST (app/api/internal/token-delivery/route.ts:58:14)
+      at Object.<anonymous> (tests/unit/app/api/internal/token-delivery/route.test.ts:54:22)
+
+    console.info
+      Spotify token delivered and processed successfully.
+
+      at Object.info (utils/logger.ts:17:55)
+
+    console.error
+      {
+        err: SyntaxError: Unexpected end of JSON input
+            at JSON.parse (<anonymous>)
+            at parseJSONFromBytes (node:internal/deps/undici/undici:5852:19)
+            at successSteps (node:internal/deps/undici/undici:5833:27)
+            at consumeBody (node:internal/deps/undici/undici:5839:9)
+            at NextRequest.json (node:internal/deps/undici/undici:5779:18)
+            at POST (/app/app/api/internal/token-delivery/route.ts:19:34)
+            at Object.<anonymous> (/app/tests/unit/app/api/internal/token-delivery/route.test.ts:97:32)
+            at Promise.finally.completed (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1557:28)
+            at new Promise (<anonymous>)
+            at callAsyncCircusFn (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1497:10)
+            at _callCircusTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1007:40)
+            at processTicksAndRejections (node:internal/process/task_queues:105:5)
+            at _runTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:947:3)
+            at /app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:849:7
+            at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:862:11)
+            at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+            at run (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:761:3)
+            at runAndTransformResultsToJestFormat (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1918:21)
+            at jestAdapter (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/runner.js:101:19)
+            at runTestInternal (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:275:16)
+            at runTest (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:343:7)
+            at Object.worker (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:497:12)
+      } Unhandled error in token-delivery
+
+      17 |   info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+      18 |   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+    > 19 |   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
+         |                                                        ^
+      20 |   child: function () {
+      21 |     return this
+      22 |   }, // Return self for child logger on client
+
+      at Object.error (utils/logger.ts:19:56)
+      at POST (app/api/internal/token-delivery/route.ts:64:12)
+      at Object.<anonymous> (tests/unit/app/api/internal/token-delivery/route.test.ts:97:22)
+
+    console.info
+      Spotify token delivered and processed successfully.
+
+      at Object.info (utils/logger.ts:17:55)
+
+PASS tests/unit/lib/notifications.test.ts
+PASS tests/unit/lib/validation/schemas.test.ts
+PASS tests/unit/hooks/useSpotifyAuth.test.ts
+PASS tests/unit/hooks/useCalorieCalculator.test.ts
+PASS tests/unit/hooks/useSpotifyWebPlayback.test.ts
+  ● Console
+
+    console.log
+      [Spotify Web Playback] Hook initialized, checking prerequisites...
+
+      at hooks/useSpotifyWebPlayback.ts:129:13
+
+    console.log
+      [Spotify Web Playback] Spotify SDK already loaded
+
+      at initializeSDK (hooks/useSpotifyWebPlayback.ts:150:17)
+
+    console.log
+      [Spotify Web Playback] Initializing player...
+
+      at initializePlayer (hooks/useSpotifyWebPlayback.ts:171:15)
+
+    console.log
+      [Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!
+
+      at hooks/useSpotifyWebPlayback.ts:219:19
+
+    console.log
+      [Spotify Web Playback] Hook initialized, checking prerequisites...
+
+      at hooks/useSpotifyWebPlayback.ts:129:13
+
+    console.log
+      [Spotify Web Playback] Spotify SDK already loaded
+
+      at initializeSDK (hooks/useSpotifyWebPlayback.ts:150:17)
+
+    console.log
+      [Spotify Web Playback] Initializing player...
+
+      at initializePlayer (hooks/useSpotifyWebPlayback.ts:171:15)
+
+    console.log
+      [Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!
+
+      at hooks/useSpotifyWebPlayback.ts:219:19
+
+    console.log
+      [Spotify Web Playback] Hook initialized, checking prerequisites...
+
+      at hooks/useSpotifyWebPlayback.ts:129:13
+
+    console.log
+      [Spotify Web Playback] Spotify SDK already loaded
+
+      at initializeSDK (hooks/useSpotifyWebPlayback.ts:150:17)
+
+    console.log
+      [Spotify Web Playback] Initializing player...
+
+      at initializePlayer (hooks/useSpotifyWebPlayback.ts:171:15)
+
+    console.log
+      [Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!
+
+      at hooks/useSpotifyWebPlayback.ts:219:19
+
+    console.error
+      [Spotify Web Playback] Failed to get OAuth token: Internal Server Error
+
+      114 |       } catch (error) {
+      115 |         const appError = error as AppError
+    > 116 |         console.error(
+          |                 ^
+      117 |           `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
+      118 |         )
+      119 |         addError(`Failed to authenticate with Spotify: ${appError.message}`, {
+
+      at Object.getOAuthToken (hooks/useSpotifyWebPlayback.ts:116:17)
+      at Object.<anonymous> (tests/unit/hooks/useSpotifyWebPlayback.test.ts:101:5)
+
+PASS tests/unit/lib/utils.test.ts
+PASS tests/unit/context/UserSettingsContext.test.tsx
+PASS tests/unit/hooks/useCalorieTracker.test.ts
+PASS tests/unit/hooks/useLocalWorkoutBuffer.test.ts
+PASS tests/unit/lib/spotify.test.ts
+PASS tests/unit/hooks/useLocalStorage.test.ts
+PASS tests/unit/scripts/gemini-client.test.ts
+PASS tests/unit/lib/workout-session-storage.fallback.test.ts
+PASS tests/unit/lib/validation/userMetrics.test.ts
+PASS tests/unit/utils/units.test.ts
+PASS tests/unit/safeSpotifyApi.test.ts
+PASS tests/unit/utils/logger.server.test.ts
+PASS tests/unit/scripts/conflict-resolver.test.ts
+PASS tests/unit/context/webSocketReducer.test.ts
+PASS tests/unit/constants/reconnection.test.ts
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+-----------------------------|---------|----------|---------|---------|-----------------------------------------------------------
+File                         | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-----------------------------|---------|----------|---------|---------|-----------------------------------------------------------
+All files                    |   87.88 |    69.32 |   91.34 |   88.61 |
+ services                    |   86.32 |    64.91 |   87.83 |   86.76 |
+  genericTimer.ts            |   93.61 |    79.59 |     100 |   93.18 | 40,71,84
+  googleDocParser.ts         |   89.65 |       60 |   83.33 |   88.46 | 34-35,45
+  safeSpotifyApi.ts          |     100 |      100 |     100 |     100 |
+  spotifyApiErrorHandling.ts |   64.44 |    50.87 |     100 |   64.44 | 32-36,74-78,101-102,112-137
+  spotifyPlaylistService.ts  |     100 |       75 |     100 |     100 | 32
+  spotifyPolling.ts          |   88.52 |     63.8 |   89.18 |   89.32 | 33,69,129-133,182,187,213-214,240,344,362-363,392,453-456
+  spotifyTokenManager.ts     |   83.72 |    67.85 |   69.23 |   85.36 | 77-83,146,185-186,200,227-228,247-252
+  tabataTimer.ts             |   94.73 |       75 |     100 |   94.73 | 54
+ services/timer              |   93.57 |    84.37 |     100 |   97.08 |
+  timerCommands.ts           |    93.2 |    83.87 |     100 |    96.9 | 221-222,258
+  timerQueries.ts            |     100 |      100 |     100 |     100 |
+  timerState.ts              |     100 |      100 |     100 |     100 |
+ utils                       |   88.13 |    73.07 |     100 |   87.93 |
+  socketManager.ts           |   88.13 |    73.07 |     100 |   87.93 | 59-60,79,129-130,206-207,289-310,363-375
+-----------------------------|---------|----------|---------|---------|-----------------------------------------------------------
+
+Test Suites: 96 passed, 96 total
+Tests:       569 passed, 569 total
+Snapshots:   5 passed, 5 total
+Time:        23.626 s, estimated 26 s
+Ran all test suites matching tests/unit.

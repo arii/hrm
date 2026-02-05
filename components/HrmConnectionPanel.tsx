@@ -8,7 +8,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import HrTileWrapper from '@/components/HrTileWrapper'
 
 const HrmConnectionPanel = () => {
-  const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const { hrmData, activeAlerts } = useWebSocket()
 
   const tileData = useMemo(() => {
     // Filter out users with placeholder names or no identity
@@ -33,10 +33,6 @@ const HrmConnectionPanel = () => {
       })
   }, [hrmData, activeAlerts])
 
-  const isLoading =
-    connectionStatus === 'Connecting...' ||
-    connectionStatus === 'Reconnecting...'
-
   return (
     <Box
       data-testid="hrm-connection-panel"
@@ -47,7 +43,7 @@ const HrmConnectionPanel = () => {
         height: '100%',
       }}
     >
-      {isLoading || tileData.length === 0 ? (
+      {tileData.length === 0 ? (
         <>
           <Box
             sx={{

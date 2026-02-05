@@ -4,7 +4,7 @@ test('should remove tile after 35 seconds of inactivity', async ({ page }) => {
   // Install mock clock
   await page.clock.install({ time: new Date() })
 
-  await page.goto('/client/control')
+  await page.goto('/')
   // 1. Simulate active data
   await page.evaluate(() =>
     (
@@ -14,7 +14,15 @@ test('should remove tile after 35 seconds of inactivity', async ({ page }) => {
     ).postMessage(
       {
         type: 'HRM_UPDATE',
-        payload: [{ clientId: 'test-1', hrm: 75, userName: 'test-1' }],
+        payload: [
+          {
+            clientId: 'test-1',
+            value: 75,
+            name: 'test-1',
+            maxHr: 190,
+            calories: 100,
+          },
+        ],
       },
       '*'
     )

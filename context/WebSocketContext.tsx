@@ -122,7 +122,23 @@ export const WebSocketProvider = ({
           connect: () => {},
         }
       }
+
+      // Allow tests to inject messages via postMessage
+      const handleMessage = (event: MessageEvent) => {
+        if (
+          event.data &&
+          (event.data.type === 'HRM_UPDATE' ||
+            event.data.type === 'DEVICE_OFFLINE')
+        ) {
+          dispatch(event.data)
+        }
+      }
+      window.addEventListener('message', handleMessage)
+      return () => {
+        window.removeEventListener('message', handleMessage)
+      }
     }
+    return undefined
   }, [dispatch])
 
   // Throttled warning for connection issues

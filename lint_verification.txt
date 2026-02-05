@@ -1,0 +1,15 @@
+
+> hrm@0.30.0 lint /app
+> eslint app/ components/ constants/ context/ hooks/ lib/ services/ tests/ types/ utils/ server.ts proxy.ts --cache
+
+
+/app/components/HrmTiles.tsx
+  31:1  error  Delete `········`  prettier/prettier
+
+/app/context/webSocketReducer.ts
+  109:18  error  Insert `⏎·········`  prettier/prettier
+
+✖ 2 problems (2 errors, 0 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+
+ ELIFECYCLE  Command failed with exit code 1.
