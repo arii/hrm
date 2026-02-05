@@ -18,21 +18,13 @@ import {
 import { formatDuration, formatDate, getStatusColor } from '@/lib/utils'
 
 interface WorkoutSummaryProps {
-  /** Total workout duration in seconds */
   duration: number
-  /** Total calories burned */
   calories: number
-  /** Current workout state */
   status: 'idle' | 'running' | 'paused' | 'finished'
-  /** Name of the user performing the workout */
   userName: string
-  /** The date of the workout session. */
   date: Date
 }
 
-/**
- * Reusable sub-component for displaying a workout metric.
- */
 interface MetricBlockProps {
   label: string
   value: string | number
@@ -81,9 +73,6 @@ const MetricBlock = ({
   </Box>
 )
 
-/**
- * Displays a summary of the current workout session.
- */
 const WorkoutSummary = ({
   duration,
   calories,

@@ -5,7 +5,6 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import WorkoutSummary from '@/app/client/experimental/components/WorkoutSummary'
 
-// Mock utils to have consistent output in tests
 jest.mock('@/lib/utils', () => ({
   formatDuration: jest.fn((d) => `formatted-${d}`),
   formatDate: jest.fn(
@@ -51,9 +50,6 @@ describe('WorkoutSummary', () => {
     expect(screen.getByText('formatted-3600')).toBeInTheDocument()
     expect(screen.getByText('500.5')).toBeInTheDocument()
     expect(screen.getByText(/formatted-date/)).toBeInTheDocument()
-
-    // Check for icons (by their aria-label or just by being in the document if they don't have labels)
-    // MUI icons usually don't have accessible names by default unless specified
   })
 
   it('renders with required props', () => {
@@ -98,9 +94,6 @@ describe('WorkoutSummary', () => {
       <WorkoutSummary {...defaultProps} calories={0} />
     )
     const zeroCal = screen.getByText('0.0')
-    // When calories is 0, valueColor is 'text.primary'
-    // In JSDOM with MUI, this might not show up as a computed style easily without a ThemeProvider
-    // but we can at least verify it's rendered.
     expect(zeroCal).toBeInTheDocument()
 
     rerender(<WorkoutSummary {...defaultProps} calories={100} />)

@@ -1,4 +1,3 @@
-// app/client/experimental/components/SessionDetail.tsx
 import { Card, CardContent, Typography, Button, Box } from '@mui/material'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatDate } from '@/lib/utils'

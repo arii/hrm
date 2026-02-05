@@ -1,4 +1,3 @@
-// app/client/experimental/components/SessionList.tsx
 import {
   List,
   ListItem,

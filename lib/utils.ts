@@ -1,10 +1,3 @@
-/**
- * Creates an object from an array of key-value pairs, filtering out entries
- * where the value is null or undefined. This is useful for cleaning up
- * objects before updating state.
- * @param entries An array of [key, value] pairs.
- * @returns A new object with the null/undefined values removed.
- */
 export const objectFromEntries = <T>(
   entries: [string, T | null | undefined][]
 ): Record<string, T> => {
@@ -13,23 +6,11 @@ export const objectFromEntries = <T>(
   ) as Record<string, T>
 }
 
-/**
- * Rounds a number to a specified number of decimal places.
- * @param value The number to round.
- * @param decimalPlaces The number of decimal places to round to.
- * @returns The rounded number.
- */
 export const roundTo = (value: number, decimalPlaces: number): number => {
   const factor = Math.pow(10, decimalPlaces)
   return Math.round((value + Number.EPSILON) * factor) / factor
 }
 
-/**
- * Formats a duration into a string.
- * @param duration The duration.
- * @param options The options for formatting.
- * @returns The formatted duration string.
- */
 export const formatDuration = (
   duration: number,
   options: {
@@ -71,12 +52,6 @@ export const formatDuration = (
   return `${h}:${m}:${s}`
 }
 
-/**
- * Formats a date into a localized string.
- * @param date The date to format.
- * @param options Intl.DateTimeFormatOptions
- * @returns The formatted date string.
- */
 export const formatDate = (
   date: Date | number,
   options: Intl.DateTimeFormatOptions = {
@@ -90,11 +65,6 @@ export const formatDate = (
   return d.toLocaleDateString(locale, options)
 }
 
-/**
- * Returns a theme-compatible color name for a given workout status.
- * @param status The workout status string.
- * @returns A Material-UI color name.
- */
 export const getStatusColor = (
   status: 'idle' | 'running' | 'paused' | 'finished' | string
 ): 'success' | 'warning' | 'primary' | 'default' => {
