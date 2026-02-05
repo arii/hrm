@@ -46,6 +46,7 @@ export const mockHrmData: HrmData = {
   age: 30,
   calories: 100,
   isConnected: true,
+  timestamp: Date.now(),
 }
 
 export const mockWebSocketContext: WebSocketContextType = {

@@ -54,7 +54,7 @@ interface ConnectViewProps {
   unitSystem: MeasurementSystem
   onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
-  isDataStale?: boolean
+  lastUpdated: number | null
   deviceStatus: string
   batteryLevel: number | null
   onConnect: () => void
@@ -96,7 +96,7 @@ export default function ConnectView({
   unitSystem,
   onUnitChange,
   isConnected,
-  isDataStale = false,
+  lastUpdated,
   deviceStatus,
   batteryLevel,
   onConnect,
@@ -120,11 +120,11 @@ export default function ConnectView({
   useEffect(() => {
     if (isConnected) {
       logger.debug(
-        { currentHR, isDataStale, userName },
+        { currentHR, userName, lastUpdated },
         'HrTile rendering with currentHR'
       )
     }
-  }, [currentHR, isConnected, isDataStale, userName])
+  }, [currentHR, isConnected, userName, lastUpdated])
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -378,7 +378,7 @@ export default function ConnectView({
               bpm={currentHR}
               percentMax={hrZoneProps.percentage}
               calories={caloriesBurned}
-              isDataStale={isDataStale}
+              lastUpdated={lastUpdated}
             />
           </Box>
         )}

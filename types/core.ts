@@ -96,6 +96,7 @@ export interface HrmStreamData {
   calories: number
   weightKg?: number
   updatedAt?: number
+  timestamp: number
 }
 
 /**
