@@ -3,9 +3,12 @@
 import React, { createContext, useContext } from 'react'
 import usePersistentStorage from '../hooks/usePersistentStorage'
 import { MeasurementSystem, Gender } from '../types/core'
+import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
 
 // Directly define the preferences interface and defaults here
 export interface UserPreferences {
+  // ... existing fields
+  maxHeartRate: number // New Field
   theme: 'dark' | 'light'
   volumeLevel: number
   defaultWorkDuration: number
@@ -19,7 +22,10 @@ export interface UserPreferences {
   unitSystem: MeasurementSystem
 }
 
+// Update DEFAULT_PREFERENCES
 const DEFAULT_PREFERENCES: UserPreferences = {
+  // ... existing defaults
+  maxHeartRate: MAX_HR_DEFAULT, // Default fallback
   theme: 'dark',
   volumeLevel: 70,
   defaultWorkDuration: 20,
@@ -48,13 +54,18 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   // Use the usePersistentStorage hook directly within the provider
-  const userPreferences = usePersistentStorage<UserPreferences>(
+  const [preferences, setPreferences] = usePersistentStorage<UserPreferences>(
     'user-prefs',
     DEFAULT_PREFERENCES
   )
 
+  const value = React.useMemo(
+    () => [preferences, setPreferences] as const,
+    [preferences, setPreferences]
+  )
+
   return (
-    <UserSettingsContext.Provider value={userPreferences}>
+    <UserSettingsContext.Provider value={value}>
       {children}
     </UserSettingsContext.Provider>
   )

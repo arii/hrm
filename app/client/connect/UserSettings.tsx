@@ -2,6 +2,11 @@
 import React from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
+import InputAdornment from '@mui/material/InputAdornment'
+import IconButton from '@mui/material/IconButton'
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
+import Tooltip from '@mui/material/Tooltip'
+import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 
@@ -24,6 +29,8 @@ interface UserSettingsProps {
   weightError: string | null
   unit: 'METRIC' | 'IMPERIAL'
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
+  maxHr: string
+  setMaxHr: (hr: string) => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -43,7 +50,16 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   weightError,
   unit,
   setUnit,
+  maxHr,
+  setMaxHr,
 }) => {
+  const handleAutoCalculate = () => {
+    const ageNum = parseInt(userAge, 10)
+    if (!isNaN(ageNum)) {
+      setMaxHr(calculateMaxHr(ageNum).toString())
+    }
+  }
+
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <TextField
@@ -68,6 +84,25 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         error={!!ageError}
         helperText={ageError}
         inputProps={{ min: 1, max: 120 }}
+      />
+      <TextField
+        fullWidth
+        label="Max Heart Rate"
+        type="number"
+        value={maxHr}
+        onChange={(e) => setMaxHr(e.target.value)}
+        helperText="Used to calculate your heart rate zones."
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <Tooltip title="Auto-calculate from age">
+                <IconButton onClick={handleAutoCalculate} edge="end">
+                  <AutoFixHighIcon />
+                </IconButton>
+              </Tooltip>
+            </InputAdornment>
+          ),
+        }}
       />
       <ToggleButtonGroup
         value={unit}

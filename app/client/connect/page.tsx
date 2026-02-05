@@ -22,7 +22,8 @@ import logger from '@/utils/logger'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
-  const { userName, userAge, userWeight, gender, unitSystem } = userSettings
+  const { userName, userAge, userWeight, gender, unitSystem, maxHeartRate } =
+    userSettings
 
   const [currentHR, setCurrentHR] = useState(0)
 
@@ -252,6 +253,10 @@ export default function ConnectPage() {
       userAge={String(userAge || '')}
       setUserAge={(age) =>
         setUserSettings((prev) => ({ ...prev, userAge: Number(age) }))
+      }
+      maxHr={String(maxHeartRate || '')}
+      setMaxHr={(hr) =>
+        setUserSettings((prev) => ({ ...prev, maxHeartRate: Number(hr) }))
       }
       onAgeBlur={handleAgeBlur}
       ageError={ageError}

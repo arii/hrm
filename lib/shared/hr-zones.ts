@@ -3,7 +3,7 @@
  * Shared constants and types for Heart Rate (HR) zones to ensure consistency
  * across different modules (domain logic, UI, etc.).
  */
-export const MAX_HR_DEFAULT = 185
+export const MAX_HR_DEFAULT = 190
 
 /**
  * Enum for HR Zone names to provide compile-time safety and prevent string mismatches.
@@ -56,4 +56,33 @@ export const getUserHrZones = (age: number): UserHrZones => {
     peak: { min: calculateZoneBPM(0.85) },
     max: { min: calculateZoneBPM(0.95) },
   }
+}
+
+/**
+ * Internal helper for HR zone threshold calculation.
+ */
+const HR_ZONE_THRESHOLDS: { threshold: number; name: HrZoneName }[] = [
+  { threshold: 60, name: HrZoneName.WarmUp },
+  { threshold: 70, name: HrZoneName.FatBurn },
+  { threshold: 85, name: HrZoneName.Cardio },
+  { threshold: 95, name: HrZoneName.Peak },
+]
+
+export const calculateHrZone = (
+  currentHr: number,
+  maxHr: number
+): { zoneName: HrZoneName; percentage: number; bpm: number } => {
+  const percentage = maxHr > 0 ? Math.round((currentHr / maxHr) * 100) : 0
+  const bpm = currentHr
+
+  if (currentHr <= 0) {
+    return { zoneName: HrZoneName.NoData, percentage, bpm }
+  }
+
+  const zoneDefinition = HR_ZONE_THRESHOLDS.find(
+    (z) => percentage < z.threshold
+  )
+  const zoneName = zoneDefinition ? zoneDefinition.name : HrZoneName.Max
+
+  return { zoneName, percentage, bpm }
 }

@@ -6,9 +6,8 @@ import {
   WorkoutSessionData,
   HrDataPoint,
 } from '../lib/workout-session-storage'
-import { HrZoneName } from '../lib/shared/hr-zones'
+import { HrZoneName, calculateHrZone } from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
-import { calculateHrZone } from '../lib/hrm/zones'
 import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useAppSnackbar } from './useAppSnackbar'
 import { isSameDay } from '../lib/date'
@@ -49,7 +48,7 @@ function sessionManagerReducer(
     }
     case 'START': {
       const { age, weight, maxHr: providedMaxHr } = action.payload
-      const maxHr = providedMaxHr || calculateMaxHr(age)
+      const maxHeartRate = providedMaxHr || calculateMaxHr(age)
       const initialTimeInZones = Object.fromEntries(
         Object.values(HrZoneName).map((zone) => [zone, 0])
       ) as Record<HrZoneName, number>
@@ -65,7 +64,7 @@ function sessionManagerReducer(
         maxHr: 0,
         calorieHistory: [],
         totalCaloriesBurned: 0,
-        userSettings: { age, weight, maxHr },
+        userSettings: { age, weight, maxHeartRate },
         lastSyncTime: Date.now(),
         syncStatus: 'pending',
       }
@@ -110,10 +109,11 @@ function sessionManagerReducer(
         ? (action.payload.time - lastDataPoint.time) / 1000
         : 1
 
-      const { zoneName } = calculateHrZone(
-        action.payload.hr,
-        state.session.userSettings.maxHr
-      )
+      const { hr } = action.payload
+      const {
+        userSettings: { maxHeartRate },
+      } = state.session
+      const { zoneName } = calculateHrZone(hr, maxHeartRate)
       const newTimeInZones = {
         ...state.session.timeInZones,
         [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,

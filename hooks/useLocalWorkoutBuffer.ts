@@ -1,7 +1,7 @@
 // hooks/useLocalWorkoutBuffer.ts
 
 import { useReducer, useCallback } from 'react'
-import { HrZoneName, calculateHrZone } from '../lib/hrm/zones'
+import { HrZoneName, calculateHrZone } from '../lib/shared/hr-zones'
 import { HrDataPoint } from '../lib/workout-session-storage'
 
 // --- State, Actions, and Reducer ---
