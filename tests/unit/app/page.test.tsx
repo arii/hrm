@@ -1,38 +1,54 @@
 /** @jest-environment jsdom */
 import { render, screen, fireEvent } from '@testing-library/react'
-import Dashboard from '../../../app/page'
+import Dashboard from '@/app/page'
 
 // Mock child components to isolate the Dashboard component
-jest.mock('../../../components/WorkoutTableViewer', () => {
-  const WorkoutTableViewer = ({ refreshKey }: { refreshKey: number }) => (
-    <div data-testid="workout-table-viewer" data-refresh-key={refreshKey} />
+jest.mock('@/components/WorkoutTableViewer', () => {
+  const WorkoutTableViewer = ({
+    refreshKey,
+    onRefresh,
+  }: {
+    refreshKey: number
+    onRefresh?: () => void
+  }) => (
+    <div data-testid="workout-table-viewer" data-refresh-key={refreshKey}>
+      <button aria-label="refresh workout table" onClick={onRefresh} />
+    </div>
   )
   WorkoutTableViewer.displayName = 'WorkoutTableViewer'
   return WorkoutTableViewer
 })
-jest.mock('../../../components/GoogleDocViewer', () => {
-  const GoogleDocViewer = ({ refreshKey }: { refreshKey: number }) => (
-    <div data-testid="google-doc-viewer" data-refresh-key={refreshKey} />
+jest.mock('@/components/GoogleDocViewer', () => {
+  const GoogleDocViewer = ({
+    refreshKey,
+    onRefresh,
+  }: {
+    refreshKey: number
+    onRefresh?: () => void
+  }) => (
+    <div data-testid="google-doc-viewer" data-refresh-key={refreshKey}>
+      <button aria-label="refresh workout table" onClick={onRefresh} />
+    </div>
   )
   GoogleDocViewer.displayName = 'GoogleDocViewer'
   return GoogleDocViewer
 })
-jest.mock('../../../components/HrmConnectionPanel', () => {
+jest.mock('@/components/HrmConnectionPanel', () => {
   const HrmConnectionPanel = () => <div data-testid="hrm-connection-panel" />
   HrmConnectionPanel.displayName = 'HrmConnectionPanel'
   return HrmConnectionPanel
 })
-jest.mock('../../../components/TimerDisplay', () => {
+jest.mock('@/components/TimerDisplay', () => {
   const TimerDisplay = () => <div data-testid="timer-display" />
   TimerDisplay.displayName = 'TimerDisplay'
   return TimerDisplay
 })
-jest.mock('../../../components/SpotifyDisplay', () => {
+jest.mock('@/components/SpotifyDisplay', () => {
   const SpotifyDisplay = () => <div data-testid="spotify-display" />
   SpotifyDisplay.displayName = 'SpotifyDisplay'
   return SpotifyDisplay
 })
-jest.mock('../../../hooks/useAudio', () => ({
+jest.mock('@/hooks/useAudio', () => ({
   useAudio: () => ({
     initializeAudio: jest.fn(),
   }),
@@ -90,6 +106,29 @@ describe('Dashboard', () => {
     )
     const updatedRefreshKey =
       updatedWorkoutTableViewer.getAttribute('data-refresh-key')
+
+    expect(updatedRefreshKey).not.toBe(initialRefreshKey)
+    expect(parseInt(updatedRefreshKey as string)).toBe(
+      parseInt(initialRefreshKey as string) + 1
+    )
+  })
+
+  it('passes a new refreshKey to GoogleDocViewer when refresh button is clicked', async () => {
+    process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'false'
+    render(<Dashboard />)
+
+    const googleDocViewer = await screen.findByTestId('google-doc-viewer')
+    const initialRefreshKey = googleDocViewer.getAttribute('data-refresh-key')
+
+    const refreshButton = screen.getByRole('button', {
+      name: /refresh workout table/i,
+    })
+    fireEvent.click(refreshButton)
+
+    const updatedGoogleDocViewer =
+      await screen.findByTestId('google-doc-viewer')
+    const updatedRefreshKey =
+      updatedGoogleDocViewer.getAttribute('data-refresh-key')
 
     expect(updatedRefreshKey).not.toBe(initialRefreshKey)
     expect(parseInt(updatedRefreshKey as string)).toBe(
