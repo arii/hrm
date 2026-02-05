@@ -67,4 +67,5 @@ export const TIMER_INTERVAL = 1000 // ms
 // --- Stale Tile Display ---
 // Visual indicator threshold (show "waiting for data" state before removal)
 export const STALE_TILE_DISPLAY_THRESHOLD_MS = 20000 // 20 seconds
-// Note: Tile removal is handled by reducer at 35 seconds (see context/webSocketReducer.ts)
+// Tile removal threshold (used by reducer and UI for consistency)
+export const STALE_TILE_REMOVAL_THRESHOLD_MS = 35000 // 35 seconds

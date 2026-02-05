@@ -5,6 +5,7 @@ import {
   ActiveAlert,
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
+import { STALE_TILE_REMOVAL_THRESHOLD_MS } from '@/utils/constants'
 
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
@@ -105,7 +106,8 @@ export const reducer = (
 
       // Filter out stale users who haven't updated in 35 seconds
       const filteredHrmData = mergedHrmData.filter(
-        (user) => now - (user.lastUpdated || 0) < 35000
+        (user) =>
+          now - (user.lastUpdated || 0) < STALE_TILE_REMOVAL_THRESHOLD_MS
       )
 
       return { ...state, hrmData: filteredHrmData }
