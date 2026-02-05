@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { calculateHrZone } from '../lib/hrm/zones'
 import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useAppSnackbar } from './useAppSnackbar'
-import { isSameDay } from '../lib/date'
+import { isSessionStale } from '../lib/workout-session'
 
 // --- State, Actions, and Reducer ---
 
@@ -154,12 +154,10 @@ export const useWorkoutSessionManager = () => {
       message: string,
       onStale: (message: string) => void
     ) => {
-      const sessionDate = new Date(session.startTime)
-      const currentDate = new Date()
-
-      if (!isSameDay(sessionDate, currentDate)) {
+      if (isSessionStale(session)) {
+        const sessionDate = new Date(session.startTime)
         console.info(
-          `[SessionManager] Stale session from ${sessionDate.toDateString()} detected. Clearing for new day ${currentDate.toDateString()}.`
+          `[SessionManager] Stale session from ${sessionDate.toDateString()} detected. Clearing for new day ${new Date().toDateString()}.`
         )
         await workoutSessionStorage.deleteSession(session.sessionId)
         onStale(message)
