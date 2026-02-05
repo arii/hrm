@@ -32,6 +32,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       'connect-page-checking-saved-devices.png',
       {
         mask: [connectPage.getByTestId('user-settings-form')],
+        fullPage: false,
       }
     )
   })
@@ -51,6 +52,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     // Mask the dynamic HR tile to prevent flakes
     await takeScreenshot(connectPage, 'connect-page-connected.png', {
       mask: [connectPage.getByTestId('hr-tile')],
+      fullPage: false,
     })
   })
 
@@ -66,6 +68,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-connection-error.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
+      fullPage: false,
     })
   })
 
@@ -82,6 +85,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-no-devices-found.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
+      fullPage: false,
     })
   })
 })
