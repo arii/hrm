@@ -103,6 +103,7 @@ a {
   }
 }
 
+/* Utility class for screen-reader-only content (WCAG compliant) */
 .sr-only {
   position: absolute;
   width: 1px;
