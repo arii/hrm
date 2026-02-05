@@ -430,13 +430,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         let attempt = 0
         const maxRetries = 3
 
-        while (attempt < maxRetries) {
+        while (true) {
           try {
+            // Attempt the connection
             server = await cancellablePromise(device.gatt!.connect(), {
               timeoutMs: 20000,
               errorMessage: 'GATT connection timeout',
               signal: abortControllerRef.current.signal,
             })
+            // If we get here, connection succeeded!
             break
           } catch (error) {
             attempt++
@@ -447,19 +449,22 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (isBusy && attempt < maxRetries) {
               const delay = Math.pow(2, attempt) * 1000
               logger.warn(
-                { device: device.name, attempt, delay, error },
-                'Device likely busy (Zombie connection). Retrying...'
+                { device: device.name, attempt, delayMs, errorMsg },
+                'Device likely busy (Zombie connection). Retrying with exponential backoff...'
               )
               setStatus(BluetoothConnectionStatus.CONNECTING)
               setCustomStatusMessage(
-                BLUETOOTH_MESSAGES.deviceBusy(delay, attempt, maxRetries)
+                BLUETOOTH_MESSAGES.deviceBusy(delayMs, attempt, maxRetries)
               )
-              await new Promise((res) => setTimeout(res, delay))
+
+              await new Promise((resolve) => setTimeout(resolve, delayMs))
               continue
+            } else {
+              throw error
             }
-            throw error
           }
         }
+        // --- END NEW RETRY LOGIC ---
 
         if (abortControllerRef.current?.signal.aborted) {
           server?.disconnect()
@@ -640,7 +645,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userNameFromArgs?: string,
       userAgeFromArgs?: number,
       options: { silent?: boolean } = {}
-    ): Promise<boolean> => {
+    ): Promise<void> => {
       const { silent = false } = options
 
       userDetailsRef.current = {
@@ -648,7 +653,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         age: userAgeFromArgs || userAge || 0,
       }
 
-      if (statusRef.current === BluetoothConnectionStatus.CONNECTED) return true
+      if (statusRef.current === BluetoothConnectionStatus.CONNECTED) return
       if (connectionStatus !== 'Connected') {
         const err = new Error('WebSocket not connected')
         if (!silent) handleConnectionError(err)
@@ -661,10 +666,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           'connectAndStream called'
         )
         setStatus(BluetoothConnectionStatus.CONNECTING)
+        setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
         let device = savedDevice
 
         if (!device) {
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
           const savedDeviceId = getCookie('hrm_device_id')
           logger.info(
             { savedDeviceId, hasGetDevices: !!navigator.bluetooth?.getDevices },
@@ -684,7 +689,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 'Found saved device, connecting'
               )
               await connectToGatt(foundDevice)
-              return true
+              return
             } else {
               logger.info(
                 { savedDeviceId },
@@ -750,12 +755,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
+    // Try to auto-connect to a saved device. This is a critical function for user experience.
+    // We want it to succeed silently if possible, but still provide feedback if it fails.
     if (isConnecting.current) {
       logger.info('Auto-connect call ignored, connection already in progress.')
       return
     }
-
     try {
+      isConnecting.current = true // Set lock immediately after guard
       logger.info('Starting auto-connect to saved device...')
       setStatus(BluetoothConnectionStatus.CONNECTING)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.connectingToSavedDevice)
@@ -774,13 +781,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setCustomStatusMessage(null)
       }
     } catch (error) {
+      // Silent failure is OK - user can manually connect if needed
       const errorMsg = error instanceof Error ? error.message : String(error)
       logger.info(
         { errorMsg },
         'Auto-connect failed, user can connect manually'
       )
+      // Set status back to allow manual connection
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
+    } finally {
+      isConnecting.current = false // Ensure lock is always released
     }
   }, [connectAndStream])
 

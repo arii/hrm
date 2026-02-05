@@ -8,15 +8,17 @@ import Container from '@mui/material/Container'
 import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
-import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
+import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
-import HrmConnectionPanel from '@/components/HrmConnectionPanel'
-import TimerDisplay from '@/components/TimerDisplay'
-import { useAudio } from '@/hooks/useAudio'
+import IconButton from '@mui/material/IconButton'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import HrmConnectionPanel from '../components/HrmConnectionPanel'
+import TimerDisplay from '../components/TimerDisplay'
+import { useAudio } from '../hooks/useAudio'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
-const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
+const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
   ssr: false,
   loading: () => <DashboardSectionLoadingSkeleton height="80px" />, // Optional: Render nothing while loading to avoid layout shift
 })
@@ -25,14 +27,14 @@ const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 const WorkoutTableViewer = dynamic(
-  () => import('@/components/WorkoutTableViewer'),
+  () => import('../components/WorkoutTableViewer'),
   {
     ssr: false,
     loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
   }
 )
 
-const GoogleDocViewer = dynamic(() => import('@/components/GoogleDocViewer'), {
+const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
   ssr: false,
   loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
 })
@@ -102,12 +104,17 @@ const Dashboard = () => {
         <HrmConnectionPanel />
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-end', mb: 1 }}>
+          <Box sx={{ flexGrow: 1 }} />
+          <IconButton
+            onClick={handleRefresh}
+            aria-label="refresh workout table"
+          >
+            <RefreshIcon />
+          </IconButton>
+        </Box>
         {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ? (
-          <WorkoutTableViewer
-            docId={DOC_ID}
-            refreshKey={refreshKey}
-            onRefresh={handleRefresh}
-          />
+          <WorkoutTableViewer docId={DOC_ID} refreshKey={refreshKey} />
         ) : (
           <GoogleDocViewer
             title="Today's Training Regimen"
@@ -116,7 +123,6 @@ const Dashboard = () => {
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
             refreshKey={refreshKey}
-            onRefresh={handleRefresh}
           />
         )}
       </Box>

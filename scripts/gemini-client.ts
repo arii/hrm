@@ -115,31 +115,15 @@ export class JsonProcessor {
     success: boolean
     data: unknown
   } {
-    // Helper function to ensure the parsed JSON object has a 'labels' field.
-    const ensureLabels = (data: unknown) => {
-      // The `labels` field is only relevant for objects, not arrays or primitives.
-      if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
-        // Use 'in' operator for a safe property check.
-        if (!('labels' in data)) {
-          // If 'labels' is missing, add it as an empty array.
-          // We use type assertion here to modify the object.
-          ;(data as { labels?: string[] }).labels = []
-        }
-      }
-      return data
-    }
-
     try {
       // First, try parsing the text directly.
-      const parsedData = JSON.parse(text)
-      return { success: true, data: ensureLabels(parsedData) }
+      return { success: true, data: JSON.parse(text) }
     } catch {
       // If direct parsing fails, try to extract JSON from a markdown code block.
       const jsonBlock = this.extractJsonBlock(text)
       if (jsonBlock) {
         try {
-          const parsedData = JSON.parse(jsonBlock)
-          return { success: true, data: ensureLabels(parsedData) }
+          return { success: true, data: JSON.parse(jsonBlock) }
         } catch (e) {
           console.error('Error parsing JSON block:', e)
           // If parsing the extracted block fails, return a structured error.

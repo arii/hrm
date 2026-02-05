@@ -184,21 +184,49 @@ describe('useBluetoothHRM', () => {
   it('ignores connection attempts while isConnecting lock is held', async () => {
     const mockAbort = jest.fn()
     const OriginalAbortController = global.AbortController
-    global.AbortController = jest.fn().mockImplementation(() => ({
+
+    // Simplified Mock AbortController
+    class MockAbortController {
       signal: {
-        aborted: false,
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
-      },
-      abort: mockAbort,
-    })) as jest.Mock
+        aborted: boolean
+        addEventListener: (event: string, cb: () => void) => void
+        removeEventListener: jest.Mock
+      }
+      listeners: (() => void)[]
+      constructor() {
+        this.listeners = []
+        this.signal = {
+          aborted: false,
+          addEventListener: (_event: string, cb: () => void) => {
+            this.listeners.push(cb)
+          },
+          removeEventListener: jest.fn(),
+        }
+      }
+      abort(reason?: unknown) {
+        this.signal.aborted = true
+        mockAbort(reason)
+        this.listeners.forEach((cb) => cb())
+      }
+    }
+
+    // @ts-expect-error - Mocking a global
+    global.AbortController = MockAbortController
+    // @ts-expect-error - Mocking window property for JSDOM
+    if (typeof window !== 'undefined') {
+      window.AbortController =
+        MockAbortController as unknown as typeof AbortController
+    }
 
     try {
       // Make the connect call a promise that we can control
       let connectResolver: (value: MockBluetoothRemoteGATTServer) => void
       const connectPromise = new Promise<MockBluetoothRemoteGATTServer>(
-        (resolve) => {
+        (resolve, _reject) => {
           connectResolver = resolve
+          // If the signal aborts while we are waiting, we should reject?
+          // The cancellablePromise utility wraps this, so the underlying promise doesn't STRICTLY need to handle abort,
+          // but it's good practice.
         }
       )
       mockGatt.connect.mockReturnValue(connectPromise)
@@ -223,13 +251,16 @@ describe('useBluetoothHRM', () => {
 
       await act(async () => {
         connectResolver(mockGatt)
-        await firstPromise
       })
 
       expect(result.current.isConnected).toBe(true)
     } finally {
       // Restore original AbortController
       global.AbortController = OriginalAbortController
+      if (typeof window !== 'undefined') {
+        window.AbortController =
+          OriginalAbortController as unknown as typeof AbortController
+      }
     }
   })
 
