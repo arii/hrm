@@ -10,6 +10,17 @@ import { ServerMessage } from '../../../types/websocket'
 import { HrmStreamData } from '../../../types/core'
 
 describe('webSocketReducer', () => {
+  const baseUser: HrmStreamData = {
+    clientId: '1',
+    userName: 'User A',
+    userAge: 30,
+    maxHr: 190,
+    restingHr: 60,
+    hrm: 100,
+    zone: 'warmup',
+    calories: 10,
+  }
+
   it('should return the initial state if no action is matched', () => {
     // This is an unconventional action to test the default case.
     const action = { type: 'UNKNOWN_ACTION' } as unknown as ServerMessage
@@ -77,31 +88,23 @@ describe('webSocketReducer', () => {
   })
 
   describe('HRM_UPDATE action', () => {
-    const baseUser: HrmStreamData = {
-      clientId: '1',
-      userName: 'User A',
-      userAge: 30,
-      maxHr: 190,
-      restingHr: 60,
-      hrm: 100,
-      zone: 'warmup',
-      calories: 10,
-    }
-
-    it('should add a new user', () => {
+    it('should add a new user with a lastUpdated timestamp', () => {
       const action: ServerMessage = {
         type: 'HRM_UPDATE',
         payload: [baseUser],
       }
       const state = reducer(INITIAL_STATE, action)
       expect(state.hrmData).toHaveLength(1)
-      expect(state.hrmData[0]).toEqual({ ...baseUser, isConnected: true })
+      expect(state.hrmData[0]).toEqual(
+        expect.objectContaining({ ...baseUser, isConnected: true })
+      )
+      expect(state.hrmData[0].lastUpdated).toBeDefined()
     })
 
-    it('should update an existing user and keep them connected', () => {
+    it('should update an existing user and their lastUpdated timestamp', () => {
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
-        hrmData: [{ ...baseUser, isConnected: true }],
+        hrmData: [{ ...baseUser, isConnected: true, lastUpdated: 12345 }],
       }
       const updatedUser = { ...baseUser, hrm: 150, zone: 'aerobic' }
       const action: ServerMessage = {
@@ -113,9 +116,36 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0].hrm).toBe(150)
       expect(state.hrmData[0].zone).toBe('aerobic')
       expect(state.hrmData[0].isConnected).toBe(true)
+      expect(state.hrmData[0].lastUpdated).not.toBe(12345)
     })
 
-    it('should mark a user as disconnected if not in payload', () => {
+    it('should remove users that have not been updated in the last 3 minutes', () => {
+      const now = Date.now()
+      const staleUser = {
+        ...baseUser,
+        clientId: '2',
+        userName: 'Stale User',
+      }
+      const initialState: WebSocketState = {
+        ...INITIAL_STATE,
+        hrmData: [
+          { ...baseUser, isConnected: true, lastUpdated: now },
+          { ...staleUser, isConnected: true, lastUpdated: now - 180001 },
+        ],
+      }
+      const action: ServerMessage = {
+        type: 'HRM_UPDATE',
+        payload: [baseUser],
+      }
+      const state = reducer(initialState, action)
+      expect(state.hrmData).toHaveLength(1)
+      expect(state.hrmData.find((d) => d.clientId === '2')).toBeUndefined()
+      expect(state.hrmData[0].clientId).toBe('1')
+    })
+  })
+
+  describe('DEVICE_OFFLINE action', () => {
+    it('should remove the specified device from the state', () => {
       const user2 = { ...baseUser, clientId: '2', userName: 'User B' }
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
@@ -125,15 +155,13 @@ describe('webSocketReducer', () => {
         ],
       }
       const action: ServerMessage = {
-        type: 'HRM_UPDATE',
-        payload: [baseUser], // Only user 1 is in the update
+        type: 'DEVICE_OFFLINE',
+        payload: { deviceId: '1' },
       }
       const state = reducer(initialState, action)
-      expect(state.hrmData).toHaveLength(2)
-      const updatedUser1 = state.hrmData.find((u) => u.clientId === '1')
-      const updatedUser2 = state.hrmData.find((u) => u.clientId === '2')
-      expect(updatedUser1?.isConnected).toBe(true)
-      expect(updatedUser2?.isConnected).toBe(false)
+      expect(state.hrmData).toHaveLength(1)
+      expect(state.hrmData.find((d) => d.clientId === '1')).toBeUndefined()
+      expect(state.hrmData[0].clientId).toBe('2')
     })
   })
 
