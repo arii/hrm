@@ -90,7 +90,7 @@ describe('webSocketReducer', () => {
   })
 
   describe('HRM_UPDATE action', () => {
-    it('should add a new user with a lastUpdated timestamp', () => {
+    it('should add a new user with a lastUpdate timestamp', () => {
       const action: ServerMessage = {
         type: 'HRM_UPDATE',
         payload: [baseUser],
@@ -100,13 +100,13 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0]).toEqual(
         expect.objectContaining({ ...baseUser, isConnected: true })
       )
-      expect(state.hrmData[0].lastUpdated).toBeDefined()
+      expect(state.hrmData[0].lastUpdate).toBeDefined()
     })
 
-    it('should update an existing user and their lastUpdated timestamp', () => {
+    it('should update an existing user and their lastUpdate timestamp', () => {
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
-        hrmData: [{ ...baseUser, isConnected: true, lastUpdated: 12345 }],
+        hrmData: [{ ...baseUser, isConnected: true, lastUpdate: 12345 }],
       }
       const updatedUser = { ...baseUser, value: 150, zone: 'aerobic' }
       const action: ServerMessage = {
@@ -118,7 +118,7 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0].value).toBe(150)
       expect(state.hrmData[0].zone).toBe('aerobic')
       expect(state.hrmData[0].isConnected).toBe(true)
-      expect(state.hrmData[0].lastUpdated).not.toBe(12345)
+      expect(state.hrmData[0].lastUpdate).not.toBe(12345)
     })
 
     it('should remove users that are not in the payload immediately', () => {
@@ -131,8 +131,8 @@ describe('webSocketReducer', () => {
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [
-          { ...baseUser, isConnected: true, lastUpdated: now },
-          { ...staleUser, isConnected: true, lastUpdated: now },
+          { ...baseUser, isConnected: true, lastUpdate: now },
+          { ...staleUser, isConnected: true, lastUpdate: now },
         ],
       }
       const action: ServerMessage = {

@@ -6,34 +6,27 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import HrTileWrapper from '@/components/HrTileWrapper'
-import { useHeartRateLiveness } from '@/hooks/useHeartRateLiveness'
+import { useFilteredHrmTiles } from '@/hooks/useFilteredHrmTiles'
 
 const HrmConnectionPanel = () => {
-  const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
-  const usersWithLiveness = useHeartRateLiveness(hrmData)
+  const { connectionStatus, activeAlerts } = useWebSocket()
+  const filteredUsers = useFilteredHrmTiles()
 
   const tileData = useMemo(() => {
-    // Filter out users with placeholder names or no identity
-    return usersWithLiveness
-      .filter((user) => {
-        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-        const hasNoIdentity = user.name == null
-        return !(isPlaceholderName || hasNoIdentity || user.isExpired)
-      })
-      .map((user) => {
-        const matchingAlert = activeAlerts.find(
-          (alert) =>
-            alert.clientId === user.clientId &&
-            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
-        )
+    return filteredUsers.map((user) => {
+      const matchingAlert = activeAlerts.find(
+        (alert) =>
+          alert.clientId === user.clientId &&
+          (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
+      )
 
-        return {
-          ...user,
-          isAlerting: !!matchingAlert,
-          alertMessage: matchingAlert?.message,
-        }
-      })
-  }, [usersWithLiveness, activeAlerts])
+      return {
+        ...user,
+        isAlerting: !!matchingAlert,
+        alertMessage: matchingAlert?.message,
+      }
+    })
+  }, [filteredUsers, activeAlerts])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||

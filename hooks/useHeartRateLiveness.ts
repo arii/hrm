@@ -1,7 +1,7 @@
 'use client'
 import { useMemo } from 'react'
 import { useNow } from './useNow'
-import { HrmData } from '@/context/webSocketReducer'
+import { HrmData } from '@/types/websocket'
 import { HRM_STALE_WARNING_MS, HRM_STALE_THRESHOLD_MS } from '@/constants/hrm'
 
 export interface HeartRateLivenessResult extends HrmData {
@@ -26,9 +26,9 @@ export const useHeartRateLiveness = (
 
   return useMemo(() => {
     return hrmData.map((user) => {
-      // Prioritize `updatedAt` (server-side data timestamp) over `lastUpdated` (client-side message timestamp).
+      // Prioritize `updatedAt` (server-side data timestamp) over `lastUpdate` (client-side message timestamp).
       // Fallback to `now` if neither is available (should not happen for active tiles).
-      const lastSeen = user.updatedAt || user.lastUpdated || now
+      const lastSeen = user.updatedAt || user.lastUpdate || now
       const diff = now - lastSeen
 
       return {

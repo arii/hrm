@@ -6,6 +6,7 @@ import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
+import SignalCellularConnectedNoInternet0BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet0Bar'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
@@ -71,14 +72,14 @@ const HrTile = ({
           flexDirection: 'column',
           justifyContent: 'center',
           position: 'relative',
-          opacity: isConnected && !isDataStale ? 1 : 0.6,
+          opacity: isConnected && !isDataStale ? 1 : 0.5,
           transition: theme.transitions.create('opacity', {
             duration: theme.transitions.duration.short, // Approx 300ms
           }),
         }}
       >
-        {/* --- Disconnected Icon --- */}
-        {!isConnected && (
+        {/* --- Status Icons --- */}
+        {!isConnected ? (
           <WifiOffIcon
             sx={{
               position: 'absolute',
@@ -88,6 +89,18 @@ const HrTile = ({
               color: theme.palette.warning.main,
             }}
           />
+        ) : (
+          isDataStale && (
+            <SignalCellularConnectedNoInternet0BarIcon
+              sx={{
+                position: 'absolute',
+                top: theme.spacing(1),
+                right: theme.spacing(1),
+                fontSize: '1.5rem',
+                color: theme.palette.warning.main,
+              }}
+            />
+          )
         )}
 
         {/* --- Alerting Overlay --- */}

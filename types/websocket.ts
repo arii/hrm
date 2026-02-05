@@ -5,11 +5,17 @@
  */
 import { WebSocket } from 'ws'
 import type {
-  HrmStreamData as HrmData,
+  HrmStreamData as ServerHrmData,
   TimerData,
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
 } from './core'
+
+// Client-side extension of HrmData to include connection status
+export interface HrmData extends ServerHrmData {
+  isConnected?: boolean
+  lastUpdate?: number
+}
 
 // --- WebSocket Connection & Augmentation ---
 
@@ -26,7 +32,7 @@ export interface ExtWebSocket extends WebSocket {
 
 // --- Server Broadcast State Interfaces ---
 
-export type { HrmData, TimerData, SpotifyData, TimerMode }
+export type { TimerData, SpotifyData, TimerMode }
 
 export type SpotifyCommand =
   | 'PLAY'

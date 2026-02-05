@@ -3,14 +3,9 @@ import {
   TimerData,
   ServerMessage,
   ActiveAlert,
+  HrmData,
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
-
-// Client-side extension of HrmData to include connection status
-export interface HrmData extends ServerHrmData {
-  isConnected: boolean
-  lastUpdated?: number
-}
 
 export interface WebSocketState {
   hrmData: HrmData[]
@@ -85,7 +80,7 @@ export const reducer = (
           ...existingUser,
           ...updatedUser,
           isConnected: true,
-          lastUpdated: now,
+          lastUpdate: now,
         }
       })
 
@@ -99,7 +94,7 @@ export const reducer = (
           mergedHrmData.push({
             ...newUser,
             isConnected: true,
-            lastUpdated: now,
+            lastUpdate: now,
           })
         }
       })

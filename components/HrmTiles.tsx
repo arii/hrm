@@ -7,59 +7,52 @@ import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useMemo } from 'react'
-import { useHeartRateLiveness } from '@/hooks/useHeartRateLiveness'
+import { useFilteredHrmTiles } from '@/hooks/useFilteredHrmTiles'
 
 const HrmTiles = () => {
-  const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
-  const usersWithLiveness = useHeartRateLiveness(hrmData)
+  const { connectionStatus, activeAlerts } = useWebSocket()
+  const filteredUsers = useFilteredHrmTiles()
 
-  const filteredTiles = useMemo(() => {
-    return usersWithLiveness
-      .filter((user) => {
-        const isZero = user.value === 0
-        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-        const hasNoIdentity = user.name == null
-        return !(isZero || isPlaceholderName || hasNoIdentity || user.isExpired)
-      })
-      .map((user) => {
-        const hrZoneProps = getHrZoneProps(
-          user.value,
-          user.maxHr || MAX_HR_DEFAULT
-        )
+  const tileElements = useMemo(() => {
+    return filteredUsers.map((user) => {
+      const hrZoneProps = getHrZoneProps(
+        user.value,
+        user.maxHr || MAX_HR_DEFAULT
+      )
 
-        // Find the alert specific to this HR Monitor's clientId
-        const matchingAlert = activeAlerts.find(
-          (alert) =>
-            alert.clientId === user.clientId &&
-            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
-        )
+      // Find the alert specific to this HR Monitor's clientId
+      const matchingAlert = activeAlerts.find(
+        (alert) =>
+          alert.clientId === user.clientId &&
+          (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
+      )
 
-        return (
-          <Grid
-            size={{ xs: 12, sm: 6, lg: 3 }}
-            key={user.clientId}
-            data-testid="hr-tile-grid-item"
-          >
-            <HrTile
-              name={user.name || ''}
-              bpm={user.value}
-              percentMax={hrZoneProps.percentage}
-              calories={user.calories || 0} // Pass calories
-              isDataStale={user.isDataStale}
-              isAlerting={!!matchingAlert}
-              // Conditionally add alertMessage to avoid passing `undefined`
-              {...(matchingAlert && { alertMessage: matchingAlert.message })}
-            />
-          </Grid>
-        )
-      })
-  }, [usersWithLiveness, activeAlerts])
+      return (
+        <Grid
+          size={{ xs: 12, sm: 6, lg: 3 }}
+          key={user.clientId}
+          data-testid="hr-tile-grid-item"
+        >
+          <HrTile
+            name={user.name || ''}
+            bpm={user.value}
+            percentMax={hrZoneProps.percentage}
+            calories={user.calories || 0} // Pass calories
+            isDataStale={user.isDataStale}
+            isAlerting={!!matchingAlert}
+            // Conditionally add alertMessage to avoid passing `undefined`
+            {...(matchingAlert && { alertMessage: matchingAlert.message })}
+          />
+        </Grid>
+      )
+    })
+  }, [filteredUsers, activeAlerts])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 
-  if (isLoading || filteredTiles.length === 0) {
+  if (isLoading || tileElements.length === 0) {
     return (
       <>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
@@ -80,7 +73,7 @@ const HrmTiles = () => {
     )
   }
 
-  return <>{filteredTiles}</>
+  return <>{tileElements}</>
 }
 
 // Memoize HrmTiles to prevent re-renders when parent components update.
