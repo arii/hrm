@@ -58,8 +58,7 @@ function workoutBufferReducer(
         }
       }
 
-      const previousHrDataPoint = state.hrHistory[state.hrHistory.length - 1]
-      if (!previousHrDataPoint) return state
+      const previousHrDataPoint = state.hrHistory[state.hrHistory.length - 1]!
 
       const { zoneName } = calculateHrZone(previousHrDataPoint.hr, maxHr)
 
