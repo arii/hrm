@@ -100,7 +100,7 @@ describe('useSpotifyWebPlayback', () => {
 
     // Wait a bit to ensure timeout would have fired if it was going to
     return new Promise((resolve) => setTimeout(resolve, 100)).then(() => {
-       expect(window.Spotify.Player).not.toHaveBeenCalled()
+      expect(window.Spotify.Player).not.toHaveBeenCalled()
     })
   })
 })
