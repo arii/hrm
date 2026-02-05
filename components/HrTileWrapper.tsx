@@ -3,6 +3,7 @@
 import { useHrZone } from '@/hooks/useHrZone'
 import HrTile from '@/components/HrTile'
 import { HrmData } from '@/context/webSocketReducer'
+import { useNow } from '@/hooks/useNow'
 import { HRM_WARNING_THRESHOLD_MS } from '@/utils/constants'
 
 interface HrTileWrapperProps {
@@ -11,13 +12,11 @@ interface HrTileWrapperProps {
 
 const HrTileWrapper = ({ user }: HrTileWrapperProps) => {
   const hrZoneProps = useHrZone(user.value, user.maxHr)
+  const now = useNow()
 
   // Use the lastUpdated timestamp from the reducer to determine staleness.
-  // We use Date.now() here because the parent component (HrmConnectionPanel)
-  // already uses the useNow hook, which triggers a re-render of this component
-  // every second, ensuring the stale state is kept up-to-date.
   const isDataStale =
-    user.lastUpdated && Date.now() - user.lastUpdated > HRM_WARNING_THRESHOLD_MS
+    user.lastUpdated && now - user.lastUpdated > HRM_WARNING_THRESHOLD_MS
 
   return (
     <HrTile
