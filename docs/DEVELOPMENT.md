@@ -147,3 +147,15 @@ When integrating with third-party libraries that may have incorrect or incomplet
 **Problem**: The `@spotify/web-api-ts-sdk` library does not correctly type the `deviceId` parameter as optional for several of its player methods. This can lead to runtime errors and requires unsafe type assertions in the application code.
 
 **Solution**: The `safeSpotifyApi.ts` module provides a `createSafeSpotifyApi` function that wraps the Spotify SDK instance in a `Proxy`. This proxy intercepts calls to the player methods and dynamically handles the `deviceId` parameter, ensuring that `undefined` values are not passed to the SDK. This encapsulates the workaround in a single, reusable module, eliminating the need for scattered type assertions and improving the overall type safety of the codebase.
+
+### Reactive Data Liveness Detection
+
+To handle real-time data streams that may stop unexpectedly (e.g., hardware failure or signal loss), the application implements a reactive liveness detection pattern. This ensures that the UI remains accurate even if no explicit "disconnect" message is received over the WebSocket.
+
+**Key Components:**
+- **`useNow` Hook**: Provides a reactive, state-based timestamp that updates at a regular interval (e.g., every 5 seconds). This is crucial for triggering re-renders in components that depend on the passage of time rather than incoming data.
+- **`useHeartRateLiveness` Hook**: Calculates data staleness and expiration by comparing the `updatedAt` (server-side) or `lastUpdate` (client-side) timestamps with the reactive `now` timestamp. It adds `isDataStale` and `isExpired` flags to the HRM data.
+- **Centralized Thresholds**: Liveness thresholds are defined in `constants/hrm.ts` (`HRM_STALE_WARNING_MS` and `HRM_STALE_THRESHOLD_MS`).
+
+**Usage Pattern:**
+Components that display real-time data should consume hooks that implement this liveness check. For example, `HrmTiles` uses `useFilteredHrmTiles` to automatically remove tiles that have exceeded the expiration threshold.
