@@ -149,14 +149,6 @@ export const WebSocketProvider = ({
     return undefined
   }, [dispatch])
 
-  // Periodically prune stale data
-  useEffect(() => {
-    const interval = setInterval(() => {
-      dispatch({ type: 'PRUNE_STALE' })
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [dispatch])
-
   // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
     () =>
