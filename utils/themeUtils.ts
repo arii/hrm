@@ -1,5 +1,15 @@
-import type { Theme } from '@mui/material'
+import type { Theme, Palette } from '@mui/material'
 import { HrZoneName } from '@/lib/shared/hr-zones'
+
+const ZONE_COLOR_MAP: Partial<Record<HrZoneName, keyof Palette['custom']['hrZones']>> = {
+  [HrZoneName.Max]: 'max',
+  [HrZoneName.Peak]: 'peak',
+  [HrZoneName.Cardio]: 'cardio',
+  [HrZoneName.FatBurn]: 'fatBurn',
+  [HrZoneName.WarmUp]: 'warmUp',
+  [HrZoneName.NoData]: 'noData',
+  [HrZoneName.Unknown]: 'unknown',
+}
 
 /**
  * Maps a Heart Rate Zone name to the corresponding color from the theme.
@@ -13,22 +23,6 @@ export const getZoneColor = (zone: HrZoneName, theme: Theme): string => {
   // Fallback to grey if custom palette is missing
   if (!hrZones) return theme.palette.grey[500]
 
-  switch (zone) {
-    case HrZoneName.Max:
-      return hrZones.max
-    case HrZoneName.Peak:
-      return hrZones.peak
-    case HrZoneName.Cardio:
-      return hrZones.cardio
-    case HrZoneName.FatBurn:
-      return hrZones.fatBurn
-    case HrZoneName.WarmUp:
-      return hrZones.warmUp
-    case HrZoneName.NoData:
-      return hrZones.noData
-    case HrZoneName.Unknown:
-      return hrZones.unknown
-    default:
-      return theme.palette.grey[500]
-  }
+  const colorKey = ZONE_COLOR_MAP[zone]
+  return (colorKey && hrZones[colorKey]) || theme.palette.grey[500]
 }
