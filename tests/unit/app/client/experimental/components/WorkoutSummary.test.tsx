@@ -11,18 +11,6 @@ jest.mock('@/lib/utils', () => ({
   formatDate: jest.fn(
     (d) => `formatted-date-${d instanceof Date ? d.toISOString() : d}`
   ),
-  getStatusColor: jest.fn((s) => {
-    switch (s) {
-      case 'running':
-        return 'success'
-      case 'paused':
-        return 'warning'
-      case 'finished':
-        return 'primary'
-      default:
-        return 'default'
-    }
-  }),
 }))
 
 describe('WorkoutSummary', () => {

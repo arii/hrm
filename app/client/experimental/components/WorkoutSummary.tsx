@@ -9,24 +9,20 @@ import {
   Divider,
   Stack,
   useTheme,
+  SvgIconProps,
 } from '@mui/material'
 import {
   AccessTime as TimeIcon,
   LocalFireDepartment as BurnIcon,
   Person as PersonIcon,
 } from '@mui/icons-material'
-import { formatDuration, formatDate, getStatusColor } from '@/lib/utils'
+import { formatDuration, formatDate } from '@/lib/utils'
 
 interface WorkoutSummaryProps {
-  /** Total workout duration in seconds */
   duration: number
-  /** Total calories burned */
   calories: number
-  /** Current workout state */
   status: 'idle' | 'running' | 'paused' | 'finished'
-  /** Name of the user performing the workout */
   userName: string
-  /** The date of the workout session. */
   date: Date
 }
 
@@ -37,14 +33,7 @@ interface MetricBlockProps {
   label: string
   value: string | number
   icon: React.ElementType
-  iconColor?:
-    | 'action'
-    | 'error'
-    | 'primary'
-    | 'secondary'
-    | 'info'
-    | 'success'
-    | 'warning'
+  iconColor?: SvgIconProps['color']
   valueColor?: string
 }
 
@@ -80,6 +69,21 @@ const MetricBlock = ({
     </Typography>
   </Box>
 )
+
+const getStatusColor = (
+  status: 'idle' | 'running' | 'paused' | 'finished' | string
+): 'success' | 'warning' | 'primary' | 'default' => {
+  switch (status) {
+    case 'running':
+      return 'success'
+    case 'paused':
+      return 'warning'
+    case 'finished':
+      return 'primary'
+    default:
+      return 'default'
+  }
+}
 
 /**
  * Displays a summary of the current workout session.
