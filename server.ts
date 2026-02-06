@@ -14,6 +14,7 @@ import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
+import fs from 'fs'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -99,7 +100,8 @@ app.prepare().then(async () => {
   // --- Static Asset Serving (Production Only) ---
   if (env.NODE_ENV === 'production') {
     const isDeployment = process.env.IS_DEPLOYMENT === 'true'
-    const nextDir = isDeployment ? '.next_prod' : '.next'
+    const hasNextProd = fs.existsSync(path.join(process.cwd(), '.next_prod'))
+    const nextDir = isDeployment || hasNextProd ? '.next_prod' : '.next'
     const staticPath = path.join(process.cwd(), nextDir, 'static')
     expressApp.use(
       '/_next/static',

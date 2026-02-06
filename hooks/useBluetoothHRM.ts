@@ -69,12 +69,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isSupported, setIsSupported] = useState(false)
 
   useEffect(() => {
-    setIsSupported(
-      typeof navigator !== 'undefined' &&
-        (!!navigator.bluetooth ||
-          (typeof window !== 'undefined' &&
-            !!(window as unknown as { MockBluetooth: unknown }).MockBluetooth))
-    )
+    const hasNavigatorBluetooth =
+      typeof navigator !== 'undefined' && !!navigator.bluetooth
+    const hasMockBluetooth =
+      typeof window !== 'undefined' &&
+      !!(window as unknown as { MockBluetooth: unknown }).MockBluetooth
+
+    setIsSupported(hasNavigatorBluetooth || hasMockBluetooth)
   }, [])
 
   const deviceStatus = customStatusMessage ?? statusMessageMap[status]
