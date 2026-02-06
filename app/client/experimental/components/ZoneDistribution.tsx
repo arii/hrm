@@ -23,6 +23,11 @@ interface ZoneItemProps {
   color: string
 }
 
+const BASE_PROGRESS_SX = {
+  height: 10,
+  borderRadius: 5,
+}
+
 const ZoneRow: React.FC<ZoneItemProps> = ({
   label,
   seconds,
