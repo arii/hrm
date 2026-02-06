@@ -17,7 +17,7 @@ import {
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
-import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
+import { SafeSpotifyApi } from '../types/spotify.js'
 import { env } from '../lib/env.js'
 
 export interface SpotifyTokenResponse {
@@ -218,7 +218,7 @@ export class SpotifyPolling implements SpotifyService {
       tokenWithoutRefresh as AccessToken
     )
     // Wrap the SDK with our safe API to handle optional deviceIds correctly.
-    this.sdk = createSafeSpotifyApi(sdk)
+    this.sdk = sdk as unknown as SafeSpotifyApi
   }
 
   private async checkAndRefreshSdkToken() {
@@ -385,20 +385,29 @@ export class SpotifyPolling implements SpotifyService {
         await this.executeSdkCommand(
           command,
           () => {
+            // Note: The Spotify SDK types define `deviceId` as `string`, but the underlying implementation
+            // checks for truthiness and omits the parameter if it is undefined/null/empty.
+            // This allows us to pass `undefined` safely to target the active device.
+            // We cast to `string` (via unknown) here because we have verified the runtime behavior (see EndpointsBase.ts in SDK)
+            // supports `undefined` even though the type definition requires `string`.
+            const safeDeviceId = (deviceId || undefined) as unknown as string
+
             if (uri) {
               // The Spotify API requires that if a `uri` (for a specific track) is provided,
               // the `context_uri` must be omitted. The SDK handles this by accepting
               // `undefined` for the context parameter.
-              return sdk.player.startResumePlayback(deviceId, undefined, [uri])
+              return sdk.player.startResumePlayback(safeDeviceId, undefined, [
+                uri,
+              ])
             }
             if (effectiveContextUri) {
               return sdk.player.startResumePlayback(
-                deviceId,
+                safeDeviceId,
                 effectiveContextUri
               )
             }
             // If neither uri nor contextUri is provided, call with just deviceId.
-            return sdk.player.startResumePlayback(deviceId)
+            return sdk.player.startResumePlayback(safeDeviceId)
           },
           { deviceId, contextUri: effectiveContextUri, uri }
         )
@@ -425,16 +434,22 @@ export class SpotifyPolling implements SpotifyService {
         )
         break
       case 'TRANSFER_PLAYBACK':
-        if (deviceId) {
-          await this.executeSdkCommand(
-            command,
-            () => sdk.player.transferPlayback([deviceId], true),
-            { deviceId }
-          )
+        if (!deviceId) {
+          logger.warn({ command }, 'TRANSFER_PLAYBACK missing deviceId')
+          return
         }
+        await this.executeSdkCommand(
+          command,
+          () => sdk.player.transferPlayback([deviceId], true),
+          { deviceId }
+        )
         break
       case 'SET_VOLUME':
-        if (volume !== undefined) {
+        if (volume === undefined) {
+          logger.warn({ command }, 'SET_VOLUME missing volume')
+          return
+        }
+        {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
           await this.executeSdkCommand(
             command,
