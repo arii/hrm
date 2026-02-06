@@ -66,7 +66,27 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    await handleSpotifyApiError(error)
+    const isHandled = await handleSpotifyApiError(error)
+
+    if (isHandled) {
+      const err = error as { status?: number }
+      if (err?.status === 429) {
+        return NextResponse.json(
+          { error: 'Spotify API Rate Limit Exceeded' },
+          { status: 429 }
+        )
+      }
+      if (err?.status === 401) {
+        return NextResponse.json(
+          { error: 'Spotify Token Expired' },
+          { status: 401 }
+        )
+      }
+      return NextResponse.json(
+        { error: 'Spotify Service Unavailable' },
+        { status: 503 }
+      )
+    }
 
     if (
       error instanceof SyntaxError &&

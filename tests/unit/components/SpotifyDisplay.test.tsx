@@ -30,15 +30,21 @@ jest.mock('@/components/shared/VolumeSlider', () => ({
   default: ({
     volume,
     onVolumeChange,
+    onVolumeChangeCommitted,
   }: {
     volume: number
     onVolumeChange: (v: number) => void
+    onVolumeChangeCommitted: (v: number) => void
   }) => (
     <input
       type="range"
       aria-label="Volume"
       value={volume}
       onChange={(e) => onVolumeChange(Number(e.target.value))}
+      onMouseUp={(e) =>
+        onVolumeChangeCommitted &&
+        onVolumeChangeCommitted(Number((e.target as HTMLInputElement).value))
+      }
     />
   ),
 }))
@@ -138,6 +144,8 @@ describe('SpotifyDisplay', () => {
     renderComponent()
     const slider = screen.getByRole('slider')
     fireEvent.change(slider, { target: { value: '75' } })
+    expect(execute).not.toHaveBeenCalled()
+    fireEvent.mouseUp(slider, { target: { value: '75' } })
     expect(execute).toHaveBeenCalledWith('SET_VOLUME', { volume: 75 })
   })
 

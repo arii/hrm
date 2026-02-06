@@ -45,7 +45,14 @@ const SpotifyDisplay = () => {
     setDeviceMenuAnchor(null)
   }
 
+  const [localVolume, setLocalVolume] = useState<number | null>(null)
+
   const handleVolumeChange = (newVolume: number) => {
+    setLocalVolume(newVolume)
+  }
+
+  const handleVolumeCommitted = (newVolume: number) => {
+    setLocalVolume(null)
     execute('SET_VOLUME', { volume: newVolume })
   }
 
@@ -178,11 +185,11 @@ const SpotifyDisplay = () => {
         }}
       >
         <VolumeSlider
-          volume={playback.volumePercent}
+          volume={localVolume ?? playback.volumePercent}
           muted={playback.isMuted}
           onVolumeChange={handleVolumeChange}
-          onVolumeChangeCommitted={handleVolumeChange}
-          onToggleMute={() => handleVolumeChange(playback.isMuted ? 50 : 0)}
+          onVolumeChangeCommitted={handleVolumeCommitted}
+          onToggleMute={() => handleVolumeCommitted(playback.isMuted ? 50 : 0)}
           showValue={true}
         />
         <SpotifyDeviceSelector
