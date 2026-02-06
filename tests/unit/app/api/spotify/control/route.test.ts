@@ -76,6 +76,14 @@ describe('API Route: /api/spotify/control', () => {
     expect(data.error).toContain('Invalid command')
   })
 
+  it('should return 400 if deviceId is invalid type', async () => {
+    const req = createRequest({ command: 'PLAY', deviceId: 123 })
+    const response = await POST(req)
+    const data = await response.json()
+    expect(response.status).toBe(400)
+    expect(data.error).toContain('Invalid deviceId format')
+  })
+
   it('should call startResumePlayback for PLAY command', async () => {
     const req = createRequest({ command: 'PLAY', deviceId: 'test-device' })
     const response = await POST(req)

@@ -153,7 +153,7 @@ This architecture ensures that if a user starts or stops playing music on anothe
 ### Recovery Strategies
 
 - **Token Expiration**: The backend `SpotifyTokenManager` automatically uses the refresh token to get a new access token when a 401 error is detected. The `useSpotifyWebPlayback` hook on the frontend will also request a new token on subsequent initializations.
-- **API Errors**: The `handleSpotifyApiError` utility function (`services/spotifyApiErrorHandling.ts`) centralizes logging and handling of common Spotify API errors.
+- **API Errors**: The `handleSpotifyApiError` utility function (`services/spotifyApiErrorHandling.server.ts`) centralizes logging and handling of common Spotify API errors.
 
 ### User-Facing Messages
 

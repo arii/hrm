@@ -36,6 +36,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { command, deviceId, volume, contextUri, uri, playlistUri } = body
 
+    // Global sanity check: If deviceId is provided, it must be a string.
+    if (deviceId != null && typeof deviceId !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid deviceId format. Must be a string.' },
+        { status: 400 }
+      )
+    }
+
     switch (command) {
       case 'PLAY': {
         const uris = uri ? [uri] : undefined

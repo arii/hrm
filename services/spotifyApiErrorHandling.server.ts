@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server.js'
+import { NextResponse } from 'next/server'
 import { logSpotifyApiError } from './spotifyErrorLogging.server.js'
 
 // Re-export command logger for convenience, though direct import is preferred to avoid side-effects
