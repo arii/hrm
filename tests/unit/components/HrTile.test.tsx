@@ -12,7 +12,7 @@ import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 describe('HrTile', () => {
   it('renders the correct background and text color for the Peak zone', () => {
     // 95% -> Zone 5
-    render(<HrTile name="Test" bpm={180} percentMax={95} />)
+    render(<HrTile name="Test" bpm={180} percentMax={95} zone={5} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[5].color}`
@@ -22,7 +22,7 @@ describe('HrTile', () => {
 
   it('renders the correct background and text color for the Cardio zone', () => {
     // 85% -> Zone 4
-    render(<HrTile name="Test" bpm={160} percentMax={85} />)
+    render(<HrTile name="Test" bpm={160} percentMax={85} zone={4} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[4].color}`
@@ -32,7 +32,7 @@ describe('HrTile', () => {
 
   it('renders the correct background and text color for the Aerobic (formerly Fat Burn) zone', () => {
     // 75% -> Zone 3
-    render(<HrTile name="Test" bpm={140} percentMax={75} />)
+    render(<HrTile name="Test" bpm={140} percentMax={75} zone={3} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[3].color}`
@@ -42,7 +42,7 @@ describe('HrTile', () => {
 
   it('renders the correct background and text color for the Warm-up zone', () => {
     // 65% -> Zone 2
-    render(<HrTile name="Test" bpm={120} percentMax={65} />)
+    render(<HrTile name="Test" bpm={120} percentMax={65} zone={2} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[2].color}`
@@ -52,7 +52,7 @@ describe('HrTile', () => {
 
   it('renders the correct background and text color for the Recovery zone', () => {
     // 55% -> Zone 1
-    render(<HrTile name="Test" bpm={100} percentMax={55} />)
+    render(<HrTile name="Test" bpm={100} percentMax={55} zone={1} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[1].color}`

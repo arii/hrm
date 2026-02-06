@@ -8,7 +8,7 @@ import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import { HR_ZONE_VISUAL_CONFIG, ZONE_THRESHOLDS } from '@/lib/shared/hr-zones'
+import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 
@@ -43,16 +43,7 @@ const HrTile = ({
 
   // Determine the effective zone.
   // If 'zone' is provided (server-calculated), use it.
-  // Otherwise, calculate it locally from 'percentMax' using shared thresholds.
-  let displayZone = zone
-  if (displayZone === undefined) {
-    if (percentMax >= ZONE_THRESHOLDS.ZONE_5) displayZone = 5
-    else if (percentMax >= ZONE_THRESHOLDS.ZONE_4) displayZone = 4
-    else if (percentMax >= ZONE_THRESHOLDS.ZONE_3) displayZone = 3
-    else if (percentMax >= ZONE_THRESHOLDS.ZONE_2) displayZone = 2
-    else if (percentMax >= ZONE_THRESHOLDS.ZONE_1) displayZone = 1
-    else displayZone = 0
-  }
+  const displayZone = zone ?? 0
 
   const zoneConfig =
     HR_ZONE_VISUAL_CONFIG[displayZone as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
