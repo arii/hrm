@@ -129,4 +129,37 @@ describe('Environment Schema Validation', () => {
       expect(error).toBeUndefined()
     })
   })
+
+  describe('SPOTIFY_CALLBACK_URL', () => {
+    it('should derive SPOTIFY_CALLBACK_URL from NEXTAUTH_URL when missing', async () => {
+      const { parsedEnv, error } = await validateEnv({
+        NODE_ENV: 'development',
+        SPOTIFY_CLIENT_ID: 'test-id',
+        SPOTIFY_CLIENT_SECRET: 'test-secret',
+        NEXTAUTH_SECRET: 'a-valid-secret-for-testing',
+        NEXTAUTH_URL: 'http://localhost:3000',
+      })
+      expect(error).toBeUndefined()
+      // @ts-expect-error - parsedEnv is inferred as possibly undefined or having error
+      expect(parsedEnv?.data?.SPOTIFY_CALLBACK_URL).toBe(
+        'http://localhost:3000/api/auth/callback/spotify'
+      )
+    })
+
+    it('should use provided SPOTIFY_CALLBACK_URL if present', async () => {
+      const { parsedEnv, error } = await validateEnv({
+        NODE_ENV: 'development',
+        SPOTIFY_CLIENT_ID: 'test-id',
+        SPOTIFY_CLIENT_SECRET: 'test-secret',
+        NEXTAUTH_SECRET: 'a-valid-secret-for-testing',
+        NEXTAUTH_URL: 'http://localhost:3000',
+        SPOTIFY_CALLBACK_URL: 'http://custom-url.com/callback',
+      })
+      expect(error).toBeUndefined()
+      // @ts-expect-error - parsedEnv is inferred as possibly undefined or having error
+      expect(parsedEnv?.data?.SPOTIFY_CALLBACK_URL).toBe(
+        'http://custom-url.com/callback'
+      )
+    })
+  })
 })
