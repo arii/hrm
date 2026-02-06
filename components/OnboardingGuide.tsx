@@ -39,13 +39,11 @@ export default function OnboardingGuide() {
               <Typography>{step.description}</Typography>
               {step.href && (
                 <Box sx={{ mb: 2, mt: 1 }}>
-                  <div>
-                    <Link href={step.href} passHref>
-                      <Button variant="contained" sx={{ mt: 1, mr: 1 }}>
-                        {step.buttonText}
-                      </Button>
-                    </Link>
-                  </div>
+                  <Link href={step.href} passHref>
+                    <Button variant="contained" sx={{ mt: 1, mr: 1 }}>
+                      {step.buttonText}
+                    </Button>
+                  </Link>
                 </Box>
               )}
             </StepContent>
