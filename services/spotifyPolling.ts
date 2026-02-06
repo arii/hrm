@@ -397,11 +397,9 @@ export class SpotifyPolling implements SpotifyService {
               // The Spotify API requires that if a `uri` (for a specific track) is provided,
               // the `context_uri` must be omitted. The SDK handles this by accepting
               // `undefined` for the context parameter.
-              return sdk.player.startResumePlayback(
-                safeDeviceId,
-                undefined,
-                [uri]
-              )
+              return sdk.player.startResumePlayback(safeDeviceId, undefined, [
+                uri,
+              ])
             }
             if (effectiveContextUri) {
               return sdk.player.startResumePlayback(
