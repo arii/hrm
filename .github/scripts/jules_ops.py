@@ -77,23 +77,35 @@ def main():
     Main function to parse arguments and manage Jules sessions.
     """
     parser = argparse.ArgumentParser(description="Manage Jules coding sessions.")
-    parser.add_argument("--command", required=True, choices=['new', 'delete'], help="The command to execute.")
+    parser.add_argument("--command", required=True, choices=['new', 'delete', 'parse_comment'], help="The command to execute.")
     parser.add_argument("--session-id", help="The ID of the session to delete.")
     parser.add_argument("--prompt", help="The task description for the AI.")
+    parser.add_argument("--prompt-file", help="Path to a file containing the task description for the AI.")
     parser.add_argument("--branch", help="The git branch for the task.")
     parser.add_argument("--title", help="The title for the task or PR.")
     parser.add_argument("--owner", help="The owner of the repository.")
     parser.add_argument("--repo-name", help="The name of the repository.")
     parser.add_argument("--jules-api-url", default="https://api.jules.ai/v1/sessions", help="The URL of the Jules API.")
+    parser.add_argument("--comment-body", help="The body of the comment to parse.")
 
     args = parser.parse_args()
 
     if args.command == 'new':
-        if not all([args.prompt, args.branch, args.title, args.owner, args.repo_name]):
-            sys.stderr.write("Error: --prompt, --branch, --title, --owner, and --repo-name are required for the 'new' command.\n")
+        prompt_content = args.prompt
+        if args.prompt_file:
+            try:
+                with open(args.prompt_file, 'r') as f:
+                    prompt_content = f.read()
+            except IOError as e:
+                sys.stderr.write(f"Error reading prompt file: {e}\n")
+                sys.exit(1)
+
+        if not all([prompt_content, args.branch, args.title, args.owner, args.repo_name]):
+            sys.stderr.write("Error: --prompt (or --prompt-file), --branch, --title, --owner, and --repo-name are required for the 'new' command.\n")
             sys.exit(1)
+
         session_id = create_jules_session(
-            prompt=args.prompt,
+            prompt=prompt_content,
             branch=args.branch,
             title=args.title,
             owner=args.owner,
@@ -108,6 +120,24 @@ def main():
 
     elif args.command == 'delete':
         delete_jules_session(session_id=args.session_id, jules_api_url=args.jules_api_url)
+
+    elif args.command == 'parse_comment':
+        if not args.comment_body:
+            sys.stderr.write("Error: --comment-body is required for the 'parse_comment' command.\n")
+            sys.exit(1)
+
+        command = ""
+        # replicate bash logic: checks start of string
+        if args.comment_body.strip().startswith("@jules-delete"):
+            command = "delete"
+        elif args.comment_body.strip().startswith("@jules-new"):
+            command = "new"
+
+        if 'GITHUB_OUTPUT' in os.environ:
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                f.write(f"COMMAND={command}\n")
+        else:
+            print(f"COMMAND={command}")
 
 if __name__ == "__main__":
     main()
