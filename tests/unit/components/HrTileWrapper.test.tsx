@@ -6,11 +6,9 @@ import HrTileWrapper from '@/components/HrTileWrapper'
 import { ClientHrmData } from '@/context/webSocketReducer'
 import { useHrZone } from '@/hooks/useHrZone'
 
-// Mock the useHrZone hook
 jest.mock('@/hooks/useHrZone')
 const mockUseHrZone = useHrZone as jest.Mock
 
-// Mock the HrTile component
 jest.mock('@/components/HrTile', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return jest.fn((props: any) => (

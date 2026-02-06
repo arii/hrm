@@ -13,6 +13,8 @@ interface GetActiveHrmDataOptions {
   includeZeroValues?: boolean
 }
 
+const PLACEHOLDER_NAME_REGEX = /new user/i
+
 export const getActiveHrmData = (
   hrmData: HrmData[],
   activeAlerts: ActiveAlert[],
@@ -29,36 +31,34 @@ export const getActiveHrmData = (
     }
   }
 
-  return hrmData
-    .filter((user) => {
-      const isZero = user.value === 0
-      const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-      const hasNoIdentity = user.name == null
-      const isStale =
-        user.lastUpdated && now - user.lastUpdated > HRM_STALE_THRESHOLD_MS
+  return hrmData.reduce<ActiveHrmData[]>((acc, user) => {
+    const isZero = user.value === 0
+    const isPlaceholderName =
+      !!user.name && PLACEHOLDER_NAME_REGEX.test(user.name)
+    const hasNoIdentity = user.name == null
+    const isStale =
+      user.lastUpdated && now - user.lastUpdated > HRM_STALE_THRESHOLD_MS
 
-      if (isPlaceholderName || hasNoIdentity || isStale) {
-        return false
-      }
+    if (isPlaceholderName || hasNoIdentity || isStale) {
+      return acc
+    }
 
-      if (!includeZeroValues && isZero) {
-        return false
-      }
+    if (!includeZeroValues && isZero) {
+      return acc
+    }
 
-      return true
+    const matchingAlert = alertMap.get(user.clientId)
+    const isDataStale = !!(
+      user.lastUpdated && now - user.lastUpdated > HRM_WARNING_THRESHOLD_MS
+    )
+
+    acc.push({
+      ...user,
+      isAlerting: !!matchingAlert,
+      alertMessage: matchingAlert?.message,
+      isDataStale,
     })
-    .map((user) => {
-      const matchingAlert = alertMap.get(user.clientId)
 
-      const isDataStale = !!(
-        user.lastUpdated && now - user.lastUpdated > HRM_WARNING_THRESHOLD_MS
-      )
-
-      return {
-        ...user,
-        isAlerting: !!matchingAlert,
-        alertMessage: matchingAlert?.message,
-        isDataStale,
-      }
-    })
+    return acc
+  }, [])
 }

@@ -8,57 +8,34 @@ import {
 
 describe('getActiveHrmData', () => {
   const now = 100000
+
+  const createMockUser = (
+    id: string,
+    overrides: Partial<HrmData> = {}
+  ): HrmData => ({
+    clientId: id,
+    name: 'Test User',
+    value: 120,
+    calories: 100,
+    updatedAt: now,
+    isConnected: true,
+    lastUpdated: now,
+    maxHr: 180,
+    ...overrides,
+  })
+
   const mockHrmData: HrmData[] = [
-    {
-      clientId: 'c1',
-      name: 'User One',
-      value: 120,
-      calories: 100,
-      updatedAt: now,
-      isConnected: true,
-      lastUpdated: now,
-      maxHr: 180,
-    },
-    {
-      clientId: 'c2', // Stale
+    createMockUser('c1', { name: 'User One' }),
+    createMockUser('c2', {
       name: 'User Two',
-      value: 130,
-      calories: 110,
-      updatedAt: now - HRM_STALE_THRESHOLD_MS - 1,
-      isConnected: true,
       lastUpdated: now - HRM_STALE_THRESHOLD_MS - 1,
-      maxHr: 180,
-    },
-    {
-      clientId: 'c3', // Zero value
-      name: 'User Three',
-      value: 0,
-      calories: 0,
-      updatedAt: now,
-      isConnected: true,
-      lastUpdated: now,
-      maxHr: 180,
-    },
-    {
-      clientId: 'c4', // Placeholder
-      name: 'New User 123',
-      value: 120,
-      calories: 100,
-      updatedAt: now,
-      isConnected: true,
-      lastUpdated: now,
-      maxHr: 180,
-    },
-    {
-      clientId: 'c5', // Warning Stale
+    }), // Stale
+    createMockUser('c3', { name: 'User Three', value: 0 }), // Zero value
+    createMockUser('c4', { name: 'New User 123' }), // Placeholder
+    createMockUser('c5', {
       name: 'User Five',
-      value: 120,
-      calories: 100,
-      updatedAt: now - HRM_WARNING_THRESHOLD_MS - 1,
-      isConnected: true,
       lastUpdated: now - HRM_WARNING_THRESHOLD_MS - 1,
-      maxHr: 180,
-    },
+    }), // Warning Stale
   ]
 
   const mockAlerts: ActiveAlert[] = [
