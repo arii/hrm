@@ -1,10 +1,103 @@
 import { WebSocket } from 'ws'
+import { z } from 'zod'
 import type {
   HrmStreamData as HrmData,
   TimerData,
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
 } from './core'
+
+// --- Zod Schemas ---
+
+export const IncomingHrmDataSchema = z.object({
+  value: z.number().nullable(),
+  calories: z.number().optional(),
+})
+
+export const HrmMetadataUpdateDataSchema = z.object({
+  maxHr: z.number().optional(),
+  name: z.string().optional(),
+  age: z.number().optional(),
+  weight: z.number().optional(),
+  height: z.number().optional(),
+  gender: z.string().optional(),
+})
+
+export const HrmMetadataUpdateMessageSchema = z.object({
+  type: z.literal('HRM_METADATA_UPDATE'),
+  data: HrmMetadataUpdateDataSchema,
+})
+
+export const TimerCommandMessageSchema = z.object({
+  type: z.literal('TIMER_COMMAND'),
+  command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
+})
+
+export const TimerModeCommandMessageSchema = z.object({
+  type: z.literal('SET_MODE'),
+  mode: z.union([z.literal('STOPWATCH'), z.literal('TABATA')]),
+})
+
+export const TimerConfigMessageSchema = z.object({
+  type: z.literal('TIMER_CONFIG'),
+  workDuration: z.number(),
+  restDuration: z.number(),
+})
+
+export const SpotifyCommandSchema = z.union([
+  z.literal('PLAY'),
+  z.literal('PAUSE'),
+  z.literal('NEXT'),
+  z.literal('PREVIOUS'),
+  z.literal('TRANSFER_PLAYBACK'),
+  z.literal('SET_VOLUME'),
+  z.literal('GET_DEVICES'),
+])
+
+export const SpotifyCommandMessageSchema = z.object({
+  type: z.literal('SPOTIFY_COMMAND'),
+  command: SpotifyCommandSchema,
+  deviceId: z.string().optional(),
+  volume: z.number().min(0).max(100).optional(),
+  playlistUri: z.string().optional(),
+  contextUri: z.string().optional(),
+  uri: z.string().optional(),
+  offset: z
+    .object({
+      position: z.number(),
+    })
+    .optional(),
+})
+
+export const GetStateMessageSchema = z.object({
+  type: z.literal('GET_STATE'),
+})
+
+export const ClientRegistrationMessageSchema = z.object({
+  type: z.literal('REGISTER_CLIENT'),
+  role: z.union([z.literal('dashboard'), z.literal('controller')]),
+})
+
+export const PingMessageSchema = z.object({
+  type: z.literal('PING'),
+})
+
+export const HrmInputMessageSchema = z.object({
+  type: z.literal('HRM_INPUT'),
+  data: IncomingHrmDataSchema,
+})
+
+export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
+  HrmInputMessageSchema,
+  HrmMetadataUpdateMessageSchema,
+  TimerCommandMessageSchema,
+  TimerModeCommandMessageSchema,
+  SpotifyCommandMessageSchema,
+  TimerConfigMessageSchema,
+  GetStateMessageSchema,
+  ClientRegistrationMessageSchema,
+  PingMessageSchema,
+])
 
 // --- WebSocket Connection & Augmentation ---
 
@@ -23,14 +116,31 @@ export interface ExtWebSocket extends WebSocket {
 
 export type { HrmData, TimerData, SpotifyData, TimerMode }
 
-export type SpotifyCommand =
-  | 'PLAY'
-  | 'PAUSE'
-  | 'NEXT'
-  | 'PREVIOUS'
-  | 'TRANSFER_PLAYBACK'
-  | 'SET_VOLUME'
-  | 'GET_DEVICES'
+// Derived Types
+export type IncomingHrmData = z.infer<typeof IncomingHrmDataSchema>
+export type HrmMetadataUpdateData = z.infer<typeof HrmMetadataUpdateDataSchema>
+export type HrmMetadataUpdateMessage = z.infer<
+  typeof HrmMetadataUpdateMessageSchema
+>
+export type TimerCommandMessage = z.infer<typeof TimerCommandMessageSchema>
+export type TimerModeCommandMessage = z.infer<
+  typeof TimerModeCommandMessageSchema
+>
+export type TimerConfigMessage = z.infer<typeof TimerConfigMessageSchema>
+export type SpotifyCommand = z.infer<typeof SpotifyCommandSchema>
+export type SpotifyCommandMessage = z.infer<typeof SpotifyCommandMessageSchema>
+export type GetStateMessage = z.infer<typeof GetStateMessageSchema>
+export type ClientRegistrationMessage = z.infer<
+  typeof ClientRegistrationMessageSchema
+>
+export type PingMessage = z.infer<typeof PingMessageSchema>
+export type HrmInputMessage = z.infer<typeof HrmInputMessageSchema>
+export type ClientCommandMessage = z.infer<typeof ClientCommandMessageSchema>
+
+export interface SpotifyExecutionMessage {
+  type: 'EXECUTE_SPOTIFY'
+  payload: SpotifyCommandMessage
+}
 
 /**
  * The payload for the INITIAL_STATE message, representing the full application state.
@@ -74,191 +184,3 @@ export type ServerMessage =
   | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
   | { type: 'DEVICE_OFFLINE'; payload: { deviceId: string } }
   | SpotifyExecutionMessage
-
-/**
- * BroadcastData: a small, optional-shaped payload that services may send to
- * the socket broadcaster. This mirrors the ad-hoc interface previously found
- * inside the compiled `server.js` and centralizes it here for reuse.
- */
-
-// --- Client Input Command Interfaces ---
-
-/**
- * Represents the data payload for an incoming HRM_INPUT message.
- * The `calories` field is optional to support older clients and handle
- * cases where the client has not yet calculated a value.
- */
-export interface IncomingHrmData {
-  value: number | null
-  maxHr?: number
-  name?: string
-  age?: number
-  calories?: number
-}
-
-export interface HrmInputMessage {
-  type: 'HRM_INPUT'
-  data: IncomingHrmData
-}
-
-export type HrmMetadataUpdateData = Omit<
-  Partial<HrmData>,
-  'clientId' | 'value' | 'calories'
-> & {
-  weight?: number
-  height?: number
-  gender?: string
-}
-
-export interface HrmMetadataUpdateMessage {
-  type: 'HRM_METADATA_UPDATE'
-  data: HrmMetadataUpdateData
-}
-
-export interface TimerCommandMessage {
-  type: 'TIMER_COMMAND'
-  command: 'START' | 'PAUSE' | 'STOP'
-}
-
-export interface TimerModeCommandMessage {
-  type: 'SET_MODE'
-  mode: TimerMode
-}
-
-export interface TimerConfigMessage {
-  type: 'TIMER_CONFIG'
-  workDuration: number
-  restDuration: number
-}
-
-export interface SpotifyCommandMessage {
-  type: 'SPOTIFY_COMMAND'
-  command: SpotifyCommand
-  deviceId?: string
-  volume?: number
-  playlistUri?: string
-  contextUri?: string
-  uri?: string
-  offset?: {
-    position: number
-  }
-}
-
-export interface GetStateMessage {
-  type: 'GET_STATE'
-}
-
-export interface ClientRegistrationMessage {
-  type: 'REGISTER_CLIENT'
-  role: 'dashboard' | 'controller'
-}
-
-export interface SpotifyExecutionMessage {
-  type: 'EXECUTE_SPOTIFY'
-  payload: SpotifyCommandMessage
-}
-
-export interface PingMessage {
-  type: 'PING'
-}
-
-export type ClientCommandMessage =
-  | HrmInputMessage
-  | HrmMetadataUpdateMessage
-  | TimerCommandMessage
-  | TimerModeCommandMessage
-  | SpotifyCommandMessage
-  | TimerConfigMessage
-  | GetStateMessage
-  | ClientRegistrationMessage
-  | PingMessage
-
-import { z } from 'zod'
-
-export const IncomingHrmDataSchema = z.object({
-  value: z.number().nullable(),
-  calories: z.number().optional(),
-})
-
-export const HrmMetadataUpdateDataSchema = z.object({
-  maxHr: z.number().optional(),
-  name: z.string().optional(),
-  age: z.number().optional(),
-  weight: z.number().optional(),
-  height: z.number().optional(),
-  gender: z.string().optional(),
-})
-
-export const HrmMetadataUpdateMessageSchema = z.object({
-  type: z.literal('HRM_METADATA_UPDATE'),
-  data: HrmMetadataUpdateDataSchema,
-})
-
-export const TimerCommandMessageSchema = z.object({
-  type: z.literal('TIMER_COMMAND'),
-  command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
-})
-
-export const TimerModeCommandMessageSchema = z.object({
-  type: z.literal('SET_MODE'),
-  mode: z.union([z.literal('STOPWATCH'), z.literal('TABATA')]),
-})
-
-export const TimerConfigMessageSchema = z.object({
-  type: z.literal('TIMER_CONFIG'),
-  workDuration: z.number(),
-  restDuration: z.number(),
-})
-
-export const SpotifyCommandMessageSchema = z.object({
-  type: z.literal('SPOTIFY_COMMAND'),
-  command: z.union([
-    z.literal('PLAY'),
-    z.literal('PAUSE'),
-    z.literal('NEXT'),
-    z.literal('PREVIOUS'),
-    z.literal('TRANSFER_PLAYBACK'),
-    z.literal('SET_VOLUME'),
-    z.literal('GET_DEVICES'),
-  ]),
-  deviceId: z.string().optional(),
-  volume: z.number().min(0).max(100).optional(),
-  playlistUri: z.string().optional(),
-  contextUri: z.string().optional(),
-  uri: z.string().optional(),
-  offset: z
-    .object({
-      position: z.number(),
-    })
-    .optional(),
-})
-
-export const GetStateMessageSchema = z.object({
-  type: z.literal('GET_STATE'),
-})
-
-export const ClientRegistrationMessageSchema = z.object({
-  type: z.literal('REGISTER_CLIENT'),
-  role: z.union([z.literal('dashboard'), z.literal('controller')]),
-})
-
-export const PingMessageSchema = z.object({
-  type: z.literal('PING'),
-})
-
-export const HrmInputMessageSchema = z.object({
-  type: z.literal('HRM_INPUT'),
-  data: IncomingHrmDataSchema,
-})
-
-export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
-  HrmInputMessageSchema,
-  HrmMetadataUpdateMessageSchema,
-  TimerCommandMessageSchema,
-  TimerModeCommandMessageSchema,
-  SpotifyCommandMessageSchema,
-  TimerConfigMessageSchema,
-  GetStateMessageSchema,
-  ClientRegistrationMessageSchema,
-  PingMessageSchema,
-])

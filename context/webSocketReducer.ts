@@ -64,41 +64,19 @@ export const reducer = (
       }
     }
     case 'HRM_UPDATE': {
-      const now = Date.now()
       const payload = message.payload as ServerHrmData[]
-      const incomingClients = new Set(payload.map((user) => user.clientId))
+      // O(N) Lookup Map
+      const existingMap = new Map(state.hrmData.map((d) => [d.clientId, d]))
 
-      const activeHrmData = state.hrmData.filter((existing) =>
-        incomingClients.has(existing.clientId)
-      )
+      // Single pass O(N) generation of new state
+      const hrmData = payload.map((serverData) => ({
+        ...(existingMap.get(serverData.clientId) || {}),
+        ...serverData,
+        isConnected: true,
+        lastUpdated: Date.now(),
+      })) as HrmData[]
 
-      const mergedHrmData = activeHrmData.map((existingUser) => {
-        const updatedUser = payload.find(
-          (newUser) => newUser.clientId === existingUser.clientId
-        )
-        return {
-          ...existingUser,
-          ...updatedUser,
-          isConnected: true,
-          lastUpdated: now,
-        }
-      })
-
-      payload.forEach((newUser) => {
-        if (
-          !mergedHrmData.some(
-            (existingUser) => existingUser.clientId === newUser.clientId
-          )
-        ) {
-          mergedHrmData.push({
-            ...newUser,
-            isConnected: true,
-            lastUpdated: now,
-          })
-        }
-      })
-
-      return { ...state, hrmData: mergedHrmData }
+      return { ...state, hrmData }
     }
     case 'DEVICE_OFFLINE': {
       const { deviceId } = message.payload

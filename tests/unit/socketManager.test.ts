@@ -61,47 +61,36 @@ jest.mock('../../utils/logger.server.js', () => ({
   },
 }))
 
-jest.mock('ws', () => ({
-  Server: jest.fn().mockImplementation(() => {
-    const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
-    wss.clients = new Set<MockWebSocket>()
-    const originalOn = wss.on.bind(wss)
-    const originalEmit = wss.emit.bind(wss)
-    wss.on = jest.fn(
-      (event: string, listener: (...args: unknown[]) => void) => {
-        return originalOn(event, listener)
-      }
-    )
-    wss.emit = jest.fn((event: string, ...args: unknown[]) => {
-      return originalEmit(event, ...args)
-    })
-    return wss
-  }),
-  WebSocket: jest.fn(),
-}))
-
+// Simplified MockWebSocket
 class MockWebSocket extends EventEmitter {
-  isAlive: boolean
-  clientType: string | undefined
-  clientId?: string
+  isAlive = true
+  clientType?: 'dashboard' | 'controller'
+  clientId: string = '' // Initialize as required by ExtWebSocket
   terminate = jest.fn()
   ping = jest.fn()
   send = jest.fn()
-
-  constructor() {
-    super()
-    this.isAlive = true
-  }
-
-  receivePong() {
-    this.emit('pong')
-  }
-
-  on(event: string | symbol, listener: (...args: unknown[]) => void): this {
-    super.on(event, listener)
-    return this
-  }
+  readyState = 1 // WebSocket.OPEN
 }
+
+jest.mock('ws', () => ({
+  Server: jest.fn().mockImplementation(() => {
+    const wss = new EventEmitter() as unknown as WebSocketServer
+    // Correctly type clients as Set<ExtWebSocket> to avoid casts in tests
+    wss.clients = new Set<ExtWebSocket>() as unknown as Set<
+      import('ws').WebSocket
+    >
+    // Spy on methods instead of manual wrapping
+    jest.spyOn(wss, 'on')
+    jest.spyOn(wss, 'emit')
+    return wss
+  }),
+  WebSocket: Object.assign(jest.fn(), {
+    CONNECTING: 0,
+    OPEN: 1,
+    CLOSING: 2,
+    CLOSED: 3,
+  }),
+}))
 
 describe('WebSocket Manager', () => {
   let mockWss: jest.Mocked<WebSocketServer>
@@ -157,14 +146,17 @@ describe('WebSocket Manager', () => {
     initSocketManager(mockWss, getSnapshot, mockServices)
     const mockReq = createMockRequest()
     mockWs = new MockWebSocket()
-    ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
+    // Type assertion removed as MockWebSocket now conforms to ExtWebSocket
+    ;(mockWss.clients as unknown as Set<ExtWebSocket>).add(
+      mockWs as ExtWebSocket
+    )
     mockWss.emit('connection', mockWs, mockReq)
   })
 
   afterEach(() => {
     jest.useRealTimers()
     jest.clearAllMocks()
-    ;(mockWss.clients as Set<MockWebSocket>).clear()
+    ;(mockWss.clients as unknown as Set<ExtWebSocket>).clear()
     resetSocketManager()
   })
 
@@ -526,8 +518,8 @@ describe('WebSocket Manager', () => {
       dashboardWs.clientType = 'dashboard'
       const controllerWs = new MockWebSocket() as ExtWebSocket
       controllerWs.clientType = 'controller'
-      ;(mockWss.clients as Set<MockWebSocket>).add(dashboardWs)
-      ;(mockWss.clients as Set<MockWebSocket>).add(controllerWs)
+      ;(mockWss.clients as unknown as Set<ExtWebSocket>).add(dashboardWs)
+      ;(mockWss.clients as unknown as Set<ExtWebSocket>).add(controllerWs)
 
       const message = JSON.stringify({
         type: 'SPOTIFY_COMMAND',
