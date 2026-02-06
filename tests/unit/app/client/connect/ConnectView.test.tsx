@@ -35,6 +35,7 @@ describe('ConnectView', () => {
     onDisconnect: jest.fn(),
     onForgetDevice: jest.fn().mockResolvedValue(undefined),
     isSupported: true,
+    signalPeriodMs: 1000,
     currentHR: 0,
     hrZoneProps: { percentage: 0, progressColor: 'grey' },
     connectionStatus: 'Connected',

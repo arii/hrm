@@ -126,6 +126,7 @@ export default function ConnectPage() {
   })
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   const {
     addHrData,
     startWorkout: startPersistentWorkout,
@@ -135,6 +136,8 @@ export default function ConnectPage() {
 
 =======
 >>>>>>> feat(medium): Persist Workout Session Across Page Navigation
+=======
+>>>>>>> test(persistence): add unit tests for buffered session persistence (#6827)
   const handleStartWorkout = useCallback(() => {
     startWorkout()
   }, [startWorkout])
@@ -146,12 +149,17 @@ export default function ConnectPage() {
   const handleEndWorkout = useCallback(() => {
     endWorkout()
 <<<<<<< HEAD
+<<<<<<< HEAD
     endPersistentWorkout()
     resetCalculator() // Reset calories on workout end
   }, [endWorkout, endPersistentWorkout, resetCalculator])
 =======
   }, [endWorkout])
 >>>>>>> feat(medium): Persist Workout Session Across Page Navigation
+=======
+    resetCalculator()
+  }, [endWorkout, resetCalculator])
+>>>>>>> test(persistence): add unit tests for buffered session persistence (#6827)
 
   const handleResetWorkout = useCallback(() => {
     resetWorkoutSession()
@@ -165,6 +173,7 @@ export default function ConnectPage() {
         'handleHeartRateUpdate called, updating local state'
       )
       setCurrentHR(heartRate)
+<<<<<<< HEAD
 <<<<<<< HEAD
 
       if (workoutStatus === 'running') {
@@ -181,6 +190,11 @@ export default function ConnectPage() {
         // Persist individual HR data points to IndexedDB
         addHrData(heartRate)
 >>>>>>> feat(medium): Persist Workout Session Across Page Navigation
+=======
+      if (workoutStatus === 'running') {
+        processHeartRate(heartRate)
+        addHrData(heartRate)
+>>>>>>> test(persistence): add unit tests for buffered session persistence (#6827)
       }
     },
     [processHeartRate, workoutStatus, setCurrentHR, addHrData]
@@ -214,6 +228,9 @@ export default function ConnectPage() {
 
   useEffect(() => {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> test(persistence): add unit tests for buffered session persistence (#6827)
     if (
       !isConnected &&
       isSupported &&
