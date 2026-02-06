@@ -1049,8 +1049,9 @@ jobs:
           echo "🔎 Searching for the last successful 'PR Quality Gate' workflow run on branch '${{ github.head_ref || github.ref_name }}'..."
           # Fetch the SHA of the head commit from the most recent successful run of this workflow on this branch.
           # Exclude the current run_id to prevent finding ourselves in a race condition.
-          WORKFLOW_RUN_JSON=$(gh run list --workflow "pr-quality.yml" --branch "${{ github.head_ref || github.ref_name }}" --status "success" -L 5 --json headSha,databaseId)
-          PARENT_SHA=$(echo "$WORKFLOW_RUN_JSON" | jq -r --argjson current_run_id ${{ github.run_id }} '.[] | select(.databaseId != $current_run_id) | .headSha' | head -n 1)
+          # Explicitly filter for completed and successful runs to avoid race conditions with in-progress runs.
+          WORKFLOW_RUN_JSON=$(gh run list --workflow "pr-quality.yml" --branch "${{ github.head_ref || github.ref_name }}" --status completed -L 20 --json headSha,databaseId,status,conclusion)
+          PARENT_SHA=$(echo "$WORKFLOW_RUN_JSON" | jq -r --argjson current_run_id ${{ github.run_id }} '.[] | select(.databaseId != $current_run_id and .status == "completed" and .conclusion == "success") | .headSha' | head -n 1)
 
           if [ -z "$PARENT_SHA" ]; then
             echo "::warning::Could not find a recent successful workflow run to copy checks from. Falling back to the commit before HEAD (${{ github.event.before }})."
