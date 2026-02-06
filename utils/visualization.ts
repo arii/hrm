@@ -8,8 +8,7 @@ import { WorkoutData } from '../types'
 import { WorkoutItem } from '../types/workout'
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 import theme from '../lib/theme'
-import { calculateHrZone } from '../lib/hrm/zones'
-import { HrZoneName } from '../lib/shared/hr-zones'
+import { calculateHrZone, HrZoneName } from '../lib/shared/hr-zones'
 
 // Define types for MUI color props
 type MuiColor =

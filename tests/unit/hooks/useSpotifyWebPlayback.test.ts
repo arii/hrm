@@ -93,11 +93,7 @@ describe('useSpotifyWebPlayback', () => {
   })
 
   it('calls addError but not signOut for non-401 errors', async () => {
-    const error: networkUtils.AppError = {
-      message: 'Internal Server Error',
-      code: 'HTTP_ERROR_500',
-      retryable: true,
-    }
+    const error = new Error('Internal Server Error')
     mockFetchWithRetry.mockRejectedValue(error)
 
     renderHook(() => useSpotifyWebPlayback())
