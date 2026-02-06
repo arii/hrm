@@ -5,12 +5,12 @@ import {
   HrDataPoint,
 } from '@/lib/workout-session-storage'
 import { v4 as uuidv4 } from 'uuid'
-import { HrZoneName } from '@/lib/shared/hr-zones'
+import { HrZoneName, calculateMaxHr } from '@/lib/shared/hr-zones'
 import { calculateHrZone } from '@/lib/hrm/zones'
+import { isSameDay } from '@/lib/date'
 
 const STORAGE_KEY = 'hrm_dashboard:active_session'
 
-// --- State Definitions ---
 type SessionStatus = 'idle' | 'running' | 'paused'
 
 interface SessionState {
@@ -22,7 +22,16 @@ interface SessionState {
   totalPaused: number // Total paused duration in milliseconds
   pauseTime: number | null // Timestamp when the workout was paused
   sessionId: string | null // For IndexedDB persistence
+  // In-memory stats for UI
+  timeInZones: Record<HrZoneName, number>
+  averageHr: number
+  maxHr: number
+  hrCount: number // Helper for average calculation
 }
+
+const initialTimeInZones = Object.fromEntries(
+  Object.values(HrZoneName).map((zone) => [zone, 0])
+) as Record<HrZoneName, number>
 
 const initialState: SessionState = {
   status: 'idle',
@@ -33,32 +42,22 @@ const initialState: SessionState = {
   totalPaused: 0,
   pauseTime: null,
   sessionId: null,
+  timeInZones: { ...initialTimeInZones },
+  averageHr: 0,
+  maxHr: 0,
+  hrCount: 0,
 }
 
-// --- Helper for state validation ---
 const isValidSessionState = (parsed: unknown): parsed is SessionState => {
   if (!parsed || typeof parsed !== 'object') return false
   const p = parsed as Record<string, unknown>
-
-  const hasRequiredFields =
+  return (
     typeof p.status === 'string' &&
     ['idle', 'running', 'paused'].includes(p.status) &&
     typeof p.duration === 'number'
-
-  const hasValidOptionalFields =
-    (p.startTime === null || typeof p.startTime === 'number') &&
-    (p.totalPaused === null || typeof p.totalPaused === 'number') &&
-    (p.pauseTime === null || typeof p.pauseTime === 'number') &&
-    (p.sessionId === null || typeof p.sessionId === 'string') &&
-    (p.calories === undefined ||
-      p.calories === null ||
-      typeof p.calories === 'number') &&
-    (p.startCalories === undefined || typeof p.startCalories === 'number')
-
-  return hasRequiredFields && hasValidOptionalFields
+  )
 }
 
-// --- Helper to load from storage ---
 const loadState = (): SessionState => {
   if (typeof window === 'undefined') return initialState
   try {
@@ -66,9 +65,19 @@ const loadState = (): SessionState => {
     if (stored) {
       const parsed = JSON.parse(stored)
       if (isValidSessionState(parsed)) {
+        // Validate stale session (different day)
+        if (
+          parsed.startTime &&
+          !isSameDay(new Date(parsed.startTime), new Date())
+        ) {
+          return initialState
+        }
+
+        // Hydrate in-memory stats if missing (backward compat or partial save)
         return {
           ...initialState,
           ...parsed,
+          timeInZones: parsed.timeInZones || { ...initialTimeInZones },
         }
       }
     }
@@ -90,6 +99,10 @@ type SessionAction =
   | { type: 'END_WORKOUT'; payload: { now: number } }
   | { type: 'UPDATE_CALORIES'; payload: number }
   | { type: 'HYDRATE'; payload: SessionState }
+  | {
+      type: 'ADD_HR_DATA'
+      payload: { hr: number; zoneName: HrZoneName; timeDelta: number }
+    }
 
 function sessionReducer(
   state: SessionState,
@@ -112,6 +125,11 @@ function sessionReducer(
           totalPaused: 0,
           pauseTime: null,
           sessionId: action.payload.sessionId,
+          // Reset stats
+          timeInZones: { ...initialTimeInZones },
+          averageHr: 0,
+          maxHr: 0,
+          hrCount: 0,
         }
       }
       break
@@ -142,6 +160,24 @@ function sessionReducer(
     case 'UPDATE_CALORIES':
       newState = { ...state, calories: action.payload }
       break
+    case 'ADD_HR_DATA':
+      if (state.status === 'running') {
+        const { hr, zoneName, timeDelta } = action.payload
+        const newCount = state.hrCount + 1
+        const newAverage = (state.averageHr * state.hrCount + hr) / newCount
+
+        newState = {
+          ...state,
+          timeInZones: {
+            ...state.timeInZones,
+            [zoneName]: (state.timeInZones[zoneName] || 0) + timeDelta,
+          },
+          maxHr: Math.max(state.maxHr, hr),
+          averageHr: newAverage,
+          hrCount: newCount,
+        }
+      }
+      break
     case 'RESET':
       newState = initialState
       break
@@ -150,7 +186,6 @@ function sessionReducer(
   return newState
 }
 
-// --- Hook Implementation ---
 interface WorkoutSessionOptions {
   /**
    * The total cumulative calories reported by the server.
@@ -187,6 +222,12 @@ export const useWorkoutSession = ({
 
   // Buffer for HR data points to reduce IndexedDB writes
   const hrDataBuffer = useRef<HrDataPoint[]>([])
+  const lastHrTime = useRef<number>(0)
+
+  // Initialize lastHrTime safely
+  useEffect(() => {
+    lastHrTime.current = Date.now()
+  }, [])
 
   // Side Effect: Save to Storage
   // Move side effects out of the reducer to maintain purity.
@@ -236,41 +277,7 @@ export const useWorkoutSession = ({
     hrDataBuffer.current = [] // Clear buffer immediately
 
     try {
-      const session = await workoutSessionStorage.getSession(state.sessionId)
-      if (!session) return
-
-      const newHrHistory = [...session.hrHistory]
-      const newTimeInZones = { ...session.timeInZones }
-      let newMaxHr = session.maxHr
-      let currentAverageHr = session.averageHr
-      let currentCount = session.hrHistory.length
-
-      for (const point of bufferToFlush) {
-        const lastPoint =
-          newHrHistory.length > 0 ? newHrHistory[newHrHistory.length - 1] : null
-        const timeDelta = lastPoint ? (point.time - lastPoint.time) / 1000 : 1
-
-        const { zoneName } = calculateHrZone(
-          point.hr,
-          session.userSettings.maxHr
-        )
-        newTimeInZones[zoneName] = (newTimeInZones[zoneName] || 0) + timeDelta
-
-        newMaxHr = Math.max(newMaxHr, point.hr)
-        currentAverageHr =
-          (currentAverageHr * currentCount + point.hr) / (currentCount + 1)
-        currentCount++
-
-        newHrHistory.push(point)
-      }
-
-      await workoutSessionStorage.saveSession({
-        ...session,
-        hrHistory: newHrHistory,
-        timeInZones: newTimeInZones,
-        maxHr: newMaxHr,
-        averageHr: currentAverageHr,
-      })
+      await workoutSessionStorage.appendHrData(state.sessionId, bufferToFlush)
     } catch (e) {
       console.error('Failed to flush HR data to storage', e)
     }
@@ -306,9 +313,7 @@ export const useWorkoutSession = ({
         endTime: null,
         status: 'running',
         hrHistory: [],
-        timeInZones: Object.fromEntries(
-          Object.values(HrZoneName).map((zone) => [zone, 0])
-        ) as Record<HrZoneName, number>,
+        timeInZones: { ...initialTimeInZones },
         averageHr: 0,
         maxHr: 0,
         calorieHistory: [],
@@ -316,7 +321,7 @@ export const useWorkoutSession = ({
         userSettings: {
           age: userAge,
           weight: userWeight,
-          maxHr: 220 - userAge,
+          maxHr: calculateMaxHr(userAge),
         },
         lastSyncTime: now,
         syncStatus: 'pending',
@@ -326,8 +331,10 @@ export const useWorkoutSession = ({
         type: 'START_WORKOUT',
         payload: { now, sessionId, startCalories: totalCalories },
       })
+      lastHrTime.current = now
     } else if (state.status === 'paused') {
       dispatch({ type: 'RESUME_WORKOUT', payload: { now: Date.now() } })
+      lastHrTime.current = Date.now()
     }
   }, [state.status, totalCalories, userAge, userWeight])
 
@@ -359,10 +366,26 @@ export const useWorkoutSession = ({
   const addHrData = useCallback(
     (hr: number) => {
       if (state.status === 'running' && state.sessionId) {
-        hrDataBuffer.current.push({ time: Date.now(), hr })
+        const now = Date.now()
+        // Calculate time delta in seconds since last point
+        const timeDelta = (now - lastHrTime.current) / 1000
+        lastHrTime.current = now
+
+        // Calculate zone for in-memory aggregation
+        const maxHr = calculateMaxHr(userAge)
+        const { zoneName } = calculateHrZone(hr, maxHr)
+
+        // Update in-memory state for UI
+        dispatch({
+          type: 'ADD_HR_DATA',
+          payload: { hr, zoneName, timeDelta },
+        })
+
+        // Buffer for storage
+        hrDataBuffer.current.push({ time: now, hr })
       }
     },
-    [state.status, state.sessionId]
+    [state.status, state.sessionId, userAge]
   )
 
   const caloriesBurned = useMemo(() => {
@@ -385,5 +408,10 @@ export const useWorkoutSession = ({
     addHrData,
     workoutStatus: state.status,
     hasStarted: state.startTime !== null,
+    sessionId: state.sessionId,
+    // Live Derived State
+    timeInZones: state.timeInZones,
+    averageHr: state.averageHr,
+    maxHr: state.maxHr,
   }
 }

@@ -9,6 +9,7 @@ import { workoutSessionStorage } from '@/lib/workout-session-storage'
 jest.mock('@/lib/workout-session-storage', () => ({
   workoutSessionStorage: {
     saveSession: jest.fn().mockResolvedValue(undefined),
+    appendHrData: jest.fn().mockResolvedValue(undefined),
     getSession: jest.fn().mockResolvedValue({
       sessionId: 'test-session-id',
       status: 'running',
@@ -31,6 +32,21 @@ jest.mock('@/lib/workout-session-storage', () => ({
 
 jest.mock('@/lib/hrm/zones', () => ({
   calculateHrZone: jest.fn().mockReturnValue({ zoneName: 'FatBurn' }),
+}))
+
+jest.mock('@/lib/shared/hr-zones', () => ({
+  HrZoneName: {
+    Rest: 'Rest',
+    WarmUp: 'WarmUp',
+    FatBurn: 'FatBurn',
+    Cardio: 'Cardio',
+    Peak: 'Peak',
+  },
+  calculateMaxHr: jest.fn().mockReturnValue(190),
+}))
+
+jest.mock('@/lib/date', () => ({
+  isSameDay: jest.fn().mockReturnValue(true),
 }))
 
 describe('useWorkoutSession', () => {
@@ -102,6 +118,29 @@ describe('useWorkoutSession', () => {
       })
 
       expect(workoutSessionStorage.saveSession).not.toHaveBeenCalled()
+      expect(workoutSessionStorage.appendHrData).not.toHaveBeenCalled()
+    })
+
+    it('should update in-memory stats immediately', () => {
+      const { result } = renderHook(() => useWorkoutSession({}))
+
+      act(() => {
+        result.current.startWorkout()
+      })
+
+      act(() => {
+        result.current.addHrData(150)
+      })
+
+      expect(result.current.maxHr).toBe(150)
+      expect(result.current.averageHr).toBe(150)
+
+      act(() => {
+        result.current.addHrData(160)
+      })
+
+      expect(result.current.maxHr).toBe(160)
+      expect(result.current.averageHr).toBe(155)
     })
 
     it('should flush buffered data to IndexedDB after 30 seconds', async () => {
@@ -118,18 +157,23 @@ describe('useWorkoutSession', () => {
       })
 
       expect(workoutSessionStorage.saveSession).not.toHaveBeenCalled()
+      expect(workoutSessionStorage.appendHrData).not.toHaveBeenCalled()
 
       // Fast-forward time by 30 seconds
       await act(async () => {
         jest.advanceTimersByTime(30000)
       })
 
-      // We expect saveSession to have been called now
-      expect(workoutSessionStorage.saveSession).toHaveBeenCalledTimes(1)
-      const savedSession = jest.mocked(workoutSessionStorage.saveSession).mock
-        .calls[0][0]
-      // Check that the history contains the added points
-      expect(savedSession.hrHistory).toHaveLength(2)
+      // We expect appendHrData to have been called now
+      expect(workoutSessionStorage.appendHrData).toHaveBeenCalledTimes(1)
+      const [sessionId, buffer] = jest.mocked(
+        workoutSessionStorage.appendHrData
+      ).mock.calls[0]
+      expect(sessionId).toBe(result.current.sessionId)
+      // Check that the buffer contains the added points
+      expect(buffer).toHaveLength(2)
+      expect(buffer[0].hr).toBe(120)
+      expect(buffer[1].hr).toBe(125)
     })
 
     it('should flush buffered data when pausing the workout', async () => {
@@ -143,13 +187,13 @@ describe('useWorkoutSession', () => {
       act(() => {
         result.current.addHrData(130)
       })
-      expect(workoutSessionStorage.saveSession).not.toHaveBeenCalled()
+      expect(workoutSessionStorage.appendHrData).not.toHaveBeenCalled()
 
       await act(async () => {
         await result.current.pauseWorkout()
       })
 
-      expect(workoutSessionStorage.saveSession).toHaveBeenCalledTimes(1)
+      expect(workoutSessionStorage.appendHrData).toHaveBeenCalledTimes(1)
     })
 
     it('should flush buffered data when ending the workout', async () => {
@@ -163,18 +207,16 @@ describe('useWorkoutSession', () => {
       act(() => {
         result.current.addHrData(140)
       })
-      expect(workoutSessionStorage.saveSession).not.toHaveBeenCalled()
+      expect(workoutSessionStorage.appendHrData).not.toHaveBeenCalled()
 
       await act(async () => {
         await result.current.endWorkout()
       })
 
-      // It might be called twice: once for flush, once for setting status='finished'
-      // But at least once with the data
+      // Flush data
+      expect(workoutSessionStorage.appendHrData).toHaveBeenCalled()
+      // Save session status change
       expect(workoutSessionStorage.saveSession).toHaveBeenCalled()
-      const calls = jest.mocked(workoutSessionStorage.saveSession).mock.calls
-      const dataFlushCall = calls.find((call) => call[0].hrHistory.length > 0)
-      expect(dataFlushCall).toBeDefined()
     })
 
     it('should flush buffered data on unmount', async () => {
@@ -198,7 +240,7 @@ describe('useWorkoutSession', () => {
       })
 
       // The cleanup function of the useEffect should trigger a flush
-      expect(workoutSessionStorage.saveSession).toHaveBeenCalled()
+      expect(workoutSessionStorage.appendHrData).toHaveBeenCalled()
     })
   })
 })

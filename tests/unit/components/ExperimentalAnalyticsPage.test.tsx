@@ -7,7 +7,7 @@ import { render } from '@testing-library/react'
 import ExperimentalAnalyticsPage from '@/app/client/experimental/components/ExperimentalAnalyticsPage'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { workoutSessionStorage } from '@/lib/workout-session-storage'
 import { waitFor } from '@testing-library/react'
 
@@ -21,18 +21,19 @@ jest.mock('next/dynamic', () => () => {
 // Mock hooks
 jest.mock('@/context/UserSettingsContext')
 jest.mock('@/context/WebSocketContext')
-jest.mock('@/hooks/useWorkoutSessionManager')
+jest.mock('@/hooks/useWorkoutSession')
 jest.mock('@/lib/workout-session-storage', () => ({
   workoutSessionStorage: {
     getAllSessions: jest.fn(),
     deleteSession: jest.fn(),
+    getSession: jest.fn(),
   },
 }))
 
 describe('ExperimentalAnalyticsPage', () => {
   const mockUseUserSettings = useUserSettings as jest.Mock
   const mockUseWebSocket = useWebSocket as jest.Mock
-  const mockUseWorkoutSessionManager = useWorkoutSessionManager as jest.Mock
+  const mockUseWorkoutSession = useWorkoutSession as jest.Mock
   const mockGetAllSessions = workoutSessionStorage.getAllSessions as jest.Mock
 
   beforeEach(() => {
@@ -43,17 +44,25 @@ describe('ExperimentalAnalyticsPage', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
       timerData: { currentPhase: 'IDLE' },
+      sendData: jest.fn(),
+      connectionStatus: 'Disconnected',
     })
-    mockUseWorkoutSessionManager.mockReturnValue({
-      session: null,
-      status: 'idle',
-      isInitialized: true,
-      duration: 0,
+    mockUseWorkoutSession.mockReturnValue({
+      sessionId: null,
+      workoutStatus: 'idle',
+      hasStarted: false,
+      workoutDuration: 0,
       startWorkout: jest.fn(),
-      resumeWorkout: jest.fn(),
+      pauseWorkout: jest.fn(),
       endWorkout: jest.fn(),
       resetWorkout: jest.fn(),
       addHrData: jest.fn(),
+      caloriesBurned: 0,
+      startTime: null,
+      // Mock derived state
+      timeInZones: {},
+      averageHr: 0,
+      maxHr: 0,
     })
     mockGetAllSessions.mockResolvedValue([])
   })
