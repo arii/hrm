@@ -681,7 +681,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               { count: devices.length, savedDeviceId },
               'Available devices'
             )
-            const foundDevice = devices.find((d: BluetoothDevice) => d.id === savedDeviceId)
+            const foundDevice = devices.find(
+              (d: BluetoothDevice) => d.id === savedDeviceId
+            )
 
             if (foundDevice) {
               logger.info(
