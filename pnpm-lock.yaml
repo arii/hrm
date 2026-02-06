@@ -15,6 +15,7 @@ overrides:
   on-headers@<1.1.0: '>=1.1.0'
   send@<0.19.0: '>=0.19.0'
   next@>=16.0.0-canary.0 <16.0.7: '>=16.0.7'
+  zod: ^4.3.6
 
 importers:
 
@@ -71,6 +72,9 @@ importers:
       lodash.throttle:
         specifier: ^4.1.1
         version: 4.1.1
+      lucide-react:
+        specifier: 0.473.0
+        version: 0.473.0(react@19.2.4)
       next:
         specifier: 16.1.6
         version: 16.1.6(@babel/core@7.28.6)(@playwright/test@1.58.1)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -333,7 +337,7 @@ packages:
   '@asteasolutions/zod-to-openapi@8.4.0':
     resolution: {integrity: sha512-Ckp971tmTw4pnv+o7iK85ldBHBKk6gxMaoNyLn3c2Th/fKoTG8G3jdYuOanpdGqwlDB0z01FOjry2d32lfTqrA==}
     peerDependencies:
-      zod: ^4.0.0
+      zod: ^4.3.6
 
   '@axe-core/playwright@4.11.0':
     resolution: {integrity: sha512-70vBT/Ylqpm65RQz2iCG2o0JJCEG/WCNyefTr2xcOcr1CoSee60gNQYUMZZ7YukoKkFLv26I/jjlsvwwp532oQ==}
@@ -5726,6 +5730,11 @@ packages:
     resolution: {integrity: sha512-jumlc0BIUrS3qJGgIkWZsyfAM7NCWiBcCDhnd+3NNM5KbBmLTgHVfWBcg6W+rLUsIpzpERPsvwUP7CckAQSOoA==}
     engines: {node: '>=12'}
 
+  lucide-react@0.473.0:
+    resolution: {integrity: sha512-KW6u5AKeIjkvrxXZ6WuCu9zHE/gEYSXCay+Gre2ZoInD0Je/e3RBtP4OHpJVJ40nDklSvjVKjgH7VU8/e2dzRw==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
@@ -7744,7 +7753,7 @@ packages:
     resolution: {integrity: sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      zod: ^3.25.0 || ^4.0.0
+      zod: ^4.3.6
 
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
@@ -14128,6 +14137,10 @@ snapshots:
       yallist: 4.0.0
 
   lru-cache@7.18.3: {}
+
+  lucide-react@0.473.0(react@19.2.4):
+    dependencies:
+      react: 19.2.4
 
   lz-string@1.5.0: {}
 
