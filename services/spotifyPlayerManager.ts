@@ -5,6 +5,15 @@ import logger from '../utils/logger.server.js'
 import { isEmptyResponseError } from './spotifyUtils.js'
 import { Track, Episode } from '@spotify/web-api-ts-sdk'
 
+export interface ParsedPlaybackState {
+  trackId: string
+  trackName: string
+  artist: string
+  albumName: string
+  albumArtUrl: string
+  isPlaying: boolean
+}
+
 export class SpotifyPlayerManager {
   private sdk: SafeSpotifyApi
   private broadcastUpdate: (message: ServerMessage) => void
@@ -27,7 +36,7 @@ export class SpotifyPlayerManager {
     this.setState = setState
   }
 
-  public async fetchPlaybackState(): Promise<Partial<SpotifyData> | null> {
+  public async fetchPlaybackState(): Promise<ParsedPlaybackState | null> {
     const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
 
     if (!playbackState || !playbackState.item) {
