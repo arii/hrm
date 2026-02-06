@@ -1,19 +1,38 @@
-// components/OnboardingOverlay.tsx
 'use client'
 
 import { Alert, AlertTitle } from '@mui/material'
 import { checkOnboardingRequirements } from '@/utils/browserSupport'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export const OnboardingOverlay = () => {
-  const [support] = useState(() => checkOnboardingRequirements())
+  // Initialize with allSupported: true to prevent hydration mismatch (matches server)
+  const [support, setSupport] = useState({
+    allSupported: true,
+    bluetooth: true,
+    isSecure: true,
+    webSockets: true,
+  })
+  const [dismissed, setDismissed] = useState(false)
 
-  if (support.allSupported) {
+  useEffect(() => {
+    // Wrap in timeout to avoid "setState in effect" warning and ensure client-side execution
+    const timer = setTimeout(() => {
+      setSupport(checkOnboardingRequirements())
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (support.allSupported || dismissed) {
     return null
   }
 
   return (
-    <Alert severity="warning" variant="filled" sx={{ m: 2 }}>
+    <Alert
+      severity="warning"
+      variant="filled"
+      sx={{ m: 2 }}
+      onClose={() => setDismissed(true)}
+    >
       <AlertTitle>Browser Incompatible</AlertTitle>
       {!support.bluetooth && (
         <p>
