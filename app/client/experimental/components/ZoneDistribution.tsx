@@ -8,33 +8,27 @@ import {
   Box,
   useTheme,
   Stack,
-  Theme,
 } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 import { formatDuration } from '@/lib/utils'
+import { getZoneColor } from '@/utils/themeUtils'
 
 interface ZoneDistributionProps {
   timeInZones: Record<HrZoneName, number>
   totalDuration: number
 }
 
-const getZoneColor = (zone: string, theme: Theme): string => {
-  const hrZones = theme.palette.custom?.hrZones
-  if (!hrZones) return theme.palette.grey[500]
-
-  const zoneColorMap: Record<string, string | undefined> = {
-    [HrZoneName.Max]: hrZones.max,
-    [HrZoneName.Peak]: hrZones.peak,
-    [HrZoneName.Cardio]: hrZones.cardio,
-    [HrZoneName.FatBurn]: hrZones.fatBurn,
-    [HrZoneName.WarmUp]: hrZones.warmUp,
-    [HrZoneName.NoData]: hrZones.noData,
-    [HrZoneName.Unknown]: hrZones.unknown,
-  }
-
-  return zoneColorMap[zone] || theme.palette.grey[500]
-}
+// Order of zones for sorting (High intensity to Low intensity)
+const ZONE_ORDER: HrZoneName[] = [
+  HrZoneName.Max,
+  HrZoneName.Peak,
+  HrZoneName.Cardio,
+  HrZoneName.FatBurn,
+  HrZoneName.WarmUp,
+  HrZoneName.NoData,
+  HrZoneName.Unknown,
+]
 
 const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   timeInZones,
@@ -42,29 +36,30 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 }) => {
   const theme = useTheme()
 
-  // Transform data for Recharts and list display
-  // Memoized to prevent recalculation on unrelated renders
   const data = useMemo(() => {
-    return (
-      Object.entries(timeInZones)
-        .map(([zone, time]) => {
-          const percentage =
-            totalDuration > 0 ? (time / totalDuration) * 100 : 0
-          return {
-            name: zone,
-            value: time,
-            percentage: parseFloat(percentage.toFixed(1)),
-            formattedTime: formatDuration(time, {
-              unit: 'seconds',
-              format: 'MM:SS',
-            }),
-            color: getZoneColor(zone, theme),
-          }
-        })
-        // Sort by intensity usually makes sense, but data order might suffice.
-        // Filter out zero values to keep the chart clean
-        .filter((item) => item.value > 0)
-    )
+    return Object.entries(timeInZones)
+      .map(([zone, time]) => {
+        const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
+        return {
+          name: zone as HrZoneName,
+          value: time,
+          percentage: parseFloat(percentage.toFixed(1)),
+          formattedTime: formatDuration(time, {
+            unit: 'seconds',
+            format: 'MM:SS',
+          }),
+          color: getZoneColor(zone as HrZoneName, theme),
+        }
+      })
+      .filter((item) => item.value > 0)
+      .sort((a, b) => {
+        const indexA = ZONE_ORDER.indexOf(a.name)
+        const indexB = ZONE_ORDER.indexOf(b.name)
+        // If a zone is not in the order list, push it to the end
+        if (indexA === -1) return 1
+        if (indexB === -1) return -1
+        return indexA - indexB
+      })
   }, [timeInZones, totalDuration, theme])
 
   if (data.length === 0) {
@@ -109,11 +104,8 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value) => [
-                    formatDuration(Number(value || 0), {
-                      unit: 'seconds',
-                      format: 'MM:SS',
-                    }),
+                  formatter={(_value, _name, item) => [
+                    item.payload.formattedTime,
                     'Duration',
                   ]}
                   contentStyle={{
@@ -152,13 +144,18 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 
           {/* Legend / List Section */}
           <Box
+            component="ul"
             width={{ xs: '100%', sm: '50%' }}
             display="flex"
             flexDirection="column"
             gap={1}
+            p={0}
+            m={0}
+            sx={{ listStyle: 'none' }}
           >
             {data.map((item) => (
               <Box
+                component="li"
                 key={item.name}
                 data-testid={`zone-row-${item.name}`}
                 display="flex"
