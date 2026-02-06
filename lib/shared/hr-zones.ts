@@ -33,7 +33,9 @@ export const HR_ZONE_DEFINITIONS = [
 ]
 
 /**
- * Estimates a user's maximum heart rate using the Tanaka formula.
+ * Estimates a user's maximum heart rate using the Tanaka formula (208 - 0.7 * age).
+ * @param age - The user's age in years. Can be a number, string, null, or undefined.
+ * @returns The estimated maximum heart rate. Returns `MAX_HR_DEFAULT` (185) if age is invalid or not provided.
  */
 export const calculateMaxHr = (age?: number | string | null): number => {
   if (!age) return MAX_HR_DEFAULT
@@ -49,6 +51,9 @@ export const calculateMaxHr = (age?: number | string | null): number => {
 
 /**
  * Calculates the current heart rate zone, and percentage of max HR.
+ * @param currentHr - The current heart rate in beats per minute (BPM).
+ * @param maxHr - The user's maximum heart rate.
+ * @returns An `HrZone` object containing the zone name, percentage of max HR, and current BPM.
  */
 export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
   if (!maxHr || !currentHr || currentHr <= 0) {
