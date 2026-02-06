@@ -37,9 +37,7 @@ export const injectBluetoothMocks = async (page: Page) => {
         view.setUint8(1, uint8Value) // HR Value
         this.value = view
 
-        // Native dispatch. 'target' is automatically set to 'this' instance.
-        // We need to attach the value to the event or rely on the listener reading it from the target
-        // The standard Web Bluetooth event is just a generic Event, and listeners read `event.target.value`.
+        // Dispatch standard event; listeners access value via event.target.value
         this.dispatchEvent(new Event('characteristicvaluechanged'))
       }
     }
