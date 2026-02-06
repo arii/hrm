@@ -62,9 +62,12 @@ export async function POST(req: NextRequest) {
         await sdk.player.setPlaybackVolume(volume, deviceId)
         break
       case 'TRANSFER_PLAYBACK':
-        if (!deviceId) {
+        if (!deviceId || typeof deviceId !== 'string') {
           return NextResponse.json(
-            { error: 'Device ID is required for TRANSFER_PLAYBACK' },
+            {
+              error:
+                'Device ID is required and must be a string for TRANSFER_PLAYBACK',
+            },
             { status: 400 }
           )
         }

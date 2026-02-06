@@ -7,17 +7,14 @@ import {
 } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyDevice, SpotifyCommandParameters } from '../types/core'
-import {
-  SpotifyTokenManager,
-  SpotifyTokenPayload,
-} from './spotifyTokenManager.js'
-import logger from '../utils/logger.server.js'
+import { SpotifyTokenManager, SpotifyTokenPayload } from './spotifyTokenManager'
+import logger from '../utils/logger.server'
 import {
   logSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyErrorLogging.server.js'
-import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
-import { env } from '../lib/env.js'
+} from './spotifyErrorLogging.server'
+import { SpotifyCommand, SpotifyService } from '../types/interfaces'
+import { env } from '../lib/env'
 
 export interface SpotifyTokenResponse {
   access_token: string
@@ -388,21 +385,17 @@ export class SpotifyPolling implements SpotifyService {
           command,
           () => {
             if (uri) {
-              return sdk.player.startResumePlayback(
-                (deviceId || undefined) as string,
-                undefined,
-                [uri]
-              )
+              // @ts-expect-error SDK types deviceId as mandatory string, but runtime accepts undefined
+              // eslint-disable-next-line prettier/prettier
+              return sdk.player.startResumePlayback(deviceId || undefined, undefined, [uri])
             }
             if (effectiveContextUri) {
-              return sdk.player.startResumePlayback(
-                (deviceId || undefined) as string,
-                effectiveContextUri
-              )
+              // @ts-expect-error SDK types deviceId as mandatory string, but runtime accepts undefined
+              // eslint-disable-next-line prettier/prettier
+              return sdk.player.startResumePlayback(deviceId || undefined, effectiveContextUri)
             }
-            return sdk.player.startResumePlayback(
-              (deviceId || undefined) as string
-            )
+            // @ts-expect-error SDK types deviceId as mandatory string, but runtime accepts undefined
+            return sdk.player.startResumePlayback(deviceId || undefined)
           },
           { deviceId, contextUri: effectiveContextUri, uri }
         )
@@ -410,21 +403,24 @@ export class SpotifyPolling implements SpotifyService {
       case 'PAUSE':
         await this.executeSdkCommand(
           command,
-          () => sdk.player.pausePlayback((deviceId || undefined) as string),
+          // @ts-expect-error SDK types deviceId as mandatory string, but runtime accepts undefined
+          () => sdk.player.pausePlayback(deviceId || undefined),
           { deviceId }
         )
         break
       case 'NEXT':
         await this.executeSdkCommand(
           command,
-          () => sdk.player.skipToNext((deviceId || undefined) as string),
+          // @ts-expect-error SDK types deviceId as mandatory string, but runtime accepts undefined
+          () => sdk.player.skipToNext(deviceId || undefined),
           { deviceId }
         )
         break
       case 'PREVIOUS':
         await this.executeSdkCommand(
           command,
-          () => sdk.player.skipToPrevious((deviceId || undefined) as string),
+          // @ts-expect-error SDK types deviceId as mandatory string, but runtime accepts undefined
+          () => sdk.player.skipToPrevious(deviceId || undefined),
           { deviceId }
         )
         break
@@ -445,7 +441,7 @@ export class SpotifyPolling implements SpotifyService {
             () =>
               sdk.player.setPlaybackVolume(
                 clampedVolume,
-                (deviceId || undefined) as string
+                deviceId || undefined
               ),
             { deviceId, volume: clampedVolume }
           )
