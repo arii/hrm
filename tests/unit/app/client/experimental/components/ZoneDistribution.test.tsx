@@ -44,13 +44,13 @@ describe('ZoneDistribution', () => {
     }
     render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
     expect(screen.getByText(HrZoneName.WarmUp)).toBeInTheDocument()
-    expect(screen.getByText(/1m 0s/)).toBeInTheDocument()
+    expect(screen.getByText(/01:00/)).toBeInTheDocument()
     expect(screen.getByText(/(60.0%)/)).toBeInTheDocument()
     expect(screen.getByText(HrZoneName.FatBurn)).toBeInTheDocument()
-    expect(screen.getByText(/0m 30s/)).toBeInTheDocument()
+    expect(screen.getByText(/00:30/)).toBeInTheDocument()
     expect(screen.getByText(/(30.0%)/)).toBeInTheDocument()
     expect(screen.getByText(HrZoneName.Cardio)).toBeInTheDocument()
-    expect(screen.getByText(/0m 10s/)).toBeInTheDocument()
+    expect(screen.getByText(/00:10/)).toBeInTheDocument()
     expect(screen.getByText(/(10.0%)/)).toBeInTheDocument()
   })
 
@@ -82,7 +82,7 @@ describe('ZoneDistribution', () => {
     }
     render(<ZoneDistribution timeInZones={timeInZones} totalDuration={120} />)
     expect(screen.getByText(HrZoneName.FatBurn)).toBeInTheDocument()
-    expect(screen.getByText(/2m 0s/)).toBeInTheDocument()
+    expect(screen.getByText(/02:00/)).toBeInTheDocument()
     expect(screen.getByText(/(100.0%)/)).toBeInTheDocument()
   })
 })
