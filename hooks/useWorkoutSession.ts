@@ -1,9 +1,14 @@
 // hooks/useWorkoutSession.ts
 import { useEffect, useReducer, useCallback, useMemo } from 'react'
-import { workoutSessionStorage } from '@/lib/workout-session-storage'
+import {
+  workoutSessionStorage,
+  WorkoutSessionData,
+} from '@/lib/workout-session-storage'
 import { v4 as uuidv4 } from 'uuid'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 import { calculateHrZone } from '@/lib/hrm/zones'
+import { isSameDay } from '@/lib/date'
+import { useAppSnackbar } from './useAppSnackbar'
 
 const STORAGE_KEY = 'hrm_dashboard:active_session'
 
@@ -18,6 +23,7 @@ interface SessionState {
   totalPaused: number // Total paused duration in milliseconds
   pauseTime: number | null // Timestamp when the workout was paused
   sessionId: string | null // For IndexedDB persistence
+  currentSession: WorkoutSessionData | null // Full session object
 }
 
 const initialState: SessionState = {
@@ -29,11 +35,12 @@ const initialState: SessionState = {
   totalPaused: 0,
   pauseTime: null,
   sessionId: null,
+  currentSession: null,
 }
 
-const isValidSessionState = (parsed: unknown): parsed is SessionState => {
-  if (!parsed || typeof parsed !== 'object') return false
-  const p = parsed as Record<string, unknown>
+const isValidSessionState = (data: unknown): data is SessionState => {
+  if (!data || typeof data !== 'object') return false
+  const p = data as Record<string, unknown>
 
   const hasRequiredFields =
     typeof p.status === 'string' &&
@@ -50,6 +57,10 @@ const isValidSessionState = (parsed: unknown): parsed is SessionState => {
       typeof p.calories === 'number') &&
     (p.startCalories === undefined || typeof p.startCalories === 'number')
 
+  // Note: currentSession is transient/derived and not strictly persisted in localStorage in the same way,
+  // or if it is, we validate it. But typically localStorage just has the metadata.
+  // We'll accept it if missing.
+
   return hasRequiredFields && hasValidOptionalFields
 }
 
@@ -63,6 +74,7 @@ const loadState = (): SessionState => {
         return {
           ...initialState,
           ...parsed,
+          currentSession: null, // Always start null, let the effect hydrate it if needed
         }
       }
     }
@@ -77,12 +89,18 @@ type SessionAction =
   | { type: 'RESET' }
   | {
       type: 'START_WORKOUT'
-      payload: { now: number; sessionId: string; startCalories: number }
+      payload: {
+        now: number
+        sessionId: string
+        startCalories: number
+        initialSession: WorkoutSessionData
+      }
     }
   | { type: 'RESUME_WORKOUT'; payload: { now: number } }
   | { type: 'PAUSE_WORKOUT'; payload: { now: number } }
   | { type: 'END_WORKOUT'; payload: { now: number } }
   | { type: 'UPDATE_CALORIES'; payload: number }
+  | { type: 'UPDATE_SESSION'; payload: WorkoutSessionData }
 
 function sessionReducer(
   state: SessionState,
@@ -102,6 +120,7 @@ function sessionReducer(
           totalPaused: 0,
           pauseTime: null,
           sessionId: action.payload.sessionId,
+          currentSession: action.payload.initialSession,
         }
       }
       break
@@ -132,6 +151,9 @@ function sessionReducer(
     case 'UPDATE_CALORIES':
       newState = { ...state, calories: action.payload }
       break
+    case 'UPDATE_SESSION':
+      newState = { ...state, currentSession: action.payload }
+      break
     case 'RESET':
       newState = initialState
       break
@@ -158,6 +180,7 @@ export const useWorkoutSession = ({
   userWeight = 70,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState, loadState)
+  const { showInfo } = useAppSnackbar()
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -165,12 +188,72 @@ export const useWorkoutSession = ({
       if (state.status === 'idle' && state.duration === 0) {
         window.localStorage.removeItem(STORAGE_KEY)
       } else {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+        // We don't persist currentSession to localStorage to avoid quota issues
+        // It is persisted in IndexedDB
+        const { currentSession: _, ...persistState } = state
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistState))
       }
     } catch (e) {
       console.warn('Failed to save session state to storage', e)
     }
   }, [state])
+
+  // Handle session daily rotation and hydration
+  const checkForStaleSession = useCallback(
+    async (session: WorkoutSessionData) => {
+      const sessionDate = new Date(session.startTime)
+      const currentDate = new Date()
+
+      if (!isSameDay(sessionDate, currentDate)) {
+        console.info(
+          `[WorkoutSession] Stale session from ${sessionDate.toDateString()} detected. Clearing for new day ${currentDate.toDateString()}.`
+        )
+        await workoutSessionStorage.deleteSession(session.sessionId)
+        dispatch({ type: 'RESET' })
+        showInfo('New day detected. Your previous session was cleared.')
+        return true
+      }
+      return false
+    },
+    [showInfo]
+  )
+
+  // Hydrate currentSession from IDB on mount/resume if missing, and check for stale sessions
+  useEffect(() => {
+    if (state.sessionId && !state.currentSession) {
+      workoutSessionStorage
+        .getSession(state.sessionId)
+        .then(async (session) => {
+          if (session) {
+            const isStale = await checkForStaleSession(session)
+            if (!isStale) {
+              dispatch({ type: 'UPDATE_SESSION', payload: session })
+            }
+          }
+        })
+    } else if (state.currentSession) {
+      // Also check if the currently loaded session has become stale (e.g. app left open overnight)
+      // We can use a simpler check here or reuse the logic if we want to be aggressive
+      // For now, let's rely on the visibility change or manual check if needed,
+      // but checking on mount/update is good.
+      const sessionDate = new Date(state.currentSession.startTime)
+      const currentDate = new Date()
+      if (!isSameDay(sessionDate, currentDate)) {
+        checkForStaleSession(state.currentSession)
+      }
+    }
+  }, [state.sessionId, state.currentSession, checkForStaleSession])
+
+  // Check for stale session on window focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (state.currentSession) {
+        checkForStaleSession(state.currentSession)
+      }
+    }
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [state.currentSession, checkForStaleSession])
 
   useEffect(() => {
     const isWorkoutOver = state.status === 'idle' && state.startCalories > 0
@@ -205,7 +288,7 @@ export const useWorkoutSession = ({
       const now = Date.now()
       const sessionId = uuidv4()
 
-      workoutSessionStorage.saveSession({
+      const initialSession: WorkoutSessionData = {
         sessionId,
         startTime: now,
         endTime: null,
@@ -225,11 +308,18 @@ export const useWorkoutSession = ({
         },
         lastSyncTime: now,
         syncStatus: 'pending',
-      })
+      }
+
+      workoutSessionStorage.saveSession(initialSession)
 
       dispatch({
         type: 'START_WORKOUT',
-        payload: { now, sessionId, startCalories: totalCalories },
+        payload: {
+          now,
+          sessionId,
+          startCalories: totalCalories,
+          initialSession,
+        },
       })
     } else if (state.status === 'paused') {
       dispatch({ type: 'RESUME_WORKOUT', payload: { now: Date.now() } })
@@ -262,7 +352,11 @@ export const useWorkoutSession = ({
   const addHrData = useCallback(
     async (hr: number) => {
       if (state.status === 'running' && state.sessionId) {
-        const session = await workoutSessionStorage.getSession(state.sessionId)
+        // Optimistic update to local state to avoid UI lag
+        // In a real scenario, we might want to just rely on the reducer update
+        // but we need the previous session state to calculate deltas.
+        // We can get it from state.currentSession
+        const session = state.currentSession
         if (session) {
           const now = Date.now()
           const dataPoint = { time: now, hr }
@@ -284,17 +378,62 @@ export const useWorkoutSession = ({
             (session.averageHr * session.hrHistory.length + hr) /
             (session.hrHistory.length + 1)
 
-          await workoutSessionStorage.saveSession({
+          const updatedSession: WorkoutSessionData = {
             ...session,
             hrHistory: newHrHistory,
             maxHr: newMaxHr,
             averageHr: newAverageHr,
             timeInZones: newTimeInZones,
-          })
+          }
+
+          dispatch({ type: 'UPDATE_SESSION', payload: updatedSession })
+          await workoutSessionStorage.saveSession(updatedSession)
+        } else {
+          // Fallback if currentSession is missing for some reason (e.g. hydration lag)
+          const storedSession = await workoutSessionStorage.getSession(
+            state.sessionId
+          )
+          if (storedSession) {
+            const now = Date.now()
+            const dataPoint = { time: now, hr }
+
+            const lastDataPoint =
+              storedSession.hrHistory[storedSession.hrHistory.length - 1]
+            const timeDelta = lastDataPoint
+              ? (now - lastDataPoint.time) / 1000
+              : 1
+
+            const { zoneName } = calculateHrZone(
+              hr,
+              storedSession.userSettings.maxHr
+            )
+            const newTimeInZones = {
+              ...storedSession.timeInZones,
+              [zoneName]:
+                (storedSession.timeInZones[zoneName] || 0) + timeDelta,
+            }
+
+            const newHrHistory = [...storedSession.hrHistory, dataPoint]
+            const newMaxHr = Math.max(storedSession.maxHr, hr)
+            const newAverageHr =
+              (storedSession.averageHr * storedSession.hrHistory.length + hr) /
+              (storedSession.hrHistory.length + 1)
+
+            const updatedSession: WorkoutSessionData = {
+              ...storedSession,
+              hrHistory: newHrHistory,
+              maxHr: newMaxHr,
+              averageHr: newAverageHr,
+              timeInZones: newTimeInZones,
+            }
+
+            dispatch({ type: 'UPDATE_SESSION', payload: updatedSession })
+            await workoutSessionStorage.saveSession(updatedSession)
+          }
         }
       }
     },
-    [state.status, state.sessionId]
+    [state.status, state.sessionId, state.currentSession]
   )
 
   const caloriesBurned = useMemo(() => {
@@ -314,5 +453,7 @@ export const useWorkoutSession = ({
     addHrData,
     workoutStatus: state.status,
     hasStarted: state.startTime !== null,
+    sessionId: state.sessionId,
+    currentSession: state.currentSession,
   }
 }
