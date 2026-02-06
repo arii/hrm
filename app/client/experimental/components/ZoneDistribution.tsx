@@ -8,6 +8,7 @@ import {
   LinearProgress,
 } from '@mui/material'
 import { HrZoneName } from '@/lib/shared/hr-zones'
+import { formatDuration } from '@/lib/utils'
 
 interface ZoneDistributionProps {
   timeInZones: Record<HrZoneName, number>
@@ -43,8 +44,11 @@ const ZoneDistribution = ({
                     {zone}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    {Math.floor(time / 60)}m {Math.floor(time % 60)}s (
-                    {percentage.toFixed(1)}%)
+                    {formatDuration(time, {
+                      unit: 'seconds',
+                      format: 'MM:SS',
+                    })}{' '}
+                    ({percentage.toFixed(1)}%)
                   </Typography>
                 </Box>
                 <LinearProgress

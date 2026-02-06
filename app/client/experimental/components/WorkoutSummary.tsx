@@ -10,6 +10,13 @@ interface WorkoutSummaryProps {
   status: 'idle' | 'running' | 'paused' | 'finished'
 }
 
+const STATUS_COLOR_MAP = {
+  idle: 'idle',
+  running: 'running',
+  paused: 'prepare',
+  finished: 'cooldown',
+} as const
+
 const WorkoutSummary = ({
   duration,
   calories,
@@ -17,14 +24,9 @@ const WorkoutSummary = ({
 }: WorkoutSummaryProps) => {
   const theme = useTheme()
 
-  const statusColors = {
-    idle: theme.palette.custom.idle,
-    running: theme.palette.custom.running,
-    paused: theme.palette.custom.prepare,
-    finished: theme.palette.custom.cooldown,
-  }
-
-  const statusColor = statusColors[status] || theme.palette.custom.idle
+  const colorKey =
+    STATUS_COLOR_MAP[status as keyof typeof STATUS_COLOR_MAP] || 'idle'
+  const statusColor = theme.palette.custom[colorKey]
 
   return (
     <Card elevation={2} data-testid="workout-summary">
@@ -52,7 +54,12 @@ const WorkoutSummary = ({
             <Typography variant="caption" color="textSecondary">
               Duration
             </Typography>
-            <Typography variant="h5" sx={{ fontFamily: 'Monospace' }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontFamily: theme.typography.fontFamilyMono || 'monospace',
+              }}
+            >
               {formatDuration(duration, {
                 unit: 'seconds',
                 format: 'HH:MM:SS',

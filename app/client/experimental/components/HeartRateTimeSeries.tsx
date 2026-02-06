@@ -27,7 +27,7 @@ const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
         <Typography variant="h6" fontWeight="bold" gutterBottom>
           Heart Rate Over Time
         </Typography>
-        <Box sx={{ minHeight: 300 }} data-testid="hr-time-series-chart">
+        <Box sx={{ height: 300 }} data-testid="hr-time-series-chart">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={hrHistory} syncId="anyId">
               <CartesianGrid

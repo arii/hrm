@@ -3,29 +3,6 @@
 import { createTheme } from '@mui/material/styles'
 import libTheme from '@/lib/theme'
 
-declare module '@mui/material/styles' {
-  interface Palette {
-    custom: {
-      prepare: string
-      work: string
-      rest: string
-      running: string
-      idle: string
-      cooldown: string
-    }
-  }
-  interface PaletteOptions {
-    custom?: {
-      prepare?: string
-      work?: string
-      rest?: string
-      running?: string
-      idle?: string
-      cooldown?: string
-    }
-  }
-}
-
 const theme = createTheme(libTheme, {
   palette: {
     custom: {
@@ -36,6 +13,9 @@ const theme = createTheme(libTheme, {
       idle: '#6b7280',
       cooldown: '#6b7280',
     },
+  },
+  typography: {
+    fontFamilyMono: '"Roboto Mono", "Courier New", monospace',
   },
 })
 
