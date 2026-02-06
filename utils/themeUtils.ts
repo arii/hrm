@@ -1,4 +1,4 @@
-import { Theme } from '@mui/material'
+import type { Theme } from '@mui/material'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 
 /**

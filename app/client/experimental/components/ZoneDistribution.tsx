@@ -105,7 +105,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                 </Pie>
                 <Tooltip
                   formatter={(_value, _name, item) => [
-                    item.payload.formattedTime,
+                    item.payload.formattedTime || '00:00',
                     'Duration',
                   ]}
                   contentStyle={{
