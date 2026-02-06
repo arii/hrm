@@ -5,13 +5,13 @@ import { render, screen } from '@testing-library/react'
 import HrTileWrapper from '@/components/HrTileWrapper'
 import { ClientHrmData } from '@/context/webSocketReducer'
 import { useHrZone } from '@/hooks/useHrZone'
+import { HrTileProps } from '@/types'
 
 jest.mock('@/hooks/useHrZone')
 const mockUseHrZone = useHrZone as jest.Mock
 
 jest.mock('@/components/HrTile', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return jest.fn((props: any) => (
+  return jest.fn((props: HrTileProps) => (
     <div data-testid="mock-hr-tile">
       <span data-testid="tile-name">{props.name}</span>
       <span data-testid="tile-bpm">{props.bpm}</span>
