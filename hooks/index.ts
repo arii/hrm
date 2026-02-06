@@ -1,5 +1,4 @@
 export * from './useAudio'
-export * from './useAutoConnect'
 export * from './useBluetoothHRM'
 export * from './useDebounce'
 export * from './useLocalStorage'

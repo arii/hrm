@@ -12,6 +12,12 @@ name: PR Enrichment
 on:
   pull_request:
     types: [opened, reopened]
+  workflow_call:
+    inputs:
+      pr_number:
+        description: 'PR number to enrich'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -25,6 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: refs/pull/${{ inputs.pr_number || github.event.pull_request.number }}/head
           fetch-depth: 0
 
       - name: Setup Environment
@@ -44,15 +51,54 @@ jobs:
             echo "disabled=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Setup PR Context
+        id: pr_context
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER_INPUT: ${{ inputs.pr_number }}
+          PR_NUMBER_EVENT: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -n "$PR_NUMBER_INPUT" ]; then
+            PR_NUMBER="$PR_NUMBER_INPUT"
+          else
+            PR_NUMBER="$PR_NUMBER_EVENT"
+          fi
+
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+          # Fetch PR details
+          PR_DATA=$(gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author --jq '{title: .title, body: .body, base_ref: .baseRefName, head_ref: .headRefName, base_sha: .baseRefOid, head_sha: .headRefOid, author: .author.login}')
+
+          echo "PR_TITLE=$(echo "$PR_DATA" | jq -r .title)" >> $GITHUB_ENV
+          echo "PR_AUTHOR=$(echo "$PR_DATA" | jq -r .author)" >> $GITHUB_ENV
+          echo "BASE_SHA=$(echo "$PR_DATA" | jq -r .base_sha)" >> $GITHUB_ENV
+          echo "HEAD_SHA=$(echo "$PR_DATA" | jq -r .head_sha)" >> $GITHUB_ENV
+
+          # Securely write multiline body to GITHUB_ENV
+          echo "PR_BODY<<EOF" >> $GITHUB_ENV
+          echo "$PR_DATA" | jq -r .body >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Analyze PR Changes
         if: steps.check-disabled.outputs.disabled == 'false'
         id: analyze
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # Get files changed
-          FILES=$(gh pr diff "$PR_NUMBER" --name-only)
+          # Add a retry mechanism for the diff to prevent "0 files changed" reports
+          FILES=""
+          for i in {1..5}; do
+            FILES=$(gh pr diff "$PR_NUMBER" --name-only 2>/dev/null || echo "")
+            if [ -n "$FILES" ]; then break; fi
+            echo "Waiting for GitHub API to index PR diff..."
+            sleep 2
+          done
+
+          if [ -z "$FILES" ]; then
+            echo "::error::Could not retrieve PR diff. Indexing delay or empty PR."
+            exit 1
+          fi
+
           echo "FILES<<EOF" >> $GITHUB_ENV
           echo "$FILES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -93,8 +139,7 @@ jobs:
           echo "FILE_COUNT=$FILE_COUNT" >> $GITHUB_ENV
 
           # Get lines changed
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          # Using env vars set in Setup PR Context
           ADDITIONS=$(git diff --numstat "$BASE_SHA" "$HEAD_SHA" | awk '{sum+=$1} END {print sum}')
           DELETIONS=$(git diff --numstat "$BASE_SHA" "$HEAD_SHA" | awk '{sum+=$2} END {print sum}')
           echo "ADDITIONS=${ADDITIONS:-0}" >> $GITHUB_ENV
@@ -112,15 +157,9 @@ jobs:
 
       - name: Generate PR Description
         id: generate-description
+        if: steps.check-disabled.outputs.disabled == 'false'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          FILE_COUNT: ${{ env.FILE_COUNT }}
-          ADDITIONS: ${{ env.ADDITIONS }}
-          DELETIONS: ${{ env.DELETIONS }}
-          CATEGORIES: ${{ env.CATEGORIES }}
           PR_TEMPLATE_PATH: .github/PULL_REQUEST_TEMPLATE.md
         run: |
           PROMPT_FILE=$(mktemp)
@@ -183,7 +222,10 @@ jobs:
           npx tsx scripts/gemini-client.ts --task-file "$PROMPT_FILE" --output "pr_description.json"
 
       - name: Update PR Description
+        if: steps.check-disabled.outputs.disabled == 'false'
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ env.PR_NUMBER }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -215,7 +257,19 @@ jobs:
 
               if (result.description) {
                 const newBody = result.description;
-                const currentBody = context.payload.pull_request.body || '';
+                // Need to fetch current body again or use env var, but actions/github-script context has payload
+                // If triggered by workflow_call, context.payload might not be pull_request.
+                // We should use the REST API to get the latest body to be safe, or use process.env.PR_BODY (which is what we fetched earlier)
+                // However, we want to respect any changes made since then?
+                // Let's fetch it to be safe.
+
+                const prNumber = parseInt(process.env.PR_NUMBER);
+                const pr = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber
+                });
+                const currentBody = pr.data.body || '';
 
                 // 1. Find the Jules task line anywhere in the current body to ensure it's always found.
                 const julesTaskRegex = /^PR created automatically by Jules for task .*$/m;
@@ -249,7 +303,7 @@ jobs:
                 await github.rest.pulls.update({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  pull_number: context.issue.number,
+                  pull_number: prNumber,
                   body: finalBody.trim(),
                 });
               } else {
@@ -270,9 +324,8 @@ jobs:
         if: steps.check-disabled.outputs.disabled == 'false' && env.DISABLE_TITLE_ENHANCEMENT != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          CURRENT_TITLE="${{ github.event.pull_request.title }}"
+          CURRENT_TITLE="$PR_TITLE"
 
           # Define Regex Patterns for Conventional Commits
           # Using readonly variables improves readability and avoids complex escaping in the `if` conditions.
@@ -309,7 +362,7 @@ jobs:
               echo "Updating title to: $NEW_TITLE"
 
               REPO_URL="https://api.github.com/repos/${{ github.repository }}"
-              PR_API_URL="$REPO_URL/pulls/${{ github.event.pull_request.number }}"
+              PR_API_URL="$REPO_URL/pulls/$PR_NUMBER"
 
               curl -X PATCH -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                    -H "Content-Type: application/json" \

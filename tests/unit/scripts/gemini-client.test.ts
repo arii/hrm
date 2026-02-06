@@ -3,7 +3,79 @@ import {
   cleanJsonOutput,
   ReviewContext,
   FailedCheck,
+  JsonProcessor,
 } from '../../../scripts/gemini-client'
+
+describe('JsonProcessor', () => {
+  let processor: JsonProcessor
+
+  beforeEach(() => {
+    processor = new JsonProcessor()
+  })
+
+  it('should parse valid JSON and ensure labels field exists', () => {
+    const input = '{"reviewComment": "Looks good"}'
+    const result = processor.process(input)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({
+      reviewComment: 'Looks good',
+      labels: [],
+    })
+  })
+
+  it('should not overwrite existing labels field', () => {
+    const input = '{"reviewComment": "Needs work", "labels": ["bug"]}'
+    const result = processor.process(input)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({
+      reviewComment: 'Needs work',
+      labels: ['bug'],
+    })
+  })
+
+  it('should handle JSON within a markdown block', () => {
+    const input = '```json\n{"reviewComment": "Great job!"}\n```'
+    const result = processor.process(input)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({
+      reviewComment: 'Great job!',
+      labels: [],
+    })
+  })
+
+  it('should return an error for invalid JSON', () => {
+    const input = '{"reviewComment": "Missing quote}'
+    const result = processor.process(input)
+    expect(result.success).toBe(false)
+    expect(result.data).toHaveProperty('error')
+  })
+  it('should return an error for invalid JSON that is not just truncated', () => {
+    // Note: My current tryRepair might actually fix this if it's at the end of the string
+    // Let's use something truly broken
+    const brokenInput = '{"reviewComment": "valid", [broken]}'
+    const result = processor.process(brokenInput)
+    expect(result.success).toBe(false)
+    expect(result.data).toHaveProperty('error')
+  })
+
+  it('should attempt recovery for truncated JSON', () => {
+    const input = '{"reviewComment": "This comment was cut off'
+    const result = processor.process(input)
+    expect(result.success).toBe(true)
+    const data = result.data as { reviewComment: string; labels: string[] }
+    expect(data.reviewComment).toBe('This comment was cut off')
+    expect(data.labels).toEqual([])
+  })
+
+  it('should attempt recovery for truncated JSON with partial labels', () => {
+    const input = '{"reviewComment": "Good", "labels": ["bug"'
+    const result = processor.process(input)
+    expect(result.success).toBe(true)
+    const data = result.data as { reviewComment: string; labels: string[] }
+    expect(data.reviewComment).toBe('Good')
+    expect(data.labels).toEqual(['bug'])
+  })
+})
 
 describe('cleanJsonOutput', () => {
   it('should remove markdown code blocks with "json" identifier', () => {
@@ -135,5 +207,17 @@ describe('buildReviewPrompt', () => {
     expect(prompt).toContain('IMMEDIATE ACTION REQUIRED')
     expect(prompt).toContain('You are now in **DEBUG MODE**')
     expect(prompt).toContain('- **test-check** (failure)')
+  })
+
+  it('should include slop analysis in the prompt when provided', async () => {
+    const slopAnalysis = 'This is a test slop analysis.'
+    const contextWithSlop = createMockContext({ slopAnalysis })
+    const prompt = await buildReviewPrompt(
+      'test diff',
+      contextWithSlop,
+      'test context'
+    )
+    expect(prompt).toContain('## AI Slop Analysis')
+    expect(prompt).toContain(slopAnalysis)
   })
 })
