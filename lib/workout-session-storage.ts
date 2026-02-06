@@ -2,6 +2,7 @@
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
 import { HrZoneName } from './shared/hr-zones'
+import { calculateHrZone } from './hrm/zones'
 
 // --- TypeScript Interfaces ---
 
@@ -123,6 +124,41 @@ export class WorkoutSessionStorage {
     return localStorageOperation()
   }
 
+  private updateSessionWithHrData(
+    session: WorkoutSessionData,
+    dataPoints: HrDataPoint[]
+  ): WorkoutSessionData {
+    const newHrHistory = [...session.hrHistory]
+    const newTimeInZones = { ...session.timeInZones }
+    let newMaxHr = session.maxHr
+    let currentAverageHr = session.averageHr
+    let currentCount = session.hrHistory.length
+
+    for (const point of dataPoints) {
+      const lastPoint =
+        newHrHistory.length > 0 ? newHrHistory[newHrHistory.length - 1] : null
+      const timeDelta = lastPoint ? (point.time - lastPoint.time) / 1000 : 1
+
+      const { zoneName } = calculateHrZone(point.hr, session.userSettings.maxHr)
+      newTimeInZones[zoneName] = (newTimeInZones[zoneName] || 0) + timeDelta
+
+      newMaxHr = Math.max(newMaxHr, point.hr)
+      currentAverageHr =
+        (currentAverageHr * currentCount + point.hr) / (currentCount + 1)
+      currentCount++
+
+      newHrHistory.push(point)
+    }
+
+    return {
+      ...session,
+      hrHistory: newHrHistory,
+      timeInZones: newTimeInZones,
+      maxHr: newMaxHr,
+      averageHr: currentAverageHr,
+    }
+  }
+
   /**
    * Saves a workout session to persistent storage.
    *
@@ -145,6 +181,56 @@ export class WorkoutSessionStorage {
           this.localStorageKeyPrefix + session.sessionId,
           JSON.stringify(session)
         )
+      }
+    )
+  }
+
+  /**
+   * Appends heart rate data points to an active session in a transaction-safe manner.
+   * This updates the history, time-in-zones, max HR, and average HR.
+   */
+  public async appendHrData(
+    sessionId: string,
+    dataPoints: HrDataPoint[]
+  ): Promise<void> {
+    if (dataPoints.length === 0) return
+
+    await this.withFallback(
+      'appendHrData',
+      async (db) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite')
+        const store = tx.store
+        const session = await store.get(sessionId)
+
+        if (session) {
+          const updatedSession = this.updateSessionWithHrData(
+            session,
+            dataPoints
+          )
+          await store.put(updatedSession)
+        }
+        await tx.done
+      },
+      () => {
+        try {
+          const sessionStr = localStorage.getItem(
+            this.localStorageKeyPrefix + sessionId
+          )
+          if (!sessionStr) return
+
+          const session: WorkoutSessionData = JSON.parse(sessionStr)
+          const updatedSession = this.updateSessionWithHrData(
+            session,
+            dataPoints
+          )
+
+          localStorage.setItem(
+            this.localStorageKeyPrefix + sessionId,
+            JSON.stringify(updatedSession)
+          )
+        } catch (error) {
+          console.error('Failed to append HR data in localStorage:', error)
+        }
       }
     )
   }

@@ -6,11 +6,9 @@ import {
 } from '@/lib/workout-session-storage'
 import { v4 as uuidv4 } from 'uuid'
 import { HrZoneName } from '@/lib/shared/hr-zones'
-import { calculateHrZone } from '@/lib/hrm/zones'
 
 const STORAGE_KEY = 'hrm_dashboard:active_session'
 
-// --- State Definitions ---
 type SessionStatus = 'idle' | 'running' | 'paused'
 
 interface SessionState {
@@ -35,30 +33,16 @@ const initialState: SessionState = {
   sessionId: null,
 }
 
-// --- Helper for state validation ---
 const isValidSessionState = (parsed: unknown): parsed is SessionState => {
   if (!parsed || typeof parsed !== 'object') return false
   const p = parsed as Record<string, unknown>
-
-  const hasRequiredFields =
+  return (
     typeof p.status === 'string' &&
     ['idle', 'running', 'paused'].includes(p.status) &&
     typeof p.duration === 'number'
-
-  const hasValidOptionalFields =
-    (p.startTime === null || typeof p.startTime === 'number') &&
-    (p.totalPaused === null || typeof p.totalPaused === 'number') &&
-    (p.pauseTime === null || typeof p.pauseTime === 'number') &&
-    (p.sessionId === null || typeof p.sessionId === 'string') &&
-    (p.calories === undefined ||
-      p.calories === null ||
-      typeof p.calories === 'number') &&
-    (p.startCalories === undefined || typeof p.startCalories === 'number')
-
-  return hasRequiredFields && hasValidOptionalFields
+  )
 }
 
-// --- Helper to load from storage ---
 const loadState = (): SessionState => {
   if (typeof window === 'undefined') return initialState
   try {
@@ -150,7 +134,6 @@ function sessionReducer(
   return newState
 }
 
-// --- Hook Implementation ---
 interface WorkoutSessionOptions {
   /**
    * The total cumulative calories reported by the server.
@@ -236,41 +219,7 @@ export const useWorkoutSession = ({
     hrDataBuffer.current = [] // Clear buffer immediately
 
     try {
-      const session = await workoutSessionStorage.getSession(state.sessionId)
-      if (!session) return
-
-      const newHrHistory = [...session.hrHistory]
-      const newTimeInZones = { ...session.timeInZones }
-      let newMaxHr = session.maxHr
-      let currentAverageHr = session.averageHr
-      let currentCount = session.hrHistory.length
-
-      for (const point of bufferToFlush) {
-        const lastPoint =
-          newHrHistory.length > 0 ? newHrHistory[newHrHistory.length - 1] : null
-        const timeDelta = lastPoint ? (point.time - lastPoint.time) / 1000 : 1
-
-        const { zoneName } = calculateHrZone(
-          point.hr,
-          session.userSettings.maxHr
-        )
-        newTimeInZones[zoneName] = (newTimeInZones[zoneName] || 0) + timeDelta
-
-        newMaxHr = Math.max(newMaxHr, point.hr)
-        currentAverageHr =
-          (currentAverageHr * currentCount + point.hr) / (currentCount + 1)
-        currentCount++
-
-        newHrHistory.push(point)
-      }
-
-      await workoutSessionStorage.saveSession({
-        ...session,
-        hrHistory: newHrHistory,
-        timeInZones: newTimeInZones,
-        maxHr: newMaxHr,
-        averageHr: currentAverageHr,
-      })
+      await workoutSessionStorage.appendHrData(state.sessionId, bufferToFlush)
     } catch (e) {
       console.error('Failed to flush HR data to storage', e)
     }
@@ -385,5 +334,6 @@ export const useWorkoutSession = ({
     addHrData,
     workoutStatus: state.status,
     hasStarted: state.startTime !== null,
+    sessionId: state.sessionId,
   }
 }
