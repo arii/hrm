@@ -17,7 +17,7 @@ import {
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
-import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
+import { SafeSpotifyApi } from './safeSpotifyApi.js'
 import { env } from '../lib/env.js'
 
 export interface SpotifyTokenResponse {
@@ -218,7 +218,7 @@ export class SpotifyPolling implements SpotifyService {
       tokenWithoutRefresh as AccessToken
     )
     // Wrap the SDK with our safe API to handle optional deviceIds correctly.
-    this.sdk = createSafeSpotifyApi(sdk)
+    this.sdk = sdk as unknown as SafeSpotifyApi
   }
 
   private async checkAndRefreshSdkToken() {

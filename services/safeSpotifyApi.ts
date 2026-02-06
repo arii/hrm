@@ -30,6 +30,3 @@ export type SafeSpotifyApi = Omit<SpotifyApi, 'player'> & {
   player: SafePlayer
 }
 
-export function createSafeSpotifyApi(sdk: SpotifyApi): SafeSpotifyApi {
-  return sdk as unknown as SafeSpotifyApi
-}
