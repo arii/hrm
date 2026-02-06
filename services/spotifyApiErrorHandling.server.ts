@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import { logSpotifyApiError } from './spotifyErrorLogging.server'
+import { logSpotifyApiError } from './spotifyErrorLogging.server.js'
 
 // Re-export command logger for convenience, though direct import is preferred to avoid side-effects
-export { logSpotifyCommandError } from './spotifyErrorLogging.server'
+export { logSpotifyCommandError } from './spotifyErrorLogging.server.js'
 
 export function handleSpotifyApiError(error: unknown): NextResponse {
   // Log the error using the shared logging logic

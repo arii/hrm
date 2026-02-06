@@ -7,14 +7,14 @@ import {
 } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyDevice, SpotifyCommandParameters } from '../types/core'
-import { SpotifyTokenManager, SpotifyTokenPayload } from './spotifyTokenManager'
-import logger from '../utils/logger.server'
+import { SpotifyTokenManager, SpotifyTokenPayload } from './spotifyTokenManager.js'
+import logger from '../utils/logger.server.js'
 import {
   logSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyErrorLogging.server'
-import { SpotifyCommand, SpotifyService } from '../types/interfaces'
-import { env } from '../lib/env'
+} from './spotifyErrorLogging.server.js'
+import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
+import { env } from '../lib/env.js'
 
 export interface SpotifyTokenResponse {
   access_token: string
