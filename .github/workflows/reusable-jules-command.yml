@@ -39,21 +39,21 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+          cache: 'pip'
+
+      - name: 'Install Dependencies'
+        run: pip install -r .github/scripts/requirements.txt
 
       - name: 'Parse Command'
         id: parse_command
         env:
           COMMENT_BODY: ${{ inputs.comment_body }}
         run: |
-          if [[ "$COMMENT_BODY" == "@jules-delete"* ]]; then
-            echo "COMMAND=delete" >> $GITHUB_ENV
-          elif [[ "$COMMENT_BODY" == "@jules-new"* ]]; then
-            echo "COMMAND=new" >> $GITHUB_ENV
-          fi
+          python3 .github/scripts/jules_ops.py --command parse_comment --comment-body "$COMMENT_BODY"
 
       - name: 'Get PR Context'
         id: pr_context
-        if: env.COMMAND == 'new'
+        if: steps.parse_command.outputs.COMMAND == 'new'
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ inputs.issue_number }}
@@ -94,14 +94,14 @@ jobs:
           )
 
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-          echo "PROMPT<<EOF" >> $GITHUB_ENV
-          echo "$FULL_PROMPT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          cat <<EOF > prompt.txt
+          $FULL_PROMPT
+          EOF
           echo "TITLE=$TITLE" >> $GITHUB_ENV
 
       - name: 'Find Jules Session ID'
         id: find_session_id
-        if: env.COMMAND == 'delete'
+        if: steps.parse_command.outputs.COMMAND == 'delete'
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ inputs.issue_number }}
@@ -113,7 +113,7 @@ jobs:
           fi
           echo "JULES_SESSION_ID=$SESSION_ID" >> $GITHUB_ENV
 
-      - name: 'Validate Secrets and Install Dependencies'
+      - name: 'Validate Secrets'
         env:
           JULES_API_URL: ${{ secrets.JULES_API_URL }}
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -139,23 +139,21 @@ jobs:
           fi
 
           echo "✅ All required Jules secrets are configured"
-          pip install -r .github/scripts/requirements.txt
 
       - name: 'Run Jules Operation: New'
-        if: env.COMMAND == 'new'
+        if: steps.parse_command.outputs.COMMAND == 'new'
         id: jules_op_new
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
           BRANCH: ${{ env.BRANCH }}
           TITLE: ${{ env.TITLE }}
-          PROMPT: ${{ env.PROMPT }}
           REPO_OWNER: ${{ inputs.repository_owner }}
           REPO_NAME: ${{ inputs.repository_name }}
         run: |
           set +e
           OUTPUT=$(python3 .github/scripts/jules_ops.py \
             --command "new" \
-            --prompt "$PROMPT" \
+            --prompt-file "prompt.txt" \
             --branch "$BRANCH" \
             --title "$TITLE" \
             --owner "$REPO_OWNER" \
@@ -171,7 +169,7 @@ jobs:
           echo "session_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: 'Run Jules Operation: Delete'
-        if: env.COMMAND == 'delete'
+        if: steps.parse_command.outputs.COMMAND == 'delete'
         id: jules_op_delete
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -190,7 +188,7 @@ jobs:
           fi
 
       - name: 'Post Session ID Comment'
-        if: success() && env.COMMAND == 'new'
+        if: success() && steps.parse_command.outputs.COMMAND == 'new'
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GH_TOKEN }}
