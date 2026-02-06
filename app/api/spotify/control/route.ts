@@ -36,6 +36,18 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { command, deviceId, volume, contextUri, uri, playlistUri } = body
 
+    // Global sanity check: If deviceId is provided, it must be a string.
+    if (
+      deviceId !== undefined &&
+      deviceId !== null &&
+      typeof deviceId !== 'string'
+    ) {
+      return NextResponse.json(
+        { error: 'Invalid deviceId format. Must be a string.' },
+        { status: 400 }
+      )
+    }
+
     switch (command) {
       case 'PLAY': {
         const uris = uri ? [uri] : undefined
@@ -62,12 +74,9 @@ export async function POST(req: NextRequest) {
         await sdk.player.setPlaybackVolume(volume, deviceId)
         break
       case 'TRANSFER_PLAYBACK':
-        if (!deviceId || typeof deviceId !== 'string') {
+        if (!deviceId) {
           return NextResponse.json(
-            {
-              error:
-                'Device ID is required and must be a string for TRANSFER_PLAYBACK',
-            },
+            { error: 'Device ID is required for TRANSFER_PLAYBACK' },
             { status: 400 }
           )
         }
