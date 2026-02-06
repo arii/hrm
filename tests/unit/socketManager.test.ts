@@ -34,7 +34,6 @@ import {
 import logger from '@/utils/logger.server'
 import { createMockRequest } from '@/tests/test-utils'
 
-// Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
@@ -43,7 +42,6 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
-// Mock ConnectionMonitor and other utils
 jest.mock('../../utils/websocketUtils.js', () => ({
   sendWebSocketMessage: jest.fn(),
   broadcast: jest.fn(),
@@ -53,7 +51,6 @@ jest.mock('../../utils/websocketUtils.js', () => ({
   })),
 }))
 
-// Mock logger globally for the test file
 jest.mock('../../utils/logger.server.js', () => ({
   __esModule: true,
   default: {
@@ -64,7 +61,6 @@ jest.mock('../../utils/logger.server.js', () => ({
   },
 }))
 
-// Manual mock for the 'ws' module
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
     const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
@@ -97,12 +93,10 @@ class MockWebSocket extends EventEmitter {
     this.isAlive = true
   }
 
-  // Simulate receiving a pong from the client
   receivePong() {
     this.emit('pong')
   }
 
-  // Override 'on' to correctly handle our event emitter
   on(event: string | symbol, listener: (...args: unknown[]) => void): this {
     super.on(event, listener)
     return this
@@ -123,7 +117,6 @@ describe('WebSocket Manager', () => {
     mockWss =
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
 
-    // Create fully typed mocks for the services.
     const mockTabataTimer: jest.Mocked<TabataTimer> = {
       handleCommand: jest.fn(),
       setMode: jest.fn(),
@@ -176,7 +169,7 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Connection Logging', () => {
-    it('should log connection metadata on new connection', () => {
+    it('logs connection metadata on new connection', () => {
       const loggerInfoSpy = jest.spyOn(logger, 'info')
       const mockReq = createMockRequest('/?clientId=new-client-123')
       const newWs = new MockWebSocket()
@@ -196,9 +189,9 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should log a warning when overwriting an existing socket', () => {
+    it('logs a warning when overwriting an existing socket', () => {
       const loggerWarnSpy = jest.spyOn(logger, 'warn')
-      const mockReq = createMockRequest('/?clientId=test-client') // Same clientId as in beforeEach
+      const mockReq = createMockRequest('/?clientId=test-client')
       const newWs = new MockWebSocket()
 
       mockWss.emit('connection', newWs, mockReq)
@@ -216,9 +209,8 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should correctly identify a secure TLSSocket connection', () => {
+    it('correctly identifies a secure TLSSocket connection', () => {
       const loggerInfoSpy = jest.spyOn(logger, 'info')
-      // Simulate a TLSSocket by creating an object with the correct prototype chain
       const mockTlsSocket = Object.create(TLSSocket.prototype)
       const mockReq = createMockRequest(
         '/?clientId=secure-client',
@@ -249,7 +241,7 @@ describe('WebSocket Manager', () => {
         process.env.NODE_ENV = originalNodeEnv
       })
 
-      it('should redact sensitive fields in production', async () => {
+      it('redacts sensitive fields in production', async () => {
         process.env.NODE_ENV = 'production'
         process.env.NEXTAUTH_SECRET =
           'a-very-long-and-secure-secret-for-production-env'
@@ -258,12 +250,10 @@ describe('WebSocket Manager', () => {
         const mockReq = createMockRequest('/?clientId=prod-client')
         const newWs = new MockWebSocket()
 
-        // Re-import the module to get the version with the updated process.env
         await jest.isolateModulesAsync(async () => {
           const { initSocketManager: initSocketManagerProd } =
             await import('../../utils/socketManager')
 
-          // Use the re-imported init function
           initSocketManagerProd(mockWss, getSnapshot, mockServices)
           mockWss.emit('connection', newWs, mockReq)
 
@@ -284,41 +274,41 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Connection Monitoring', () => {
-    it('should initialize and start the ConnectionMonitor', () => {
+    it('initializes and starts the ConnectionMonitor', () => {
       expect(ConnectionMonitor).toHaveBeenCalledWith(mockWss)
       const monitorInstance = (ConnectionMonitor as jest.Mock).mock.results[0]
         .value
       expect(monitorInstance.start).toHaveBeenCalled()
     })
 
-    it('should set isAlive to true on new connection', () => {
+    it('sets isAlive to true on new connection', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       expect(newWs.isAlive).toBe(true)
     })
 
-    it('should set isAlive to true on pong', () => {
+    it('sets isAlive to true on pong', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
-      newWs.isAlive = false // Manually set to false
+      newWs.isAlive = false
       newWs.emit('pong')
       expect(newWs.isAlive).toBe(true)
     })
 
-    it('should stop the ConnectionMonitor when the server closes', () => {
+    it('stops the ConnectionMonitor when the server closes', () => {
       mockWss.emit('close')
       const monitorInstance = (ConnectionMonitor as jest.Mock).mock.results[0]
         .value
       expect(monitorInstance.stop).toHaveBeenCalled()
     })
 
-    it('should set isAlive to true on any message', () => {
+    it('sets isAlive to true on any message', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
-      newWs.isAlive = false // Manually set to false
+      newWs.isAlive = false
       const message = JSON.stringify({ type: 'PING' })
       newWs.emit('message', message.toString())
       expect(newWs.isAlive).toBe(true)
@@ -326,7 +316,7 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Calorie Processing', () => {
-    it('should accept and store client-calculated calories', () => {
+    it('accepts and stores client-calculated calories', () => {
       const message = JSON.stringify({
         type: 'HRM_INPUT',
         data: { value: 150, calories: 123.45 },
@@ -344,8 +334,7 @@ describe('WebSocket Manager', () => {
       expect(clientData!.calories).toBe(123.45)
     })
 
-    it('should ignore a large, anomalous calorie jump from the client', () => {
-      // First, set a reasonable baseline
+    it('ignores a large, anomalous calorie jump from the client', () => {
       const baselineMessage = JSON.stringify({
         type: 'HRM_INPUT',
         data: { value: 150, calories: 10 },
@@ -359,10 +348,9 @@ describe('WebSocket Manager', () => {
       let clientData = finalPayload.find((c) => c.clientId === 'test-client')
       expect(clientData!.calories).toBe(10)
 
-      // Now, send a message with a huge jump
       const anomalyMessage = JSON.stringify({
         type: 'HRM_INPUT',
-        data: { value: 151, calories: 100 }, // A jump of 90 calories
+        data: { value: 151, calories: 100 },
       })
       mockWs.emit('message', anomalyMessage.toString())
 
@@ -371,7 +359,6 @@ describe('WebSocket Manager', () => {
       finalPayload = lastCall[1].payload
       clientData = finalPayload.find((c) => c.clientId === 'test-client')
 
-      // The server should have rejected the new value and kept the old one.
       expect(logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({
           clientId: 'test-client',
@@ -383,12 +370,10 @@ describe('WebSocket Manager', () => {
       expect(clientData!.calories).toBe(10)
     })
 
-    it('should reject an anomalously high initial calorie value', () => {
-      // Server's initial calorie state for a new client is 0.
-      // Send an initial message with a calorie value that exceeds the MAX_CALORIE_JUMP_PER_UPDATE threshold.
+    it('rejects an anomalously high initial calorie value', () => {
       const initialAnomalyMessage = JSON.stringify({
         type: 'HRM_INPUT',
-        data: { value: 120, calories: 1001 }, // 1001 > MAX_INITIAL_CALORIES (1000)
+        data: { value: 120, calories: 1001 },
       })
       mockWs.emit('message', initialAnomalyMessage.toString())
 
@@ -398,7 +383,6 @@ describe('WebSocket Manager', () => {
       const finalPayload: HrmData[] = lastCall[1].payload
       const clientData = finalPayload.find((c) => c.clientId === 'test-client')
 
-      // The server should have rejected the anomalously high initial value and kept calories at 0.
       expect(logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({
           clientId: 'test-client',
@@ -409,12 +393,10 @@ describe('WebSocket Manager', () => {
         'Anomalous calorie value detected. Using last known server value.'
       )
       expect(clientData).toBeDefined()
-      // Calories should remain at the last known safe value (which is 0 initially).
       expect(clientData!.calories).toBe(0)
     })
 
-    it('should accept a subsequent valid calorie update after an anomaly', () => {
-      // 1. Baseline
+    it('accepts a subsequent valid calorie update after an anomaly', () => {
       mockWs.emit(
         'message',
         JSON.stringify({
@@ -423,7 +405,6 @@ describe('WebSocket Manager', () => {
         })
       )
 
-      // 2. Anomaly (rejected)
       mockWs.emit(
         'message',
         JSON.stringify({
@@ -437,9 +418,8 @@ describe('WebSocket Manager', () => {
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       let finalPayload: HrmData[] = lastCall[1].payload
       let clientData = finalPayload.find((c) => c.clientId === 'test-client')
-      expect(clientData!.calories).toBe(10) // Still at 10
+      expect(clientData!.calories).toBe(10)
 
-      // 3. Valid update
       mockWs.emit(
         'message',
         JSON.stringify({
@@ -452,12 +432,10 @@ describe('WebSocket Manager', () => {
       finalPayload = lastCall[1].payload
       clientData = finalPayload.find((c) => c.clientId === 'test-client')
 
-      // The server should now accept the new, reasonable value.
       expect(clientData!.calories).toBe(11.5)
     })
 
-    it('should handle HRM_INPUT messages without a calories field gracefully', () => {
-      // Set a known calorie value first
+    it('handles HRM_INPUT messages without a calories field gracefully', () => {
       mockWs.emit(
         'message',
         JSON.stringify({
@@ -473,7 +451,6 @@ describe('WebSocket Manager', () => {
       let clientData = finalPayload.find((c) => c.clientId === 'test-client')
       expect(clientData!.calories).toBe(25)
 
-      // Send a message without the calories field (like an old client would)
       mockWs.emit(
         'message',
         JSON.stringify({
@@ -486,15 +463,13 @@ describe('WebSocket Manager', () => {
       finalPayload = lastCall[1].payload
       clientData = finalPayload.find((c) => c.clientId === 'test-client')
 
-      // The calorie value should remain unchanged from the last known value.
       expect(clientData!.calories).toBe(25)
-      // The HR value should be updated.
       expect(clientData!.value).toBe(155)
     })
   })
 
   describe('Message Handling', () => {
-    it('should handle REGISTER_CLIENT message', () => {
+    it('handles REGISTER_CLIENT message', () => {
       const message = JSON.stringify({
         type: 'REGISTER_CLIENT',
         role: 'dashboard',
@@ -503,7 +478,7 @@ describe('WebSocket Manager', () => {
       expect((mockWs as ExtWebSocket).clientType).toBe('dashboard')
     })
 
-    it('should send initial state on GET_STATE message', () => {
+    it('sends initial state on GET_STATE message', () => {
       const message = JSON.stringify({ type: 'GET_STATE' })
       mockWs.emit('message', message.toString())
 
@@ -516,7 +491,7 @@ describe('WebSocket Manager', () => {
       expect(sentData.payload).toHaveProperty('hrmData')
     })
 
-    it('should handle invalid JSON gracefully', () => {
+    it('handles invalid JSON gracefully', () => {
       mockWs.emit('message', 'invalid json')
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({ clientId: 'test-client' }),
@@ -524,7 +499,7 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should handle Zod validation errors gracefully', () => {
+    it('handles Zod validation errors gracefully', () => {
       const message = JSON.stringify({ type: 'INVALID_TYPE' })
       mockWs.emit('message', message.toString())
       expect(logger.error).toHaveBeenCalledWith(
@@ -533,7 +508,7 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should broadcast state on client disconnect', () => {
+    it('broadcasts state on client disconnect', () => {
       mockWs.emit('close')
       jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalledWith(
@@ -546,7 +521,7 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
+    it('forwards SPOTIFY_COMMAND to dashboard clients', () => {
       const dashboardWs = new MockWebSocket() as ExtWebSocket
       dashboardWs.clientType = 'dashboard'
       const controllerWs = new MockWebSocket() as ExtWebSocket
@@ -572,7 +547,7 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should extract contextUri and playlistUri from SPOTIFY_COMMAND', () => {
+    it('extracts contextUri and playlistUri from SPOTIFY_COMMAND', () => {
       const message = JSON.stringify({
         type: 'SPOTIFY_COMMAND',
         command: 'PLAY',
@@ -594,7 +569,7 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should extract uri from SPOTIFY_COMMAND', () => {
+    it('extracts uri from SPOTIFY_COMMAND', () => {
       const message = JSON.stringify({
         type: 'SPOTIFY_COMMAND',
         command: 'PLAY',
@@ -612,7 +587,7 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should handle unknown message types', () => {
+    it('handles unknown message types', () => {
       const message = JSON.stringify({ type: 'SOME_GARBAGE' })
       jest
         .spyOn(ClientCommandMessageSchema, 'parse')
@@ -627,25 +602,21 @@ describe('WebSocket Manager', () => {
     })
   })
   describe('Session Cleanup', () => {
-    it('should clean up client session after grace period', () => {
+    it('cleans up client session after grace period', () => {
       const clientId = 'test-client-cleanup'
       const mockReq = createMockRequest(`/?clientId=${clientId}`)
       const newWs = new MockWebSocket()
       mockWss.emit('connection', newWs, mockReq)
 
-      // Disconnect the client
       newWs.emit('close')
 
-      // Advance timers to trigger cleanup
       jest.runOnlyPendingTimers()
 
-      // Verify that the cleanup logic was called
       expect(logger.info).toHaveBeenCalledWith(
         { clientId },
         'Session expired. Deleting data.'
       )
 
-      // Verify the broadcast payload contains the other client but not the cleaned-up one
       const mockBroadcast = broadcast as jest.Mock
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
@@ -656,46 +627,37 @@ describe('WebSocket Manager', () => {
       expect(payload.find((c) => c.clientId === clientId)).toBeUndefined()
     })
 
-    it('should not clean up session if client reconnects within grace period', () => {
+    it('does not clean up session if client reconnects within grace period', () => {
       const clientId = 'test-client-reconnect'
       const mockReq = createMockRequest(`/?clientId=${clientId}`)
       const firstWs = new MockWebSocket()
       mockWss.emit('connection', firstWs, mockReq)
 
-      // Disconnect the first client
       firstWs.emit('close')
 
-      // Reconnect with a new WebSocket instance before the timer fires
       const secondWs = new MockWebSocket()
       mockWss.emit('connection', secondWs, mockReq)
 
-      // Advance timers past the grace period
       jest.runOnlyPendingTimers()
 
-      // Verify that the cleanup was NOT called for the original session
       expect(logger.info).not.toHaveBeenCalledWith(
         { clientId },
         'Session expired. Deleting data.'
       )
-      // Verify that the "timer cleared" message was logged
       expect(logger.info).toHaveBeenCalledWith(
         { clientId },
         'Cleared cleanup timer for reconnected client.'
       )
 
-      // Trigger a broadcast by having the other client disconnect
-      mockWs.emit('close') // This is the 'test-client' from beforeEach
+      mockWs.emit('close')
       jest.runOnlyPendingTimers()
 
-      // Verify that the client's data still exists in the broadcast from the *other* client's cleanup
       const mockBroadcast = broadcast as jest.Mock
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       const payload: HrmData[] = lastCall[1].payload
 
-      // The payload should contain our reconnected client
       expect(payload.find((c) => c.clientId === clientId)).toBeDefined()
-      // The payload should NOT contain the client that just disconnected to trigger the broadcast
       expect(payload.find((c) => c.clientId === 'test-client')).toBeUndefined()
     })
   })

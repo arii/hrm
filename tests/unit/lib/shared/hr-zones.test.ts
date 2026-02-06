@@ -1,8 +1,7 @@
-// File: tests/unit/lib/hrm/zones.test.ts
-import { calculateHrZone } from '../../../../lib/hrm/zones'
-import { HrZoneName } from '../../../../lib/shared/hr-zones'
+// File: tests/unit/lib/shared/hr-zones.test.ts
+import { calculateHrZone, HrZoneName } from '../../../../lib/shared/hr-zones'
 
-describe('lib/hrm/zones', () => {
+describe('lib/shared/hr-zones', () => {
   describe('calculateHrZone', () => {
     const maxHr = 200
 

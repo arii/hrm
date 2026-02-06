@@ -7,7 +7,6 @@ import * as networkUtils from '@/utils/network'
 import * as redirectUtils from '@/utils/redirect'
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 
-// Mock dependencies
 jest.mock('next-auth/react', () => ({
   signOut: jest.fn(),
   useSession: jest.fn(() => ({ data: null, status: 'authenticated' })),
@@ -36,7 +35,6 @@ const mockFetchWithRetry = networkUtils.fetchWithRetry as jest.Mock
 const mockRedirectTo = redirectUtils.redirectTo as jest.Mock
 const mockUseSpotifyAuth = useSpotifyAuth as jest.Mock
 
-// Mock Spotify SDK
 const mockPlayer = {
   connect: jest.fn().mockResolvedValue(true),
   disconnect: jest.fn(),
@@ -58,7 +56,7 @@ describe('useSpotifyWebPlayback', () => {
     mockUseSpotifyAuth.mockReturnValue({ status: 'authenticated' })
   })
 
-  it('should initialize the SDK and connect the player on mount', async () => {
+  it('initializes the SDK and connects the player on mount', async () => {
     mockFetchWithRetry.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ accessToken: 'fake-token' }),
@@ -72,7 +70,7 @@ describe('useSpotifyWebPlayback', () => {
     })
   })
 
-  it('should call signOut and addError on 401 error from fetchWithRetry', async () => {
+  it('calls signOut and addError on 401 error from fetchWithRetry', async () => {
     mockFetchWithRetry.mockResolvedValue({
       ok: false,
       status: 401,
@@ -81,7 +79,6 @@ describe('useSpotifyWebPlayback', () => {
 
     renderHook(() => useSpotifyWebPlayback())
 
-    // The hook's getOAuthToken is called by the Spotify Player constructor.
     const playerOptions = (window.Spotify.Player as jest.Mock).mock.calls[0][0]
     await playerOptions.getOAuthToken(() => {})
 
@@ -95,12 +92,8 @@ describe('useSpotifyWebPlayback', () => {
     })
   })
 
-  it('should call addError but not signOut for non-401 errors', async () => {
-    const error: networkUtils.AppError = {
-      message: 'Internal Server Error',
-      code: 'HTTP_ERROR_500',
-      retryable: true,
-    }
+  it('calls addError but not signOut for non-401 errors', async () => {
+    const error = new Error('Internal Server Error')
     mockFetchWithRetry.mockRejectedValue(error)
 
     renderHook(() => useSpotifyWebPlayback())
@@ -117,7 +110,7 @@ describe('useSpotifyWebPlayback', () => {
     })
   })
 
-  it('should not initialize the player if the user is not authenticated', () => {
+  it('does not initialize the player if the user is not authenticated', () => {
     mockUseSpotifyAuth.mockReturnValue({ status: 'unauthenticated' })
 
     renderHook(() => useSpotifyWebPlayback())

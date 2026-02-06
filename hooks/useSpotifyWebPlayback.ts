@@ -7,7 +7,7 @@ import {
   SPOTIFY_AUTH_LOOP_GUARD_KEY,
   SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT,
 } from '@/constants/spotify'
-import { fetchWithRetry, AppError } from '@/utils/network'
+import { fetchWithRetry } from '@/utils/network'
 import { signOut } from 'next-auth/react'
 import { redirectTo } from '@/utils/redirect'
 import { useSpotifyAuth } from './useSpotifyAuth'
@@ -20,8 +20,6 @@ interface SpotifyErrorEvent {
   message: string
 }
 
-// Define a minimal interface for the Spotify Player
-// This will be expanded as we integrate more features.
 interface SpotifyPlayer {
   connect: () => Promise<boolean>
   disconnect: () => void
@@ -47,7 +45,6 @@ interface SpotifyPlayerOptions {
   volume: number
 }
 
-// Define the structure for the window object to include the Spotify SDK properties
 declare global {
   interface Window {
     Spotify: {
@@ -57,7 +54,6 @@ declare global {
   }
 }
 
-// Manages the Spotify Web Playback SDK lifecycle.
 const useSpotifyWebPlayback = () => {
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [isReady, setIsReady] = useState(false)
@@ -75,7 +71,7 @@ const useSpotifyWebPlayback = () => {
 
         if (!response.ok) {
           if (response.status === 401) {
-            // Circuit Breaker: Use sessionStorage to detect rapid failures
+            // Use sessionStorage to detect rapid failures
             const lastAuthFail = sessionStorage.getItem(
               SPOTIFY_AUTH_LOOP_GUARD_KEY
             )
@@ -104,7 +100,6 @@ const useSpotifyWebPlayback = () => {
             redirectTo('/?error=SpotifyAuthFailed')
             return
           }
-          // For other non-ok responses, throw to be caught by the catch block.
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
@@ -114,12 +109,12 @@ const useSpotifyWebPlayback = () => {
         }
         cb(accessToken)
       } catch (error) {
-        const appError = error as AppError
+        const message = error instanceof Error ? error.message : String(error)
         console.error(
-          `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
+          `[Spotify Web Playback] Failed to get OAuth token: ${message}`
         )
         setInitStatus('failed')
-        addError(`Failed to authenticate with Spotify: ${appError.message}`, {
+        addError(`Failed to authenticate with Spotify: ${message}`, {
           persist: false,
         })
       }
@@ -158,8 +153,6 @@ const useSpotifyWebPlayback = () => {
         getOAuthToken,
         volume: 0.5,
       })
-
-      // --- Player Event Listeners ---
 
       spotifyPlayer.addListener('ready', ({ device_id }) => {
         console.log('[Spotify Web Playback] Ready with Device ID', device_id)

@@ -1,13 +1,7 @@
-// File: lib/shared/hr-zones.ts
-/**
- * Shared constants and types for Heart Rate (HR) zones to ensure consistency
- * across different modules (domain logic, UI, etc.).
- */
+import type { HrZone } from '../../types/heart-rate'
+
 export const MAX_HR_DEFAULT = 185
 
-/**
- * Enum for HR Zone names to provide compile-time safety and prevent string mismatches.
- */
 export enum HrZoneName {
   WarmUp = 'Warm-up',
   FatBurn = 'Fat Burn',
@@ -18,24 +12,51 @@ export enum HrZoneName {
   Unknown = 'Unknown',
 }
 
-/**
- * Estimates a user's maximum heart rate using the Tanaka formula.
- * @param age - The user's age in years.
- * @returns The estimated maximum heart rate.
- */
+export const HR_ZONE_DEFINITIONS = [
+  { name: HrZoneName.WarmUp, min: 0.5 },
+  { name: HrZoneName.FatBurn, min: 0.6 },
+  { name: HrZoneName.Cardio, min: 0.7 },
+  { name: HrZoneName.Peak, min: 0.85 },
+  { name: HrZoneName.Max, min: 0.95 },
+]
+
 export const calculateMaxHr = (age?: number | string | null): number => {
   if (!age) return MAX_HR_DEFAULT
-
   const ageNum = typeof age === 'string' ? parseInt(age, 10) : age
-
-  if (isNaN(ageNum) || ageNum <= 0) {
-    return MAX_HR_DEFAULT
-  }
-
+  if (isNaN(ageNum) || ageNum <= 0) return MAX_HR_DEFAULT
   return 208 - 0.7 * ageNum
 }
 
-// Define a type for the return value for clarity
+export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
+  if (!maxHr || !currentHr || currentHr <= 0) {
+    return {
+      zoneName: HrZoneName.NoData,
+      percentage: 0,
+      bpm: 0,
+    }
+  }
+
+  const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
+  let calculatedZone = HR_ZONE_DEFINITIONS[0] || {
+    name: HrZoneName.Unknown,
+    min: 0,
+  }
+
+  for (let i = HR_ZONE_DEFINITIONS.length - 1; i >= 0; i--) {
+    const hrZone = HR_ZONE_DEFINITIONS[i]
+    if (hrZone && percentageOfMax / 100 >= hrZone.min) {
+      calculatedZone = hrZone
+      break
+    }
+  }
+
+  return {
+    zoneName: calculatedZone.name,
+    percentage: percentageOfMax,
+    bpm: currentHr,
+  }
+}
+
 export type UserHrZones = {
   warmUp: { min: number }
   fatBurn: { min: number }

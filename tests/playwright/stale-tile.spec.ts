@@ -1,52 +1,49 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, Page } from '@playwright/test'
 import { ServerMessage } from '../../types/websocket'
+import { STALE_TILE_REMOVAL_THRESHOLD_MS } from '../../constants/hrm'
 
-test('should remove tile immediately when missing from HRM_UPDATE', async ({
-  page,
-}) => {
-  await page.goto('/')
+// Helper to send messages via postMessage
+async function dispatch(page: Page, message: ServerMessage) {
+  await page.evaluate((msg) => {
+    window.postMessage(msg, '*')
+  }, message)
+}
 
-  // Helper to dispatch messages to the reducer
-  const dispatch = async (message: ServerMessage | { type: 'RESET_STATE' }) => {
-    await page.evaluate((msg) => {
-      const win = window as unknown as {
-        __TEST_CONTROLS__: {
-          dispatch: (m: unknown) => void
-        }
-      }
-      const controls = win.__TEST_CONTROLS__
-      if (controls && typeof controls.dispatch === 'function') {
-        controls.dispatch(msg)
-      } else {
-        throw new Error('__TEST_CONTROLS__.dispatch not found')
-      }
-    }, message)
-  }
-
-  // 1. Simulate active data
-  await dispatch({
-    type: 'HRM_UPDATE',
-    payload: [
-      {
-        clientId: 'test-1',
-        value: 75,
-        name: 'test-1',
-        age: 30,
-        maxHr: 190,
-        restingHr: 60,
-        zone: 'warmup',
-        calories: 10,
-      },
-    ],
-  })
-  await expect(page.locator('text=test-1')).toBeVisible()
-
-  // 2. Send update without the user
-  await dispatch({
-    type: 'HRM_UPDATE',
-    payload: [],
+test.describe('Stale Tile Removal', () => {
+  test.beforeEach(async ({ page }) => {
+    // Install clock before navigation to ensure we control time from the start
+    await page.clock.install({ time: new Date() })
   })
 
-  // 3. Assert immediate removal
-  await expect(page.locator('text=test-1')).not.toBeVisible()
+  test('removes tile after inactivity threshold', async ({ page }) => {
+    await page.goto('/')
+
+    // Wait for the page to be hydrated and listener attached
+    await page.waitForTimeout(1000)
+
+    // 1. Simulate active data
+    await dispatch(page, {
+      type: 'HRM_UPDATE',
+      payload: [
+        {
+          clientId: 'test-1',
+          name: 'test-1',
+          value: 75,
+          maxHr: 190,
+          age: 30,
+          calories: 10,
+        },
+      ],
+    })
+
+    // Verify the tile appears
+    await expect(page.locator('text=test-1')).toBeVisible()
+
+    // 2. Fast forward time past the threshold
+    // Adding a small buffer to ensure we definitely cross the threshold
+    await page.clock.fastForward(STALE_TILE_REMOVAL_THRESHOLD_MS + 1000)
+
+    // 3. Verify tile is gone
+    await expect(page.locator('text=test-1')).not.toBeVisible()
+  })
 })
