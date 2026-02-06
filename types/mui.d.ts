@@ -22,6 +22,14 @@ declare module '@mui/material/styles' {
     }
   }
 
+  interface Typography {
+    fontFamilyMono: string
+  }
+
+  interface TypographyOptions {
+    fontFamilyMono?: string
+  }
+
   interface TypographyVariants {
     fontFamilyMono: string
   }
