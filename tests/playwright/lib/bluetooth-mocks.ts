@@ -145,7 +145,17 @@ export const injectBluetoothMocks = async (page: Page) => {
     }
 
     // Inject
-    navigator.bluetooth = mockBluetooth
+    try {
+      Object.defineProperty(navigator, 'bluetooth', {
+        value: mockBluetooth,
+        writable: true,
+      })
+    } catch (e) {
+      console.warn('Could not mock navigator.bluetooth directly:', e)
+    }
+
+    // Fallback for environments where navigator is sealed
+    window.MockBluetooth = mockBluetooth
     window.MockBluetoothDevice = MockBluetoothDevice
     window.bluetoothTestHelpers = {
       simulateHeartRate: async (bpm: number) => {
