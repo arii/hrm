@@ -7,6 +7,8 @@ import {
 import { v4 as uuidv4 } from 'uuid'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 import { calculateHrZone } from '@/lib/hrm/zones'
+import { isSameDay } from '@/lib/date'
+import { useAppSnackbar } from './useAppSnackbar'
 
 const STORAGE_KEY = 'hrm_dashboard:active_session'
 
@@ -178,6 +180,7 @@ export const useWorkoutSession = ({
   userWeight = 70,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState, loadState)
+  const { showInfo } = useAppSnackbar()
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -195,16 +198,60 @@ export const useWorkoutSession = ({
     }
   }, [state])
 
-  // Hydrate currentSession from IDB on mount/resume if missing
+  // Handle session daily rotation and hydration
+  const checkForStaleSession = useCallback(
+    async (session: WorkoutSessionData) => {
+      const sessionDate = new Date(session.startTime)
+      const currentDate = new Date()
+
+      if (!isSameDay(sessionDate, currentDate)) {
+        console.info(
+          `[WorkoutSession] Stale session from ${sessionDate.toDateString()} detected. Clearing for new day ${currentDate.toDateString()}.`
+        )
+        await workoutSessionStorage.deleteSession(session.sessionId)
+        dispatch({ type: 'RESET' })
+        showInfo('New day detected. Your previous session was cleared.')
+        return true
+      }
+      return false
+    },
+    [showInfo]
+  )
+
+  // Hydrate currentSession from IDB on mount/resume if missing, and check for stale sessions
   useEffect(() => {
     if (state.sessionId && !state.currentSession) {
-      workoutSessionStorage.getSession(state.sessionId).then((session) => {
+      workoutSessionStorage.getSession(state.sessionId).then(async (session) => {
         if (session) {
-          dispatch({ type: 'UPDATE_SESSION', payload: session })
+          const isStale = await checkForStaleSession(session)
+          if (!isStale) {
+            dispatch({ type: 'UPDATE_SESSION', payload: session })
+          }
         }
       })
+    } else if (state.currentSession) {
+      // Also check if the currently loaded session has become stale (e.g. app left open overnight)
+      // We can use a simpler check here or reuse the logic if we want to be aggressive
+      // For now, let's rely on the visibility change or manual check if needed,
+      // but checking on mount/update is good.
+      const sessionDate = new Date(state.currentSession.startTime)
+      const currentDate = new Date()
+      if (!isSameDay(sessionDate, currentDate)) {
+        checkForStaleSession(state.currentSession)
+      }
     }
-  }, [state.sessionId, state.currentSession])
+  }, [state.sessionId, state.currentSession, checkForStaleSession])
+
+  // Check for stale session on window focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (state.currentSession) {
+        checkForStaleSession(state.currentSession)
+      }
+    }
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [state.currentSession, checkForStaleSession])
 
   useEffect(() => {
     const isWorkoutOver = state.status === 'idle' && state.startCalories > 0

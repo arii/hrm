@@ -202,4 +202,44 @@ describe('useWorkoutSession', () => {
 
     expect(result.current.workoutStatus).toBe('idle')
   })
+
+  it('resets stale session from previous day', async () => {
+    const staleState = {
+      status: 'running',
+      duration: 100,
+      startTime: Date.now() - 24 * 60 * 60 * 1000, // 24 hours ago
+      sessionId: 'stale-id',
+      totalPaused: 0,
+      pauseTime: null,
+      calories: 500,
+      startCalories: 100,
+    }
+    jest
+      .spyOn(Object.getPrototypeOf(window.localStorage), 'getItem')
+      .mockReturnValue(JSON.stringify(staleState))
+
+    const mockStaleSession = {
+      sessionId: 'stale-id',
+      status: 'running',
+      startTime: staleState.startTime,
+      hrHistory: [],
+      userSettings: { age: 30, weight: 70, maxHr: 190 },
+      timeInZones: {},
+    }
+    ;(workoutSessionStorage.getSession as jest.Mock).mockResolvedValue(
+      mockStaleSession
+    )
+
+    const { result } = renderHook(() => useWorkoutSession({}))
+
+    // Wait for effect
+    await waitFor(() => {
+      expect(workoutSessionStorage.deleteSession).toHaveBeenCalledWith(
+        'stale-id'
+      )
+    })
+
+    expect(result.current.currentSession).toBeNull()
+    expect(result.current.workoutStatus).toBe('idle')
+  })
 })
