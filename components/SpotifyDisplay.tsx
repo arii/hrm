@@ -2,7 +2,6 @@
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { DeviceRecommendation } from '@/components/Spotify/DeviceRecommendation'
 import PauseIcon from '@mui/icons-material/Pause'
@@ -21,14 +20,11 @@ import { useState } from 'react'
 
 const SpotifyDisplay = () => {
   const { isLoggedIn } = useSpotifyAuth()
-  const { player, isReady } = useSpotifyWebPlayback()
+  const { isReady } = useSpotifyWebPlayback()
   const { execute, playback, hrmPlayer, activeDevice } = useSpotifyCommand()
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
   )
-
-  // Enable remote Spotify control from controllers
-  useSpotifyRemoteExecution(player)
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
