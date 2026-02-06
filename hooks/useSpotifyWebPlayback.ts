@@ -7,7 +7,7 @@ import {
   SPOTIFY_AUTH_LOOP_GUARD_KEY,
   SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT,
 } from '@/constants/spotify'
-import { fetchWithRetry, AppError } from '@/utils/network'
+import { fetchWithRetry } from '@/utils/network'
 import { signOut } from 'next-auth/react'
 import { redirectTo } from '@/utils/redirect'
 import { useSpotifyAuth } from './useSpotifyAuth'
@@ -109,12 +109,12 @@ const useSpotifyWebPlayback = () => {
         }
         cb(accessToken)
       } catch (error) {
-        const appError = error as AppError
+        const message = error instanceof Error ? error.message : String(error)
         console.error(
-          `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
+          `[Spotify Web Playback] Failed to get OAuth token: ${message}`
         )
         setInitStatus('failed')
-        addError(`Failed to authenticate with Spotify: ${appError.message}`, {
+        addError(`Failed to authenticate with Spotify: ${message}`, {
           persist: false,
         })
       }
