@@ -97,7 +97,7 @@ const ZoneDistribution = ({
       label,
       seconds,
       percentage: totalDuration > 0 ? (seconds / totalDuration) * 100 : 0,
-      color: ZONE_COLORS[label as HrZoneName],
+      color: ZONE_COLORS[label as HrZoneName] ?? theme.palette.grey[400],
     }))
     .filter(
       (zone) =>
