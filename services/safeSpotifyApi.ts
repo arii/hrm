@@ -29,4 +29,3 @@ interface SafePlayer extends Omit<
 export type SafeSpotifyApi = Omit<SpotifyApi, 'player'> & {
   player: SafePlayer
 }
-
