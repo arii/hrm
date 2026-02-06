@@ -6,10 +6,9 @@ import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
-import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
+import { HR_ZONE_VISUAL_CONFIG, ZONE_THRESHOLDS } from '@/lib/shared/hr-zones'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 
@@ -41,19 +40,26 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
-  const currentZone =
-    zone !== undefined
-      ? HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
-        HR_ZONE_VISUAL_CONFIG[0]
-      : null
 
-  const { backgroundColor: fallbackBg, textColor: fallbackText } =
-    getHrZoneProps(percentMax, 100)
+  // Determine the effective zone.
+  // If 'zone' is provided (server-calculated), use it.
+  // Otherwise, calculate it locally from 'percentMax' using shared thresholds.
+  let displayZone = zone
+  if (displayZone === undefined) {
+    if (percentMax >= ZONE_THRESHOLDS.ZONE_5) displayZone = 5
+    else if (percentMax >= ZONE_THRESHOLDS.ZONE_4) displayZone = 4
+    else if (percentMax >= ZONE_THRESHOLDS.ZONE_3) displayZone = 3
+    else if (percentMax >= ZONE_THRESHOLDS.ZONE_2) displayZone = 2
+    else if (percentMax >= ZONE_THRESHOLDS.ZONE_1) displayZone = 1
+    else displayZone = 0
+  }
 
-  const backgroundColor = currentZone ? currentZone.color : fallbackBg
-  const textColor = currentZone
-    ? theme.palette.getContrastText(currentZone.color)
-    : fallbackText
+  const zoneConfig =
+    HR_ZONE_VISUAL_CONFIG[displayZone as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
+    HR_ZONE_VISUAL_CONFIG[0]
+
+  const backgroundColor = zoneConfig.color
+  const textColor = zoneConfig.textColor
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -70,15 +76,7 @@ const HrTile = ({
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
           isConnected ? `${bpm} beats per minute` : 'Disconnected'
-        }, ${percentMax}% of maximum${
-          zone !== undefined
-            ? `, Zone ${zone}: ${
-                HR_ZONE_VISUAL_CONFIG[
-                  zone as keyof typeof HR_ZONE_VISUAL_CONFIG
-                ]?.label || 'Idle'
-              }`
-            : ''
-        }`}
+        }, ${percentMax}% of maximum, Zone ${displayZone}: ${zoneConfig.label}`}
         sx={{
           backgroundColor: backgroundColor,
           color: textColor,
@@ -173,33 +171,28 @@ const HrTile = ({
             </Box>
 
             {/* Zone Display for WCAG Compliance (don't rely on color alone) */}
-            {zone !== undefined && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                mt: 0.5,
+              }}
+            >
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                  mt: 0.5,
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  backgroundColor: 'currentColor',
+                  border: '1px solid rgba(255,255,255,0.3)',
                 }}
-              >
-                <Box
-                  sx={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    backgroundColor: 'currentColor',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                  }}
-                />
-                <Typography variant="caption" sx={{ fontWeight: 800 }}>
-                  ZONE {zone}:{' '}
-                  {HR_ZONE_VISUAL_CONFIG[
-                    zone as keyof typeof HR_ZONE_VISUAL_CONFIG
-                  ]?.label || 'IDLE'}
-                </Typography>
-              </Box>
-            )}
+              />
+              <Typography variant="caption" sx={{ fontWeight: 800 }}>
+                ZONE {displayZone}: {zoneConfig.label}
+              </Typography>
+            </Box>
 
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography

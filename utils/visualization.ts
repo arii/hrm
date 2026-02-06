@@ -28,6 +28,10 @@ type HrZoneUi = {
   bgColor: string
 }
 
+/**
+ * @deprecated Use HR_ZONE_VISUAL_CONFIG from lib/shared/hr-zones instead.
+ * This map contains legacy Tailwind color classes and hex values.
+ */
 export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
   [HrZoneName.Idle]: {
     color: 'text-gray-400',
@@ -105,6 +109,8 @@ export interface HrZoneProps {
  * Calculates the current zone, percentage of max HR, and returns MUI-ready props.
  * This function now composes the core business logic from `lib/hrm` with
  * presentation-specific properties defined in this file.
+ *
+ * @deprecated Use HR_ZONE_VISUAL_CONFIG and manual zone calculation instead.
  */
 export const getHrZoneProps = (
   currentHr: number,
