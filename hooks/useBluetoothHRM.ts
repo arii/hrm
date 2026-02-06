@@ -37,6 +37,18 @@ const parseHeartRate = (value: DataView): number => {
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
 }
 
+const getBluetooth = () => {
+  if (typeof navigator !== 'undefined' && navigator.bluetooth) {
+    return navigator.bluetooth
+  }
+  // @ts-expect-error MockBluetooth is injected by Playwright
+  if (typeof window !== 'undefined' && window.MockBluetooth) {
+    // @ts-expect-error MockBluetooth is injected by Playwright
+    return window.MockBluetooth
+  }
+  return undefined
+}
+
 interface UseBluetoothHRMProps {
   dataLivenessTimeoutMs?: number
   throttleMs?: number
@@ -66,9 +78,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
   const [connectionAttempted, setConnectionAttempted] = useState(false)
-  const [isSupported] = useState(
-    () => typeof navigator !== 'undefined' && !!navigator.bluetooth
-  )
+  const [isSupported] = useState(() => !!getBluetooth())
 
   const deviceStatus = customStatusMessage ?? statusMessageMap[status]
 
@@ -660,12 +670,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             throw new Error('No saved device ID for silent connection.')
           }
 
+          const bluetooth = getBluetooth()
           logger.info(
-            { savedDeviceId, hasGetDevices: !!navigator.bluetooth?.getDevices },
+            { savedDeviceId, hasGetDevices: !!bluetooth?.getDevices },
             'Looking for saved device'
           )
-          if (savedDeviceId && navigator.bluetooth?.getDevices) {
-            const devices = await navigator.bluetooth.getDevices()
+          if (savedDeviceId && bluetooth?.getDevices) {
+            const devices = await bluetooth.getDevices()
             logger.info(
               { count: devices.length, savedDeviceId },
               'Available devices'
@@ -699,7 +710,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (!device && !silent) {
           setStatus(BluetoothConnectionStatus.CONNECTING)
           setCustomStatusMessage(BLUETOOTH_MESSAGES.scanningForDevices)
-          device = await navigator.bluetooth.requestDevice({
+          const bluetooth = getBluetooth()
+          if (!bluetooth) {
+            throw new Error('Bluetooth not supported')
+          }
+          device = await bluetooth.requestDevice({
             filters: [{ services: [HR_SERVICE_UUID] }],
             optionalServices: [BATTERY_SERVICE_UUID],
           })
