@@ -2,6 +2,17 @@ import { SpotifyCommandParameters } from '../types/core'
 import { ServerMessage, SpotifyCommand, SpotifyData } from '../types/websocket'
 import { SafeSpotifyApi } from './safeSpotifyApi'
 import logger from '../utils/logger.server.js'
+import { isEmptyResponseError } from './spotifyUtils.js'
+import { Track, Episode } from '@spotify/web-api-ts-sdk'
+
+export interface ParsedPlaybackState {
+  trackId: string
+  trackName: string
+  artist: string
+  albumName: string
+  albumArtUrl: string
+  isPlaying: boolean
+}
 
 export class SpotifyPlayerManager {
   private sdk: SafeSpotifyApi
@@ -23,6 +34,44 @@ export class SpotifyPlayerManager {
     this.broadcastUpdate = broadcastUpdate
     this.getState = getState
     this.setState = setState
+  }
+
+  public async fetchPlaybackState(): Promise<ParsedPlaybackState | null> {
+    const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
+
+    if (!playbackState || !playbackState.item) {
+      return null
+    }
+
+    const item = playbackState.item
+    const isPlaying = playbackState.is_playing
+
+    const trackId = item.id
+    const trackName = item.name
+    let artist = ''
+    let albumName = ''
+    let albumArtUrl = ''
+
+    if (item.type === 'track') {
+      const track = item as Track
+      artist = track.artists.map((a) => a.name).join(', ')
+      albumName = track.album.name
+      albumArtUrl = track.album.images?.[0]?.url ?? ''
+    } else if (item.type === 'episode') {
+      const episode = item as Episode
+      artist = episode.show.publisher
+      albumName = episode.show.name
+      albumArtUrl = episode.show.images?.[0]?.url ?? ''
+    }
+
+    return {
+      trackId,
+      trackName,
+      artist,
+      albumName,
+      albumArtUrl,
+      isPlaying,
+    }
   }
 
   public async executeSpotifyCommand(
@@ -112,7 +161,7 @@ export class SpotifyPlayerManager {
     try {
       await apiCall()
     } catch (error) {
-      if (this.isEmptyResponseError(error)) {
+      if (isEmptyResponseError(error)) {
         logger.debug(
           { command: commandName, ...logContext },
           'Spotify command successful (204 No Content)'
@@ -121,12 +170,5 @@ export class SpotifyPlayerManager {
       }
       throw error
     }
-  }
-
-  private isEmptyResponseError(error: unknown): boolean {
-    if (!(error instanceof SyntaxError)) {
-      return false
-    }
-    return /unexpected end of/i.test(error.message)
   }
 }

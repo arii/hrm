@@ -3,7 +3,7 @@ import { SpotifyPlayerManager } from '../../../services/spotifyPlayerManager'
 import { mockPlayer } from '../spotify-test-utils'
 import { SafeSpotifyApi } from '../../../services/safeSpotifyApi'
 import { createSafeSpotifyApi } from '../../../services/safeSpotifyApi'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { SpotifyApi, PlaybackState } from '@spotify/web-api-ts-sdk'
 
 // Mock the logger to prevent logs from appearing in test output
 jest.mock('../../../utils/logger.server.js', () => ({
@@ -159,6 +159,78 @@ describe('SpotifyPlayerManager', () => {
       await expect(
         playerManager.executeSpotifyCommand('PAUSE', { deviceId: 'test' })
       ).rejects.toThrow('API is down')
+    })
+  })
+
+  describe('fetchPlaybackState', () => {
+    it('should return null when no playback state returned', async () => {
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(null)
+      const result = await playerManager.fetchPlaybackState()
+      expect(result).toBeNull()
+    })
+
+    it('should return null when no item in playback state', async () => {
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
+        item: null,
+      } as unknown as PlaybackState)
+      const result = await playerManager.fetchPlaybackState()
+      expect(result).toBeNull()
+    })
+
+    it('should return parsed track data', async () => {
+      const mockTrack = {
+        id: 'track1',
+        name: 'Track Name',
+        type: 'track',
+        artists: [{ name: 'Artist 1' }, { name: 'Artist 2' }],
+        album: {
+          name: 'Album Name',
+          images: [{ url: 'http://image.url' }],
+        },
+      }
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
+        item: mockTrack,
+        is_playing: true,
+      } as unknown as PlaybackState)
+
+      const result = await playerManager.fetchPlaybackState()
+
+      expect(result).toEqual({
+        trackId: 'track1',
+        trackName: 'Track Name',
+        artist: 'Artist 1, Artist 2',
+        albumName: 'Album Name',
+        albumArtUrl: 'http://image.url',
+        isPlaying: true,
+      })
+    })
+
+    it('should return parsed episode data', async () => {
+      const mockEpisode = {
+        id: 'episode1',
+        name: 'Episode Name',
+        type: 'episode',
+        show: {
+          publisher: 'Publisher Name',
+          name: 'Show Name',
+          images: [{ url: 'http://episode.image.url' }],
+        },
+      }
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
+        item: mockEpisode,
+        is_playing: false,
+      } as unknown as PlaybackState)
+
+      const result = await playerManager.fetchPlaybackState()
+
+      expect(result).toEqual({
+        trackId: 'episode1',
+        trackName: 'Episode Name',
+        artist: 'Publisher Name',
+        albumName: 'Show Name',
+        albumArtUrl: 'http://episode.image.url',
+        isPlaying: false,
+      })
     })
   })
 })
