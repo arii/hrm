@@ -6,7 +6,11 @@ import {
   WorkoutSessionData,
   HrDataPoint,
 } from '../lib/workout-session-storage'
-import { HrZoneName, calculateHrZone, calculateMaxHr } from '../lib/shared/hr-zones'
+import {
+  HrZoneName,
+  calculateHrZone,
+  calculateMaxHr,
+} from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
 import { useAppSnackbar } from './useAppSnackbar'
 import { isSessionStale } from '../lib/workout-session'
