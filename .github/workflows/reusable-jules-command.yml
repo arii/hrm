@@ -6,6 +6,10 @@ on:
       comment_body:
         required: true
         type: string
+      command_type:
+        description: 'The specific Jules command (new or delete)'
+        required: true
+        type: string
       issue_number:
         required: true
         type: number
@@ -44,16 +48,9 @@ jobs:
       - name: 'Install Dependencies'
         run: pip install -r .github/scripts/requirements.txt
 
-      - name: 'Parse Command'
-        id: parse_command
-        env:
-          COMMENT_BODY: ${{ inputs.comment_body }}
-        run: |
-          python3 .github/scripts/jules_ops.py --command parse_comment --comment-body "$COMMENT_BODY"
-
       - name: 'Get PR Context'
         id: pr_context
-        if: steps.parse_command.outputs.COMMAND == 'new'
+        if: inputs.command_type == 'new'
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ inputs.issue_number }}
@@ -101,7 +98,7 @@ jobs:
 
       - name: 'Find Jules Session ID'
         id: find_session_id
-        if: steps.parse_command.outputs.COMMAND == 'delete'
+        if: inputs.command_type == 'delete'
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ inputs.issue_number }}
@@ -141,7 +138,7 @@ jobs:
           echo "✅ All required Jules secrets are configured"
 
       - name: 'Run Jules Operation: New'
-        if: steps.parse_command.outputs.COMMAND == 'new'
+        if: inputs.command_type == 'new'
         id: jules_op_new
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -169,7 +166,7 @@ jobs:
           echo "session_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: 'Run Jules Operation: Delete'
-        if: steps.parse_command.outputs.COMMAND == 'delete'
+        if: inputs.command_type == 'delete'
         id: jules_op_delete
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -188,7 +185,7 @@ jobs:
           fi
 
       - name: 'Post Session ID Comment'
-        if: success() && steps.parse_command.outputs.COMMAND == 'new'
+        if: success() && inputs.command_type == 'new'
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GH_TOKEN }}

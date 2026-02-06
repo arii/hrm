@@ -83,7 +83,7 @@ def main():
     """
     parser = argparse.ArgumentParser(description="Manage Jules coding sessions.")
     parser.add_argument(
-        "--command", required=True, choices=['new', 'delete', 'parse_comment'],
+        "--command", required=True, choices=['new', 'delete'],
         help="The command to execute."
     )
     parser.add_argument("--session-id", help="The ID of the session to delete.")
@@ -101,7 +101,6 @@ def main():
         default="https://api.jules.ai/v1/sessions",
         help="The URL of the Jules API."
     )
-    parser.add_argument("--comment-body", help="The body of the comment to parse.")
 
     args = parser.parse_args()
 
@@ -141,26 +140,6 @@ def main():
             session_id=args.session_id,
             jules_api_url=args.jules_api_url
         )
-
-    elif args.command == 'parse_comment':
-        if not args.comment_body:
-            sys.stderr.write(
-                "Error: --comment-body is required for the 'parse_comment' command.\n"
-            )
-            sys.exit(1)
-
-        command = ""
-        # replicate bash logic: checks start of string
-        if args.comment_body.strip().startswith("@jules-delete"):
-            command = "delete"
-        elif args.comment_body.strip().startswith("@jules-new"):
-            command = "new"
-
-        if 'GITHUB_OUTPUT' in os.environ:
-            with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
-                f.write(f"COMMAND={command}\n")
-        else:
-            print(f"COMMAND={command}")
 
 if __name__ == "__main__":
     main()

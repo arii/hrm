@@ -316,6 +316,7 @@ jobs:
     uses: ./.github/workflows/reusable-jules-command.yml
     with:
       comment_body: ${{ github.event.comment.body }}
+      command_type: ${{ needs.comment-router.outputs.jules_command_type }}
       issue_number: ${{ github.event.issue.number }}
       comment_id: ${{ github.event.comment.id }}
       repository_owner: ${{ github.repository_owner }}

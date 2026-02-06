@@ -24,6 +24,9 @@ outputs:
   is_jules_command:
     description: 'Whether the comment is a Jules command'
     value: ${{ steps.router.outputs.is_jules_command }}
+  jules_command_type:
+    description: 'The specific Jules command type (new or delete)'
+    value: ${{ steps.router.outputs.jules_command_type }}
   is_create_issues_command:
     description: 'Whether the comment triggers issue creation'
     value: ${{ steps.router.outputs.is_create_issues_command }}
@@ -54,8 +57,12 @@ runs:
         if echo "$COMMENT_BODY" | grep -q '@conflict-resolve'; then
           echo "is_conflict_resolve_comment=true" >> "$GITHUB_OUTPUT"
         fi
-        if echo "$COMMENT_BODY" | grep -q '^@jules-delete' || echo "$COMMENT_BODY" | grep -q '^@jules-new'; then
+        if echo "$COMMENT_BODY" | grep -q '^@jules-delete'; then
           echo "is_jules_command=true" >> "$GITHUB_OUTPUT"
+          echo "jules_command_type=delete" >> "$GITHUB_OUTPUT"
+        elif echo "$COMMENT_BODY" | grep -q '^@jules-new'; then
+          echo "is_jules_command=true" >> "$GITHUB_OUTPUT"
+          echo "jules_command_type=new" >> "$GITHUB_OUTPUT"
         fi
         if echo "$COMMENT_BODY" | grep -q '/create-issues'; then
           echo "is_create_issues_command=true" >> "$GITHUB_OUTPUT"
