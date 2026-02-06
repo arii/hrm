@@ -193,7 +193,7 @@ describe('SpotifyPolling Service', () => {
       const playlistUri = 'spotify:playlist:123'
       await spotifyService.handleCommand('PLAY', { playlistUri })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
-        '',
+        undefined,
         playlistUri
       )
     })
@@ -202,7 +202,7 @@ describe('SpotifyPolling Service', () => {
       const contextUri = 'spotify:album:456'
       await spotifyService.handleCommand('PLAY', { contextUri })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
-        '',
+        undefined,
         contextUri
       )
     })
@@ -212,7 +212,7 @@ describe('SpotifyPolling Service', () => {
       const playlistUri = 'spotify:playlist:123'
       await spotifyService.handleCommand('PLAY', { contextUri, playlistUri })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
-        '',
+        undefined,
         contextUri
       )
     })
@@ -221,28 +221,28 @@ describe('SpotifyPolling Service', () => {
   describe('Volume Control', () => {
     it('should set volume with SET_VOLUME command', async () => {
       await spotifyService.handleCommand('SET_VOLUME', { volume: 75 })
-      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(75, '')
+      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(75, undefined)
     })
 
     it('should clamp volume to 0-100 range', async () => {
       await spotifyService.handleCommand('SET_VOLUME', { volume: 150 })
-      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(100, '')
+      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(100, undefined)
     })
 
     it('should clamp negative volume to 0', async () => {
       await spotifyService.handleCommand('SET_VOLUME', { volume: -10 })
-      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(0, '')
+      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(0, undefined)
     })
 
     it('should round volume to nearest integer', async () => {
       await spotifyService.handleCommand('SET_VOLUME', { volume: 75.7 })
-      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(76, '')
+      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(76, undefined)
     })
 
     it('should return true on successful volume change', async () => {
       mockPlayer.setPlaybackVolume.mockImplementation(() => Promise.resolve())
       await spotifyService.handleCommand('SET_VOLUME', { volume: 50 })
-      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, '')
+      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
     })
 
     it('should return false on failed volume change', async () => {
@@ -250,7 +250,7 @@ describe('SpotifyPolling Service', () => {
         Promise.reject(new Error('API Error'))
       )
       await spotifyService.handleCommand('SET_VOLUME', { volume: 50 })
-      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, '')
+      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
       expect(logger.error).toHaveBeenCalled()
     })
   })
