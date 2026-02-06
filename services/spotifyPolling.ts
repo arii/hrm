@@ -385,20 +385,32 @@ export class SpotifyPolling implements SpotifyService {
         await this.executeSdkCommand(
           command,
           () => {
+            // Note: The Spotify SDK types define `deviceId` as `string`, but the underlying implementation
+            // checks for truthiness and omits the parameter if it is undefined/null/empty.
+            // This allows us to pass `undefined` safely to target the active device.
+            // We cast to `any` here because we have verified the runtime behavior (see EndpointsBase.ts in SDK),
+            // but want to maintain clean types elsewhere.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const safeDeviceId = (deviceId || undefined) as any
+
             if (uri) {
               // The Spotify API requires that if a `uri` (for a specific track) is provided,
               // the `context_uri` must be omitted. The SDK handles this by accepting
               // `undefined` for the context parameter.
-              return sdk.player.startResumePlayback(deviceId, undefined, [uri])
+              return sdk.player.startResumePlayback(
+                safeDeviceId,
+                undefined,
+                [uri]
+              )
             }
             if (effectiveContextUri) {
               return sdk.player.startResumePlayback(
-                deviceId,
+                safeDeviceId,
                 effectiveContextUri
               )
             }
             // If neither uri nor contextUri is provided, call with just deviceId.
-            return sdk.player.startResumePlayback(deviceId)
+            return sdk.player.startResumePlayback(safeDeviceId)
           },
           { deviceId, contextUri: effectiveContextUri, uri }
         )

@@ -126,5 +126,13 @@ describe('SpotifyPolling', () => {
 
       expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalledWith(50, 'dev-1')
     })
+
+    it('should safely handle undefined deviceId by passing undefined to SDK', async () => {
+      await spotifyPolling.handleCommand('PLAY', {})
+
+      // Verify that startResumePlayback was called with undefined as the first argument.
+      // This confirms our logic to handle optional deviceIds works as expected.
+      expect(mockSdk.player.startResumePlayback).toHaveBeenCalledWith(undefined)
+    })
   })
 })
