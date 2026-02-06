@@ -10,9 +10,8 @@ import { memo } from 'react'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 import {
-  HrZoneName,
-  ZONE_THRESHOLDS,
   HR_ZONE_VISUAL_CONFIG,
+  getZoneFromPercentage,
 } from '@/lib/shared/hr-zones'
 
 const overlayStyles = {
@@ -42,17 +41,7 @@ const HrTile = ({
 }: HrTileProps) => {
   const theme = useTheme()
 
-  const ratio = percentMax / 100
-  let zoneName = HrZoneName.Resting
-  if (ratio >= ZONE_THRESHOLDS[HrZoneName.Max]) zoneName = HrZoneName.Max
-  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.Peak]) zoneName = HrZoneName.Peak
-  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.Cardio])
-    zoneName = HrZoneName.Cardio
-  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.FatBurn])
-    zoneName = HrZoneName.FatBurn
-  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.WarmUp])
-    zoneName = HrZoneName.WarmUp
-
+  const zoneName = getZoneFromPercentage(percentMax)
   const { color: backgroundColor, textColor } = HR_ZONE_VISUAL_CONFIG[zoneName]
 
   const tooltipTitle = isAlerting

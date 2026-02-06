@@ -99,7 +99,7 @@ export const WebSocketProvider = ({
   useEffect(() => {
     const interval = setInterval(() => {
       dispatch({ type: 'PRUNE_STALE' })
-    }, 1000)
+    }, 5000)
     return () => clearInterval(interval)
   }, [dispatch])
 

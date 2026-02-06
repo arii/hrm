@@ -19,7 +19,7 @@ export enum HrZoneName {
 }
 
 /**
- * Estimates a user's maximum heart rate using the Fox formula.
+ * Estimates a user's maximum heart rate using the Tanaka formula.
  * @param age - The user's age in years.
  * @returns The estimated maximum heart rate.
  */
@@ -32,7 +32,7 @@ export const calculateMaxHr = (age?: number | string | null): number => {
     return MAX_HR_DEFAULT
   }
 
-  return 220 - ageNum
+  return Math.round(208 - 0.7 * ageNum)
 }
 
 export const ZONE_THRESHOLDS = {
@@ -75,6 +75,16 @@ export type UserHrZones = {
   max: { min: number }
 }
 
+export const getZoneFromPercentage = (percentage: number): HrZoneName => {
+  const ratio = percentage / 100
+  if (ratio >= ZONE_THRESHOLDS[HrZoneName.Max]) return HrZoneName.Max
+  if (ratio >= ZONE_THRESHOLDS[HrZoneName.Peak]) return HrZoneName.Peak
+  if (ratio >= ZONE_THRESHOLDS[HrZoneName.Cardio]) return HrZoneName.Cardio
+  if (ratio >= ZONE_THRESHOLDS[HrZoneName.FatBurn]) return HrZoneName.FatBurn
+  if (ratio >= ZONE_THRESHOLDS[HrZoneName.WarmUp]) return HrZoneName.WarmUp
+  return HrZoneName.Resting
+}
+
 /**
  * Calculates the current heart rate zone, and percentage of max HR.
  * @param {number} currentHr - The current heart rate in beats per minute.
@@ -94,34 +104,11 @@ export const calculateZoneFromMaxHr = (
   }
 
   const percentage = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  const ratio = percentage / 100
-
-  let zoneName = HrZoneName.Resting
-  if (ratio >= ZONE_THRESHOLDS[HrZoneName.Max]) zoneName = HrZoneName.Max
-  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.Peak]) zoneName = HrZoneName.Peak
-  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.Cardio])
-    zoneName = HrZoneName.Cardio
-  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.FatBurn])
-    zoneName = HrZoneName.FatBurn
-  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.WarmUp])
-    zoneName = HrZoneName.WarmUp
-  else zoneName = HrZoneName.Resting
+  const zoneName = getZoneFromPercentage(percentage)
 
   return {
     zoneName,
     percentage,
     bpm: currentHr,
-  }
-}
-
-// Deprecated: kept for backward compatibility if needed, but should use calculateZoneFromMaxHr
-export const getUserHrZones = (age: number) => {
-  const maxHr = calculateMaxHr(age)
-  return {
-    warmUp: { min: Math.round(maxHr * ZONE_THRESHOLDS[HrZoneName.WarmUp]) },
-    fatBurn: { min: Math.round(maxHr * ZONE_THRESHOLDS[HrZoneName.FatBurn]) },
-    cardio: { min: Math.round(maxHr * ZONE_THRESHOLDS[HrZoneName.Cardio]) },
-    peak: { min: Math.round(maxHr * ZONE_THRESHOLDS[HrZoneName.Peak]) },
-    max: { min: Math.round(maxHr * ZONE_THRESHOLDS[HrZoneName.Max]) },
   }
 }
