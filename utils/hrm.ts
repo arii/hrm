@@ -26,11 +26,14 @@ export const getActiveHrmData = (
   const { includeZeroValues = false } = options
 
   // Create a Map for O(1) lookup of alerts
+  // Note: iterate forwards but only set if not exists to preserve "first match wins" priority
+  // consistent with Array.find() behavior on the original list.
   const alertMap = new Map<string, ActiveAlert>()
   for (const alert of activeAlerts) {
     if (
-      alert.code === ALERT_CODE_BAD_PLACEMENT ||
-      alert.code === ALERT_CODE_HRM_STALE
+      (alert.code === ALERT_CODE_BAD_PLACEMENT ||
+        alert.code === ALERT_CODE_HRM_STALE) &&
+      !alertMap.has(alert.clientId)
     ) {
       alertMap.set(alert.clientId, alert)
     }
