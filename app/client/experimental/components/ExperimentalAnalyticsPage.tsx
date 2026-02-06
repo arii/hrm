@@ -58,23 +58,35 @@ const ExperimentalAnalyticsPage = () => {
     null
   )
 
+  // Effect to handle session fetching and polling
   useEffect(() => {
+    let isActive = true
+
     if (sessionId) {
       const fetchSession = async () => {
         try {
           const s = await workoutSessionStorage.getSession(sessionId)
-          setActiveSession(s)
+          if (isActive) setActiveSession(s)
         } catch (e) {
           console.error('Failed to load active session', e)
         }
       }
+
       fetchSession()
       // Poll for updates (e.g. every 5 seconds)
-      const interval = setInterval(fetchSession, 5000)
-      return () => clearInterval(interval)
+      const id = setInterval(fetchSession, 5000)
+      return () => {
+        isActive = false
+        clearInterval(id)
+      }
     } else {
-      setActiveSession(null)
-      return undefined
+      const t = setTimeout(() => {
+        if (isActive) setActiveSession(null)
+      }, 0)
+      return () => {
+        isActive = false
+        clearTimeout(t)
+      }
     }
   }, [sessionId])
 
@@ -86,9 +98,7 @@ const ExperimentalAnalyticsPage = () => {
 
   // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
-  const [view, setView] = useState<View>(() =>
-    sessionId ? 'active' : 'list'
-  )
+  const [view, setView] = useState<View>(() => (sessionId ? 'active' : 'list'))
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
 
@@ -110,7 +120,7 @@ const ExperimentalAnalyticsPage = () => {
         setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
         // If we were viewing active, switch to list
         if (view === 'active') {
-            setView('list')
+          setView('list')
         }
       }
       reloadSessions()

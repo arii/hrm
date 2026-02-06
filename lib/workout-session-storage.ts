@@ -193,6 +193,9 @@ export class WorkoutSessionStorage {
     sessionId: string,
     dataPoints: HrDataPoint[]
   ): Promise<void> {
+    // TODO: Refactor this to use a separate ObjectStore for HrDataPoints keyed by sessionId (one-to-many relationship)
+    // instead of embedding a massive array inside the Session object.
+    // This current implementation reads/writes the full session object which is O(N) and inefficient for long workouts.
     if (dataPoints.length === 0) return
 
     await this.withFallback(
