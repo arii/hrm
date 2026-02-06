@@ -143,6 +143,29 @@ describe('webSocketReducer', () => {
       expect(state.hrmData.find((d) => d.clientId === '2')).toBeUndefined()
       expect(state.hrmData[0].clientId).toBe('1')
     })
+
+    it('should preserve existing client state properties not present in payload if merging', () => {
+      const initialState: WebSocketState = {
+        ...INITIAL_STATE,
+        hrmData: [{ ...baseUser, isConnected: true, lastUpdated: 1000 }],
+      }
+
+      // Payload intentionally missing 'name' and other properties
+      const payloadUser = {
+        clientId: '1',
+        value: 150,
+      } as unknown as HrmStreamData
+
+      const action: ServerMessage = {
+        type: 'HRM_UPDATE',
+        payload: [payloadUser],
+      }
+      const state = reducer(initialState, action)
+
+      expect(state.hrmData).toHaveLength(1)
+      expect(state.hrmData[0].value).toBe(150)
+      expect(state.hrmData[0].name).toBe('User A') // Should be preserved from initial state
+    })
   })
 
   describe('DEVICE_OFFLINE action', () => {
