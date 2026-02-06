@@ -32,16 +32,6 @@ export class SpotifyPolling implements SpotifyService {
     return this.getCurrentlyPlaying()
   }
 
-  /**
-   * Helper to cast device ID to string to satisfy SDK types.
-   * The SDK types imply deviceId is mandatory (string), but runtime accepts undefined
-   * to target the currently active device.
-   */
-  private castDeviceId(id: string | null | undefined): string {
-    // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-    return id || undefined
-  }
-
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
   private devicePollInterval: NodeJS.Timeout | null = null
@@ -399,19 +389,17 @@ export class SpotifyPolling implements SpotifyService {
           command,
           () => {
             if (uri) {
-              return sdk.player.startResumePlayback(
-                this.castDeviceId(deviceId),
-                undefined,
-                [uri]
-              )
+              // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
+              // eslint-disable-next-line prettier/prettier
+              return sdk.player.startResumePlayback(deviceId || undefined, undefined, [uri])
             }
             if (effectiveContextUri) {
-              return sdk.player.startResumePlayback(
-                this.castDeviceId(deviceId),
-                effectiveContextUri
-              )
+              // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
+              // eslint-disable-next-line prettier/prettier
+              return sdk.player.startResumePlayback(deviceId || undefined, effectiveContextUri)
             }
-            return sdk.player.startResumePlayback(this.castDeviceId(deviceId))
+            // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
+            return sdk.player.startResumePlayback(deviceId || undefined)
           },
           { deviceId, contextUri: effectiveContextUri, uri }
         )
@@ -419,21 +407,24 @@ export class SpotifyPolling implements SpotifyService {
       case 'PAUSE':
         await this.executeSdkCommand(
           command,
-          () => sdk.player.pausePlayback(this.castDeviceId(deviceId)),
+          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
+          () => sdk.player.pausePlayback(deviceId || undefined),
           { deviceId }
         )
         break
       case 'NEXT':
         await this.executeSdkCommand(
           command,
-          () => sdk.player.skipToNext(this.castDeviceId(deviceId)),
+          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
+          () => sdk.player.skipToNext(deviceId || undefined),
           { deviceId }
         )
         break
       case 'PREVIOUS':
         await this.executeSdkCommand(
           command,
-          () => sdk.player.skipToPrevious(this.castDeviceId(deviceId)),
+          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
+          () => sdk.player.skipToPrevious(deviceId || undefined),
           { deviceId }
         )
         break
@@ -454,7 +445,7 @@ export class SpotifyPolling implements SpotifyService {
             () =>
               sdk.player.setPlaybackVolume(
                 clampedVolume,
-                this.castDeviceId(deviceId)
+                deviceId || undefined
               ),
             { deviceId, volume: clampedVolume }
           )
