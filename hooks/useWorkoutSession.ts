@@ -89,6 +89,7 @@ type SessionAction =
   | { type: 'PAUSE_WORKOUT'; payload: { now: number } }
   | { type: 'END_WORKOUT'; payload: { now: number } }
   | { type: 'UPDATE_CALORIES'; payload: number }
+  | { type: 'HYDRATE'; payload: SessionState }
 
 function sessionReducer(
   state: SessionState,
@@ -96,6 +97,9 @@ function sessionReducer(
 ): SessionState {
   let newState = state
   switch (action.type) {
+    case 'HYDRATE':
+      newState = action.payload
+      break
     case 'START_WORKOUT':
       if (state.status === 'idle') {
         newState = {
@@ -170,8 +174,16 @@ export const useWorkoutSession = ({
   userAge = 30,
   userWeight = 70,
 }: WorkoutSessionOptions) => {
-  // Initialize from storage instead of default initialState
-  const [state, dispatch] = useReducer(sessionReducer, initialState, loadState)
+  // Initialize from default initialState to avoid hydration mismatch
+  const [state, dispatch] = useReducer(sessionReducer, initialState)
+
+  // Load from storage on mount to fix hydration mismatch
+  useEffect(() => {
+    const loaded = loadState()
+    if (loaded.status !== 'idle' || loaded.duration > 0) {
+      dispatch({ type: 'HYDRATE', payload: loaded })
+    }
+  }, [])
 
   // Buffer for HR data points to reduce IndexedDB writes
   const hrDataBuffer = useRef<HrDataPoint[]>([])
@@ -319,9 +331,9 @@ export const useWorkoutSession = ({
     }
   }, [state.status, totalCalories, userAge, userWeight])
 
-  const pauseWorkout = useCallback(() => {
+  const pauseWorkout = useCallback(async () => {
     if (state.status === 'running') {
-      flushData()
+      await flushData()
       dispatch({ type: 'PAUSE_WORKOUT', payload: { now: Date.now() } })
     }
   }, [state.status, flushData])

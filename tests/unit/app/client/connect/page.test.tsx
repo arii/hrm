@@ -24,6 +24,7 @@ jest.mock('@/hooks/useBluetoothHRM', () =>
     isDataStale: false,
     isSupported: true,
     disconnectionReason: null,
+    signalPeriodMs: 1000,
   }))
 )
 
@@ -37,6 +38,9 @@ jest.mock('@/hooks/useWorkoutSession', () => ({
     pauseWorkout: jest.fn(),
     endWorkout: jest.fn(),
     workoutStatus: 'idle',
+    startTime: null,
+    addHrData: jest.fn(),
+    caloriesBurned: 0,
   })),
 }))
 
