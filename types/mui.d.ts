@@ -22,14 +22,9 @@ declare module '@mui/material/styles' {
     }
   }
 
-  interface Typography {
-    fontFamilyMono: string
-  }
-
-  interface TypographyOptions {
-    fontFamilyMono?: string
-  }
-
+  // NOTE: In MUI v5+, Theme['typography'] is defined as TypographyVariants
+  // We must extend TypographyVariants to add properties to theme.typography,
+  // even if they are just strings (not full variant objects).
   interface TypographyVariants {
     fontFamilyMono: string
   }

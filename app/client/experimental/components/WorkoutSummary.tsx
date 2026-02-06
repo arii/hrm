@@ -4,18 +4,23 @@ import { Card, CardContent, Typography, Box, Chip } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { formatDuration } from '@/lib/utils'
 
+import { Palette } from '@mui/material/styles'
+
 interface WorkoutSummaryProps {
   duration: number
   calories: number
   status: 'idle' | 'running' | 'paused' | 'finished'
 }
 
-const STATUS_COLOR_MAP = {
+const STATUS_COLOR_MAP: Record<
+  WorkoutSummaryProps['status'],
+  keyof Palette['custom']
+> = {
   idle: 'idle',
   running: 'running',
   paused: 'prepare',
   finished: 'cooldown',
-} as const
+}
 
 const WorkoutSummary = ({
   duration,
@@ -24,8 +29,7 @@ const WorkoutSummary = ({
 }: WorkoutSummaryProps) => {
   const theme = useTheme()
 
-  const colorKey =
-    STATUS_COLOR_MAP[status as keyof typeof STATUS_COLOR_MAP] || 'idle'
+  const colorKey = STATUS_COLOR_MAP[status]
   const statusColor = theme.palette.custom[colorKey]
 
   return (
