@@ -99,23 +99,24 @@ export class SpotifyPolling implements SpotifyService {
         return
       }
 
-      const { trackId, trackName, artist, albumName, albumArtUrl, isPlaying } = playbackState
+      const { trackId, trackName, artist, albumName, albumArtUrl, isPlaying } =
+        playbackState
 
       if (
         trackId !== this.lastTrackId ||
         isPlaying !== this.lastPlaybackState
       ) {
-        this.lastTrackId = trackId!
-        this.lastPlaybackState = isPlaying!
+        this.lastTrackId = trackId
+        this.lastPlaybackState = isPlaying
 
         this.setState({
           ...this.state,
-          trackId: trackId!,
-          trackName: trackName!,
-          artist: artist!,
-          albumName: albumName!,
-          albumArtUrl: albumArtUrl!,
-          isPlaying: isPlaying!,
+          trackId,
+          trackName,
+          artist,
+          albumName,
+          albumArtUrl,
+          isPlaying,
         })
 
         this.broadcastUpdate({

@@ -3,7 +3,7 @@ import { SpotifyPlayerManager } from '../../../services/spotifyPlayerManager'
 import { mockPlayer } from '../spotify-test-utils'
 import { SafeSpotifyApi } from '../../../services/safeSpotifyApi'
 import { createSafeSpotifyApi } from '../../../services/safeSpotifyApi'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { SpotifyApi, PlaybackState } from '@spotify/web-api-ts-sdk'
 
 // Mock the logger to prevent logs from appearing in test output
 jest.mock('../../../utils/logger.server.js', () => ({
@@ -172,7 +172,7 @@ describe('SpotifyPlayerManager', () => {
     it('should return null when no item in playback state', async () => {
       mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
         item: null,
-      } as any)
+      } as unknown as PlaybackState)
       const result = await playerManager.fetchPlaybackState()
       expect(result).toBeNull()
     })
@@ -191,7 +191,7 @@ describe('SpotifyPlayerManager', () => {
       mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
         item: mockTrack,
         is_playing: true,
-      } as any)
+      } as unknown as PlaybackState)
 
       const result = await playerManager.fetchPlaybackState()
 
@@ -219,7 +219,7 @@ describe('SpotifyPlayerManager', () => {
       mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
         item: mockEpisode,
         is_playing: false,
-      } as any)
+      } as unknown as PlaybackState)
 
       const result = await playerManager.fetchPlaybackState()
 
