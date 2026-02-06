@@ -1,4 +1,3 @@
-// File: lib/shared/hr-zones.ts
 import type { HrZone } from '../../types/heart-rate'
 
 export const MAX_HR_DEFAULT = 185
