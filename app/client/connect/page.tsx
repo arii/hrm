@@ -5,7 +5,6 @@ import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
-import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
@@ -114,45 +113,42 @@ export default function ConnectPage() {
     [sendData]
   )
 
-  const {
-    workoutDuration,
-    resetWorkout: resetWorkoutSession,
-    hasStarted,
-    startWorkout,
-    pauseWorkout,
-    endWorkout,
-    workoutStatus,
-  } = useWorkoutSession({
-    isConnected: false, // This will be updated by the useBluetoothHRM hook
-    totalCalories: calories,
-  })
-
   // Add the workout session manager for data persistence
   const {
     addHrData,
     startWorkout: startPersistentWorkout,
     endWorkout: endPersistentWorkout,
     resetWorkout: resetPersistentWorkout,
+    pauseWorkout,
+    resumeWorkout,
+    workoutStatus,
+    workoutDuration,
+    hasStarted,
   } = useWorkoutSessionManager()
 
   // Create wrapper functions that sync both hooks
   const handleStartWorkout = useCallback(() => {
-    startWorkout()
-    if (userAge && userWeight) {
+    if (workoutStatus === 'paused') {
+      resumeWorkout()
+    } else if (userAge && userWeight) {
       startPersistentWorkout(userAge, userWeight)
     }
-  }, [startWorkout, startPersistentWorkout, userAge, userWeight])
+  }, [
+    workoutStatus,
+    resumeWorkout,
+    startPersistentWorkout,
+    userAge,
+    userWeight,
+  ])
 
   const handleEndWorkout = useCallback(() => {
-    endWorkout()
     endPersistentWorkout()
-  }, [endWorkout, endPersistentWorkout])
+  }, [endPersistentWorkout])
 
   const handleResetWorkout = useCallback(() => {
-    resetWorkoutSession()
     resetCalculator()
     resetPersistentWorkout()
-  }, [resetWorkoutSession, resetCalculator, resetPersistentWorkout])
+  }, [resetCalculator, resetPersistentWorkout])
 
   // Callback for raw heart rate updates from the Bluetooth hook
   const handleHeartRateUpdate = useCallback(
@@ -193,6 +189,13 @@ export default function ConnectPage() {
     onHeartRateUpdate: handleHeartRateUpdate,
     onConnect: handleStartWorkout, // Use the wrapped function
   })
+
+  // Auto-pause on disconnect
+  useEffect(() => {
+    if (hasStarted && !isConnected && workoutStatus === 'running') {
+      pauseWorkout()
+    }
+  }, [isConnected, hasStarted, workoutStatus, pauseWorkout])
 
   useEffect(() => {
     // Try to auto-connect when WebSocket is ready and we're not already connected.

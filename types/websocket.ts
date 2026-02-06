@@ -36,6 +36,7 @@ export type SpotifyCommand =
   | 'TRANSFER_PLAYBACK'
   | 'SET_VOLUME'
   | 'GET_DEVICES'
+  | 'LOGIN'
 
 /**
  * The payload for the INITIAL_STATE message, representing the full application state.
@@ -230,6 +231,7 @@ export const SpotifyCommandMessageSchema = z.object({
     z.literal('TRANSFER_PLAYBACK'),
     z.literal('SET_VOLUME'),
     z.literal('GET_DEVICES'), // <--- ADDED
+    z.literal('LOGIN'),
   ]),
   deviceId: z.string().optional(),
   volume: z.number().min(0).max(100).optional(),

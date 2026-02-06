@@ -14,24 +14,6 @@ export const BLUETOOTH_NOT_SUPPORTED_TEXT = 'Bluetooth Not Supported'
 export const CONNECT_HR_MONITOR_BUTTON_TEXT = 'Connect HR Monitor'
 export const DISCONNECT_HR_MONITOR_BUTTON_TEXT = 'Disconnect HR Monitor'
 
-// --- Heart Rate Calculation Constants ---
-
-// --- Heart Rate Zones Configuration ---
-export interface HeartRateZoneConfig {
-  name: string
-  minPercent: number // 0-100
-  maxPercent: number // 0-100
-  color: string
-}
-
-export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
-  { name: 'Zone 5', minPercent: 90, maxPercent: 100, color: '#F44336' },
-  { name: 'Zone 4', minPercent: 80, maxPercent: 90, color: '#FFEB3B' },
-  { name: 'Zone 3', minPercent: 70, maxPercent: 80, color: '#4CAF50' },
-  { name: 'Zone 2', minPercent: 60, maxPercent: 70, color: '#2196F3' },
-  { name: 'Zone 1', minPercent: 50, maxPercent: 60, color: '#9E9E9E' },
-]
-
 // --- Calorie Calculation Constants ---
 // Based on standard metabolic formulas (e.g., Keytel)
 export const CALORIE_DEFAULTS = {

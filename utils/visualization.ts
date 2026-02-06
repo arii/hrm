@@ -7,7 +7,7 @@ import { TimerData } from '../types/websocket'
 import { WorkoutData } from '../types'
 import { WorkoutItem } from '../types/workout'
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
-import theme from '../lib/theme'
+import theme from '@/theme/theme' // Changed to import the extended theme
 import { calculateHrZone } from '../lib/hrm/zones'
 import { HrZoneName } from '../lib/shared/hr-zones'
 
@@ -28,7 +28,15 @@ type HrZoneUi = {
   bgColor: string
 }
 
+/**
+ * @deprecated Use HR_ZONE_VISUAL_CONFIG from lib/shared/hr-zones.ts instead.
+ */
 export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
+  [HrZoneName.Resting]: {
+    color: 'text-gray-500',
+    progressColor: theme.palette.custom?.resting || '#607d8b',
+    bgColor: theme.palette.custom?.resting || '#607d8b',
+  },
   [HrZoneName.WarmUp]: {
     color: 'text-blue-400',
     progressColor: theme.palette.secondary.main,
@@ -67,7 +75,9 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
   },
 }
 
-// Zone color lookup for easy access (zone 1-5)
+/**
+ * @deprecated Use HR_ZONE_VISUAL_CONFIG from lib/shared/hr-zones.ts instead.
+ */
 export const ZONE_COLORS = {
   grey: '#9E9E9E', // Below zone 1
   blue: theme.palette.secondary.main, // Zone 1: Warm-up
@@ -91,6 +101,7 @@ export interface HrZoneProps {
  * Calculates the current zone, percentage of max HR, and returns MUI-ready props.
  * This function now composes the core business logic from `lib/hrm` with
  * presentation-specific properties defined in this file.
+ * @deprecated Prefer using HrTile's local resolution or server-provided props.
  */
 export const getHrZoneProps = (
   currentHr: number,

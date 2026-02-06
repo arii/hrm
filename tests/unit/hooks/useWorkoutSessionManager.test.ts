@@ -57,7 +57,7 @@ describe('useWorkoutSessionManager', () => {
 
       // Pause
       act(() => {
-        result.current.endWorkout()
+        result.current.pauseWorkout()
       })
       expect(result.current.status).toBe('paused')
       expect(result.current.session?.status).toBe('paused')
@@ -72,7 +72,7 @@ describe('useWorkoutSessionManager', () => {
 
       // Pause again before finishing
       act(() => {
-        result.current.endWorkout()
+        result.current.pauseWorkout()
       })
       expect(result.current.status).toBe('paused')
 
@@ -157,7 +157,7 @@ describe('useWorkoutSessionManager', () => {
 
       // Pause the session
       act(() => {
-        result.current.endWorkout()
+        result.current.pauseWorkout()
       })
       expect(result.current.status).toBe('paused')
 
@@ -190,6 +190,8 @@ describe('useWorkoutSessionManager', () => {
         lastSyncTime: 900000,
         syncStatus: 'pending',
         endTime: null,
+        totalPausedTime: 0,
+        lastPauseStartTime: null
       }
       mockGetIncompleteSession.mockResolvedValue(staleSession)
       mockIsSameDay.mockReturnValue(false) // Mock as a different day

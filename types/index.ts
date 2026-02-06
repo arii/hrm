@@ -9,6 +9,7 @@ export interface HrTileProps extends HrData {
   calories?: number
   isConnected?: boolean
   isDataStale?: boolean
+  zone?: string // HrZoneName
 
   // NEW: Flag to trigger the visual diagnostic state
   isAlerting?: boolean

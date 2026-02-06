@@ -14,6 +14,7 @@ import {
 import { HrZoneName } from '@/lib/shared/hr-zones'
 
 const defaultTimeInZones: Record<HrZoneName, number> = {
+  [HrZoneName.Resting]: 0,
   [HrZoneName.WarmUp]: 0,
   [HrZoneName.FatBurn]: 0,
   [HrZoneName.Cardio]: 0,

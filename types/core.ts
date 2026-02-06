@@ -96,6 +96,8 @@ export interface HrmStreamData {
   calories: number
   weightKg?: number
   updatedAt?: number
+  percentage?: number // 0-100
+  zone?: string // HrZoneName
 }
 
 /**

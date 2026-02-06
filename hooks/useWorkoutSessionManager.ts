@@ -26,6 +26,7 @@ type SessionManagerAction =
   | { type: 'SET_SESSION'; payload: WorkoutSessionData }
   | { type: 'START'; payload: { age: number; weight: number; maxHr?: number } }
   | { type: 'RESUME' }
+  | { type: 'PAUSE' }
   | { type: 'END' }
   | { type: 'RESET' }
   | { type: 'ADD_HR_DATA'; payload: HrDataPoint }
@@ -58,6 +59,8 @@ function sessionManagerReducer(
         sessionId: uuidv4(),
         startTime: Date.now(),
         endTime: null,
+        totalPausedTime: 0,
+        lastPauseStartTime: null,
         status: 'running',
         hrHistory: [],
         timeInZones: initialTimeInZones,
@@ -77,25 +80,55 @@ function sessionManagerReducer(
     }
     case 'RESUME': {
       if (!state.session) return state
-      return {
-        ...state,
-        session: { ...state.session, status: 'running' },
-        status: 'running',
-      }
-    }
-    case 'END': {
-      if (!state.session) return state
-      // If running, transition to 'paused'. If paused, transition to 'finished'.
-      const nextStatus = state.status === 'running' ? 'paused' : 'finished'
+      // If we are already running, do nothing
+      if (state.status === 'running') return state
+
+      const now = Date.now()
+      const additionalPausedTime = state.session.lastPauseStartTime
+        ? now - state.session.lastPauseStartTime
+        : 0
+
       return {
         ...state,
         session: {
           ...state.session,
-          status: nextStatus,
-          // Only set endTime when the session is truly finished
-          endTime: nextStatus === 'finished' ? Date.now() : null,
+          status: 'running',
+          lastPauseStartTime: null,
+          totalPausedTime: state.session.totalPausedTime + additionalPausedTime,
         },
-        status: nextStatus,
+        status: 'running',
+      }
+    }
+    case 'PAUSE': {
+      if (!state.session || state.status !== 'running') return state
+      return {
+        ...state,
+        session: {
+          ...state.session,
+          status: 'paused',
+          lastPauseStartTime: Date.now(),
+        },
+        status: 'paused',
+      }
+    }
+    case 'END': {
+      if (!state.session) return state
+
+      let finalTotalPaused = state.session.totalPausedTime
+      if (state.status === 'paused' && state.session.lastPauseStartTime) {
+        finalTotalPaused += Date.now() - state.session.lastPauseStartTime
+      }
+
+      return {
+        ...state,
+        session: {
+          ...state.session,
+          status: 'finished',
+          endTime: Date.now(),
+          lastPauseStartTime: null,
+          totalPausedTime: finalTotalPaused,
+        },
+        status: 'finished',
       }
     }
     case 'RESET': {
@@ -234,6 +267,10 @@ export const useWorkoutSessionManager = () => {
     dispatch({ type: 'RESUME' })
   }, [])
 
+  const pauseWorkout = useCallback(() => {
+    dispatch({ type: 'PAUSE' })
+  }, [])
+
   const endWorkout = useCallback(() => {
     dispatch({ type: 'END' })
   }, [])
@@ -251,28 +288,74 @@ export const useWorkoutSessionManager = () => {
 
   const [duration, setDuration] = useState(0)
 
+  // Sync duration logic with state
   useEffect(() => {
-    if (state.status !== 'running') {
-      return
+    // Initial calc
+    const calculateDuration = () => {
+      if (!state.session) return 0
+      if (state.status === 'running') {
+        const now = Date.now()
+        return Math.floor(
+          (now - state.session.startTime - state.session.totalPausedTime) / 1000
+        )
+      } else if (
+        state.status === 'paused' &&
+        state.session.lastPauseStartTime
+      ) {
+        // Duration is frozen at the point of pause
+        // duration = (pauseStartTime - startTime) - totalPausedTime
+        return Math.floor(
+          (state.session.lastPauseStartTime -
+            state.session.startTime -
+            state.session.totalPausedTime) /
+            1000
+        )
+      } else if (state.status === 'finished' && state.session.endTime) {
+        return Math.floor(
+          (state.session.endTime -
+            state.session.startTime -
+            state.session.totalPausedTime) /
+            1000
+        )
+      }
+      return 0
     }
 
-    const interval = setInterval(() => {
-      if (state.session?.startTime) {
-        const now = Date.now()
-        setDuration(Math.floor((now - state.session.startTime) / 1000))
+    // Using a timeout to move state update out of the effect execution phase
+    // This avoids the "set-state-in-effect" warning/error
+    const timer = setTimeout(() => {
+      if (state.session) {
+        setDuration(calculateDuration())
+      } else {
+        setDuration(0)
       }
-    }, 1000)
+    }, 0)
 
-    return () => clearInterval(interval)
-  }, [state.status, state.session?.startTime])
+    let interval: NodeJS.Timeout | undefined
+
+    if (state.status === 'running') {
+      interval = setInterval(() => {
+        setDuration(calculateDuration())
+      }, 1000)
+    }
+
+    return () => {
+      clearTimeout(timer)
+      if (interval) clearInterval(interval)
+    }
+  }, [state.status, state.session])
 
   return {
     session: state.session,
     status: state.status,
+    workoutStatus: state.status, // Alias for compatibility
+    hasStarted: state.status !== 'idle', // Derived property
     isInitialized,
     duration,
+    workoutDuration: duration, // Alias for compatibility
     startWorkout,
     resumeWorkout,
+    pauseWorkout,
     endWorkout,
     resetWorkout,
     addHrData,

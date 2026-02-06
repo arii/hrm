@@ -23,6 +23,8 @@ export interface WorkoutSessionData {
   sessionId: string
   startTime: number
   endTime: number | null
+  totalPausedTime: number // Accumulated pause time in ms
+  lastPauseStartTime: number | null // Timestamp when the last pause started
   status: 'idle' | 'running' | 'paused' | 'finished'
   hrHistory: HrDataPoint[]
   timeInZones: Record<HrZoneName, number>

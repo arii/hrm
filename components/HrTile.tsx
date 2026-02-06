@@ -6,11 +6,15 @@ import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
-import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
+import {
+  HR_ZONE_VISUAL_CONFIG,
+  ZONE_THRESHOLDS,
+  HrZoneName,
+} from '@/lib/shared/hr-zones'
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -32,6 +36,7 @@ const HrTile = ({
   name,
   bpm,
   percentMax,
+  zone,
   calories = 0, // Default to 0 to prevent NaN
   isConnected = true, // Default to connected
   isDataStale = false,
@@ -39,7 +44,36 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
-  const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
+
+  // Resolve zone locally if not provided
+  let resolvedZone = zone as HrZoneName
+  if (!resolvedZone) {
+    if (!isConnected || bpm === 0) {
+      resolvedZone = HrZoneName.NoData
+    } else {
+      const pct = percentMax / 100
+      // Use ZONE_THRESHOLDS for fallback calculation
+      if (pct >= (ZONE_THRESHOLDS[HrZoneName.Max] || 0.95))
+        resolvedZone = HrZoneName.Max
+      else if (pct >= (ZONE_THRESHOLDS[HrZoneName.Peak] || 0.85))
+        resolvedZone = HrZoneName.Peak
+      else if (pct >= (ZONE_THRESHOLDS[HrZoneName.Cardio] || 0.7))
+        resolvedZone = HrZoneName.Cardio
+      else if (pct >= (ZONE_THRESHOLDS[HrZoneName.FatBurn] || 0.6))
+        resolvedZone = HrZoneName.FatBurn
+      else if (pct >= (ZONE_THRESHOLDS[HrZoneName.WarmUp] || 0.5))
+        resolvedZone = HrZoneName.WarmUp
+      else resolvedZone = HrZoneName.Resting
+    }
+  }
+
+  const visualConfig = HR_ZONE_VISUAL_CONFIG[resolvedZone] ||
+    HR_ZONE_VISUAL_CONFIG[HrZoneName.Unknown] || {
+      color: '#9e9e9e',
+      textColor: '#ffffff',
+    }
+  const backgroundColor = visualConfig.color
+  const textColor = visualConfig.textColor
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -178,6 +212,7 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
+    prevProps.zone === nextProps.zone &&
     prevProps.calories === nextProps.calories &&
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isDataStale === nextProps.isDataStale &&

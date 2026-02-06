@@ -3,39 +3,6 @@
 import { createTheme } from '@mui/material/styles'
 import libTheme from '@/lib/theme'
 
-declare module '@mui/material/styles' {
-  interface Palette {
-    custom: {
-      prepare: string
-      work: string
-      rest: string
-      running: string
-      idle: string
-      cooldown: string
-      warmUp: string
-      fatBurn: string
-      cardio: string
-      peak: string
-      max: string
-    }
-  }
-  interface PaletteOptions {
-    custom?: {
-      prepare?: string
-      work?: string
-      rest?:string
-      running?: string
-      idle?: string
-      cooldown?: string
-      warmUp?: string
-      fatBurn?: string
-      cardio?: string
-      peak?: string
-      max?: string
-    }
-  }
-}
-
 const theme = createTheme(libTheme, {
   palette: {
     custom: {
@@ -50,6 +17,7 @@ const theme = createTheme(libTheme, {
       cardio: '#f1c40f',
       peak: '#e67e22',
       max: '#e74c3c',
+      resting: '#607d8b',
     },
   },
 })

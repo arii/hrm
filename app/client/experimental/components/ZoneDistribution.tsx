@@ -75,6 +75,7 @@ const ZoneDistribution = ({
 }: ZoneDistributionProps) => {
   const theme = useTheme()
   const ZONE_COLORS: Record<HrZoneName, string> = {
+    [HrZoneName.Resting]: theme.palette.custom.resting,
     [HrZoneName.WarmUp]: theme.palette.custom.warmUp,
     [HrZoneName.FatBurn]: theme.palette.custom.fatBurn,
     [HrZoneName.Cardio]: theme.palette.custom.cardio,
