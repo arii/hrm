@@ -304,7 +304,6 @@ export const useWorkoutSessionManager = () => {
 
   useEffect(() => {
     if (state.status === 'idle') {
-      setDuration(0)
       return
     }
 
@@ -354,7 +353,7 @@ export const useWorkoutSessionManager = () => {
     session: state.session,
     status: state.status,
     isInitialized,
-    duration,
+    duration: state.status === 'idle' ? 0 : duration,
     startWorkout,
     resumeWorkout,
     pauseWorkout,

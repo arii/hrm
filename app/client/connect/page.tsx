@@ -89,6 +89,19 @@ export default function ConnectPage() {
     }
   }, [connectionStatus, userName, userAge, sendData])
 
+  // Unified Session Manager
+  const {
+    duration,
+    status: workoutStatus,
+    startWorkout,
+    pauseWorkout,
+    resumeWorkout,
+    endWorkout,
+    resetWorkout,
+    addHrData,
+    updateCalories,
+  } = useWorkoutSessionManager()
+
   // Centralized calorie calculation engine
   const {
     calories,
@@ -97,6 +110,11 @@ export default function ConnectPage() {
   } = useCalorieCalculator({
     age: userAge || 30,
     weightKg: userWeight || 70,
+    onCaloriesUpdate: (newCalories) => {
+      if (workoutStatus !== 'idle' && workoutStatus !== 'finished') {
+        updateCalories(newCalories)
+      }
+    },
   })
 
   // Throttled sender for WebSocket messages
@@ -111,19 +129,6 @@ export default function ConnectPage() {
       }, 250),
     [sendData]
   )
-
-  // Unified Session Manager
-  const {
-    duration,
-    status: workoutStatus,
-    startWorkout,
-    pauseWorkout,
-    resumeWorkout,
-    endWorkout,
-    resetWorkout,
-    addHrData,
-    updateCalories,
-  } = useWorkoutSessionManager()
 
   const handleStartWorkout = useCallback(() => {
     if (workoutStatus === 'idle' || workoutStatus === 'finished') {
@@ -141,13 +146,6 @@ export default function ConnectPage() {
   const handleEndWorkout = useCallback(() => {
     endWorkout()
   }, [endWorkout])
-
-  // Sync calories to manager
-  useEffect(() => {
-    if (workoutStatus !== 'idle' && workoutStatus !== 'finished') {
-      updateCalories(calories)
-    }
-  }, [calories, updateCalories, workoutStatus])
 
   // Callback for raw heart rate updates from the Bluetooth hook
   const handleHeartRateUpdate = useCallback(

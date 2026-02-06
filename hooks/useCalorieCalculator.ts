@@ -9,6 +9,7 @@ interface CalorieCalculatorProps {
   weightKg: number
   gender?: Gender
   smoothingWindow?: number
+  onCaloriesUpdate?: (calories: number) => void
 }
 
 /**
@@ -24,6 +25,7 @@ export const useCalorieCalculator = ({
   weightKg,
   gender = 'neutral',
   smoothingWindow = 5, // Default to a 5-sample window for SMA
+  onCaloriesUpdate,
 }: CalorieCalculatorProps) => {
   const [calories, setCalories] = useState(0)
   const lastTimestampRef = useRef<number | null>(null)
@@ -32,6 +34,11 @@ export const useCalorieCalculator = ({
   const ageRef = useRef(age)
   const weightKgRef = useRef(weightKg)
   const genderRef = useRef(gender)
+  const onCaloriesUpdateRef = useRef(onCaloriesUpdate)
+
+  useEffect(() => {
+    onCaloriesUpdateRef.current = onCaloriesUpdate
+  }, [onCaloriesUpdate])
 
   // Keep refs updated to avoid stale closures in callbacks
   useEffect(() => {
@@ -74,7 +81,14 @@ export const useCalorieCalculator = ({
             gender: genderRef.current,
             durationMinutes: dtMinutes,
           })
-          setCalories((prev) => prev + caloriesBurned)
+
+          setCalories((prev) => {
+            const newTotal = prev + caloriesBurned
+            if (onCaloriesUpdateRef.current) {
+              onCaloriesUpdateRef.current(newTotal)
+            }
+            return newTotal
+          })
         }
       }
 

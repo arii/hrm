@@ -4,22 +4,20 @@ import { Alert, AlertTitle } from '@mui/material'
 import { checkOnboardingRequirements } from '@/utils/browserSupport'
 import { useState, useEffect } from 'react'
 
+const DEFAULT_SUPPORT = {
+  allSupported: true,
+  bluetooth: true,
+  isSecure: true,
+  webSockets: true,
+}
+
 export const OnboardingOverlay = () => {
   // Initialize with allSupported: true to prevent hydration mismatch (matches server)
-  const [support, setSupport] = useState({
-    allSupported: true,
-    bluetooth: true,
-    isSecure: true,
-    webSockets: true,
-  })
+  const [support, setSupport] = useState(DEFAULT_SUPPORT)
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
-    // Wrap in timeout to avoid "setState in effect" warning and ensure client-side execution
-    const timer = setTimeout(() => {
-      setSupport(checkOnboardingRequirements())
-    }, 0)
-    return () => clearTimeout(timer)
+    setSupport(checkOnboardingRequirements())
   }, [])
 
   if (support.allSupported || dismissed) {

@@ -98,16 +98,16 @@ describe('useWorkoutSessionManager', () => {
 
     // Helper to mock Date
     const mockDate = class extends realDate {
-        constructor(dateString?: string | number | Date) {
-            if (dateString) {
-                super(dateString)
-            } else {
-                super(tomorrow)
-            }
+      constructor(dateString?: string | number | Date) {
+        if (dateString) {
+          super(dateString)
+        } else {
+          super(tomorrow)
         }
-        static now() {
-            return tomorrow.getTime()
-        }
+      }
+      static now() {
+        return tomorrow.getTime()
+      }
     } as unknown as typeof Date
 
     global.Date = mockDate
