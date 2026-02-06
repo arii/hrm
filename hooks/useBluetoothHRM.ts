@@ -41,10 +41,8 @@ const getBluetooth = () => {
   if (typeof navigator !== 'undefined' && navigator.bluetooth) {
     return navigator.bluetooth
   }
-  // @ts-expect-error MockBluetooth is injected by Playwright
   if (typeof window !== 'undefined' && window.MockBluetooth) {
-    // @ts-expect-error MockBluetooth is injected by Playwright
-    return window.MockBluetooth
+    return window.MockBluetooth as Bluetooth
   }
   return undefined
 }
