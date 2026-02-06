@@ -1,4 +1,3 @@
-// Manages Bluetooth HRM device lifecycle: discovery, connection, data streaming, reconnection
 import { useCallback, useState, useRef, useEffect } from 'react'
 import {
   HrmMetadataUpdateMessage,
@@ -27,13 +26,11 @@ const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 
-// Constants for signal quality calculation
 const ROLLING_AVG_HISTORY_LENGTH = 5
 const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
 const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
-export const HEARTBEAT_INTERVAL_MS = 1000 // Exported for testing purposes
+export const HEARTBEAT_INTERVAL_MS = 1000
 
-// Parses the heart rate value from the raw DataView received from a BLE device.
 const parseHeartRate = (value: DataView): number => {
   const flags = value.getUint8(0)
   const is16Bit = flags & 0x1
@@ -41,9 +38,7 @@ const parseHeartRate = (value: DataView): number => {
 }
 
 interface UseBluetoothHRMProps {
-  // The timeout in milliseconds for determining if the Bluetooth data stream is stale.
   dataLivenessTimeoutMs?: number
-  // The frequency in milliseconds at which to throttle heart rate updates.
   throttleMs?: number
   userName?: string | null
   userAge?: number | null
@@ -51,12 +46,6 @@ interface UseBluetoothHRMProps {
   onConnect?: () => void
 }
 
-/**
- * Manages the entire lifecycle of a Bluetooth HRM device, including discovery,
- * connection, data streaming, and reconnection.
- * @returns An object with functions to manage the device and state properties
- * like connection status, battery level, and data staleness.
- */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
     dataLivenessTimeoutMs = 10000,
@@ -76,6 +65,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
+  const [connectionAttempted, setConnectionAttempted] = useState(false)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
@@ -98,7 +88,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     null
   )
 
-  // Centralized function to update the signal period history and state
   const updateSignalPeriod = useCallback((newPeriod: number) => {
     periodHistory.current.push(newPeriod)
     if (periodHistory.current.length > ROLLING_AVG_HISTORY_LENGTH) {
@@ -110,7 +99,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setSignalPeriodMs(Math.round(average))
   }, [])
 
-  // Manages the cancellation of in-flight Bluetooth connection attempts.
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
     | ((device: BluetoothDevice, isReconnect?: boolean) => Promise<boolean>)
@@ -127,15 +115,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     onConnectRef.current = onConnect
   }, [onConnect])
 
-  // Keep track of the latest sendData function to avoid stale closures
   const sendDataRef = useRef(sendData)
   useEffect(() => {
     sendDataRef.current = sendData
   }, [sendData])
-
-  useEffect(() => {
-    userDetailsRef.current = { name: userName || '', age: userAge || 0 }
-  }, [userName, userAge])
 
   useEffect(() => {
     userDetailsRef.current = {
@@ -215,7 +198,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           }
         }
       }
-    }, HEARTBEAT_INTERVAL_MS) // Runs every 1s
+    }, HEARTBEAT_INTERVAL_MS)
 
     return () => clearInterval(interval)
   }, [dataLivenessTimeoutMs, isDataStale, updateSignalPeriod])
@@ -235,6 +218,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setCustomStatusMessage(null)
     setSavedDevice(null)
     setBatteryLevel(null)
+    setConnectionAttempted(false)
     deviceRef.current = null
     periodHistory.current = []
     avgPeriodMs.current = 0
@@ -244,6 +228,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
     disconnect()
+    setConnectionAttempted(false)
     try {
       setCookie('hrm_device_id', '', -1)
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
@@ -440,7 +425,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             break
           } catch (error) {
             attempt++
-            // Android zombie errors: NetworkError, busy, out of range
             const isBusy =
               String(error).includes('busy') ||
               String(error).includes('NetworkError')
@@ -448,7 +432,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               const delay = Math.pow(2, attempt) * 1000
               logger.warn(
                 { device: device.name, attempt, delay, error },
-                'Device likely busy (Zombie connection). Retrying...'
+                'Device likely busy. Retrying...'
               )
               setStatus(BluetoothConnectionStatus.CONNECTING)
               setCustomStatusMessage(
@@ -666,6 +650,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (!device) {
           setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
           const savedDeviceId = getCookie('hrm_device_id')
+
+          // Abort silent connection if no device ID is found, to prevent looping.
+          if (silent && !savedDeviceId) {
+            logger.warn(
+              { savedDeviceId },
+              'Aborting silent connect: No saved device ID.'
+            )
+            throw new Error('No saved device ID for silent connection.')
+          }
+
           logger.info(
             { savedDeviceId, hasGetDevices: !!navigator.bluetooth?.getDevices },
             'Looking for saved device'
@@ -750,13 +744,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    if (isConnecting.current) {
-      logger.info('Auto-connect call ignored, connection already in progress.')
-      return
-    }
+    if (isConnecting.current) return
 
     try {
-      logger.info('Starting auto-connect to saved device...')
+      setConnectionAttempted(true)
       setStatus(BluetoothConnectionStatus.CONNECTING)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.connectingToSavedDevice)
 
@@ -766,21 +757,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         { silent: true }
       )
 
-      if (deviceFoundAndAttempted) {
-        logger.info('Auto-connect succeeded')
-      } else {
-        logger.info('No saved device found to auto-connect.')
+      if (!deviceFoundAndAttempted) {
         setStatus(BluetoothConnectionStatus.DISCONNECTED)
         setCustomStatusMessage(null)
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error)
-      logger.info(
-        { errorMsg },
-        'Auto-connect failed, user can connect manually'
-      )
+      logger.error({ error }, 'Auto-connect failed')
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
-      setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
+      if (errorMsg.includes('No saved device ID')) {
+        setCustomStatusMessage(null)
+      } else {
+        setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
+      }
     }
   }, [connectAndStream])
 
@@ -795,6 +784,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isDataStale,
     isSupported, // Export this flag
     signalPeriodMs,
+    connectionAttempted,
   }
 }
 

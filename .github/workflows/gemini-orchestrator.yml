@@ -10,11 +10,18 @@ on:
         description: 'Command to run'
         required: true
         default: 'review'
+      pr_number:
+        description: 'The PR number to source review artifacts from'
+        required: false
   issue_comment:
     types: [created]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   issues: write
   checks: write
@@ -31,6 +38,8 @@ jobs:
       is_update_pr: ${{ steps.router.outputs.is_update_pr }}
       is_squash_comment: ${{ steps.router.outputs.is_squash_comment }}
       is_conflict_resolve_comment: ${{ steps.router.outputs.is_conflict_resolve_comment }}
+      is_jules_command: ${{ steps.router.outputs.is_jules_command }}
+      is_create_issues_command: ${{ steps.router.outputs.is_create_issues_command }}
     steps:
       - name: Route Comment
         id: router
@@ -55,6 +64,12 @@ jobs:
           if echo "$COMMENT_BODY" | grep -q '@conflict-resolve'; then
             echo "is_conflict_resolve_comment=true" >> "$GITHUB_OUTPUT"
           fi
+          if echo "$COMMENT_BODY" | grep -q '^@jules-delete' || echo "$COMMENT_BODY" | grep -q '^@jules-new'; then
+            echo "is_jules_command=true" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$COMMENT_BODY" | grep -q '/create-issues'; then
+            echo "is_create_issues_command=true" >> "$GITHUB_OUTPUT"
+          fi
 
   check-diff:
     name: 📝 Check for file changes
@@ -70,52 +85,70 @@ jobs:
           fetch-depth: 100
       - name: Check for file changes and find last non-empty commit
         id: check_files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set +e
+          set -e
 
-          # Fetch the base branch to ensure it exists locally
-          git fetch origin ${{ github.base_ref }} --depth=100 2>/dev/null || true
+          git fetch origin ${{ github.base_ref }} --depth=100
 
-          # Get merge base between current branch and base branch
-          MERGE_BASE=$(git merge-base HEAD origin/${{ github.base_ref }} 2>/dev/null)
-
+          MERGE_BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
           if [ -z "$MERGE_BASE" ]; then
-            # Fallback: use previous commit if merge-base fails
-            MERGE_BASE=$(git rev-parse HEAD~1 2>/dev/null)
+            echo "::warning::Could not find a merge-base. Falling back to HEAD~1."
+            MERGE_BASE=$(git rev-parse HEAD~1)
           fi
+          echo "::notice::Merge base is at ${MERGE_BASE}"
 
-          if [ -z "$MERGE_BASE" ]; then
-            # Last resort: compare HEAD against itself (will show no changes)
-            MERGE_BASE=$(git rev-parse HEAD)
-          fi
-
-          # Check if there are actual file changes between merge base and HEAD
-          HAS_DIFF=0
-          git diff --quiet "$MERGE_BASE" HEAD -- .
-          HAS_DIFF=$?
-
-          if [ $HAS_DIFF -eq 0 ]; then
-            # No changes found
+          if git diff --quiet "$MERGE_BASE" HEAD -- .; then
+            echo "::notice::No file changes detected between HEAD and merge base. Searching PR history..."
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "::notice::No file changes detected between $MERGE_BASE and HEAD"
 
-            # Find the last commit with file changes in the PR
-            for sha in $(git rev-list "$MERGE_BASE"..HEAD 2>/dev/null | head -100); do
-              if git cat-file -e $sha^ &>/dev/null 2>/dev/null; then
-                if ! git diff --quiet $sha^ $sha -- . ; then
-                  echo "last_non_empty_commit=$sha" >> $GITHUB_OUTPUT
+            # Even if HEAD has no changes, we find the last non-empty commit to ensure that
+            # downstream workflows (like gemini-review) have a valid commit SHA to analyze,
+            # especially in cases of reverts or empty commits.
+            echo "::notice::Fetching commit list from GitHub API for PR #${{ github.event.pull_request.number }}..."
+            COMMIT_SHAS_JSON=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --jq '.[].sha' || true)
+
+            if [ -z "$COMMIT_SHAS_JSON" ]; then
+              echo "::error::Failed to fetch commits from GitHub API. Cannot determine last non-empty commit."
+              echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            mapfile -t COMMIT_SHAS < <(echo "$COMMIT_SHAS_JSON" | tac)
+
+            LAST_NON_EMPTY_COMMIT=""
+            for sha in "${COMMIT_SHAS[@]}"; do
+              if ! git cat-file -e "$sha" &>/dev/null; then
+                echo "::notice::Commit $sha not found locally, fetching..."
+                git fetch origin "$sha" --depth=1
+              fi
+
+              if git cat-file -e "$sha^" &>/dev/null; then
+                if ! git diff --quiet "$sha^" "$sha" -- .; then
+                  echo "::notice::Found last non-empty commit: $sha"
+                  LAST_NON_EMPTY_COMMIT=$sha
+                  break
+                fi
+              else
+                if [ -n "$(git ls-tree --name-only -r "$sha")" ]; then
+                  echo "::notice::Found first commit in PR with files: $sha"
+                  LAST_NON_EMPTY_COMMIT=$sha
                   break
                 fi
               fi
             done
+
+            if [ -z "$LAST_NON_EMPTY_COMMIT" ]; then
+              echo "::warning::Could not find any non-empty commit in the PR history. Using HEAD as fallback."
+              LAST_NON_EMPTY_COMMIT=$(git rev-parse HEAD)
+            fi
+            echo "last_non_empty_commit=${LAST_NON_EMPTY_COMMIT}" >> $GITHUB_OUTPUT
           else
-            # Changes found
+            echo "::notice::File changes detected between HEAD and merge base."
             echo "has_changes=true" >> $GITHUB_OUTPUT
             echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-            echo "::notice::File changes detected between $MERGE_BASE and HEAD"
           fi
-
-          exit 0
   # 1. Run CI checks on every push to a PR
   pr-quality:
     if: github.event_name == 'pull_request' && needs.check-diff.outputs.has_changes == 'true'
@@ -216,7 +249,7 @@ jobs:
       ARI_PAT: ${{ secrets.ARI_PAT }}
 
   gemini-dispatch:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.command
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
@@ -230,56 +263,30 @@ jobs:
   gemini-invoke:
     if: needs.comment-router.outputs.is_gemini_invoke == 'true'
     needs: [comment-router]
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-      - name: Run Gemini Client
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMMENT_BODY: ${{ github.event.comment.body }}
-        run: pnpm tsx scripts/gemini-client.ts --comment-body "$COMMENT_BODY"
+    uses: ./.github/workflows/reusable-gemini-invoke.yml
+    with:
+      comment_body: ${{ github.event.comment.body }}
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   update-pr-on-comment:
     if: needs.comment-router.outputs.is_update_pr == 'true'
     needs: [comment-router]
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Trigger PR Enrichment'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'pr-enrichment.yml',
-              ref: 'refs/pull/${{ github.event.issue.number }}/head'
-            });
+    uses: ./.github/workflows/pr-enrichment.yml
+    with:
+      pr_number: ${{ github.event.issue.number }}
+    secrets: inherit
 
   squash-on-comment:
     if: needs.comment-router.outputs.is_squash_comment == 'true'
     needs: [comment-router]
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Trigger PR Squash'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'pr-squash.yml',
-              ref: 'leader',
-              inputs: {
-                pr_number: `${{ github.event.issue.number }}`,
-                comment_body: `${{ github.event.comment.body }}`,
-                comment_id: `${{ github.event.comment.id }}`
-              }
-            });
+    uses: ./.github/workflows/pr-squash.yml
+    with:
+      pr_number: ${{ github.event.issue.number }}
+      comment_body: ${{ github.event.comment.body }}
+      comment_id: ${{ github.event.comment.id }}
+    secrets: inherit
 
   react-to-conflict-resolve-comment:
     if: needs.comment-router.outputs.is_conflict_resolve_comment == 'true'
@@ -293,12 +300,16 @@ jobs:
           comment-id: ${{ github.event.comment.id }}
           reaction: eyes
 
-  resolve-conflicts-on-comment:
+  prepare-conflict-resolution:
     if: needs.comment-router.outputs.is_conflict_resolve_comment == 'true'
     needs: [comment-router]
     runs-on: ubuntu-latest
+    outputs:
+      target_branch: ${{ steps.get_branches.outputs.target_branch }}
+      source_branch: ${{ steps.get_branches.outputs.source_branch }}
     steps:
-      - name: 'Trigger Conflict Resolver'
+      - name: Get PR Details
+        id: get_branches
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -308,20 +319,107 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number,
             });
+            core.setOutput('target_branch', pr.data.base.ref);
+            core.setOutput('source_branch', pr.data.head.ref);
 
-            const baseBranch = pr.data.base.ref;
-            const headBranch = pr.data.head.ref;
+  resolve-conflicts-on-comment:
+    if: needs.comment-router.outputs.is_conflict_resolve_comment == 'true'
+    needs: [comment-router, prepare-conflict-resolution]
+    uses: ./.github/workflows/conflict-resolver.yml
+    with:
+      target_branch: ${{ needs.prepare-conflict-resolution.outputs.target_branch }}
+      source_branch: ${{ needs.prepare-conflict-resolution.outputs.source_branch }}
+      pr_number: ${{ github.event.issue.number }}
+    secrets: inherit
 
-            console.log(`Triggering conflict resolution for PR #${context.issue.number}: merging '${headBranch}' into '${baseBranch}'`);
+  jules-command:
+    if: |
+      needs.comment-router.outputs.is_jules_command == 'true' &&
+      contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    needs: [comment-router]
+    uses: ./.github/workflows/reusable-jules-command.yml
+    with:
+      comment_body: ${{ github.event.comment.body }}
+      issue_number: ${{ github.event.issue.number }}
+      comment_id: ${{ github.event.comment.id }}
+      repository_owner: ${{ github.repository_owner }}
+      repository_name: ${{ github.event.repository.name }}
+    secrets:
+      JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+      JULES_API_URL: ${{ secrets.JULES_API_URL }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  prepare-comment-run:
+    if: needs.comment-router.outputs.is_create_issues_command == 'true'
+    needs: [comment-router]
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ github.event.issue.number }}
+      run_id: ${{ steps.find_run.outputs.run_id }}
+    steps:
+      - name: 'Get PR branch name'
+        id: get_pr
+        run: |
+          gh pr view ${{ github.event.issue.number }} --json headRefName -q '.headRefName' > pr_branch.txt
+          echo "branch=$(cat pr_branch.txt)" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
 
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'conflict-resolver.yml',
-              ref: baseBranch,
-              inputs: {
-                target_branch: baseBranch,
-                source_branch: headBranch,
-                pr_number: String(context.issue.number),
-              },
-            });
+      - name: 'Find successful workflow run'
+        id: find_run
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          BRANCH_NAME: ${{ steps.get_pr.outputs.branch }}
+        run: |
+          run_id=$(gh run list --workflow="pr-quality.yml" --branch="$BRANCH_NAME" --status=success --json databaseId -q '.[0].databaseId' || echo "")
+          if [[ -z "$run_id" ]]; then
+            echo "::error::Could not find a successful workflow run for $BRANCH_NAME."
+            exit 1
+          fi
+          echo "run_id=$run_id" >> $GITHUB_OUTPUT
+
+  create-issues-from-comment:
+    needs: prepare-comment-run
+    uses: ./.github/workflows/reusable-create-review-issues.yml
+    with:
+      pr_number: ${{ needs.prepare-comment-run.outputs.pr_number }}
+      run_id: ${{ needs.prepare-comment-run.outputs.run_id }}
+    secrets:
+      gh_token: ${{ secrets.ARI_PAT }}
+
+  create-issues-from-dispatch:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.pr_number
+    needs: prepare-dispatch-run
+    uses: ./.github/workflows/reusable-create-review-issues.yml
+    with:
+      pr_number: ${{ needs.prepare-dispatch-run.outputs.pr_number }}
+      run_id: ${{ needs.prepare-dispatch-run.outputs.run_id }}
+    secrets:
+      gh_token: ${{ secrets.ARI_PAT }}
+
+  prepare-dispatch-run:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.pr_number
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ github.event.inputs.pr_number }}
+      run_id: ${{ steps.find_run.outputs.run_id }}
+    steps:
+      - name: 'Get PR branch name'
+        id: get_pr
+        run: |
+          gh pr view ${{ github.event.inputs.pr_number }} --json headRefName -q '.headRefName' > pr_branch.txt
+          echo "branch=$(cat pr_branch.txt)" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+
+      - name: 'Find successful workflow run'
+        id: find_run
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          BRANCH_NAME: ${{ steps.get_pr.outputs.branch }}
+        run: |
+          run_id=$(gh run list --workflow="pr-quality.yml" --branch="$BRANCH_NAME" --status=success --json databaseId -q '.[0].databaseId' || echo "")
+          if [[ -z "$run_id" ]]; then
+            echo "::error::Could not find a successful workflow run for $BRANCH_NAME."
+            exit 1
+          fi
+          echo "run_id=$run_id" >> $GITHUB_OUTPUT
