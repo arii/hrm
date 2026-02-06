@@ -1,0 +1,69 @@
+name: 'Route Comment'
+description: 'Parses a comment body and outputs boolean flags for downstream jobs.'
+inputs:
+  comment_body:
+    description: 'The body of the comment to parse'
+    required: true
+
+outputs:
+  is_review_comment:
+    description: 'Whether the comment triggers a review'
+    value: ${{ steps.router.outputs.is_review_comment }}
+  is_gemini_invoke:
+    description: 'Whether the comment invokes Gemini explicitly'
+    value: ${{ steps.router.outputs.is_gemini_invoke }}
+  is_update_pr:
+    description: 'Whether the comment triggers a PR update'
+    value: ${{ steps.router.outputs.is_update_pr }}
+  is_squash_comment:
+    description: 'Whether the comment triggers a squash'
+    value: ${{ steps.router.outputs.is_squash_comment }}
+  is_conflict_resolve_comment:
+    description: 'Whether the comment triggers conflict resolution'
+    value: ${{ steps.router.outputs.is_conflict_resolve_comment }}
+  is_jules_command:
+    description: 'Whether the comment is a Jules command'
+    value: ${{ steps.router.outputs.is_jules_command }}
+  jules_command_type:
+    description: 'The specific Jules command type (new or delete)'
+    value: ${{ steps.router.outputs.jules_command_type }}
+  is_create_issues_command:
+    description: 'Whether the comment triggers issue creation'
+    value: ${{ steps.router.outputs.is_create_issues_command }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Route Comment
+      id: router
+      shell: bash
+      env:
+        COMMENT_BODY: ${{ inputs.comment_body }}
+      run: |
+        # '^' matches the beginning of the string.
+        # '-x' matches the entire line exactly.
+        if echo "$COMMENT_BODY" | grep -q '^@gemini-bot' || echo "$COMMENT_BODY" | grep -q '^@jules fix'; then
+          echo "is_review_comment=true" >> "$GITHUB_OUTPUT"
+        fi
+        if echo "$COMMENT_BODY" | grep -q '^@gemini-bot'; then
+          echo "is_gemini_invoke=true" >> "$GITHUB_OUTPUT"
+        fi
+        if echo "$COMMENT_BODY" | grep -Fxq '@gemini-update-pr'; then
+          echo "is_update_pr=true" >> "$GITHUB_OUTPUT"
+        fi
+        if echo "$COMMENT_BODY" | grep -q '@pr-squash'; then
+          echo "is_squash_comment=true" >> "$GITHUB_OUTPUT"
+        fi
+        if echo "$COMMENT_BODY" | grep -q '@conflict-resolve'; then
+          echo "is_conflict_resolve_comment=true" >> "$GITHUB_OUTPUT"
+        fi
+        if echo "$COMMENT_BODY" | grep -q '^@jules-delete'; then
+          echo "is_jules_command=true" >> "$GITHUB_OUTPUT"
+          echo "jules_command_type=delete" >> "$GITHUB_OUTPUT"
+        elif echo "$COMMENT_BODY" | grep -q '^@jules-new'; then
+          echo "is_jules_command=true" >> "$GITHUB_OUTPUT"
+          echo "jules_command_type=new" >> "$GITHUB_OUTPUT"
+        fi
+        if echo "$COMMENT_BODY" | grep -q '/create-issues'; then
+          echo "is_create_issues_command=true" >> "$GITHUB_OUTPUT"
+        fi
