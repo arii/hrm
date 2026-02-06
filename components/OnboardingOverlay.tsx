@@ -17,6 +17,9 @@ export const OnboardingOverlay = () => {
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
+    // Check requirements only on client-side after mount to avoid hydration mismatch.
+    // This triggers a re-render if requirements are not met, which is expected.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSupport(checkOnboardingRequirements())
   }, [])
 

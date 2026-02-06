@@ -9,7 +9,8 @@ jest.mock('@/utils/browserSupport', () => ({
 }))
 
 describe('OnboardingOverlay', () => {
-  const mockCheckOnboardingRequirements = checkOnboardingRequirements as jest.Mock
+  const mockCheckOnboardingRequirements =
+    checkOnboardingRequirements as jest.Mock
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -55,7 +56,9 @@ describe('OnboardingOverlay', () => {
 
     expect(screen.getByText('Browser Incompatible')).toBeInTheDocument()
     expect(
-      screen.getByText('A secure connection (HTTPS) is required for Bluetooth features.')
+      screen.getByText(
+        'A secure connection (HTTPS) is required for Bluetooth features.'
+      )
     ).toBeInTheDocument()
   })
 
