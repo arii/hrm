@@ -46,11 +46,9 @@ export const RESTING_THRESHOLD = HR_ZONE_DEFINITIONS[0]!.min
  * @returns The estimated maximum heart rate.
  */
 export const calculateMaxHr = (age?: number | string | null): number => {
-  if (age === null || age === undefined || age === '') return MAX_HR_DEFAULT
-
   const ageNum = Number(age)
-
-  if (isNaN(ageNum) || ageNum <= 0 || ageNum > 120) {
+  // Catch NaN, 0, negative, and unrealistic ages in one check
+  if (!ageNum || ageNum <= 0 || ageNum > 120) {
     return MAX_HR_DEFAULT
   }
 

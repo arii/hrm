@@ -1,14 +1,14 @@
 'use client'
-import { Box, Typography, Stack } from '@mui/material'
+import { Box, Typography, Stack, useTheme } from '@mui/material'
 import {
   HrZoneName,
   HR_ZONE_DEFINITIONS,
   RESTING_THRESHOLD,
 } from '@/lib/shared/hr-zones'
 import { HR_ZONE_UI_PROPS_MAP } from '@/utils/visualization'
-import theme from '@/theme/theme'
 
 const ZoneLegend = () => {
+  const theme = useTheme()
   // Create a full list of zones including Resting
   // HR_ZONE_DEFINITIONS are ordered WarmUp -> Max
   // We want Resting first.
