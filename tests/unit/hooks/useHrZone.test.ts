@@ -1,39 +1,22 @@
 /** @jest-environment jsdom */
-import { mockGetHrZoneProps } from '../../mocks/visualization'
 import { renderHook } from '@testing-library/react'
 import { useHrZone } from '@/hooks/useHrZone'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 describe('useHrZone', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
-  it('should call getHrZoneProps with correct arguments', () => {
-    const mockProps = {
-      percentage: 50,
-      color: 'primary',
-      progressColor: '#fff',
-      label: 'Zone 1',
-    }
-    mockGetHrZoneProps.mockReturnValue(mockProps)
-
+  it('should return correct zone properties based on input', () => {
     const currentHR = 100
-    const maxHr = 200
+    const maxHr = 200 // 50% -> WarmUp
     const { result } = renderHook(() => useHrZone(currentHR, maxHr))
 
-    expect(mockGetHrZoneProps).toHaveBeenCalledWith(currentHR, maxHr)
-    expect(result.current).toEqual(mockProps)
+    expect(result.current.zone).toBe(HrZoneName.WarmUp)
+    expect(result.current.percentage).toBe(50)
+    expect(result.current.bpm).toBe(100)
+    expect(result.current.color).toBeDefined()
+    expect(result.current.backgroundColor).toBeDefined()
   })
 
   it('should memoize the result', () => {
-    const mockProps = {
-      percentage: 50,
-      color: 'primary',
-      progressColor: '#fff',
-      label: 'Zone 1',
-    }
-    mockGetHrZoneProps.mockReturnValue(mockProps)
-
     const { result, rerender } = renderHook(
       ({ hr, max }) => useHrZone(hr, max),
       {
@@ -46,10 +29,10 @@ describe('useHrZone', () => {
     // Rerender with same props
     rerender({ hr: 100, max: 200 })
     expect(result.current).toBe(firstResult) // Reference equality check
-    expect(mockGetHrZoneProps).toHaveBeenCalledTimes(1) // Should still be 1
 
     // Rerender with new props
     rerender({ hr: 110, max: 200 })
-    expect(mockGetHrZoneProps).toHaveBeenCalledTimes(2)
+    expect(result.current).not.toBe(firstResult)
+    expect(result.current.bpm).toBe(110)
   })
 })

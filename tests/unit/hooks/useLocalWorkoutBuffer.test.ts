@@ -3,7 +3,7 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useLocalWorkoutBuffer } from '@/hooks/useLocalWorkoutBuffer'
-import { HrZoneName } from '@/lib/hrm/zones'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 describe('useLocalWorkoutBuffer', () => {
   beforeAll(() => {

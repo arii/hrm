@@ -1,14 +1,10 @@
 /**
  * Shared constants, types, and domain logic for Heart Rate (HR) zones.
- * This module serves as the Single Source of Truth (SSOT) for HR calculations
- * and definitions, ensuring consistency across the application.
+ * This module serves as the Single Source of Truth (SSOT) for HR calculations.
  */
 
 export const MAX_HR_DEFAULT = 185
 
-/**
- * Enum for HR Zone names to provide compile-time safety and prevent string mismatches.
- */
 export enum HrZoneName {
   WarmUp = 'Warm-up',
   FatBurn = 'Fat Burn',
@@ -19,9 +15,6 @@ export enum HrZoneName {
   Unknown = 'Unknown',
 }
 
-/**
- * Interface representing a calculated heart rate zone status.
- */
 export interface HrZone {
   zoneName: HrZoneName
   percentage: number
@@ -29,18 +22,20 @@ export interface HrZone {
 }
 
 // Heart Rate Zone Boundaries (as percentage of Max HR)
+// Note: Peak (Zone 4) starts at 80% and Max (Zone 5) starts at 90% to align with
+// standard 5-zone models and previous application logic, ensuring accurate user performance tracking.
 export const HR_ZONE_DEFINITIONS = [
   { name: HrZoneName.WarmUp, min: 0.5 },
   { name: HrZoneName.FatBurn, min: 0.6 },
   { name: HrZoneName.Cardio, min: 0.7 },
-  { name: HrZoneName.Peak, min: 0.85 },
-  { name: HrZoneName.Max, min: 0.95 },
+  { name: HrZoneName.Peak, min: 0.8 },
+  { name: HrZoneName.Max, min: 0.9 },
 ]
 
 /**
- * Estimates a user's maximum heart rate using the Tanaka formula.
- * @param age - The user's age in years.
- * @returns The estimated maximum heart rate.
+ * Estimates a user's maximum heart rate using the Tanaka formula (208 - 0.7 * age).
+ * @param age - The user's age in years. Can be a number, string, null, or undefined.
+ * @returns The estimated maximum heart rate. Returns `MAX_HR_DEFAULT` (185) if age is invalid or not provided.
  */
 export const calculateMaxHr = (age?: number | string | null): number => {
   if (!age) return MAX_HR_DEFAULT
@@ -56,9 +51,9 @@ export const calculateMaxHr = (age?: number | string | null): number => {
 
 /**
  * Calculates the current heart rate zone, and percentage of max HR.
- * @param {number} currentHr - The current heart rate in beats per minute.
- * @param {number} maxHr - The user's maximum heart rate.
- * @returns {HrZone} An object containing the zone name, percentage of max HR, and current BPM.
+ * @param currentHr - The current heart rate in beats per minute (BPM).
+ * @param maxHr - The user's maximum heart rate.
+ * @returns An `HrZone` object containing the zone name, percentage of max HR, and current BPM.
  */
 export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
   if (!maxHr || !currentHr || currentHr <= 0) {
@@ -70,9 +65,11 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
   }
 
   const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  let calculatedZone = HR_ZONE_DEFINITIONS[0]!
+  let calculatedZone = HR_ZONE_DEFINITIONS[0] ?? {
+    name: HrZoneName.Unknown,
+    min: 0,
+  }
 
-  // Iterate backwards to find the correct zone
   for (let i = HR_ZONE_DEFINITIONS.length - 1; i >= 0; i--) {
     const hrZone = HR_ZONE_DEFINITIONS[i]
     if (hrZone && percentageOfMax / 100 >= hrZone.min) {
@@ -88,7 +85,6 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
   }
 }
 
-// Define a type for the return value for clarity
 export type UserHrZones = {
   warmUp: { min: number }
   fatBurn: { min: number }
@@ -106,7 +102,7 @@ export const getUserHrZones = (age: number): UserHrZones => {
     warmUp: { min: calculateZoneBPM(0.5) },
     fatBurn: { min: calculateZoneBPM(0.6) },
     cardio: { min: calculateZoneBPM(0.7) },
-    peak: { min: calculateZoneBPM(0.85) },
-    max: { min: calculateZoneBPM(0.95) },
+    peak: { min: calculateZoneBPM(0.8) },
+    max: { min: calculateZoneBPM(0.9) },
   }
 }

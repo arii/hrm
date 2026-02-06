@@ -32,8 +32,8 @@ describe('Heart Rate Zone Calculations', () => {
       expect(zones.warmUp.min).toBe(94) // 187 * 0.5
       expect(zones.fatBurn.min).toBe(112) // 187 * 0.6
       expect(zones.cardio.min).toBe(131) // 187 * 0.7
-      expect(zones.peak.min).toBe(159) // 187 * 0.85
-      expect(zones.max.min).toBe(178) // 187 * 0.95
+      expect(zones.peak.min).toBe(150) // 187 * 0.8
+      expect(zones.max.min).toBe(168) // 187 * 0.9
     })
   })
 
@@ -91,10 +91,10 @@ describe('Heart Rate Zone Calculations', () => {
     })
 
     it('should correctly calculate the "Peak" zone', () => {
-      // 90% of 200 is 180
-      const result = calculateHrZone(180, maxHr)
+      // 85% of 200 is 170
+      const result = calculateHrZone(170, maxHr)
       expect(result.zoneName).toBe(HrZoneName.Peak)
-      expect(result.percentage).toBe(90)
+      expect(result.percentage).toBe(85)
     })
 
     it('should correctly calculate the "Max" zone', () => {

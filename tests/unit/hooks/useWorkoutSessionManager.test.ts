@@ -126,7 +126,7 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.averageHr).toBe(120)
       expect(result.current.session?.timeInZones[HrZoneName.FatBurn]).toBe(1)
 
-      // Add second data point (HR 150 -> ~81% -> Zone 3 / Cardio)
+      // Add second data point (HR 150 -> ~81% -> Zone 4 / Peak)
       act(() => {
         result.current.addHrData({ time: 1002000, hr: 150 })
       })
@@ -134,7 +134,7 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBe(135)
       expect(result.current.session?.timeInZones[HrZoneName.FatBurn]).toBe(1)
-      expect(result.current.session?.timeInZones[HrZoneName.Cardio]).toBe(1)
+      expect(result.current.session?.timeInZones[HrZoneName.Peak]).toBe(1)
 
       // Add third data point (HR 100 -> ~54% -> Zone 1 / Warm-up)
       act(() => {
@@ -143,7 +143,7 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.hrHistory.length).toBe(3)
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBeCloseTo(123.33)
-      expect(result.current.session?.timeInZones[HrZoneName.Cardio]).toBe(1)
+      expect(result.current.session?.timeInZones[HrZoneName.Peak]).toBe(1)
       expect(result.current.session?.timeInZones[HrZoneName.WarmUp]).toBe(2)
     })
 
