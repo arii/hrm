@@ -1,25 +1,20 @@
 import '@mui/material/styles'
 
 declare module '@mui/material/styles' {
+  interface CustomColors {
+    prepare: string
+    work: string
+    rest: string
+    running: string
+    idle: string
+    cooldown: string
+  }
+
   interface Palette {
-    custom: {
-      prepare: string
-      work: string
-      rest: string
-      running: string
-      idle: string
-      cooldown: string
-    }
+    custom: CustomColors
   }
   interface PaletteOptions {
-    custom?: {
-      prepare?: string
-      work?: string
-      rest?: string
-      running?: string
-      idle?: string
-      cooldown?: string
-    }
+    custom?: Partial<CustomColors>
   }
 
   // NOTE: In MUI v5+, Theme['typography'] is defined as TypographyVariants

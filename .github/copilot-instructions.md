@@ -164,7 +164,7 @@ All UI components must use Material-UI (MUI) and adhere to the project's theme.
 
 - `@/*` path aliases for all imports from the root directory
 - MUI components from `@mui/material`
-- The project theme defined in `theme/theme.ts` (access via `useTheme()`)
+- The project theme defined in `lib/theme.ts` (access via `useTheme()`)
 - MUI's `sx` prop for component-specific styling
 - Custom theme colors via `theme.palette.custom.*` (e.g., `theme.palette.custom.work`, `theme.palette.custom.rest`)
 
@@ -263,7 +263,7 @@ Violates **Single Source of Truth Principle** (section: Critical Architectural C
 | "Install with `npm install <package>`"                  | "Install with `pnpm add <package>`"                                                    |
 | "Use `any` type here for simplicity"                    | "Use discriminated union or `unknown` with type narrowing"                             |
 | "Add a `react-query` hook to fetch timer state"         | "Subscribe to `TIMER_UPDATE` WebSocket messages via `useWebSocket` hook"               |
-| "Use inline styles"                                     | "Use MUI's `sx` prop with theme colors from `theme/theme.ts`"                          |
+| "Use inline styles"                                     | "Use MUI's `sx` prop with theme colors from `lib/theme.ts`"                          |
 | "Import with `../../../components/`"                    | "Import with `@/components/`"                                                          |
 | "Add `eslint-disable no-explicit-any`"                  | "Refactor to use proper types"                                                         |
 | "Cast to `any` to access private property"              | "Use `_test_` property pattern for testing"                                            |
