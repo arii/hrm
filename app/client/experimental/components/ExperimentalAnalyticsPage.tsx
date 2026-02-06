@@ -125,8 +125,6 @@ const ExperimentalAnalyticsPage = () => {
       // Process calories (uses time-gap validation internally)
       processHeartRate(currentHr)
 
-      // Add HR data point
-      // useWorkoutSession.addHrData expects number
       addHrData(currentHr)
 
       // Update local history for chart (simplified)
