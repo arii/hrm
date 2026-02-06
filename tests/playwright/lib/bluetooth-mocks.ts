@@ -155,7 +155,7 @@ export const injectBluetoothMocks = async (page: Page) => {
     }
 
     // Fallback for environments where navigator is sealed
-    // @ts-ignore
+    // @ts-expect-error MockBluetooth is injected by Playwright
     window.MockBluetooth = mockBluetooth
     window.MockBluetoothDevice = MockBluetoothDevice
     window.bluetoothTestHelpers = {
