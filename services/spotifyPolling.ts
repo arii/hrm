@@ -266,7 +266,11 @@ export class SpotifyPolling implements SpotifyService {
   }
 
   public startPolling() {
-    if (this.pollInterval || !this.deviceManager) return
+    if (this.pollInterval) return
+    if (!this.isReady()) {
+      logger.warn('Cannot start polling: Spotify service is not ready.')
+      return
+    }
 
     const trackIntervalMs = env.SPOTIFY_POLLING_INTERVAL_MS
     this.pollInterval = setInterval(
