@@ -211,10 +211,7 @@ export default function ConnectPage() {
     connectionAttempted,
   ])
 
-  const { percentage, zone } = useMemo(
-    () => calculateHrZoneInfo(currentHR, userAge || 30),
-    [currentHR, userAge]
-  )
+  const { percentage, zone } = calculateHrZoneInfo(currentHR, userAge || 30)
 
   useEffect(() => {
     throttledSend({
