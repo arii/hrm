@@ -5,7 +5,6 @@ import {
   ActiveAlert,
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
-import { STALE_TILE_REMOVAL_THRESHOLD_MS } from '../constants/hrm'
 
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
@@ -50,20 +49,9 @@ export const INITIAL_STATE: WebSocketState = {
 
 export const reducer = (
   state: WebSocketState,
-  message: ServerMessage | { type: 'RESET_STATE' } | { type: 'PRUNE_STALE' }
+  message: ServerMessage | { type: 'RESET_STATE' }
 ): WebSocketState => {
   switch (message.type) {
-    case 'PRUNE_STALE': {
-      const now = Date.now()
-      const filteredHrmData = state.hrmData.filter(
-        (user) =>
-          now - (user.lastUpdated || 0) < STALE_TILE_REMOVAL_THRESHOLD_MS
-      )
-      if (filteredHrmData.length === state.hrmData.length) {
-        return state
-      }
-      return { ...state, hrmData: filteredHrmData }
-    }
     case 'RESET_STATE':
       return INITIAL_STATE
     case 'INITIAL_STATE': {
@@ -78,45 +66,22 @@ export const reducer = (
     case 'HRM_UPDATE': {
       const now = Date.now()
       const payload = message.payload as ServerHrmData[]
-      const incomingClients = new Set(payload.map((user) => user.clientId))
 
-      const mergedHrmData = state.hrmData.map((existingUser) => {
-        if (incomingClients.has(existingUser.clientId)) {
-          const updatedUser = payload.find(
-            (newUser) => newUser.clientId === existingUser.clientId
-          )
-          return updatedUser
-            ? {
-                ...existingUser,
-                ...updatedUser,
-                isConnected: true,
-                lastUpdated: now,
-              }
-            : { ...existingUser, isConnected: true, lastUpdated: now }
-        }
-        return existingUser
-      })
-
-      payload.forEach((newUser) => {
-        if (
-          !mergedHrmData.some(
-            (existingUser) => existingUser.clientId === newUser.clientId
-          )
-        ) {
-          mergedHrmData.push({
-            ...newUser,
-            isConnected: true,
-            lastUpdated: now,
-          })
+      // Snapshot Synchronization: The payload is the source of truth.
+      // We map the payload to the new state, preserving existing local state if needed.
+      const newHrmData: HrmData[] = payload.map((newUser) => {
+        const existingUser = state.hrmData.find(
+          (u) => u.clientId === newUser.clientId
+        )
+        return {
+          ...(existingUser || {}),
+          ...newUser,
+          isConnected: true,
+          lastUpdated: now,
         }
       })
 
-      const filteredHrmData = mergedHrmData.filter(
-        (user) =>
-          now - (user.lastUpdated || 0) < STALE_TILE_REMOVAL_THRESHOLD_MS
-      )
-
-      return { ...state, hrmData: filteredHrmData }
+      return { ...state, hrmData: newHrmData }
     }
     case 'DEVICE_OFFLINE': {
       const { deviceId } = message.payload

@@ -1,6 +1,5 @@
 import { test, expect, Page } from '@playwright/test'
 import { ServerMessage } from '../../types/websocket'
-import { STALE_TILE_REMOVAL_THRESHOLD_MS } from '../../constants/hrm'
 
 // Helper to send messages via postMessage
 async function dispatch(page: Page, message: ServerMessage) {
@@ -9,13 +8,8 @@ async function dispatch(page: Page, message: ServerMessage) {
   }, message)
 }
 
-test.describe('Stale Tile Removal', () => {
-  test.beforeEach(async ({ page }) => {
-    // Install clock before navigation to ensure we control time from the start
-    await page.clock.install({ time: new Date() })
-  })
-
-  test('removes tile after inactivity threshold', async ({ page }) => {
+test.describe('Snapshot Synchronization', () => {
+  test('removes tile when absent from server update', async ({ page }) => {
     await page.goto('/')
 
     // Wait for the page to be hydrated and listener attached
@@ -39,11 +33,13 @@ test.describe('Stale Tile Removal', () => {
     // Verify the tile appears
     await expect(page.locator('text=test-1')).toBeVisible()
 
-    // 2. Fast forward time past the threshold
-    // Adding a small buffer to ensure we definitely cross the threshold
-    await page.clock.fastForward(STALE_TILE_REMOVAL_THRESHOLD_MS + 1000)
+    // 2. Simulate update where test-1 is missing
+    await dispatch(page, {
+      type: 'HRM_UPDATE',
+      payload: [],
+    })
 
-    // 3. Verify tile is gone
+    // 3. Verify tile is gone immediately
     await expect(page.locator('text=test-1')).not.toBeVisible()
   })
 })
