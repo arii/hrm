@@ -29,6 +29,9 @@ test.describe('WorkoutSummary Component VRT', () => {
     await dashboardPage.getByRole('button', { name: 'New Workout' }).click()
     const workoutSummary = dashboardPage.getByTestId('workout-summary')
 
+    // Wait for the summary to be visible to avoid timeouts during accessibility checks
+    await workoutSummary.waitFor({ state: 'visible', timeout: 10000 })
+
     // Mask the duration, since it's dynamic
     await takeScreenshot(workoutSummary, 'workout-summary-active.png', {
       mask: [dashboardPage.getByText(/\d{2}:\d{2}:\d{2}/)],
