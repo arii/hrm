@@ -23,13 +23,16 @@ export const fetchWithRetry = async (
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
     // Use AbortSignal.any if available (modern envs), otherwise manual merge
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const abortSignal = (AbortSignal as any).any
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (AbortSignal as any).any(
-          [controller.signal, options.signal].filter(Boolean)
-        )
-      : undefined
+    const abortSignalClass = AbortSignal as unknown as {
+      any: (signals: Iterable<AbortSignal>) => AbortSignal
+    }
+
+    const abortSignal =
+      typeof abortSignalClass.any === 'function'
+        ? abortSignalClass.any(
+            [controller.signal, options.signal].filter(Boolean) as AbortSignal[]
+          )
+        : undefined
 
     let onUserAbort: (() => void) | undefined
 
