@@ -1,4 +1,3 @@
-// app/client/experimental/components/ZoneDistribution.tsx
 'use client'
 import {
   Card,
@@ -6,7 +5,6 @@ import {
   Typography,
   Box,
   Stack,
-  styled,
   LinearProgress,
 } from '@mui/material'
 import { HrZoneName } from '@/lib/shared/hr-zones'
@@ -18,23 +16,16 @@ interface ZoneDistributionProps {
   totalDuration: number
 }
 
-const StyledProgress = styled(LinearProgress, {
-  shouldForwardProp: (prop) => prop !== 'barcolor',
-})<{ barcolor: string }>(({ theme, barcolor }) => ({
-  height: 10,
-  borderRadius: 5,
-  backgroundColor: theme.palette.grey[200],
-  '& .MuiLinearProgress-bar': {
-    backgroundColor: barcolor,
-    borderRadius: 5,
-  },
-}))
-
 interface ZoneItemProps {
   label: string
   seconds: number
   percentage: number
   color: string
+}
+
+const BASE_PROGRESS_SX = {
+  height: 10,
+  borderRadius: 5,
 }
 
 const ZoneRow: React.FC<ZoneItemProps> = ({
@@ -66,11 +57,18 @@ const ZoneRow: React.FC<ZoneItemProps> = ({
         </Typography>
       </Stack>
     </Stack>
-    <StyledProgress
+    <LinearProgress
       variant="determinate"
       value={percentage}
-      barcolor={color || '#999'}
       aria-label={`${label} distribution`}
+      sx={{
+        ...BASE_PROGRESS_SX,
+        backgroundColor: (theme) => theme.palette.grey[200],
+        '& .MuiLinearProgress-bar': {
+          backgroundColor: color,
+          borderRadius: 5,
+        },
+      }}
     />
   </Box>
 )
@@ -80,12 +78,14 @@ const ZoneDistribution = ({
   totalDuration,
 }: ZoneDistributionProps) => {
   const theme = useTheme()
-  const ZONE_COLORS: Record<string, string> = {
+  const ZONE_COLORS: Record<HrZoneName, string> = {
     [HrZoneName.WarmUp]: theme.palette.custom.warmUp,
     [HrZoneName.FatBurn]: theme.palette.custom.fatBurn,
     [HrZoneName.Cardio]: theme.palette.custom.cardio,
     [HrZoneName.Peak]: theme.palette.custom.peak,
     [HrZoneName.Max]: theme.palette.custom.max,
+    [HrZoneName.NoData]: theme.palette.grey[400],
+    [HrZoneName.Unknown]: theme.palette.grey[400],
   }
 
   const zones = Object.entries(timeInZones)
@@ -93,7 +93,7 @@ const ZoneDistribution = ({
       label,
       seconds,
       percentage: totalDuration > 0 ? (seconds / totalDuration) * 100 : 0,
-      color: ZONE_COLORS[label] || '#999',
+      color: ZONE_COLORS[label as HrZoneName] ?? theme.palette.grey[400],
     }))
     .filter(
       (zone) =>

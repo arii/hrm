@@ -24,11 +24,11 @@ describe('formatZoneDuration', () => {
   })
 
   it('should format durations of exactly one hour correctly', () => {
-    expect(formatZoneDuration(3600)).toBe('1h 0m 0s')
+    expect(formatZoneDuration(3600)).toBe('1:00:00')
   })
 
   it('should format durations over an hour correctly', () => {
-    expect(formatZoneDuration(3661)).toBe('1h 1m 1s')
+    expect(formatZoneDuration(3661)).toBe('1:01:01')
   })
 
   it('should handle zero seconds', () => {
