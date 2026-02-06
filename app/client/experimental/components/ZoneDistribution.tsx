@@ -30,6 +30,8 @@ const ZONE_ORDER: HrZoneName[] = [
   HrZoneName.Unknown,
 ]
 
+const TIME_FORMAT_OPTIONS = { unit: 'seconds', format: 'MM:SS' } as const
+
 const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   timeInZones,
   totalDuration,
@@ -44,10 +46,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
           name: zone as HrZoneName,
           value: time,
           percentage: parseFloat(percentage.toFixed(1)),
-          formattedTime: formatDuration(time, {
-            unit: 'seconds',
-            format: 'MM:SS',
-          }),
+          formattedTime: formatDuration(time, TIME_FORMAT_OPTIONS),
           color: getZoneColor(zone as HrZoneName, theme),
         }
       })
@@ -93,8 +92,8 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
+                  innerRadius="60%"
+                  outerRadius="80%"
                   paddingAngle={2}
                   dataKey="value"
                   stroke="none"
@@ -134,10 +133,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                 Total
               </Typography>
               <Typography variant="h6" fontWeight="bold">
-                {formatDuration(totalDuration, {
-                  unit: 'seconds',
-                  format: 'MM:SS',
-                })}
+                {formatDuration(totalDuration, TIME_FORMAT_OPTIONS)}
               </Typography>
             </Box>
           </Box>
