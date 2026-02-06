@@ -21,9 +21,9 @@ import {
   ReferenceArea,
   Label,
 } from 'recharts'
-import { format } from 'date-fns'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
+import { HrDataPoint } from '@/lib/workout-session-storage'
 
 const getZoneColors = (theme: Theme) => ({
   zone1: alpha(theme.palette.secondary.main, 0.3),
@@ -33,13 +33,8 @@ const getZoneColors = (theme: Theme) => ({
   zone5: alpha(theme.palette.primary.main, 0.3),
 })
 
-interface HeartRateDataPoint {
-  time: number
-  hr: number
-}
-
 interface HeartRateTimeSeriesProps {
-  data: HeartRateDataPoint[]
+  data: HrDataPoint[]
   maxHr?: number
 }
 
@@ -50,13 +45,22 @@ const HeartRateTimeSeriesBase = ({
   const theme = useTheme()
   const ZONE_COLORS = useMemo(() => getZoneColors(theme), [theme])
 
-  const xAxisTickFormatter = useCallback(
-    (tick: number) => format(new Date(tick), 'HH:mm:ss'),
-    []
-  )
+  const xAxisTickFormatter = useCallback((tick: number) => {
+    return new Date(tick).toLocaleTimeString([], {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+  }, [])
+
   const tooltipLabelFormatter = useCallback((label: unknown) => {
     if (typeof label === 'number' || typeof label === 'string') {
-      return format(new Date(label), 'pp')
+      return new Date(label).toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+      })
     }
     return ''
   }, [])
@@ -81,15 +85,7 @@ const HeartRateTimeSeriesBase = ({
 
   const chartDescription = useMemo(() => {
     if (data.length === 0) return 'Heart rate chart with no data.'
-    let minHr = data[0]!.hr
-    let maxHrValue = data[0]!.hr
-    for (let i = 1; i < data.length; i++) {
-      if (data[i]!.hr < minHr) minHr = data[i]!.hr
-      if (data[i]!.hr > maxHrValue) maxHrValue = data[i]!.hr
-    }
-    return `Line chart showing heart rate over time.
-    Heart rate ranges from ${minHr} to ${maxHrValue} BPM.
-    Zones are marked in the background.`
+    return 'Line chart showing heart rate over time.'
   }, [data])
 
   return (
@@ -218,11 +214,7 @@ const HeartRateTimeSeriesBase = ({
 
 export const HeartRateTimeSeries = React.memo(HeartRateTimeSeriesBase)
 
-export const ConnectedHeartRateChart = ({
-  data,
-}: {
-  data: HeartRateDataPoint[]
-}) => {
+export const ConnectedHeartRateChart = ({ data }: { data: HrDataPoint[] }) => {
   const [preferences] = useUserSettings()
 
   return (

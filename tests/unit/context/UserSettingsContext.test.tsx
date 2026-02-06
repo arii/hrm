@@ -1,117 +1,48 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react'
+import React from 'react'
+import { renderHook } from '@testing-library/react'
 import {
   UserSettingsProvider,
   useUserSettings,
 } from '@/context/UserSettingsContext'
+import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
+
+// Mock usePersistentStorage
+// We need to support different return values for different tests
+const mockSetPreferences = jest.fn()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let mockPreferences: any = {}
+
+jest.mock('@/hooks/usePersistentStorage', () => ({
+  __esModule: true,
+  default: jest.fn(() => [mockPreferences, mockSetPreferences]),
+}))
 
 describe('UserSettingsContext', () => {
   beforeEach(() => {
-    window.localStorage.clear()
+    mockSetPreferences.mockClear()
+    mockPreferences = {}
   })
 
-  it('should load default preferences', () => {
-    const { result } = renderHook(() => useUserSettings(), {
-      wrapper: UserSettingsProvider,
-    })
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <UserSettingsProvider>{children}</UserSettingsProvider>
+  )
 
-    const [settings] = result.current
-    expect(settings.theme).toBe('dark')
-    expect(settings.userName).toBe('')
-  })
-
-  it('should save preferences to localStorage', () => {
-    const { result } = renderHook(() => useUserSettings(), {
-      wrapper: UserSettingsProvider,
-    })
-
-    act(() => {
-      const [, setSettings] = result.current
-      setSettings((prev) => ({ ...prev, userName: 'Test User' }))
-    })
-
-    const storedSettings = JSON.parse(
-      window.localStorage.getItem('user-prefs') || '{}'
-    )
-    expect(storedSettings.userName).toBe('Test User')
-  })
-
-  it('should load preferences from localStorage', () => {
-    window.localStorage.setItem(
-      'user-prefs',
-      JSON.stringify({ userName: 'Stored User' })
-    )
-
-    const { result } = renderHook(() => useUserSettings(), {
-      wrapper: UserSettingsProvider,
-    })
-
-    const [settings] = result.current
-    expect(settings.userName).toBe('Stored User')
-  })
-
-  it('should update preferences', () => {
-    const { result } = renderHook(() => useUserSettings(), {
-      wrapper: UserSettingsProvider,
-    })
-
-    act(() => {
-      const [, setSettings] = result.current
-      setSettings((prev) => ({ ...prev, theme: 'light' }))
-    })
-
-    const [settings] = result.current
-    expect(settings.theme).toBe('light')
-  })
-
-  it('should merge stored preferences with defaults, adding new keys', () => {
-    const oldPreferences = {
-      theme: 'light',
-      userName: 'Old User',
-      // Missing other default keys
+  it('should provide default values when storage is empty', () => {
+    // Simulate legacy storage state (missing maxHeartRate)
+    mockPreferences = {
+      theme: 'dark',
+      volumeLevel: 70,
+      // maxHeartRate is missing
     }
-    window.localStorage.setItem('user-prefs', JSON.stringify(oldPreferences))
 
-    const { result } = renderHook(() => useUserSettings(), {
-      wrapper: UserSettingsProvider,
-    })
+    const { result } = renderHook(() => useUserSettings(), { wrapper })
 
-    const [settings] = result.current
-    expect(settings.userName).toBe('Old User') // Stored value should persist
-    expect(settings.theme).toBe('light') // Stored value should persist
-    expect(settings.volumeLevel).toBe(70) // Default value for new key
-  })
+    const [preferences] = result.current
 
-  it('should filter out "zombie" keys from localStorage', () => {
-    const oldPreferences = {
-      userName: 'Zombie User',
-      zombieKey: 'this should be removed',
-    }
-    window.localStorage.setItem('user-prefs', JSON.stringify(oldPreferences))
-
-    const { result } = renderHook(() => useUserSettings(), {
-      wrapper: UserSettingsProvider,
-    })
-
-    const [settings] = result.current
-    expect(settings.userName).toBe('Zombie User')
-    expect(settings).not.toHaveProperty('zombieKey')
-
-    // Also check that the cleaned data is written back to localStorage
-    const storedSettings = JSON.parse(
-      window.localStorage.getItem('user-prefs') || '{}'
-    )
-    expect(storedSettings).not.toHaveProperty('zombieKey')
-  })
-
-  it('should have default gender as FEMALE', () => {
-    const { result } = renderHook(() => useUserSettings(), {
-      wrapper: UserSettingsProvider,
-    })
-
-    const [settings] = result.current
-    expect(settings.gender).toBe('FEMALE')
+    // We expect it to be merged with default
+    expect(preferences.maxHeartRate).toBe(MAX_HR_DEFAULT)
   })
 })

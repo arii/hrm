@@ -54,9 +54,13 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   // Use the usePersistentStorage hook directly within the provider
-  const [preferences, setPreferences] = usePersistentStorage<UserPreferences>(
-    'user-prefs',
-    DEFAULT_PREFERENCES
+  const [storedPreferences, setPreferences] =
+    usePersistentStorage<UserPreferences>('user-prefs', DEFAULT_PREFERENCES)
+
+  // Ensure that new fields (like maxHeartRate) are merged with existing stored preferences
+  const preferences = React.useMemo(
+    () => ({ ...DEFAULT_PREFERENCES, ...storedPreferences }),
+    [storedPreferences]
   )
 
   const value = React.useMemo(
