@@ -13,10 +13,6 @@ interface GetActiveHrmDataOptions {
   includeZeroValues?: boolean
 }
 
-const PLACEHOLDER_NAME_REGEX = /new user/i
-const ALERT_CODE_BAD_PLACEMENT = 'BAD_PLACEMENT'
-const ALERT_CODE_HRM_STALE = 'HRM_STALE'
-
 export const getActiveHrmData = (
   hrmData: HrmData[],
   activeAlerts: ActiveAlert[],
@@ -25,49 +21,40 @@ export const getActiveHrmData = (
 ): ActiveHrmData[] => {
   const { includeZeroValues = false } = options
 
-  // Create a Map for O(1) lookup of alerts
-  // Note: iterate forwards but only set if not exists to preserve "first match wins" priority
-  // consistent with Array.find() behavior on the original list.
-  const alertMap = new Map<string, ActiveAlert>()
-  for (const alert of activeAlerts) {
-    if (
-      (alert.code === ALERT_CODE_BAD_PLACEMENT ||
-        alert.code === ALERT_CODE_HRM_STALE) &&
-      !alertMap.has(alert.clientId)
-    ) {
-      alertMap.set(alert.clientId, alert)
-    }
-  }
+  return hrmData
+    .filter((user) => {
+      const isZero = user.value === 0
+      const isPlaceholderName = !!user.name && /new user/i.test(user.name)
+      const hasNoIdentity = user.name == null
+      const isStale =
+        user.lastUpdated && now - user.lastUpdated > HRM_STALE_THRESHOLD_MS
 
-  return hrmData.reduce<ActiveHrmData[]>((acc, user) => {
-    const isZero = user.value === 0
-    const isPlaceholderName =
-      !!user.name && PLACEHOLDER_NAME_REGEX.test(user.name)
-    const hasNoIdentity = user.name == null
-    const isStale =
-      user.lastUpdated && now - user.lastUpdated > HRM_STALE_THRESHOLD_MS
+      if (isPlaceholderName || hasNoIdentity || isStale) {
+        return false
+      }
 
-    if (
-      isPlaceholderName ||
-      hasNoIdentity ||
-      isStale ||
-      (!includeZeroValues && isZero)
-    ) {
-      return acc
-    }
+      if (!includeZeroValues && isZero) {
+        return false
+      }
 
-    const matchingAlert = alertMap.get(user.clientId)
-    const isDataStale = !!(
-      user.lastUpdated && now - user.lastUpdated > HRM_WARNING_THRESHOLD_MS
-    )
-
-    acc.push({
-      ...user,
-      isAlerting: !!matchingAlert,
-      alertMessage: matchingAlert?.message,
-      isDataStale,
+      return true
     })
+    .map((user) => {
+      const matchingAlert = activeAlerts.find(
+        (alert) =>
+          alert.clientId === user.clientId &&
+          (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
+      )
 
-    return acc
-  }, [])
+      const isDataStale = !!(
+        user.lastUpdated && now - user.lastUpdated > HRM_WARNING_THRESHOLD_MS
+      )
+
+      return {
+        ...user,
+        isAlerting: !!matchingAlert,
+        alertMessage: matchingAlert?.message,
+        isDataStale,
+      }
+    })
 }
