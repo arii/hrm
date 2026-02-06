@@ -7,6 +7,8 @@ import type {
   TimerMode,
 } from './core'
 
+// --- Zod Schemas ---
+
 export const IncomingHrmDataSchema = z.object({
   value: z.number().nullable(),
   calories: z.number().optional(),
@@ -50,7 +52,6 @@ export const SpotifyCommandSchema = z.union([
   z.literal('TRANSFER_PLAYBACK'),
   z.literal('SET_VOLUME'),
   z.literal('GET_DEVICES'),
-  z.literal('LOGIN'),
 ])
 
 export const SpotifyCommandMessageSchema = z.object({
@@ -98,6 +99,8 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   PingMessageSchema,
 ])
 
+// --- WebSocket Connection & Augmentation ---
+
 /**
  * Extends the base WebSocket type from the 'ws' library to include
  * application-specific properties for tracking client state, such as a
@@ -109,8 +112,11 @@ export interface ExtWebSocket extends WebSocket {
   clientType?: 'dashboard' | 'controller'
 }
 
+// --- Server Broadcast State Interfaces ---
+
 export type { HrmData, TimerData, SpotifyData, TimerMode }
 
+// Derived Types
 export type IncomingHrmData = z.infer<typeof IncomingHrmDataSchema>
 export type HrmMetadataUpdateData = z.infer<typeof HrmMetadataUpdateDataSchema>
 export type HrmMetadataUpdateMessage = z.infer<
@@ -155,6 +161,8 @@ export type StateSnapshot = Omit<InitialStateSnapshotPayload, 'hrmData'>
 /**
  * The single, unified state object broadcast by the server to all clients.
  */
+// TOPIC-BASED REAL-TIME MESSAGES
+// Use a discriminated union for type-safe message handling
 export interface ActiveAlert {
   clientId: string
   code: 'HRM_STALE' | 'BAD_PLACEMENT'
