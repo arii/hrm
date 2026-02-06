@@ -1,6 +1,11 @@
 // File: hooks/useCalorieCalculator.ts
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation'
+import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
+import {
+  MAX_CALORIES_PER_WORKOUT,
+  TIME_GAP_THRESHOLD_SECONDS,
+  MIN_HR_FOR_CALORIE_CALCULATION,
+} from '@/constants/calorie-thresholds'
 
 import { Gender } from '@/types/user'
 
@@ -61,11 +66,14 @@ export const useCalorieCalculator = ({
       const smoothedHr = sum / hrHistoryRef.current.length
 
       // 2. Delta-time calculation and calorie accumulation
-      if (lastTimestampRef.current && smoothedHr > 30) {
+      if (
+        lastTimestampRef.current &&
+        smoothedHr > MIN_HR_FOR_CALORIE_CALCULATION
+      ) {
         const dtSeconds = (now - lastTimestampRef.current) / 1000
 
         // Prevent calculating calories for large time gaps (e.g., tab backgrounding)
-        if (dtSeconds > 0 && dtSeconds < 10) {
+        if (dtSeconds > 0 && dtSeconds < TIME_GAP_THRESHOLD_SECONDS) {
           const dtMinutes = dtSeconds / 60
           const caloriesBurned = estimateCaloriesBurned({
             heartRate: smoothedHr,
@@ -74,7 +82,11 @@ export const useCalorieCalculator = ({
             gender: genderRef.current,
             durationMinutes: dtMinutes,
           })
-          setCalories((prev) => prev + caloriesBurned)
+
+          setCalories((prev) => {
+            const newTotal = prev + caloriesBurned
+            return Math.min(newTotal, MAX_CALORIES_PER_WORKOUT)
+          })
         }
       }
 
