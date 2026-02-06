@@ -1,6 +1,7 @@
 // hooks/useHrZone.ts
-import { getHrZoneProps } from '@/utils/visualization'
 import { useMemo } from 'react'
+import { calculateHrZone } from '@/lib/shared/hr-zones'
+import { HR_ZONE_UI_PROPS_MAP } from '@/utils/visualization'
 
 /**
  * A hook to calculate Heart Rate Zone properties based on current HR and Max HR.
@@ -15,6 +16,17 @@ import { useMemo } from 'react'
  */
 export const useHrZone = (currentHR: number, maxHr: number) => {
   return useMemo(() => {
-    return getHrZoneProps(currentHR, maxHr)
+    const { zoneName, percentage, bpm } = calculateHrZone(currentHR, maxHr)
+    const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
+
+    return {
+      zone: zoneName,
+      percentage: percentage,
+      color: zoneUiProps.color,
+      progressColor: zoneUiProps.progressColor,
+      backgroundColor: zoneUiProps.bgColor,
+      textColor: zoneUiProps.textColor,
+      bpm: bpm,
+    }
   }, [currentHR, maxHr])
 }

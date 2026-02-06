@@ -1,12 +1,6 @@
-import type { HrZoneName, UserHrZones } from '../lib/shared/hr-zones'
+import type { UserHrZones, HrZone } from '../lib/shared/hr-zones'
 
-export interface HrZone {
-  zoneName: HrZoneName
-  percentage: number
-  bpm: number
-}
-
-export type { UserHrZones }
+export type { UserHrZones, HrZone }
 
 export interface HrData {
   bpm: number

@@ -1,8 +1,52 @@
-// File: tests/unit/lib/hrm/zones.test.ts
-import { calculateHrZone } from '../../../../lib/hrm/zones'
-import { HrZoneName } from '../../../../lib/shared/hr-zones'
+// tests/lib/shared/hr-zones.test.ts
+import {
+  calculateMaxHr,
+  getUserHrZones,
+  calculateHrZone,
+  HrZoneName,
+} from '@/lib/shared/hr-zones'
 
-describe('lib/hrm/zones', () => {
+describe('Heart Rate Zone Calculations', () => {
+  describe('calculateMaxHr', () => {
+    it('should calculate max heart rate using the Tanaka formula', () => {
+      expect(calculateMaxHr(30)).toBeCloseTo(187) // 208 - 0.7 * 30
+      expect(calculateMaxHr(50)).toBeCloseTo(173) // 208 - 0.7 * 50
+    })
+
+    it('should handle various input types gracefully', () => {
+      expect(calculateMaxHr('30')).toBeCloseTo(187)
+      expect(calculateMaxHr(null)).toBe(185)
+      expect(calculateMaxHr(undefined)).toBe(185)
+      expect(calculateMaxHr(0)).toBe(185)
+      expect(calculateMaxHr(-10)).toBe(185)
+      expect(calculateMaxHr('abc')).toBe(185)
+    })
+  })
+
+  describe('getUserHrZones', () => {
+    it('should calculate HR zones correctly for a given age', () => {
+      const age = 30
+      const zones = getUserHrZones(age)
+
+      // Tanaka formula: 208 - 0.7 * 30 = 187
+      expect(zones.warmUp.min).toBe(94) // 187 * 0.5
+      expect(zones.fatBurn.min).toBe(112) // 187 * 0.6
+      expect(zones.cardio.min).toBe(131) // 187 * 0.7
+      expect(zones.peak.min).toBe(150) // 187 * 0.8
+      expect(zones.max.min).toBe(168) // 187 * 0.9
+    })
+  })
+
+  describe('HrZoneName Enum', () => {
+    it('should have the correct string values', () => {
+      expect(HrZoneName.WarmUp).toBe('Warm-up')
+      expect(HrZoneName.FatBurn).toBe('Fat Burn')
+      expect(HrZoneName.Cardio).toBe('Cardio')
+      expect(HrZoneName.Peak).toBe('Peak')
+      expect(HrZoneName.Max).toBe('Max')
+    })
+  })
+
   describe('calculateHrZone', () => {
     const maxHr = 200
 
@@ -47,10 +91,10 @@ describe('lib/hrm/zones', () => {
     })
 
     it('should correctly calculate the "Peak" zone', () => {
-      // 90% of 200 is 180
-      const result = calculateHrZone(180, maxHr)
+      // 85% of 200 is 170
+      const result = calculateHrZone(170, maxHr)
       expect(result.zoneName).toBe(HrZoneName.Peak)
-      expect(result.percentage).toBe(90)
+      expect(result.percentage).toBe(85)
     })
 
     it('should correctly calculate the "Max" zone', () => {
