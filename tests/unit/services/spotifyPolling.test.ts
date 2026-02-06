@@ -17,6 +17,7 @@ jest.mock('@/utils/logger.server', () => ({
 describe('SpotifyPolling', () => {
   let broadcastUpdate: jest.Mock
   let spotifyPolling: SpotifyPolling
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockSdk: any
 
   beforeEach(async () => {
@@ -24,12 +25,16 @@ describe('SpotifyPolling', () => {
     ;(SpotifyTokenManager as jest.Mock).mockClear()
 
     // Mock the token manager to return a valid token so SDK initializes
-    ;(SpotifyTokenManager.prototype.getValidAccessToken as jest.Mock).mockResolvedValue('mock-token')
-    ;(SpotifyTokenManager.prototype.getSdkAccessToken as jest.Mock).mockReturnValue({
+    ;(
+      SpotifyTokenManager.prototype.getValidAccessToken as jest.Mock
+    ).mockResolvedValue('mock-token')
+    ;(
+      SpotifyTokenManager.prototype.getSdkAccessToken as jest.Mock
+    ).mockReturnValue({
       access_token: 'mock-token',
       token_type: 'Bearer',
       expires_in: 3600,
-      scope: 'scope'
+      scope: 'scope',
     })
 
     // Mock SpotifyApi
@@ -43,7 +48,7 @@ describe('SpotifyPolling', () => {
         skipToPrevious: jest.fn(),
         transferPlayback: jest.fn(),
         setPlaybackVolume: jest.fn(),
-      }
+      },
     }
     const withAccessTokenSpy = jest.spyOn(SpotifyApi, 'withAccessToken')
     withAccessTokenSpy.mockReturnValue(mockSdk)
@@ -57,7 +62,9 @@ describe('SpotifyPolling', () => {
 
   it('should throw an error when getSdk is called before initialization', async () => {
     // Reset the instance to one without SDK for this test
-    ;(SpotifyTokenManager.prototype.getValidAccessToken as jest.Mock).mockResolvedValue(null)
+    ;(
+      SpotifyTokenManager.prototype.getValidAccessToken as jest.Mock
+    ).mockResolvedValue(null)
     const emptyPolling = await SpotifyPolling.create(broadcastUpdate)
     expect(() => emptyPolling._test_?.getSdk()).toThrow(
       'Spotify SDK has not been initialized.'
@@ -66,7 +73,9 @@ describe('SpotifyPolling', () => {
 
   it('should return early and not throw if getCurrentlyPlaying is called without an initialized SDK', async () => {
     // Arrange: Create instance without SDK
-    ;(SpotifyTokenManager.prototype.getValidAccessToken as jest.Mock).mockResolvedValue(null)
+    ;(
+      SpotifyTokenManager.prototype.getValidAccessToken as jest.Mock
+    ).mockResolvedValue(null)
     const emptyPolling = await SpotifyPolling.create(broadcastUpdate)
 
     // Act & Assert
@@ -89,9 +98,14 @@ describe('SpotifyPolling', () => {
     })
 
     it('should execute TRANSFER_PLAYBACK if deviceId is present', async () => {
-      await spotifyPolling.handleCommand('TRANSFER_PLAYBACK', { deviceId: 'dev-1' })
+      await spotifyPolling.handleCommand('TRANSFER_PLAYBACK', {
+        deviceId: 'dev-1',
+      })
 
-      expect(mockSdk.player.transferPlayback).toHaveBeenCalledWith(['dev-1'], true)
+      expect(mockSdk.player.transferPlayback).toHaveBeenCalledWith(
+        ['dev-1'],
+        true
+      )
     })
 
     it('should log warning and abort SET_VOLUME if volume is missing', async () => {
@@ -105,7 +119,10 @@ describe('SpotifyPolling', () => {
     })
 
     it('should execute SET_VOLUME if volume is present', async () => {
-      await spotifyPolling.handleCommand('SET_VOLUME', { deviceId: 'dev-1', volume: 50 })
+      await spotifyPolling.handleCommand('SET_VOLUME', {
+        deviceId: 'dev-1',
+        volume: 50,
+      })
 
       expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalledWith(50, 'dev-1')
     })
