@@ -1,5 +1,15 @@
 // utils/network.ts
 
+export class HttpError extends Error {
+  status: number
+
+  constructor(status: number, message?: string) {
+    super(message || `HTTP Error: ${status}`)
+    this.name = 'HttpError'
+    this.status = status
+  }
+}
+
 export const fetchWithRetry = async (
   url: string,
   options: RequestInit = {},
@@ -12,22 +22,31 @@ export const fetchWithRetry = async (
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
-    // Manually merge signals if AbortSignal.any is not available or we want guaranteed safety
-    // This listener ensures that if the user aborts, we abort our internal controller
-    const onUserAbort = () => controller.abort()
-    if (options.signal) {
+    // Use AbortSignal.any if available (modern envs), otherwise manual merge
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const abortSignal = (AbortSignal as any).any
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (AbortSignal as any).any(
+          [controller.signal, options.signal].filter(Boolean)
+        )
+      : undefined
+
+    let onUserAbort: (() => void) | undefined
+
+    if (!abortSignal && options.signal) {
+      // Fallback manual merge
       if (options.signal.aborted) {
-        // Already aborted
         clearTimeout(timeoutId)
         throw options.signal.reason || new Error('Aborted')
       }
+      onUserAbort = () => controller.abort()
       options.signal.addEventListener('abort', onUserAbort)
     }
 
     try {
       const response = await fetch(url, {
         ...options,
-        signal: controller.signal,
+        signal: abortSignal || controller.signal,
       })
       clearTimeout(timeoutId)
 
@@ -35,10 +54,10 @@ export const fetchWithRetry = async (
         // Only retry on 5xx (server errors) or 429 (too many requests)
         const isRetryable = response.status >= 500 || response.status === 429
         if (!isRetryable) {
-          throw new Error(`HTTP Error: ${response.status}`)
+          throw new HttpError(response.status)
         }
-        // If retryable, throw to trigger the catch block and retry loop
-        throw new Error(`HTTP Error: ${response.status}`)
+        // Throw to trigger retry loop
+        throw new HttpError(response.status)
       }
 
       return response
@@ -52,22 +71,12 @@ export const fetchWithRetry = async (
 
       lastError = error
 
-      // Don't retry if the specific error was our timeout (unless we want to retry on timeout,
-      // which is usually good, but let's check strictness. The prompt asked to retry on 500s.
-      // Usually retrying on network timeout is desirable.)
-
       // Check if we should stop retrying
       const isLastAttempt = i === retries - 1
 
-      // If it's a non-retryable HTTP error (already handled above by rethrowing only if retryable),
-      // we need to distinguish it. But wait, I threw generic Error above.
-      // Let's refine the logic: inside the try, if !ok and !retryable, RETURN or THROW a special error?
-      // Actually, if !ok and !retryable, I should probably throw an error that I catch and rethrow immediately.
-
-      if (error instanceof Error && error.message.startsWith('HTTP Error:')) {
-        const statusStr = error.message.split(': ')[1]
-        const status = parseInt(statusStr || '0', 10)
-        const isRetryable = status >= 500 || status === 429
+      // Don't retry if it's a non-retryable HttpError (re-thrown above)
+      if (error instanceof HttpError) {
+        const isRetryable = error.status >= 500 || error.status === 429
         if (!isRetryable) throw error
       }
 
@@ -77,8 +86,8 @@ export const fetchWithRetry = async (
         )
       }
     } finally {
-      // Cleanup listener
-      if (options.signal) {
+      // Cleanup listener if we used manual merge
+      if (onUserAbort && options.signal) {
         options.signal.removeEventListener('abort', onUserAbort)
       }
     }

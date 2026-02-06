@@ -1,4 +1,4 @@
-import { fetchWithRetry } from '../../../utils/network'
+import { fetchWithRetry, HttpError } from '../../../utils/network'
 
 // Mock the global fetch
 global.fetch = jest.fn()
@@ -31,9 +31,12 @@ describe('fetchWithRetry', () => {
     })
 
     await expect(fetchWithRetry('https://api.example.com')).rejects.toThrow(
-      'HTTP Error: 400'
+      HttpError
     )
-    expect(global.fetch).toHaveBeenCalledTimes(1)
+    await expect(
+      fetchWithRetry('https://api.example.com')
+    ).rejects.toMatchObject({ status: 400 })
+    expect(global.fetch).toHaveBeenCalledTimes(2)
   })
 
   it('should not retry on unauthorized (401)', async () => {
@@ -43,7 +46,7 @@ describe('fetchWithRetry', () => {
     })
 
     await expect(fetchWithRetry('https://api.example.com')).rejects.toThrow(
-      'HTTP Error: 401'
+      HttpError
     )
     expect(global.fetch).toHaveBeenCalledTimes(1)
   })
@@ -98,7 +101,8 @@ describe('fetchWithRetry', () => {
     await jest.advanceTimersByTimeAsync(1000)
     // 3rd attempt happens, fails, throws. No more retries.
 
-    await expect(promise).rejects.toThrow('HTTP Error: 503')
+    await expect(promise).rejects.toThrow(HttpError)
+    await expect(promise).rejects.toMatchObject({ status: 503 })
     expect(global.fetch).toHaveBeenCalledTimes(3)
   })
 
@@ -106,16 +110,15 @@ describe('fetchWithRetry', () => {
     const controller = new AbortController()
 
     // Mock fetch to simulate pending request that respects signal
-    ;(global.fetch as jest.Mock).mockImplementation(() => {
+    ;(global.fetch as jest.Mock).mockImplementation((_url, options) => {
       return new Promise((resolve, reject) => {
-        // If already aborted, reject immediately
-        if (controller.signal.aborted) {
+        const signal = options.signal
+        if (signal.aborted) {
           return reject(
             new DOMException('This operation was aborted', 'AbortError')
           )
         }
-        // Listen for abort
-        controller.signal.addEventListener('abort', () => {
+        signal.addEventListener('abort', () => {
           reject(new DOMException('This operation was aborted', 'AbortError'))
         })
       })
@@ -128,9 +131,6 @@ describe('fetchWithRetry', () => {
     // Trigger abort
     controller.abort()
 
-    // The fetch implementation throws AbortError (DOMException)
-    // fetchWithRetry rethrows it.
-    // We match roughly on AbortError or message substring "aborted"
     await expect(fetchPromise).rejects.toThrow(/aborted/i)
   })
 })
