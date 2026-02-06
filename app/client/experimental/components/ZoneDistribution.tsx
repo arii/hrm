@@ -1,4 +1,5 @@
 'use client'
+import { useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -78,15 +79,18 @@ const ZoneDistribution = ({
   totalDuration,
 }: ZoneDistributionProps) => {
   const theme = useTheme()
-  const ZONE_COLORS: Record<HrZoneName, string> = {
-    [HrZoneName.WarmUp]: theme.palette.custom.warmUp,
-    [HrZoneName.FatBurn]: theme.palette.custom.fatBurn,
-    [HrZoneName.Cardio]: theme.palette.custom.cardio,
-    [HrZoneName.Peak]: theme.palette.custom.peak,
-    [HrZoneName.Max]: theme.palette.custom.max,
-    [HrZoneName.NoData]: theme.palette.grey[400],
-    [HrZoneName.Unknown]: theme.palette.grey[400],
-  }
+  const ZONE_COLORS = useMemo<Record<HrZoneName, string>>(
+    () => ({
+      [HrZoneName.WarmUp]: theme.palette.custom.warmUp,
+      [HrZoneName.FatBurn]: theme.palette.custom.fatBurn,
+      [HrZoneName.Cardio]: theme.palette.custom.cardio,
+      [HrZoneName.Peak]: theme.palette.custom.peak,
+      [HrZoneName.Max]: theme.palette.custom.max,
+      [HrZoneName.NoData]: theme.palette.grey[400],
+      [HrZoneName.Unknown]: theme.palette.grey[400],
+    }),
+    [theme]
+  )
 
   const zones = Object.entries(timeInZones)
     .map(([label, seconds]) => ({
