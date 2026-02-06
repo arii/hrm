@@ -67,7 +67,7 @@ const ExperimentalAnalyticsPage = () => {
       }
       loadHistory()
     } else if (status === 'idle') {
-      // Use setTimeout to avoid set-state-in-effect warning
+      // Use setTimeout to safely schedule state update after render
       setTimeout(() => {
         if (isMounted) setActiveSessionHistory([])
       }, 0)
@@ -102,7 +102,7 @@ const ExperimentalAnalyticsPage = () => {
   useEffect(() => {
     let timeoutId: NodeJS.Timeout
     if (status === 'idle' && !sessionId && view === 'active') {
-      // Use setTimeout to avoid set-state-in-effect warning
+      // Use setTimeout to safely schedule state update after render
       timeoutId = setTimeout(() => {
         setView('list')
       }, 0)

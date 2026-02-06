@@ -26,7 +26,7 @@ interface SessionState {
   timeInZones: Record<HrZoneName, number>
   averageHr: number
   maxHr: number
-  hrCount: number // Helper for average calculation
+  hrCount: number
 }
 
 const initialTimeInZones = Object.fromEntries(
@@ -196,10 +196,6 @@ interface WorkoutSessionOptions {
 /**
  * useWorkoutSession manages the local workout lifecycle and persists session metadata
  * to localStorage.
- *
- * Note: While session duration and deltas (calories burned) are persisted locally for UX,
- * authoritative HRM data and cumulative totals should always be sourced from the server
- * to prevent state divergence.
  */
 export const useWorkoutSession = ({
   totalCalories = 0,
