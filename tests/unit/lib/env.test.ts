@@ -69,6 +69,17 @@ describe('Environment Variables', () => {
     )
   })
 
+  it('should use provided SPOTIFY_CALLBACK_URL if present', async () => {
+    process.env.NODE_ENV = 'test'
+    process.env.NEXTAUTH_URL = 'http://localhost:3000'
+    process.env.NEXTAUTH_SECRET = 'secret'
+    process.env.SPOTIFY_CLIENT_ID = 'id'
+    process.env.SPOTIFY_CLIENT_SECRET = 'secret'
+    process.env.SPOTIFY_CALLBACK_URL = 'http://custom-url.com/callback'
+    const { env } = await import('../../../lib/env')
+    expect(env.SPOTIFY_CALLBACK_URL).toBe('http://custom-url.com/callback')
+  })
+
   it('should throw an error if Spotify credentials are provided but callback URL cannot be determined', async () => {
     process.env.NODE_ENV = 'test'
     process.env.NEXTAUTH_SECRET = 'secret'
