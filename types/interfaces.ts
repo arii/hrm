@@ -9,6 +9,8 @@ t* estable, and easier to refactor.
 import { SpotifyTokenPayload } from '../services/spotifyTokenManager'
 import { SpotifyData, SpotifyCommand } from './websocket'
 
+export type { SpotifyCommand }
+
 /**
  * Represents a service that provides a snapshot of its current state.
  * @template T The type of the state object.

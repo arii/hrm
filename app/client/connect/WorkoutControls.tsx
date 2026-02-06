@@ -30,17 +30,20 @@ const WorkoutControls = ({
         minHeight: '48px', // Ensure consistent height for layout stability
       }}
     >
-      {workoutStatus === 'idle' && isConnected && (
-        <Button
-          variant="contained"
-          onClick={onStart}
-          size="large"
-          sx={{ minWidth: '200px' }}
-          aria-label="Start workout session"
-        >
-          Start Workout
-        </Button>
-      )}
+      {(workoutStatus === 'idle' || workoutStatus === 'finished') &&
+        isConnected && (
+          <Button
+            variant="contained"
+            onClick={onStart}
+            size="large"
+            sx={{ minWidth: '200px' }}
+            aria-label="Start workout session"
+          >
+            {workoutStatus === 'finished'
+              ? 'Start New Workout'
+              : 'Start Workout'}
+          </Button>
+        )}
       {workoutStatus === 'paused' && (
         <>
           <Button

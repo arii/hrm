@@ -28,7 +28,15 @@ type HrZoneUi = {
   bgColor: string
 }
 
+/**
+ * @deprecated Use `HR_ZONE_VISUAL_CONFIG` from `lib/shared/hr-zones` instead.
+ */
 export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
+  [HrZoneName.Resting]: {
+    color: 'text-gray-400',
+    progressColor: '#9e9e9e',
+    bgColor: '#f5f5f5',
+  },
   [HrZoneName.WarmUp]: {
     color: 'text-blue-400',
     progressColor: theme.palette.secondary.main,
@@ -91,6 +99,7 @@ export interface HrZoneProps {
  * Calculates the current zone, percentage of max HR, and returns MUI-ready props.
  * This function now composes the core business logic from `lib/hrm` with
  * presentation-specific properties defined in this file.
+ * @deprecated Use `calculateZoneFromMaxHr` and `HR_ZONE_VISUAL_CONFIG` from `lib/shared/hr-zones` instead.
  */
 export const getHrZoneProps = (
   currentHr: number,

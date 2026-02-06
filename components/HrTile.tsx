@@ -1,4 +1,3 @@
-// File: components/HrTile.tsx
 'use client'
 import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
@@ -6,40 +5,55 @@ import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
-import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
+import {
+  HrZoneName,
+  ZONE_THRESHOLDS,
+  HR_ZONE_VISUAL_CONFIG,
+} from '@/lib/shared/hr-zones'
 
-// Define the style for the centered overlay
 const overlayStyles = {
   position: 'absolute',
   top: 0,
   left: 0,
   width: '100%',
   height: '100%',
-  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
+  backgroundColor: 'rgba(0, 0, 0, 0.7)',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
   zIndex: 10,
-  borderRadius: 'inherit', // Match card border radius from StyledCard
+  borderRadius: 'inherit',
 }
 
 const HrTile = ({
   name,
   bpm,
   percentMax,
-  calories = 0, // Default to 0 to prevent NaN
-  isConnected = true, // Default to connected
+  calories = 0,
+  isConnected = true,
   isDataStale = false,
   isAlerting = false,
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
-  const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
+
+  const ratio = percentMax / 100
+  let zoneName = HrZoneName.Resting
+  if (ratio >= ZONE_THRESHOLDS[HrZoneName.Max]) zoneName = HrZoneName.Max
+  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.Peak]) zoneName = HrZoneName.Peak
+  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.Cardio])
+    zoneName = HrZoneName.Cardio
+  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.FatBurn])
+    zoneName = HrZoneName.FatBurn
+  else if (ratio >= ZONE_THRESHOLDS[HrZoneName.WarmUp])
+    zoneName = HrZoneName.WarmUp
+
+  const { color: backgroundColor, textColor } = HR_ZONE_VISUAL_CONFIG[zoneName]
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -69,11 +83,10 @@ const HrTile = ({
           position: 'relative',
           opacity: isConnected && !isDataStale ? 1 : 0.6,
           transition: theme.transitions.create('opacity', {
-            duration: theme.transitions.duration.short, // Approx 300ms
+            duration: theme.transitions.duration.short,
           }),
         }}
       >
-        {/* --- Disconnected Icon --- */}
         {!isConnected && (
           <WifiOffIcon
             sx={{
@@ -86,7 +99,6 @@ const HrTile = ({
           />
         )}
 
-        {/* --- Alerting Overlay --- */}
         {isAlerting && (
           <Box sx={overlayStyles} data-testid="hr-tile-alert-overlay">
             <CircularProgress size={30} sx={{ color: 'white' }} />
@@ -121,7 +133,6 @@ const HrTile = ({
                 mt: 1,
               }}
             >
-              {/* BPM Display */}
               <Typography
                 data-testid="bpm-value"
                 variant="h6"
@@ -137,7 +148,6 @@ const HrTile = ({
                 </Typography>
               </Typography>
 
-              {/* Calorie Display */}
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 {Math.floor(calories)}{' '}
                 <Typography
@@ -172,7 +182,6 @@ const HrTile = ({
   )
 }
 
-// Custom comparison function for React.memo
 const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
   return (
     prevProps.name === nextProps.name &&
