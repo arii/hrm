@@ -390,13 +390,18 @@ export class SpotifyPolling implements SpotifyService {
           () => {
             if (uri) {
               // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-              // eslint-disable-next-line prettier/prettier
-              return sdk.player.startResumePlayback(deviceId || undefined, undefined, [uri])
+              return sdk.player.startResumePlayback(
+                deviceId || undefined,
+                undefined,
+                [uri]
+              )
             }
             if (effectiveContextUri) {
               // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-              // eslint-disable-next-line prettier/prettier
-              return sdk.player.startResumePlayback(deviceId || undefined, effectiveContextUri)
+              return sdk.player.startResumePlayback(
+                deviceId || undefined,
+                effectiveContextUri
+              )
             }
             // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
             return sdk.player.startResumePlayback(deviceId || undefined)
