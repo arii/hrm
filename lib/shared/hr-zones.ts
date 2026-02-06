@@ -23,6 +23,17 @@ export enum HrZoneName {
 }
 
 /**
+ * Thresholds for HR zones (percentage of Max HR).
+ */
+export const ZONE_THRESHOLDS = {
+  ZONE_5: 90,
+  ZONE_4: 80,
+  ZONE_3: 70,
+  ZONE_2: 60,
+  ZONE_1: 50,
+} as const
+
+/**
  * Estimates a user's maximum heart rate using the Haskell & Fox formula (220 - age).
  *
  * NOTE: While the Tanaka formula (208 - 0.7 * age) is often more accurate for older adults,
@@ -47,15 +58,42 @@ export const calculateMaxHr = (age?: number | string | null): number => {
 /**
  * Canonical visual configuration for heart rate zones.
  * Shared between client (Connect/Mock) and Dashboard (HrTile).
+ * color: Background color for the zone.
+ * textColor: Text color for optimal contrast (forcing specific overrides).
  */
 export const HR_ZONE_VISUAL_CONFIG = {
-  5: { color: '#ff0000', label: HrZoneName.Peak },
-  4: { color: '#ff8000', label: HrZoneName.Cardio },
-  3: { color: '#ffff00', label: HrZoneName.Aerobic },
-  2: { color: '#00ff00', label: HrZoneName.WarmUp },
-  1: { color: '#00ffff', label: HrZoneName.Recovery },
-  0: { color: '#cccccc', label: HrZoneName.Idle },
+  5: { color: '#ff0000', label: HrZoneName.Peak, textColor: '#FFFFFF' },
+  4: { color: '#ff8000', label: HrZoneName.Cardio, textColor: '#FFFFFF' },
+  3: { color: '#ffff00', label: HrZoneName.Aerobic, textColor: '#FFFFFF' },
+  2: { color: '#00ff00', label: HrZoneName.WarmUp, textColor: '#FFFFFF' },
+  1: { color: '#00ffff', label: HrZoneName.Recovery, textColor: '#000000' },
+  0: { color: '#cccccc', label: HrZoneName.Idle, textColor: '#000000' },
 } as const
+
+/**
+ * Calculates the percentage of max HR and the corresponding zone (0-5) based on Max HR.
+ * @param currentHr - Current heart rate in BPM.
+ * @param maxHr - Max Heart Rate.
+ * @returns An object containing the calculated percentage and zone.
+ */
+export const calculateZoneFromMaxHr = (
+  currentHr: number,
+  maxHr: number
+): { percentage: number; zone: number } => {
+  const percentage =
+    maxHr > 0 && currentHr > 0
+      ? Math.min(100, Math.round((currentHr / maxHr) * 100))
+      : 0
+
+  let zone = 0
+  if (percentage >= ZONE_THRESHOLDS.ZONE_5) zone = 5
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_4) zone = 4
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_3) zone = 3
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_2) zone = 2
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_1) zone = 1
+
+  return { percentage, zone }
+}
 
 /**
  * Calculates the percentage of max HR and the corresponding zone (0-5).
@@ -68,17 +106,7 @@ export const calculateHrZoneInfo = (
   age: number
 ): { percentage: number; zone: number } => {
   const maxHr = calculateMaxHr(age)
-  const percentage =
-    currentHr > 0 ? Math.min(100, Math.round((currentHr / maxHr) * 100)) : 0
-
-  let zone = 0
-  if (percentage >= 90) zone = 5
-  else if (percentage >= 80) zone = 4
-  else if (percentage >= 70) zone = 3
-  else if (percentage >= 60) zone = 2
-  else if (percentage >= 50) zone = 1
-
-  return { percentage, zone }
+  return calculateZoneFromMaxHr(currentHr, maxHr)
 }
 
 /**
