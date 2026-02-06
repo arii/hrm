@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Container, Box, Button } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useCalorieTracker } from '@/hooks/useCalorieTracker'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import {
@@ -40,17 +40,43 @@ const ExperimentalAnalyticsPage = () => {
   const { hrmData, sendData, connectionStatus } = useWebSocket()
   const [userSettings] = useUserSettings()
 
-  // Use #5110's hooks
   const {
-    session: activeSession,
-    status,
-    isInitialized,
-    duration,
+    sessionId,
+    workoutStatus: status,
+    workoutDuration: duration,
     startWorkout,
-    resumeWorkout,
+    pauseWorkout,
     endWorkout,
     addHrData,
-  } = useWorkoutSessionManager()
+  } = useWorkoutSession({
+    userAge: userSettings.userAge || 30,
+    userWeight: userSettings.userWeight || 70,
+  })
+
+  // Local state for active session data (loaded from storage)
+  const [activeSession, setActiveSession] = useState<WorkoutSessionData | null>(
+    null
+  )
+
+  useEffect(() => {
+    if (sessionId) {
+      const fetchSession = async () => {
+        try {
+          const s = await workoutSessionStorage.getSession(sessionId)
+          setActiveSession(s)
+        } catch (e) {
+          console.error('Failed to load active session', e)
+        }
+      }
+      fetchSession()
+      // Poll for updates (e.g. every 5 seconds)
+      const interval = setInterval(fetchSession, 5000)
+      return () => clearInterval(interval)
+    } else {
+      setActiveSession(null)
+      return undefined
+    }
+  }, [sessionId])
 
   const { processHeartRate, totalCaloriesBurned, calorieHistory, reset } =
     useCalorieTracker({
@@ -61,7 +87,7 @@ const ExperimentalAnalyticsPage = () => {
   // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
   const [view, setView] = useState<View>(() =>
-    activeSession ? 'active' : 'list'
+    sessionId ? 'active' : 'list'
   )
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
@@ -72,22 +98,24 @@ const ExperimentalAnalyticsPage = () => {
       const sessions = await workoutSessionStorage.getAllSessions()
       setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
     }
-    if (isInitialized) {
-      loadSessions()
-    }
-  }, [isInitialized, activeSession?.endTime]) // Reload when session ends
+    // Load initially and when active session changes (ends)
+    loadSessions()
+  }, [sessionId]) // Reload when session ID changes (start/end)
 
   // Effect to handle the end of a workout session
   useEffect(() => {
-    if (status === 'finished') {
+    if (status === 'idle') {
       const reloadSessions = async () => {
         const sessions = await workoutSessionStorage.getAllSessions()
         setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
-        setView('list')
+        // If we were viewing active, switch to list
+        if (view === 'active') {
+            setView('list')
+        }
       }
       reloadSessions()
     }
-  }, [status])
+  }, [status, sessionId, view])
 
   // Send user metadata when WebSocket connects
   useEffect(() => {
@@ -124,13 +152,9 @@ const ExperimentalAnalyticsPage = () => {
       // Process calories (uses time-gap validation internally)
       processHeartRate(currentHr)
 
-      // Add HR data point with zone calculation
-      const dataPoint = {
-        time: Date.now(),
-        hr: currentHr,
-      }
-
-      addHrData(dataPoint)
+      // Add HR data point
+      // useWorkoutSession.addHrData expects number
+      addHrData(currentHr)
     }, 1000)
 
     return () => clearInterval(intervalId)
@@ -138,17 +162,18 @@ const ExperimentalAnalyticsPage = () => {
 
   // Handlers
   const handleStartWorkout = useCallback(() => {
-    const age = userSettings.userAge || 30
-    const weight = userSettings.userWeight || 70
-    const maxHr = 220 - age // Calculate max HR from age
-    startWorkout(age, weight, maxHr)
+    startWorkout() // No args
     reset()
     setView('active')
-  }, [startWorkout, reset, userSettings])
+  }, [startWorkout, reset])
 
   const handleResumeWorkout = useCallback(() => {
-    resumeWorkout()
-  }, [resumeWorkout])
+    startWorkout() // startWorkout handles resume if paused
+  }, [startWorkout])
+
+  const handlePauseWorkout = useCallback(() => {
+    pauseWorkout()
+  }, [pauseWorkout])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
@@ -159,8 +184,8 @@ const ExperimentalAnalyticsPage = () => {
     setView('detail')
   }, [])
 
-  const handleDeleteSession = useCallback(async (sessionId: string) => {
-    await workoutSessionStorage.deleteSession(sessionId)
+  const handleDeleteSession = useCallback(async (sid: string) => {
+    await workoutSessionStorage.deleteSession(sid)
     const sessions = await workoutSessionStorage.getAllSessions()
     setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
   }, [])
@@ -208,7 +233,7 @@ const ExperimentalAnalyticsPage = () => {
               </Button>
             )}
             {status === 'running' && (
-              <Button variant="outlined" onClick={handleEndWorkout}>
+              <Button variant="outlined" onClick={handlePauseWorkout}>
                 Pause
               </Button>
             )}
@@ -254,7 +279,7 @@ const ExperimentalAnalyticsPage = () => {
         <>
           <Box sx={{ mb: 3 }}>
             <Button variant="contained" onClick={() => setView('active')}>
-              {activeSession ? 'Back to Active Workout' : 'New Workout'}
+              {sessionId ? 'Back to Active Workout' : 'New Workout'}
             </Button>
           </Box>
           <SessionList

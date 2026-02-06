@@ -125,19 +125,6 @@ export default function ConnectPage() {
     userWeight: userWeight || 70,
   })
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  const {
-    addHrData,
-    startWorkout: startPersistentWorkout,
-    endWorkout: endPersistentWorkout,
-    resetWorkout: resetPersistentWorkout,
-  } = useWorkoutSessionManager()
-
-=======
->>>>>>> feat(medium): Persist Workout Session Across Page Navigation
-=======
->>>>>>> test(persistence): add unit tests for buffered session persistence (#6827)
   const handleStartWorkout = useCallback(() => {
     startWorkout()
   }, [startWorkout])
@@ -148,18 +135,8 @@ export default function ConnectPage() {
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
-<<<<<<< HEAD
-<<<<<<< HEAD
-    endPersistentWorkout()
-    resetCalculator() // Reset calories on workout end
-  }, [endWorkout, endPersistentWorkout, resetCalculator])
-=======
-  }, [endWorkout])
->>>>>>> feat(medium): Persist Workout Session Across Page Navigation
-=======
     resetCalculator()
   }, [endWorkout, resetCalculator])
->>>>>>> test(persistence): add unit tests for buffered session persistence (#6827)
 
   const handleResetWorkout = useCallback(() => {
     resetWorkoutSession()
@@ -173,28 +150,10 @@ export default function ConnectPage() {
         'handleHeartRateUpdate called, updating local state'
       )
       setCurrentHR(heartRate)
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-      if (workoutStatus === 'running') {
-        processHeartRate(heartRate)
-
-        addHrData({
-          time: Date.now(),
-          hr: heartRate,
-        })
-=======
-      if (workoutStatus === 'running') {
-        processHeartRate(heartRate)
-
-        // Persist individual HR data points to IndexedDB
-        addHrData(heartRate)
->>>>>>> feat(medium): Persist Workout Session Across Page Navigation
-=======
       if (workoutStatus === 'running') {
         processHeartRate(heartRate)
         addHrData(heartRate)
->>>>>>> test(persistence): add unit tests for buffered session persistence (#6827)
       }
     },
     [processHeartRate, workoutStatus, setCurrentHR, addHrData]
@@ -227,19 +186,12 @@ export default function ConnectPage() {
   }, [isConnected, workoutStatus, handlePauseWorkout])
 
   useEffect(() => {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> test(persistence): add unit tests for buffered session persistence (#6827)
     if (
       !isConnected &&
       isSupported &&
       connectionStatus === 'Connected' &&
       !connectionAttempted
     ) {
-=======
-    if (!isConnected && isSupported && connectionStatus === 'Connected') {
->>>>>>> feat(medium): Persist Workout Session Across Page Navigation
       logger.info('WebSocket ready, attempting auto-connect...')
       const timeout = setTimeout(() => {
         autoConnect().catch(() => {
