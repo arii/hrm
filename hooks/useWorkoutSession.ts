@@ -221,14 +221,16 @@ export const useWorkoutSession = ({
   // Hydrate currentSession from IDB on mount/resume if missing, and check for stale sessions
   useEffect(() => {
     if (state.sessionId && !state.currentSession) {
-      workoutSessionStorage.getSession(state.sessionId).then(async (session) => {
-        if (session) {
-          const isStale = await checkForStaleSession(session)
-          if (!isStale) {
-            dispatch({ type: 'UPDATE_SESSION', payload: session })
+      workoutSessionStorage
+        .getSession(state.sessionId)
+        .then(async (session) => {
+          if (session) {
+            const isStale = await checkForStaleSession(session)
+            if (!isStale) {
+              dispatch({ type: 'UPDATE_SESSION', payload: session })
+            }
           }
-        }
-      })
+        })
     } else if (state.currentSession) {
       // Also check if the currently loaded session has become stale (e.g. app left open overnight)
       // We can use a simpler check here or reuse the logic if we want to be aggressive
