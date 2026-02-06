@@ -8,12 +8,16 @@ export const injectBluetoothMocks = async (page: Page) => {
     let _connectedDevice: MockBluetoothDevice | null = null
 
     // 1. Mock Classes
-    class MockBluetoothRemoteGATTCharacteristic implements MockBluetoothRemoteGATTCharacteristic {
+
+    class MockBluetoothRemoteGATTCharacteristic
+      extends EventTarget
+      implements MockBluetoothRemoteGATTCharacteristic
+    {
       service: MockBluetoothRemoteGATTService
       value: DataView | null = null
-      listeners: { [key: string]: MockEventListener[] } = {}
 
       constructor(service: MockBluetoothRemoteGATTService) {
+        super()
         this.service = service
       }
 
@@ -25,20 +29,6 @@ export const injectBluetoothMocks = async (page: Page) => {
         return this
       }
 
-      addEventListener(type: string, listener: MockEventListener) {
-        if (!this.listeners[type]) this.listeners[type] = []
-        this.listeners[type].push(listener)
-      }
-
-      removeEventListener(type: string, listener: MockEventListener) {
-        if (this.listeners[type]) {
-          const index = this.listeners[type].indexOf(listener)
-          if (index > -1) {
-            this.listeners[type].splice(index, 1)
-          }
-        }
-      }
-
       // Helper to simulate data arriving
       emitValue(uint8Value: number) {
         const buffer = new ArrayBuffer(2)
@@ -47,10 +37,8 @@ export const injectBluetoothMocks = async (page: Page) => {
         view.setUint8(1, uint8Value) // HR Value
         this.value = view
 
-        const event = { target: { value: this.value } }
-        if (this.listeners['characteristicvaluechanged']) {
-          this.listeners['characteristicvaluechanged'].forEach((l) => l(event))
-        }
+        // Dispatch standard event; listeners access value via event.target.value
+        this.dispatchEvent(new Event('characteristicvaluechanged'))
       }
     }
 
@@ -93,11 +81,7 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.connected = false
         _connectedDevice = null
         // Trigger disconnection listener on device
-        if (this.device.listeners['gattserverdisconnected']) {
-          this.device.listeners['gattserverdisconnected'].forEach((l) =>
-            l({ target: this.device } as unknown as Event)
-          )
-        }
+        this.device.dispatchEvent(new Event('gattserverdisconnected'))
       }
 
       async getPrimaryService(uuid: string) {
@@ -106,31 +90,20 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothDevice implements MockBluetoothDevice {
+    class MockBluetoothDevice
+      extends EventTarget
+      implements MockBluetoothDevice
+    {
       id: string
       name: string
       gatt: MockBluetoothRemoteGATTServer
-      listeners: { [key: string]: ((event: Event) => void)[] } = {}
       _shouldFailConnection = false
 
       constructor(id: string, name: string) {
+        super()
         this.id = id
         this.name = name
         this.gatt = new MockBluetoothRemoteGATTServer(this)
-      }
-
-      addEventListener(type: string, listener: (event: Event) => void) {
-        if (!this.listeners[type]) this.listeners[type] = []
-        this.listeners[type].push(listener)
-      }
-
-      removeEventListener(type: string, listener: (event: Event) => void) {
-        if (this.listeners[type]) {
-          const index = this.listeners[type].indexOf(listener)
-          if (index > -1) {
-            this.listeners[type].splice(index, 1)
-          }
-        }
       }
 
       async forget() {

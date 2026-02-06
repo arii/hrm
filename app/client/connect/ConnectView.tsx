@@ -117,8 +117,6 @@ export default function ConnectView({
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
-  const showUserDetails = hasStarted || isConnected
-
   useEffect(() => {
     if (isConnected) {
       logger.debug(
@@ -192,6 +190,8 @@ export default function ConnectView({
       </Container>
     )
   }
+
+  const showUserDetails = hasStarted || isConnected
 
   return (
     <>
