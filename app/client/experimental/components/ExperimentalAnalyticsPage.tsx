@@ -86,13 +86,12 @@ const ExperimentalAnalyticsPage = () => {
   }, [workoutStatus])
 
   useEffect(() => {
-    // Load sessions asynchronously
-    // Wrapped in setTimeout to satisfy linter rule about sync state updates in effect
-    setTimeout(() => {
-      loadSessions().catch((err) =>
-        console.error('Failed to load sessions:', err)
-      )
-    }, 0)
+    // The linter incorrectly flags this as a synchronous state update.
+    // loadSessions is an async function that performs an IDB lookup before setting state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadSessions().catch((err) =>
+      console.error('Failed to load sessions:', err)
+    )
   }, [loadSessions, workoutStatus])
 
   useEffect(() => {

@@ -340,16 +340,46 @@ export const useWorkoutSession = ({
           dispatch({ type: 'UPDATE_SESSION', payload: updatedSession })
           await workoutSessionStorage.saveSession(updatedSession)
         } else {
-          // Fallback if currentSession is missing for some reason
+          // Fallback if currentSession is missing for some reason (e.g. hydration lag)
           const storedSession = await workoutSessionStorage.getSession(
             state.sessionId
           )
           if (storedSession) {
-            // ... similar logic, or just update session storage and let the next hydration pick it up?
-            // Better to just update storage if we can't update local state immediately
-            // But we want to avoid logic duplication.
-            // If state.currentSession is null, we should probably fetch it, update it, and dispatch it.
-            // For now, let's assume currentSession is hydrated.
+            const now = Date.now()
+            const dataPoint = { time: now, hr }
+
+            const lastDataPoint =
+              storedSession.hrHistory[storedSession.hrHistory.length - 1]
+            const timeDelta = lastDataPoint
+              ? (now - lastDataPoint.time) / 1000
+              : 1
+
+            const { zoneName } = calculateHrZone(
+              hr,
+              storedSession.userSettings.maxHr
+            )
+            const newTimeInZones = {
+              ...storedSession.timeInZones,
+              [zoneName]:
+                (storedSession.timeInZones[zoneName] || 0) + timeDelta,
+            }
+
+            const newHrHistory = [...storedSession.hrHistory, dataPoint]
+            const newMaxHr = Math.max(storedSession.maxHr, hr)
+            const newAverageHr =
+              (storedSession.averageHr * storedSession.hrHistory.length + hr) /
+              (storedSession.hrHistory.length + 1)
+
+            const updatedSession: WorkoutSessionData = {
+              ...storedSession,
+              hrHistory: newHrHistory,
+              maxHr: newMaxHr,
+              averageHr: newAverageHr,
+              timeInZones: newTimeInZones,
+            }
+
+            dispatch({ type: 'UPDATE_SESSION', payload: updatedSession })
+            await workoutSessionStorage.saveSession(updatedSession)
           }
         }
       }
