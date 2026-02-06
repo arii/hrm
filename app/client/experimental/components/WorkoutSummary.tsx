@@ -48,7 +48,7 @@ const WorkoutSummary = ({
             label={status.toUpperCase()}
             sx={{
               backgroundColor: statusColor,
-              color: '#fff',
+              color: theme.palette.getContrastText(statusColor),
               fontWeight: 'bold',
             }}
           />
