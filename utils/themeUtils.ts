@@ -1,7 +1,9 @@
 import type { Theme, Palette } from '@mui/material'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 
-const ZONE_COLOR_MAP: Partial<Record<HrZoneName, keyof Palette['custom']['hrZones']>> = {
+const ZONE_COLOR_MAP: Partial<
+  Record<HrZoneName, keyof Palette['custom']['hrZones']>
+> = {
   [HrZoneName.Max]: 'max',
   [HrZoneName.Peak]: 'peak',
   [HrZoneName.Cardio]: 'cardio',
