@@ -38,7 +38,8 @@ export class SpotifyPolling implements SpotifyService {
    * to target the currently active device.
    */
   private castDeviceId(id: string | null | undefined): string {
-    return (id || undefined) as unknown as string
+    // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
+    return id || undefined
   }
 
   private tokenManager: SpotifyTokenManager
