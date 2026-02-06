@@ -1,7 +1,7 @@
 // hooks/useLocalWorkoutBuffer.ts
 
 import { useReducer, useCallback } from 'react'
-import { HrZoneName, calculateHrZone } from '../lib/hrm/zones'
+import { HrZoneName, calculateZoneFromMaxHr } from '@/lib/shared/hr-zones'
 import { HrDataPoint } from '../lib/workout-session-storage'
 
 // --- State, Actions, and Reducer ---
@@ -22,6 +22,7 @@ type WorkoutBufferAction =
 const initialState: WorkoutBufferState = {
   hrHistory: [],
   timeInZones: {
+    [HrZoneName.Resting]: 0,
     [HrZoneName.WarmUp]: 0,
     [HrZoneName.FatBurn]: 0,
     [HrZoneName.Cardio]: 0,
@@ -66,7 +67,7 @@ function workoutBufferReducer(
       // This should not happen if lastDataPointTime is set, but as a safeguard:
       if (!previousHrDataPoint) return state
 
-      const { zoneName } = calculateHrZone(previousHrDataPoint.hr, maxHr)
+      const { zoneName } = calculateZoneFromMaxHr(previousHrDataPoint.hr, maxHr)
 
       const newTimeInZones = {
         ...state.timeInZones,

@@ -65,11 +65,30 @@ jest.mock('../../utils/logger.server.js', () => ({
 class MockWebSocket extends EventEmitter {
   isAlive = true
   clientType?: 'dashboard' | 'controller'
-  clientId: string = '' // Initialize as required by ExtWebSocket
+  clientId = '' // Initialize as required by ExtWebSocket
   terminate = jest.fn()
   ping = jest.fn()
   send = jest.fn()
+  close = jest.fn()
   readyState = 1 // WebSocket.OPEN
+
+  // Add missing WebSocket properties to satisfy ExtWebSocket interface partially
+  binaryType = 'blob'
+  bufferedAmount = 0
+  extensions = ''
+  protocol = ''
+  url = ''
+  CONNECTING = 0
+  OPEN = 1
+  CLOSING = 2
+  CLOSED = 3
+  onopen = null
+  onclose = null
+  onerror = null
+  onmessage = null
+  addEventListener = jest.fn()
+  removeEventListener = jest.fn()
+  dispatchEvent = jest.fn()
 }
 
 jest.mock('ws', () => ({

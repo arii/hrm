@@ -30,6 +30,8 @@ export interface WorkoutSessionData {
   maxHr: number
   calorieHistory: CalorieDataPoint[]
   totalCaloriesBurned: number
+  totalPausedTime: number
+  lastPauseStartTime: number | null
   userSettings: { age: number; weight: number; maxHr: number }
   lastSyncTime: number
   syncStatus: 'pending' | 'synced' | 'failed'

@@ -1,4 +1,3 @@
-// File: lib/shared/hr-zones.ts
 /**
  * Shared constants and types for Heart Rate (HR) zones to ensure consistency
  * across different modules (domain logic, UI, etc.).
@@ -9,6 +8,7 @@ export const MAX_HR_DEFAULT = 185
  * Enum for HR Zone names to provide compile-time safety and prevent string mismatches.
  */
 export enum HrZoneName {
+  Resting = 'Resting',
   WarmUp = 'Warm-up',
   FatBurn = 'Fat Burn',
   Cardio = 'Cardio',
@@ -32,7 +32,38 @@ export const calculateMaxHr = (age?: number | string | null): number => {
     return MAX_HR_DEFAULT
   }
 
-  return 208 - 0.7 * ageNum
+  return Math.round(208 - 0.7 * ageNum)
+}
+
+export const ZONE_THRESHOLDS = {
+  [HrZoneName.Resting]: 0,
+  [HrZoneName.WarmUp]: 0.5,
+  [HrZoneName.FatBurn]: 0.6,
+  [HrZoneName.Cardio]: 0.7,
+  [HrZoneName.Peak]: 0.85,
+  [HrZoneName.Max]: 0.95,
+}
+
+export interface HrZoneVisualConfig {
+  color: string
+  textColor: string
+}
+
+export const HR_ZONE_VISUAL_CONFIG: Record<HrZoneName, HrZoneVisualConfig> = {
+  [HrZoneName.Resting]: { color: '#9E9E9E', textColor: '#FFFFFF' },
+  [HrZoneName.WarmUp]: { color: '#2196F3', textColor: '#FFFFFF' },
+  [HrZoneName.FatBurn]: { color: '#4CAF50', textColor: '#FFFFFF' },
+  [HrZoneName.Cardio]: { color: '#FFEB3B', textColor: '#000000' },
+  [HrZoneName.Peak]: { color: '#F44336', textColor: '#FFFFFF' },
+  [HrZoneName.Max]: { color: '#9C27B0', textColor: '#FFFFFF' },
+  [HrZoneName.NoData]: { color: '#B0BEC5', textColor: '#FFFFFF' },
+  [HrZoneName.Unknown]: { color: '#9E9E9E', textColor: '#FFFFFF' },
+}
+
+export type HrZoneInfo = {
+  zoneName: HrZoneName
+  percentage: number
+  bpm: number
 }
 
 // Define a type for the return value for clarity
@@ -44,16 +75,40 @@ export type UserHrZones = {
   max: { min: number }
 }
 
-export const getUserHrZones = (age: number): UserHrZones => {
-  const maxHr = calculateMaxHr(age)
-  const calculateZoneBPM = (percentage: number) =>
-    Math.round(maxHr * percentage)
+export const getZoneFromPercentage = (percentage: number): HrZoneName => {
+  const ratio = percentage / 100
+  if (ratio >= ZONE_THRESHOLDS[HrZoneName.Max]) return HrZoneName.Max
+  if (ratio >= ZONE_THRESHOLDS[HrZoneName.Peak]) return HrZoneName.Peak
+  if (ratio >= ZONE_THRESHOLDS[HrZoneName.Cardio]) return HrZoneName.Cardio
+  if (ratio >= ZONE_THRESHOLDS[HrZoneName.FatBurn]) return HrZoneName.FatBurn
+  if (ratio >= ZONE_THRESHOLDS[HrZoneName.WarmUp]) return HrZoneName.WarmUp
+  return HrZoneName.Resting
+}
+
+/**
+ * Calculates the current heart rate zone, and percentage of max HR.
+ * @param {number} currentHr - The current heart rate in beats per minute.
+ * @param {number} maxHr - The user's maximum heart rate.
+ * @returns {HrZoneInfo} An object containing the zone name, percentage of max HR, and current BPM.
+ */
+export const calculateZoneFromMaxHr = (
+  currentHr: number,
+  maxHr: number
+): HrZoneInfo => {
+  if (!maxHr || !currentHr || currentHr <= 0) {
+    return {
+      zoneName: HrZoneName.NoData,
+      percentage: 0,
+      bpm: 0,
+    }
+  }
+
+  const percentage = Math.min(100, Math.round((currentHr / maxHr) * 100))
+  const zoneName = getZoneFromPercentage(percentage)
 
   return {
-    warmUp: { min: calculateZoneBPM(0.5) },
-    fatBurn: { min: calculateZoneBPM(0.6) },
-    cardio: { min: calculateZoneBPM(0.7) },
-    peak: { min: calculateZoneBPM(0.85) },
-    max: { min: calculateZoneBPM(0.95) },
+    zoneName,
+    percentage,
+    bpm: currentHr,
   }
 }

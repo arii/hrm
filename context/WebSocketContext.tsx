@@ -95,6 +95,14 @@ export const WebSocketProvider = ({
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
+  // Start stale data pruning interval
+  useEffect(() => {
+    const interval = setInterval(() => {
+      dispatch({ type: 'PRUNE_STALE' })
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [dispatch])
+
   const throttledDispatch = useRef(
     throttle((message: ServerMessage) => {
       dispatch(message)

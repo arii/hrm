@@ -3,7 +3,7 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useLocalWorkoutBuffer } from '@/hooks/useLocalWorkoutBuffer'
-import { HrZoneName } from '@/lib/hrm/zones'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 describe('useLocalWorkoutBuffer', () => {
   beforeAll(() => {
@@ -19,6 +19,7 @@ describe('useLocalWorkoutBuffer', () => {
 
     expect(result.current.hrHistory).toEqual([])
     expect(result.current.timeInZones).toEqual({
+      [HrZoneName.Resting]: 0,
       [HrZoneName.WarmUp]: 0,
       [HrZoneName.FatBurn]: 0,
       [HrZoneName.Cardio]: 0,
@@ -112,6 +113,7 @@ describe('useLocalWorkoutBuffer', () => {
 
     expect(result.current.hrHistory).toEqual([])
     expect(result.current.timeInZones).toEqual({
+      [HrZoneName.Resting]: 0,
       [HrZoneName.WarmUp]: 0,
       [HrZoneName.FatBurn]: 0,
       [HrZoneName.Cardio]: 0,

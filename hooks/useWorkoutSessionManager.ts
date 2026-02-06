@@ -6,14 +6,14 @@ import {
   WorkoutSessionData,
   HrDataPoint,
 } from '../lib/workout-session-storage'
-import { HrZoneName } from '../lib/shared/hr-zones'
+import {
+  HrZoneName,
+  calculateMaxHr,
+  calculateZoneFromMaxHr,
+} from '@/lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
-import { calculateHrZone } from '../lib/hrm/zones'
-import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useAppSnackbar } from './useAppSnackbar'
 import { isSessionStale } from '../lib/workout-session'
-
-// --- State, Actions, and Reducer ---
 
 type SessionStatus = 'idle' | 'running' | 'paused' | 'finished'
 
@@ -68,6 +68,8 @@ function sessionManagerReducer(
         userSettings: { age, weight, maxHr },
         lastSyncTime: Date.now(),
         syncStatus: 'pending',
+        totalPausedTime: 0,
+        lastPauseStartTime: null,
       }
       return {
         ...state,
@@ -77,23 +79,37 @@ function sessionManagerReducer(
     }
     case 'RESUME': {
       if (!state.session) return state
+      let updatedTotalPaused = state.session.totalPausedTime
+      if (state.session.lastPauseStartTime) {
+        updatedTotalPaused += Date.now() - state.session.lastPauseStartTime
+      }
       return {
         ...state,
-        session: { ...state.session, status: 'running' },
+        session: {
+          ...state.session,
+          status: 'running',
+          totalPausedTime: updatedTotalPaused,
+          lastPauseStartTime: null,
+        },
         status: 'running',
       }
     }
     case 'END': {
       if (!state.session) return state
-      // If running, transition to 'paused'. If paused, transition to 'finished'.
       const nextStatus = state.status === 'running' ? 'paused' : 'finished'
+
+      let updatedLastPause = state.session.lastPauseStartTime
+      if (nextStatus === 'paused' && state.status === 'running') {
+        updatedLastPause = Date.now()
+      }
+
       return {
         ...state,
         session: {
           ...state.session,
           status: nextStatus,
-          // Only set endTime when the session is truly finished
           endTime: nextStatus === 'finished' ? Date.now() : null,
+          lastPauseStartTime: updatedLastPause,
         },
         status: nextStatus,
       }
@@ -110,7 +126,7 @@ function sessionManagerReducer(
         ? (action.payload.time - lastDataPoint.time) / 1000
         : 1
 
-      const { zoneName } = calculateHrZone(
+      const { zoneName } = calculateZoneFromMaxHr(
         action.payload.hr,
         state.session.userSettings.maxHr
       )
@@ -141,8 +157,6 @@ function sessionManagerReducer(
   }
 }
 
-// --- The Hook ---
-
 export const useWorkoutSessionManager = () => {
   const [state, dispatch] = useReducer(sessionManagerReducer, initialState)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -161,9 +175,9 @@ export const useWorkoutSessionManager = () => {
         )
         await workoutSessionStorage.deleteSession(session.sessionId)
         onStale(message)
-        return true // Indicates session was stale and cleared
+        return true
       }
-      return false // Indicates session was not stale
+      return false
     },
     []
   )
@@ -181,7 +195,6 @@ export const useWorkoutSessionManager = () => {
     }
   }, [state.session, showInfo, clearStaleSession])
 
-  // Auto-recovery of incomplete sessions
   useEffect(() => {
     const recoverSession = async () => {
       let incompleteSession = await workoutSessionStorage.getIncompleteSession()
@@ -208,7 +221,6 @@ export const useWorkoutSessionManager = () => {
     }
   }, [isInitialized, showInfo, clearStaleSession])
 
-  // Validate session on window focus
   useEffect(() => {
     window.addEventListener('focus', checkAndRotateSession)
     return () => {
@@ -216,7 +228,6 @@ export const useWorkoutSessionManager = () => {
     }
   }, [checkAndRotateSession])
 
-  // Persist session changes to IndexedDB
   useEffect(() => {
     if (state.session) {
       workoutSessionStorage.saveSession(state.session)
@@ -249,7 +260,10 @@ export const useWorkoutSessionManager = () => {
     dispatch({ type: 'ADD_HR_DATA', payload: hrDataPoint })
   }, [])
 
-  const [duration, setDuration] = useState(0)
+  // Force re-render every second when running to update duration
+  const [currentTimestamp, setCurrentTimestamp] = useState<number>(() =>
+    Date.now()
+  )
 
   useEffect(() => {
     if (state.status !== 'running') {
@@ -257,14 +271,35 @@ export const useWorkoutSessionManager = () => {
     }
 
     const interval = setInterval(() => {
-      if (state.session?.startTime) {
-        const now = Date.now()
-        setDuration(Math.floor((now - state.session.startTime) / 1000))
-      }
+      setCurrentTimestamp(Date.now())
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [state.status, state.session?.startTime])
+  }, [state.status])
+
+  const duration = (() => {
+    if (
+      state.status === 'running' &&
+      state.session?.startTime &&
+      currentTimestamp
+    ) {
+      const currentPausedTime = state.session.totalPausedTime || 0
+      return Math.floor(
+        (currentTimestamp - state.session.startTime - currentPausedTime) / 1000
+      )
+    } else if (state.status === 'paused' && state.session?.startTime) {
+      if (state.session.lastPauseStartTime) {
+        const currentPausedTime = state.session.totalPausedTime || 0
+        return Math.floor(
+          (state.session.lastPauseStartTime -
+            state.session.startTime -
+            currentPausedTime) /
+            1000
+        )
+      }
+    }
+    return 0
+  })()
 
   return {
     session: state.session,
