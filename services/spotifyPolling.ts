@@ -389,16 +389,16 @@ export class SpotifyPolling implements SpotifyService {
           command,
           () => {
             if (uri) {
-              // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
               return sdk.player.startResumePlayback(
+                // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
                 deviceId || undefined,
                 undefined,
                 [uri]
               )
             }
             if (effectiveContextUri) {
-              // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
               return sdk.player.startResumePlayback(
+                // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
                 deviceId || undefined,
                 effectiveContextUri
               )
