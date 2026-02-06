@@ -8,36 +8,9 @@ export const injectBluetoothMocks = async (page: Page) => {
     let _connectedDevice: MockBluetoothDevice | null = null
 
     // 1. Mock Classes
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    type MockListener = (event: any) => void
-
-    class MockEventEmitter {
-      listeners: { [key: string]: MockListener[] } = {}
-
-      addEventListener(type: string, listener: MockListener) {
-        if (!this.listeners[type]) this.listeners[type] = []
-        this.listeners[type].push(listener)
-      }
-
-      removeEventListener(type: string, listener: MockListener) {
-        if (this.listeners[type]) {
-          const index = this.listeners[type].indexOf(listener)
-          if (index > -1) {
-            this.listeners[type].splice(index, 1)
-          }
-        }
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      dispatchEvent(type: string, event: any) {
-        if (this.listeners[type]) {
-          this.listeners[type].forEach((l) => l(event))
-        }
-      }
-    }
 
     class MockBluetoothRemoteGATTCharacteristic
-      extends MockEventEmitter
+      extends EventTarget
       implements MockBluetoothRemoteGATTCharacteristic
     {
       service: MockBluetoothRemoteGATTService
@@ -64,8 +37,10 @@ export const injectBluetoothMocks = async (page: Page) => {
         view.setUint8(1, uint8Value) // HR Value
         this.value = view
 
-        const event = { target: { value: this.value } }
-        this.dispatchEvent('characteristicvaluechanged', event)
+        // Native dispatch. 'target' is automatically set to 'this' instance.
+        // We need to attach the value to the event or rely on the listener reading it from the target
+        // The standard Web Bluetooth event is just a generic Event, and listeners read `event.target.value`.
+        this.dispatchEvent(new Event('characteristicvaluechanged'))
       }
     }
 
@@ -108,9 +83,7 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.connected = false
         _connectedDevice = null
         // Trigger disconnection listener on device
-        this.device.dispatchEvent('gattserverdisconnected', {
-          target: this.device,
-        })
+        this.device.dispatchEvent(new Event('gattserverdisconnected'))
       }
 
       async getPrimaryService(uuid: string) {
@@ -120,7 +93,7 @@ export const injectBluetoothMocks = async (page: Page) => {
     }
 
     class MockBluetoothDevice
-      extends MockEventEmitter
+      extends EventTarget
       implements MockBluetoothDevice
     {
       id: string
