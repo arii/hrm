@@ -16,10 +16,6 @@ export interface HrTileProps extends HrData {
   alertMessage?: string
 }
 
-export interface HeartRateZonesProps {
-  maxHr: number
-}
-
 export interface TimerDisplayProps {
   phase: TimerPhase
   timeRemaining: number

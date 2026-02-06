@@ -16,24 +16,6 @@ export const DISCONNECT_HR_MONITOR_BUTTON_TEXT = 'Disconnect HR Monitor'
 
 // --- Heart Rate Calculation Constants ---
 
-// --- Heart Rate Zones Configuration ---
-export interface HeartRateZoneConfig {
-  name: string
-  minPercent: number // 0-100
-  maxPercent: number // 0-100
-  color: string
-}
-
-export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
-  // Colors aligned with docs/DESIGN_GUIDELINES.md.
-  // Note: Ranges kept as 90, 80, 70, 60, 50 to maintain backward compatibility with global categorized data.
-  { name: 'Zone 5', minPercent: 90, maxPercent: 100, color: '#D32F2F' }, // Max - Primary Dark
-  { name: 'Zone 4', minPercent: 80, maxPercent: 90, color: '#F44336' }, // Peak - Primary
-  { name: 'Zone 3', minPercent: 70, maxPercent: 80, color: '#FFEB3B' }, // Cardio - Warning
-  { name: 'Zone 2', minPercent: 60, maxPercent: 70, color: '#4CAF50' }, // Fat Burn - Success
-  { name: 'Zone 1', minPercent: 50, maxPercent: 60, color: '#2196F3' }, // Warm up - Secondary
-]
-
 // --- Calorie Calculation Constants ---
 // Based on standard metabolic formulas (e.g., Keytel)
 export const CALORIE_DEFAULTS = {
