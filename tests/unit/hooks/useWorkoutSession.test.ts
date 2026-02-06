@@ -5,7 +5,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useWorkoutSession } from '../../../hooks/useWorkoutSession'
 import { workoutSessionStorage } from '../../../lib/workout-session-storage'
-import { HrZoneName } from '../../../lib/shared/hr-zones'
 
 jest.mock('../../../lib/workout-session-storage')
 

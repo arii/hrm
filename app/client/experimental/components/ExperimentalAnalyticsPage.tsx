@@ -11,7 +11,6 @@ import {
   WorkoutSessionData,
 } from '@/lib/workout-session-storage'
 import { HrZoneName } from '@/lib/shared/hr-zones'
-import { calculateHrZone } from '@/lib/hrm/zones'
 
 const defaultTimeInZones: Record<HrZoneName, number> = {
   [HrZoneName.WarmUp]: 0,
@@ -57,7 +56,6 @@ const ExperimentalAnalyticsPage = () => {
     endWorkout,
     addHrData,
     workoutStatus,
-    sessionId,
     currentSession,
   } = useWorkoutSession({
     totalCalories: totalCaloriesBurned,
