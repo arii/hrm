@@ -22,6 +22,8 @@ export interface HrZone {
 }
 
 // Heart Rate Zone Boundaries (as percentage of Max HR)
+// Note: Peak (Zone 4) starts at 80% and Max (Zone 5) starts at 90% to align with
+// standard 5-zone models and previous application logic, ensuring accurate user performance tracking.
 export const HR_ZONE_DEFINITIONS = [
   { name: HrZoneName.WarmUp, min: 0.5 },
   { name: HrZoneName.FatBurn, min: 0.6 },
