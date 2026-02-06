@@ -65,10 +65,8 @@ export const reducer = (
     }
     case 'HRM_UPDATE': {
       const payload = message.payload as ServerHrmData[]
-      // O(N) Lookup Map
       const existingMap = new Map(state.hrmData.map((d) => [d.clientId, d]))
 
-      // Single pass O(N) generation of new state
       const hrmData = payload.map((serverData) => ({
         ...(existingMap.get(serverData.clientId) || {}),
         ...serverData,
