@@ -38,6 +38,8 @@ export const HR_ZONE_DEFINITIONS = [
   { name: HrZoneName.Max, min: 0.95 },
 ]
 
+export const RESTING_THRESHOLD = HR_ZONE_DEFINITIONS[0]!.min
+
 /**
  * Estimates a user's maximum heart rate using the Tanaka formula.
  * @param age - The user's age in years.
@@ -62,7 +64,7 @@ export const calculateMaxHr = (age?: number | string | null): number => {
  * @returns {HrZone} An object containing the zone name, percentage of max HR, and current BPM.
  */
 export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
-  if (!maxHr || !currentHr || currentHr <= 0) {
+  if (maxHr <= 0 || !currentHr || currentHr <= 0) {
     return {
       zoneName: HrZoneName.NoData,
       percentage: 0,

@@ -1,14 +1,22 @@
 'use client'
 import { Box, Typography, Stack } from '@mui/material'
-import { HrZoneName, HR_ZONE_DEFINITIONS } from '@/lib/shared/hr-zones'
+import {
+  HrZoneName,
+  HR_ZONE_DEFINITIONS,
+  RESTING_THRESHOLD,
+} from '@/lib/shared/hr-zones'
 import { HR_ZONE_UI_PROPS_MAP } from '@/utils/visualization'
+import theme from '@/theme/theme'
 
 const ZoneLegend = () => {
   // Create a full list of zones including Resting
   // HR_ZONE_DEFINITIONS are ordered WarmUp -> Max
   // We want Resting first.
   const zones = [
-    { name: HrZoneName.Resting, label: 'Resting (<50%)' },
+    {
+      name: HrZoneName.Resting,
+      label: `Resting (<${RESTING_THRESHOLD * 100}%)`,
+    },
     ...HR_ZONE_DEFINITIONS.map((z) => ({
       name: z.name,
       label: `${z.name} (${z.min * 100}%)`,
@@ -37,8 +45,7 @@ const ZoneLegend = () => {
         {zones.map((zone) => {
           const props = HR_ZONE_UI_PROPS_MAP[zone.name]
           // Force white text for better contrast on colored backgrounds
-          // similar to logic in getHrZoneProps
-          const textColor = '#FFFFFF'
+          const textColor = theme.palette.getContrastText(props.bgColor)
 
           return (
             <Box
