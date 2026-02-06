@@ -12,11 +12,7 @@ export const injectBluetoothMocks = async (page: Page) => {
     type MockListener = (event: any) => void
 
     class MockEventEmitter {
-      listeners: { [key: string]: MockListener[] }
-
-      constructor() {
-        this.listeners = {}
-      }
+      listeners: { [key: string]: MockListener[] } = {}
 
       addEventListener(type: string, listener: MockListener) {
         if (!this.listeners[type]) this.listeners[type] = []
@@ -34,7 +30,7 @@ export const injectBluetoothMocks = async (page: Page) => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       dispatchEvent(type: string, event: any) {
-        if (this.listeners && this.listeners[type]) {
+        if (this.listeners[type]) {
           this.listeners[type].forEach((l) => l(event))
         }
       }
