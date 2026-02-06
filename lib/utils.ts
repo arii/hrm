@@ -84,28 +84,8 @@ export const formatDate = (
     month: 'long',
     day: 'numeric',
   },
-  locale: string = 'en-US'
+  locale?: string
 ): string => {
   const d = typeof date === 'number' ? new Date(date) : date
   return d.toLocaleDateString(locale, options)
-}
-
-/**
- * Returns a theme-compatible color name for a given workout status.
- * @param status The workout status string.
- * @returns A Material-UI color name.
- */
-export const getStatusColor = (
-  status: 'idle' | 'running' | 'paused' | 'finished' | string
-): 'success' | 'warning' | 'primary' | 'default' => {
-  switch (status) {
-    case 'running':
-      return 'success'
-    case 'paused':
-      return 'warning'
-    case 'finished':
-      return 'primary'
-    default:
-      return 'default'
-  }
 }
