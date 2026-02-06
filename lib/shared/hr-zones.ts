@@ -58,7 +58,10 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
   }
 
   const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  let calculatedZone = HR_ZONE_DEFINITIONS[0] ?? { name: HrZoneName.Unknown, min: 0 }
+  let calculatedZone = HR_ZONE_DEFINITIONS[0] ?? {
+    name: HrZoneName.Unknown,
+    min: 0,
+  }
 
   for (let i = HR_ZONE_DEFINITIONS.length - 1; i >= 0; i--) {
     const hrZone = HR_ZONE_DEFINITIONS[i]
