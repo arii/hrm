@@ -8,12 +8,47 @@ export const injectBluetoothMocks = async (page: Page) => {
     let _connectedDevice: MockBluetoothDevice | null = null
 
     // 1. Mock Classes
-    class MockBluetoothRemoteGATTCharacteristic implements MockBluetoothRemoteGATTCharacteristic {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type MockListener = (event: any) => void
+
+    class MockEventEmitter {
+      listeners: { [key: string]: MockListener[] }
+
+      constructor() {
+        this.listeners = {}
+      }
+
+      addEventListener(type: string, listener: MockListener) {
+        if (!this.listeners[type]) this.listeners[type] = []
+        this.listeners[type].push(listener)
+      }
+
+      removeEventListener(type: string, listener: MockListener) {
+        if (this.listeners[type]) {
+          const index = this.listeners[type].indexOf(listener)
+          if (index > -1) {
+            this.listeners[type].splice(index, 1)
+          }
+        }
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      dispatchEvent(type: string, event: any) {
+        if (this.listeners && this.listeners[type]) {
+          this.listeners[type].forEach((l) => l(event))
+        }
+      }
+    }
+
+    class MockBluetoothRemoteGATTCharacteristic
+      extends MockEventEmitter
+      implements MockBluetoothRemoteGATTCharacteristic
+    {
       service: MockBluetoothRemoteGATTService
       value: DataView | null = null
-      listeners: { [key: string]: MockEventListener[] } = {}
 
       constructor(service: MockBluetoothRemoteGATTService) {
+        super()
         this.service = service
       }
 
@@ -25,20 +60,6 @@ export const injectBluetoothMocks = async (page: Page) => {
         return this
       }
 
-      addEventListener(type: string, listener: MockEventListener) {
-        if (!this.listeners[type]) this.listeners[type] = []
-        this.listeners[type].push(listener)
-      }
-
-      removeEventListener(type: string, listener: MockEventListener) {
-        if (this.listeners[type]) {
-          const index = this.listeners[type].indexOf(listener)
-          if (index > -1) {
-            this.listeners[type].splice(index, 1)
-          }
-        }
-      }
-
       // Helper to simulate data arriving
       emitValue(uint8Value: number) {
         const buffer = new ArrayBuffer(2)
@@ -48,9 +69,7 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.value = view
 
         const event = { target: { value: this.value } }
-        if (this.listeners['characteristicvaluechanged']) {
-          this.listeners['characteristicvaluechanged'].forEach((l) => l(event))
-        }
+        this.dispatchEvent('characteristicvaluechanged', event)
       }
     }
 
@@ -93,11 +112,9 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.connected = false
         _connectedDevice = null
         // Trigger disconnection listener on device
-        if (this.device.listeners['gattserverdisconnected']) {
-          this.device.listeners['gattserverdisconnected'].forEach((l) =>
-            l({ target: this.device } as unknown as Event)
-          )
-        }
+        this.device.dispatchEvent('gattserverdisconnected', {
+          target: this.device,
+        })
       }
 
       async getPrimaryService(uuid: string) {
@@ -106,31 +123,20 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothDevice implements MockBluetoothDevice {
+    class MockBluetoothDevice
+      extends MockEventEmitter
+      implements MockBluetoothDevice
+    {
       id: string
       name: string
       gatt: MockBluetoothRemoteGATTServer
-      listeners: { [key: string]: ((event: Event) => void)[] } = {}
       _shouldFailConnection = false
 
       constructor(id: string, name: string) {
+        super()
         this.id = id
         this.name = name
         this.gatt = new MockBluetoothRemoteGATTServer(this)
-      }
-
-      addEventListener(type: string, listener: (event: Event) => void) {
-        if (!this.listeners[type]) this.listeners[type] = []
-        this.listeners[type].push(listener)
-      }
-
-      removeEventListener(type: string, listener: (event: Event) => void) {
-        if (this.listeners[type]) {
-          const index = this.listeners[type].indexOf(listener)
-          if (index > -1) {
-            this.listeners[type].splice(index, 1)
-          }
-        }
       }
 
       async forget() {
