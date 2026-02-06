@@ -453,7 +453,7 @@ export class SpotifyPolling implements SpotifyService {
             () =>
               sdk.player.setPlaybackVolume(
                 clampedVolume,
-                deviceId || undefined
+                this.castDeviceId(deviceId)
               ),
             { deviceId, volume: clampedVolume }
           )
