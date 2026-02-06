@@ -106,6 +106,9 @@ describe('webSocketReducer', () => {
     })
 
     it('should update an existing user and their lastUpdated timestamp', () => {
+      const mockNow = 1234567890
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(mockNow)
+
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [{ ...baseUser, isConnected: true, lastUpdated: 12345 }],
@@ -125,7 +128,9 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0].value).toBe(150)
       expect(state.hrmData[0].zone).toBe('aerobic')
       expect(state.hrmData[0].isConnected).toBe(true)
-      expect(state.hrmData[0].lastUpdated).toBe(2000000)
+      expect(state.hrmData[0].lastUpdated).toBe(mockNow)
+
+      dateSpy.mockRestore()
     })
 
     it('should remove users that are not in the payload immediately', () => {
