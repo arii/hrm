@@ -191,7 +191,7 @@ describe('useWorkoutSessionManager', () => {
         syncStatus: 'pending',
         endTime: null,
         totalPausedTime: 0,
-        lastPauseStartTime: null
+        lastPauseStartTime: null,
       }
       mockGetIncompleteSession.mockResolvedValue(staleSession)
       mockIsSameDay.mockReturnValue(false) // Mock as a different day
