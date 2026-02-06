@@ -54,6 +54,8 @@ describe('useWorkoutSession', () => {
     localStorage.clear()
     jest.clearAllMocks()
     jest.useFakeTimers()
+    // Mock Date.now to start at a fixed time
+    jest.setSystemTime(new Date('2024-01-01T12:00:00Z'))
   })
 
   afterEach(() => {
@@ -114,6 +116,8 @@ describe('useWorkoutSession', () => {
       jest.mocked(workoutSessionStorage.saveSession).mockClear()
 
       act(() => {
+        // Advance time by 1s
+        jest.advanceTimersByTime(1000)
         result.current.addHrData(120)
       })
 
@@ -129,6 +133,7 @@ describe('useWorkoutSession', () => {
       })
 
       act(() => {
+        jest.advanceTimersByTime(1000)
         result.current.addHrData(150)
       })
 
@@ -136,6 +141,7 @@ describe('useWorkoutSession', () => {
       expect(result.current.averageHr).toBe(150)
 
       act(() => {
+        jest.advanceTimersByTime(1000)
         result.current.addHrData(160)
       })
 
@@ -152,7 +158,9 @@ describe('useWorkoutSession', () => {
       jest.mocked(workoutSessionStorage.saveSession).mockClear()
 
       act(() => {
+        jest.advanceTimersByTime(1000)
         result.current.addHrData(120)
+        jest.advanceTimersByTime(1000)
         result.current.addHrData(125)
       })
 
@@ -185,6 +193,7 @@ describe('useWorkoutSession', () => {
       jest.mocked(workoutSessionStorage.saveSession).mockClear()
 
       act(() => {
+        jest.advanceTimersByTime(1000)
         result.current.addHrData(130)
       })
       expect(workoutSessionStorage.appendHrData).not.toHaveBeenCalled()
@@ -205,6 +214,7 @@ describe('useWorkoutSession', () => {
       jest.mocked(workoutSessionStorage.saveSession).mockClear()
 
       act(() => {
+        jest.advanceTimersByTime(1000)
         result.current.addHrData(140)
       })
       expect(workoutSessionStorage.appendHrData).not.toHaveBeenCalled()
@@ -228,6 +238,7 @@ describe('useWorkoutSession', () => {
       jest.mocked(workoutSessionStorage.saveSession).mockClear()
 
       act(() => {
+        jest.advanceTimersByTime(1000)
         result.current.addHrData(150)
       })
 

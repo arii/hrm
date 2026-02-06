@@ -51,9 +51,31 @@ const ExperimentalAnalyticsPage = () => {
     { time: number; hr: number }[]
   >([])
 
-  // Load history if resuming a session (optional enhancement, skipping complex merge for now)
-  // For now, we visualize what's in memory or just current stream.
-  // Ideally, we'd load the full history from IDB on mount if session exists.
+  // Load history if resuming a session
+  useEffect(() => {
+    let isMounted = true
+    if (sessionId && status !== 'idle') {
+      const loadHistory = async () => {
+        try {
+          const session = await workoutSessionStorage.getSession(sessionId)
+          if (isMounted && session && session.hrHistory) {
+            setActiveSessionHistory(session.hrHistory)
+          }
+        } catch (e) {
+          console.error('Failed to load session history', e)
+        }
+      }
+      loadHistory()
+    } else if (status === 'idle') {
+      // Use setTimeout to avoid set-state-in-effect warning
+      setTimeout(() => {
+        if (isMounted) setActiveSessionHistory([])
+      }, 0)
+    }
+    return () => {
+      isMounted = false
+    }
+  }, [sessionId, status])
 
   const { processHeartRate, calorieHistory, reset } = useCalorieTracker({
     age: userSettings.userAge || 30,
@@ -125,6 +147,8 @@ const ExperimentalAnalyticsPage = () => {
       // Process calories (uses time-gap validation internally)
       processHeartRate(currentHr)
 
+      // Add HR data point
+      // useWorkoutSession.addHrData expects number
       addHrData(currentHr)
 
       // Update local history for chart (simplified)

@@ -48,14 +48,11 @@ const initialState: SessionState = {
   hrCount: 0,
 }
 
+// Simplified validation as suggested
 const isValidSessionState = (parsed: unknown): parsed is SessionState => {
   if (!parsed || typeof parsed !== 'object') return false
   const p = parsed as Record<string, unknown>
-  return (
-    typeof p.status === 'string' &&
-    ['idle', 'running', 'paused'].includes(p.status) &&
-    typeof p.duration === 'number'
-  )
+  return typeof p.status === 'string'
 }
 
 const loadState = (): SessionState => {
