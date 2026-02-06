@@ -388,10 +388,9 @@ export class SpotifyPolling implements SpotifyService {
             // Note: The Spotify SDK types define `deviceId` as `string`, but the underlying implementation
             // checks for truthiness and omits the parameter if it is undefined/null/empty.
             // This allows us to pass `undefined` safely to target the active device.
-            // We cast to `any` here because we have verified the runtime behavior (see EndpointsBase.ts in SDK),
-            // but want to maintain clean types elsewhere.
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const safeDeviceId = (deviceId || undefined) as any
+            // We cast to `string` (via unknown) here because we have verified the runtime behavior (see EndpointsBase.ts in SDK)
+            // supports `undefined` even though the type definition requires `string`.
+            const safeDeviceId = (deviceId || undefined) as unknown as string
 
             if (uri) {
               // The Spotify API requires that if a `uri` (for a specific track) is provided,
