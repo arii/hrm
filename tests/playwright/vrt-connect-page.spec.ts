@@ -14,6 +14,15 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     // Wait for the test controls to be initialized
     await connectPage.waitForFunction(() => window.TEST_CONTROLS?.setHrmStatus)
 
+    // Verify mocks are injected
+    const isMockInjected = await connectPage.evaluate(() => {
+      // @ts-expect-error - checking for mock injection
+      return !!window.MockBluetooth || !!navigator.bluetooth
+    })
+    if (!isMockInjected) {
+      throw new Error('Bluetooth mocks were not injected successfully')
+    }
+
     // Wait for the initial auto-connect attempt to finish (100ms debounce + execution time)
     // This prevents the auto-connect logic from overwriting our manual state updates in the tests.
     await connectPage.waitForTimeout(500)

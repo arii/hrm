@@ -149,6 +149,9 @@ export const injectBluetoothMocks = async (page: Page) => {
       value: mockBluetooth,
       writable: true,
     })
+    // Fallback for environments where navigator.bluetooth is read-only
+    // @ts-expect-error -- window.MockBluetooth is a custom property injected for testing
+    window.MockBluetooth = mockBluetooth
     window.MockBluetoothDevice = MockBluetoothDevice
     window.bluetoothTestHelpers = {
       simulateHeartRate: async (bpm: number) => {
