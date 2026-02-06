@@ -142,10 +142,13 @@ describe('Environment Schema Validation', () => {
         NEXTAUTH_URL: 'http://localhost:3000',
       })
       expect(error).toBeUndefined()
-      // @ts-expect-error - parsedEnv is inferred as possibly undefined or having error
-      expect(parsedEnv?.data?.SPOTIFY_CALLBACK_URL).toBe(
-        'http://localhost:3000/api/auth/callback/spotify'
-      )
+      if (parsedEnv?.success) {
+        expect(parsedEnv.data.SPOTIFY_CALLBACK_URL).toBe(
+          'http://localhost:3000/api/auth/callback/spotify'
+        )
+      } else {
+        throw new Error('Parsing failed unexpectedly')
+      }
     })
 
     it('should use provided SPOTIFY_CALLBACK_URL if present', async () => {
@@ -158,10 +161,13 @@ describe('Environment Schema Validation', () => {
         SPOTIFY_CALLBACK_URL: 'http://custom-url.com/callback',
       })
       expect(error).toBeUndefined()
-      // @ts-expect-error - parsedEnv is inferred as possibly undefined or having error
-      expect(parsedEnv?.data?.SPOTIFY_CALLBACK_URL).toBe(
-        'http://custom-url.com/callback'
-      )
+      if (parsedEnv?.success) {
+        expect(parsedEnv.data.SPOTIFY_CALLBACK_URL).toBe(
+          'http://custom-url.com/callback'
+        )
+      } else {
+        throw new Error('Parsing failed unexpectedly')
+      }
     })
   })
 
