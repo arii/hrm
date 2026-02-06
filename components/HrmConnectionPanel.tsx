@@ -1,4 +1,3 @@
-// File: app/components/dashboard/HrmConnectionPanel.tsx
 'use client'
 import { useMemo } from 'react'
 import Box from '@mui/material/Box'
@@ -7,35 +6,16 @@ import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useNow } from '@/hooks/useNow'
 import HrTileWrapper from '@/components/HrTileWrapper'
-import { HRM_STALE_THRESHOLD_MS } from '@/utils/constants'
+import { getActiveHrmData } from '@/utils/hrm'
 
 const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const now = useNow()
 
   const tileData = useMemo(() => {
-    // Filter out users with placeholder names, no identity, or stale data
-    return hrmData
-      .filter((user) => {
-        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-        const hasNoIdentity = user.name == null
-        const isStale =
-          user.lastUpdated && now - user.lastUpdated > HRM_STALE_THRESHOLD_MS
-        return !(isPlaceholderName || hasNoIdentity || isStale)
-      })
-      .map((user) => {
-        const matchingAlert = activeAlerts.find(
-          (alert) =>
-            alert.clientId === user.clientId &&
-            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
-        )
-
-        return {
-          ...user,
-          isAlerting: !!matchingAlert,
-          alertMessage: matchingAlert?.message,
-        }
-      })
+    return getActiveHrmData(hrmData, activeAlerts, now, {
+      includeZeroValues: true,
+    })
   }, [hrmData, activeAlerts, now])
 
   const isLoading =
@@ -103,7 +83,7 @@ const HrmConnectionPanel = () => {
               },
             }}
           >
-            <HrTileWrapper user={user} />
+            <HrTileWrapper user={user} isDataStale={user.isDataStale} />
           </Box>
         ))
       )}
