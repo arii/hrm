@@ -39,6 +39,7 @@ describe('Heart Rate Zone Calculations', () => {
 
   describe('HrZoneName Enum', () => {
     it('should have the correct string values', () => {
+      expect(HrZoneName.Resting).toBe('Resting')
       expect(HrZoneName.WarmUp).toBe('Warm-up')
       expect(HrZoneName.FatBurn).toBe('Fat Burn')
       expect(HrZoneName.Cardio).toBe('Cardio')
@@ -66,6 +67,14 @@ describe('Heart Rate Zone Calculations', () => {
         percentage: 0,
         bpm: 0,
       })
+    })
+
+    it('should correctly calculate the "Resting" zone', () => {
+      // 40% of 200 is 80
+      const result = calculateHrZone(80, maxHr)
+      expect(result.zoneName).toBe(HrZoneName.Resting)
+      expect(result.percentage).toBe(40)
+      expect(result.bpm).toBe(80)
     })
 
     it('should correctly calculate the "Warm-up" zone', () => {

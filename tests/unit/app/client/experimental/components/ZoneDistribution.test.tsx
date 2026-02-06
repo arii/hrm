@@ -10,6 +10,7 @@ import { ThemeProvider } from '@mui/material/styles'
 import theme from '@/theme/theme'
 
 const mockTimeInZones = {
+  [HrZoneName.Resting]: 0,
   [HrZoneName.WarmUp]: 120,
   [HrZoneName.FatBurn]: 300,
   [HrZoneName.Cardio]: 600,

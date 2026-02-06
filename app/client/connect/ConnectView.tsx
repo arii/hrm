@@ -11,6 +11,7 @@ import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
+import ZoneLegend from '../../../components/ZoneLegend'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
@@ -395,6 +396,8 @@ export default function ConnectView({
         {hasStarted && (
           <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
         )}
+
+        <ZoneLegend />
 
         <Typography
           variant="body2"

@@ -12,6 +12,7 @@ declare module '@mui/material/styles' {
       running: string
       idle: string
       cooldown: string
+      resting: string
       warmUp: string
       fatBurn: string
       cardio: string
@@ -27,6 +28,7 @@ declare module '@mui/material/styles' {
       running?: string
       idle?: string
       cooldown?: string
+      resting?: string
       warmUp?: string
       fatBurn?: string
       cardio?: string
@@ -45,6 +47,7 @@ const theme = createTheme(libTheme, {
       running: '#3b82f6',
       idle: '#6b7280',
       cooldown: '#6b7280',
+      resting: '#9E9E9E',
       warmUp: '#3498db',
       fatBurn: '#2ecc71',
       cardio: '#f1c40f',

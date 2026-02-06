@@ -10,6 +10,7 @@ export const MAX_HR_DEFAULT = 185
  * Enum for HR Zone names to provide compile-time safety and prevent string mismatches.
  */
 export enum HrZoneName {
+  Resting = 'Resting',
   WarmUp = 'Warm-up',
   FatBurn = 'Fat Burn',
   Cardio = 'Cardio',
@@ -43,11 +44,11 @@ export const HR_ZONE_DEFINITIONS = [
  * @returns The estimated maximum heart rate.
  */
 export const calculateMaxHr = (age?: number | string | null): number => {
-  if (!age) return MAX_HR_DEFAULT
+  if (age === null || age === undefined || age === '') return MAX_HR_DEFAULT
 
-  const ageNum = typeof age === 'string' ? parseInt(age, 10) : age
+  const ageNum = Number(age)
 
-  if (isNaN(ageNum) || ageNum <= 0) {
+  if (isNaN(ageNum) || ageNum <= 0 || ageNum > 120) {
     return MAX_HR_DEFAULT
   }
 
@@ -70,7 +71,8 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
   }
 
   const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  let calculatedZone = HR_ZONE_DEFINITIONS[0]!
+  // Default to Resting zone if below the lowest defined zone (WarmUp)
+  let calculatedZone = { name: HrZoneName.Resting, min: 0 }
 
   // Iterate backwards to find the correct zone
   for (let i = HR_ZONE_DEFINITIONS.length - 1; i >= 0; i--) {

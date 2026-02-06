@@ -13,6 +13,7 @@ describe('getHrZoneProps', () => {
   const testCases = [
     { zone: HrZoneName.NoData, hr: 0, expectedColor: '#FFFFFF' },
     { zone: HrZoneName.Unknown, hr: 0, expectedColor: '#FFFFFF' },
+    { zone: HrZoneName.Resting, hr: 60, expectedColor: '#FFFFFF' },
     {
       zone: HrZoneName.WarmUp,
       hr: 100,

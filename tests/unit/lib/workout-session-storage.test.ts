@@ -15,6 +15,7 @@ const mockSessionData: WorkoutSessionData = {
   status: 'running',
   hrHistory: [],
   timeInZones: {
+    [HrZoneName.Resting]: 0,
     [HrZoneName.WarmUp]: 0,
     [HrZoneName.FatBurn]: 0,
     [HrZoneName.Cardio]: 0,

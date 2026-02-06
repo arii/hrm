@@ -28,6 +28,11 @@ type HrZoneUi = {
 }
 
 export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
+  [HrZoneName.Resting]: {
+    color: 'text-gray-500',
+    progressColor: '#9E9E9E',
+    bgColor: '#9E9E9E',
+  },
   [HrZoneName.WarmUp]: {
     color: 'text-blue-400',
     progressColor: theme.palette.secondary.main,
@@ -106,6 +111,7 @@ export const getHrZoneProps = (
   if (
     zoneName === HrZoneName.NoData ||
     zoneName === HrZoneName.Unknown ||
+    zoneName === HrZoneName.Resting ||
     zoneName === HrZoneName.FatBurn ||
     zoneName === HrZoneName.Cardio
   ) {
