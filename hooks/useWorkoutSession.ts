@@ -187,7 +187,7 @@ export const useWorkoutSession = ({
       } else {
         // We don't persist currentSession to localStorage to avoid quota issues
         // It is persisted in IndexedDB
-        const { currentSession, ...persistState } = state
+        const { currentSession: _, ...persistState } = state
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistState))
       }
     } catch (e) {
@@ -265,7 +265,12 @@ export const useWorkoutSession = ({
 
       dispatch({
         type: 'START_WORKOUT',
-        payload: { now, sessionId, startCalories: totalCalories, initialSession },
+        payload: {
+          now,
+          sessionId,
+          startCalories: totalCalories,
+          initialSession,
+        },
       })
     } else if (state.status === 'paused') {
       dispatch({ type: 'RESUME_WORKOUT', payload: { now: Date.now() } })

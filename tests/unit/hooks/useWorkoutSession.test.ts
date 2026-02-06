@@ -11,7 +11,9 @@ jest.mock('../../../lib/workout-session-storage')
 describe('useWorkoutSession', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.spyOn(Object.getPrototypeOf(window.localStorage), 'getItem').mockReturnValue(null)
+    jest
+      .spyOn(Object.getPrototypeOf(window.localStorage), 'getItem')
+      .mockReturnValue(null)
     jest
       .spyOn(Object.getPrototypeOf(window.localStorage), 'setItem')
       .mockImplementation(() => {})

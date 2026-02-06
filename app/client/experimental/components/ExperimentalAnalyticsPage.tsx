@@ -85,7 +85,6 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [workoutStatus])
 
-
   useEffect(() => {
     // Load sessions asynchronously
     // Wrapped in setTimeout to satisfy linter rule about sync state updates in effect
