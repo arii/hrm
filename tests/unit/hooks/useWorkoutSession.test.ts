@@ -125,7 +125,7 @@ describe('useWorkoutSession', () => {
 
       // We expect appendHrData to have been called now
       expect(workoutSessionStorage.appendHrData).toHaveBeenCalledTimes(1)
-      const [sessionId, buffer] = jest.mocked(
+      const [_, buffer] = jest.mocked(
         workoutSessionStorage.appendHrData
       ).mock.calls[0]
       // Check that the buffer contains the added points

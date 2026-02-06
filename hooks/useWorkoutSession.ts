@@ -38,8 +38,7 @@ const isValidSessionState = (parsed: unknown): parsed is SessionState => {
   const p = parsed as Record<string, unknown>
   return (
     typeof p.status === 'string' &&
-    ['idle', 'running', 'paused'].includes(p.status) &&
-    typeof p.duration === 'number'
+    ['idle', 'running', 'paused'].includes(p.status)
   )
 }
 
@@ -50,9 +49,23 @@ const loadState = (): SessionState => {
     if (stored) {
       const parsed = JSON.parse(stored)
       if (isValidSessionState(parsed)) {
+        // Recalculate duration to avoid storing it
+        const p = parsed as SessionState
+        let duration = p.duration || 0
+        const now = Date.now()
+
+        if (p.status === 'running' && p.startTime) {
+          duration = Math.floor((now - p.startTime - p.totalPaused) / 1000)
+        } else if (p.status === 'paused' && p.startTime && p.pauseTime) {
+          duration = Math.floor(
+            (p.pauseTime - p.startTime - p.totalPaused) / 1000
+          )
+        }
+
         return {
           ...initialState,
           ...parsed,
+          duration: duration > 0 ? duration : 0,
         }
       }
     }
@@ -171,6 +184,12 @@ export const useWorkoutSession = ({
   // Buffer for HR data points to reduce IndexedDB writes
   const hrDataBuffer = useRef<HrDataPoint[]>([])
 
+  // Keep a ref to sessionId for cleanup/flush
+  const sessionIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    sessionIdRef.current = state.sessionId
+  }, [state.sessionId])
+
   // Side Effect: Save to Storage
   // Move side effects out of the reducer to maintain purity.
   useEffect(() => {
@@ -179,12 +198,29 @@ export const useWorkoutSession = ({
       if (state.status === 'idle' && state.duration === 0) {
         window.localStorage.removeItem(STORAGE_KEY)
       } else {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+        // Only save the essential restoration data
+        const minimalState = {
+          status: state.status,
+          startTime: state.startTime,
+          startCalories: state.startCalories,
+          totalPaused: state.totalPaused,
+          pauseTime: state.pauseTime,
+          sessionId: state.sessionId,
+        }
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(minimalState))
       }
     } catch (e) {
       console.warn('Failed to save session state to storage', e)
     }
-  }, [state])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    state.status,
+    state.startTime,
+    state.startCalories,
+    state.totalPaused,
+    state.pauseTime,
+    state.sessionId,
+  ])
 
   // Sync total calories
   useEffect(() => {
@@ -213,17 +249,18 @@ export const useWorkoutSession = ({
   }, [state.status, state.startTime, state.totalPaused])
 
   const flushData = useCallback(async () => {
-    if (hrDataBuffer.current.length === 0 || !state.sessionId) return
+    const currentSessionId = sessionIdRef.current
+    if (hrDataBuffer.current.length === 0 || !currentSessionId) return
 
     const bufferToFlush = [...hrDataBuffer.current]
     hrDataBuffer.current = [] // Clear buffer immediately
 
     try {
-      await workoutSessionStorage.appendHrData(state.sessionId, bufferToFlush)
+      await workoutSessionStorage.appendHrData(currentSessionId, bufferToFlush)
     } catch (e) {
       console.error('Failed to flush HR data to storage', e)
     }
-  }, [state.sessionId])
+  }, [])
 
   // Periodic flush
   useEffect(() => {
