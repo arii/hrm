@@ -425,16 +425,22 @@ export class SpotifyPolling implements SpotifyService {
         )
         break
       case 'TRANSFER_PLAYBACK':
-        if (deviceId) {
-          await this.executeSdkCommand(
-            command,
-            () => sdk.player.transferPlayback([deviceId], true),
-            { deviceId }
-          )
+        if (!deviceId) {
+          logger.warn({ command }, 'TRANSFER_PLAYBACK missing deviceId')
+          return
         }
+        await this.executeSdkCommand(
+          command,
+          () => sdk.player.transferPlayback([deviceId], true),
+          { deviceId }
+        )
         break
       case 'SET_VOLUME':
-        if (volume !== undefined) {
+        if (volume === undefined) {
+          logger.warn({ command }, 'SET_VOLUME missing volume')
+          return
+        }
+        {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
           await this.executeSdkCommand(
             command,

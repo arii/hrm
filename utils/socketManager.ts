@@ -388,9 +388,7 @@ const handleIncomingMessage = (
           contextUri?: string
           uri?: string
         } = {}
-        // Web Clients often send empty strings ("") for form values.
-        // The truthiness check `if (commandMsg.deviceId)` automatically filters out empty strings,
-        // preventing them from being passed to the SDK which expects a valid string or undefined.
+        // Filter out empty strings from web clients to ensure SDK compatibility.
         if (commandMsg.deviceId)
           spotifyCommandParams.deviceId = commandMsg.deviceId
         if (commandMsg.volume !== undefined)
