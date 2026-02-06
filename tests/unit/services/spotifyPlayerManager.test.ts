@@ -161,4 +161,76 @@ describe('SpotifyPlayerManager', () => {
       ).rejects.toThrow('API is down')
     })
   })
+
+  describe('fetchPlaybackState', () => {
+    it('should return null when no playback state returned', async () => {
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(null)
+      const result = await playerManager.fetchPlaybackState()
+      expect(result).toBeNull()
+    })
+
+    it('should return null when no item in playback state', async () => {
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
+        item: null,
+      } as any)
+      const result = await playerManager.fetchPlaybackState()
+      expect(result).toBeNull()
+    })
+
+    it('should return parsed track data', async () => {
+      const mockTrack = {
+        id: 'track1',
+        name: 'Track Name',
+        type: 'track',
+        artists: [{ name: 'Artist 1' }, { name: 'Artist 2' }],
+        album: {
+          name: 'Album Name',
+          images: [{ url: 'http://image.url' }],
+        },
+      }
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
+        item: mockTrack,
+        is_playing: true,
+      } as any)
+
+      const result = await playerManager.fetchPlaybackState()
+
+      expect(result).toEqual({
+        trackId: 'track1',
+        trackName: 'Track Name',
+        artist: 'Artist 1, Artist 2',
+        albumName: 'Album Name',
+        albumArtUrl: 'http://image.url',
+        isPlaying: true,
+      })
+    })
+
+    it('should return parsed episode data', async () => {
+      const mockEpisode = {
+        id: 'episode1',
+        name: 'Episode Name',
+        type: 'episode',
+        show: {
+          publisher: 'Publisher Name',
+          name: 'Show Name',
+          images: [{ url: 'http://episode.image.url' }],
+        },
+      }
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
+        item: mockEpisode,
+        is_playing: false,
+      } as any)
+
+      const result = await playerManager.fetchPlaybackState()
+
+      expect(result).toEqual({
+        trackId: 'episode1',
+        trackName: 'Episode Name',
+        artist: 'Publisher Name',
+        albumName: 'Show Name',
+        albumArtUrl: 'http://episode.image.url',
+        isPlaying: false,
+      })
+    })
+  })
 })

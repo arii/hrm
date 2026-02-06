@@ -1,9 +1,4 @@
-import {
-  AccessToken,
-  SpotifyApi,
-  Track,
-  Episode,
-} from '@spotify/web-api-ts-sdk'
+import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyCommandParameters } from '../types/core'
 import {
@@ -77,13 +72,14 @@ export class SpotifyPolling implements SpotifyService {
 
   private getCurrentlyPlaying = async () => {
     try {
-      if (!this.sdk) {
+      if (!this.sdk || !this.playerManager) {
         logger.debug('Spotify SDK not initialized, skipping poll')
         return
       }
-      const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
 
-      if (!playbackState || !playbackState.item) {
+      const playbackState = await this.playerManager.fetchPlaybackState()
+
+      if (!playbackState) {
         if (this.lastPlaybackState !== false) {
           this.lastPlaybackState = false
           this.setState({
@@ -103,42 +99,23 @@ export class SpotifyPolling implements SpotifyService {
         return
       }
 
-      const item = playbackState.item
-      const isPlaying = playbackState.is_playing
+      const { trackId, trackName, artist, albumName, albumArtUrl, isPlaying } = playbackState
 
       if (
-        item.id !== this.lastTrackId ||
+        trackId !== this.lastTrackId ||
         isPlaying !== this.lastPlaybackState
       ) {
-        this.lastTrackId = item.id
-        this.lastPlaybackState = isPlaying
-
-        const trackName = item.name
-        const trackId = item.id
-        let artistName = ''
-        let albumName = ''
-        let albumArtUrl = ''
-
-        if (item.type === 'track') {
-          const track = item as Track
-          artistName = track.artists.map((a) => a.name).join(', ')
-          albumName = track.album.name
-          albumArtUrl = track.album.images?.[0]?.url ?? ''
-        } else if (item.type === 'episode') {
-          const episode = item as Episode
-          artistName = episode.show.publisher
-          albumName = episode.show.name
-          albumArtUrl = episode.show.images?.[0]?.url ?? ''
-        }
+        this.lastTrackId = trackId!
+        this.lastPlaybackState = isPlaying!
 
         this.setState({
           ...this.state,
-          trackId,
-          trackName,
-          artist: artistName,
-          albumName,
-          albumArtUrl,
-          isPlaying,
+          trackId: trackId!,
+          trackName: trackName!,
+          artist: artist!,
+          albumName: albumName!,
+          albumArtUrl: albumArtUrl!,
+          isPlaying: isPlaying!,
         })
 
         this.broadcastUpdate({
