@@ -177,4 +177,34 @@ describe('ZoneDistribution', () => {
       `background-color: ${hrZones.max}`
     )
   })
+
+  it('sorts zones from high intensity to low intensity', () => {
+    const timeInZones = {
+      [HrZoneName.WarmUp]: 10,
+      [HrZoneName.Max]: 10,
+      [HrZoneName.FatBurn]: 10,
+      [HrZoneName.Peak]: 10,
+      [HrZoneName.Cardio]: 10,
+      [HrZoneName.NoData]: 10,
+      [HrZoneName.Unknown]: 10,
+    }
+    const { getAllByTestId } = render(
+      <ThemeProvider theme={theme}>
+        <ZoneDistribution timeInZones={timeInZones} totalDuration={70} />
+      </ThemeProvider>
+    )
+
+    const rows = getAllByTestId(/^zone-row-/)
+    const renderedZones = rows.map((row) => row.getAttribute('data-testid'))
+
+    expect(renderedZones).toEqual([
+      `zone-row-${HrZoneName.Max}`,
+      `zone-row-${HrZoneName.Peak}`,
+      `zone-row-${HrZoneName.Cardio}`,
+      `zone-row-${HrZoneName.FatBurn}`,
+      `zone-row-${HrZoneName.WarmUp}`,
+      `zone-row-${HrZoneName.NoData}`,
+      `zone-row-${HrZoneName.Unknown}`,
+    ])
+  })
 })
