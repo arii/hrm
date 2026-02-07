@@ -140,10 +140,10 @@ This section clarifies when and why `package.json` and `pnpm-lock.yaml` should b
 
 ## Architectural Patterns
 
-### Type-Safe API Wrappers
+### Type-Safe API Augmentation
 
-When integrating with third-party libraries that may have incorrect or incomplete TypeScript definitions, we use a type-safe wrapper pattern to ensure our application remains robust. A prime example of this is the `safeSpotifyApi.ts` module.
+When integrating with third-party libraries that may have incorrect or incomplete TypeScript definitions, we prioritize **Module Augmentation** over runtime wrappers to ensure type safety without overhead.
 
-**Problem**: The `@spotify/web-api-ts-sdk` library does not correctly type the `deviceId` parameter as optional for several of its player methods. This can lead to runtime errors and requires unsafe type assertions in the application code.
+**Problem**: The `@spotify/web-api-ts-sdk` library does not correctly type the `deviceId` parameter as optional (`string | undefined`) for several of its player methods (e.g., `startResumePlayback`), despite the underlying API supporting it.
 
-**Solution**: The `safeSpotifyApi.ts` module provides a `createSafeSpotifyApi` function that wraps the Spotify SDK instance in a `Proxy`. This proxy intercepts calls to the player methods and dynamically handles the `deviceId` parameter, ensuring that `undefined` values are not passed to the SDK. This encapsulates the workaround in a single, reusable module, eliminating the need for scattered type assertions and improving the overall type safety of the codebase.
+**Solution**: We use TypeScript Module Augmentation in `types/spotify-web-api-ts-sdk.d.ts` to extend and correct the library's `Player` interface. This tells TypeScript that `deviceId` can be `undefined`, allowing us to use the SDK directly and idiomatically without needing complex `Proxy` wrappers or unsafe type casting.

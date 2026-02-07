@@ -1,4 +1,3 @@
-// types/spotify-custom.ts
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 /**
@@ -14,6 +13,7 @@ export type SafeSpotifyApi = Omit<SpotifyApi, 'player'> & {
     | 'skipToNext'
     | 'skipToPrevious'
     | 'setPlaybackVolume'
+    | 'transferPlayback'
   > & {
     startResumePlayback(
       deviceId: string | undefined,
@@ -29,5 +29,6 @@ export type SafeSpotifyApi = Omit<SpotifyApi, 'player'> & {
       volume_percent: number,
       deviceId: string | undefined
     ): Promise<void>
+    transferPlayback(device_ids: string[], play?: boolean): Promise<void>
   }
 }
