@@ -30,8 +30,7 @@ export const SCREENSHOT_OPTIONS = {
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  // TODO: Revert maxDiffPixelRatio to 0.02 once CI environment stabilizes or specific font rendering issues are resolved.
-  maxDiffPixelRatio: 0.05,
+  maxDiffPixelRatio: 0.02,
 }
 
 /**
