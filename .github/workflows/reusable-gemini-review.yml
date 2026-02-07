@@ -136,51 +136,11 @@ jobs:
       - name: Run AI Slop Detector
         id: slop-detector
         run: |
-          SCRIPT_PATH="./scripts/find_slop.sh"
-          SLOP_REPORT=""
+          chmod +x .github/scripts/analyze-slop.sh
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
 
-          # 1. Verify script existence and permissions
-          if [ ! -f "$SCRIPT_PATH" ]; then
-            SLOP_REPORT="❌ ERROR: Slop detector script not found at $SCRIPT_PATH."
-          elif [ ! -x "$SCRIPT_PATH" ]; then
-            SLOP_REPORT="❌ ERROR: Slop detector script at $SCRIPT_PATH is not executable. Please run 'chmod +x $SCRIPT_PATH'."
-          fi
-
-          if [ -z "$SLOP_REPORT" ]; then # If no errors so far
-            BASE_SHA=${{ github.event.pull_request.base.sha }}
-            HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
-
-            # Create temp files
-            FILE_LIST=$(mktemp)
-            TEMP_OUT=$(mktemp)
-
-            # Generate list of changed files
-            if ! git diff --name-only -z "${BASE_SHA}...${HEAD_SHA}" > "$FILE_LIST" 2>/dev/null; then
-              SLOP_REPORT="❌ ERROR: Failed to generate a list of changed files. This can happen in shallow clone environments."
-            elif [ ! -s "$FILE_LIST" ]; then
-              SLOP_REPORT="No analysis performed as no files were changed."
-            else
-              # Run script on changed files
-              # xargs -0 will read null-delimited filenames from FILE_LIST and pass them to SCRIPT_PATH
-              # Exit code 123 from xargs means "command failed" (which happens if find_slop.sh exits 1)
-              EXIT_CODE=0
-              xargs -0 "$SCRIPT_PATH" < "$FILE_LIST" > "$TEMP_OUT" 2>&1 || EXIT_CODE=$?
-
-              if [ $EXIT_CODE -eq 0 ]; then
-                # Exit code 0: Success, no slop found.
-                SLOP_REPORT=$(<"$TEMP_OUT")
-              elif [ $EXIT_CODE -eq 1 ] || [ $EXIT_CODE -eq 123 ]; then
-                # Exit code 1 or 123: Slop was found, which is an expected "failure".
-                SLOP_REPORT=$(<"$TEMP_OUT")
-              else
-                # Any other exit code indicates an unexpected script error.
-                SLOP_REPORT="❌ ERROR: Slop detector script failed with unexpected exit code $EXIT_CODE.\n\n$(<"$TEMP_OUT")"
-              fi
-            fi
-
-            # Cleanup
-            rm -f "$FILE_LIST" "$TEMP_OUT"
-          fi
+          SLOP_REPORT=$(.github/scripts/analyze-slop.sh "$BASE_SHA" "$HEAD_SHA")
 
           # Use a random delimiter to prevent injection attacks
           DELIMITER="EOF_$(openssl rand -hex 8)"
