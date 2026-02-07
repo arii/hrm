@@ -6,9 +6,8 @@ import {
   WorkoutSessionData,
   HrDataPoint,
 } from '../lib/workout-session-storage'
-import { HrZoneName } from '../lib/shared/hr-zones'
+import { HrZoneName, getHrZoneLabel, calculateZoneFromMaxHr } from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
-import { calculateHrZone } from '../lib/hrm/zones'
 import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useAppSnackbar } from './useAppSnackbar'
 import { isSessionStale } from '../lib/workout-session'
@@ -110,10 +109,11 @@ function sessionManagerReducer(
         ? (action.payload.time - lastDataPoint.time) / 1000
         : 1
 
-      const { zoneName } = calculateHrZone(
+      const { zone } = calculateZoneFromMaxHr(
         action.payload.hr,
         state.session.userSettings.maxHr
       )
+      const zoneName = getHrZoneLabel(zone) as HrZoneName
       const newTimeInZones = {
         ...state.session.timeInZones,
         [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,

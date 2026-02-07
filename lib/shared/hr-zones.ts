@@ -103,7 +103,7 @@ export const calculateZoneFromMaxHr = (
  */
 export const calculateHrZoneInfo = (
   currentHr: number,
-  age: number
+  age?: number | string | null
 ): { percentage: number; zone: number } => {
   const maxHr = calculateMaxHr(age)
   return calculateZoneFromMaxHr(currentHr, maxHr)
