@@ -33,18 +33,13 @@ const WorkoutSummary = ({
 }: WorkoutSummaryProps) => {
   const theme = useTheme()
 
-  // Helper to determine status color
-  const getStatusColor = (s: string) => {
-    switch (s) {
-      case 'running':
-        return 'success'
-      case 'paused':
-        return 'warning'
-      case 'finished':
-        return 'primary'
-      default:
-        return 'default'
-    }
+  const statusColors: Record<
+    string,
+    'success' | 'warning' | 'primary' | 'default'
+  > = {
+    running: 'success',
+    paused: 'warning',
+    finished: 'primary',
   }
 
   const formattedDate = date
@@ -92,7 +87,7 @@ const WorkoutSummary = ({
           </Box>
           <Chip
             label={status ? status.toUpperCase() : 'IDLE'}
-            color={getStatusColor(status)}
+            color={statusColors[status] || 'default'}
             variant={status === 'running' ? 'filled' : 'outlined'}
             sx={{
               fontWeight: 'bold',

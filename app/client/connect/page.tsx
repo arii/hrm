@@ -119,6 +119,7 @@ export default function ConnectPage() {
     endWorkout,
     addHrData,
     workoutStatus,
+    hrHistory,
   } = useWorkoutSession({
     totalCalories: calories,
     userAge: userAge || 30,
@@ -236,6 +237,7 @@ export default function ConnectPage() {
     <ConnectView
       workoutDuration={workoutDuration} // Pass raw number
       startTime={startTime} // Pass start time
+      hrHistory={hrHistory}
       caloriesBurned={calories}
       userName={userName}
       setUserName={(name) =>

@@ -32,11 +32,14 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material'
+import HeartRateTimeSeries from '@/app/client/experimental/components/HeartRateTimeSeries'
+import { HrDataPoint } from '@/lib/workout-session-storage'
 
 interface ConnectViewProps {
   workoutDuration: number // Changed: Raw number for better internal handling
   caloriesBurned: number
   startTime: number | null // Added: For persistence
+  hrHistory?: HrDataPoint[]
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -82,6 +85,7 @@ export default function ConnectView({
   workoutDuration,
   caloriesBurned,
   startTime,
+  hrHistory,
   userName,
   setUserName,
   userAge,
@@ -167,7 +171,6 @@ export default function ConnectView({
         spacing={2}
         justifyContent="center"
       >
-        {/* Button 1: Clear Session Only */}
         <Button
           variant="outlined"
           color="warning"
@@ -178,7 +181,6 @@ export default function ConnectView({
           Clear Session Data
         </Button>
 
-        {/* Button 2: Full Reset */}
         <Button
           variant="outlined"
           color="error"
@@ -408,6 +410,12 @@ export default function ConnectView({
               calories={caloriesBurned}
               isDataStale={isDataStale}
             />
+          </Box>
+        )}
+
+        {hrHistory && hrHistory.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <HeartRateTimeSeries hrHistory={hrHistory} />
           </Box>
         )}
 
