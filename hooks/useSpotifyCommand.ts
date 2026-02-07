@@ -3,6 +3,7 @@
 import { useCallback, useMemo } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage, SpotifyCommand } from '@/types/websocket'
+import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 
 export const useSpotifyCommand = () => {
   const { spotifyData, sendData } = useWebSocket()
@@ -14,7 +15,8 @@ export const useSpotifyCommand = () => {
   )
 
   const hrmPlayer = useMemo(
-    () => spotifyData.devices?.find((d) => d.name === 'HRM Web Player') || null,
+    () =>
+      spotifyData.devices?.find((d) => d.name === HRM_WEB_PLAYER_NAME) || null,
     [spotifyData.devices]
   )
 
@@ -43,6 +45,6 @@ export const useSpotifyCommand = () => {
     activeDevice,
     hrmPlayer,
     playback: spotifyData,
-    isHrmPlayerActive: activeDevice?.name === 'HRM Web Player',
+    isHrmPlayerActive: activeDevice?.name === HRM_WEB_PLAYER_NAME,
   }
 }

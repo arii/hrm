@@ -1,8 +1,8 @@
 // File: lib/spotify/sdk.ts
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { authOptions } from '@/lib/auth'
+import { authOptions } from '../auth.js'
 import { getServerSession } from 'next-auth/next'
-import { ApiError } from '@/lib/errors'
+import { ApiError } from '../errors.js'
 
 /**
  * Creates a Spotify SDK instance for the authenticated user.
@@ -33,4 +33,12 @@ export async function getAuthenticatedSpotifyApi(): Promise<SpotifyApi> {
   }
 
   return SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID, token)
+}
+
+/**
+ * Safely coerces a deviceId to string for SDK compatibility.
+ * The SDK types mandate string, but runtime accepts undefined for active device.
+ */
+export function getDeviceId(id: string | undefined | null): string {
+  return (id ?? undefined) as unknown as string
 }
