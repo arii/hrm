@@ -41,21 +41,27 @@ describe('HrTileWrapper', () => {
   })
 
   it('passes isDataStale=true to HrTile', () => {
-    render(<HrTileWrapper user={mockUser} isDataStale={true} />)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { updatedAt, lastUpdated, ...visualProps } = mockUser
+    render(<HrTileWrapper {...visualProps} isDataStale={true} />)
 
     expect(screen.getByTestId('mock-hr-tile')).toBeInTheDocument()
     expect(screen.getByTestId('tile-stale')).toHaveTextContent('true')
   })
 
   it('passes isDataStale=false to HrTile', () => {
-    render(<HrTileWrapper user={mockUser} isDataStale={false} />)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { updatedAt, lastUpdated, ...visualProps } = mockUser
+    render(<HrTileWrapper {...visualProps} isDataStale={false} />)
 
     expect(screen.getByTestId('mock-hr-tile')).toBeInTheDocument()
     expect(screen.getByTestId('tile-stale')).toHaveTextContent('false')
   })
 
   it('passes user data to HrTile', () => {
-    render(<HrTileWrapper user={mockUser} isDataStale={false} />)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { updatedAt, lastUpdated, ...visualProps } = mockUser
+    render(<HrTileWrapper {...visualProps} isDataStale={false} />)
 
     expect(screen.getByTestId('tile-name')).toHaveTextContent('Test User')
     expect(screen.getByTestId('tile-bpm')).toHaveTextContent('120')
