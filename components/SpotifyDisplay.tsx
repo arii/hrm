@@ -53,7 +53,7 @@ const SpotifyDisplay = () => {
 
   const handleVolumeCommitted = (newVolume: number) => {
     setLocalVolume(null)
-    execute('SET_VOLUME', { volume: newVolume })
+    execute('SET_VOLUME', { volumePercent: newVolume })
   }
 
   if (!isLoggedIn) {

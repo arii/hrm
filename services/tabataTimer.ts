@@ -5,14 +5,11 @@
  * cohesive public API for managing the timer. It delegates all logic to the
  * respective modules, acting as a facade.
  */
-import { ServerMessage } from '../types/websocket.js'
-import { TimerData, TimerMode } from '../types/core.js'
-import {
-  createInitialTimerState,
-  DualModeTimerState,
-} from './timer/timerState.js'
-import { TimerQueries } from './timer/timerQueries.js'
-import { TimerCommands } from './timer/timerCommands.js'
+import { ServerMessage } from '../types/websocket'
+import { TimerData, TimerMode } from '../types/core'
+import { createInitialTimerState, DualModeTimerState } from './timer/timerState'
+import { TimerQueries } from './timer/timerQueries'
+import { TimerCommands } from './timer/timerCommands'
 
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'
 

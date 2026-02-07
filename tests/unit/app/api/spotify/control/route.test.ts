@@ -2,20 +2,28 @@
 /** @jest-environment node */
 
 import { POST } from '@/app/api/spotify/control/route'
-import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
-import { ApiError } from '@/lib/errors'
+import { getSpotifyApiFromSession } from '@/lib/spotify/sdk'
 import { handleSpotifyApiError } from '@/services/spotifyApiErrorHandling'
+import { getServerSession } from 'next-auth/next'
 
 // Mock the dependencies
 jest.mock('@/lib/spotify/sdk', () => ({
-  getAuthenticatedSpotifyApi: jest.fn(),
+  getSpotifyApiFromSession: jest.fn(),
+  getAuthenticatedSpotifyApi: jest.fn(), // Keeping this mock if it's used elsewhere implicitly or for completeness
 }))
 jest.mock('@/services/spotifyApiErrorHandling', () => ({
   handleSpotifyApiError: jest.fn(),
 }))
+jest.mock('next-auth/next', () => ({
+  getServerSession: jest.fn(),
+}))
+jest.mock('@/lib/auth', () => ({
+  authOptions: {},
+}))
 
-const mockedGetSpotifyApi = getAuthenticatedSpotifyApi as jest.Mock
+const mockedGetSpotifyApi = getSpotifyApiFromSession as jest.Mock
 const mockedHandleError = handleSpotifyApiError as jest.Mock
+const mockedGetServerSession = getServerSession as jest.Mock
 
 // Mock player methods
 const mockPlayer = {
@@ -38,20 +46,22 @@ const createRequest = (body: object) => {
 describe('API Route: /api/spotify/control', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    // Default successful mock for the SDK
-    mockedGetSpotifyApi.mockResolvedValue({ player: mockPlayer })
+    // Default successful mocks
+    mockedGetServerSession.mockResolvedValue({
+      accessToken: 'test-token',
+      user: { name: 'Test User' },
+    })
+    mockedGetSpotifyApi.mockReturnValue({ player: mockPlayer })
   })
 
-  it('should return 401 if getAuthenticatedSpotifyApi throws an auth error', async () => {
-    mockedGetSpotifyApi.mockImplementation(() =>
-      Promise.reject(new ApiError(401, 'Not authenticated'))
-    )
+  it('should return 401 if no session exists', async () => {
+    mockedGetServerSession.mockResolvedValue(null)
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(401)
-    expect(data.error).toBe('Not authenticated')
+    expect(data.error).toBe('Unauthorized: No active session')
   })
 
   it('should return 400 for an invalid command', async () => {
@@ -63,13 +73,13 @@ describe('API Route: /api/spotify/control', () => {
     expect(data.error).toBe('Invalid command: INVALID_COMMAND')
   })
 
-  it('should return 400 if SET_VOLUME is missing volume', async () => {
+  it('should return 400 if SET_VOLUME is missing volumePercent', async () => {
     const req = createRequest({ command: 'SET_VOLUME' })
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe('Volume must be provided for SET_VOLUME')
+    expect(data.error).toBe('volumePercent must be provided for SET_VOLUME')
   })
 
   it('should return 400 if TRANSFER_PLAYBACK is missing deviceId', async () => {
@@ -94,7 +104,7 @@ describe('API Route: /api/spotify/control', () => {
   it('should call setPlaybackVolume for SET_VOLUME command', async () => {
     const req = createRequest({
       command: 'SET_VOLUME',
-      volume: 50,
+      volumePercent: 50,
       deviceId: 'test-device',
     })
     const response = await POST(req)
@@ -133,9 +143,11 @@ describe('API Route: /api/spotify/control', () => {
   })
 
   it('should return 500 for unexpected errors', async () => {
-    mockedGetSpotifyApi.mockRejectedValue(
-      new Error('Something unexpected happened')
-    )
+    // Force SDK creation to throw (which happens synchronously or inside the logic flow)
+    mockedGetSpotifyApi.mockImplementation(() => {
+      throw new Error('Something unexpected happened')
+    })
+
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
     const data = await response.json()

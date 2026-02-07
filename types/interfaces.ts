@@ -3,7 +3,7 @@
  * Defines common interfaces for services to promote consistency and enable
  * dependency inversion (the "D" in SOLID). By depending on these abstractions
  * rather than concrete implementations, consuming code becomes more modular,
-t* estable, and easier to refactor.
+ * testable, and easier to refactor.
  */
 
 import { SpotifyTokenPayload } from '../services/spotifyTokenManager'
@@ -97,7 +97,7 @@ export type SpotifyService = StateProvider<SpotifyData> &
     SpotifyCommand,
     {
       deviceId?: string
-      volume?: number
+      volumePercent?: number
       playlistUri?: string
       contextUri?: string
     }
