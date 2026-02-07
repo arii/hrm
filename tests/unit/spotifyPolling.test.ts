@@ -346,74 +346,53 @@ describe('SpotifyPolling Service', () => {
       expect(lastState?.trackName).toBe('Nothing is currently playing.')
     })
 
-    it('should broadcast update when transitioning from playing to stopped', async () => {
-      // 1. Setup initial state as "Playing"
+    // Helper function to reduce boilerplate
+    async function runPollingScenario(
+      initialState: Partial<SpotifyData>,
+      mockResponse: unknown
+    ) {
       spotifyService._test_!.setState({
         ...spotifyService.getState(),
-        isPlaying: true,
-        trackName: 'Some Song',
+        ...initialState,
       })
 
-      // 2. Mock API returning null (stopped)
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(null)
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(mockResponse)
 
-      // 3. Trigger poll
       spotifyService.startPolling()
       jest.advanceTimersByTime(150)
       await Promise.resolve()
       await Promise.resolve()
       spotifyService.stopPolling()
+    }
 
-      // 4. Verify broadcast
+    it('should broadcast update when transitioning from playing to stopped', async () => {
+      await runPollingScenario(
+        { isPlaying: true, trackName: 'Some Song' },
+        null
+      )
+
       const lastState = broadcastedStates.at(-1)
       expect(lastState?.isPlaying).toBe(false)
       expect(lastState?.trackName).toBe('Nothing is currently playing.')
     })
 
     it('should broadcast update when transitioning from non-default track name to stopped', async () => {
-      // 1. Setup initial state as "Awaiting Login..." but not playing
-      spotifyService._test_!.setState({
-        ...spotifyService.getState(),
-        isPlaying: false,
-        trackName: 'Awaiting Login...',
-      })
+      await runPollingScenario(
+        { isPlaying: false, trackName: 'Awaiting Login...' },
+        null
+      )
 
-      // 2. Mock API returning null (stopped/ready)
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(null)
-
-      // 3. Trigger poll
-      spotifyService.startPolling()
-      jest.advanceTimersByTime(150)
-      await Promise.resolve()
-      await Promise.resolve()
-      spotifyService.stopPolling()
-
-      // 4. Verify broadcast
       const lastState = broadcastedStates.at(-1)
       expect(lastState?.trackName).toBe('Nothing is currently playing.')
     })
 
     it('should NOT broadcast if already stopped and API returns null', async () => {
-      // 1. Setup initial state as "Nothing is currently playing."
-      spotifyService._test_!.setState({
-        ...spotifyService.getState(),
-        isPlaying: false,
-        trackName: 'Nothing is currently playing.',
-      })
-
       broadcastedStates.length = 0 // Clear previous broadcasts
+      await runPollingScenario(
+        { isPlaying: false, trackName: 'Nothing is currently playing.' },
+        null
+      )
 
-      // 2. Mock API returning null
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(null)
-
-      // 3. Trigger poll
-      spotifyService.startPolling()
-      jest.advanceTimersByTime(150)
-      await Promise.resolve()
-      await Promise.resolve()
-      spotifyService.stopPolling()
-
-      // 4. Verify NO broadcast
       expect(broadcastedStates.length).toBe(0)
     })
 
@@ -427,15 +406,8 @@ describe('SpotifyPolling Service', () => {
         isPlaying: true,
       }
 
-      // 1. Setup initial state
-      spotifyService._test_!.setState({
-        ...spotifyService.getState(),
-        ...trackState,
-      })
-
       broadcastedStates.length = 0 // Clear broadcasts
 
-      // 2. Mock API returning same state
       const mockPlayback = {
         item: {
           id: 'track1',
@@ -447,16 +419,9 @@ describe('SpotifyPolling Service', () => {
         is_playing: true,
         currently_playing_type: 'track',
       }
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(mockPlayback)
 
-      // 3. Trigger poll
-      spotifyService.startPolling()
-      jest.advanceTimersByTime(150)
-      await Promise.resolve()
-      await Promise.resolve()
-      spotifyService.stopPolling()
+      await runPollingScenario(trackState, mockPlayback)
 
-      // 4. Verify NO broadcast
       expect(broadcastedStates.length).toBe(0)
     })
   })
