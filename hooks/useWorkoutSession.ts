@@ -1,5 +1,12 @@
 // hooks/useWorkoutSession.ts
-import { useEffect, useReducer, useCallback, useMemo, useRef } from 'react'
+import {
+  useEffect,
+  useReducer,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import {
   workoutSessionStorage,
   HrDataPoint,
@@ -159,12 +166,25 @@ export const useWorkoutSession = ({
 }: WorkoutSessionOptions) => {
   // Initialize from default initialState to avoid hydration mismatch
   const [state, dispatch] = useReducer(sessionReducer, initialState)
+  const [hrHistory, setHrHistory] = useState<HrDataPoint[]>([])
 
   // Load from storage on mount to fix hydration mismatch
   useEffect(() => {
     const loaded = loadState()
     if (loaded.status !== 'idle' || loaded.duration > 0) {
       dispatch({ type: 'HYDRATE', payload: loaded })
+
+      // Load history asynchronously if session exists
+      if (loaded.sessionId) {
+        workoutSessionStorage
+          .getSession(loaded.sessionId)
+          .then((session) => {
+            if (session?.hrHistory) {
+              setHrHistory(session.hrHistory)
+            }
+          })
+          .catch((e) => console.warn('Failed to load session history', e))
+      }
     }
   }, [])
 
@@ -173,18 +193,30 @@ export const useWorkoutSession = ({
 
   // Side Effect: Save to Storage
   // Move side effects out of the reducer to maintain purity.
+  // We use JSON.stringify as a stable dependency to detect structural changes
+  // in the state we care about (everything except duration), preventing
+  // frequent writes when only the duration (1Hz) changes.
+  const serializedStateToSave = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { duration, ...rest } = state
+    const stateToSave = { ...rest, duration: 0 }
+    return JSON.stringify(stateToSave)
+  }, [state])
+
   useEffect(() => {
     if (typeof window === 'undefined') return
+
     try {
-      if (state.status === 'idle' && state.duration === 0) {
+      const parsed = JSON.parse(serializedStateToSave)
+      if (parsed.status === 'idle' && !parsed.startTime) {
         window.localStorage.removeItem(STORAGE_KEY)
       } else {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+        window.localStorage.setItem(STORAGE_KEY, serializedStateToSave)
       }
     } catch (e) {
       console.warn('Failed to save session state to storage', e)
     }
-  }, [state])
+  }, [serializedStateToSave])
 
   // Sync total calories
   useEffect(() => {
@@ -225,7 +257,7 @@ export const useWorkoutSession = ({
     }
   }, [state.sessionId])
 
-  // Periodic flush
+  // Periodic flush & Unmount flush
   useEffect(() => {
     if (state.status !== 'running') return
 
@@ -233,8 +265,18 @@ export const useWorkoutSession = ({
       flushData()
     }, 30000) // Flush every 30 seconds
 
+    const handleUnload = () => {
+      flushData()
+    }
+
+    // Ensure flush on tab close/nav
+    window.addEventListener('pagehide', handleUnload)
+    window.addEventListener('beforeunload', handleUnload)
+
     return () => {
       clearInterval(interval)
+      window.removeEventListener('pagehide', handleUnload)
+      window.removeEventListener('beforeunload', handleUnload)
       flushData() // Flush on unmount/status change
     }
   }, [state.status, flushData])
@@ -308,7 +350,9 @@ export const useWorkoutSession = ({
   const addHrData = useCallback(
     (hr: number) => {
       if (state.status === 'running' && state.sessionId) {
-        hrDataBuffer.current.push({ time: Date.now(), hr })
+        const point = { time: Date.now(), hr }
+        hrDataBuffer.current.push(point)
+        setHrHistory((prev) => [...prev, point])
       }
     },
     [state.status, state.sessionId]
@@ -335,5 +379,6 @@ export const useWorkoutSession = ({
     workoutStatus: state.status,
     hasStarted: state.startTime !== null,
     sessionId: state.sessionId,
+    hrHistory,
   }
 }

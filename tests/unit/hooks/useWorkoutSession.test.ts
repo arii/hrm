@@ -13,7 +13,10 @@ jest.mock('@/lib/workout-session-storage', () => ({
     getSession: jest.fn().mockResolvedValue({
       sessionId: 'test-session-id',
       status: 'running',
-      hrHistory: [],
+      hrHistory: [
+        { time: 1000, hr: 80 },
+        { time: 2000, hr: 85 },
+      ],
       timeInZones: {},
       maxHr: 0,
       averageHr: 0,
@@ -125,7 +128,7 @@ describe('useWorkoutSession', () => {
 
       // We expect appendHrData to have been called now
       expect(workoutSessionStorage.appendHrData).toHaveBeenCalledTimes(1)
-      const [sessionId, buffer] = jest.mocked(
+      const [_sessionId, buffer] = jest.mocked(
         workoutSessionStorage.appendHrData
       ).mock.calls[0]
       // Check that the buffer contains the added points
@@ -199,6 +202,75 @@ describe('useWorkoutSession', () => {
 
       // The cleanup function of the useEffect should trigger a flush
       expect(workoutSessionStorage.appendHrData).toHaveBeenCalled()
+    })
+
+    it('should persist minimal state to localStorage (excluding duration)', async () => {
+      const { result } = renderHook(() => useWorkoutSession({}))
+
+      act(() => {
+        result.current.startWorkout()
+      })
+
+      // Wait for state update
+      await act(async () => {
+        jest.advanceTimersByTime(1000)
+      })
+
+      const stored = localStorage.getItem('hrm_dashboard:active_session')
+      expect(stored).toBeTruthy()
+      const parsed = JSON.parse(stored!)
+
+      // Verify duration is NOT persisted as the live value (to prevent 1Hz thrashing)
+      expect(parsed.duration).toBe(0)
+      // Verify essential state IS persisted
+      expect(parsed.status).toBe('running')
+      expect(parsed.startTime).toBeDefined()
+      expect(parsed.sessionId).toBeDefined()
+    })
+
+    it('should load hrHistory from IndexedDB on mount', async () => {
+      // Simulate existing session in localStorage
+      localStorage.setItem(
+        'hrm_dashboard:active_session',
+        JSON.stringify({
+          status: 'running',
+          duration: 0,
+          sessionId: 'test-session-id',
+          startTime: Date.now() - 5000,
+        })
+      )
+
+      const { result } = renderHook(() => useWorkoutSession({}))
+
+      // Wait for async effect
+      await act(async () => {
+        await Promise.resolve()
+      })
+
+      expect(workoutSessionStorage.getSession).toHaveBeenCalledWith(
+        'test-session-id'
+      )
+      // hrHistory should be populated from the mock
+      expect(result.current.hrHistory).toHaveLength(2)
+      expect(result.current.hrHistory[0].hr).toBe(80)
+    })
+
+    it('should attach pagehide/beforeunload listeners for data safety', async () => {
+      const addEventListenerSpy = jest.spyOn(window, 'addEventListener')
+      const { result } = renderHook(() => useWorkoutSession({}))
+
+      act(() => {
+        result.current.startWorkout()
+      })
+
+      expect(addEventListenerSpy).toHaveBeenCalledWith(
+        'pagehide',
+        expect.any(Function)
+      )
+      expect(addEventListenerSpy).toHaveBeenCalledWith(
+        'beforeunload',
+        expect.any(Function)
+      )
     })
   })
 })

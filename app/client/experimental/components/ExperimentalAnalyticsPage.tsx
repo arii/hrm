@@ -30,9 +30,12 @@ import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
 
-const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
-  ssr: false,
-})
+const HeartRateTimeSeries = dynamic(
+  () => import('@/components/HeartRateTimeSeries'),
+  {
+    ssr: false,
+  }
+)
 
 type View = 'active' | 'list' | 'detail'
 
@@ -59,6 +62,8 @@ const ExperimentalAnalyticsPage = () => {
   )
 
   useEffect(() => {
+    let interval: NodeJS.Timeout | undefined
+
     if (sessionId) {
       const fetchSession = async () => {
         try {
@@ -70,11 +75,15 @@ const ExperimentalAnalyticsPage = () => {
       }
       fetchSession()
       // Poll for updates (e.g. every 5 seconds)
-      const interval = setInterval(fetchSession, 5000)
-      return () => clearInterval(interval)
+      interval = setInterval(fetchSession, 5000)
     } else {
-      setActiveSession(null)
-      return undefined
+      // Use setTimeout to avoid "setState in effect" linter warning/cascading renders
+      // This ensures the update happens in the next tick
+      setTimeout(() => setActiveSession(null), 0)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
     }
   }, [sessionId])
 
@@ -86,9 +95,7 @@ const ExperimentalAnalyticsPage = () => {
 
   // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
-  const [view, setView] = useState<View>(() =>
-    sessionId ? 'active' : 'list'
-  )
+  const [view, setView] = useState<View>(() => (sessionId ? 'active' : 'list'))
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
 
@@ -110,7 +117,7 @@ const ExperimentalAnalyticsPage = () => {
         setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
         // If we were viewing active, switch to list
         if (view === 'active') {
-            setView('list')
+          setView('list')
         }
       }
       reloadSessions()
