@@ -21,7 +21,9 @@ interface TestHrmData extends HrmData {
 describe('webSocketReducer', () => {
   // Helper to create mock users and reduce duplication
   // Returns TestHrmData to allow for extra test properties
-  const createMockUser = (overrides: Partial<TestHrmData> = {}): TestHrmData => ({
+  const createMockUser = (
+    overrides: Partial<TestHrmData> = {}
+  ): TestHrmData => ({
     clientId: 'client-1',
     name: 'User A',
     age: 30,
