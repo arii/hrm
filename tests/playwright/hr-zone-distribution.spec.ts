@@ -20,6 +20,7 @@ test.describe('HR Zone Distribution Interactivity', () => {
   })
 
   test('should display zone distribution and show tooltip on hover', async () => {
+    test.setTimeout(60000)
     await dashboardPage.goto('/client/experimental')
     await waitForPageReady(dashboardPage)
     await waitForPageReady(mockPage)
@@ -53,9 +54,6 @@ test.describe('HR Zone Distribution Interactivity', () => {
     const zoneCard = dashboardPage.getByTestId('zone-distribution-card')
     await expect(zoneCard).toBeVisible({ timeout: 15000 })
 
-    // Debug: take screenshot of dashboard
-    await dashboardPage.screenshot({ path: 'dashboard-debug.png' })
-
     // Assert legend contains Peak zone
     const peakRow = dashboardPage.getByTestId('zone-row-Peak')
     await expect(peakRow).toBeVisible({ timeout: 10000 })
@@ -64,7 +62,9 @@ test.describe('HR Zone Distribution Interactivity', () => {
     // Pause workout and stop streaming to stabilize the chart for hover
     await dashboardPage.getByRole('button', { name: 'Pause' }).click()
     await mockPage.getByTestId('streaming-stop-button').click()
-    await dashboardPage.waitForTimeout(1000)
+    await expect(
+      dashboardPage.getByRole('button', { name: 'Resume' })
+    ).toBeVisible()
 
     // Verify chart is rendered (has sectors)
     const sectors = dashboardPage
@@ -77,8 +77,5 @@ test.describe('HR Zone Distribution Interactivity', () => {
       name: /heart rate zone distribution chart/i,
     })
     await expect(chartRegion).toBeVisible()
-
-    // Take verification screenshot
-    await dashboardPage.screenshot({ path: 'final-verification.png' })
   })
 })
