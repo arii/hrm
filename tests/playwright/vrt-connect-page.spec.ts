@@ -6,7 +6,21 @@ import { BluetoothConnectionStatus } from '../../types/bluetooth'
 test.describe('Visual Regression Tests for /client/connect Page', () => {
   test.beforeEach(async ({ connectPage }) => {
     await injectBluetoothMocks(connectPage)
+    await connectPage.addInitScript(() => window.localStorage.clear())
     await connectPage.goto('/client/connect')
+
+    // Handle potential stale session state
+    // Give the page a moment to settle/hydrate
+    await connectPage.waitForTimeout(2000)
+
+    const connectedText = connectPage.getByText('Connected as')
+    if (await connectedText.isVisible()) {
+      await connectPage
+        .getByRole('button', { name: 'Forget Device & Reset All' })
+        .click()
+      await connectPage.waitForTimeout(1000) // Wait for reset
+    }
+
     // Fill the form once for all tests
     await connectPage.getByLabel('Your Name').fill('VRT Runner')
     await connectPage.getByLabel('Your Age').fill('30')

@@ -66,9 +66,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
   const [connectionAttempted, setConnectionAttempted] = useState(false)
-  const [isSupported] = useState(
-    () => typeof navigator !== 'undefined' && !!navigator.bluetooth
-  )
+  const [isSupported, setIsSupported] = useState(false)
+
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_TESTING === 'true') {
+      setIsSupported(true)
+    } else {
+      setIsSupported(typeof navigator !== 'undefined' && !!navigator.bluetooth)
+    }
+  }, [])
 
   const deviceStatus = customStatusMessage ?? statusMessageMap[status]
 

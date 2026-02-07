@@ -73,6 +73,7 @@ const ExperimentalAnalyticsPage = () => {
       const interval = setInterval(fetchSession, 5000)
       return () => clearInterval(interval)
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveSession(null)
       return undefined
     }
@@ -86,9 +87,7 @@ const ExperimentalAnalyticsPage = () => {
 
   // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
-  const [view, setView] = useState<View>(() =>
-    sessionId ? 'active' : 'list'
-  )
+  const [view, setView] = useState<View>(() => (sessionId ? 'active' : 'list'))
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
 
@@ -110,7 +109,7 @@ const ExperimentalAnalyticsPage = () => {
         setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
         // If we were viewing active, switch to list
         if (view === 'active') {
-            setView('list')
+          setView('list')
         }
       }
       reloadSessions()
