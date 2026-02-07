@@ -220,28 +220,28 @@ describe('SpotifyPolling Service', () => {
 
   describe('Volume Control', () => {
     it('should set volume with SET_VOLUME command', async () => {
-      await spotifyService.handleCommand('SET_VOLUME', { volume: 75 })
+      await spotifyService.handleCommand('SET_VOLUME', { volumePercent: 75 })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(75, undefined)
     })
 
     it('should clamp volume to 0-100 range', async () => {
-      await spotifyService.handleCommand('SET_VOLUME', { volume: 150 })
+      await spotifyService.handleCommand('SET_VOLUME', { volumePercent: 150 })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(100, undefined)
     })
 
     it('should clamp negative volume to 0', async () => {
-      await spotifyService.handleCommand('SET_VOLUME', { volume: -10 })
+      await spotifyService.handleCommand('SET_VOLUME', { volumePercent: -10 })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(0, undefined)
     })
 
     it('should round volume to nearest integer', async () => {
-      await spotifyService.handleCommand('SET_VOLUME', { volume: 75.7 })
+      await spotifyService.handleCommand('SET_VOLUME', { volumePercent: 75.7 })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(76, undefined)
     })
 
     it('should return true on successful volume change', async () => {
       mockPlayer.setPlaybackVolume.mockImplementation(() => Promise.resolve())
-      await spotifyService.handleCommand('SET_VOLUME', { volume: 50 })
+      await spotifyService.handleCommand('SET_VOLUME', { volumePercent: 50 })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
     })
 
@@ -249,7 +249,7 @@ describe('SpotifyPolling Service', () => {
       mockPlayer.setPlaybackVolume.mockImplementation(() =>
         Promise.reject(new Error('API Error'))
       )
-      await spotifyService.handleCommand('SET_VOLUME', { volume: 50 })
+      await spotifyService.handleCommand('SET_VOLUME', { volumePercent: 50 })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
       expect(logger.error).toHaveBeenCalled()
     })
@@ -481,7 +481,7 @@ describe('SpotifyPolling Service', () => {
       })
 
       const newService = await SpotifyPolling.create(broadcastMock)
-      await newService.handleCommand('SET_VOLUME', { volume: 50 })
+      await newService.handleCommand('SET_VOLUME', { volumePercent: 50 })
       expect(mockPlayer.setPlaybackVolume).not.toHaveBeenCalled()
 
       // Restore original SpotifyPolling.create

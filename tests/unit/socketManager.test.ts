@@ -577,7 +577,7 @@ describe('WebSocket Manager', () => {
         type: 'SPOTIFY_COMMAND',
         command: 'PLAY',
         deviceId: 'test_device',
-        volume: 50,
+        volumePercent: 50,
         playlistUri: 'spotify:playlist:123',
         contextUri: 'spotify:album:456',
       })
@@ -587,7 +587,7 @@ describe('WebSocket Manager', () => {
         'PLAY',
         {
           deviceId: 'test_device',
-          volume: 50,
+          volumePercent: 50,
           playlistUri: 'spotify:playlist:123',
           contextUri: 'spotify:album:456',
         }
