@@ -93,9 +93,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     const win = window as unknown as {
       bluetoothTestHelpers?: unknown
       MockBluetooth?: unknown
+      __IS_TEST_ENV__?: boolean
     }
 
-    if ((win.bluetoothTestHelpers || win.MockBluetooth) && !isSupported) {
+    if (
+      (win.bluetoothTestHelpers ||
+        win.MockBluetooth ||
+        win.__IS_TEST_ENV__ === true) &&
+      !isSupported
+    ) {
       setIsSupported(true)
     }
   }, [isSupported])
@@ -385,6 +391,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     const isTestEnv =
       win?.bluetoothTestHelpers ||
       win?.MockBluetooth ||
+      (win as unknown as { __IS_TEST_ENV__?: boolean })?.__IS_TEST_ENV__ ===
+        true ||
       process.env.NEXT_PUBLIC_TESTING === 'true'
 
     if (isTestEnv && win) {
