@@ -67,8 +67,7 @@ export const reducer = (
       const now = Date.now()
       const payload = message.payload as ServerHrmData[]
 
-      // Snapshot Synchronization: The payload is the source of truth.
-      // We map the payload to the new state, preserving existing local state if needed.
+      // Snapshot Sync: Payload is the source of truth. Items absent from payload are removed.
       const newHrmData: HrmData[] = payload.map((newUser) => {
         const existingUser = state.hrmData.find(
           (u) => u.clientId === newUser.clientId

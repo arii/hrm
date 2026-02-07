@@ -14,6 +14,7 @@ import {
 } from 'react'
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
+import { validateWebSocketMessage } from '../utils/websocket-validation'
 
 // Define a type for the test controls to avoid using 'any'
 interface TestControls {
@@ -134,13 +135,16 @@ export const WebSocketProvider = ({
       process.env.NEXT_PUBLIC_TESTING === 'true'
     ) {
       const handleMessage = (event: MessageEvent) => {
-        if (
-          event.source === window &&
-          event.data &&
-          (event.data.type === 'HRM_UPDATE' ||
-            event.data.type === 'DEVICE_OFFLINE')
-        ) {
-          dispatch(event.data)
+        if (event.source !== window || !event.data) return
+
+        // Validate payload before dispatching
+        if (validateWebSocketMessage(event.data)) {
+          if (
+            event.data.type === 'HRM_UPDATE' ||
+            event.data.type === 'DEVICE_OFFLINE'
+          ) {
+            dispatch(event.data)
+          }
         }
       }
       window.addEventListener('message', handleMessage)
@@ -312,6 +316,11 @@ export const WebSocketProvider = ({
               detail: message,
             })
           )
+          return
+        }
+
+        // Validate payload before processing
+        if (!validateWebSocketMessage(message)) {
           return
         }
 
