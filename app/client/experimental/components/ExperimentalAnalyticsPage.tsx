@@ -79,16 +79,13 @@ const ExperimentalAnalyticsPage = () => {
         isActive = false
         clearInterval(id)
       }
-    } else {
-      const t = setTimeout(() => {
-        if (isActive) setActiveSession(null)
-      }, 0)
-      return () => {
-        isActive = false
-        clearTimeout(t)
-      }
+    } else if (activeSession) {
+      // Wrap in setTimeout to avoid "synchronous setState in effect" warning
+      // This is safe here because we are intentionally deferring the clear operation
+      const t = setTimeout(() => setActiveSession(null), 0)
+      return () => clearTimeout(t)
     }
-  }, [sessionId])
+  }, [sessionId, activeSession])
 
   const { processHeartRate, totalCaloriesBurned, calorieHistory, reset } =
     useCalorieTracker({

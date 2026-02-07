@@ -46,8 +46,9 @@ test.describe('Visual Regression Tests', () => {
     })
 
     test('select music button hover state', async () => {
+      // Use regex to match either "Select Music" (disconnected) or "Select Playlist" (connected/error state)
       const selectMusicButton = controlPage.getByRole('button', {
-        name: 'Select Music',
+        name: /Select (Music|Playlist)/,
       })
       await selectMusicButton.hover()
       await takeScreenshot(selectMusicButton, 'select-music-button-hover.png')
