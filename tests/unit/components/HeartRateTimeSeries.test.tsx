@@ -3,7 +3,7 @@
  */
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import HeartRateTimeSeries from '@/app/client/experimental/components/HeartRateTimeSeries'
+import HeartRateTimeSeries from '@/components/HeartRateTimeSeries'
 import { HrDataPoint } from '@/lib/workout-session-storage'
 
 // Mock ResizeObserver for Recharts

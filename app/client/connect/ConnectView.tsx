@@ -36,7 +36,7 @@ import { HrDataPoint } from '@/lib/workout-session-storage'
 import dynamic from 'next/dynamic'
 
 const HeartRateTimeSeries = dynamic(
-  () => import('@/app/client/experimental/components/HeartRateTimeSeries'),
+  () => import('@/components/HeartRateTimeSeries'),
   { ssr: false }
 )
 

@@ -59,6 +59,8 @@ const ExperimentalAnalyticsPage = () => {
   )
 
   useEffect(() => {
+    let interval: NodeJS.Timeout
+
     if (sessionId) {
       const fetchSession = async () => {
         try {
@@ -70,12 +72,15 @@ const ExperimentalAnalyticsPage = () => {
       }
       fetchSession()
       // Poll for updates (e.g. every 5 seconds)
-      const interval = setInterval(fetchSession, 5000)
-      return () => clearInterval(interval)
+      interval = setInterval(fetchSession, 5000)
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      // Safe to set state here as it's triggered by sessionId change prop
+      // and we want to clear the local session view
       setActiveSession(null)
-      return undefined
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
     }
   }, [sessionId])
 
