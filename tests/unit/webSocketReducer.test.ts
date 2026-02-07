@@ -15,7 +15,6 @@ import { HrmStreamData as ServerHrmData } from '../../types/core'
 interface TestHrmData extends HrmData {
   percentage?: number
   zone?: number
-  restingHr?: number
 }
 
 describe('webSocketReducer', () => {
