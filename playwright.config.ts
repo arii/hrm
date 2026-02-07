@@ -35,6 +35,9 @@ const testIgnoreList = [
   'vrt-*.spec.ts',
 ]
 
+// TODO: Issue #VRT-INFRA: Re-enable Visual Regression Tests once CI runner instability is resolved.
+// Currently, 'vrt-connect-page.spec.ts' is skipped in the file itself due to "Log file not found" crashes.
+
 // Only ignore auth-dependent tests if credentials are missing
 // We now have a fallback test in auth-flow.spec.ts so we don't need to ignore it entirely
 if (!hasSpotifyCredentials) {
