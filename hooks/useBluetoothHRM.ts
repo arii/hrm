@@ -12,6 +12,10 @@ import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import { MAX_RECONNECT_ATTEMPTS } from '@/constants/reconnection'
+import {
+  checkBluetoothSupport,
+  injectTestControls,
+} from '@/lib/hrm/bluetooth-helpers'
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
@@ -66,25 +70,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
   const [connectionAttempted, setConnectionAttempted] = useState(false)
-  const checkIsSupported = useCallback(() => {
-    if (typeof window === 'undefined') return false
 
-    const win = window as unknown as {
-      bluetoothTestHelpers?: unknown
-      MockBluetooth?: unknown
-      __IS_TEST_ENV__?: boolean
-    }
-
-    if (
-      win.bluetoothTestHelpers ||
-      win.MockBluetooth ||
-      win.__IS_TEST_ENV__ === true ||
-      process.env.NEXT_PUBLIC_TESTING === 'true'
-    ) {
-      return true
-    }
-    return !!navigator.bluetooth
-  }, [])
+  const checkIsSupported = useCallback(() => checkBluetoothSupport(), [])
 
   const [isSupported, setIsSupported] = useState(checkIsSupported)
 
@@ -366,32 +353,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   useEffect(() => {
     isManualDisconnect.current = false
 
-    const win =
-      typeof window !== 'undefined'
-        ? (window as unknown as {
-            bluetoothTestHelpers?: unknown
-            MockBluetooth?: unknown
-            TEST_CONTROLS?: {
-              setHrmStatus?: (status: BluetoothConnectionStatus) => void
-              setCustomHrmStatusMessage?: (msg: string | null) => void
-            }
-          })
-        : undefined
-
-    const isTestEnv =
-      win?.bluetoothTestHelpers ||
-      win?.MockBluetooth ||
-      (win as unknown as { __IS_TEST_ENV__?: boolean })?.__IS_TEST_ENV__ ===
-        true ||
-      process.env.NEXT_PUBLIC_TESTING === 'true'
-
-    if (isTestEnv && win) {
-      win.TEST_CONTROLS = {
-        ...win.TEST_CONTROLS,
-        setHrmStatus: setStatus,
-        setCustomHrmStatusMessage: setCustomStatusMessage,
-      }
-    }
+    // Inject test controls
+    const cleanupTestControls = injectTestControls(
+      setStatus,
+      setCustomStatusMessage
+    )
 
     return () => {
       // Clean up the disconnected listener to prevent leaks across remounts
@@ -406,10 +372,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
 
-      if (isTestEnv && win?.TEST_CONTROLS) {
-        delete win.TEST_CONTROLS.setHrmStatus
-        delete win.TEST_CONTROLS.setCustomHrmStatusMessage
-      }
+      cleanupTestControls()
     }
   }, [])
 
