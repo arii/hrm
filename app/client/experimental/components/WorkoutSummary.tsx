@@ -61,7 +61,7 @@ const WorkoutSummary = ({
             <Typography
               variant="h5"
               sx={{
-                fontFamily: theme.typography.fontFamilyMono || 'monospace',
+                fontFamily: theme.typography.fontFamilyMono,
               }}
             >
               {formatDuration(duration, {
