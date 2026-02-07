@@ -13,6 +13,10 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     // Give the page a moment to settle/hydrate
     await connectPage.waitForTimeout(2000)
 
+    if (await connectPage.getByText('Bluetooth Not Supported').isVisible()) {
+      throw new Error('Bluetooth Not Supported screen is visible')
+    }
+
     const connectedText = connectPage.getByText('Connected as')
     if (await connectedText.isVisible()) {
       await connectPage
