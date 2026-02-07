@@ -1,13 +1,25 @@
 import js from '@eslint/js'
-import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
-import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
-import react from 'eslint-plugin-react' // Explicitly import the React plugin
+import react from 'eslint-plugin-react'
 import unusedImports from 'eslint-plugin-unused-imports'
+import { FlatCompat } from '@eslint/eslintrc'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-export default defineConfig([
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+})
+
+// Use compat.extends() to load next config
+const nextConfig = compat.extends('next/core-web-vitals')
+
+/** @type {import('eslint').Linter.Config[]} */
+export default [
   // 1. GLOBAL IGNORES
   {
     ignores: [
@@ -31,7 +43,7 @@ export default defineConfig([
   ...tseslint.configs.recommended,
 
   // 3. Next.js Configuration (includes React/React Hooks rules)
-  ...nextPlugin,
+  ...nextConfig,
 
   // 4. Explicit React Configuration for Clarity
   {
@@ -169,7 +181,7 @@ export default defineConfig([
   },
   {
     rules: {
-      'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+      'no-console': 'warn',
     },
   },
-])
+]

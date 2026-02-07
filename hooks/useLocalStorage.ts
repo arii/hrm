@@ -53,7 +53,6 @@ function useLocalStorage<T>(key: string, initialValue: T) {
           const merged = { ...initialValue, ...filteredParsed } as T
           // This is the core of the SSR-safe logic. We initialize state to `initialValue`
           // and then update it with the value from localStorage on the client.
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setStoredValue(merged)
           // Also, update localStorage to remove zombie keys.
           window.localStorage.setItem(key, JSON.stringify(merged))
