@@ -30,9 +30,12 @@ import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
 
-const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
-  ssr: false,
-})
+const HeartRateTimeSeries = dynamic(
+  () => import('@/components/HeartRateTimeSeries'),
+  {
+    ssr: false,
+  }
+)
 
 type View = 'active' | 'list' | 'detail'
 
