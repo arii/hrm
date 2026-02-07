@@ -16,6 +16,8 @@ import { env } from '../lib/env.js'
 import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
 import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
 
+const NOT_PLAYING_MESSAGE = 'Nothing is currently playing.'
+
 export class SpotifyPolling implements SpotifyService {
   public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
@@ -28,9 +30,6 @@ export class SpotifyPolling implements SpotifyService {
   private deviceManager: SpotifyDeviceManager | null = null
 
   private readonly broadcastUpdate: (message: ServerMessage) => void
-
-  private lastTrackId: string | null = null
-  private lastPlaybackState: boolean | null = null
 
   private state: SpotifyData = {
     trackId: null,
@@ -80,12 +79,14 @@ export class SpotifyPolling implements SpotifyService {
       const playbackState = await this.playerManager.fetchPlaybackState()
 
       if (!playbackState) {
-        if (this.lastPlaybackState !== false) {
-          this.lastPlaybackState = false
+        if (
+          this.state.isPlaying ||
+          this.state.trackName !== NOT_PLAYING_MESSAGE
+        ) {
           this.setState({
             ...this.state,
             trackId: null,
-            trackName: 'Nothing is currently playing.',
+            trackName: NOT_PLAYING_MESSAGE,
             artist: '',
             albumName: '',
             albumArtUrl: '',
@@ -103,12 +104,9 @@ export class SpotifyPolling implements SpotifyService {
         playbackState
 
       if (
-        trackId !== this.lastTrackId ||
-        isPlaying !== this.lastPlaybackState
+        trackId !== this.state.trackId ||
+        isPlaying !== this.state.isPlaying
       ) {
-        this.lastTrackId = trackId
-        this.lastPlaybackState = isPlaying
-
         this.setState({
           ...this.state,
           trackId,
@@ -132,7 +130,7 @@ export class SpotifyPolling implements SpotifyService {
   public _test_ =
     process.env.NODE_ENV === 'test'
       ? {
-          getSdk: this.getSdk.bind(this),
+          setState: this.setState,
           setSdk: (sdk: SafeSpotifyApi | null) => {
             this.sdk = sdk
           },
@@ -220,13 +218,6 @@ export class SpotifyPolling implements SpotifyService {
       this.playerManager !== null &&
       this.deviceManager !== null
     )
-  }
-
-  private getSdk(): SafeSpotifyApi {
-    if (!this.sdk) {
-      throw new Error('Spotify SDK has not been initialized.')
-    }
-    return this.sdk
   }
 
   public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {

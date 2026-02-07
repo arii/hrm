@@ -345,6 +345,85 @@ describe('SpotifyPolling Service', () => {
       const lastState = broadcastedStates.at(-1)
       expect(lastState?.trackName).toBe('Nothing is currently playing.')
     })
+
+    // Helper function to reduce boilerplate
+    async function runPollingScenario(
+      initialState: Partial<SpotifyData>,
+      mockResponse: unknown
+    ) {
+      spotifyService._test_!.setState({
+        ...spotifyService.getState(),
+        ...initialState,
+      })
+
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(mockResponse)
+
+      spotifyService.startPolling()
+      jest.advanceTimersByTime(150)
+      await Promise.resolve()
+      await Promise.resolve()
+      spotifyService.stopPolling()
+    }
+
+    it('should broadcast update when transitioning from playing to stopped', async () => {
+      await runPollingScenario(
+        { isPlaying: true, trackName: 'Some Song' },
+        null
+      )
+
+      const lastState = broadcastedStates.at(-1)
+      expect(lastState?.isPlaying).toBe(false)
+      expect(lastState?.trackName).toBe('Nothing is currently playing.')
+    })
+
+    it('should broadcast update when transitioning from non-default track name to stopped', async () => {
+      await runPollingScenario(
+        { isPlaying: false, trackName: 'Awaiting Login...' },
+        null
+      )
+
+      const lastState = broadcastedStates.at(-1)
+      expect(lastState?.trackName).toBe('Nothing is currently playing.')
+    })
+
+    it('should NOT broadcast if already stopped and API returns null', async () => {
+      broadcastedStates.length = 0 // Clear previous broadcasts
+      await runPollingScenario(
+        { isPlaying: false, trackName: 'Nothing is currently playing.' },
+        null
+      )
+
+      expect(broadcastedStates.length).toBe(0)
+    })
+
+    it('should NOT broadcast if playback state has not changed', async () => {
+      const trackState = {
+        trackId: 'track1',
+        trackName: 'Song 1',
+        artist: 'Artist 1',
+        albumName: 'Album 1',
+        albumArtUrl: 'url1',
+        isPlaying: true,
+      }
+
+      broadcastedStates.length = 0 // Clear broadcasts
+
+      const mockPlayback = {
+        item: {
+          id: 'track1',
+          name: 'Song 1',
+          artists: [{ name: 'Artist 1' }],
+          album: { name: 'Album 1', images: [{ url: 'url1' }] },
+          type: 'track',
+        },
+        is_playing: true,
+        currently_playing_type: 'track',
+      }
+
+      await runPollingScenario(trackState, mockPlayback)
+
+      expect(broadcastedStates.length).toBe(0)
+    })
   })
 
   describe('Integration with Timer', () => {
