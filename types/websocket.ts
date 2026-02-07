@@ -10,6 +10,7 @@ import type {
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
 } from './core'
+import { z } from 'zod'
 
 // --- WebSocket Connection & Augmentation ---
 
@@ -140,7 +141,7 @@ export interface SpotifyCommandMessage {
   type: 'SPOTIFY_COMMAND'
   command: SpotifyCommand
   deviceId?: string
-  volume?: number
+  volumePercent?: number
   playlistUri?: string // Added to support your incoming message
   contextUri?: string // Generic support for albums/artists
   uri?: string
@@ -180,8 +181,6 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
-
-import { z } from 'zod'
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
@@ -232,7 +231,7 @@ export const SpotifyCommandMessageSchema = z.object({
     z.literal('GET_DEVICES'), // <--- ADDED
   ]),
   deviceId: z.string().optional(),
-  volume: z.number().min(0).max(100).optional(),
+  volumePercent: z.number().min(0).max(100).optional(),
   playlistUri: z.string().optional(),
   contextUri: z.string().optional(),
   uri: z.string().optional(),

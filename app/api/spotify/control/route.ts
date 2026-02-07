@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
+import { getSpotifyApiFromSession } from '@/lib/spotify/sdk'
 import { ApiError } from '@/lib/errors'
-import { createSafeSpotifyApi } from '@/services/safeSpotifyApi'
 import { handleSpotifyApiError } from '@/services/spotifyApiErrorHandling'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
+import { SafeSpotifyApi } from '@/types/spotify-custom'
 
 export async function POST(req: NextRequest) {
   try {
-    const rawSdk = await getAuthenticatedSpotifyApi()
-    const sdk = createSafeSpotifyApi(rawSdk)
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized: No active session' },
+        { status: 401 }
+      )
+    }
+
+    const sdk = getSpotifyApiFromSession(session) as unknown as SafeSpotifyApi
     const body = await req.json()
-    const { command, uri, contextUri, volume } = body
+    const { command, uri, contextUri, volumePercent } = body
     // Normalize deviceId to undefined if empty string or null
     const deviceId = body.deviceId || undefined
 
@@ -33,13 +42,13 @@ export async function POST(req: NextRequest) {
         await sdk.player.skipToPrevious(deviceId)
         break
       case 'SET_VOLUME':
-        if (volume === undefined) {
+        if (volumePercent === undefined) {
           return NextResponse.json(
-            { error: 'Volume must be provided for SET_VOLUME' },
+            { error: 'volumePercent must be provided for SET_VOLUME' },
             { status: 400 }
           )
         }
-        await sdk.player.setPlaybackVolume(volume, deviceId)
+        await sdk.player.setPlaybackVolume(volumePercent, deviceId)
         break
       case 'TRANSFER_PLAYBACK':
         if (!deviceId) {

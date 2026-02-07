@@ -2,19 +2,17 @@
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { authOptions } from '@/lib/auth'
 import { getServerSession } from 'next-auth/next'
+import { Session } from 'next-auth'
 import { ApiError } from '@/lib/errors'
 
 /**
- * Creates a Spotify SDK instance for the authenticated user.
- * This function should be used within API routes to get a pre-configured SDK.
- * It handles session retrieval and token validation.
+ * Creates a Spotify SDK instance from a valid NextAuth session.
  *
+ * @param session - The NextAuth session object.
  * @returns An instance of the SpotifyApi.
- * @throws {ApiError} If the user is not authenticated or the token is missing.
+ * @throws {ApiError} If the session is invalid or token is missing.
  */
-export async function getAuthenticatedSpotifyApi(): Promise<SpotifyApi> {
-  const session = await getServerSession(authOptions)
-
+export function getSpotifyApiFromSession(session: Session | null): SpotifyApi {
   if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
     throw new ApiError(500, 'Spotify client ID or secret not configured.')
   }
@@ -33,4 +31,17 @@ export async function getAuthenticatedSpotifyApi(): Promise<SpotifyApi> {
   }
 
   return SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID, token)
+}
+
+/**
+ * Creates a Spotify SDK instance for the authenticated user.
+ * This function should be used within API routes to get a pre-configured SDK.
+ * It handles session retrieval and token validation.
+ *
+ * @returns An instance of the SpotifyApi.
+ * @throws {ApiError} If the user is not authenticated or the token is missing.
+ */
+export async function getAuthenticatedSpotifyApi(): Promise<SpotifyApi> {
+  const session = await getServerSession(authOptions)
+  return getSpotifyApiFromSession(session)
 }

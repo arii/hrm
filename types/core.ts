@@ -176,7 +176,7 @@ export interface SpotifyPlaylistItem {
  */
 export interface SpotifyCommandParameters {
   deviceId?: string
-  volume?: number
+  volumePercent?: number
   playlistUri?: string
   contextUri?: string
   uri?: string
