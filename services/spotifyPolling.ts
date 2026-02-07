@@ -7,17 +7,14 @@ import {
 } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyDevice, SpotifyCommandParameters } from '../types/core'
-import {
-  SpotifyTokenManager,
-  SpotifyTokenPayload,
-} from './spotifyTokenManager.js'
-import logger from '../utils/logger.server.js'
+import { SpotifyTokenManager, SpotifyTokenPayload } from './spotifyTokenManager'
+import logger from '../utils/logger.server'
 import {
   logSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyErrorLogging.server.js'
-import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
-import { env } from '../lib/env.js'
+} from './spotifyErrorLogging.server'
+import { SpotifyCommand, SpotifyService } from '../types/interfaces'
+import { env } from '../lib/env'
 
 export interface SpotifyTokenResponse {
   access_token: string
@@ -390,21 +387,20 @@ export class SpotifyPolling implements SpotifyService {
           () => {
             if (uri) {
               return sdk.player.startResumePlayback(
-                // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-                deviceId || undefined,
+                (deviceId || undefined) as string,
                 undefined,
                 [uri]
               )
             }
             if (effectiveContextUri) {
               return sdk.player.startResumePlayback(
-                // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-                deviceId || undefined,
+                (deviceId || undefined) as string,
                 effectiveContextUri
               )
             }
-            // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-            return sdk.player.startResumePlayback(deviceId || undefined)
+            return sdk.player.startResumePlayback(
+              (deviceId || undefined) as string
+            )
           },
           { deviceId, contextUri: effectiveContextUri, uri }
         )
@@ -412,24 +408,21 @@ export class SpotifyPolling implements SpotifyService {
       case 'PAUSE':
         await this.executeSdkCommand(
           command,
-          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-          () => sdk.player.pausePlayback(deviceId || undefined),
+          () => sdk.player.pausePlayback((deviceId || undefined) as string),
           { deviceId }
         )
         break
       case 'NEXT':
         await this.executeSdkCommand(
           command,
-          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-          () => sdk.player.skipToNext(deviceId || undefined),
+          () => sdk.player.skipToNext((deviceId || undefined) as string),
           { deviceId }
         )
         break
       case 'PREVIOUS':
         await this.executeSdkCommand(
           command,
-          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-          () => sdk.player.skipToPrevious(deviceId || undefined),
+          () => sdk.player.skipToPrevious((deviceId || undefined) as string),
           { deviceId }
         )
         break
@@ -450,7 +443,7 @@ export class SpotifyPolling implements SpotifyService {
             () =>
               sdk.player.setPlaybackVolume(
                 clampedVolume,
-                deviceId || undefined
+                (deviceId || undefined) as string
               ),
             { deviceId, volume: clampedVolume }
           )
@@ -474,6 +467,9 @@ export class SpotifyPolling implements SpotifyService {
    * @param commandName The name of the command being executed (for logging).
    * @param apiCall The SDK function to execute.
    * @param logContext Additional context for logging. This is for internal logging only and is not passed to the Spotify SDK. e.g., `{ deviceId, contextUri }`
+   */
+  /**
+   * Helper to execute SDK commands and handle 204 responses.
    */
   private async executeSdkCommand(
     commandName: string,
