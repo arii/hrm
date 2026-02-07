@@ -16,7 +16,6 @@ import {
   resetSocketManager,
 } from '../../utils/socketManager'
 import { WebSocket, Server as WebSocketServer } from 'ws'
-import { EventEmitter } from 'events'
 import { TLSSocket } from 'tls'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
@@ -62,7 +61,7 @@ jest.mock('../../utils/logger.server.js', () => ({
 }))
 
 jest.mock('ws', () => {
-  const { EventEmitter } = require('events')
+  const { EventEmitter } = jest.requireActual('events')
   const { WebSocket: RealWebSocket } = jest.requireActual('ws')
 
   class MockWebSocket extends RealWebSocket {
@@ -91,7 +90,7 @@ jest.mock('ws', () => {
   return {
     Server: jest.fn().mockImplementation(() => {
       const wss = new EventEmitter()
-      // @ts-ignore: Assigning MockWebSocket set to WebSocket set (compatible)
+      // @ts-expect-error: Assigning MockWebSocket set to WebSocket set (compatible at runtime)
       wss.clients = new Set<MockWebSocket>()
       jest.spyOn(wss, 'on')
       jest.spyOn(wss, 'emit')
