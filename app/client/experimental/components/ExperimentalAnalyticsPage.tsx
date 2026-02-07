@@ -85,6 +85,7 @@ const ExperimentalAnalyticsPage = () => {
       const t = setTimeout(() => setActiveSession(null), 0)
       return () => clearTimeout(t)
     }
+    return undefined // Explicit return for paths where no cleanup is needed
   }, [sessionId, activeSession])
 
   const { processHeartRate, totalCaloriesBurned, calorieHistory, reset } =
