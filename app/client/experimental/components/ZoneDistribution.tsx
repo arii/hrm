@@ -8,11 +8,11 @@ import {
   Box,
   useTheme,
   Stack,
+  Palette,
 } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 import { formatDuration } from '@/lib/utils'
-import { getZoneColor } from '@/utils/themeUtils'
 
 interface ZoneDistributionProps {
   timeInZones: Record<HrZoneName, number>
@@ -20,15 +20,27 @@ interface ZoneDistributionProps {
 }
 
 // Order of zones for sorting (High intensity to Low intensity)
-const ZONE_ORDER: HrZoneName[] = [
-  HrZoneName.Max,
-  HrZoneName.Peak,
-  HrZoneName.Cardio,
-  HrZoneName.FatBurn,
-  HrZoneName.WarmUp,
-  HrZoneName.NoData,
-  HrZoneName.Unknown,
-]
+const ZONE_PRIORITY: Record<HrZoneName, number> = {
+  [HrZoneName.Max]: 0,
+  [HrZoneName.Peak]: 1,
+  [HrZoneName.Cardio]: 2,
+  [HrZoneName.FatBurn]: 3,
+  [HrZoneName.WarmUp]: 4,
+  [HrZoneName.NoData]: 5,
+  [HrZoneName.Unknown]: 6,
+}
+
+const ZONE_COLOR_MAP: Partial<
+  Record<HrZoneName, keyof Palette['custom']['hrZones']>
+> = {
+  [HrZoneName.Max]: 'max',
+  [HrZoneName.Peak]: 'peak',
+  [HrZoneName.Cardio]: 'cardio',
+  [HrZoneName.FatBurn]: 'fatBurn',
+  [HrZoneName.WarmUp]: 'warmUp',
+  [HrZoneName.NoData]: 'noData',
+  [HrZoneName.Unknown]: 'unknown',
+}
 
 const TIME_FORMAT_OPTIONS = { unit: 'seconds', format: 'MM:SS' } as const
 
@@ -42,24 +54,39 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
     return Object.entries(timeInZones)
       .map(([zone, time]) => {
         const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
+        const zoneName = zone as HrZoneName
+
+        // Inline getZoneColor logic
+        const hrZones = theme.palette.custom?.hrZones
+        let color = theme.palette.grey[500]
+        if (hrZones) {
+          const colorKey = ZONE_COLOR_MAP[zoneName]
+          if (colorKey && hrZones[colorKey]) {
+            color = hrZones[colorKey]
+          }
+        }
+
         return {
-          name: zone as HrZoneName,
+          name: zoneName,
           value: time,
           percentage: parseFloat(percentage.toFixed(1)),
           formattedTime: formatDuration(time, TIME_FORMAT_OPTIONS),
-          color: getZoneColor(zone as HrZoneName, theme),
+          color: color,
         }
       })
       .filter((item) => item.value > 0)
       .sort((a, b) => {
-        const indexA = ZONE_ORDER.indexOf(a.name)
-        const indexB = ZONE_ORDER.indexOf(b.name)
-        // If a zone is not in the order list, push it to the end
-        if (indexA === -1) return 1
-        if (indexB === -1) return -1
-        return indexA - indexB
+        // Efficient sorting using map
+        const priorityA = ZONE_PRIORITY[a.name] ?? 99
+        const priorityB = ZONE_PRIORITY[b.name] ?? 99
+        return priorityA - priorityB
       })
   }, [timeInZones, totalDuration, theme])
+
+  const isTestEnv =
+    typeof window !== 'undefined' &&
+    (window as unknown as { __IS_TEST_ENV__?: boolean }).__IS_TEST_ENV__ ===
+      true
 
   if (data.length === 0) {
     return null
@@ -97,6 +124,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   paddingAngle={2}
                   dataKey="value"
                   stroke="none"
+                  isAnimationActive={!isTestEnv}
                 >
                   {data.map((entry) => (
                     <Cell key={`cell-${entry.name}`} fill={entry.color} />
@@ -112,6 +140,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                     border: 'none',
                     boxShadow: theme.shadows[3],
                   }}
+                  isAnimationActive={!isTestEnv}
                 />
               </PieChart>
             </ResponsiveContainer>

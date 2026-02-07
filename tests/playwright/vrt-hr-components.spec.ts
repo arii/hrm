@@ -24,6 +24,14 @@ test.describe('Visual Regression Tests', () => {
     context = setup.context
     dashboardPage = setup.dashboardPage
     mockPage = setup.mockPage
+
+    // Inject flag to disable animations for stable VRT
+    await dashboardPage.addInitScript(() => {
+      ;(window as unknown as { __IS_TEST_ENV__: boolean }).__IS_TEST_ENV__ =
+        true
+    })
+    await dashboardPage.reload()
+    await waitForPageReady(dashboardPage)
   })
 
   // Centralized cleanup hook
@@ -84,8 +92,6 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.waitForSelector(
         '[data-testid="zone-distribution-card"]'
       )
-      // Give it a moment for the chart animation
-      await dashboardPage.waitForTimeout(2000)
 
       const zoneCard = dashboardPage.getByTestId('zone-distribution-card')
 
