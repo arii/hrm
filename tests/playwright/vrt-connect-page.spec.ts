@@ -6,7 +6,11 @@ import { BluetoothConnectionStatus } from '../../types/bluetooth'
 test.describe('Visual Regression Tests for /client/connect Page', () => {
   test.beforeEach(async ({ connectPage }) => {
     await injectBluetoothMocks(connectPage)
-    await connectPage.addInitScript(() => window.localStorage.clear())
+    await connectPage.addInitScript(() => {
+      window.localStorage.clear()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(window as any).__IS_TEST_ENV__ = true
+    })
     await connectPage.goto('/client/connect')
 
     // Handle potential stale session state
