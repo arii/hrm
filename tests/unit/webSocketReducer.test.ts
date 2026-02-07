@@ -209,14 +209,6 @@ describe('webSocketReducer', () => {
         ],
       }
 
-      // Create payload WITHOUT the name property to test preservation
-      // We pass explicitly undefined to the helper, but the helper spreads overrides at the end.
-      // So { ...defaults, name: undefined } will result in name being undefined.
-      // However, we want the property to be MISSING, not undefined, ideally.
-      // But for merging logic, undefined usually overwrites if we do { ...state, ...payload }.
-      // Let's rely on the helper creating a full object, then we assert as a partial/Omit to simulate "server payload missing this field".
-      // Actually, since ServerHrmData defines name as optional (name?: string), omitting it is valid.
-
       const payloadItem = createMockUser({
         value: 125,
         percentage: 65,
