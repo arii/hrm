@@ -482,6 +482,8 @@ describe('SpotifyPolling Service', () => {
       jest.advanceTimersByTime(150)
       await Promise.resolve() // Flush promises
       await Promise.resolve() // Flush promises
+      await Promise.resolve() // Flush promises
+      await Promise.resolve() // Flush promises
       spotifyService.stopPolling()
 
       // Should attempt to handle 401 without crashing

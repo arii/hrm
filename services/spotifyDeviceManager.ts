@@ -28,7 +28,7 @@ export class SpotifyDeviceManager {
       const validDevices: SpotifyDevice[] = (response.devices || [])
         .filter((d: Device): d is Device & { id: string } => d.id !== null)
         .map((d) => ({
-          id: d.id!,
+          id: d.id,
           is_active: d.is_active,
           is_private_session: d.is_private_session,
           is_restricted: d.is_restricted,
