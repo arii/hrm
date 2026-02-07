@@ -348,8 +348,7 @@ describe('SpotifyPolling Service', () => {
 
     it('should broadcast update when transitioning from playing to stopped', async () => {
       // 1. Setup initial state as "Playing"
-      // @ts-expect-error - Testing private state
-      spotifyService.setState({
+      spotifyService._test_!.setState({
         ...spotifyService.getState(),
         isPlaying: true,
         trackName: 'Some Song',
@@ -373,8 +372,7 @@ describe('SpotifyPolling Service', () => {
 
     it('should broadcast update when transitioning from non-default track name to stopped', async () => {
       // 1. Setup initial state as "Awaiting Login..." but not playing
-      // @ts-expect-error - Testing private state
-      spotifyService.setState({
+      spotifyService._test_!.setState({
         ...spotifyService.getState(),
         isPlaying: false,
         trackName: 'Awaiting Login...',
@@ -397,8 +395,7 @@ describe('SpotifyPolling Service', () => {
 
     it('should NOT broadcast if already stopped and API returns null', async () => {
       // 1. Setup initial state as "Nothing is currently playing."
-      // @ts-expect-error - Testing private state
-      spotifyService.setState({
+      spotifyService._test_!.setState({
         ...spotifyService.getState(),
         isPlaying: false,
         trackName: 'Nothing is currently playing.',
@@ -431,8 +428,7 @@ describe('SpotifyPolling Service', () => {
       }
 
       // 1. Setup initial state
-      // @ts-expect-error - Testing private state
-      spotifyService.setState({
+      spotifyService._test_!.setState({
         ...spotifyService.getState(),
         ...trackState,
       })

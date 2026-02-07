@@ -128,6 +128,7 @@ export class SpotifyPolling implements SpotifyService {
   public _test_ =
     process.env.NODE_ENV === 'test'
       ? {
+          setState: this.setState,
           setSdk: (sdk: SafeSpotifyApi | null) => {
             this.sdk = sdk
           },
