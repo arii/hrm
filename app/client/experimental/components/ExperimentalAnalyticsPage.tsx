@@ -80,13 +80,7 @@ const ExperimentalAnalyticsPage = () => {
         clearInterval(id)
       }
     } else {
-      const t = setTimeout(() => {
-        if (isActive) setActiveSession(null)
-      }, 0)
-      return () => {
-        isActive = false
-        clearTimeout(t)
-      }
+      setActiveSession(null)
     }
   }, [sessionId])
 
