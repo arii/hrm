@@ -402,15 +402,15 @@ const handleIncomingMessage = (
         const spotifyService = services.spotifyService
         const spotifyCommandParams: {
           deviceId?: string
-          volume?: number
+          volumePercent?: number
           playlistUri?: string
           contextUri?: string
           uri?: string
         } = {}
         if (commandMsg.deviceId)
           spotifyCommandParams.deviceId = commandMsg.deviceId
-        if (commandMsg.volume !== undefined)
-          spotifyCommandParams.volume = commandMsg.volume
+        if (commandMsg.volumePercent !== undefined)
+          spotifyCommandParams.volumePercent = commandMsg.volumePercent
         if (commandMsg.playlistUri)
           spotifyCommandParams.playlistUri = commandMsg.playlistUri
         if (commandMsg.contextUri)

@@ -14,8 +14,8 @@ import {
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces'
-import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi'
 import { env } from '../lib/env'
+import { SafeSpotifyApi } from '../types/spotify-custom'
 
 export interface SpotifyTokenResponse {
   access_token: string
@@ -210,12 +210,10 @@ export class SpotifyPolling implements SpotifyService {
       logger.error('Spotify client ID not found, cannot initialize SDK.')
       return
     }
-    const sdk = SpotifyApi.withAccessToken(
+    this.sdk = SpotifyApi.withAccessToken(
       env.SPOTIFY_CLIENT_ID,
       tokenWithoutRefresh as AccessToken
-    )
-    // Wrap the SDK with our safe API to handle optional deviceIds correctly.
-    this.sdk = createSafeSpotifyApi(sdk)
+    ) as unknown as SafeSpotifyApi
   }
 
   private async checkAndRefreshSdkToken() {
@@ -347,7 +345,7 @@ export class SpotifyPolling implements SpotifyService {
    * @param command The command to execute.
    * @param params The parameters for the command.
    * @param params.deviceId The ID of the device to target.
-   * @param params.volume The volume to set.
+   * @param params.volumePercent The volume to set.
    * @param params.playlistUri The URI of a playlist to play (legacy).
    * @param params.contextUri The URI of a context to play (playlist, album, artist). Takes precedence over playlistUri.
    */
@@ -373,7 +371,7 @@ export class SpotifyPolling implements SpotifyService {
     command: SpotifyCommand,
     params: SpotifyCommandParameters
   ) {
-    const { deviceId, volume, playlistUri, contextUri, uri } = params
+    const { deviceId, volumePercent, playlistUri, contextUri, uri } = params
     const effectiveContextUri = contextUri || playlistUri
     const sdk = this.getSdk()
 
@@ -431,12 +429,15 @@ export class SpotifyPolling implements SpotifyService {
         }
         break
       case 'SET_VOLUME':
-        if (volume !== undefined) {
-          const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
+        if (volumePercent !== undefined) {
+          const clampedVolume = Math.max(
+            0,
+            Math.min(100, Math.round(volumePercent))
+          )
           await this.executeSdkCommand(
             command,
             () => sdk.player.setPlaybackVolume(clampedVolume, deviceId),
-            { deviceId, volume: clampedVolume }
+            { deviceId, volumePercent: clampedVolume }
           )
           this.state.volumePercent = clampedVolume
           this.state.isMuted = clampedVolume === 0

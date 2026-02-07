@@ -139,7 +139,7 @@ describe('components/SpotifyControls', () => {
       expect.objectContaining({
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
-        volume: 80,
+        volumePercent: 80,
       })
     )
     jest.useRealTimers()

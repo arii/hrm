@@ -169,7 +169,7 @@ const SpotifyControls = () => {
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
-        volume: sanitized,
+        volumePercent: sanitized,
         ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
       }
       sendData(message)
