@@ -32,10 +32,10 @@ describe('lib/hrm/zones', () => {
       expect(result.bpm).toBe(110)
     })
 
-    it('should correctly calculate the "Warm Up" zone', () => {
+    it('should correctly calculate the "Fat Burn" (formerly Warm Up) zone', () => {
       // 65% of 200 is 130
       const result = calculateHrZone(130, maxHr)
-      expect(result.zoneName).toBe(HrZoneName.WarmUp)
+      expect(result.zoneName).toBe(HrZoneName.FatBurn)
       expect(result.percentage).toBe(65)
     })
 

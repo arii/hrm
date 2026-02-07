@@ -20,6 +20,7 @@ import { HrZone } from '../../types/heart-rate'
  * NOTE: This is a legacy wrapper around calculateZoneFromMaxHr to maintain compatibility
  * with existing Dashboard UI components that expect the HrZone interface.
  *
+ * @deprecated Use calculateHrZoneInfo from lib/shared/hr-zones instead.
  * @param {number} currentHr - The current heart rate in beats per minute.
  * @param {number} maxHr - The user's maximum heart rate.
  * @returns {HrZone} An object containing the zone name, percentage of max HR, and current BPM.
@@ -35,8 +36,14 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
 
   const { percentage, zone } = calculateZoneFromMaxHr(currentHr, maxHr)
 
+  // Legacy mapping to maintain backward compatibility for systems expecting "Fat Burn"
+  let zoneName = getHrZoneLabel(zone) as HrZoneName
+  if (zone === 2) {
+    zoneName = HrZoneName.FatBurn
+  }
+
   return {
-    zoneName: getHrZoneLabel(zone) as HrZoneName,
+    zoneName,
     percentage: percentage,
     bpm: currentHr,
   }

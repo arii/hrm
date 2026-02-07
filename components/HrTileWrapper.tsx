@@ -11,9 +11,8 @@ interface HrTileWrapperProps {
 const HrTileWrapper = ({ user }: HrTileWrapperProps) => {
   // Use the percentage and zone from the user object if available,
   // falling back to local calculation if not (ensures consistent logic).
-  // Default to age 30 if not provided for fallback calculation.
   const { percentage: fallbackPercentage, zone: fallbackZone } =
-    calculateHrZoneInfo(user.value || 0, user.age ?? 30)
+    calculateHrZoneInfo(user.value || 0, user.age)
 
   const percentMax = user.percentage ?? fallbackPercentage
   const zone = user.zone ?? fallbackZone
