@@ -356,12 +356,26 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   useEffect(() => {
     isManualDisconnect.current = false
 
-    if (
-      typeof window !== 'undefined' &&
+    const win =
+      typeof window !== 'undefined'
+        ? (window as unknown as {
+            bluetoothTestHelpers?: unknown
+            MockBluetooth?: unknown
+            TEST_CONTROLS?: {
+              setHrmStatus?: (status: BluetoothConnectionStatus) => void
+              setCustomHrmStatusMessage?: (msg: string | null) => void
+            }
+          })
+        : undefined
+
+    const isTestEnv =
+      win?.bluetoothTestHelpers ||
+      win?.MockBluetooth ||
       process.env.NEXT_PUBLIC_TESTING === 'true'
-    ) {
-      window.TEST_CONTROLS = {
-        ...window.TEST_CONTROLS,
+
+    if (isTestEnv && win) {
+      win.TEST_CONTROLS = {
+        ...win.TEST_CONTROLS,
         setHrmStatus: setStatus,
         setCustomHrmStatusMessage: setCustomStatusMessage,
       }
@@ -380,14 +394,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
 
-      if (
-        typeof window !== 'undefined' &&
-        process.env.NEXT_PUBLIC_TESTING === 'true'
-      ) {
-        if (window.TEST_CONTROLS) {
-          delete window.TEST_CONTROLS.setHrmStatus
-          delete window.TEST_CONTROLS.setCustomHrmStatusMessage
-        }
+      if (isTestEnv && win?.TEST_CONTROLS) {
+        delete win.TEST_CONTROLS.setHrmStatus
+        delete win.TEST_CONTROLS.setCustomHrmStatusMessage
       }
     }
   }, [])
