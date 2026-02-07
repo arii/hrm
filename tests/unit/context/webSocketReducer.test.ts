@@ -9,8 +9,6 @@ import {
 } from '../../../context/webSocketReducer'
 import { ServerMessage } from '../../../types/websocket'
 import { HrmStreamData } from '../../../types/core'
-import { STALE_TILE_REMOVAL_THRESHOLD_MS } from '../../../constants/hrm'
-
 describe('webSocketReducer', () => {
   const baseUser: HrmData = {
     clientId: '1',
@@ -121,7 +119,7 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0].lastUpdated).not.toBe(12345)
     })
 
-    it('removes users that have not been updated in the last threshold period', () => {
+    it('removes users that are absent from the update payload', () => {
       const now = Date.now()
       const staleUser = {
         ...baseUser,
@@ -135,13 +133,13 @@ describe('webSocketReducer', () => {
           {
             ...staleUser,
             isConnected: true,
-            lastUpdated: now - STALE_TILE_REMOVAL_THRESHOLD_MS - 1000,
+            lastUpdated: now, // Timestamp is irrelevant for snapshot sync
           },
         ],
       }
       const action: ServerMessage = {
         type: 'HRM_UPDATE',
-        payload: [baseUser],
+        payload: [baseUser], // staleUser is absent, so it will be removed
       }
       const state = reducer(initialState, action)
       expect(state.hrmData).toHaveLength(1)
@@ -152,7 +150,7 @@ describe('webSocketReducer', () => {
 
   describe('DEVICE_OFFLINE action', () => {
     it('removes the specified device from the state', () => {
-      const user2 = { ...baseUser, clientId: '2', userName: 'User B' }
+      const user2 = { ...baseUser, clientId: '2', name: 'User B' }
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [
