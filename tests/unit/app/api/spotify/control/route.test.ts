@@ -3,7 +3,6 @@
 
 import { POST } from '@/app/api/spotify/control/route'
 import { getSpotifyApiFromSession } from '@/lib/spotify/sdk'
-import { ApiError } from '@/lib/errors'
 import { handleSpotifyApiError } from '@/services/spotifyApiErrorHandling'
 import { getServerSession } from 'next-auth/next'
 
@@ -146,7 +145,7 @@ describe('API Route: /api/spotify/control', () => {
   it('should return 500 for unexpected errors', async () => {
     // Force SDK creation to throw (which happens synchronously or inside the logic flow)
     mockedGetSpotifyApi.mockImplementation(() => {
-        throw new Error('Something unexpected happened')
+      throw new Error('Something unexpected happened')
     })
 
     const req = createRequest({ command: 'PLAY' })
