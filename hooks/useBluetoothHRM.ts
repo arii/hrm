@@ -67,7 +67,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
   const [connectionAttempted, setConnectionAttempted] = useState(false)
   const [isSupported] = useState(() => {
-    if (process.env.NEXT_PUBLIC_TESTING === 'true') {
+    // Check for test environment flags
+    const win =
+      typeof window !== 'undefined'
+        ? (window as unknown as {
+            bluetoothTestHelpers?: unknown
+            MockBluetooth?: unknown
+          })
+        : undefined
+
+    if (
+      win?.bluetoothTestHelpers ||
+      win?.MockBluetooth ||
+      process.env.NEXT_PUBLIC_TESTING === 'true'
+    ) {
       return true
     }
     return typeof navigator !== 'undefined' && !!navigator.bluetooth
