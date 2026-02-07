@@ -62,7 +62,7 @@ const ExperimentalAnalyticsPage = () => {
   )
 
   useEffect(() => {
-    let interval: NodeJS.Timeout
+    let interval: NodeJS.Timeout | undefined
 
     if (sessionId) {
       const fetchSession = async () => {

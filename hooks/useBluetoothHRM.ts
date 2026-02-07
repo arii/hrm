@@ -66,29 +66,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
   const [connectionAttempted, setConnectionAttempted] = useState(false)
-  const [isSupported, setIsSupported] = useState(() => {
-    // Check for test environment flags
-    const win =
-      typeof window !== 'undefined'
-        ? (window as unknown as {
-            bluetoothTestHelpers?: unknown
-            MockBluetooth?: unknown
-          })
-        : undefined
-
-    if (
-      win?.bluetoothTestHelpers ||
-      win?.MockBluetooth ||
-      process.env.NEXT_PUBLIC_TESTING === 'true'
-    ) {
-      return true
-    }
-    return typeof navigator !== 'undefined' && !!navigator.bluetooth
-  })
-
-  // Effect to re-check support after mount to catch injected test helpers
-  useEffect(() => {
-    if (typeof window === 'undefined') return
+  const checkIsSupported = useCallback(() => {
+    if (typeof window === 'undefined') return false
 
     const win = window as unknown as {
       bluetoothTestHelpers?: unknown
@@ -97,14 +76,25 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
 
     if (
-      (win.bluetoothTestHelpers ||
-        win.MockBluetooth ||
-        win.__IS_TEST_ENV__ === true) &&
-      !isSupported
+      win.bluetoothTestHelpers ||
+      win.MockBluetooth ||
+      win.__IS_TEST_ENV__ === true ||
+      process.env.NEXT_PUBLIC_TESTING === 'true'
     ) {
+      return true
+    }
+    return !!navigator.bluetooth
+  }, [])
+
+  const [isSupported, setIsSupported] = useState(checkIsSupported)
+
+  // Effect to re-check support after mount to catch injected test helpers
+  // This helps when scripts are injected after the initial render
+  useEffect(() => {
+    if (checkIsSupported() && !isSupported) {
       setIsSupported(true)
     }
-  }, [isSupported])
+  }, [isSupported, checkIsSupported])
 
   const deviceStatus = customStatusMessage ?? statusMessageMap[status]
 

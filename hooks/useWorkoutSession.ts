@@ -193,49 +193,30 @@ export const useWorkoutSession = ({
 
   // Side Effect: Save to Storage
   // Move side effects out of the reducer to maintain purity.
-  const {
-    status,
-    startTime,
-    calories,
-    startCalories,
-    totalPaused,
-    pauseTime,
-    sessionId,
-  } = state
+  // We use JSON.stringify as a stable dependency to detect structural changes
+  // in the state we care about (everything except duration), preventing
+  // frequent writes when only the duration (1Hz) changes.
+  const serializedStateToSave = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { duration, ...rest } = state
+    const stateToSave = { ...rest, duration: 0 }
+    return JSON.stringify(stateToSave)
+  }, [state])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    // Reconstruct state to save (excluding duration)
-    const stateToSave = {
-      status,
-      startTime,
-      calories,
-      startCalories,
-      totalPaused,
-      pauseTime,
-      sessionId,
-      duration: 0,
-    }
-
     try {
-      if (status === 'idle' && !startTime) {
+      const parsed = JSON.parse(serializedStateToSave)
+      if (parsed.status === 'idle' && !parsed.startTime) {
         window.localStorage.removeItem(STORAGE_KEY)
       } else {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave))
+        window.localStorage.setItem(STORAGE_KEY, serializedStateToSave)
       }
     } catch (e) {
       console.warn('Failed to save session state to storage', e)
     }
-  }, [
-    status,
-    startTime,
-    calories,
-    startCalories,
-    totalPaused,
-    pauseTime,
-    sessionId,
-  ])
+  }, [serializedStateToSave])
 
   // Sync total calories
   useEffect(() => {
