@@ -29,9 +29,6 @@ export class SpotifyPolling implements SpotifyService {
 
   private readonly broadcastUpdate: (message: ServerMessage) => void
 
-  private lastTrackId: string | null = null
-  private lastPlaybackState: boolean | null = null
-
   private state: SpotifyData = {
     trackId: null,
     trackName: 'Awaiting Login...',
@@ -80,8 +77,10 @@ export class SpotifyPolling implements SpotifyService {
       const playbackState = await this.playerManager.fetchPlaybackState()
 
       if (!playbackState) {
-        if (this.lastPlaybackState !== false) {
-          this.lastPlaybackState = false
+        if (
+          this.state.isPlaying ||
+          this.state.trackName !== 'Nothing is currently playing.'
+        ) {
           this.setState({
             ...this.state,
             trackId: null,
@@ -103,12 +102,9 @@ export class SpotifyPolling implements SpotifyService {
         playbackState
 
       if (
-        trackId !== this.lastTrackId ||
-        isPlaying !== this.lastPlaybackState
+        trackId !== this.state.trackId ||
+        isPlaying !== this.state.isPlaying
       ) {
-        this.lastTrackId = trackId
-        this.lastPlaybackState = isPlaying
-
         this.setState({
           ...this.state,
           trackId,
@@ -132,7 +128,6 @@ export class SpotifyPolling implements SpotifyService {
   public _test_ =
     process.env.NODE_ENV === 'test'
       ? {
-          getSdk: this.getSdk.bind(this),
           setSdk: (sdk: SafeSpotifyApi | null) => {
             this.sdk = sdk
           },
@@ -220,13 +215,6 @@ export class SpotifyPolling implements SpotifyService {
       this.playerManager !== null &&
       this.deviceManager !== null
     )
-  }
-
-  private getSdk(): SafeSpotifyApi {
-    if (!this.sdk) {
-      throw new Error('Spotify SDK has not been initialized.')
-    }
-    return this.sdk
   }
 
   public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
