@@ -20,10 +20,7 @@ const HrmTiles = () => {
       })
       .map((user) => {
         // Standardize fallback logic to use the same formula/mapping
-        const fallbackZoneData = calculateHrZoneInfo(
-          user.value,
-          user.age || 30 // Default age if not provided
-        )
+        const fallbackZoneData = calculateHrZoneInfo(user.value, user.age)
 
         // Find the alert specific to this HR Monitor's clientId
         const matchingAlert = activeAlerts.find(
