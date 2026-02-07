@@ -331,6 +331,22 @@ export const WebSocketProvider = ({
           return
         }
 
+        // Validate payloads for critical updates
+        if (message.type === 'HRM_UPDATE') {
+          if (!Array.isArray(message.payload)) {
+            logger.warn('[WebSocketContext] Invalid HRM_UPDATE payload', message)
+            return
+          }
+        } else if (message.type === 'DEVICE_OFFLINE') {
+          if (!message.payload || typeof message.payload.deviceId !== 'string') {
+            logger.warn(
+              '[WebSocketContext] Invalid DEVICE_OFFLINE payload',
+              message
+            )
+            return
+          }
+        }
+
         // Throttle high-frequency messages
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
           throttledDispatch(message)
