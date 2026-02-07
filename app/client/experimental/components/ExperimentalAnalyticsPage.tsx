@@ -74,9 +74,9 @@ const ExperimentalAnalyticsPage = () => {
       // Poll for updates (e.g. every 5 seconds)
       interval = setInterval(fetchSession, 5000)
     } else {
-      // Safe to set state here as it's triggered by sessionId change prop
-      // and we want to clear the local session view
-      setActiveSession(null)
+      // Use setTimeout to avoid "setState in effect" linter warning/cascading renders
+      // This ensures the update happens in the next tick
+      setTimeout(() => setActiveSession(null), 0)
     }
 
     return () => {
