@@ -30,9 +30,6 @@ const testIgnoreList = [
   // OAuth tests are excluded from regular test runs (use separate npm script)
   'oauth/**/*.spec.ts',
 
-  // TEMPORARY: Disable all Visual Regression Tests due to persistent CI runner instability
-  // (timeouts/crashes leading to "Log file not found")
-  'vrt-*.spec.ts',
 ]
 
 // Only ignore auth-dependent tests if credentials are missing
