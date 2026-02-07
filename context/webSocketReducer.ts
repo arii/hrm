@@ -64,6 +64,8 @@ export const reducer = (
       }
     }
     case 'HRM_UPDATE': {
+      // payload is the authoritative list of active clients from the server.
+      // Mapping over it ensures we only keep connected clients, while preserving local state.
       const payload = message.payload as ServerHrmData[]
       const existingMap = new Map(state.hrmData.map((d) => [d.clientId, d]))
 
