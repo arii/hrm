@@ -153,7 +153,7 @@ describe('WebSocket Manager', () => {
 
     initSocketManager(mockWss, getSnapshot, mockServices)
     const mockReq = createMockRequest()
-    mockWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+    mockWs = new WebSocket('ws://test') as ExtWebSocket
     mockWss.clients.add(mockWs)
     mockWss.emit('connection', mockWs, mockReq)
   })
@@ -169,7 +169,7 @@ describe('WebSocket Manager', () => {
     it('should log connection metadata on new connection', () => {
       const loggerInfoSpy = jest.spyOn(logger, 'info')
       const mockReq = createMockRequest('/?clientId=new-client-123')
-      const newWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
 
       mockWss.emit('connection', newWs, mockReq)
 
@@ -189,7 +189,7 @@ describe('WebSocket Manager', () => {
     it('should log a warning when overwriting an existing socket', () => {
       const loggerWarnSpy = jest.spyOn(logger, 'warn')
       const mockReq = createMockRequest('/?clientId=test-client')
-      const newWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
 
       mockWss.emit('connection', newWs, mockReq)
 
@@ -214,7 +214,7 @@ describe('WebSocket Manager', () => {
         {},
         mockTlsSocket
       )
-      const newWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
 
       mockWss.emit('connection', newWs, mockReq)
 
@@ -245,7 +245,7 @@ describe('WebSocket Manager', () => {
 
         const loggerInfoSpy = jest.spyOn(logger, 'info')
         const mockReq = createMockRequest('/?clientId=prod-client')
-        const newWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+        const newWs = new WebSocket('ws://test') as ExtWebSocket
 
         await jest.isolateModulesAsync(async () => {
           const { initSocketManager: initSocketManagerProd } =
@@ -279,14 +279,14 @@ describe('WebSocket Manager', () => {
     })
 
     it('should set isAlive to true on new connection', () => {
-      const newWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       expect(newWs.isAlive).toBe(true)
     })
 
     it('should set isAlive to true on pong', () => {
-      const newWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       newWs.isAlive = false
@@ -302,7 +302,7 @@ describe('WebSocket Manager', () => {
     })
 
     it('should set isAlive to true on any message', () => {
-      const newWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       newWs.isAlive = false
@@ -519,9 +519,9 @@ describe('WebSocket Manager', () => {
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
-      const dashboardWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+      const dashboardWs = new WebSocket('ws://test') as ExtWebSocket
       dashboardWs.clientType = 'dashboard'
-      const controllerWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+      const controllerWs = new WebSocket('ws://test') as ExtWebSocket
       controllerWs.clientType = 'controller'
       mockWss.clients.add(dashboardWs)
       mockWss.clients.add(controllerWs)
@@ -602,7 +602,7 @@ describe('WebSocket Manager', () => {
     it('should clean up client session after grace period', () => {
       const clientId = 'test-client-cleanup'
       const mockReq = createMockRequest(`/?clientId=${clientId}`)
-      const newWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
       mockWss.emit('connection', newWs, mockReq)
 
       newWs.emit('close')
@@ -627,12 +627,12 @@ describe('WebSocket Manager', () => {
     it('should not clean up session if client reconnects within grace period', () => {
       const clientId = 'test-client-reconnect'
       const mockReq = createMockRequest(`/?clientId=${clientId}`)
-      const firstWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+      const firstWs = new WebSocket('ws://test') as ExtWebSocket
       mockWss.emit('connection', firstWs, mockReq)
 
       firstWs.emit('close')
 
-      const secondWs = new WebSocket('ws://test') as unknown as ExtWebSocket
+      const secondWs = new WebSocket('ws://test') as ExtWebSocket
       mockWss.emit('connection', secondWs, mockReq)
 
       jest.runOnlyPendingTimers()
