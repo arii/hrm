@@ -20,7 +20,7 @@ import { HrZone } from '../../types/heart-rate'
  * NOTE: This is a legacy wrapper around calculateZoneFromMaxHr to maintain compatibility
  * with existing Dashboard UI components that expect the HrZone interface.
  *
- * @deprecated Use calculateHrZoneInfo from lib/shared/hr-zones instead.
+ * @deprecated Use `calculateHrZoneInfo` from `lib/shared/hr-zones` instead.
  * @param {number} currentHr - The current heart rate in beats per minute.
  * @param {number} maxHr - The user's maximum heart rate.
  * @returns {HrZone} An object containing the zone name, percentage of max HR, and current BPM.
