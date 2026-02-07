@@ -134,13 +134,29 @@ export const WebSocketProvider = ({
       process.env.NEXT_PUBLIC_TESTING === 'true'
     ) {
       const handleMessage = (event: MessageEvent) => {
-        if (
-          event.source === window &&
-          event.data &&
-          (event.data.type === 'HRM_UPDATE' ||
-            event.data.type === 'DEVICE_OFFLINE')
-        ) {
-          dispatch(event.data)
+        if (event.source !== window || !event.data) return
+
+        if (event.data.type === 'HRM_UPDATE') {
+          if (Array.isArray(event.data.payload)) {
+            dispatch(event.data)
+          } else {
+            logger.warn(
+              '[WebSocketContext] Invalid HRM_UPDATE payload',
+              event.data
+            )
+          }
+        } else if (event.data.type === 'DEVICE_OFFLINE') {
+          if (
+            event.data.payload &&
+            typeof event.data.payload.deviceId === 'string'
+          ) {
+            dispatch(event.data)
+          } else {
+            logger.warn(
+              '[WebSocketContext] Invalid DEVICE_OFFLINE payload',
+              event.data
+            )
+          }
         }
       }
       window.addEventListener('message', handleMessage)
