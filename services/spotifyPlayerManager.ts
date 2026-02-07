@@ -5,6 +5,8 @@ import logger from '../utils/logger.server.js'
 import { isEmptyResponseError } from './spotifyUtils.js'
 import { Track, Episode } from '@spotify/web-api-ts-sdk'
 
+const NOT_PLAYING_MESSAGE = 'Nothing is currently playing.'
+
 export interface ParsedPlaybackState {
   trackId: string
   trackName: string
@@ -36,7 +38,57 @@ export class SpotifyPlayerManager {
     this.setState = setState
   }
 
-  public async fetchPlaybackState(): Promise<ParsedPlaybackState | null> {
+  public async refreshPlaybackState(): Promise<void> {
+    const playbackState = await this.fetchPlaybackState()
+    const currentState = this.getState()
+
+    if (!playbackState) {
+      if (
+        currentState.isPlaying ||
+        currentState.trackName !== NOT_PLAYING_MESSAGE
+      ) {
+        this.setState((prev) => ({
+          ...prev,
+          trackId: null,
+          trackName: NOT_PLAYING_MESSAGE,
+          artist: '',
+          albumName: '',
+          albumArtUrl: '',
+          isPlaying: false,
+        }))
+        this.broadcastUpdate({
+          type: 'SPOTIFY_UPDATE',
+          payload: this.getState(),
+        })
+      }
+      return
+    }
+
+    const { trackId, trackName, artist, albumName, albumArtUrl, isPlaying } =
+      playbackState
+
+    if (
+      trackId !== currentState.trackId ||
+      isPlaying !== currentState.isPlaying
+    ) {
+      this.setState((prev) => ({
+        ...prev,
+        trackId,
+        trackName,
+        artist,
+        albumName,
+        albumArtUrl,
+        isPlaying,
+      }))
+
+      this.broadcastUpdate({
+        type: 'SPOTIFY_UPDATE',
+        payload: this.getState(),
+      })
+    }
+  }
+
+  private async fetchPlaybackState(): Promise<ParsedPlaybackState | null> {
     const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
 
     if (!playbackState || !playbackState.item) {
