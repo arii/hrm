@@ -6,6 +6,15 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import logger from '@/utils/logger.server'
 import { handleSpotifyApiError } from '@/services/spotifyApiErrorHandling.server'
 
+interface ControlBody {
+  command: string
+  deviceId?: string
+  volume?: number
+  uri?: string
+  contextUri?: string
+  playlistUri?: string
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
 
@@ -33,7 +42,7 @@ export async function POST(req: NextRequest) {
   })
 
   try {
-    const body = await req.json()
+    const body = (await req.json()) as ControlBody
     const { command, deviceId, volume, contextUri, uri, playlistUri } = body
 
     // Global sanity check: If deviceId is provided, it must be a string.
@@ -44,21 +53,23 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const targetDevice = (deviceId || undefined) as string
+
     switch (command) {
       case 'PLAY': {
         const uris = uri ? [uri] : undefined
         const playContextUri = playlistUri || contextUri
-        await sdk.player.startResumePlayback(deviceId, playContextUri, uris)
+        await sdk.player.startResumePlayback(targetDevice, playContextUri, uris)
         break
       }
       case 'PAUSE':
-        await sdk.player.pausePlayback(deviceId)
+        await sdk.player.pausePlayback(targetDevice)
         break
       case 'NEXT':
-        await sdk.player.skipToNext(deviceId)
+        await sdk.player.skipToNext(targetDevice)
         break
       case 'PREVIOUS':
-        await sdk.player.skipToPrevious(deviceId)
+        await sdk.player.skipToPrevious(targetDevice)
         break
       case 'SET_VOLUME':
         if (typeof volume !== 'number') {
@@ -67,7 +78,7 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           )
         }
-        await sdk.player.setPlaybackVolume(volume, deviceId)
+        await sdk.player.setPlaybackVolume(volume, targetDevice)
         break
       case 'TRANSFER_PLAYBACK':
         if (!deviceId) {
