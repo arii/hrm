@@ -20,6 +20,7 @@ test.describe('HR Zone Distribution Interactivity', () => {
   })
 
   test('should display zone distribution and show tooltip on hover', async () => {
+    // TODO: Consider moving this timeout to playwright.config.ts if consistent slowness is observed across multiple tests
     test.setTimeout(60000)
     await dashboardPage.goto('/client/experimental')
     await waitForPageReady(dashboardPage)
