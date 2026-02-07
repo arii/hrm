@@ -17,7 +17,7 @@ interface HeartRateTimeSeriesProps {
   hrHistory: HrDataPoint[]
 }
 
-const timeFormatter = new Intl.DateTimeFormat('en-US', {
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
   hour: 'numeric',
   minute: 'numeric',
   second: 'numeric',

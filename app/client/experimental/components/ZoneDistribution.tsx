@@ -35,7 +35,7 @@ const ZoneDistribution = ({
           .map(([zone, time]) => {
             const percentage =
               totalDuration > 0 ? (time / totalDuration) * 100 : 0
-            if (percentage < 1) return null // Hide negligible data
+            if (time <= 0) return null
 
             return (
               <Box key={zone} mb={2}>
