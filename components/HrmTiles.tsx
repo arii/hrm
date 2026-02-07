@@ -1,13 +1,11 @@
 'use client'
-import HrTile from '@/components/HrTile'
+import HrTileWrapper from '@/components/HrTileWrapper'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useNow } from '@/hooks/useNow'
-import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
-import { getHrZoneProps } from '@/utils/visualization'
+import { getActiveHrmData } from '@/utils/hrm'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useMemo } from 'react'
-import { getActiveHrmData } from '@/utils/hrm'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -17,10 +15,12 @@ const HrmTiles = () => {
     return getActiveHrmData(hrmData, activeAlerts, now, {
       includeZeroValues: false,
     }).map((user) => {
-      const hrZoneProps = getHrZoneProps(
-        user.value,
-        user.maxHr || MAX_HR_DEFAULT
-      )
+      // Destructure to remove rapidly changing timestamps to allow React.memo to work effectively
+      const {
+        updatedAt: _updatedAt,
+        lastUpdated: _lastUpdated,
+        ...visualProps
+      } = user
 
       return (
         <Grid
@@ -28,16 +28,7 @@ const HrmTiles = () => {
           key={user.clientId}
           data-testid="hr-tile-grid-item"
         >
-          <HrTile
-            name={user.name || ''}
-            bpm={user.value}
-            percentMax={hrZoneProps.percentage}
-            calories={user.calories || 0}
-            isConnected={user.isConnected}
-            isDataStale={user.isDataStale}
-            isAlerting={user.isAlerting}
-            {...(user.alertMessage && { alertMessage: user.alertMessage })}
-          />
+          <HrTileWrapper {...visualProps} />
         </Grid>
       )
     })
