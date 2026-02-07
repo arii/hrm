@@ -43,9 +43,33 @@ jobs:
     steps:
       - name: Route Comment
         id: router
-        uses: ./.github/actions/route-comment
-        with:
-          comment_body: ${{ github.event.comment.body }}
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          # Use grep for robust matching.
+          # '^' matches the beginning of the string.
+          # '-x' matches the entire line exactly.
+          if echo "$COMMENT_BODY" | grep -q '^@gemini-bot' || echo "$COMMENT_BODY" | grep -q '^@jules fix'; then
+            echo "is_review_comment=true" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$COMMENT_BODY" | grep -q '^@gemini-bot'; then
+            echo "is_gemini_invoke=true" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$COMMENT_BODY" | grep -Fxq '@gemini-update-pr'; then
+            echo "is_update_pr=true" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$COMMENT_BODY" | grep -q '@pr-squash'; then
+            echo "is_squash_comment=true" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$COMMENT_BODY" | grep -q '@conflict-resolve'; then
+            echo "is_conflict_resolve_comment=true" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$COMMENT_BODY" | grep -q '^@jules-delete' || echo "$COMMENT_BODY" | grep -q '^@jules-new'; then
+            echo "is_jules_command=true" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$COMMENT_BODY" | grep -q '/create-issues'; then
+            echo "is_create_issues_command=true" >> "$GITHUB_OUTPUT"
+          fi
 
   check-diff:
     name: 📝 Check for file changes
@@ -251,7 +275,7 @@ jobs:
     needs: [comment-router]
     uses: ./.github/workflows/pr-enrichment.yml
     with:
-      pr_number: "${{ github.event.issue.number }}"
+      pr_number: ${{ github.event.issue.number }}
     secrets: inherit
 
   squash-on-comment:
@@ -259,9 +283,9 @@ jobs:
     needs: [comment-router]
     uses: ./.github/workflows/pr-squash.yml
     with:
-      pr_number: "${{ github.event.issue.number }}"
+      pr_number: ${{ github.event.issue.number }}
       comment_body: ${{ github.event.comment.body }}
-      comment_id: "${{ github.event.comment.id }}"
+      comment_id: ${{ github.event.comment.id }}
     secrets: inherit
 
   react-to-conflict-resolve-comment:
@@ -305,7 +329,7 @@ jobs:
     with:
       target_branch: ${{ needs.prepare-conflict-resolution.outputs.target_branch }}
       source_branch: ${{ needs.prepare-conflict-resolution.outputs.source_branch }}
-      pr_number: "${{ github.event.issue.number }}"
+      pr_number: ${{ github.event.issue.number }}
     secrets: inherit
 
   jules-command:
@@ -316,7 +340,6 @@ jobs:
     uses: ./.github/workflows/reusable-jules-command.yml
     with:
       comment_body: ${{ github.event.comment.body }}
-      command_type: ${{ needs.comment-router.outputs.jules_command_type }}
       issue_number: ${{ github.event.issue.number }}
       comment_id: ${{ github.event.comment.id }}
       repository_owner: ${{ github.repository_owner }}

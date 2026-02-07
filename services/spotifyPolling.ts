@@ -18,6 +18,7 @@ import {
 } from './spotifyErrorLogging.server.js'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { env } from '../lib/env.js'
+import { getDeviceId } from '../lib/spotify/sdk.js'
 
 export interface SpotifyTokenResponse {
   access_token: string
@@ -390,21 +391,18 @@ export class SpotifyPolling implements SpotifyService {
           () => {
             if (uri) {
               return sdk.player.startResumePlayback(
-                // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-                deviceId || undefined,
+                getDeviceId(deviceId),
                 undefined,
                 [uri]
               )
             }
             if (effectiveContextUri) {
               return sdk.player.startResumePlayback(
-                // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-                deviceId || undefined,
+                getDeviceId(deviceId),
                 effectiveContextUri
               )
             }
-            // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-            return sdk.player.startResumePlayback(deviceId || undefined)
+            return sdk.player.startResumePlayback(getDeviceId(deviceId))
           },
           { deviceId, contextUri: effectiveContextUri, uri }
         )
@@ -412,24 +410,21 @@ export class SpotifyPolling implements SpotifyService {
       case 'PAUSE':
         await this.executeSdkCommand(
           command,
-          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-          () => sdk.player.pausePlayback(deviceId || undefined),
+          () => sdk.player.pausePlayback(getDeviceId(deviceId)),
           { deviceId }
         )
         break
       case 'NEXT':
         await this.executeSdkCommand(
           command,
-          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-          () => sdk.player.skipToNext(deviceId || undefined),
+          () => sdk.player.skipToNext(getDeviceId(deviceId)),
           { deviceId }
         )
         break
       case 'PREVIOUS':
         await this.executeSdkCommand(
           command,
-          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-          () => sdk.player.skipToPrevious(deviceId || undefined),
+          () => sdk.player.skipToPrevious(getDeviceId(deviceId)),
           { deviceId }
         )
         break
@@ -450,7 +445,7 @@ export class SpotifyPolling implements SpotifyService {
             () =>
               sdk.player.setPlaybackVolume(
                 clampedVolume,
-                deviceId || undefined
+                getDeviceId(deviceId)
               ),
             { deviceId, volume: clampedVolume }
           )

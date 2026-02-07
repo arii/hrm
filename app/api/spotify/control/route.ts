@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import logger from '@/utils/logger.server'
 import { handleSpotifyApiError } from '@/services/spotifyApiErrorHandling.server'
+import { getDeviceId } from '@/lib/spotify/sdk'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -48,17 +49,21 @@ export async function POST(req: NextRequest) {
       case 'PLAY': {
         const uris = uri ? [uri] : undefined
         const playContextUri = playlistUri || contextUri
-        await sdk.player.startResumePlayback(deviceId, playContextUri, uris)
+        await sdk.player.startResumePlayback(
+          getDeviceId(deviceId),
+          playContextUri,
+          uris
+        )
         break
       }
       case 'PAUSE':
-        await sdk.player.pausePlayback(deviceId)
+        await sdk.player.pausePlayback(getDeviceId(deviceId))
         break
       case 'NEXT':
-        await sdk.player.skipToNext(deviceId)
+        await sdk.player.skipToNext(getDeviceId(deviceId))
         break
       case 'PREVIOUS':
-        await sdk.player.skipToPrevious(deviceId)
+        await sdk.player.skipToPrevious(getDeviceId(deviceId))
         break
       case 'SET_VOLUME':
         if (typeof volume !== 'number') {
@@ -67,7 +72,7 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           )
         }
-        await sdk.player.setPlaybackVolume(volume, deviceId)
+        await sdk.player.setPlaybackVolume(volume, getDeviceId(deviceId))
         break
       case 'TRANSFER_PLAYBACK':
         if (!deviceId) {
@@ -76,7 +81,7 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           )
         }
-        await sdk.player.transferPlayback([deviceId], true)
+        await sdk.player.transferPlayback([getDeviceId(deviceId)], true)
         break
       default:
         logger.warn({ command }, 'Invalid Spotify command received')
