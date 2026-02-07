@@ -10,27 +10,31 @@ import {
 import { ServerMessage } from '../../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../../types/core'
 
+// Define a test-specific type that includes properties commonly used in tests
+// but potentially missing from the strict HrmData/ServerHrmData types.
+interface TestHrmData extends HrmData {
+  percentage?: number
+  zone?: number
+  restingHr?: number
+}
+
 describe('webSocketReducer', () => {
   // Helper to create mock users and reduce duplication
-  // uses partial + record to allow extra properties like percentage/zone/restingHr
-  // which appear in tests but might be missing from the strict HrmData type
-  const createMockUser = (
-    overrides: Partial<HrmData> & Record<string, unknown> = {}
-  ): HrmData =>
-    ({
-      clientId: 'client-1',
-      name: 'User A',
-      age: 30,
-      maxHr: 190,
-      restingHr: 60,
-      value: 100,
-      percentage: 50,
-      zone: 1,
-      calories: 10,
-      isConnected: true,
-      updatedAt: 1000,
-      ...overrides,
-    }) as unknown as HrmData
+  // Returns TestHrmData to allow for extra test properties
+  const createMockUser = (overrides: Partial<TestHrmData> = {}): TestHrmData => ({
+    clientId: 'client-1',
+    name: 'User A',
+    age: 30,
+    maxHr: 190,
+    restingHr: 60,
+    value: 100,
+    percentage: 50,
+    zone: 1,
+    calories: 10,
+    isConnected: true,
+    updatedAt: 1000,
+    ...overrides,
+  })
 
   const baseUser = createMockUser()
 
@@ -101,7 +105,7 @@ describe('webSocketReducer', () => {
           zone: 2,
           updatedAt: 2000,
           calories: 105,
-        }),
+        }) as ServerHrmData,
       ]
 
       const message: ServerMessage = {
@@ -136,7 +140,7 @@ describe('webSocketReducer', () => {
           zone: 3,
           updatedAt: 3000,
           calories: 50,
-        }),
+        }) as ServerHrmData,
       ]
 
       const message: ServerMessage = {
@@ -175,7 +179,7 @@ describe('webSocketReducer', () => {
           zone: 3,
           updatedAt: 3000,
           calories: 50,
-        }),
+        }) as ServerHrmData,
       ]
 
       const message: ServerMessage = {
@@ -203,7 +207,14 @@ describe('webSocketReducer', () => {
         ],
       }
 
-      // We want to simulate a payload that does NOT have 'name', so we delete it.
+      // Create payload WITHOUT the name property to test preservation
+      // We pass explicitly undefined to the helper, but the helper spreads overrides at the end.
+      // So { ...defaults, name: undefined } will result in name being undefined.
+      // However, we want the property to be MISSING, not undefined, ideally.
+      // But for merging logic, undefined usually overwrites if we do { ...state, ...payload }.
+      // Let's rely on the helper creating a full object, then we assert as a partial/Omit to simulate "server payload missing this field".
+      // Actually, since ServerHrmData defines name as optional (name?: string), omitting it is valid.
+
       const payloadItem = createMockUser({
         value: 125,
         percentage: 65,
@@ -211,9 +222,10 @@ describe('webSocketReducer', () => {
         updatedAt: 2000,
         calories: 105,
       })
-      delete (payloadItem as unknown as Record<string, unknown>).name
+      // Explicitly remove name to simulate server payload not sending it
+      delete payloadItem.name
 
-      const payload: ServerHrmData[] = [payloadItem]
+      const payload: ServerHrmData[] = [payloadItem as ServerHrmData]
 
       const message: ServerMessage = {
         type: 'HRM_UPDATE',
