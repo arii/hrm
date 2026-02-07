@@ -4,7 +4,9 @@ import { ServerMessage } from '../types/websocket'
 /**
  * Type guard for ServerMessage based on the shape of the data.
  */
-function isServerMessage(message: unknown): message is { type: string; payload?: unknown } {
+function isServerMessage(
+  message: unknown
+): message is { type: string; payload?: unknown } {
   return (
     typeof message === 'object' &&
     message !== null &&
