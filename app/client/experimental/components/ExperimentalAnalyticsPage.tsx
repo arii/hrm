@@ -58,31 +58,37 @@ const ExperimentalAnalyticsPage = () => {
     null
   )
 
-  // Effect to handle session fetching and polling
+  // Effect to handle session fetching and polling (active session only)
   useEffect(() => {
+    if (!sessionId) return
+
     let isActive = true
-
-    if (sessionId) {
-      const fetchSession = async () => {
-        try {
-          const s = await workoutSessionStorage.getSession(sessionId)
-          if (isActive) setActiveSession(s)
-        } catch (e) {
-          console.error('Failed to load active session', e)
-        }
+    const fetchSession = async () => {
+      try {
+        const s = await workoutSessionStorage.getSession(sessionId)
+        if (isActive) setActiveSession(s)
+      } catch (e) {
+        console.error('Failed to load active session', e)
       }
-
-      fetchSession()
-      // Poll for updates (e.g. every 5 seconds)
-      const id = setInterval(fetchSession, 5000)
-      return () => {
-        isActive = false
-        clearInterval(id)
-      }
-    } else {
-      setActiveSession(null)
     }
-  }, [sessionId])
+
+    fetchSession()
+    const id = setInterval(fetchSession, 5000)
+    return () => {
+      isActive = false
+      clearInterval(id)
+    }
+  }, [sessionId]) // removed activeSession dependency to avoid churn
+
+  // Effect to clear active session when workout ends
+  useEffect(() => {
+    if (!sessionId && activeSession) {
+      // Wrap in setTimeout to avoid "synchronous setState in effect" warning
+      const t = setTimeout(() => setActiveSession(null), 0)
+      return () => clearTimeout(t)
+    }
+    return undefined
+  }, [sessionId, activeSession])
 
   const { processHeartRate, totalCaloriesBurned, calorieHistory, reset } =
     useCalorieTracker({

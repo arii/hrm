@@ -1,7 +1,7 @@
-import { type BrowserContext, type Page, expect } from '@playwright/test'
+import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
 import { setupVisualRegressionTest } from './test-helpers'
-import { SCREENSHOT_OPTIONS } from './lib/visual'
+import { takeScreenshot } from './lib/visual'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -27,7 +27,9 @@ test.describe('WorkoutSummary Component VRT', () => {
   test('active state', async () => {
     // The dashboard starts in a "list" view. Click "New Workout" to show the summary.
     // Use force:true to ensure click goes through overlays if any
-    await dashboardPage.getByRole('button', { name: 'New Workout' }).click({ force: true })
+    await dashboardPage
+      .getByRole('button', { name: 'New Workout' })
+      .click({ force: true })
 
     const workoutSummary = dashboardPage.getByTestId('workout-summary')
 
@@ -36,9 +38,12 @@ test.describe('WorkoutSummary Component VRT', () => {
 
     // Bypass checkAccessibility due to instability/timeout on this specific component transition
     // directly use expect().toHaveScreenshot
-    await expect(workoutSummary).toHaveScreenshot('workout-summary-active.png', {
-      ...SCREENSHOT_OPTIONS,
-      mask: [dashboardPage.getByText(/\d{2}:\d{2}:\d{2}/)],
-    })
+    await expect(workoutSummary).toHaveScreenshot(
+      'workout-summary-active.png',
+      {
+        ...SCREENSHOT_OPTIONS,
+        mask: [dashboardPage.getByText(/\d{2}:\d{2}:\d{2}/)],
+      }
+    )
   })
 })
