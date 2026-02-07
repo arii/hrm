@@ -66,7 +66,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
   const [connectionAttempted, setConnectionAttempted] = useState(false)
-  const [isSupported] = useState(() => {
+  const [isSupported, setIsSupported] = useState(() => {
     // Check for test environment flags
     const win =
       typeof window !== 'undefined'
@@ -85,6 +85,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
     return typeof navigator !== 'undefined' && !!navigator.bluetooth
   })
+
+  // Effect to re-check support after mount to catch injected test helpers
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const win = window as unknown as {
+      bluetoothTestHelpers?: unknown
+      MockBluetooth?: unknown
+    }
+
+    if ((win.bluetoothTestHelpers || win.MockBluetooth) && !isSupported) {
+      setIsSupported(true)
+    }
+  }, [isSupported])
 
   const deviceStatus = customStatusMessage ?? statusMessageMap[status]
 
