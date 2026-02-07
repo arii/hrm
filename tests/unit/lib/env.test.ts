@@ -22,17 +22,35 @@ describe('Environment Schema Validation', () => {
   // Helper function to dynamically import and test the schema
   const validateEnv = async (env: NodeJS.ProcessEnv) => {
     process.env = { ...originalEnv, ...env }
-    let parsedEnv: { success: boolean; error?: z.ZodError } | undefined
+    let parsedEnv:
+      | {
+          success: boolean
+          data?: z.infer<typeof import('../../../lib/env').envSchema>
+          error?: z.ZodError
+        }
+      | undefined
     let error: unknown
 
     try {
       // Dynamically import the module to re-evaluate it with the new process.env
       const { envSchema } = await import('../../../lib/env')
       parsedEnv = envSchema?.safeParse(process.env)
-    } catch (e) {
+    } catch (e: unknown) {
       error = e
-      if (e instanceof z.ZodError) {
-        parsedEnv = { success: false, error: e }
+      // Use duck typing to check for ZodError because jest.resetModules() can create different instances
+      const isZodError =
+        e instanceof z.ZodError ||
+        (e &&
+          typeof e === 'object' &&
+          'name' in e &&
+          (e as { name: string }).name === 'ZodError') ||
+        (e &&
+          typeof e === 'object' &&
+          'issues' in e &&
+          Array.isArray((e as { issues: unknown[] }).issues))
+
+      if (isZodError) {
+        parsedEnv = { success: false, error: e as z.ZodError }
       } else {
         throw e // Re-throw unexpected errors
       }
@@ -50,11 +68,15 @@ describe('Environment Schema Validation', () => {
         NEXTAUTH_SECRET: 'a-valid-secret-for-testing',
         NEXTAUTH_URL: 'http://localhost:3000',
       })
-      expect(error).toBeInstanceOf(z.ZodError)
-      if (error instanceof z.ZodError) {
-        expect(error.issues[0]?.message).toBe(
+      // Check for error properties instead of strict instanceof check
+      expect(error).toBeDefined()
+      if (error && typeof error === 'object' && 'issues' in error) {
+        const issues = (error as z.ZodError).issues
+        expect(issues[0]?.message).toBe(
           'SPOTIFY_CLIENT_SECRET is required when SPOTIFY_CLIENT_ID is set.'
         )
+      } else {
+        expect(true).toBe(false) // Force fail if not error
       }
     })
 
@@ -66,9 +88,10 @@ describe('Environment Schema Validation', () => {
         NEXTAUTH_SECRET: 'a-valid-secret-for-testing',
         NEXTAUTH_URL: 'http://localhost:3000',
       })
-      expect(error).toBeInstanceOf(z.ZodError)
-      if (error instanceof z.ZodError) {
-        expect(error.issues[0]?.message).toBe(
+      expect(error).toBeDefined()
+      if (error && typeof error === 'object' && 'issues' in error) {
+        const issues = (error as z.ZodError).issues
+        expect(issues[0]?.message).toBe(
           'SPOTIFY_CLIENT_ID is required when SPOTIFY_CLIENT_SECRET is set.'
         )
       }
@@ -93,9 +116,10 @@ describe('Environment Schema Validation', () => {
         NEXTAUTH_SECRET: 'short-secret',
         NEXTAUTH_URL: 'http://localhost:3000',
       })
-      expect(error).toBeInstanceOf(z.ZodError)
-      if (error instanceof z.ZodError) {
-        expect(error.issues[0]?.message).toBe(
+      expect(error).toBeDefined()
+      if (error && typeof error === 'object' && 'issues' in error) {
+        const issues = (error as z.ZodError).issues
+        expect(issues[0]?.message).toBe(
           'NEXTAUTH_SECRET must be at least 32 characters long in production.'
         )
       }
@@ -116,9 +140,10 @@ describe('Environment Schema Validation', () => {
         NEXTAUTH_SECRET: '',
         NEXTAUTH_URL: 'http://localhost:3000',
       })
-      expect(error).toBeInstanceOf(z.ZodError)
-      if (error instanceof z.ZodError) {
-        expect(error.issues[0]?.message).toBe('NEXTAUTH_SECRET is required.')
+      expect(error).toBeDefined()
+      if (error && typeof error === 'object' && 'issues' in error) {
+        const issues = (error as z.ZodError).issues
+        expect(issues[0]?.message).toBe('NEXTAUTH_SECRET is required.')
       }
     })
 
@@ -143,7 +168,7 @@ describe('Environment Schema Validation', () => {
       })
       expect(error).toBeUndefined()
       if (parsedEnv?.success) {
-        expect(parsedEnv.data.SPOTIFY_CALLBACK_URL).toBe(
+        expect(parsedEnv.data?.SPOTIFY_CALLBACK_URL).toBe(
           'http://localhost:3000/api/auth/callback/spotify'
         )
       } else {
@@ -162,7 +187,7 @@ describe('Environment Schema Validation', () => {
       })
       expect(error).toBeUndefined()
       if (parsedEnv?.success) {
-        expect(parsedEnv.data.SPOTIFY_CALLBACK_URL).toBe(
+        expect(parsedEnv.data?.SPOTIFY_CALLBACK_URL).toBe(
           'http://custom-url.com/callback'
         )
       } else {
@@ -213,7 +238,8 @@ describe('Environment Schema Validation', () => {
         NEXTAUTH_URL: 'invalid-url',
         NEXTAUTH_SECRET: 'secret',
       })
-      expect(error).toBeInstanceOf(z.ZodError)
+      // Use checks more resilient to module reset issues
+      expect(error).toBeDefined()
     })
   })
 })

@@ -1,9 +1,8 @@
 /** @type {import('jest').Config} */
-const config = {
+
+const commonConfig = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
   roots: ['<rootDir>/tests/unit'],
-  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   coverageDirectory: 'coverage',
   reporters: [
@@ -11,11 +10,11 @@ const config = {
     [
       'jest-junit',
       {
-        outputDirectory: './test-results', // The directory where the XML file will be saved
-        outputName: 'unit-results.xml', // The name of the JUnit XML file
-        suiteNameTemplate: '{filepath}', // Optional: customize the suite name
-        classNameTemplate: '{classname}', // Optional: customize the class name
-        titleTemplate: '{title}', // Optional: customize the test title
+        outputDirectory: './test-results',
+        outputName: 'unit-results.xml',
+        suiteNameTemplate: '{filepath}',
+        classNameTemplate: '{classname}',
+        titleTemplate: '{title}',
       },
     ],
   ],
@@ -27,23 +26,23 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
+    '^.+\\.mjs$': 'babel-jest',
     '^.+\\.(ts|tsx)$': [
       'ts-jest',
       {
         useESM: true,
         tsconfig: {
           module: 'ES2022',
-          moduleResolution: 'bundler', // bundler is a better choice for modern apps
+          moduleResolution: 'bundler',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
+          jsx: 'react-jsx',
         },
       },
     ],
   },
   transformIgnorePatterns: [
-    // recharts is mocked, so it doesn't need to be explicitly transformed or ignored from transformation.
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
+    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi|cheerio)',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
@@ -58,4 +57,38 @@ const config = {
   ],
 }
 
-module.exports = config
+module.exports = {
+  projects: [
+    {
+      ...commonConfig,
+      displayName: 'api',
+      testEnvironment: 'node',
+      testMatch: [
+        '<rootDir>/tests/unit/app/api/**/*.test.ts',
+        '<rootDir>/tests/unit/services/**/*.test.ts',
+        '<rootDir>/tests/unit/lib/**/*.test.ts',
+        '<rootDir>/tests/unit/scripts/**/*.test.ts',
+        '<rootDir>/tests/unit/gemini-client.test.ts',
+        '<rootDir>/tests/unit/safeSpotifyApi.test.ts',
+        '<rootDir>/tests/unit/services.test.ts',
+        '<rootDir>/tests/unit/spotifyPolling.test.ts',
+      ],
+    },
+    {
+      ...commonConfig,
+      displayName: 'client',
+      testEnvironment: 'jsdom',
+      testMatch: [
+        '<rootDir>/tests/unit/components/**/*.test.{ts,tsx}',
+        '<rootDir>/tests/unit/hooks/**/*.test.{ts,tsx}',
+        '<rootDir>/tests/unit/context/**/*.test.{ts,tsx}',
+        '<rootDir>/tests/unit/app/client/**/*.test.{ts,tsx}',
+        '<rootDir>/tests/unit/utils/**/*.test.{ts,tsx}',
+        '<rootDir>/tests/unit/constants/**/*.test.{ts,tsx}',
+        '<rootDir>/tests/unit/useVolumePreference.test.ts',
+        '<rootDir>/tests/unit/socketManager.test.ts',
+        '<rootDir>/tests/unit/websocketUtils.test.ts',
+      ],
+    },
+  ],
+}

@@ -36,13 +36,13 @@ exports[`ControlPanel Component should match snapshot 1`] = `
             class="MuiBox-root css-gtkpha"
           >
             <button
-              class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary css-1c3apq8-MuiButtonBase-root-MuiButton-root"
+              class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary css-1c7lqo9-MuiButtonBase-root-MuiButton-root"
               data-testid="tabata-mode-button"
               tabindex="0"
               type="button"
             >
               <span
-                class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1sh91j5-MuiButton-startIcon"
+                class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1jsm74t-MuiButton-startIcon"
               >
                 <svg
                   aria-hidden="true"
@@ -59,13 +59,13 @@ exports[`ControlPanel Component should match snapshot 1`] = `
               Tabata
             </button>
             <button
-              class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary css-1c3apq8-MuiButtonBase-root-MuiButton-root"
+              class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary css-1c7lqo9-MuiButtonBase-root-MuiButton-root"
               data-testid="stopwatch-mode-button"
               tabindex="0"
               type="button"
             >
               <span
-                class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1sh91j5-MuiButton-startIcon"
+                class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1jsm74t-MuiButton-startIcon"
               >
                 <svg
                   aria-hidden="true"
@@ -82,7 +82,7 @@ exports[`ControlPanel Component should match snapshot 1`] = `
               Stopwatch
             </button>
             <div
-              style="position: absolute; top: 4px; left: calc(50% - 4px); width: calc(50% - 4px); height: calc(100% - 8px); background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); z-index: 0; border-radius: 20px;"
+              style="position: absolute; top: 4px; left: calc(50% - 4px); width: calc(50% - 4px); height: calc(100% - 8px); background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); border-radius: 20px; z-index: 0;"
             />
           </div>
         </div>
@@ -107,13 +107,13 @@ exports[`ControlPanel Component should match snapshot 1`] = `
             tabindex="0"
           >
             <button
-              class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary css-av20y-MuiButtonBase-root-MuiButton-root"
+              class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary css-14jmie7-MuiButtonBase-root-MuiButton-root"
               data-testid="start-timer-button"
               tabindex="0"
               type="button"
             >
               <span
-                class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1sh91j5-MuiButton-startIcon"
+                class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1jsm74t-MuiButton-startIcon"
               >
                 <svg
                   aria-hidden="true"
