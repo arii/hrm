@@ -27,10 +27,9 @@ const TestComponent = () => {
 
 describe('WebSocketContext Payload Validation', () => {
   const wsUrl = 'ws://localhost:1234'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockWebSocket: any
 
-  beforeEach(() => {
+  // Helper to setup WebSocket mock
+  const setupWebSocket = () => {
     jest.clearAllMocks()
 
     // Mock crypto.randomUUID for clientId generation
@@ -41,8 +40,7 @@ describe('WebSocketContext Payload Validation', () => {
       writable: true,
     })
 
-    // Mock WebSocket implementation
-    mockWebSocket = {
+    const mockWebSocket = {
       send: jest.fn(),
       close: jest.fn(),
       readyState: 1, // OPEN
@@ -56,9 +54,26 @@ describe('WebSocketContext Payload Validation', () => {
     global.WebSocket = jest.fn(() => mockWebSocket) as any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(global.WebSocket as any).OPEN = 1
-  })
+
+    return mockWebSocket
+  }
+
+  // Helper to simulate incoming messages
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const simulateMessage = (mockWebSocket: any, data: any) => {
+    act(() => {
+      if (mockWebSocket.onmessage) {
+        mockWebSocket.onmessage({
+          data: JSON.stringify(data),
+        } as MessageEvent)
+      }
+    })
+  }
 
   it('validates HRM_UPDATE payload is an array', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mockWebSocket: any = setupWebSocket()
+
     render(
       <WebSocketProvider serverUrl={wsUrl}>
         <TestComponent />
@@ -76,13 +91,7 @@ describe('WebSocketContext Payload Validation', () => {
       payload: { some: 'object' },
     }
 
-    act(() => {
-      if (mockWebSocket.onmessage) {
-        mockWebSocket.onmessage({
-          data: JSON.stringify(invalidMessage),
-        } as MessageEvent)
-      }
-    })
+    simulateMessage(mockWebSocket, invalidMessage)
 
     expect(logger.warn).toHaveBeenCalledWith(
       '[WebSocketContext] Invalid HRM_UPDATE payload',
@@ -91,6 +100,9 @@ describe('WebSocketContext Payload Validation', () => {
   })
 
   it('validates DEVICE_OFFLINE payload has string deviceId', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mockWebSocket: any = setupWebSocket()
+
     render(
       <WebSocketProvider serverUrl={wsUrl}>
         <TestComponent />
@@ -107,13 +119,7 @@ describe('WebSocketContext Payload Validation', () => {
       payload: {},
     }
 
-    act(() => {
-      if (mockWebSocket.onmessage) {
-        mockWebSocket.onmessage({
-          data: JSON.stringify(invalidMessage1),
-        } as MessageEvent)
-      }
-    })
+    simulateMessage(mockWebSocket, invalidMessage1)
 
     expect(logger.warn).toHaveBeenCalledWith(
       '[WebSocketContext] Invalid DEVICE_OFFLINE payload',
@@ -126,13 +132,7 @@ describe('WebSocketContext Payload Validation', () => {
       payload: { deviceId: 123 },
     }
 
-    act(() => {
-      if (mockWebSocket.onmessage) {
-        mockWebSocket.onmessage({
-          data: JSON.stringify(invalidMessage2),
-        } as MessageEvent)
-      }
-    })
+    simulateMessage(mockWebSocket, invalidMessage2)
 
     expect(logger.warn).toHaveBeenCalledWith(
       '[WebSocketContext] Invalid DEVICE_OFFLINE payload',
@@ -141,6 +141,9 @@ describe('WebSocketContext Payload Validation', () => {
   })
 
   it('accepts valid HRM_UPDATE payload', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mockWebSocket: any = setupWebSocket()
+
     render(
       <WebSocketProvider serverUrl={wsUrl}>
         <TestComponent />
@@ -158,18 +161,15 @@ describe('WebSocketContext Payload Validation', () => {
       ],
     }
 
-    act(() => {
-      if (mockWebSocket.onmessage) {
-        mockWebSocket.onmessage({
-          data: JSON.stringify(validMessage),
-        } as MessageEvent)
-      }
-    })
+    simulateMessage(mockWebSocket, validMessage)
 
     expect(logger.warn).not.toHaveBeenCalled()
   })
 
   it('accepts valid DEVICE_OFFLINE payload', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mockWebSocket: any = setupWebSocket()
+
     render(
       <WebSocketProvider serverUrl={wsUrl}>
         <TestComponent />
@@ -185,13 +185,7 @@ describe('WebSocketContext Payload Validation', () => {
       payload: { deviceId: 'test-device' },
     }
 
-    act(() => {
-      if (mockWebSocket.onmessage) {
-        mockWebSocket.onmessage({
-          data: JSON.stringify(validMessage),
-        } as MessageEvent)
-      }
-    })
+    simulateMessage(mockWebSocket, validMessage)
 
     expect(logger.warn).not.toHaveBeenCalled()
   })

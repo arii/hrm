@@ -67,13 +67,7 @@ export const reducer = (
       const now = Date.now()
       const payload = message.payload as ServerHrmData[]
 
-      // Snapshot Synchronization Strategy:
-      // The payload received from the server is considered the absolute source of truth.
-      // 1. Any device present in the payload is updated (or added).
-      // 2. Any device ABSENT from the payload is implicitly considered offline/removed.
-      // This replaces the previous time-based "staleness" check, simplifying logic and
-      // strictly coupling the UI state to the server's active session state.
-      // We map the payload to the new state, preserving existing local state if needed.
+      // Snapshot Sync: Payload is the source of truth. Items absent from payload are removed.
       const newHrmData: HrmData[] = payload.map((newUser) => {
         const existingUser = state.hrmData.find(
           (u) => u.clientId === newUser.clientId

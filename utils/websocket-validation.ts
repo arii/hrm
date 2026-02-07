@@ -27,22 +27,39 @@ export const validateWebSocketMessage = (
     return false
   }
 
-  if (message.type === 'HRM_UPDATE') {
-    if (!Array.isArray(message.payload)) {
-      logger.warn('[WebSocketContext] Invalid HRM_UPDATE payload', message)
-      return false
-    }
-  } else if (message.type === 'DEVICE_OFFLINE') {
-    if (
-      !message.payload ||
-      typeof message.payload !== 'object' ||
-      !('deviceId' in message.payload) ||
-      typeof (message.payload as { deviceId: unknown }).deviceId !== 'string'
-    ) {
-      logger.warn('[WebSocketContext] Invalid DEVICE_OFFLINE payload', message)
-      return false
-    }
-  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const msg = message as any
 
-  return true
+  switch (msg.type) {
+    case 'HRM_UPDATE':
+      if (!Array.isArray(msg.payload)) {
+        logger.warn('[WebSocketContext] Invalid HRM_UPDATE payload', msg)
+        return false
+      }
+      return true
+    case 'DEVICE_OFFLINE':
+      if (
+        !msg.payload ||
+        typeof msg.payload !== 'object' ||
+        !('deviceId' in msg.payload) ||
+        typeof msg.payload.deviceId !== 'string'
+      ) {
+        logger.warn('[WebSocketContext] Invalid DEVICE_OFFLINE payload', msg)
+        return false
+      }
+      return true
+    case 'TIMER_UPDATE':
+    case 'SPOTIFY_UPDATE':
+    case 'ACTIVE_ALERTS_UPDATE':
+    case 'SPOTIFY_SERVICE_INIT_UPDATE':
+    case 'INITIAL_STATE':
+    case 'PONG':
+    case 'EXECUTE_SPOTIFY':
+      // For now, we assume these are valid if the type matches, or add specific validation if needed
+      return true
+    default:
+      // Unknown message type
+      logger.warn('[WebSocketValidation] Unknown message type:', msg.type)
+      return false
+  }
 }
