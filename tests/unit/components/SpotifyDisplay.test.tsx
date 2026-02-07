@@ -146,7 +146,7 @@ describe('SpotifyDisplay', () => {
     fireEvent.change(slider, { target: { value: '75' } })
     expect(execute).not.toHaveBeenCalled()
     fireEvent.mouseUp(slider, { target: { value: '75' } })
-    expect(execute).toHaveBeenCalledWith('SET_VOLUME', { volume: 75 })
+    expect(execute).toHaveBeenCalledWith('SET_VOLUME', { volumePercent: 75 })
   })
 
   it('renders DeviceRecommendation when no device is active but HRM player exists', () => {
