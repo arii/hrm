@@ -72,8 +72,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     const hasNavigatorBluetooth =
       typeof navigator !== 'undefined' && !!navigator.bluetooth
     const hasMockBluetooth =
-      typeof window !== 'undefined' &&
-      !!(window as unknown as { MockBluetooth: unknown }).MockBluetooth
+      typeof window !== 'undefined' && !!window.MockBluetooth
 
     setIsSupported(hasNavigatorBluetooth || hasMockBluetooth)
   }, [])

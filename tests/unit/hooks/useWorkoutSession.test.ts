@@ -200,4 +200,56 @@ describe('useWorkoutSession', () => {
       expect(workoutSessionStorage.appendHrData).toHaveBeenCalled()
     })
   })
+
+  describe('Hydration Logic', () => {
+    it('should hydrate a running session and catch up duration', () => {
+      const now = Date.now()
+      const startTime = now - 60000 // 1 minute ago
+      const storedState = {
+        status: 'running',
+        startTime,
+        startCalories: 0,
+        totalPaused: 0,
+        pauseTime: null,
+        sessionId: 'test-session',
+      }
+      localStorage.setItem(
+        'hrm_dashboard:active_session',
+        JSON.stringify(storedState)
+      )
+
+      const { result } = renderHook(() => useWorkoutSession({}))
+
+      expect(result.current.workoutStatus).toBe('running')
+      // Duration should be approx 60 seconds
+      expect(result.current.workoutDuration).toBeGreaterThanOrEqual(60)
+      expect(result.current.workoutDuration).toBeLessThan(62) // Allow small delta
+      expect(result.current.sessionId).toBe('test-session')
+    })
+
+    it('should hydrate a paused session and calculate correct duration', () => {
+      const now = Date.now()
+      const startTime = now - 120000 // 2 minutes ago
+      const pauseTime = now - 60000 // Paused 1 minute ago
+      // Running time before pause: 1 minute
+      const storedState = {
+        status: 'paused',
+        startTime,
+        startCalories: 0,
+        totalPaused: 0,
+        pauseTime,
+        sessionId: 'test-session-paused',
+      }
+      localStorage.setItem(
+        'hrm_dashboard:active_session',
+        JSON.stringify(storedState)
+      )
+
+      const { result } = renderHook(() => useWorkoutSession({}))
+
+      expect(result.current.workoutStatus).toBe('paused')
+      // Duration should be approx 60 seconds (time active before pause)
+      expect(result.current.workoutDuration).toBe(60)
+    })
+  })
 })

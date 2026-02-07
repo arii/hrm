@@ -58,6 +58,11 @@ const ExperimentalAnalyticsPage = () => {
     null
   )
 
+  // Clear active session if sessionId is gone (Derived state pattern)
+  if (!sessionId && activeSession !== null) {
+    setActiveSession(null)
+  }
+
   // Effect to handle session fetching and polling
   useEffect(() => {
     let isActive = true
@@ -78,14 +83,6 @@ const ExperimentalAnalyticsPage = () => {
       return () => {
         isActive = false
         clearInterval(id)
-      }
-    } else {
-      const t = setTimeout(() => {
-        if (isActive) setActiveSession(null)
-      }, 0)
-      return () => {
-        isActive = false
-        clearTimeout(t)
       }
     }
   }, [sessionId])
