@@ -10,8 +10,19 @@ import {
 import { ServerMessage } from '../../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../../types/core'
 
+// Define a test-specific type that includes properties commonly used in tests
+// but potentially missing from the strict HrmData/ServerHrmData types.
+interface TestHrmData extends HrmData {
+  percentage?: number
+  zone?: number
+}
+
 describe('webSocketReducer', () => {
-  const baseUser: HrmData = {
+  // Helper to create mock users and reduce duplication
+  // Returns TestHrmData to allow for extra test properties
+  const createMockUser = (
+    overrides: Partial<TestHrmData> = {}
+  ): TestHrmData => ({
     clientId: 'client-1',
     name: 'User A',
     age: 30,
@@ -23,7 +34,10 @@ describe('webSocketReducer', () => {
     calories: 10,
     isConnected: true,
     updatedAt: 1000,
-  }
+    ...overrides,
+  })
+
+  const baseUser = createMockUser()
 
   it('should return the initial state if no action is matched', () => {
     const action = { type: 'UNKNOWN_ACTION' } as unknown as ServerMessage
@@ -44,18 +58,11 @@ describe('webSocketReducer', () => {
     it('should handle INITIAL_STATE action and mark hrmData as connected', () => {
       const serverState = {
         hrmData: [
-          {
-            clientId: 'client-1',
-            name: 'User A',
-            age: 30,
-            maxHr: 190,
-            restingHr: 60,
+          createMockUser({
             value: 120,
             percentage: 60,
-            zone: 1,
             calories: 100,
-            updatedAt: 1000,
-          },
+          }),
         ] as ServerHrmData[],
         timerData: {
           ...INITIAL_STATE.timerData,
@@ -84,24 +91,22 @@ describe('webSocketReducer', () => {
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [
-          {
-            ...baseUser,
+          createMockUser({
             value: 120,
             percentage: 60,
             lastUpdated: 1000,
-          },
+          }),
         ],
       }
 
       const payload: ServerHrmData[] = [
-        {
-          clientId: 'client-1',
+        createMockUser({
           value: 125,
           percentage: 65,
           zone: 2,
           updatedAt: 2000,
           calories: 105,
-        },
+        }) as ServerHrmData,
       ]
 
       const message: ServerMessage = {
@@ -129,14 +134,14 @@ describe('webSocketReducer', () => {
       const initialState: WebSocketState = { ...INITIAL_STATE, hrmData: [] }
 
       const payload: ServerHrmData[] = [
-        {
+        createMockUser({
           clientId: 'client-2',
           value: 140,
           percentage: 75,
           zone: 3,
           updatedAt: 3000,
           calories: 50,
-        },
+        }) as ServerHrmData,
       ]
 
       const message: ServerMessage = {
@@ -160,23 +165,22 @@ describe('webSocketReducer', () => {
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [
-          {
-            ...baseUser,
+          createMockUser({
             clientId: 'client-toremove',
             lastUpdated: 1000,
-          },
+          }),
         ],
       }
 
       const payload: ServerHrmData[] = [
-        {
+        createMockUser({
           clientId: 'client-new',
           value: 140,
           percentage: 75,
           zone: 3,
           updatedAt: 3000,
           calories: 50,
-        },
+        }) as ServerHrmData,
       ]
 
       const message: ServerMessage = {
@@ -197,25 +201,24 @@ describe('webSocketReducer', () => {
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [
-          {
-            ...baseUser,
-            clientId: 'client-1',
+          createMockUser({
             name: 'Existing Name',
             lastUpdated: 1000,
-          },
+          }),
         ],
       }
 
-      const payload: ServerHrmData[] = [
-        {
-          clientId: 'client-1',
-          value: 125,
-          percentage: 65,
-          zone: 2,
-          updatedAt: 2000,
-          calories: 105,
-        },
-      ]
+      const payloadItem = createMockUser({
+        value: 125,
+        percentage: 65,
+        zone: 2,
+        updatedAt: 2000,
+        calories: 105,
+      })
+      // Explicitly remove name to simulate server payload not sending it
+      delete payloadItem.name
+
+      const payload: ServerHrmData[] = [payloadItem as ServerHrmData]
 
       const message: ServerMessage = {
         type: 'HRM_UPDATE',
@@ -231,7 +234,7 @@ describe('webSocketReducer', () => {
 
   describe('DEVICE_OFFLINE action', () => {
     it('should remove the specified device from the state', () => {
-      const user2 = { ...baseUser, clientId: 'client-2', name: 'User B' }
+      const user2 = createMockUser({ clientId: 'client-2', name: 'User B' })
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [baseUser, user2],
