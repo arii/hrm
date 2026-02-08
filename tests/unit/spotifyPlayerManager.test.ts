@@ -3,7 +3,6 @@ import { SpotifyPlayerManager } from '../../services/spotifyPlayerManager'
 import { SafeSpotifyApi } from '../../services/safeSpotifyApi'
 import { ServerMessage, SpotifyData } from '../../types/websocket'
 import { mockPlayer } from './spotify-test-utils'
-import logger from '../../utils/logger.server'
 
 const NOT_PLAYING_MESSAGE = 'Nothing is currently playing.'
 
