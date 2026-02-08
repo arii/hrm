@@ -10,7 +10,8 @@ export const mockSpotifyData: SpotifyData = {
     'https://i.scdn.co/image/ab67616d0000b273f8e7a4a8c2d1b7a6f7d1b7a6',
   isPlaying: true,
   devices: [],
-  volumePercent: 50,
+  volume: 50,
+  isMuted: false,
 }
 
 export const mockSpotifyDataNoActivePlayback: SpotifyData = {
@@ -21,7 +22,8 @@ export const mockSpotifyDataNoActivePlayback: SpotifyData = {
   albumArtUrl: '',
   isPlaying: false,
   devices: [],
-  volumePercent: 70,
+  volume: 70,
+  isMuted: false,
 }
 
 export const mockTimerData: TimerData = {
