@@ -41,36 +41,21 @@ describe('HrTileWrapper', () => {
   })
 
   it('passes isDataStale=true to HrTile', () => {
-    const {
-      updatedAt: _updatedAt,
-      lastUpdated: _lastUpdated,
-      ...visualProps
-    } = mockUser
-    render(<HrTileWrapper {...visualProps} isDataStale={true} />)
+    render(<HrTileWrapper user={mockUser} isDataStale={true} />)
 
     expect(screen.getByTestId('mock-hr-tile')).toBeInTheDocument()
     expect(screen.getByTestId('tile-stale')).toHaveTextContent('true')
   })
 
   it('passes isDataStale=false to HrTile', () => {
-    const {
-      updatedAt: _updatedAt,
-      lastUpdated: _lastUpdated,
-      ...visualProps
-    } = mockUser
-    render(<HrTileWrapper {...visualProps} isDataStale={false} />)
+    render(<HrTileWrapper user={mockUser} isDataStale={false} />)
 
     expect(screen.getByTestId('mock-hr-tile')).toBeInTheDocument()
     expect(screen.getByTestId('tile-stale')).toHaveTextContent('false')
   })
 
   it('passes user data to HrTile', () => {
-    const {
-      updatedAt: _updatedAt,
-      lastUpdated: _lastUpdated,
-      ...visualProps
-    } = mockUser
-    render(<HrTileWrapper {...visualProps} isDataStale={false} />)
+    render(<HrTileWrapper user={mockUser} isDataStale={false} />)
 
     expect(screen.getByTestId('tile-name')).toHaveTextContent('Test User')
     expect(screen.getByTestId('tile-bpm')).toHaveTextContent('120')
