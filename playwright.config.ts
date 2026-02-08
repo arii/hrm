@@ -132,8 +132,10 @@ export default defineConfig({
 
   // Web Server Configuration
   webServer: {
+    // Optimized command: Check for build artifacts (.next_prod and dist/server.js) to skip redundant builds
+    // This prevents double-builds when tests are run via 'pnpm run test:visual' which already builds the app
     command:
-      'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
+      'if [ -d .next_prod ] && [ -f dist/server.js ]; then echo "Skipping build... (Artifacts found)"; else NODE_ENV=production pnpm run build; fi && bash scripts/start-production.sh',
     url: `${baseURL}/api/health/simple`,
     timeout: 180 * 1000, // 3 minutes - increased for CI build time
     reuseExistingServer: !process.env.CI,
