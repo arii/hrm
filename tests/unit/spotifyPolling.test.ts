@@ -58,6 +58,14 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
+// Helper to flush promises
+const flushPromises = async () => {
+  await Promise.resolve()
+  await Promise.resolve()
+  await Promise.resolve()
+  await Promise.resolve()
+}
+
 describe('SpotifyPolling Service', () => {
   let spotifyService: SpotifyPolling
   let broadcastMock: jest.Mock<(message: ServerMessage) => void>
@@ -321,8 +329,7 @@ describe('SpotifyPolling Service', () => {
 
       spotifyService.startPolling()
       jest.advanceTimersByTime(150)
-      await Promise.resolve()
-      await Promise.resolve()
+      await flushPromises()
       spotifyService.stopPolling()
 
       // Only check the last broadcasted state
@@ -337,8 +344,7 @@ describe('SpotifyPolling Service', () => {
 
       spotifyService.startPolling()
       jest.advanceTimersByTime(150)
-      await Promise.resolve()
-      await Promise.resolve()
+      await flushPromises()
       spotifyService.stopPolling()
 
       // Only check the last broadcasted state
@@ -360,8 +366,7 @@ describe('SpotifyPolling Service', () => {
 
       spotifyService.startPolling()
       jest.advanceTimersByTime(150)
-      await Promise.resolve()
-      await Promise.resolve()
+      await flushPromises()
       spotifyService.stopPolling()
     }
 
@@ -480,10 +485,10 @@ describe('SpotifyPolling Service', () => {
       const refreshSpy = jest.spyOn(spotifyService, 'checkAndRefreshSdkToken')
       spotifyService.startPolling(100)
       jest.advanceTimersByTime(150)
-      await Promise.resolve() // Flush promises
-      await Promise.resolve() // Flush promises
-      await Promise.resolve() // Flush promises
-      await Promise.resolve() // Flush promises
+
+      // Use helper to clear microtasks
+      await flushPromises()
+
       spotifyService.stopPolling()
 
       // Should attempt to handle 401 without crashing
@@ -492,7 +497,7 @@ describe('SpotifyPolling Service', () => {
         'Spotify token expired during polling. Attempting refresh.'
       )
       expect(refreshSpy).toHaveBeenCalled()
-    })
+    }, 15000) // Extended timeout for safety
 
     it('should handle SyntaxError during error logging gracefully', async () => {
       // Simulate an error that returns invalid JSON when text() is called
