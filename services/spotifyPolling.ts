@@ -16,8 +16,6 @@ import { env } from '../lib/env.js'
 import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
 import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
 
-const NOT_PLAYING_MESSAGE = 'Nothing is currently playing.'
-
 export class SpotifyPolling implements SpotifyService {
   public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
@@ -76,52 +74,7 @@ export class SpotifyPolling implements SpotifyService {
         return
       }
 
-      const playbackState = await this.playerManager.fetchPlaybackState()
-
-      if (!playbackState) {
-        if (
-          this.state.isPlaying ||
-          this.state.trackName !== NOT_PLAYING_MESSAGE
-        ) {
-          this.setState({
-            ...this.state,
-            trackId: null,
-            trackName: NOT_PLAYING_MESSAGE,
-            artist: '',
-            albumName: '',
-            albumArtUrl: '',
-            isPlaying: false,
-          })
-          this.broadcastUpdate({
-            type: 'SPOTIFY_UPDATE',
-            payload: this.getState(),
-          })
-        }
-        return
-      }
-
-      const { trackId, trackName, artist, albumName, albumArtUrl, isPlaying } =
-        playbackState
-
-      if (
-        trackId !== this.state.trackId ||
-        isPlaying !== this.state.isPlaying
-      ) {
-        this.setState({
-          ...this.state,
-          trackId,
-          trackName,
-          artist,
-          albumName,
-          albumArtUrl,
-          isPlaying,
-        })
-
-        this.broadcastUpdate({
-          type: 'SPOTIFY_UPDATE',
-          payload: this.getState(),
-        })
-      }
+      await this.playerManager.refreshPlaybackState()
     } catch (error) {
       await handleSpotifyApiError(error, () => this.checkAndRefreshSdkToken())
     }
