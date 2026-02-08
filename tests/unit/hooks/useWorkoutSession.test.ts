@@ -6,6 +6,7 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import {
   workoutSessionStorage,
   HrZoneName,
+  WorkoutSessionData,
 } from '@/lib/workout-session-storage'
 
 // Mock the storage module
@@ -292,7 +293,7 @@ describe('useWorkoutSession', () => {
       localStorage.setItem('hrm_dashboard:hr_buffer', JSON.stringify(buffer))
 
       // Re-mock getSession to return a session matching this ID
-      jest.mocked(workoutSessionStorage.getSession).mockResolvedValueOnce({
+      const mockSession: WorkoutSessionData = {
         sessionId,
         status: 'running',
         hrHistory: [],
@@ -310,7 +311,13 @@ describe('useWorkoutSession', () => {
         userSettings: { age: 30, weight: 70, maxHr: 190 },
         lastSyncTime: 0,
         syncStatus: 'pending',
-      } as unknown as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+        startTime: Date.now() - 10000,
+        endTime: null,
+      }
+
+      jest
+        .mocked(workoutSessionStorage.getSession)
+        .mockResolvedValueOnce(mockSession)
 
       renderHook(() => useWorkoutSession({}))
 
