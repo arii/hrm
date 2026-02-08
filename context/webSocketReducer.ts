@@ -12,6 +12,15 @@ export interface HrmData extends ServerHrmData {
   lastUpdated?: number
 }
 
+/**
+ * Comprehensive client-side HRM data type including joined alert state.
+ * Used primarily for component props where HRM data and active alerts are merged.
+ */
+export interface ClientHrmData extends HrmData {
+  isAlerting: boolean
+  alertMessage?: string
+}
+
 export interface WebSocketState {
   hrmData: HrmData[]
   timerData: TimerData
@@ -57,8 +66,14 @@ export const reducer = (
       return INITIAL_STATE
     case 'INITIAL_STATE': {
       // When the initial state is loaded, ensure all HRM data is marked as connected.
+      // We use the client's current time for lastUpdated to prevent clock skew issues.
+      const now = Date.now()
       const hrmDataWithConnection =
-        message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) || []
+        message.payload.hrmData?.map((d) => ({
+          ...d,
+          isConnected: true,
+          lastUpdated: now,
+        })) || []
       return {
         ...state,
         ...message.payload,
@@ -66,41 +81,22 @@ export const reducer = (
       }
     }
     case 'HRM_UPDATE': {
-      const now = Date.now()
       const payload = message.payload as ServerHrmData[]
-      const incomingClients = new Set(payload.map((user) => user.clientId))
+      const now = Date.now()
 
-      // THE FIX: Immediately filter out any devices that are NOT in the incoming payload.
-      // This ensures the client state perfectly mirrors the server's HrmDataStore.
-      const activeHrmData = state.hrmData.filter((existing) =>
-        incomingClients.has(existing.clientId)
-      )
-
-      // Update existing users with new data
-      const mergedHrmData = activeHrmData.map((existingUser) => {
-        const updatedUser = payload.find(
-          (newUser) => newUser.clientId === existingUser.clientId
+      // Simplify: The HRM_UPDATE payload from the server is the single source of truth.
+      // We map the payload to our local HrmData structure, preserving existing local state
+      // (like isConnected and lastUpdated) if available, and updating it with new data.
+      // This automatically removes any users NOT present in the payload.
+      const mergedHrmData = payload.map((newUser) => {
+        const existingUser = state.hrmData.find(
+          (d) => d.clientId === newUser.clientId
         )
         return {
           ...existingUser,
-          ...updatedUser,
+          ...newUser,
           isConnected: true,
           lastUpdated: now,
-        }
-      })
-
-      // Add brand-new users from the payload
-      payload.forEach((newUser) => {
-        if (
-          !mergedHrmData.some(
-            (existingUser) => existingUser.clientId === newUser.clientId
-          )
-        ) {
-          mergedHrmData.push({
-            ...newUser,
-            isConnected: true,
-            lastUpdated: now,
-          })
         }
       })
 

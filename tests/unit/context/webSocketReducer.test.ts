@@ -21,6 +21,7 @@ describe('webSocketReducer', () => {
     zone: 'warmup',
     calories: 10,
     isConnected: true,
+    updatedAt: 1000000,
   }
 
   it('should return the initial state if no action is matched', () => {
@@ -65,6 +66,7 @@ describe('webSocketReducer', () => {
             value: 120,
             zone: 'aerobic',
             calories: 100,
+            updatedAt: 1000000,
           },
         ] as HrmStreamData[],
         timerData: {
@@ -104,11 +106,19 @@ describe('webSocketReducer', () => {
     })
 
     it('should update an existing user and their lastUpdated timestamp', () => {
+      const mockNow = 1234567890
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(mockNow)
+
       const initialState: WebSocketState = {
         ...INITIAL_STATE,
         hrmData: [{ ...baseUser, isConnected: true, lastUpdated: 12345 }],
       }
-      const updatedUser = { ...baseUser, value: 150, zone: 'aerobic' }
+      const updatedUser = {
+        ...baseUser,
+        value: 150,
+        zone: 'aerobic',
+        updatedAt: 2000000,
+      }
       const action: ServerMessage = {
         type: 'HRM_UPDATE',
         payload: [updatedUser],
@@ -118,7 +128,9 @@ describe('webSocketReducer', () => {
       expect(state.hrmData[0].value).toBe(150)
       expect(state.hrmData[0].zone).toBe('aerobic')
       expect(state.hrmData[0].isConnected).toBe(true)
-      expect(state.hrmData[0].lastUpdated).not.toBe(12345)
+      expect(state.hrmData[0].lastUpdated).toBe(mockNow)
+
+      dateSpy.mockRestore()
     })
 
     it('should remove users that are not in the payload immediately', () => {
