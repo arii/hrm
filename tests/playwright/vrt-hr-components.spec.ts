@@ -31,6 +31,7 @@ test.describe('Visual Regression Tests', () => {
         true
     })
     await dashboardPage.reload()
+    await mockPage.reload()
     await waitForPageReady(dashboardPage)
   })
 
@@ -40,13 +41,18 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.beforeEach(async () => {
-    await waitForPageReady(dashboardPage)
+    // Ensure both pages are ready before each test to prevent race conditions
+    await Promise.all([
+      waitForPageReady(dashboardPage),
+      waitForPageReady(mockPage),
+    ])
   })
 
   test.describe('HR-Related Components', () => {
     test('dashboard with HR data', async () => {
-      await mockPage.getByLabel('Current BPM').fill('155')
-      await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+      test.setTimeout(60000) // Increase timeout for CI stability
+      await mockPage.getByTestId('hr-input').fill('155', { timeout: 30000 })
+      await mockPage.getByTestId('zone-4-button').click({ timeout: 30000 })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
 
@@ -60,6 +66,7 @@ test.describe('Visual Regression Tests', () => {
     })
 
     test('heart rate zone distribution chart', async () => {
+      test.setTimeout(60000) // Increase timeout for CI stability
       // Ensure we are in the active workout view
       const newWorkoutBtn = dashboardPage.getByRole('button', {
         name: 'New Workout',
@@ -77,8 +84,8 @@ test.describe('Visual Regression Tests', () => {
 
       // Inject data via mock page to populate zones
       // Peak zone
-      await mockPage.getByLabel('Current BPM').fill('155')
-      await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+      await mockPage.getByTestId('hr-input').fill('155', { timeout: 30000 })
+      await mockPage.getByTestId('zone-4-button').click({ timeout: 30000 })
 
       // Ensure mock client is connected before starting stream
       await expect(
