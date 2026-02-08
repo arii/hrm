@@ -2,6 +2,7 @@
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
+import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
@@ -39,7 +40,7 @@ type SpotifyDisplayAction =
   | { type: 'CLOSE_DEVICE_MENU' }
   | {
       type: 'SYNC_WITH_WEBSOCKET'
-      payload: { volumePercent?: number }
+      payload: { volume?: number; isMuted?: boolean }
     }
 
 // 3. Reducer Logic
@@ -50,12 +51,12 @@ const spotifyDisplayReducer = (
   switch (action.type) {
     case 'SYNC_WITH_WEBSOCKET': {
       if (state.isSliding) return state
-      const { volumePercent } = action.payload
-      const newVolume = volumePercent ?? state.displayVolume
+      const { volume, isMuted } = action.payload
+      const newVolume = volume ?? state.displayVolume
       return {
         ...state,
         displayVolume: newVolume,
-        isMuted: newVolume === 0,
+        isMuted: isMuted ?? state.isMuted,
         lastVolume: newVolume > 0 ? newVolume : state.lastVolume,
       }
     }
@@ -108,13 +109,11 @@ const SpotifyDisplay = () => {
 
   // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
-    displayVolume: spotifyData.volumePercent ?? 70,
-    isMuted: (spotifyData.volumePercent ?? 70) === 0,
+    displayVolume: spotifyData.volume ?? 70,
+    isMuted: spotifyData.isMuted ?? false,
     isSliding: false,
     lastVolume:
-      spotifyData.volumePercent && spotifyData.volumePercent > 0
-        ? spotifyData.volumePercent
-        : 70,
+      spotifyData.volume && spotifyData.volume > 0 ? spotifyData.volume : 70,
     selectedDeviceId: '',
     deviceMenuAnchor: null,
   })
@@ -129,7 +128,10 @@ const SpotifyDisplay = () => {
     window.location.reload()
   }
 
-  const { isReady, deviceId } = useSpotifyWebPlayback()
+  const { player, isReady, deviceId } = useSpotifyWebPlayback()
+
+  // Enable remote Spotify control from controllers
+  useSpotifyRemoteExecution(player)
 
   // Synchronize with WebSocket data whenever it changes
   // Grace period prevents race conditions when volume commands are in flight
@@ -152,9 +154,9 @@ const SpotifyDisplay = () => {
 
     dispatch({
       type: 'SYNC_WITH_WEBSOCKET',
-      payload: { volumePercent: spotifyData.volumePercent },
+      payload: { volume: spotifyData.volume, isMuted: spotifyData.isMuted },
     })
-  }, [spotifyData.volumePercent, state.isSliding])
+  }, [spotifyData.volume, spotifyData.isMuted, state.isSliding])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(

@@ -133,7 +133,7 @@ describe('SpotifyDisplay', () => {
         albumName: 'Test Album',
         albumArtUrl: '',
         isPlaying: true,
-        volumePercent: 50,
+        volume: 50,
         isMuted: false,
         devices: [
           { id: 'mock-device-1', name: 'Test Device', is_active: true },
@@ -166,7 +166,7 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('50')
 
       // Simulate external update
-      const updatedSpotifyData = { ...initialSpotifyData, volumePercent: 80 }
+      const updatedSpotifyData = { ...initialSpotifyData, volume: 80 }
       mockedUseWebSocket.mockReturnValue({
         ...mockedUseWebSocket(),
         spotifyData: updatedSpotifyData,
@@ -185,7 +185,7 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('70')
 
       // Simulate external update while sliding
-      const updatedSpotifyData = { ...initialSpotifyData, volumePercent: 90 }
+      const updatedSpotifyData = { ...initialSpotifyData, volume: 90 }
       mockedUseWebSocket.mockReturnValue({
         ...mockedUseWebSocket(),
         spotifyData: updatedSpotifyData,
@@ -207,7 +207,7 @@ describe('SpotifyDisplay', () => {
         expect(slider).toHaveValue('75')
 
         // Simulate external update while sliding (should be ignored)
-        let updatedSpotifyData = { ...initialSpotifyData, volumePercent: 100 }
+        let updatedSpotifyData = { ...initialSpotifyData, volume: 100 }
         mockedUseWebSocket.mockReturnValue({
           ...mockedUseWebSocket(),
           spotifyData: updatedSpotifyData,
@@ -222,7 +222,7 @@ describe('SpotifyDisplay', () => {
         jest.advanceTimersByTime(600)
 
         // Simulate another external update (should now be applied)
-        updatedSpotifyData = { ...initialSpotifyData, volumePercent: 10 } // Ensure new volume to trigger effect
+        updatedSpotifyData = { ...initialSpotifyData, volume: 10 } // Ensure new volume to trigger effect
         mockedUseWebSocket.mockReturnValue({
           ...mockedUseWebSocket(),
           spotifyData: updatedSpotifyData,

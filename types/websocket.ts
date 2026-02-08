@@ -78,6 +78,7 @@ export type ServerMessage =
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
   | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
   | { type: 'DEVICE_OFFLINE'; payload: { deviceId: string } }
+  | SpotifyExecutionMessage
 
 /**
  * BroadcastData: a small, optional-shaped payload that services may send to
@@ -160,6 +161,11 @@ export interface GetStateMessage {
 export interface ClientRegistrationMessage {
   type: 'REGISTER_CLIENT'
   role: 'dashboard' | 'controller'
+}
+
+export interface SpotifyExecutionMessage {
+  type: 'EXECUTE_SPOTIFY'
+  payload: SpotifyCommandMessage
 }
 
 export interface PingMessage {

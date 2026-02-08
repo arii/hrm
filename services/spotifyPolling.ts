@@ -13,10 +13,11 @@ import {
 } from './spotifyTokenManager.js'
 import logger from '../utils/logger.server.js'
 import {
-  logSpotifyApiError,
+  handleSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyErrorLogging.server.js'
+} from './spotifyApiErrorHandling.js'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
+import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
 import { env } from '../lib/env.js'
 
 export interface SpotifyTokenResponse {
@@ -31,7 +32,6 @@ export class SpotifyPolling implements SpotifyService {
   public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
   }
-
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
   private devicePollInterval: NodeJS.Timeout | null = null
@@ -55,10 +55,11 @@ export class SpotifyPolling implements SpotifyService {
     albumArtUrl: '',
     isPlaying: false,
     devices: [],
-    volumePercent: 70,
+    volume: 70,
+    isMuted: false,
   }
 
-  private sdk: SpotifyApi | null = null
+  private sdk: SafeSpotifyApi | null = null
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
@@ -148,13 +149,7 @@ export class SpotifyPolling implements SpotifyService {
         })
       }
     } catch (error) {
-      const errObj = error as { status?: number }
-      if (errObj?.status === 401) {
-        logger.warn('Spotify token expired during polling. Attempting refresh.')
-        this.checkAndRefreshSdkToken()
-        return
-      }
-      logSpotifyApiError(error)
+      await handleSpotifyApiError(error, () => this.checkAndRefreshSdkToken())
     }
   }
 
@@ -218,10 +213,12 @@ export class SpotifyPolling implements SpotifyService {
       logger.error('Spotify client ID not found, cannot initialize SDK.')
       return
     }
-    this.sdk = SpotifyApi.withAccessToken(
+    const sdk = SpotifyApi.withAccessToken(
       env.SPOTIFY_CLIENT_ID,
       tokenWithoutRefresh as AccessToken
     )
+    // Wrap the SDK with our safe API to handle optional deviceIds correctly.
+    this.sdk = createSafeSpotifyApi(sdk)
   }
 
   private async checkAndRefreshSdkToken() {
@@ -246,10 +243,10 @@ export class SpotifyPolling implements SpotifyService {
   /**
    * Returns the initialized Spotify SDK instance or throws an error if not ready.
    * @private
-   * @returns {SpotifyApi} The initialized SDK instance.
+   * @returns {SafeSpotifyApi} The initialized SDK instance.
    * @throws {Error} If the SDK is not initialized.
    */
-  private getSdk(): SpotifyApi {
+  private getSdk(): SafeSpotifyApi {
     if (!this.sdk) {
       throw new Error('Spotify SDK has not been initialized.')
     }
@@ -389,22 +386,19 @@ export class SpotifyPolling implements SpotifyService {
           command,
           () => {
             if (uri) {
-              return sdk.player.startResumePlayback(
-                // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-                deviceId || undefined,
-                undefined,
-                [uri]
-              )
+              // The Spotify API requires that if a `uri` (for a specific track) is provided,
+              // the `context_uri` must be omitted. The SDK handles this by accepting
+              // `undefined` for the context parameter.
+              return sdk.player.startResumePlayback(deviceId, undefined, [uri])
             }
             if (effectiveContextUri) {
               return sdk.player.startResumePlayback(
-                // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-                deviceId || undefined,
+                deviceId,
                 effectiveContextUri
               )
             }
-            // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-            return sdk.player.startResumePlayback(deviceId || undefined)
+            // If neither uri nor contextUri is provided, call with just deviceId.
+            return sdk.player.startResumePlayback(deviceId)
           },
           { deviceId, contextUri: effectiveContextUri, uri }
         )
@@ -412,24 +406,21 @@ export class SpotifyPolling implements SpotifyService {
       case 'PAUSE':
         await this.executeSdkCommand(
           command,
-          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-          () => sdk.player.pausePlayback(deviceId || undefined),
+          () => sdk.player.pausePlayback(deviceId),
           { deviceId }
         )
         break
       case 'NEXT':
         await this.executeSdkCommand(
           command,
-          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-          () => sdk.player.skipToNext(deviceId || undefined),
+          () => sdk.player.skipToNext(deviceId),
           { deviceId }
         )
         break
       case 'PREVIOUS':
         await this.executeSdkCommand(
           command,
-          // @ts-expect-error SDK types mandate string, but runtime accepts undefined for active device
-          () => sdk.player.skipToPrevious(deviceId || undefined),
+          () => sdk.player.skipToPrevious(deviceId),
           { deviceId }
         )
         break
@@ -447,14 +438,11 @@ export class SpotifyPolling implements SpotifyService {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
           await this.executeSdkCommand(
             command,
-            () =>
-              sdk.player.setPlaybackVolume(
-                clampedVolume,
-                deviceId || undefined
-              ),
+            () => sdk.player.setPlaybackVolume(clampedVolume, deviceId),
             { deviceId, volume: clampedVolume }
           )
-          this.state.volumePercent = clampedVolume
+          this.state.volume = clampedVolume
+          this.state.isMuted = clampedVolume === 0
           this.broadcastUpdate({
             type: 'SPOTIFY_UPDATE',
             payload: this.getState(),

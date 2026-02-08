@@ -1,0 +1,110 @@
+import { jest, describe, it, expect, beforeEach } from '@jest/globals'
+import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { createSafeSpotifyApi } from '../../services/safeSpotifyApi'
+
+// Mock the SpotifyApi player methods
+const mockPlayer: jest.Mocked<SpotifyApi['player']> = {
+  startResumePlayback: jest.fn(),
+  pausePlayback: jest.fn(),
+  skipToNext: jest.fn(),
+  skipToPrevious: jest.fn(),
+  // Add other methods that might be called to prevent errors
+  addItemToPlaybackQueue: jest.fn(),
+  getAvailableDevices: jest.fn(),
+  getCurrentlyPlayingTrack: jest.fn(),
+  getPlaybackState: jest.fn(),
+  getRecentlyPlayedTracks: jest.fn(),
+  seekToPosition: jest.fn(),
+  setPlaybackVolume: jest.fn(),
+  setRepeatMode: jest.fn(),
+  togglePlaybackShuffle: jest.fn(),
+  transferPlayback: jest.fn(),
+}
+
+// A mock SDK instance
+const mockSdk = {
+  player: mockPlayer,
+} as unknown as SpotifyApi
+
+describe('createSafeSpotifyApi', () => {
+  let safeSdk: SpotifyApi
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    safeSdk = createSafeSpotifyApi(mockSdk)
+  })
+
+  it('should call startResumePlayback with deviceId when provided', async () => {
+    const deviceId = 'test-device'
+    await safeSdk.player.startResumePlayback(deviceId)
+    expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(deviceId)
+  })
+
+  it('should call startResumePlayback with null deviceId when it is null', async () => {
+    await safeSdk.player.startResumePlayback(null)
+    expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(null)
+  })
+
+  it('should call startResumePlayback with undefined deviceId when it is undefined', async () => {
+    await safeSdk.player.startResumePlayback(undefined)
+    expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(undefined)
+  })
+
+  it('should call pausePlayback with deviceId when provided', async () => {
+    const deviceId = 'test-device'
+    await safeSdk.player.pausePlayback(deviceId)
+    expect(mockPlayer.pausePlayback).toHaveBeenCalledWith(deviceId)
+  })
+
+  it('should call pausePlayback with undefined deviceId when it is undefined', async () => {
+    await safeSdk.player.pausePlayback(undefined)
+    expect(mockPlayer.pausePlayback).toHaveBeenCalledWith(undefined)
+  })
+
+  it('should call pausePlayback with null deviceId when it is null', async () => {
+    await safeSdk.player.pausePlayback(null)
+    expect(mockPlayer.pausePlayback).toHaveBeenCalledWith(null)
+  })
+
+  it('should call skipToNext with deviceId when provided', async () => {
+    const deviceId = 'test-device'
+    await safeSdk.player.skipToNext(deviceId)
+    expect(mockPlayer.skipToNext).toHaveBeenCalledWith(deviceId)
+  })
+
+  it('should call skipToNext with an empty string when deviceId is an empty string', async () => {
+    await safeSdk.player.skipToNext('')
+    expect(mockPlayer.skipToNext).toHaveBeenCalledWith('')
+  })
+
+  it('should call skipToNext with null deviceId when it is null', async () => {
+    await safeSdk.player.skipToNext(null)
+    expect(mockPlayer.skipToNext).toHaveBeenCalledWith(null)
+  })
+
+  it('should call skipToNext with undefined deviceId when it is undefined', async () => {
+    await safeSdk.player.skipToNext(undefined)
+    expect(mockPlayer.skipToNext).toHaveBeenCalledWith(undefined)
+  })
+
+  it('should call skipToPrevious with deviceId when provided', async () => {
+    const deviceId = 'test-device'
+    await safeSdk.player.skipToPrevious(deviceId)
+    expect(mockPlayer.skipToPrevious).toHaveBeenCalledWith(deviceId)
+  })
+
+  it('should call skipToPrevious without deviceId when it is not provided', async () => {
+    await safeSdk.player.skipToPrevious()
+    expect(mockPlayer.skipToPrevious).toHaveBeenCalledWith()
+  })
+
+  it('should call skipToPrevious with null deviceId when it is null', async () => {
+    await safeSdk.player.skipToPrevious(null)
+    expect(mockPlayer.skipToPrevious).toHaveBeenCalledWith(null)
+  })
+
+  it('should call skipToPrevious with undefined deviceId when it is undefined', async () => {
+    await safeSdk.player.skipToPrevious(undefined)
+    expect(mockPlayer.skipToPrevious).toHaveBeenCalledWith(undefined)
+  })
+})
