@@ -63,7 +63,8 @@ interface ConnectViewProps {
   isSupported: boolean
   signalPeriodMs: number
   currentHR: number
-  hrZoneProps: { percentage: number; progressColor: string }
+  hrZoneProps: { percentage: number }
+  zone: number
   connectionStatus: string
   bluetoothConnected: boolean
   hasStarted: boolean
@@ -106,6 +107,7 @@ export default function ConnectView({
   signalPeriodMs,
   currentHR,
   hrZoneProps,
+  zone,
   connectionStatus,
   bluetoothConnected,
   hasStarted,
@@ -377,6 +379,7 @@ export default function ConnectView({
               name={userName}
               bpm={currentHR}
               percentMax={hrZoneProps.percentage}
+              zone={zone}
               calories={caloriesBurned}
               isDataStale={isDataStale}
             />
