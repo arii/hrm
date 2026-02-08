@@ -13,13 +13,14 @@ import {
 } from '@/lib/workout-session-storage'
 import { v4 as uuidv4 } from 'uuid'
 import { HrZoneName } from '@/lib/shared/hr-zones'
+import { useDebounce } from './useDebounce'
+import { WorkoutStatus } from '@/types/workout'
 
 const STORAGE_KEY = 'hrm_dashboard:active_session'
-
-type SessionStatus = 'idle' | 'running' | 'paused'
+const BUFFER_STORAGE_KEY = 'hrm_dashboard:hr_buffer'
 
 interface SessionState {
-  status: SessionStatus
+  status: WorkoutStatus
   duration: number
   calories: number
   startCalories: number
@@ -45,7 +46,7 @@ const isValidSessionState = (parsed: unknown): parsed is SessionState => {
   const p = parsed as Record<string, unknown>
   return (
     typeof p.status === 'string' &&
-    ['idle', 'running', 'paused'].includes(p.status) &&
+    ['idle', 'running', 'paused', 'finished'].includes(p.status) &&
     typeof p.duration === 'number'
   )
 }
@@ -92,7 +93,7 @@ function sessionReducer(
       newState = action.payload
       break
     case 'START_WORKOUT':
-      if (state.status === 'idle') {
+      if (state.status === 'idle' || state.status === 'finished') {
         newState = {
           ...state,
           status: 'running',
@@ -125,7 +126,7 @@ function sessionReducer(
       }
       break
     case 'END_WORKOUT':
-      newState = { ...state, status: 'idle' }
+      newState = { ...state, status: 'finished' }
       break
     case 'TICK':
       newState = { ...state, duration: action.payload.duration }
@@ -184,6 +185,26 @@ export const useWorkoutSession = ({
             }
           })
           .catch((e) => console.warn('Failed to load session history', e))
+
+        // Check for unsaved buffer from previous unload
+        try {
+          const bufferStr = window.localStorage.getItem(BUFFER_STORAGE_KEY)
+          if (bufferStr) {
+            const buffer = JSON.parse(bufferStr)
+            if (Array.isArray(buffer) && buffer.length > 0) {
+              workoutSessionStorage
+                .appendHrData(loaded.sessionId, buffer)
+                .then(() => window.localStorage.removeItem(BUFFER_STORAGE_KEY))
+                .catch((e) =>
+                  console.error('Failed to flush recovered buffer', e)
+                )
+            } else {
+              window.localStorage.removeItem(BUFFER_STORAGE_KEY)
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to recover buffer', e)
+        }
       }
     }
   }, [])
@@ -191,32 +212,38 @@ export const useWorkoutSession = ({
   // Buffer for HR data points to reduce IndexedDB writes
   const hrDataBuffer = useRef<HrDataPoint[]>([])
 
+  // Buffer for UI updates to throttle re-renders (Performance optimization)
+  const pendingUIBuffer = useRef<HrDataPoint[]>([])
+  const lastHistoryUpdate = useRef<number>(0)
+
   // Side Effect: Save to Storage
   // Move side effects out of the reducer to maintain purity.
   // We use JSON.stringify as a stable dependency to detect structural changes
   // in the state we care about (everything except duration), preventing
   // frequent writes when only the duration (1Hz) changes.
   const serializedStateToSave = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { duration, ...rest } = state
+    const { duration: _duration, ...rest } = state
     const stateToSave = { ...rest, duration: 0 }
     return JSON.stringify(stateToSave)
   }, [state])
+
+  // Debounce the storage write to prevent high-frequency I/O (e.g. calories updates)
+  const debouncedStateToSave = useDebounce(serializedStateToSave, 1000)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
 
     try {
-      const parsed = JSON.parse(serializedStateToSave)
+      const parsed = JSON.parse(debouncedStateToSave)
       if (parsed.status === 'idle' && !parsed.startTime) {
         window.localStorage.removeItem(STORAGE_KEY)
       } else {
-        window.localStorage.setItem(STORAGE_KEY, serializedStateToSave)
+        window.localStorage.setItem(STORAGE_KEY, debouncedStateToSave)
       }
     } catch (e) {
       console.warn('Failed to save session state to storage', e)
     }
-  }, [serializedStateToSave])
+  }, [debouncedStateToSave])
 
   // Sync total calories
   useEffect(() => {
@@ -254,8 +281,18 @@ export const useWorkoutSession = ({
       await workoutSessionStorage.appendHrData(state.sessionId, bufferToFlush)
     } catch (e) {
       console.error('Failed to flush HR data to storage', e)
+      // Restore buffer on failure to try again next time
+      hrDataBuffer.current = [...bufferToFlush, ...hrDataBuffer.current]
     }
   }, [state.sessionId])
+
+  const flushUIUpdates = useCallback(() => {
+    if (pendingUIBuffer.current.length > 0) {
+      const points = [...pendingUIBuffer.current]
+      setHrHistory((prev) => [...prev, ...points])
+      pendingUIBuffer.current = []
+    }
+  }, [])
 
   // Periodic flush & Unmount flush
   useEffect(() => {
@@ -266,6 +303,17 @@ export const useWorkoutSession = ({
     }, 30000) // Flush every 30 seconds
 
     const handleUnload = () => {
+      // Synchronous backup to localStorage to prevent data loss on tab close
+      if (hrDataBuffer.current.length > 0) {
+        try {
+          window.localStorage.setItem(
+            BUFFER_STORAGE_KEY,
+            JSON.stringify(hrDataBuffer.current)
+          )
+        } catch (e) {
+          console.error('Failed to save HR buffer to localStorage', e)
+        }
+      }
       flushData()
     }
 
@@ -286,7 +334,7 @@ export const useWorkoutSession = ({
   }, [])
 
   const startWorkout = useCallback(() => {
-    if (state.status === 'idle') {
+    if (state.status === 'idle' || state.status === 'finished') {
       const now = Date.now()
       const sessionId = uuidv4()
 
@@ -324,13 +372,15 @@ export const useWorkoutSession = ({
 
   const pauseWorkout = useCallback(async () => {
     if (state.status === 'running') {
+      flushUIUpdates()
       await flushData()
       dispatch({ type: 'PAUSE_WORKOUT', payload: { now: Date.now() } })
     }
-  }, [state.status, flushData])
+  }, [state.status, flushData, flushUIUpdates])
 
   const endWorkout = useCallback(async () => {
     if (state.status !== 'idle') {
+      flushUIUpdates()
       await flushData()
       const now = Date.now()
       if (state.sessionId) {
@@ -345,17 +395,28 @@ export const useWorkoutSession = ({
       }
       dispatch({ type: 'END_WORKOUT', payload: { now } })
     }
-  }, [state.status, state.sessionId, flushData])
+  }, [state.status, state.sessionId, flushData, flushUIUpdates])
 
   const addHrData = useCallback(
     (hr: number) => {
       if (state.status === 'running' && state.sessionId) {
-        const point = { time: Date.now(), hr }
+        const now = Date.now()
+        const point = { time: now, hr }
+
+        // 1. Add to persistence buffer
         hrDataBuffer.current.push(point)
-        setHrHistory((prev) => [...prev, point])
+
+        // 2. Add to UI buffer
+        pendingUIBuffer.current.push(point)
+
+        // 3. Throttled UI update (every 5 seconds)
+        if (now - lastHistoryUpdate.current > 5000) {
+          flushUIUpdates()
+          lastHistoryUpdate.current = now
+        }
       }
     },
-    [state.status, state.sessionId]
+    [state.status, state.sessionId, flushUIUpdates]
   )
 
   const caloriesBurned = useMemo(() => {
