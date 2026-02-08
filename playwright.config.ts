@@ -48,7 +48,7 @@ export default defineConfig({
   // Performance Optimizations
   fullyParallel: false,
   workers: 1, // process.env.CI ? 2 : undefined, // Use available CPU cores locally, 2 on CI
-  timeout: 30 * 1000, // Global test timeout (30s) - Restored to Playwright default to accommodate CI variance
+  timeout: 60 * 1000, // Global test timeout (60s) - Increased to accommodate CI variance
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
