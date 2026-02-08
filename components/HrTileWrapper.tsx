@@ -1,35 +1,45 @@
 'use client'
 import { useHrZone } from '@/hooks/useHrZone'
 import HrTile from '@/components/HrTile'
-import { ActiveHrmData } from '@/utils/hrm'
+import { ClientHrmData } from '@/context/webSocketReducer'
 import { memo } from 'react'
 
-export type HrTileWrapperProps = Omit<ActiveHrmData, 'updatedAt' | 'lastUpdated'>
+interface HrTileWrapperProps {
+  user: ClientHrmData
+  isDataStale: boolean
+}
 
-const HrTileWrapper = ({
-  value,
-  maxHr,
-  name,
-  calories,
-  isConnected,
-  isDataStale,
-  isAlerting,
-  alertMessage,
-}: HrTileWrapperProps) => {
-  const hrZoneProps = useHrZone(value, maxHr)
+const HrTileWrapper = ({ user, isDataStale }: HrTileWrapperProps) => {
+  const hrZoneProps = useHrZone(user.value, user.maxHr)
 
   return (
     <HrTile
-      name={name || ''}
-      bpm={value}
+      name={user.name || ''}
+      bpm={user.value}
       percentMax={hrZoneProps.percentage}
-      calories={calories}
-      isConnected={isConnected}
+      calories={user.calories}
+      isConnected={user.isConnected}
       isDataStale={isDataStale}
-      isAlerting={isAlerting}
-      {...(alertMessage && { alertMessage })}
+      isAlerting={user.isAlerting}
+      {...(user.alertMessage && { alertMessage: user.alertMessage })}
     />
   )
 }
 
-export default memo(HrTileWrapper)
+const arePropsEqual = (
+  prevProps: HrTileWrapperProps,
+  nextProps: HrTileWrapperProps
+) => {
+  return (
+    prevProps.isDataStale === nextProps.isDataStale &&
+    prevProps.user.value === nextProps.user.value &&
+    prevProps.user.maxHr === nextProps.user.maxHr &&
+    prevProps.user.name === nextProps.user.name &&
+    prevProps.user.calories === nextProps.user.calories &&
+    prevProps.user.isConnected === nextProps.user.isConnected &&
+    prevProps.user.isAlerting === nextProps.user.isAlerting &&
+    prevProps.user.alertMessage === nextProps.user.alertMessage
+  )
+}
+
+export default memo(HrTileWrapper, arePropsEqual)

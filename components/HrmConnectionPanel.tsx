@@ -72,25 +72,20 @@ const HrmConnectionPanel = () => {
           </Box>
         </>
       ) : (
-        tileData.map((user) => {
-          // Destructure to remove rapidly changing timestamps
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { updatedAt, lastUpdated, ...visualProps } = user
-          return (
-            <Box
-              key={user.clientId}
-              data-testid="hr-tile-grid-item"
-              sx={{
-                width: {
-                  xs: '100%',
-                  sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-                },
-              }}
-            >
-              <HrTileWrapper {...visualProps} />
-            </Box>
-          )
-        })
+        tileData.map((user) => (
+          <Box
+            key={user.clientId}
+            data-testid="hr-tile-grid-item"
+            sx={{
+              width: {
+                xs: '100%',
+                sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
+              },
+            }}
+          >
+            <HrTileWrapper user={user} isDataStale={user.isDataStale} />
+          </Box>
+        ))
       )}
     </Box>
   )

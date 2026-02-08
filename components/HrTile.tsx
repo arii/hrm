@@ -172,4 +172,18 @@ const HrTile = ({
   )
 }
 
-export default memo(HrTile)
+// Custom comparison function for React.memo
+const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
+  return (
+    prevProps.name === nextProps.name &&
+    prevProps.bpm === nextProps.bpm &&
+    prevProps.percentMax === nextProps.percentMax &&
+    prevProps.calories === nextProps.calories &&
+    prevProps.isConnected === nextProps.isConnected &&
+    prevProps.isDataStale === nextProps.isDataStale &&
+    prevProps.isAlerting === nextProps.isAlerting &&
+    prevProps.alertMessage === nextProps.alertMessage
+  )
+}
+
+export default memo(HrTile, arePropsEqual)
