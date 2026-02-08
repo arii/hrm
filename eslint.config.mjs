@@ -15,12 +15,10 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 })
 
-// Use compat.extends() to load next config
 const nextConfig = compat.extends('next/core-web-vitals')
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
-  // 1. GLOBAL IGNORES
   {
     ignores: [
       '**/node_modules/**',
@@ -38,14 +36,11 @@ export default [
     ],
   },
 
-  // 2. Base Configurations
   js.configs.recommended,
   ...tseslint.configs.recommended,
 
-  // 3. Next.js Configuration (includes React/React Hooks rules)
   ...nextConfig,
 
-  // 4. Explicit React Configuration for Clarity
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
@@ -53,12 +48,11 @@ export default [
     },
     rules: {
       ...react.configs.recommended.rules,
-      'react/react-in-jsx-scope': 'off', // Not needed with Next.js App Router
-      'react/prop-types': 'off', // Not needed for TypeScript projects
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
     },
   },
 
-  // 5. Custom Rules: General Variables & Formatting
   {
     plugins: {
       'unused-imports': unusedImports,
@@ -76,7 +70,6 @@ export default [
           argsIgnorePattern: '^_',
         },
       ],
-      // This rule is not purely stylistic and helps prevent VCS noise.
       '@typescript-eslint/comma-dangle': [
         'error',
         {
@@ -90,7 +83,6 @@ export default [
     },
   },
 
-  // 6. TypeScript Specific Settings
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
@@ -104,7 +96,6 @@ export default [
     },
   },
 
-  // 7. Test Overrides
   {
     files: ['tests/playwright/**/*.ts'],
     languageOptions: {
@@ -114,7 +105,7 @@ export default [
       },
     },
     rules: {
-      'react-hooks/rules-of-hooks': 'off', // Playwright's use() fixture is not a hook
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
   {
@@ -152,7 +143,6 @@ export default [
     },
   },
 
-  // 8. Services Override (Specific Ignores)
   {
     files: ['services/**/*.ts'],
     rules: {
@@ -167,9 +157,6 @@ export default [
     },
   },
 
-  // 9. Prettier Config (Must be last to override conflicting rules)
-  // This disables ESLint's stylistic rules in favor of Prettier.
-  // Code formatting is enforced via a pre-commit hook using lint-staged.
   prettierConfig,
   {
     plugins: {
