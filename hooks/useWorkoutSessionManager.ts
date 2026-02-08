@@ -6,12 +6,15 @@ import {
   WorkoutSessionData,
   HrDataPoint,
 } from '../lib/workout-session-storage'
-import { HrZoneName } from '../lib/shared/hr-zones'
+import {
+  HrZoneName,
+  getHrZoneLabel,
+  calculateZoneFromMaxHr,
+} from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
-import { calculateHrZone } from '../lib/hrm/zones'
 import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useAppSnackbar } from './useAppSnackbar'
-import { isSameDay } from '../lib/date'
+import { isSessionStale } from '../lib/workout-session'
 
 // --- State, Actions, and Reducer ---
 
@@ -110,10 +113,11 @@ function sessionManagerReducer(
         ? (action.payload.time - lastDataPoint.time) / 1000
         : 1
 
-      const { zoneName } = calculateHrZone(
+      const { zone } = calculateZoneFromMaxHr(
         action.payload.hr,
         state.session.userSettings.maxHr
       )
+      const zoneName = getHrZoneLabel(zone) as HrZoneName
       const newTimeInZones = {
         ...state.session.timeInZones,
         [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,
@@ -154,12 +158,10 @@ export const useWorkoutSessionManager = () => {
       message: string,
       onStale: (message: string) => void
     ) => {
-      const sessionDate = new Date(session.startTime)
-      const currentDate = new Date()
-
-      if (!isSameDay(sessionDate, currentDate)) {
+      if (isSessionStale(session)) {
+        const sessionDate = new Date(session.startTime)
         console.info(
-          `[SessionManager] Stale session from ${sessionDate.toDateString()} detected. Clearing for new day ${currentDate.toDateString()}.`
+          `[SessionManager] Stale session from ${sessionDate.toDateString()} detected. Clearing for new day ${new Date().toDateString()}.`
         )
         await workoutSessionStorage.deleteSession(session.sessionId)
         onStale(message)

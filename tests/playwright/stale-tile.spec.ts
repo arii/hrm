@@ -1,29 +1,52 @@
 import { test, expect } from '@playwright/test'
+import { ServerMessage } from '../../types/websocket'
 
-test('should remove tile after 35 seconds of inactivity', async ({ page }) => {
-  // Install mock clock
-  await page.clock.install({ time: new Date() })
+test('should remove tile immediately when missing from HRM_UPDATE', async ({
+  page,
+}) => {
+  await page.goto('/')
 
-  await page.goto('/client/control')
-  // 1. Simulate active data
-  await page.evaluate(() =>
-    (
-      window as unknown as {
-        postMessage: (message: unknown, targetOrigin: string) => void
+  // Helper to dispatch messages to the reducer
+  const dispatch = async (message: ServerMessage | { type: 'RESET_STATE' }) => {
+    await page.evaluate((msg) => {
+      const win = window as unknown as {
+        __TEST_CONTROLS__: {
+          dispatch: (m: unknown) => void
+        }
       }
-    ).postMessage(
+      const controls = win.__TEST_CONTROLS__
+      if (controls && typeof controls.dispatch === 'function') {
+        controls.dispatch(msg)
+      } else {
+        throw new Error('__TEST_CONTROLS__.dispatch not found')
+      }
+    }, message)
+  }
+
+  // 1. Simulate active data
+  await dispatch({
+    type: 'HRM_UPDATE',
+    payload: [
       {
-        type: 'HRM_UPDATE',
-        payload: [{ clientId: 'test-1', hrm: 75, userName: 'test-1' }],
+        clientId: 'test-1',
+        value: 75,
+        name: 'test-1',
+        age: 30,
+        maxHr: 190,
+        restingHr: 60,
+        zone: 'warmup',
+        calories: 10,
       },
-      '*'
-    )
-  )
+    ],
+  })
   await expect(page.locator('text=test-1')).toBeVisible()
 
-  // 2. Fast-forward time
-  await page.clock.fastForward(35000)
+  // 2. Send update without the user
+  await dispatch({
+    type: 'HRM_UPDATE',
+    payload: [],
+  })
 
-  // 3. Assert removal
+  // 3. Assert immediate removal
   await expect(page.locator('text=test-1')).not.toBeVisible()
 })

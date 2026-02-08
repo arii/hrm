@@ -53,6 +53,14 @@
 
 ---
 
+## AI Slop Analysis
+
+```
+{{slopAnalysis}}
+```
+
+---
+
 ## Guiding Principles for AI Reviewers (AI Slop Prevention)
 
 The Golden Rule: **Less code, more clarity.** Your feedback should actively simplify the codebase.

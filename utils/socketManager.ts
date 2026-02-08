@@ -350,8 +350,16 @@ const handleIncomingMessage = (
           // Update the repository with the latest data
           hrmDataStore.save({
             ...existingData,
+            name: hrmMessage.data.name ?? existingData.name,
+            age: hrmMessage.data.age ?? existingData.age,
+            maxHr: hrmMessage.data.maxHr ?? existingData.maxHr,
             value: hrmMessage.data.value ?? existingData.value,
             calories: roundTo(finalCalories, 4),
+            percentage:
+              hrmMessage.data.percentage !== undefined
+                ? roundTo(hrmMessage.data.percentage, 4)
+                : undefined,
+            zone: hrmMessage.data.zone,
             updatedAt: now,
           })
         }
