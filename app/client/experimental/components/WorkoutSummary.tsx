@@ -26,9 +26,6 @@ interface WorkoutSummaryProps {
   date: Date
 }
 
-/**
- * Reusable sub-component for displaying a workout metric.
- */
 interface MetricBlockProps {
   label: string
   value: string | number
@@ -70,24 +67,15 @@ const MetricBlock = ({
   </Box>
 )
 
-const getStatusColor = (
-  status: 'idle' | 'running' | 'paused' | 'finished' | string
-): 'success' | 'warning' | 'primary' | 'default' => {
-  switch (status) {
-    case 'running':
-      return 'success'
-    case 'paused':
-      return 'warning'
-    case 'finished':
-      return 'primary'
-    default:
-      return 'default'
-  }
+const STATUS_COLORS: Record<
+  string,
+  'success' | 'warning' | 'primary' | 'default'
+> = {
+  running: 'success',
+  paused: 'warning',
+  finished: 'primary',
 }
 
-/**
- * Displays a summary of the current workout session.
- */
 const WorkoutSummary = ({
   duration,
   calories,
@@ -139,7 +127,7 @@ const WorkoutSummary = ({
           </Box>
           <Chip
             label={status.toUpperCase()}
-            color={getStatusColor(status)}
+            color={STATUS_COLORS[status] || 'default'}
             variant={status === 'running' ? 'filled' : 'outlined'}
             sx={{
               fontWeight: 'bold',
