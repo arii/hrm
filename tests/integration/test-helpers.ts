@@ -1,5 +1,6 @@
 import { spawn, ChildProcess } from 'child_process'
 import http from 'http'
+import { WebSocket } from 'ws'
 
 export interface ServerProcess {
   process: ChildProcess
@@ -77,5 +78,33 @@ export function startServer(port: number): Promise<ServerProcess> {
         )
       )
     }, 120000)
+  })
+}
+
+export function waitForMessage<T>(
+  ws: WebSocket,
+  predicate: (msg: T) => boolean,
+  timeoutMs: number = 5000
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      ws.removeListener('message', onMessage)
+      reject(new Error('Timeout waiting for message matching predicate'))
+    }, timeoutMs)
+
+    function onMessage(data: { toString: () => string }) {
+      try {
+        const msg = JSON.parse(data.toString()) as T
+        if (predicate(msg)) {
+          clearTimeout(timeout)
+          ws.removeListener('message', onMessage)
+          resolve(msg)
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+
+    ws.on('message', onMessage)
   })
 }

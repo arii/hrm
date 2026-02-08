@@ -10,7 +10,7 @@ import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-import { useHrZone } from '@/hooks/useHrZone'
+import { calculateHrZoneInfo } from '@/lib/shared/hr-zones'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -211,15 +211,19 @@ export default function ConnectPage() {
     connectionAttempted,
   ])
 
+  const { percentage, zone } = calculateHrZoneInfo(currentHR, userAge)
+
   useEffect(() => {
     throttledSend({
       type: 'HRM_INPUT',
       data: {
         value: currentHR,
         calories: calories,
+        percentage,
+        zone,
       },
     })
-  }, [currentHR, calories, throttledSend])
+  }, [currentHR, calories, percentage, zone, throttledSend])
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
@@ -231,8 +235,6 @@ export default function ConnectPage() {
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
-  const maxHr = userAge ? 220 - userAge : 190
-  const hrZoneProps = useHrZone(currentHR, maxHr)
 
   return (
     <ConnectView
@@ -274,9 +276,9 @@ export default function ConnectPage() {
       signalPeriodMs={signalPeriodMs}
       currentHR={currentHR}
       hrZoneProps={{
-        percentage: hrZoneProps.percentage,
-        progressColor: hrZoneProps.progressColor,
+        percentage,
       }}
+      zone={zone}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}

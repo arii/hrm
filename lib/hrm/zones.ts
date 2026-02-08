@@ -4,24 +4,23 @@
  * This module is independent of any specific UI framework or theme.
  */
 
-import { HrZoneName } from '../shared/hr-zones'
+import {
+  HrZoneName,
+  calculateZoneFromMaxHr,
+  getHrZoneLabel,
+} from '../shared/hr-zones'
 
 export { HrZoneName }
-
-// --- Constants ---
-// Heart Rate Zone Boundaries (as percentage of Max HR)
-export const HR_ZONE_DEFINITIONS = [
-  { name: HrZoneName.WarmUp, min: 0.5 },
-  { name: HrZoneName.FatBurn, min: 0.6 },
-  { name: HrZoneName.Cardio, min: 0.7 },
-  { name: HrZoneName.Peak, min: 0.85 },
-  { name: HrZoneName.Max, min: 0.95 },
-]
 
 import { HrZone } from '../../types/heart-rate'
 
 /**
  * Calculates the current heart rate zone, and percentage of max HR.
+ *
+ * NOTE: This is a legacy wrapper around calculateZoneFromMaxHr to maintain compatibility
+ * with existing Dashboard UI components that expect the HrZone interface.
+ *
+ * @deprecated Use `calculateHrZoneInfo` from `lib/shared/hr-zones` instead.
  * @param {number} currentHr - The current heart rate in beats per minute.
  * @param {number} maxHr - The user's maximum heart rate.
  * @returns {HrZone} An object containing the zone name, percentage of max HR, and current BPM.
@@ -35,21 +34,17 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
     }
   }
 
-  const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  let calculatedZone = HR_ZONE_DEFINITIONS[0]!
+  const { percentage, zone } = calculateZoneFromMaxHr(currentHr, maxHr)
 
-  // Iterate backwards to find the correct zone
-  for (let i = HR_ZONE_DEFINITIONS.length - 1; i >= 0; i--) {
-    const hrZone = HR_ZONE_DEFINITIONS[i]
-    if (hrZone && percentageOfMax / 100 >= hrZone.min) {
-      calculatedZone = hrZone
-      break
-    }
+  // Legacy mapping to maintain backward compatibility for systems expecting "Fat Burn"
+  let zoneName = getHrZoneLabel(zone) as HrZoneName
+  if (zone === 2) {
+    zoneName = HrZoneName.FatBurn
   }
 
   return {
-    zoneName: calculatedZone.name,
-    percentage: percentageOfMax,
+    zoneName,
+    percentage: percentage,
     bpm: currentHr,
   }
 }
