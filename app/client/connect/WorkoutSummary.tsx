@@ -15,11 +15,12 @@ import {
   Person as PersonIcon,
 } from '@mui/icons-material'
 import { formatDuration } from '@/lib/utils'
+import { WorkoutStatus } from '@/types/workout'
 
 interface WorkoutSummaryProps {
-  duration: number // Changed from string to number for raw formatting
+  duration: number
   calories: number
-  status: 'idle' | 'running' | 'paused' | 'finished'
+  status: WorkoutStatus
   userName?: string
   date?: Date
 }

@@ -3,7 +3,11 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { workoutSessionStorage } from '@/lib/workout-session-storage'
+import {
+  workoutSessionStorage,
+  HrZoneName,
+  WorkoutSessionData,
+} from '@/lib/workout-session-storage'
 
 // Mock the storage module
 jest.mock('@/lib/workout-session-storage', () => ({
@@ -204,16 +208,16 @@ describe('useWorkoutSession', () => {
       expect(workoutSessionStorage.appendHrData).toHaveBeenCalled()
     })
 
-    it('should persist minimal state to localStorage (excluding duration)', async () => {
+    it('should persist minimal state to localStorage (excluding duration) with debounce', async () => {
       const { result } = renderHook(() => useWorkoutSession({}))
 
       act(() => {
         result.current.startWorkout()
       })
 
-      // Wait for state update
+      // Wait for state update - debounce is 1000ms
       await act(async () => {
-        jest.advanceTimersByTime(1000)
+        jest.advanceTimersByTime(1100)
       })
 
       const stored = localStorage.getItem('hrm_dashboard:active_session')
@@ -271,6 +275,95 @@ describe('useWorkoutSession', () => {
         'beforeunload',
         expect.any(Function)
       )
+    })
+
+    it('should recover buffered HR data from localStorage on mount', async () => {
+      const sessionId = 'test-session-id'
+      const buffer = [{ time: 1000, hr: 120 }]
+
+      localStorage.setItem(
+        'hrm_dashboard:active_session',
+        JSON.stringify({
+          status: 'running',
+          sessionId,
+          startTime: Date.now() - 10000,
+          duration: 0,
+        })
+      )
+      localStorage.setItem('hrm_dashboard:hr_buffer', JSON.stringify(buffer))
+
+      // Re-mock getSession to return a session matching this ID
+      const mockSession: WorkoutSessionData = {
+        sessionId,
+        status: 'running',
+        hrHistory: [],
+        timeInZones: {
+          [HrZoneName.Rest]: 0,
+          [HrZoneName.WarmUp]: 0,
+          [HrZoneName.FatBurn]: 0,
+          [HrZoneName.Cardio]: 0,
+          [HrZoneName.Peak]: 0,
+        },
+        maxHr: 0,
+        averageHr: 0,
+        calorieHistory: [],
+        totalCaloriesBurned: 0,
+        userSettings: { age: 30, weight: 70, maxHr: 190 },
+        lastSyncTime: 0,
+        syncStatus: 'pending',
+        startTime: Date.now() - 10000,
+        endTime: null,
+      }
+
+      jest
+        .mocked(workoutSessionStorage.getSession)
+        .mockResolvedValueOnce(mockSession)
+
+      renderHook(() => useWorkoutSession({}))
+
+      await act(async () => {
+        await Promise.resolve() // Wait for effects
+      })
+
+      expect(workoutSessionStorage.appendHrData).toHaveBeenCalledWith(
+        sessionId,
+        buffer
+      )
+      // We expect the buffer to be cleared from localStorage after recovery
+      // Note: The promise needs to resolve. We use Promise.resolve() above but might need more ticks.
+      // But we can check if the call happened.
+    })
+
+    it('should transition to finished status on endWorkout', async () => {
+      const { result } = renderHook(() => useWorkoutSession({}))
+      act(() => result.current.startWorkout())
+      await act(async () => result.current.endWorkout())
+      expect(result.current.workoutStatus).toBe('finished')
+    })
+
+    it('should throttle hrHistory updates', async () => {
+      const { result } = renderHook(() => useWorkoutSession({}))
+      act(() => result.current.startWorkout())
+
+      // First point updates immediately (because lastUpdate is 0)
+      act(() => result.current.addHrData(100))
+      expect(result.current.hrHistory).toHaveLength(1)
+
+      // Second point immediately after
+      act(() => result.current.addHrData(105))
+      // Should NOT update hrHistory yet (throttle is 5000ms from last update)
+      expect(result.current.hrHistory).toHaveLength(1)
+
+      // Advance time by 6000ms
+      await act(async () => {
+        jest.advanceTimersByTime(6000)
+      })
+
+      // Trigger another update
+      act(() => result.current.addHrData(110))
+
+      // Now it should have updated with pending points (105) AND current point (110)
+      expect(result.current.hrHistory).toHaveLength(3)
     })
   })
 })
