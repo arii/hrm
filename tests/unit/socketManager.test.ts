@@ -15,8 +15,7 @@ import {
   initSocketManager,
   resetSocketManager,
 } from '../../utils/socketManager'
-import { Server as WebSocketServer } from 'ws'
-import { EventEmitter } from 'events'
+import { WebSocket, Server as WebSocketServer } from 'ws'
 import { TLSSocket } from 'tls'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
@@ -61,36 +60,45 @@ jest.mock('../../utils/logger.server.js', () => ({
   },
 }))
 
-// Simplified MockWebSocket
-class MockWebSocket extends EventEmitter {
-  isAlive = true
-  clientType?: 'dashboard' | 'controller'
-  clientId: string = '' // Initialize as required by ExtWebSocket
-  terminate = jest.fn()
-  ping = jest.fn()
-  send = jest.fn()
-  readyState = 1 // WebSocket.OPEN
-}
+jest.mock('ws', () => {
+  const { EventEmitter } = jest.requireActual('events')
+  const { WebSocket: RealWebSocket } = jest.requireActual('ws')
 
-jest.mock('ws', () => ({
-  Server: jest.fn().mockImplementation(() => {
-    const wss = new EventEmitter() as unknown as WebSocketServer
-    // Correctly type clients as Set<ExtWebSocket> to avoid casts in tests
-    wss.clients = new Set<ExtWebSocket>() as unknown as Set<
-      import('ws').WebSocket
-    >
-    // Spy on methods instead of manual wrapping
-    jest.spyOn(wss, 'on')
-    jest.spyOn(wss, 'emit')
-    return wss
-  }),
-  WebSocket: Object.assign(jest.fn(), {
-    CONNECTING: 0,
-    OPEN: 1,
-    CLOSING: 2,
-    CLOSED: 3,
-  }),
-}))
+  class MockWebSocket extends RealWebSocket {
+    clientId: string = ''
+    isAlive: boolean = true
+    clientType?: 'dashboard' | 'controller'
+
+    constructor(address: string) {
+      super(address || 'ws://test')
+      // Suppress connection errors from the underlying real WebSocket
+      this.on('error', () => {})
+      Object.defineProperty(this, 'readyState', {
+        get: () => 1, // OPEN
+        configurable: true,
+      })
+      this.on = jest.fn(this.on)
+      this.emit = jest.fn(this.emit)
+    }
+
+    send = jest.fn()
+    terminate = jest.fn()
+    ping = jest.fn()
+    close = jest.fn()
+  }
+
+  return {
+    Server: jest.fn().mockImplementation(() => {
+      const wss = new EventEmitter()
+      // @ts-expect-error: Assigning MockWebSocket set to WebSocket set (compatible at runtime)
+      wss.clients = new Set<MockWebSocket>()
+      jest.spyOn(wss, 'on')
+      jest.spyOn(wss, 'emit')
+      return wss
+    }),
+    WebSocket: MockWebSocket,
+  }
+})
 
 describe('WebSocket Manager', () => {
   let mockWss: jest.Mocked<WebSocketServer>
@@ -99,7 +107,7 @@ describe('WebSocket Manager', () => {
     spotifyService: jest.Mocked<SpotifyPolling>
   }
   let getSnapshot: () => StateSnapshot
-  let mockWs: MockWebSocket
+  let mockWs: ExtWebSocket
 
   beforeEach(() => {
     jest.useFakeTimers()
@@ -145,18 +153,15 @@ describe('WebSocket Manager', () => {
 
     initSocketManager(mockWss, getSnapshot, mockServices)
     const mockReq = createMockRequest()
-    mockWs = new MockWebSocket()
-    // Type assertion removed as MockWebSocket now conforms to ExtWebSocket
-    ;(mockWss.clients as unknown as Set<ExtWebSocket>).add(
-      mockWs as ExtWebSocket
-    )
+    mockWs = new WebSocket('ws://test') as ExtWebSocket
+    mockWss.clients.add(mockWs)
     mockWss.emit('connection', mockWs, mockReq)
   })
 
   afterEach(() => {
     jest.useRealTimers()
     jest.clearAllMocks()
-    ;(mockWss.clients as unknown as Set<ExtWebSocket>).clear()
+    mockWss.clients.clear()
     resetSocketManager()
   })
 
@@ -164,7 +169,7 @@ describe('WebSocket Manager', () => {
     it('should log connection metadata on new connection', () => {
       const loggerInfoSpy = jest.spyOn(logger, 'info')
       const mockReq = createMockRequest('/?clientId=new-client-123')
-      const newWs = new MockWebSocket()
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
 
       mockWss.emit('connection', newWs, mockReq)
 
@@ -184,7 +189,7 @@ describe('WebSocket Manager', () => {
     it('should log a warning when overwriting an existing socket', () => {
       const loggerWarnSpy = jest.spyOn(logger, 'warn')
       const mockReq = createMockRequest('/?clientId=test-client')
-      const newWs = new MockWebSocket()
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
 
       mockWss.emit('connection', newWs, mockReq)
 
@@ -209,7 +214,7 @@ describe('WebSocket Manager', () => {
         {},
         mockTlsSocket
       )
-      const newWs = new MockWebSocket()
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
 
       mockWss.emit('connection', newWs, mockReq)
 
@@ -240,7 +245,7 @@ describe('WebSocket Manager', () => {
 
         const loggerInfoSpy = jest.spyOn(logger, 'info')
         const mockReq = createMockRequest('/?clientId=prod-client')
-        const newWs = new MockWebSocket()
+        const newWs = new WebSocket('ws://test') as ExtWebSocket
 
         await jest.isolateModulesAsync(async () => {
           const { initSocketManager: initSocketManagerProd } =
@@ -274,14 +279,14 @@ describe('WebSocket Manager', () => {
     })
 
     it('should set isAlive to true on new connection', () => {
-      const newWs = new MockWebSocket() as ExtWebSocket
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       expect(newWs.isAlive).toBe(true)
     })
 
     it('should set isAlive to true on pong', () => {
-      const newWs = new MockWebSocket() as ExtWebSocket
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       newWs.isAlive = false
@@ -297,7 +302,7 @@ describe('WebSocket Manager', () => {
     })
 
     it('should set isAlive to true on any message', () => {
-      const newWs = new MockWebSocket() as ExtWebSocket
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
       const mockReq = createMockRequest()
       mockWss.emit('connection', newWs, mockReq)
       newWs.isAlive = false
@@ -467,7 +472,7 @@ describe('WebSocket Manager', () => {
         role: 'dashboard',
       })
       mockWs.emit('message', message.toString())
-      expect((mockWs as ExtWebSocket).clientType).toBe('dashboard')
+      expect(mockWs.clientType).toBe('dashboard')
     })
 
     it('should send initial state on GET_STATE message', () => {
@@ -514,12 +519,12 @@ describe('WebSocket Manager', () => {
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
-      const dashboardWs = new MockWebSocket() as ExtWebSocket
+      const dashboardWs = new WebSocket('ws://test') as ExtWebSocket
       dashboardWs.clientType = 'dashboard'
-      const controllerWs = new MockWebSocket() as ExtWebSocket
+      const controllerWs = new WebSocket('ws://test') as ExtWebSocket
       controllerWs.clientType = 'controller'
-      ;(mockWss.clients as unknown as Set<ExtWebSocket>).add(dashboardWs)
-      ;(mockWss.clients as unknown as Set<ExtWebSocket>).add(controllerWs)
+      mockWss.clients.add(dashboardWs)
+      mockWss.clients.add(controllerWs)
 
       const message = JSON.stringify({
         type: 'SPOTIFY_COMMAND',
@@ -597,7 +602,7 @@ describe('WebSocket Manager', () => {
     it('should clean up client session after grace period', () => {
       const clientId = 'test-client-cleanup'
       const mockReq = createMockRequest(`/?clientId=${clientId}`)
-      const newWs = new MockWebSocket()
+      const newWs = new WebSocket('ws://test') as ExtWebSocket
       mockWss.emit('connection', newWs, mockReq)
 
       newWs.emit('close')
@@ -622,12 +627,12 @@ describe('WebSocket Manager', () => {
     it('should not clean up session if client reconnects within grace period', () => {
       const clientId = 'test-client-reconnect'
       const mockReq = createMockRequest(`/?clientId=${clientId}`)
-      const firstWs = new MockWebSocket()
+      const firstWs = new WebSocket('ws://test') as ExtWebSocket
       mockWss.emit('connection', firstWs, mockReq)
 
       firstWs.emit('close')
 
-      const secondWs = new MockWebSocket()
+      const secondWs = new WebSocket('ws://test') as ExtWebSocket
       mockWss.emit('connection', secondWs, mockReq)
 
       jest.runOnlyPendingTimers()
