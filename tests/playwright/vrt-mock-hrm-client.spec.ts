@@ -34,11 +34,10 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByLabel('Weight (kg)').fill('75')
       await mockPage.getByLabel('Height (cm)').fill('180')
       await mockPage.getByLabel('Gender').fill('female')
+      await mockPage.getByLabel('Gender').blur()
       const mockClientForm = mockPage.getByTestId('mock-client-form')
       // Isolate relaxed threshold for this specific flaky form snapshot
-      await takeScreenshot(mockClientForm, 'mock-hrm-client-form.png', {
-        maxDiffPixelRatio: 0.05,
-      })
+      await takeScreenshot(mockClientForm, 'mock-hrm-client-form.png')
     })
   })
 })

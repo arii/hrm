@@ -5,7 +5,8 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import HeartRateTimeSeries from '@/app/client/experimental/components/HeartRateTimeSeries'
 import { HrDataPoint } from '@/lib/workout-session-storage'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { ThemeProvider } from '@mui/material/styles'
+import theme from '@/lib/theme'
 
 // Mock ResizeObserver for Recharts
 global.ResizeObserver = class ResizeObserver {
@@ -14,14 +15,6 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 }
 
-const mockTheme = createTheme({
-  palette: {
-    custom: {
-      work: '#ef4444',
-    },
-  },
-})
-
 describe('HeartRateTimeSeries', () => {
   const mockHrHistory: HrDataPoint[] = [
     { time: new Date('2023-01-01T10:00:00').getTime(), hr: 60 },
@@ -29,7 +22,7 @@ describe('HeartRateTimeSeries', () => {
   ]
 
   const renderWithTheme = (component: React.ReactElement) => {
-    return render(<ThemeProvider theme={mockTheme}>{component}</ThemeProvider>)
+    return render(<ThemeProvider theme={theme}>{component}</ThemeProvider>)
   }
 
   it('renders the title', () => {
