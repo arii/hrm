@@ -24,52 +24,52 @@ describe('lib/hrm/zones', () => {
       })
     })
 
-    it('should correctly calculate the "Warm-up" zone', () => {
+    it('should correctly calculate the "Recovery" zone', () => {
       // 55% of 200 is 110
       const result = calculateHrZone(110, maxHr)
-      expect(result.zoneName).toBe(HrZoneName.WarmUp)
+      expect(result.zoneName).toBe(HrZoneName.Recovery)
       expect(result.percentage).toBe(55)
       expect(result.bpm).toBe(110)
     })
 
-    it('should correctly calculate the "Fat Burn" zone', () => {
+    it('should correctly calculate the "Fat Burn" (formerly Warm Up) zone', () => {
       // 65% of 200 is 130
       const result = calculateHrZone(130, maxHr)
       expect(result.zoneName).toBe(HrZoneName.FatBurn)
       expect(result.percentage).toBe(65)
     })
 
-    it('should correctly calculate the "Cardio" zone', () => {
+    it('should correctly calculate the "Aerobic" zone', () => {
       // 75% of 200 is 150
       const result = calculateHrZone(150, maxHr)
-      expect(result.zoneName).toBe(HrZoneName.Cardio)
+      expect(result.zoneName).toBe(HrZoneName.Aerobic)
       expect(result.percentage).toBe(75)
     })
 
-    it('should correctly calculate the "Peak" zone', () => {
-      // 90% of 200 is 180
-      const result = calculateHrZone(180, maxHr)
-      expect(result.zoneName).toBe(HrZoneName.Peak)
-      expect(result.percentage).toBe(90)
+    it('should correctly calculate the "Cardio" zone', () => {
+      // 85% of 200 is 170
+      const result = calculateHrZone(170, maxHr)
+      expect(result.zoneName).toBe(HrZoneName.Cardio)
+      expect(result.percentage).toBe(85)
     })
 
-    it('should correctly calculate the "Max" zone', () => {
-      // 98% of 200 is 196
-      const result = calculateHrZone(196, maxHr)
-      expect(result.zoneName).toBe(HrZoneName.Max)
-      expect(result.percentage).toBe(98)
+    it('should correctly calculate the "Peak" zone', () => {
+      // 95% of 200 is 190
+      const result = calculateHrZone(190, maxHr)
+      expect(result.zoneName).toBe(HrZoneName.Peak)
+      expect(result.percentage).toBe(95)
     })
 
     it('should handle the exact lower boundary of a zone', () => {
-      // 70% of 200 is 140, which is the start of Cardio
-      const result = calculateHrZone(140, maxHr)
+      // 80% of 200 is 160, which is the start of Cardio
+      const result = calculateHrZone(160, maxHr)
       expect(result.zoneName).toBe(HrZoneName.Cardio)
-      expect(result.percentage).toBe(70)
+      expect(result.percentage).toBe(80)
     })
 
     it('should handle HR values exceeding the maximum', () => {
       const result = calculateHrZone(220, maxHr)
-      expect(result.zoneName).toBe(HrZoneName.Max)
+      expect(result.zoneName).toBe(HrZoneName.Peak)
       // Percentage should be capped at 100
       expect(result.percentage).toBe(100)
       expect(result.bpm).toBe(220)

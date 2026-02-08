@@ -13,6 +13,21 @@ on:
       pr_number:
         description: 'The PR number to comment on (required for feedback)'
         required: true
+  workflow_call:
+    inputs:
+      target_branch:
+        description: 'The branch to merge into'
+        required: true
+        type: string
+        default: 'leader'
+      source_branch:
+        description: 'The branch to merge from'
+        required: true
+        type: string
+      pr_number:
+        description: 'The PR number to comment on (required for feedback)'
+        required: true
+        type: string
 
 jobs:
   merge_and_resolve:
@@ -22,31 +37,31 @@ jobs:
       pull-requests: write
     steps:
       - name: Create or update comment
-        if: github.event.inputs.pr_number
+        if: inputs.pr_number
         uses: peter-evans/create-or-update-comment@v4
         with:
-          issue-number: ${{ github.event.inputs.pr_number }}
+          issue-number: ${{ inputs.pr_number }}
           body: |
-            ⏳ Attempting to automatically resolve conflicts for branch `${{ github.event.inputs.source_branch }}`...
+            ⏳ Attempting to automatically resolve conflicts for branch `${{ inputs.source_branch }}`...
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Validate branches
         id: validate_branches
         run: |
-          if ! git ls-remote --exit-code --heads origin ${{ github.event.inputs.target_branch }}; then
-            echo "::error::Target branch '${{ github.event.inputs.target_branch }}' not found."
+          if ! git ls-remote --exit-code --heads origin ${{ inputs.target_branch }}; then
+            echo "::error::Target branch '${{ inputs.target_branch }}' not found."
             exit 1
           fi
-          if ! git ls-remote --exit-code --heads origin ${{ github.event.inputs.source_branch }}; then
-            echo "::error::Source branch '${{ github.event.inputs.source_branch }}' not found."
+          if ! git ls-remote --exit-code --heads origin ${{ inputs.source_branch }}; then
+            echo "::error::Source branch '${{ inputs.source_branch }}' not found."
             exit 1
           fi
 
       - name: Checkout source branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.source_branch }}
+          ref: ${{ inputs.source_branch }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -54,8 +69,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin ${{ github.event.inputs.target_branch }}
-          git merge origin/${{ github.event.inputs.target_branch }} --no-commit --no-ff || true
+          git fetch origin ${{ inputs.target_branch }}
+          git merge origin/${{ inputs.target_branch }} --no-commit --no-ff || true
 
       - name: Resolve conflicts
         id: resolve
@@ -67,16 +82,16 @@ jobs:
         if: steps.resolve.outputs.unresolved-files == ''
         run: |
           git add .
-          git commit -m "Auto-resolve merge conflicts by merging ${{ github.event.inputs.target_branch }}"
+          git commit -m "Auto-resolve merge conflicts by merging ${{ inputs.target_branch }}"
           git push --force
 
       - name: Update comment on success
-        if: success() && steps.resolve.outputs.unresolved-files == '' && github.event.inputs.pr_number
+        if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number
         uses: peter-evans/create-or-update-comment@v4
         with:
-          issue-number: ${{ github.event.inputs.pr_number }}
+          issue-number: ${{ inputs.pr_number }}
           body: |
-            ✅ Successfully resolved all conflicts by merging the latest changes from `${{ github.event.inputs.target_branch }}`. The pull request has been updated.
+            ✅ Successfully resolved all conflicts by merging the latest changes from `${{ inputs.target_branch }}`. The pull request has been updated.
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -86,7 +101,7 @@ jobs:
         env:
           UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
         with:
-          issue-number: ${{ github.event.inputs.pr_number }}
+          issue-number: ${{ inputs.pr_number }}
           body: |
             ❌ **Error: Unable to automatically resolve all conflicts.**
             The following files have unresolved conflicts:

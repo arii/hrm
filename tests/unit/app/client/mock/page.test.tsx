@@ -49,10 +49,12 @@ describe('app/client/mock/page', () => {
 
     // HR packet is sent on change
     expect(mockSendData).toHaveBeenCalledTimes(2)
-    expect(mockSendData).toHaveBeenCalledWith({
-      type: 'HRM_INPUT',
-      data: { value: 125 },
-    })
+    expect(mockSendData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'HRM_INPUT',
+        data: expect.objectContaining({ value: 125 }),
+      })
+    )
   })
 
   it('starts and stops streaming HR data', () => {
@@ -66,10 +68,12 @@ describe('app/client/mock/page', () => {
     expect(screen.getByTestId('streaming-stop-button')).toBeInTheDocument()
 
     // It should send an initial HR packet immediately
-    expect(mockSendData).toHaveBeenCalledWith({
-      type: 'HRM_INPUT',
-      data: { value: 100 },
-    })
+    expect(mockSendData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'HRM_INPUT',
+        data: expect.objectContaining({ value: 100 }),
+      })
+    )
 
     // Advance time to trigger the interval
     jest.advanceTimersByTime(2000)

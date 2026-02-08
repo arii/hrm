@@ -14,26 +14,20 @@ describe('getHrZoneProps', () => {
     { zone: HrZoneName.NoData, hr: 0, expectedColor: '#FFFFFF' },
     { zone: HrZoneName.Unknown, hr: 0, expectedColor: '#FFFFFF' },
     {
-      zone: HrZoneName.WarmUp,
+      zone: HrZoneName.Recovery,
       hr: 100,
       expectedColor: theme.palette.getContrastText(
-        HR_ZONE_UI_PROPS_MAP[HrZoneName.WarmUp].bgColor
+        HR_ZONE_UI_PROPS_MAP[HrZoneName.Recovery].bgColor
       ),
     },
-    { zone: HrZoneName.FatBurn, hr: 130, expectedColor: '#FFFFFF' },
-    { zone: HrZoneName.Cardio, hr: 150, expectedColor: '#FFFFFF' },
+    { zone: HrZoneName.WarmUp, hr: 120, expectedColor: '#FFFFFF' },
+    { zone: HrZoneName.Aerobic, hr: 140, expectedColor: '#FFFFFF' },
+    { zone: HrZoneName.Cardio, hr: 160, expectedColor: '#FFFFFF' },
     {
       zone: HrZoneName.Peak,
-      hr: 170,
+      hr: 180,
       expectedColor: theme.palette.getContrastText(
         HR_ZONE_UI_PROPS_MAP[HrZoneName.Peak].bgColor
-      ),
-    },
-    {
-      zone: HrZoneName.Max,
-      hr: 190,
-      expectedColor: theme.palette.getContrastText(
-        HR_ZONE_UI_PROPS_MAP[HrZoneName.Max].bgColor
       ),
     },
   ]
