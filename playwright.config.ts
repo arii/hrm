@@ -48,7 +48,7 @@ export default defineConfig({
   // Performance Optimizations
   fullyParallel: false,
   workers: 1, // process.env.CI ? 2 : undefined, // Use available CPU cores locally, 2 on CI
-  timeout: 60 * 1000, // Global test timeout (60s) - Increased to accommodate CI variance
+  timeout: 90 * 1000, // Global test timeout (90s) - Increased to accommodate CI variance
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
@@ -135,7 +135,7 @@ export default defineConfig({
     command:
       'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
     url: `${baseURL}/api/health/simple`,
-    timeout: 120 * 1000, // 2 minutes
+    timeout: 180 * 1000, // 3 minutes - increased for CI build time
     reuseExistingServer: !process.env.CI,
     env: {
       PORT: port.toString(),
