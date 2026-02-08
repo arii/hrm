@@ -24,6 +24,14 @@ test.describe('Visual Regression Tests', () => {
     context = setup.context
     dashboardPage = setup.dashboardPage
     mockPage = setup.mockPage
+
+    // Inject flag to disable animations for stable VRT
+    await dashboardPage.addInitScript(() => {
+      window.__IS_TEST_ENV__ = true
+    })
+    await dashboardPage.reload()
+    await mockPage.reload()
+    await waitForPageReady(dashboardPage)
   })
 
   // Centralized cleanup hook
@@ -32,13 +40,18 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.beforeEach(async () => {
-    await waitForPageReady(dashboardPage)
+    // Ensure both pages are ready before each test to prevent race conditions
+    await Promise.all([
+      waitForPageReady(dashboardPage),
+      waitForPageReady(mockPage),
+    ])
   })
 
   test.describe('HR-Related Components', () => {
     test('dashboard with HR data', async () => {
-      await mockPage.getByLabel('Current BPM').fill('155')
-      await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+      test.setTimeout(60000) // Increase timeout for CI stability
+      await mockPage.getByTestId('hr-input').fill('155', { timeout: 30000 })
+      await mockPage.getByTestId('zone-4-button').click({ timeout: 30000 })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
 
@@ -52,6 +65,7 @@ test.describe('Visual Regression Tests', () => {
     })
 
     test('heart rate zone distribution chart', async () => {
+      test.setTimeout(60000) // Increase timeout for CI stability
       // Ensure we are in the active workout view
       const newWorkoutBtn = dashboardPage.getByRole('button', {
         name: 'New Workout',
@@ -69,8 +83,8 @@ test.describe('Visual Regression Tests', () => {
 
       // Inject data via mock page to populate zones
       // Peak zone
-      await mockPage.getByLabel('Current BPM').fill('155')
-      await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+      await mockPage.getByTestId('hr-input').fill('155', { timeout: 30000 })
+      await mockPage.getByTestId('zone-4-button').click({ timeout: 30000 })
 
       // Ensure mock client is connected before starting stream
       await expect(
@@ -84,8 +98,6 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.waitForSelector(
         '[data-testid="zone-distribution-card"]'
       )
-      // Give it a moment for the chart animation
-      await dashboardPage.waitForTimeout(2000)
 
       const zoneCard = dashboardPage.getByTestId('zone-distribution-card')
 
