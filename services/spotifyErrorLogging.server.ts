@@ -80,59 +80,29 @@ export async function logSpotifyCommandError(
 }
 
 /**
- * Handles errors during the `getCurrentlyPlaying` poll.
- * Differentiates between rate limiting (429), token expiration (401),
- * and other errors.
- *
- * @param error The caught error object.
- * @param onTokenExpired A callback to trigger a token refresh.
- * @returns {boolean} - Returns true if the error was handled (e.g., rate limit, auth), false otherwise.
+ * Logs a Spotify API error without returning a response.
+ * Useful for background services that don't respond to HTTP requests.
+ * @param error The error object.
  */
-export async function handleSpotifyApiError(
-  error: unknown,
-  onTokenExpired: () => void
-): Promise<boolean> {
-  const err = error as {
+export function logSpotifyApiError(error: unknown): void {
+  const spotifyError = error as {
     status?: number
-    response?: { text: () => Promise<string> }
+    message?: string
+    cause?: { reason?: string }
   }
 
-  if (err?.status === 429) {
-    logger.warn('Spotify API Rate Limited. Backing off...')
-    return true // Handled
-  }
-
-  if (err?.status === 401) {
-    logger.warn('Spotify token expired during polling. Attempting refresh.')
-    onTokenExpired()
-    return true // Handled
-  }
-
-  // Check for network errors
-  const errMsg = (error as { message?: string })?.message || ''
-  if (
-    errMsg.includes('fetch failed') ||
-    errMsg.includes('EAI_AGAIN') ||
-    errMsg.includes('ENETUNREACH') ||
-    errMsg.includes('ECONNREFUSED')
-  ) {
-    logger.warn(
-      { err: error },
-      `Temporary network connectivity issue during Spotify polling: ${errMsg} (suppressed)`
-    )
-    return true // Handled (suppressed)
-  }
-
-  // For other errors, log the response if available
-  if (err?.response && typeof err.response.text === 'function') {
-    const text = await err.response.text()
-    const parsed = safeParseJSON(text)
+  if (spotifyError && spotifyError.status) {
     logger.error(
-      { response: parsed },
-      'Unhandled Spotify API error during polling'
+      {
+        status: spotifyError.status,
+        message: spotifyError.message,
+        reason: spotifyError.cause?.reason,
+      },
+      'Spotify API Error'
     )
-  } else {
-    logger.error({ err: error }, 'Error fetching currently playing track')
+    return
   }
-  return false // Not a specifically handled API error
+
+  // Handle non-SDK errors
+  logger.error({ error }, 'Internal Server Error')
 }

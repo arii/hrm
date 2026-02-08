@@ -257,11 +257,6 @@ jobs:
 
               if (result.description) {
                 const newBody = result.description;
-                // Need to fetch current body again or use env var, but actions/github-script context has payload
-                // If triggered by workflow_call, context.payload might not be pull_request.
-                // We should use the REST API to get the latest body to be safe, or use process.env.PR_BODY (which is what we fetched earlier)
-                // However, we want to respect any changes made since then?
-                // Let's fetch it to be safe.
 
                 const prNumber = parseInt(process.env.PR_NUMBER);
                 const pr = await github.rest.pulls.get({

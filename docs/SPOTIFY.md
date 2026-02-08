@@ -153,7 +153,7 @@ This architecture ensures that if a user starts or stops playing music on anothe
 ### Recovery Strategies
 
 - **Token Expiration**: The backend `SpotifyTokenManager` automatically uses the refresh token to get a new access token when a 401 error is detected. The `useSpotifyWebPlayback` hook on the frontend will also request a new token on subsequent initializations.
-- **API Errors**: The `handleSpotifyApiError` utility function (`services/spotifyApiErrorHandling.ts`) centralizes logging and handling of common Spotify API errors.
+- **API Errors**: The `handleSpotifyApiError` utility function (`services/spotifyApiErrorHandling.server.ts`) centralizes logging and handling of common Spotify API errors.
 
 ### User-Facing Messages
 
@@ -203,4 +203,3 @@ Moving device data fetching to the backend and broadcasting it via WebSockets wa
 ### Unauthenticated Support (Design)
 
 - **Rationale**: The design for unauthenticated users focuses on providing a good "empty state" experience. Instead of showing broken or empty components, the UI clearly indicates that the user needs to log in to access Spotify features. This is achieved by letting the authentication flow fail silently within the `useSpotifyWebPlayback` hook and having the UI components react to the resulting unauthenticated state.
-- **Safe API Wrapper**: The backend SDK usage is wrapped in a `SafeSpotifyApi` (`services/safeSpotifyApi.ts`) to handle potential issues with Spotify's API, such as commands that succeed but return an empty response body. This aligns with the project's convention of creating type-safe wrappers for third-party APIs.
