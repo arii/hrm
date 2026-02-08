@@ -2,8 +2,8 @@
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import logger from '@/utils/logger'
-import { getAPIURL } from '../utils/urls'
+import logger from '../utils/logger.js' // Explicit .js extension for ESM build
+import { getAPIURL } from '../utils/urls.js' // Explicit .js extension for ESM build
 import { env } from './env'
 import { refreshSpotifyToken } from './spotify'
 
@@ -70,7 +70,6 @@ async function syncTokenWithBackend(token: JWT) {
   }
 }
 
-/**
 /**
  * Safely extracts the hostname from `NEXTAUTH_URL` to set the cookie domain.
  * Returns `undefined` for localhost to allow the browser to use the current domain,
