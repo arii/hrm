@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
 
   const sdk = SpotifyApi.withAccessToken(clientId, {
     access_token: session.accessToken,
+    // session.tokenType is not available in the Session type, defaulting to Bearer
     token_type: 'Bearer',
     expires_in: 3600,
     refresh_token: session.refreshToken || '',
