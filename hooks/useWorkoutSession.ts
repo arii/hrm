@@ -13,6 +13,7 @@ import {
 } from '@/lib/workout-session-storage'
 import { v4 as uuidv4 } from 'uuid'
 import { HrZoneName } from '@/lib/shared/hr-zones'
+import { calculateHrZone } from '@/lib/hrm/zones'
 import { useDebounce } from './useDebounce'
 import { WorkoutStatus } from '@/types/workout'
 
@@ -28,7 +29,13 @@ interface SessionState {
   totalPaused: number // Total paused duration in milliseconds
   pauseTime: number | null // Timestamp when the workout was paused
   sessionId: string | null // For IndexedDB persistence
+  timeInZones: Record<HrZoneName, number>
+  lastActiveTime: number | null
 }
+
+const initialTimeInZones: Record<HrZoneName, number> = Object.fromEntries(
+  Object.values(HrZoneName).map((zone) => [zone, 0])
+) as Record<HrZoneName, number>
 
 const initialState: SessionState = {
   status: 'idle',
@@ -39,6 +46,8 @@ const initialState: SessionState = {
   totalPaused: 0,
   pauseTime: null,
   sessionId: null,
+  timeInZones: initialTimeInZones,
+  lastActiveTime: null,
 }
 
 const isValidSessionState = (parsed: unknown): parsed is SessionState => {
@@ -58,10 +67,26 @@ const loadState = (): SessionState => {
     if (stored) {
       const parsed = JSON.parse(stored)
       if (isValidSessionState(parsed)) {
-        return {
+        // Hydration Fix: Ensure timeInZones exists
+        const timeInZones = parsed.timeInZones || initialTimeInZones
+
+        let newState = {
           ...initialState,
           ...parsed,
+          timeInZones,
         }
+
+        // Auto-pause if session is stale (user away for > 1 min)
+        if (newState.status === 'running' && newState.lastActiveTime) {
+          const now = Date.now()
+          if (now - newState.lastActiveTime > 60000) {
+            newState.status = 'paused'
+            newState.pauseTime = newState.lastActiveTime
+            // We do not adjust totalPaused here; the gap is effectively "paused" time
+            // which will be added to totalPaused when/if they resume.
+          }
+        }
+        return newState
       }
     }
   } catch (e) {
@@ -71,7 +96,7 @@ const loadState = (): SessionState => {
 }
 
 type SessionAction =
-  | { type: 'TICK'; payload: { duration: number } }
+  | { type: 'TICK'; payload: { duration: number; now: number } }
   | { type: 'RESET' }
   | {
       type: 'START_WORKOUT'
@@ -82,6 +107,7 @@ type SessionAction =
   | { type: 'END_WORKOUT'; payload: { now: number } }
   | { type: 'UPDATE_CALORIES'; payload: number }
   | { type: 'HYDRATE'; payload: SessionState }
+  | { type: 'UPDATE_ZONES'; payload: { zone: HrZoneName; delta: number; now: number } }
 
 function sessionReducer(
   state: SessionState,
@@ -104,6 +130,8 @@ function sessionReducer(
           totalPaused: 0,
           pauseTime: null,
           sessionId: action.payload.sessionId,
+          timeInZones: initialTimeInZones,
+          lastActiveTime: action.payload.now,
         }
       }
       break
@@ -117,6 +145,7 @@ function sessionReducer(
           status: 'running',
           totalPaused: state.totalPaused + addedPaused,
           pauseTime: null,
+          lastActiveTime: action.payload.now,
         }
       }
       break
@@ -129,10 +158,27 @@ function sessionReducer(
       newState = { ...state, status: 'finished' }
       break
     case 'TICK':
-      newState = { ...state, duration: action.payload.duration }
+      newState = {
+        ...state,
+        duration: action.payload.duration,
+        lastActiveTime: action.payload.now
+      }
       break
     case 'UPDATE_CALORIES':
       newState = { ...state, calories: action.payload }
+      break
+    case 'UPDATE_ZONES':
+      if (state.status === 'running') {
+        const { zone, delta } = action.payload
+        newState = {
+          ...state,
+          timeInZones: {
+            ...state.timeInZones,
+            [zone]: (state.timeInZones[zone] || 0) + delta,
+          },
+          lastActiveTime: action.payload.now,
+        }
+      }
       break
     case 'RESET':
       newState = initialState
@@ -168,6 +214,12 @@ export const useWorkoutSession = ({
   // Initialize from default initialState to avoid hydration mismatch
   const [state, dispatch] = useReducer(sessionReducer, initialState)
   const [hrHistory, setHrHistory] = useState<HrDataPoint[]>([])
+
+  // Store totalCalories in a ref to avoid recreating startWorkout frequently
+  const totalCaloriesRef = useRef(totalCalories)
+  useEffect(() => {
+    totalCaloriesRef.current = totalCalories
+  }, [totalCalories])
 
   // Load from storage on mount to fix hydration mismatch
   useEffect(() => {
@@ -215,6 +267,7 @@ export const useWorkoutSession = ({
   // Buffer for UI updates to throttle re-renders (Performance optimization)
   const pendingUIBuffer = useRef<HrDataPoint[]>([])
   const lastHistoryUpdate = useRef<number>(0)
+  const lastHrTime = useRef<number | null>(null)
 
   // Side Effect: Save to Storage
   // Move side effects out of the reducer to maintain purity.
@@ -263,7 +316,7 @@ export const useWorkoutSession = ({
         const duration = Math.floor(
           (now - state.startTime! - state.totalPaused) / 1000
         )
-        dispatch({ type: 'TICK', payload: { duration } })
+        dispatch({ type: 'TICK', payload: { duration, now } })
       }, 1000)
     }
     return () => {
@@ -331,12 +384,14 @@ export const useWorkoutSession = ({
 
   const resetWorkout = useCallback(() => {
     dispatch({ type: 'RESET' })
+    lastHrTime.current = null
   }, [])
 
   const startWorkout = useCallback(() => {
     if (state.status === 'idle' || state.status === 'finished') {
       const now = Date.now()
       const sessionId = uuidv4()
+      lastHrTime.current = now
 
       // Initial IndexedDB entry
       workoutSessionStorage.saveSession({
@@ -345,9 +400,7 @@ export const useWorkoutSession = ({
         endTime: null,
         status: 'running',
         hrHistory: [],
-        timeInZones: Object.fromEntries(
-          Object.values(HrZoneName).map((zone) => [zone, 0])
-        ) as Record<HrZoneName, number>,
+        timeInZones: initialTimeInZones,
         averageHr: 0,
         maxHr: 0,
         calorieHistory: [],
@@ -363,12 +416,14 @@ export const useWorkoutSession = ({
 
       dispatch({
         type: 'START_WORKOUT',
-        payload: { now, sessionId, startCalories: totalCalories },
+        payload: { now, sessionId, startCalories: totalCaloriesRef.current },
       })
     } else if (state.status === 'paused') {
-      dispatch({ type: 'RESUME_WORKOUT', payload: { now: Date.now() } })
+      const now = Date.now()
+      lastHrTime.current = now // Reset lastHrTime on resume to avoid jumping
+      dispatch({ type: 'RESUME_WORKOUT', payload: { now } })
     }
-  }, [state.status, totalCalories, userAge, userWeight])
+  }, [state.status, userAge, userWeight])
 
   const pauseWorkout = useCallback(async () => {
     if (state.status === 'running') {
@@ -403,20 +458,31 @@ export const useWorkoutSession = ({
         const now = Date.now()
         const point = { time: now, hr }
 
-        // 1. Add to persistence buffer
+        // 1. Calculate Zone and Delta
+        const maxHr = 220 - userAge // Simple estimate or pass from props
+        const { zoneName } = calculateHrZone(hr, maxHr)
+
+        const prevTime = lastHrTime.current || (now - 1000)
+        const delta = Math.max(0, (now - prevTime) / 1000)
+        lastHrTime.current = now
+
+        // 2. Add to persistence buffer
         hrDataBuffer.current.push(point)
 
-        // 2. Add to UI buffer
+        // 3. Add to UI buffer
         pendingUIBuffer.current.push(point)
 
-        // 3. Throttled UI update (every 5 seconds)
-        if (now - lastHistoryUpdate.current > 5000) {
+        // 4. Update State (Zones)
+        dispatch({ type: 'UPDATE_ZONES', payload: { zone: zoneName, delta, now } })
+
+        // 5. Throttled UI update (every 1 second)
+        if (now - lastHistoryUpdate.current > 1000) {
           flushUIUpdates()
           lastHistoryUpdate.current = now
         }
       }
     },
-    [state.status, state.sessionId, flushUIUpdates]
+    [state.status, state.sessionId, userAge, flushUIUpdates]
   )
 
   const caloriesBurned = useMemo(() => {
@@ -441,5 +507,6 @@ export const useWorkoutSession = ({
     hasStarted: state.startTime !== null,
     sessionId: state.sessionId,
     hrHistory,
+    timeInZones: state.timeInZones,
   }
 }
