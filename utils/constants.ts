@@ -1,6 +1,6 @@
 // File: utils/constants.ts
 // Centralized constants for the application.
-import { HEART_RATE_ZONES, HeartRateZoneConfig } from '../lib/shared/hr-zones'
+import { HEART_RATE_ZONES, HeartRateZoneConfig } from '@/lib/shared/hr-zones'
 
 // Battery level thresholds for UI icons
 export const BATTERY_LEVEL_FULL = 70

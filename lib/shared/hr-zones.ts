@@ -3,8 +3,6 @@
  * Shared constants and types for Heart Rate (HR) zones to ensure consistency
  * across different modules (domain logic, UI, etc.).
  */
-import theme from '../theme'
-
 export const MAX_HR_DEFAULT = 185
 
 /**
@@ -63,31 +61,34 @@ export const calculateMaxHr = (age?: number | string | null): number => {
  * Shared between client (Connect/Mock) and Dashboard (HrTile).
  * color: Background color for the zone.
  * textColor: Text color for optimal contrast (forcing specific overrides).
+ *
+ * NOTE: Colors are hardcoded hex values to maintain server-side compatibility
+ * (avoiding MUI theme dependencies in shared logic).
  */
 export const HR_ZONE_VISUAL_CONFIG = {
-  6: { color: '#9C27B0', label: HrZoneName.Max, textColor: '#FFFFFF' },
+  6: { color: '#9C27B0', label: HrZoneName.Max, textColor: '#FFFFFF' }, // Purple
   5: {
-    color: theme.palette.primary.main,
+    color: '#F44336', // theme.palette.primary.main (Red)
     label: HrZoneName.Peak,
     textColor: '#FFFFFF',
   },
   4: {
-    color: theme.palette.warning.dark,
+    color: '#FBC02D', // theme.palette.warning.dark (Amber/Yellow)
     label: HrZoneName.Cardio,
     textColor: '#FFFFFF',
   },
   3: {
-    color: theme.palette.success.main,
+    color: '#4CAF50', // theme.palette.success.main (Green)
     label: HrZoneName.FatBurn,
     textColor: '#FFFFFF',
   },
   2: {
-    color: theme.palette.secondary.main,
+    color: '#2196F3', // theme.palette.secondary.main (Blue)
     label: HrZoneName.WarmUp,
     textColor: '#FFFFFF',
   },
-  1: { color: '#00ffff', label: HrZoneName.Recovery, textColor: '#000000' },
-  0: { color: '#cccccc', label: HrZoneName.Idle, textColor: '#000000' },
+  1: { color: '#00ffff', label: HrZoneName.Recovery, textColor: '#000000' }, // Cyan
+  0: { color: '#cccccc', label: HrZoneName.Idle, textColor: '#000000' }, // Grey
 } as const
 
 /**

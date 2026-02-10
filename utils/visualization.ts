@@ -3,13 +3,13 @@
  * Utility functions to map numerical and state data to MUI aesthetic properties.
  * This ensures clean separation of business logic from React component rendering.
  */
-import { TimerData } from '../types/websocket'
-import { WorkoutData } from '../types'
-import { WorkoutItem } from '../types/workout'
+import { TimerData } from '@/types/websocket'
+import { WorkoutData } from '@/types/index'
+import { WorkoutItem } from '@/types/workout'
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
-import theme from '../lib/theme'
-import { calculateHrZone } from '../lib/hrm/zones'
-import { HrZoneName } from '../lib/shared/hr-zones'
+import theme from '@/lib/theme'
+import { calculateHrZone } from '@/lib/hrm/zones'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 // Define types for MUI color props
 type MuiColor =
