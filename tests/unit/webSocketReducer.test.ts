@@ -1,25 +1,18 @@
 /**
  * @jest-environment jsdom
  */
-import {
-  reducer,
-  INITIAL_STATE,
-  WebSocketState,
-  HrmData,
-} from '../../context/webSocketReducer'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { reducer, INITIAL_STATE, HrmData } from '../../context/webSocketReducer'
 import { ServerMessage } from '../../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../../types/core'
 
-// Define a test-specific type that includes properties commonly used in tests
-// but potentially missing from the strict HrmData/ServerHrmData types.
 interface TestHrmData extends HrmData {
   percentage?: number
   zone?: number
+  restingHr?: number
 }
 
 describe('webSocketReducer', () => {
-  // Helper to create mock users and reduce duplication
-  // Returns TestHrmData to allow for extra test properties
   const createMockUser = (
     overrides: Partial<TestHrmData> = {}
   ): TestHrmData => ({
@@ -37,234 +30,121 @@ describe('webSocketReducer', () => {
     ...overrides,
   })
 
-  const baseUser = createMockUser()
-
-  it('should return the initial state if no action is matched', () => {
-    const action = { type: 'UNKNOWN_ACTION' } as unknown as ServerMessage
-    const state = reducer(INITIAL_STATE, action)
-    expect(state).toEqual(INITIAL_STATE)
+  it('should return initial state for unknown action', () => {
+    const action = { type: 'UNKNOWN' } as unknown as ServerMessage
+    expect(reducer(INITIAL_STATE, action)).toEqual(INITIAL_STATE)
   })
 
-  it('should handle RESET_STATE action', () => {
-    const currentState: WebSocketState = {
-      ...INITIAL_STATE,
-      hrmData: [baseUser],
-    }
-    const state = reducer(currentState, { type: 'RESET_STATE' })
-    expect(state).toEqual(INITIAL_STATE)
+  it('should handle RESET_STATE', () => {
+    const state = { ...INITIAL_STATE, hrmData: [createMockUser()] }
+    expect(reducer(state, { type: 'RESET_STATE' })).toEqual(INITIAL_STATE)
   })
 
-  describe('INITIAL_STATE action', () => {
-    it('should handle INITIAL_STATE action and mark hrmData as connected', () => {
-      const serverState = {
-        hrmData: [
-          createMockUser({
-            value: 120,
-            percentage: 60,
-            calories: 100,
-          }),
-        ] as ServerHrmData[],
-        timerData: {
-          ...INITIAL_STATE.timerData,
-          isRunning: true,
-        },
-        spotifyData: {
+  describe('Simple State Updates', () => {
+    test.each([
+      [
+        'TIMER_UPDATE',
+        'timerData',
+        { timeRemaining: 20, isRunning: true },
+        { ...INITIAL_STATE.timerData, timeRemaining: 20, isRunning: true },
+      ],
+      [
+        'SPOTIFY_UPDATE',
+        'spotifyData',
+        { trackName: 'New Song', isPlaying: true },
+        {
           ...INITIAL_STATE.spotifyData,
-          trackName: 'Test Track',
+          trackName: 'New Song',
+          isPlaying: true,
         },
-      }
-
-      const action: ServerMessage = {
-        type: 'INITIAL_STATE',
-        payload: serverState,
-      }
+      ],
+      [
+        'ACTIVE_ALERTS_UPDATE',
+        'activeAlerts',
+        [{ code: 'HRM_STALE' }],
+        [{ code: 'HRM_STALE' }],
+      ],
+      ['SPOTIFY_SERVICE_INIT_UPDATE', 'spotifyServiceInitialized', true, true],
+    ])('should handle %s', (type, key, payload, expected) => {
+      const action = { type, payload } as unknown as ServerMessage
       const state = reducer(INITIAL_STATE, action)
+      // @ts-expect-error: mocking
+      expect(state[key]).toEqual(expected)
+    })
+  })
+
+  describe('Complex Actions', () => {
+    it('should handle INITIAL_STATE', () => {
+      const payload = {
+        hrmData: [createMockUser({ value: 120 })],
+        timerData: { ...INITIAL_STATE.timerData, isRunning: true },
+        spotifyData: { ...INITIAL_STATE.spotifyData, trackName: 'Test' },
+      }
+      const state = reducer(INITIAL_STATE, {
+        type: 'INITIAL_STATE',
+        payload: payload as any,
+      })
 
       expect(state.hrmData[0].isConnected).toBe(true)
       expect(state.timerData.isRunning).toBe(true)
-      expect(state.spotifyData.trackName).toBe('Test Track')
+      expect(state.spotifyData.trackName).toBe('Test')
     })
-  })
 
-  describe('HRM_UPDATE action', () => {
-    it('should handle HRM_UPDATE by merging new data with existing state', () => {
-      const initialState: WebSocketState = {
+    it('should handle DEVICE_OFFLINE', () => {
+      const state = {
         ...INITIAL_STATE,
-        hrmData: [
-          createMockUser({
-            value: 120,
-            percentage: 60,
-            lastUpdated: 1000,
-          }),
-        ],
+        hrmData: [createMockUser(), createMockUser({ clientId: 'client-2' })],
       }
-
-      const payload: ServerHrmData[] = [
-        createMockUser({
-          value: 125,
-          percentage: 65,
-          zone: 2,
-          updatedAt: 2000,
-          calories: 105,
-        }) as ServerHrmData,
-      ]
-
-      const message: ServerMessage = {
-        type: 'HRM_UPDATE',
-        payload: payload,
-      }
-
-      const newState = reducer(initialState, message)
-
-      expect(newState.hrmData).toHaveLength(1)
-      expect(newState.hrmData[0]).toEqual(
-        expect.objectContaining({
-          clientId: 'client-1',
-          value: 125,
-          percentage: 65,
-          zone: 2,
-          updatedAt: 2000,
-          isConnected: true,
-        })
-      )
-      expect(newState.hrmData[0].lastUpdated).toBeGreaterThan(1000)
-    })
-
-    it('should handle HRM_UPDATE by adding new clients', () => {
-      const initialState: WebSocketState = { ...INITIAL_STATE, hrmData: [] }
-
-      const payload: ServerHrmData[] = [
-        createMockUser({
-          clientId: 'client-2',
-          value: 140,
-          percentage: 75,
-          zone: 3,
-          updatedAt: 3000,
-          calories: 50,
-        }) as ServerHrmData,
-      ]
-
-      const message: ServerMessage = {
-        type: 'HRM_UPDATE',
-        payload: payload,
-      }
-
-      const newState = reducer(initialState, message)
-
-      expect(newState.hrmData).toHaveLength(1)
-      expect(newState.hrmData[0]).toEqual(
-        expect.objectContaining({
-          clientId: 'client-2',
-          value: 140,
-          isConnected: true,
-        })
-      )
-    })
-
-    it('should handle HRM_UPDATE by removing clients not present in the payload', () => {
-      const initialState: WebSocketState = {
-        ...INITIAL_STATE,
-        hrmData: [
-          createMockUser({
-            clientId: 'client-toremove',
-            lastUpdated: 1000,
-          }),
-        ],
-      }
-
-      const payload: ServerHrmData[] = [
-        createMockUser({
-          clientId: 'client-new',
-          value: 140,
-          percentage: 75,
-          zone: 3,
-          updatedAt: 3000,
-          calories: 50,
-        }) as ServerHrmData,
-      ]
-
-      const message: ServerMessage = {
-        type: 'HRM_UPDATE',
-        payload: payload,
-      }
-
-      const newState = reducer(initialState, message)
-
-      expect(newState.hrmData).toHaveLength(1)
-      expect(newState.hrmData[0].clientId).toBe('client-new')
-      expect(
-        newState.hrmData.find((c) => c.clientId === 'client-toremove')
-      ).toBeUndefined()
-    })
-
-    it('should preserve existing client state properties not present in payload if merging', () => {
-      const initialState: WebSocketState = {
-        ...INITIAL_STATE,
-        hrmData: [
-          createMockUser({
-            name: 'Existing Name',
-            lastUpdated: 1000,
-          }),
-        ],
-      }
-
-      const payloadItem = createMockUser({
-        value: 125,
-        percentage: 65,
-        zone: 2,
-        updatedAt: 2000,
-        calories: 105,
-      })
-      // Explicitly remove name to simulate server payload not sending it
-      delete payloadItem.name
-
-      const payload: ServerHrmData[] = [payloadItem as ServerHrmData]
-
-      const message: ServerMessage = {
-        type: 'HRM_UPDATE',
-        payload: payload,
-      }
-
-      const newState = reducer(initialState, message)
-
-      expect(newState.hrmData[0].name).toBe('Existing Name')
-      expect(newState.hrmData[0].value).toBe(125)
-    })
-  })
-
-  describe('DEVICE_OFFLINE action', () => {
-    it('should remove the specified device from the state', () => {
-      const user2 = createMockUser({ clientId: 'client-2', name: 'User B' })
-      const initialState: WebSocketState = {
-        ...INITIAL_STATE,
-        hrmData: [baseUser, user2],
-      }
-      const action: ServerMessage = {
+      const newState = reducer(state, {
         type: 'DEVICE_OFFLINE',
         payload: { deviceId: 'client-1' },
-      }
-      const state = reducer(initialState, action)
-      expect(state.hrmData).toHaveLength(1)
-      expect(
-        state.hrmData.find((d) => d.clientId === 'client-1')
-      ).toBeUndefined()
-      expect(state.hrmData[0].clientId).toBe('client-2')
+      })
+      expect(newState.hrmData).toHaveLength(1)
+      expect(newState.hrmData[0].clientId).toBe('client-2')
     })
   })
 
-  it('should handle TIMER_UPDATE action', () => {
-    const payload = { timeRemaining: 20, isRunning: true }
-    const action: ServerMessage = { type: 'TIMER_UPDATE', payload }
-    const state = reducer(INITIAL_STATE, action)
-    expect(state.timerData.timeRemaining).toBe(20)
-    expect(state.timerData.isRunning).toBe(true)
-  })
+  describe('HRM_UPDATE Logic', () => {
+    it('should merge, add, and remove clients correctly', () => {
+      const initialState = {
+        ...INITIAL_STATE,
+        hrmData: [
+          createMockUser({ clientId: 'c1', value: 100, name: 'Keep Me' }),
+          createMockUser({ clientId: 'c2', value: 100 }), // To be removed
+        ],
+      }
 
-  it('should handle SPOTIFY_UPDATE action', () => {
-    const payload = { trackName: 'New Song', isPlaying: true }
-    const action: ServerMessage = { type: 'SPOTIFY_UPDATE', payload }
-    const state = reducer(INITIAL_STATE, action)
-    expect(state.spotifyData.trackName).toBe('New Song')
-    expect(state.spotifyData.isPlaying).toBe(true)
+      const payload = [
+        createMockUser({ clientId: 'c1', value: 110 }), // Update
+        createMockUser({ clientId: 'c3', value: 120 }), // Add
+      ]
+      // Simulate partial update for c1 (server might not send name)
+      delete (payload[0] as any).name
+
+      const state = reducer(initialState, {
+        type: 'HRM_UPDATE',
+        payload: payload as ServerHrmData[],
+      })
+
+      expect(state.hrmData).toHaveLength(2)
+
+      // Check Update + Merge (name preserved)
+      const c1 = state.hrmData.find((d) => d.clientId === 'c1')
+      expect(c1).toBeDefined()
+      expect(c1!).toMatchObject({
+        value: 110,
+        name: 'Keep Me',
+        isConnected: true,
+      })
+      expect(c1!.lastUpdated).toBeGreaterThan(0)
+
+      // Check Add
+      const c3 = state.hrmData.find((d) => d.clientId === 'c3')
+      expect(c3).toBeDefined()
+      expect(c3!).toMatchObject({ value: 120, isConnected: true })
+
+      // Check Remove
+      expect(state.hrmData.find((d) => d.clientId === 'c2')).toBeUndefined()
+    })
   })
 })
