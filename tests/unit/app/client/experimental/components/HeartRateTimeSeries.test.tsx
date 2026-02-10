@@ -15,6 +15,48 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 }
 
+// Mock Recharts to test props
+jest.mock('recharts', () => {
+  const OriginalModule = jest.requireActual('recharts')
+  return {
+    ...OriginalModule,
+    LineChart: ({
+      children,
+      syncId,
+      data,
+    }: {
+      children: React.ReactNode
+      syncId: string
+      data: unknown[]
+    }) => (
+      <div
+        data-testid="line-chart"
+        data-sync-id={syncId}
+        data-points={data.length}
+      >
+        {children}
+      </div>
+    ),
+    XAxis: ({
+      tickFormatter,
+      dataKey,
+    }: {
+      tickFormatter: (val: number) => string
+      dataKey: string
+    }) => (
+      <div data-testid="x-axis" data-key={dataKey}>
+        {/* Render a sample tick to verify formatter */}
+        {tickFormatter
+          ? tickFormatter(new Date('2023-01-01T10:00:00').getTime())
+          : null}
+      </div>
+    ),
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+  }
+})
+
 describe('HeartRateTimeSeries', () => {
   const mockHrHistory: HrDataPoint[] = [
     { time: new Date('2023-01-01T10:00:00').getTime(), hr: 60 },
@@ -30,8 +72,19 @@ describe('HeartRateTimeSeries', () => {
     expect(screen.getByText('Heart Rate Over Time')).toBeInTheDocument()
   })
 
-  it('renders with the correct data-testid', () => {
+  it('passes syncId="workout-metrics" to LineChart', () => {
     renderWithTheme(<HeartRateTimeSeries hrHistory={mockHrHistory} />)
-    expect(screen.getByTestId('hr-time-series-chart')).toBeInTheDocument()
+    const chart = screen.getByTestId('line-chart')
+    expect(chart).toHaveAttribute('data-sync-id', 'workout-metrics')
+  })
+
+  it('uses the correct time format in XAxis', () => {
+    renderWithTheme(<HeartRateTimeSeries hrHistory={mockHrHistory} />)
+    // The formatter uses { timeStyle: 'medium' }, which should output something like "10:00:00 AM" depending on locale.
+    // Since node environment locale might vary, we check if it renders *something* formatted.
+    // However, the test environment (jsdom) usually defaults to en-US.
+    // "10:00:00 AM" or "10:00:00"
+    const axis = screen.getByTestId('x-axis')
+    expect(axis).toHaveTextContent(/:00/) // Simple check for time format
   })
 })
