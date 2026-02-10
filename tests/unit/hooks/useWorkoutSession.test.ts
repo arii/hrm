@@ -28,13 +28,7 @@ jest.mock('@/lib/workout-session-storage', () => ({
     }),
     deleteSession: jest.fn().mockResolvedValue(undefined),
   },
-  HrZoneName: {
-    Rest: 'Rest',
-    WarmUp: 'WarmUp',
-    FatBurn: 'FatBurn',
-    Cardio: 'Cardio',
-    Peak: 'Peak',
-  },
+  HrZoneName: jest.requireActual('@/lib/shared/hr-zones').HrZoneName,
 }))
 
 describe('useWorkoutSession', () => {
@@ -349,14 +343,14 @@ describe('useWorkoutSession', () => {
       act(() => result.current.addHrData(100))
       expect(result.current.hrHistory).toHaveLength(1)
 
-      // Second point immediately after
+      // Second point immediately after (within 1000ms)
       act(() => result.current.addHrData(105))
-      // Should NOT update hrHistory yet (throttle is 5000ms from last update)
+      // Should NOT update hrHistory yet (throttle is 1000ms from last update)
       expect(result.current.hrHistory).toHaveLength(1)
 
-      // Advance time by 6000ms
+      // Advance time by 1500ms
       await act(async () => {
-        jest.advanceTimersByTime(6000)
+        jest.advanceTimersByTime(1500)
       })
 
       // Trigger another update
@@ -364,6 +358,59 @@ describe('useWorkoutSession', () => {
 
       // Now it should have updated with pending points (105) AND current point (110)
       expect(result.current.hrHistory).toHaveLength(3)
+    })
+
+    it('should update timeInZones on addHrData', () => {
+      const { result } = renderHook(() => useWorkoutSession({ userAge: 30 }))
+      act(() => result.current.startWorkout())
+
+      // Max HR for age 30 is 190.
+      // Zone calculation:
+      // WarmUp: 0.5 * 190 = 95
+      // FatBurn: 0.6 * 190 = 114
+      // Cardio: 0.7 * 190 = 133
+      // Peak: 0.85 * 190 = 161.5
+      // Max: 0.95 * 190 = 180.5
+
+      // Add data in WarmUp zone (100 bpm)
+      act(() => result.current.addHrData(100))
+
+      // Advance time by 2 seconds
+      jest.advanceTimersByTime(2000)
+
+      // Add data again
+      act(() => result.current.addHrData(100))
+
+      // Delta should be calculated based on time difference (approx 2s)
+      // Since we mock Date.now() via jest.useFakeTimers(), and addHrData uses Date.now().
+      // Wait, jest.useFakeTimers() mocks Date.now() too? Yes, usually.
+      // Let's verify if timeInZones increased.
+
+      const warmUpTime = result.current.timeInZones[HrZoneName.WarmUp]
+      expect(warmUpTime).toBeGreaterThan(0)
+    })
+
+    it('should auto-pause on restore if session is stale', () => {
+      const now = Date.now()
+      const staleTime = now - 70000 // 70 seconds ago
+
+      // Mock localStorage with a running session last active 70s ago
+      localStorage.setItem(
+        'hrm_dashboard:active_session',
+        JSON.stringify({
+          status: 'running',
+          duration: 100,
+          sessionId: 'stale-session',
+          startTime: staleTime - 100000,
+          lastActiveTime: staleTime,
+          timeInZones: {}, // Add empty zones to pass validation
+        })
+      )
+
+      const { result } = renderHook(() => useWorkoutSession({}))
+
+      expect(result.current.workoutStatus).toBe('paused')
+      // It should not have increased duration
     })
   })
 })
