@@ -7,25 +7,9 @@
  */
 
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { SafeSpotifyApi } from '../types/spotify.js'
 
-/**
- * A type representing the SpotifyApi with corrected typing for player methods
- * that accept optional deviceId parameters.
- */
-export type SafeSpotifyApi = Omit<SpotifyApi, 'player'> & {
-  player: SpotifyApi['player'] & {
-    startResumePlayback: (
-      deviceId?: string | null,
-      context_uri?: string,
-      uris?: string[],
-      offset?: object,
-      position_ms?: number
-    ) => Promise<void>
-    pausePlayback: (deviceId?: string | null) => Promise<void>
-    skipToNext: (deviceId?: string | null) => Promise<void>
-    skipToPrevious: (deviceId?: string | null) => Promise<void>
-  }
-}
+export type { SafeSpotifyApi }
 
 /**
  * Type-casts the SpotifyApi instance to provide correct optional parameter typing.

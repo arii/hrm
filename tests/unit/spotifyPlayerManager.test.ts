@@ -53,12 +53,14 @@ describe('SpotifyPlayerManager', () => {
       player: mockPlayer,
     } as unknown as SafeSpotifyApi
 
-    playerManager = new SpotifyPlayerManager(
-      mockSdk,
-      broadcastMock,
-      getStateMock,
-      setStateMock
-    )
+    const context = {
+      getSdk: () => mockSdk,
+      getState: getStateMock,
+      setState: setStateMock,
+      broadcastUpdate: broadcastMock,
+    }
+
+    playerManager = new SpotifyPlayerManager(context)
   })
 
   describe('refreshPlaybackState', () => {
