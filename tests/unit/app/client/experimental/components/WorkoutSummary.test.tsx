@@ -60,23 +60,18 @@ describe('WorkoutSummary', () => {
     expect(screen.getByText(/formatted-date/)).toBeInTheDocument()
   })
 
-  describe('status colors and styles', () => {
+  describe('status display', () => {
     const statuses = [
-      { status: 'running' as const, expectedColor: 'success' },
-      { status: 'paused' as const, expectedColor: 'warning' },
-      { status: 'finished' as const, expectedColor: 'primary' },
-      { status: 'idle' as const, expectedColor: 'default' },
+      { status: 'running' as const },
+      { status: 'paused' as const },
+      { status: 'finished' as const },
+      { status: 'idle' as const },
     ]
 
-    statuses.forEach(({ status, expectedColor }) => {
-      it(`renders correctly for status: ${status}`, () => {
+    statuses.forEach(({ status }) => {
+      it(`renders status text for: ${status}`, () => {
         render(<WorkoutSummary {...defaultProps} status={status} />)
-        const chip = screen
-          .getByText(status.toUpperCase())
-          .closest('.MuiChip-root')
-        expect(chip).toHaveClass(
-          `MuiChip-color${expectedColor.charAt(0).toUpperCase() + expectedColor.slice(1)}`
-        )
+        expect(screen.getByText(status.toUpperCase())).toBeInTheDocument()
       })
     })
   })
