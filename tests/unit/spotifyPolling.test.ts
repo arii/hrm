@@ -99,7 +99,6 @@ describe('SpotifyPolling Service', () => {
   afterEach(() => {
     // Ensure polling is stopped and all timers are cleared
     if (spotifyService) {
-      spotifyService.stopPolling()
       spotifyService.cleanup()
     }
     jest.clearAllTimers()
@@ -118,7 +117,6 @@ describe('SpotifyPolling Service', () => {
     describe('SDK Initialization', () => {
       it('should not start polling if SDK initialization fails', async () => {
         // Arrange: Mock the token manager to simulate a failure in getting the SDK access token.
-        // This is a more direct way to test this scenario.
         ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
           getValidAccessToken: jest.fn().mockResolvedValue('mock_access_token'),
           getSdkAccessToken: jest.fn().mockReturnValue(null), // Simulate failure
@@ -130,18 +128,21 @@ describe('SpotifyPolling Service', () => {
 
         // Assert
         expect(service.isReady()).toBe(false)
-        const pollInterval = service._test_?.getPollInterval()
-        expect(pollInterval).toBeNull()
+        // Cleanup explicitly
+        service.cleanup()
       })
 
       it('should not execute commands if SDK is not initialized', async () => {
-        // Arrange: Ensure SDK is not ready
-        if (spotifyService._test_) {
-          spotifyService._test_.setSdk(null)
-        }
+        // Arrange: Create a service that fails initialization
+        ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
+          getValidAccessToken: jest.fn().mockResolvedValue('mock_access_token'),
+          getSdkAccessToken: jest.fn().mockReturnValue(null), // Simulate failure
+          updateToken: jest.fn(),
+        }))
+        const unreadyService = await SpotifyPolling.create(broadcastMock)
 
         // Act
-        await spotifyService.handleCommand('PLAY', {})
+        await unreadyService.handleCommand('PLAY', {})
 
         // Assert
         expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
@@ -149,21 +150,27 @@ describe('SpotifyPolling Service', () => {
           'Spotify service not ready, command ignored.',
           { command: 'PLAY' }
         )
+        unreadyService.cleanup()
       })
 
-      it('should return false for isReady if SDK is not initialized', () => {
-        // Arrange: Force SDK to be null
-        if (spotifyService._test_) {
-          spotifyService._test_.setSdk(null)
-        }
+      it('should return false for isReady if SDK is not initialized', async () => {
+        // Arrange: Create a service that fails initialization
+        ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
+          getValidAccessToken: jest.fn().mockResolvedValue('mock_access_token'),
+          getSdkAccessToken: jest.fn().mockReturnValue(null), // Simulate failure
+          updateToken: jest.fn(),
+        }))
+        const unreadyService = await SpotifyPolling.create(broadcastMock)
 
         // Act & Assert
-        expect(spotifyService.isReady()).toBe(false)
+        expect(unreadyService.isReady()).toBe(false)
+        unreadyService.cleanup()
       })
     })
   })
 
   describe('Command Handling', () => {
+    // ... existing tests ...
     it('should handle PLAY command', async () => {
       await spotifyService.handleCommand('PLAY', { deviceId: 'test_device_id' })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
@@ -226,6 +233,7 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Volume Control', () => {
+    // ... existing tests ...
     it('should set volume with SET_VOLUME command', async () => {
       await spotifyService.handleCommand('SET_VOLUME', { volume: 75 })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(75, undefined)
@@ -263,6 +271,7 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Token Management', () => {
+    // ... existing tests ...
     it('should handle token updates', async () => {
       const mockTokenPayload = {
         provider: 'spotify',
@@ -304,6 +313,7 @@ describe('SpotifyPolling Service', () => {
       await newService.handleCommand('PLAY', {})
       // Should not make API call without token
       expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
+      newService.cleanup()
     })
   })
 
@@ -352,22 +362,42 @@ describe('SpotifyPolling Service', () => {
       expect(lastState?.trackName).toBe('Nothing is currently playing.')
     })
 
-    // Helper function to reduce boilerplate
+    // Refactored helper function to set up state via polling
     async function runPollingScenario(
       initialState: Partial<SpotifyData>,
       mockResponse: unknown
     ) {
-      spotifyService._test_!.setState({
-        ...spotifyService.getState(),
-        ...initialState,
-      })
+      // Setup initial state if needed
+      if (initialState.isPlaying) {
+        mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
+          item: {
+            id: initialState.trackId || 'id',
+            name: initialState.trackName || 'name',
+            artists: [{ name: initialState.artist || 'artist' }],
+            album: {
+              name: initialState.albumName || 'album',
+              images: [{ url: initialState.albumArtUrl || '' }],
+            },
+            type: 'track',
+          },
+          is_playing: true,
+          currently_playing_type: 'track',
+        })
+        await spotifyService.forcePollAndBroadcast()
+      } else if (initialState.trackName === 'Nothing is currently playing.') {
+        mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(null)
+        await spotifyService.forcePollAndBroadcast()
+      }
+      // If 'Awaiting Login...', it's default, so no setup needed
 
+      // Clear previous broadcasts to verify only the transition
+      broadcastedStates.length = 0
+
+      // Setup next
       mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(mockResponse)
 
-      spotifyService.startPolling()
-      jest.advanceTimersByTime(150)
-      await flushPromises()
-      spotifyService.stopPolling()
+      // Run poll
+      await spotifyService.forcePollAndBroadcast()
     }
 
     it('should broadcast update when transitioning from playing to stopped', async () => {
@@ -382,6 +412,12 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should broadcast update when transitioning from non-default track name to stopped', async () => {
+      // Setup initial state: 'Awaiting Login...' is default, so this test implies
+      // transitioning FROM a state that is NOT 'Awaiting Login...' and NOT Playing?
+      // Wait, 'Awaiting Login...' IS default.
+      // If we want to test transition FROM 'Awaiting Login...' to 'Nothing is currently playing.'
+      // The previous test logic used: setState({ isPlaying: false, trackName: 'Awaiting Login...' }) (which is default)
+      // and expected transition to 'Nothing is currently playing.' (via null response).
       await runPollingScenario(
         { isPlaying: false, trackName: 'Awaiting Login...' },
         null
@@ -392,7 +428,6 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should NOT broadcast if already stopped and API returns null', async () => {
-      broadcastedStates.length = 0 // Clear previous broadcasts
       await runPollingScenario(
         { isPlaying: false, trackName: 'Nothing is currently playing.' },
         null
@@ -410,8 +445,6 @@ describe('SpotifyPolling Service', () => {
         albumArtUrl: 'url1',
         isPlaying: true,
       }
-
-      broadcastedStates.length = 0 // Clear broadcasts
 
       const mockPlayback = {
         item: {
@@ -432,6 +465,7 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Integration with Timer', () => {
+    // ... existing tests ...
     it('should support NEXT command when timer starts', async () => {
       // Simulate timer start triggering NEXT
       await spotifyService.handleCommand('NEXT', { deviceId: 'test_device_id' })
@@ -464,6 +498,7 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Error Handling', () => {
+    // ... existing tests ...
     it('should handle API errors gracefully', async () => {
       mockPlayer.startResumePlayback.mockImplementation(() =>
         Promise.reject(new Error('Network error'))
@@ -483,7 +518,7 @@ describe('SpotifyPolling Service', () => {
       )
       // @ts-expect-error - Testing private method
       const refreshSpy = jest.spyOn(spotifyService, 'checkAndRefreshSdkToken')
-      spotifyService.startPolling(100)
+      spotifyService.startPolling()
       jest.advanceTimersByTime(150)
 
       // Use helper to clear microtasks

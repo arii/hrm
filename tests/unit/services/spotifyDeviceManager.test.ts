@@ -4,6 +4,7 @@ import { mockPlayer } from '../spotify-test-utils'
 import { SafeSpotifyApi } from '../../../services/safeSpotifyApi'
 import { createSafeSpotifyApi } from '../../../services/safeSpotifyApi'
 import { Devices, SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { SpotifyData } from '../../../types/websocket'
 
 // Mock the logger to prevent logs from appearing in test output
 jest.mock('../../../utils/logger.server.js', () => ({
@@ -28,12 +29,14 @@ describe('SpotifyDeviceManager', () => {
     })
     setStateMock = jest.fn()
 
-    deviceManager = new SpotifyDeviceManager(
-      sdk,
-      broadcastMock,
-      getStateMock,
-      setStateMock
-    )
+    const context = {
+      getSdk: () => sdk,
+      getState: getStateMock,
+      setState: setStateMock,
+      broadcastUpdate: broadcastMock,
+    }
+
+    deviceManager = new SpotifyDeviceManager(context)
   })
 
   describe('refreshDevices', () => {
@@ -64,7 +67,7 @@ describe('SpotifyDeviceManager', () => {
       expect(setStateMock).toHaveBeenCalledWith(expect.any(Function))
       // It's better to test the outcome of the state update, not the function itself
       const setStateFunction = setStateMock.mock.calls[0][0]
-      const newState = setStateFunction({ devices: [] })
+      const newState = setStateFunction({ devices: [] } as SpotifyData)
       expect(newState.devices).toHaveLength(2)
       expect(newState.devices[0].id).toBe('device1')
 
@@ -99,7 +102,7 @@ describe('SpotifyDeviceManager', () => {
       await deviceManager.refreshDevices()
 
       const setStateFunction = setStateMock.mock.calls[0][0]
-      const newState = setStateFunction({ devices: [] })
+      const newState = setStateFunction({ devices: [] } as SpotifyData)
       expect(newState.devices).toHaveLength(1)
       expect(newState.devices[0].id).toBe('device1')
     })

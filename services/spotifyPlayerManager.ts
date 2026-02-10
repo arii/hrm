@@ -1,6 +1,6 @@
 import { SpotifyCommandParameters } from '../types/core'
-import { ServerMessage, SpotifyCommand, SpotifyData } from '../types/websocket'
-import { SafeSpotifyApi } from './safeSpotifyApi'
+import { SpotifyCommand } from '../types/websocket'
+import { SpotifyManagerContext } from '../types/interfaces.js'
 import logger from '../utils/logger.server.js'
 import { isEmptyResponseError } from './spotifyUtils.js'
 import { Track, Episode } from '@spotify/web-api-ts-sdk'
@@ -17,37 +17,22 @@ export interface ParsedPlaybackState {
 }
 
 export class SpotifyPlayerManager {
-  private sdk: SafeSpotifyApi
-  private broadcastUpdate: (message: ServerMessage) => void
-  private getState: () => SpotifyData
-  private setState: (
-    update: SpotifyData | ((prevState: SpotifyData) => SpotifyData)
-  ) => void
+  private context: SpotifyManagerContext
 
-  constructor(
-    sdk: SafeSpotifyApi,
-    broadcastUpdate: (message: ServerMessage) => void,
-    getState: () => SpotifyData,
-    setState: (
-      update: SpotifyData | ((prevState: SpotifyData) => SpotifyData)
-    ) => void
-  ) {
-    this.sdk = sdk
-    this.broadcastUpdate = broadcastUpdate
-    this.getState = getState
-    this.setState = setState
+  constructor(context: SpotifyManagerContext) {
+    this.context = context
   }
 
   public async refreshPlaybackState(): Promise<void> {
     const playbackState = await this.fetchPlaybackState()
-    const currentState = this.getState()
+    const currentState = this.context.getState()
 
     if (!playbackState) {
       if (
         currentState.isPlaying ||
         currentState.trackName !== NOT_PLAYING_MESSAGE
       ) {
-        this.setState((prev) => ({
+        this.context.setState((prev) => ({
           ...prev,
           trackId: null,
           trackName: NOT_PLAYING_MESSAGE,
@@ -56,9 +41,9 @@ export class SpotifyPlayerManager {
           albumArtUrl: '',
           isPlaying: false,
         }))
-        this.broadcastUpdate({
+        this.context.broadcastUpdate({
           type: 'SPOTIFY_UPDATE',
-          payload: this.getState(),
+          payload: this.context.getState(),
         })
       }
       return
@@ -71,7 +56,7 @@ export class SpotifyPlayerManager {
       trackId !== currentState.trackId ||
       isPlaying !== currentState.isPlaying
     ) {
-      this.setState((prev) => ({
+      this.context.setState((prev) => ({
         ...prev,
         trackId,
         trackName,
@@ -81,15 +66,18 @@ export class SpotifyPlayerManager {
         isPlaying,
       }))
 
-      this.broadcastUpdate({
+      this.context.broadcastUpdate({
         type: 'SPOTIFY_UPDATE',
-        payload: this.getState(),
+        payload: this.context.getState(),
       })
     }
   }
 
   private async fetchPlaybackState(): Promise<ParsedPlaybackState | null> {
-    const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
+    const sdk = this.context.getSdk()
+    if (!sdk) return null
+
+    const playbackState = await sdk.player.getCurrentlyPlayingTrack()
 
     if (!playbackState || !playbackState.item) {
       return null
@@ -132,7 +120,14 @@ export class SpotifyPlayerManager {
   ) {
     const { deviceId, volume, playlistUri, contextUri, uri } = params
     const effectiveContextUri = contextUri || playlistUri
-    const sdk = this.sdk
+    const sdk = this.context.getSdk()
+
+    if (!sdk) {
+      logger.warn('Spotify SDK not initialized, cannot execute command.', {
+        command,
+      })
+      return
+    }
 
     switch (command) {
       case 'PLAY':
@@ -191,14 +186,14 @@ export class SpotifyPlayerManager {
             () => sdk.player.setPlaybackVolume(clampedVolume, deviceId),
             { deviceId, volume: clampedVolume }
           )
-          this.setState((prevState) => ({
+          this.context.setState((prevState) => ({
             ...prevState,
             volume: clampedVolume,
             isMuted: clampedVolume === 0,
           }))
-          this.broadcastUpdate({
+          this.context.broadcastUpdate({
             type: 'SPOTIFY_UPDATE',
-            payload: this.getState(),
+            payload: this.context.getState(),
           })
         }
         break
