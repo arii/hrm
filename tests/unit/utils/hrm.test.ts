@@ -1,6 +1,5 @@
 import { getActiveHrmData } from '@/utils/hrm'
-import { HrmData } from '@/context/webSocketReducer'
-import { ActiveAlert } from '@/types/websocket'
+import { ConnectedHrmData, ActiveAlert } from '@/types/websocket'
 import {
   HRM_STALE_THRESHOLD_MS,
   HRM_WARNING_THRESHOLD_MS,
@@ -8,7 +7,7 @@ import {
 
 describe('getActiveHrmData', () => {
   const now = 100000
-  const mockHrmData: HrmData[] = [
+  const mockHrmData: ConnectedHrmData[] = [
     {
       clientId: 'c1',
       name: 'User One',
@@ -117,5 +116,28 @@ describe('getActiveHrmData', () => {
     const c1 = result.find((d) => d.clientId === 'c1')
     expect(c1?.isAlerting).toBe(true)
     expect(c1?.alertMessage).toBe('Fix it')
+  })
+
+  it('marks data as stale if updatedAt is old but lastUpdated is recent (server broadcast stale data)', () => {
+    // This scenario happens when the server broadcasts the last known state of a user
+    // but the sensor itself hasn't sent an update in a while.
+    const staleSensorData: ConnectedHrmData = {
+      clientId: 'c_stale_sensor',
+      name: 'Stale Sensor User',
+      value: 120,
+      calories: 100,
+      updatedAt: now - HRM_WARNING_THRESHOLD_MS - 1, // Sensor timestamp is old
+      isConnected: true,
+      lastUpdated: now, // Receipt timestamp is fresh (just received from server)
+      maxHr: 180,
+    }
+
+    const result = getActiveHrmData([staleSensorData], [], now, {
+      includeZeroValues: true,
+    })
+
+    const user = result.find((d) => d.clientId === 'c_stale_sensor')
+    expect(user).toBeDefined()
+    expect(user?.isDataStale).toBe(true)
   })
 })
