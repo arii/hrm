@@ -3,21 +3,18 @@
  */
 import { render, screen } from '@testing-library/react'
 import HrTileWrapper from '@/components/HrTileWrapper'
-import { ClientHrmData } from '@/context/webSocketReducer'
-import { useHrZone } from '@/hooks/useHrZone'
-import { HrTileProps } from '@/types'
-
-jest.mock('@/hooks/useHrZone')
-const mockUseHrZone = useHrZone as jest.Mock
+import { ClientHrmData } from '@/types/websocket'
+import { HrTileProps } from '@/components/HrTile' // Update import path if needed
 
 jest.mock('@/components/HrTile', () => {
-  return jest.fn((props: HrTileProps) => (
+  // eslint-disable-next-line react/display-name
+  return (props: any) => (
     <div data-testid="mock-hr-tile">
       <span data-testid="tile-name">{props.name}</span>
       <span data-testid="tile-bpm">{props.bpm}</span>
       <span data-testid="tile-stale">{String(props.isDataStale)}</span>
     </div>
-  ))
+  )
 })
 
 describe('HrTileWrapper', () => {
@@ -30,32 +27,26 @@ describe('HrTileWrapper', () => {
     isConnected: true,
     isAlerting: false,
     updatedAt: Date.now(),
+    isDataStale: false, // Default
+    age: 30, // Required for calculation
   }
 
-  beforeEach(() => {
-    mockUseHrZone.mockReturnValue({
-      percentage: 63,
-      zone: 2,
-      color: '#blue',
-    })
-  })
-
   it('passes isDataStale=true to HrTile', () => {
-    render(<HrTileWrapper user={mockUser} isDataStale={true} />)
+    render(<HrTileWrapper {...mockUser} isDataStale={true} />)
 
     expect(screen.getByTestId('mock-hr-tile')).toBeInTheDocument()
     expect(screen.getByTestId('tile-stale')).toHaveTextContent('true')
   })
 
   it('passes isDataStale=false to HrTile', () => {
-    render(<HrTileWrapper user={mockUser} isDataStale={false} />)
+    render(<HrTileWrapper {...mockUser} isDataStale={false} />)
 
     expect(screen.getByTestId('mock-hr-tile')).toBeInTheDocument()
     expect(screen.getByTestId('tile-stale')).toHaveTextContent('false')
   })
 
   it('passes user data to HrTile', () => {
-    render(<HrTileWrapper user={mockUser} isDataStale={false} />)
+    render(<HrTileWrapper {...mockUser} />)
 
     expect(screen.getByTestId('tile-name')).toHaveTextContent('Test User')
     expect(screen.getByTestId('tile-bpm')).toHaveTextContent('120')

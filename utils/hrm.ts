@@ -1,24 +1,19 @@
-import { ClientHrmData, HrmData } from '@/context/webSocketReducer'
-import { ActiveAlert } from '@/types/websocket'
+import { ConnectedHrmData, ClientHrmData, ActiveAlert } from '@/types/websocket'
 import {
   HRM_STALE_THRESHOLD_MS,
   HRM_WARNING_THRESHOLD_MS,
 } from '@/utils/constants'
-
-export type ActiveHrmData = ClientHrmData & {
-  isDataStale: boolean
-}
 
 interface GetActiveHrmDataOptions {
   includeZeroValues?: boolean
 }
 
 export const getActiveHrmData = (
-  hrmData: HrmData[],
+  hrmData: ConnectedHrmData[],
   activeAlerts: ActiveAlert[],
   now: number,
   options: GetActiveHrmDataOptions = {}
-): ActiveHrmData[] => {
+): ClientHrmData[] => {
   const { includeZeroValues = false } = options
 
   return hrmData
@@ -26,8 +21,9 @@ export const getActiveHrmData = (
       const isZero = user.value === 0
       const isPlaceholderName = !!user.name && /new user/i.test(user.name)
       const hasNoIdentity = user.name == null
-      const isStale =
-        user.lastUpdated && now - user.lastUpdated > HRM_STALE_THRESHOLD_MS
+      // Use the sensor's timestamp if available, otherwise fall back to receipt time
+      const referenceTime = user.updatedAt || user.lastUpdated || now
+      const isStale = now - referenceTime > HRM_STALE_THRESHOLD_MS
 
       if (isPlaceholderName || hasNoIdentity || isStale) {
         return false
@@ -46,9 +42,9 @@ export const getActiveHrmData = (
           (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
       )
 
-      const isDataStale = !!(
-        user.lastUpdated && now - user.lastUpdated > HRM_WARNING_THRESHOLD_MS
-      )
+      // Use the same reference time logic for the visual warning
+      const referenceTime = user.updatedAt || user.lastUpdated || now
+      const isDataStale = now - referenceTime > HRM_WARNING_THRESHOLD_MS
 
       return {
         ...user,
