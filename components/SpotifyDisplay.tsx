@@ -131,6 +131,13 @@ const SpotifyDisplay = () => {
 
   const { isReady, deviceId } = useSpotifyWebPlayback()
 
+  // Reset sliding state if socket disconnects
+  useEffect(() => {
+    if (connectionStatus !== 'Connected' && state.isSliding) {
+      dispatch({ type: 'SET_SLIDING', payload: false })
+    }
+  }, [connectionStatus, state.isSliding])
+
   // Synchronize with WebSocket data whenever it changes
   // Grace period prevents race conditions when volume commands are in flight
   useEffect(() => {
