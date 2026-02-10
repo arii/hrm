@@ -1,10 +1,10 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import DeviceRecommendation from '@/components/Spotify/DeviceRecommendation'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { clampVolume } from '@/hooks/useVolumePreference'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -104,7 +104,11 @@ const spotifyDisplayReducer = (
 
 const SpotifyDisplay = () => {
   const { isLoggedIn } = useSpotifyAuth()
-  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+  const {
+    execute,
+    playback: spotifyData,
+    connectionStatus,
+  } = useSpotifyCommand()
 
   // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
@@ -160,27 +164,17 @@ const SpotifyDisplay = () => {
   const sendVolumeCommand = useCallback(
     (volume: number) => {
       if (connectionStatus !== 'Connected') return
-      const targetDeviceId =
-        selectedDeviceId ||
-        spotifyData.devices?.find((device) => device.is_active)?.id
-      if (!targetDeviceId) {
-        console.warn(
-          '[SpotifyDisplay] No target device for volume command. Aborting.'
-        )
-        return
-      }
+
       const sanitized = clampVolume(volume)
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
+      execute('SET_VOLUME', {
         volume: sanitized,
-        deviceId: targetDeviceId,
-      }
+        deviceId: selectedDeviceId || undefined,
+      })
+
       lastVolumeSendTimeRef.current = Date.now()
       hasPendingSendRef.current = true
-      sendData(message)
     },
-    [connectionStatus, selectedDeviceId, sendData, spotifyData.devices]
+    [connectionStatus, selectedDeviceId, execute]
   )
 
   // Handler for immediate UI update while sliding
@@ -234,12 +228,7 @@ const SpotifyDisplay = () => {
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
     targetDeviceId?: string
   ) => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command,
-      ...(targetDeviceId && { deviceId: targetDeviceId }),
-    }
-    sendData(message)
+    execute(command, targetDeviceId ? { deviceId: targetDeviceId } : undefined)
   }
 
   const handlePlayPauseToggle = () => {
@@ -412,6 +401,7 @@ const SpotifyDisplay = () => {
             gap: 1,
           }}
         >
+          <DeviceRecommendation />
           <VolumeSlider
             volume={displayVolume}
             muted={isMuted}

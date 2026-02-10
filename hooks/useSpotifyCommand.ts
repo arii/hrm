@@ -6,7 +6,7 @@ import { SpotifyCommandMessage, SpotifyCommand } from '@/types/websocket'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 
 export const useSpotifyCommand = () => {
-  const { spotifyData, sendData } = useWebSocket()
+  const { spotifyData, sendData, connectionStatus } = useWebSocket()
 
   // Simplified state selectors from the unified bus
   const activeDevice = useMemo(
@@ -46,5 +46,6 @@ export const useSpotifyCommand = () => {
     hrmPlayer,
     playback: spotifyData,
     isHrmPlayerActive: activeDevice?.name === HRM_WEB_PLAYER_NAME,
+    connectionStatus,
   }
 }
