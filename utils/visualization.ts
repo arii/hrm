@@ -54,7 +54,7 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
     bgColor: theme.palette.success.main,
   },
   [HrZoneName.Aerobic]: {
-    color: 'text-green-400',
+    color: 'text-green-500',
     progressColor: theme.palette.success.main,
     bgColor: theme.palette.success.main,
   },
