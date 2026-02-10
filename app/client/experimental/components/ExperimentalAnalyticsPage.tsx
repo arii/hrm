@@ -11,13 +11,16 @@ import {
   workoutSessionStorage,
   WorkoutSessionData,
 } from '@/lib/workout-session-storage'
-import { HrZoneName } from '@/lib/shared/hr-zones'
+import { HrZoneName, calculateMaxHr } from '@/lib/shared/hr-zones'
 
 const defaultTimeInZones: Record<HrZoneName, number> = {
+  [HrZoneName.Idle]: 0,
+  [HrZoneName.Recovery]: 0,
   [HrZoneName.WarmUp]: 0,
-  [HrZoneName.FatBurn]: 0,
+  [HrZoneName.Aerobic]: 0,
   [HrZoneName.Cardio]: 0,
   [HrZoneName.Peak]: 0,
+  [HrZoneName.FatBurn]: 0,
   [HrZoneName.Max]: 0,
   [HrZoneName.NoData]: 0,
   [HrZoneName.Unknown]: 0,
@@ -93,7 +96,7 @@ const ExperimentalAnalyticsPage = () => {
   useEffect(() => {
     if (connectionStatus === 'Connected') {
       const age = userSettings.userAge || 30
-      const maxHr = 220 - age // Simple formula for max HR
+      const maxHr = calculateMaxHr(age)
       sendData({
         type: 'HRM_METADATA_UPDATE',
         data: {
@@ -140,7 +143,7 @@ const ExperimentalAnalyticsPage = () => {
   const handleStartWorkout = useCallback(() => {
     const age = userSettings.userAge || 30
     const weight = userSettings.userWeight || 70
-    const maxHr = 220 - age // Calculate max HR from age
+    const maxHr = calculateMaxHr(age)
     startWorkout(age, weight, maxHr)
     reset()
     setView('active')

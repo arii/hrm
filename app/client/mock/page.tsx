@@ -16,6 +16,7 @@ import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
+import { calculateMaxHr, calculateHrZoneInfo } from '@/lib/shared/hr-zones'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
@@ -28,7 +29,7 @@ export default function MockPage() {
   const [intervalId, setIntervalId] = useState<number | null>(null)
 
   const isStreaming = intervalId !== null
-  const maxHr = 220 - age
+  const maxHr = calculateMaxHr(age)
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -44,15 +45,19 @@ export default function MockPage() {
 
   const sendHrPacket = useCallback(
     (hr: number) => {
+      const { percentage, zone } = calculateHrZoneInfo(hr, age)
+
       const message: HrmInputMessage = {
         type: 'HRM_INPUT',
         data: {
           value: hr,
+          percentage,
+          zone,
         },
       }
       sendData(message)
     },
-    [sendData]
+    [sendData, age]
   )
 
   const sendMetadataPacket = useCallback(() => {
