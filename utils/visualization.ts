@@ -44,29 +44,29 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
     bgColor: '#00ffff',
   },
   [HrZoneName.WarmUp]: {
-    color: 'text-green-400',
-    progressColor: '#00ff00',
-    bgColor: '#00ff00',
-  },
-  [HrZoneName.Aerobic]: {
-    color: 'text-yellow-400',
-    progressColor: '#ffff00',
-    bgColor: '#ffff00',
-  },
-  [HrZoneName.Cardio]: {
-    color: 'text-orange-400',
-    progressColor: '#ff8000',
-    bgColor: '#ff8000',
-  },
-  [HrZoneName.Peak]: {
-    color: 'text-red-500',
-    progressColor: '#ff0000',
-    bgColor: '#ff0000',
+    color: 'text-blue-400',
+    progressColor: theme.palette.secondary.main,
+    bgColor: theme.palette.secondary.main,
   },
   [HrZoneName.FatBurn]: {
     color: 'text-green-500',
     progressColor: theme.palette.success.main,
     bgColor: theme.palette.success.main,
+  },
+  [HrZoneName.Aerobic]: {
+    color: 'text-green-400',
+    progressColor: theme.palette.success.main,
+    bgColor: theme.palette.success.main,
+  },
+  [HrZoneName.Cardio]: {
+    color: 'text-yellow-500',
+    progressColor: theme.palette.warning.dark,
+    bgColor: theme.palette.warning.dark,
+  },
+  [HrZoneName.Peak]: {
+    color: 'text-red-500',
+    progressColor: theme.palette.primary.main,
+    bgColor: theme.palette.primary.main,
   },
   [HrZoneName.Max]: {
     color: 'text-purple-600',
@@ -85,14 +85,15 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
   },
 }
 
-// Zone color lookup for easy access (zone 1-5)
+// Zone color lookup for easy access (zones 0-6)
 export const ZONE_COLORS = {
-  grey: '#9E9E9E', // Below zone 1
-  blue: theme.palette.secondary.main, // Zone 1: Warm-up
-  green: theme.palette.success.main, // Zone 2: Fat Burn
-  yellow: theme.palette.warning.main, // Zone 3: Cardio
-  red: theme.palette.primary.main, // Zone 4: Peak
-  purple: '#9C27B0', // Zone 5: Max
+  grey: '#cccccc', // Zone 0: Idle
+  cyan: '#00ffff', // Zone 1: Recovery
+  blue: theme.palette.secondary.main, // Zone 2: Warm-up
+  green: theme.palette.success.main, // Zone 3: Fat Burn
+  yellow: theme.palette.warning.dark, // Zone 4: Cardio
+  red: theme.palette.primary.main, // Zone 5: Peak
+  purple: '#9C27B0', // Zone 6: Max
 }
 
 export interface HrZoneProps {

@@ -30,6 +30,13 @@ describe('getHrZoneProps', () => {
         HR_ZONE_UI_PROPS_MAP[HrZoneName.Peak].bgColor
       ),
     },
+    {
+      zone: HrZoneName.Max,
+      hr: 196,
+      expectedColor: theme.palette.getContrastText(
+        HR_ZONE_UI_PROPS_MAP[HrZoneName.Max].bgColor
+      ),
+    },
   ]
 
   testCases.forEach(({ zone, hr, expectedColor }) => {

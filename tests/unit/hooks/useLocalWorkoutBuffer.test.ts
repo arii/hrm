@@ -70,8 +70,8 @@ describe('useLocalWorkoutBuffer', () => {
       result.current.addHrData(170, maxHr) // Peak
     })
 
-    // This adds 3 seconds to Aerobic (the zone of the *second* point, 78.9%).
-    expect(result.current.timeInZones[HrZoneName.Aerobic]).toBeCloseTo(3)
+    // This adds 3 seconds to Fat Burn (the zone of the *second* point, 78.9%).
+    expect(result.current.timeInZones[HrZoneName.FatBurn]).toBeCloseTo(3)
   })
 
   it('should not add data if the time delta is too large (greater than 10s)', () => {

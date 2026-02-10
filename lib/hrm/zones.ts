@@ -36,11 +36,8 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
 
   const { percentage, zone } = calculateZoneFromMaxHr(currentHr, maxHr)
 
-  // Legacy mapping to maintain backward compatibility for systems expecting "Fat Burn"
-  let zoneName = getHrZoneLabel(zone) as HrZoneName
-  if (zone === 2) {
-    zoneName = HrZoneName.FatBurn
-  }
+  // Canonical mapping from shared HR zones
+  const zoneName = getHrZoneLabel(zone) as HrZoneName
 
   return {
     zoneName,

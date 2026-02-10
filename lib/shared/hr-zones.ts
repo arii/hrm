@@ -3,6 +3,8 @@
  * Shared constants and types for Heart Rate (HR) zones to ensure consistency
  * across different modules (domain logic, UI, etc.).
  */
+import theme from '../theme'
+
 export const MAX_HR_DEFAULT = 185
 
 /**
@@ -26,6 +28,7 @@ export enum HrZoneName {
  * Thresholds for HR zones (percentage of Max HR).
  */
 export const ZONE_THRESHOLDS = {
+  ZONE_6: 95,
   ZONE_5: 90,
   ZONE_4: 80,
   ZONE_3: 70,
@@ -62,10 +65,27 @@ export const calculateMaxHr = (age?: number | string | null): number => {
  * textColor: Text color for optimal contrast (forcing specific overrides).
  */
 export const HR_ZONE_VISUAL_CONFIG = {
-  5: { color: '#ff0000', label: HrZoneName.Peak, textColor: '#FFFFFF' },
-  4: { color: '#ff8000', label: HrZoneName.Cardio, textColor: '#FFFFFF' },
-  3: { color: '#ffff00', label: HrZoneName.Aerobic, textColor: '#FFFFFF' },
-  2: { color: '#00ff00', label: HrZoneName.WarmUp, textColor: '#FFFFFF' },
+  6: { color: '#9C27B0', label: HrZoneName.Max, textColor: '#FFFFFF' },
+  5: {
+    color: theme.palette.primary.main,
+    label: HrZoneName.Peak,
+    textColor: '#FFFFFF',
+  },
+  4: {
+    color: theme.palette.warning.dark,
+    label: HrZoneName.Cardio,
+    textColor: '#FFFFFF',
+  },
+  3: {
+    color: theme.palette.success.main,
+    label: HrZoneName.FatBurn,
+    textColor: '#FFFFFF',
+  },
+  2: {
+    color: theme.palette.secondary.main,
+    label: HrZoneName.WarmUp,
+    textColor: '#FFFFFF',
+  },
   1: { color: '#00ffff', label: HrZoneName.Recovery, textColor: '#000000' },
   0: { color: '#cccccc', label: HrZoneName.Idle, textColor: '#000000' },
 } as const
@@ -86,7 +106,8 @@ export const calculateZoneFromMaxHr = (
       : 0
 
   let zone = 0
-  if (percentage >= ZONE_THRESHOLDS.ZONE_5) zone = 5
+  if (percentage >= ZONE_THRESHOLDS.ZONE_6) zone = 6
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_5) zone = 5
   else if (percentage >= ZONE_THRESHOLDS.ZONE_4) zone = 4
   else if (percentage >= ZONE_THRESHOLDS.ZONE_3) zone = 3
   else if (percentage >= ZONE_THRESHOLDS.ZONE_2) zone = 2
