@@ -1,8 +1,12 @@
 // app/client/experimental/components/SessionDetail.tsx
 import { Card, CardContent, Typography, Button, Box } from '@mui/material'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
-import ZoneDistribution from './ZoneDistribution'
+import dynamic from 'next/dynamic'
 import HeartRateTimeSeries from './HeartRateTimeSeries'
+
+const ZoneDistribution = dynamic(() => import('./ZoneDistribution'), {
+  ssr: false,
+})
 
 interface SessionDetailProps {
   session: WorkoutSessionData

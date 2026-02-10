@@ -12,7 +12,7 @@ import {
 } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { HrZoneName } from '@/lib/shared/hr-zones'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration, isTestEnvironment } from '@/lib/utils'
 
 interface ZoneDistributionProps {
   timeInZones: Record<HrZoneName, number>
@@ -24,10 +24,13 @@ const ZONE_PRIORITY: Record<HrZoneName, number> = {
   [HrZoneName.Max]: 0,
   [HrZoneName.Peak]: 1,
   [HrZoneName.Cardio]: 2,
-  [HrZoneName.FatBurn]: 3,
-  [HrZoneName.WarmUp]: 4,
-  [HrZoneName.NoData]: 5,
-  [HrZoneName.Unknown]: 6,
+  [HrZoneName.Aerobic]: 3,
+  [HrZoneName.FatBurn]: 4,
+  [HrZoneName.WarmUp]: 5,
+  [HrZoneName.Recovery]: 6,
+  [HrZoneName.Idle]: 7,
+  [HrZoneName.NoData]: 8,
+  [HrZoneName.Unknown]: 9,
 }
 
 const ZONE_COLOR_MAP: Partial<
@@ -36,8 +39,11 @@ const ZONE_COLOR_MAP: Partial<
   [HrZoneName.Max]: 'max',
   [HrZoneName.Peak]: 'peak',
   [HrZoneName.Cardio]: 'cardio',
+  [HrZoneName.Aerobic]: 'aerobic',
   [HrZoneName.FatBurn]: 'fatBurn',
   [HrZoneName.WarmUp]: 'warmUp',
+  [HrZoneName.Recovery]: 'recovery',
+  [HrZoneName.Idle]: 'idle',
   [HrZoneName.NoData]: 'noData',
   [HrZoneName.Unknown]: 'unknown',
 }
@@ -53,38 +59,30 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   const data = useMemo(() => {
     return Object.entries(timeInZones)
       .map(([zone, time]) => {
-        const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
         const zoneName = zone as HrZoneName
-
-        // Inline getZoneColor logic
-        const hrZones = theme.palette.custom?.hrZones
-        let color = theme.palette.grey[500]
-        if (hrZones) {
-          const colorKey = ZONE_COLOR_MAP[zoneName]
-          if (colorKey && hrZones[colorKey]) {
-            color = hrZones[colorKey]
-          }
-        }
+        const colorKey = ZONE_COLOR_MAP[zoneName]
+        const color =
+          (colorKey && theme.palette.custom?.hrZones?.[colorKey]) ||
+          theme.palette.grey[500]
 
         return {
           name: zoneName,
           value: time,
-          percentage: parseFloat(percentage.toFixed(1)),
+          percentage:
+            totalDuration > 0
+              ? parseFloat(((time / totalDuration) * 100).toFixed(1))
+              : 0,
           formattedTime: formatDuration(time, TIME_FORMAT_OPTIONS),
-          color: color,
+          color,
         }
       })
       .filter((item) => item.value > 0)
       .sort((a, b) => {
-        // Efficient sorting using map
         const priorityA = ZONE_PRIORITY[a.name] ?? 99
         const priorityB = ZONE_PRIORITY[b.name] ?? 99
         return priorityA - priorityB
       })
   }, [timeInZones, totalDuration, theme])
-
-  const isTestEnv =
-    typeof window !== 'undefined' && window.__IS_TEST_ENV__ === true
 
   if (data.length === 0) {
     return null
@@ -122,7 +120,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   paddingAngle={2}
                   dataKey="value"
                   stroke="none"
-                  isAnimationActive={!isTestEnv}
+                  isAnimationActive={!isTestEnvironment()}
                 >
                   {data.map((entry) => (
                     <Cell key={`cell-${entry.name}`} fill={entry.color} />
@@ -138,7 +136,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                     border: 'none',
                     boxShadow: theme.shadows[3],
                   }}
-                  isAnimationActive={!isTestEnv}
+                  isAnimationActive={!isTestEnvironment()}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -211,7 +209,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                     {item.formattedTime}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
-                    {item.percentage}%
+                    {item.percentage.toFixed(1)}%
                   </Typography>
                 </Box>
               </Box>

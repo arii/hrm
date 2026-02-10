@@ -15,6 +15,9 @@ declare module '@mui/material/styles' {
         cardio: string
         peak: string
         max: string
+        aerobic: string
+        recovery: string
+        idle: string
         unknown: string
         noData: string
       }
@@ -34,6 +37,9 @@ declare module '@mui/material/styles' {
         cardio?: string
         peak?: string
         max?: string
+        aerobic?: string
+        recovery?: string
+        idle?: string
         unknown?: string
         noData?: string
       }

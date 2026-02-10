@@ -70,3 +70,11 @@ export const formatDuration = (
     .padStart(2, '0')
   return `${h}:${m}:${s}`
 }
+
+/**
+ * Checks if the current environment is a test environment.
+ * @returns True if running in a test environment.
+ */
+export const isTestEnvironment = (): boolean => {
+  return typeof window !== 'undefined' && window.__IS_TEST_ENV__ === true
+}

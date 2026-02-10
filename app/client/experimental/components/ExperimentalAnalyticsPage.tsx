@@ -28,10 +28,13 @@ const defaultTimeInZones: Record<HrZoneName, number> = {
 
 // Components
 import WorkoutSummary from './WorkoutSummary'
-import ZoneDistribution from './ZoneDistribution'
 import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
+
+const ZoneDistribution = dynamic(() => import('./ZoneDistribution'), {
+  ssr: false,
+})
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
