@@ -82,15 +82,15 @@ describe('ZoneDistribution', () => {
 
     const warmUpRow = getByTestId(`zone-row-${HrZoneName.WarmUp}`)
     expect(within(warmUpRow).getByText('01:00')).toBeInTheDocument()
-    expect(within(warmUpRow).getByText(/60%/)).toBeInTheDocument()
+    expect(within(warmUpRow).getByText(/60.0%/)).toBeInTheDocument()
 
     const fatBurnRow = getByTestId(`zone-row-${HrZoneName.FatBurn}`)
     expect(within(fatBurnRow).getByText('00:30')).toBeInTheDocument()
-    expect(within(fatBurnRow).getByText(/30%/)).toBeInTheDocument()
+    expect(within(fatBurnRow).getByText(/30.0%/)).toBeInTheDocument()
 
     const cardioRow = getByTestId(`zone-row-${HrZoneName.Cardio}`)
     expect(within(cardioRow).getByText('00:10')).toBeInTheDocument()
-    expect(within(cardioRow).getByText(/10%/)).toBeInTheDocument()
+    expect(within(cardioRow).getByText(/10.0%/)).toBeInTheDocument()
   })
 
   it('does not display zones with no time', () => {
@@ -131,18 +131,17 @@ describe('ZoneDistribution', () => {
     )
     const cardioRow = getByTestId(`zone-row-${HrZoneName.Cardio}`)
     expect(within(cardioRow).getByText('02:00')).toBeInTheDocument()
-    expect(within(cardioRow).getByText(/0%/)).toBeInTheDocument()
+    expect(within(cardioRow).getByText(/0.0%/)).toBeInTheDocument()
   })
 
   it('uses correct colors for each zone from the theme', () => {
     const timeInZones = {
+      ...baseTimeInZones,
       [HrZoneName.WarmUp]: 10,
       [HrZoneName.FatBurn]: 10,
       [HrZoneName.Cardio]: 10,
       [HrZoneName.Peak]: 10,
       [HrZoneName.Max]: 10,
-      [HrZoneName.NoData]: 0,
-      [HrZoneName.Unknown]: 0,
     }
     const { getByTestId } = render(
       <ThemeProvider theme={theme}>
@@ -180,6 +179,7 @@ describe('ZoneDistribution', () => {
 
   it('sorts zones from high intensity to low intensity', () => {
     const timeInZones = {
+      ...baseTimeInZones,
       [HrZoneName.WarmUp]: 10,
       [HrZoneName.Max]: 10,
       [HrZoneName.FatBurn]: 10,

@@ -68,6 +68,17 @@ const theme = createTheme({
     info: {
       main: '#2196F3', // Blue
     },
+    custom: {
+      hrZones: {
+        max: '#B71C1C', // Dark Red
+        peak: '#F44336', // Red
+        cardio: '#FF9800', // Orange
+        fatBurn: '#4CAF50', // Green
+        warmUp: '#2196F3', // Blue
+        noData: '#9E9E9E', // Grey
+        unknown: '#607D8B', // Blue Grey
+      },
+    },
     // Background colors
     background: {
       default: '#F5F5F5', // Light grey for main background
