@@ -1,8 +1,9 @@
 'use client'
-import { useHrZone } from '@/hooks/useHrZone'
 import HrTile from '@/components/HrTile'
 import { ClientHrmData } from '@/context/webSocketReducer'
 import { memo } from 'react'
+import { HrmData } from '@/types/websocket'
+import { calculateHrZoneInfo } from '@/lib/shared/hr-zones'
 
 interface HrTileWrapperProps {
   user: ClientHrmData
@@ -11,12 +12,21 @@ interface HrTileWrapperProps {
 
 const HrTileWrapper = ({ user, isDataStale }: HrTileWrapperProps) => {
   const hrZoneProps = useHrZone(user.value, user.maxHr)
+const HrTileWrapper = ({ user }: HrTileWrapperProps) => {
+  // Use the percentage and zone from the user object if available,
+  // falling back to local calculation if not (ensures consistent logic).
+  const { percentage: fallbackPercentage, zone: fallbackZone } =
+    calculateHrZoneInfo(user.value || 0, user.age)
+
+  const percentMax = user.percentage ?? fallbackPercentage
+  const zone = user.zone ?? fallbackZone
 
   return (
     <HrTile
       name={user.name || ''}
       bpm={user.value}
-      percentMax={hrZoneProps.percentage}
+      percentMax={percentMax}
+      zone={zone}
       calories={user.calories}
       isConnected={user.isConnected}
       isDataStale={isDataStale}
