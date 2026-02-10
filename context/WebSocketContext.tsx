@@ -120,6 +120,7 @@ export const WebSocketProvider = ({
       process.env.NODE_ENV !== 'production' ||
       process.env.NEXT_PUBLIC_TESTING === 'true'
     ) {
+      // 1. Setup global controls
       ;(
         window as Window & { __TEST_CONTROLS__?: TestControls }
       ).__TEST_CONTROLS__ = {
@@ -127,13 +128,8 @@ export const WebSocketProvider = ({
         disconnect: () => {},
         connect: () => {},
       }
-    }
 
-    // Allow injecting messages via postMessage for E2E testing
-    if (
-      process.env.NODE_ENV !== 'production' ||
-      process.env.NEXT_PUBLIC_TESTING === 'true'
-    ) {
+      // 2. Setup message listener
       const handleMessage = (event: MessageEvent) => {
         if (event.source !== window || !event.data) return
 
