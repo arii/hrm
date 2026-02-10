@@ -233,5 +233,39 @@ describe('SpotifyDisplay', () => {
         jest.useRealTimers()
       }
     })
+
+    it('shows connect to HRM player button when no active device but HRM player is available', () => {
+      const hrmDevice = {
+        id: 'hrm-device-id',
+        name: 'HRM Web Player',
+        is_active: false,
+      }
+      const updatedSpotifyData = {
+        ...initialSpotifyData,
+        devices: [hrmDevice],
+        isPlaying: false,
+      }
+      mockedUseWebSocket.mockReturnValue({
+        spotifyData: updatedSpotifyData,
+        sendData: mockSendData, // useSpotifyCommand calls sendData via useWebSocket
+        connectionStatus: 'Connected',
+        spotifyServiceInitialized: true,
+      })
+
+      rerender(<SpotifyDisplay />)
+
+      const connectButton = screen.getByText(/Connect to HRM Web Player/i)
+      expect(connectButton).toBeInTheDocument()
+
+      fireEvent.click(connectButton)
+
+      expect(mockSendData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'SPOTIFY_COMMAND',
+          command: 'TRANSFER_PLAYBACK',
+          deviceId: 'hrm-device-id',
+        })
+      )
+    })
   })
 })

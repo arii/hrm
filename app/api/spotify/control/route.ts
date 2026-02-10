@@ -72,7 +72,11 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           )
         }
-        await sdk.player.setPlaybackVolume(volume, getDeviceId(deviceId))
+        // Clamp volume between 0 and 100 to prevent API errors
+        await sdk.player.setPlaybackVolume(
+          Math.max(0, Math.min(100, Math.round(volume))),
+          getDeviceId(deviceId)
+        )
         break
       case 'TRANSFER_PLAYBACK':
         if (!deviceId) {
