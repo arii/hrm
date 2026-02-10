@@ -142,6 +142,59 @@ export const getHrZoneLabel = (zone: number): string => {
   )
 }
 
+/**
+ * Interface for HR zone configuration used in UI components.
+ */
+export interface HeartRateZoneConfig {
+  name: string
+  minPercent: number
+  maxPercent: number
+  color: string
+}
+
+/**
+ * Canonical list of heart rate zones with their percentage ranges and colors.
+ * This is the single source of truth for zone definitions.
+ */
+export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
+  {
+    name: 'Zone 6',
+    minPercent: ZONE_THRESHOLDS.ZONE_6,
+    maxPercent: 100,
+    color: HR_ZONE_VISUAL_CONFIG[6].color,
+  },
+  {
+    name: 'Zone 5',
+    minPercent: ZONE_THRESHOLDS.ZONE_5,
+    maxPercent: ZONE_THRESHOLDS.ZONE_6,
+    color: HR_ZONE_VISUAL_CONFIG[5].color,
+  },
+  {
+    name: 'Zone 4',
+    minPercent: ZONE_THRESHOLDS.ZONE_4,
+    maxPercent: ZONE_THRESHOLDS.ZONE_5,
+    color: HR_ZONE_VISUAL_CONFIG[4].color,
+  },
+  {
+    name: 'Zone 3',
+    minPercent: ZONE_THRESHOLDS.ZONE_3,
+    maxPercent: ZONE_THRESHOLDS.ZONE_4,
+    color: HR_ZONE_VISUAL_CONFIG[3].color,
+  },
+  {
+    name: 'Zone 2',
+    minPercent: ZONE_THRESHOLDS.ZONE_2,
+    maxPercent: ZONE_THRESHOLDS.ZONE_3,
+    color: HR_ZONE_VISUAL_CONFIG[2].color,
+  },
+  {
+    name: 'Zone 1',
+    minPercent: ZONE_THRESHOLDS.ZONE_1,
+    maxPercent: ZONE_THRESHOLDS.ZONE_2,
+    color: HR_ZONE_VISUAL_CONFIG[1].color,
+  },
+]
+
 // Define a type for the return value for clarity
 export type UserHrZones = {
   warmUp: { min: number }
