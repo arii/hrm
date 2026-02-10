@@ -6,9 +6,9 @@ import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
-import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
+import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 
@@ -32,6 +32,7 @@ const HrTile = ({
   name,
   bpm,
   percentMax,
+  zone,
   calories = 0, // Default to 0 to prevent NaN
   isConnected = true, // Default to connected
   isDataStale = false,
@@ -39,7 +40,17 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
-  const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
+
+  // Determine the effective zone.
+  // If 'zone' is provided (server-calculated), use it.
+  const displayZone = zone ?? 0
+
+  const zoneConfig =
+    HR_ZONE_VISUAL_CONFIG[displayZone as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
+    HR_ZONE_VISUAL_CONFIG[0]
+
+  const backgroundColor = zoneConfig.color
+  const textColor = zoneConfig.textColor
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -56,7 +67,7 @@ const HrTile = ({
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
           isConnected ? `${bpm} beats per minute` : 'Disconnected'
-        }, ${percentMax}% of maximum`}
+        }, ${percentMax}% of maximum, Zone ${displayZone}: ${zoneConfig.label}`}
         sx={{
           backgroundColor: backgroundColor,
           color: textColor,
@@ -149,6 +160,31 @@ const HrTile = ({
                 </Typography>
               </Typography>
             </Box>
+
+            {/* Zone Display for WCAG Compliance (don't rely on color alone) */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                mt: 0.5,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  backgroundColor: 'currentColor',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                }}
+              />
+              <Typography variant="caption" sx={{ fontWeight: 800 }}>
+                ZONE {displayZone}: {zoneConfig.label}
+              </Typography>
+            </Box>
+
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography
                 variant="subtitle1"
@@ -178,6 +214,7 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
+    prevProps.zone === nextProps.zone &&
     prevProps.calories === nextProps.calories &&
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isDataStale === nextProps.isDataStale &&

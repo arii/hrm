@@ -18,6 +18,10 @@ A complete design system has been established to address all identified UI consi
 - **Success (Green #4CAF50)**: Matches **Fat Burn** zone.
 - **Warning (Yellow #FFEB3B)**: Matches **Cardio** zone.
 - **Primary Dark (#D32F2F)**: Matches **Max** HR zone.
+- **Primary (Red #F44336)**: High-energy color matching Peak HR zone, used for primary actions.
+- **Secondary (Blue #2196F3)**: Calm color matching Warm-up zone, used for secondary actions.
+- **Success (Green #4CAF50)**: Matches Warm Up zone (formerly Fat Burn). "Fat Burn" is considered a legacy alias for this zone in older parts of the system.
+- **Warning (Yellow #FFEB3B)**: Matches Cardio zone.
 - **Background**: Light grey (#F5F5F5) for main areas, white for cards.
 - **Text**: Dark grey (#212121) primary, medium grey (#757575) secondary.
 
