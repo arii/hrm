@@ -13,7 +13,10 @@ test.describe('Snapshot Synchronization', () => {
     await page.goto('/')
 
     // Wait for the page to be hydrated and listener attached
-    await page.waitForTimeout(1000)
+    await page.waitForFunction(
+      () =>
+        (window as unknown as { __TEST_CONTROLS__: unknown }).__TEST_CONTROLS__
+    )
 
     // 1. Simulate active data
     await dispatch(page, {
