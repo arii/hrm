@@ -72,10 +72,8 @@ export const formatDuration = (
 }
 
 /**
- * Formats a date into a localized string.
- * @param date The date to format.
- * @param options Intl.DateTimeFormatOptions
- * @returns The formatted date string.
+ * Formats a date using Intl.DateTimeFormat.
+ * @param locale Defaults to system locale if undefined.
  */
 export const formatDate = (
   date: Date | number,
@@ -84,7 +82,7 @@ export const formatDate = (
     month: 'long',
     day: 'numeric',
   },
-  locale: string = 'en-US'
+  locale: string | undefined = undefined
 ): string => {
   const d = typeof date === 'number' ? new Date(date) : date
   return d.toLocaleDateString(locale, options)

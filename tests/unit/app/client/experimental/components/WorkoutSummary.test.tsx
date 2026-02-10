@@ -60,7 +60,7 @@ describe('WorkoutSummary', () => {
     expect(screen.getByText(/formatted-date/)).toBeInTheDocument()
   })
 
-  describe('status colors and styles', () => {
+  describe('status display', () => {
     const statuses = [
       { status: 'running' as const, expectedColor: 'success' },
       { status: 'paused' as const, expectedColor: 'warning' },
@@ -69,7 +69,7 @@ describe('WorkoutSummary', () => {
     ]
 
     statuses.forEach(({ status, expectedColor }) => {
-      it(`renders correctly for status: ${status}`, () => {
+      it(`renders status text for: ${status}`, () => {
         render(<WorkoutSummary {...defaultProps} status={status} />)
         const chip = screen
           .getByText(status.toUpperCase())
