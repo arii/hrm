@@ -87,3 +87,15 @@ export const formatDate = (
   const d = typeof date === 'number' ? new Date(date) : date
   return d.toLocaleDateString(locale, options)
 }
+
+/**
+ * Checks if the current environment is a test environment.
+ * @returns True if running in a test environment.
+ */
+export const isTestEnvironment = (): boolean => {
+  return (
+    typeof window !== 'undefined' &&
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__IS_TEST_ENV__ === true
+  )
+}

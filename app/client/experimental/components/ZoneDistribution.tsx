@@ -11,7 +11,7 @@ import {
 } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { HrZoneName } from '@/lib/shared/hr-zones'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration, isTestEnvironment } from '@/lib/utils'
 
 // --- Types ---
 interface ZoneDistributionProps {
@@ -21,18 +21,18 @@ interface ZoneDistributionProps {
 
 // --- Constants & Helpers ---
 
-// Order of zones for sorting (High intensity to Low intensity)
 const ZONE_PRIORITY: Record<HrZoneName, number> = {
   [HrZoneName.Max]: 0,
   [HrZoneName.Peak]: 1,
   [HrZoneName.Cardio]: 2,
   [HrZoneName.FatBurn]: 3,
   [HrZoneName.WarmUp]: 4,
-  [HrZoneName.NoData]: 5,
-  [HrZoneName.Unknown]: 6,
   [HrZoneName.Recovery]: 7,
   [HrZoneName.Aerobic]: 8,
   [HrZoneName.Idle]: 9,
+  // NoData and Unknown are filtered out before sorting
+  [HrZoneName.NoData]: 99,
+  [HrZoneName.Unknown]: 99,
 }
 
 const ZONE_COLOR_KEY_MAP: Partial<
@@ -44,6 +44,7 @@ const ZONE_COLOR_KEY_MAP: Partial<
   [HrZoneName.FatBurn]: 'fatBurn',
   [HrZoneName.WarmUp]: 'warmUp',
   [HrZoneName.Recovery]: 'recovery',
+  [HrZoneName.Aerobic]: 'warmUp', // Fallback to warmUp color for Aerobic as it lacks a distinct theme slot
   [HrZoneName.Idle]: 'idle',
 }
 
@@ -53,8 +54,6 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 }) => {
   const theme = useTheme()
 
-  // Transform data for Recharts and list display
-  // Memoized to prevent recalculation on unrelated renders
   const data = useMemo(() => {
     return Object.entries(timeInZones)
       .filter(
@@ -75,7 +74,6 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
           name: zoneName,
           value: time,
           percentage: parseFloat(percentage.toFixed(1)),
-          // Use standard formatDuration utility (MM:SS)
           formattedTime: formatDuration(time, {
             unit: 'seconds',
             format: 'MM:SS',
@@ -117,7 +115,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             aria-label="Heart rate zone distribution chart"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart accessibilityLayer>
                 <Pie
                   data={data}
                   cx="50%"
@@ -127,6 +125,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   paddingAngle={2}
                   dataKey="value"
                   stroke="none"
+                  isAnimationActive={!isTestEnvironment()}
                 >
                   {data.map((entry) => (
                     <Cell key={`cell-${entry.name}`} fill={entry.color} />
@@ -145,6 +144,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                     border: 'none',
                     boxShadow: theme.shadows[3],
                   }}
+                  isAnimationActive={!isTestEnvironment()}
                 />
               </PieChart>
             </ResponsiveContainer>

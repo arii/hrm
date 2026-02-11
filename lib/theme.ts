@@ -113,8 +113,8 @@ const theme = createTheme({
       hrZones: {
         max: HR_COLORS.ZONE_5_PEAK,
         peak: '#FFEB3B', // Warning main
-        cardio: HR_COLORS.ZONE_3_FATBURN,
-        fatBurn: HR_COLORS.ZONE_2_WARMUP,
+        cardio: HR_COLORS.ZONE_4_CARDIO, // Corrected: Mapped to Zone 4 Amber/Yellow
+        fatBurn: HR_COLORS.ZONE_3_FATBURN, // Corrected: Mapped to Zone 3 Green
         warmUp: '#9E9E9E',
         recovery: '#00ffff',
         idle: '#cccccc',
