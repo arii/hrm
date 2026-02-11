@@ -3,29 +3,6 @@
 import { createTheme } from '@mui/material/styles'
 import libTheme from '@/lib/theme'
 
-declare module '@mui/material/styles' {
-  interface Palette {
-    custom: {
-      prepare: string
-      work: string
-      rest: string
-      running: string
-      idle: string
-      cooldown: string
-    }
-  }
-  interface PaletteOptions {
-    custom?: {
-      prepare?: string
-      work?: string
-      rest?: string
-      running?: string
-      idle?: string
-      cooldown?: string
-    }
-  }
-}
-
 const theme = createTheme(libTheme, {
   palette: {
     custom: {
@@ -35,6 +12,17 @@ const theme = createTheme(libTheme, {
       running: '#3b82f6',
       idle: '#6b7280',
       cooldown: '#6b7280',
+      hrZones: {
+        // Aligned with docs/DESIGN_GUIDELINES.md color mappings:
+        // Primary -> Peak, Secondary -> Warm-up, Success -> Fat Burn, Warning -> Cardio
+        warmUp: '#2196F3', // Secondary (Blue)
+        fatBurn: '#4CAF50', // Success (Green)
+        cardio: '#FFEB3B', // Warning (Yellow)
+        peak: '#F44336', // Primary (Red)
+        max: '#D32F2F', // Primary Dark (Dark Red)
+        unknown: '#9e9e9e',
+        noData: '#e0e0e0',
+      },
     },
   },
 })
