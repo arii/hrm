@@ -76,7 +76,6 @@ const HrTile = ({
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: 4, // 16px radius matching design system tokens
           position: 'relative',
           overflow: 'hidden',
           opacity: isConnected && !isDataStale ? 1 : 0.6,
