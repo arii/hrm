@@ -2,18 +2,8 @@ import { ApiError, ServiceInitializationError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
 import { getSpotifyService } from '@/lib/services'
-import { z } from 'zod'
 import { env } from '@/lib/env'
-
-const TokenDeliverySchema = z.object({
-  provider: z.string(),
-  sub: z.string(),
-  access_token: z.string(),
-  refresh_token: z.string(),
-  expires_in: z.number(),
-  scope: z.string(),
-  obtainedAt: z.number().optional(),
-})
+import { TokenDeliverySchema } from '@/types/spotify'
 
 /**
  * @route POST /api/internal/token-delivery
@@ -24,7 +14,6 @@ const TokenDeliverySchema = z.object({
  */
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate the request from our internal callback
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
     const expected = env.INTERNAL_TOKEN_DELIVERY_SECRET || env.NEXTAUTH_SECRET
 
@@ -32,7 +21,6 @@ export async function POST(req: NextRequest) {
       throw new ApiError(401, 'Unauthorized: Missing or invalid secret.')
     }
 
-    // 2. Parse and validate the token from the request body
     const body = await req.json()
     const result = TokenDeliverySchema.safeParse(body)
 
@@ -46,10 +34,7 @@ export async function POST(req: NextRequest) {
       obtainedAt: result.data.obtainedAt ?? Date.now(),
     }
 
-    // 3. Get the singleton instance of the Spotify service
     const spotifyService = getSpotifyService()
-
-    // 4. Directly and reliably update the service with the new token
     await spotifyService.handleTokenUpdate(tokenData)
     logger.info('Spotify token delivered and processed successfully.')
 

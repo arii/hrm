@@ -10,13 +10,38 @@ export interface AppServices {
   isSpotifyInitialized: boolean
 }
 
-let spotifyServiceInstance: SpotifyService | null = null
+const createNoOpSpotifyService = (): SpotifyService => ({
+  handleCommand: () => {},
+  stopPolling: () => {},
+  startPolling: () => {},
+  getState: () => ({
+    trackName: 'Service Error',
+    artist: '',
+    isPlaying: false,
+    trackId: '',
+    albumName: '',
+    albumArtUrl: '',
+    devices: [],
+    volume: 0,
+    isMuted: false,
+  }),
+  isReady: () => false,
+  forcePollAndBroadcast: () => Promise.resolve(),
+  handleTokenUpdate: () => Promise.resolve(),
+  cleanup: () => {},
+})
+
+// Ensures singleton persistence across Next.js compilation boundaries
+const globalWithSpotify = global as typeof globalThis & {
+  spotifyServiceInstance?: SpotifyService
+}
 
 export const getSpotifyService = (): SpotifyService => {
-  if (!spotifyServiceInstance) {
+  const instance = globalWithSpotify.spotifyServiceInstance
+  if (!instance) {
     throw new ServiceInitializationError('SpotifyService')
   }
-  return spotifyServiceInstance
+  return instance
 }
 
 export async function createServices(
@@ -31,29 +56,10 @@ export async function createServices(
   } catch (e) {
     console.error('SpotifyPolling initialization failed:', e)
     isSpotifyInitialized = false
-    spotifyService = {
-      handleCommand: () => {},
-      stopPolling: () => {},
-      startPolling: () => {},
-      getState: () => ({
-        trackName: 'Service Error',
-        artist: '',
-        isPlaying: false,
-        trackId: '',
-        albumName: '',
-        albumArtUrl: '',
-        devices: [],
-        volume: 0,
-        isMuted: false,
-      }),
-      isReady: () => false,
-      forcePollAndBroadcast: () => {},
-      handleTokenUpdate: () => Promise.resolve(),
-      cleanup: () => {},
-    }
+    spotifyService = createNoOpSpotifyService()
   }
 
-  spotifyServiceInstance = spotifyService
+  globalWithSpotify.spotifyServiceInstance = spotifyService
 
   return { tabataService, spotifyService, isSpotifyInitialized }
 }
