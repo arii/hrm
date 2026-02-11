@@ -4,11 +4,15 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ConnectView from '@/app/client/connect/ConnectView'
 import '@testing-library/jest-dom'
+import { ComponentProps } from 'react'
+
+type ConnectViewProps = ComponentProps<typeof ConnectView>
 
 describe('ConnectView', () => {
-  const mockProps = {
-    duration: '00:00',
+  const mockProps: ConnectViewProps = {
+    workoutDuration: 0,
     caloriesBurned: 0,
+    startTime: null,
     userName: 'Test User',
     setUserName: jest.fn(),
     userAge: '30',
@@ -34,37 +38,46 @@ describe('ConnectView', () => {
     onDisconnect: jest.fn(),
     onForgetDevice: jest.fn().mockResolvedValue(undefined),
     isSupported: true,
+    signalPeriodMs: 0,
     currentHR: 0,
     hrZoneProps: { percentage: 0, progressColor: 'grey' },
+    zone: 0,
     connectionStatus: 'Connected',
     bluetoothConnected: false,
     hasStarted: false,
     onReset: jest.fn(),
     workoutStatus: 'idle' as const,
     onStartWorkout: jest.fn(),
+    onPauseWorkout: jest.fn(),
     onEndWorkout: jest.fn(),
   }
 
   it('renders the reset button when bluetooth is not supported', () => {
     render(<ConnectView {...mockProps} isSupported={false} />)
     const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
+      name: /Forget Device & Reset/i,
     })
     expect(resetButton).toBeInTheDocument()
   })
 
-  it('renders the reset button as enabled by default', () => {
+  it('renders the reset buttons as enabled by default (when appropriate)', () => {
     render(<ConnectView {...mockProps} />)
-    const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
+    const fullResetButton = screen.getByRole('button', {
+      name: /Forget Device & Reset/i,
     })
-    expect(resetButton).toBeEnabled()
+    expect(fullResetButton).toBeEnabled()
+
+    const clearSessionButton = screen.getByRole('button', {
+      name: /Clear Session Data/i,
+    })
+    // Disabled by default because hasStarted is false
+    expect(clearSessionButton).toBeDisabled()
   })
 
-  it('calls onForgetDevice and onReset when the reset button is clicked', async () => {
+  it('calls onForgetDevice and onReset when the full reset button is clicked', async () => {
     render(<ConnectView {...mockProps} />)
     const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
+      name: /Forget Device & Reset/i,
     })
     fireEvent.click(resetButton)
 
@@ -72,5 +85,15 @@ describe('ConnectView', () => {
       expect(mockProps.onForgetDevice).toHaveBeenCalled()
       expect(mockProps.onReset).toHaveBeenCalled()
     })
+  })
+
+  it('calls onReset when Clear Session Data is clicked', async () => {
+    render(<ConnectView {...mockProps} hasStarted={true} />)
+    const clearButton = screen.getByRole('button', {
+      name: /Clear Session Data/i,
+    })
+    fireEvent.click(clearButton)
+
+    expect(mockProps.onReset).toHaveBeenCalled()
   })
 })

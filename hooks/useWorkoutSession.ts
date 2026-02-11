@@ -7,194 +7,198 @@ import {
   useState,
 } from 'react'
 
-// --- State, Actions, and Reducer for managing session state ---
+const STORAGE_KEY = 'hrm_active_session'
 
+// --- State Definitions ---
 type SessionStatus = 'idle' | 'running' | 'paused'
 
 interface SessionState {
   status: SessionStatus
   duration: number
   calories: number
+  startTime: number | null
+  pauseTime: number | null
+  totalPaused: number
 }
-
-type SessionAction =
-  | { type: 'CONNECT' }
-  | { type: 'DISCONNECT' }
-  | { type: 'TICK'; payload: { duration: number } }
-  | { type: 'RESET' }
-  | { type: 'START_WORKOUT' }
-  | { type: 'PAUSE_WORKOUT' }
-  | { type: 'END_WORKOUT' }
-  | { type: 'UPDATE_CALORIES'; payload: number }
 
 const initialState: SessionState = {
   status: 'idle',
   duration: 0,
   calories: 0,
+  startTime: null,
+  pauseTime: null,
+  totalPaused: 0,
 }
+
+// --- Helper to load from storage ---
+const loadState = (): SessionState => {
+  if (typeof window === 'undefined') return initialState
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      // Basic validation to ensure shape matches
+      if (parsed.status && typeof parsed.duration === 'number') {
+        return {
+          ...initialState,
+          ...parsed,
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load session state', e)
+  }
+  return initialState
+}
+
+type SessionAction =
+  | { type: 'TICK'; payload: { duration: number } }
+  | { type: 'RESET' }
+  | { type: 'START_WORKOUT'; payload: { startTime: number } }
+  | { type: 'PAUSE_WORKOUT'; payload: { pauseTime: number } }
+  | { type: 'RESUME_WORKOUT'; payload: { resumeTime: number } }
+  | { type: 'END_WORKOUT' }
+  | { type: 'UPDATE_CALORIES'; payload: number }
 
 function sessionReducer(
   state: SessionState,
   action: SessionAction
 ): SessionState {
+  let newState = state
   switch (action.type) {
-    case 'CONNECT':
     case 'START_WORKOUT':
-      if (state.status === 'paused') {
-        // This is a resume. Don't reset duration.
-        return { ...state, status: 'running' }
-      }
       if (state.status === 'idle') {
-        // This is a new workout. Reset duration.
-        return { ...state, status: 'running', duration: 0 }
+        newState = {
+          ...state,
+          status: 'running',
+          duration: 0,
+          startTime: action.payload.startTime,
+          pauseTime: null,
+          totalPaused: 0,
+        }
+      } else if (state.status === 'paused') {
+        const addedPaused = state.pauseTime
+          ? action.payload.startTime - state.pauseTime
+          : 0
+        newState = {
+          ...state,
+          status: 'running',
+          pauseTime: null,
+          totalPaused: state.totalPaused + addedPaused,
+        }
       }
-      return state
+      break
     case 'PAUSE_WORKOUT':
-    case 'DISCONNECT':
       if (state.status === 'running') {
-        return { ...state, status: 'paused' }
+        newState = {
+          ...state,
+          status: 'paused',
+          pauseTime: action.payload.pauseTime,
+        }
       }
-      return state
+      break
+    case 'RESUME_WORKOUT':
+      if (state.status === 'paused') {
+        const addedPaused = state.pauseTime
+          ? action.payload.resumeTime - state.pauseTime
+          : 0
+        newState = {
+          ...state,
+          status: 'running',
+          pauseTime: null,
+          totalPaused: state.totalPaused + addedPaused,
+        }
+      }
+      break
     case 'END_WORKOUT':
-      // Go idle, reset duration, but preserve calories for the final summary calculation.
-      return { ...state, status: 'idle', duration: 0 }
+      newState = { ...state, status: 'idle', pauseTime: null }
+      break
     case 'TICK':
-      return {
-        ...state,
-        duration: action.payload.duration,
-      }
+      newState = { ...state, duration: action.payload.duration }
+      break
     case 'UPDATE_CALORIES':
-      return {
-        ...state,
-        calories: action.payload,
-      }
+      newState = { ...state, calories: action.payload }
+      break
     case 'RESET':
-      return initialState
-    default:
-      return state
+      newState = initialState
+      break
   }
+
+  // Side Effect: Save to Storage
+  if (typeof window !== 'undefined') {
+    if (newState.status === 'idle' && newState.duration === 0) {
+      // Clear storage on full reset or fresh idle
+      if (action.type === 'RESET') window.localStorage.removeItem(STORAGE_KEY)
+    } else {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(newState))
+    }
+  }
+
+  return newState
 }
 
-// --- The Hook Implementation ---
-
-/**
- * Manages the state of a client-side workout session, tracking duration.
- *
- * NOTE: Calorie calculation is no longer performed in this hook.
- * It is now handled server-side and streamed via the WebSocket connection.
- * This hook consumes the final `totalCalories` value to ensure data consistency
- * across the application.
- */
+// --- Hook Implementation ---
 interface WorkoutSessionOptions {
-  isConnected: boolean
   totalCalories?: number
 }
 
 export const useWorkoutSession = ({
-  isConnected,
   totalCalories = 0,
 }: WorkoutSessionOptions) => {
-  const [state, dispatch] = useReducer(sessionReducer, initialState)
+  // Initialize from storage instead of default initialState
+  const [state, dispatch] = useReducer(sessionReducer, initialState, loadState)
   const [startCalories, setStartCalories] = useState(0)
 
-  const sessionDataRef = useRef({
-    startTime: null as number | null,
-    pauseTime: null as number | null,
-    totalPaused: 0,
-  })
-
+  // Sync total calories
   useEffect(() => {
-    // A workout is considered "over" if the status is idle but we have a startCalories value.
     const isWorkoutOver = state.status === 'idle' && startCalories > 0
-    if (isWorkoutOver) {
-      return // Don't update calories anymore
-    }
+    if (isWorkoutOver) return
     dispatch({ type: 'UPDATE_CALORIES', payload: totalCalories })
   }, [totalCalories, state.status, startCalories])
 
-  const prevIsConnected = useRef(isConnected)
-  useEffect(() => {
-    if (prevIsConnected.current !== isConnected) {
-      if (isConnected) {
-        dispatch({ type: 'CONNECT' })
-      } else {
-        dispatch({ type: 'DISCONNECT' })
-      }
-      prevIsConnected.current = isConnected
-    }
-  }, [isConnected])
-
-  useEffect(() => {
-    const session = sessionDataRef.current
-
-    if (state.status === 'running' && session.startTime === null) {
-      // A new session is starting.
-      session.startTime = Date.now()
-      session.pauseTime = null
-      session.totalPaused = 0
-    } else if (state.status === 'running' && session.pauseTime !== null) {
-      // A paused session is resuming.
-      session.totalPaused += Date.now() - session.pauseTime
-      session.pauseTime = null
-    } else if (state.status === 'paused' && session.pauseTime === null) {
-      // A running session is being paused.
-      session.pauseTime = Date.now()
-    }
-  }, [state.status])
-
+  // Timer Logic
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
-    const session = sessionDataRef.current
 
     if (state.status === 'running') {
       interval = setInterval(() => {
-        if (session.startTime) {
+        if (state.startTime) {
+          const now = Date.now()
           const duration = Math.floor(
-            (Date.now() - session.startTime - session.totalPaused) / 1000
+            (now - state.startTime - state.totalPaused) / 1000
           )
-          dispatch({
-            type: 'TICK',
-            payload: {
-              duration,
-            },
-          })
+          dispatch({ type: 'TICK', payload: { duration } })
         }
       }, 1000)
     }
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [state.status])
+  }, [state.status, state.startTime, state.totalPaused])
 
   const resetWorkout = useCallback(() => {
-    const session = sessionDataRef.current
-    session.startTime = null
-    session.pauseTime = null
-    session.totalPaused = 0
     setStartCalories(0)
-    prevIsConnected.current = false
     dispatch({ type: 'RESET' })
   }, [])
 
   const startWorkout = useCallback(() => {
-    // Capture the calorie count at the moment the workout starts.
+    const now = Date.now()
     setStartCalories(totalCalories)
-    dispatch({ type: 'START_WORKOUT' })
-  }, [totalCalories])
+    if (state.status === 'paused') {
+      dispatch({ type: 'RESUME_WORKOUT', payload: { resumeTime: now } })
+    } else {
+      dispatch({ type: 'START_WORKOUT', payload: { startTime: now } })
+    }
+  }, [totalCalories, state.status])
 
   const pauseWorkout = useCallback(() => {
-    dispatch({ type: 'PAUSE_WORKOUT' })
+    dispatch({ type: 'PAUSE_WORKOUT', payload: { pauseTime: Date.now() } })
   }, [])
 
-  const endWorkout = useCallback(() => {
-    dispatch({ type: 'END_WORKOUT' })
-  }, [])
+  const endWorkout = useCallback(() => dispatch({ type: 'END_WORKOUT' }), [])
 
-  // Calculate the calories burned *during this session*.
   const caloriesBurned = useMemo(() => {
-    if (startCalories === 0) {
-      return 0
-    }
+    if (startCalories === 0) return 0
     const burned = Math.round(state.calories - startCalories)
     return burned > 0 ? burned : 0
   }, [state.calories, startCalories])
@@ -202,11 +206,12 @@ export const useWorkoutSession = ({
   return {
     workoutDuration: state.duration,
     caloriesBurned,
+    startTime: state.startTime,
     resetWorkout,
     startWorkout,
     pauseWorkout,
     endWorkout,
     workoutStatus: state.status,
-    hasStarted: state.status !== 'idle',
+    hasStarted: state.startTime !== null,
   }
 }
