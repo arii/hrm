@@ -177,5 +177,4 @@ fi
 # Log the final decision and write to the output file for GitHub Actions.
 echo "::info::Final Decision: needs-review=$NEEDS_REVIEW (Reason: $SKIP_REASON)"
 echo "needs-review=$NEEDS_REVIEW" >> "$GITHUB_OUTPUT"
-echo "review_needed=$NEEDS_REVIEW" >> "$GITHUB_OUTPUT"
 echo "skip-reason=$SKIP_REASON" >> "$GITHUB_OUTPUT"
