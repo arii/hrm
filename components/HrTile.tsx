@@ -10,6 +10,23 @@ import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
+import { isGenericName } from '@/utils/hrm'
+
+// Define the style for the centered overlay as a constant to avoid recreation
+const OVERLAY_STYLES = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 10,
+  borderRadius: 'inherit',
+} as const
 
 const HrTile = ({
   name,
@@ -43,6 +60,8 @@ const HrTile = ({
         ? 'Waiting for data...'
         : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
 
+  const showName = !isGenericName(name)
+
   return (
     <Tooltip title={tooltipTitle} arrow>
       <Card
@@ -57,7 +76,7 @@ const HrTile = ({
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: 4,
+          borderRadius: 4, // 16px radius matching design system tokens
           position: 'relative',
           overflow: 'hidden',
           opacity: isConnected && !isDataStale ? 1 : 0.6,
@@ -82,23 +101,7 @@ const HrTile = ({
 
         {/* --- Alerting Overlay --- */}
         {isAlerting && (
-          <Box
-            data-testid="hr-tile-alert-overlay"
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 10,
-              borderRadius: 'inherit',
-            }}
-          >
+          <Box data-testid="hr-tile-alert-overlay" sx={OVERLAY_STYLES}>
             <CircularProgress size={30} sx={{ color: 'white' }} />
             <Typography
               variant="caption"
@@ -109,72 +112,95 @@ const HrTile = ({
           </Box>
         )}
 
-        {/* TOP: Identity Tier - Scaled up for visibility */}
-        <Box sx={{ pt: 3, textAlign: 'center' }}>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              px: 2,
-            }}
-          >
-            {name && !/^(user|new user)$/i.test(name) ? name : ''}
-          </Typography>
-        </Box>
-
-        {/* CENTER: Hero Tier - Maximum font-size */}
+        {/* Accessibility wrapper for real-time updates */}
         <Box
+          aria-live="polite"
+          aria-atomic="true"
           sx={{
             flexGrow: 1,
             display: 'flex',
+            flexDirection: 'column',
             justifyContent: 'center',
-            alignItems: 'center',
           }}
         >
-          <Typography
-            data-testid="live-hr-percent"
-            variant="h1"
+          {/* TOP: Identity Tier - Scaled up for visibility */}
+          {showName && (
+            <Box sx={{ pt: 3, textAlign: 'center' }}>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  px: 2,
+                }}
+              >
+                {name}
+              </Typography>
+            </Box>
+          )}
+
+          {/* CENTER: Hero Tier - Maximum font-size */}
+          <Box
             sx={{
-              fontSize: { xs: '8rem', sm: '12rem', md: '15rem' },
-              fontWeight: 950,
-              lineHeight: 1,
-              fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
+              flexGrow: 1,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
             }}
           >
-            {percentMax}%
-          </Typography>
-        </Box>
+            <Typography
+              data-testid="live-hr-percent"
+              variant="h1"
+              component="div"
+              sx={{
+                fontSize: { xs: '8rem', sm: '12rem', md: '15rem' },
+                fontWeight: 900,
+                lineHeight: 1,
+                fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
+              }}
+            >
+              {percentMax}%
+            </Typography>
+          </Box>
 
-        {/* BOTTOM: Consolidated Data Tier */}
-        <Box sx={{ pb: 3, display: 'flex', justifyContent: 'center', gap: 4 }}>
-          <Typography
-            data-testid="bpm-value"
-            variant="h4"
-            sx={{ fontWeight: 800 }}
+          {/* BOTTOM: Consolidated Data Tier */}
+          <Box
+            sx={{
+              pb: 3,
+              pt: showName ? 0 : 3, // Balance spacing if name is missing
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 4,
+            }}
           >
-            {bpm ?? '---'}{' '}
             <Typography
-              component="span"
-              variant="caption"
-              sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+              data-testid="bpm-value"
+              variant="h4"
+              sx={{ fontWeight: 800 }}
             >
-              BPM
+              {bpm ?? '---'}{' '}
+              <Typography
+                component="span"
+                variant="caption"
+                sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+              >
+                BPM
+              </Typography>
             </Typography>
-          </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 800 }}>
-            {Math.floor(calories)}{' '}
-            <Typography
-              component="span"
-              variant="caption"
-              sx={{ fontSize: '1.2rem', opacity: 0.8 }}
-            >
-              KCAL
+            <Typography variant="h4" sx={{ fontWeight: 800 }}>
+              {Math.floor(calories)}{' '}
+              <Typography
+                component="span"
+                variant="caption"
+                sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+              >
+                KCAL
+              </Typography>
             </Typography>
-          </Typography>
+          </Box>
         </Box>
 
         {/* FOOTER: Black Anchor Bar */}
