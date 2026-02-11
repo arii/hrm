@@ -15,10 +15,6 @@ declare module '@mui/material/styles' {
     custom?: Partial<Palette['custom']>
   }
 
-  // NOTE: In MUI v5+, Theme['typography'] is defined as TypographyVariants
-  // We must extend TypographyVariants to add properties to theme.typography,
-  // even if they are just strings (not full variant objects).
-  // Although extending Typography is preferred, it's not exported by default in this version of MUI.
   interface TypographyVariants {
     fontFamilyMono: string
   }

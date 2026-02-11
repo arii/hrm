@@ -18,12 +18,8 @@ interface HeartRateTimeSeriesProps {
 }
 
 const timeFormatter = new Intl.DateTimeFormat(undefined, {
-  hour: 'numeric',
-  minute: 'numeric',
-  second: 'numeric',
+  timeStyle: 'medium',
 })
-
-const formatTime = (time: number) => timeFormatter.format(time)
 
 const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
   const theme = useTheme()
@@ -36,12 +32,12 @@ const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
         </Typography>
         <Box sx={{ height: 300 }} data-testid="hr-time-series-chart">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={hrHistory}>
+            <LineChart data={hrHistory} syncId="workout-metrics">
               <CartesianGrid
                 stroke={theme.palette.divider}
                 strokeDasharray="3 3"
               />
-              <XAxis dataKey="time" tickFormatter={formatTime} />
+              <XAxis dataKey="time" tickFormatter={timeFormatter.format} />
               <YAxis domain={['auto', 'auto']} />
               <Tooltip />
               <Legend />
