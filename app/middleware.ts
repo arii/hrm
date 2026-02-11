@@ -4,7 +4,9 @@ import { NextResponse } from 'next/server'
 
 export default withAuth(
   function middleware(req: NextRequestWithAuth) {
-    // 1. Fail-Fast for Debug Routes in Production
+    // SECURITY: Fail-Fast for Debug Routes in Production
+    // This prevents exposure of sensitive debug endpoints (e.g., state resets, token dumps)
+    // in production environments, as per the "Quality & Security First" principle.
     // Rejects requests to /api/debug/* in production mode.
     if (req.nextUrl.pathname.startsWith('/api/debug')) {
       if (process.env.NODE_ENV === 'production') {
