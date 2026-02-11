@@ -150,6 +150,16 @@ if (!NEXTAUTH_SECRET) {
 
 const providers = []
 
+/**
+ * SpotifyProvider Import Fix for ESM/CJS Interop:
+ * NextAuth v4 exports providers as CJS modules. When running in an ESM environment (like this project),
+ * the import `import SpotifyProvider from 'next-auth/providers/spotify'` might resolve to a Module Namespace Object
+ * instead of the default export.
+ *
+ * We check for `.default` to handle both CJS (direct function) and ESM (module with default export) contexts.
+ * The `@ts-expect-error` is necessary because TypeScript's static analysis might not perfectly align with
+ * the runtime behavior of this specific interop scenario across different build tools (Next.js, Jest, ts-node).
+ */
 // @ts-expect-error: Handle CJS/ESM interop for SpotifyProvider
 const SpotifyProvider = SpotifyProviderModule.default || SpotifyProviderModule
 
