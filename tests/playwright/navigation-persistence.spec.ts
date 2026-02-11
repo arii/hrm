@@ -11,7 +11,7 @@ test.describe('Session Persistence & Navigation', () => {
         gatt = {
           connected: false,
           connect: async function () {
-            // @ts-ignore
+            // @ts-expect-error: mocking
             this.connected = true
             return {
               getPrimaryService: async () => ({
@@ -24,18 +24,23 @@ test.describe('Session Persistence & Navigation', () => {
             }
           },
           disconnect: async function () {
-            // @ts-ignore
+            // @ts-expect-error: mocking
             this.connected = false
           },
         }
         addEventListener() {}
         removeEventListener() {}
+        watchAdvertisements() {
+          return Promise.resolve()
+        }
       }
 
-      // @ts-ignore
+      const mockDevice = new MockBluetoothDevice()
+
+      // @ts-expect-error: mocking
       navigator.bluetooth = {
-        requestDevice: async () => new MockBluetoothDevice(),
-        getDevices: async () => [],
+        requestDevice: async () => mockDevice,
+        getDevices: async () => [mockDevice],
         addEventListener: () => {},
         removeEventListener: () => {},
       }
@@ -75,7 +80,10 @@ test.describe('Session Persistence & Navigation', () => {
     // 6. Verify Timer is Running
     // Wait a few seconds to let timer increment
     await page.waitForTimeout(3000)
-    const durationText = await page.getByText(/00:00:0/).first().textContent()
+    const durationText = await page
+      .getByText(/00:00:0/)
+      .first()
+      .textContent()
     expect(durationText).not.toBe('00:00:00')
 
     // 7. Navigate Away (To Experimental Page)
@@ -95,18 +103,21 @@ test.describe('Session Persistence & Navigation', () => {
     await expect(page).toHaveURL(/.*\/client\/connect/)
 
     // 9. Assert State Persisted
-    await expect(page.getByText('RUNNING')).toBeVisible()
+    // It might briefly show PAUSED before auto-reconnecting
+    await expect(page.getByText(/RUNNING|PAUSED/)).toBeVisible()
+
+    // Wait for auto-reconnect to set it back to RUNNING if it was paused
+    await expect(page.getByText('RUNNING')).toBeVisible({ timeout: 10000 })
     await expect(page.getByText('HRM Session')).toBeVisible()
 
     // Verify timer is still running (value should be > 0)
-    // We check that it didn't reset to 00:00:00
     const returnedDurationText = await page
       .getByText(/00:00:/)
       .first()
       .textContent()
     expect(returnedDurationText).not.toBe('00:00:00')
 
-    // Verify the "Date" field is present (part of the new UI update)
+    // Verify the "Date" field is present
     const today = new Date().toLocaleDateString(undefined, { year: 'numeric' })
     await expect(page.getByText(today).first()).toBeVisible()
   })

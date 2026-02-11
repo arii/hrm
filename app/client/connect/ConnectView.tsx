@@ -13,7 +13,6 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import HrTile from '../../../components/HrTile'
-import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
@@ -33,9 +32,9 @@ import {
 } from '@mui/material'
 
 interface ConnectViewProps {
-  workoutDuration: number // Changed: Raw number for better internal handling
+  workoutDuration: number
   caloriesBurned: number
-  startTime: number | null // Added: For persistence
+  startTime: number | null
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -76,6 +75,80 @@ interface ConnectViewProps {
   onStartWorkout: () => void
   onPauseWorkout: () => void
   onEndWorkout: () => void
+}
+
+const ResetSection = ({
+  onReset,
+  onForgetDevice,
+  hasStarted,
+  isResetting,
+  setIsResetting,
+}: {
+  onReset: () => void
+  onForgetDevice: () => Promise<void>
+  hasStarted: boolean
+  isResetting: boolean
+  setIsResetting: (val: boolean) => void
+}) => {
+  const handleFullReset = async () => {
+    setIsResetting(true)
+    try {
+      await onForgetDevice()
+      onReset()
+    } catch (error) {
+      console.error('Reset failed:', error)
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
+  return (
+    <Box
+      sx={{
+        textAlign: 'center',
+        mt: 6,
+        pt: 4,
+        borderTop: '1px solid #eee',
+      }}
+    >
+      <Typography variant="overline" color="text.secondary" gutterBottom>
+        Session Management
+      </Typography>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        justifyContent="center"
+      >
+        <Button
+          variant="outlined"
+          color="warning"
+          startIcon={<RestartAltIcon />}
+          onClick={onReset}
+          disabled={!hasStarted}
+        >
+          Clear Session Data
+        </Button>
+
+        <Button
+          variant="outlined"
+          color="error"
+          startIcon={<DeleteSweepIcon />}
+          onClick={handleFullReset}
+          disabled={isResetting}
+        >
+          {isResetting ? 'Resetting...' : 'Forget Device & Reset'}
+        </Button>
+      </Stack>
+      <Typography
+        variant="caption"
+        display="block"
+        sx={{ mt: 1, color: 'text.secondary' }}
+      >
+        &quot;Forget Device&quot; removes Bluetooth permissions. &quot;Clear
+        Session&quot; resets the timer/calories.
+      </Typography>
+    </Box>
+  )
 }
 
 export default function ConnectView({
@@ -139,68 +212,6 @@ export default function ConnectView({
     return <BatteryAlertIcon color="error" />
   }
 
-  const handleFullReset = async () => {
-    setIsResetting(true)
-    try {
-      await onForgetDevice()
-      onReset()
-    } catch (error) {
-      console.error('Reset failed:', error)
-    } finally {
-      setIsResetting(false)
-    }
-  }
-
-  const ResetSection = () => (
-    <Box
-      sx={{
-        textAlign: 'center',
-        mt: 6,
-        pt: 4,
-        borderTop: '1px solid #eee',
-      }}
-    >
-      <Typography variant="overline" color="text.secondary" gutterBottom>
-        Session Management
-      </Typography>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={2}
-        justifyContent="center"
-      >
-        {/* Button 1: Clear Session Only */}
-        <Button
-          variant="outlined"
-          color="warning"
-          startIcon={<RestartAltIcon />}
-          onClick={onReset}
-          disabled={!hasStarted}
-        >
-          Clear Session Data
-        </Button>
-
-        {/* Button 2: Full Reset */}
-        <Button
-          variant="outlined"
-          color="error"
-          startIcon={<DeleteSweepIcon />}
-          onClick={handleFullReset}
-          disabled={isResetting}
-        >
-          {isResetting ? 'Resetting...' : 'Forget Device & Reset'}
-        </Button>
-      </Stack>
-      <Typography
-        variant="caption"
-        display="block"
-        sx={{ mt: 1, color: 'text.secondary' }}
-      >
-        "Forget Device" removes Bluetooth permissions. "Clear Session" resets
-        the timer/calories.
-      </Typography>
-    </Box>
-  )
-
   if (!isSupported) {
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
@@ -214,8 +225,13 @@ export default function ConnectView({
           Your browser does not support Web Bluetooth. Please use Google Chrome,
           Edge, or Bluefy (on iOS).
         </Alert>
-        <ResetSection />
-        <BottomNavBar />
+        <ResetSection
+          onReset={onReset}
+          onForgetDevice={onForgetDevice}
+          hasStarted={hasStarted}
+          isResetting={isResetting}
+          setIsResetting={setIsResetting}
+        />
       </Container>
     )
   }
@@ -432,7 +448,13 @@ export default function ConnectView({
           />
         )}
 
-        <ResetSection />
+        <ResetSection
+          onReset={onReset}
+          onForgetDevice={onForgetDevice}
+          hasStarted={hasStarted}
+          isResetting={isResetting}
+          setIsResetting={setIsResetting}
+        />
 
         <Box sx={{ mt: 4, textAlign: 'center', opacity: 0.5 }}>
           <Typography variant="caption">
@@ -440,7 +462,6 @@ export default function ConnectView({
           </Typography>
         </Box>
       </Container>
-      <BottomNavBar />
     </>
   )
 }

@@ -32,7 +32,6 @@ const WorkoutSummary = ({
 }: WorkoutSummaryProps) => {
   const theme = useTheme()
 
-  // Helper to determine status color
   const getStatusColor = (s: string) => {
     switch (s) {
       case 'running':
@@ -66,7 +65,9 @@ const WorkoutSummary = ({
       }}
     >
       {/* Header Section */}
-      <Box sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', p: 2 }}>
+      <Box
+        sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', p: 2 }}
+      >
         <Stack
           direction="row"
           justifyContent="space-between"

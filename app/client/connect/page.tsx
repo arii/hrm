@@ -8,7 +8,10 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-import { useHrZone } from '@/hooks/useHrZone'
+import {
+  calculateZoneFromMaxHr,
+  HR_ZONE_VISUAL_CONFIG,
+} from '@/lib/shared/hr-zones'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -69,7 +72,6 @@ export default function ConnectPage() {
         setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
       }
     }
-    // Reset local state to show the canonical value from context
     setLocalDisplayWeight(null)
   }
 
@@ -96,9 +98,20 @@ export default function ConnectPage() {
     weightKg: userWeight || 70,
   })
 
-  // Pre-calculate HR zone info for both WebSocket and View
-  const maxHr = userAge ? 220 - userAge : 190
-  const hrZoneProps = useHrZone(currentHR, maxHr)
+  // Inlined HR zone info logic to avoid over-engineering with a custom hook
+  const hrZoneInfo = useMemo(() => {
+    const maxHr = userAge ? 220 - userAge : 190
+    const { percentage, zone } = calculateZoneFromMaxHr(currentHR, maxHr)
+    const zoneConfig =
+      HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
+      HR_ZONE_VISUAL_CONFIG[0]
+
+    return {
+      percentage,
+      zone,
+      progressColor: zoneConfig.color,
+    }
+  }, [currentHR, userAge])
 
   const throttledSend = useMemo(
     () =>
@@ -157,7 +170,6 @@ export default function ConnectPage() {
     onConnect: startWorkout,
   })
 
-  // Auto-pause/resume logic handled in the page to coordinate between HRM and Session
   useEffect(() => {
     if (hasStarted && !isConnected && workoutStatus === 'running') {
       pauseWorkout()
@@ -185,17 +197,11 @@ export default function ConnectPage() {
       data: {
         value: currentHR,
         calories: calories,
-        percentage: hrZoneProps.percentage,
-        zone: hrZoneProps.zone,
+        percentage: hrZoneInfo.percentage,
+        zone: hrZoneInfo.zone,
       },
     })
-  }, [
-    currentHR,
-    calories,
-    hrZoneProps.percentage,
-    hrZoneProps.zone,
-    throttledSend,
-  ])
+  }, [currentHR, calories, hrZoneInfo, throttledSend])
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
@@ -251,10 +257,10 @@ export default function ConnectPage() {
       signalPeriodMs={signalPeriodMs}
       currentHR={currentHR}
       hrZoneProps={{
-        percentage: hrZoneProps.percentage,
-        progressColor: hrZoneProps.progressColor,
+        percentage: hrZoneInfo.percentage,
+        progressColor: hrZoneInfo.progressColor,
       }}
-      zone={hrZoneProps.zone}
+      zone={hrZoneInfo.zone}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}

@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useReducer,
-  useRef,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react'
+import { useEffect, useReducer, useCallback, useMemo, useState } from 'react'
 
 const STORAGE_KEY = 'hrm_active_session'
 
@@ -37,7 +30,6 @@ const loadState = (): SessionState => {
     const stored = window.localStorage.getItem(STORAGE_KEY)
     if (stored) {
       const parsed = JSON.parse(stored)
-      // Basic validation to ensure shape matches
       if (parsed.status && typeof parsed.duration === 'number') {
         return {
           ...initialState,
@@ -64,11 +56,10 @@ function sessionReducer(
   state: SessionState,
   action: SessionAction
 ): SessionState {
-  let newState = state
   switch (action.type) {
     case 'START_WORKOUT':
       if (state.status === 'idle') {
-        newState = {
+        return {
           ...state,
           status: 'running',
           duration: 0,
@@ -80,64 +71,49 @@ function sessionReducer(
         const addedPaused = state.pauseTime
           ? action.payload.startTime - state.pauseTime
           : 0
-        newState = {
+        return {
           ...state,
           status: 'running',
           pauseTime: null,
           totalPaused: state.totalPaused + addedPaused,
         }
       }
-      break
+      return state
     case 'PAUSE_WORKOUT':
       if (state.status === 'running') {
-        newState = {
+        return {
           ...state,
           status: 'paused',
           pauseTime: action.payload.pauseTime,
         }
       }
-      break
+      return state
     case 'RESUME_WORKOUT':
       if (state.status === 'paused') {
         const addedPaused = state.pauseTime
           ? action.payload.resumeTime - state.pauseTime
           : 0
-        newState = {
+        return {
           ...state,
           status: 'running',
           pauseTime: null,
           totalPaused: state.totalPaused + addedPaused,
         }
       }
-      break
+      return state
     case 'END_WORKOUT':
-      newState = { ...state, status: 'idle', pauseTime: null }
-      break
+      return { ...state, status: 'idle', pauseTime: null }
     case 'TICK':
-      newState = { ...state, duration: action.payload.duration }
-      break
+      return { ...state, duration: action.payload.duration }
     case 'UPDATE_CALORIES':
-      newState = { ...state, calories: action.payload }
-      break
+      return { ...state, calories: action.payload }
     case 'RESET':
-      newState = initialState
-      break
+      return initialState
+    default:
+      return state
   }
-
-  // Side Effect: Save to Storage
-  if (typeof window !== 'undefined') {
-    if (newState.status === 'idle' && newState.duration === 0) {
-      // Clear storage on full reset or fresh idle
-      if (action.type === 'RESET') window.localStorage.removeItem(STORAGE_KEY)
-    } else {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(newState))
-    }
-  }
-
-  return newState
 }
 
-// --- Hook Implementation ---
 interface WorkoutSessionOptions {
   totalCalories?: number
 }
@@ -145,18 +121,30 @@ interface WorkoutSessionOptions {
 export const useWorkoutSession = ({
   totalCalories = 0,
 }: WorkoutSessionOptions) => {
-  // Initialize from storage instead of default initialState
   const [state, dispatch] = useReducer(sessionReducer, initialState, loadState)
   const [startCalories, setStartCalories] = useState(0)
 
-  // Sync total calories
+  // Move persistence side effects to useEffect
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    if (state.status === 'idle' && state.duration === 0) {
+      // Logic for clear storage on full reset or fresh idle
+      // We check state rather than action type here
+      if (state.startTime === null) {
+        window.localStorage.removeItem(STORAGE_KEY)
+      }
+    } else {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    }
+  }, [state])
+
   useEffect(() => {
     const isWorkoutOver = state.status === 'idle' && startCalories > 0
     if (isWorkoutOver) return
     dispatch({ type: 'UPDATE_CALORIES', payload: totalCalories })
   }, [totalCalories, state.status, startCalories])
 
-  // Timer Logic
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
 
