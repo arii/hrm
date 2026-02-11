@@ -1,5 +1,10 @@
 // tests/unit/lib/utils.test.ts
-import { objectFromEntries, roundTo, formatDuration } from '@/lib/utils'
+import {
+  objectFromEntries,
+  roundTo,
+  formatDuration,
+  formatDate,
+} from '@/lib/utils'
 
 describe('lib/utils', () => {
   describe('objectFromEntries', () => {
@@ -89,6 +94,44 @@ describe('lib/utils', () => {
       expect(formatDuration(60, { unit: 'seconds' })).toBe('00:01:00')
       expect(formatDuration(3599, { unit: 'seconds' })).toBe('00:59:59')
       expect(formatDuration(3600, { unit: 'seconds' })).toBe('01:00:00')
+    })
+  })
+
+  describe('formatDate', () => {
+    const testDate = new Date('2023-10-27T12:00:00Z')
+
+    it('should format a Date object with default options and locale', () => {
+      // Note: toLocaleDateString output can vary by environment, but en-US is usually consistent
+      const result = formatDate(testDate)
+      expect(result).toContain('October 27, 2023')
+    })
+
+    it('should format a timestamp with default options and locale', () => {
+      const result = formatDate(testDate.getTime())
+      expect(result).toContain('October 27, 2023')
+    })
+
+    it('should respect custom options', () => {
+      const result = formatDate(testDate, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+      expect(result).toContain('Oct 27, 2023')
+    })
+
+    it('should respect custom locale', () => {
+      // In German, October is Oktober
+      const result = formatDate(
+        testDate,
+        {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        },
+        'de-DE'
+      )
+      expect(result).toMatch(/27\. Oktober 2023/)
     })
   })
 })

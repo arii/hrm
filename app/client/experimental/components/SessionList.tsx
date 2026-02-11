@@ -17,6 +17,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import LiveDuration from './LiveDuration'
 import { useState } from 'react'
+import { formatDate } from '@/lib/utils'
 
 interface SessionListProps {
   sessions: WorkoutSessionData[]
@@ -77,9 +78,11 @@ const SessionList = ({
                 }
               >
                 <ListItemText
-                  primary={`Workout - ${new Date(
-                    session.startTime
-                  ).toLocaleDateString()}`}
+                  primary={`Workout - ${formatDate(session.startTime, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}`}
                   secondary={
                     <>
                       <LiveDuration
