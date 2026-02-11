@@ -21,33 +21,19 @@ on:
 jobs:
   rebase:
     runs-on: ubuntu-latest
-    # This job must run on pushes to 'leader' so it can rebase all open PRs targeting 'leader'.
-    # The previous 'if: github.ref != ...' condition incorrectly blocked this behavior.
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Validate PAT Token
-        run: |
-          if [ -z "${{ secrets.PAT_TOKEN }}" ] && [ -z "${{ secrets.ARI_PAT }}" ]; then
-            echo "::warning::Neither PAT_TOKEN nor ARI_PAT secrets are configured. Using default GITHUB_TOKEN fallback. This might fail on protected branches with required status checks, as the default token cannot trigger subsequent CI workflows."
-          else
-            echo "::notice::Personal Access Token (PAT) is configured"
-          fi
-
       - name: Rebase PRs
         uses: peter-evans/rebase@v4
         with:
-          # A PAT (Personal Access Token) with 'repo' scope is highly recommended.
-          # The default GITHUB_TOKEN has limitations: it cannot trigger other workflows
-          # (e.g., CI checks won't run after the rebase) and may not be able to push
-          # to protected branches depending on repository settings.
           token: ${{ secrets.PAT_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           base: leader
           # Rebase a specific PR if pr_number is provided, otherwise rebase all open PRs targeting leader
-          pull-request-number: ${{ inputs.pr_number || github.event.inputs.pr_number }}
+          pull-request-number: ${{ inputs.pr_number }}
           # "Intelligent" behavior: Exclude branches with specific labels (e.g., if you are in the middle of a complex refactor)
           exclude-labels: |
             no-rebase
