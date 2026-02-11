@@ -17,6 +17,8 @@ declare module '@mui/material/styles' {
         max: string
         unknown: string
         noData: string
+        recovery: string
+        idle: string
       }
     }
   }
@@ -36,6 +38,8 @@ declare module '@mui/material/styles' {
         max?: string
         unknown?: string
         noData?: string
+        recovery?: string
+        idle?: string
       }
     }
   }

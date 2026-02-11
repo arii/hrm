@@ -61,7 +61,6 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
     // Excluding them would misleadingly show 100% adherence to active zones even if data was missing for 90% of the time.
     return Object.entries(timeInZones)
       .map(([zone, time]) => {
-        const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
         const zoneName = zone as HrZoneName
 
         const color =
