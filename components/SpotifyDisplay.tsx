@@ -104,7 +104,11 @@ const spotifyDisplayReducer = (
 
 const SpotifyDisplay = () => {
   const { isLoggedIn } = useSpotifyAuth()
-  const { execute, playback: spotifyData, connectionStatus } = useSpotifyCommand()
+  const {
+    execute,
+    playback: spotifyData,
+    connectionStatus,
+  } = useSpotifyCommand()
 
   // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {

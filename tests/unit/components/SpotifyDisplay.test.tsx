@@ -8,7 +8,7 @@ jest.mock('uuid', () => ({
 
 import SpotifyDisplay from '@/components/SpotifyDisplay'
 import { ErrorProvider } from '@/context/ErrorContext'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
 import { fireEvent, render, screen } from '@testing-library/react'
@@ -46,7 +46,9 @@ jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
   __esModule: true,
   default: () => <div data-testid="current-spotify-item-display" />,
 }))
-jest.mock('@/context/WebSocketContext')
+// Mock useSpotifyCommand instead of useWebSocket since SpotifyDisplay uses the former
+jest.mock('@/hooks/useSpotifyCommand')
+
 jest.mock('next-auth/react', () => ({
   ...jest.requireActual('next-auth/react'), // Keep original functionality
   useSession: jest.fn(), // Mock useSession specifically
@@ -57,7 +59,7 @@ jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
   default: jest.fn(),
 }))
 
-const mockedUseWebSocket = useWebSocket as jest.Mock
+const mockedUseSpotifyCommand = useSpotifyCommand as jest.Mock
 const mockedUseSession = useSession as jest.Mock
 const mockedSignIn = signIn as jest.Mock
 const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
@@ -86,8 +88,8 @@ describe('SpotifyDisplay', () => {
 
   it('should render login button and call signIn with correct provider on click', async () => {
     mockedUseSession.mockReturnValue({ data: null, status: 'unauthenticated' })
-    mockedUseWebSocket.mockReturnValue({
-      spotifyData: {
+    mockedUseSpotifyCommand.mockReturnValue({
+      playback: {
         trackName: '',
         artist: '',
         albumName: '',
@@ -95,7 +97,7 @@ describe('SpotifyDisplay', () => {
         isPlaying: false,
       },
       connectionStatus: 'Connected',
-      spotifyServiceInitialized: true,
+      execute: jest.fn(),
     })
     mockedUseSpotifyWebPlayback.mockReturnValue({
       isAuthenticated: false,
@@ -120,13 +122,13 @@ describe('SpotifyDisplay', () => {
   })
 
   describe('when authenticated', () => {
-    let mockSendData: jest.Mock
+    let mockExecute: jest.Mock
     let rerender: (ui: React.ReactElement) => void
     let initialSpotifyData: SpotifyData
 
     beforeEach(() => {
       jest.useFakeTimers()
-      mockSendData = jest.fn()
+      mockExecute = jest.fn()
       initialSpotifyData = {
         trackName: 'Test Track',
         artist: 'Test Artist',
@@ -144,11 +146,10 @@ describe('SpotifyDisplay', () => {
         data: { accessToken: 'fake-token' },
         status: 'authenticated',
       })
-      mockedUseWebSocket.mockReturnValue({
-        spotifyData: initialSpotifyData,
-        sendData: mockSendData,
+      mockedUseSpotifyCommand.mockReturnValue({
+        playback: initialSpotifyData,
+        execute: mockExecute,
         connectionStatus: 'Connected',
-        spotifyServiceInitialized: true,
       })
 
       const { rerender: rerenderComponent } = renderWithProviders(
@@ -167,9 +168,9 @@ describe('SpotifyDisplay', () => {
 
       // Simulate external update
       const updatedSpotifyData = { ...initialSpotifyData, volumePercent: 80 }
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
+      mockedUseSpotifyCommand.mockReturnValue({
+        ...mockedUseSpotifyCommand(),
+        playback: updatedSpotifyData,
       })
       rerender(<SpotifyDisplay />)
 
@@ -186,9 +187,9 @@ describe('SpotifyDisplay', () => {
 
       // Simulate external update while sliding
       const updatedSpotifyData = { ...initialSpotifyData, volumePercent: 90 }
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
+      mockedUseSpotifyCommand.mockReturnValue({
+        ...mockedUseSpotifyCommand(),
+        playback: updatedSpotifyData,
       })
       rerender(<SpotifyDisplay />)
 
@@ -208,9 +209,9 @@ describe('SpotifyDisplay', () => {
 
         // Simulate external update while sliding (should be ignored)
         let updatedSpotifyData = { ...initialSpotifyData, volumePercent: 100 }
-        mockedUseWebSocket.mockReturnValue({
-          ...mockedUseWebSocket(),
-          spotifyData: updatedSpotifyData,
+        mockedUseSpotifyCommand.mockReturnValue({
+          ...mockedUseSpotifyCommand(),
+          playback: updatedSpotifyData,
         })
         rerender(<SpotifyDisplay />)
         expect(slider).toHaveValue('75')
@@ -223,9 +224,9 @@ describe('SpotifyDisplay', () => {
 
         // Simulate another external update (should now be applied)
         updatedSpotifyData = { ...initialSpotifyData, volumePercent: 10 } // Ensure new volume to trigger effect
-        mockedUseWebSocket.mockReturnValue({
-          ...mockedUseWebSocket(),
-          spotifyData: updatedSpotifyData,
+        mockedUseSpotifyCommand.mockReturnValue({
+          ...mockedUseSpotifyCommand(),
+          playback: updatedSpotifyData,
         })
         rerender(<SpotifyDisplay />)
         expect(slider).toHaveValue('10')
@@ -245,11 +246,11 @@ describe('SpotifyDisplay', () => {
         devices: [hrmDevice],
         isPlaying: false,
       }
-      mockedUseWebSocket.mockReturnValue({
-        spotifyData: updatedSpotifyData,
-        sendData: mockSendData, // useSpotifyCommand calls sendData via useWebSocket
+      mockedUseSpotifyCommand.mockReturnValue({
+        playback: updatedSpotifyData,
+        execute: mockExecute,
         connectionStatus: 'Connected',
-        spotifyServiceInitialized: true,
+        hrmPlayer: hrmDevice,
       })
 
       rerender(<SpotifyDisplay />)
@@ -259,10 +260,9 @@ describe('SpotifyDisplay', () => {
 
       fireEvent.click(connectButton)
 
-      expect(mockSendData).toHaveBeenCalledWith(
+      expect(mockExecute).toHaveBeenCalledWith(
+        'TRANSFER_PLAYBACK',
         expect.objectContaining({
-          type: 'SPOTIFY_COMMAND',
-          command: 'TRANSFER_PLAYBACK',
           deviceId: 'hrm-device-id',
         })
       )
