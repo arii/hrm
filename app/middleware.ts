@@ -1,10 +1,20 @@
 // middleware.ts
-import { withAuth } from 'next-auth/middleware'
-import { NextRequest, NextResponse, NextFetchEvent } from 'next/server'
+import { withAuth, NextRequestWithAuth } from 'next-auth/middleware'
+import { NextResponse } from 'next/server'
 
-const authMiddleware = withAuth(
-  // `withAuth` augments your `Request` with the user's token.
-  function middleware(req: NextRequest) {
+export default withAuth(
+  function middleware(req: NextRequestWithAuth) {
+    // 1. Fail-Fast for Debug Routes in Production
+    // Rejects requests to /api/debug/* in production mode.
+    if (req.nextUrl.pathname.startsWith('/api/debug')) {
+      if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json(
+          { error: 'Endpoint unavailable in production' },
+          { status: 404 }
+        )
+      }
+    }
+
     const url = req.nextUrl.clone()
 
     // If the user is being redirected to a page with an auth error,
@@ -26,23 +36,6 @@ const authMiddleware = withAuth(
     },
   }
 )
-
-export default function middleware(req: NextRequest, event: NextFetchEvent) {
-  // 1. Fail-Fast for Debug Routes in Production
-  // This is outside withAuth to ensure it runs even for unauthenticated users,
-  // effectively masking the routes.
-  if (req.nextUrl.pathname.startsWith('/api/debug')) {
-    if (process.env.NODE_ENV === 'production') {
-      return new NextResponse(
-        JSON.stringify({ error: 'Endpoint unavailable in production' }),
-        { status: 404, headers: { 'content-type': 'application/json' } }
-      )
-    }
-  }
-
-  // @ts-expect-error: next-auth type mismatch
-  return authMiddleware(req, event)
-}
 
 export const config = {
   matcher: ['/api/internal/:path*', '/api/debug/:path*', '/api/users/:path*'],

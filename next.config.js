@@ -66,20 +66,6 @@ const nextConfig = {
       },
     ]
   },
-  async rewrites() {
-    // In production, mask debug routes completely
-    if (process.env.NODE_ENV === 'production') {
-      return {
-        beforeFiles: [
-          {
-            source: '/api/debug/:path*',
-            destination: '/404', // Route to the 404 page internally
-          },
-        ],
-      }
-    }
-    return []
-  },
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
 }
 
