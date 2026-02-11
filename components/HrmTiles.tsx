@@ -2,11 +2,8 @@
 'use client'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { MAX_HR_DEFAULT } from '@/lib/shared/hr-zones'
-import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid2'
 import { calculateHrZoneInfo } from '@/lib/shared/hr-zones'
-import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useMemo } from 'react'
 
