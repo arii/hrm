@@ -42,7 +42,6 @@ jest.mock('../../services/spotifyTokenManager', () => {
         expires_in: 3600,
       }),
       updateToken: jest.fn(),
-      saveTokens: jest.fn(),
     }
   })
   return {
@@ -85,7 +84,6 @@ describe('SpotifyPolling Service', () => {
         expires_in: 3600,
       }),
       updateToken: jest.fn(),
-      saveTokens: jest.fn(),
     }))
 
     mockPlayer.getAvailableDevices.mockResolvedValue({ devices: [] })
@@ -125,7 +123,6 @@ describe('SpotifyPolling Service', () => {
           getValidAccessToken: jest.fn().mockResolvedValue('mock_access_token'),
           getSdkAccessToken: jest.fn().mockReturnValue(null), // Simulate failure
           updateToken: jest.fn(),
-          saveTokens: jest.fn(),
         }))
 
         // Act
@@ -268,8 +265,13 @@ describe('SpotifyPolling Service', () => {
   describe('Token Management', () => {
     it('should handle token updates', async () => {
       const mockTokenPayload = {
-        accessToken: 'new_access_token',
-        refreshToken: 'new_refresh_token',
+        provider: 'spotify',
+        sub: 'testuser',
+        access_token: 'new_access_token',
+        refresh_token: 'new_refresh_token',
+        expires_in: 3600,
+        scope: 'user-read-playback-state',
+        obtainedAt: Date.now(),
       }
 
       const forcePollSpy = jest
@@ -281,7 +283,7 @@ describe('SpotifyPolling Service', () => {
       // Verify that the token manager was updated
       const tokenManagerInstance = (SpotifyTokenManager as jest.Mock).mock
         .results[0].value
-      expect(tokenManagerInstance.saveTokens).toHaveBeenCalledWith(
+      expect(tokenManagerInstance.updateToken).toHaveBeenCalledWith(
         mockTokenPayload
       )
 
@@ -296,7 +298,6 @@ describe('SpotifyPolling Service', () => {
       ;(SpotifyTokenManager as jest.Mock).mockImplementationOnce(() => ({
         getValidAccessToken: jest.fn().mockResolvedValue(null),
         getSdkAccessToken: jest.fn().mockReturnValue(null),
-        saveTokens: jest.fn(),
       }))
 
       const newService = await SpotifyPollingService.create(broadcastMock)

@@ -2,16 +2,21 @@ import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
 import { getSpotifyService } from '@/lib/services'
+import { z } from 'zod'
+
+const TokenDeliverySchema = z.object({
+  provider: z.string(),
+  sub: z.string(),
+  access_token: z.string(),
+  refresh_token: z.string(),
+  expires_in: z.number(),
+  scope: z.string(),
+  obtainedAt: z.number(),
+})
 
 /**
  * @route POST /api/internal/token-delivery
  * @description Secure internal endpoint for receiving updated Spotify tokens from NextAuth callbacks.
- * This route is the new, reliable, event-driven way of updating the Spotify polling service.
- * It directly accesses the singleton `spotifyService` instance and calls its token update handler.
- * This replaces the previous fragile, timing-based middleware interception in `server.ts`.
- *
- * @protection This endpoint is protected by a secret header (`x-internal-token-secret`)
- * defined in the `INTERNAL_TOKEN_DELIVERY_SECRET` environment variable.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -25,22 +30,22 @@ export async function POST(req: NextRequest) {
       throw new ApiError(401, 'Unauthorized: Missing or invalid secret.')
     }
 
-    // 2. Parse the token from the request body
+    // 2. Parse and validate the token from the request body
     const body = await req.json()
-    const { accessToken, refreshToken } = body
+    const result = TokenDeliverySchema.safeParse(body)
 
-    if (!accessToken || !refreshToken) {
-      throw new ApiError(400, 'Bad Request: Missing tokens.')
+    if (!result.success) {
+      logger.warn({ errors: result.error.format() }, 'Invalid token structure')
+      throw new ApiError(400, 'Bad Request: Invalid token structure.')
     }
 
+    const tokenData = result.data
+
     // 3. Get the singleton instance of the Spotify service
-    // FIX: Removed `!spotifyService.isReady()` check.
-    // The service might be uninitialized (not ready) because it's waiting for this very token to initialize.
-    // This check created a circular dependency. We must allow the token delivery to proceed to bootstrap the SDK.
     const spotifyService = getSpotifyService()
 
     // 4. Directly and reliably update the service with the new token
-    await spotifyService.handleTokenUpdate({ accessToken, refreshToken })
+    await spotifyService.handleTokenUpdate(tokenData)
     logger.info('Spotify token delivered and processed successfully.')
 
     return NextResponse.json({

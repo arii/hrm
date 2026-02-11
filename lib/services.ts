@@ -2,6 +2,7 @@ import { SpotifyPollingService } from '@/services/spotifyPolling'
 import { TabataService } from '@/services/tabataTimer'
 import { Broadcaster } from '@/lib/websocket'
 import { SpotifyService } from '@/types/interfaces'
+import { ServiceInitializationError } from '@/lib/errors'
 
 export interface AppServices {
   tabataService: TabataService
@@ -9,15 +10,11 @@ export interface AppServices {
   isSpotifyInitialized: boolean
 }
 
-// 1. Create a mutable singleton reference
 let spotifyServiceInstance: SpotifyService | null = null
 
-// 2. Add an accessor for API routes
 export const getSpotifyService = (): SpotifyService => {
   if (!spotifyServiceInstance) {
-    throw new Error(
-      'SpotifyService not initialized. Server may be starting up.'
-    )
+    throw new ServiceInitializationError('SpotifyService')
   }
   return spotifyServiceInstance
 }
@@ -34,7 +31,6 @@ export async function createServices(
   } catch (e) {
     console.error('SpotifyPolling initialization failed:', e)
     isSpotifyInitialized = false
-    // Fallback stub
     spotifyService = {
       handleCommand: () => {},
       stopPolling: () => {},
@@ -57,7 +53,6 @@ export async function createServices(
     }
   }
 
-  // 3. Assign the instance during startup
   spotifyServiceInstance = spotifyService
 
   return { tabataService, spotifyService, isSpotifyInitialized }

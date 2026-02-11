@@ -1,7 +1,10 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '@/types/websocket'
 import { SpotifyCommandParameters } from '@/types/core'
-import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
+import {
+  SpotifyTokenManager,
+  SpotifyTokenPayload,
+} from '@/services/spotifyTokenManager'
 import logger from '@/utils/logger.server'
 import {
   handleSpotifyApiError,
@@ -18,8 +21,6 @@ export class SpotifyPollingService implements SpotifyService {
     return this.getCurrentlyPlaying()
   }
   private tokenManager: SpotifyTokenManager
-  private accessToken: string | null = null
-  private refreshToken: string | null = null
   private pollInterval: NodeJS.Timeout | null = null
   private devicePollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
@@ -172,34 +173,21 @@ export class SpotifyPollingService implements SpotifyService {
     )
   }
 
-  public async handleTokenUpdate(newTokens: {
-    accessToken: string
-    refreshToken: string
-  }): Promise<void> {
-    // 1. Update In-Memory State immediately
-    this.accessToken = newTokens.accessToken
-    this.refreshToken = newTokens.refreshToken
+  public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
+    // 1. Persist to disk and update internal manager state
+    this.tokenManager.updateToken(tokens)
 
-    // 2. Persist to disk
-    await this.tokenManager.saveTokens(newTokens)
-
-    // 3. Re-initialize SDK with new tokens
+    // 2. Re-initialize SDK with new tokens
     const sdkToken = this.tokenManager.getSdkAccessToken()
     if (sdkToken) {
       this.setupSdk(sdkToken)
       this.startPolling()
     }
 
-    // 4. Immediately poll with new tokens to update UI
+    // 3. Immediately poll with new tokens to update UI
     await this.forcePollAndBroadcast()
 
-    logger.info(
-      {
-        accessToken: this.accessToken ? 'Present' : 'Missing',
-        refreshToken: this.refreshToken ? 'Present' : 'Missing',
-      },
-      'Tokens updated and state broadcasted via direct event'
-    )
+    logger.info('Tokens updated and state broadcasted via direct event')
   }
 
   public startPolling() {
