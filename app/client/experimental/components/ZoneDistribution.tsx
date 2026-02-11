@@ -64,11 +64,10 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
         const zoneName = zone as HrZoneName
 
-        const colorKey = ZONE_COLOR_KEY_MAP[zoneName]
         const color =
-          colorKey && theme.palette.custom?.hrZones?.[colorKey]
-            ? theme.palette.custom.hrZones[colorKey]
-            : theme.palette.grey[500]
+          theme.palette.custom?.hrZones?.[
+            ZONE_COLOR_KEY_MAP[zoneName] || 'idle'
+          ] ?? theme.palette.grey[500]
 
         return {
           name: zoneName,
