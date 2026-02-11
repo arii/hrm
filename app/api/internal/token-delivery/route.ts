@@ -1,7 +1,7 @@
 import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
-import { AccessToken } from '@spotify/web-api-ts-sdk'
+import { getSpotifyService } from '@/lib/services'
 
 /**
  * @route POST /api/internal/token-delivery
@@ -15,13 +15,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
  */
 export async function POST(req: NextRequest) {
   try {
-    // 1. Parse the token from the request body
-    const tokenData = (await req.json()) as AccessToken
-    if (!tokenData || !tokenData.refresh_token) {
-      throw new ApiError(400, 'Bad Request: Missing token data.')
-    }
-
-    // 2. Authenticate the request from our internal callback
+    // 1. Authenticate the request from our internal callback
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
     const expected = process.env.NEXTAUTH_SECRET
     if (!expected) {
@@ -31,22 +25,22 @@ export async function POST(req: NextRequest) {
       throw new ApiError(401, 'Unauthorized: Missing or invalid secret.')
     }
 
+    // 2. Parse the token from the request body
+    const body = await req.json()
+    const { accessToken, refreshToken } = body
+
+    if (!accessToken || !refreshToken) {
+      throw new ApiError(400, 'Bad Request: Missing tokens.')
+    }
+
     // 3. Get the singleton instance of the Spotify service
     // FIX: Removed `!spotifyService.isReady()` check.
     // The service might be uninitialized (not ready) because it's waiting for this very token to initialize.
     // This check created a circular dependency. We must allow the token delivery to proceed to bootstrap the SDK.
-    if (!global.spotifyService) {
-      throw new ApiError(503, 'Spotify service is not available.')
-    }
+    const spotifyService = getSpotifyService()
 
     // 4. Directly and reliably update the service with the new token
-    await global.spotifyService.handleTokenUpdate({
-      ...tokenData,
-      provider: 'spotify',
-      sub: '',
-      scope: '',
-      obtainedAt: Date.now(),
-    })
+    await spotifyService.handleTokenUpdate({ accessToken, refreshToken })
     logger.info('Spotify token delivered and processed successfully.')
 
     return NextResponse.json({
