@@ -10,6 +10,7 @@ on:
 jobs:
   rebase:
     runs-on: ubuntu-latest
+    # Rebase all open PRs targeting 'leader' when 'leader' is updated
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
