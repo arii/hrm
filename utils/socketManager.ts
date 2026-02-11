@@ -29,6 +29,7 @@ import { HrmDataStore } from '../lib/hrm/HrmDataStore.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
 import { roundTo, objectFromEntries } from '../lib/utils.js'
+import { isGenericName } from './hrm.js'
 
 let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
@@ -293,14 +294,10 @@ const handleIncomingMessage = (
             Object.entries(message.data)
           )
 
-          // Prevent overwriting a real name with a default "Unknown" name
+          // Prevent overwriting a real name with a default generic name
           if (
-            existingData.name &&
-            !/^(user|new user|unknown|bluetooth hrm)/i.test(
-              existingData.name
-            ) &&
-            updateData.name &&
-            /^(user|new user|unknown|bluetooth hrm)/i.test(updateData.name)
+            !isGenericName(existingData.name) &&
+            isGenericName(updateData.name)
           ) {
             delete updateData.name
           }
