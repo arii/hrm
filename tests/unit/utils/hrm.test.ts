@@ -140,4 +140,48 @@ describe('getActiveHrmData', () => {
     expect(user).toBeDefined()
     expect(user?.isDataStale).toBe(true)
   })
+
+  it('pre-calculates percentage and zone when they are missing', () => {
+    const mockHrm: ConnectedHrmData = {
+      clientId: 'c_new',
+      name: 'Real User',
+      value: 148, // 148/185 = 80% (Zone 4)
+      calories: 0,
+      updatedAt: now,
+      isConnected: true,
+      lastUpdated: now,
+      maxHr: 185, // Default max HR if age is not provided
+    }
+
+    const result = getActiveHrmData([mockHrm], [], now, {
+      includeZeroValues: true,
+    })
+
+    const user = result[0]
+    expect(user.percentage).toBe(80)
+    expect(user.zone).toBe(4)
+  })
+
+  it('respects existing percentage and zone if provided', () => {
+    const mockHrm: ConnectedHrmData = {
+      clientId: 'c_existing',
+      name: 'Existing User',
+      value: 148,
+      calories: 0,
+      updatedAt: now,
+      isConnected: true,
+      lastUpdated: now,
+      maxHr: 185,
+      percentage: 90, // Override
+      zone: 5, // Override
+    }
+
+    const result = getActiveHrmData([mockHrm], [], now, {
+      includeZeroValues: true,
+    })
+
+    const user = result[0]
+    expect(user.percentage).toBe(90)
+    expect(user.zone).toBe(5)
+  })
 })
