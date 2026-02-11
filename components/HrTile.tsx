@@ -11,22 +11,6 @@ import { memo } from 'react'
 import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
 
-// Define the style for the centered overlay
-const overlayStyles = {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 10,
-  borderRadius: 'inherit',
-}
-
 const HrTile = ({
   name,
   bpm,
@@ -49,6 +33,7 @@ const HrTile = ({
     HR_ZONE_VISUAL_CONFIG[0]
 
   const backgroundColor = zoneConfig.color
+  const textColor = zoneConfig.textColor
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -68,6 +53,7 @@ const HrTile = ({
         }, ${percentMax}% of maximum, Zone ${displayZone}: ${zoneConfig.label}`}
         sx={{
           bgcolor: backgroundColor,
+          color: textColor,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -96,7 +82,23 @@ const HrTile = ({
 
         {/* --- Alerting Overlay --- */}
         {isAlerting && (
-          <Box sx={overlayStyles} data-testid="hr-tile-alert-overlay">
+          <Box
+            data-testid="hr-tile-alert-overlay"
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 10,
+              borderRadius: 'inherit',
+            }}
+          >
             <CircularProgress size={30} sx={{ color: 'white' }} />
             <Typography
               variant="caption"
@@ -113,7 +115,6 @@ const HrTile = ({
             variant="h5"
             sx={{
               fontWeight: 900,
-              color: '#FFF',
               textTransform: 'uppercase',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -121,7 +122,7 @@ const HrTile = ({
               px: 2,
             }}
           >
-            {name}
+            {name && !/^(user|new user)$/i.test(name) ? name : ''}
           </Typography>
         </Box>
 
@@ -140,7 +141,6 @@ const HrTile = ({
             sx={{
               fontSize: { xs: '8rem', sm: '12rem', md: '15rem' },
               fontWeight: 950,
-              color: '#FFF',
               lineHeight: 1,
               fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
             }}
@@ -154,14 +154,26 @@ const HrTile = ({
           <Typography
             data-testid="bpm-value"
             variant="h4"
-            sx={{ fontWeight: 800, color: '#FFF' }}
+            sx={{ fontWeight: 800 }}
           >
             {bpm ?? '---'}{' '}
-            <small style={{ fontSize: '1.2rem', opacity: 0.8 }}>BPM</small>
+            <Typography
+              component="span"
+              variant="caption"
+              sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+            >
+              BPM
+            </Typography>
           </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#FFF' }}>
+          <Typography variant="h4" sx={{ fontWeight: 800 }}>
             {Math.floor(calories)}{' '}
-            <small style={{ fontSize: '1.2rem', opacity: 0.8 }}>KCAL</small>
+            <Typography
+              component="span"
+              variant="caption"
+              sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+            >
+              KCAL
+            </Typography>
           </Typography>
         </Box>
 

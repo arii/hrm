@@ -10,58 +10,64 @@ import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 // We no longer need to mock getHrZoneProps as HrTile uses shared config directly.
 
 describe('HrTile', () => {
-  it('renders the correct background color for the Max zone', () => {
+  it('renders the correct background and text color for the Max zone', () => {
     // 95% -> Zone 6
     render(<HrTile name="Test" bpm={190} percentMax={95} zone={6} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[6].color}`
     )
+    expect(card).toHaveStyle(`color: ${HR_ZONE_VISUAL_CONFIG[6].textColor}`)
   })
 
-  it('renders the correct background color for the Peak zone', () => {
+  it('renders the correct background and text color for the Peak zone', () => {
     // 92% -> Zone 5
     render(<HrTile name="Test" bpm={175} percentMax={92} zone={5} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[5].color}`
     )
+    expect(card).toHaveStyle(`color: ${HR_ZONE_VISUAL_CONFIG[5].textColor}`)
   })
 
-  it('renders the correct background color for the Cardio zone', () => {
+  it('renders the correct background and text color for the Cardio zone', () => {
     // 85% -> Zone 4
     render(<HrTile name="Test" bpm={160} percentMax={85} zone={4} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[4].color}`
     )
+    expect(card).toHaveStyle(`color: ${HR_ZONE_VISUAL_CONFIG[4].textColor}`)
   })
 
-  it('renders the correct background color for the Fat Burn zone', () => {
+  it('renders the correct background and text color for the Fat Burn zone', () => {
     // 75% -> Zone 3
     render(<HrTile name="Test" bpm={140} percentMax={75} zone={3} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[3].color}`
     )
+    expect(card).toHaveStyle(`color: ${HR_ZONE_VISUAL_CONFIG[3].textColor}`)
   })
 
-  it('renders the correct background color for the Warm-up zone', () => {
+  it('renders the correct background and text color for the Warm-up zone', () => {
     // 65% -> Zone 2
     render(<HrTile name="Test" bpm={120} percentMax={65} zone={2} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[2].color}`
     )
+    expect(card).toHaveStyle(`color: ${HR_ZONE_VISUAL_CONFIG[2].textColor}`)
   })
 
-  it('renders the correct background color for the Recovery zone', () => {
+  it('renders the correct background and text color for the Recovery zone', () => {
     // 55% -> Zone 1
     render(<HrTile name="Test" bpm={100} percentMax={55} zone={1} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[1].color}`
     )
+    expect(card).toHaveStyle(`color: ${HR_ZONE_VISUAL_CONFIG[1].textColor}`)
   })
 
   it('renders "---" for BPM when the value is null', () => {
@@ -113,5 +119,18 @@ describe('HrTile', () => {
       'aria-label',
       'Heart rate monitor for Test: 150 beats per minute, 80% of maximum, Zone 4: Cardio'
     )
+  })
+
+  it('suppresses generic names in the Identity Tier', () => {
+    const { rerender } = render(
+      <HrTile name="user" bpm={100} percentMax={50} zone={1} />
+    )
+    expect(screen.queryByText(/user/i)).not.toBeInTheDocument()
+
+    rerender(<HrTile name="New User" bpm={100} percentMax={50} zone={1} />)
+    expect(screen.queryByText(/new user/i)).not.toBeInTheDocument()
+
+    rerender(<HrTile name="Jules" bpm={100} percentMax={50} zone={1} />)
+    expect(screen.getByText('Jules')).toBeInTheDocument()
   })
 })
