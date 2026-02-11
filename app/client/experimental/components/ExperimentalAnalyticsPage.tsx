@@ -200,6 +200,8 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [activeSession, totalCaloriesBurned])
 
+  const defaultDate = useMemo(() => new Date(), [])
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
       {view === 'active' && (
@@ -235,6 +237,10 @@ const ExperimentalAnalyticsPage = () => {
               duration={duration}
               calories={summaryData.totalCalories}
               status={status}
+              userName={userSettings.userName || 'Guest User'}
+              date={
+                activeSession ? new Date(activeSession.startTime) : defaultDate
+              }
             />
 
             <CalorieTracker calorieHistory={calorieHistory} />

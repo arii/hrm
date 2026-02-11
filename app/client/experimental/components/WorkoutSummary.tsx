@@ -1,44 +1,174 @@
-// app/client/experimental/components/WorkoutSummary.tsx
 'use client'
-import { Card, CardContent, Typography, Box } from '@mui/material'
-import { formatDuration } from '@/lib/utils'
+
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Chip,
+  Divider,
+  Stack,
+  useTheme,
+  SvgIconProps,
+} from '@mui/material'
+import {
+  AccessTime as TimeIcon,
+  LocalFireDepartment as BurnIcon,
+  Person as PersonIcon,
+} from '@mui/icons-material'
+import { formatDuration, formatDate } from '@/lib/utils'
 
 interface WorkoutSummaryProps {
   duration: number
   calories: number
   status: 'idle' | 'running' | 'paused' | 'finished'
+  userName: string
+  date: Date
+}
+
+interface MetricBlockProps {
+  label: string
+  value: string | number
+  icon: React.ElementType
+  iconColor?: SvgIconProps['color']
+  valueColor?: string
+}
+
+const MetricBlock = ({
+  label,
+  value,
+  icon: Icon,
+  iconColor = 'action',
+  valueColor = 'text.primary',
+}: MetricBlockProps) => (
+  <Box sx={{ textAlign: 'center', flex: 1 }}>
+    <Stack
+      direction="row"
+      justifyContent="center"
+      alignItems="center"
+      gap={1}
+      mb={0.5}
+    >
+      <Icon color={iconColor} fontSize="small" aria-hidden="true" />
+      <Typography variant="subtitle2" color="text.secondary" fontWeight={600}>
+        {label}
+      </Typography>
+    </Stack>
+    <Typography
+      variant="h4"
+      component="p"
+      sx={{
+        color: valueColor,
+        fontWeight: 700,
+      }}
+    >
+      {value}
+    </Typography>
+  </Box>
+)
+
+const STATUS_COLORS: Record<
+  string,
+  'success' | 'warning' | 'primary' | 'default'
+> = {
+  running: 'success',
+  paused: 'warning',
+  finished: 'primary',
+  idle: 'default',
 }
 
 const WorkoutSummary = ({
   duration,
   calories,
   status,
+  userName,
+  date,
 }: WorkoutSummaryProps) => {
+  const theme = useTheme()
+
+  const formattedDate = formatDate(date, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
   return (
-    <Card data-testid="workout-summary">
-      <CardContent>
-        <Typography variant="h5" gutterBottom>
-          Workout Summary
-        </Typography>
-        <Box display="flex" flexWrap="wrap" mx={-1}>
-          <Box width="50%" p={1}>
-            <Typography variant="h6">Status</Typography>
-            <Typography variant="body1">{status}</Typography>
-          </Box>
-          <Box width="50%" p={1}>
-            <Typography variant="h6">Duration</Typography>
-            <Typography variant="body1">
-              {formatDuration(duration, {
-                unit: 'seconds',
-                format: 'HH:MM:SS',
-              })}
+    <Card
+      data-testid="workout-summary"
+      elevation={4}
+      sx={{
+        borderRadius: 3,
+        overflow: 'hidden',
+        border: `1px solid ${theme.palette.divider}`,
+      }}
+    >
+      <Box
+        sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', p: 2 }}
+      >
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Box>
+            <Typography
+              variant="overline"
+              sx={{ opacity: 0.8, letterSpacing: 1 }}
+            >
+              HRM Session
+            </Typography>
+            <Typography
+              variant="h6"
+              fontWeight="bold"
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+            >
+              <PersonIcon fontSize="small" aria-hidden="true" /> {userName}
             </Typography>
           </Box>
-          <Box width="50%" p={1}>
-            <Typography variant="h6">Calories Burned</Typography>
-            <Typography variant="body1">{calories.toFixed(2)}</Typography>
-          </Box>
-        </Box>
+          <Chip
+            label={status.toUpperCase()}
+            color={STATUS_COLORS[status] || 'default'}
+            variant={status === 'running' ? 'filled' : 'outlined'}
+            sx={{
+              fontWeight: 'bold',
+              bgcolor: status === 'running' ? 'white' : 'transparent',
+              color: status === 'running' ? 'primary.main' : 'inherit',
+              borderColor: 'white',
+            }}
+          />
+        </Stack>
+        <Typography
+          variant="caption"
+          sx={{ display: 'block', mt: 1, opacity: 0.9 }}
+        >
+          {formattedDate}
+        </Typography>
+      </Box>
+
+      <CardContent sx={{ pt: 3 }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          divider={<Divider orientation="vertical" flexItem />}
+          spacing={2}
+          justifyContent="space-around"
+        >
+          <MetricBlock
+            label="DURATION"
+            value={formatDuration(duration, {
+              unit: 'seconds',
+              format: 'HH:MM:SS',
+            })}
+            icon={TimeIcon}
+          />
+          <MetricBlock
+            label="CALORIES"
+            value={calories.toFixed(1)}
+            icon={BurnIcon}
+            iconColor="error"
+            valueColor={calories > 0 ? 'error.main' : 'text.primary'}
+          />
+        </Stack>
       </CardContent>
     </Card>
   )
