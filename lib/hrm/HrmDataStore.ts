@@ -23,6 +23,7 @@ interface ClientSession {
     peakHr: number
     minHr: number
   }
+  cachedAugmentedData?: HrmStreamData
 }
 
 const LIVE_WINDOW_SIZE = env.HRM_LIVE_WINDOW_SIZE // 10 minutes at 1Hz (default)
@@ -74,6 +75,7 @@ export class HrmDataStore {
     }
 
     session.latestData = data
+    session.cachedAugmentedData = undefined
 
     // Only update history and stats if we have a valid HR value
     if (data.value > 0) {
@@ -110,15 +112,11 @@ export class HrmDataStore {
     const session = this.sessions.get(clientId)
     if (!session) return null
 
+    const derived = this.getDerivedStats(session.stats)
     return {
       recentHistory: session.liveWindow.toArray(),
       summary: {
-        avgHr:
-          session.stats.count > 0
-            ? Math.round(session.stats.sumHr / session.stats.count)
-            : 0,
-        peakHr: session.stats.peakHr,
-        minHr: session.stats.count > 0 ? session.stats.minHr : 0,
+        ...derived,
         count: session.stats.count,
       },
     }
@@ -148,6 +146,7 @@ export class HrmDataStore {
       session.stats = this.createInitialStats()
       // Reset the current HR value to 0 to prevent UI "ghosting"
       session.latestData.value = 0
+      session.cachedAugmentedData = undefined
     }
   }
 
@@ -168,15 +167,27 @@ export class HrmDataStore {
     stats.minHr = Math.min(stats.minHr, heartRate)
   }
 
-  private mergeStats(session: ClientSession): HrmStreamData {
-    const { latestData, stats } = session
+  private getDerivedStats(stats: ClientSession['stats']) {
+    const hasData = stats.count > 0
     return {
-      ...latestData,
-      sessionStats: {
-        avgHr: stats.count > 0 ? Math.round(stats.sumHr / stats.count) : 0,
-        peakHr: stats.peakHr,
-        minHr: stats.count > 0 ? stats.minHr : 0,
-      },
+      avgHr: hasData ? Math.round(stats.sumHr / stats.count) : 0,
+      peakHr: stats.peakHr,
+      minHr: hasData ? stats.minHr : 0,
     }
+  }
+
+  private mergeStats(session: ClientSession): HrmStreamData {
+    if (session.cachedAugmentedData) {
+      return session.cachedAugmentedData
+    }
+
+    const { latestData, stats } = session
+    const augmented: HrmStreamData = {
+      ...latestData,
+      sessionStats: this.getDerivedStats(stats),
+    }
+
+    session.cachedAugmentedData = augmented
+    return augmented
   }
 }

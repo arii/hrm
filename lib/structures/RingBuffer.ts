@@ -39,13 +39,6 @@ export class RingBuffer<T> {
   }
 
   /**
-   * Returns the maximum capacity of the buffer.
-   */
-  public getCapacity(): number {
-    return this.capacity
-  }
-
-  /**
    * Reconstructs a linear array from the circular buffer,
    * ordered from oldest to newest.
    */
