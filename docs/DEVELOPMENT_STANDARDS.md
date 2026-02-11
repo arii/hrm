@@ -65,6 +65,16 @@ The project uses the `Auto Rebase` workflow to automatically rebase all open pul
 ### Manual Synchronization
 Developers can also manually trigger a rebase on a specific pull request by using the `@gemini-update-pr` command in a PR comment.
 
+### Verifying Rebase Logic
+To manually verify the rebase workflow for a specific PR without waiting for a push to `leader`:
+1. Navigate to the **Actions** tab in GitHub.
+2. Select the **Auto Rebase** workflow.
+3. Click **Run workflow**.
+4. Enter the target **Pull Request number**.
+5. Click **Run workflow**.
+
+This is useful for confirming that a specific branch can be rebased successfully or for forcing an update on a stale PR.
+
 ### Creating Internal Modules
 
 When creating internal modules that only use built-in APIs or existing dependencies, changes to `package.json` or `pnpm-lock.yaml` are **not** required.
