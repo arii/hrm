@@ -64,6 +64,14 @@ The project uses the `Auto Rebase` workflow to automatically rebase all open pul
 
 **Note**: For the `Auto Rebase` workflow to push to protected branches and trigger subsequent CI checks on the rebased commits, a Personal Access Token (PAT) with `repo` scope must be configured as a repository secret named `PAT_TOKEN`.
 
+#### Opting Out of Automated Synchronization
+If a specific Pull Request or branch should NOT be automatically rebased (e.g., during a complex manual refactor or if history rewriting is undesirable for that branch), apply one of the following labels to the PR:
+- `no-rebase`
+- `no-update`
+- `wip`
+
+The `Auto Rebase` workflow is configured to skip any PR containing these labels.
+
 ### Manual Synchronization
 Developers can also manually trigger a rebase on a specific pull request by using the `@gemini-update-pr` command in a PR comment.
 
