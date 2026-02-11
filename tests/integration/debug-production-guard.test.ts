@@ -17,7 +17,6 @@ describe('Debug Production Guard', () => {
     jest.clearAllMocks()
   })
 
-  // Robustly restore NODE_ENV even if tests fail catastrophically
   afterAll(() => {
     process.env.NODE_ENV = originalEnv
   })
