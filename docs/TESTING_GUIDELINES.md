@@ -68,3 +68,24 @@ const outputPath = process.env.SCREENSHOT_PATH || './test-results/screenshots'
 ```
 
 This ensures that the test suite is portable and can be easily configured to run in any environment.
+
+## Environment Helpers
+
+To avoid polluting production code with testing logic, we use centralized helper functions.
+
+### `isTestEnvironment()`
+
+- **Location**: `lib/utils.ts`
+- **Purpose**: Checks if the application is running in a test environment (e.g., during Playwright visual regression tests).
+- **Mechanism**: It checks for the presence of `window.__IS_TEST_ENV__`, which is injected by the test runner.
+- **Usage**: Use this function to conditionally disable animations or other non-deterministic behaviors that cause test flakiness.
+
+```typescript
+import { isTestEnvironment } from '@/lib/utils'
+
+// ...
+
+<PieChart isAnimationActive={!isTestEnvironment()}>
+// ...
+</PieChart>
+```
