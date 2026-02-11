@@ -4,8 +4,8 @@ import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '../utils/logger.js' // Explicit .js extension for ESM build
 import { getAPIURL } from '../utils/urls.js' // Explicit .js extension for ESM build
-import { env } from './env'
-import { refreshSpotifyToken } from './spotify'
+import { env } from './env.js'
+import { refreshSpotifyToken } from './spotify.js'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {

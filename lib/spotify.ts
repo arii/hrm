@@ -1,4 +1,4 @@
-import { env } from './env'
+import { env } from './env.js'
 import logger from '@/utils/logger'
 
 export const SPOTIFY_CONSTANTS = {

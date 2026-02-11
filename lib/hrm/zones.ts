@@ -4,7 +4,7 @@
  * This module is independent of any specific UI framework or theme.
  */
 
-import { HrZoneName } from '../shared/hr-zones'
+import { HrZoneName } from '../shared/hr-zones.js'
 
 export { HrZoneName }
 
