@@ -131,22 +131,24 @@ export default defineConfig({
   ],
 
   // Web Server Configuration
-  webServer: {
-    command:
-      'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
-    url: `${baseURL}/api/health/simple`,
-    timeout: 120 * 1000, // 2 minutes
-    reuseExistingServer: !process.env.CI,
-    env: {
-      PORT: port.toString(),
-      TESTING: 'true',
-      NEXT_PUBLIC_TESTING: 'true',
-      NEXTAUTH_SECRET: 'a-super-long-and-secure-secret-for-ci-tests',
-      NEXTAUTH_URL: baseURL,
-      SPOTIFY_CLIENT_ID: 'test_client_id',
-      SPOTIFY_CLIENT_SECRET: 'test_client_secret',
-    },
-  },
+  webServer: process.env.SKIP_WEBSERVER
+    ? undefined
+    : {
+        command:
+          'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
+        url: `${baseURL}/api/health/simple`,
+        timeout: 120 * 1000, // 2 minutes
+        reuseExistingServer: !process.env.CI,
+        env: {
+          PORT: port.toString(),
+          TESTING: 'true',
+          NEXT_PUBLIC_TESTING: 'true',
+          NEXTAUTH_SECRET: 'a-super-long-and-secure-secret-for-ci-tests',
+          NEXTAUTH_URL: baseURL,
+          SPOTIFY_CLIENT_ID: 'test_client_id',
+          SPOTIFY_CLIENT_SECRET: 'test_client_secret',
+        },
+      },
 
   // Output configuration
   outputDir: 'test-results/',
