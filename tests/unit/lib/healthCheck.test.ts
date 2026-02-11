@@ -8,7 +8,7 @@ import {
   checkWebSocketService,
   checkTimerService,
 } from '../../../lib/healthCheck'
-import { WebSocket } from 'ws'
+import { WebSocket, Event } from 'ws'
 import TabataTimer from '../../../services/tabataTimer'
 
 // Mock the 'ws' module
@@ -87,7 +87,12 @@ describe('Health Check Logic', () => {
     it('should return healthy when WebSocket connection is successful', async () => {
       MockedWebSocket.mockImplementation(function (this: WebSocket) {
         this.close = jest.fn()
-        setTimeout(() => this.onopen && this.onopen({} as any), 50)
+        setTimeout(
+          () =>
+            this.onopen &&
+            this.onopen({ type: 'open', target: this } as unknown as Event),
+          50
+        )
         return this
       })
       const result = await checkWebSocketService()
@@ -98,7 +103,14 @@ describe('Health Check Logic', () => {
       MockedWebSocket.mockImplementation(function (this: WebSocket) {
         this.close = jest.fn()
         setTimeout(
-          () => this.onerror && this.onerror({ error: new Error('Connection failed') } as any),
+          () =>
+            this.onerror &&
+            this.onerror({
+              error: new Error('Connection failed'),
+              type: 'error',
+              target: this,
+              message: 'Connection failed',
+            } as unknown as Event),
           50
         )
         return this
