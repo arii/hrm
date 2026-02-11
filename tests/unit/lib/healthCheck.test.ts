@@ -10,6 +10,7 @@ import {
 } from '../../../lib/healthCheck'
 import { WebSocket, Event } from 'ws'
 import TabataTimer from '../../../services/tabataTimer'
+import { TimerData } from '../../../types/core'
 
 // Mock the 'ws' module
 jest.mock('ws')
@@ -114,10 +115,10 @@ describe('Health Check Logic', () => {
         setTimeout(() => {
           if (this.onerror) {
             const event: Event = {
-                type: 'error',
-                target: this,
-                error: new Error('Connection failed'),
-                message: 'Connection failed'
+              type: 'error',
+              target: this,
+              error: new Error('Connection failed'),
+              message: 'Connection failed',
             }
             this.onerror(event)
           }
@@ -134,7 +135,7 @@ describe('Health Check Logic', () => {
     it('should return healthy when timer service is active', () => {
       // Use Partial to satisfy the type without casting to unknown
       const mockTimer: Partial<TabataTimer> = {
-        getState: jest.fn(() => ({} as any))
+        getState: jest.fn(() => ({}) as unknown as TimerData),
       }
 
       const result = checkTimerService(mockTimer as TabataTimer)
