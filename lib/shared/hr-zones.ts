@@ -3,6 +3,8 @@
  * Shared constants and types for Heart Rate (HR) zones to ensure consistency
  * across different modules (domain logic, UI, etc.).
  */
+import { HR_COLORS } from './colors.js'
+
 export const MAX_HR_DEFAULT = 185
 
 /**
@@ -62,33 +64,45 @@ export const calculateMaxHr = (age?: number | string | null): number => {
  * color: Background color for the zone.
  * textColor: Text color for optimal contrast (forcing specific overrides).
  *
- * NOTE: Colors are hardcoded hex values to maintain server-side compatibility
- * (avoiding MUI theme dependencies in shared logic).
+ * NOTE: Colors are imported from shared constants to maintain consistency
+ * between shared logic and the MUI theme.
  */
 export const HR_ZONE_VISUAL_CONFIG = {
-  6: { color: '#9C27B0', label: HrZoneName.Max, textColor: '#FFFFFF' }, // Purple
+  6: {
+    color: HR_COLORS.ZONE_6_MAX,
+    label: HrZoneName.Max,
+    textColor: HR_COLORS.TEXT_LIGHT,
+  },
   5: {
-    color: '#F44336', // theme.palette.primary.main (Red)
+    color: HR_COLORS.ZONE_5_PEAK,
     label: HrZoneName.Peak,
-    textColor: '#FFFFFF',
+    textColor: HR_COLORS.TEXT_LIGHT,
   },
   4: {
-    color: '#FBC02D', // theme.palette.warning.dark (Amber/Yellow)
+    color: HR_COLORS.ZONE_4_CARDIO,
     label: HrZoneName.Cardio,
-    textColor: '#FFFFFF',
+    textColor: HR_COLORS.TEXT_LIGHT,
   },
   3: {
-    color: '#4CAF50', // theme.palette.success.main (Green)
+    color: HR_COLORS.ZONE_3_FATBURN,
     label: HrZoneName.FatBurn,
-    textColor: '#FFFFFF',
+    textColor: HR_COLORS.TEXT_LIGHT,
   },
   2: {
-    color: '#2196F3', // theme.palette.secondary.main (Blue)
+    color: HR_COLORS.ZONE_2_WARMUP,
     label: HrZoneName.WarmUp,
-    textColor: '#FFFFFF',
+    textColor: HR_COLORS.TEXT_LIGHT,
   },
-  1: { color: '#00ffff', label: HrZoneName.Recovery, textColor: '#000000' }, // Cyan
-  0: { color: '#cccccc', label: HrZoneName.Idle, textColor: '#000000' }, // Grey
+  1: {
+    color: HR_COLORS.ZONE_1_RECOVERY,
+    label: HrZoneName.Recovery,
+    textColor: HR_COLORS.TEXT_DARK,
+  },
+  0: {
+    color: HR_COLORS.ZONE_0_IDLE,
+    label: HrZoneName.Idle,
+    textColor: HR_COLORS.TEXT_DARK,
+  },
 } as const
 
 /**
