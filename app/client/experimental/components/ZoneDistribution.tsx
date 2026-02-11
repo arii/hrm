@@ -1,7 +1,14 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { Card, CardContent, Typography, Box, useTheme, Palette } from '@mui/material'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  useTheme,
+  Palette,
+} from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 import { formatDuration } from '@/lib/utils'
@@ -28,7 +35,9 @@ const ZONE_PRIORITY: Record<HrZoneName, number> = {
   [HrZoneName.Idle]: 9,
 }
 
-const ZONE_COLOR_KEY_MAP: Partial<Record<HrZoneName, keyof Palette['custom']['hrZones']>> = {
+const ZONE_COLOR_KEY_MAP: Partial<
+  Record<HrZoneName, keyof Palette['custom']['hrZones']>
+> = {
   [HrZoneName.Max]: 'max',
   [HrZoneName.Peak]: 'peak',
   [HrZoneName.Cardio]: 'cardio',
@@ -48,31 +57,37 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   // Memoized to prevent recalculation on unrelated renders
   const data = useMemo(() => {
     return Object.entries(timeInZones)
-      .filter(([zone]) => zone !== HrZoneName.NoData && zone !== HrZoneName.Unknown)
+      .filter(
+        ([zone]) => zone !== HrZoneName.NoData && zone !== HrZoneName.Unknown
+      )
       .map(([zone, time]) => {
         const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
         const zoneName = zone as HrZoneName
 
         // Get color from theme
         const colorKey = ZONE_COLOR_KEY_MAP[zoneName]
-        const color = colorKey && theme.palette.custom?.hrZones?.[colorKey]
-          ? theme.palette.custom.hrZones[colorKey]
-          : theme.palette.grey[500]
+        const color =
+          colorKey && theme.palette.custom?.hrZones?.[colorKey]
+            ? theme.palette.custom.hrZones[colorKey]
+            : theme.palette.grey[500]
 
         return {
           name: zoneName,
           value: time,
           percentage: parseFloat(percentage.toFixed(1)),
           // Use standard formatDuration utility (MM:SS)
-          formattedTime: formatDuration(time, { unit: 'seconds', format: 'MM:SS' }),
+          formattedTime: formatDuration(time, {
+            unit: 'seconds',
+            format: 'MM:SS',
+          }),
           color,
         }
       })
       .filter((item) => item.value > 0)
       .sort((a, b) => {
-         const priorityA = ZONE_PRIORITY[a.name] ?? 99
-         const priorityB = ZONE_PRIORITY[b.name] ?? 99
-         return priorityA - priorityB
+        const priorityA = ZONE_PRIORITY[a.name] ?? 99
+        const priorityB = ZONE_PRIORITY[b.name] ?? 99
+        return priorityA - priorityB
       })
   }, [timeInZones, totalDuration, theme])
 
@@ -87,8 +102,12 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
           Heart Rate Zone Distribution
         </Typography>
 
-        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2} alignItems="center">
-
+        <Box
+          display="flex"
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          gap={2}
+          alignItems="center"
+        >
           {/* Chart Section */}
           <Box
             width={{ xs: '100%', sm: '50%' }}
@@ -115,10 +134,17 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                 </Pie>
                 <Tooltip
                   formatter={(value: number | undefined) => [
-                    formatDuration(value ?? 0, { unit: 'seconds', format: 'MM:SS' }),
-                    'Duration'
+                    formatDuration(value ?? 0, {
+                      unit: 'seconds',
+                      format: 'MM:SS',
+                    }),
+                    'Duration',
                   ]}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: theme.shadows[3] }}
+                  contentStyle={{
+                    borderRadius: '8px',
+                    border: 'none',
+                    boxShadow: theme.shadows[3],
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -136,15 +162,25 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
               flexDirection="column"
               sx={{ pointerEvents: 'none' }}
             >
-              <Typography variant="caption" color="textSecondary">Total</Typography>
+              <Typography variant="caption" color="textSecondary">
+                Total
+              </Typography>
               <Typography variant="h6" fontWeight="bold">
-                {formatDuration(totalDuration, { unit: 'seconds', format: 'MM:SS' })}
+                {formatDuration(totalDuration, {
+                  unit: 'seconds',
+                  format: 'MM:SS',
+                })}
               </Typography>
             </Box>
           </Box>
 
           {/* Legend / List Section */}
-          <Box width={{ xs: '100%', sm: '50%' }} display="flex" flexDirection="column" gap={1}>
+          <Box
+            width={{ xs: '100%', sm: '50%' }}
+            display="flex"
+            flexDirection="column"
+            gap={1}
+          >
             {data.map((item) => (
               <Box
                 key={item.name}
@@ -162,12 +198,20 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                     bgcolor={item.color}
                     data-testid="zone-color-indicator"
                   />
-                  <Typography variant="body2" fontWeight={600} color="textPrimary">
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    color="textPrimary"
+                  >
                     {item.name}
                   </Typography>
                 </Box>
                 <Box textAlign="right">
-                  <Typography variant="body2" fontWeight="bold" fontFamily="monospace">
+                  <Typography
+                    variant="body2"
+                    fontWeight="bold"
+                    fontFamily="monospace"
+                  >
                     {item.formattedTime}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
