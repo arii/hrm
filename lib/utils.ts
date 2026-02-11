@@ -96,7 +96,5 @@ export const isTestEnvironment = (): boolean => {
   if (process.env.NODE_ENV === 'test') {
     return true
   }
-  return (
-    typeof window !== 'undefined' && window.__IS_TEST_ENV__ === true
-  )
+  return typeof window !== 'undefined' && window.__IS_TEST_ENV__ === true
 }
