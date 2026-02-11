@@ -1,7 +1,7 @@
 // lib/workout-session.ts
 
-import { isSameDay } from './date'
-import { WorkoutSessionData } from './workout-session-storage'
+import { isSameDay } from './date.js'
+import { WorkoutSessionData } from './workout-session-storage.js'
 
 /**
  * Checks if a workout session is stale (i.e., from a previous day).
