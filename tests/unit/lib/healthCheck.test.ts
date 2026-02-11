@@ -15,10 +15,10 @@ import TabataTimer from '../../../services/tabataTimer'
 jest.mock('ws')
 
 // Mock global fetch
-global.fetch = jest.fn()
+global.fetch = jest.fn() as unknown as typeof fetch
 
 describe('Health Check Logic', () => {
-  const MockedWebSocket = WebSocket as jest.Mock
+  const MockedWebSocket = WebSocket as unknown as jest.Mock
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -27,10 +27,42 @@ describe('Health Check Logic', () => {
   })
 
   describe('checkMemoryUsage', () => {
+    // Store original implementation
+    const originalMemoryUsage = process.memoryUsage
+
+    afterEach(() => {
+      // Restore original implementation after each test
+      process.memoryUsage = originalMemoryUsage
+    })
+
     it('should return healthy if memory usage is within limits', () => {
+      // Mock process.memoryUsage to return 50MB used (well below 512MB limit)
+      process.memoryUsage = jest.fn(() => ({
+        rss: 100 * 1024 * 1024,
+        heapTotal: 50 * 1024 * 1024,
+        heapUsed: 50 * 1024 * 1024,
+        external: 0,
+        arrayBuffers: 0,
+      })) as unknown as () => NodeJS.MemoryUsage
+
       const result = checkMemoryUsage()
       expect(result.healthy).toBe(true)
-      expect(result.details.usedMB).toBeGreaterThan(0)
+      expect(result.details.usedMB).toBe(50)
+    })
+
+    it('should return unhealthy if memory usage exceeds limits', () => {
+      // Mock process.memoryUsage to return 600MB used (above 512MB limit)
+      process.memoryUsage = jest.fn(() => ({
+        rss: 1024 * 1024 * 1024,
+        heapTotal: 600 * 1024 * 1024,
+        heapUsed: 600 * 1024 * 1024,
+        external: 0,
+        arrayBuffers: 0,
+      })) as unknown as () => NodeJS.MemoryUsage
+
+      const result = checkMemoryUsage()
+      expect(result.healthy).toBe(false)
+      expect(result.details.usedMB).toBe(600)
     })
   })
 
@@ -55,7 +87,7 @@ describe('Health Check Logic', () => {
     it('should return healthy when WebSocket connection is successful', async () => {
       MockedWebSocket.mockImplementation(function (this: WebSocket) {
         this.close = jest.fn()
-        setTimeout(() => this.onopen && this.onopen(), 50)
+        setTimeout(() => this.onopen && this.onopen({} as any), 50)
         return this
       })
       const result = await checkWebSocketService()
@@ -66,7 +98,7 @@ describe('Health Check Logic', () => {
       MockedWebSocket.mockImplementation(function (this: WebSocket) {
         this.close = jest.fn()
         setTimeout(
-          () => this.onerror && this.onerror(new Error('Connection failed')),
+          () => this.onerror && this.onerror({ error: new Error('Connection failed') } as any),
           50
         )
         return this
@@ -78,7 +110,7 @@ describe('Health Check Logic', () => {
 
   describe('checkTimerService', () => {
     it('should return healthy when timer service is active', () => {
-      const mockTimer = { getState: () => ({}) } as TabataTimer
+      const mockTimer = { getState: () => ({}) } as unknown as TabataTimer
       const result = checkTimerService(mockTimer)
       expect(result.healthy).toBe(true)
       expect(result.details.instance).toBe('active')
