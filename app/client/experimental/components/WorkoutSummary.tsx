@@ -74,6 +74,7 @@ const STATUS_COLORS: Record<
   running: 'success',
   paused: 'warning',
   finished: 'primary',
+  idle: 'default',
 }
 
 const WorkoutSummary = ({
