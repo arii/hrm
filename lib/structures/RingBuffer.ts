@@ -39,13 +39,6 @@ export class RingBuffer<T> {
   }
 
   /**
-   * Returns the current number of items in the buffer.
-   */
-  public getSize(): number {
-    return this.size
-  }
-
-  /**
    * Returns the maximum capacity of the buffer.
    */
   public getCapacity(): number {

@@ -5,7 +5,6 @@ describe('RingBuffer', () => {
   it('should initialize with given capacity', () => {
     const buffer = new RingBuffer<number>(5)
     expect(buffer.getCapacity()).toBe(5)
-    expect(buffer.getSize()).toBe(0)
   })
 
   it('should throw error for invalid capacity', () => {
@@ -15,18 +14,6 @@ describe('RingBuffer', () => {
     expect(() => new RingBuffer<number>(-1)).toThrow(
       'Capacity must be greater than 0'
     )
-  })
-
-  it('should add items and report size correctly', () => {
-    const buffer = new RingBuffer<number>(3)
-    buffer.push(1)
-    expect(buffer.getSize()).toBe(1)
-    buffer.push(2)
-    expect(buffer.getSize()).toBe(2)
-    buffer.push(3)
-    expect(buffer.getSize()).toBe(3)
-    buffer.push(4)
-    expect(buffer.getSize()).toBe(3)
   })
 
   it('should return items in correct order when not full', () => {
@@ -56,7 +43,6 @@ describe('RingBuffer', () => {
     buffer.push(1)
     buffer.push(2)
     buffer.clear()
-    expect(buffer.getSize()).toBe(0)
     expect(buffer.toArray()).toEqual([])
 
     buffer.push(3)

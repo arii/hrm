@@ -89,7 +89,7 @@ export interface HeartRateDataPoint {
  */
 export interface HrmSessionStats {
   avgHr: number
-  maxHr: number
+  peakHr: number
   minHr: number
 }
 

@@ -20,7 +20,7 @@ interface ClientSession {
   stats: {
     count: number
     sumHr: number
-    maxHr: number
+    peakHr: number
     minHr: number
   }
 }
@@ -68,12 +68,7 @@ export class HrmDataStore {
       session = {
         latestData: data,
         liveWindow: new RingBuffer<HrmDataPoint>(LIVE_WINDOW_SIZE),
-        stats: {
-          count: 0,
-          sumHr: 0,
-          maxHr: 0,
-          minHr: Infinity,
-        },
+        stats: this.createInitialStats(),
       }
       this.sessions.set(data.clientId, session)
     }
@@ -122,7 +117,7 @@ export class HrmDataStore {
           session.stats.count > 0
             ? Math.round(session.stats.sumHr / session.stats.count)
             : 0,
-        maxHr: session.stats.maxHr,
+        peakHr: session.stats.peakHr,
         minHr: session.stats.count > 0 ? session.stats.minHr : 0,
         count: session.stats.count,
       },
@@ -143,19 +138,25 @@ export class HrmDataStore {
   }
 
   /**
-   * Resets both history and statistics for a client session.
+   * Resets history, statistics, and the current value for a client session.
    * @param clientId The client's unique identifier.
    */
   resetSession(clientId: string): void {
     const session = this.sessions.get(clientId)
     if (session) {
       session.liveWindow.clear()
-      session.stats = {
-        count: 0,
-        sumHr: 0,
-        maxHr: 0,
-        minHr: Infinity,
-      }
+      session.stats = this.createInitialStats()
+      // Reset the current HR value to 0 to prevent UI "ghosting"
+      session.latestData.value = 0
+    }
+  }
+
+  private createInitialStats() {
+    return {
+      count: 0,
+      sumHr: 0,
+      peakHr: 0,
+      minHr: Infinity,
     }
   }
 
@@ -163,7 +164,7 @@ export class HrmDataStore {
     const { stats } = session
     stats.count++
     stats.sumHr += heartRate
-    stats.maxHr = Math.max(stats.maxHr, heartRate)
+    stats.peakHr = Math.max(stats.peakHr, heartRate)
     stats.minHr = Math.min(stats.minHr, heartRate)
   }
 
@@ -173,7 +174,7 @@ export class HrmDataStore {
       ...latestData,
       sessionStats: {
         avgHr: stats.count > 0 ? Math.round(stats.sumHr / stats.count) : 0,
-        maxHr: stats.maxHr,
+        peakHr: stats.peakHr,
         minHr: stats.count > 0 ? stats.minHr : 0,
       },
     }

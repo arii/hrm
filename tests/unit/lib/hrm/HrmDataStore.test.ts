@@ -76,7 +76,7 @@ describe('HrmDataStore', () => {
       ...updatedClient,
       sessionStats: {
         avgHr: 90, // (80 + 100) / 2
-        maxHr: 100,
+        peakHr: 100,
         minHr: 80,
       },
     })
@@ -89,7 +89,7 @@ describe('HrmDataStore', () => {
 
     const found = repository.findById('client1')
     expect(found?.sessionStats?.avgHr).toBe(100) // (80+120+100)/3
-    expect(found?.sessionStats?.maxHr).toBe(120)
+    expect(found?.sessionStats?.peakHr).toBe(120)
     expect(found?.sessionStats?.minHr).toBe(80)
   })
 
@@ -108,6 +108,7 @@ describe('HrmDataStore', () => {
       timestamp: 2000,
     })
     expect(snapshot?.summary.avgHr).toBe(85)
+    expect(snapshot?.summary.peakHr).toBe(90)
   })
 
   it('should handle pruneSessionHistory by clearing history but keeping stats', () => {
@@ -121,19 +122,21 @@ describe('HrmDataStore', () => {
     expect(snapshot?.summary.avgHr).toBe(85)
   })
 
-  it('should handle resetSession by clearing both history and stats', () => {
+  it('should handle resetSession by clearing history, stats, and current value', () => {
     repository.save({ ...client1, value: 80 })
     repository.save({ ...client1, value: 90 })
 
     repository.resetSession('client1')
 
     const found = repository.findById('client1')
+    expect(found?.value).toBe(0)
     expect(found?.sessionStats?.avgHr).toBe(0)
-    expect(found?.sessionStats?.count).toBeUndefined() // HrmStreamData.sessionStats doesn't have count
+    expect(found?.sessionStats?.peakHr).toBe(0)
 
     const snapshot = repository.getSnapshot('client1')
     expect(snapshot?.recentHistory).toHaveLength(0)
     expect(snapshot?.summary.avgHr).toBe(0)
     expect(snapshot?.summary.count).toBe(0)
+    expect(snapshot?.summary.peakHr).toBe(0)
   })
 })
