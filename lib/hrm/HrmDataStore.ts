@@ -1,7 +1,9 @@
 // lib/hrm/HrmDataStore.ts
 import { RingBuffer } from '../structures/RingBuffer.js'
-import { HrmStreamData, HrmDataPoint } from '../../types/core.js'
+import { HrmStreamData, HeartRateDataPoint } from '../../types/core.js'
 import { env } from '../env.js'
+
+type HrmDataPoint = Pick<HeartRateDataPoint, 'heartRate' | 'timestamp'>
 
 /**
  * Internal session state for a single HRM client.
@@ -66,7 +68,7 @@ export class HrmDataStore {
           count: 0,
           sumHr: 0,
           maxHr: 0,
-          minHr: 0,
+          minHr: Infinity,
         },
       }
       this.sessions.set(data.clientId, session)
@@ -117,18 +119,18 @@ export class HrmDataStore {
             ? Math.round(session.stats.sumHr / session.stats.count)
             : 0,
         maxHr: session.stats.maxHr,
-        minHr: session.stats.minHr,
+        minHr: session.stats.count > 0 ? session.stats.minHr : 0,
         count: session.stats.count,
       },
     }
   }
 
   /**
-   * Clears history for a client to free up memory,
-   * simulating a "flush" to persistent storage.
+   * Prunes the history buffer for a client to free up memory.
+   * Note: This does not persist data; ensure it is saved elsewhere if needed.
    * @param clientId The client's unique identifier.
    */
-  flushToDisk(clientId: string): void {
+  pruneSessionHistory(clientId: string): void {
     const session = this.sessions.get(clientId)
     if (session) {
       session.liveWindow.clear()
@@ -141,8 +143,7 @@ export class HrmDataStore {
     stats.count++
     stats.sumHr += heartRate
     stats.maxHr = Math.max(stats.maxHr, heartRate)
-    stats.minHr =
-      stats.count === 1 ? heartRate : Math.min(stats.minHr, heartRate)
+    stats.minHr = Math.min(stats.minHr, heartRate)
   }
 
   private mergeStats(session: ClientSession): HrmStreamData {
@@ -151,7 +152,7 @@ export class HrmDataStore {
       ...latestData,
       sessionAvgHr: stats.count > 0 ? Math.round(stats.sumHr / stats.count) : 0,
       sessionMaxHr: stats.maxHr,
-      sessionMinHr: stats.minHr,
+      sessionMinHr: stats.count > 0 ? stats.minHr : 0,
     }
   }
 }

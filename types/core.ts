@@ -85,14 +85,6 @@ export interface HeartRateDataPoint {
 // =================================================================================================
 
 /**
- * Represents a single heart rate measurement for history and stats.
- */
-export interface HrmDataPoint {
-  heartRate: number
-  timestamp: number
-}
-
-/**
  * Represents a single, real-time heart rate data stream from a client.
  */
 export interface HrmStreamData {

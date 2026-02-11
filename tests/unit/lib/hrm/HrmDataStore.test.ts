@@ -108,11 +108,11 @@ describe('HrmDataStore', () => {
     expect(snapshot?.summary.avgHr).toBe(85)
   })
 
-  it('should handle flushToDisk by clearing history but keeping stats', () => {
+  it('should handle pruneSessionHistory by clearing history but keeping stats', () => {
     repository.save({ ...client1, value: 80 })
     repository.save({ ...client1, value: 90 })
 
-    repository.flushToDisk('client1')
+    repository.pruneSessionHistory('client1')
 
     const snapshot = repository.getSnapshot('client1')
     expect(snapshot?.recentHistory).toHaveLength(0)

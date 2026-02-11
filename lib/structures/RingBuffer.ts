@@ -1,8 +1,8 @@
 // lib/structures/RingBuffer.ts
 
 /**
- * A strictly typed, performance-optimized circular buffer.
- * Replaces unbounded arrays to prevent memory growth and OOM risks.
+ * A circular buffer with a fixed capacity.
+ * Overwrites oldest items when full to bound memory usage.
  */
 export class RingBuffer<T> {
   private buffer: Array<T | null>
