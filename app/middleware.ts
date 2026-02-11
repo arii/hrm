@@ -3,6 +3,9 @@ import { withAuth, NextRequestWithAuth } from 'next-auth/middleware'
 import { NextResponse } from 'next/server'
 
 export default withAuth(
+  /**
+   * Middleware to handle authentication and security guards.
+   */
   function middleware(req: NextRequestWithAuth) {
     // SECURITY: Fail-Fast for Debug Routes in Production
     // This prevents exposure of sensitive debug endpoints (e.g., state resets, token dumps)
