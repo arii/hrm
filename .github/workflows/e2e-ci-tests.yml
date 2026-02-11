@@ -11,6 +11,9 @@ permissions:
   issues: write
 
 env:
+  # GH_TOKEN is used for GitHub CLI commands.
+  # Priority: CI_BOT_PAT (automated), ARI_PAT (legacy/user), GITHUB_TOKEN (fallback).
+  # A PAT is required to trigger downstream workflows (e.g., PR squash orchestrator).
   GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
 
 jobs:
