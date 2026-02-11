@@ -40,7 +40,6 @@ async function syncTokenWithBackend(token: JWT) {
         ((token.accessTokenExpires as number) - Date.now()) / 1000
       ),
       scope: token.scope || '', // Ensure scope is preserved in JWT if needed
-      obtainedAt: Date.now(),
     }
     // Only sync if we have valid data
     if (!tokenPayload.access_token || !tokenPayload.refresh_token) return

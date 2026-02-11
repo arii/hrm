@@ -12,15 +12,17 @@ const TokenDeliverySchema = z.object({
   refresh_token: z.string(),
   expires_in: z.number(),
   scope: z.string(),
-  obtainedAt: z.number(),
+  obtainedAt: z.number().optional(),
 })
 
 /**
  * @route POST /api/internal/token-delivery
  * @description Secure internal endpoint for receiving updated Spotify tokens from NextAuth callbacks.
+ * This route provides the necessary tokens for the Spotify service to initialize or update its SDK.
+ * It uses the `getSpotifyService()` singleton accessor, which handles initialization checks.
  *
  * @protection This endpoint is protected by a secret header (`x-internal-token-secret`)
- * defined in `INTERNAL_TOKEN_DELIVERY_SECRET` or `NEXTAUTH_SECRET`.
+ * defined in the `INTERNAL_TOKEN_DELIVERY_SECRET` or `NEXTAUTH_SECRET` environment variables.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -41,7 +43,10 @@ export async function POST(req: NextRequest) {
       throw new ApiError(400, 'Bad Request: Invalid token structure.')
     }
 
-    const tokenData = result.data
+    const tokenData = {
+      ...result.data,
+      obtainedAt: result.data.obtainedAt ?? Date.now(),
+    }
 
     // 3. Get the singleton instance of the Spotify service
     const spotifyService = getSpotifyService()

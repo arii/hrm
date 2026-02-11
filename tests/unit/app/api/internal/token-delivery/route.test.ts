@@ -110,6 +110,30 @@ describe('POST /api/internal/token-delivery', () => {
     )
   })
 
+  it('should default obtainedAt if missing in payload', async () => {
+    const { obtainedAt, ...tokenWithoutObtainedAt } = validTokenData
+    const req = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'x-internal-token-secret': 'test-secret',
+        },
+        body: JSON.stringify(tokenWithoutObtainedAt),
+      }
+    )
+
+    const response = await POST(req)
+    expect(response.status).toBe(200)
+
+    const lastCall = (mockSpotifyService.handleTokenUpdate as jest.Mock).mock
+      .calls[0][0]
+    expect(lastCall.obtainedAt).toBeDefined()
+    expect(typeof lastCall.obtainedAt).toBe('number')
+    // Should be close to current time
+    expect(Math.abs(Date.now() - lastCall.obtainedAt)).toBeLessThan(1000)
+  })
+
   it('should return 503 if service is not initialized', async () => {
     ;(getSpotifyService as jest.Mock).mockImplementationOnce(() => {
       throw new ServiceInitializationError('SpotifyService')
