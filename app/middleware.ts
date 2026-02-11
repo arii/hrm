@@ -40,7 +40,8 @@ export default function middleware(req: NextRequest, event: NextFetchEvent) {
     }
   }
 
-  return (authMiddleware as any)(req, event)
+  // @ts-expect-error: next-auth type mismatch
+  return authMiddleware(req, event)
 }
 
 export const config = {
