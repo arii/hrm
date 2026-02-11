@@ -12,22 +12,6 @@ import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 
-// Centered overlay styles for alerting states
-const OVERLAY_STYLES = {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 10,
-  borderRadius: 'inherit',
-} as const
-
 const HrTile = ({
   name,
   bpm,
@@ -100,7 +84,23 @@ const HrTile = ({
 
         {/* --- Alerting Overlay --- */}
         {isAlerting && (
-          <Box data-testid="hr-tile-alert-overlay" sx={OVERLAY_STYLES}>
+          <Box
+            data-testid="hr-tile-alert-overlay"
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 10,
+              borderRadius: 'inherit',
+            }}
+          >
             <CircularProgress size={30} sx={{ color: 'white' }} />
             <Typography
               variant="caption"
