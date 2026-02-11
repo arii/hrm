@@ -27,6 +27,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Validate Token
+        run: |
+          if [[ -z "${{ secrets.CI_BOT_PAT }}" && -z "${{ secrets.ARI_PAT }}" ]]; then
+            echo "::error::Neither CI_BOT_PAT nor ARI_PAT is set. A PAT is REQUIRED to trigger downstream workflows for E2E testing."
+            exit 1
+          fi
+          echo "✅ Authentic PAT found. Recursive workflow triggers enabled."
+
       - name: Create Test Branch and PR
         id: create_pr
         run: |
@@ -45,6 +53,10 @@ jobs:
           git push origin "$BRANCH_NAME"
           PR_URL=$(gh pr create --title "E2E Test PR" --body "Test PR for E2E testing" --base leader --head "$BRANCH_NAME")
           PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+" | tail -n 1)
+          if [[ -z "$PR_NUMBER" ]]; then
+            echo "::error::Failed to extract PR number from URL: $PR_URL"
+            exit 1
+          fi
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
@@ -94,6 +106,13 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Validate Token
+        run: |
+          if [[ -z "${{ secrets.CI_BOT_PAT }}" && -z "${{ secrets.ARI_PAT }}" ]]; then
+            echo "::error::Neither CI_BOT_PAT nor ARI_PAT is set. A PAT is REQUIRED to trigger downstream workflows for E2E testing."
+            exit 1
+          fi
+
       - name: Create Conflict
         id: create_conflict
         run: |
@@ -136,6 +155,10 @@ jobs:
           # Create a pull request to trigger the conflict resolver
           PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base "$BRANCH_A" --head "$BRANCH_B")
           PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+" | tail -n 1)
+          if [[ -z "$PR_NUMBER" ]]; then
+            echo "::error::Failed to extract PR number from URL: $PR_URL"
+            exit 1
+          fi
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
@@ -189,6 +212,13 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Validate Token
+        run: |
+          if [[ -z "${{ secrets.CI_BOT_PAT }}" && -z "${{ secrets.ARI_PAT }}" ]]; then
+            echo "::error::Neither CI_BOT_PAT nor ARI_PAT is set. A PAT is REQUIRED to trigger downstream workflows for E2E testing."
+            exit 1
+          fi
+
       - name: Create Test Branch and PR
         id: create_pr
         run: |
@@ -207,6 +237,10 @@ jobs:
           git push origin "$BRANCH_NAME"
           PR_URL=$(gh pr create --title "E2E Test PR (rebase)" --body "Test PR for E2E testing (rebase)" --base leader --head "$BRANCH_NAME")
           PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+" | tail -n 1)
+          if [[ -z "$PR_NUMBER" ]]; then
+            echo "::error::Failed to extract PR number from URL: $PR_URL"
+            exit 1
+          fi
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
