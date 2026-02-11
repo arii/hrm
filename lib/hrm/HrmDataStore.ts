@@ -138,6 +138,23 @@ export class HrmDataStore {
     }
   }
 
+  /**
+   * Resets both history and statistics for a client session.
+   * @param clientId The client's unique identifier.
+   */
+  resetSession(clientId: string): void {
+    const session = this.sessions.get(clientId)
+    if (session) {
+      session.liveWindow.clear()
+      session.stats = {
+        count: 0,
+        sumHr: 0,
+        maxHr: 0,
+        minHr: Infinity,
+      }
+    }
+  }
+
   private updateStats(session: ClientSession, heartRate: number): void {
     const { stats } = session
     stats.count++
@@ -150,9 +167,11 @@ export class HrmDataStore {
     const { latestData, stats } = session
     return {
       ...latestData,
-      sessionAvgHr: stats.count > 0 ? Math.round(stats.sumHr / stats.count) : 0,
-      sessionMaxHr: stats.maxHr,
-      sessionMinHr: stats.count > 0 ? stats.minHr : 0,
+      sessionStats: {
+        avgHr: stats.count > 0 ? Math.round(stats.sumHr / stats.count) : 0,
+        maxHr: stats.maxHr,
+        minHr: stats.count > 0 ? stats.minHr : 0,
+      },
     }
   }
 }

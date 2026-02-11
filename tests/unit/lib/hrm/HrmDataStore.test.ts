@@ -74,9 +74,11 @@ describe('HrmDataStore', () => {
     const found = repository.findById('client1')
     expect(found).toMatchObject({
       ...updatedClient,
-      sessionAvgHr: 90, // (80 + 100) / 2
-      sessionMaxHr: 100,
-      sessionMinHr: 80,
+      sessionStats: {
+        avgHr: 90, // (80 + 100) / 2
+        maxHr: 100,
+        minHr: 80,
+      },
     })
   })
 
@@ -86,9 +88,9 @@ describe('HrmDataStore', () => {
     repository.save({ ...client1, value: 100 })
 
     const found = repository.findById('client1')
-    expect(found?.sessionAvgHr).toBe(100) // (80+120+100)/3
-    expect(found?.sessionMaxHr).toBe(120)
-    expect(found?.sessionMinHr).toBe(80)
+    expect(found?.sessionStats?.avgHr).toBe(100) // (80+120+100)/3
+    expect(found?.sessionStats?.maxHr).toBe(120)
+    expect(found?.sessionStats?.minHr).toBe(80)
   })
 
   it('should provide history snapshot', () => {
@@ -117,5 +119,21 @@ describe('HrmDataStore', () => {
     const snapshot = repository.getSnapshot('client1')
     expect(snapshot?.recentHistory).toHaveLength(0)
     expect(snapshot?.summary.avgHr).toBe(85)
+  })
+
+  it('should handle resetSession by clearing both history and stats', () => {
+    repository.save({ ...client1, value: 80 })
+    repository.save({ ...client1, value: 90 })
+
+    repository.resetSession('client1')
+
+    const found = repository.findById('client1')
+    expect(found?.sessionStats?.avgHr).toBe(0)
+    expect(found?.sessionStats?.count).toBeUndefined() // HrmStreamData.sessionStats doesn't have count
+
+    const snapshot = repository.getSnapshot('client1')
+    expect(snapshot?.recentHistory).toHaveLength(0)
+    expect(snapshot?.summary.avgHr).toBe(0)
+    expect(snapshot?.summary.count).toBe(0)
   })
 })

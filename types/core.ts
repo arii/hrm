@@ -85,6 +85,15 @@ export interface HeartRateDataPoint {
 // =================================================================================================
 
 /**
+ * Represents aggregated session statistics for heart rate data.
+ */
+export interface HrmSessionStats {
+  avgHr: number
+  maxHr: number
+  minHr: number
+}
+
+/**
  * Represents a single, real-time heart rate data stream from a client.
  */
 export interface HrmStreamData {
@@ -99,9 +108,7 @@ export interface HrmStreamData {
   weightKg?: number
   updatedAt?: number
   // Session statistics (calculated incrementally)
-  sessionAvgHr?: number
-  sessionMaxHr?: number
-  sessionMinHr?: number
+  sessionStats?: HrmSessionStats
 }
 
 /**
