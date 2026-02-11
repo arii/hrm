@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from 'react'
 import {
   Card,
   CardContent,
@@ -16,12 +17,19 @@ import {
 import { formatDuration } from '@/lib/utils'
 
 interface WorkoutSummaryProps {
-  duration: number // Changed from string to number for raw formatting
+  duration: number
   calories: number
   status: 'idle' | 'running' | 'paused' | 'finished'
   userName?: string
   date?: Date
 }
+
+const STATUS_COLORS = {
+  running: 'success',
+  paused: 'warning',
+  finished: 'primary',
+  idle: 'default',
+} as const
 
 const WorkoutSummary = ({
   duration,
@@ -31,28 +39,22 @@ const WorkoutSummary = ({
   date,
 }: WorkoutSummaryProps) => {
   const theme = useTheme()
+  const [hasMounted, setHasMounted] = useState(false)
 
-  const getStatusColor = (s: string) => {
-    switch (s) {
-      case 'running':
-        return 'success'
-      case 'paused':
-        return 'warning'
-      case 'finished':
-        return 'primary'
-      default:
-        return 'default'
-    }
-  }
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHasMounted(true)
+  }, [])
 
-  const formattedDate = date
-    ? date.toLocaleDateString(undefined, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : 'Today'
+  const formattedDate =
+    hasMounted && date
+      ? date.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+      : 'Today'
 
   return (
     <Card
@@ -64,9 +66,12 @@ const WorkoutSummary = ({
         mt: 2,
       }}
     >
-      {/* Header Section */}
       <Box
-        sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', p: 2 }}
+        sx={{
+          bgcolor: 'primary.main',
+          color: 'primary.contrastText',
+          p: 2,
+        }}
       >
         <Stack
           direction="row"
@@ -90,7 +95,7 @@ const WorkoutSummary = ({
           </Box>
           <Chip
             label={status ? status.toUpperCase() : 'IDLE'}
-            color={getStatusColor(status)}
+            color={STATUS_COLORS[status] || 'default'}
             variant={status === 'running' ? 'filled' : 'outlined'}
             sx={{
               fontWeight: 'bold',
@@ -115,7 +120,6 @@ const WorkoutSummary = ({
           spacing={2}
           justifyContent="space-around"
         >
-          {/* Duration Block */}
           <Box sx={{ textAlign: 'center', flex: 1 }}>
             <Stack
               direction="row"
@@ -141,7 +145,6 @@ const WorkoutSummary = ({
             </Typography>
           </Box>
 
-          {/* Calories Block */}
           <Box sx={{ textAlign: 'center', flex: 1 }}>
             <Stack
               direction="row"

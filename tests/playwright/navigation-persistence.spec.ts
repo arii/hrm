@@ -33,12 +33,10 @@ test.describe('Session Persistence & Navigation', () => {
 
     await expect(page.getByText('RUNNING')).toBeVisible()
 
-    await page.waitForTimeout(3000)
-    const durationText = await page
-      .getByText(/00:00:0/)
-      .first()
-      .textContent()
-    expect(durationText).not.toBe('00:00:00')
+    // Web-first assertion: Wait for the timer to advance past 00:00:00
+    await expect(page.getByText(/00:00:0[1-9]/).first()).toBeVisible({
+      timeout: 10000,
+    })
 
     await page
       .getByRole('link', { name: /navigate to phone controls page/i })
@@ -54,13 +52,10 @@ test.describe('Session Persistence & Navigation', () => {
     await expect(page.getByText('RUNNING')).toBeVisible()
     await expect(page.getByText('Workout Summary')).toBeVisible()
 
-    const returnedDurationText = await page
-      .getByText(/00:00:/)
-      .first()
-      .textContent()
-    expect(returnedDurationText).not.toBe('00:00:00')
+    // Verify timer is still advanced
+    await expect(page.getByText(/00:00:/).first()).not.toHaveText('00:00:00')
 
-    const today = new Date().toLocaleDateString(undefined, { year: 'numeric' })
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric' })
     await expect(page.getByText(today)).toBeVisible()
   })
 })
