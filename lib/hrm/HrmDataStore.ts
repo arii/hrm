@@ -65,7 +65,7 @@ export class HrmDataStore {
           count: 0,
           sumHr: 0,
           maxHr: 0,
-          minHr: Infinity,
+          minHr: 0,
         },
       }
       this.sessions.set(data.clientId, session)
@@ -116,7 +116,7 @@ export class HrmDataStore {
             ? Math.round(session.stats.sumHr / session.stats.count)
             : 0,
         maxHr: session.stats.maxHr,
-        minHr: session.stats.minHr === Infinity ? 0 : session.stats.minHr,
+        minHr: session.stats.minHr,
         count: session.stats.count,
       },
     }
@@ -140,7 +140,8 @@ export class HrmDataStore {
     stats.count++
     stats.sumHr += heartRate
     stats.maxHr = Math.max(stats.maxHr, heartRate)
-    stats.minHr = Math.min(stats.minHr, heartRate)
+    stats.minHr =
+      stats.count === 1 ? heartRate : Math.min(stats.minHr, heartRate)
   }
 
   private mergeStats(session: ClientSession): HrmStreamData {
@@ -149,7 +150,7 @@ export class HrmDataStore {
       ...latestData,
       sessionAvgHr: stats.count > 0 ? Math.round(stats.sumHr / stats.count) : 0,
       sessionMaxHr: stats.maxHr,
-      sessionMinHr: stats.minHr === Infinity ? 0 : stats.minHr,
+      sessionMinHr: stats.minHr,
     }
   }
 }
