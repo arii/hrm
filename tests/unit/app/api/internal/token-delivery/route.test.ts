@@ -5,6 +5,7 @@ import { describe, expect, it, jest, beforeAll, afterAll } from '@jest/globals'
 import { POST } from '@/app/api/internal/token-delivery/route'
 import { NextRequest } from 'next/server'
 import { getSpotifyService } from '@/lib/services'
+import { ServiceInitializationError } from '@/lib/errors'
 
 // Mock services
 jest.mock('@/lib/services', () => ({
@@ -109,6 +110,28 @@ describe('POST /api/internal/token-delivery', () => {
     expect(mockSpotifyService.handleTokenUpdate).toHaveBeenCalledWith(
       validTokenData
     )
+  })
+
+  it('should return 503 if service is not initialized', async () => {
+    ;(getSpotifyService as jest.Mock).mockImplementationOnce(() => {
+      throw new ServiceInitializationError('SpotifyService')
+    })
+
+    const req = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'x-internal-token-secret': 'test-secret',
+        },
+        body: JSON.stringify(validTokenData),
+      }
+    )
+
+    const response = await POST(req)
+    expect(response.status).toBe(503)
+    const body = await response.json()
+    expect(body.error).toContain('not initialized')
   })
 
   it('should return 500 if an unexpected error occurs', async () => {
