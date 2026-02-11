@@ -32,17 +32,17 @@ describe('lib/hrm/zones', () => {
       expect(result.bpm).toBe(110)
     })
 
-    it('should correctly calculate the "Fat Burn" (formerly Warm Up) zone', () => {
+    it('should correctly calculate the "Warm Up" zone', () => {
       // 65% of 200 is 130
       const result = calculateHrZone(130, maxHr)
-      expect(result.zoneName).toBe(HrZoneName.FatBurn)
+      expect(result.zoneName).toBe(HrZoneName.WarmUp)
       expect(result.percentage).toBe(65)
     })
 
-    it('should correctly calculate the "Aerobic" zone', () => {
+    it('should correctly calculate the "Fat Burn" zone', () => {
       // 75% of 200 is 150
       const result = calculateHrZone(150, maxHr)
-      expect(result.zoneName).toBe(HrZoneName.Aerobic)
+      expect(result.zoneName).toBe(HrZoneName.FatBurn)
       expect(result.percentage).toBe(75)
     })
 
@@ -53,10 +53,10 @@ describe('lib/hrm/zones', () => {
       expect(result.percentage).toBe(85)
     })
 
-    it('should correctly calculate the "Peak" zone', () => {
+    it('should correctly calculate the "Max" zone', () => {
       // 95% of 200 is 190
       const result = calculateHrZone(190, maxHr)
-      expect(result.zoneName).toBe(HrZoneName.Peak)
+      expect(result.zoneName).toBe(HrZoneName.Max)
       expect(result.percentage).toBe(95)
     })
 
@@ -69,7 +69,7 @@ describe('lib/hrm/zones', () => {
 
     it('should handle HR values exceeding the maximum', () => {
       const result = calculateHrZone(220, maxHr)
-      expect(result.zoneName).toBe(HrZoneName.Peak)
+      expect(result.zoneName).toBe(HrZoneName.Max)
       // Percentage should be capped at 100
       expect(result.percentage).toBe(100)
       expect(result.bpm).toBe(220)

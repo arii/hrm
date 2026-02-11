@@ -3,6 +3,8 @@
  * Shared constants and types for Heart Rate (HR) zones to ensure consistency
  * across different modules (domain logic, UI, etc.).
  */
+import { HR_COLORS } from '@/lib/shared/colors'
+
 export const MAX_HR_DEFAULT = 185
 
 /**
@@ -26,6 +28,7 @@ export enum HrZoneName {
  * Thresholds for HR zones (percentage of Max HR).
  */
 export const ZONE_THRESHOLDS = {
+  ZONE_6: 95,
   ZONE_5: 90,
   ZONE_4: 80,
   ZONE_3: 70,
@@ -60,14 +63,46 @@ export const calculateMaxHr = (age?: number | string | null): number => {
  * Shared between client (Connect/Mock) and Dashboard (HrTile).
  * color: Background color for the zone.
  * textColor: Text color for optimal contrast (forcing specific overrides).
+ *
+ * NOTE: Colors are imported from shared constants to maintain consistency
+ * between shared logic and the MUI theme.
  */
 export const HR_ZONE_VISUAL_CONFIG = {
-  5: { color: '#ff0000', label: HrZoneName.Peak, textColor: '#FFFFFF' },
-  4: { color: '#ff8000', label: HrZoneName.Cardio, textColor: '#FFFFFF' },
-  3: { color: '#ffff00', label: HrZoneName.Aerobic, textColor: '#FFFFFF' },
-  2: { color: '#00ff00', label: HrZoneName.WarmUp, textColor: '#FFFFFF' },
-  1: { color: '#00ffff', label: HrZoneName.Recovery, textColor: '#000000' },
-  0: { color: '#cccccc', label: HrZoneName.Idle, textColor: '#000000' },
+  6: {
+    color: HR_COLORS.ZONE_6_MAX,
+    label: HrZoneName.Max,
+    textColor: HR_COLORS.TEXT_LIGHT,
+  },
+  5: {
+    color: HR_COLORS.ZONE_5_PEAK,
+    label: HrZoneName.Peak,
+    textColor: HR_COLORS.TEXT_LIGHT,
+  },
+  4: {
+    color: HR_COLORS.ZONE_4_CARDIO,
+    label: HrZoneName.Cardio,
+    textColor: HR_COLORS.TEXT_LIGHT,
+  },
+  3: {
+    color: HR_COLORS.ZONE_3_FATBURN,
+    label: HrZoneName.FatBurn,
+    textColor: HR_COLORS.TEXT_LIGHT,
+  },
+  2: {
+    color: HR_COLORS.ZONE_2_WARMUP,
+    label: HrZoneName.WarmUp,
+    textColor: HR_COLORS.TEXT_LIGHT,
+  },
+  1: {
+    color: HR_COLORS.ZONE_1_RECOVERY,
+    label: HrZoneName.Recovery,
+    textColor: HR_COLORS.TEXT_DARK,
+  },
+  0: {
+    color: HR_COLORS.ZONE_0_IDLE,
+    label: HrZoneName.Idle,
+    textColor: HR_COLORS.TEXT_DARK,
+  },
 } as const
 
 /**
@@ -86,7 +121,8 @@ export const calculateZoneFromMaxHr = (
       : 0
 
   let zone = 0
-  if (percentage >= ZONE_THRESHOLDS.ZONE_5) zone = 5
+  if (percentage >= ZONE_THRESHOLDS.ZONE_6) zone = 6
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_5) zone = 5
   else if (percentage >= ZONE_THRESHOLDS.ZONE_4) zone = 4
   else if (percentage >= ZONE_THRESHOLDS.ZONE_3) zone = 3
   else if (percentage >= ZONE_THRESHOLDS.ZONE_2) zone = 2
@@ -120,6 +156,59 @@ export const getHrZoneLabel = (zone: number): string => {
     'Idle'
   )
 }
+
+/**
+ * Interface for HR zone configuration used in UI components.
+ */
+export interface HeartRateZoneConfig {
+  name: string
+  minPercent: number
+  maxPercent: number
+  color: string
+}
+
+/**
+ * Canonical list of heart rate zones with their percentage ranges and colors.
+ * This is the single source of truth for zone definitions.
+ */
+export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
+  {
+    name: 'Zone 6',
+    minPercent: ZONE_THRESHOLDS.ZONE_6,
+    maxPercent: 100,
+    color: HR_ZONE_VISUAL_CONFIG[6].color,
+  },
+  {
+    name: 'Zone 5',
+    minPercent: ZONE_THRESHOLDS.ZONE_5,
+    maxPercent: ZONE_THRESHOLDS.ZONE_6,
+    color: HR_ZONE_VISUAL_CONFIG[5].color,
+  },
+  {
+    name: 'Zone 4',
+    minPercent: ZONE_THRESHOLDS.ZONE_4,
+    maxPercent: ZONE_THRESHOLDS.ZONE_5,
+    color: HR_ZONE_VISUAL_CONFIG[4].color,
+  },
+  {
+    name: 'Zone 3',
+    minPercent: ZONE_THRESHOLDS.ZONE_3,
+    maxPercent: ZONE_THRESHOLDS.ZONE_4,
+    color: HR_ZONE_VISUAL_CONFIG[3].color,
+  },
+  {
+    name: 'Zone 2',
+    minPercent: ZONE_THRESHOLDS.ZONE_2,
+    maxPercent: ZONE_THRESHOLDS.ZONE_3,
+    color: HR_ZONE_VISUAL_CONFIG[2].color,
+  },
+  {
+    name: 'Zone 1',
+    minPercent: ZONE_THRESHOLDS.ZONE_1,
+    maxPercent: ZONE_THRESHOLDS.ZONE_2,
+    color: HR_ZONE_VISUAL_CONFIG[1].color,
+  },
+]
 
 // Define a type for the return value for clarity
 export type UserHrZones = {

@@ -10,9 +10,19 @@ import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 // We no longer need to mock getHrZoneProps as HrTile uses shared config directly.
 
 describe('HrTile', () => {
+  it('renders the correct background and text color for the Max zone', () => {
+    // 95% -> Zone 6
+    render(<HrTile name="Test" bpm={190} percentMax={95} zone={6} />)
+    const card = screen.getByTestId('hr-tile-card')
+    expect(card).toHaveStyle(
+      `background-color: ${HR_ZONE_VISUAL_CONFIG[6].color}`
+    )
+    expect(card).toHaveStyle(`color: ${HR_ZONE_VISUAL_CONFIG[6].textColor}`)
+  })
+
   it('renders the correct background and text color for the Peak zone', () => {
-    // 95% -> Zone 5
-    render(<HrTile name="Test" bpm={180} percentMax={95} zone={5} />)
+    // 92% -> Zone 5
+    render(<HrTile name="Test" bpm={175} percentMax={92} zone={5} />)
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[5].color}`
@@ -30,7 +40,7 @@ describe('HrTile', () => {
     expect(card).toHaveStyle(`color: ${HR_ZONE_VISUAL_CONFIG[4].textColor}`)
   })
 
-  it('renders the correct background and text color for the Aerobic (formerly Fat Burn) zone', () => {
+  it('renders the correct background and text color for the Fat Burn zone', () => {
     // 75% -> Zone 3
     render(<HrTile name="Test" bpm={140} percentMax={75} zone={3} />)
     const card = screen.getByTestId('hr-tile-card')
@@ -89,12 +99,11 @@ describe('HrTile', () => {
   })
 
   it('displays the correct zone information when zone prop is provided', () => {
-    render(<HrTile name="Test" bpm={180} percentMax={95} zone={5} />)
-    expect(screen.getByText(/ZONE 5: PEAK/i)).toBeInTheDocument()
+    render(<HrTile name="Test" bpm={190} percentMax={95} zone={6} />)
+    expect(screen.getByText(/ZONE 6: MAX/i)).toBeInTheDocument()
     const card = screen.getByTestId('hr-tile-card')
-    // Color should match zoneConfig[5].color = '#ff0000'
     expect(card).toHaveStyle(
-      `background-color: ${HR_ZONE_VISUAL_CONFIG[5].color}`
+      `background-color: ${HR_ZONE_VISUAL_CONFIG[6].color}`
     )
   })
 

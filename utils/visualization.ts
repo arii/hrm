@@ -3,13 +3,13 @@
  * Utility functions to map numerical and state data to MUI aesthetic properties.
  * This ensures clean separation of business logic from React component rendering.
  */
-import { TimerData } from '../types/websocket'
-import { WorkoutData } from '../types'
-import { WorkoutItem } from '../types/workout'
+import { TimerData } from '@/types/websocket'
+import { WorkoutData } from '@/types/index'
+import { WorkoutItem } from '@/types/workout'
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
-import theme from '../lib/theme'
-import { calculateHrZone } from '../lib/hrm/zones'
-import { HrZoneName } from '../lib/shared/hr-zones'
+import theme from '@/lib/theme'
+import { calculateHrZone } from '@/lib/hrm/zones'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 // Define types for MUI color props
 type MuiColor =
@@ -44,29 +44,30 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
     bgColor: '#00ffff',
   },
   [HrZoneName.WarmUp]: {
-    color: 'text-green-400',
-    progressColor: '#00ff00',
-    bgColor: '#00ff00',
-  },
-  [HrZoneName.Aerobic]: {
-    color: 'text-yellow-400',
-    progressColor: '#ffff00',
-    bgColor: '#ffff00',
-  },
-  [HrZoneName.Cardio]: {
-    color: 'text-orange-400',
-    progressColor: '#ff8000',
-    bgColor: '#ff8000',
-  },
-  [HrZoneName.Peak]: {
-    color: 'text-red-500',
-    progressColor: '#ff0000',
-    bgColor: '#ff0000',
+    color: 'text-blue-400',
+    progressColor: theme.palette.secondary.main,
+    bgColor: theme.palette.secondary.main,
   },
   [HrZoneName.FatBurn]: {
     color: 'text-green-500',
     progressColor: theme.palette.success.main,
     bgColor: theme.palette.success.main,
+  },
+  [HrZoneName.Aerobic]: {
+    // Aerobic is an alias for Fat Burn (Zone 3)
+    color: 'text-green-500',
+    progressColor: theme.palette.success.main,
+    bgColor: theme.palette.success.main,
+  },
+  [HrZoneName.Cardio]: {
+    color: 'text-yellow-500',
+    progressColor: theme.palette.warning.dark,
+    bgColor: theme.palette.warning.dark,
+  },
+  [HrZoneName.Peak]: {
+    color: 'text-red-500',
+    progressColor: theme.palette.primary.main,
+    bgColor: theme.palette.primary.main,
   },
   [HrZoneName.Max]: {
     color: 'text-purple-600',
@@ -83,16 +84,6 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
     progressColor: '#9ca3af',
     bgColor: '#9ca3af',
   },
-}
-
-// Zone color lookup for easy access (zone 1-5)
-export const ZONE_COLORS = {
-  grey: '#9E9E9E', // Below zone 1
-  blue: theme.palette.secondary.main, // Zone 1: Warm-up
-  green: theme.palette.success.main, // Zone 2: Fat Burn
-  yellow: theme.palette.warning.main, // Zone 3: Cardio
-  red: theme.palette.primary.main, // Zone 4: Peak
-  purple: '#9C27B0', // Zone 5: Max
 }
 
 export interface HrZoneProps {

@@ -8,11 +8,11 @@ import {
   HrZoneName,
   calculateZoneFromMaxHr,
   getHrZoneLabel,
-} from '../shared/hr-zones'
+} from '../shared/hr-zones.js'
 
 export { HrZoneName }
 
-import { HrZone } from '../../types/heart-rate'
+import { HrZone } from '../../types/heart-rate.js'
 
 /**
  * Calculates the current heart rate zone, and percentage of max HR.
@@ -36,11 +36,8 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
 
   const { percentage, zone } = calculateZoneFromMaxHr(currentHr, maxHr)
 
-  // Legacy mapping to maintain backward compatibility for systems expecting "Fat Burn"
-  let zoneName = getHrZoneLabel(zone) as HrZoneName
-  if (zone === 2) {
-    zoneName = HrZoneName.FatBurn
-  }
+  // Canonical mapping from shared HR zones
+  const zoneName = getHrZoneLabel(zone) as HrZoneName
 
   return {
     zoneName,
