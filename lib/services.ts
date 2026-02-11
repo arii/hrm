@@ -1,45 +1,23 @@
 import { SpotifyPollingService } from '@/services/spotifyPolling'
 import { TabataTimer } from '@/services/tabataTimer'
 import { Broadcaster } from '@/lib/websocket'
-import { SpotifyService } from '@/types/interfaces'
-import { ServiceInitializationError } from '@/lib/errors'
 
 export interface AppServices {
   tabataService: TabataTimer
-  spotifyService: SpotifyService
+  spotifyService: SpotifyPollingService
   isSpotifyInitialized: boolean
 }
 
-const createNoOpSpotifyService = (): SpotifyService => ({
-  handleCommand: () => {},
-  stopPolling: () => {},
-  startPolling: () => {},
-  getState: () => ({
-    trackName: 'Service Error',
-    artist: '',
-    isPlaying: false,
-    trackId: '',
-    albumName: '',
-    albumArtUrl: '',
-    devices: [],
-    volume: 0,
-    isMuted: false,
-  }),
-  isReady: () => false,
-  forcePollAndBroadcast: () => Promise.resolve(),
-  handleTokenUpdate: () => Promise.resolve(),
-  cleanup: () => {},
-})
-
 // Ensures singleton persistence across Next.js compilation boundaries
 const globalWithSpotify = global as typeof globalThis & {
-  spotifyServiceInstance?: SpotifyService
+  spotifyServiceInstance?: SpotifyPollingService
 }
 
-export const getSpotifyService = (): SpotifyService => {
+export const getSpotifyService = (): SpotifyPollingService => {
   const instance = globalWithSpotify.spotifyServiceInstance
   if (!instance) {
-    throw new ServiceInitializationError('SpotifyService')
+    // This should technically never happen if createServices is called at startup
+    throw new Error('SpotifyService singleton not initialized')
   }
   return instance
 }
@@ -48,15 +26,15 @@ export async function createServices(
   broadcast: Broadcaster
 ): Promise<AppServices> {
   const tabataService = new TabataTimer(broadcast)
-  let spotifyService: SpotifyService
-  let isSpotifyInitialized = true
+  const spotifyService = new SpotifyPollingService(broadcast)
+  let isSpotifyInitialized = false
 
   try {
-    spotifyService = await SpotifyPollingService.create(broadcast)
+    await spotifyService.initializeSdk()
+    spotifyService.startPolling()
+    isSpotifyInitialized = true
   } catch (e) {
-    console.error('SpotifyPolling initialization failed:', e)
-    isSpotifyInitialized = false
-    spotifyService = createNoOpSpotifyService()
+    console.warn('SpotifyPolling initialization paused (waiting for token):', e)
   }
 
   globalWithSpotify.spotifyServiceInstance = spotifyService

@@ -43,7 +43,7 @@ export class SpotifyPollingService implements SpotifyService {
 
   private sdk: SafeSpotifyApi | null = null
 
-  private constructor(broadcastUpdate: (message: ServerMessage) => void) {
+  constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
     logger.debug('Spotify Polling Service Initialized.')
 
@@ -103,7 +103,12 @@ export class SpotifyPollingService implements SpotifyService {
     broadcastUpdate: (message: ServerMessage) => void
   ): Promise<SpotifyPollingService> {
     const instance = new SpotifyPollingService(broadcastUpdate)
-    await instance.initializeSdk()
+    try {
+      await instance.initializeSdk()
+    } catch (e) {
+      logger.warn('Initial Spotify SDK bootstrap failed:', e)
+    }
+
     instance.tokenRefreshInterval = setInterval(
       () => instance.checkAndRefreshSdkToken(),
       1000 * 60 * 5
@@ -111,7 +116,7 @@ export class SpotifyPollingService implements SpotifyService {
     return instance
   }
 
-  private async initializeSdk() {
+  public async initializeSdk() {
     const token = await this.tokenManager.getValidAccessToken()
     if (token) {
       const sdkToken = this.tokenManager.getSdkAccessToken()

@@ -1,4 +1,4 @@
-import { ApiError, ServiceInitializationError } from '@/lib/errors'
+import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
 import { getSpotifyService } from '@/lib/services'
@@ -49,13 +49,6 @@ export async function POST(req: NextRequest) {
         { error: err.message },
         { status: err.statusCode }
       )
-    }
-
-    if (err instanceof ServiceInitializationError) {
-      logger.warn(
-        `Service Initialization Error in token-delivery: ${err.message}`
-      )
-      return NextResponse.json({ error: err.message }, { status: 503 })
     }
 
     logger.error({ err }, 'Unhandled error in token-delivery')

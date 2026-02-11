@@ -5,7 +5,6 @@ import { describe, expect, it, jest } from '@jest/globals'
 import { POST } from '@/app/api/internal/token-delivery/route'
 import { NextRequest } from 'next/server'
 import { getSpotifyService } from '@/lib/services'
-import { ServiceInitializationError } from '@/lib/errors'
 
 // Mock services
 jest.mock('@/lib/services', () => ({
@@ -134,9 +133,9 @@ describe('POST /api/internal/token-delivery', () => {
     expect(Math.abs(Date.now() - lastCall.obtainedAt)).toBeLessThan(1000)
   })
 
-  it('should return 503 if service is not initialized', async () => {
+  it('should return 500 if service is not initialized (generic error)', async () => {
     ;(getSpotifyService as jest.Mock).mockImplementationOnce(() => {
-      throw new ServiceInitializationError('SpotifyService')
+      throw new Error('SpotifyService singleton not initialized')
     })
 
     const req = new NextRequest(
@@ -151,9 +150,9 @@ describe('POST /api/internal/token-delivery', () => {
     )
 
     const response = await POST(req)
-    expect(response.status).toBe(503)
+    expect(response.status).toBe(500)
     const body = await response.json()
-    expect(body.error).toContain('not initialized')
+    expect(body).toEqual({ error: 'server_error' })
   })
 
   it('should return 500 if an unexpected error occurs', async () => {
