@@ -70,7 +70,7 @@ const loadState = (): SessionState => {
         // Hydration Fix: Ensure timeInZones exists
         const timeInZones = parsed.timeInZones || initialTimeInZones
 
-        let newState = {
+        const newState = {
           ...initialState,
           ...parsed,
           timeInZones,
@@ -107,20 +107,21 @@ type SessionAction =
   | { type: 'END_WORKOUT'; payload: { now: number } }
   | { type: 'UPDATE_CALORIES'; payload: number }
   | { type: 'HYDRATE'; payload: SessionState }
-  | { type: 'UPDATE_ZONES'; payload: { zone: HrZoneName; delta: number; now: number } }
+  | {
+      type: 'UPDATE_ZONES'
+      payload: { zone: HrZoneName; delta: number; now: number }
+    }
 
 function sessionReducer(
   state: SessionState,
   action: SessionAction
 ): SessionState {
-  let newState = state
   switch (action.type) {
     case 'HYDRATE':
-      newState = action.payload
-      break
+      return action.payload
     case 'START_WORKOUT':
       if (state.status === 'idle' || state.status === 'finished') {
-        newState = {
+        return {
           ...state,
           status: 'running',
           duration: 0,
@@ -134,13 +135,13 @@ function sessionReducer(
           lastActiveTime: action.payload.now,
         }
       }
-      break
+      return state
     case 'RESUME_WORKOUT':
       if (state.status === 'paused') {
         const addedPaused = state.pauseTime
           ? action.payload.now - state.pauseTime
           : 0
-        newState = {
+        return {
           ...state,
           status: 'running',
           totalPaused: state.totalPaused + addedPaused,
@@ -148,29 +149,26 @@ function sessionReducer(
           lastActiveTime: action.payload.now,
         }
       }
-      break
+      return state
     case 'PAUSE_WORKOUT':
       if (state.status === 'running') {
-        newState = { ...state, status: 'paused', pauseTime: action.payload.now }
+        return { ...state, status: 'paused', pauseTime: action.payload.now }
       }
-      break
+      return state
     case 'END_WORKOUT':
-      newState = { ...state, status: 'finished' }
-      break
+      return { ...state, status: 'finished' }
     case 'TICK':
-      newState = {
+      return {
         ...state,
         duration: action.payload.duration,
-        lastActiveTime: action.payload.now
+        lastActiveTime: action.payload.now,
       }
-      break
     case 'UPDATE_CALORIES':
-      newState = { ...state, calories: action.payload }
-      break
+      return { ...state, calories: action.payload }
     case 'UPDATE_ZONES':
       if (state.status === 'running') {
         const { zone, delta } = action.payload
-        newState = {
+        return {
           ...state,
           timeInZones: {
             ...state.timeInZones,
@@ -179,13 +177,12 @@ function sessionReducer(
           lastActiveTime: action.payload.now,
         }
       }
-      break
+      return state
     case 'RESET':
-      newState = initialState
-      break
+      return initialState
+    default:
+      return state
   }
-
-  return newState
 }
 
 interface WorkoutSessionOptions {
@@ -462,7 +459,7 @@ export const useWorkoutSession = ({
         const maxHr = 220 - userAge // Simple estimate or pass from props
         const { zoneName } = calculateHrZone(hr, maxHr)
 
-        const prevTime = lastHrTime.current || (now - 1000)
+        const prevTime = lastHrTime.current || now - 1000
         const delta = Math.max(0, (now - prevTime) / 1000)
         lastHrTime.current = now
 
@@ -473,7 +470,10 @@ export const useWorkoutSession = ({
         pendingUIBuffer.current.push(point)
 
         // 4. Update State (Zones)
-        dispatch({ type: 'UPDATE_ZONES', payload: { zone: zoneName, delta, now } })
+        dispatch({
+          type: 'UPDATE_ZONES',
+          payload: { zone: zoneName, delta, now },
+        })
 
         // 5. Throttled UI update (every 1 second)
         if (now - lastHistoryUpdate.current > 1000) {
