@@ -19,7 +19,7 @@ const waitForPort = async (
       verbose: false, // Set to true for debugging flaky tests
     })
   } catch (error) {
-    // Re-throw a more informative error, including the stack trace
+    // Re-throw with port context and stack trace
     const err = error as Error
     throw new Error(
       `Timeout waiting for port ${port}. Error: ${err.message}\nStack: ${err.stack}`
@@ -101,7 +101,7 @@ test.describe('Infrastructure & Scripts', () => {
   })
 
   // 4. PRODUCTION SCRIPT TEST
-  // Runs the exact shell script used in production (start-production.sh).
+  // Verifies the production shell script (start-production.sh).
   test('start-production.sh should start successfully', async () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 4) // Increased for CI stability
 

@@ -12,7 +12,7 @@ import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 
-// Define the style for the centered overlay as a constant to avoid recreation
+// Centered overlay styles for alerting states
 const OVERLAY_STYLES = {
   position: 'absolute',
   top: 0,
