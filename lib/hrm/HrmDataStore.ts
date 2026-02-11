@@ -1,6 +1,7 @@
 // lib/hrm/HrmDataStore.ts
 import { RingBuffer } from '../structures/RingBuffer.js'
 import { HrmStreamData, HrmDataPoint } from '../../types/core.js'
+import { env } from '../env.js'
 
 /**
  * Internal session state for a single HRM client.
@@ -18,7 +19,7 @@ interface ClientSession {
   }
 }
 
-const LIVE_WINDOW_SIZE = 600 // 10 minutes at 1Hz
+const LIVE_WINDOW_SIZE = env.HRM_LIVE_WINDOW_SIZE // 10 minutes at 1Hz (default)
 
 /**
  * DataStore for managing HRM client data.
