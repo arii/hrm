@@ -28,12 +28,14 @@ jobs:
           fetch-depth: 0
 
       - name: Validate Token
+        env:
+          CI_BOT_PAT: ${{ secrets.CI_BOT_PAT }}
+          ARI_PAT: ${{ secrets.ARI_PAT }}
         run: |
-          if [[ -z "${{ secrets.CI_BOT_PAT }}" && -z "${{ secrets.ARI_PAT }}" ]]; then
+          if [[ -z "$CI_BOT_PAT" && -z "$ARI_PAT" ]]; then
             echo "::error::Neither CI_BOT_PAT nor ARI_PAT is set. A PAT is REQUIRED to trigger downstream workflows for E2E testing."
             exit 1
           fi
-          echo "✅ Authentic PAT found. Recursive workflow triggers enabled."
 
       - name: Create Test Branch and PR
         id: create_pr
@@ -107,8 +109,11 @@ jobs:
           fetch-depth: 0
 
       - name: Validate Token
+        env:
+          CI_BOT_PAT: ${{ secrets.CI_BOT_PAT }}
+          ARI_PAT: ${{ secrets.ARI_PAT }}
         run: |
-          if [[ -z "${{ secrets.CI_BOT_PAT }}" && -z "${{ secrets.ARI_PAT }}" ]]; then
+          if [[ -z "$CI_BOT_PAT" && -z "$ARI_PAT" ]]; then
             echo "::error::Neither CI_BOT_PAT nor ARI_PAT is set. A PAT is REQUIRED to trigger downstream workflows for E2E testing."
             exit 1
           fi
@@ -213,8 +218,11 @@ jobs:
           fetch-depth: 0
 
       - name: Validate Token
+        env:
+          CI_BOT_PAT: ${{ secrets.CI_BOT_PAT }}
+          ARI_PAT: ${{ secrets.ARI_PAT }}
         run: |
-          if [[ -z "${{ secrets.CI_BOT_PAT }}" && -z "${{ secrets.ARI_PAT }}" ]]; then
+          if [[ -z "$CI_BOT_PAT" && -z "$ARI_PAT" ]]; then
             echo "::error::Neither CI_BOT_PAT nor ARI_PAT is set. A PAT is REQUIRED to trigger downstream workflows for E2E testing."
             exit 1
           fi
