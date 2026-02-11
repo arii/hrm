@@ -273,7 +273,7 @@ jobs:
   update-pr-on-comment:
     if: needs.comment-router.outputs.is_update_pr == 'true'
     needs: [comment-router]
-    uses: ./.github/workflows/pr-enrichment.yml
+    uses: ./.github/workflows/auto-rebase.yml
     with:
       pr_number: ${{ github.event.issue.number }}
     secrets: inherit

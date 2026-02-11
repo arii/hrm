@@ -6,12 +6,22 @@ on:
       - leader
   # Allows manual triggering from the Actions tab
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull Request number to rebase (optional, if omitted all PRs are rebased)'
+        required: false
+  # Allows calling from other workflows
+  workflow_call:
+    inputs:
+      pr_number:
+        description: 'Pull Request number to rebase'
+        required: false
+        type: string
 
 jobs:
   rebase:
     runs-on: ubuntu-latest
-    # Skip this job if the push is to leader itself (only rebase PRs targeting leader)
-    if: github.ref != 'refs/heads/leader'
+    # Removed the incorrect 'if: github.ref != ...' which prevented it from running on pushes to leader
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,21 +30,22 @@ jobs:
 
       - name: Validate PAT Token
         run: |
-          if [ -z "${{ secrets.PAT_TOKEN }}" ]; then
-            echo "::warning::PAT_TOKEN secret is not configured. Auto-rebase will not work."
-            echo "Please configure a Personal Access Token (PAT) with 'repo' scope in repository secrets."
-            exit 0
+          if [ -z "${{ secrets.PAT_TOKEN }}" ] && [ -z "${{ secrets.ARI_PAT }}" ]; then
+            echo "::warning::Neither PAT_TOKEN nor ARI_PAT secrets are configured. Auto-rebase might fail for protected branches."
           else
-            echo "::notice::PAT_TOKEN is configured"
+            echo "::notice::PAT is configured"
           fi
 
       - name: Rebase PRs
         uses: peter-evans/rebase@v4
         with:
-          token: ${{ secrets.PAT_TOKEN }} # A PAT with 'repo' scope is required to allow the action to push to protected branches and trigger CI.
+          token: ${{ secrets.PAT_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           base: leader
+          # Rebase a specific PR if pr_number is provided, otherwise rebase all open PRs targeting leader
+          pull-request-number: ${{ inputs.pr_number || github.event.inputs.pr_number }}
           # "Intelligent" behavior: Exclude branches with specific labels (e.g., if you are in the middle of a complex refactor)
           exclude-labels: |
             no-rebase
             wip
+            no-update
         continue-on-error: true

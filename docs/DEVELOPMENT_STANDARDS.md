@@ -55,6 +55,16 @@ Knip is configured in the `knip.ts` file in the root of the project. This file d
 - **Breaking Changes**: Document any breaking changes and include migration steps.
 - **Testing**: Verify the application builds and all tests pass with the new dependencies.
 
+## Branch Synchronization Strategy
+
+To maintain a clean and linear commit history, this project uses **Rebase** as the preferred strategy for synchronizing feature branches with the `leader` branch.
+
+### Automated Synchronization
+The project uses the `Auto Rebase` workflow to automatically rebase all open pull requests whenever new changes are pushed to the `leader` branch. This ensures that PRs are always up-to-date and reduces the likelihood of complex merge conflicts at the end of a feature's development.
+
+### Manual Synchronization
+Developers can also manually trigger a rebase on a specific pull request by using the `@gemini-update-pr` command in a PR comment.
+
 ### Creating Internal Modules
 
 When creating internal modules that only use built-in APIs or existing dependencies, changes to `package.json` or `pnpm-lock.yaml` are **not** required.
