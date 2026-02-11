@@ -7,17 +7,15 @@ export default withAuth(
    * Middleware to handle authentication and security guards.
    */
   function middleware(req: NextRequestWithAuth) {
-    // SECURITY: Fail-Fast for Debug Routes in Production
-    // This prevents exposure of sensitive debug endpoints (e.g., state resets, token dumps)
-    // in production environments, as per the "Quality & Security First" principle.
-    // Rejects requests to /api/debug/* in production mode.
-    if (req.nextUrl.pathname.startsWith('/api/debug')) {
-      if (process.env.NODE_ENV === 'production') {
-        return NextResponse.json(
-          { error: 'Endpoint unavailable in production' },
-          { status: 404 }
-        )
-      }
+    // SECURITY: Block debug endpoints in production to prevent state resets or token leaks.
+    if (
+      process.env.NODE_ENV === 'production' &&
+      req.nextUrl.pathname.startsWith('/api/debug')
+    ) {
+      return NextResponse.json(
+        { error: 'Endpoint unavailable in production' },
+        { status: 404 }
+      )
     }
 
     // If the user is being redirected to a page with an auth error,
