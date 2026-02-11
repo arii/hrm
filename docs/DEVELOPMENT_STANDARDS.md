@@ -60,9 +60,9 @@ Knip is configured in the `knip.ts` file in the root of the project. This file d
 To maintain a clean and linear commit history, this project uses **Rebase** as the preferred strategy for synchronizing feature branches with the `leader` branch.
 
 ### Automated Synchronization
-The project uses the `Auto Rebase` workflow to automatically rebase all open pull requests whenever new changes are pushed to the `leader` branch. This ensures that PRs are always up-to-date and reduces the likelihood of complex merge conflicts at the end of a feature's development.
+The project uses the `Auto-rebase` workflow to automatically rebase all open pull requests whenever new changes are pushed to the `leader` branch. This ensures that PRs are always up-to-date and reduces the likelihood of complex merge conflicts at the end of a feature's development.
 
-**Note**: For the `Auto Rebase` workflow to push to protected branches and trigger subsequent CI checks on the rebased commits, a Personal Access Token (PAT) with `repo` scope must be configured. The workflow is configured to check for the following secrets in order of preference:
+**Note**: For the `Auto-rebase` workflow to push to protected branches and trigger subsequent CI checks on the rebased commits, a Personal Access Token (PAT) with `repo` scope must be configured. The workflow is configured to check for the following secrets in order of preference:
 1. `PAT_TOKEN` (Primary recommendation)
 2. `ARI_PAT` (Supported fallback)
 3. `GITHUB_TOKEN` (Default fallback; **Note**: This token cannot trigger subsequent CI checks and may fail on protected branches).
@@ -73,7 +73,7 @@ If a specific Pull Request or branch should NOT be automatically rebased (e.g., 
 - `no-update`
 - `wip`
 
-The `Auto Rebase` workflow is configured to skip any PR containing these labels.
+The `Auto-rebase` workflow is configured to skip any PR containing these labels.
 
 ### Manual Synchronization
 Developers can also manually trigger a rebase on a specific pull request by using the `@gemini-update-pr` command in a PR comment.
@@ -81,7 +81,7 @@ Developers can also manually trigger a rebase on a specific pull request by usin
 ### Verifying Rebase Logic
 To manually verify the rebase workflow for a specific PR without waiting for a push to `leader`:
 1. Navigate to the **Actions** tab in GitHub.
-2. Select the **Auto Rebase** workflow.
+2. Select the **Auto-rebase** workflow.
 3. Click **Run workflow**.
 4. Enter the target **Pull Request number**.
 5. Click **Run workflow**.
