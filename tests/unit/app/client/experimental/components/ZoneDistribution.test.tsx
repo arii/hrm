@@ -7,7 +7,6 @@ import { ThemeProvider } from '@mui/material/styles'
 import theme from '@/theme/theme'
 import ZoneDistribution from '@/app/client/experimental/components/ZoneDistribution'
 import { HrZoneName } from '@/lib/shared/hr-zones'
-import { HEART_RATE_ZONES } from '@/utils/constants'
 
 // Mock recharts components
 jest.mock('recharts', () => ({
@@ -82,15 +81,15 @@ describe('ZoneDistribution', () => {
     )
 
     const warmUpRow = getByTestId(`zone-row-${HrZoneName.WarmUp}`)
-    expect(within(warmUpRow).getByText('1:00')).toBeInTheDocument()
+    expect(within(warmUpRow).getByText('01:00')).toBeInTheDocument()
     expect(within(warmUpRow).getByText(/60%/)).toBeInTheDocument()
 
     const fatBurnRow = getByTestId(`zone-row-${HrZoneName.FatBurn}`)
-    expect(within(fatBurnRow).getByText('0:30')).toBeInTheDocument()
+    expect(within(fatBurnRow).getByText('00:30')).toBeInTheDocument()
     expect(within(fatBurnRow).getByText(/30%/)).toBeInTheDocument()
 
     const cardioRow = getByTestId(`zone-row-${HrZoneName.Cardio}`)
-    expect(within(cardioRow).getByText('0:10')).toBeInTheDocument()
+    expect(within(cardioRow).getByText('00:10')).toBeInTheDocument()
     expect(within(cardioRow).getByText(/10%/)).toBeInTheDocument()
   })
 
@@ -133,61 +132,55 @@ describe('ZoneDistribution', () => {
       </ThemeProvider>
     )
     const cardioRow = getByTestId(`zone-row-${HrZoneName.Cardio}`)
-    expect(within(cardioRow).getByText('2:00')).toBeInTheDocument()
+    expect(within(cardioRow).getByText('02:00')).toBeInTheDocument()
     expect(within(cardioRow).getByText(/0%/)).toBeInTheDocument()
   })
 
-  it('uses correct colors for each zone', () => {
+  it('uses correct colors for each zone from the theme', () => {
     const timeInZones = {
       [HrZoneName.WarmUp]: 10,
       [HrZoneName.FatBurn]: 10,
       [HrZoneName.Cardio]: 10,
       [HrZoneName.Peak]: 10,
       [HrZoneName.Max]: 10,
-    } as unknown as Record<HrZoneName, number>
-
+      [HrZoneName.NoData]: 0,
+      [HrZoneName.Unknown]: 0,
+    }
     const { getByTestId } = render(
       <ThemeProvider theme={theme}>
         <ZoneDistribution timeInZones={timeInZones} totalDuration={50} />
       </ThemeProvider>
     )
 
-    // Expected colors based on the user's mapping
-    const expectedColors = {
-      [HrZoneName.Max]: HEART_RATE_ZONES.find(z => z.name === 'Zone 5')?.color || '#F44336',
-      [HrZoneName.Peak]: HEART_RATE_ZONES.find(z => z.name === 'Zone 4')?.color || '#FFEB3B',
-      [HrZoneName.Cardio]: HEART_RATE_ZONES.find(z => z.name === 'Zone 3')?.color || '#4CAF50',
-      [HrZoneName.FatBurn]: HEART_RATE_ZONES.find(z => z.name === 'Zone 2')?.color || '#2196F3',
-      [HrZoneName.WarmUp]: HEART_RATE_ZONES.find(z => z.name === 'Zone 1')?.color || '#9E9E9E',
-    }
+    const hrZones = theme.palette.custom.hrZones
 
     const warmUpRow = getByTestId(`zone-row-${HrZoneName.WarmUp}`)
     expect(within(warmUpRow).getByTestId('zone-color-indicator')).toHaveStyle(
-      `background-color: ${expectedColors[HrZoneName.WarmUp]}`
+      `background-color: ${hrZones.warmUp}`
     )
 
     const fatBurnRow = getByTestId(`zone-row-${HrZoneName.FatBurn}`)
     expect(within(fatBurnRow).getByTestId('zone-color-indicator')).toHaveStyle(
-      `background-color: ${expectedColors[HrZoneName.FatBurn]}`
+      `background-color: ${hrZones.fatBurn}`
     )
 
     const cardioRow = getByTestId(`zone-row-${HrZoneName.Cardio}`)
     expect(within(cardioRow).getByTestId('zone-color-indicator')).toHaveStyle(
-      `background-color: ${expectedColors[HrZoneName.Cardio]}`
+      `background-color: ${hrZones.cardio}`
     )
 
     const peakRow = getByTestId(`zone-row-${HrZoneName.Peak}`)
     expect(within(peakRow).getByTestId('zone-color-indicator')).toHaveStyle(
-      `background-color: ${expectedColors[HrZoneName.Peak]}`
+      `background-color: ${hrZones.peak}`
     )
 
     const maxRow = getByTestId(`zone-row-${HrZoneName.Max}`)
     expect(within(maxRow).getByTestId('zone-color-indicator')).toHaveStyle(
-      `background-color: ${expectedColors[HrZoneName.Max]}`
+      `background-color: ${hrZones.max}`
     )
   })
 
-  it('renders zones without explicit sorting (order depends on input object iteration)', () => {
+  it('sorts zones from high intensity to low intensity', () => {
     const timeInZones = {
       [HrZoneName.WarmUp]: 10,
       [HrZoneName.Max]: 10,
@@ -196,8 +189,7 @@ describe('ZoneDistribution', () => {
       [HrZoneName.Cardio]: 10,
       [HrZoneName.NoData]: 10,
       [HrZoneName.Unknown]: 10,
-    } as unknown as Record<HrZoneName, number>
-
+    }
     const { getAllByTestId } = render(
       <ThemeProvider theme={theme}>
         <ZoneDistribution timeInZones={timeInZones} totalDuration={70} />
@@ -207,12 +199,12 @@ describe('ZoneDistribution', () => {
     const rows = getAllByTestId(/^zone-row-/)
     const renderedZones = rows.map((row) => row.getAttribute('data-testid'))
 
-    expect(renderedZones).not.toContain(`zone-row-${HrZoneName.NoData}`)
-    expect(renderedZones).not.toContain(`zone-row-${HrZoneName.Unknown}`)
-    expect(renderedZones).toContain(`zone-row-${HrZoneName.Max}`)
-    expect(renderedZones).toContain(`zone-row-${HrZoneName.Peak}`)
-    expect(renderedZones).toContain(`zone-row-${HrZoneName.Cardio}`)
-    expect(renderedZones).toContain(`zone-row-${HrZoneName.FatBurn}`)
-    expect(renderedZones).toContain(`zone-row-${HrZoneName.WarmUp}`)
+    expect(renderedZones).toEqual([
+      `zone-row-${HrZoneName.Max}`,
+      `zone-row-${HrZoneName.Peak}`,
+      `zone-row-${HrZoneName.Cardio}`,
+      `zone-row-${HrZoneName.FatBurn}`,
+      `zone-row-${HrZoneName.WarmUp}`,
+    ])
   })
 })

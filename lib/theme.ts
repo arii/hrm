@@ -18,6 +18,46 @@ declare module '@mui/material/styles' {
   interface TypeBackground {
     overlay: string
   }
+
+  interface Palette {
+    custom: {
+      hrZones: {
+        max: string
+        peak: string
+        cardio: string
+        fatBurn: string
+        warmUp: string
+        recovery: string
+        idle: string
+      }
+      prepare: string
+      work: string
+      rest: string
+      running: string
+      cooldown: string
+      idle: string
+    }
+  }
+
+  interface PaletteOptions {
+    custom?: {
+      hrZones?: {
+        max?: string
+        peak?: string
+        cardio?: string
+        fatBurn?: string
+        warmUp?: string
+        recovery?: string
+        idle?: string
+      }
+      prepare?: string
+      work?: string
+      rest?: string
+      running?: string
+      cooldown?: string
+      idle?: string
+    }
+  }
 }
 
 /**
@@ -68,6 +108,23 @@ const theme = createTheme({
     },
     info: {
       main: '#2196F3', // Blue
+    },
+    custom: {
+      hrZones: {
+        max: HR_COLORS.ZONE_5_PEAK,
+        peak: '#FFEB3B', // Warning main
+        cardio: HR_COLORS.ZONE_3_FATBURN,
+        fatBurn: HR_COLORS.ZONE_2_WARMUP,
+        warmUp: '#9E9E9E',
+        recovery: '#00ffff',
+        idle: '#cccccc',
+      },
+      prepare: '#2196F3',
+      work: '#4CAF50',
+      rest: '#FFEB3B',
+      running: '#2196F3',
+      cooldown: '#9C27B0',
+      idle: '#9E9E9E',
     },
     // Background colors
     background: {
