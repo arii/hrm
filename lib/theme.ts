@@ -71,21 +71,21 @@ const theme = createTheme({
     },
     custom: {
       hrZones: {
-        max: HR_COLORS.ZONE_5_PEAK,
-        peak: '#FFEB3B', // Warning main
+        max: HR_COLORS.ZONE_6_MAX,
+        peak: HR_COLORS.ZONE_5_PEAK,
         cardio: HR_COLORS.ZONE_4_CARDIO,
         fatBurn: HR_COLORS.ZONE_3_FATBURN,
-        warmUp: '#9E9E9E',
-        recovery: '#00ffff',
-        idle: '#cccccc',
+        warmUp: HR_COLORS.ZONE_2_WARMUP,
+        recovery: HR_COLORS.ZONE_1_RECOVERY,
+        idle: HR_COLORS.ZONE_0_IDLE,
       },
       // Timer phases mapped to HR colors where appropriate to reduce magic strings
       prepare: HR_COLORS.ZONE_2_WARMUP,
       work: HR_COLORS.ZONE_3_FATBURN,
-      rest: '#FFEB3B', // Matches Peak/Warning
+      rest: HR_COLORS.ZONE_4_CARDIO,
       running: HR_COLORS.ZONE_2_WARMUP,
-      cooldown: '#9C27B0', // Matches Max/Purple
-      idle: '#9E9E9E', // Matches WarmUp/Grey
+      cooldown: HR_COLORS.ZONE_6_MAX,
+      idle: HR_COLORS.ZONE_0_IDLE,
     },
     // Background colors
     background: {

@@ -88,10 +88,6 @@ export const formatDate = (
   return d.toLocaleDateString(locale, options)
 }
 
-/**
- * Checks if the current environment is a test environment.
- * @returns True if running in a test environment.
- */
 export const isTestEnvironment = (): boolean => {
   if (process.env.NODE_ENV === 'test') {
     return true
