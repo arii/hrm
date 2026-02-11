@@ -97,8 +97,6 @@ export const isTestEnvironment = (): boolean => {
     return true
   }
   return (
-    typeof window !== 'undefined' &&
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).__IS_TEST_ENV__ === true
+    typeof window !== 'undefined' && window.__IS_TEST_ENV__ === true
   )
 }
