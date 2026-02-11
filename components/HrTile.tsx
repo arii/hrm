@@ -2,14 +2,13 @@
 'use client'
 import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
-import CardContent from '@mui/material/CardContent'
+import Card from '@mui/material/Card'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
-import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 
 // Define the style for the centered overlay
@@ -25,7 +24,7 @@ const overlayStyles = {
   justifyContent: 'center',
   alignItems: 'center',
   zIndex: 10,
-  borderRadius: 'inherit', // Match card border radius from StyledCard
+  borderRadius: 'inherit',
 }
 
 const HrTile = ({
@@ -50,7 +49,6 @@ const HrTile = ({
     HR_ZONE_VISUAL_CONFIG[0]
 
   const backgroundColor = zoneConfig.color
-  const textColor = zoneConfig.textColor
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -62,25 +60,23 @@ const HrTile = ({
 
   return (
     <Tooltip title={tooltipTitle} arrow>
-      <ControlCard
+      <Card
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
           isConnected ? `${bpm} beats per minute` : 'Disconnected'
         }, ${percentMax}% of maximum, Zone ${displayZone}: ${zoneConfig.label}`}
         sx={{
-          backgroundColor: backgroundColor,
-          color: textColor,
-          textAlign: 'center',
-          minHeight: 180,
+          bgcolor: backgroundColor,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
+          borderRadius: 4,
           position: 'relative',
+          overflow: 'hidden',
           opacity: isConnected && !isDataStale ? 1 : 0.6,
           transition: theme.transitions.create('opacity', {
-            duration: theme.transitions.duration.short, // Approx 300ms
+            duration: theme.transitions.duration.short,
           }),
         }}
       >
@@ -93,6 +89,7 @@ const HrTile = ({
               right: theme.spacing(1),
               fontSize: '1.5rem',
               color: theme.palette.warning.main,
+              zIndex: 5,
             }}
           />
         )}
@@ -110,100 +107,74 @@ const HrTile = ({
           </Box>
         )}
 
-        <Box aria-live="polite" aria-atomic="true">
-          <CardContent sx={{ p: 0 }}>
-            <Typography
-              data-testid="live-hr-percent"
-              sx={{
-                fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-                fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
-                fontWeight: 900,
-                lineHeight: 0.85,
-                my: 0.5,
-              }}
-            >
-              {percentMax}%
-            </Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-around',
-                alignItems: 'center',
-                mt: 1,
-              }}
-            >
-              {/* BPM Display */}
-              <Typography
-                data-testid="bpm-value"
-                variant="h6"
-                sx={{ fontWeight: 600 }}
-              >
-                {bpm ?? '---'}{' '}
-                <Typography
-                  variant="caption"
-                  component="span"
-                  sx={{ opacity: 0.8 }}
-                >
-                  BPM
-                </Typography>
-              </Typography>
-
-              {/* Calorie Display */}
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {Math.floor(calories)}{' '}
-                <Typography
-                  variant="caption"
-                  component="span"
-                  sx={{ opacity: 0.8 }}
-                >
-                  KCAL
-                </Typography>
-              </Typography>
-            </Box>
-
-            {/* Zone Display for WCAG Compliance (don't rely on color alone) */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-                mt: 0.5,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  backgroundColor: 'currentColor',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                }}
-              />
-              <Typography variant="caption" sx={{ fontWeight: 800 }}>
-                ZONE {displayZone}: {zoneConfig.label}
-              </Typography>
-            </Box>
-
-            {name && !/^(user|new user)$/i.test(name) && (
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 700,
-                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-                  letterSpacing: '0.05em',
-                  mt: 1,
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                }}
-              >
-                {name}
-              </Typography>
-            )}
-          </CardContent>
+        {/* TOP: Identity Tier - Scaled up for visibility */}
+        <Box sx={{ pt: 3, textAlign: 'center' }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 900,
+              color: '#FFF',
+              textTransform: 'uppercase',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              px: 2,
+            }}
+          >
+            {name}
+          </Typography>
         </Box>
-      </ControlCard>
+
+        {/* CENTER: Hero Tier - Maximum font-size */}
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Typography
+            data-testid="live-hr-percent"
+            variant="h1"
+            sx={{
+              fontSize: { xs: '8rem', sm: '12rem', md: '15rem' },
+              fontWeight: 950,
+              color: '#FFF',
+              lineHeight: 1,
+              fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
+            }}
+          >
+            {percentMax}%
+          </Typography>
+        </Box>
+
+        {/* BOTTOM: Consolidated Data Tier */}
+        <Box sx={{ pb: 3, display: 'flex', justifyContent: 'center', gap: 4 }}>
+          <Typography
+            data-testid="bpm-value"
+            variant="h4"
+            sx={{ fontWeight: 800, color: '#FFF' }}
+          >
+            {bpm ?? '---'}{' '}
+            <small style={{ fontSize: '1.2rem', opacity: 0.8 }}>BPM</small>
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#FFF' }}>
+            {Math.floor(calories)}{' '}
+            <small style={{ fontSize: '1.2rem', opacity: 0.8 }}>KCAL</small>
+          </Typography>
+        </Box>
+
+        {/* FOOTER: Black Anchor Bar */}
+        <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
+          <Typography
+            variant="h6"
+            sx={{ color: '#FFF', fontWeight: 900, letterSpacing: '0.3em' }}
+          >
+            {zoneConfig.label.toUpperCase()}
+          </Typography>
+        </Box>
+      </Card>
     </Tooltip>
   )
 }
