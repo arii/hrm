@@ -12,9 +12,23 @@ import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 
-/**
- * Identity Tier: Displays the user name if it's not generic.
- */
+const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
+
+const OVERLAY_SX = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 10,
+  borderRadius: 'inherit',
+} as const
+
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 3, textAlign: 'center' }}>
     <Typography
@@ -33,9 +47,6 @@ const IdentityTier = ({ name }: { name: string }) => (
   </Box>
 )
 
-/**
- * Hero Tier: Displays the massive heart rate percentage.
- */
 const HeroTier = ({ percentMax }: { percentMax: number }) => (
   <Box
     sx={{
@@ -47,13 +58,13 @@ const HeroTier = ({ percentMax }: { percentMax: number }) => (
   >
     <Typography
       data-testid="live-hr-percent"
-      variant="h1"
+      variant="h2"
       component="div"
       sx={{
         fontSize: { xs: '8rem', sm: '12rem', md: '15rem' },
         fontWeight: 900,
         lineHeight: 1,
-        fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
+        fontFamily: HERO_FONT_FAMILY,
       }}
     >
       {percentMax}%
@@ -61,9 +72,6 @@ const HeroTier = ({ percentMax }: { percentMax: number }) => (
   </Box>
 )
 
-/**
- * Data Tier: Displays consolidated BPM and KCAL metrics.
- */
 const DataTier = ({
   bpm,
   calories,
@@ -169,23 +177,7 @@ const HrTile = ({
         )}
 
         {isAlerting && (
-          <Box
-            data-testid="hr-tile-alert-overlay"
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 10,
-              borderRadius: 'inherit',
-            }}
-          >
+          <Box data-testid="hr-tile-alert-overlay" sx={OVERLAY_SX}>
             <CircularProgress size={30} sx={{ color: 'white' }} />
             <Typography
               variant="caption"

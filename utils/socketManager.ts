@@ -292,7 +292,6 @@ const handleIncomingMessage = (
             Object.entries(message.data)
           )
 
-          // Prevent overwriting a real name with a default generic name
           if (
             !isGenericName(existingData.name) &&
             isGenericName(updateData.name)
