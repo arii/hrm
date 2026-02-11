@@ -30,7 +30,6 @@ const ZONE_PRIORITY: Record<HrZoneName, number> = {
   [HrZoneName.Recovery]: 7,
   [HrZoneName.Aerobic]: 8,
   [HrZoneName.Idle]: 9,
-  // NoData and Unknown are filtered out before sorting
   [HrZoneName.NoData]: 99,
   [HrZoneName.Unknown]: 99,
 }
@@ -44,9 +43,12 @@ const ZONE_COLOR_KEY_MAP: Partial<
   [HrZoneName.FatBurn]: 'fatBurn',
   [HrZoneName.WarmUp]: 'warmUp',
   [HrZoneName.Recovery]: 'recovery',
-  [HrZoneName.Aerobic]: 'warmUp', // Fallback to warmUp color for Aerobic as it lacks a distinct theme slot
+  [HrZoneName.Aerobic]: 'warmUp',
   [HrZoneName.Idle]: 'idle',
+  // NoData and Unknown will fall back to default logic, usually handled by theme or grey
 }
+
+const DURATION_FORMAT_OPTS = { unit: 'seconds', format: 'MM:SS' } as const
 
 const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   timeInZones,
@@ -55,15 +57,13 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   const theme = useTheme()
 
   const data = useMemo(() => {
+    // We intentionally include NoData and Unknown to reflect the true integrity of the workout duration.
+    // Excluding them would misleadingly show 100% adherence to active zones even if data was missing for 90% of the time.
     return Object.entries(timeInZones)
-      .filter(
-        ([zone]) => zone !== HrZoneName.NoData && zone !== HrZoneName.Unknown
-      )
       .map(([zone, time]) => {
         const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
         const zoneName = zone as HrZoneName
 
-        // Get color from theme
         const colorKey = ZONE_COLOR_KEY_MAP[zoneName]
         const color =
           colorKey && theme.palette.custom?.hrZones?.[colorKey]
@@ -74,10 +74,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
           name: zoneName,
           value: time,
           percentage: parseFloat(percentage.toFixed(1)),
-          formattedTime: formatDuration(time, {
-            unit: 'seconds',
-            format: 'MM:SS',
-          }),
+          formattedTime: formatDuration(time, DURATION_FORMAT_OPTS),
           color,
         }
       })
@@ -120,8 +117,8 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
+                  innerRadius="60%"
+                  outerRadius="80%"
                   paddingAngle={2}
                   dataKey="value"
                   stroke="none"
@@ -133,10 +130,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                 </Pie>
                 <Tooltip
                   formatter={(value: number | undefined) => [
-                    formatDuration(value ?? 0, {
-                      unit: 'seconds',
-                      format: 'MM:SS',
-                    }),
+                    formatDuration(value ?? 0, DURATION_FORMAT_OPTS),
                     'Duration',
                   ]}
                   contentStyle={{
@@ -166,10 +160,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                 Total
               </Typography>
               <Typography variant="h6" fontWeight="bold">
-                {formatDuration(totalDuration, {
-                  unit: 'seconds',
-                  format: 'MM:SS',
-                })}
+                {formatDuration(totalDuration, DURATION_FORMAT_OPTS)}
               </Typography>
             </Box>
           </Box>

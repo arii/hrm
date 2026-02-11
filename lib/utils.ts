@@ -93,6 +93,9 @@ export const formatDate = (
  * @returns True if running in a test environment.
  */
 export const isTestEnvironment = (): boolean => {
+  if (process.env.NODE_ENV === 'test') {
+    return true
+  }
   return (
     typeof window !== 'undefined' &&
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
