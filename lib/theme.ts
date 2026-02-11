@@ -18,46 +18,6 @@ declare module '@mui/material/styles' {
   interface TypeBackground {
     overlay: string
   }
-
-  interface Palette {
-    custom: {
-      hrZones: {
-        max: string
-        peak: string
-        cardio: string
-        fatBurn: string
-        warmUp: string
-        recovery: string
-        idle: string
-      }
-      prepare: string
-      work: string
-      rest: string
-      running: string
-      cooldown: string
-      idle: string
-    }
-  }
-
-  interface PaletteOptions {
-    custom?: {
-      hrZones?: {
-        max?: string
-        peak?: string
-        cardio?: string
-        fatBurn?: string
-        warmUp?: string
-        recovery?: string
-        idle?: string
-      }
-      prepare?: string
-      work?: string
-      rest?: string
-      running?: string
-      cooldown?: string
-      idle?: string
-    }
-  }
 }
 
 /**
@@ -113,18 +73,19 @@ const theme = createTheme({
       hrZones: {
         max: HR_COLORS.ZONE_5_PEAK,
         peak: '#FFEB3B', // Warning main
-        cardio: HR_COLORS.ZONE_4_CARDIO, // Corrected: Mapped to Zone 4 Amber/Yellow
-        fatBurn: HR_COLORS.ZONE_3_FATBURN, // Corrected: Mapped to Zone 3 Green
+        cardio: HR_COLORS.ZONE_4_CARDIO,
+        fatBurn: HR_COLORS.ZONE_3_FATBURN,
         warmUp: '#9E9E9E',
         recovery: '#00ffff',
         idle: '#cccccc',
       },
-      prepare: '#2196F3',
-      work: '#4CAF50',
-      rest: '#FFEB3B',
-      running: '#2196F3',
-      cooldown: '#9C27B0',
-      idle: '#9E9E9E',
+      // Timer phases mapped to HR colors where appropriate to reduce magic strings
+      prepare: HR_COLORS.ZONE_2_WARMUP,
+      work: HR_COLORS.ZONE_3_FATBURN,
+      rest: '#FFEB3B', // Matches Peak/Warning
+      running: HR_COLORS.ZONE_2_WARMUP,
+      cooldown: '#9C27B0', // Matches Max/Purple
+      idle: '#9E9E9E', // Matches WarmUp/Grey
     },
     // Background colors
     background: {

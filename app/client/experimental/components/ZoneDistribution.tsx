@@ -72,17 +72,16 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         return {
           name: zoneName,
           value: time,
-          percentage: parseFloat(percentage.toFixed(1)),
+          percentage:
+            totalDuration > 0
+              ? Math.round((time / totalDuration) * 1000) / 10
+              : 0,
           formattedTime: formatDuration(time, DURATION_FORMAT_OPTS),
           color,
         }
       })
       .filter((item) => item.value > 0)
-      .sort((a, b) => {
-        const priorityA = ZONE_PRIORITY[a.name] ?? 99
-        const priorityB = ZONE_PRIORITY[b.name] ?? 99
-        return priorityA - priorityB
-      })
+      .sort((a, b) => ZONE_PRIORITY[a.name] - ZONE_PRIORITY[b.name])
   }, [timeInZones, totalDuration, theme])
 
   if (data.length === 0) {
