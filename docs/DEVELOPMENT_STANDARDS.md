@@ -62,6 +62,8 @@ To maintain a clean and linear commit history, this project uses **Rebase** as t
 ### Automated Synchronization
 The project uses the `Auto Rebase` workflow to automatically rebase all open pull requests whenever new changes are pushed to the `leader` branch. This ensures that PRs are always up-to-date and reduces the likelihood of complex merge conflicts at the end of a feature's development.
 
+**Note**: For the `Auto Rebase` workflow to push to protected branches and trigger subsequent CI checks on the rebased commits, a Personal Access Token (PAT) with `repo` scope must be configured as a repository secret named `PAT_TOKEN`.
+
 ### Manual Synchronization
 Developers can also manually trigger a rebase on a specific pull request by using the `@gemini-update-pr` command in a PR comment.
 

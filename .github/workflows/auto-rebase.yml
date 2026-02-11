@@ -31,9 +31,9 @@ jobs:
       - name: Validate PAT Token
         run: |
           if [ -z "${{ secrets.PAT_TOKEN }}" ] && [ -z "${{ secrets.ARI_PAT }}" ]; then
-            echo "::warning::Neither PAT_TOKEN nor ARI_PAT secrets are configured. Auto-rebase might fail for protected branches."
+            echo "::warning::Neither PAT_TOKEN nor ARI_PAT secrets are configured. Using default GITHUB_TOKEN fallback. Auto-rebase might fail for protected branches or fail to trigger subsequent CI checks."
           else
-            echo "::notice::PAT is configured"
+            echo "::notice::Personal Access Token (PAT) is configured"
           fi
 
       - name: Rebase PRs
