@@ -11,7 +11,19 @@ test.describe('HRM debug endpoints', () => {
     expect(healthJson.status).toBe('ok')
 
     const session = await request.get(`${BASE}/api/debug/session`)
-    // session may return 200 with session or 200+empty or 401; assert not 5xx
+
+    // In production, debug endpoints are blocked by middleware/rewrites and return 404
+    if (session.status() === 404) {
+      // Check if it returns the custom JSON error from middleware
+      const contentType = session.headers()['content-type']
+      if (contentType && contentType.includes('application/json')) {
+        const body = await session.json()
+        expect(body.error).toBe('Endpoint unavailable in production')
+      }
+      return
+    }
+
+    // Otherwise (e.g. in dev), it should respond normally
     expect(session.status()).toBeLessThan(500)
     const s = await session.json()
     expect(typeof s).toBe('object')
