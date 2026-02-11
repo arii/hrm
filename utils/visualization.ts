@@ -86,17 +86,6 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
   },
 }
 
-// Zone color lookup for easy access (zones 0-6)
-export const ZONE_COLORS = {
-  grey: '#cccccc', // Zone 0: Idle
-  cyan: '#00ffff', // Zone 1: Recovery
-  blue: theme.palette.secondary.main, // Zone 2: Warm-up
-  green: theme.palette.success.main, // Zone 3: Fat Burn
-  yellow: theme.palette.warning.dark, // Zone 4: Cardio
-  red: theme.palette.primary.main, // Zone 5: Peak
-  purple: '#9C27B0', // Zone 6: Max
-}
-
 export interface HrZoneProps {
   zone: string
   percentage: number
