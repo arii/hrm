@@ -10,7 +10,7 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import { Server as WebSocketServer, WebSocket } from 'ws'
+import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import { ConnectionMonitor } from '../../utils/websocketUtils'
 import logger from '@/utils/logger.server'
