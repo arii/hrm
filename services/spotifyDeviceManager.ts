@@ -1,21 +1,30 @@
 import { Device } from '@spotify/web-api-ts-sdk'
 import { SpotifyDevice } from '../types/core'
-import { SpotifyManagerContext } from '../types/interfaces.js'
+import { ServerMessage, SpotifyData } from '../types/websocket'
+import { SafeSpotifyApi } from './safeSpotifyApi'
 import logger from '../utils/logger.server.js'
 
 export class SpotifyDeviceManager {
-  private context: SpotifyManagerContext
+  private sdk: SafeSpotifyApi
+  private broadcastUpdate: (message: ServerMessage) => void
+  private getState: () => SpotifyData
+  private setState: (updateFn: (prevState: SpotifyData) => SpotifyData) => void
 
-  constructor(context: SpotifyManagerContext) {
-    this.context = context
+  constructor(
+    sdk: SafeSpotifyApi,
+    broadcastUpdate: (message: ServerMessage) => void,
+    getState: () => SpotifyData,
+    setState: (updateFn: (prevState: SpotifyData) => SpotifyData) => void
+  ) {
+    this.sdk = sdk
+    this.broadcastUpdate = broadcastUpdate
+    this.getState = getState
+    this.setState = setState
   }
 
   public async refreshDevices(): Promise<void> {
-    const sdk = this.context.getSdk()
-    if (!sdk) return
-
     try {
-      const response = await sdk.player.getAvailableDevices()
+      const response = await this.sdk.player.getAvailableDevices()
       const validDevices: SpotifyDevice[] = (response.devices || [])
         .filter((d: Device): d is Device & { id: string } => d.id !== null)
         .map((d) => ({
@@ -28,13 +37,10 @@ export class SpotifyDeviceManager {
           volume_percent: d.volume_percent ?? 0,
         }))
 
-      this.context.setState((prevState) => ({
-        ...prevState,
-        devices: validDevices,
-      }))
-      this.context.broadcastUpdate({
+      this.setState((prevState) => ({ ...prevState, devices: validDevices }))
+      this.broadcastUpdate({
         type: 'SPOTIFY_UPDATE',
-        payload: this.context.getState(),
+        payload: this.getState(),
       })
       logger.debug({ count: validDevices.length }, 'Devices refreshed')
     } catch (error) {

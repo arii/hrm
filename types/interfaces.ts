@@ -7,8 +7,7 @@ t* estable, and easier to refactor.
  */
 
 import { SpotifyTokenPayload } from '../services/spotifyTokenManager'
-import { ServerMessage, SpotifyData } from './websocket'
-import { SafeSpotifyApi } from './spotify'
+import { SpotifyData } from './websocket'
 
 /**
  * Represents a service that provides a snapshot of its current state.
@@ -105,14 +104,5 @@ export type SpotifyService = StateProvider<SpotifyData> &
   > &
   Lifecycle &
   SpotifyTokenHandler & {
-    forcePollAndBroadcast(): Promise<void>
+    forcePollAndBroadcast(): void
   }
-
-export interface SpotifyManagerContext {
-  getSdk: () => SafeSpotifyApi | null
-  getState: () => SpotifyData
-  setState: (
-    update: SpotifyData | ((prevState: SpotifyData) => SpotifyData)
-  ) => void
-  broadcastUpdate: (message: ServerMessage) => void
-}

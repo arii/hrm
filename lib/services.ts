@@ -38,7 +38,7 @@ export async function createServices(
         isMuted: false,
       }),
       isReady: () => false,
-      forcePollAndBroadcast: () => Promise.resolve(),
+      forcePollAndBroadcast: () => {},
       handleTokenUpdate: () => Promise.resolve(),
       cleanup: () => {},
     }

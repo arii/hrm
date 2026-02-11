@@ -11,23 +11,21 @@ import {
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
-import { SafeSpotifyApi } from '../types/spotify.js'
-import { createSafeSpotifyApi } from './safeSpotifyApi.js'
-import { SpotifyManagerContext } from '../types/interfaces.js'
+import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
 import { env } from '../lib/env.js'
 import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
 import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
 
 export class SpotifyPolling implements SpotifyService {
-  public async forcePollAndBroadcast(): Promise<void> {
+  public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
   }
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
   private devicePollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
-  private playerManager: SpotifyPlayerManager
-  private deviceManager: SpotifyDeviceManager
+  private playerManager: SpotifyPlayerManager | null = null
+  private deviceManager: SpotifyDeviceManager | null = null
 
   private readonly broadcastUpdate: (message: ServerMessage) => void
 
@@ -57,16 +55,6 @@ export class SpotifyPolling implements SpotifyService {
       env.SPOTIFY_CLIENT_ID,
       env.SPOTIFY_CLIENT_SECRET
     )
-
-    const context: SpotifyManagerContext = {
-      getSdk: () => this.sdk,
-      getState: this.getState.bind(this),
-      setState: this.setState.bind(this),
-      broadcastUpdate: this.broadcastUpdate,
-    }
-
-    this.playerManager = new SpotifyPlayerManager(context)
-    this.deviceManager = new SpotifyDeviceManager(context)
   }
 
   private setState = (
@@ -81,7 +69,7 @@ export class SpotifyPolling implements SpotifyService {
 
   private getCurrentlyPlaying = async () => {
     try {
-      if (!this.sdk) {
+      if (!this.sdk || !this.playerManager) {
         logger.debug('Spotify SDK not initialized, skipping poll')
         return
       }
@@ -91,6 +79,25 @@ export class SpotifyPolling implements SpotifyService {
       await handleSpotifyApiError(error, () => this.checkAndRefreshSdkToken())
     }
   }
+
+  public _test_ =
+    process.env.NODE_ENV === 'test'
+      ? {
+          setState: this.setState,
+          setSdk: (sdk: SafeSpotifyApi | null) => {
+            this.sdk = sdk
+          },
+          getPollInterval: () => this.pollInterval,
+          getTokenRefreshInterval: () => this.tokenRefreshInterval,
+          setPollInterval: (interval: NodeJS.Timeout | null) => {
+            this.pollInterval = interval
+          },
+          setTokenRefreshInterval: (interval: NodeJS.Timeout | null) => {
+            this.tokenRefreshInterval = interval
+          },
+          getCurrentlyPlaying: this.getCurrentlyPlaying.bind(this),
+        }
+      : undefined
 
   public static async create(
     broadcastUpdate: (message: ServerMessage) => void
@@ -130,6 +137,18 @@ export class SpotifyPolling implements SpotifyService {
       tokenWithoutRefresh as AccessToken
     )
     this.sdk = createSafeSpotifyApi(sdk)
+    this.playerManager = new SpotifyPlayerManager(
+      this.sdk,
+      this.broadcastUpdate,
+      this.getState.bind(this),
+      this.setState.bind(this)
+    )
+    this.deviceManager = new SpotifyDeviceManager(
+      this.sdk,
+      this.broadcastUpdate,
+      this.getState.bind(this),
+      this.setState.bind(this)
+    )
   }
 
   private async checkAndRefreshSdkToken() {
@@ -147,7 +166,11 @@ export class SpotifyPolling implements SpotifyService {
   }
 
   public isReady(): boolean {
-    return this.sdk !== null
+    return (
+      this.sdk !== null &&
+      this.playerManager !== null &&
+      this.deviceManager !== null
+    )
   }
 
   public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
@@ -179,7 +202,7 @@ export class SpotifyPolling implements SpotifyService {
 
     const deviceIntervalMs = env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS
     this.devicePollInterval = setInterval(
-      () => this.deviceManager.refreshDevices(),
+      () => this.deviceManager!.refreshDevices(),
       deviceIntervalMs
     )
 
@@ -221,7 +244,7 @@ export class SpotifyPolling implements SpotifyService {
 
     try {
       if (command === 'GET_DEVICES') {
-        await this.deviceManager.refreshDevices()
+        await this.deviceManager!.refreshDevices()
         return
       }
 
@@ -231,7 +254,7 @@ export class SpotifyPolling implements SpotifyService {
       }
 
       // All other commands are player-related
-      await this.playerManager.executeSpotifyCommand(command, params)
+      await this.playerManager!.executeSpotifyCommand(command, params)
 
       // Slight delay to allow Spotify API to update before we re-poll
       setTimeout(() => this.getCurrentlyPlaying(), 500)
