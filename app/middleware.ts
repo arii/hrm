@@ -1,42 +1,39 @@
-// middleware.ts
 import { withAuth, NextRequestWithAuth } from 'next-auth/middleware'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse, NextFetchEvent } from 'next/server'
 
-export default withAuth(
-  /**
-   * Middleware to handle authentication and security guards.
-   */
-  function middleware(req: NextRequestWithAuth) {
-    // SECURITY: Block debug endpoints in production to prevent state resets or token leaks.
-    if (
-      process.env.NODE_ENV === 'production' &&
-      req.nextUrl.pathname.startsWith('/api/debug')
-    ) {
-      return NextResponse.json(
-        { error: 'Endpoint unavailable in production' },
-        { status: 404 }
-      )
-    }
-
-    // If the user is being redirected to a page with an auth error,
-    // we should let them land there to break any potential redirect loops caused
-    // by the default `withAuth` behavior.
-    if (req.nextUrl.searchParams.get('error') === 'SpotifyAuthFailed') {
-      return NextResponse.next()
-    }
-
-    // Default behavior: allow the request to proceed.
+const authMiddleware = withAuth(
+  function middleware() {
     return NextResponse.next()
   },
   {
     callbacks: {
-      // This configuration makes the middleware run on all matching paths,
-      // regardless of whether the user is authenticated or not.
-      // We return true to always execute the middleware function above.
       authorized: () => true,
     },
   }
 )
+
+export default async function middleware(
+  req: NextRequest,
+  event: NextFetchEvent
+) {
+  // Block debug endpoints in production to prevent state resets or token leaks.
+  if (
+    process.env.NODE_ENV === 'production' &&
+    req.nextUrl.pathname.startsWith('/api/debug')
+  ) {
+    return NextResponse.json(
+      { error: 'Endpoint unavailable in production' },
+      { status: 404 }
+    )
+  }
+
+  // Handle Spotify auth failure redirect loop
+  if (req.nextUrl.searchParams.get('error') === 'SpotifyAuthFailed') {
+    return NextResponse.next()
+  }
+
+  return authMiddleware(req as NextRequestWithAuth, event)
+}
 
 export const config = {
   matcher: ['/api/internal/:path*', '/api/debug/:path*', '/api/users/:path*'],

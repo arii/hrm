@@ -12,20 +12,26 @@ test.describe('HRM debug endpoints', () => {
 
     const session = await request.get(`${BASE}/api/debug/session`)
 
-    // In production, debug endpoints are blocked by middleware/rewrites and return 404
+    // In production (the default for Playwright webserver), debug endpoints are blocked.
+    // We expect a 404 with a specific JSON error message from the middleware.
+    // NOTE: This test strictly verifies that we don't leak debug info in the standard test environment.
     if (session.status() === 404) {
-      // Check if it returns the custom JSON error from middleware
-      const contentType = session.headers()['content-type']
-      if (contentType && contentType.includes('application/json')) {
-        const body = await session.json()
-        expect(body.error).toBe('Endpoint unavailable in production')
-      }
-      return
-    }
+      const body = await session.json()
+      expect(body.error).toBe('Endpoint unavailable in production')
+    } else if (session.status() === 200) {
+      // This should only happen in local dev environments where NODE_ENV is not production.
+      // If this happens in CI, it indicates a security failure.
+      const s = await session.json()
+      expect(typeof s).toBe('object')
 
-    // Otherwise (e.g. in dev), it should respond normally
-    expect(session.status()).toBeLessThan(500)
-    const s = await session.json()
-    expect(typeof s).toBe('object')
+      // In CI we definitely expect production mode
+      if (process.env.CI === 'true') {
+        throw new Error(
+          'Security failure: Debug endpoint accessible (200 OK) in CI environment'
+        )
+      }
+    } else {
+      throw new Error(`Unexpected status code: ${session.status()}`)
+    }
   })
 })

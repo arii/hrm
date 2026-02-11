@@ -20,6 +20,19 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_TESTING: process.env.TESTING,
   },
+  async rewrites() {
+    // In production, mask debug routes completely as a fallback for middleware.
+    // These run after middleware, so middleware can provide a JSON response first.
+    if (process.env.NODE_ENV === 'production') {
+      return [
+        {
+          source: '/api/debug/:path*',
+          destination: '/404',
+        },
+      ]
+    }
+    return []
+  },
   async redirects() {
     return [
       {
