@@ -135,7 +135,9 @@ export class JsonProcessor {
 
       // Check for truncation
       if (!repaired.endsWith('}')) {
-        console.warn('Detected truncated JSON. Attempting emergency recovery...')
+        console.warn(
+          'Detected truncated JSON. Attempting emergency recovery...'
+        )
 
         // Try to close a trailing string if odd number of unescaped quotes
         const unescapedQuotes = repaired.match(/(^|[^\\])"/g) || []

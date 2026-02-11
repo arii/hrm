@@ -1,34 +1,34 @@
-// File: components/HrTileWrapper.tsx
 'use client'
 import HrTile from '@/components/HrTile'
-import { HrmData } from '@/types/websocket'
+import { ClientHrmData } from '@/types/websocket'
+import { memo } from 'react'
 import { calculateHrZoneInfo } from '@/lib/shared/hr-zones'
 
-interface HrTileWrapperProps {
-  user: HrmData & { isAlerting: boolean; alertMessage?: string }
-}
+// Omit volatile timestamps to allow React.memo to work effectively with shallow comparison
+type HrTileWrapperProps = Omit<ClientHrmData, 'updatedAt' | 'lastUpdated'>
 
-const HrTileWrapper = ({ user }: HrTileWrapperProps) => {
-  // Use the percentage and zone from the user object if available,
+const HrTileWrapper = (props: HrTileWrapperProps) => {
+  // Use the percentage and zone from the props if available,
   // falling back to local calculation if not (ensures consistent logic).
   const { percentage: fallbackPercentage, zone: fallbackZone } =
-    calculateHrZoneInfo(user.value || 0, user.age)
+    calculateHrZoneInfo(props.value || 0, props.age)
 
-  const percentMax = user.percentage ?? fallbackPercentage
-  const zone = user.zone ?? fallbackZone
+  const percentMax = props.percentage ?? fallbackPercentage
+  const zone = props.zone ?? fallbackZone
 
   return (
     <HrTile
-      name={user.name || ''}
-      bpm={user.value}
+      name={props.name || ''}
+      bpm={props.value}
       percentMax={percentMax}
       zone={zone}
-      calories={user.calories}
-      isConnected={user.value !== null}
-      isAlerting={user.isAlerting}
-      {...(user.alertMessage && { alertMessage: user.alertMessage })}
+      calories={props.calories}
+      isConnected={props.isConnected}
+      isDataStale={props.isDataStale}
+      isAlerting={props.isAlerting}
+      {...(props.alertMessage && { alertMessage: props.alertMessage })}
     />
   )
 }
 
-export default HrTileWrapper
+export default memo(HrTileWrapper)

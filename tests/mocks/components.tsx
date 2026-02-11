@@ -1,7 +1,7 @@
-export const mockHrTileWrapper = jest.fn(({ user }) => (
-  <div data-testid="mock-hr-tile">
-    <p>{user.name}</p>
-    <p>{user.value}</p>
+export const mockHrTileWrapper = jest.fn((props) => (
+  <div data-testid="mock-hr-tile" data-is-stale={props.isDataStale}>
+    <p>{props.name}</p>
+    <p>{props.value}</p>
   </div>
 ))
 

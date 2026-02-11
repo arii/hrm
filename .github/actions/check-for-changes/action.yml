@@ -6,9 +6,9 @@ inputs:
     required: true
 outputs:
   has_changes:
-    description: "Boolean indicating if changes were found"
+    description: 'Boolean indicating if changes were found'
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Fetch base branch
       shell: bash

@@ -53,10 +53,10 @@ describe('lib/shared/hr-zones', () => {
 
     it('should calculate zone info using default max HR when age is undefined', () => {
       // Default Max HR = 185
-      // 185 bpm / 185 max = 100% -> Zone 5
+      // 185 bpm / 185 max = 100% -> Zone 6 (since 100% >= 95%)
       const result = calculateHrZoneInfo(185, undefined)
       expect(result.percentage).toBe(100)
-      expect(result.zone).toBe(5)
+      expect(result.zone).toBe(6)
     })
 
     it('should calculate zone info using default max HR when age is null', () => {
@@ -71,6 +71,19 @@ describe('lib/shared/hr-zones', () => {
       const result = calculateHrZoneInfo(0, 30)
       expect(result.percentage).toBe(0)
       expect(result.zone).toBe(0)
+    })
+
+    it('should correctly identify Zone 6 (Max) for heart rate >= 95% of max', () => {
+      const age = 20 // Max HR = 200
+      // 190 bpm / 200 max = 95% -> Zone 6
+      const result95 = calculateHrZoneInfo(190, age)
+      expect(result95.percentage).toBe(95)
+      expect(result95.zone).toBe(6)
+
+      // 196 bpm / 200 max = 98% -> Zone 6
+      const result98 = calculateHrZoneInfo(196, age)
+      expect(result98.percentage).toBe(98)
+      expect(result98.zone).toBe(6)
     })
   })
 })

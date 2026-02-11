@@ -2,6 +2,7 @@
 
 import { createTheme } from '@mui/material/styles'
 import { reducedMotionStyles } from './theme/animations'
+import { HR_COLORS } from './shared/colors'
 
 // Extend the MUI theme types to include custom properties
 declare module '@mui/material/styles' {
@@ -35,33 +36,33 @@ const theme = createTheme({
   // Color Palette - Vibrant fitness-focused colors
   palette: {
     primary: {
-      main: '#F44336', // Red - matches Peak HR zone, high energy
+      main: HR_COLORS.ZONE_5_PEAK, // matches Peak HR zone
       light: '#EF5350',
       dark: '#D32F2F',
-      contrastText: '#FFFFFF',
+      contrastText: HR_COLORS.TEXT_LIGHT,
     },
     spotify: {
       main: '#1DB954', // Spotify green
     },
     secondary: {
-      main: '#2196F3', // Blue - matches Warm-up zone
+      main: HR_COLORS.ZONE_2_WARMUP, // matches Warm-up zone
       light: '#42A5F5',
       dark: '#1976D2',
-      contrastText: '#FFFFFF',
+      contrastText: HR_COLORS.TEXT_LIGHT,
     },
     success: {
-      main: '#4CAF50', // Green - matches Fat Burn zone
+      main: HR_COLORS.ZONE_3_FATBURN, // matches Fat Burn zone
       light: '#66BB6A',
       dark: '#388E3C',
     },
     warning: {
       main: '#FFEB3B', // Yellow - matches Cardio zone
       light: '#FFF176',
-      dark: '#FBC02D',
-      contrastText: '#000000',
+      dark: HR_COLORS.ZONE_4_CARDIO,
+      contrastText: HR_COLORS.TEXT_DARK,
     },
     error: {
-      main: '#F44336', // Red - matches Peak zone
+      main: HR_COLORS.ZONE_5_PEAK, // matches Peak zone
       light: '#EF5350',
       dark: '#D32F2F',
     },

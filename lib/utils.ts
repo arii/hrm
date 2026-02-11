@@ -70,3 +70,20 @@ export const formatDuration = (
     .padStart(2, '0')
   return `${h}:${m}:${s}`
 }
+
+/**
+ * Formats a date using Intl.DateTimeFormat.
+ * @param locale Defaults to system locale if undefined.
+ */
+export const formatDate = (
+  date: Date | number,
+  options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  },
+  locale: string | undefined = undefined
+): string => {
+  const d = typeof date === 'number' ? new Date(date) : date
+  return d.toLocaleDateString(locale, options)
+}

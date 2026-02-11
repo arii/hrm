@@ -1,7 +1,7 @@
 // lib/workout-session-storage.ts
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
-import { HrZoneName } from './shared/hr-zones'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 // --- TypeScript Interfaces ---
 
