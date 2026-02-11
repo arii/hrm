@@ -5,6 +5,11 @@ on:
     paths:
       - '.github/**'
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
 jobs:
   test_pr_squash:
     runs-on: ubuntu-latest
@@ -18,7 +23,7 @@ jobs:
       - name: Create Test Branch and PR
         id: create_pr
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
         run: |
           set -e
           BRANCH_NAME="e2e-test-$(date +%s)"
@@ -34,14 +39,14 @@ jobs:
           git commit -m "E2E Test Commit 2"
           git push origin $BRANCH_NAME
           PR_URL=$(gh pr create --title "E2E Test PR" --body "Test PR for E2E testing" --base leader --head $BRANCH_NAME)
-          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+$")
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Trigger PR Squash and Wait
         timeout-minutes: 15
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
         run: |
           set -e
@@ -52,7 +57,7 @@ jobs:
 
       - name: Verify Squash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
@@ -69,7 +74,7 @@ jobs:
       - name: Cleanup
         if: always()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
@@ -90,7 +95,7 @@ jobs:
       - name: Create Conflict
         id: create_conflict
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
         run: |
           set -e
           git config user.name "github-actions[bot]"
@@ -130,14 +135,14 @@ jobs:
 
           # Create a pull request to trigger the conflict resolver
           PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base $BRANCH_A --head $BRANCH_B)
-          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+$")
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Trigger Conflict Resolver and Wait
         timeout-minutes: 15
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
         run: |
           set -e
@@ -148,7 +153,7 @@ jobs:
 
       - name: Verify Conflict Resolution
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
         run: |
           set -e
           git fetch origin $BRANCH_A
@@ -164,7 +169,7 @@ jobs:
       - name: Cleanup
         if: always()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
         run: |
           set -e
@@ -186,7 +191,7 @@ jobs:
       - name: Create Test Branch and PR
         id: create_pr
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
         run: |
           set -e
           BRANCH_NAME="e2e-test-rebase-$(date +%s)"
@@ -202,14 +207,14 @@ jobs:
           git commit -m "E2E Test Commit 2 (rebase)"
           git push origin $BRANCH_NAME
           PR_URL=$(gh pr create --title "E2E Test PR (rebase)" --body "Test PR for E2E testing (rebase)" --base leader --head $BRANCH_NAME)
-          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+$")
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Trigger PR Squash and Rebase and Wait
         timeout-minutes: 15
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
         run: |
           set -e
@@ -220,7 +225,7 @@ jobs:
 
       - name: Verify Squash and Rebase
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
@@ -244,7 +249,7 @@ jobs:
       - name: Cleanup
         if: always()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
