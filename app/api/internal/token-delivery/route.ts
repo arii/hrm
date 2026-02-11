@@ -62,11 +62,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (err instanceof ServiceInitializationError) {
-      logger.warn(`Service Initialization Error in token-delivery: ${err.message}`)
-      return NextResponse.json(
-        { error: err.message },
-        { status: 503 }
+      logger.warn(
+        `Service Initialization Error in token-delivery: ${err.message}`
       )
+      return NextResponse.json({ error: err.message }, { status: 503 })
     }
 
     logger.error({ err }, 'Unhandled error in token-delivery')
