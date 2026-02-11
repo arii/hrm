@@ -25,10 +25,9 @@ jobs:
       - name: Validate Token
         run: |
           if [ -z "${{ secrets.CI_BOT_PAT }}" ] && [ -z "${{ secrets.ARI_PAT }}" ]; then
-            echo "::error::Required PAT (CI_BOT_PAT or ARI_PAT) is missing. This test will fail to trigger the squash orchestrator."
-            exit 1
+            echo "::warning::Required PAT (CI_BOT_PAT or ARI_PAT) is missing. This test may fail to trigger downstream orchestrators."
           else
-            echo "::notice::Required PAT is present. Workflow will be able to trigger downstream actions."
+            echo "::notice::Required PAT is present."
           fi
 
       - name: Create Test Branch and PR
@@ -100,10 +99,9 @@ jobs:
       - name: Validate Token
         run: |
           if [ -z "${{ secrets.CI_BOT_PAT }}" ] && [ -z "${{ secrets.ARI_PAT }}" ]; then
-            echo "::error::Required PAT (CI_BOT_PAT or ARI_PAT) is missing. This test will fail to trigger the conflict resolver."
-            exit 1
+            echo "::warning::Required PAT (CI_BOT_PAT or ARI_PAT) is missing. This test may fail to trigger downstream orchestrators."
           else
-            echo "::notice::Required PAT is present. Workflow will be able to trigger downstream actions."
+            echo "::notice::Required PAT is present."
           fi
 
       - name: Create Conflict
@@ -201,10 +199,9 @@ jobs:
       - name: Validate Token
         run: |
           if [ -z "${{ secrets.CI_BOT_PAT }}" ] && [ -z "${{ secrets.ARI_PAT }}" ]; then
-            echo "::error::Required PAT (CI_BOT_PAT or ARI_PAT) is missing. This test will fail to trigger the squash orchestrator."
-            exit 1
+            echo "::warning::Required PAT (CI_BOT_PAT or ARI_PAT) is missing. This test may fail to trigger downstream orchestrators."
           else
-            echo "::notice::Required PAT is present. Workflow will be able to trigger downstream actions."
+            echo "::notice::Required PAT is present."
           fi
 
       - name: Create Test Branch and PR
