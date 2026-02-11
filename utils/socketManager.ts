@@ -195,8 +195,6 @@ const initSocketManager = (
       // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
       // NOTE: In a high-traffic production environment, this could lead to
       // memory pressure if many clients disconnect and don't reconnect.
-      // A more robust solution might involve a separate cleanup process
-      // or a maximum number of inactive sessions.
       const timer = setTimeout(() => {
         // Only cleanup if the client has not reconnected.
         // We verify this by checking if the socket associated with the clientId is the one that just closed.

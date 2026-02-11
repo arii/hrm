@@ -7,7 +7,6 @@ import waitOn from 'wait-on'
 
 /**
  * Enhanced waitForPort using the `wait-on` package.
- * It's more robust and specifically designed for this purpose.
  */
 const waitForPort = async (
   port: number,
@@ -58,7 +57,7 @@ test.describe('Infrastructure & Scripts', () => {
   })
 
   // 3. DEV SERVER TEST
-  // Spawns the real dev server on a unique port to ensure it boots.
+  // Spawns the real dev server on a unique port to verify it boots.
   test('pnpm run dev should start and listen', async () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 4) // Increased for CI stability
 
@@ -92,7 +91,7 @@ test.describe('Infrastructure & Scripts', () => {
       throw error // Re-throw the original error to fail the test
     } finally {
       // Cleanup: Kill the entire process group.
-      // The `-` before devServer.pid is crucial; it kills the group, not just the parent process.
+      // The `-` before devServer.pid kills the group, not just the parent process.
       try {
         if (devServer.pid) process.kill(-devServer.pid)
       } catch {
