@@ -29,7 +29,29 @@ set -e
 # - Configs that don't need code review (.gitignore, .editorconfig)
 # - Assets (*.png, *.svg, *.ico, *.jpg, *.jpeg, *.gif, *.webp)
 # - Documentation (*.md)
-IGNORE_PATTERN='(\.md$|package-lock\.json$|pnpm-lock\.yaml$|\.gitignore$|\.editorconfig$|\.png$|\.svg$|\.ico$|\.jpg$|\.jpeg$|\.gif$|\.webp$)'
+IGNORE_PATTERN='\.(md|png|svg|ico|jpg|jpeg|gif|webp)$|^(package-lock\.json|pnpm-lock\.yaml|\.gitignore|\.editorconfig)$'
+
+# Function to check for substantive changes
+# Sets NEEDS_REVIEW and SKIP_REASON globally
+check_substantive() {
+    local target_base="$1"
+    local target_head="$2"
+    local reason_suffix="$3"
+
+    local changed_files
+    changed_files=$(git diff --name-only "$target_base" "$target_head")
+
+    local substantive_files
+    substantive_files=$(echo "$changed_files" | grep -vE "$IGNORE_PATTERN" || true)
+
+    if [ -z "$substantive_files" ]; then
+        NEEDS_REVIEW="false"
+        SKIP_REASON="no significant code changes $reason_suffix (filtered by anti-slop rules)"
+    else
+        NEEDS_REVIEW="true"
+        SKIP_REASON=""
+    fi
+}
 
 
 # --- Initial State ---
@@ -146,27 +168,10 @@ else
         else
             # Check for substantial code changes since the last review.
             if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
-                CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
-                SUBSTANTIVE_FILES=$(echo "$CHANGED_FILES" | grep -vE "$IGNORE_PATTERN" || true)
-
-                if [ -z "$SUBSTANTIVE_FILES" ]; then
-                    SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA (filtered by anti-slop rules)"
-                    NEEDS_REVIEW="false"
-                else
-                    NEEDS_REVIEW="true"
-                    SKIP_REASON=""
-                fi
+                check_substantive "$LAST_REVIEWED_SHA" "$HEAD_SHA" "since last review at $LAST_REVIEWED_SHA"
             else
                 # Fallback if the last reviewed SHA is not in the history (e.g., after a force-push).
-                CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-                SUBSTANTIVE_FILES=$(echo "$CHANGED_FILES" | grep -vE "$IGNORE_PATTERN" || true)
-                if [ -z "$SUBSTANTIVE_FILES" ]; then
-                    SKIP_REASON="no significant code changes from base (filtered by anti-slop rules)"
-                    NEEDS_REVIEW="false"
-                else
-                    NEEDS_REVIEW="true"
-                    SKIP_REASON=""
-                fi
+                check_substantive "$BASE_SHA" "$HEAD_SHA" "from base"
             fi
         fi
     fi

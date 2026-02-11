@@ -46,7 +46,6 @@ jobs:
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
-          # Use grep for robust matching.
           # '^' matches the beginning of the string.
           # '-x' matches the entire line exactly.
           if echo "$COMMENT_BODY" | grep -q '^@gemini-bot' || echo "$COMMENT_BODY" | grep -q '^@jules fix'; then
@@ -82,7 +81,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # WARN: Monitor this. If slow, switch to 'fetch-depth: 100' + 'git fetch --deepen'
       - name: Check for file changes and find last non-empty commit
         id: check_files
         env:
