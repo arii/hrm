@@ -1,7 +1,6 @@
 /**
  * @jest-environment node
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   afterEach,
   beforeEach,
@@ -10,7 +9,7 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import { WebSocketServer } from 'ws'
+import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import { ConnectionMonitor } from '../../utils/websocketUtils'
 import logger from '@/utils/logger.server'
@@ -30,7 +29,8 @@ jest.mock('@/utils/logger.server', () => ({
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
     const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
-    wss.clients = new Set<MockWebSocket>() as any
+    // In tests, we use MockWebSocket but force it to be compatible with WebSocket type
+    wss.clients = new Set<MockWebSocket>() as unknown as Set<WebSocket>
     return wss
   }),
   WebSocket: jest.fn(),
@@ -69,7 +69,9 @@ describe('ConnectionMonitor', () => {
   })
 
   afterEach(() => {
-    connectionMonitor.stop()
+    if (connectionMonitor) {
+      connectionMonitor.stop()
+    }
     jest.useRealTimers()
     jest.clearAllMocks()
     ;(mockWss.clients as unknown as Set<MockWebSocket>).clear()
@@ -104,7 +106,7 @@ describe('ConnectionMonitor', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
     const unresponsiveClient = new MockWebSocket()
     unresponsiveClient.isAlive = false // Simulate a client that missed a pong
-    ;(mockWss.clients as any).add(unresponsiveClient)
+    ;(mockWss.clients as unknown as Set<MockWebSocket>).add(unresponsiveClient)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)
@@ -120,7 +122,7 @@ describe('ConnectionMonitor', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
     const responsiveClient = new MockWebSocket()
     responsiveClient.isAlive = true
-    ;(mockWss.clients as any).add(responsiveClient)
+    ;(mockWss.clients as unknown as Set<MockWebSocket>).add(responsiveClient)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)
@@ -132,7 +134,7 @@ describe('ConnectionMonitor', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
     const activeClient = new MockWebSocket()
     activeClient.isAlive = true
-    ;(mockWss.clients as any).add(activeClient)
+    ;(mockWss.clients as unknown as Set<MockWebSocket>).add(activeClient)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)
@@ -148,9 +150,9 @@ describe('ConnectionMonitor', () => {
     const client3 = new MockWebSocket() // Responsive
 
     client2.isAlive = false
-    ;(mockWss.clients as any).add(client1)
-    ;(mockWss.clients as any).add(client2)
-    ;(mockWss.clients as any).add(client3)
+    ;(mockWss.clients as unknown as Set<MockWebSocket>).add(client1)
+    ;(mockWss.clients as unknown as Set<MockWebSocket>).add(client2)
+    ;(mockWss.clients as unknown as Set<MockWebSocket>).add(client3)
 
     connectionMonitor.start()
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)

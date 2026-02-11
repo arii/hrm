@@ -1,9 +1,11 @@
 /**
  * @jest-environment jsdom
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { reducer, INITIAL_STATE, HrmData } from '../../context/webSocketReducer'
-import { ServerMessage } from '../../types/websocket'
+import {
+  InitialStateSnapshotPayload,
+  ServerMessage,
+} from '../../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../../types/core'
 
 interface TestHrmData extends HrmData {
@@ -68,21 +70,21 @@ describe('webSocketReducer', () => {
     ])('should handle %s', (type, key, payload, expected) => {
       const action = { type, payload } as unknown as ServerMessage
       const state = reducer(INITIAL_STATE, action)
-      // @ts-expect-error: mocking
+      // @ts-expect-error: mocking dynamic key access for test brevity
       expect(state[key]).toEqual(expected)
     })
   })
 
   describe('Complex Actions', () => {
     it('should handle INITIAL_STATE', () => {
-      const payload = {
+      const payload: InitialStateSnapshotPayload = {
         hrmData: [createMockUser({ value: 120 })],
         timerData: { ...INITIAL_STATE.timerData, isRunning: true },
         spotifyData: { ...INITIAL_STATE.spotifyData, trackName: 'Test' },
       }
       const state = reducer(INITIAL_STATE, {
         type: 'INITIAL_STATE',
-        payload: payload as any,
+        payload,
       })
 
       expect(state.hrmData[0].isConnected).toBe(true)
@@ -114,16 +116,18 @@ describe('webSocketReducer', () => {
         ],
       }
 
-      const payload = [
-        createMockUser({ clientId: 'c1', value: 110 }), // Update
+      // Simulate partial update for c1 (server might not send name)
+      const c1Payload = createMockUser({ clientId: 'c1', value: 110 })
+      delete c1Payload.name
+
+      const payload: ServerHrmData[] = [
+        c1Payload, // Update
         createMockUser({ clientId: 'c3', value: 120 }), // Add
       ]
-      // Simulate partial update for c1 (server might not send name)
-      delete (payload[0] as any).name
 
       const state = reducer(initialState, {
         type: 'HRM_UPDATE',
-        payload: payload as ServerHrmData[],
+        payload,
       })
 
       expect(state.hrmData).toHaveLength(2)
