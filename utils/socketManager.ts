@@ -33,6 +33,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
+let staleCheckInterval: NodeJS.Timeout | undefined
 
 // State Management:
 // - hrmDataStore: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
@@ -123,7 +124,8 @@ const initSocketManager = (
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
-  setInterval(() => {
+  if (staleCheckInterval) clearInterval(staleCheckInterval)
+  staleCheckInterval = setInterval(() => {
     const now = Date.now()
     for (const [clientId, session] of clientSessionState.entries()) {
       if (now - session.lastUpdate > STALE_THRESHOLD_MS) {
@@ -218,6 +220,10 @@ const initSocketManager = (
 
   wss.on('close', () => {
     connectionMonitor.stop()
+    if (staleCheckInterval) {
+      clearInterval(staleCheckInterval)
+      staleCheckInterval = undefined
+    }
   })
 }
 
@@ -227,6 +233,10 @@ const initSocketManager = (
 export const resetSocketManager = () => {
   hrmDataStore.clear()
   clientSessionState.clear()
+  if (staleCheckInterval) {
+    clearInterval(staleCheckInterval)
+    staleCheckInterval = undefined
+  }
 }
 
 const broadcastState = () => {

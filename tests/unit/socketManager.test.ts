@@ -24,6 +24,7 @@ import {
   StateSnapshot,
   ClientCommandMessageSchema,
   ExtWebSocket,
+  ServerMessage,
 } from '../../types/websocket'
 import {
   broadcast,
@@ -61,24 +62,32 @@ jest.mock('../../utils/logger.server.js', () => ({
 }))
 
 jest.mock('ws', () => {
-  const { EventEmitter } = jest.requireActual('events')
-  const { WebSocket: RealWebSocket } = jest.requireActual('ws')
+  const { EventEmitter } = jest.requireActual(
+    'events'
+  ) as typeof import('events')
 
-  class MockWebSocket extends RealWebSocket {
+  class MockWebSocket extends EventEmitter {
+    static CONNECTING = 0
+    static OPEN = 1
+    static CLOSING = 2
+    static CLOSED = 3
+
     clientId: string = ''
     isAlive: boolean = true
     clientType?: 'dashboard' | 'controller'
+    readyState: 0 | 1 | 2 | 3 = 1 // OPEN
+    binaryType: 'nodebuffer' | 'arraybuffer' | 'fragments' = 'nodebuffer'
+    bufferedAmount = 0
+    extensions = ''
+    protocol = ''
+    url = ''
+    onopen = null
+    onclose = null
+    onerror = null
+    onmessage = null
 
-    constructor(address: string) {
-      super(address || 'ws://test')
-      // Suppress connection errors from the underlying real WebSocket
-      this.on('error', () => {})
-      Object.defineProperty(this, 'readyState', {
-        get: () => 1, // OPEN
-        configurable: true,
-      })
-      this.on = jest.fn(this.on)
-      this.emit = jest.fn(this.emit)
+    constructor(_address: string) {
+      super()
     }
 
     send = jest.fn()
@@ -90,8 +99,7 @@ jest.mock('ws', () => {
   return {
     Server: jest.fn().mockImplementation(() => {
       const wss = new EventEmitter()
-      // @ts-expect-error: Assigning MockWebSocket set to WebSocket set (compatible at runtime)
-      wss.clients = new Set<MockWebSocket>()
+      wss.clients = new Set<MockWebSocket>() as unknown as Set<WebSocket>
       jest.spyOn(wss, 'on')
       jest.spyOn(wss, 'emit')
       return wss
@@ -164,6 +172,20 @@ describe('WebSocket Manager', () => {
     mockWss.clients.clear()
     resetSocketManager()
   })
+
+  // Helper to extract the last broadcast payload safely
+  const getLastBroadcastPayload = (): HrmData[] => {
+    const mockBroadcast = broadcast as jest.Mock
+    const lastCall =
+      mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+    if (!lastCall) return []
+    // The second argument to broadcast is the message: { type: '...', payload: ... }
+    const message = lastCall[1] as ServerMessage
+    if (message.type === 'HRM_UPDATE') {
+      return message.payload
+    }
+    return []
+  }
 
   describe('Connection Logging', () => {
     it('should log connection metadata on new connection', () => {
@@ -322,9 +344,7 @@ describe('WebSocket Manager', () => {
 
       const mockBroadcast = broadcast as jest.Mock
       expect(mockBroadcast).toHaveBeenCalled()
-      const lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const finalPayload: HrmData[] = lastCall[1].payload
+      const finalPayload = getLastBroadcastPayload()
       const clientData = finalPayload.find((c) => c.clientId === 'test-client')
 
       expect(clientData).toBeDefined()
@@ -338,10 +358,7 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', baselineMessage.toString())
 
-      let mockBroadcast = broadcast as jest.Mock
-      let lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      let finalPayload: HrmData[] = lastCall[1].payload
+      let finalPayload = getLastBroadcastPayload()
       let clientData = finalPayload.find((c) => c.clientId === 'test-client')
       expect(clientData!.calories).toBe(10)
 
@@ -351,9 +368,7 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', anomalyMessage.toString())
 
-      mockBroadcast = broadcast as jest.Mock
-      lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      finalPayload = lastCall[1].payload
+      finalPayload = getLastBroadcastPayload()
       clientData = finalPayload.find((c) => c.clientId === 'test-client')
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -374,10 +389,7 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', initialAnomalyMessage.toString())
 
-      const mockBroadcast = broadcast as jest.Mock
-      const lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const finalPayload: HrmData[] = lastCall[1].payload
+      const finalPayload = getLastBroadcastPayload()
       const clientData = finalPayload.find((c) => c.clientId === 'test-client')
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -410,10 +422,7 @@ describe('WebSocket Manager', () => {
         })
       )
 
-      const mockBroadcast = broadcast as jest.Mock
-      let lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      let finalPayload: HrmData[] = lastCall[1].payload
+      let finalPayload = getLastBroadcastPayload()
       let clientData = finalPayload.find((c) => c.clientId === 'test-client')
       expect(clientData!.calories).toBe(10)
 
@@ -425,8 +434,7 @@ describe('WebSocket Manager', () => {
         })
       )
 
-      lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      finalPayload = lastCall[1].payload
+      finalPayload = getLastBroadcastPayload()
       clientData = finalPayload.find((c) => c.clientId === 'test-client')
 
       expect(clientData!.calories).toBe(11.5)
@@ -441,10 +449,7 @@ describe('WebSocket Manager', () => {
         })
       )
 
-      const mockBroadcast = broadcast as jest.Mock
-      let lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      let finalPayload: HrmData[] = lastCall[1].payload
+      let finalPayload = getLastBroadcastPayload()
       let clientData = finalPayload.find((c) => c.clientId === 'test-client')
       expect(clientData!.calories).toBe(25)
 
@@ -456,8 +461,7 @@ describe('WebSocket Manager', () => {
         })
       )
 
-      lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      finalPayload = lastCall[1].payload
+      finalPayload = getLastBroadcastPayload()
       clientData = finalPayload.find((c) => c.clientId === 'test-client')
 
       expect(clientData!.calories).toBe(25)
@@ -481,11 +485,19 @@ describe('WebSocket Manager', () => {
 
       expect(getSnapshot).toHaveBeenCalled()
       expect(sendWebSocketMessage).toHaveBeenCalled()
-      const sentData = (sendWebSocketMessage as jest.Mock).mock.calls[0][1]
-      expect(sentData.type).toBe('INITIAL_STATE')
-      expect(sentData.payload).toHaveProperty('timer')
-      expect(sentData.payload).toHaveProperty('spotify')
-      expect(sentData.payload).toHaveProperty('hrmData')
+      // Use explicit casting or assertion for mock calls if needed, but avoid 'as any' where possible
+      const mockSend = sendWebSocketMessage as jest.Mock
+      const lastCall = mockSend.mock.calls[0]
+      const sentData = lastCall ? (lastCall[1] as ServerMessage) : undefined
+
+      expect(sentData).toBeDefined()
+      if (sentData && sentData.type === 'INITIAL_STATE') {
+        expect(sentData.payload).toHaveProperty('timer')
+        expect(sentData.payload).toHaveProperty('spotify')
+        expect(sentData.payload).toHaveProperty('hrmData')
+      } else {
+        throw new Error('Expected INITIAL_STATE message')
+      }
     })
 
     it('should handle invalid JSON gracefully', () => {
@@ -614,10 +626,7 @@ describe('WebSocket Manager', () => {
         'Session expired. Deleting data.'
       )
 
-      const mockBroadcast = broadcast as jest.Mock
-      const lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const payload: HrmData[] = lastCall[1].payload
+      const payload = getLastBroadcastPayload()
 
       expect(payload.length).toBe(1)
       expect(payload[0].clientId).toBe('test-client')
@@ -649,10 +658,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('close')
       jest.runOnlyPendingTimers()
 
-      const mockBroadcast = broadcast as jest.Mock
-      const lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const payload: HrmData[] = lastCall[1].payload
+      const payload = getLastBroadcastPayload()
 
       expect(payload.find((c) => c.clientId === clientId)).toBeDefined()
       expect(payload.find((c) => c.clientId === 'test-client')).toBeUndefined()
