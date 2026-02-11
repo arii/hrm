@@ -10,11 +10,12 @@ permissions:
   pull-requests: write
   issues: write
 
+env:
+  GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+
 jobs:
   test_pr_squash:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,11 +24,12 @@ jobs:
           fetch-depth: 0
 
       - name: Validate Token
+        env:
+          CI_BOT_PAT: ${{ secrets.CI_BOT_PAT }}
+          ARI_PAT: ${{ secrets.ARI_PAT }}
         run: |
-          if [ -z "${{ secrets.CI_BOT_PAT }}" ] && [ -z "${{ secrets.ARI_PAT }}" ]; then
+          if [ -z "$CI_BOT_PAT" ] && [ -z "$ARI_PAT" ]; then
             echo "::warning::Required PAT (CI_BOT_PAT or ARI_PAT) is missing. This test may fail to trigger downstream orchestrators."
-          else
-            echo "::notice::Required PAT is present."
           fi
 
       - name: Create Test Branch and PR
@@ -47,7 +49,7 @@ jobs:
           git commit -m "E2E Test Commit 2"
           git push origin $BRANCH_NAME
           PR_URL=$(gh pr create --title "E2E Test PR" --body "Test PR for E2E testing" --base leader --head $BRANCH_NAME)
-          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+$")
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+/?$" | sed 's/\///g')
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
@@ -87,8 +89,6 @@ jobs:
 
   test_conflict_resolver:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -97,11 +97,12 @@ jobs:
           fetch-depth: 0
 
       - name: Validate Token
+        env:
+          CI_BOT_PAT: ${{ secrets.CI_BOT_PAT }}
+          ARI_PAT: ${{ secrets.ARI_PAT }}
         run: |
-          if [ -z "${{ secrets.CI_BOT_PAT }}" ] && [ -z "${{ secrets.ARI_PAT }}" ]; then
+          if [ -z "$CI_BOT_PAT" ] && [ -z "$ARI_PAT" ]; then
             echo "::warning::Required PAT (CI_BOT_PAT or ARI_PAT) is missing. This test may fail to trigger downstream orchestrators."
-          else
-            echo "::notice::Required PAT is present."
           fi
 
       - name: Create Conflict
@@ -145,7 +146,7 @@ jobs:
 
           # Create a pull request to trigger the conflict resolver
           PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base $BRANCH_A --head $BRANCH_B)
-          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+$")
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+/?$" | sed 's/\///g')
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
@@ -187,8 +188,6 @@ jobs:
 
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -197,11 +196,12 @@ jobs:
           fetch-depth: 0
 
       - name: Validate Token
+        env:
+          CI_BOT_PAT: ${{ secrets.CI_BOT_PAT }}
+          ARI_PAT: ${{ secrets.ARI_PAT }}
         run: |
-          if [ -z "${{ secrets.CI_BOT_PAT }}" ] && [ -z "${{ secrets.ARI_PAT }}" ]; then
+          if [ -z "$CI_BOT_PAT" ] && [ -z "$ARI_PAT" ]; then
             echo "::warning::Required PAT (CI_BOT_PAT or ARI_PAT) is missing. This test may fail to trigger downstream orchestrators."
-          else
-            echo "::notice::Required PAT is present."
           fi
 
       - name: Create Test Branch and PR
@@ -221,7 +221,7 @@ jobs:
           git commit -m "E2E Test Commit 2 (rebase)"
           git push origin $BRANCH_NAME
           PR_URL=$(gh pr create --title "E2E Test PR (rebase)" --body "Test PR for E2E testing (rebase)" --base leader --head $BRANCH_NAME)
-          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+$")
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+/?$" | sed 's/\///g')
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
