@@ -39,6 +39,10 @@ jobs:
       - name: Rebase PRs
         uses: peter-evans/rebase@v4
         with:
+          # A PAT (Personal Access Token) with 'repo' scope is highly recommended.
+          # The default GITHUB_TOKEN has limitations: it cannot trigger other workflows
+          # (e.g., CI checks won't run after the rebase) and may not be able to push
+          # to protected branches depending on repository settings.
           token: ${{ secrets.PAT_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           base: leader
           # Rebase a specific PR if pr_number is provided, otherwise rebase all open PRs targeting leader
