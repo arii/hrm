@@ -21,7 +21,8 @@ on:
 jobs:
   rebase:
     runs-on: ubuntu-latest
-    # Removed the incorrect 'if: github.ref != ...' which prevented it from running on pushes to leader
+    # This job must run on pushes to 'leader' so it can rebase all open PRs targeting 'leader'.
+    # The previous 'if: github.ref != ...' condition incorrectly blocked this behavior.
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
