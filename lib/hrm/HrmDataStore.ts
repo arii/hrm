@@ -1,36 +1,87 @@
-// lib/repositories/HrmDataRepository.ts
-import { HrmStreamData } from '../../types/core'
+// lib/hrm/HrmDataStore.ts
+import { RingBuffer } from '../structures/RingBuffer.js'
+import { HrmStreamData, HrmDataPoint } from '../../types/core.js'
+
+/**
+ * Internal session state for a single HRM client.
+ * Combines the latest streamed data with a fixed-capacity history
+ * and incrementally updated statistics to prevent O(N) calculations.
+ */
+interface ClientSession {
+  latestData: HrmStreamData
+  liveWindow: RingBuffer<HrmDataPoint>
+  stats: {
+    count: number
+    sumHr: number
+    maxHr: number
+    minHr: number
+  }
+}
+
+const LIVE_WINDOW_SIZE = 600 // 10 minutes at 1Hz
 
 /**
  * DataStore for managing HRM client data.
- * Encapsulates the storage and retrieval of HrmStreamData.
+ * Encapsulates the storage and retrieval of HrmStreamData with integrated
+ * memory management via Ring Buffers.
  */
 export class HrmDataStore {
-  private clientData = new Map<string, HrmStreamData>()
+  private sessions = new Map<string, ClientSession>()
 
   /**
-   * Finds a client's data by their ID.
+   * Finds a client's data by their ID, including aggregated session stats.
    * @param id The client's unique identifier.
    * @returns The client's data or undefined if not found.
    */
   findById(id: string): HrmStreamData | undefined {
-    return this.clientData.get(id)
+    const session = this.sessions.get(id)
+    if (!session) return undefined
+
+    return this.mergeStats(session)
   }
 
   /**
-   * Retrieves all client data entries.
+   * Retrieves all client data entries with aggregated session stats.
    * @returns An array of all client data.
    */
   findAll(): HrmStreamData[] {
-    return Array.from(this.clientData.values())
+    return Array.from(this.sessions.values()).map((session) =>
+      this.mergeStats(session)
+    )
   }
 
   /**
-   * Saves or updates a client's data.
+   * Saves or updates a client's data and adds a point to their history.
    * @param data The client data to save.
    */
   save(data: HrmStreamData): void {
-    this.clientData.set(data.clientId, data)
+    let session = this.sessions.get(data.clientId)
+
+    if (!session) {
+      session = {
+        latestData: data,
+        liveWindow: new RingBuffer<HrmDataPoint>(LIVE_WINDOW_SIZE),
+        stats: {
+          count: 0,
+          sumHr: 0,
+          maxHr: 0,
+          minHr: Infinity,
+        },
+      }
+      this.sessions.set(data.clientId, session)
+    }
+
+    session.latestData = data
+
+    // Only update history and stats if we have a valid HR value
+    if (data.value > 0) {
+      const point: HrmDataPoint = {
+        heartRate: data.value,
+        timestamp: data.updatedAt || Date.now(),
+      }
+      session.liveWindow.push(point)
+      this.updateStats(session, point.heartRate)
+    }
   }
 
   /**
@@ -38,13 +89,67 @@ export class HrmDataStore {
    * @param id The client's unique identifier.
    */
   deleteById(id: string): void {
-    this.clientData.delete(id)
+    this.sessions.delete(id)
   }
 
   /**
    * Clears all client data from the repository.
    */
   clear(): void {
-    this.clientData.clear()
+    this.sessions.clear()
+  }
+
+  /**
+   * Returns a snapshot of history and stats for a client.
+   * Useful for initial state hydration or deep analysis.
+   * @param clientId The client's unique identifier.
+   */
+  getSnapshot(clientId: string) {
+    const session = this.sessions.get(clientId)
+    if (!session) return null
+
+    return {
+      recentHistory: session.liveWindow.toArray(),
+      summary: {
+        avgHr:
+          session.stats.count > 0
+            ? Math.round(session.stats.sumHr / session.stats.count)
+            : 0,
+        maxHr: session.stats.maxHr,
+        minHr: session.stats.minHr === Infinity ? 0 : session.stats.minHr,
+        count: session.stats.count,
+      },
+    }
+  }
+
+  /**
+   * Clears history for a client to free up memory,
+   * simulating a "flush" to persistent storage.
+   * @param clientId The client's unique identifier.
+   */
+  flushToDisk(clientId: string): void {
+    const session = this.sessions.get(clientId)
+    if (session) {
+      session.liveWindow.clear()
+      // We keep the stats as they represent the session-to-date
+    }
+  }
+
+  private updateStats(session: ClientSession, heartRate: number): void {
+    const { stats } = session
+    stats.count++
+    stats.sumHr += heartRate
+    stats.maxHr = Math.max(stats.maxHr, heartRate)
+    stats.minHr = Math.min(stats.minHr, heartRate)
+  }
+
+  private mergeStats(session: ClientSession): HrmStreamData {
+    const { latestData, stats } = session
+    return {
+      ...latestData,
+      sessionAvgHr: stats.count > 0 ? Math.round(stats.sumHr / stats.count) : 0,
+      sessionMaxHr: stats.maxHr,
+      sessionMinHr: stats.minHr === Infinity ? 0 : stats.minHr,
+    }
   }
 }
