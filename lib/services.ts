@@ -1,11 +1,11 @@
 import { SpotifyPollingService } from '@/services/spotifyPolling'
-import { TabataService } from '@/services/tabataTimer'
+import { TabataTimer } from '@/services/tabataTimer'
 import { Broadcaster } from '@/lib/websocket'
 import { SpotifyService } from '@/types/interfaces'
 import { ServiceInitializationError } from '@/lib/errors'
 
 export interface AppServices {
-  tabataService: TabataService
+  tabataService: TabataTimer
   spotifyService: SpotifyService
   isSpotifyInitialized: boolean
 }
@@ -22,7 +22,7 @@ export const getSpotifyService = (): SpotifyService => {
 export async function createServices(
   broadcast: Broadcaster
 ): Promise<AppServices> {
-  const tabataService = new TabataService(broadcast)
+  const tabataService = new TabataTimer(broadcast)
   let spotifyService: SpotifyService
   let isSpotifyInitialized = true
 

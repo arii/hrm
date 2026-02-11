@@ -18,7 +18,7 @@ import {
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import { TLSSocket } from 'tls'
-import { TabataService } from '../../services/tabataTimer'
+import { TabataTimer } from '../../services/tabataTimer'
 import { SpotifyPollingService } from '../../services/spotifyPolling'
 import {
   HrmData,
@@ -112,7 +112,7 @@ class MockWebSocket extends EventEmitter {
 describe('WebSocket Manager', () => {
   let mockWss: jest.Mocked<WebSocketServer>
   let mockServices: {
-    tabataService: jest.Mocked<TabataService>
+    tabataService: jest.Mocked<TabataTimer>
     spotifyService: jest.Mocked<SpotifyPollingService>
   }
   let getSnapshot: () => StateSnapshot
@@ -124,7 +124,7 @@ describe('WebSocket Manager', () => {
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
 
     // Create fully typed mocks for the services.
-    const mockTabataTimer: jest.Mocked<TabataService> = {
+    const mockTabataTimer: jest.Mocked<TabataTimer> = {
       handleCommand: jest.fn(),
       setMode: jest.fn(),
       setConfig: jest.fn(),
@@ -138,7 +138,7 @@ describe('WebSocket Manager', () => {
       getSnapshot: jest.fn(),
       cleanup: jest.fn(),
       dispose: jest.fn(),
-    } as unknown as jest.Mocked<TabataService>
+    } as unknown as jest.Mocked<TabataTimer>
 
     const mockSpotifyPolling: jest.Mocked<SpotifyPollingService> = {
       handleCommand: jest.fn(),

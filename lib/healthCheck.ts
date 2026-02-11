@@ -1,6 +1,6 @@
 // lib/healthCheck.ts
 import { WebSocket } from 'ws'
-import { TabataService } from '@/services/tabataTimer'
+import { TabataTimer } from '@/services/tabataTimer'
 
 export type HealthCheckResult = {
   healthy: boolean
@@ -98,9 +98,7 @@ export async function checkSpotifyAPI(): Promise<HealthCheckResult> {
   }
 }
 
-export function checkTimerService(
-  tabataTimer: TabataService
-): HealthCheckResult {
+export function checkTimerService(tabataTimer: TabataTimer): HealthCheckResult {
   try {
     const timerCheck =
       typeof tabataTimer !== 'undefined' && tabataTimer.getState

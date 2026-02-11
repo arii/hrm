@@ -16,7 +16,7 @@ import { TimerCommands } from '@/services/timer/timerCommands'
 
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'
 
-export class TabataService {
+export class TabataTimer {
   private readonly state: DualModeTimerState
   private readonly queries: TimerQueries
   private readonly commands: TimerCommands

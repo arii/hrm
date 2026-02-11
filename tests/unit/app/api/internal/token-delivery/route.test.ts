@@ -111,7 +111,7 @@ describe('POST /api/internal/token-delivery', () => {
   })
 
   it('should default obtainedAt if missing in payload', async () => {
-    const { obtainedAt, ...tokenWithoutObtainedAt } = validTokenData
+    const { obtainedAt: _, ...tokenWithoutObtainedAt } = validTokenData
     const req = new NextRequest(
       'http://localhost/api/internal/token-delivery',
       {

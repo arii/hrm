@@ -9,7 +9,7 @@ import {
   checkTimerService,
 } from '../../../lib/healthCheck'
 import { WebSocket } from 'ws'
-import { TabataService } from '../../../services/tabataTimer'
+import { TabataTimer } from '../../../services/tabataTimer'
 
 // Mock the 'ws' module
 jest.mock('ws')
@@ -100,7 +100,7 @@ describe('Health Check Logic', () => {
 
   describe('checkTimerService', () => {
     it('should return healthy when timer service is active', () => {
-      const mockTimer = { getState: () => ({}) } as TabataService
+      const mockTimer = { getState: () => ({}) } as TabataTimer
       const result = checkTimerService(mockTimer)
       expect(result.healthy).toBe(true)
       expect(result.details.instance).toBe('active')
