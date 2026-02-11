@@ -62,7 +62,10 @@ To maintain a clean and linear commit history, this project uses **Rebase** as t
 ### Automated Synchronization
 The project uses the `Auto Rebase` workflow to automatically rebase all open pull requests whenever new changes are pushed to the `leader` branch. This ensures that PRs are always up-to-date and reduces the likelihood of complex merge conflicts at the end of a feature's development.
 
-**Note**: For the `Auto Rebase` workflow to push to protected branches and trigger subsequent CI checks on the rebased commits, a Personal Access Token (PAT) with `repo` scope must be configured as a repository secret named `PAT_TOKEN`.
+**Note**: For the `Auto Rebase` workflow to push to protected branches and trigger subsequent CI checks on the rebased commits, a Personal Access Token (PAT) with `repo` scope must be configured. The workflow is configured to check for the following secrets in order of preference:
+1. `PAT_TOKEN` (Primary recommendation)
+2. `ARI_PAT` (Supported fallback)
+3. `GITHUB_TOKEN` (Default fallback; **Note**: This token cannot trigger subsequent CI checks and may fail on protected branches).
 
 #### Opting Out of Automated Synchronization
 If a specific Pull Request or branch should NOT be automatically rebased (e.g., during a complex manual refactor or if history rewriting is undesirable for that branch), apply one of the following labels to the PR:
