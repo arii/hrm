@@ -24,6 +24,13 @@ set -e
 # This variable is optional and may not be present for all event types.
 : "${COMMENT_BODY:=}"
 
+# Define the 'Ignore List' regex (Trivial/Non-Code files)
+# - Lockfiles (package-lock.json, pnpm-lock.yaml)
+# - Configs that don't need code review (.gitignore, .editorconfig)
+# - Assets (*.png, *.svg, *.ico, *.jpg, *.jpeg, *.gif, *.webp)
+# - Documentation (*.md)
+IGNORE_PATTERN='(\.md$|package-lock\.json$|pnpm-lock\.yaml$|\.gitignore$|\.editorconfig$|\.png$|\.svg$|\.ico$|\.jpg$|\.jpeg$|\.gif$|\.webp$)'
+
 
 # --- Initial State ---
 NEEDS_REVIEW="false"
@@ -140,10 +147,10 @@ else
             # Check for substantial code changes since the last review.
             if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
                 CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
-                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE "$IGNORE_PATTERN" 2>/dev/null || echo 0) | head -n 1)
 
                 if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                    SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
+                    SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA (filtered by anti-slop rules)"
                     NEEDS_REVIEW="false"
                 else
                     NEEDS_REVIEW="true"
@@ -152,9 +159,9 @@ else
             else
                 # Fallback if the last reviewed SHA is not in the history (e.g., after a force-push).
                 CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE "$IGNORE_PATTERN" 2>/dev/null || echo 0) | head -n 1)
                 if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                    SKIP_REASON="no significant code changes from base"
+                    SKIP_REASON="no significant code changes from base (filtered by anti-slop rules)"
                     NEEDS_REVIEW="false"
                 else
                     NEEDS_REVIEW="true"
@@ -170,4 +177,5 @@ fi
 # Log the final decision and write to the output file for GitHub Actions.
 echo "::info::Final Decision: needs-review=$NEEDS_REVIEW (Reason: $SKIP_REASON)"
 echo "needs-review=$NEEDS_REVIEW" >> "$GITHUB_OUTPUT"
+echo "review_needed=$NEEDS_REVIEW" >> "$GITHUB_OUTPUT"
 echo "skip-reason=$SKIP_REASON" >> "$GITHUB_OUTPUT"

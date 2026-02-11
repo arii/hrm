@@ -82,7 +82,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 100
+          fetch-depth: 0
       - name: Check for file changes and find last non-empty commit
         id: check_files
         env:
@@ -167,7 +167,7 @@ jobs:
 
   # 2. Trigger review AFTER CI checks are done for a PR event
   review-on-pr-update:
-    if: always() && github.event_name == 'pull_request' && needs.check-diff.outputs.has_changes == 'true'
+    if: github.event_name == 'pull_request' && needs.check-diff.outputs.has_changes == 'true' && needs.pr-quality.result == 'success'
     needs: [check-diff, pr-quality]
     permissions:
       contents: read
