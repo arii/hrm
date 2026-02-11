@@ -21,6 +21,7 @@ A complete design system has been established to address all identified UI consi
 - **Success (Green #4CAF50)**: Matches **Fat Burn** zone.
 - **Light Blue (#03A9F4)**: Matches **Recovery** zone.
 - **Grey (#9E9E9E)**: Matches **Idle** / No Data.
+- **Blue Grey (#607D8B)**: Matches **Unknown** zone.
 - **Background**: Light grey (#F5F5F5) for main areas, white for cards.
 - **Text**: Dark grey (#212121) primary, medium grey (#757575) secondary.
 
