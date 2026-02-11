@@ -1,48 +1,39 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  useTheme,
-  Stack,
-  Palette,
-} from '@mui/material'
+import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { HrZoneName } from '@/lib/shared/hr-zones'
-import { formatDuration } from '@/lib/utils'
+// Import global constants for consistent coloring
+import { HEART_RATE_ZONES } from '@/utils/constants'
 
+// --- Types ---
 interface ZoneDistributionProps {
   timeInZones: Record<HrZoneName, number>
   totalDuration: number
 }
 
-// Order of zones for sorting (High intensity to Low intensity)
-const ZONE_PRIORITY: Record<HrZoneName, number> = {
-  [HrZoneName.Max]: 0,
-  [HrZoneName.Peak]: 1,
-  [HrZoneName.Cardio]: 2,
-  [HrZoneName.FatBurn]: 3,
-  [HrZoneName.WarmUp]: 4,
-  [HrZoneName.NoData]: 5,
-  [HrZoneName.Unknown]: 6,
+// --- Constants & Helpers ---
+
+// Map your domain "HrZoneName" enum to the UI colors defined in HEART_RATE_ZONES
+// We map these explicitly to ensure domain names match visual expectations
+const ZONE_COLOR_MAP: Record<string, string> = {
+  [HrZoneName.Max]: HEART_RATE_ZONES.find(z => z.name === 'Zone 5')?.color || '#F44336',
+  [HrZoneName.Peak]: HEART_RATE_ZONES.find(z => z.name === 'Zone 4')?.color || '#FFEB3B',
+  [HrZoneName.Cardio]: HEART_RATE_ZONES.find(z => z.name === 'Zone 3')?.color || '#4CAF50',
+  [HrZoneName.FatBurn]: HEART_RATE_ZONES.find(z => z.name === 'Zone 2')?.color || '#2196F3',
+  [HrZoneName.WarmUp]: HEART_RATE_ZONES.find(z => z.name === 'Zone 1')?.color || '#9E9E9E',
+  [HrZoneName.NoData]: '#e0e0e0',
+  [HrZoneName.Unknown]: '#9e9e9e',
 }
 
-const ZONE_COLOR_MAP: Partial<
-  Record<HrZoneName, keyof Palette['custom']['hrZones']>
-> = {
-  [HrZoneName.Max]: 'max',
-  [HrZoneName.Peak]: 'peak',
-  [HrZoneName.Cardio]: 'cardio',
-  [HrZoneName.FatBurn]: 'fatBurn',
-  [HrZoneName.WarmUp]: 'warmUp',
-  [HrZoneName.NoData]: 'noData',
-  [HrZoneName.Unknown]: 'unknown',
+// Strict time formatter: "MM:SS" (e.g., "25:40")
+const formatTime = (seconds: number): string => {
+  const safeSeconds = Math.max(0, Math.floor(seconds))
+  const mins = Math.floor(safeSeconds / 60)
+  const secs = safeSeconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
 }
-
-const TIME_FORMAT_OPTIONS = { unit: 'seconds', format: 'MM:SS' } as const
 
 const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   timeInZones,
@@ -50,41 +41,25 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 }) => {
   const theme = useTheme()
 
+  // Transform data for Recharts and list display
+  // Memoized to prevent recalculation on unrelated renders
   const data = useMemo(() => {
     return Object.entries(timeInZones)
+      .filter(([zone]) => zone !== HrZoneName.NoData && zone !== HrZoneName.Unknown)
       .map(([zone, time]) => {
         const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
-        const zoneName = zone as HrZoneName
-
-        // Inline getZoneColor logic
-        const hrZones = theme.palette.custom?.hrZones
-        let color = theme.palette.grey[500]
-        if (hrZones) {
-          const colorKey = ZONE_COLOR_MAP[zoneName]
-          if (colorKey && hrZones[colorKey]) {
-            color = hrZones[colorKey]
-          }
-        }
-
         return {
-          name: zoneName,
+          name: zone,
           value: time,
           percentage: parseFloat(percentage.toFixed(1)),
-          formattedTime: formatDuration(time, TIME_FORMAT_OPTIONS),
-          color: color,
+          formattedTime: formatTime(time),
+          color: ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
         }
       })
+      // Sort by intensity usually makes sense, but data order might suffice.
+      // Filter out zero values to keep the chart clean
       .filter((item) => item.value > 0)
-      .sort((a, b) => {
-        // Efficient sorting using map
-        const priorityA = ZONE_PRIORITY[a.name] ?? 99
-        const priorityB = ZONE_PRIORITY[b.name] ?? 99
-        return priorityA - priorityB
-      })
-  }, [timeInZones, totalDuration, theme])
-
-  const isTestEnv =
-    typeof window !== 'undefined' && window.__IS_TEST_ENV__ === true
+  }, [timeInZones, totalDuration, theme.palette.grey])
 
   if (data.length === 0) {
     return null
@@ -97,48 +72,35 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
           Heart Rate Zone Distribution
         </Typography>
 
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          alignItems="flex-start"
-          width="100%"
-        >
+        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2} alignItems="center">
+
           {/* Chart Section */}
           <Box
             width={{ xs: '100%', sm: '50%' }}
-            minHeight={200}
+            height={200}
             position="relative"
             role="region"
             aria-label="Heart rate zone distribution chart"
           >
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart accessibilityLayer>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius="60%"
-                  outerRadius="80%"
+                  innerRadius={60}
+                  outerRadius={80}
                   paddingAngle={2}
                   dataKey="value"
                   stroke="none"
-                  isAnimationActive={!isTestEnv}
                 >
                   {data.map((entry) => (
                     <Cell key={`cell-${entry.name}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(_value, _name, item) => [
-                    item.payload.formattedTime || '00:00',
-                    'Duration',
-                  ]}
-                  contentStyle={{
-                    borderRadius: '8px',
-                    border: 'none',
-                    boxShadow: theme.shadows[3],
-                  }}
-                  isAnimationActive={!isTestEnv}
+                  formatter={(value: number | undefined) => [formatTime(value ?? 0), 'Duration']}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: theme.shadows[3] }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -156,29 +118,17 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
               flexDirection="column"
               sx={{ pointerEvents: 'none' }}
             >
-              <Typography variant="caption" color="textSecondary">
-                Total
-              </Typography>
+              <Typography variant="caption" color="textSecondary">Total</Typography>
               <Typography variant="h6" fontWeight="bold">
-                {formatDuration(totalDuration, TIME_FORMAT_OPTIONS)}
+                {formatTime(totalDuration)}
               </Typography>
             </Box>
           </Box>
 
           {/* Legend / List Section */}
-          <Box
-            component="ul"
-            width={{ xs: '100%', sm: '50%' }}
-            display="flex"
-            flexDirection="column"
-            gap={1}
-            p={0}
-            m={0}
-            sx={{ listStyle: 'none' }}
-          >
+          <Box width={{ xs: '100%', sm: '50%' }} display="flex" flexDirection="column" gap={1}>
             {data.map((item) => (
               <Box
-                component="li"
                 key={item.name}
                 data-testid={`zone-row-${item.name}`}
                 display="flex"
@@ -194,20 +144,12 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                     bgcolor={item.color}
                     data-testid="zone-color-indicator"
                   />
-                  <Typography
-                    variant="body2"
-                    fontWeight={600}
-                    color="textPrimary"
-                  >
+                  <Typography variant="body2" fontWeight={600} color="textPrimary">
                     {item.name}
                   </Typography>
                 </Box>
                 <Box textAlign="right">
-                  <Typography
-                    variant="body2"
-                    fontWeight="bold"
-                    fontFamily="monospace"
-                  >
+                  <Typography variant="body2" fontWeight="bold" fontFamily="monospace">
                     {item.formattedTime}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
@@ -217,7 +159,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
               </Box>
             ))}
           </Box>
-        </Stack>
+        </Box>
       </CardContent>
     </Card>
   )

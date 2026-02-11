@@ -16,6 +16,8 @@ export const CONNECT_HR_MONITOR_BUTTON_TEXT = 'Connect HR Monitor'
 export const DISCONNECT_HR_MONITOR_BUTTON_TEXT = 'Disconnect HR Monitor'
 
 // --- Heart Rate Calculation Constants ---
+export const HRM_STALE_THRESHOLD_MS = 30000
+export const HRM_WARNING_THRESHOLD_MS = 10000
 
 // --- Heart Rate Zones Configuration ---
 // Exported from lib/shared/hr-zones.ts for canonical source of truth.
