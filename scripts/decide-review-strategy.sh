@@ -24,27 +24,17 @@ set -e
 # This variable is optional and may not be present for all event types.
 : "${COMMENT_BODY:=}"
 
-# Define the 'Ignore List' regex (Trivial/Non-Code files)
-# - Lockfiles (package-lock.json, pnpm-lock.yaml)
-# - Configs that don't need code review (.gitignore, .editorconfig)
-# - Assets (*.png, *.svg, *.ico, *.jpg, *.jpeg, *.gif, *.webp)
-# - Documentation (*.md)
+# Regex to filter trivial files (assets, locks, configs, docs)
 IGNORE_PATTERN='\.(md|png|svg|ico|jpg|jpeg|gif|webp)$|(package-lock\.json|pnpm-lock\.yaml|\.gitignore|\.editorconfig)$'
 
-# Function to check for substantive changes
-# Sets NEEDS_REVIEW and SKIP_REASON globally
+# Function to check for substantive changes. Sets NEEDS_REVIEW and SKIP_REASON globally.
 check_substantive() {
     local target_base="$1"
     local target_head="$2"
     local reason_suffix="$3"
 
-    local changed_files
-    changed_files=$(git diff --name-only "$target_base" "$target_head")
-
-    local substantive_files
-    substantive_files=$(echo "$changed_files" | grep -vE "$IGNORE_PATTERN" || true)
-
-    if [ -z "$substantive_files" ]; then
+    # Direct pipe reduces intermediate variables and improves code ratio
+    if [ -z "$(git diff --name-only "$target_base" "$target_head" | grep -vE "$IGNORE_PATTERN" || true)" ]; then
         NEEDS_REVIEW="false"
         SKIP_REASON="no significant code changes $reason_suffix (filtered by anti-slop rules)"
     else
