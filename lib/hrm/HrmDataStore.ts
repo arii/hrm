@@ -1,6 +1,10 @@
 // lib/hrm/HrmDataStore.ts
 import { RingBuffer } from '../structures/RingBuffer.js'
-import { HrmStreamData, HeartRateDataPoint } from '../../types/core.js'
+import {
+  HrmStreamData,
+  RawHrmStreamData,
+  HeartRateDataPoint,
+} from '../../types/core.js'
 import { env } from '../env.js'
 
 type HrmDataPoint = Pick<HeartRateDataPoint, 'heartRate' | 'timestamp'>
@@ -11,7 +15,7 @@ type HrmDataPoint = Pick<HeartRateDataPoint, 'heartRate' | 'timestamp'>
  * and incrementally updated statistics to prevent O(N) calculations.
  */
 interface ClientSession {
-  latestData: HrmStreamData
+  latestData: RawHrmStreamData
   liveWindow: RingBuffer<HrmDataPoint>
   stats: {
     count: number
@@ -57,7 +61,7 @@ export class HrmDataStore {
    * Saves or updates a client's data and adds a point to their history.
    * @param data The client data to save.
    */
-  save(data: HrmStreamData): void {
+  save(data: RawHrmStreamData): void {
     let session = this.sessions.get(data.clientId)
 
     if (!session) {

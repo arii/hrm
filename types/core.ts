@@ -94,9 +94,9 @@ export interface HrmSessionStats {
 }
 
 /**
- * Represents a single, real-time heart rate data stream from a client.
+ * Represents raw heart rate data streamed from a client.
  */
-export interface HrmStreamData {
+export interface RawHrmStreamData {
   clientId: string
   value: number
   maxHr: number
@@ -107,6 +107,12 @@ export interface HrmStreamData {
   zone?: number
   weightKg?: number
   updatedAt?: number
+}
+
+/**
+ * Represents heart rate data augmented with session-level statistics.
+ */
+export interface HrmStreamData extends RawHrmStreamData {
   // Session statistics (calculated incrementally)
   sessionStats?: HrmSessionStats
 }

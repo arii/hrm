@@ -1,17 +1,17 @@
 // tests/unit/lib/hrm/HrmDataStore.test.ts
 import { HrmDataStore } from '../../../../lib/hrm/HrmDataStore'
-import { HrmStreamData } from '../../../../types/core'
+import { RawHrmStreamData } from '../../../../types/core'
 
 describe('HrmDataStore', () => {
   let repository: HrmDataStore
-  const client1: HrmStreamData = {
+  const client1: RawHrmStreamData = {
     clientId: 'client1',
     value: 80,
     maxHr: 190,
     age: 25,
     calories: 100,
   }
-  const client2: HrmStreamData = {
+  const client2: RawHrmStreamData = {
     clientId: 'client2',
     value: 90,
     maxHr: 180,
