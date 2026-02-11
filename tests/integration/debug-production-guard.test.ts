@@ -28,11 +28,9 @@ describe('Debug Production Guard', () => {
       const req = {
         nextUrl: {
           pathname: '/api/debug/reset',
-          clone: jest.fn().mockReturnValue({
-            searchParams: {
-              get: jest.fn().mockReturnValue(null),
-            },
-          }),
+          searchParams: {
+            get: jest.fn().mockReturnValue(null),
+          },
         },
       } as unknown as NextRequestWithAuth
 
@@ -54,11 +52,9 @@ describe('Debug Production Guard', () => {
       const req = {
         nextUrl: {
           pathname: '/api/debug/reset',
-          clone: jest.fn().mockReturnValue({
-            searchParams: {
-              get: jest.fn().mockReturnValue(null),
-            },
-          }),
+          searchParams: {
+            get: jest.fn().mockReturnValue(null),
+          },
         },
       } as unknown as NextRequestWithAuth
 

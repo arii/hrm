@@ -20,12 +20,10 @@ export default withAuth(
       }
     }
 
-    const url = req.nextUrl.clone()
-
     // If the user is being redirected to a page with an auth error,
     // we should let them land there to break any potential redirect loops caused
     // by the default `withAuth` behavior.
-    if (url.searchParams.get('error') === 'SpotifyAuthFailed') {
+    if (req.nextUrl.searchParams.get('error') === 'SpotifyAuthFailed') {
       return NextResponse.next()
     }
 
