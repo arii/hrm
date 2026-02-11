@@ -294,11 +294,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add reaction to comment
-        uses: peter-evans/create-reaction@v4
+        uses: actions/github-script@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ github.event.comment.id }}
-          reaction: eyes
+          script: |
+            github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ github.event.comment.id }},
+              content: 'eyes'
+            });
 
   prepare-conflict-resolution:
     if: needs.comment-router.outputs.is_conflict_resolve_comment == 'true'
