@@ -4,7 +4,7 @@
  */
 
 import { jest } from '@jest/globals'
-import TabataTimer from '../../../services/tabataTimer'
+import { TabataService } from '../../../services/tabataTimer'
 import { ConfigurationError } from '../../../types/errors'
 
 // Mock the broadcast function
@@ -14,13 +14,13 @@ const broadcastUpdate = jest.fn()
 jest.useFakeTimers()
 
 describe('TabataTimer (Refactored)', () => {
-  let timer: TabataTimer
+  let timer: TabataService
 
   beforeEach(() => {
     // Clear any previous mocks and timers
     broadcastUpdate.mockClear()
     jest.clearAllTimers()
-    timer = new TabataTimer(broadcastUpdate)
+    timer = new TabataService(broadcastUpdate)
   })
 
   // Test initial state

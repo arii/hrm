@@ -1,26 +1,25 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { ServerMessage, SpotifyData } from '../types/websocket'
-import { SpotifyCommandParameters } from '../types/core'
-import {
-  SpotifyTokenManager,
-  SpotifyTokenPayload,
-} from './spotifyTokenManager.js'
-import logger from '../utils/logger.server.js'
+import { ServerMessage, SpotifyData } from '@/types/websocket'
+import { SpotifyCommandParameters } from '@/types/core'
+import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
+import logger from '@/utils/logger.server'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyApiErrorHandling.js'
-import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
-import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
-import { env } from '../lib/env.js'
-import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
-import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
+} from '@/services/spotifyApiErrorHandling'
+import { SpotifyCommand, SpotifyService } from '@/types/interfaces'
+import { SafeSpotifyApi, createSafeSpotifyApi } from '@/services/safeSpotifyApi'
+import { env } from '@/lib/env'
+import { SpotifyPlayerManager } from '@/services/spotifyPlayerManager'
+import { SpotifyDeviceManager } from '@/services/spotifyDeviceManager'
 
-export class SpotifyPolling implements SpotifyService {
+export class SpotifyPollingService implements SpotifyService {
   public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
   }
   private tokenManager: SpotifyTokenManager
+  private accessToken: string | null = null
+  private refreshToken: string | null = null
   private pollInterval: NodeJS.Timeout | null = null
   private devicePollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
@@ -101,8 +100,8 @@ export class SpotifyPolling implements SpotifyService {
 
   public static async create(
     broadcastUpdate: (message: ServerMessage) => void
-  ): Promise<SpotifyPolling> {
-    const instance = new SpotifyPolling(broadcastUpdate)
+  ): Promise<SpotifyPollingService> {
+    const instance = new SpotifyPollingService(broadcastUpdate)
     await instance.initializeSdk()
     instance.tokenRefreshInterval = setInterval(
       () => instance.checkAndRefreshSdkToken(),
@@ -173,18 +172,34 @@ export class SpotifyPolling implements SpotifyService {
     )
   }
 
-  public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
-    logger.info(
-      { tokens },
-      'Spotify token payload received. Updating SDK and forcing poll.'
-    )
-    this.tokenManager.updateToken(tokens)
+  public async handleTokenUpdate(newTokens: {
+    accessToken: string
+    refreshToken: string
+  }): Promise<void> {
+    // 1. Update In-Memory State immediately
+    this.accessToken = newTokens.accessToken
+    this.refreshToken = newTokens.refreshToken
+
+    // 2. Persist to disk
+    await this.tokenManager.saveTokens(newTokens)
+
+    // 3. Re-initialize SDK with new tokens
     const sdkToken = this.tokenManager.getSdkAccessToken()
     if (sdkToken) {
       this.setupSdk(sdkToken)
       this.startPolling()
     }
+
+    // 4. Immediately poll with new tokens to update UI
     await this.forcePollAndBroadcast()
+
+    logger.info(
+      {
+        accessToken: this.accessToken ? 'Present' : 'Missing',
+        refreshToken: this.refreshToken ? 'Present' : 'Missing',
+      },
+      'Tokens updated and state broadcasted via direct event'
+    )
   }
 
   public startPolling() {

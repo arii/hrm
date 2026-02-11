@@ -6,7 +6,6 @@
 t* estable, and easier to refactor.
  */
 
-import { SpotifyTokenPayload } from '../services/spotifyTokenManager'
 import { SpotifyData } from './websocket'
 
 /**
@@ -65,10 +64,13 @@ export interface Lifecycle {
 export interface SpotifyTokenHandler {
   /**
    * Handles the reception of new Spotify authentication tokens.
-   * @param {SpotifyTokenPayload} tokens - The new token payload.
+   * @param {object} tokens - The new token payload.
    * @returns {Promise<void>}
    */
-  handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void>
+  handleTokenUpdate(tokens: {
+    accessToken: string
+    refreshToken: string
+  }): Promise<void>
 }
 
 // --- Domain-Specific Types ---

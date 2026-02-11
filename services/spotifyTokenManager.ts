@@ -85,6 +85,36 @@ export class SpotifyTokenManager {
       this.currentToken.payload.sub
     )
   }
+
+  /**
+   * Specifically saves new tokens from the delivery route.
+   */
+  public async saveTokens(tokens: {
+    accessToken: string
+    refreshToken: string
+  }): Promise<void> {
+    const obtainedAt = Date.now()
+    if (this.currentToken) {
+      this.currentToken.payload.access_token = tokens.accessToken
+      this.currentToken.payload.refresh_token = tokens.refreshToken
+      this.currentToken.payload.obtainedAt = obtainedAt
+    } else {
+      this.currentToken = {
+        receivedAt: obtainedAt,
+        payload: {
+          provider: 'spotify',
+          sub: 'unknown',
+          access_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
+          expires_in: 3600,
+          scope: '',
+          obtainedAt: obtainedAt,
+        },
+      }
+    }
+    writeTokenFileSafe(this.tokenFile, this.currentToken)
+    console.log('Saved delivered Spotify tokens to disk and memory.')
+  }
   private tokenFile: string
   private currentToken: TokenRecord | null = null
   private refreshPromise: Promise<void> | null = null

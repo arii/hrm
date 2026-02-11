@@ -1,23 +1,35 @@
-import { ServerMessage } from '../types/websocket.js'
-import { SpotifyPolling } from '../services/spotifyPolling.js'
-import TabataTimer from '../services/tabataTimer.js'
-import { SpotifyService } from '../types/interfaces.js'
+import { SpotifyPollingService } from '@/services/spotifyPolling'
+import { TabataService } from '@/services/tabataTimer'
+import { Broadcaster } from '@/lib/websocket'
 
 export interface AppServices {
-  spotifyService: SpotifyService
-  tabataService: TabataTimer
+  tabataService: TabataService
+  spotifyService: SpotifyPollingService
   isSpotifyInitialized: boolean
 }
 
+// 1. Create a mutable singleton reference
+let spotifyServiceInstance: SpotifyPollingService | null = null
+
+// 2. Add an accessor for API routes
+export const getSpotifyService = (): SpotifyPollingService => {
+  if (!spotifyServiceInstance) {
+    throw new Error(
+      'SpotifyService not initialized. Server may be starting up.'
+    )
+  }
+  return spotifyServiceInstance
+}
+
 export async function createServices(
-  broadcast: (data: Partial<ServerMessage>) => void
+  broadcast: Broadcaster
 ): Promise<AppServices> {
-  const tabataService = new TabataTimer(broadcast)
-  let spotifyService: SpotifyService
+  const tabataService = new TabataService(broadcast)
+  let spotifyService: SpotifyPollingService
   let isSpotifyInitialized = true
 
   try {
-    spotifyService = await SpotifyPolling.create(broadcast)
+    spotifyService = await SpotifyPollingService.create(broadcast)
   } catch (e) {
     console.error('SpotifyPolling initialization failed:', e)
     isSpotifyInitialized = false
@@ -41,8 +53,11 @@ export async function createServices(
       forcePollAndBroadcast: () => {},
       handleTokenUpdate: () => Promise.resolve(),
       cleanup: () => {},
-    }
+    } as unknown as SpotifyPollingService
   }
+
+  // 3. Assign the instance during startup
+  spotifyServiceInstance = spotifyService
 
   return { tabataService, spotifyService, isSpotifyInitialized }
 }
