@@ -1,7 +1,7 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
-import SpotifyProvider from 'next-auth/providers/spotify'
+import SpotifyProviderModule from 'next-auth/providers/spotify'
 import logger from '../utils/logger.js' // Explicit .js extension for ESM build
 import { getAPIURL } from '../utils/urls.js' // Explicit .js extension for ESM build
 import { env } from './env.js'
@@ -149,6 +149,9 @@ if (!NEXTAUTH_SECRET) {
 }
 
 const providers = []
+
+// @ts-expect-error: Handle CJS/ESM interop for SpotifyProvider
+const SpotifyProvider = SpotifyProviderModule.default || SpotifyProviderModule
 
 if (env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET) {
   providers.push(
