@@ -18,8 +18,6 @@ const TokenDeliverySchema = z.object({
 /**
  * @route POST /api/internal/token-delivery
  * @description Secure internal endpoint for receiving updated Spotify tokens from NextAuth callbacks.
- * This route provides the necessary tokens for the Spotify service to initialize or update its SDK.
- * It uses the `getSpotifyService()` singleton accessor, which handles initialization checks.
  *
  * @protection This endpoint is protected by a secret header (`x-internal-token-secret`)
  * defined in the `INTERNAL_TOKEN_DELIVERY_SECRET` or `NEXTAUTH_SECRET` environment variables.
