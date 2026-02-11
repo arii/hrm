@@ -28,6 +28,25 @@ export interface ExtWebSocket extends WebSocket {
 
 export type { HrmData, TimerData, SpotifyData, TimerMode }
 
+/**
+ * Represents HRM data stored in the client application state (e.g., Redux/Context).
+ * Extends the raw server stream data with connection status and local timestamps.
+ */
+export interface ConnectedHrmData extends HrmData {
+  isConnected: boolean
+  lastUpdated?: number
+}
+
+/**
+ * Represents the fully augmented HRM data used by UI components.
+ * Includes derived state for staleness and alerts.
+ */
+export interface ClientHrmData extends ConnectedHrmData {
+  isDataStale: boolean
+  isAlerting: boolean
+  alertMessage?: string
+}
+
 export type SpotifyCommand =
   | 'PLAY'
   | 'PAUSE'

@@ -3,26 +3,12 @@ import {
   TimerData,
   ServerMessage,
   ActiveAlert,
+  ConnectedHrmData,
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 
-// Client-side extension of HrmData to include connection status
-export interface HrmData extends ServerHrmData {
-  isConnected: boolean
-  lastUpdated?: number
-}
-
-/**
- * Comprehensive client-side HRM data type including joined alert state.
- * Used primarily for component props where HRM data and active alerts are merged.
- */
-export interface ClientHrmData extends HrmData {
-  isAlerting: boolean
-  alertMessage?: string
-}
-
 export interface WebSocketState {
-  hrmData: HrmData[]
+  hrmData: ConnectedHrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
   activeAlerts: ActiveAlert[]
