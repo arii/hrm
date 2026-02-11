@@ -107,7 +107,7 @@ describe('ZoneDistribution', () => {
     expect(screen.queryByText(HrZoneName.FatBurn)).not.toBeInTheDocument()
   })
 
-  it('excludes NoData and Unknown zones even if they have time', () => {
+  it('includes NoData and Unknown zones to reflect data gaps', () => {
     const timeInZones = {
       ...baseTimeInZones,
       [HrZoneName.NoData]: 50,
@@ -119,8 +119,8 @@ describe('ZoneDistribution', () => {
         <ZoneDistribution timeInZones={timeInZones} totalDuration={110} />
       </ThemeProvider>
     )
-    expect(screen.queryByText(HrZoneName.NoData)).not.toBeInTheDocument()
-    expect(screen.queryByText(HrZoneName.Unknown)).not.toBeInTheDocument()
+    expect(screen.getByText(HrZoneName.NoData)).toBeInTheDocument()
+    expect(screen.getByText(HrZoneName.Unknown)).toBeInTheDocument()
     expect(screen.getByText(HrZoneName.Cardio)).toBeInTheDocument()
   })
 
@@ -205,6 +205,8 @@ describe('ZoneDistribution', () => {
       `zone-row-${HrZoneName.Cardio}`,
       `zone-row-${HrZoneName.FatBurn}`,
       `zone-row-${HrZoneName.WarmUp}`,
+      `zone-row-${HrZoneName.NoData}`,
+      `zone-row-${HrZoneName.Unknown}`,
     ])
   })
 })
