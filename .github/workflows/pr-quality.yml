@@ -983,9 +983,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          mkdir -p logs
-          # Ensure stdout and stderr are captured for the reporter
-          ./scripts/ci/run-visual-tests.sh 2>&1 | tee logs/visual-output.log
+          ./scripts/ci/run-visual-tests.sh
         continue-on-error: true
 
       - name: Publish Visual Tests Results
