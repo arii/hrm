@@ -12,29 +12,116 @@ import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 
+/**
+ * Identity Tier: Displays the user name if it's not generic.
+ */
+const IdentityTier = ({ name }: { name: string }) => (
+  <Box sx={{ pt: 3, textAlign: 'center' }}>
+    <Typography
+      variant="h5"
+      sx={{
+        fontWeight: 900,
+        textTransform: 'uppercase',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        px: 2,
+      }}
+    >
+      {name}
+    </Typography>
+  </Box>
+)
+
+/**
+ * Hero Tier: Displays the massive heart rate percentage.
+ */
+const HeroTier = ({ percentMax }: { percentMax: number }) => (
+  <Box
+    sx={{
+      flexGrow: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}
+  >
+    <Typography
+      data-testid="live-hr-percent"
+      variant="h1"
+      component="div"
+      sx={{
+        fontSize: { xs: '8rem', sm: '12rem', md: '15rem' },
+        fontWeight: 900,
+        lineHeight: 1,
+        fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
+      }}
+    >
+      {percentMax}%
+    </Typography>
+  </Box>
+)
+
+/**
+ * Data Tier: Displays consolidated BPM and KCAL metrics.
+ */
+const DataTier = ({
+  bpm,
+  calories,
+  showName,
+}: {
+  bpm: number | null
+  calories: number
+  showName: boolean
+}) => (
+  <Box
+    sx={{
+      pb: 3,
+      pt: showName ? 0 : 3, // Balance spacing if name is missing
+      display: 'flex',
+      justifyContent: 'center',
+      gap: 4,
+    }}
+  >
+    <Typography data-testid="bpm-value" variant="h4" sx={{ fontWeight: 800 }}>
+      {bpm ?? '---'}{' '}
+      <Typography
+        component="span"
+        variant="caption"
+        sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+      >
+        BPM
+      </Typography>
+    </Typography>
+    <Typography variant="h4" sx={{ fontWeight: 800 }}>
+      {Math.floor(calories)}{' '}
+      <Typography
+        component="span"
+        variant="caption"
+        sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+      >
+        KCAL
+      </Typography>
+    </Typography>
+  </Box>
+)
+
 const HrTile = ({
   name,
   bpm,
   percentMax,
   zone,
-  calories = 0, // Default to 0 to prevent NaN
-  isConnected = true, // Default to connected
+  calories = 0,
+  isConnected = true,
   isDataStale = false,
   isAlerting = false,
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
 
-  // Determine the effective zone.
-  // If 'zone' is provided (server-calculated), use it.
   const displayZone = zone ?? 0
-
   const zoneConfig =
     HR_ZONE_VISUAL_CONFIG[displayZone as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
     HR_ZONE_VISUAL_CONFIG[0]
-
-  const backgroundColor = zoneConfig.color
-  const textColor = zoneConfig.textColor
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -55,8 +142,8 @@ const HrTile = ({
           isConnected ? `${bpm} beats per minute` : 'Disconnected'
         }, ${percentMax}% of maximum, Zone ${displayZone}: ${zoneConfig.label}`}
         sx={{
-          bgcolor: backgroundColor,
-          color: textColor,
+          bgcolor: zoneConfig.color,
+          color: zoneConfig.textColor,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -68,7 +155,6 @@ const HrTile = ({
           }),
         }}
       >
-        {/* --- Disconnected Icon --- */}
         {!isConnected && (
           <WifiOffIcon
             sx={{
@@ -82,7 +168,6 @@ const HrTile = ({
           />
         )}
 
-        {/* --- Alerting Overlay --- */}
         {isAlerting && (
           <Box
             data-testid="hr-tile-alert-overlay"
@@ -92,7 +177,7 @@ const HrTile = ({
               left: 0,
               width: '100%',
               height: '100%',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
@@ -111,7 +196,6 @@ const HrTile = ({
           </Box>
         )}
 
-        {/* Accessibility wrapper for real-time updates */}
         <Box
           aria-live="polite"
           aria-atomic="true"
@@ -122,87 +206,11 @@ const HrTile = ({
             justifyContent: 'center',
           }}
         >
-          {/* TOP: Identity Tier - Scaled up for visibility */}
-          {showName && (
-            <Box sx={{ pt: 3, textAlign: 'center' }}>
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  px: 2,
-                }}
-              >
-                {name}
-              </Typography>
-            </Box>
-          )}
-
-          {/* CENTER: Hero Tier - Maximum font-size */}
-          <Box
-            sx={{
-              flexGrow: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Typography
-              data-testid="live-hr-percent"
-              variant="h1"
-              component="div"
-              sx={{
-                fontSize: { xs: '8rem', sm: '12rem', md: '15rem' },
-                fontWeight: 900,
-                lineHeight: 1,
-                fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-              }}
-            >
-              {percentMax}%
-            </Typography>
-          </Box>
-
-          {/* BOTTOM: Consolidated Data Tier */}
-          <Box
-            sx={{
-              pb: 3,
-              pt: showName ? 0 : 3, // Balance spacing if name is missing
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 4,
-            }}
-          >
-            <Typography
-              data-testid="bpm-value"
-              variant="h4"
-              sx={{ fontWeight: 800 }}
-            >
-              {bpm ?? '---'}{' '}
-              <Typography
-                component="span"
-                variant="caption"
-                sx={{ fontSize: '1.2rem', opacity: 0.8 }}
-              >
-                BPM
-              </Typography>
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800 }}>
-              {Math.floor(calories)}{' '}
-              <Typography
-                component="span"
-                variant="caption"
-                sx={{ fontSize: '1.2rem', opacity: 0.8 }}
-              >
-                KCAL
-              </Typography>
-            </Typography>
-          </Box>
+          {showName && <IdentityTier name={name} />}
+          <HeroTier percentMax={percentMax} />
+          <DataTier bpm={bpm} calories={calories} showName={showName} />
         </Box>
 
-        {/* FOOTER: Black Anchor Bar */}
         <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
           <Typography
             variant="h6"
@@ -216,7 +224,6 @@ const HrTile = ({
   )
 }
 
-// Custom comparison function for React.memo
 const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
   return (
     prevProps.name === nextProps.name &&
