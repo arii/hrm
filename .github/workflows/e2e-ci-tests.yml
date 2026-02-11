@@ -26,7 +26,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-
       - name: Create Test Branch and PR
         id: create_pr
         run: |
@@ -93,7 +92,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-
 
       - name: Create Conflict
         id: create_conflict
@@ -189,7 +187,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-
 
       - name: Create Test Branch and PR
         id: create_pr
