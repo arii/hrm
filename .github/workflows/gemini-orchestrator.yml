@@ -81,7 +81,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # WARN: Monitor this. If slow, switch to 'fetch-depth: 100' + 'git fetch --deepen'
+          fetch-depth: 100
       - name: Check for file changes and find last non-empty commit
         id: check_files
         env:
@@ -89,7 +89,7 @@ jobs:
         run: |
           set -e
 
-          git fetch origin ${{ github.base_ref }}
+          git fetch origin ${{ github.base_ref }} --depth=100
 
           MERGE_BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
           if [ -z "$MERGE_BASE" ]; then

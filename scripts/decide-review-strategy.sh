@@ -29,7 +29,7 @@ set -e
 # - Configs that don't need code review (.gitignore, .editorconfig)
 # - Assets (*.png, *.svg, *.ico, *.jpg, *.jpeg, *.gif, *.webp)
 # - Documentation (*.md)
-IGNORE_PATTERN='\.(md|png|svg|ico|jpg|jpeg|gif|webp)$|^(package-lock\.json|pnpm-lock\.yaml|\.gitignore|\.editorconfig)$'
+IGNORE_PATTERN='\.(md|png|svg|ico|jpg|jpeg|gif|webp)$|(package-lock\.json|pnpm-lock\.yaml|\.gitignore|\.editorconfig)$'
 
 # Function to check for substantive changes
 # Sets NEEDS_REVIEW and SKIP_REASON globally
