@@ -45,11 +45,13 @@ async function syncTokenWithBackend(token: JWT) {
     // Only sync if we have valid data
     if (!tokenPayload.access_token || !tokenPayload.refresh_token) return
 
+    const secret = env.INTERNAL_TOKEN_DELIVERY_SECRET || env.NEXTAUTH_SECRET
+
     const response = await fetch(getAPIURL('internal/token-delivery'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-internal-token-secret': env.NEXTAUTH_SECRET,
+        'x-internal-token-secret': secret,
       },
       body: JSON.stringify(tokenPayload),
     })

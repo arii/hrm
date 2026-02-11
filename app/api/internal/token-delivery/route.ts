@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
 import { getSpotifyService } from '@/lib/services'
 import { z } from 'zod'
+import { env } from '@/lib/env'
 
 const TokenDeliverySchema = z.object({
   provider: z.string(),
@@ -17,21 +18,16 @@ const TokenDeliverySchema = z.object({
 /**
  * @route POST /api/internal/token-delivery
  * @description Secure internal endpoint for receiving updated Spotify tokens from NextAuth callbacks.
- * This route is the new, reliable, event-driven way of updating the Spotify polling service.
- * It directly accesses the singleton `spotifyService` instance and calls its token update handler.
- * This replaces the previous fragile, timing-based middleware interception in `server.ts`.
  *
  * @protection This endpoint is protected by a secret header (`x-internal-token-secret`)
- * defined in the `NEXTAUTH_SECRET` environment variable.
+ * defined in `INTERNAL_TOKEN_DELIVERY_SECRET` or `NEXTAUTH_SECRET`.
  */
 export async function POST(req: NextRequest) {
   try {
     // 1. Authenticate the request from our internal callback
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
-    const expected = process.env.NEXTAUTH_SECRET
-    if (!expected) {
-      throw new ApiError(500, 'NEXTAUTH_SECRET is not set.')
-    }
+    const expected = env.INTERNAL_TOKEN_DELIVERY_SECRET || env.NEXTAUTH_SECRET
+
     if (secretHeader !== expected) {
       throw new ApiError(401, 'Unauthorized: Missing or invalid secret.')
     }

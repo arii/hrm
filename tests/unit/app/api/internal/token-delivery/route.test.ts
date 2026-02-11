@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { describe, expect, it, jest, beforeAll, afterAll } from '@jest/globals'
+import { describe, expect, it, jest } from '@jest/globals'
 import { POST } from '@/app/api/internal/token-delivery/route'
 import { NextRequest } from 'next/server'
 import { getSpotifyService } from '@/lib/services'
@@ -10,6 +10,14 @@ import { ServiceInitializationError } from '@/lib/errors'
 // Mock services
 jest.mock('@/lib/services', () => ({
   getSpotifyService: jest.fn(),
+}))
+
+// Mock env
+jest.mock('@/lib/env', () => ({
+  env: {
+    NEXTAUTH_SECRET: 'test-secret',
+    INTERNAL_TOKEN_DELIVERY_SECRET: undefined,
+  },
 }))
 
 // Mock logger
@@ -39,16 +47,6 @@ const validTokenData = {
 }
 
 describe('POST /api/internal/token-delivery', () => {
-  const originalNextAuthSecret = process.env.NEXTAUTH_SECRET
-
-  beforeAll(() => {
-    process.env.NEXTAUTH_SECRET = 'test-secret'
-  })
-
-  afterAll(() => {
-    process.env.NEXTAUTH_SECRET = originalNextAuthSecret
-  })
-
   beforeEach(() => {
     jest.clearAllMocks()
     ;(getSpotifyService as jest.Mock).mockReturnValue(mockSpotifyService)
