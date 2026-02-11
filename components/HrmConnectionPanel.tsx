@@ -1,37 +1,22 @@
-// File: app/components/dashboard/HrmConnectionPanel.tsx
 'use client'
 import { useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useNow } from '@/hooks/useNow'
 import HrTileWrapper from '@/components/HrTileWrapper'
+import { getActiveHrmData } from '@/utils/hrm'
 
 const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const now = useNow()
 
   const tileData = useMemo(() => {
-    // Filter out users with placeholder names or no identity
-    return hrmData
-      .filter((user) => {
-        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-        const hasNoIdentity = user.name == null
-        return !(isPlaceholderName || hasNoIdentity)
-      })
-      .map((user) => {
-        const matchingAlert = activeAlerts.find(
-          (alert) =>
-            alert.clientId === user.clientId &&
-            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
-        )
-
-        return {
-          ...user,
-          isAlerting: !!matchingAlert,
-          alertMessage: matchingAlert?.message,
-        }
-      })
-  }, [hrmData, activeAlerts])
+    return getActiveHrmData(hrmData, activeAlerts, now, {
+      includeZeroValues: true,
+    })
+  }, [hrmData, activeAlerts, now])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
@@ -87,20 +72,28 @@ const HrmConnectionPanel = () => {
           </Box>
         </>
       ) : (
-        tileData.map((user) => (
-          <Box
-            key={user.clientId}
-            data-testid="hr-tile-grid-item"
-            sx={{
-              width: {
-                xs: '100%',
-                sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-              },
-            }}
-          >
-            <HrTileWrapper user={user} />
-          </Box>
-        ))
+        tileData.map((user) => {
+          // Destructure to remove volatile timestamps causing re-renders
+          const {
+            updatedAt: _updatedAt,
+            lastUpdated: _lastUpdated,
+            ...tileProps
+          } = user
+          return (
+            <Box
+              key={user.clientId}
+              data-testid="hr-tile-grid-item"
+              sx={{
+                width: {
+                  xs: '100%',
+                  sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
+                },
+              }}
+            >
+              <HrTileWrapper {...tileProps} />
+            </Box>
+          )
+        })
       )}
     </Box>
   )
