@@ -2,12 +2,8 @@
 /**
  * Defines the state structure, constants, and initial state for the dual-mode timer.
  */
-import { TimerMode, TimerPhase } from '../../types/core'
-
-import {
-  DEFAULT_WORK_DURATION,
-  DEFAULT_REST_DURATION,
-} from '../../utils/constants.js'
+import { TimerMode, TimerPhase } from '@/types/core'
+import { DEFAULT_WORK_DURATION, DEFAULT_REST_DURATION } from '@/utils/constants'
 
 /**
  * Encapsulates the complete state of the timer, including both publicly

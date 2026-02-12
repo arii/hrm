@@ -2,7 +2,9 @@ import { WebSocketServer, WebSocket } from 'ws'
 import { IncomingMessage } from 'http'
 import { Socket } from 'net'
 import { parse } from 'url'
-import { ServerMessage } from '../types/websocket.js'
+import { ServerMessage } from '@/types/websocket'
+
+export type Broadcaster = (data: Partial<ServerMessage>) => void
 
 export class WebSocketManager {
   public wss: WebSocketServer
@@ -20,7 +22,7 @@ export class WebSocketManager {
     }
   }
 
-  public createBroadcaster() {
+  public createBroadcaster(): Broadcaster {
     return (data: Partial<ServerMessage>) => {
       if (this.wss.clients.size > 0) {
         const message = JSON.stringify({
