@@ -117,6 +117,7 @@ app.prepare().then(async () => {
   const services: AppServices = await createServices(
     wsManager.createBroadcaster()
   )
+  global.spotifyService = services.spotifyService
 
   // 3. Initialize Socket Logic (Controllers)
   const getUnifiedStateSnapshot = (): StateSnapshot => ({

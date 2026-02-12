@@ -10,8 +10,9 @@ import {
   beforeEach,
   afterEach,
 } from '@jest/globals'
-import { TabataTimer } from '../../services/tabataTimer'
-import { SpotifyPollingService } from '../../services/spotifyPolling'
+import { jest } from '@jest/globals'
+import TabataTimer from '../../services/tabataTimer'
+import { SpotifyPolling } from '../../services/spotifyPolling'
 import { ServerMessage } from '../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
@@ -30,7 +31,7 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 
 describe('Services Integration', () => {
   let tabataTimer: TabataTimer
-  let spotifyService: SpotifyPollingService
+  let spotifyService: SpotifyPolling
   let broadcastedMessages: ServerMessage[]
   let broadcastFn: (message: ServerMessage) => void
   let mockPlayerFns: jest.Mocked<SpotifyApi['player']>
@@ -90,7 +91,7 @@ describe('Services Integration', () => {
 
     tabataTimer = new TabataTimer(broadcastFn)
     // Initialize service (which will trigger async token load)
-    spotifyService = await SpotifyPollingService.create(broadcastFn)
+    spotifyService = await SpotifyPolling.create(broadcastFn)
   })
 
   afterEach(() => {
