@@ -240,16 +240,14 @@ jobs:
             mapfile -t NAMES < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].name')
             mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion // "failure"')
             mapfile -t URLS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url')
-            # FIX: Use a reliable regex to extract job ID.
-            # Relaxed regex to handle URLs with query parameters or trailing slashes (e.g. /runs/12345?check_suite_focus=true)
-            mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url | capture("(?<job_id>\\d+)(?:\\?|/|$)").job_id // ""')
-
             LOG_DIR=$(mktemp -d)
             trap 'rm -rf "$LOG_DIR"' EXIT
 
             process_job() {
               local i=$1
-              local job_id=${JOB_IDS[i]}
+              local url="${URLS[i]}"
+              # Extract the last sequence of digits from the URL, which is typically the job ID or run ID
+              local job_id=$(echo "$url" | grep -oE '[0-9]+' | tail -n 1)
               local raw_log_file="$LOG_DIR/raw_log_${i}.txt"
               local redacted_log_file="$LOG_DIR/redacted_log_${i}.txt"
 
@@ -257,7 +255,7 @@ jobs:
 
               # FIX: Improved error handling for Job ID parsing
               if ! [[ "$job_id" =~ ^[0-9]+$ ]]; then
-                echo "Error: Could not parse Job ID from URL: ${URLS[i]}" > "$redacted_log_file"
+                echo "Error: Could not parse Job ID from URL: $url" > "$redacted_log_file"
               else
                  # Retry logic for fetching job logs
                 for ((j=1; j<=MAX_RETRIES; j++)); do
@@ -289,8 +287,8 @@ jobs:
             export MAX_RETRIES
             export RETRY_DELAY
 
-            if [ ${#JOB_IDS[@]} -gt 0 ]; then
-                seq 0 $((${#JOB_IDS[@]} - 1)) | xargs -P 4 -I {} bash -c 'process_job "{}"'
+            if [ ${#URLS[@]} -gt 0 ]; then
+                seq 0 $((${#URLS[@]} - 1)) | xargs -P 4 -I {} bash -c 'process_job "{}"'
             fi
 
             # Combine results into the final JSON
