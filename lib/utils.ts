@@ -87,3 +87,10 @@ export const formatDate = (
   const d = typeof date === 'number' ? new Date(date) : date
   return d.toLocaleDateString(locale, options)
 }
+
+export const isTestEnvironment = (): boolean => {
+  if (process.env.NODE_ENV === 'test') {
+    return true
+  }
+  return typeof window !== 'undefined' && window.__IS_TEST_ENV__ === true
+}

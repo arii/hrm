@@ -34,7 +34,7 @@ test.describe('HR Zone Distribution Interactivity', () => {
     await newWorkoutBtn.click()
 
     // Start streaming from mock
-    // Use 165 BPM to ensure we are in the Peak zone
+    // Use 165 BPM (Zone 4/Cardio for Age 30)
     await mockPage.getByLabel('Current BPM').fill('165')
 
     // Ensure mock client is connected before starting stream
@@ -55,10 +55,10 @@ test.describe('HR Zone Distribution Interactivity', () => {
     const zoneCard = dashboardPage.getByTestId('zone-distribution-card')
     await expect(zoneCard).toBeVisible({ timeout: 15000 })
 
-    // Assert legend contains Peak zone
-    const peakRow = dashboardPage.getByTestId('zone-row-Peak')
-    await expect(peakRow).toBeVisible({ timeout: 10000 })
-    await expect(peakRow).toContainText('Peak')
+    // Assert legend contains Cardio zone
+    const cardioRow = dashboardPage.getByTestId('zone-row-Cardio')
+    await expect(cardioRow).toBeVisible({ timeout: 10000 })
+    await expect(cardioRow).toContainText('Cardio')
 
     // Pause workout and stop streaming to stabilize the chart for hover
     await dashboardPage.getByRole('button', { name: 'Pause' }).click()

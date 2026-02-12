@@ -7,30 +7,34 @@ import {
   Typography,
   Box,
   useTheme,
-  Stack,
   Palette,
 } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { HrZoneName } from '@/lib/shared/hr-zones'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration, isTestEnvironment } from '@/lib/utils'
 
+// --- Types ---
 interface ZoneDistributionProps {
   timeInZones: Record<HrZoneName, number>
   totalDuration: number
 }
 
-// Order of zones for sorting (High intensity to Low intensity)
-const ZONE_PRIORITY: Record<HrZoneName, number> = {
-  [HrZoneName.Max]: 0,
-  [HrZoneName.Peak]: 1,
-  [HrZoneName.Cardio]: 2,
-  [HrZoneName.FatBurn]: 3,
-  [HrZoneName.WarmUp]: 4,
-  [HrZoneName.NoData]: 5,
-  [HrZoneName.Unknown]: 6,
-}
+// --- Constants & Helpers ---
 
-const ZONE_COLOR_MAP: Partial<
+const ZONE_ORDER: HrZoneName[] = [
+  HrZoneName.Max,
+  HrZoneName.Peak,
+  HrZoneName.Cardio,
+  HrZoneName.FatBurn,
+  HrZoneName.Aerobic,
+  HrZoneName.WarmUp,
+  HrZoneName.Recovery,
+  HrZoneName.Idle,
+  HrZoneName.NoData,
+  HrZoneName.Unknown,
+]
+
+const ZONE_COLOR_KEY_MAP: Partial<
   Record<HrZoneName, keyof Palette['custom']['hrZones']>
 > = {
   [HrZoneName.Max]: 'max',
@@ -38,11 +42,12 @@ const ZONE_COLOR_MAP: Partial<
   [HrZoneName.Cardio]: 'cardio',
   [HrZoneName.FatBurn]: 'fatBurn',
   [HrZoneName.WarmUp]: 'warmUp',
-  [HrZoneName.NoData]: 'noData',
-  [HrZoneName.Unknown]: 'unknown',
+  [HrZoneName.Recovery]: 'recovery',
+  [HrZoneName.Aerobic]: 'fatBurn', // Aerobic capacity is typically higher intensity (Zone 3/4 boundary), mapping to Green/FatBurn as fallback
+  [HrZoneName.Idle]: 'idle',
 }
 
-const TIME_FORMAT_OPTIONS = { unit: 'seconds', format: 'MM:SS' } as const
+const DURATION_FORMAT_OPTS = { unit: 'seconds', format: 'MM:SS' } as const
 
 const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   timeInZones,
@@ -51,40 +56,35 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   const theme = useTheme()
 
   const data = useMemo(() => {
+    // We intentionally include NoData and Unknown to reflect the true integrity of the workout duration.
+    // Excluding them would misleadingly show 100% adherence to active zones even if data was missing for 90% of the time.
     return Object.entries(timeInZones)
       .map(([zone, time]) => {
-        const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
         const zoneName = zone as HrZoneName
 
-        // Inline getZoneColor logic
-        const hrZones = theme.palette.custom?.hrZones
-        let color = theme.palette.grey[500]
-        if (hrZones) {
-          const colorKey = ZONE_COLOR_MAP[zoneName]
-          if (colorKey && hrZones[colorKey]) {
-            color = hrZones[colorKey]
-          }
-        }
+        const color =
+          theme.palette.custom?.hrZones?.[
+            ZONE_COLOR_KEY_MAP[zoneName] || 'idle'
+          ] ?? theme.palette.grey[500]
 
         return {
           name: zoneName,
           value: time,
-          percentage: parseFloat(percentage.toFixed(1)),
-          formattedTime: formatDuration(time, TIME_FORMAT_OPTIONS),
-          color: color,
+          percentage:
+            totalDuration > 0
+              ? Math.round((time / totalDuration) * 1000) / 10
+              : 0,
+          formattedTime: formatDuration(time, DURATION_FORMAT_OPTS),
+          color,
         }
       })
       .filter((item) => item.value > 0)
       .sort((a, b) => {
-        // Efficient sorting using map
-        const priorityA = ZONE_PRIORITY[a.name] ?? 99
-        const priorityB = ZONE_PRIORITY[b.name] ?? 99
-        return priorityA - priorityB
+        const idxA = ZONE_ORDER.indexOf(a.name)
+        const idxB = ZONE_ORDER.indexOf(b.name)
+        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB)
       })
   }, [timeInZones, totalDuration, theme])
-
-  const isTestEnv =
-    typeof window !== 'undefined' && window.__IS_TEST_ENV__ === true
 
   if (data.length === 0) {
     return null
@@ -97,21 +97,21 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
           Heart Rate Zone Distribution
         </Typography>
 
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          alignItems="flex-start"
-          width="100%"
+        <Box
+          display="flex"
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          gap={2}
+          alignItems="center"
         >
           {/* Chart Section */}
           <Box
             width={{ xs: '100%', sm: '50%' }}
-            minHeight={200}
+            height={200}
             position="relative"
             role="region"
             aria-label="Heart rate zone distribution chart"
           >
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart accessibilityLayer>
                 <Pie
                   data={data}
@@ -122,15 +122,15 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   paddingAngle={2}
                   dataKey="value"
                   stroke="none"
-                  isAnimationActive={!isTestEnv}
+                  isAnimationActive={!isTestEnvironment()}
                 >
                   {data.map((entry) => (
                     <Cell key={`cell-${entry.name}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(_value, _name, item) => [
-                    item.payload.formattedTime || '00:00',
+                  formatter={(value: number | undefined) => [
+                    formatDuration(value ?? 0, DURATION_FORMAT_OPTS),
                     'Duration',
                   ]}
                   contentStyle={{
@@ -138,7 +138,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                     border: 'none',
                     boxShadow: theme.shadows[3],
                   }}
-                  isAnimationActive={!isTestEnv}
+                  isAnimationActive={!isTestEnvironment()}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -160,7 +160,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                 Total
               </Typography>
               <Typography variant="h6" fontWeight="bold">
-                {formatDuration(totalDuration, TIME_FORMAT_OPTIONS)}
+                {formatDuration(totalDuration, DURATION_FORMAT_OPTS)}
               </Typography>
             </Box>
           </Box>
@@ -217,7 +217,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
               </Box>
             ))}
           </Box>
-        </Stack>
+        </Box>
       </CardContent>
     </Card>
   )

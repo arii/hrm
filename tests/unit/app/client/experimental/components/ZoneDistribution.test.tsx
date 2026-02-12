@@ -107,19 +107,21 @@ describe('ZoneDistribution', () => {
     expect(screen.queryByText(HrZoneName.FatBurn)).not.toBeInTheDocument()
   })
 
-  it('includes NoData and Unknown zones if they have time', () => {
+  it('includes NoData and Unknown zones to reflect data gaps', () => {
     const timeInZones = {
       ...baseTimeInZones,
       [HrZoneName.NoData]: 50,
       [HrZoneName.Unknown]: 50,
+      [HrZoneName.Cardio]: 10,
     }
     render(
       <ThemeProvider theme={theme}>
-        <ZoneDistribution timeInZones={timeInZones} totalDuration={100} />
+        <ZoneDistribution timeInZones={timeInZones} totalDuration={110} />
       </ThemeProvider>
     )
     expect(screen.getByText(HrZoneName.NoData)).toBeInTheDocument()
     expect(screen.getByText(HrZoneName.Unknown)).toBeInTheDocument()
+    expect(screen.getByText(HrZoneName.Cardio)).toBeInTheDocument()
   })
 
   it('handles a total duration of zero to prevent division by zero', () => {

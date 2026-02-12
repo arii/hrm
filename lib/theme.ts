@@ -69,6 +69,24 @@ const theme = createTheme({
     info: {
       main: '#2196F3', // Blue
     },
+    custom: {
+      hrZones: {
+        max: HR_COLORS.ZONE_6_MAX,
+        peak: HR_COLORS.ZONE_5_PEAK,
+        cardio: HR_COLORS.ZONE_4_CARDIO,
+        fatBurn: HR_COLORS.ZONE_3_FATBURN,
+        warmUp: HR_COLORS.ZONE_2_WARMUP,
+        recovery: HR_COLORS.ZONE_1_RECOVERY,
+        idle: HR_COLORS.ZONE_0_IDLE,
+      },
+      // Timer phases mapped to HR colors where appropriate to reduce magic strings
+      prepare: HR_COLORS.ZONE_2_WARMUP,
+      work: HR_COLORS.ZONE_3_FATBURN,
+      rest: HR_COLORS.ZONE_4_CARDIO,
+      running: HR_COLORS.ZONE_2_WARMUP,
+      cooldown: HR_COLORS.ZONE_6_MAX,
+      idle: HR_COLORS.ZONE_0_IDLE,
+    },
     // Background colors
     background: {
       default: '#F5F5F5', // Light grey for main background
