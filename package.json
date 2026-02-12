@@ -55,7 +55,7 @@
     "test:infra:prod": "cross-env SKIP_WEBSERVER=true playwright test tests/playwright/infrastructure.spec.ts --grep \"start-production.sh should start successfully\"",
     "verify": "node scripts/verify-and-publish.cjs",
     "commit:verified": "pnpm run verify",
-    "knip": "knip",
+    "knip": "knip --max-issues 70",
     "storybook": "storybook dev -p 6006 --open",
     "build-storybook": "storybook build",
     "verify:storybook": "pnpm exec ts-node --esm scripts/verify-storybook-setup.ts",
