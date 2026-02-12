@@ -90,8 +90,9 @@ jobs:
           set -e
 
           # Use diff-tree to see if the HEAD commit itself has changes
-          if [ -z "$(git diff-tree --no-commit-id --name-only -r HEAD)" ]; then
-            echo "::notice::Current commit is empty. Searching PR history..."
+          # -m ensures merge commits are not treated as empty
+          if [ -z "$(git diff-tree --no-commit-id --name-only -r -m HEAD)" ]; then
+            echo "::notice::Current commit is truly empty. Searching PR history..."
             echo "has_changes=false" >> $GITHUB_OUTPUT
 
             # Even if HEAD has no changes, we find the last non-empty commit to ensure that
@@ -136,7 +137,7 @@ jobs:
             fi
             echo "last_non_empty_commit=${LAST_NON_EMPTY_COMMIT}" >> $GITHUB_OUTPUT
           else
-            echo "::notice::File changes detected in current commit."
+            echo "::notice::Changes detected in current commit (including merge diffs)."
             echo "has_changes=true" >> $GITHUB_OUTPUT
             echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           fi

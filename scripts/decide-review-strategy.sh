@@ -60,8 +60,9 @@ fi
 
 # Check 1.5: Empty Triggering Commit
 # Avoid triggering a full review analysis if the latest commit is empty
-# (e.g., an empty commit to trigger CI, or a merge commit without conflicts).
-if [ "$(git diff-tree --no-commit-id --name-only -r "$HEAD_SHA" | wc -l)" -eq 0 ]; then
+# (e.g., an empty commit to trigger CI).
+# -m ensures merge commits are not treated as empty if they carry changes.
+if [ "$(git diff-tree --no-commit-id --name-only -r -m "$HEAD_SHA" | wc -l)" -eq 0 ]; then
   echo "::info::Triggering commit ($HEAD_SHA) has no file changes. Skipping."
   echo "needs-review=false" >> "$GITHUB_OUTPUT"
   echo "skip-reason=triggering commit has no file changes" >> "$GITHUB_OUTPUT"

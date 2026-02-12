@@ -16,7 +16,28 @@ setup() {
 
   cat <<'EOF' > "$MOCK_BIN_DIR/git"
 #!/bin/bash
-if [[ "$1" == "diff-tree" ]]; then
+# Check the first argument. Since arguments are shifted, flags like -r or -m might be $1, $2 etc.
+# We are looking for the subcommand "diff-tree", "diff", etc.
+# But git command structure is `git [flags] subcommand [args]` or `git subcommand [flags] [args]`.
+# The script calls: `git diff-tree --no-commit-id --name-only -r -m "$HEAD_SHA"`
+# So "diff-tree" is the first argument to the wrapper script.
+
+# Simple argument parsing to find the subcommand
+SUBCOMMAND=""
+for arg in "$@"; do
+  if [[ "$arg" == "diff-tree" ]]; then
+    SUBCOMMAND="diff-tree"
+    break
+  elif [[ "$arg" == "diff" ]]; then
+    SUBCOMMAND="diff"
+    break
+  elif [[ "$arg" == "cat-file" ]]; then
+    SUBCOMMAND="cat-file"
+    break
+  fi
+done
+
+if [[ "$SUBCOMMAND" == "diff-tree" ]]; then
   if [[ "$MOCK_GIT_DIFF_TREE_EMPTY" == "true" ]]; then
     # Return nothing (0 lines) for empty commit
     exit 0
@@ -24,10 +45,10 @@ if [[ "$1" == "diff-tree" ]]; then
     # Return a dummy file so existing tests pass (simulate changes)
     echo "mock_changed_file.txt"
   fi
-elif [[ "$1" == "diff" ]]; then
+elif [[ "$SUBCOMMAND" == "diff" ]]; then
   # For check_substantive: simulate substantive changes by default
   echo "some_file.ts"
-elif [[ "$1" == "cat-file" ]]; then
+elif [[ "$SUBCOMMAND" == "cat-file" ]]; then
   # Simulate commit exists
   exit 0
 else
