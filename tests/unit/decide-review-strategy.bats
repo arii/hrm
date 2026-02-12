@@ -52,7 +52,7 @@ elif [[ "$SUBCOMMAND" == "cat-file" ]]; then
   # Simulate commit exists
   exit 0
 else
-  # Fail on unexpected commands to ensure test robustness
+  # Fail on unexpected commands to ensure test reliability
   echo "Error: Unexpected git command or argument: $@" >&2
   exit 1
 fi
