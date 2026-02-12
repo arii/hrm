@@ -214,6 +214,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_BRANCH: ${{ needs.squash-and-rebase.outputs.head_ref }}
+          BASE_BRANCH: ${{ needs.squash-and-rebase.outputs.base_ref }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          gh workflow run "Gemini Orchestrator" --ref "$HEAD_BRANCH" -f pr_number="$PR_NUMBER"
+          gh workflow run "Gemini Orchestrator" --ref "$HEAD_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_BRANCH" -f head_ref="$HEAD_BRANCH"

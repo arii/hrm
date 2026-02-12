@@ -9,6 +9,14 @@ on:
         description: 'PR Number (optional, for manual trigger context)'
         required: false
         type: string
+      base_ref:
+        description: 'Base branch for path filtering'
+        required: false
+        type: string
+      head_ref:
+        description: 'Head branch for path filtering'
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
@@ -32,7 +40,8 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: changes
         with:
-          # Automatically compares HEAD against the PR base (leader)
+          base: ${{ inputs.base_ref }}
+          ref: ${{ inputs.head_ref }}
           filters: |
             src:
               - 'app/**'
