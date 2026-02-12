@@ -90,8 +90,9 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          # Use ARI_PAT to ensure the push triggers downstream workflows (like Gemini Orchestrator)
-          token: ${{ secrets.ARI_PAT }}
+          # Using the default GITHUB_TOKEN. For this to work on protected branches,
+          # the repository settings may need to be adjusted to allow the github-actions bot to push.
+          token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ steps.pr_data.outputs.head_ref }}
           fetch-depth: 0
 
@@ -201,3 +202,12 @@ jobs:
         uses: ./.github/actions/check-for-changes
         with:
           base_branch: ${{ needs.squash-and-rebase.outputs.base_ref }}
+
+  trigger-quality-check:
+    needs: [squash-and-rebase, check-for-changes-after-squash]
+    if: needs.squash-and-rebase.outputs.outcome == 'success'
+    uses: ./.github/workflows/pr-quality.yml
+    with:
+      branch: ${{ needs.squash-and-rebase.outputs.head_ref }}
+      pr_number: ${{ inputs.pr_number }}
+      has_changes: ${{ needs.check-for-changes-after-squash.outputs.has_changes }}
