@@ -88,9 +88,6 @@ jobs:
             echo "✅ Commit message format verified."
           else
             echo "❌ Commit message format invalid: $LAST_COMMIT_MSG"
-            # We log the failure but do not fail the step yet unless strictly required,
-            # as previously failing tests might not have enforced this.
-            # However, for a robust test suite, we should fail.
             exit 1
           fi
 
