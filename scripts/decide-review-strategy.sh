@@ -25,7 +25,7 @@ set -e
 : "${COMMENT_BODY:=}"
 
 # Regex to filter trivial files (assets, locks, configs, docs)
-IGNORE_PATTERN='\.(md|png|svg|ico|jpg|jpeg|gif|webp)$|(package-lock\.json|pnpm-lock\.yaml|\.gitignore|\.editorconfig)$'
+IGNORE_PATTERN='\.(svg|ico|jpg|jpeg|gif|webp)$|(package-lock\.json|pnpm-lock\.yaml|\.gitignore|\.editorconfig)$'
 
 # Function to check for substantive changes. Sets NEEDS_REVIEW and SKIP_REASON globally.
 check_substantive() {
