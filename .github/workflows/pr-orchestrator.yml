@@ -3,6 +3,7 @@ name: PR Automation Orchestrator
 on:
   pull_request:
     types: [opened, synchronize]
+  workflow_dispatch:
 
 jobs:
   filter:
@@ -51,5 +52,5 @@ jobs:
       pr_quality_result: ${{ needs.pr-quality.result }}
       trigger_event: 'pull_request'
       # Path filter handles the diff logic; we pass current HEAD for analysis
-      last_non_empty_commit: ${{ github.sha }}
+      last_non_empty_commit: ${{ github.event.pull_request.head.sha || github.sha }}
     secrets: inherit

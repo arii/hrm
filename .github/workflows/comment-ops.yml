@@ -13,7 +13,6 @@ jobs:
       command: ${{ steps.route.outputs.command }}
     steps:
       - id: route
-        # Using env variable prevents script injection
         env:
           BODY: ${{ github.event.comment.body }}
         run: |
@@ -42,18 +41,6 @@ jobs:
     secrets: inherit
 
   # Restoring conflict resolution logic from gemini-orchestrator.yml
-  react-to-resolve:
-    needs: [router]
-    if: needs.router.outputs.command == 'resolve'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Add reaction to comment
-        uses: peter-evans/create-reaction@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ github.event.comment.id }}
-          reaction: eyes
-
   prepare-resolve:
     needs: [router]
     if: needs.router.outputs.command == 'resolve'
@@ -62,6 +49,12 @@ jobs:
       target_branch: ${{ steps.get_branches.outputs.target_branch }}
       source_branch: ${{ steps.get_branches.outputs.source_branch }}
     steps:
+      - name: Add reaction to comment
+        uses: peter-evans/create-reaction@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ github.event.comment.id }}
+          reaction: eyes
       - name: Get PR Details
         id: get_branches
         uses: actions/github-script@v7
