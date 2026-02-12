@@ -246,8 +246,10 @@ jobs:
             process_job() {
               local i=$1
               local url="${URLS[i]}"
-              # Extract the last sequence of digits from the URL, which is typically the job ID or run ID
-              local job_id=$(echo "$url" | grep -oE '[0-9]+' | tail -n 1)
+              # Strip query parameters to avoid matching numbers in them (e.g. ?check_suite_focus=true&page=1)
+              local url_no_query="${url%%\?*}"
+              # Extract the last sequence of digits from the URL path, which is typically the job ID or run ID
+              local job_id=$(echo "$url_no_query" | grep -oE '[0-9]+' | tail -n 1)
               local raw_log_file="$LOG_DIR/raw_log_${i}.txt"
               local redacted_log_file="$LOG_DIR/redacted_log_${i}.txt"
 
