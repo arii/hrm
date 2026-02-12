@@ -37,8 +37,34 @@ jobs:
       should_review: ${{ steps.changes.outputs.src }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: dorny/paths-filter@v3
-        id: changes
+        if: github.event_name == 'pull_request'
+        id: changes-pr
+        with:
+          filters: |
+            src:
+              - 'app/**'
+              - 'components/**'
+              - 'constants/**'
+              - 'context/**'
+              - 'hooks/**'
+              - 'lib/**'
+              - 'services/**'
+              - 'utils/**'
+              - 'types/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig.json'
+              - 'next.config.js'
+              - 'tailwind.config.ts'
+              - '.env*'
+              - '.github/**'
+              - 'scripts/**'
+
+      - uses: dorny/paths-filter@v3
+        if: github.event_name == 'workflow_dispatch'
+        id: changes-dispatch
         with:
           base: ${{ inputs.base_ref }}
           ref: ${{ inputs.head_ref }}
@@ -61,6 +87,15 @@ jobs:
               - '.env*'
               - '.github/**'
               - 'scripts/**'
+
+      - name: Consolidate Changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "src=${{ steps.changes-pr.outputs.src }}" >> $GITHUB_OUTPUT
+          else
+            echo "src=${{ steps.changes-dispatch.outputs.src }}" >> $GITHUB_OUTPUT
+          fi
 
   pr-quality:
     name: 🛡️ Quality Gates
