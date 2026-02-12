@@ -66,3 +66,5 @@ export const TokenDeliverySchema = z.object({
 })
 
 export type TokenDeliveryPayload = z.infer<typeof TokenDeliverySchema>
+
+export type SpotifyTokenPayload = Required<TokenDeliveryPayload>

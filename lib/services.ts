@@ -29,6 +29,9 @@ export async function createServices(
   const spotifyService = new SpotifyPollingService(broadcast)
   let isSpotifyInitialized = false
 
+  // Assign immediately to prevent race conditions during async initialization
+  globalWithSpotify.spotifyServiceInstance = spotifyService
+
   try {
     await spotifyService.initializeSdk()
     spotifyService.startPolling()
@@ -36,8 +39,6 @@ export async function createServices(
   } catch (e) {
     console.warn('SpotifyPolling initialization paused (waiting for token):', e)
   }
-
-  globalWithSpotify.spotifyServiceInstance = spotifyService
 
   return { tabataService, spotifyService, isSpotifyInitialized }
 }

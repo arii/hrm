@@ -34,8 +34,7 @@ export async function POST(req: NextRequest) {
       obtainedAt: result.data.obtainedAt ?? Date.now(),
     }
 
-    const spotifyService = getSpotifyService()
-    await spotifyService.handleTokenUpdate(tokenData)
+    await getSpotifyService().handleTokenUpdate(tokenData)
     logger.info('Spotify token delivered and processed successfully.')
 
     return NextResponse.json({
