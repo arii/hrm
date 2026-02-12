@@ -1,4 +1,5 @@
 import { NextRequestWithAuth } from 'next-auth/middleware'
+import { NextFetchEvent } from 'next/server'
 
 // Mock next-auth/middleware before importing proxy
 jest.mock('next-auth/middleware', () => ({
@@ -37,7 +38,7 @@ describe('Debug Production Guard', () => {
     const req = createReq('/api/debug/reset')
 
     // @ts-expect-error: mocking middleware call
-    const res = await proxy(req, {} as any)
+    const res = await proxy(req, {} as unknown as NextFetchEvent)
 
     expect(res).toBeDefined()
     expect(res?.status).toBe(404)
@@ -50,7 +51,7 @@ describe('Debug Production Guard', () => {
     const req = createReq('/api/debug/reset')
 
     // @ts-expect-error: mocking middleware call
-    const res = await proxy(req, {} as any)
+    const res = await proxy(req, {} as unknown as NextFetchEvent)
 
     // Continuation response (NextResponse.next())
     expect(res).toBeDefined()
