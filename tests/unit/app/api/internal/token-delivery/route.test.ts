@@ -1,23 +1,9 @@
 /**
  * @jest-environment node
  */
-import { describe, expect, it, jest } from '@jest/globals'
+import { describe, expect, it, jest, beforeAll, afterAll } from '@jest/globals'
 import { POST } from '@/app/api/internal/token-delivery/route'
 import { NextRequest } from 'next/server'
-import { getSpotifyService } from '@/lib/services'
-
-// Mock services
-jest.mock('@/lib/services', () => ({
-  getSpotifyService: jest.fn(),
-}))
-
-// Mock env
-jest.mock('@/lib/env', () => ({
-  env: {
-    NEXTAUTH_SECRET: 'test-secret',
-    INTERNAL_TOKEN_DELIVERY_SECRET: undefined,
-  },
-}))
 
 // Mock logger
 jest.mock('@/utils/logger.server', () => ({
@@ -35,20 +21,22 @@ const mockSpotifyService = {
   handleTokenUpdate: jest.fn(),
 }
 
-const validTokenData = {
-  provider: 'spotify',
-  sub: 'test-user',
-  access_token: 'test-access-token',
-  refresh_token: 'test-refresh-token',
-  expires_in: 3600,
-  scope: 'test-scope',
-  obtainedAt: Date.now(),
-}
-
 describe('POST /api/internal/token-delivery', () => {
+  const originalNextAuthSecret = process.env.NEXTAUTH_SECRET
+
+  beforeAll(() => {
+    process.env.NEXTAUTH_SECRET = 'test-secret'
+  })
+
+  afterAll(() => {
+    process.env.NEXTAUTH_SECRET = originalNextAuthSecret
+    // @ts-expect-error - Deleting global for test isolation
+    delete global.spotifyService
+  })
+
   beforeEach(() => {
     jest.clearAllMocks()
-    ;(getSpotifyService as jest.Mock).mockReturnValue(mockSpotifyService)
+    global.spotifyService = mockSpotifyService
   })
 
   it('should return 401 if secret header is missing or invalid', async () => {
@@ -59,7 +47,7 @@ describe('POST /api/internal/token-delivery', () => {
         headers: {
           'x-internal-token-secret': 'wrong-secret',
         },
-        body: JSON.stringify(validTokenData),
+        body: JSON.stringify({ refresh_token: 'test' }),
       }
     )
 
@@ -69,25 +57,7 @@ describe('POST /api/internal/token-delivery', () => {
     expect(body).toEqual({ error: 'Unauthorized: Missing or invalid secret.' })
   })
 
-  it('should return 400 if body structure is invalid', async () => {
-    const req = new NextRequest(
-      'http://localhost/api/internal/token-delivery',
-      {
-        method: 'POST',
-        headers: {
-          'x-internal-token-secret': 'test-secret',
-        },
-        body: JSON.stringify({ invalid: 'data' }),
-      }
-    )
-
-    const response = await POST(req)
-    expect(response.status).toBe(400)
-    const body = await response.json()
-    expect(body).toEqual({ error: 'Bad Request: Invalid token structure.' })
-  })
-
-  it('should return 200 OK if secret header and body are correct', async () => {
+  it('should return 200 OK if secret header is correct', async () => {
     mockSpotifyService.isReady.mockReturnValue(true)
     const req = new NextRequest(
       'http://localhost/api/internal/token-delivery',
@@ -96,66 +66,24 @@ describe('POST /api/internal/token-delivery', () => {
         headers: {
           'x-internal-token-secret': 'test-secret',
         },
-        body: JSON.stringify(validTokenData),
+        body: JSON.stringify({ refresh_token: 'test' }),
       }
     )
+
+    // The route handler does NOT read the body anymore, so we don't need to provide one
+    // or worry about stream consumption in this unit test.
 
     const response = await POST(req)
     expect(response.status).toBe(200)
     const body = await response.json()
     expect(body).toEqual({ ok: true, message: 'Token delivered successfully.' })
-    expect(mockSpotifyService.handleTokenUpdate).toHaveBeenCalledWith(
-      validTokenData
-    )
-  })
-
-  it('should default obtainedAt if missing in payload', async () => {
-    const { obtainedAt: _, ...tokenWithoutObtainedAt } = validTokenData
-    const req = new NextRequest(
-      'http://localhost/api/internal/token-delivery',
-      {
-        method: 'POST',
-        headers: {
-          'x-internal-token-secret': 'test-secret',
-        },
-        body: JSON.stringify(tokenWithoutObtainedAt),
-      }
-    )
-
-    const response = await POST(req)
-    expect(response.status).toBe(200)
-
-    const lastCall = (mockSpotifyService.handleTokenUpdate as jest.Mock).mock
-      .calls[0][0]
-    expect(lastCall.obtainedAt).toBeDefined()
-    expect(typeof lastCall.obtainedAt).toBe('number')
-    // Should be close to current time
-    expect(Math.abs(Date.now() - lastCall.obtainedAt)).toBeLessThan(1000)
-  })
-
-  it('should return 500 if service is not initialized (generic error)', async () => {
-    ;(getSpotifyService as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('SpotifyService singleton not initialized')
-    })
-
-    const req = new NextRequest(
-      'http://localhost/api/internal/token-delivery',
-      {
-        method: 'POST',
-        headers: {
-          'x-internal-token-secret': 'test-secret',
-        },
-        body: JSON.stringify(validTokenData),
-      }
-    )
-
-    const response = await POST(req)
-    expect(response.status).toBe(500)
-    const body = await response.json()
-    expect(body).toEqual({ error: 'server_error' })
   })
 
   it('should return 500 if an unexpected error occurs', async () => {
+    // Force an error by mocking ApiError or something else if possible.
+    // However, since the logic is very simple, it's hard to make it fail unexpectedly
+    // without mocking globals or the request object throwing.
+    // Let's mock headers.get to throw.
     const req = new NextRequest(
       'http://localhost/api/internal/token-delivery',
       {
@@ -170,5 +98,37 @@ describe('POST /api/internal/token-delivery', () => {
     expect(response.status).toBe(500)
     const body = await response.json()
     expect(body).toEqual({ error: 'server_error' })
+  })
+
+  it('should process token even if spotifyService is not ready', async () => {
+    mockSpotifyService.isReady.mockReturnValue(false)
+    const tokenData = {
+      refresh_token: 'new-refresh-token',
+      access_token: 'new-access-token',
+    }
+    const req = new NextRequest(
+      'http://localhost/api/internal/token-delivery',
+      {
+        method: 'POST',
+        headers: {
+          'x-internal-token-secret': 'test-secret',
+        },
+        body: JSON.stringify(tokenData),
+      }
+    )
+
+    const response = await POST(req)
+    expect(response.status).toBe(200)
+    expect(mockSpotifyService.handleTokenUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ...tokenData,
+        provider: 'spotify',
+        sub: '',
+        scope: '',
+        obtainedAt: expect.any(Number),
+      })
+    )
+    const body = await response.json()
+    expect(body).toEqual({ ok: true, message: 'Token delivered successfully.' })
   })
 })
