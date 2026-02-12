@@ -28,6 +28,14 @@ jobs:
               - 'services/**'
               - 'utils/**'
               - 'types/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig.json'
+              - 'next.config.js'
+              - 'tailwind.config.ts'
+              - '.env*'
+              - '.github/**'
+              - 'scripts/**'
 
   pr-quality:
     name: 🛡️ Quality Gates
