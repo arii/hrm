@@ -7,7 +7,7 @@ t* estable, and easier to refactor.
  */
 
 import { SpotifyData } from './websocket'
-import { SpotifyTokenPayload } from '../services/spotifyTokenManager'
+import { SpotifyTokenPayload } from './spotify'
 
 /**
  * Represents a service that provides a snapshot of its current state.
