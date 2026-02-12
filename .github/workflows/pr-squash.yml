@@ -90,9 +90,8 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          # Using the default GITHUB_TOKEN. For this to work on protected branches,
-          # the repository settings may need to be adjusted to allow the github-actions bot to push.
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # Use ARI_PAT to ensure the push triggers downstream workflows (like Gemini Orchestrator)
+          token: ${{ secrets.ARI_PAT }}
           ref: ${{ steps.pr_data.outputs.head_ref }}
           fetch-depth: 0
 
