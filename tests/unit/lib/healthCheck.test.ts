@@ -9,7 +9,7 @@ import {
   checkTimerService,
 } from '../../../lib/healthCheck'
 import { WebSocket } from 'ws'
-import TabataTimer from '../../../services/tabataTimer'
+import { TabataTimer } from '../../../services/tabataTimer'
 
 // Mock the 'ws' module
 jest.mock('ws')
@@ -34,7 +34,7 @@ describe('Health Check Logic', () => {
         heapUsed: 100 * 1024 * 1024, // 100MB
         external: 0,
         arrayBuffers: 0,
-      })
+      } as NodeJS.MemoryUsage)
 
       const result = checkMemoryUsage()
       expect(result.healthy).toBe(true)
@@ -48,7 +48,7 @@ describe('Health Check Logic', () => {
         heapUsed: 600 * 1024 * 1024, // 600MB
         external: 0,
         arrayBuffers: 0,
-      })
+      } as NodeJS.MemoryUsage)
 
       const result = checkMemoryUsage()
       expect(result.healthy).toBe(false)

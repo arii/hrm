@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals'
-import { SpotifyPolling } from '../../services/spotifyPolling'
+import { SpotifyPollingService } from '../../services/spotifyPolling'
 
 export { mockPlayer, mockSpotifyApi, mockLogger } from './spotify-mocks'
 
@@ -9,10 +9,10 @@ export { mockPlayer, mockSpotifyApi, mockLogger } from './spotify-mocks'
  * @returns A tuple containing the service instance and the broadcast mock function.
  */
 export async function setupSpotifyPollingService(): Promise<
-  [SpotifyPolling, jest.Mock]
+  [SpotifyPollingService, jest.Mock]
 > {
   const broadcastMock = jest.fn()
-  const service = await SpotifyPolling.create(broadcastMock)
+  const service = await SpotifyPollingService.create(broadcastMock)
 
   // After creation, immediately stop any running timers to prevent side effects
   if (service._test_) {

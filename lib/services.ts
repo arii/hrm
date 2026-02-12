@@ -1,47 +1,51 @@
-import { ServerMessage } from '../types/websocket.js'
-import { SpotifyPolling } from '../services/spotifyPolling.js'
-import TabataTimer from '../services/tabataTimer.js'
-import { SpotifyService } from '../types/interfaces.js'
+import { SpotifyPollingService } from '@/services/spotifyPolling'
+import { TabataTimer } from '@/services/tabataTimer'
+import { Broadcaster } from '@/lib/websocket'
+import { ServiceInitializationError } from '@/lib/errors'
+import { env } from '@/lib/env'
 
 export interface AppServices {
-  spotifyService: SpotifyService
   tabataService: TabataTimer
+  spotifyService: SpotifyPollingService
   isSpotifyInitialized: boolean
 }
 
+// Ensures singleton persistence across Next.js compilation boundaries
+const globalWithSpotify = global as typeof globalThis & {
+  spotifyServiceInstance?: SpotifyPollingService
+}
+
+export const getSpotifyService = (): SpotifyPollingService => {
+  const instance = globalWithSpotify.spotifyServiceInstance
+  if (!instance) {
+    // This should technically never happen if createServices is called at startup
+    throw new Error('SpotifyService singleton not initialized')
+  }
+  return instance
+}
+
 export async function createServices(
-  broadcast: (data: Partial<ServerMessage>) => void
+  broadcast: Broadcaster
 ): Promise<AppServices> {
   const tabataService = new TabataTimer(broadcast)
-  let spotifyService: SpotifyService
-  let isSpotifyInitialized = true
+  const spotifyService = new SpotifyPollingService(broadcast)
+  let isSpotifyInitialized = false
+
+  // Assign immediately to prevent race conditions during async initialization
+  globalWithSpotify.spotifyServiceInstance = spotifyService
 
   try {
-    spotifyService = await SpotifyPolling.create(broadcast)
-  } catch (e) {
-    console.error('SpotifyPolling initialization failed:', e)
-    isSpotifyInitialized = false
-    // Fallback stub
-    spotifyService = {
-      handleCommand: () => {},
-      stopPolling: () => {},
-      startPolling: () => {},
-      getState: () => ({
-        trackName: 'Service Error',
-        artist: '',
-        isPlaying: false,
-        trackId: '',
-        albumName: '',
-        albumArtUrl: '',
-        devices: [],
-        volume: 0,
-        isMuted: false,
-      }),
-      isReady: () => false,
-      forcePollAndBroadcast: () => {},
-      handleTokenUpdate: () => Promise.resolve(),
-      cleanup: () => {},
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      throw new ServiceInitializationError(
+        'SpotifyService',
+        'Missing Spotify credentials'
+      )
     }
+    await spotifyService.initializeSdk()
+    spotifyService.startPolling()
+    isSpotifyInitialized = true
+  } catch (e) {
+    console.warn('SpotifyPolling initialization paused (waiting for token):', e)
   }
 
   return { tabataService, spotifyService, isSpotifyInitialized }

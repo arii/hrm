@@ -5,18 +5,18 @@
  * cohesive public API for managing the timer. It delegates all logic to the
  * respective modules, acting as a facade.
  */
-import { ServerMessage } from '../types/websocket'
-import { TimerData, TimerMode } from '../types/core'
+import { ServerMessage } from '@/types/websocket'
+import { TimerData, TimerMode } from '@/types/core'
 import {
   createInitialTimerState,
   DualModeTimerState,
-} from './timer/timerState.js'
-import { TimerQueries } from './timer/timerQueries.js'
-import { TimerCommands } from './timer/timerCommands.js'
+} from '@/services/timer/timerState'
+import { TimerQueries } from '@/services/timer/timerQueries'
+import { TimerCommands } from '@/services/timer/timerCommands'
 
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'
 
-class TabataTimer {
+export class TabataTimer {
   private readonly state: DualModeTimerState
   private readonly queries: TimerQueries
   private readonly commands: TimerCommands
@@ -81,5 +81,3 @@ class TabataTimer {
     this.commands.dispose()
   }
 }
-
-export default TabataTimer
