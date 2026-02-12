@@ -89,57 +89,34 @@ jobs:
         run: |
           set -e
 
-          # Use diff-tree to see if the HEAD commit itself has changes
-          # -m ensures merge commits are not treated as empty
-          if [ -z "$(git diff-tree --no-commit-id --name-only -r -m HEAD)" ]; then
-            echo "::notice::Current commit is truly empty. Searching PR history..."
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+          # Fix branch naming convention for the local environment
+          git config --global init.defaultBranch leader
 
-            # Even if HEAD has no changes, we find the last non-empty commit to ensure that
-            # downstream workflows (like gemini-review) have a valid commit SHA to analyze,
-            # especially in cases of reverts or empty commits.
-            echo "::notice::Fetching commit list from GitHub API for PR #${{ github.event.pull_request.number }}..."
-            COMMIT_SHAS_JSON=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --jq '.[].sha' || true)
+          # Determine if the EXACT commit that triggered this CI contains changes.
+          # -m: Follows merge commits (standard for GitHub's synthetic merge ref)
+          # -r: Recurses into subdirectories
+          # --no-commit-id: Suppresses the SHA in output to leave only filenames
+          CHANGES=$(git diff-tree --no-commit-id --name-only -r -m HEAD)
 
-            if [ -z "$COMMIT_SHAS_JSON" ]; then
-              echo "::error::Failed to fetch commits from GitHub API. Cannot determine last non-empty commit."
-              echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-              exit 0
+          if [ -z "$CHANGES" ]; then
+            echo "::notice::The triggering commit is empty (no file changes)."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+
+            # Fallback logic to find the actual code commit for Gemini analysis
+            # --diff-filter=ACMRT excludes empty/merge commits
+            # We look at history to find the last substantive commit
+            LAST_SHA=$(git log -n 1 --pretty=format:%H --diff-filter=ACMRT HEAD || echo "")
+
+            if [ -z "$LAST_SHA" ]; then
+               echo "::warning::Could not find any non-empty commit in history. Using HEAD as fallback."
+               LAST_SHA=$(git rev-parse HEAD)
             fi
 
-            mapfile -t COMMIT_SHAS < <(echo "$COMMIT_SHAS_JSON" | tac)
-
-            LAST_NON_EMPTY_COMMIT=""
-            for sha in "${COMMIT_SHAS[@]}"; do
-              if ! git cat-file -e "$sha" &>/dev/null; then
-                echo "::notice::Commit $sha not found locally, fetching..."
-                git fetch origin "$sha" --depth=1
-              fi
-
-              if git cat-file -e "$sha^" &>/dev/null; then
-                if ! git diff --quiet "$sha^" "$sha" -- .; then
-                  echo "::notice::Found last non-empty commit: $sha"
-                  LAST_NON_EMPTY_COMMIT=$sha
-                  break
-                fi
-              else
-                if [ -n "$(git ls-tree --name-only -r "$sha")" ]; then
-                  echo "::notice::Found first commit in PR with files: $sha"
-                  LAST_NON_EMPTY_COMMIT=$sha
-                  break
-                fi
-              fi
-            done
-
-            if [ -z "$LAST_NON_EMPTY_COMMIT" ]; then
-              echo "::warning::Could not find any non-empty commit in the PR history. Using HEAD as fallback."
-              LAST_NON_EMPTY_COMMIT=$(git rev-parse HEAD)
-            fi
-            echo "last_non_empty_commit=${LAST_NON_EMPTY_COMMIT}" >> $GITHUB_OUTPUT
+            echo "last_non_empty_commit=$LAST_SHA" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::Changes detected in current commit (including merge diffs)."
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+            echo "::notice::File changes detected in the triggering commit."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "last_non_empty_commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           fi
   # 1. Run CI checks on every push to a PR
   pr-quality:
