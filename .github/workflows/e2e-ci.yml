@@ -1,0 +1,155 @@
+name: 'E2E CI Tests'
+
+on:
+  push:
+    paths:
+      - '.github/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+env:
+  GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+
+jobs:
+  test_pr_squash_rebase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Create Test Branch and PR
+        id: create_pr
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH_NAME="e2e-rebase-$(date +%s)"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git checkout -b "$BRANCH_NAME"
+          echo "line 1" > test-rebase.txt
+          git add test-rebase.txt && git commit -m "feat: E2E Commit 1"
+          echo "line 2" >> test-rebase.txt
+          git add test-rebase.txt && git commit -m "fix: E2E Commit 2"
+          git push origin "$BRANCH_NAME"
+          PR_URL=$(gh pr create --base leader --head "$BRANCH_NAME" --fill)
+          echo "PR_NUMBER=${PR_URL##*/}" >> $GITHUB_ENV
+
+      - name: Trigger Squash-Rebase
+        run: |
+          set -e
+          gh pr comment "$PR_NUMBER" --body "@pr-squash-rebase"
+          echo "Triggered squash-rebase. Waiting for bot action..."
+          sleep 60
+
+      - name: Verify Git History and Content
+        run: |
+          set -e
+          git fetch origin "$BRANCH_NAME"
+          git checkout "$BRANCH_NAME"
+
+          # 1. Verify Squash (Exactly 1 commit ahead of leader)
+          COMMIT_COUNT=$(git rev-list --count HEAD ^origin/leader)
+          if [ "$COMMIT_COUNT" -ne 1 ]; then
+            echo "❌ Squash failed: Found $COMMIT_COUNT commits instead of 1."
+            exit 1
+          fi
+
+          # 2. Verify Rebase (Leader is ancestor)
+          if git merge-base --is-ancestor origin/leader HEAD; then
+            echo "✅ Rebase verified: Branch is on top of latest leader."
+          else
+            echo "❌ Rebase failed: Branch history is not linear."
+            exit 1
+          fi
+
+          # 3. Verify Content Integrity
+          grep -q "line 2" test-rebase.txt || { echo "❌ Content lost after squash"; exit 1; }
+
+          # 4. Verify Commit Message Format (Conventional Commits)
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit Message: $LAST_COMMIT_MSG"
+          if [[ "$LAST_COMMIT_MSG" =~ ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+$ ]]; then
+            echo "✅ Commit message format verified."
+          else
+            echo "❌ Commit message format invalid: $LAST_COMMIT_MSG"
+            exit 1
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          [ -n "$PR_NUMBER" ] && gh pr close "$PR_NUMBER" --delete-branch || true
+
+  test_conflict_resolver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Create Conflict and PR
+        id: setup
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          ID=${{ github.run_id }}
+          BASE="base-$ID"
+          HEAD="head-$ID"
+
+          echo "BASE_BRANCH=$BASE" >> $GITHUB_ENV
+          echo "HEAD_BRANCH=$HEAD" >> $GITHUB_ENV
+
+          # Create base branch with initial content
+          git checkout -b "$BASE"
+          echo "line 1" > test.generated.js
+          git add test.generated.js && git commit -m "base" && git push origin "$BASE"
+
+          # Create head branch with conflicting change
+          git checkout -b "$HEAD"
+          echo "head change" > test.generated.js
+          git add test.generated.js && git commit -m "head change" && git push origin "$HEAD"
+
+          # Create conflict on base branch
+          git checkout "$BASE"
+          echo "base conflict" > test.generated.js
+          git add test.generated.js && git commit -m "base conflict" && git push origin "$BASE"
+
+          PR_URL=$(gh pr create --base "$BASE" --head "$HEAD" --title "E2E Conflict Test" --body "Testing conflict resolver")
+          echo "PR_NUMBER=${PR_URL##*/}" >> $GITHUB_ENV
+
+      - name: Trigger Conflict Resolver
+        run: |
+          set -e
+          gh pr comment "$PR_NUMBER" --body "@conflict-resolve"
+          echo "Triggered conflict resolver. Waiting for bot action..."
+          sleep 60
+
+      - name: Verify Content Accuracy
+        run: |
+          set -e
+          git fetch origin "$HEAD_BRANCH"
+          git checkout "$HEAD_BRANCH"
+          # Strategy is 'ours' (head), so 'head change' should be present.
+          if grep -q "head change" test.generated.js; then
+            echo "✅ Content verification passed: 'head change' found in file."
+          else
+            echo "❌ Content verification failed: test.generated.js state is incorrect."
+            cat test.generated.js
+            exit 1
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          [ -n "$PR_NUMBER" ] && gh pr close "$PR_NUMBER" || true
+          git push origin --delete "$BASE_BRANCH" "$HEAD_BRANCH" || true
