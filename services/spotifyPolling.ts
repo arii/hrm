@@ -45,13 +45,9 @@ export class SpotifyPollingService implements SpotifyService {
     this.broadcastUpdate = broadcastUpdate
     logger.debug('Spotify Polling Service Initialized.')
 
-    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
-      throw new Error('Spotify client ID or secret not configured.')
-    }
-
     this.tokenManager = new SpotifyTokenManager(
-      env.SPOTIFY_CLIENT_ID,
-      env.SPOTIFY_CLIENT_SECRET
+      env.SPOTIFY_CLIENT_ID || '',
+      env.SPOTIFY_CLIENT_SECRET || ''
     )
   }
 
