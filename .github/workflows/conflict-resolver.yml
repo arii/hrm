@@ -1,11 +1,23 @@
 name: Conflict Resolver
 on:
-  issue_comment:
-    types: [created]
+  workflow_call:
+    inputs:
+      target_branch:
+        description: 'The branch to merge into'
+        required: true
+        type: string
+        default: 'leader'
+      source_branch:
+        description: 'The branch to merge from'
+        required: true
+        type: string
+      pr_number:
+        description: 'The PR number to comment on (required for feedback)'
+        required: true
+        type: string
 
 jobs:
   merge_and_resolve:
-    if: contains(github.event.comment.body, '@conflict-resolve')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -17,12 +29,11 @@ jobs:
       - name: Resolve Conflicts
         env:
           GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          BASE_BRANCH: ${{ inputs.target_branch }}
+          HEAD_BRANCH: ${{ inputs.source_branch }}
         run: |
           set -e
-          PR_DATA=$(gh pr view ${{ github.event.issue.number }} --json baseRefName,headRefName)
-          BASE_BRANCH=$(echo "$PR_DATA" | jq -r .baseRefName)
-          HEAD_BRANCH=$(echo "$PR_DATA" | jq -r .headRefName)
-
           echo "Attempting to merge $BASE_BRANCH into $HEAD_BRANCH"
 
           git config user.name "github-actions[bot]"
@@ -34,7 +45,7 @@ jobs:
           if git merge "origin/$BASE_BRANCH"; then
             echo "Clean merge, pushing..."
             git push origin "$HEAD_BRANCH"
-            gh pr comment ${{ github.event.issue.number }} --body "✅ Successfully resolved all conflicts via clean merge."
+            gh pr comment "$PR_NUMBER" --body "✅ Successfully resolved all conflicts via clean merge."
           else
             echo "Conflicts detected. Attempting automated resolution for generated files..."
             # Strategy: Favor HEAD changes for .js files, standard markers for others
@@ -42,5 +53,5 @@ jobs:
             git add .
             git commit -m "chore: automated conflict resolution"
             git push origin "$HEAD_BRANCH"
-            gh pr comment ${{ github.event.issue.number }} --body "✅ Successfully resolved all conflicts using automated strategy."
+            gh pr comment "$PR_NUMBER" --body "✅ Successfully resolved all conflicts using automated strategy."
           fi
