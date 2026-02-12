@@ -1,0 +1,131 @@
+// tests/unit/lib/hrm/HrmSessionManager.test.ts
+import { HrmSessionManager } from '../../../../lib/hrm/HrmSessionManager'
+import { RawHrmStreamData } from '../../../../types/core'
+
+describe('HrmSessionManager', () => {
+  let manager: HrmSessionManager
+  const client1: RawHrmStreamData = {
+    clientId: 'client1',
+    value: 80,
+    maxHr: 190,
+    age: 25,
+    calories: 100,
+  }
+  const client2: RawHrmStreamData = {
+    clientId: 'client2',
+    value: 90,
+    maxHr: 180,
+    age: 35,
+    calories: 150,
+  }
+
+  beforeEach(() => {
+    manager = new HrmSessionManager()
+  })
+
+  it('should save and find a client by ID', () => {
+    manager.save(client1)
+    const found = manager.findById('client1')
+    expect(found).toMatchObject(client1)
+  })
+
+  it('should return undefined for a non-existent client', () => {
+    const found = manager.findById('non-existent')
+    expect(found).toBeUndefined()
+  })
+
+  it('should find all clients', () => {
+    manager.save(client1)
+    manager.save(client2)
+    const allClients = manager.findAll()
+    expect(allClients).toHaveLength(2)
+    expect(allClients).toContainEqual(expect.objectContaining(client1))
+    expect(allClients).toContainEqual(expect.objectContaining(client2))
+  })
+
+  it('should return an empty array when no clients are saved', () => {
+    const allClients = manager.findAll()
+    expect(allClients).toHaveLength(0)
+  })
+
+  it('should delete a client by ID', () => {
+    manager.save(client1)
+    manager.deleteById('client1')
+    const found = manager.findById('client1')
+    expect(found).toBeUndefined()
+  })
+
+  it('should not throw an error when deleting a non-existent client', () => {
+    expect(() => manager.deleteById('non-existent')).not.toThrow()
+  })
+
+  it('should clear all clients', () => {
+    manager.save(client1)
+    manager.save(client2)
+    manager.clear()
+    const allClients = manager.findAll()
+    expect(allClients).toHaveLength(0)
+  })
+
+  it('should update an existing client', () => {
+    manager.save(client1)
+    const updatedClient = { ...client1, value: 100 }
+    manager.save(updatedClient)
+    const found = manager.findById('client1')
+    expect(found).toMatchObject({
+      ...updatedClient,
+      sessionStats: {
+        avgHr: 90, // (80 + 100) / 2
+        peakHr: 100,
+        minHr: 80,
+      },
+    })
+  })
+
+  it('should track incremental stats correctly', () => {
+    manager.save(client1) // HR 80
+    manager.save({ ...client1, value: 120 })
+    manager.save({ ...client1, value: 100 })
+
+    const found = manager.findById('client1')
+    expect(found?.sessionStats?.avgHr).toBe(100) // (80+120+100)/3
+    expect(found?.sessionStats?.peakHr).toBe(120)
+    expect(found?.sessionStats?.minHr).toBe(80)
+  })
+
+  it('should provide history snapshot', () => {
+    manager.save({ ...client1, value: 80, updatedAt: 1000 })
+    manager.save({ ...client1, value: 90, updatedAt: 2000 })
+
+    const snapshot = manager.getSnapshot('client1')
+    expect(snapshot?.recentHistory).toHaveLength(2)
+    expect(snapshot?.recentHistory[0]).toEqual({
+      heartRate: 80,
+      timestamp: 1000,
+    })
+    expect(snapshot?.recentHistory[1]).toEqual({
+      heartRate: 90,
+      timestamp: 2000,
+    })
+    expect(snapshot?.summary.avgHr).toBe(85)
+    expect(snapshot?.summary.peakHr).toBe(90)
+  })
+
+  it('should handle resetSession by clearing history, stats, and current value', () => {
+    manager.save({ ...client1, value: 80 })
+    manager.save({ ...client1, value: 90 })
+
+    manager.resetSession('client1')
+
+    const found = manager.findById('client1')
+    expect(found?.value).toBe(0)
+    expect(found?.sessionStats?.avgHr).toBe(0)
+    expect(found?.sessionStats?.peakHr).toBe(0)
+
+    const snapshot = manager.getSnapshot('client1')
+    expect(snapshot?.recentHistory).toHaveLength(0)
+    expect(snapshot?.summary.avgHr).toBe(0)
+    expect(snapshot?.summary.count).toBe(0)
+    expect(snapshot?.summary.peakHr).toBe(0)
+  })
+})

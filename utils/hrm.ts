@@ -3,6 +3,7 @@ import {
   HRM_STALE_THRESHOLD_MS,
   HRM_WARNING_THRESHOLD_MS,
 } from '@/utils/constants'
+import { calculateHrZoneInfo } from '@/lib/shared/hr-zones'
 
 interface GetActiveHrmDataOptions {
   includeZeroValues?: boolean
@@ -46,11 +47,16 @@ export const getActiveHrmData = (
       const referenceTime = user.updatedAt || user.lastUpdated || now
       const isDataStale = now - referenceTime > HRM_WARNING_THRESHOLD_MS
 
+      // Pre-calculate HR zone info if not already present
+      const { percentage, zone } = calculateHrZoneInfo(user.value, user.age)
+
       return {
         ...user,
         isAlerting: !!matchingAlert,
         alertMessage: matchingAlert?.message,
         isDataStale,
+        percentage: user.percentage ?? percentage,
+        zone: user.zone ?? zone,
       }
     })
 }
