@@ -205,37 +205,15 @@ jobs:
         with:
           base_branch: ${{ needs.squash-and-rebase.outputs.base_ref }}
 
-  trigger-quality-check:
-    needs: [squash-and-rebase, check-for-changes-after-squash]
+  trigger-ci-workflow:
+    needs: [squash-and-rebase]
     if: needs.squash-and-rebase.outputs.outcome == 'success'
-    uses: ./.github/workflows/pr-quality.yml
-    with:
-      branch: ${{ needs.squash-and-rebase.outputs.head_ref }}
-      pr_number: ${{ inputs.pr_number }}
-      has_changes: ${{ needs.check-for-changes-after-squash.outputs.has_changes }}
-    secrets:
-      GH_TOKEN: ${{ secrets.ARI_PAT }}
-
-  report-status:
-    needs: [squash-and-rebase, trigger-quality-check]
-    if: always() && needs.squash-and-rebase.outputs.outcome == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Create Status Check
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const conclusion = '${{ needs.trigger-quality-check.result }}' === 'success' ? 'success' : 'failure';
-            await github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: 'Gemini Orchestrator',
-              head_sha: '${{ needs.squash-and-rebase.outputs.squashed_sha }}',
-              status: 'completed',
-              conclusion: conclusion,
-              output: {
-                title: 'Manual Quality Gate',
-                summary: `Quality check executed via pr-squash workflow. Result: ${conclusion}`
-              }
-            });
+      - name: Trigger Gemini Orchestrator
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_BRANCH: ${{ needs.squash-and-rebase.outputs.head_ref }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          gh workflow run "Gemini Orchestrator" --ref "$HEAD_BRANCH" -f pr_number="$PR_NUMBER"

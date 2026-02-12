@@ -4,9 +4,14 @@ on:
   pull_request:
     types: [opened, synchronize]
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR Number (optional, for manual trigger context)'
+        required: false
+        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -55,6 +60,7 @@ jobs:
     uses: ./.github/workflows/pr-quality.yml
     with:
       has_changes: true
+      pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
 
