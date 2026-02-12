@@ -61,7 +61,7 @@ export const getActiveHrmData = (
     })
 }
 
-const GENERIC_NAME_REGEX = /^(user|unknown|new user|bluetooth hrm)/i
+const GENERIC_NAME_REGEX = /^(user|unknown|new user|bluetooth hrm)(\s+\d+)?$/i
 
 /**
  * Checks if a user name is generic (e.g., "User", "New User").

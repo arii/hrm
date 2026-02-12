@@ -59,7 +59,8 @@ test.describe('Infrastructure & Scripts', () => {
   // 3. DEV SERVER TEST
   // Spawns the real dev server on a unique port to verify it boots.
   test('pnpm run dev should start and listen', async () => {
-    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 4) // Increased for CI stability
+    // Wait for dev server to be ready
+    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2)
 
     // Clean up .next/ directory to prevent "lock file" errors from previous runs
     const nextDir = path.join(process.cwd(), '.next')
@@ -103,7 +104,8 @@ test.describe('Infrastructure & Scripts', () => {
   // 4. PRODUCTION SCRIPT TEST
   // Verifies the production shell script (start-production.sh).
   test('start-production.sh should start successfully', async () => {
-    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 4) // Increased for CI stability
+    // Wait for production script to be ready
+    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2)
 
     const PORT = 3006
     // Mock env vars usually provided by .env.production

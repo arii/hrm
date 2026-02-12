@@ -61,7 +61,11 @@ const HeroTier = ({ percentMax }: { percentMax: number }) => (
       variant="h2"
       component="div"
       sx={{
-        fontSize: { xs: '8rem', sm: '12rem', md: '15rem' },
+        fontSize: {
+          xs: 'clamp(5rem, 15vw, 8rem)',
+          sm: 'clamp(8rem, 18vw, 12rem)',
+          md: 'clamp(10rem, 20vw, 15rem)',
+        },
         fontWeight: 900,
         lineHeight: 1,
         fontFamily: HERO_FONT_FAMILY,
@@ -70,6 +74,27 @@ const HeroTier = ({ percentMax }: { percentMax: number }) => (
       {percentMax}%
     </Typography>
   </Box>
+)
+
+const MetricItem = ({
+  value,
+  label,
+  testId,
+}: {
+  value: React.ReactNode
+  label: string
+  testId?: string
+}) => (
+  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
+    {value}{' '}
+    <Typography
+      component="span"
+      variant="caption"
+      sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+    >
+      {label}
+    </Typography>
+  </Typography>
 )
 
 const DataTier = ({
@@ -84,32 +109,14 @@ const DataTier = ({
   <Box
     sx={{
       pb: 3,
-      pt: showName ? 0 : 3, // Balance spacing if name is missing
+      pt: showName ? 0 : 3,
       display: 'flex',
       justifyContent: 'center',
       gap: 4,
     }}
   >
-    <Typography data-testid="bpm-value" variant="h4" sx={{ fontWeight: 800 }}>
-      {bpm ?? '---'}{' '}
-      <Typography
-        component="span"
-        variant="caption"
-        sx={{ fontSize: '1.2rem', opacity: 0.8 }}
-      >
-        BPM
-      </Typography>
-    </Typography>
-    <Typography variant="h4" sx={{ fontWeight: 800 }}>
-      {Math.floor(calories)}{' '}
-      <Typography
-        component="span"
-        variant="caption"
-        sx={{ fontSize: '1.2rem', opacity: 0.8 }}
-      >
-        KCAL
-      </Typography>
-    </Typography>
+    <MetricItem value={bpm ?? '---'} label="BPM" testId="bpm-value" />
+    <MetricItem value={Math.floor(calories)} label="KCAL" />
   </Box>
 )
 
@@ -126,9 +133,8 @@ const HrTile = ({
 }: HrTileProps) => {
   const theme = useTheme()
 
-  const displayZone = zone ?? 0
   const zoneConfig =
-    HR_ZONE_VISUAL_CONFIG[displayZone as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
+    HR_ZONE_VISUAL_CONFIG[(zone ?? 0) as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
     HR_ZONE_VISUAL_CONFIG[0]
 
   const tooltipTitle = isAlerting
@@ -148,7 +154,7 @@ const HrTile = ({
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
           isConnected ? `${bpm} beats per minute` : 'Disconnected'
-        }, ${percentMax}% of maximum, Zone ${displayZone}: ${zoneConfig.label}`}
+        }, ${percentMax}% of maximum, Zone ${zone ?? 0}: ${zoneConfig.label}`}
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
@@ -216,18 +222,4 @@ const HrTile = ({
   )
 }
 
-const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
-  return (
-    prevProps.name === nextProps.name &&
-    prevProps.bpm === nextProps.bpm &&
-    prevProps.percentMax === nextProps.percentMax &&
-    prevProps.zone === nextProps.zone &&
-    prevProps.calories === nextProps.calories &&
-    prevProps.isConnected === nextProps.isConnected &&
-    prevProps.isDataStale === nextProps.isDataStale &&
-    prevProps.isAlerting === nextProps.isAlerting &&
-    prevProps.alertMessage === nextProps.alertMessage
-  )
-}
-
-export default memo(HrTile, arePropsEqual)
+export default memo(HrTile)
