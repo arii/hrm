@@ -6,7 +6,6 @@ import {
   WorkoutSessionStorage,
   WorkoutSessionData,
 } from '../../../lib/workout-session-storage'
-import { HeartRateZone } from '../../../lib/shared/hr-zones'
 
 const mockSessionData: WorkoutSessionData = {
   sessionId: 'test-session-1',
@@ -67,7 +66,10 @@ describe('WorkoutSessionStorage with fake-indexeddb', () => {
   })
 
   it('should get an incomplete session', async () => {
-    const incompleteSession = { ...mockSessionData, status: 'paused' as 'paused' }
+    const incompleteSession = {
+      ...mockSessionData,
+      status: 'paused' as const,
+    }
     await storage.saveSession(incompleteSession)
     const session = await storage.getIncompleteSession()
     expect(session).toEqual(incompleteSession)

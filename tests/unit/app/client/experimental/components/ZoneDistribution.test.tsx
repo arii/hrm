@@ -103,7 +103,9 @@ describe('ZoneDistribution', () => {
       </ThemeProvider>
     )
     expect(screen.getByText(HR_ZONE_CONFIG.ZONE_1.label)).toBeInTheDocument()
-    expect(screen.queryByText(HR_ZONE_CONFIG.ZONE_3.label)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(HR_ZONE_CONFIG.ZONE_3.label)
+    ).not.toBeInTheDocument()
   })
 
   it('includes NoData and Unknown zones to reflect data gaps', () => {

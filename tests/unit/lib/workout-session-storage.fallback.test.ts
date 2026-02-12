@@ -6,7 +6,6 @@ import {
   WorkoutSessionStorage,
   WorkoutSessionData,
 } from '../../../lib/workout-session-storage'
-import { HeartRateZone } from '../../../lib/shared/hr-zones'
 
 jest.mock('idb', () => ({
   openDB: jest.fn(() => ({
@@ -70,7 +69,10 @@ describe('WorkoutSessionStorage', () => {
     })
 
     it('should get an incomplete session using localStorage', async () => {
-      const incompleteSession = { ...mockSessionData, status: 'paused' as 'paused' }
+      const incompleteSession = {
+        ...mockSessionData,
+        status: 'paused' as const,
+      }
       await storage.saveSession(incompleteSession)
       const session = await storage.getIncompleteSession()
       expect(session).toEqual(incompleteSession)

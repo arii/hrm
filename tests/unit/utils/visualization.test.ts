@@ -10,7 +10,11 @@ describe('getHrZoneProps', () => {
   const maxHr = 200
 
   // Test cases for each HR Zone
-  const testCases: { zone: HeartRateZone; hr: number; expectedColor?: string }[] = [
+  const testCases: {
+    zone: HeartRateZone
+    hr: number
+    expectedColor?: string
+  }[] = [
     { zone: 'NO_DATA', hr: 0, expectedColor: '#FFFFFF' },
     { zone: 'UNKNOWN', hr: 0, expectedColor: '#FFFFFF' },
     {
@@ -50,7 +54,7 @@ describe('getHrZoneProps', () => {
         // Fail if zone calculation mismatches expectation
         // except for 0 hr which returns NO_DATA but we might test UNKNOWN
         if (hr > 0) {
-           expect(resultZone).toBe(zone)
+          expect(resultZone).toBe(zone)
         }
       }
     })

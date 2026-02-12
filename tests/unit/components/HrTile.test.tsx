@@ -12,9 +12,7 @@ describe('HrTile', () => {
     // 95% -> Zone 6
     render(<HrTile name="Test" bpm={190} percentMax={95} zone="ZONE_6" />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(
-      `background-color: ${HR_ZONE_CONFIG.ZONE_6.color}`
-    )
+    expect(card).toHaveStyle(`background-color: ${HR_ZONE_CONFIG.ZONE_6.color}`)
     expect(card).toHaveStyle(`color: ${HR_ZONE_CONFIG.ZONE_6.textColor}`)
   })
 
@@ -22,9 +20,7 @@ describe('HrTile', () => {
     // 92% -> Zone 5
     render(<HrTile name="Test" bpm={175} percentMax={92} zone="ZONE_5" />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(
-      `background-color: ${HR_ZONE_CONFIG.ZONE_5.color}`
-    )
+    expect(card).toHaveStyle(`background-color: ${HR_ZONE_CONFIG.ZONE_5.color}`)
     expect(card).toHaveStyle(`color: ${HR_ZONE_CONFIG.ZONE_5.textColor}`)
   })
 
@@ -32,9 +28,7 @@ describe('HrTile', () => {
     // 85% -> Zone 4
     render(<HrTile name="Test" bpm={160} percentMax={85} zone="ZONE_4" />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(
-      `background-color: ${HR_ZONE_CONFIG.ZONE_4.color}`
-    )
+    expect(card).toHaveStyle(`background-color: ${HR_ZONE_CONFIG.ZONE_4.color}`)
     expect(card).toHaveStyle(`color: ${HR_ZONE_CONFIG.ZONE_4.textColor}`)
   })
 
@@ -42,9 +36,7 @@ describe('HrTile', () => {
     // 75% -> Zone 3
     render(<HrTile name="Test" bpm={140} percentMax={75} zone="ZONE_3" />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(
-      `background-color: ${HR_ZONE_CONFIG.ZONE_3.color}`
-    )
+    expect(card).toHaveStyle(`background-color: ${HR_ZONE_CONFIG.ZONE_3.color}`)
     expect(card).toHaveStyle(`color: ${HR_ZONE_CONFIG.ZONE_3.textColor}`)
   })
 
@@ -52,9 +44,7 @@ describe('HrTile', () => {
     // 65% -> Zone 2
     render(<HrTile name="Test" bpm={120} percentMax={65} zone="ZONE_2" />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(
-      `background-color: ${HR_ZONE_CONFIG.ZONE_2.color}`
-    )
+    expect(card).toHaveStyle(`background-color: ${HR_ZONE_CONFIG.ZONE_2.color}`)
     expect(card).toHaveStyle(`color: ${HR_ZONE_CONFIG.ZONE_2.textColor}`)
   })
 
@@ -62,9 +52,7 @@ describe('HrTile', () => {
     // 55% -> Zone 1
     render(<HrTile name="Test" bpm={100} percentMax={55} zone="ZONE_1" />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(
-      `background-color: ${HR_ZONE_CONFIG.ZONE_1.color}`
-    )
+    expect(card).toHaveStyle(`background-color: ${HR_ZONE_CONFIG.ZONE_1.color}`)
     expect(card).toHaveStyle(`color: ${HR_ZONE_CONFIG.ZONE_1.textColor}`)
   })
 
@@ -98,16 +86,20 @@ describe('HrTile', () => {
 
   it('displays the correct zone information when zone prop is provided', () => {
     render(<HrTile name="Test" bpm={190} percentMax={95} zone="ZONE_6" />)
-    expect(screen.getByText(new RegExp(`ZONE 6: ${HR_ZONE_CONFIG.ZONE_6.label}`, 'i'))).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        new RegExp(`ZONE 6: ${HR_ZONE_CONFIG.ZONE_6.label}`, 'i')
+      )
+    ).toBeInTheDocument()
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(
-      `background-color: ${HR_ZONE_CONFIG.ZONE_6.color}`
-    )
+    expect(card).toHaveStyle(`background-color: ${HR_ZONE_CONFIG.ZONE_6.color}`)
   })
 
   it('displays "IDLE" for zone 0', () => {
     render(<HrTile name="Test" bpm={60} percentMax={30} zone="ZONE_0" />)
-    expect(screen.getByText(new RegExp(`${HR_ZONE_CONFIG.ZONE_0.label}`, 'i'))).toBeInTheDocument()
+    expect(
+      screen.getByText(new RegExp(`${HR_ZONE_CONFIG.ZONE_0.label}`, 'i'))
+    ).toBeInTheDocument()
   })
 
   it('updates aria-label to include zone information', () => {
