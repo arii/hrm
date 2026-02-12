@@ -5,12 +5,11 @@
  */
 
 import {
-  HrZoneName,
+  HeartRateZone,
   calculateZoneFromMaxHr,
-  getHrZoneLabel,
 } from '../shared/hr-zones.js'
 
-export { HrZoneName }
+export type { HeartRateZone }
 
 import { HrZone } from '../../types/heart-rate.js'
 
@@ -23,12 +22,12 @@ import { HrZone } from '../../types/heart-rate.js'
  * @deprecated Use `calculateHrZoneInfo` from `lib/shared/hr-zones` instead.
  * @param {number} currentHr - The current heart rate in beats per minute.
  * @param {number} maxHr - The user's maximum heart rate.
- * @returns {HrZone} An object containing the zone name, percentage of max HR, and current BPM.
+ * @returns {HrZone} An object containing the zone name (key), percentage of max HR, and current BPM.
  */
 export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
   if (!maxHr || !currentHr || currentHr <= 0) {
     return {
-      zoneName: HrZoneName.NoData,
+      zoneName: 'NO_DATA',
       percentage: 0,
       bpm: 0,
     }
@@ -36,11 +35,8 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
 
   const { percentage, zone } = calculateZoneFromMaxHr(currentHr, maxHr)
 
-  // Canonical mapping from shared HR zones
-  const zoneName = getHrZoneLabel(zone) as HrZoneName
-
   return {
-    zoneName,
+    zoneName: zone,
     percentage: percentage,
     bpm: currentHr,
   }

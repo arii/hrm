@@ -1,6 +1,6 @@
 // File: utils/constants.ts
 // Centralized constants for the application.
-import { HEART_RATE_ZONES, HeartRateZoneConfig } from '@/lib/shared/hr-zones'
+import { HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
 
 // Battery level thresholds for UI icons
 export const BATTERY_LEVEL_FULL = 70
@@ -21,8 +21,7 @@ export const HRM_WARNING_THRESHOLD_MS = 10000
 
 // --- Heart Rate Zones Configuration ---
 // Exported from lib/shared/hr-zones.ts for canonical source of truth.
-export { HEART_RATE_ZONES }
-export type { HeartRateZoneConfig }
+export { HR_ZONE_CONFIG }
 
 // --- Calorie Calculation Constants ---
 // Based on standard metabolic formulas (e.g., Keytel)

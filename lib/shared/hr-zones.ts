@@ -7,42 +7,108 @@ import { HR_COLORS } from '@/lib/shared/colors'
 
 export const MAX_HR_DEFAULT = 185
 
-/**
- * Enum for HR Zone names to provide compile-time safety and prevent string mismatches.
- */
-export enum HrZoneName {
-  Idle = 'Idle',
-  Recovery = 'Recovery',
-  WarmUp = 'Warm Up',
-  Aerobic = 'Aerobic',
-  Cardio = 'Cardio',
-  Peak = 'Peak',
-  // Legacy/Internal names for compatibility
-  FatBurn = 'Fat Burn',
-  Max = 'Max',
-  NoData = 'No Data',
-  Unknown = 'Unknown',
+// Define the canonical HeartRateZone type
+export type HeartRateZone =
+  | 'ZONE_0'
+  | 'ZONE_1'
+  | 'ZONE_2'
+  | 'ZONE_3'
+  | 'ZONE_4'
+  | 'ZONE_5'
+  | 'ZONE_6'
+  | 'NO_DATA'
+  | 'UNKNOWN'
+
+export interface ZoneDetail {
+  label: string
+  minPercent: number
+  maxPercent: number
+  color: string
+  textColor: string
 }
 
 /**
- * Thresholds for HR zones (percentage of Max HR).
+ * Canonical configuration for heart rate zones.
+ * This is the single source of truth for zone definitions, thresholds, and visuals.
  */
+export const HR_ZONE_CONFIG: Record<HeartRateZone, ZoneDetail> = {
+  ZONE_6: {
+    label: 'Maximum',
+    minPercent: 95,
+    maxPercent: 100,
+    color: HR_COLORS.ZONE_6_MAX,
+    textColor: HR_COLORS.TEXT_LIGHT,
+  },
+  ZONE_5: {
+    label: 'Anaerobic',
+    minPercent: 90,
+    maxPercent: 95,
+    color: HR_COLORS.ZONE_5_PEAK,
+    textColor: HR_COLORS.TEXT_LIGHT,
+  },
+  ZONE_4: {
+    label: 'Threshold',
+    minPercent: 80,
+    maxPercent: 90,
+    color: HR_COLORS.ZONE_4_CARDIO,
+    textColor: HR_COLORS.TEXT_LIGHT,
+  },
+  ZONE_3: {
+    label: 'Aerobic',
+    minPercent: 70,
+    maxPercent: 80,
+    color: HR_COLORS.ZONE_3_FATBURN,
+    textColor: HR_COLORS.TEXT_LIGHT,
+  },
+  ZONE_2: {
+    label: 'Easy',
+    minPercent: 60,
+    maxPercent: 70,
+    color: HR_COLORS.ZONE_2_WARMUP,
+    textColor: HR_COLORS.TEXT_LIGHT,
+  },
+  ZONE_1: {
+    label: 'Warm Up',
+    minPercent: 50,
+    maxPercent: 60,
+    color: HR_COLORS.ZONE_1_RECOVERY,
+    textColor: HR_COLORS.TEXT_DARK,
+  },
+  ZONE_0: {
+    label: 'Idle',
+    minPercent: 0,
+    maxPercent: 50,
+    color: HR_COLORS.ZONE_0_IDLE,
+    textColor: HR_COLORS.TEXT_DARK,
+  },
+  NO_DATA: {
+    label: 'No Data',
+    minPercent: 0,
+    maxPercent: 0,
+    color: HR_COLORS.ZONE_0_IDLE,
+    textColor: HR_COLORS.TEXT_DARK,
+  },
+  UNKNOWN: {
+    label: 'Unknown',
+    minPercent: 0,
+    maxPercent: 0,
+    color: HR_COLORS.ZONE_0_IDLE,
+    textColor: HR_COLORS.TEXT_DARK,
+  },
+}
+
+// Keep ZONE_THRESHOLDS for internal logic if needed
 export const ZONE_THRESHOLDS = {
-  ZONE_6: 95,
-  ZONE_5: 90,
-  ZONE_4: 80,
-  ZONE_3: 70,
-  ZONE_2: 60,
-  ZONE_1: 50,
+  ZONE_6: HR_ZONE_CONFIG.ZONE_6.minPercent,
+  ZONE_5: HR_ZONE_CONFIG.ZONE_5.minPercent,
+  ZONE_4: HR_ZONE_CONFIG.ZONE_4.minPercent,
+  ZONE_3: HR_ZONE_CONFIG.ZONE_3.minPercent,
+  ZONE_2: HR_ZONE_CONFIG.ZONE_2.minPercent,
+  ZONE_1: HR_ZONE_CONFIG.ZONE_1.minPercent,
 } as const
 
 /**
  * Estimates a user's maximum heart rate using the Haskell & Fox formula (220 - age).
- *
- * NOTE: While the Tanaka formula (208 - 0.7 * age) is often more accurate for older adults,
- * we are using the Haskell & Fox formula here to ensure parity with existing dashboard
- * calculation logic and requested test cases (e.g. 120-year-old athlete).
- *
  * @param age - The user's age in years.
  * @returns The estimated maximum heart rate.
  */
@@ -59,158 +125,55 @@ export const calculateMaxHr = (age?: number | string | null): number => {
 }
 
 /**
- * Canonical visual configuration for heart rate zones.
- * Shared between client (Connect/Mock) and Dashboard (HrTile).
- * color: Background color for the zone.
- * textColor: Text color for optimal contrast (forcing specific overrides).
- *
- * NOTE: Colors are imported from shared constants to maintain consistency
- * between shared logic and the MUI theme.
- */
-export const HR_ZONE_VISUAL_CONFIG = {
-  6: {
-    color: HR_COLORS.ZONE_6_MAX,
-    label: HrZoneName.Max,
-    textColor: HR_COLORS.TEXT_LIGHT,
-  },
-  5: {
-    color: HR_COLORS.ZONE_5_PEAK,
-    label: HrZoneName.Peak,
-    textColor: HR_COLORS.TEXT_LIGHT,
-  },
-  4: {
-    color: HR_COLORS.ZONE_4_CARDIO,
-    label: HrZoneName.Cardio,
-    textColor: HR_COLORS.TEXT_LIGHT,
-  },
-  3: {
-    color: HR_COLORS.ZONE_3_FATBURN,
-    label: HrZoneName.FatBurn,
-    textColor: HR_COLORS.TEXT_LIGHT,
-  },
-  2: {
-    color: HR_COLORS.ZONE_2_WARMUP,
-    label: HrZoneName.WarmUp,
-    textColor: HR_COLORS.TEXT_LIGHT,
-  },
-  1: {
-    color: HR_COLORS.ZONE_1_RECOVERY,
-    label: HrZoneName.Recovery,
-    textColor: HR_COLORS.TEXT_DARK,
-  },
-  0: {
-    color: HR_COLORS.ZONE_0_IDLE,
-    label: HrZoneName.Idle,
-    textColor: HR_COLORS.TEXT_DARK,
-  },
-} as const
-
-/**
- * Calculates the percentage of max HR and the corresponding zone (0-5) based on Max HR.
+ * Calculates the percentage of max HR and the corresponding zone based on Max HR.
  * @param currentHr - Current heart rate in BPM.
  * @param maxHr - Max Heart Rate.
- * @returns An object containing the calculated percentage and zone.
+ * @returns An object containing the calculated percentage and zone key.
  */
 export const calculateZoneFromMaxHr = (
   currentHr: number,
   maxHr: number
-): { percentage: number; zone: number } => {
+): { percentage: number; zone: HeartRateZone } => {
   const percentage =
     maxHr > 0 && currentHr > 0
       ? Math.min(100, Math.round((currentHr / maxHr) * 100))
       : 0
 
-  let zone = 0
-  if (percentage >= ZONE_THRESHOLDS.ZONE_6) zone = 6
-  else if (percentage >= ZONE_THRESHOLDS.ZONE_5) zone = 5
-  else if (percentage >= ZONE_THRESHOLDS.ZONE_4) zone = 4
-  else if (percentage >= ZONE_THRESHOLDS.ZONE_3) zone = 3
-  else if (percentage >= ZONE_THRESHOLDS.ZONE_2) zone = 2
-  else if (percentage >= ZONE_THRESHOLDS.ZONE_1) zone = 1
+  let zone: HeartRateZone = 'ZONE_0'
+  if (percentage >= ZONE_THRESHOLDS.ZONE_6) zone = 'ZONE_6'
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_5) zone = 'ZONE_5'
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_4) zone = 'ZONE_4'
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_3) zone = 'ZONE_3'
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_2) zone = 'ZONE_2'
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_1) zone = 'ZONE_1'
 
   return { percentage, zone }
 }
 
 /**
- * Calculates the percentage of max HR and the corresponding zone (0-5).
+ * Calculates the percentage of max HR and the corresponding zone.
  * @param currentHr - Current heart rate in BPM.
  * @param age - User's age.
- * @returns An object containing the calculated percentage and zone.
+ * @returns An object containing the calculated percentage and zone key.
  */
 export const calculateHrZoneInfo = (
   currentHr: number,
   age?: number | string | null
-): { percentage: number; zone: number } => {
+): { percentage: number; zone: HeartRateZone } => {
   const maxHr = calculateMaxHr(age)
   return calculateZoneFromMaxHr(currentHr, maxHr)
 }
 
 /**
- * Gets the string label for a numeric zone.
- * @param zone - Numeric zone (0-5).
+ * Gets the string label for a zone key.
+ * @param zone - Zone key.
  * @returns Human-readable label.
  */
-export const getHrZoneLabel = (zone: number): string => {
-  return (
-    HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG]?.label ||
-    'Idle'
-  )
+export const getHrZoneLabel = (zone: HeartRateZone): string => {
+  return HR_ZONE_CONFIG[zone]?.label || 'Idle'
 }
 
-/**
- * Interface for HR zone configuration used in UI components.
- */
-export interface HeartRateZoneConfig {
-  name: string
-  minPercent: number
-  maxPercent: number
-  color: string
-}
-
-/**
- * Canonical list of heart rate zones with their percentage ranges and colors.
- * This is the single source of truth for zone definitions.
- */
-export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
-  {
-    name: 'Zone 6',
-    minPercent: ZONE_THRESHOLDS.ZONE_6,
-    maxPercent: 100,
-    color: HR_ZONE_VISUAL_CONFIG[6].color,
-  },
-  {
-    name: 'Zone 5',
-    minPercent: ZONE_THRESHOLDS.ZONE_5,
-    maxPercent: ZONE_THRESHOLDS.ZONE_6,
-    color: HR_ZONE_VISUAL_CONFIG[5].color,
-  },
-  {
-    name: 'Zone 4',
-    minPercent: ZONE_THRESHOLDS.ZONE_4,
-    maxPercent: ZONE_THRESHOLDS.ZONE_5,
-    color: HR_ZONE_VISUAL_CONFIG[4].color,
-  },
-  {
-    name: 'Zone 3',
-    minPercent: ZONE_THRESHOLDS.ZONE_3,
-    maxPercent: ZONE_THRESHOLDS.ZONE_4,
-    color: HR_ZONE_VISUAL_CONFIG[3].color,
-  },
-  {
-    name: 'Zone 2',
-    minPercent: ZONE_THRESHOLDS.ZONE_2,
-    maxPercent: ZONE_THRESHOLDS.ZONE_3,
-    color: HR_ZONE_VISUAL_CONFIG[2].color,
-  },
-  {
-    name: 'Zone 1',
-    minPercent: ZONE_THRESHOLDS.ZONE_1,
-    maxPercent: ZONE_THRESHOLDS.ZONE_2,
-    color: HR_ZONE_VISUAL_CONFIG[1].color,
-  },
-]
-
-// Define a type for the return value for clarity
+// UserHrZones type remains for legacy support or usage in getUserHrZones
 export type UserHrZones = {
   warmUp: { min: number }
   fatBurn: { min: number }

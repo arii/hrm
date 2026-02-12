@@ -8,7 +8,7 @@ import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
+import { HR_ZONE_CONFIG, HeartRateZone } from '@/lib/shared/hr-zones'
 import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 
@@ -43,14 +43,21 @@ const HrTile = ({
 
   // Determine the effective zone.
   // If 'zone' is provided (server-calculated), use it.
-  const displayZone = zone ?? 0
+  const displayZone: HeartRateZone = zone ?? 'ZONE_0'
 
-  const zoneConfig =
-    HR_ZONE_VISUAL_CONFIG[displayZone as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
-    HR_ZONE_VISUAL_CONFIG[0]
+  const zoneConfig = HR_ZONE_CONFIG[displayZone] || HR_ZONE_CONFIG.ZONE_0
 
   const backgroundColor = zoneConfig.color
   const textColor = zoneConfig.textColor
+
+  // Extract zone number for display (e.g. "ZONE_2" -> "2")
+  const zoneNum = displayZone.startsWith('ZONE_')
+    ? displayZone.replace('ZONE_', '')
+    : ''
+
+  const displayLabel = zoneNum
+    ? `ZONE ${zoneNum}: ${zoneConfig.label}`
+    : zoneConfig.label
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -67,7 +74,7 @@ const HrTile = ({
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
           isConnected ? `${bpm} beats per minute` : 'Disconnected'
-        }, ${percentMax}% of maximum, Zone ${displayZone}: ${zoneConfig.label}`}
+        }, ${percentMax}% of maximum, ${displayLabel}`}
         sx={{
           backgroundColor: backgroundColor,
           color: textColor,
@@ -181,7 +188,7 @@ const HrTile = ({
                 }}
               />
               <Typography variant="caption" sx={{ fontWeight: 800 }}>
-                ZONE {displayZone}: {zoneConfig.label}
+                {displayLabel}
               </Typography>
             </Box>
 
