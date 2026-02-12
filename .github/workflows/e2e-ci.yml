@@ -45,7 +45,7 @@ jobs:
           set -e
           gh pr comment "$PR_NUMBER" --body "@pr-squash-rebase"
           echo "Triggered squash-rebase. Waiting for bot action..."
-          sleep 60
+          sleep 45
 
       - name: Verify Git History and Content
         run: |
@@ -132,7 +132,7 @@ jobs:
           set -e
           gh pr comment "$PR_NUMBER" --body "@conflict-resolve"
           echo "Triggered conflict resolver. Waiting for bot action..."
-          sleep 60
+          sleep 45
 
       - name: Verify Content Accuracy
         run: |

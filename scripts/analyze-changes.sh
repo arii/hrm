@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# Set local environment to match repo structure
-git config --global init.defaultBranch leader
-
 # 1. Identify current state
 CURRENT_SHA=$(git rev-parse HEAD)
 # Use environment variable if provided, else default to origin/leader
