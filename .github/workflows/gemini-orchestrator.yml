@@ -92,11 +92,20 @@ jobs:
           # Fix branch naming convention for the local environment
           git config --global init.defaultBranch leader
 
-          # Determine if the EXACT commit that triggered this CI contains changes.
-          # -m: Follows merge commits (standard for GitHub's synthetic merge ref)
+          # Detect changes in the specific triggering commit.
+          # We prefer checking the PR Head SHA directly to avoid confusion with the merge commit (HEAD).
+          # If this is not a PR event (e.g. push), we fallback to HEAD.
+          TARGET_SHA="${{ github.event.pull_request.head.sha }}"
+          if [ -z "$TARGET_SHA" ]; then
+            TARGET_SHA="HEAD"
+          fi
+
+          echo "::notice::Checking for changes in commit: $TARGET_SHA"
+
+          # -m: Follows merge commits (reports diff vs parents)
           # -r: Recurses into subdirectories
           # --no-commit-id: Suppresses the SHA in output to leave only filenames
-          CHANGES=$(git diff-tree --no-commit-id --name-only -r -m HEAD)
+          CHANGES=$(git diff-tree --no-commit-id --name-only -r -m "$TARGET_SHA")
 
           if [ -z "$CHANGES" ]; then
             echo "::notice::The triggering commit is empty (no file changes)."
@@ -104,19 +113,19 @@ jobs:
 
             # Fallback logic to find the actual code commit for Gemini analysis
             # --diff-filter=ACMRT excludes empty/merge commits
-            # We look at history to find the last substantive commit
-            LAST_SHA=$(git log -n 1 --pretty=format:%H --diff-filter=ACMRT HEAD || echo "")
+            # We look at history starting from TARGET_SHA to find the last substantive commit
+            LAST_SHA=$(git log -n 1 --pretty=format:%H --diff-filter=ACMRT "$TARGET_SHA" || echo "")
 
             if [ -z "$LAST_SHA" ]; then
-               echo "::warning::Could not find any non-empty commit in history. Using HEAD as fallback."
-               LAST_SHA=$(git rev-parse HEAD)
+               echo "::warning::Could not find any non-empty commit in history. Using TARGET_SHA as fallback."
+               LAST_SHA=$TARGET_SHA
             fi
 
             echo "last_non_empty_commit=$LAST_SHA" >> "$GITHUB_OUTPUT"
           else
             echo "::notice::File changes detected in the triggering commit."
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
-            echo "last_non_empty_commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            echo "last_non_empty_commit=$TARGET_SHA" >> "$GITHUB_OUTPUT"
           fi
   # 1. Run CI checks on every push to a PR
   pr-quality:
