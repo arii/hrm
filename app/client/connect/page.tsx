@@ -1,3 +1,4 @@
+// app/client/connect/page.tsx
 'use client'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
@@ -8,6 +9,7 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
+import { calculateHrZoneInfo, HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -16,11 +18,6 @@ import {
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
-import {
-  calculateHrZoneInfo,
-  HR_ZONE_VISUAL_CONFIG,
-} from '@/lib/shared/hr-zones'
-import { Skeleton, Container } from '@mui/material'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -73,6 +70,7 @@ export default function ConnectPage() {
         setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
       }
     }
+    // Reset local state to show the canonical value from context
     setLocalDisplayWeight(null)
   }
 
@@ -113,14 +111,13 @@ export default function ConnectPage() {
 
   const {
     workoutDuration,
-    startTime,
+    startTime, // Destructure persistent start time
     resetWorkout: resetWorkoutSession,
     hasStarted,
     startWorkout,
     pauseWorkout,
     endWorkout,
     workoutStatus,
-    isRehydrated,
   } = useWorkoutSession({
     isConnected: false,
     totalCalories: calories,
@@ -171,22 +168,15 @@ export default function ConnectPage() {
     return undefined
   }, [connectionStatus, isConnected, isSupported, autoConnect])
 
-  const { percentage, zone } = useMemo(
-    () => calculateHrZoneInfo(currentHR, userAge),
-    [currentHR, userAge]
-  )
-
   useEffect(() => {
     throttledSend({
       type: 'HRM_INPUT',
       data: {
         value: currentHR,
         calories: calories,
-        percentage,
-        zone,
       },
     })
-  }, [currentHR, calories, percentage, zone, throttledSend])
+  }, [currentHR, calories, throttledSend])
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
@@ -198,31 +188,16 @@ export default function ConnectPage() {
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
-
-  const hrZoneProps = {
-    percentage,
-    progressColor:
-      HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG]
-        ?.color || HR_ZONE_VISUAL_CONFIG[0].color,
-  }
-
+  const { percentage, zone } = calculateHrZoneInfo(currentHR, userAge)
   const resetWorkout = () => {
     resetWorkoutSession()
     resetCalculator()
   }
 
-  if (!isRehydrated) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 3 }}>
-        <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
-      </Container>
-    )
-  }
-
   return (
     <ConnectView
-      workoutDuration={workoutDuration}
-      startTime={startTime}
+      workoutDuration={workoutDuration} // Pass raw number
+      startTime={startTime}             // Pass start time
       caloriesBurned={calories}
       userName={userName}
       setUserName={(name) =>
@@ -256,7 +231,10 @@ export default function ConnectPage() {
       isSupported={isSupported}
       signalPeriodMs={signalPeriodMs}
       currentHR={currentHR}
-      hrZoneProps={hrZoneProps}
+      hrZoneProps={{
+        percentage,
+        progressColor: (HR_ZONE_VISUAL_CONFIG as any)[zone].color,
+      }}
       zone={zone}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}

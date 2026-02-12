@@ -13,6 +13,7 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import HrTile from '../../../components/HrTile'
+import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
@@ -214,25 +215,28 @@ export default function ConnectView({
 
   if (!isSupported) {
     return (
-      <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
-        <BluetoothDisabledIcon
-          sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }}
-        />
-        <Typography variant="h5" gutterBottom>
-          Bluetooth Not Supported
-        </Typography>
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          Your browser does not support Web Bluetooth. Please use Google Chrome,
-          Edge, or Bluefy (on iOS).
-        </Alert>
-        <ResetSection
-          onReset={onReset}
-          onForgetDevice={onForgetDevice}
-          hasStarted={hasStarted}
-          isResetting={isResetting}
-          setIsResetting={setIsResetting}
-        />
-      </Container>
+      <>
+        <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
+          <BluetoothDisabledIcon
+            sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }}
+          />
+          <Typography variant="h5" gutterBottom>
+            Bluetooth Not Supported
+          </Typography>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Your browser does not support Web Bluetooth. Please use Google
+            Chrome, Edge, or Bluefy (on iOS).
+          </Alert>
+          <ResetSection
+            onReset={onReset}
+            onForgetDevice={onForgetDevice}
+            hasStarted={hasStarted}
+            isResetting={isResetting}
+            setIsResetting={setIsResetting}
+          />
+        </Container>
+        <BottomNavBar />
+      </>
     )
   }
 
@@ -462,6 +466,7 @@ export default function ConnectView({
           </Typography>
         </Box>
       </Container>
+      <BottomNavBar />
     </>
   )
 }

@@ -97,13 +97,13 @@ function sessionReducer(
       }
 
     case 'END_WORKOUT':
-      return { ...state, status: 'finished' }
+        return { ...state, status: 'idle' }
 
     case 'TICK':
       return { ...state, duration: action.payload.duration }
 
     case 'UPDATE_TOTAL_CALORIES':
-      if (state.status === 'finished' || state.status === 'idle') return state
+        if (state.status === 'idle') return state
       return { ...state, totalCalories: action.payload }
 
     case 'RESET':
@@ -185,7 +185,7 @@ export const useWorkoutSession = ({
   }, [status, startTime, totalPaused])
 
   useEffect(() => {
-    if (totalCalories > 0 && status !== 'finished' && status !== 'idle') {
+    if (totalCalories > 0 && status !== 'idle') {
       dispatch({ type: 'UPDATE_TOTAL_CALORIES', payload: totalCalories })
     }
   }, [totalCalories, status])
@@ -215,8 +215,7 @@ export const useWorkoutSession = ({
 
   const caloriesBurned = useMemo(() => {
     if (startTime === null || (status === 'idle' && duration === 0)) return 0
-    const currentTotal =
-      status === 'finished' ? savedTotal : Math.max(totalCalories, savedTotal)
+    const currentTotal = Math.max(totalCalories, savedTotal)
     const burned = Math.round(currentTotal - startCalories)
     return burned > 0 ? burned : 0
   }, [totalCalories, savedTotal, startCalories, status, startTime, duration])
