@@ -40,22 +40,12 @@ jobs:
           PR_URL=$(gh pr create --base leader --head "$BRANCH_NAME" --fill)
           echo "PR_NUMBER=${PR_URL##*/}" >> $GITHUB_ENV
 
-      - name: Trigger and Poll Squash-Rebase
+      - name: Trigger Squash-Rebase
         run: |
           set -e
           gh pr comment "$PR_NUMBER" --body "@pr-squash-rebase"
-          echo "Polling for squash-rebase completion comment..."
-          # Avoid 'gh pr checks --watch' because it fails if checks haven't started yet
-          for i in {1..40}; do
-            if gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body' | grep -q "Squash and rebase successful"; then
-               echo "✅ Bot confirmed successful squash and rebase."
-               exit 0
-            fi
-            echo "Waiting for bot... ($i/40)"
-            sleep 15
-          done
-          echo "❌ Timeout waiting for squash-rebase."
-          exit 1
+          echo "Triggered squash-rebase. Waiting for bot action..."
+          sleep 60
 
       - name: Verify Git History and Content
         run: |
@@ -137,22 +127,12 @@ jobs:
           PR_URL=$(gh pr create --base "$BASE" --head "$HEAD" --title "E2E Conflict Test" --body "Testing conflict resolver")
           echo "PR_NUMBER=${PR_URL##*/}" >> $GITHUB_ENV
 
-      - name: Trigger and Poll Resolver
+      - name: Trigger Conflict Resolver
         run: |
           set -e
           gh pr comment "$PR_NUMBER" --body "@conflict-resolve"
-
-          echo "Polling for resolver check success..."
-          for i in {1..40}; do
-            if gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body' | grep -q "Successfully resolved all conflicts"; then
-               echo "✅ Conflict resolution confirmed by bot comment."
-               exit 0
-            fi
-            echo "Waiting for bot... ($i/40)"
-            sleep 15
-          done
-          echo "❌ Timeout waiting for conflict resolution."
-          exit 1
+          echo "Triggered conflict resolver. Waiting for bot action..."
+          sleep 60
 
       - name: Verify Content Accuracy
         run: |
