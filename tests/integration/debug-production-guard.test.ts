@@ -1,13 +1,13 @@
 import { NextRequestWithAuth } from 'next-auth/middleware'
 
-// Mock next-auth/middleware before importing middleware
+// Mock next-auth/middleware before importing proxy
 jest.mock('next-auth/middleware', () => ({
   withAuth: jest.fn((handler: (req: NextRequestWithAuth) => void) =>
     jest.fn((req: NextRequestWithAuth) => handler(req))
   ),
 }))
 
-import middleware from '../../app/middleware'
+import { proxy } from '../../proxy'
 
 describe('Debug Production Guard', () => {
   const originalEnv = process.env.NODE_ENV
@@ -37,7 +37,7 @@ describe('Debug Production Guard', () => {
     const req = createReq('/api/debug/reset')
 
     // @ts-expect-error: mocking middleware call
-    const res = await middleware(req, {})
+    const res = await proxy(req, {} as any)
 
     expect(res).toBeDefined()
     expect(res?.status).toBe(404)
@@ -50,7 +50,7 @@ describe('Debug Production Guard', () => {
     const req = createReq('/api/debug/reset')
 
     // @ts-expect-error: mocking middleware call
-    const res = await middleware(req, {})
+    const res = await proxy(req, {} as any)
 
     // Continuation response (NextResponse.next())
     expect(res).toBeDefined()
