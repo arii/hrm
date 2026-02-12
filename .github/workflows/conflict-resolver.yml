@@ -90,7 +90,8 @@ jobs:
       - name: Trigger Gemini Orchestrator
         if: steps.resolve.outputs.unresolved-files == ''
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use CI_BOT_PAT if available to ensure workflow is triggered (GITHUB_TOKEN prevents recursion)
+          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           SOURCE_BRANCH: ${{ inputs.source_branch }}
           TARGET_BRANCH: ${{ inputs.target_branch }}
           PR_NUMBER: ${{ inputs.pr_number }}

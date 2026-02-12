@@ -212,7 +212,8 @@ jobs:
     steps:
       - name: Trigger Gemini Orchestrator
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use CI_BOT_PAT if available to ensure workflow is triggered (GITHUB_TOKEN prevents recursion)
+          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           HEAD_BRANCH: ${{ needs.squash-and-rebase.outputs.head_ref }}
           BASE_BRANCH: ${{ needs.squash-and-rebase.outputs.base_ref }}
           PR_NUMBER: ${{ inputs.pr_number }}
