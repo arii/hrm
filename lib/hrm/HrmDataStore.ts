@@ -23,6 +23,11 @@ interface ClientSession {
     peakHr: number
     minHr: number
   }
+  /**
+   * Caches the augmented HrmStreamData (latest data + session stats).
+   * This prevents repeated object allocations during high-frequency reads.
+   * Invalidation occurs in save() when new data arrives and in resetSession().
+   */
   cachedAugmentedData?: HrmStreamData
 }
 
