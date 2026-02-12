@@ -21,19 +21,21 @@ jobs:
     if: github.event.issue.pull_request
     runs-on: ubuntu-latest
     outputs:
-      command: ${{ steps.route.outputs.command }}
+      is_review: ${{ steps.route.outputs.is_review }}
+      is_squash: ${{ steps.route.outputs.is_squash }}
+      is_resolve: ${{ steps.route.outputs.is_resolve }}
     steps:
       - id: route
         env:
           BODY: ${{ github.event.comment.body }}
         run: |
-          if echo "$BODY" | grep -q "^@gemini-bot"; then echo "command=review" >> $GITHUB_OUTPUT
-          elif echo "$BODY" | grep -q "@pr-squash"; then echo "command=squash" >> $GITHUB_OUTPUT
-          elif echo "$BODY" | grep -q "@conflict-resolve"; then echo "command=resolve" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -q "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -q "@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -q "@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
 
   execute-review:
     needs: [router]
-    if: needs.router.outputs.command == 'review'
+    if: needs.router.outputs.is_review == 'true'
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       pr_quality_result: 'not_applicable'
@@ -43,7 +45,7 @@ jobs:
 
   execute-squash:
     needs: [router]
-    if: needs.router.outputs.command == 'squash'
+    if: needs.router.outputs.is_squash == 'true'
     uses: ./.github/workflows/pr-squash.yml
     with:
       pr_number: ${{ github.event.issue.number }}
@@ -54,7 +56,7 @@ jobs:
   # Restoring conflict resolution logic from gemini-orchestrator.yml
   prepare-resolve:
     needs: [router]
-    if: needs.router.outputs.command == 'resolve'
+    if: needs.router.outputs.is_resolve == 'true'
     runs-on: ubuntu-latest
     outputs:
       target_branch: ${{ steps.get_branches.outputs.target_branch }}
@@ -82,7 +84,7 @@ jobs:
 
   execute-resolve:
     needs: [router, prepare-resolve]
-    if: needs.router.outputs.command == 'resolve'
+    if: needs.router.outputs.is_resolve == 'true'
     uses: ./.github/workflows/conflict-resolver.yml
     with:
       target_branch: ${{ needs.prepare-resolve.outputs.target_branch }}
