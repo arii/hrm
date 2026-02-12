@@ -27,16 +27,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Validate Token
-        env:
-          CI_BOT_PAT: ${{ secrets.CI_BOT_PAT }}
-          ARI_PAT: ${{ secrets.ARI_PAT }}
-        run: |
-          if [[ -z "$CI_BOT_PAT" && -z "$ARI_PAT" ]]; then
-            echo "::error::Neither CI_BOT_PAT nor ARI_PAT is set. A PAT is REQUIRED to trigger downstream workflows for E2E testing."
-            exit 1
-          fi
-
       - name: Create Test Branch and PR
         id: create_pr
         run: |
@@ -53,12 +43,7 @@ jobs:
           git add test-file.txt
           git commit -m "E2E Test Commit 2"
           git push origin "$BRANCH_NAME"
-          PR_URL=$(gh pr create --title "E2E Test PR" --body "Test PR for E2E testing" --base leader --head "$BRANCH_NAME")
-          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+" | tail -n 1)
-          if [[ -z "$PR_NUMBER" ]]; then
-            echo "::error::Failed to extract PR number from URL: $PR_URL"
-            exit 1
-          fi
+          PR_NUMBER=$(gh pr create --title "E2E Test PR" --body "Test PR for E2E testing" --base leader --head "$BRANCH_NAME" --json number --jq ".number")
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
@@ -96,8 +81,12 @@ jobs:
         run: |
           set -e
           echo "Cleaning up PR and branch..."
-          gh pr close "$PR_NUMBER"
-          git push origin --delete "$BRANCH_NAME"
+          if [[ -n "$PR_NUMBER" ]]; then
+            gh pr close "$PR_NUMBER"
+          fi
+          if [[ -n "$BRANCH_NAME" ]]; then
+            git push origin --delete "$BRANCH_NAME" || true
+          fi
 
   test_conflict_resolver:
     runs-on: ubuntu-latest
@@ -107,16 +96,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-
-      - name: Validate Token
-        env:
-          CI_BOT_PAT: ${{ secrets.CI_BOT_PAT }}
-          ARI_PAT: ${{ secrets.ARI_PAT }}
-        run: |
-          if [[ -z "$CI_BOT_PAT" && -z "$ARI_PAT" ]]; then
-            echo "::error::Neither CI_BOT_PAT nor ARI_PAT is set. A PAT is REQUIRED to trigger downstream workflows for E2E testing."
-            exit 1
-          fi
 
       - name: Create Conflict
         id: create_conflict
@@ -158,12 +137,7 @@ jobs:
           git push origin "$BRANCH_B"
 
           # Create a pull request to trigger the conflict resolver
-          PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base "$BRANCH_A" --head "$BRANCH_B")
-          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+" | tail -n 1)
-          if [[ -z "$PR_NUMBER" ]]; then
-            echo "::error::Failed to extract PR number from URL: $PR_URL"
-            exit 1
-          fi
+          PR_NUMBER=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base "$BRANCH_A" --head "$BRANCH_B" --json number --jq ".number")
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
@@ -203,10 +177,14 @@ jobs:
         run: |
           set -e
           echo "Cleaning up PR and branches..."
-          gh pr close "$PR_NUMBER"
-          git push origin --delete "$BRANCH_A"
-          git push origin --delete "$BRANCH_B"
-          git push origin --delete "$BASE_BRANCH"
+          if [[ -n "$PR_NUMBER" ]]; then
+            gh pr close "$PR_NUMBER"
+          fi
+          for branch in "$BRANCH_A" "$BRANCH_B" "$BASE_BRANCH"; do
+            if [[ -n "$branch" ]]; then
+              git push origin --delete "$branch" || true
+            fi
+          done
 
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
@@ -216,16 +194,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-
-      - name: Validate Token
-        env:
-          CI_BOT_PAT: ${{ secrets.CI_BOT_PAT }}
-          ARI_PAT: ${{ secrets.ARI_PAT }}
-        run: |
-          if [[ -z "$CI_BOT_PAT" && -z "$ARI_PAT" ]]; then
-            echo "::error::Neither CI_BOT_PAT nor ARI_PAT is set. A PAT is REQUIRED to trigger downstream workflows for E2E testing."
-            exit 1
-          fi
 
       - name: Create Test Branch and PR
         id: create_pr
@@ -243,12 +211,7 @@ jobs:
           git add test-file-rebase.txt
           git commit -m "E2E Test Commit 2 (rebase)"
           git push origin "$BRANCH_NAME"
-          PR_URL=$(gh pr create --title "E2E Test PR (rebase)" --body "Test PR for E2E testing (rebase)" --base leader --head "$BRANCH_NAME")
-          PR_NUMBER=$(echo "$PR_URL" | grep -oE "[0-9]+" | tail -n 1)
-          if [[ -z "$PR_NUMBER" ]]; then
-            echo "::error::Failed to extract PR number from URL: $PR_URL"
-            exit 1
-          fi
+          PR_NUMBER=$(gh pr create --title "E2E Test PR (rebase)" --body "Test PR for E2E testing (rebase)" --base leader --head "$BRANCH_NAME" --json number --jq ".number")
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
@@ -293,5 +256,9 @@ jobs:
         run: |
           set -e
           echo "Cleaning up PR and branch..."
-          gh pr close "$PR_NUMBER"
-          git push origin --delete "$BRANCH_NAME"
+          if [[ -n "$PR_NUMBER" ]]; then
+            gh pr close "$PR_NUMBER"
+          fi
+          if [[ -n "$BRANCH_NAME" ]]; then
+            git push origin --delete "$BRANCH_NAME" || true
+          fi
