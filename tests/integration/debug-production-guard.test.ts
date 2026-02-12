@@ -3,7 +3,7 @@ import { NextRequestWithAuth } from 'next-auth/middleware'
 // Mock next-auth/middleware before importing middleware
 jest.mock('next-auth/middleware', () => ({
   withAuth: jest.fn((handler: (req: NextRequestWithAuth) => void) =>
-    jest.fn((req: NextRequestWithAuth, _event: unknown) => handler(req))
+    jest.fn((req: NextRequestWithAuth) => handler(req))
   ),
 }))
 
@@ -21,10 +21,10 @@ describe('Debug Production Guard', () => {
     process.env.NODE_ENV = originalEnv
   })
 
-  const createMockRequest = (pathname: string) =>
+  const createReq = (path: string) =>
     ({
       nextUrl: {
-        pathname,
+        pathname: path,
         searchParams: {
           get: jest.fn().mockReturnValue(null),
         },
@@ -34,7 +34,7 @@ describe('Debug Production Guard', () => {
   it('should block /api/debug in production', async () => {
     process.env.NODE_ENV = 'production'
 
-    const req = createMockRequest('/api/debug/reset')
+    const req = createReq('/api/debug/reset')
 
     // @ts-expect-error: mocking middleware call
     const res = await middleware(req, {})
@@ -47,7 +47,7 @@ describe('Debug Production Guard', () => {
 
   it('should allow /api/debug in development', async () => {
     process.env.NODE_ENV = 'development'
-    const req = createMockRequest('/api/debug/reset')
+    const req = createReq('/api/debug/reset')
 
     // @ts-expect-error: mocking middleware call
     const res = await middleware(req, {})
