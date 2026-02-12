@@ -18,10 +18,21 @@ on:
         required: false
         type: string
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   rebase:
     runs-on: ubuntu-latest
     steps:
+      - name: Token Check
+        run: |
+          if [ -z "${{ secrets.PAT_TOKEN }}" ] && [ -z "${{ secrets.ARI_PAT }}" ]; then
+            echo "::error::Personal Access Token (PAT) not found. A PAT is required to trigger CI workflows after rebase."
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -30,11 +41,9 @@ jobs:
       - name: Rebase PRs
         uses: peter-evans/rebase@v4
         with:
-          token: ${{ secrets.PAT_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN || secrets.ARI_PAT }}
           base: leader
-          # Rebase a specific PR if pr_number is provided, otherwise rebase all open PRs targeting leader
           pull-request-number: ${{ inputs.pr_number }}
-          # "Intelligent" behavior: Exclude branches with specific labels (e.g., if you are in the middle of a complex refactor)
           exclude-labels: |
             no-rebase
             wip
