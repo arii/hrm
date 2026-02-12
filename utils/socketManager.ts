@@ -25,7 +25,7 @@ import {
   ConnectionMonitor,
 } from './websocketUtils.js'
 import logger from './logger.server.js'
-import { HrmDataStore } from '../lib/hrm/HrmDataStore.js'
+import { HrmSessionManager } from '../lib/hrm/HrmSessionManager.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
 import { roundTo, objectFromEntries } from '../lib/utils.js'
@@ -36,10 +36,10 @@ let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
 // State Management:
-// - hrmDataStore: Stores the live HRM data for each client (e.g., HR value, calories). This is the primary source of truth for broadcasted state.
+// - hrmSessionManager: Manages live HRM sessions for each client (e.g., HR value, calories, history). This is the primary source of truth for broadcasted state.
 // - clientSockets: Maps a clientId to their active WebSocket connection. Used to handle zombie connections and check for reconnections.
 // - clientSessionState: Holds internal server state for calculations (e.g., calorie accumulation), not sent to the client.
-const hrmDataStore = new HrmDataStore()
+const hrmSessionManager = new HrmSessionManager()
 
 const clientSockets = new Map<string, WebSocket>()
 
@@ -65,7 +65,7 @@ const getRequestParams = (req: IncomingMessage): URLSearchParams => {
 const cleanupClientSession = (clientId: string) => {
   logger.info({ clientId }, 'Session expired. Deleting data.')
   try {
-    hrmDataStore.deleteById(clientId)
+    hrmSessionManager.deleteById(clientId)
     clientSessionState.delete(clientId)
     broadcast(
       wsServerInstance,
@@ -164,7 +164,7 @@ const initSocketManager = (
 
     logger.info(logMeta, 'WebSocket client connected')
 
-    if (!hrmDataStore.findById(clientId)) {
+    if (!hrmSessionManager.findById(clientId)) {
       // Initialize new client
       const newClient: HrmStreamData = {
         clientId: extWs.clientId,
@@ -174,7 +174,7 @@ const initSocketManager = (
         calories: 0,
         updatedAt: Date.now(),
       }
-      hrmDataStore.save(newClient)
+      hrmSessionManager.save(newClient)
       clientSessionState.set(extWs.clientId, {
         lastUpdate: Date.now(),
         accumulatedCalories: 0,
@@ -225,7 +225,7 @@ const initSocketManager = (
  * Resets the socket manager state. Use this for testing purposes only.
  */
 export const resetSocketManager = () => {
-  hrmDataStore.clear()
+  hrmSessionManager.clear()
   clientSessionState.clear()
 }
 
@@ -234,7 +234,7 @@ const broadcastState = () => {
     wsServerInstance,
     {
       type: 'HRM_UPDATE',
-      payload: hrmDataStore.findAll(),
+      payload: hrmSessionManager.findAll(),
     },
     'socketManager.broadcastState'
   )
@@ -277,7 +277,7 @@ const handleIncomingMessage = (
         const stateSnapshot = getUnifiedStateSnapshot()
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: hrmDataStore.findAll(),
+          hrmData: hrmSessionManager.findAll(),
         }
         const initialStateMessage: ServerMessage = {
           type: 'INITIAL_STATE',
@@ -287,7 +287,7 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataStore.findById(clientId)
+        const existingData = hrmSessionManager.findById(clientId)
         if (existingData) {
           const updateData: Partial<HrmStreamData> = objectFromEntries(
             Object.entries(message.data)
@@ -305,7 +305,7 @@ const handleIncomingMessage = (
             delete updateData.name
           }
 
-          hrmDataStore.save({
+          hrmSessionManager.save({
             ...existingData,
             ...updateData,
             updatedAt: Date.now(),
@@ -316,7 +316,7 @@ const handleIncomingMessage = (
       }
       case 'HRM_INPUT': {
         const hrmMessage = message as HrmInputMessage
-        const existingData = hrmDataStore.findById(clientId)
+        const existingData = hrmSessionManager.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
         if (existingData && sessionState) {
           const now = Date.now()
@@ -352,8 +352,8 @@ const handleIncomingMessage = (
             }
           }
 
-          // Update the repository with the latest data
-          hrmDataStore.save({
+          // Update the manager with the latest data
+          hrmSessionManager.save({
             ...existingData,
             name: hrmMessage.data.name ?? existingData.name,
             age: hrmMessage.data.age ?? existingData.age,
