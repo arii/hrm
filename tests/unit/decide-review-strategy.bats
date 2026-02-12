@@ -52,8 +52,9 @@ elif [[ "$SUBCOMMAND" == "cat-file" ]]; then
   # Simulate commit exists
   exit 0
 else
-  # Ignore other commands or pass through if needed (e.g. rev-parse)
-  :
+  # Fail on unexpected commands to ensure test robustness
+  echo "Error: Unexpected git command or argument: $@" >&2
+  exit 1
 fi
 EOF
   chmod +x "$MOCK_BIN_DIR/git"

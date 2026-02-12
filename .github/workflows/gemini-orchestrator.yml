@@ -89,9 +89,6 @@ jobs:
         run: |
           set -e
 
-          # Fix branch naming convention for the local environment
-          git config --global init.defaultBranch leader
-
           # Detect changes in the specific triggering commit.
           # We prefer checking the PR Head SHA directly to avoid confusion with the merge commit (HEAD).
           # If this is not a PR event (e.g. push), we fallback to HEAD.
