@@ -41,6 +41,7 @@ jobs:
       outcome: ${{ steps.squash_rebase.outcome }}
       head_ref: ${{ steps.pr_data.outputs.head_ref }}
       base_ref: ${{ steps.pr_data.outputs.base_ref }}
+      squashed_sha: ${{ steps.squash_rebase.outputs.squashed_sha }}
     steps:
       - name: Acknowledge command
         uses: actions/github-script@v6
@@ -139,6 +140,7 @@ jobs:
           fi
 
           git push --force-with-lease origin $HEAD_BRANCH
+          echo "squashed_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
       - name: Handle Rebase Failure
         if: steps.squash_rebase.outcome == 'failure'
@@ -213,3 +215,27 @@ jobs:
       has_changes: ${{ needs.check-for-changes-after-squash.outputs.has_changes }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
+
+  report-status:
+    needs: [squash-and-rebase, trigger-quality-check]
+    if: always() && needs.squash-and-rebase.outputs.outcome == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Status Check
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const conclusion = '${{ needs.trigger-quality-check.result }}' === 'success' ? 'success' : 'failure';
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Gemini Orchestrator',
+              head_sha: '${{ needs.squash-and-rebase.outputs.squashed_sha }}',
+              status: 'completed',
+              conclusion: conclusion,
+              output: {
+                title: 'Manual Quality Gate',
+                summary: `Quality check executed via pr-squash workflow. Result: ${conclusion}`
+              }
+            });

@@ -84,6 +84,27 @@ jobs:
           git add .
           git commit -m "Auto-resolve merge conflicts by merging ${{ inputs.target_branch }}"
           git push --force
+          echo "resolved_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+        id: commit_push
+
+      - name: Create Status Check
+        if: steps.resolve.outputs.unresolved-files == ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Gemini Orchestrator',
+              head_sha: '${{ steps.commit_push.outputs.resolved_sha }}',
+              status: 'completed',
+              conclusion: 'success',
+              output: {
+                title: 'Conflict Resolution Success',
+                summary: 'Conflicts resolved and changes pushed successfully.'
+              }
+            });
 
       - name: Update comment on success
         if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number
