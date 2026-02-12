@@ -1,8 +1,6 @@
-// File: components/HrTile.tsx
 'use client'
 import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
@@ -11,6 +9,7 @@ import { memo } from 'react'
 import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
+import ControlCard from '@/components/shared/ControlCard'
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 
@@ -61,11 +60,7 @@ const HeroTier = ({ percentMax }: { percentMax: number }) => (
       variant="h2"
       component="div"
       sx={{
-        fontSize: {
-          xs: 'clamp(5rem, 15vw, 8rem)',
-          sm: 'clamp(8rem, 18vw, 12rem)',
-          md: 'clamp(10rem, 20vw, 15rem)',
-        },
+        fontSize: 'clamp(4rem, 15cqw, 15rem)',
         fontWeight: 900,
         lineHeight: 1,
         fontFamily: HERO_FONT_FAMILY,
@@ -149,7 +144,7 @@ const HrTile = ({
 
   return (
     <Tooltip title={tooltipTitle} arrow>
-      <Card
+      <ControlCard
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
@@ -167,6 +162,7 @@ const HrTile = ({
           transition: theme.transitions.create('opacity', {
             duration: theme.transitions.duration.short,
           }),
+          containerType: 'inline-size',
         }}
       >
         {!isConnected && (
@@ -217,7 +213,7 @@ const HrTile = ({
             {zoneConfig.label.toUpperCase()}
           </Typography>
         </Box>
-      </Card>
+      </ControlCard>
     </Tooltip>
   )
 }
