@@ -82,3 +82,4 @@ verification/screenshots/
 .next_prod/
 release.tar.gz
 knip_report.txt
+all_comments.json
