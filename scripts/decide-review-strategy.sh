@@ -33,7 +33,6 @@ check_substantive() {
     local target_head="$2"
     local reason_suffix="$3"
 
-    # Direct pipe reduces intermediate variables and improves code ratio
     if [ -z "$(git diff --name-only "$target_base" "$target_head" | grep -vE "$IGNORE_PATTERN" || true)" ]; then
         NEEDS_REVIEW="false"
         SKIP_REASON="no significant code changes $reason_suffix (filtered by anti-slop rules)"
