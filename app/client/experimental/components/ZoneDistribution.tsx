@@ -21,18 +21,18 @@ interface ZoneDistributionProps {
 
 // --- Constants & Helpers ---
 
-const ZONE_PRIORITY: Record<HrZoneName, number> = {
-  [HrZoneName.Max]: 0,
-  [HrZoneName.Peak]: 1,
-  [HrZoneName.Cardio]: 2,
-  [HrZoneName.FatBurn]: 3,
-  [HrZoneName.WarmUp]: 4,
-  [HrZoneName.Recovery]: 7,
-  [HrZoneName.Aerobic]: 8,
-  [HrZoneName.Idle]: 9,
-  [HrZoneName.NoData]: 99,
-  [HrZoneName.Unknown]: 99,
-}
+const ZONE_ORDER: HrZoneName[] = [
+  HrZoneName.Max,
+  HrZoneName.Peak,
+  HrZoneName.Cardio,
+  HrZoneName.FatBurn,
+  HrZoneName.Aerobic,
+  HrZoneName.WarmUp,
+  HrZoneName.Recovery,
+  HrZoneName.Idle,
+  HrZoneName.NoData,
+  HrZoneName.Unknown,
+]
 
 const ZONE_COLOR_KEY_MAP: Partial<
   Record<HrZoneName, keyof Palette['custom']['hrZones']>
@@ -43,9 +43,8 @@ const ZONE_COLOR_KEY_MAP: Partial<
   [HrZoneName.FatBurn]: 'fatBurn',
   [HrZoneName.WarmUp]: 'warmUp',
   [HrZoneName.Recovery]: 'recovery',
-  [HrZoneName.Aerobic]: 'warmUp',
+  [HrZoneName.Aerobic]: 'fatBurn', // Aerobic capacity is typically higher intensity (Zone 3/4 boundary), mapping to Green/FatBurn as fallback
   [HrZoneName.Idle]: 'idle',
-  // NoData and Unknown will fall back to default logic, usually handled by theme or grey
 }
 
 const DURATION_FORMAT_OPTS = { unit: 'seconds', format: 'MM:SS' } as const
@@ -80,7 +79,11 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         }
       })
       .filter((item) => item.value > 0)
-      .sort((a, b) => ZONE_PRIORITY[a.name] - ZONE_PRIORITY[b.name])
+      .sort((a, b) => {
+        const idxA = ZONE_ORDER.indexOf(a.name)
+        const idxB = ZONE_ORDER.indexOf(b.name)
+        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB)
+      })
   }, [timeInZones, totalDuration, theme])
 
   if (data.length === 0) {
@@ -164,13 +167,18 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 
           {/* Legend / List Section */}
           <Box
+            component="ul"
             width={{ xs: '100%', sm: '50%' }}
             display="flex"
             flexDirection="column"
             gap={1}
+            p={0}
+            m={0}
+            sx={{ listStyle: 'none' }}
           >
             {data.map((item) => (
               <Box
+                component="li"
                 key={item.name}
                 data-testid={`zone-row-${item.name}`}
                 display="flex"
