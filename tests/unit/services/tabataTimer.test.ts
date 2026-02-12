@@ -4,7 +4,7 @@
  */
 
 import { jest } from '@jest/globals'
-import { TabataTimer } from '../../../services/tabataTimer'
+import TabataTimer from '../../../services/tabataTimer'
 import { ConfigurationError } from '../../../types/errors'
 
 // Mock the broadcast function
