@@ -11,9 +11,15 @@ test.describe('HRM debug endpoints', () => {
     expect(healthJson.status).toBe('ok')
 
     const session = await request.get(`${BASE}/api/debug/session`)
-    // session may return 200 with session or 200+empty or 401; assert not 5xx
-    expect(session.status()).toBeLessThan(500)
-    const s = await session.json()
-    expect(typeof s).toBe('object')
+
+    // In CI (production mode), debug endpoints are blocked.
+    if (process.env.CI) {
+      expect(session.status()).toBe(404)
+      const body = await session.json()
+      expect(body.error).toBe('Endpoint unavailable in production')
+    } else {
+      // In local dev, allow 200 or 404 depending on environment config
+      expect(session.status()).toBeLessThan(500)
+    }
   })
 })
