@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import {
   Card,
   CardContent,
@@ -39,22 +39,15 @@ const WorkoutSummary = ({
   date,
 }: WorkoutSummaryProps) => {
   const theme = useTheme()
-  const [hasMounted, setHasMounted] = useState(false)
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHasMounted(true)
-  }, [])
-
-  const formattedDate =
-    hasMounted && date
-      ? date.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        })
-      : 'Today'
+  const formattedDate = date
+    ? date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : 'Today'
 
   return (
     <Card

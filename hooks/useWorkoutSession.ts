@@ -63,19 +63,13 @@ function sessionReducer(
       return { ...state, ...action.payload, isRehydrated: true }
 
     case 'START_WORKOUT': {
-      if (state.status === 'running') return state
-
-      const startTime = state.startTime ?? action.payload.startTime
-      const startCalories =
-        state.startTime === null
-          ? action.payload.startCalories
-          : state.startCalories
-
+      // Per audit feedback: dispatcher handles status check,
+      // so this logic is strictly for fresh starts.
       return {
         ...state,
         status: 'running',
-        startTime,
-        startCalories,
+        startTime: action.payload.startTime,
+        startCalories: action.payload.startCalories,
         totalCalories: Math.max(
           state.totalCalories,
           action.payload.startCalories
@@ -237,5 +231,6 @@ export const useWorkoutSession = ({
     endWorkout,
     workoutStatus: status,
     hasStarted: startTime !== null,
+    isRehydrated,
   }
 }

@@ -8,10 +8,6 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-import {
-  calculateZoneFromMaxHr,
-  HR_ZONE_VISUAL_CONFIG,
-} from '@/lib/shared/hr-zones'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -20,6 +16,11 @@ import {
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
+import {
+  calculateHrZoneInfo,
+  HR_ZONE_VISUAL_CONFIG,
+} from '@/lib/shared/hr-zones'
+import { Skeleton, Container } from '@mui/material'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -98,21 +99,6 @@ export default function ConnectPage() {
     weightKg: userWeight || 70,
   })
 
-  // Inlined HR zone info logic to avoid over-engineering with a custom hook
-  const hrZoneInfo = useMemo(() => {
-    const maxHr = userAge ? 220 - userAge : 190
-    const { percentage, zone } = calculateZoneFromMaxHr(currentHR, maxHr)
-    const zoneConfig =
-      HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
-      HR_ZONE_VISUAL_CONFIG[0]
-
-    return {
-      percentage,
-      zone,
-      progressColor: zoneConfig.color,
-    }
-  }, [currentHR, userAge])
-
   const throttledSend = useMemo(
     () =>
       throttle((message: HrmInputMessage) => {
@@ -134,7 +120,9 @@ export default function ConnectPage() {
     pauseWorkout,
     endWorkout,
     workoutStatus,
+    isRehydrated,
   } = useWorkoutSession({
+    isConnected: false,
     totalCalories: calories,
   })
 
@@ -171,14 +159,6 @@ export default function ConnectPage() {
   })
 
   useEffect(() => {
-    if (hasStarted && !isConnected && workoutStatus === 'running') {
-      pauseWorkout()
-    } else if (hasStarted && isConnected && workoutStatus === 'paused') {
-      startWorkout()
-    }
-  }, [isConnected, hasStarted, workoutStatus, pauseWorkout, startWorkout])
-
-  useEffect(() => {
     if (!isConnected && isSupported && connectionStatus === 'Connected') {
       logger.info('WebSocket ready, attempting auto-connect...')
       const timeout = setTimeout(() => {
@@ -191,17 +171,22 @@ export default function ConnectPage() {
     return undefined
   }, [connectionStatus, isConnected, isSupported, autoConnect])
 
+  const { percentage, zone } = useMemo(
+    () => calculateHrZoneInfo(currentHR, userAge),
+    [currentHR, userAge]
+  )
+
   useEffect(() => {
     throttledSend({
       type: 'HRM_INPUT',
       data: {
         value: currentHR,
         calories: calories,
-        percentage: hrZoneInfo.percentage,
-        zone: hrZoneInfo.zone,
+        percentage,
+        zone,
       },
     })
-  }, [currentHR, calories, hrZoneInfo, throttledSend])
+  }, [currentHR, calories, percentage, zone, throttledSend])
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
@@ -214,9 +199,24 @@ export default function ConnectPage() {
     connectAndStream(userName, userAge || 0)
   }
 
+  const hrZoneProps = {
+    percentage,
+    progressColor:
+      HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG]
+        ?.color || HR_ZONE_VISUAL_CONFIG[0].color,
+  }
+
   const resetWorkout = () => {
     resetWorkoutSession()
     resetCalculator()
+  }
+
+  if (!isRehydrated) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 3 }}>
+        <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
+      </Container>
+    )
   }
 
   return (
@@ -256,11 +256,8 @@ export default function ConnectPage() {
       isSupported={isSupported}
       signalPeriodMs={signalPeriodMs}
       currentHR={currentHR}
-      hrZoneProps={{
-        percentage: hrZoneInfo.percentage,
-        progressColor: hrZoneInfo.progressColor,
-      }}
-      zone={hrZoneInfo.zone}
+      hrZoneProps={hrZoneProps}
+      zone={zone}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}
