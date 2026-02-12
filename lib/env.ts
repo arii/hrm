@@ -37,6 +37,7 @@ const envSchema = z
     TESTING: z.string().optional(),
     IS_DEPLOYMENT: z.string().optional(),
     WS_URL: z.string().url().optional(),
+    HRM_LIVE_WINDOW_SIZE: z.coerce.number().int().min(1).default(600),
   })
   .superRefine((data, ctx) => {
     // Paired validation for Spotify credentials
