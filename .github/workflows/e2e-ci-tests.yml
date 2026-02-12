@@ -31,21 +31,25 @@ jobs:
         id: create_pr
         run: |
           set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
           BRANCH_NAME="e2e-test-$(date +%s)"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
           git checkout -b "$BRANCH_NAME"
           echo "test content" > test-file.txt
           git add test-file.txt
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -m "E2E Test Commit 1"
           echo "another line" >> test-file.txt
           git add test-file.txt
           git commit -m "E2E Test Commit 2"
           git push origin "$BRANCH_NAME"
-          PR_NUMBER=$(gh pr create --title "E2E Test PR" --body "Test PR for E2E testing" --base leader --head "$BRANCH_NAME" --json number --jq ".number")
+
+          PR_URL=$(gh pr create --base leader --head "$BRANCH_NAME" --fill)
+          PR_NUMBER=${PR_URL##*/}
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Trigger PR Squash and Wait
         timeout-minutes: 15
@@ -73,13 +77,7 @@ jobs:
         if: always()
         run: |
           set -e
-          echo "Cleaning up PR and branch..."
-          if [[ -n "$PR_NUMBER" ]]; then
-            gh pr close "$PR_NUMBER"
-          fi
-          if [[ -n "$BRANCH_NAME" ]]; then
-            git push origin --delete "$BRANCH_NAME" || true
-          fi
+          [ -n "$PR_NUMBER" ] && gh pr close "$PR_NUMBER" --delete-branch || true
 
   test_conflict_resolver:
     runs-on: ubuntu-latest
@@ -130,9 +128,10 @@ jobs:
           git push origin "$BRANCH_B"
 
           # Create a pull request to trigger the conflict resolver
-          PR_NUMBER=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base "$BRANCH_A" --head "$BRANCH_B" --json number --jq ".number")
+          PR_URL=$(gh pr create --base "$BRANCH_A" --head "$BRANCH_B" --fill)
+          PR_NUMBER=${PR_URL##*/}
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Trigger Conflict Resolver and Wait
         timeout-minutes: 15
@@ -183,21 +182,25 @@ jobs:
         id: create_pr
         run: |
           set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
           BRANCH_NAME="e2e-test-rebase-$(date +%s)"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
           git checkout -b "$BRANCH_NAME"
           echo "test content" > test-file-rebase.txt
           git add test-file-rebase.txt
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -m "E2E Test Commit 1 (rebase)"
           echo "another line" >> test-file-rebase.txt
           git add test-file-rebase.txt
           git commit -m "E2E Test Commit 2 (rebase)"
           git push origin "$BRANCH_NAME"
-          PR_NUMBER=$(gh pr create --title "E2E Test PR (rebase)" --body "Test PR for E2E testing (rebase)" --base leader --head "$BRANCH_NAME" --json number --jq ".number")
+
+          PR_URL=$(gh pr create --base leader --head "$BRANCH_NAME" --fill)
+          PR_NUMBER=${PR_URL##*/}
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Trigger PR Squash and Rebase and Wait
         timeout-minutes: 15
@@ -232,10 +235,4 @@ jobs:
         if: always()
         run: |
           set -e
-          echo "Cleaning up PR and branch..."
-          if [[ -n "$PR_NUMBER" ]]; then
-            gh pr close "$PR_NUMBER"
-          fi
-          if [[ -n "$BRANCH_NAME" ]]; then
-            git push origin --delete "$BRANCH_NAME" || true
-          fi
+          [ -n "$PR_NUMBER" ] && gh pr close "$PR_NUMBER" --delete-branch || true
