@@ -49,8 +49,6 @@ jobs:
 
       - name: Trigger PR Squash and Wait
         timeout-minutes: 15
-        env:
-          PR_NUMBER: ${{ env.PR_NUMBER }}
         run: |
           set -e
           gh pr comment "$PR_NUMBER" --body "@pr-squash"
@@ -59,8 +57,6 @@ jobs:
           timeout 300 gh pr checks "$PR_NUMBER" --watch
 
       - name: Verify Squash
-        env:
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
           git fetch origin "$BRANCH_NAME"
@@ -75,9 +71,6 @@ jobs:
 
       - name: Cleanup
         if: always()
-        env:
-          PR_NUMBER: ${{ env.PR_NUMBER }}
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
           echo "Cleaning up PR and branch..."
@@ -143,8 +136,6 @@ jobs:
 
       - name: Trigger Conflict Resolver and Wait
         timeout-minutes: 15
-        env:
-          PR_NUMBER: ${{ env.PR_NUMBER }}
         run: |
           set -e
           gh pr comment "$PR_NUMBER" --body "@conflict-resolve"
@@ -153,8 +144,6 @@ jobs:
           timeout 300 gh pr checks "$PR_NUMBER" --watch
 
       - name: Verify Conflict Resolution
-        env:
-          BRANCH_A: ${{ env.BRANCH_A }}
         run: |
           set -e
           git fetch origin "$BRANCH_A"
@@ -169,11 +158,6 @@ jobs:
 
       - name: Cleanup
         if: always()
-        env:
-          PR_NUMBER: ${{ env.PR_NUMBER }}
-          BRANCH_A: ${{ env.BRANCH_A }}
-          BRANCH_B: ${{ env.BRANCH_B }}
-          BASE_BRANCH: ${{ env.BASE_BRANCH }}
         run: |
           set -e
           echo "Cleaning up PR and branches..."
@@ -217,8 +201,6 @@ jobs:
 
       - name: Trigger PR Squash and Rebase and Wait
         timeout-minutes: 15
-        env:
-          PR_NUMBER: ${{ env.PR_NUMBER }}
         run: |
           set -e
           gh pr comment "$PR_NUMBER" --body "@pr-squash-rebase"
@@ -227,8 +209,6 @@ jobs:
           timeout 300 gh pr checks "$PR_NUMBER" --watch
 
       - name: Verify Squash and Rebase
-        env:
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
           git fetch origin "$BRANCH_NAME"
@@ -250,9 +230,6 @@ jobs:
 
       - name: Cleanup
         if: always()
-        env:
-          PR_NUMBER: ${{ env.PR_NUMBER }}
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
           echo "Cleaning up PR and branch..."
