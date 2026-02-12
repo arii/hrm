@@ -9,7 +9,11 @@ describe('Server Integration Test', () => {
   const wsUrl = `ws://127.0.0.1:${PORT}/ws`
 
   beforeAll(async () => {
-    server = await startServer(PORT)
+    server = await startServer(PORT, {
+      WS_MAX_CONNECTIONS: '2',
+      GENERAL_API_MAX_REQUESTS: '5',
+      RATE_LIMIT_WINDOW_MS: '60000',
+    })
   })
 
   afterAll(async () => {
@@ -44,13 +48,15 @@ describe('Server Integration Test', () => {
     const promises = []
     for (let i = 0; i < 10; i++) {
       promises.push(
-        fetch(`http://127.0.0.1:${PORT}/api/health`).then((res) => res.status)
+        fetch(`http://127.0.0.1:${PORT}/api/test-rate-limit`).then(
+          (res) => res.status
+        )
       )
       await new Promise((resolve) => setTimeout(resolve, 100))
     }
 
     const results = await Promise.all(promises)
-    const successfulRequests = results.filter((status) => status === 200).length
+    const successfulRequests = results.filter((status) => status === 404).length
     const rateLimitedRequests = results.filter(
       (status) => status === 429
     ).length

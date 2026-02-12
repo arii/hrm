@@ -7,7 +7,10 @@ export interface ServerProcess {
   kill: () => Promise<void>
 }
 
-export function startServer(port: number): Promise<ServerProcess> {
+export function startServer(
+  port: number,
+  envOverrides: Record<string, string> = {}
+): Promise<ServerProcess> {
   return new Promise((resolve, reject) => {
     // Note: The server should be built by the test script `pnpm run build` before this is called.
     const serverProcess = spawn('node', ['dist/server.js'], {
@@ -19,6 +22,7 @@ export function startServer(port: number): Promise<ServerProcess> {
         WS_MAX_CONNECTIONS: '10',
         RATE_LIMIT_WINDOW_MS: '60000',
         GENERAL_API_MAX_REQUESTS: '1000',
+        ...envOverrides,
       },
       detached: true, // Run in a new process group
     })

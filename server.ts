@@ -86,8 +86,9 @@ app.prepare().then(async () => {
       },
       message: { error: 'Too many requests, please try again later.' },
       skip: (req) =>
-        req.path.startsWith('/api/spotify') ||
-        req.path.startsWith('/api/internal'),
+        req.originalUrl.startsWith('/api/spotify') ||
+        req.originalUrl.startsWith('/api/internal') ||
+        req.originalUrl.startsWith('/api/health'),
     })
 
     // Apply the rate limiters to specific routes
