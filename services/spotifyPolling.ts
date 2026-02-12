@@ -11,6 +11,7 @@ import {
 import { SpotifyCommand, SpotifyService } from '@/types/interfaces'
 import { SafeSpotifyApi, createSafeSpotifyApi } from '@/services/safeSpotifyApi'
 import { env } from '@/lib/env'
+import { ServiceInitializationError } from '@/lib/errors'
 import { SpotifyPlayerManager } from '@/services/spotifyPlayerManager'
 import { SpotifyDeviceManager } from '@/services/spotifyDeviceManager'
 
@@ -128,8 +129,10 @@ export class SpotifyPollingService implements SpotifyService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { refresh_token: _, ...tokenWithoutRefresh } = accessToken
     if (!env.SPOTIFY_CLIENT_ID) {
-      logger.error('Spotify client ID not found, cannot initialize SDK.')
-      return
+      throw new ServiceInitializationError(
+        'SpotifyService',
+        'Spotify client ID not found, cannot initialize SDK.'
+      )
     }
     const sdk = SpotifyApi.withAccessToken(
       env.SPOTIFY_CLIENT_ID,

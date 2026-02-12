@@ -1,6 +1,8 @@
 import { SpotifyPollingService } from '@/services/spotifyPolling'
 import { TabataTimer } from '@/services/tabataTimer'
 import { Broadcaster } from '@/lib/websocket'
+import { ServiceInitializationError } from '@/lib/errors'
+import { env } from '@/lib/env'
 
 export interface AppServices {
   tabataService: TabataTimer
@@ -33,6 +35,12 @@ export async function createServices(
   globalWithSpotify.spotifyServiceInstance = spotifyService
 
   try {
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      throw new ServiceInitializationError(
+        'SpotifyService',
+        'Missing Spotify credentials'
+      )
+    }
     await spotifyService.initializeSdk()
     spotifyService.startPolling()
     isSpotifyInitialized = true
