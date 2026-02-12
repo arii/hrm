@@ -1,4 +1,4 @@
-import logger from '@/utils/logger.server'
+import logger from '../utils/logger.server.js'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {

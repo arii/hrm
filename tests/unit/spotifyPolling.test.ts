@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
-import { SpotifyPollingService } from '../../services/spotifyPolling'
+import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'
 import { setupSpotifyPollingService, mockPlayer } from './spotify-test-utils'
@@ -67,7 +67,7 @@ const flushPromises = async () => {
 }
 
 describe('SpotifyPolling Service', () => {
-  let spotifyService: SpotifyPollingService
+  let spotifyService: SpotifyPolling
   let broadcastMock: jest.Mock<(message: ServerMessage) => void>
   const broadcastedStates: SpotifyData[] = []
 
@@ -126,7 +126,7 @@ describe('SpotifyPolling Service', () => {
         }))
 
         // Act
-        const service = await SpotifyPollingService.create(broadcastMock)
+        const service = await SpotifyPolling.create(broadcastMock)
 
         // Assert
         expect(service.isReady()).toBe(false)
@@ -300,7 +300,7 @@ describe('SpotifyPolling Service', () => {
         getSdkAccessToken: jest.fn().mockReturnValue(null),
       }))
 
-      const newService = await SpotifyPollingService.create(broadcastMock)
+      const newService = await SpotifyPolling.create(broadcastMock)
       await newService.handleCommand('PLAY', {})
       // Should not make API call without token
       expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()

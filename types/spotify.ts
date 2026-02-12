@@ -1,5 +1,4 @@
 // types/spotify.ts
-import { z } from 'zod'
 
 export interface Track {
   id: string
@@ -54,17 +53,3 @@ export interface SpotifyTokenResponse {
   expires_in: number
   refresh_token?: string
 }
-
-export const TokenDeliverySchema = z.object({
-  provider: z.string(),
-  sub: z.string(),
-  access_token: z.string(),
-  refresh_token: z.string(),
-  expires_in: z.number(),
-  scope: z.string(),
-  obtainedAt: z.number().optional(),
-})
-
-export type TokenDeliveryPayload = z.infer<typeof TokenDeliverySchema>
-
-export type SpotifyTokenPayload = Required<TokenDeliveryPayload>

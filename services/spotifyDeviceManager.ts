@@ -1,8 +1,8 @@
 import { Device } from '@spotify/web-api-ts-sdk'
-import { SpotifyDevice } from '@/types/core'
-import { ServerMessage, SpotifyData } from '@/types/websocket'
-import { SafeSpotifyApi } from '@/services/safeSpotifyApi'
-import logger from '@/utils/logger.server'
+import { SpotifyDevice } from '../types/core'
+import { ServerMessage, SpotifyData } from '../types/websocket'
+import { SafeSpotifyApi } from './safeSpotifyApi'
+import logger from '../utils/logger.server.js'
 
 export class SpotifyDeviceManager {
   private sdk: SafeSpotifyApi
