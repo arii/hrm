@@ -1,4 +1,4 @@
-// lib/hrm/HrmDataStore.ts
+// lib/hrm/HrmSessionManager.ts
 import { RingBuffer } from '../structures/RingBuffer.js'
 import {
   HrmStreamData,
@@ -34,11 +34,10 @@ interface ClientSession {
 const LIVE_WINDOW_SIZE = env.HRM_LIVE_WINDOW_SIZE // 10 minutes at 1Hz (default)
 
 /**
- * DataStore for managing HRM client data.
- * Encapsulates the storage and retrieval of HRM data with integrated
- * history tracking and incremental statistics.
+ * Manages HRM client sessions, including history tracking and incremental statistics.
+ * Encapsulates storage, retrieval, and analysis of heart rate data streams.
  */
-export class HrmDataStore {
+export class HrmSessionManager {
   private sessions = new Map<string, ClientSession>()
 
   /**

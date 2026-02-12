@@ -1,9 +1,9 @@
-// tests/unit/lib/hrm/HrmDataStore.test.ts
-import { HrmDataStore } from '../../../../lib/hrm/HrmDataStore'
+// tests/unit/lib/hrm/HrmSessionManager.test.ts
+import { HrmSessionManager } from '../../../../lib/hrm/HrmSessionManager'
 import { RawHrmStreamData } from '../../../../types/core'
 
-describe('HrmDataStore', () => {
-  let repository: HrmDataStore
+describe('HrmSessionManager', () => {
+  let manager: HrmSessionManager
   const client1: RawHrmStreamData = {
     clientId: 'client1',
     value: 80,
@@ -20,58 +20,58 @@ describe('HrmDataStore', () => {
   }
 
   beforeEach(() => {
-    repository = new HrmDataStore()
+    manager = new HrmSessionManager()
   })
 
   it('should save and find a client by ID', () => {
-    repository.save(client1)
-    const found = repository.findById('client1')
+    manager.save(client1)
+    const found = manager.findById('client1')
     expect(found).toMatchObject(client1)
   })
 
   it('should return undefined for a non-existent client', () => {
-    const found = repository.findById('non-existent')
+    const found = manager.findById('non-existent')
     expect(found).toBeUndefined()
   })
 
   it('should find all clients', () => {
-    repository.save(client1)
-    repository.save(client2)
-    const allClients = repository.findAll()
+    manager.save(client1)
+    manager.save(client2)
+    const allClients = manager.findAll()
     expect(allClients).toHaveLength(2)
     expect(allClients).toContainEqual(expect.objectContaining(client1))
     expect(allClients).toContainEqual(expect.objectContaining(client2))
   })
 
   it('should return an empty array when no clients are saved', () => {
-    const allClients = repository.findAll()
+    const allClients = manager.findAll()
     expect(allClients).toHaveLength(0)
   })
 
   it('should delete a client by ID', () => {
-    repository.save(client1)
-    repository.deleteById('client1')
-    const found = repository.findById('client1')
+    manager.save(client1)
+    manager.deleteById('client1')
+    const found = manager.findById('client1')
     expect(found).toBeUndefined()
   })
 
   it('should not throw an error when deleting a non-existent client', () => {
-    expect(() => repository.deleteById('non-existent')).not.toThrow()
+    expect(() => manager.deleteById('non-existent')).not.toThrow()
   })
 
   it('should clear all clients', () => {
-    repository.save(client1)
-    repository.save(client2)
-    repository.clear()
-    const allClients = repository.findAll()
+    manager.save(client1)
+    manager.save(client2)
+    manager.clear()
+    const allClients = manager.findAll()
     expect(allClients).toHaveLength(0)
   })
 
   it('should update an existing client', () => {
-    repository.save(client1)
+    manager.save(client1)
     const updatedClient = { ...client1, value: 100 }
-    repository.save(updatedClient)
-    const found = repository.findById('client1')
+    manager.save(updatedClient)
+    const found = manager.findById('client1')
     expect(found).toMatchObject({
       ...updatedClient,
       sessionStats: {
@@ -83,21 +83,21 @@ describe('HrmDataStore', () => {
   })
 
   it('should track incremental stats correctly', () => {
-    repository.save(client1) // HR 80
-    repository.save({ ...client1, value: 120 })
-    repository.save({ ...client1, value: 100 })
+    manager.save(client1) // HR 80
+    manager.save({ ...client1, value: 120 })
+    manager.save({ ...client1, value: 100 })
 
-    const found = repository.findById('client1')
+    const found = manager.findById('client1')
     expect(found?.sessionStats?.avgHr).toBe(100) // (80+120+100)/3
     expect(found?.sessionStats?.peakHr).toBe(120)
     expect(found?.sessionStats?.minHr).toBe(80)
   })
 
   it('should provide history snapshot', () => {
-    repository.save({ ...client1, value: 80, updatedAt: 1000 })
-    repository.save({ ...client1, value: 90, updatedAt: 2000 })
+    manager.save({ ...client1, value: 80, updatedAt: 1000 })
+    manager.save({ ...client1, value: 90, updatedAt: 2000 })
 
-    const snapshot = repository.getSnapshot('client1')
+    const snapshot = manager.getSnapshot('client1')
     expect(snapshot?.recentHistory).toHaveLength(2)
     expect(snapshot?.recentHistory[0]).toEqual({
       heartRate: 80,
@@ -112,17 +112,17 @@ describe('HrmDataStore', () => {
   })
 
   it('should handle resetSession by clearing history, stats, and current value', () => {
-    repository.save({ ...client1, value: 80 })
-    repository.save({ ...client1, value: 90 })
+    manager.save({ ...client1, value: 80 })
+    manager.save({ ...client1, value: 90 })
 
-    repository.resetSession('client1')
+    manager.resetSession('client1')
 
-    const found = repository.findById('client1')
+    const found = manager.findById('client1')
     expect(found?.value).toBe(0)
     expect(found?.sessionStats?.avgHr).toBe(0)
     expect(found?.sessionStats?.peakHr).toBe(0)
 
-    const snapshot = repository.getSnapshot('client1')
+    const snapshot = manager.getSnapshot('client1')
     expect(snapshot?.recentHistory).toHaveLength(0)
     expect(snapshot?.summary.avgHr).toBe(0)
     expect(snapshot?.summary.count).toBe(0)
