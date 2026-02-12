@@ -5,17 +5,14 @@
  * Overwrites oldest items when full to bound memory usage.
  */
 export class RingBuffer<T> {
-  private buffer: Array<T | null>
+  private buffer: Array<T>
   private capacity: number
   private head: number = 0
   private size: number = 0
 
   constructor(capacity: number) {
-    if (capacity <= 0) {
-      throw new Error('Capacity must be greater than 0')
-    }
     this.capacity = capacity
-    this.buffer = new Array(capacity).fill(null)
+    this.buffer = new Array(capacity)
   }
 
   /**
@@ -30,15 +27,6 @@ export class RingBuffer<T> {
   }
 
   /**
-   * Clears the buffer.
-   */
-  public clear(): void {
-    this.buffer.fill(null)
-    this.head = 0
-    this.size = 0
-  }
-
-  /**
    * Reconstructs a linear array from the circular buffer,
    * ordered from oldest to newest.
    */
@@ -48,14 +36,11 @@ export class RingBuffer<T> {
     }
 
     if (this.size < this.capacity) {
-      return this.buffer.slice(0, this.size) as T[]
+      return this.buffer.slice(0, this.size)
     }
 
     // When full, the head points to the oldest item.
     // We concatenate from head to end, then from start to head.
-    return [
-      ...this.buffer.slice(this.head),
-      ...this.buffer.slice(0, this.head),
-    ] as T[]
+    return [...this.buffer.slice(this.head), ...this.buffer.slice(0, this.head)]
   }
 }

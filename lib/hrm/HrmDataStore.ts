@@ -30,8 +30,8 @@ const LIVE_WINDOW_SIZE = env.HRM_LIVE_WINDOW_SIZE // 10 minutes at 1Hz (default)
 
 /**
  * DataStore for managing HRM client data.
- * Encapsulates the storage and retrieval of HrmStreamData with integrated
- * memory management via Ring Buffers.
+ * Encapsulates the storage and retrieval of HRM data with integrated
+ * history tracking and incremental statistics.
  */
 export class HrmDataStore {
   private sessions = new Map<string, ClientSession>()
@@ -123,29 +123,20 @@ export class HrmDataStore {
   }
 
   /**
-   * Prunes the history buffer for a client to free up memory.
-   * Note: This does not persist data; ensure it is saved elsewhere if needed.
-   * @param clientId The client's unique identifier.
-   */
-  pruneSessionHistory(clientId: string): void {
-    const session = this.sessions.get(clientId)
-    if (session) {
-      session.liveWindow.clear()
-      // We keep the stats as they represent the session-to-date
-    }
-  }
-
-  /**
    * Resets history, statistics, and the current value for a client session.
    * @param clientId The client's unique identifier.
    */
   resetSession(clientId: string): void {
     const session = this.sessions.get(clientId)
     if (session) {
-      session.liveWindow.clear()
+      session.liveWindow = new RingBuffer<HrmDataPoint>(LIVE_WINDOW_SIZE)
       session.stats = this.createInitialStats()
       // Reset the current HR value to 0 to prevent UI "ghosting"
-      session.latestData.value = 0
+      session.latestData = {
+        ...session.latestData,
+        value: 0,
+        updatedAt: Date.now(),
+      }
       session.cachedAugmentedData = undefined
     }
   }

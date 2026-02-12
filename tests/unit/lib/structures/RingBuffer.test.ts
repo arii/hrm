@@ -7,15 +7,6 @@ describe('RingBuffer', () => {
     expect(buffer).toBeDefined()
   })
 
-  it('should throw error for invalid capacity', () => {
-    expect(() => new RingBuffer<number>(0)).toThrow(
-      'Capacity must be greater than 0'
-    )
-    expect(() => new RingBuffer<number>(-1)).toThrow(
-      'Capacity must be greater than 0'
-    )
-  })
-
   it('should return items in correct order when not full', () => {
     const buffer = new RingBuffer<number>(5)
     buffer.push(1)
@@ -36,17 +27,6 @@ describe('RingBuffer', () => {
 
     buffer.push(5) // Overwrites 2
     expect(buffer.toArray()).toEqual([3, 4, 5])
-  })
-
-  it('should clear correctly', () => {
-    const buffer = new RingBuffer<number>(3)
-    buffer.push(1)
-    buffer.push(2)
-    buffer.clear()
-    expect(buffer.toArray()).toEqual([])
-
-    buffer.push(3)
-    expect(buffer.toArray()).toEqual([3])
   })
 
   it('should handle complex wrap-around cases', () => {

@@ -111,17 +111,6 @@ describe('HrmDataStore', () => {
     expect(snapshot?.summary.peakHr).toBe(90)
   })
 
-  it('should handle pruneSessionHistory by clearing history but keeping stats', () => {
-    repository.save({ ...client1, value: 80 })
-    repository.save({ ...client1, value: 90 })
-
-    repository.pruneSessionHistory('client1')
-
-    const snapshot = repository.getSnapshot('client1')
-    expect(snapshot?.recentHistory).toHaveLength(0)
-    expect(snapshot?.summary.avgHr).toBe(85)
-  })
-
   it('should handle resetSession by clearing history, stats, and current value', () => {
     repository.save({ ...client1, value: 80 })
     repository.save({ ...client1, value: 90 })
