@@ -57,6 +57,9 @@ jobs:
             echo "::error::Source branch '${{ inputs.source_branch }}' not found."
             exit 1
           fi
+          # Capture base SHA (target branch)
+          git fetch origin ${{ inputs.target_branch }}
+          echo "base_sha=$(git rev-parse origin/${{ inputs.target_branch }})" >> $GITHUB_OUTPUT
 
       - name: Checkout source branch
         uses: actions/checkout@v4
@@ -93,10 +96,11 @@ jobs:
           # Use CI_BOT_PAT if available to ensure workflow is triggered (GITHUB_TOKEN prevents recursion)
           GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           SOURCE_BRANCH: ${{ inputs.source_branch }}
-          TARGET_BRANCH: ${{ inputs.target_branch }}
+          HEAD_SHA: ${{ steps.commit_push.outputs.resolved_sha }}
+          BASE_SHA: ${{ steps.validate_branches.outputs.base_sha }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$TARGET_BRANCH" -f head_ref="$SOURCE_BRANCH"
+          gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
 
       - name: Update comment on success
         if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number
