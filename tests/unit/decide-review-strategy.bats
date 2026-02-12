@@ -7,7 +7,40 @@ setup() {
   # Reset all environment variables to a clean slate
   unset TRIGGER_EVENT ACTION_TYPE COMMENT_BODY PR_NUMBER BASE_SHA HEAD_SHA \
         PR_QUALITY_RESULT MAX_COMMENTS REVIEW_THROTTLE_MINUTES BOT_USERNAME \
-        QUALITY_GATE_BOT_USERNAMES MOCK_GH_COMMENTS_JSON
+        QUALITY_GATE_BOT_USERNAMES MOCK_GH_COMMENTS_JSON \
+        MOCK_GIT_DIFF_TREE_EMPTY
+
+  # Mock git using a temporary executable
+  MOCK_BIN_DIR=$(mktemp -d)
+  export PATH="$MOCK_BIN_DIR:$PATH"
+
+  cat <<'EOF' > "$MOCK_BIN_DIR/git"
+#!/bin/bash
+if [[ "$1" == "diff-tree" ]]; then
+  if [[ "$MOCK_GIT_DIFF_TREE_EMPTY" == "true" ]]; then
+    # Return nothing (0 lines) for empty commit
+    exit 0
+  else
+    # Return a dummy file so existing tests pass (simulate changes)
+    echo "mock_changed_file.txt"
+  fi
+elif [[ "$1" == "diff" ]]; then
+  # For check_substantive: simulate substantive changes by default
+  echo "some_file.ts"
+elif [[ "$1" == "cat-file" ]]; then
+  # Simulate commit exists
+  exit 0
+else
+  # Ignore other commands or pass through if needed (e.g. rev-parse)
+  :
+fi
+EOF
+  chmod +x "$MOCK_BIN_DIR/git"
+}
+
+teardown() {
+  rm -rf "$MOCK_BIN_DIR"
+  rm -f "$GITHUB_OUTPUT"
 }
 
 @test "should trigger review on manual override" {
@@ -21,6 +54,16 @@ setup() {
   [ "$status" -eq 0 ]
   assert_output "needs-review" "true"
   assert_output "skip-reason" ""
+}
+
+@test "should skip review if triggering commit is empty" {
+  export MOCK_GIT_DIFF_TREE_EMPTY="true"
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "false"
+  assert_output "skip-reason" "triggering commit has no file changes"
 }
 
 @test "should skip review when comment limit is exceeded" {
