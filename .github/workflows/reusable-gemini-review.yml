@@ -241,7 +241,8 @@ jobs:
             mapfile -t CONCLUSIONS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].conclusion // "failure"')
             mapfile -t URLS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url')
             # FIX: Use a reliable regex to extract job ID.
-            mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url | capture("(?<job_id>\\d+)$").job_id // ""')
+            # Relaxed regex to handle URLs with query parameters or trailing slashes (e.g. /runs/12345?check_suite_focus=true)
+            mapfile -t JOB_IDS < <(echo "$FAILED_CHECKS_RAW_JSON" | jq -r '.[].details_url | capture("(?<job_id>\\d+)(?:\\?|/|$)").job_id // ""')
 
             LOG_DIR=$(mktemp -d)
             trap 'rm -rf "$LOG_DIR"' EXIT
