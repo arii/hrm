@@ -99,10 +99,10 @@ jobs:
 
           echo "::notice::Checking for changes in commit: $TARGET_SHA"
 
-          # -m: Follows merge commits (reports diff vs parents)
+          # We omit -m to avoid detecting changes from parents in merge commits.
           # -r: Recurses into subdirectories
           # --no-commit-id: Suppresses the SHA in output to leave only filenames
-          CHANGES=$(git diff-tree --no-commit-id --name-only -r -m "$TARGET_SHA")
+          CHANGES=$(git diff-tree --no-commit-id --name-only -r "$TARGET_SHA")
 
           if [ -z "$CHANGES" ]; then
             echo "::notice::The triggering commit is empty (no file changes)."

@@ -19,7 +19,7 @@ setup() {
 # Check the first argument. Since arguments are shifted, flags like -r or -m might be $1, $2 etc.
 # We are looking for the subcommand "diff-tree", "diff", etc.
 # But git command structure is `git [flags] subcommand [args]` or `git subcommand [flags] [args]`.
-# The script calls: `git diff-tree --no-commit-id --name-only -r -m "$HEAD_SHA"`
+# The script calls: `git diff-tree --no-commit-id --name-only -r "$HEAD_SHA"`
 # So "diff-tree" is the first argument to the wrapper script.
 
 # Simple argument parsing to find the subcommand
