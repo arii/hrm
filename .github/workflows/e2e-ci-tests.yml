@@ -79,7 +79,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Create Conflict
+      - name: Create Conflict and PR
+        id: setup
         run: |
           set -e
           git config user.name "github-actions[bot]"
@@ -93,35 +94,49 @@ jobs:
           echo "HEAD_BRANCH=$HEAD" >> $GITHUB_ENV
 
           git checkout -b "$BASE"
-          echo "initial" > test.generated.js
+          echo "line 1" > test.generated.js
           git add test.generated.js && git commit -m "base" && git push origin "$BASE"
 
           git checkout -b "$HEAD"
-          echo "head-change" > test.generated.js
+          echo "head change" > test.generated.js
           git add test.generated.js && git commit -m "head change" && git push origin "$HEAD"
 
           git checkout "$BASE"
-          echo "base-conflict" > test.generated.js
+          echo "base conflict" > test.generated.js
           git add test.generated.js && git commit -m "base conflict" && git push origin "$BASE"
 
-          PR_URL=$(gh pr create --base "$BASE" --head "$HEAD" --fill)
+          PR_URL=$(gh pr create --base "$BASE" --head "$HEAD" --title "E2E Conflict Test" --body "Testing conflict resolver")
           echo "PR_NUMBER=${PR_URL##*/}" >> $GITHUB_ENV
 
-      - name: Trigger Conflict Resolver
+      - name: Trigger and Poll Resolver
         run: |
+          set -e
           gh pr comment "$PR_NUMBER" --body "@conflict-resolve"
-          sleep 10
-          timeout 300 gh pr checks "$PR_NUMBER" --watch
 
-      - name: Verify Conflict Resolution
+          echo "Polling for resolver check success..."
+          for i in {1..30}; do
+            # Check for the specific resolution commit or check status
+            # We look for the success message in the PR comments
+            if gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body' | grep -q "Successfully resolved all conflicts"; then
+               echo "✅ Conflict resolution confirmed by bot comment."
+               exit 0
+            fi
+            sleep 20
+          done
+          echo "❌ Timeout waiting for conflict resolution."
+          exit 1
+
+      - name: Verify Content Accuracy
         run: |
           set -e
           git fetch origin "$HEAD_BRANCH"
           git checkout "$HEAD_BRANCH"
-          if grep -q "head-change" test.generated.js; then
-            echo "✅ Conflict resolved: test.generated.js has the correct content (ours/head kept)."
+          # Assuming the resolver picks the head's version or a merge
+          # For test.generated.js, the strategy is 'ours' (local/head), so 'head change' should be present.
+          if grep -q "head change" test.generated.js; then
+            echo "✅ Content verification passed: 'head change' found in file."
           else
-            echo "❌ Conflict resolution failed: test.generated.js has incorrect content."
+            echo "❌ Content verification failed: test.generated.js state is incorrect."
             cat test.generated.js
             exit 1
           fi
