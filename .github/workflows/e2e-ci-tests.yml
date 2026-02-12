@@ -93,16 +93,16 @@ jobs:
           echo "HEAD_BRANCH=$HEAD" >> $GITHUB_ENV
 
           git checkout -b "$BASE"
-          echo "initial" > conflict.txt
-          git add conflict.txt && git commit -m "base" && git push origin "$BASE"
+          echo "initial" > test.generated.js
+          git add test.generated.js && git commit -m "base" && git push origin "$BASE"
 
           git checkout -b "$HEAD"
-          echo "head-change" > conflict.txt
-          git add conflict.txt && git commit -m "head change" && git push origin "$HEAD"
+          echo "head-change" > test.generated.js
+          git add test.generated.js && git commit -m "head change" && git push origin "$HEAD"
 
           git checkout "$BASE"
-          echo "base-conflict" > conflict.txt
-          git add conflict.txt && git commit -m "base conflict" && git push origin "$BASE"
+          echo "base-conflict" > test.generated.js
+          git add test.generated.js && git commit -m "base conflict" && git push origin "$BASE"
 
           PR_URL=$(gh pr create --base "$BASE" --head "$HEAD" --fill)
           echo "PR_NUMBER=${PR_URL##*/}" >> $GITHUB_ENV
@@ -112,6 +112,19 @@ jobs:
           gh pr comment "$PR_NUMBER" --body "@conflict-resolve"
           sleep 10
           timeout 300 gh pr checks "$PR_NUMBER" --watch
+
+      - name: Verify Conflict Resolution
+        run: |
+          set -e
+          git fetch origin "$HEAD_BRANCH"
+          git checkout "$HEAD_BRANCH"
+          if grep -q "head-change" test.generated.js; then
+            echo "✅ Conflict resolved: test.generated.js has the correct content (ours/head kept)."
+          else
+            echo "❌ Conflict resolution failed: test.generated.js has incorrect content."
+            cat test.generated.js
+            exit 1
+          fi
 
       - name: Cleanup
         if: always()
