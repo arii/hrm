@@ -17,8 +17,8 @@ jobs:
           BODY: ${{ github.event.comment.body }}
         run: |
           if echo "$BODY" | grep -q "^@gemini-bot"; then echo "command=review" >> $GITHUB_OUTPUT
-          elif echo "$BODY" | grep -q "^@pr-squash"; then echo "command=squash" >> $GITHUB_OUTPUT
-          elif echo "$BODY" | grep -q "^@conflict-resolve"; then echo "command=resolve" >> $GITHUB_OUTPUT; fi
+          elif echo "$BODY" | grep -q "@pr-squash"; then echo "command=squash" >> $GITHUB_OUTPUT
+          elif echo "$BODY" | grep -q "@conflict-resolve"; then echo "command=resolve" >> $GITHUB_OUTPUT; fi
 
   execute-review:
     needs: [router]
