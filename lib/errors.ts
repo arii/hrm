@@ -28,7 +28,9 @@ export class ApiError extends Error {
  */
 export class ServiceInitializationError extends Error {
   constructor(serviceName: string, message?: string) {
-    super(message || `${serviceName} not initialized. Server may be starting up.`)
+    super(
+      message || `${serviceName} not initialized. Server may be starting up.`
+    )
     this.name = 'ServiceInitializationError'
   }
 }
