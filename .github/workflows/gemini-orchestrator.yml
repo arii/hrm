@@ -89,15 +89,9 @@ jobs:
         run: |
           set -e
 
-          MERGE_BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
-          if [ -z "$MERGE_BASE" ]; then
-            echo "::warning::Could not find a merge-base. Falling back to HEAD~1."
-            MERGE_BASE=$(git rev-parse HEAD~1)
-          fi
-          echo "::notice::Merge base is at ${MERGE_BASE}"
-
-          if git diff --quiet "$MERGE_BASE" HEAD -- .; then
-            echo "::notice::No file changes detected between HEAD and merge base. Searching PR history..."
+          # Use diff-tree to see if the HEAD commit itself has changes
+          if [ -z "$(git diff-tree --no-commit-id --name-only -r HEAD)" ]; then
+            echo "::notice::Current commit is empty. Searching PR history..."
             echo "has_changes=false" >> $GITHUB_OUTPUT
 
             # Even if HEAD has no changes, we find the last non-empty commit to ensure that
@@ -142,7 +136,7 @@ jobs:
             fi
             echo "last_non_empty_commit=${LAST_NON_EMPTY_COMMIT}" >> $GITHUB_OUTPUT
           else
-            echo "::notice::File changes detected between HEAD and merge base."
+            echo "::notice::File changes detected in current commit."
             echo "has_changes=true" >> $GITHUB_OUTPUT
             echo "last_non_empty_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           fi
