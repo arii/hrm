@@ -211,3 +211,5 @@ jobs:
       branch: ${{ needs.squash-and-rebase.outputs.head_ref }}
       pr_number: ${{ inputs.pr_number }}
       has_changes: ${{ needs.check-for-changes-after-squash.outputs.has_changes }}
+    secrets:
+      GH_TOKEN: ${{ secrets.ARI_PAT }}
