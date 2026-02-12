@@ -214,7 +214,14 @@ export const IncomingHrmDataSchema = z.object({
   age: z.number().optional(),
   calories: z.number().optional(),
   percentage: z.number().optional(),
-  zone: z.custom<HeartRateZone>((val) => typeof val === 'string' && val.startsWith('ZONE_') || val === 'NO_DATA' || val === 'UNKNOWN').optional(),
+  zone: z
+    .custom<HeartRateZone>(
+      (val) =>
+        (typeof val === 'string' && val.startsWith('ZONE_')) ||
+        val === 'NO_DATA' ||
+        val === 'UNKNOWN'
+    )
+    .optional(),
 })
 
 export const HrmMetadataUpdateDataSchema = z.object({

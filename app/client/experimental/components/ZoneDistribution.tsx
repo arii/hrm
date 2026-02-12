@@ -1,13 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  useTheme,
-} from '@mui/material'
+import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { HeartRateZone, HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
 import { formatDuration, isTestEnvironment } from '@/lib/utils'

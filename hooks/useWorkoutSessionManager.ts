@@ -54,10 +54,13 @@ function sessionManagerReducer(
       const { age, weight, maxHr: providedMaxHr } = action.payload
       const maxHr = providedMaxHr || calculateMaxHr(age)
 
-      const initialTimeInZones = Object.keys(HR_ZONE_CONFIG).reduce((acc, zone) => {
-        acc[zone as HeartRateZone] = 0
-        return acc
-      }, {} as Record<HeartRateZone, number>)
+      const initialTimeInZones = Object.keys(HR_ZONE_CONFIG).reduce(
+        (acc, zone) => {
+          acc[zone as HeartRateZone] = 0
+          return acc
+        },
+        {} as Record<HeartRateZone, number>
+      )
 
       const newSession: WorkoutSessionData = {
         sessionId: uuidv4(),

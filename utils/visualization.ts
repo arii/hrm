@@ -114,7 +114,7 @@ export const getHrZoneProps = (
     zoneName === 'UNKNOWN' ||
     zoneName === 'ZONE_3' || // Aerobic
     zoneName === 'ZONE_2' || // Easy
-    zoneName === 'ZONE_4'    // Threshold
+    zoneName === 'ZONE_4' // Threshold
   ) {
     textColor = '#FFFFFF' // Force white text for better visibility on colored backgrounds
   }

@@ -4,10 +4,7 @@
  * This module is independent of any specific UI framework or theme.
  */
 
-import {
-  HeartRateZone,
-  calculateZoneFromMaxHr,
-} from '../shared/hr-zones.js'
+import { HeartRateZone, calculateZoneFromMaxHr } from '../shared/hr-zones.js'
 
 export type { HeartRateZone }
 

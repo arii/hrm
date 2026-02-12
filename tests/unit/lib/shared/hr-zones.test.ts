@@ -40,7 +40,7 @@ describe('lib/shared/hr-zones', () => {
       // 150 bpm / 200 max = 75% -> Zone 3
       const result = calculateHrZoneInfo(150, age)
       expect(result.percentage).toBe(75)
-      expect(result.zone).toBe(3)
+      expect(result.zone).toBe('ZONE_3')
     })
 
     it('should calculate zone info using provided string age', () => {
@@ -48,7 +48,7 @@ describe('lib/shared/hr-zones', () => {
       // 100 bpm / 200 max = 50% -> Zone 1
       const result = calculateHrZoneInfo(100, age)
       expect(result.percentage).toBe(50)
-      expect(result.zone).toBe(1)
+      expect(result.zone).toBe('ZONE_1')
     })
 
     it('should calculate zone info using default max HR when age is undefined', () => {
@@ -56,7 +56,7 @@ describe('lib/shared/hr-zones', () => {
       // 185 bpm / 185 max = 100% -> Zone 6 (since 100% >= 95%)
       const result = calculateHrZoneInfo(185, undefined)
       expect(result.percentage).toBe(100)
-      expect(result.zone).toBe(6)
+      expect(result.zone).toBe('ZONE_6')
     })
 
     it('should calculate zone info using default max HR when age is null', () => {
@@ -64,13 +64,13 @@ describe('lib/shared/hr-zones', () => {
       // 92.5 bpm / 185 max = 50% -> Zone 1 (exact boundary)
       // Rounding check: 92.5 is 50%
       const result = calculateHrZoneInfo(93, null) // ~50.2%
-      expect(result.zone).toBe(1)
+      expect(result.zone).toBe('ZONE_1')
     })
 
     it('should handle zero heart rate', () => {
       const result = calculateHrZoneInfo(0, 30)
       expect(result.percentage).toBe(0)
-      expect(result.zone).toBe(0)
+      expect(result.zone).toBe('ZONE_0')
     })
 
     it('should correctly identify Zone 6 (Max) for heart rate >= 95% of max', () => {
@@ -78,12 +78,12 @@ describe('lib/shared/hr-zones', () => {
       // 190 bpm / 200 max = 95% -> Zone 6
       const result95 = calculateHrZoneInfo(190, age)
       expect(result95.percentage).toBe(95)
-      expect(result95.zone).toBe(6)
+      expect(result95.zone).toBe('ZONE_6')
 
       // 196 bpm / 200 max = 98% -> Zone 6
       const result98 = calculateHrZoneInfo(196, age)
       expect(result98.percentage).toBe(98)
-      expect(result98.zone).toBe(6)
+      expect(result98.zone).toBe('ZONE_6')
     })
   })
 })

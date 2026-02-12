@@ -1,10 +1,7 @@
 // hooks/useLocalWorkoutBuffer.ts
 
 import { useReducer, useCallback } from 'react'
-import {
-  HeartRateZone,
-  calculateZoneFromMaxHr,
-} from '../lib/shared/hr-zones'
+import { HeartRateZone, calculateZoneFromMaxHr } from '../lib/shared/hr-zones'
 import { HrDataPoint } from '../lib/workout-session-storage'
 
 // --- State, Actions, and Reducer ---
