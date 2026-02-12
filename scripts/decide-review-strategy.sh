@@ -58,6 +58,16 @@ if [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$C
   exit 0
 fi
 
+# Check 1.5: Empty Triggering Commit
+# Avoid triggering a full review analysis if the latest commit is empty
+# (e.g., an empty commit to trigger CI, or a merge commit without conflicts).
+if [ "$(git diff-tree --no-commit-id --name-only -r "$HEAD_SHA" | wc -l)" -eq 0 ]; then
+  echo "::info::Triggering commit ($HEAD_SHA) has no file changes. Skipping."
+  echo "needs-review=false" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=triggering commit has no file changes" >> "$GITHUB_OUTPUT"
+  exit 0
+fi
+
 # Check 2: Comment Count Limit
 # Prevents reviews on PRs that are excessively noisy.
 COMMENT_COUNT=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | length')
