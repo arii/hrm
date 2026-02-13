@@ -2,55 +2,140 @@
 'use client'
 import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
-import CardContent from '@mui/material/CardContent'
+import Card from '@mui/material/Card'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
-import ControlCard from './shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
+import { isGenericName } from '@/utils/hrm'
 
-// Define the style for the centered overlay
-const overlayStyles = {
+const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
+
+const OVERLAY_SX = {
   position: 'absolute',
   top: 0,
   left: 0,
   width: '100%',
   height: '100%',
-  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
+  backgroundColor: 'rgba(0, 0, 0, 0.7)',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
   zIndex: 10,
-  borderRadius: 'inherit', // Match card border radius from StyledCard
-}
+  borderRadius: 'inherit',
+} as const
+
+const IdentityTier = ({ name }: { name: string }) => (
+  <Box sx={{ pt: 3, textAlign: 'center' }}>
+    <Typography
+      variant="h5"
+      sx={{
+        fontWeight: 900,
+        textTransform: 'uppercase',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        px: 2,
+      }}
+    >
+      {name}
+    </Typography>
+  </Box>
+)
+
+const HeroTier = ({ percentMax }: { percentMax: number }) => (
+  <Box
+    sx={{
+      flexGrow: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}
+  >
+    <Typography
+      data-testid="live-hr-percent"
+      variant="h2"
+      component="div"
+      sx={{
+        fontSize: {
+          xs: 'clamp(5rem, 15vw, 8rem)',
+          sm: 'clamp(8rem, 18vw, 12rem)',
+          md: 'clamp(10rem, 20vw, 15rem)',
+        },
+        fontWeight: 900,
+        lineHeight: 1,
+        fontFamily: HERO_FONT_FAMILY,
+      }}
+    >
+      {percentMax}%
+    </Typography>
+  </Box>
+)
+
+const MetricItem = ({
+  value,
+  label,
+  testId,
+}: {
+  value: React.ReactNode
+  label: string
+  testId?: string
+}) => (
+  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
+    {value}{' '}
+    <Typography
+      component="span"
+      variant="caption"
+      sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+    >
+      {label}
+    </Typography>
+  </Typography>
+)
+
+const DataTier = ({
+  bpm,
+  calories,
+  showName,
+}: {
+  bpm: number | null
+  calories: number
+  showName: boolean
+}) => (
+  <Box
+    sx={{
+      pb: 3,
+      pt: showName ? 0 : 3,
+      display: 'flex',
+      justifyContent: 'center',
+      gap: 4,
+    }}
+  >
+    <MetricItem value={bpm ?? '---'} label="BPM" testId="bpm-value" />
+    <MetricItem value={Math.floor(calories)} label="KCAL" />
+  </Box>
+)
 
 const HrTile = ({
   name,
   bpm,
   percentMax,
   zone,
-  calories = 0, // Default to 0 to prevent NaN
-  isConnected = true, // Default to connected
+  calories = 0,
+  isConnected = true,
   isDataStale = false,
   isAlerting = false,
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
 
-  // Determine the effective zone.
-  // If 'zone' is provided (server-calculated), use it.
-  const displayZone = zone ?? 0
-
   const zoneConfig =
-    HR_ZONE_VISUAL_CONFIG[displayZone as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
+    HR_ZONE_VISUAL_CONFIG[(zone ?? 0) as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
     HR_ZONE_VISUAL_CONFIG[0]
-
-  const backgroundColor = zoneConfig.color
-  const textColor = zoneConfig.textColor
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -60,31 +145,30 @@ const HrTile = ({
         ? 'Waiting for data...'
         : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
 
+  const showName = !isGenericName(name)
+
   return (
     <Tooltip title={tooltipTitle} arrow>
-      <ControlCard
+      <Card
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
           isConnected ? `${bpm} beats per minute` : 'Disconnected'
-        }, ${percentMax}% of maximum, Zone ${displayZone}: ${zoneConfig.label}`}
+        }, ${percentMax}% of maximum, Zone ${zone ?? 0}: ${zoneConfig.label}`}
         sx={{
-          backgroundColor: backgroundColor,
-          color: textColor,
-          textAlign: 'center',
-          minHeight: 180,
+          bgcolor: zoneConfig.color,
+          color: zoneConfig.textColor,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
           position: 'relative',
+          overflow: 'hidden',
           opacity: isConnected && !isDataStale ? 1 : 0.6,
           transition: theme.transitions.create('opacity', {
-            duration: theme.transitions.duration.short, // Approx 300ms
+            duration: theme.transitions.duration.short,
           }),
         }}
       >
-        {/* --- Disconnected Icon --- */}
         {!isConnected && (
           <WifiOffIcon
             sx={{
@@ -93,13 +177,13 @@ const HrTile = ({
               right: theme.spacing(1),
               fontSize: '1.5rem',
               color: theme.palette.warning.main,
+              zIndex: 5,
             }}
           />
         )}
 
-        {/* --- Alerting Overlay --- */}
         {isAlerting && (
-          <Box sx={overlayStyles} data-testid="hr-tile-alert-overlay">
+          <Box data-testid="hr-tile-alert-overlay" sx={OVERLAY_SX}>
             <CircularProgress size={30} sx={{ color: 'white' }} />
             <Typography
               variant="caption"
@@ -110,117 +194,32 @@ const HrTile = ({
           </Box>
         )}
 
-        <Box aria-live="polite" aria-atomic="true">
-          <CardContent sx={{ p: 0 }}>
-            <Typography
-              data-testid="live-hr-percent"
-              sx={{
-                fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-                fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
-                fontWeight: 900,
-                lineHeight: 0.85,
-                my: 0.5,
-              }}
-            >
-              {percentMax}%
-            </Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-around',
-                alignItems: 'center',
-                mt: 1,
-              }}
-            >
-              {/* BPM Display */}
-              <Typography
-                data-testid="bpm-value"
-                variant="h6"
-                sx={{ fontWeight: 600 }}
-              >
-                {bpm ?? '---'}{' '}
-                <Typography
-                  variant="caption"
-                  component="span"
-                  sx={{ opacity: 0.8 }}
-                >
-                  BPM
-                </Typography>
-              </Typography>
-
-              {/* Calorie Display */}
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {Math.floor(calories)}{' '}
-                <Typography
-                  variant="caption"
-                  component="span"
-                  sx={{ opacity: 0.8 }}
-                >
-                  KCAL
-                </Typography>
-              </Typography>
-            </Box>
-
-            {/* Zone Display for WCAG Compliance (don't rely on color alone) */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-                mt: 0.5,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  backgroundColor: 'currentColor',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                }}
-              />
-              <Typography variant="caption" sx={{ fontWeight: 800 }}>
-                ZONE {displayZone}: {zoneConfig.label}
-              </Typography>
-            </Box>
-
-            {name && !/^(user|new user)$/i.test(name) && (
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 700,
-                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-                  letterSpacing: '0.05em',
-                  mt: 1,
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                }}
-              >
-                {name}
-              </Typography>
-            )}
-          </CardContent>
+        <Box
+          aria-live="polite"
+          aria-atomic="true"
+          sx={{
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}
+        >
+          {showName && <IdentityTier name={name} />}
+          <HeroTier percentMax={percentMax} />
+          <DataTier bpm={bpm} calories={calories} showName={showName} />
         </Box>
-      </ControlCard>
+
+        <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
+          <Typography
+            variant="h6"
+            sx={{ color: '#FFF', fontWeight: 900, letterSpacing: '0.3em' }}
+          >
+            {zoneConfig.label.toUpperCase()}
+          </Typography>
+        </Box>
+      </Card>
     </Tooltip>
   )
 }
 
-// Custom comparison function for React.memo
-const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
-  return (
-    prevProps.name === nextProps.name &&
-    prevProps.bpm === nextProps.bpm &&
-    prevProps.percentMax === nextProps.percentMax &&
-    prevProps.zone === nextProps.zone &&
-    prevProps.calories === nextProps.calories &&
-    prevProps.isConnected === nextProps.isConnected &&
-    prevProps.isDataStale === nextProps.isDataStale &&
-    prevProps.isAlerting === nextProps.isAlerting &&
-    prevProps.alertMessage === nextProps.alertMessage
-  )
-}
-
-export default memo(HrTile, arePropsEqual)
+export default memo(HrTile)
