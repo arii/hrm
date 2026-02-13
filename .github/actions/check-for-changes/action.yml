@@ -19,12 +19,6 @@ runs:
       id: check_files
       shell: bash
       env:
-        BASE_BRANCH: ${{ inputs.base_branch }}
-      run: |
-        if git diff --quiet origin/$BASE_BRANCH HEAD; then
-          echo "No changes detected."
-          echo "has_changes=false" >> $GITHUB_OUTPUT
-        else
-          echo "Changes detected."
-          echo "has_changes=true" >> $GITHUB_OUTPUT
-        fi
+        # Prepend 'origin/' to match the script's expectation
+        BASE_BRANCH: origin/${{ inputs.base_branch }}
+      run: ./scripts/analyze-changes.sh
