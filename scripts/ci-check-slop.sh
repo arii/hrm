@@ -44,4 +44,6 @@ if [ "$SKIP_CHECK" = "true" ]; then
 fi
 
 echo "Running full slop check..."
+# Explicitly ignore the diff file we just created, although find_slop.sh now excludes it by default too.
+rm -f changes.diff
 pnpm run lint:slop

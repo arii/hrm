@@ -87,7 +87,7 @@ jobs:
           # Minimal fetch for the base branch tip
           git fetch origin "$BASE_BRANCH" --depth=1 || echo "Warning: Fetch failed, might fallback."
 
-          # Generate diff (same robust logic as ci-check-slop.sh)
+          # Generate diff (same logic as ci-check-slop.sh)
           if git diff origin/"$BASE_BRANCH"...HEAD > changes.diff 2>/dev/null; then
               echo "Diff generated using merge-base."
           elif git diff origin/"$BASE_BRANCH" HEAD > changes.diff 2>/dev/null; then

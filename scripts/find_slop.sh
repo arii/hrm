@@ -4,7 +4,7 @@ WORDLIST="ai_slop_words.txt"
 EXIT_ON_FAIL=1
 SEARCH_DIR="."
 EXCLUDE_DIRS="node_modules,.git,.next,dist,build,coverage,.vercel"
-EXCLUDE_FILES="ai_slop_words.txt,find_slop.sh,*.svg,*.lock,pnpm-lock.yaml,*.png,*.ico,*.json,*.map"
+EXCLUDE_FILES="ai_slop_words.txt,find_slop.sh,*.svg,*.lock,pnpm-lock.yaml,*.png,*.ico,*.json,*.map,changes.diff"
 
 # Function to display usage
 usage() {
