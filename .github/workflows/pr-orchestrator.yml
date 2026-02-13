@@ -10,11 +10,15 @@ on:
         required: false
         type: string
       base_ref:
-        description: 'Base branch for path filtering'
+        description: 'Base branch (or SHA) for path filtering and diffs'
+        required: false
+        type: string
+      base_branch:
+        description: 'Base branch name for protection rules'
         required: false
         type: string
       head_ref:
-        description: 'Head branch for path filtering'
+        description: 'Head branch (or SHA) for path filtering and diffs'
         required: false
         type: string
 
@@ -104,7 +108,7 @@ jobs:
     with:
       has_changes: ${{ needs.filter.outputs.should_review }}
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
-      branch: ${{ github.base_ref || inputs.base_ref || 'leader' }}
+      branch: ${{ github.base_ref || inputs.base_branch || 'leader' }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
 
