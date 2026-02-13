@@ -614,7 +614,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -696,7 +696,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -776,7 +776,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -859,7 +859,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -953,7 +953,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -1007,16 +1007,16 @@ jobs:
           fi
         continue-on-error: true
 
-      - name: Upload Visual Test Logs
+      - name: Upload Visual Test Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: visual-test-logs-${{ env.SESSION_ID }}
           path: |
             logs/visual-output.log
-            test-results/results.xml
+            test-results/
             playwright-report/
-          if-no-files-found: ignore
+          if-no-files-found: warn
           retention-days: 2
 
       - name: Check Visual Tests Result
@@ -1219,7 +1219,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download All Artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           path: artifacts/
         continue-on-error: true
@@ -1415,6 +1415,7 @@ jobs:
           fi
           if [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Visual Test Failure Details" "artifacts/visual-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/visual-output.log" 50)
+            LOG_DETAILS+="\n> 💡 **Tip:** Download the \`visual-test-logs-${{ needs.prepare-env.outputs.session_id }}\` artifact to view the full interactive Playwright report.\n"
           fi
           if [ "$PERF_TESTS_OUTCOME" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Performance Test Failure Details" "artifacts/perf-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/perf-output.log" 50)
