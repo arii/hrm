@@ -43,12 +43,35 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
+          INITIAL_SHA=$(git rev-parse HEAD)
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+
+          # Poll for squash completion
+          echo "Polling for squash completion (waiting for SHA change)..."
+          START_TIME=$(date +%s)
+          TIMEOUT=300
+          while true; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            if [ "$ELAPSED_TIME" -ge "$TIMEOUT" ]; then
+              echo "Timeout waiting for squash to complete."
+              exit 1
+            fi
+
+            git fetch origin
+            CURRENT_SHA=$(git rev-parse origin/$BRANCH_NAME)
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "Squash detected: SHA has changed from $INITIAL_SHA to $CURRENT_SHA"
+              break
+            fi
+
+            echo "Waiting... (Elapsed: ${ELAPSED_TIME}s)"
+            sleep 10
+          done
 
       - name: Verify Squash
         env:
@@ -56,8 +79,8 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          git fetch origin $BRANCH_NAME
-          git checkout $BRANCH_NAME
+          git fetch origin
+          git checkout -B $BRANCH_NAME origin/$BRANCH_NAME
           COMMIT_COUNT=$(git rev-list --count HEAD ^origin/leader)
           if [ "$COMMIT_COUNT" -eq 1 ]; then
             echo "✅ Squash successful: Branch has 1 commit."
@@ -139,20 +162,43 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
+          BRANCH_A: ${{ env.BRANCH_A }}
         run: |
           set -e
+          INITIAL_SHA=$(git rev-parse HEAD)
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+
+          # Poll for conflict resolution (waiting for SHA change)
+          echo "Polling for conflict resolution..."
+          START_TIME=$(date +%s)
+          TIMEOUT=300
+          while true; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            if [ "$ELAPSED_TIME" -ge "$TIMEOUT" ]; then
+              echo "Timeout waiting for conflict resolution to complete."
+              exit 1
+            fi
+
+            git fetch origin
+            CURRENT_SHA=$(git rev-parse origin/$BRANCH_A)
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "Conflict resolution detected: SHA has changed from $INITIAL_SHA to $CURRENT_SHA"
+              break
+            fi
+
+            echo "Waiting... (Elapsed: ${ELAPSED_TIME}s)"
+            sleep 10
+          done
 
       - name: Verify Conflict Resolution
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          git fetch origin $BRANCH_A
-          git checkout $BRANCH_A
+          git fetch origin
+          git checkout -B $BRANCH_A origin/$BRANCH_A
           # Check if the conflict is resolved by verifying the content
           if grep -q "branch-b content" conflict-file.txt; then
             echo "✅ Conflict resolved: conflict-file.txt has the correct content."
@@ -211,12 +257,35 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
+          INITIAL_SHA=$(git rev-parse HEAD)
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+
+          # Poll for squash and rebase completion (waiting for SHA change)
+          echo "Polling for squash and rebase completion..."
+          START_TIME=$(date +%s)
+          TIMEOUT=300
+          while true; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            if [ "$ELAPSED_TIME" -ge "$TIMEOUT" ]; then
+              echo "Timeout waiting for squash and rebase to complete."
+              exit 1
+            fi
+
+            git fetch origin
+            CURRENT_SHA=$(git rev-parse origin/$BRANCH_NAME)
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "Squash and rebase detected: SHA has changed from $INITIAL_SHA to $CURRENT_SHA"
+              break
+            fi
+
+            echo "Waiting... (Elapsed: ${ELAPSED_TIME}s)"
+            sleep 10
+          done
 
       - name: Verify Squash and Rebase
         env:
@@ -224,8 +293,8 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          git fetch origin $BRANCH_NAME
-          git checkout $BRANCH_NAME
+          git fetch origin
+          git checkout -B $BRANCH_NAME origin/$BRANCH_NAME
           COMMIT_COUNT=$(git rev-list --count HEAD ^origin/leader)
           if [ "$COMMIT_COUNT" -eq 1 ]; then
             echo "✅ Squash and rebase successful: Branch has 1 commit."
