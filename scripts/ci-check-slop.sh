@@ -8,11 +8,20 @@ echo "Installing dependencies..."
 pip install unidiff > /dev/null 2>&1 || echo "Warning: Failed to install unidiff. Diff analysis might fail."
 
 echo "Generating diff..."
-# specific to PR checks: find common ancestor or just diff against tip of base
-git diff origin/"$BASE_BRANCH"...HEAD > changes.diff || {
+
+# Try to fetch the base branch tip to ensure we have a reference
+git fetch origin "$BASE_BRANCH" --depth=1 > /dev/null 2>&1 || echo "Warning: Could not fetch base branch."
+
+# Attempt 1: Try finding the common ancestor (requires some history)
+if git diff origin/"$BASE_BRANCH"...HEAD > changes.diff 2>/dev/null; then
+    echo "Diff generated using merge-base (ideal)."
+# Attempt 2: If merge-base fails (shallow clone), diff directly against the tip of base
+elif git diff origin/"$BASE_BRANCH" HEAD > changes.diff 2>/dev/null; then
+    echo "Diff generated against tip of base branch (fallback)."
+else
     echo "Warning: Failed to generate diff. Proceeding with full slop check."
     rm -f changes.diff
-}
+fi
 
 SKIP_CHECK=false
 
