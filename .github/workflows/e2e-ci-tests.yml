@@ -46,7 +46,7 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          INITIAL_SHA=$(git rev-parse origin/$BRANCH_NAME)
+          INITIAL_SHA=$(git ls-remote origin $BRANCH_NAME | awk "{print $1}")
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
 
@@ -62,8 +62,7 @@ jobs:
               exit 1
             fi
 
-            git fetch origin +refs/heads/*:refs/remotes/origin/*
-            CURRENT_SHA=$(git rev-parse origin/$BRANCH_NAME)
+            CURRENT_SHA=$(git ls-remote origin $BRANCH_NAME | awk "{print $1}")
             if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
               echo "Squash detected: SHA has changed from $INITIAL_SHA to $CURRENT_SHA"
               break
@@ -79,7 +78,6 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          git fetch origin +refs/heads/*:refs/remotes/origin/*
           git checkout -B $BRANCH_NAME origin/$BRANCH_NAME
           COMMIT_COUNT=$(git rev-list --count HEAD ^origin/leader)
           if [ "$COMMIT_COUNT" -eq 1 ]; then
@@ -165,7 +163,7 @@ jobs:
           BRANCH_A: ${{ env.BRANCH_A }}
         run: |
           set -e
-          INITIAL_SHA=$(git rev-parse origin/$BRANCH_A)
+          INITIAL_SHA=$(git ls-remote origin $BRANCH_A | awk "{print $1}")
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
 
@@ -181,8 +179,7 @@ jobs:
               exit 1
             fi
 
-            git fetch origin +refs/heads/*:refs/remotes/origin/*
-            CURRENT_SHA=$(git rev-parse origin/$BRANCH_A)
+            CURRENT_SHA=$(git ls-remote origin $BRANCH_A | awk "{print $1}")
             if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
               echo "Conflict resolution detected: SHA has changed from $INITIAL_SHA to $CURRENT_SHA"
               break
@@ -197,7 +194,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          git fetch origin +refs/heads/*:refs/remotes/origin/*
           git checkout -B $BRANCH_A origin/$BRANCH_A
           # Check if the conflict is resolved by verifying the content
           if grep -q "branch-b content" conflict-file.txt; then
@@ -260,7 +256,7 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          INITIAL_SHA=$(git rev-parse origin/$BRANCH_NAME)
+          INITIAL_SHA=$(git ls-remote origin $BRANCH_NAME | awk "{print $1}")
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
 
@@ -276,8 +272,7 @@ jobs:
               exit 1
             fi
 
-            git fetch origin +refs/heads/*:refs/remotes/origin/*
-            CURRENT_SHA=$(git rev-parse origin/$BRANCH_NAME)
+            CURRENT_SHA=$(git ls-remote origin $BRANCH_NAME | awk "{print $1}")
             if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
               echo "Squash and rebase detected: SHA has changed from $INITIAL_SHA to $CURRENT_SHA"
               break
@@ -293,7 +288,6 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          git fetch origin +refs/heads/*:refs/remotes/origin/*
           git checkout -B $BRANCH_NAME origin/$BRANCH_NAME
           COMMIT_COUNT=$(git rev-list --count HEAD ^origin/leader)
           if [ "$COMMIT_COUNT" -eq 1 ]; then
