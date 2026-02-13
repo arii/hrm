@@ -1,0 +1,93 @@
+name: Bot Command Orchestrator
+
+on:
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: write
+  actions: write
+
+jobs:
+  router:
+    name: 🔍 Route Comment
+    if: github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    outputs:
+      is_review: ${{ steps.route.outputs.is_review }}
+      is_squash: ${{ steps.route.outputs.is_squash }}
+      is_resolve: ${{ steps.route.outputs.is_resolve }}
+    steps:
+      - id: route
+        env:
+          BODY: ${{ github.event.comment.body }}
+        run: |
+          if echo "$BODY" | grep -q "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -q "@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -q "@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
+
+  execute-review:
+    needs: [router]
+    if: needs.router.outputs.is_review == 'true'
+    uses: ./.github/workflows/reusable-gemini-review.yml
+    with:
+      pr_quality_result: 'not_applicable'
+      trigger_event: 'comment'
+      comment_body: ${{ github.event.comment.body }}
+    secrets: inherit
+
+  execute-squash:
+    needs: [router]
+    if: needs.router.outputs.is_squash == 'true'
+    uses: ./.github/workflows/pr-squash.yml
+    with:
+      pr_number: ${{ github.event.issue.number }}
+      comment_body: ${{ github.event.comment.body }}
+      comment_id: ${{ github.event.comment.id }}
+    secrets: inherit
+
+  # Restoring conflict resolution logic from gemini-orchestrator.yml
+  prepare-resolve:
+    needs: [router]
+    if: needs.router.outputs.is_resolve == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      target_branch: ${{ steps.get_branches.outputs.target_branch }}
+      source_branch: ${{ steps.get_branches.outputs.source_branch }}
+    steps:
+      - name: Add reaction to comment
+        uses: peter-evans/create-reaction@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ github.event.comment.id }}
+          reaction: eyes
+      - name: Get PR Details
+        id: get_branches
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            core.setOutput('target_branch', pr.data.base.ref);
+            core.setOutput('source_branch', pr.data.head.ref);
+
+  execute-resolve:
+    needs: [router, prepare-resolve]
+    if: needs.router.outputs.is_resolve == 'true'
+    uses: ./.github/workflows/conflict-resolver.yml
+    with:
+      target_branch: ${{ needs.prepare-resolve.outputs.target_branch }}
+      source_branch: ${{ needs.prepare-resolve.outputs.source_branch }}
+      pr_number: ${{ github.event.issue.number }}
+    secrets: inherit
