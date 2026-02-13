@@ -46,7 +46,7 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          INITIAL_SHA=$(git rev-parse HEAD)
+          INITIAL_SHA=$(git rev-parse origin/$BRANCH_NAME)
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
 
@@ -165,7 +165,7 @@ jobs:
           BRANCH_A: ${{ env.BRANCH_A }}
         run: |
           set -e
-          INITIAL_SHA=$(git rev-parse HEAD)
+          INITIAL_SHA=$(git rev-parse origin/$BRANCH_A)
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
 
@@ -260,7 +260,7 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          INITIAL_SHA=$(git rev-parse HEAD)
+          INITIAL_SHA=$(git rev-parse origin/$BRANCH_NAME)
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
 
