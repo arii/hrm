@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import ControlCard from '@/components/shared/ControlCard'
+import { isGenericName } from '@/utils/hrm'
 import { useTheme } from '@mui/material/styles'
 
 // Define the style for the centered overlay
@@ -185,7 +186,7 @@ const HrTile = ({
               </Typography>
             </Box>
 
-            {name && !/^(user|new user)$/i.test(name) && (
+            {name && !isGenericName(name) && (
               <Typography
                 variant="subtitle1"
                 sx={{

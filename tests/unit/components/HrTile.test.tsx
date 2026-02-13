@@ -120,4 +120,11 @@ describe('HrTile', () => {
       'Heart rate monitor for Test: 150 beats per minute, 80% of maximum, Zone 4: Cardio'
     )
   })
+
+  it('does not display the name if it is a generic placeholder', () => {
+    // "New User" should be considered a generic name and suppressed
+    render(<HrTile name="New User" bpm={100} percentMax={50} zone={1} />)
+    // The text "New User" should NOT be present in the document
+    expect(screen.queryByText('New User')).not.toBeInTheDocument()
+  })
 })
