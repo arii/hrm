@@ -19,6 +19,7 @@ import {
   MAX_INITIAL_CALORIES,
   HRM_STALE_THRESHOLD_MS,
 } from './constants.js'
+import { isGenericName } from './hrm.js'
 import {
   broadcast,
   sendWebSocketMessage,
@@ -296,11 +297,9 @@ const handleIncomingMessage = (
           // Prevent overwriting a real name with a default "Unknown" name
           if (
             existingData.name &&
-            !/^(user|new user|unknown|bluetooth hrm)/i.test(
-              existingData.name
-            ) &&
+            !isGenericName(existingData.name) &&
             updateData.name &&
-            /^(user|new user|unknown|bluetooth hrm)/i.test(updateData.name)
+            isGenericName(updateData.name)
           ) {
             delete updateData.name
           }

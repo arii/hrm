@@ -9,6 +9,13 @@ interface GetActiveHrmDataOptions {
   includeZeroValues?: boolean
 }
 
+// Canonical source of truth for checking if a name is a generic placeholder.
+export const isGenericName = (name: string | null | undefined): boolean => {
+  if (!name) return true
+  // Matches "user", "new user", "unknown", "bluetooth hrm" with optional numbering
+  return /^(user|new user|unknown|bluetooth hrm)(\s+\d+)?$/i.test(name)
+}
+
 export const getActiveHrmData = (
   hrmData: ConnectedHrmData[],
   activeAlerts: ActiveAlert[],
@@ -20,7 +27,7 @@ export const getActiveHrmData = (
   return hrmData
     .filter((user) => {
       const isZero = user.value === 0
-      const isPlaceholderName = !!user.name && /new user/i.test(user.name)
+      const isPlaceholderName = isGenericName(user.name)
       const hasNoIdentity = user.name == null
       // Use the sensor's timestamp if available, otherwise fall back to receipt time
       const referenceTime = user.updatedAt || user.lastUpdated || now

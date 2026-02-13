@@ -9,7 +9,7 @@ import WifiOffIcon from '@mui/icons-material/WifiOff'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
-import ControlCard from './shared/ControlCard'
+import ControlCard from '@/components/shared/ControlCard'
 import { useTheme } from '@mui/material/styles'
 
 // Define the style for the centered overlay
