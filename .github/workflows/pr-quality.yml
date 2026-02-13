@@ -417,7 +417,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p logs
-          pnpm run lint:slop 2>&1 | tee logs/slop-output.log
+          ./scripts/ci-check-slop.sh "${{ inputs.branch }}" 2>&1 | tee logs/slop-output.log
         continue-on-error: true
 
       - name: Report Slop Failure
