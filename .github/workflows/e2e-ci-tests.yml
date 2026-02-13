@@ -61,7 +61,7 @@ jobs:
               exit 1
             fi
 
-            git fetch origin $BRANCH_NAME
+            git fetch origin
             COMMIT_COUNT=$(git rev-list --count origin/$BRANCH_NAME ^origin/leader)
             if [ "$COMMIT_COUNT" -eq 1 ]; then
               echo "Squash detected: Branch has 1 commit."
@@ -78,7 +78,7 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          git fetch origin $BRANCH_NAME
+          git fetch origin
           git checkout $BRANCH_NAME
           COMMIT_COUNT=$(git rev-list --count HEAD ^origin/leader)
           if [ "$COMMIT_COUNT" -eq 1 ]; then
@@ -179,7 +179,7 @@ jobs:
               exit 1
             fi
 
-            git fetch origin $BRANCH_A
+            git fetch origin
             git checkout origin/$BRANCH_A -- conflict-file.txt
             if grep -q "branch-b content" conflict-file.txt; then
               echo "Conflict resolved: conflict-file.txt has the correct content."
@@ -195,7 +195,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          git fetch origin $BRANCH_A
+          git fetch origin
           git checkout $BRANCH_A
           # Check if the conflict is resolved by verifying the content
           if grep -q "branch-b content" conflict-file.txt; then
@@ -273,7 +273,7 @@ jobs:
               exit 1
             fi
 
-            git fetch origin $BRANCH_NAME
+            git fetch origin
             COMMIT_COUNT=$(git rev-list --count origin/$BRANCH_NAME ^origin/leader)
 
             # Check if there is 1 commit AND it's rebased (is an ancestor)
@@ -292,7 +292,7 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          git fetch origin $BRANCH_NAME
+          git fetch origin
           git checkout $BRANCH_NAME
           COMMIT_COUNT=$(git rev-list --count HEAD ^origin/leader)
           if [ "$COMMIT_COUNT" -eq 1 ]; then
