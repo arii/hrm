@@ -41,6 +41,8 @@ jobs:
       outcome: ${{ steps.squash_rebase.outcome }}
       head_ref: ${{ steps.pr_data.outputs.head_ref }}
       base_ref: ${{ steps.pr_data.outputs.base_ref }}
+      squashed_sha: ${{ steps.squash_rebase.outputs.squashed_sha }}
+      base_sha: ${{ steps.squash_rebase.outputs.base_sha }}
     steps:
       - name: Acknowledge command
         uses: actions/github-script@v6
@@ -139,6 +141,8 @@ jobs:
           fi
 
           git push --force-with-lease origin $HEAD_BRANCH
+          echo "squashed_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "base_sha=$(git rev-parse origin/$BASE_BRANCH)" >> $GITHUB_OUTPUT
 
       - name: Handle Rebase Failure
         if: steps.squash_rebase.outcome == 'failure'
@@ -203,11 +207,18 @@ jobs:
         with:
           base_branch: ${{ needs.squash-and-rebase.outputs.base_ref }}
 
-  trigger-quality-check:
-    needs: [squash-and-rebase, check-for-changes-after-squash]
+  trigger-ci-workflow:
+    needs: [squash-and-rebase]
     if: needs.squash-and-rebase.outputs.outcome == 'success'
-    uses: ./.github/workflows/pr-quality.yml
-    with:
-      branch: ${{ needs.squash-and-rebase.outputs.head_ref }}
-      pr_number: ${{ inputs.pr_number }}
-      has_changes: ${{ needs.check-for-changes-after-squash.outputs.has_changes }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Gemini Orchestrator
+        env:
+          # Use CI_BOT_PAT if available to ensure workflow is triggered (GITHUB_TOKEN prevents recursion)
+          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+          HEAD_BRANCH: ${{ needs.squash-and-rebase.outputs.head_ref }}
+          BASE_SHA: ${{ needs.squash-and-rebase.outputs.base_sha }}
+          HEAD_SHA: ${{ needs.squash-and-rebase.outputs.squashed_sha }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          gh workflow run "Gemini Orchestrator" --ref "$HEAD_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
