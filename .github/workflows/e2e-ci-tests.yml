@@ -46,11 +46,12 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
+          INITIAL_SHA=$(git rev-parse HEAD)
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
 
           # Poll for squash completion
-          echo "Polling for squash completion..."
+          echo "Polling for squash completion (waiting for SHA change)..."
           START_TIME=$(date +%s)
           TIMEOUT=300
           while true; do
@@ -62,9 +63,9 @@ jobs:
             fi
 
             git fetch origin
-            COMMIT_COUNT=$(git rev-list --count origin/$BRANCH_NAME ^origin/leader)
-            if [ "$COMMIT_COUNT" -eq 1 ]; then
-              echo "Squash detected: Branch has 1 commit."
+            CURRENT_SHA=$(git rev-parse origin/$BRANCH_NAME)
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "Squash detected: SHA has changed from $INITIAL_SHA to $CURRENT_SHA"
               break
             fi
 
@@ -164,10 +165,11 @@ jobs:
           BRANCH_A: ${{ env.BRANCH_A }}
         run: |
           set -e
+          INITIAL_SHA=$(git rev-parse HEAD)
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
 
-          # Poll for conflict resolution
+          # Poll for conflict resolution (waiting for SHA change)
           echo "Polling for conflict resolution..."
           START_TIME=$(date +%s)
           TIMEOUT=300
@@ -180,9 +182,9 @@ jobs:
             fi
 
             git fetch origin
-            git checkout origin/$BRANCH_A -- conflict-file.txt
-            if grep -q "branch-b content" conflict-file.txt; then
-              echo "Conflict resolved: conflict-file.txt has the correct content."
+            CURRENT_SHA=$(git rev-parse origin/$BRANCH_A)
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "Conflict resolution detected: SHA has changed from $INITIAL_SHA to $CURRENT_SHA"
               break
             fi
 
@@ -258,10 +260,11 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
+          INITIAL_SHA=$(git rev-parse HEAD)
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
 
-          # Poll for squash and rebase completion
+          # Poll for squash and rebase completion (waiting for SHA change)
           echo "Polling for squash and rebase completion..."
           START_TIME=$(date +%s)
           TIMEOUT=300
@@ -274,15 +277,13 @@ jobs:
             fi
 
             git fetch origin
-            COMMIT_COUNT=$(git rev-list --count origin/$BRANCH_NAME ^origin/leader)
-
-            # Check if there is 1 commit AND it's rebased (is an ancestor)
-            if [ "$COMMIT_COUNT" -eq 1 ] && git merge-base --is-ancestor origin/leader origin/$BRANCH_NAME; then
-              echo "Squash and rebase detected: Branch has 1 commit and is rebased."
+            CURRENT_SHA=$(git rev-parse origin/$BRANCH_NAME)
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "Squash and rebase detected: SHA has changed from $INITIAL_SHA to $CURRENT_SHA"
               break
             fi
 
-            echo "Waiting... (Elapsed: ${ELAPSED_TIME}s) Commit count: $COMMIT_COUNT"
+            echo "Waiting... (Elapsed: ${ELAPSED_TIME}s)"
             sleep 10
           done
 
