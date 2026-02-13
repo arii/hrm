@@ -78,6 +78,7 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
+          git fetch origin +refs/heads/*:refs/remotes/origin/*
           git checkout -B $BRANCH_NAME origin/$BRANCH_NAME
           COMMIT_COUNT=$(git rev-list --count HEAD ^origin/leader)
           if [ "$COMMIT_COUNT" -eq 1 ]; then
@@ -194,6 +195,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
+          git fetch origin +refs/heads/*:refs/remotes/origin/*
           git checkout -B $BRANCH_A origin/$BRANCH_A
           # Check if the conflict is resolved by verifying the content
           if grep -q "branch-b content" conflict-file.txt; then
@@ -288,6 +290,7 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
+          git fetch origin +refs/heads/*:refs/remotes/origin/*
           git checkout -B $BRANCH_NAME origin/$BRANCH_NAME
           COMMIT_COUNT=$(git rev-list --count HEAD ^origin/leader)
           if [ "$COMMIT_COUNT" -eq 1 ]; then
