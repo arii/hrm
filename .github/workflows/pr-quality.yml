@@ -1415,9 +1415,7 @@ jobs:
           fi
           if [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Visual Test Failure Details" "artifacts/visual-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/visual-output.log" 50)
-            LOG_DETAILS+="
-> 💡 **Tip:** Download the \`visual-test-logs-${{ needs.prepare-env.outputs.session_id }}\` artifact to view the full interactive Playwright report.
-"
+            LOG_DETAILS+="\n> 💡 **Tip:** Download the \`visual-test-logs-${{ needs.prepare-env.outputs.session_id }}\` artifact to view the full interactive Playwright report.\n"
           fi
           if [ "$PERF_TESTS_OUTCOME" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Performance Test Failure Details" "artifacts/perf-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/perf-output.log" 50)
