@@ -10,7 +10,7 @@ describe('getActiveHrmData', () => {
   const mockHrmData: ConnectedHrmData[] = [
     {
       clientId: 'c1',
-      name: 'Jules',
+      name: 'User One',
       value: 120,
       calories: 100,
       updatedAt: now,
@@ -20,7 +20,7 @@ describe('getActiveHrmData', () => {
     },
     {
       clientId: 'c2', // Stale
-      name: 'Ariel',
+      name: 'User Two',
       value: 130,
       calories: 110,
       updatedAt: now - HRM_STALE_THRESHOLD_MS - 1,
@@ -30,7 +30,7 @@ describe('getActiveHrmData', () => {
     },
     {
       clientId: 'c3', // Zero value
-      name: 'Bob',
+      name: 'User Three',
       value: 0,
       calories: 0,
       updatedAt: now,
@@ -50,7 +50,7 @@ describe('getActiveHrmData', () => {
     },
     {
       clientId: 'c5', // Warning Stale
-      name: 'Charlie',
+      name: 'User Five',
       value: 120,
       calories: 100,
       updatedAt: now - HRM_WARNING_THRESHOLD_MS - 1,

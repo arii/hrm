@@ -43,11 +43,34 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
-          sleep 10
+
+          # Poll for squash completion
+          echo "Polling for squash completion..."
+          START_TIME=$(date +%s)
+          TIMEOUT=300
+          while true; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            if [ "$ELAPSED_TIME" -ge "$TIMEOUT" ]; then
+              echo "Timeout waiting for squash to complete."
+              exit 1
+            fi
+
+            git fetch origin $BRANCH_NAME
+            COMMIT_COUNT=$(git rev-list --count origin/$BRANCH_NAME ^origin/leader)
+            if [ "$COMMIT_COUNT" -eq 1 ]; then
+              echo "Squash detected: Branch has 1 commit."
+              break
+            fi
+
+            echo "Waiting... (Elapsed: ${ELAPSED_TIME}s)"
+            sleep 10
+          done
 
       - name: Verify Squash
         env:
@@ -138,11 +161,34 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
+          BRANCH_A: ${{ env.BRANCH_A }}
         run: |
           set -e
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
-          sleep 10
+
+          # Poll for conflict resolution
+          echo "Polling for conflict resolution..."
+          START_TIME=$(date +%s)
+          TIMEOUT=300
+          while true; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            if [ "$ELAPSED_TIME" -ge "$TIMEOUT" ]; then
+              echo "Timeout waiting for conflict resolution to complete."
+              exit 1
+            fi
+
+            git fetch origin $BRANCH_A
+            git checkout origin/$BRANCH_A -- conflict-file.txt
+            if grep -q "branch-b content" conflict-file.txt; then
+              echo "Conflict resolved: conflict-file.txt has the correct content."
+              break
+            fi
+
+            echo "Waiting... (Elapsed: ${ELAPSED_TIME}s)"
+            sleep 10
+          done
 
       - name: Verify Conflict Resolution
         env:
@@ -209,11 +255,36 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
-          sleep 10
+
+          # Poll for squash and rebase completion
+          echo "Polling for squash and rebase completion..."
+          START_TIME=$(date +%s)
+          TIMEOUT=300
+          while true; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            if [ "$ELAPSED_TIME" -ge "$TIMEOUT" ]; then
+              echo "Timeout waiting for squash and rebase to complete."
+              exit 1
+            fi
+
+            git fetch origin $BRANCH_NAME
+            COMMIT_COUNT=$(git rev-list --count origin/$BRANCH_NAME ^origin/leader)
+
+            # Check if there is 1 commit AND it's rebased (is an ancestor)
+            if [ "$COMMIT_COUNT" -eq 1 ] && git merge-base --is-ancestor origin/leader origin/$BRANCH_NAME; then
+              echo "Squash and rebase detected: Branch has 1 commit and is rebased."
+              break
+            fi
+
+            echo "Waiting... (Elapsed: ${ELAPSED_TIME}s) Commit count: $COMMIT_COUNT"
+            sleep 10
+          done
 
       - name: Verify Squash and Rebase
         env:
