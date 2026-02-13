@@ -32,6 +32,11 @@ on:
         required: true
         type: string
 
+    outputs:
+      meaningful_changes:
+        description: 'Whether the PR has meaningful (non-whitespace) changes'
+        value: ${{ jobs.check-meaningful-changes.outputs.meaningful }}
+
     secrets:
       GH_TOKEN:
         description: 'GitHub token (optional, uses github.token by default)'
@@ -51,9 +56,75 @@ env:
   FORCE_COLOR: 1
 
 jobs:
+  check-meaningful-changes:
+    name: 🧐 Check Meaningful Changes
+    runs-on: ubuntu-latest
+    if: inputs.has_changes == 'true'
+    outputs:
+      meaningful: ${{ steps.check.outputs.meaningful }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Unidiff
+        run: pip install unidiff
+
+      - name: Generate Diff and Check
+        id: check
+        shell: bash
+        run: |
+          set -e
+          BASE_BRANCH="${{ inputs.branch }}"
+          echo "Checking diff against origin/$BASE_BRANCH..."
+
+          # Minimal fetch for the base branch tip
+          git fetch origin "$BASE_BRANCH" --depth=1 || echo "Warning: Fetch failed, might fallback."
+
+          # Generate diff (same robust logic as ci-check-slop.sh)
+          if git diff origin/"$BASE_BRANCH"...HEAD > changes.diff 2>/dev/null; then
+              echo "Diff generated using merge-base."
+          elif git diff origin/"$BASE_BRANCH" HEAD > changes.diff 2>/dev/null; then
+              echo "Diff generated against tip of base."
+          else
+              echo "Warning: Diff generation failed. Assuming meaningful."
+              echo "meaningful=true" >> $GITHUB_OUTPUT
+              exit 0
+          fi
+
+          if [ ! -s changes.diff ]; then
+              echo "Diff is empty."
+              echo "meaningful=false" >> $GITHUB_OUTPUT
+              exit 0
+          fi
+
+          # Run check_diff.py with strict checking (no exclusions by default if --exclude is empty,
+          # but we want to allow skipping purely whitespace changes)
+          # We pass an empty string to --exclude to clear defaults, or just rely on the script
+          # to default to 'strict' if we update it.
+          # The script currently defaults to SLOP exclusions if None.
+          # We updated the script to take '--exclude'. If we pass '--exclude' with no args, it treats it as empty list.
+
+          echo "Running check_diff.py (strict mode)..."
+          if python3 scripts/check_diff.py changes.diff --exclude; then
+              echo "Meaningful changes detected."
+              echo "meaningful=true" >> $GITHUB_OUTPUT
+          else
+              echo "No meaningful changes detected (whitespace only)."
+              echo "meaningful=false" >> $GITHUB_OUTPUT
+          fi
+
   prepare-env:
     name: 📝 Prepare Environment
-    if: inputs.has_changes == 'true'
+    needs: [check-meaningful-changes]
+    # Run if inputs say changed AND our deep check confirms it is meaningful
+    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     outputs:
       session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
@@ -259,8 +330,8 @@ jobs:
 
   script-tests:
     name: 🧪 Script Tests
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, check-meaningful-changes]
+    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -305,8 +376,8 @@ jobs:
 
   knip-check:
     name: 🎒 Knip Check
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, check-meaningful-changes]
+    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -345,8 +416,8 @@ jobs:
 
   lint-check:
     name: 🔍 Lint Check
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, check-meaningful-changes]
+    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -396,8 +467,8 @@ jobs:
 
   slop-check:
     name: 🧹 Slop Check
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, check-meaningful-changes]
+    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -422,6 +493,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p logs
+          # Use the script which has stricter exclusions (skips lockfiles) than the global meaningful check
           ./scripts/ci-check-slop.sh "${{ inputs.branch }}" 2>&1 | tee logs/slop-output.log
         continue-on-error: true
 
@@ -453,8 +525,8 @@ jobs:
 
   build-check:
     name: 🏗️ Build Check
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, check-meaningful-changes]
+    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -600,8 +672,8 @@ jobs:
 
   infra-tests:
     name: 🧪 Infrastructure Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
+    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -685,8 +757,8 @@ jobs:
 
   unit-tests:
     name: 🧪 Unit Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
+    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -765,8 +837,8 @@ jobs:
 
   component-tests:
     name: 🧪 Component Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
+    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -845,8 +917,8 @@ jobs:
 
   perf-tests:
     name: 🧪 Performance Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
+    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -940,8 +1012,8 @@ jobs:
 
   visual-tests:
     name: 🧪 Visual Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
+    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

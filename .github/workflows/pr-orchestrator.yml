@@ -111,11 +111,16 @@ jobs:
   pr-review:
     name: 🤖 Gemini AI Review
     needs: [filter, pr-quality]
-    # Requisite: Filter matches AND Quality Gate passed
+    # Requisite: Filter matches AND Quality Gate passed AND meaningful changes exist
+    # Note: If meaningful changes check fails (meaning trivial changes), pr-quality might be skipped or succeed depending on how it's called.
+    # But pr-quality jobs are conditioned. If they skip, pr-quality workflow result is success.
+    # However, we need to check the output from pr-quality if we exposed it.
+    # pr-quality is a reusable workflow. We need to add 'meaningful_changes' to its outputs.
     if: |
       always() &&
       needs.filter.outputs.should_review == 'true' &&
-      needs.pr-quality.result == 'success'
+      needs.pr-quality.result == 'success' &&
+      needs.pr-quality.outputs.meaningful_changes == 'true'
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       pr_quality_result: ${{ needs.pr-quality.result }}

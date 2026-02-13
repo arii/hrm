@@ -28,7 +28,8 @@ SKIP_CHECK=false
 
 if [ -f "changes.diff" ]; then
     echo "Analyzing changes with unidiff..."
-    if python3 scripts/check_diff.py changes.diff; then
+    # Pass explicit exclusions for slop check
+    if python3 scripts/check_diff.py changes.diff --exclude '*.lock' 'pnpm-lock.yaml' 'package-lock.json' 'yarn.lock' '*.svg' '*.png' '*.ico' '*.map' 'find_slop.sh'; then
         echo "Meaningful changes detected."
     else
         echo "✅ No meaningful changes detected (empty or excluded files only). Skipping slop check."
