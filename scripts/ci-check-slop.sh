@@ -7,9 +7,6 @@ BASE_BRANCH=${1:-leader}
 echo "Installing dependencies..."
 pip install unidiff > /dev/null 2>&1 || echo "Warning: Failed to install unidiff. Diff analysis might fail."
 
-echo "Fetching base branch origin/$BASE_BRANCH..."
-git fetch origin "$BASE_BRANCH" --depth=1 || echo "Warning: Could not fetch base branch."
-
 echo "Generating diff..."
 # specific to PR checks: find common ancestor or just diff against tip of base
 git diff origin/"$BASE_BRANCH"...HEAD > changes.diff || {
