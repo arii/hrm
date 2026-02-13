@@ -79,10 +79,19 @@ jobs:
       - name: Generate Diff and Check
         id: check
         shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           set -e
           BASE_BRANCH="${{ inputs.branch }}"
           echo "Checking diff against origin/$BASE_BRANCH..."
+
+          # Force meaningful=true for E2E bot tests to ensure checks run and don't confuse the test harness
+          if [[ "$HEAD_REF" == e2e-test-* ]]; then
+              echo "🤖 E2E Bot Test detected. Forcing meaningful=true."
+              echo "meaningful=true" >> $GITHUB_OUTPUT
+              exit 0
+          fi
 
           # Minimal fetch for the base branch tip
           git fetch origin "$BASE_BRANCH" --depth=1 || echo "Warning: Fetch failed, might fallback."
