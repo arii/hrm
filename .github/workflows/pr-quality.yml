@@ -36,6 +36,9 @@ on:
       GH_TOKEN:
         description: 'GitHub token (optional, uses github.token by default)'
         required: false
+      GEMINI_API_KEY:
+        description: 'Gemini API Key'
+        required: false
 permissions:
   contents: read
   checks: write
@@ -269,7 +272,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -414,10 +417,11 @@ jobs:
       - name: Run Slop Check
         id: slop
         shell: bash
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          set -o pipefail
-          mkdir -p logs
-          pnpm run lint:slop 2>&1 | tee logs/slop-output.log
+          chmod +x ./scripts/ci-check-slop.sh
+          ./scripts/ci-check-slop.sh
         continue-on-error: true
 
       - name: Report Slop Failure
