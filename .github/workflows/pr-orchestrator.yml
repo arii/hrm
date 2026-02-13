@@ -1,0 +1,128 @@
+name: Gemini Orchestrator
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR Number (optional, for manual trigger context)'
+        required: false
+        type: string
+      base_ref:
+        description: 'Base branch for path filtering'
+        required: false
+        type: string
+      head_ref:
+        description: 'Head branch for path filtering'
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+  actions: read
+
+jobs:
+  filter:
+    name: 🔍 Path Filter
+    runs-on: ubuntu-latest
+    outputs:
+      should_review: ${{ steps.changes.outputs.src }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        if: github.event_name == 'pull_request'
+        id: changes-pr
+        with:
+          filters: |
+            src:
+              - 'app/**'
+              - 'components/**'
+              - 'constants/**'
+              - 'context/**'
+              - 'hooks/**'
+              - 'lib/**'
+              - 'services/**'
+              - 'utils/**'
+              - 'types/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig.json'
+              - 'next.config.js'
+              - 'tailwind.config.ts'
+              - '.env*'
+              - '.github/**'
+              - 'scripts/**'
+
+      - uses: dorny/paths-filter@v3
+        if: github.event_name == 'workflow_dispatch'
+        id: changes-dispatch
+        with:
+          base: ${{ inputs.base_ref }}
+          ref: ${{ inputs.head_ref }}
+          filters: |
+            src:
+              - 'app/**'
+              - 'components/**'
+              - 'constants/**'
+              - 'context/**'
+              - 'hooks/**'
+              - 'lib/**'
+              - 'services/**'
+              - 'utils/**'
+              - 'types/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig.json'
+              - 'next.config.js'
+              - 'tailwind.config.ts'
+              - '.env*'
+              - '.github/**'
+              - 'scripts/**'
+
+      - name: Consolidate Changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "src=${{ steps.changes-pr.outputs.src }}" >> $GITHUB_OUTPUT
+          else
+            echo "src=${{ steps.changes-dispatch.outputs.src }}" >> $GITHUB_OUTPUT
+          fi
+
+  pr-quality:
+    name: 🛡️ Quality Gates
+    needs: [filter]
+    if: needs.filter.outputs.should_review == 'true'
+    uses: ./.github/workflows/pr-quality.yml
+    with:
+      has_changes: true
+      pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
+    secrets:
+      GH_TOKEN: ${{ secrets.ARI_PAT }}
+
+  pr-review:
+    name: 🤖 Gemini AI Review
+    needs: [filter, pr-quality]
+    # Requisite: Filter matches AND Quality Gate passed
+    if: |
+      always() &&
+      needs.filter.outputs.should_review == 'true' &&
+      needs.pr-quality.result == 'success'
+    uses: ./.github/workflows/reusable-gemini-review.yml
+    with:
+      pr_quality_result: ${{ needs.pr-quality.result }}
+      trigger_event: 'pull_request'
+      # Path filter handles the diff logic; we pass current HEAD for analysis
+      last_non_empty_commit: ${{ github.event.pull_request.head.sha || github.sha }}
+      pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
+      base_sha: ${{ github.event.pull_request.base.sha || inputs.base_ref }}
+      head_sha: ${{ github.event.pull_request.head.sha || inputs.head_ref }}
+    secrets: inherit
