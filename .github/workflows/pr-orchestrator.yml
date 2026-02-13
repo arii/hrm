@@ -100,11 +100,11 @@ jobs:
   pr-quality:
     name: 🛡️ Quality Gates
     needs: [filter]
-    if: needs.filter.outputs.should_review == 'true'
     uses: ./.github/workflows/pr-quality.yml
     with:
-      has_changes: true
+      has_changes: ${{ needs.filter.outputs.should_review }}
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
+      branch: ${{ github.base_ref || inputs.base_ref || 'leader' }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
 
