@@ -9,7 +9,8 @@ pip install unidiff > /dev/null 2>&1 || echo "Warning: Failed to install unidiff
 
 echo "Generating diff..."
 
-# Try to fetch the base branch tip to ensure we have a reference
+# Try to fetch the base branch tip to ensure we have a reference for diff generation
+# limiting fetch depth to 1 for performance
 git fetch origin "$BASE_BRANCH" --depth=1 > /dev/null 2>&1 || echo "Warning: Could not fetch base branch."
 
 # Attempt 1: Try finding the common ancestor (requires some history)
