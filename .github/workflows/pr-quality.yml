@@ -339,8 +339,8 @@ jobs:
 
   script-tests:
     name: 🧪 Script Tests
-    needs: [prepare-env, check-meaningful-changes]
-    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
+    needs: [prepare-env]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -385,8 +385,8 @@ jobs:
 
   knip-check:
     name: 🎒 Knip Check
-    needs: [prepare-env, check-meaningful-changes]
-    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
+    needs: [prepare-env]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -425,8 +425,8 @@ jobs:
 
   lint-check:
     name: 🔍 Lint Check
-    needs: [prepare-env, check-meaningful-changes]
-    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
+    needs: [prepare-env]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -534,8 +534,8 @@ jobs:
 
   build-check:
     name: 🏗️ Build Check
-    needs: [prepare-env, check-meaningful-changes]
-    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
+    needs: [prepare-env]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -681,8 +681,8 @@ jobs:
 
   infra-tests:
     name: 🧪 Infrastructure Tests
-    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
-    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -766,8 +766,8 @@ jobs:
 
   unit-tests:
     name: 🧪 Unit Tests
-    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
-    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -846,8 +846,8 @@ jobs:
 
   component-tests:
     name: 🧪 Component Tests
-    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
-    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -926,8 +926,8 @@ jobs:
 
   perf-tests:
     name: 🧪 Performance Tests
-    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
-    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -1021,8 +1021,8 @@ jobs:
 
   visual-tests:
     name: 🧪 Visual Tests
-    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
-    if: inputs.has_changes == 'true' && needs.check-meaningful-changes.outputs.meaningful == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check]
+    if: inputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
