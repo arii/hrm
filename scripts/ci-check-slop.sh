@@ -10,8 +10,17 @@ GEMINI_SLOP_LOG="$LOG_DIR/gemini-slop.md"
 TASK_FILE="$LOG_DIR/slop-task.txt"
 DIFF_FILE="$LOG_DIR/pr.diff"
 
-# Ensure log directory exists
+# Ensure log directory exists and initialize logs
 mkdir -p "$LOG_DIR"
+touch "$SLOP_OUTPUT_LOG"
+
+# Error Handler
+handle_error() {
+  echo "❌ Error: Script failed unexpectedly."
+  echo "### ❌ Slop Check Error" > "$SLOP_OUTPUT_LOG"
+  echo "The script failed unexpectedly. See raw logs for details." >> "$SLOP_OUTPUT_LOG"
+}
+trap 'handle_error' ERR
 
 # Determine Base Branch (default to 'leader' if not set)
 BASE_BRANCH="${GITHUB_BASE_REF:-leader}"
@@ -40,9 +49,15 @@ fi
 
 # 2. LOC Stats
 echo "Calculating LOC stats..."
-LOC_STATS=$(git diff --stat "origin/$BASE_BRANCH...HEAD")
+LOC_STATS=""
+if git diff --stat "origin/$BASE_BRANCH...HEAD" > /dev/null 2>&1; then
+  LOC_STATS=$(git diff --stat "origin/$BASE_BRANCH...HEAD")
+else
+  LOC_STATS="Unable to calculate stats (git diff failed)."
+fi
+
 if [ -z "$LOC_STATS" ]; then
-  LOC_STATS="No changes detected or unable to calculate stats."
+  LOC_STATS="No changes detected."
 fi
 echo "$LOC_STATS"
 
@@ -50,7 +65,11 @@ echo "$LOC_STATS"
 echo "Requesting Gemini feedback..."
 
 # Generate Diff (limit size to 100KB to be safe)
-git diff "origin/$BASE_BRANCH...HEAD" | head -c 100000 > "$DIFF_FILE"
+if git diff "origin/$BASE_BRANCH...HEAD" > /dev/null 2>&1; then
+  git diff "origin/$BASE_BRANCH...HEAD" | head -c 100000 > "$DIFF_FILE"
+else
+  echo "Diff generation failed." > "$DIFF_FILE"
+fi
 
 # Prepare Task Prompt
 cat > "$TASK_FILE" <<EOF
@@ -124,6 +143,9 @@ echo "Generating final report..."
 } > "$SLOP_OUTPUT_LOG"
 
 echo "Report generated at $SLOP_OUTPUT_LOG"
+
+# Remove trap so normal exit doesn't trigger error handler
+trap - ERR
 
 # Exit with the status of the automated check
 exit $SLOP_EXIT_CODE
