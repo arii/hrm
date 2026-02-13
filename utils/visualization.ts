@@ -9,7 +9,7 @@ import { WorkoutItem } from '@/types/workout'
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 import theme from '@/lib/theme'
 import { calculateHrZone } from '@/lib/hrm/zones'
-import { HrZoneName } from '@/lib/shared/hr-zones'
+import { HeartRateZone } from '@/lib/shared/hr-zones'
 
 // Define types for MUI color props
 type MuiColor =
@@ -32,54 +32,48 @@ type HrZoneUi = {
  * @deprecated Use HR_ZONE_VISUAL_CONFIG from lib/shared/hr-zones instead.
  * This map contains legacy Tailwind color classes and hex values.
  */
-export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
-  [HrZoneName.Idle]: {
+export const HR_ZONE_UI_PROPS_MAP: Record<HeartRateZone, HrZoneUi> = {
+  ZONE_0: {
     color: 'text-gray-400',
     progressColor: '#cccccc',
     bgColor: '#cccccc',
   },
-  [HrZoneName.Recovery]: {
+  ZONE_1: {
     color: 'text-cyan-400',
     progressColor: '#00ffff',
     bgColor: '#00ffff',
   },
-  [HrZoneName.WarmUp]: {
+  ZONE_2: {
     color: 'text-blue-400',
     progressColor: theme.palette.secondary.main,
     bgColor: theme.palette.secondary.main,
   },
-  [HrZoneName.FatBurn]: {
+  ZONE_3: {
     color: 'text-green-500',
     progressColor: theme.palette.success.main,
     bgColor: theme.palette.success.main,
   },
-  [HrZoneName.Aerobic]: {
-    // Aerobic is an alias for Fat Burn (Zone 3)
-    color: 'text-green-500',
-    progressColor: theme.palette.success.main,
-    bgColor: theme.palette.success.main,
-  },
-  [HrZoneName.Cardio]: {
+  ZONE_4: {
     color: 'text-yellow-500',
     progressColor: theme.palette.warning.dark,
     bgColor: theme.palette.warning.dark,
   },
-  [HrZoneName.Peak]: {
+  ZONE_5: {
     color: 'text-red-500',
     progressColor: theme.palette.primary.main,
     bgColor: theme.palette.primary.main,
   },
-  [HrZoneName.Max]: {
+  ZONE_6: {
     color: 'text-purple-600',
     progressColor: '#9333ea',
     bgColor: '#9C27B0',
   },
-  [HrZoneName.NoData]: {
+  NO_DATA: {
     color: 'text-gray-400',
     progressColor: '#9ca3af',
     bgColor: '#B0BEC5',
   },
-  [HrZoneName.Unknown]: {
+  UNKNOWN: {
     color: 'text-gray-400',
     progressColor: '#9ca3af',
     bgColor: '#9ca3af',
@@ -116,12 +110,11 @@ export const getHrZoneProps = (
   // 3. Determine text color - force white for specific zones for better contrast
   let textColor = theme.palette.getContrastText(zoneUiProps.bgColor)
   if (
-    zoneName === HrZoneName.NoData ||
-    zoneName === HrZoneName.Unknown ||
-    zoneName === HrZoneName.FatBurn ||
-    zoneName === HrZoneName.WarmUp ||
-    zoneName === HrZoneName.Aerobic ||
-    zoneName === HrZoneName.Cardio
+    zoneName === 'NO_DATA' ||
+    zoneName === 'UNKNOWN' ||
+    zoneName === 'ZONE_3' || // Aerobic
+    zoneName === 'ZONE_2' || // Easy
+    zoneName === 'ZONE_4' // Threshold
   ) {
     textColor = '#FFFFFF' // Force white text for better visibility on colored backgrounds
   }

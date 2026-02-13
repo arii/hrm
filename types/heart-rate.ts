@@ -1,7 +1,7 @@
-import type { HrZoneName, UserHrZones } from '../lib/shared/hr-zones'
+import type { HeartRateZone, UserHrZones } from '../lib/shared/hr-zones'
 
 export interface HrZone {
-  zoneName: HrZoneName
+  zoneName: HeartRateZone
   percentage: number
   bpm: number
 }
@@ -11,5 +11,5 @@ export type { UserHrZones }
 export interface HrData {
   bpm: number
   percentMax: number // 0-100
-  zone?: number
+  zone?: HeartRateZone
 }

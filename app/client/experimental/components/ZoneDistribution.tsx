@@ -1,51 +1,30 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  useTheme,
-  Palette,
-} from '@mui/material'
+import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { HrZoneName } from '@/lib/shared/hr-zones'
+import { HeartRateZone, HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
 import { formatDuration, isTestEnvironment } from '@/lib/utils'
 
 // --- Types ---
 interface ZoneDistributionProps {
-  timeInZones: Record<HrZoneName, number>
+  timeInZones: Record<HeartRateZone, number>
   totalDuration: number
 }
 
 // --- Constants & Helpers ---
 
-const ZONE_ORDER: HrZoneName[] = [
-  HrZoneName.Max,
-  HrZoneName.Peak,
-  HrZoneName.Cardio,
-  HrZoneName.FatBurn,
-  HrZoneName.Aerobic,
-  HrZoneName.WarmUp,
-  HrZoneName.Recovery,
-  HrZoneName.Idle,
-  HrZoneName.NoData,
-  HrZoneName.Unknown,
+const ZONE_ORDER: HeartRateZone[] = [
+  'ZONE_6',
+  'ZONE_5',
+  'ZONE_4',
+  'ZONE_3',
+  'ZONE_2',
+  'ZONE_1',
+  'ZONE_0',
+  'NO_DATA',
+  'UNKNOWN',
 ]
-
-const ZONE_COLOR_KEY_MAP: Partial<
-  Record<HrZoneName, keyof Palette['custom']['hrZones']>
-> = {
-  [HrZoneName.Max]: 'max',
-  [HrZoneName.Peak]: 'peak',
-  [HrZoneName.Cardio]: 'cardio',
-  [HrZoneName.FatBurn]: 'fatBurn',
-  [HrZoneName.WarmUp]: 'warmUp',
-  [HrZoneName.Recovery]: 'recovery',
-  [HrZoneName.Aerobic]: 'fatBurn', // Aerobic capacity is typically higher intensity (Zone 3/4 boundary), mapping to Green/FatBurn as fallback
-  [HrZoneName.Idle]: 'idle',
-}
 
 const DURATION_FORMAT_OPTS = { unit: 'seconds', format: 'MM:SS' } as const
 
@@ -60,15 +39,16 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
     // Excluding them would misleadingly show 100% adherence to active zones even if data was missing for 90% of the time.
     return Object.entries(timeInZones)
       .map(([zone, time]) => {
-        const zoneName = zone as HrZoneName
+        const zoneKey = zone as HeartRateZone
+        const config = HR_ZONE_CONFIG[zoneKey]
 
-        const color =
-          theme.palette.custom?.hrZones?.[
-            ZONE_COLOR_KEY_MAP[zoneName] || 'idle'
-          ] ?? theme.palette.grey[500]
+        // Use color from centralized config
+        const color = config?.color ?? theme.palette.grey[500]
+        const label = config?.label ?? zoneKey
 
         return {
-          name: zoneName,
+          name: label,
+          zoneKey: zoneKey, // For sorting
           value: time,
           percentage:
             totalDuration > 0
@@ -80,8 +60,8 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
       })
       .filter((item) => item.value > 0)
       .sort((a, b) => {
-        const idxA = ZONE_ORDER.indexOf(a.name)
-        const idxB = ZONE_ORDER.indexOf(b.name)
+        const idxA = ZONE_ORDER.indexOf(a.zoneKey)
+        const idxB = ZONE_ORDER.indexOf(b.zoneKey)
         return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB)
       })
   }, [timeInZones, totalDuration, theme])

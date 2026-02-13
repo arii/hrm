@@ -1,9 +1,5 @@
 // tests/lib/shared/hr-zones.test.ts
-import {
-  calculateMaxHr,
-  getUserHrZones,
-  HrZoneName,
-} from '@/lib/shared/hr-zones'
+import { calculateMaxHr, getUserHrZones } from '@/lib/shared/hr-zones'
 
 describe('Heart Rate Zone Calculations', () => {
   describe('calculateMaxHr', () => {
@@ -33,15 +29,6 @@ describe('Heart Rate Zone Calculations', () => {
       expect(zones.cardio.min).toBe(133) // 190 * 0.7
       expect(zones.peak.min).toBe(162) // 190 * 0.85
       expect(zones.max.min).toBe(181) // 190 * 0.95
-    })
-  })
-
-  describe('HrZoneName Enum', () => {
-    it('should have the correct string values', () => {
-      expect(HrZoneName.WarmUp).toBe('Warm Up')
-      expect(HrZoneName.FatBurn).toBe('Fat Burn')
-      expect(HrZoneName.Cardio).toBe('Cardio')
-      expect(HrZoneName.Peak).toBe('Peak')
     })
   })
 })

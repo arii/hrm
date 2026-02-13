@@ -159,7 +159,7 @@ describe('getActiveHrmData', () => {
 
     const user = result[0]
     expect(user.percentage).toBe(80)
-    expect(user.zone).toBe(4)
+    expect(user.zone).toBe('ZONE_4')
   })
 
   it('respects existing percentage and zone if provided', () => {
@@ -173,7 +173,7 @@ describe('getActiveHrmData', () => {
       lastUpdated: now,
       maxHr: 185,
       percentage: 90, // Override
-      zone: 5, // Override
+      zone: 'ZONE_5', // Override
     }
 
     const result = getActiveHrmData([mockHrm], [], now, {
@@ -182,6 +182,6 @@ describe('getActiveHrmData', () => {
 
     const user = result[0]
     expect(user.percentage).toBe(90)
-    expect(user.zone).toBe(5)
+    expect(user.zone).toBe('ZONE_5')
   })
 })

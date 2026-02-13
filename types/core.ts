@@ -4,6 +4,8 @@
  * @see /docs/decisions/0001-centralized-data-models.md
  */
 
+import { HeartRateZone } from '@/lib/shared/hr-zones'
+
 // =================================================================================================
 // User and Profile
 // =================================================================================================
@@ -104,7 +106,7 @@ export interface RawHrmStreamData {
   age?: number
   calories: number
   percentage?: number
-  zone?: number
+  zone?: HeartRateZone
   weightKg?: number
   updatedAt?: number
 }

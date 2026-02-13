@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { getHrZoneProps } from '../../../utils/visualization'
-import { HrZoneName } from '../../../lib/shared/hr-zones'
+import { HeartRateZone } from '../../../lib/shared/hr-zones'
 import theme from '../../../lib/theme'
 import { HR_ZONE_UI_PROPS_MAP } from '../../../utils/visualization'
 
@@ -10,31 +10,35 @@ describe('getHrZoneProps', () => {
   const maxHr = 200
 
   // Test cases for each HR Zone
-  const testCases = [
-    { zone: HrZoneName.NoData, hr: 0, expectedColor: '#FFFFFF' },
-    { zone: HrZoneName.Unknown, hr: 0, expectedColor: '#FFFFFF' },
+  const testCases: {
+    zone: HeartRateZone
+    hr: number
+    expectedColor?: string
+  }[] = [
+    { zone: 'NO_DATA', hr: 0, expectedColor: '#FFFFFF' },
+    { zone: 'UNKNOWN', hr: 0, expectedColor: '#FFFFFF' },
     {
-      zone: HrZoneName.Recovery,
-      hr: 100,
+      zone: 'ZONE_1', // Recovery
+      hr: 110, // 55%
       expectedColor: theme.palette.getContrastText(
-        HR_ZONE_UI_PROPS_MAP[HrZoneName.Recovery].bgColor
+        HR_ZONE_UI_PROPS_MAP['ZONE_1'].bgColor
       ),
     },
-    { zone: HrZoneName.WarmUp, hr: 120, expectedColor: '#FFFFFF' },
-    { zone: HrZoneName.Aerobic, hr: 140, expectedColor: '#FFFFFF' },
-    { zone: HrZoneName.Cardio, hr: 160, expectedColor: '#FFFFFF' },
+    { zone: 'ZONE_2', hr: 130, expectedColor: '#FFFFFF' }, // WarmUp (65%)
+    { zone: 'ZONE_3', hr: 150, expectedColor: '#FFFFFF' }, // Aerobic (75%)
+    { zone: 'ZONE_4', hr: 170, expectedColor: '#FFFFFF' }, // Threshold (85%)
     {
-      zone: HrZoneName.Peak,
-      hr: 180,
+      zone: 'ZONE_5', // Anaerobic
+      hr: 184, // 92%
       expectedColor: theme.palette.getContrastText(
-        HR_ZONE_UI_PROPS_MAP[HrZoneName.Peak].bgColor
+        HR_ZONE_UI_PROPS_MAP['ZONE_5'].bgColor
       ),
     },
     {
-      zone: HrZoneName.Max,
-      hr: 196,
+      zone: 'ZONE_6', // Max
+      hr: 196, // 98%
       expectedColor: theme.palette.getContrastText(
-        HR_ZONE_UI_PROPS_MAP[HrZoneName.Max].bgColor
+        HR_ZONE_UI_PROPS_MAP['ZONE_6'].bgColor
       ),
     },
   ]
@@ -42,9 +46,16 @@ describe('getHrZoneProps', () => {
   testCases.forEach(({ zone, hr, expectedColor }) => {
     it(`should return the correct text color for the ${zone} zone`, () => {
       const { textColor, zone: resultZone } = getHrZoneProps(hr, maxHr)
+
       // Only check the color if the zone matches, to account for boundary conditions
-      if (resultZone === zone) {
+      if (resultZone === zone && expectedColor) {
         expect(textColor).toBe(expectedColor)
+      } else if (resultZone !== zone) {
+        // Fail if zone calculation mismatches expectation
+        // except for 0 hr which returns NO_DATA but we might test UNKNOWN
+        if (hr > 0) {
+          expect(resultZone).toBe(zone)
+        }
       }
     })
   })

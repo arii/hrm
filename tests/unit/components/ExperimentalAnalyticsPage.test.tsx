@@ -1,7 +1,6 @@
 /**
  * @jest-environment jsdom
  */
-// tests/unit/components/ExperimentalAnalyticsPage.test.tsx
 import React from 'react'
 import { render } from '@testing-library/react'
 import ExperimentalAnalyticsPage from '@/app/client/experimental/components/ExperimentalAnalyticsPage'

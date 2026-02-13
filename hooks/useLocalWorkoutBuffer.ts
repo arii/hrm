@@ -1,18 +1,14 @@
 // hooks/useLocalWorkoutBuffer.ts
 
 import { useReducer, useCallback } from 'react'
-import {
-  HrZoneName,
-  calculateZoneFromMaxHr,
-  getHrZoneLabel,
-} from '../lib/shared/hr-zones'
+import { HeartRateZone, calculateZoneFromMaxHr } from '../lib/shared/hr-zones'
 import { HrDataPoint } from '../lib/workout-session-storage'
 
 // --- State, Actions, and Reducer ---
 
 export interface WorkoutBufferState {
   hrHistory: HrDataPoint[]
-  timeInZones: Record<HrZoneName, number>
+  timeInZones: Record<HeartRateZone, number>
   lastDataPointTime: number | null
 }
 
@@ -26,16 +22,15 @@ type WorkoutBufferAction =
 const initialState: WorkoutBufferState = {
   hrHistory: [],
   timeInZones: {
-    [HrZoneName.Idle]: 0,
-    [HrZoneName.Recovery]: 0,
-    [HrZoneName.WarmUp]: 0,
-    [HrZoneName.Aerobic]: 0,
-    [HrZoneName.Cardio]: 0,
-    [HrZoneName.Peak]: 0,
-    [HrZoneName.FatBurn]: 0,
-    [HrZoneName.Max]: 0,
-    [HrZoneName.NoData]: 0,
-    [HrZoneName.Unknown]: 0,
+    ZONE_0: 0,
+    ZONE_1: 0,
+    ZONE_2: 0,
+    ZONE_3: 0,
+    ZONE_4: 0,
+    ZONE_5: 0,
+    ZONE_6: 0,
+    NO_DATA: 0,
+    UNKNOWN: 0,
   },
   lastDataPointTime: null,
 }
@@ -54,10 +49,12 @@ function workoutBufferReducer(
           ...state,
           hrHistory: [{ time, hr }],
           lastDataPointTime: time,
+          timeInZones: state.timeInZones,
         }
       }
 
       const timeDeltaSeconds = (time - state.lastDataPointTime) / 1000
+      // Clone history before pushing
       const newHrHistory = [...state.hrHistory, { time, hr }]
 
       // Ignore invalid deltas for zone calculation, but still record the HR data point.
@@ -74,11 +71,10 @@ function workoutBufferReducer(
       if (!previousHrDataPoint) return state
 
       const { zone } = calculateZoneFromMaxHr(previousHrDataPoint.hr, maxHr)
-      const zoneName = getHrZoneLabel(zone) as HrZoneName
 
       const newTimeInZones = {
         ...state.timeInZones,
-        [zoneName]: (state.timeInZones[zoneName] || 0) + timeDeltaSeconds,
+        [zone]: (state.timeInZones[zone] || 0) + timeDeltaSeconds,
       }
 
       return {
