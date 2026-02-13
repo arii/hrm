@@ -7,7 +7,7 @@ import waitOn from 'wait-on'
 
 /**
  * Enhanced waitForPort using the `wait-on` package.
- * It's more robust and specifically designed for this purpose.
+ * This utility is specifically designed for waiting on network ports.
  */
 const waitForPort = async (
   port: number,
