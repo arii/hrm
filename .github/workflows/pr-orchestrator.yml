@@ -121,6 +121,14 @@ jobs:
       - name: Generate Diff and Run Script
         id: diff_check
         run: |
+          # Bypass check for E2E tests to ensure they always run the full quality gate
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [[ "$PR_TITLE" == *"E2E Test PR"* ]]; then
+            echo "::notice::Detected E2E Test PR. Forcing meaningful changes."
+            echo "is_meaningful=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
             HEAD_SHA="${{ github.event.pull_request.head.sha }}"
