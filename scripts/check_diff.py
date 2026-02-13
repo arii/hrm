@@ -16,7 +16,6 @@ EXCLUDED_PATTERNS = [
     '*.svg',
     '*.png',
     '*.ico',
-    '*.json',
     '*.map',
     'find_slop.sh'
 ]
