@@ -17,13 +17,10 @@ interface ZoneDistributionProps {
 // Map HR Zone labels to colors using canonical config
 const ZONE_COLOR_MAP: Record<string, string> = Object.values(
   HR_ZONE_VISUAL_CONFIG
-).reduce(
-  (acc, config) => ({ ...acc, [config.label]: config.color }),
-  {
-    [HrZoneName.NoData]: '#e0e0e0',
-    [HrZoneName.Unknown]: '#9e9e9e',
-  } as Record<string, string>
-)
+).reduce((acc, config) => ({ ...acc, [config.label]: config.color }), {
+  [HrZoneName.NoData]: '#e0e0e0',
+  [HrZoneName.Unknown]: '#9e9e9e',
+} as Record<string, string>)
 
 // Strict time formatter: "MM:SS" (e.g., "25:40")
 const formatTime = (seconds: number): string => {
@@ -41,29 +38,32 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 
   // Transform data for Recharts and list display
   const data = useMemo(() => {
-    return Object.entries(timeInZones)
-      .filter(
-        ([zone]) => zone !== HrZoneName.NoData && zone !== HrZoneName.Unknown
-      )
-      .map(([zone, time]) => {
-        const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
-        return {
-          name: zone,
-          value: time,
-          percentage: parseFloat(percentage.toFixed(1)),
-          formattedTime: formatTime(time),
-          color: ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
-        }
-      })
-      // Filter out zero values to keep the chart clean
-      .filter((item) => item.value > 0)
-      // Sort by intensity (Max to Idle/Recovery)
-      .sort((a, b) => {
-        const order = Object.values(HR_ZONE_VISUAL_CONFIG)
-          .map((c) => c.label as string)
-          .reverse()
-        return order.indexOf(a.name) - order.indexOf(b.name)
-      })
+    return (
+      Object.entries(timeInZones)
+        .filter(
+          ([zone]) => zone !== HrZoneName.NoData && zone !== HrZoneName.Unknown
+        )
+        .map(([zone, time]) => {
+          const percentage =
+            totalDuration > 0 ? (time / totalDuration) * 100 : 0
+          return {
+            name: zone,
+            value: time,
+            percentage: parseFloat(percentage.toFixed(1)),
+            formattedTime: formatTime(time),
+            color: ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
+          }
+        })
+        // Filter out zero values to keep the chart clean
+        .filter((item) => item.value > 0)
+        // Sort by intensity (Max to Idle/Recovery)
+        .sort((a, b) => {
+          const order = Object.values(HR_ZONE_VISUAL_CONFIG)
+            .map((c) => c.label as string)
+            .reverse()
+          return order.indexOf(a.name) - order.indexOf(b.name)
+        })
+    )
   }, [timeInZones, totalDuration, theme.palette.grey])
 
   if (data.length === 0) {
