@@ -4,7 +4,11 @@
 import React, { useMemo } from 'react'
 import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { HrZoneName, HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
+import {
+  HrZoneName,
+  HR_ZONE_VISUAL_CONFIG,
+  HR_ZONE_ORDER,
+} from '@/lib/shared/hr-zones'
 import { formatDuration } from '@/lib/utils'
 
 // --- Types ---
@@ -59,12 +63,10 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         // Filter out zero values to keep the chart clean
         .filter((item) => item.value > 0)
         // Sort by intensity (Max to Idle/Recovery)
-        .sort((a, b) => {
-          const order = Object.values(HR_ZONE_VISUAL_CONFIG)
-            .map((c) => c.label as string)
-            .reverse()
-          return order.indexOf(a.name) - order.indexOf(b.name)
-        })
+        .sort(
+          (a, b) =>
+            HR_ZONE_ORDER.indexOf(a.name) - HR_ZONE_ORDER.indexOf(b.name)
+        )
     )
   }, [timeInZones, totalDuration, theme.palette.grey])
 
@@ -90,6 +92,40 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 
   return (
     <Card elevation={3}>
+      {/* Visually hidden table for screen reader accessibility */}
+      <Box
+        component="table"
+        sx={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: 0,
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        <caption>Heart Rate Zone Distribution Data Table</caption>
+        <thead>
+          <tr>
+            <th scope="col">Zone</th>
+            <th scope="col">Duration</th>
+            <th scope="col">Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((item) => (
+            <tr key={`sr-row-${item.name}`}>
+              <td>{item.name}</td>
+              <td>{item.formattedTime}</td>
+              <td>{item.percentage}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </Box>
+
       <CardContent>
         <Typography variant="h6" component="h2" gutterBottom fontWeight="bold">
           Heart Rate Zone Distribution

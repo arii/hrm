@@ -60,15 +60,22 @@ describe('ZoneDistribution', () => {
       [HrZoneName.Cardio]: 10,
     }
     render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
-    expect(screen.getByText(HrZoneName.WarmUp)).toBeInTheDocument()
-    expect(screen.getByText('1:00')).toBeInTheDocument() // 60s formatted as MM:SS
-    expect(screen.getByText(/60%/)).toBeInTheDocument()
-    expect(screen.getByText(HrZoneName.FatBurn)).toBeInTheDocument()
-    expect(screen.getByText('0:30')).toBeInTheDocument() // 30s formatted as MM:SS
-    expect(screen.getByText(/30%/)).toBeInTheDocument()
-    expect(screen.getByText(HrZoneName.Cardio)).toBeInTheDocument()
-    expect(screen.getByText('0:10')).toBeInTheDocument() // 10s formatted as MM:SS
-    expect(screen.getByText(/10%/)).toBeInTheDocument()
+    // Multiple instances due to accessible table and visible legend
+    expect(
+      screen.getAllByText(HrZoneName.WarmUp).length
+    ).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('1:00').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/60%/).length).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.getAllByText(HrZoneName.FatBurn).length
+    ).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('0:30').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/30%/).length).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.getAllByText(HrZoneName.Cardio).length
+    ).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('0:10').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/10%/).length).toBeGreaterThanOrEqual(1)
   })
 
   it('does not display zones with no time', () => {
@@ -77,7 +84,9 @@ describe('ZoneDistribution', () => {
       [HrZoneName.WarmUp]: 100,
     }
     render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
-    expect(screen.getByText(HrZoneName.WarmUp)).toBeInTheDocument()
+    expect(
+      screen.getAllByText(HrZoneName.WarmUp).length
+    ).toBeGreaterThanOrEqual(1)
     expect(screen.queryByText(HrZoneName.FatBurn)).not.toBeInTheDocument()
   })
 
@@ -103,7 +112,7 @@ describe('ZoneDistribution', () => {
     }
     render(<ZoneDistribution timeInZones={timeInZones} totalDuration={120} />)
     expect(screen.getByText('Total')).toBeInTheDocument()
-    // 2:00 appears twice (center and legend). We verify at least one exists.
+    // Multiple instances due to center label, legend, and table
     const timeElements = screen.getAllByText('2:00')
     expect(timeElements.length).toBeGreaterThanOrEqual(1)
   })

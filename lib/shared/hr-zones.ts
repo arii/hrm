@@ -106,6 +106,13 @@ export const HR_ZONE_VISUAL_CONFIG = {
 } as const
 
 /**
+ * Pre-calculated order of zone labels for sorting purposes (highest intensity first).
+ */
+export const HR_ZONE_ORDER = Object.values(HR_ZONE_VISUAL_CONFIG)
+  .map((config) => config.label as string)
+  .reverse()
+
+/**
  * Calculates the percentage of max HR and the corresponding zone (0-5) based on Max HR.
  * @param currentHr - Current heart rate in BPM.
  * @param maxHr - Max Heart Rate.
