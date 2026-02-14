@@ -19,15 +19,6 @@ interface ZoneDistributionProps {
 
 // --- Constants & Helpers ---
 
-// Strict time formatter: "MM:SS" (e.g., "25:40")
-const formatTime = (seconds: number): string => {
-  return formatDuration(seconds, {
-    unit: 'seconds',
-    format: 'MM:SS',
-    noPadMinutes: true,
-  })
-}
-
 const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   timeInZones,
   totalDuration,
@@ -48,7 +39,11 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             name: zone,
             value: time,
             percentage: parseFloat(percentage.toFixed(1)),
-            formattedTime: formatTime(time),
+            formattedTime: formatDuration(time, {
+              unit: 'seconds',
+              format: 'MM:SS',
+              noPadMinutes: true,
+            }),
             color: HR_ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
           }
         })
@@ -135,8 +130,9 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             height={200}
             position="relative"
             role="img"
-            aria-label={`Donut chart showing heart rate zone distribution. Total duration: ${formatTime(
-              totalDuration
+            aria-label={`Donut chart showing heart rate zone distribution. Total duration: ${formatDuration(
+              totalDuration,
+              { unit: 'seconds', format: 'MM:SS', noPadMinutes: true }
             )}.`}
           >
             <ResponsiveContainer width="100%" height="100%">
@@ -157,7 +153,14 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                 </Pie>
                 <Tooltip
                   formatter={(value: number | undefined) =>
-                    [formatTime(value || 0), 'Duration'] as [string, string]
+                    [
+                      formatDuration(value || 0, {
+                        unit: 'seconds',
+                        format: 'MM:SS',
+                        noPadMinutes: true,
+                      }),
+                      'Duration',
+                    ] as [string, string]
                   }
                   contentStyle={{
                     borderRadius: theme.shape.borderRadius,
@@ -185,7 +188,11 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                 Total
               </Typography>
               <Typography variant="h6" fontWeight="bold">
-                {formatTime(totalDuration)}
+                {formatDuration(totalDuration, {
+                  unit: 'seconds',
+                  format: 'MM:SS',
+                  noPadMinutes: true,
+                })}
               </Typography>
             </Box>
           </Box>
