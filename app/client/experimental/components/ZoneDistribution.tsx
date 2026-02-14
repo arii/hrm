@@ -160,7 +160,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                     [formatTime(value || 0), 'Duration'] as [string, string]
                   }
                   contentStyle={{
-                    borderRadius: '8px',
+                    borderRadius: theme.shape.borderRadius,
                     border: 'none',
                     boxShadow: theme.shadows[3],
                   }}
