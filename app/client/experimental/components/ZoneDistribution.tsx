@@ -165,6 +165,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   contentStyle={{
                     borderRadius: theme.shape.borderRadius,
                     border: 'none',
+                    backgroundColor: theme.palette.background.paper,
                     boxShadow: theme.shadows[3],
                   }}
                 />
