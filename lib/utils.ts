@@ -35,9 +35,10 @@ export const formatDuration = (
   options: {
     unit: 'seconds' | 'milliseconds'
     format?: 'HH:MM:SS' | 'MM:SS'
+    noPadMinutes?: boolean
   }
 ): string => {
-  const { unit, format = 'HH:MM:SS' } = options
+  const { unit, format = 'HH:MM:SS', noPadMinutes = false } = options
 
   if (isNaN(duration) || duration < 0) {
     if (format === 'HH:MM:SS') {
@@ -50,9 +51,10 @@ export const formatDuration = (
     unit === 'milliseconds' ? Math.floor(duration / 1000) : duration
 
   if (format === 'MM:SS') {
-    const minutes = Math.floor(totalSeconds / 60)
-      .toString()
-      .padStart(2, '0')
+    const minsRaw = Math.floor(totalSeconds / 60)
+    const minutes = noPadMinutes
+      ? minsRaw.toString()
+      : minsRaw.toString().padStart(2, '0')
     const seconds = Math.floor(totalSeconds % 60)
       .toString()
       .padStart(2, '0')

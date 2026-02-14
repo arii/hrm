@@ -5,6 +5,7 @@ import React, { useMemo } from 'react'
 import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { HrZoneName, HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
+import { formatDuration } from '@/lib/utils'
 
 // --- Types ---
 interface ZoneDistributionProps {
@@ -24,10 +25,11 @@ const ZONE_COLOR_MAP: Record<string, string> = Object.values(
 
 // Strict time formatter: "MM:SS" (e.g., "25:40")
 const formatTime = (seconds: number): string => {
-  const safeSeconds = Math.max(0, Math.floor(seconds))
-  const mins = Math.floor(safeSeconds / 60)
-  const secs = safeSeconds % 60
-  return `${mins}:${secs.toString().padStart(2, '0')}`
+  return formatDuration(seconds, {
+    unit: 'seconds',
+    format: 'MM:SS',
+    noPadMinutes: true,
+  })
 }
 
 const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
@@ -104,6 +106,10 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             width={{ xs: '100%', sm: '50%' }}
             height={200}
             position="relative"
+            role="img"
+            aria-label={`Donut chart showing heart rate zone distribution. Total duration: ${formatTime(
+              totalDuration
+            )}.`}
           >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
