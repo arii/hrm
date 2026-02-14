@@ -6,7 +6,7 @@ import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import {
   HrZoneName,
-  HR_ZONE_VISUAL_CONFIG,
+  HR_ZONE_COLOR_MAP,
   HR_ZONE_ORDER,
 } from '@/lib/shared/hr-zones'
 import { formatDuration } from '@/lib/utils'
@@ -18,14 +18,6 @@ interface ZoneDistributionProps {
 }
 
 // --- Constants & Helpers ---
-
-// Map HR Zone labels to colors using canonical config
-const ZONE_COLOR_MAP: Record<string, string> = Object.values(
-  HR_ZONE_VISUAL_CONFIG
-).reduce((acc, config) => ({ ...acc, [config.label]: config.color }), {
-  [HrZoneName.NoData]: '#e0e0e0',
-  [HrZoneName.Unknown]: '#9e9e9e',
-} as Record<string, string>)
 
 // Strict time formatter: "MM:SS" (e.g., "25:40")
 const formatTime = (seconds: number): string => {
@@ -57,7 +49,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             value: time,
             percentage: parseFloat(percentage.toFixed(1)),
             formattedTime: formatTime(time),
-            color: ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
+            color: HR_ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
           }
         })
         // Filter out zero values to keep the chart clean
