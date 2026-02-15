@@ -115,16 +115,6 @@ export const HR_ZONE_ORDER = (
 ).sort((a, b) => HR_ZONE_CONFIG[b].zoneNumber - HR_ZONE_CONFIG[a].zoneNumber)
 
 /**
- * Pre-calculated map of zone labels to their corresponding hex colors.
- */
-export const HR_ZONE_COLOR_MAP: Record<string, string> = Object.entries(
-  HR_ZONE_CONFIG
-).reduce((acc, [_, config]) => ({ ...acc, [config.label]: config.color }), {
-  'No Data': '#e0e0e0',
-  Unknown: '#9e9e9e',
-} as Record<string, string>)
-
-/**
  * Calculates the percentage of max HR and the corresponding zone (0-6) based on Max HR.
  * @param currentHr - Current heart rate in BPM.
  * @param maxHr - Max Heart Rate.
@@ -175,20 +165,6 @@ export const calculateHeartRateZone = (
     percentage,
     bpm: currentHr,
   }
-}
-
-/**
- * Calculates the percentage of max HR and the corresponding zone info.
- * @param currentHr - Current heart rate in BPM.
- * @param age - User's age.
- * @returns An object containing the calculated percentage and zone number.
- */
-export const calculateHrZoneInfo = (
-  currentHr: number,
-  age?: number | string | null
-): { percentage: number; zone: number } => {
-  const maxHr = calculateMaxHr(age)
-  return calculateZoneFromMaxHr(currentHr, maxHr)
 }
 
 /**
