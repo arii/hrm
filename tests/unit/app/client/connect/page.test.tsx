@@ -56,6 +56,7 @@ jest.mock('@/hooks/useWorkoutSessionManager', () => ({
 }))
 
 jest.mock('next-auth/react', () => ({
+  __esModule: true,
   useSession: jest.fn(() => ({ data: null, status: 'unauthenticated' })),
   signIn: jest.fn(),
   signOut: jest.fn(),

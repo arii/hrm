@@ -92,6 +92,7 @@ describe('authOptions.callbacks.jwt', () => {
       accessTokenExpires: Date.now() - 1000, // Expired 1 second ago
       providerAccountId: 'spotify-user-id',
       scope: 'user-read-private user-read-email',
+      provider: 'spotify',
     }
     const refreshedTokens = {
       access_token: 'refreshed-access-token',
@@ -128,6 +129,7 @@ describe('authOptions.callbacks.jwt', () => {
       accessToken: 'expired-access-token',
       refreshToken: 'current-refresh-token',
       accessTokenExpires: Date.now() - 1000,
+      provider: 'spotify',
     }
 
     ;(spotify.refreshSpotifyToken as jest.Mock).mockRejectedValue(
@@ -147,6 +149,7 @@ describe('authOptions.callbacks.jwt', () => {
       refreshToken: 'current-refresh-token',
       accessTokenExpires: Date.now() - 1000,
       scope: 'old-scope',
+      provider: 'spotify',
     }
     const refreshedTokens = {
       access_token: 'refreshed-access-token',
@@ -183,6 +186,7 @@ describe('authOptions.callbacks.session', () => {
       accessToken: 'test-access-token',
       error: 'TestError',
       scope: 'test-scope1 test-scope2',
+      provider: 'spotify',
     }
     const session = {
       expires: '1',
