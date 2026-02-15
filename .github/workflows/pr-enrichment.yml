@@ -67,12 +67,15 @@ jobs:
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
           # Fetch PR details
-          PR_DATA=$(gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author --jq '{title: .title, body: .body, base_ref: .baseRefName, head_ref: .headRefName, base_sha: .baseRefOid, head_sha: .headRefOid, author: .author.login}')
+          PR_DATA=$(gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '{title: .title, body: .body, base_ref: .baseRefName, head_ref: .headRefName, base_sha: .baseRefOid, head_sha: .headRefOid, author: .author.login, additions: .additions, deletions: .deletions, file_count: .changedFiles}')
 
           echo "PR_TITLE=$(echo "$PR_DATA" | jq -r .title)" >> $GITHUB_ENV
           echo "PR_AUTHOR=$(echo "$PR_DATA" | jq -r .author)" >> $GITHUB_ENV
           echo "BASE_SHA=$(echo "$PR_DATA" | jq -r .base_sha)" >> $GITHUB_ENV
           echo "HEAD_SHA=$(echo "$PR_DATA" | jq -r .head_sha)" >> $GITHUB_ENV
+          echo "ADDITIONS_API=$(echo "$PR_DATA" | jq -r '.additions // 0')" >> $GITHUB_ENV
+          echo "DELETIONS_API=$(echo "$PR_DATA" | jq -r '.deletions // 0')" >> $GITHUB_ENV
+          echo "FILE_COUNT_API=$(echo "$PR_DATA" | jq -r '.file_count // 0')" >> $GITHUB_ENV
 
           # Securely write multiline body to GITHUB_ENV
           echo "PR_BODY<<EOF" >> $GITHUB_ENV
@@ -135,15 +138,35 @@ jobs:
           echo "CATEGORIES=${CATEGORIES[*]}" >> $GITHUB_ENV
 
           # Count file changes
-          FILE_COUNT=$(echo "$FILES" | wc -l)
+          # Use grep -c . to avoid counting an empty string as 1 line
+          FILE_COUNT_CALC=$(echo "$FILES" | grep -c . || echo "0")
+          FILE_COUNT="${FILE_COUNT_API:-$FILE_COUNT_CALC}"
+          # If API says 0 but we found files, trust the file list
+          if [ "$FILE_COUNT" -eq 0 ] && [ "$FILE_COUNT_CALC" -gt 0 ]; then
+            FILE_COUNT="$FILE_COUNT_CALC"
+          fi
           echo "FILE_COUNT=$FILE_COUNT" >> $GITHUB_ENV
 
           # Get lines changed
           # Using env vars set in Setup PR Context
-          ADDITIONS=$(git diff --numstat "$BASE_SHA" "$HEAD_SHA" | awk '{sum+=$1} END {print sum}')
-          DELETIONS=$(git diff --numstat "$BASE_SHA" "$HEAD_SHA" | awk '{sum+=$2} END {print sum}')
-          echo "ADDITIONS=${ADDITIONS:-0}" >> $GITHUB_ENV
-          echo "DELETIONS=${DELETIONS:-0}" >> $GITHUB_ENV
+          # Fetch base branch tip to ensure it is available for diffing
+          git fetch origin "$BASE_SHA" --depth=1 || true
+
+          # Use triple-dot diff to get changes from the common ancestor
+          ADDITIONS_GIT=$(git diff --numstat "$BASE_SHA...$HEAD_SHA" | awk '{sum+=$1} END {print sum+0}')
+          DELETIONS_GIT=$(git diff --numstat "$BASE_SHA...$HEAD_SHA" | awk '{sum+=$2} END {print sum+0}')
+
+          # Prioritize API-provided metrics, fallback to git diff if API returns zero but git shows changes
+          ADDITIONS="${ADDITIONS_API:-0}"
+          DELETIONS="${DELETIONS_API:-0}"
+
+          if [ "$ADDITIONS" -eq 0 ] && [ "$DELETIONS" -eq 0 ] && ([ "$ADDITIONS_GIT" -gt 0 ] || [ "$DELETIONS_GIT" -gt 0 ]); then
+            ADDITIONS="$ADDITIONS_GIT"
+            DELETIONS="$DELETIONS_GIT"
+          fi
+
+          echo "ADDITIONS=$ADDITIONS" >> $GITHUB_ENV
+          echo "DELETIONS=$DELETIONS" >> $GITHUB_ENV
 
           # Determine change scope
           if [ "$FILE_COUNT" -le 3 ] && [ "${ADDITIONS:-0}" -le 100 ]; then
