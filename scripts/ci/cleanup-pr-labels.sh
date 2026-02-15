@@ -11,7 +11,7 @@ if [ -z "$PR_NUMBER" ]; then
   exit 1
 fi
 
-CONFIG_FILE=".github/automated-labels.yml"
+CONFIG_FILE=".github/automated-labels.json"
 
 if [ ! -f "$CONFIG_FILE" ]; then
   echo "Error: Configuration file $CONFIG_FILE not found."
@@ -29,17 +29,17 @@ while IFS= read -r label; do
   if [ -n "$label" ] && echo "$CURRENT_LABELS" | grep -qx "$label"; then
     LABELS_TO_REMOVE+=("$label")
   fi
-done < <(yq -r '.review[]' "$CONFIG_FILE")
+done < <(jq -r '.review[]' "$CONFIG_FILE")
 
 # 2. Check Obsolete Labels
 while IFS= read -r label; do
   if [ -n "$label" ] && echo "$CURRENT_LABELS" | grep -qx "$label"; then
     LABELS_TO_REMOVE+=("$label")
   fi
-done < <(yq -r '.obsolete[]' "$CONFIG_FILE")
+done < <(jq -r '.obsolete[]' "$CONFIG_FILE")
 
 # 3. Check Scope Labels
-SCOPE_PREFIX=$(yq -r '.scope_prefix' "$CONFIG_FILE")
+SCOPE_PREFIX=$(jq -r '.scope_prefix' "$CONFIG_FILE")
 while IFS= read -r label; do
   if [[ "$label" == "$SCOPE_PREFIX"* ]]; then
     LABELS_TO_REMOVE+=("$label")

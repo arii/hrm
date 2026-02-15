@@ -13,7 +13,7 @@ fi
 # Ensure all managed labels exist in the repository
 # =================================================================
 echo "Ensuring all managed labels exist..."
-yq -r '.[] | .name + "|" + .description + "|" + .color' .github/pr-labels.yml | while IFS='|' read -r name description color; do
+jq -r '.[] | .name + "|" + .description + "|" + .color' .github/pr-labels.json | while IFS='|' read -r name description color; do
   # The `gh label create` command will fail if the label already exists.
   # We append `|| true` to the command to ignore the error and continue the script.
   gh label create "$name" --description "$description" --color "$color" || true
@@ -31,8 +31,8 @@ else
   exit 0
 fi
 
-# Get the list of managed labels from the pr-labels.yml file
-MANAGED_LABELS=$(yq -r '.[].name' .github/pr-labels.yml)
+# Get the list of managed labels from the pr-labels.json file
+MANAGED_LABELS=$(jq -r '.[].name' .github/pr-labels.json)
 
 # Get current labels on the PR
 CURRENT_LABELS=$(gh pr view $PR_NUMBER --json labels --jq '.labels[].name')

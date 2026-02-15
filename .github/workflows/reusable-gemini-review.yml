@@ -401,12 +401,6 @@ jobs:
           name: review-result
           path: .
 
-      - name: Install yq
-        uses: mikefarah/yq@v4
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
       - name: Manage Labels
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
