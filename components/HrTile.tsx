@@ -11,7 +11,7 @@ import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
 
 export interface HrTileProps {
-  name: string
+  name?: string
   bpm?: number | null
   value?: number | null
   percentMax?: number
@@ -140,7 +140,7 @@ const DataTier = ({
  */
 >>>>>>> 82a421b9 (refactor: consolidate redundant hooks and components)
 const HrTile = ({
-  name,
+  name = 'User',
   bpm,
   value,
   percentMax,
@@ -156,7 +156,8 @@ const HrTile = ({
 
   // Support both property naming conventions (bpm/value and percentMax/percentage)
   const displayBpm = value !== undefined ? value : (bpm ?? null)
-  const displayPercent = percentage !== undefined ? percentage : (percentMax ?? 0)
+  const displayPercent =
+    percentage !== undefined ? percentage : (percentMax ?? 0)
 
   const zoneConfig =
     HR_ZONE_VISUAL_CONFIG[(zone ?? 0) as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
