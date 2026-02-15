@@ -65,7 +65,7 @@ jobs:
           # inputs.branch defaults to 'leader'
           BASE="origin/${{ inputs.branch }}"
           echo "Fetching $BASE..."
-          git fetch origin "${{ inputs.branch }}" --depth=1
+          git fetch origin "${{ inputs.branch }}"
 
           # Check for changes ignoring whitespace (-w) and excluding specific files
           # Returns 1 (failure) if differences exist, 0 if no differences.
