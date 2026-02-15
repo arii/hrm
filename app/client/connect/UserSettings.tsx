@@ -79,7 +79,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   }
 
   return (
-    <Stack spacing={2} sx={{ mb: 3 }}>
+    <Stack spacing={2} sx={{ mb: 3 }} data-testid="user-settings-form">
       <TextField
         fullWidth
         label="Your Name"
