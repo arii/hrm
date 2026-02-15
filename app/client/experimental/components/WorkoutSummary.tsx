@@ -23,16 +23,7 @@ const WorkoutSummary = ({
   const theme = useTheme()
 
   // Map status to theme colors defined in theme.ts
-  // Fallback to local map if theme.palette.custom is missing
-  const statusColorMap: Record<string, string> = {
-    running: '#22c55e', // Green
-    paused: '#f59e0b', // Amber
-    finished: '#3b82f6', // Blue
-    idle: '#6b7280', // Grey
-  }
-
-  const statusColor =
-    theme.palette.custom[status] || statusColorMap[status] || '#ccc'
+  const statusColor = theme.palette.custom[status] || '#ccc'
 
   return (
     <Card elevation={2} data-testid="workout-summary">

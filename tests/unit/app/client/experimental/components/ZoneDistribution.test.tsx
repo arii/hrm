@@ -46,17 +46,24 @@ describe('ZoneDistribution', () => {
     }
     render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
 
-    expect(screen.getByText(HrZoneName.WarmUp)).toBeInTheDocument()
-    expect(screen.getByText(/1m 0s/)).toBeInTheDocument()
-    expect(screen.getByText(/60\.0%/)).toBeInTheDocument()
+    // Check for zone names (multiple instances due to hidden table)
+    expect(
+      screen.getAllByText(HrZoneName.WarmUp).length
+    ).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/1m 0s/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/60\.0%/).length).toBeGreaterThanOrEqual(1)
 
-    expect(screen.getByText(HrZoneName.FatBurn)).toBeInTheDocument()
-    expect(screen.getByText(/0m 30s/)).toBeInTheDocument()
-    expect(screen.getByText(/30\.0%/)).toBeInTheDocument()
+    expect(
+      screen.getAllByText(HrZoneName.FatBurn).length
+    ).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/0m 30s/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/30\.0%/).length).toBeGreaterThanOrEqual(1)
 
-    expect(screen.getByText(HrZoneName.Cardio)).toBeInTheDocument()
-    expect(screen.getByText(/0m 10s/)).toBeInTheDocument()
-    expect(screen.getByText(/10\.0%/)).toBeInTheDocument()
+    expect(
+      screen.getAllByText(HrZoneName.Cardio).length
+    ).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/0m 10s/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/10\.0%/).length).toBeGreaterThanOrEqual(1)
   })
 
   it('does not display zones with less than 1% time', () => {
@@ -66,7 +73,9 @@ describe('ZoneDistribution', () => {
       [HrZoneName.FatBurn]: 0.5, // 0.5% of 100
     }
     render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
-    expect(screen.getByText(HrZoneName.WarmUp)).toBeInTheDocument()
+    expect(
+      screen.getAllByText(HrZoneName.WarmUp).length
+    ).toBeGreaterThanOrEqual(1)
     expect(screen.queryByText(HrZoneName.FatBurn)).not.toBeInTheDocument()
   })
 
