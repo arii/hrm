@@ -1,4 +1,4 @@
-// File: utils/visualization.ts (MUI Visualization Utilities - Final Fix)
+// File: utils/visualization.ts
 /**
  * Utility functions to map numerical and state data to MUI aesthetic properties.
  * This ensures clean separation of business logic from React component rendering.
@@ -7,9 +7,8 @@ import { TimerData } from '@/types/websocket'
 import { WorkoutData } from '@/types/index'
 import { WorkoutItem } from '@/types/workout'
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
-import theme from '@/lib/theme'
 import { calculateHrZone } from '@/lib/hrm/zones'
-import { HeartRateZone } from '@/lib/shared/hr-zones'
+import { HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
 
 // Define types for MUI color props
 type MuiColor =
@@ -20,60 +19,10 @@ type MuiColor =
   | 'info'
   | 'success'
 
-// --- Constants ---
-// UI properties for each heart rate zone, mapped for efficient O(1) lookup.
-type HrZoneUi = {
-  color: string
-  progressColor: string
-  bgColor: string
-}
-
-/**
- * @deprecated Use HR_ZONE_VISUAL_CONFIG from lib/shared/hr-zones instead.
- * This map contains legacy Tailwind color classes and hex values.
- */
-export const HR_ZONE_UI_PROPS_MAP: Record<HeartRateZone, HrZoneUi> = {
-  ZONE_0: {
-    color: 'text-gray-400',
-    progressColor: '#cccccc',
-    bgColor: '#cccccc',
-  },
-  ZONE_1: {
-    color: 'text-cyan-400',
-    progressColor: '#00ffff',
-    bgColor: '#00ffff',
-  },
-  ZONE_2: {
-    color: 'text-blue-400',
-    progressColor: theme.palette.secondary.main,
-    bgColor: theme.palette.secondary.main,
-  },
-  ZONE_3: {
-    color: 'text-green-500',
-    progressColor: theme.palette.success.main,
-    bgColor: theme.palette.success.main,
-  },
-  ZONE_4: {
-    color: 'text-yellow-500',
-    progressColor: theme.palette.warning.dark,
-    bgColor: theme.palette.warning.dark,
-  },
-  ZONE_5: {
-    color: 'text-red-500',
-    progressColor: theme.palette.primary.main,
-    bgColor: theme.palette.primary.main,
-  },
-  ZONE_6: {
-    color: 'text-purple-600',
-    progressColor: '#9333ea',
-    bgColor: '#9C27B0',
-  },
-}
-
 export interface HrZoneProps {
   zone: string
   percentage: number
-  color: string // Tailwind text color class
+  color: string // Legacy: Hex color or Tailwind class
   progressColor: string // Hex color for MUI components
   backgroundColor: string // Hex color for background
   textColor: string
@@ -82,10 +31,7 @@ export interface HrZoneProps {
 
 /**
  * Calculates the current zone, percentage of max HR, and returns MUI-ready props.
- * This function now composes the core business logic from `lib/hrm` with
- * presentation-specific properties defined in this file.
- *
- * @deprecated Use HR_ZONE_VISUAL_CONFIG and manual zone calculation instead.
+ * Leveraging the centralized HR_ZONE_CONFIG for consistency.
  */
 export const getHrZoneProps = (
   currentHr: number,
@@ -94,28 +40,17 @@ export const getHrZoneProps = (
   // 1. Get the core HR data from the domain module
   const { zoneName, percentage, bpm } = calculateHrZone(currentHr, maxHr)
 
-  // 2. Look up the UI properties from the map
-  const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
+  // 2. Look up the UI properties from the centralized config
+  const zoneConfig = HR_ZONE_CONFIG[zoneName]
 
-  // 3. Determine text color - force white for specific zones for better contrast
-  let textColor = theme.palette.getContrastText(zoneUiProps.bgColor)
-  if (
-    zoneName === 'ZONE_0' || // Idle/No Data
-    zoneName === 'ZONE_2' || // Warm Up
-    zoneName === 'ZONE_3' || // Fat Burn
-    zoneName === 'ZONE_4' // Cardio
-  ) {
-    textColor = '#FFFFFF' // Force white text for better visibility on colored backgrounds
-  }
-
-  // 4. Combine domain data with UI properties
+  // 3. Combine domain data with UI properties
   return {
-    zone: zoneName, // The enum member is a string at runtime
+    zone: zoneName,
     percentage: percentage,
-    color: zoneUiProps.color,
-    progressColor: zoneUiProps.progressColor,
-    backgroundColor: zoneUiProps.bgColor,
-    textColor: textColor,
+    color: zoneConfig.color,
+    progressColor: zoneConfig.color,
+    backgroundColor: zoneConfig.color,
+    textColor: zoneConfig.textColor,
     bpm: bpm,
   }
 }

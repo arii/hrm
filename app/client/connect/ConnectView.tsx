@@ -20,6 +20,7 @@ import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
+import { HeartRateZone } from '../../../lib/shared/hr-zones'
 import {
   ToggleButtonGroup,
   ToggleButton,
@@ -64,7 +65,7 @@ interface ConnectViewProps {
   signalPeriodMs: number
   currentHR: number
   hrZoneProps: { percentage: number }
-  zone: number
+  zone: HeartRateZone
   connectionStatus: string
   bluetoothConnected: boolean
   hasStarted: boolean

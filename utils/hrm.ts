@@ -3,7 +3,7 @@ import {
   HRM_STALE_THRESHOLD_MS,
   HRM_WARNING_THRESHOLD_MS,
 } from '@/utils/constants'
-import { calculateHrZoneInfo } from '@/lib/shared/hr-zones'
+import { calculateHrZoneInfo, HeartRateZone } from '@/lib/shared/hr-zones'
 
 interface GetActiveHrmDataOptions {
   includeZeroValues?: boolean
@@ -49,6 +49,7 @@ export const getActiveHrmData = (
 
       // Pre-calculate HR zone info if not already present
       const { percentage, zone } = calculateHrZoneInfo(user.value, user.age)
+      const heartRateZone = `ZONE_${zone}` as HeartRateZone
 
       return {
         ...user,
@@ -56,7 +57,7 @@ export const getActiveHrmData = (
         alertMessage: matchingAlert?.message,
         isDataStale,
         percentage: user.percentage ?? percentage,
-        zone: user.zone ?? zone,
+        zone: user.zone ?? heartRateZone,
       }
     })
 }

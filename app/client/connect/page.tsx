@@ -10,7 +10,7 @@ import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-import { calculateHrZoneInfo } from '@/lib/shared/hr-zones'
+import { calculateHrZoneInfo, HeartRateZone } from '@/lib/shared/hr-zones'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -212,6 +212,7 @@ export default function ConnectPage() {
   ])
 
   const { percentage, zone } = calculateHrZoneInfo(currentHR, userAge)
+  const heartRateZone = `ZONE_${zone}` as HeartRateZone
 
   useEffect(() => {
     throttledSend({
@@ -220,10 +221,10 @@ export default function ConnectPage() {
         value: currentHR,
         calories: calories,
         percentage,
-        zone,
+        zone: heartRateZone,
       },
     })
-  }, [currentHR, calories, percentage, zone, throttledSend])
+  }, [currentHR, calories, percentage, heartRateZone, throttledSend])
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
@@ -278,7 +279,7 @@ export default function ConnectPage() {
       hrZoneProps={{
         percentage,
       }}
-      zone={zone}
+      zone={heartRateZone}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}

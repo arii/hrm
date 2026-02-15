@@ -7,8 +7,8 @@ import {
   HrDataPoint,
 } from '../lib/workout-session-storage'
 import {
-  HrZoneName,
-  getHrZoneLabel,
+  HeartRateZone,
+  HR_ZONE_ORDER,
   calculateZoneFromMaxHr,
 } from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
@@ -54,8 +54,8 @@ function sessionManagerReducer(
       const { age, weight, maxHr: providedMaxHr } = action.payload
       const maxHr = providedMaxHr || calculateMaxHr(age)
       const initialTimeInZones = Object.fromEntries(
-        Object.values(HrZoneName).map((zone) => [zone, 0])
-      ) as Record<HrZoneName, number>
+        HR_ZONE_ORDER.map((zone) => [zone, 0])
+      ) as Record<HeartRateZone, number>
 
       const newSession: WorkoutSessionData = {
         sessionId: uuidv4(),
@@ -117,7 +117,7 @@ function sessionManagerReducer(
         action.payload.hr,
         state.session.userSettings.maxHr
       )
-      const zoneName = getHrZoneLabel(zone) as HrZoneName
+      const zoneName = `ZONE_${zone}` as HeartRateZone
       const newTimeInZones = {
         ...state.session.timeInZones,
         [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,

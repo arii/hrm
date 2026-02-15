@@ -8,7 +8,7 @@ import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
+import { HR_ZONE_CONFIG, HeartRateZone } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 
@@ -134,8 +134,7 @@ const HrTile = ({
   const theme = useTheme()
 
   const zoneConfig =
-    HR_ZONE_VISUAL_CONFIG[(zone ?? 0) as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
-    HR_ZONE_VISUAL_CONFIG[0]
+    HR_ZONE_CONFIG[(zone ?? 'ZONE_0') as HeartRateZone] || HR_ZONE_CONFIG.ZONE_0
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -154,7 +153,7 @@ const HrTile = ({
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
           isConnected ? `${bpm} beats per minute` : 'Disconnected'
-        }, ${percentMax}% of maximum, Zone ${zone ?? 0}: ${zoneConfig.label}`}
+        }, ${percentMax}% of maximum, Zone ${zoneConfig.zoneNumber}: ${zoneConfig.label}`}
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,

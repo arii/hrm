@@ -9,6 +9,7 @@ export const MAX_HR_DEFAULT = 185
 
 /**
  * Enum for HR Zone names to provide compile-time safety and prevent string mismatches.
+ * @deprecated Use HeartRateZone string literal type and HR_ZONE_CONFIG for labels.
  */
 export enum HrZoneName {
   Idle = 'Idle',
@@ -38,16 +39,69 @@ export type HeartRateZone =
   | 'ZONE_6'
 
 /**
- * Thresholds for HR zones (percentage of Max HR).
+ * Canonical configuration for heart rate zones.
+ * Single source of truth for labels, thresholds, and colors.
  */
-export const ZONE_THRESHOLDS = {
-  ZONE_6: 95,
-  ZONE_5: 90,
-  ZONE_4: 80,
-  ZONE_3: 70,
-  ZONE_2: 60,
-  ZONE_1: 50,
-} as const
+export const HR_ZONE_CONFIG: Record<
+  HeartRateZone,
+  {
+    label: string
+    threshold: number
+    color: string
+    textColor: string
+    zoneNumber: number
+  }
+> = {
+  ZONE_6: {
+    label: 'Max',
+    threshold: 95,
+    color: HR_COLORS.ZONE_6_MAX,
+    textColor: HR_COLORS.TEXT_LIGHT,
+    zoneNumber: 6,
+  },
+  ZONE_5: {
+    label: 'Peak',
+    threshold: 90,
+    color: HR_COLORS.ZONE_5_PEAK,
+    textColor: HR_COLORS.TEXT_LIGHT,
+    zoneNumber: 5,
+  },
+  ZONE_4: {
+    label: 'Cardio',
+    threshold: 80,
+    color: HR_COLORS.ZONE_4_CARDIO,
+    textColor: HR_COLORS.TEXT_LIGHT,
+    zoneNumber: 4,
+  },
+  ZONE_3: {
+    label: 'Fat Burn',
+    threshold: 70,
+    color: HR_COLORS.ZONE_3_FATBURN,
+    textColor: HR_COLORS.TEXT_LIGHT,
+    zoneNumber: 3,
+  },
+  ZONE_2: {
+    label: 'Warm Up',
+    threshold: 60,
+    color: HR_COLORS.ZONE_2_WARMUP,
+    textColor: HR_COLORS.TEXT_LIGHT,
+    zoneNumber: 2,
+  },
+  ZONE_1: {
+    label: 'Recovery',
+    threshold: 50,
+    color: HR_COLORS.ZONE_1_RECOVERY,
+    textColor: HR_COLORS.TEXT_DARK,
+    zoneNumber: 1,
+  },
+  ZONE_0: {
+    label: 'Idle',
+    threshold: 0,
+    color: HR_COLORS.ZONE_0_IDLE,
+    textColor: HR_COLORS.TEXT_DARK,
+    zoneNumber: 0,
+  },
+}
 
 /**
  * Estimates a user's maximum heart rate using the Haskell & Fox formula (220 - age).
@@ -72,74 +126,27 @@ export const calculateMaxHr = (age?: number | string | null): number => {
 }
 
 /**
- * Canonical visual configuration for heart rate zones.
- * Shared between client (Connect/Mock) and Dashboard (HrTile).
- * color: Background color for the zone.
- * textColor: Text color for optimal contrast (forcing specific overrides).
- *
- * NOTE: Colors are imported from shared constants to maintain consistency
- * between shared logic and the MUI theme.
- */
-export const HR_ZONE_VISUAL_CONFIG = {
-  6: {
-    color: HR_COLORS.ZONE_6_MAX,
-    label: HrZoneName.Max,
-    textColor: HR_COLORS.TEXT_LIGHT,
-  },
-  5: {
-    color: HR_COLORS.ZONE_5_PEAK,
-    label: HrZoneName.Peak,
-    textColor: HR_COLORS.TEXT_LIGHT,
-  },
-  4: {
-    color: HR_COLORS.ZONE_4_CARDIO,
-    label: HrZoneName.Cardio,
-    textColor: HR_COLORS.TEXT_LIGHT,
-  },
-  3: {
-    color: HR_COLORS.ZONE_3_FATBURN,
-    label: HrZoneName.FatBurn,
-    textColor: HR_COLORS.TEXT_LIGHT,
-  },
-  2: {
-    color: HR_COLORS.ZONE_2_WARMUP,
-    label: HrZoneName.WarmUp,
-    textColor: HR_COLORS.TEXT_LIGHT,
-  },
-  1: {
-    color: HR_COLORS.ZONE_1_RECOVERY,
-    label: HrZoneName.Recovery,
-    textColor: HR_COLORS.TEXT_DARK,
-  },
-  0: {
-    color: HR_COLORS.ZONE_0_IDLE,
-    label: HrZoneName.Idle,
-    textColor: HR_COLORS.TEXT_DARK,
-  },
-} as const
-
-/**
  * Pre-calculated order of zone labels for sorting purposes (highest intensity first).
  */
-export const HR_ZONE_ORDER = Object.values(HR_ZONE_VISUAL_CONFIG)
-  .map((config) => config.label as string)
-  .reverse()
+export const HR_ZONE_ORDER = (
+  Object.keys(HR_ZONE_CONFIG) as HeartRateZone[]
+).sort((a, b) => HR_ZONE_CONFIG[b].zoneNumber - HR_ZONE_CONFIG[a].zoneNumber)
 
 /**
  * Pre-calculated map of zone labels to their corresponding hex colors.
  */
-export const HR_ZONE_COLOR_MAP: Record<string, string> = Object.values(
-  HR_ZONE_VISUAL_CONFIG
-).reduce((acc, config) => ({ ...acc, [config.label]: config.color }), {
-  [HrZoneName.NoData]: '#e0e0e0',
-  [HrZoneName.Unknown]: '#9e9e9e',
+export const HR_ZONE_COLOR_MAP: Record<string, string> = Object.entries(
+  HR_ZONE_CONFIG
+).reduce((acc, [_, config]) => ({ ...acc, [config.label]: config.color }), {
+  'No Data': '#e0e0e0',
+  Unknown: '#9e9e9e',
 } as Record<string, string>)
 
 /**
- * Calculates the percentage of max HR and the corresponding zone (0-5) based on Max HR.
+ * Calculates the percentage of max HR and the corresponding zone (0-6) based on Max HR.
  * @param currentHr - Current heart rate in BPM.
  * @param maxHr - Max Heart Rate.
- * @returns An object containing the calculated percentage and zone.
+ * @returns An object containing the calculated percentage and zone number.
  */
 export const calculateZoneFromMaxHr = (
   currentHr: number,
@@ -151,21 +158,21 @@ export const calculateZoneFromMaxHr = (
       : 0
 
   let zone = 0
-  if (percentage >= ZONE_THRESHOLDS.ZONE_6) zone = 6
-  else if (percentage >= ZONE_THRESHOLDS.ZONE_5) zone = 5
-  else if (percentage >= ZONE_THRESHOLDS.ZONE_4) zone = 4
-  else if (percentage >= ZONE_THRESHOLDS.ZONE_3) zone = 3
-  else if (percentage >= ZONE_THRESHOLDS.ZONE_2) zone = 2
-  else if (percentage >= ZONE_THRESHOLDS.ZONE_1) zone = 1
+  if (percentage >= HR_ZONE_CONFIG.ZONE_6.threshold) zone = 6
+  else if (percentage >= HR_ZONE_CONFIG.ZONE_5.threshold) zone = 5
+  else if (percentage >= HR_ZONE_CONFIG.ZONE_4.threshold) zone = 4
+  else if (percentage >= HR_ZONE_CONFIG.ZONE_3.threshold) zone = 3
+  else if (percentage >= HR_ZONE_CONFIG.ZONE_2.threshold) zone = 2
+  else if (percentage >= HR_ZONE_CONFIG.ZONE_1.threshold) zone = 1
 
   return { percentage, zone }
 }
 
 /**
- * Calculates the percentage of max HR and the corresponding zone (0-5).
+ * Calculates the percentage of max HR and the corresponding zone info.
  * @param currentHr - Current heart rate in BPM.
  * @param age - User's age.
- * @returns An object containing the calculated percentage and zone.
+ * @returns An object containing the calculated percentage and zone number.
  */
 export const calculateHrZoneInfo = (
   currentHr: number,
@@ -177,14 +184,12 @@ export const calculateHrZoneInfo = (
 
 /**
  * Gets the string label for a numeric zone.
- * @param zone - Numeric zone (0-5).
+ * @param zone - Numeric zone (0-6).
  * @returns Human-readable label.
  */
 export const getHrZoneLabel = (zone: number): string => {
-  return (
-    HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG]?.label ||
-    'Idle'
-  )
+  const key = `ZONE_${zone}` as HeartRateZone
+  return HR_ZONE_CONFIG[key]?.label || 'Idle'
 }
 
 /**
@@ -198,49 +203,23 @@ export interface HeartRateZoneConfig {
 }
 
 /**
- * Canonical list of heart rate zones with their percentage ranges and colors.
- * This is the single source of truth for zone definitions.
+ * Canonical list of heart rate zones for UI components.
+ * Derived from HR_ZONE_CONFIG to ensure single source of truth.
  */
-export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
-  {
-    name: 'Zone 6',
-    minPercent: ZONE_THRESHOLDS.ZONE_6,
-    maxPercent: 100,
-    color: HR_ZONE_VISUAL_CONFIG[6].color,
-  },
-  {
-    name: 'Zone 5',
-    minPercent: ZONE_THRESHOLDS.ZONE_5,
-    maxPercent: ZONE_THRESHOLDS.ZONE_6,
-    color: HR_ZONE_VISUAL_CONFIG[5].color,
-  },
-  {
-    name: 'Zone 4',
-    minPercent: ZONE_THRESHOLDS.ZONE_4,
-    maxPercent: ZONE_THRESHOLDS.ZONE_5,
-    color: HR_ZONE_VISUAL_CONFIG[4].color,
-  },
-  {
-    name: 'Zone 3',
-    minPercent: ZONE_THRESHOLDS.ZONE_3,
-    maxPercent: ZONE_THRESHOLDS.ZONE_4,
-    color: HR_ZONE_VISUAL_CONFIG[3].color,
-  },
-  {
-    name: 'Zone 2',
-    minPercent: ZONE_THRESHOLDS.ZONE_2,
-    maxPercent: ZONE_THRESHOLDS.ZONE_3,
-    color: HR_ZONE_VISUAL_CONFIG[2].color,
-  },
-  {
-    name: 'Zone 1',
-    minPercent: ZONE_THRESHOLDS.ZONE_1,
-    maxPercent: ZONE_THRESHOLDS.ZONE_2,
-    color: HR_ZONE_VISUAL_CONFIG[1].color,
-  },
-]
+export const HEART_RATE_ZONES: HeartRateZoneConfig[] = HR_ZONE_ORDER.filter(
+  (z) => z !== 'ZONE_0'
+).map((z) => ({
+  name: `Zone ${HR_ZONE_CONFIG[z].zoneNumber}`,
+  minPercent: HR_ZONE_CONFIG[z].threshold,
+  maxPercent:
+    z === 'ZONE_6'
+      ? 100
+      : HR_ZONE_CONFIG[
+          `ZONE_${HR_ZONE_CONFIG[z].zoneNumber + 1}` as HeartRateZone
+        ].threshold,
+  color: HR_ZONE_CONFIG[z].color,
+}))
 
-// Define a type for the return value for clarity
 export type UserHrZones = {
   warmUp: { min: number }
   fatBurn: { min: number }
@@ -252,13 +231,13 @@ export type UserHrZones = {
 export const getUserHrZones = (age: number): UserHrZones => {
   const maxHr = calculateMaxHr(age)
   const calculateZoneBPM = (percentage: number) =>
-    Math.round(maxHr * percentage)
+    Math.round(maxHr * (percentage / 100))
 
   return {
-    warmUp: { min: calculateZoneBPM(0.5) },
-    fatBurn: { min: calculateZoneBPM(0.6) },
-    cardio: { min: calculateZoneBPM(0.7) },
-    peak: { min: calculateZoneBPM(0.85) },
-    max: { min: calculateZoneBPM(0.95) },
+    warmUp: { min: calculateZoneBPM(HR_ZONE_CONFIG.ZONE_2.threshold) },
+    fatBurn: { min: calculateZoneBPM(HR_ZONE_CONFIG.ZONE_3.threshold) },
+    cardio: { min: calculateZoneBPM(HR_ZONE_CONFIG.ZONE_4.threshold) },
+    peak: { min: calculateZoneBPM(HR_ZONE_CONFIG.ZONE_5.threshold) },
+    max: { min: calculateZoneBPM(HR_ZONE_CONFIG.ZONE_6.threshold) },
   }
 }

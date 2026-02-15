@@ -2,9 +2,9 @@
 
 import { useReducer, useCallback } from 'react'
 import {
-  HrZoneName,
+  HeartRateZone,
+  HR_ZONE_ORDER,
   calculateZoneFromMaxHr,
-  getHrZoneLabel,
 } from '../lib/shared/hr-zones'
 import { HrDataPoint } from '../lib/workout-session-storage'
 
@@ -12,7 +12,7 @@ import { HrDataPoint } from '../lib/workout-session-storage'
 
 export interface WorkoutBufferState {
   hrHistory: HrDataPoint[]
-  timeInZones: Record<HrZoneName, number>
+  timeInZones: Record<HeartRateZone, number>
   lastDataPointTime: number | null
 }
 
@@ -25,18 +25,9 @@ type WorkoutBufferAction =
 
 const initialState: WorkoutBufferState = {
   hrHistory: [],
-  timeInZones: {
-    [HrZoneName.Idle]: 0,
-    [HrZoneName.Recovery]: 0,
-    [HrZoneName.WarmUp]: 0,
-    [HrZoneName.Aerobic]: 0,
-    [HrZoneName.Cardio]: 0,
-    [HrZoneName.Peak]: 0,
-    [HrZoneName.FatBurn]: 0,
-    [HrZoneName.Max]: 0,
-    [HrZoneName.NoData]: 0,
-    [HrZoneName.Unknown]: 0,
-  },
+  timeInZones: Object.fromEntries(
+    HR_ZONE_ORDER.map((zone) => [zone, 0])
+  ) as Record<HeartRateZone, number>,
   lastDataPointTime: null,
 }
 
@@ -74,7 +65,7 @@ function workoutBufferReducer(
       if (!previousHrDataPoint) return state
 
       const { zone } = calculateZoneFromMaxHr(previousHrDataPoint.hr, maxHr)
-      const zoneName = getHrZoneLabel(zone) as HrZoneName
+      const zoneName = `ZONE_${zone}` as HeartRateZone
 
       const newTimeInZones = {
         ...state.timeInZones,

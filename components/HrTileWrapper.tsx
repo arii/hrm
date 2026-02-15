@@ -12,7 +12,7 @@ const HrTileWrapper = (props: HrTileWrapperProps) => {
       name={props.name || ''}
       bpm={props.value}
       percentMax={props.percentage ?? 0}
-      zone={props.zone ?? 0}
+      zone={props.zone ?? 'ZONE_0'}
       calories={props.calories}
       isConnected={props.isConnected}
       isDataStale={props.isDataStale}
