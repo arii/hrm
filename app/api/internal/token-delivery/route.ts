@@ -1,6 +1,7 @@
 import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
+import { SpotifyTokenPayload } from '@/services/spotifyTokenManager'
 
 /**
  * @route POST /api/internal/token-delivery
@@ -39,16 +40,25 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Directly and reliably update the service with the new token
-    // We use the data provided in the request body, falling back to sensible defaults
-    // for sub, scope, and expires_in if they are missing.
-    await global.spotifyService.handleTokenUpdate({
+    // We explicitly construct the payload to ensure type safety without 'any'.
+    const payload: SpotifyTokenPayload = {
       provider: 'spotify',
-      sub: (tokenData.sub as string) || 'unknown',
-      scope: (tokenData.scope as string) || '',
-      expires_in: (tokenData.expires_in as number) ?? 3600,
-      ...tokenData,
+      sub: typeof tokenData.sub === 'string' ? tokenData.sub : 'unknown',
+      access_token:
+        typeof tokenData.access_token === 'string'
+          ? tokenData.access_token
+          : '',
+      refresh_token:
+        typeof tokenData.refresh_token === 'string'
+          ? tokenData.refresh_token
+          : '',
+      expires_in:
+        typeof tokenData.expires_in === 'number' ? tokenData.expires_in : 3600,
+      scope: typeof tokenData.scope === 'string' ? tokenData.scope : '',
       obtainedAt: Date.now(),
-    } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    }
+
+    await global.spotifyService.handleTokenUpdate(payload)
     logger.info('Spotify token delivered and processed successfully.')
 
     return NextResponse.json({
