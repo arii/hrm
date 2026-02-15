@@ -250,6 +250,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
                     valueLabelDisplay="auto"
                     min={0}
                     max={100}
+                    aria-label={`Zone ${z} minimum percentage`}
                   />
                 </Box>
               ))}
