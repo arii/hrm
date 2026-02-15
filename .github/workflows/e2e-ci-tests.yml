@@ -15,10 +15,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Create Test Branch and PR
-        id: create_pr
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Test Branch
         run: |
           set -e
           BRANCH_NAME="e2e-test-$(date +%s)"
@@ -33,22 +30,61 @@ jobs:
           git add test-file.txt
           git commit -m "E2E Test Commit 2"
           git push origin $BRANCH_NAME
-          PR_URL=$(gh pr create --title "E2E Test PR" --body "Test PR for E2E testing" --base leader --head $BRANCH_NAME)
-          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
-      - name: Trigger PR Squash and Wait
-        timeout-minutes: 15
+      - name: Create PR
+        id: create_pr
+        uses: ./.github/actions/gh-pr-create
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+        with:
+          title: 'E2E Test PR'
+          body: 'Test PR for E2E testing'
+          base: leader
+          head: ${{ env.BRANCH_NAME }}
+
+      - name: Get Initial SHA
+        id: get_sha
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          SHA=$(gh pr view ${{ steps.create_pr.outputs.pr_number }} --json headRefOid -q '.headRefOid')
+          echo "initial_sha=$SHA" >> $GITHUB_OUTPUT
+
+      - name: Trigger PR Squash
+        uses: ./.github/actions/gh-pr-comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+        with:
+          pr_number: ${{ steps.create_pr.outputs.pr_number }}
+          body: '@pr-squash'
+
+      - name: Wait for PR Update
+        timeout-minutes: 10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INITIAL_SHA: ${{ steps.get_sha.outputs.initial_sha }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
         run: |
-          set -e
-          gh pr comment $PR_NUMBER --body "@pr-squash"
-          echo "Waiting for squash and rebase to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+          echo "Waiting for PR $PR_NUMBER to be updated by the bot (Initial SHA: $INITIAL_SHA)..."
+          for i in {1..40}; do
+            CURRENT_SHA=$(gh pr view $PR_NUMBER --json headRefOid -q '.headRefOid')
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ PR updated! New SHA: $CURRENT_SHA"
+              exit 0
+            fi
+            echo "Still waiting for update... ($i/40)"
+            sleep 15
+          done
+          echo "❌ Timed out waiting for PR update."
+          exit 1
+
+      - name: Wait for Checks
+        uses: ./.github/actions/gh-pr-wait-checks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          pr_number: ${{ steps.create_pr.outputs.pr_number }}
+          timeout: 600
 
       - name: Verify Squash
         env:
@@ -66,16 +102,22 @@ jobs:
             exit 1
           fi
 
-      - name: Cleanup
+      - name: Close PR
+        if: always()
+        uses: ./.github/actions/gh-pr-close
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          pr_number: ${{ steps.create_pr.outputs.pr_number }}
+
+      - name: Cleanup Branch
         if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          echo "Cleaning up PR and branch..."
-          gh pr close $PR_NUMBER
+          echo "Cleaning up branch..."
           git push origin --delete $BRANCH_NAME
 
   test_conflict_resolver:
@@ -88,9 +130,6 @@ jobs:
           fetch-depth: 0
 
       - name: Create Conflict
-        id: create_conflict
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           git config user.name "github-actions[bot]"
@@ -128,23 +167,60 @@ jobs:
           git commit -m "Modify conflict-file.txt in branch-b"
           git push origin $BRANCH_B
 
-          # Create a pull request to trigger the conflict resolver
-          PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base $BRANCH_A --head $BRANCH_B)
-          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+      - name: Create PR
+        id: create_conflict
+        uses: ./.github/actions/gh-pr-create
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+        with:
+          title: 'E2E Test PR with Conflict'
+          body: 'Test PR for conflict resolver'
+          base: ${{ env.BRANCH_A }}
+          head: ${{ env.BRANCH_B }}
 
-      - name: Trigger Conflict Resolver and Wait
-        timeout-minutes: 15
+      - name: Get Initial SHA
+        id: get_sha
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          SHA=$(gh pr view ${{ steps.create_conflict.outputs.pr_number }} --json headRefOid -q '.headRefOid')
+          echo "initial_sha=$SHA" >> $GITHUB_OUTPUT
+
+      - name: Trigger Conflict Resolver
+        uses: ./.github/actions/gh-pr-comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+        with:
+          pr_number: ${{ steps.create_conflict.outputs.pr_number }}
+          body: '@conflict-resolve'
+
+      - name: Wait for PR Update
+        timeout-minutes: 10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INITIAL_SHA: ${{ steps.get_sha.outputs.initial_sha }}
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
         run: |
-          set -e
-          gh pr comment $PR_NUMBER --body "@conflict-resolve"
-          echo "Waiting for conflict resolver to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+          echo "Waiting for PR $PR_NUMBER to be updated by the bot (Initial SHA: $INITIAL_SHA)..."
+          for i in {1..40}; do
+            CURRENT_SHA=$(gh pr view $PR_NUMBER --json headRefOid -q '.headRefOid')
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ PR updated! New SHA: $CURRENT_SHA"
+              exit 0
+            fi
+            echo "Still waiting for update... ($i/40)"
+            sleep 15
+          done
+          echo "❌ Timed out waiting for PR update."
+          exit 1
+
+      - name: Wait for Checks
+        uses: ./.github/actions/gh-pr-wait-checks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          pr_number: ${{ steps.create_conflict.outputs.pr_number }}
+          timeout: 600
 
       - name: Verify Conflict Resolution
         env:
@@ -161,15 +237,23 @@ jobs:
             exit 1
           fi
 
-      - name: Cleanup
+      - name: Close PR
         if: always()
+        uses: ./.github/actions/gh-pr-close
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
+        with:
+          pr_number: ${{ steps.create_conflict.outputs.pr_number }}
+
+      - name: Cleanup Branches
+        if: always()
+        env:
+          BRANCH_A: ${{ env.BRANCH_A }}
+          BRANCH_B: ${{ env.BRANCH_B }}
+          BASE_BRANCH: ${{ env.BASE_BRANCH }}
         run: |
           set -e
-          echo "Cleaning up PR and branches..."
-          gh pr close $PR_NUMBER
+          echo "Cleaning up branches..."
           git push origin --delete $BRANCH_A
           git push origin --delete $BRANCH_B
           git push origin --delete $BASE_BRANCH
@@ -183,10 +267,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Create Test Branch and PR
-        id: create_pr
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Test Branch
         run: |
           set -e
           BRANCH_NAME="e2e-test-rebase-$(date +%s)"
@@ -201,22 +282,61 @@ jobs:
           git add test-file-rebase.txt
           git commit -m "E2E Test Commit 2 (rebase)"
           git push origin $BRANCH_NAME
-          PR_URL=$(gh pr create --title "E2E Test PR (rebase)" --body "Test PR for E2E testing (rebase)" --base leader --head $BRANCH_NAME)
-          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
-      - name: Trigger PR Squash and Rebase and Wait
-        timeout-minutes: 15
+      - name: Create PR
+        id: create_pr
+        uses: ./.github/actions/gh-pr-create
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+        with:
+          title: 'E2E Test PR (rebase)'
+          body: 'Test PR for E2E testing (rebase)'
+          base: leader
+          head: ${{ env.BRANCH_NAME }}
+
+      - name: Get Initial SHA
+        id: get_sha
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          SHA=$(gh pr view ${{ steps.create_pr.outputs.pr_number }} --json headRefOid -q '.headRefOid')
+          echo "initial_sha=$SHA" >> $GITHUB_OUTPUT
+
+      - name: Trigger PR Squash and Rebase
+        uses: ./.github/actions/gh-pr-comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+        with:
+          pr_number: ${{ steps.create_pr.outputs.pr_number }}
+          body: '@pr-squash-rebase'
+
+      - name: Wait for PR Update
+        timeout-minutes: 10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INITIAL_SHA: ${{ steps.get_sha.outputs.initial_sha }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
         run: |
-          set -e
-          gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
-          echo "Waiting for squash and rebase to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+          echo "Waiting for PR $PR_NUMBER to be updated by the bot (Initial SHA: $INITIAL_SHA)..."
+          for i in {1..40}; do
+            CURRENT_SHA=$(gh pr view $PR_NUMBER --json headRefOid -q '.headRefOid')
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ PR updated! New SHA: $CURRENT_SHA"
+              exit 0
+            fi
+            echo "Still waiting for update... ($i/40)"
+            sleep 15
+          done
+          echo "❌ Timed out waiting for PR update."
+          exit 1
+
+      - name: Wait for Checks
+        uses: ./.github/actions/gh-pr-wait-checks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          pr_number: ${{ steps.create_pr.outputs.pr_number }}
+          timeout: 600
 
       - name: Verify Squash and Rebase
         env:
@@ -241,14 +361,19 @@ jobs:
             exit 1
           fi
 
-      - name: Cleanup
+      - name: Close PR
         if: always()
+        uses: ./.github/actions/gh-pr-close
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+        with:
+          pr_number: ${{ steps.create_pr.outputs.pr_number }}
+
+      - name: Cleanup Branch
+        if: always()
+        env:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          echo "Cleaning up PR and branch..."
-          gh pr close $PR_NUMBER
+          echo "Cleaning up branch..."
           git push origin --delete $BRANCH_NAME
