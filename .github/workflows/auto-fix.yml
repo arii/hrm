@@ -22,13 +22,18 @@ jobs:
 
       - name: Comment on Install Failure
         if: steps.setup.outcome == 'failure'
-        env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
-        run: |
-          gh pr comment ${{ github.event.pull_request.number }} --body "## 🚨 Auto-Fix Failed
-          The \`pnpm install --frozen-lockfile\` command failed. This likely means your \`pnpm-lock.yaml\` file is out of sync with your \`package.json\`.
-          **Action Required:** Please run \`pnpm install\` locally on your branch, commit the updated \`pnpm-lock.yaml\` file, and push the changes."
-          exit 1
+        uses: ./.github/actions/gh-pr-comment
+        with:
+          pr_number: ${{ github.event.pull_request.number }}
+          github_token: ${{ secrets.ARI_PAT }}
+          body: |
+            ## 🚨 Auto-Fix Failed
+            The `pnpm install --frozen-lockfile` command failed. This likely means your `pnpm-lock.yaml` file is out of sync with your `package.json`.
+            **Action Required:** Please run `pnpm install` locally on your branch, commit the updated `pnpm-lock.yaml` file, and push the changes.
+
+      - name: Fail Workflow
+        if: steps.setup.outcome == 'failure'
+        run: exit 1
 
       - name: Run Intelligent Fixes
         if: steps.setup.outcome == 'success'

@@ -1440,13 +1440,25 @@ jobs:
 
           # Only post comment to PR if there are genuine failures
           if [ "$FINAL_RESULT" == "failure" ]; then
-            gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
-              echo "::warning::Failed to post PR comment."
-            }
+            # Using the reusable action for PR comment
+            echo "::notice::Posting PR comment with quality gate details..."
           else
             echo "Skipping PR comment because all checks passed or were cancelled."
           fi
 
+      - name: Post PR Comment
+        if: always() && steps.aggregate-results.outputs.final_result == 'failure' && github.event.pull_request.number != null
+        uses: ./.github/actions/gh-pr-comment
+        with:
+          pr_number: ${{ github.event.pull_request.number }}
+          body_file: test-results/pr-comment.md
+          github_token: ${{ secrets.GH_TOKEN }}
+
+      - name: Update Step Summary
+        if: always()
+        env:
+          FINAL_RESULT: ${{ steps.aggregate-results.outputs.final_result }}
+        run: |
           # Check if all passed
           if [ "$FINAL_RESULT" = "success" ]; then
             echo "✅ **All quality checks passed!**" >> $GITHUB_STEP_SUMMARY
