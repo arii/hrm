@@ -20,6 +20,3 @@ gh.1
 dist/
 build/
 coverage/
-playwright-report/
-test-results/
-blob-report/
