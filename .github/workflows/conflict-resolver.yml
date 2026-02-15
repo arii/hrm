@@ -100,7 +100,7 @@ jobs:
           BASE_SHA: ${{ steps.validate_branches.outputs.base_sha }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
+          gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA" -f base_branch="$TARGET_BRANCH"
 
       - name: Update comment on success
         if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number
