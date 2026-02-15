@@ -131,7 +131,13 @@ const SpotifyControls = () => {
           ? overriddenDeviceId
           : resolveTargetDeviceId()
 
-      executeSpotify(command, { deviceId: targetDeviceId })
+      // We use a type cast here because the command is dynamic, and the hook uses overloads
+      // for strict type checking at the point of call for specific commands.
+      const execute = executeSpotify as (
+        command: string,
+        payload: { deviceId?: string }
+      ) => void
+      execute(command, { deviceId: targetDeviceId })
     },
     [resolveTargetDeviceId, executeSpotify]
   )

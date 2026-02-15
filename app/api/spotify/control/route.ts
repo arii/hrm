@@ -104,10 +104,16 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     // Check for "No active device" or similar common Spotify API errors
     const errorMessage = error instanceof Error ? error.message : String(error)
-    const status =
-      error && typeof error === 'object' && 'status' in error
-        ? (error.status as number)
-        : 500
+
+    let status = 500
+    if (
+      error &&
+      typeof error === 'object' &&
+      'status' in error &&
+      typeof error.status === 'number'
+    ) {
+      status = error.status
+    }
 
     logger.error({ error, command, deviceId }, 'Spotify SDK control failed')
 

@@ -84,7 +84,7 @@ The `useSpotifyWebPlayback` hook (`hooks/useSpotifyWebPlayback.ts`) manages the 
 
 ### Why Pre-Auth Check Was Removed
 
-Previously, the application might have checked for an existing authentication session before attempting to initialize the Web Playback SDK. This check was removed to support a more seamless user experience for unauthenticated users. The SDK is now initialized regardless of auth state. The `getOAuthToken` function itself serves as the authentication gatekeeper. If the user is not logged in, the token fetch will fail gracefully, and the SDK will not connect, without breaking the UI.
+Previously, the application might have checked for an existing authentication session before attempting to initialize the Web Playback SDK. This check was removed to provide a more consistent and non-blocking experience for unauthenticated users. The SDK is now initialized regardless of auth state. The `getOAuthToken` function itself serves as the authentication gatekeeper. If the user is not logged in, the token fetch will fail gracefully, and the SDK will not connect, without breaking the UI.
 
 ### Unauthenticated User Handling
 
