@@ -14,9 +14,10 @@ const mockSessionData: WorkoutSessionData = {
   endTime: null,
   status: 'running',
   hrHistory: [],
-  timeInZones: Object.fromEntries(
-    HR_ZONE_ORDER.map((z) => [z, 0])
-  ) as Record<HeartRateZone, number>,
+  timeInZones: Object.fromEntries(HR_ZONE_ORDER.map((z) => [z, 0])) as Record<
+    HeartRateZone,
+    number
+  >,
   averageHr: 0,
   maxHr: 0,
   calorieHistory: [],

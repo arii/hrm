@@ -8,24 +8,6 @@ import { HR_COLORS } from '@/lib/shared/colors'
 export const MAX_HR_DEFAULT = 185
 
 /**
- * Enum for HR Zone names to provide compile-time safety and prevent string mismatches.
- * @deprecated Use HeartRateZone string literal type and HR_ZONE_CONFIG for labels.
- */
-export enum HrZoneName {
-  Idle = 'Idle',
-  Recovery = 'Recovery',
-  WarmUp = 'Warm Up',
-  Aerobic = 'Aerobic',
-  Cardio = 'Cardio',
-  Peak = 'Peak',
-  // Legacy/Internal names for compatibility
-  FatBurn = 'Fat Burn',
-  Max = 'Max',
-  NoData = 'No Data',
-  Unknown = 'Unknown',
-}
-
-/**
  * Heart Rate Zone string literal type for consistency and full type safety.
  * Replaces HrZoneName enum and numeric indices in modern code.
  */
@@ -166,6 +148,33 @@ export const calculateZoneFromMaxHr = (
   else if (percentage >= HR_ZONE_CONFIG.ZONE_1.threshold) zone = 1
 
   return { percentage, zone }
+}
+
+/**
+ * Calculates the heart rate zone information.
+ * @param currentHr - Current heart rate in BPM.
+ * @param maxHr - Max Heart Rate.
+ * @returns An object containing the zone name, percentage, and BPM.
+ */
+export const calculateHeartRateZone = (
+  currentHr: number,
+  maxHr: number
+): { zoneName: HeartRateZone; percentage: number; bpm: number } => {
+  if (!maxHr || !currentHr || currentHr <= 0) {
+    return {
+      zoneName: 'ZONE_0',
+      percentage: 0,
+      bpm: 0,
+    }
+  }
+
+  const { percentage, zone } = calculateZoneFromMaxHr(currentHr, maxHr)
+
+  return {
+    zoneName: `ZONE_${zone}` as HeartRateZone,
+    percentage,
+    bpm: currentHr,
+  }
 }
 
 /**

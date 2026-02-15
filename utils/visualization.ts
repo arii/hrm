@@ -7,8 +7,7 @@ import { TimerData } from '@/types/websocket'
 import { WorkoutData } from '@/types/index'
 import { WorkoutItem } from '@/types/workout'
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
-import { calculateHrZone } from '@/lib/hrm/zones'
-import { HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
+import { calculateHeartRateZone, HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
 
 // Define types for MUI color props
 type MuiColor =
@@ -37,8 +36,8 @@ export const getHrZoneProps = (
   currentHr: number,
   maxHr: number
 ): HrZoneProps => {
-  // 1. Get the core HR data from the domain module
-  const { zoneName, percentage, bpm } = calculateHrZone(currentHr, maxHr)
+  // 1. Get the core HR data from the shared module
+  const { zoneName, percentage, bpm } = calculateHeartRateZone(currentHr, maxHr)
 
   // 2. Look up the UI properties from the centralized config
   const zoneConfig = HR_ZONE_CONFIG[zoneName]

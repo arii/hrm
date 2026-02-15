@@ -3,7 +3,7 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useLocalWorkoutBuffer } from '@/hooks/useLocalWorkoutBuffer'
-import { HeartRateZone, HR_ZONE_ORDER } from '@/lib/shared/hr-zones'
+import { HR_ZONE_ORDER } from '@/lib/shared/hr-zones'
 
 describe('useLocalWorkoutBuffer', () => {
   beforeAll(() => {
