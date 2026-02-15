@@ -195,7 +195,12 @@ export default function ConnectView({
 
   return (
     <>
-      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
+      <Container
+        component="main"
+        role="main"
+        maxWidth="sm"
+        sx={{ py: 3, pb: 10 }}
+      >
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Connect Heart Rate Monitor
         </Typography>

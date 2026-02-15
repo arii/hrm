@@ -232,6 +232,14 @@ export default function ConnectPage() {
     connectAndStream(userName, userAge || 0)
   }
 
+  // Signal when page is ready for testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__TEST_READY__ = true
+      window.dispatchEvent(new CustomEvent('test-ready'))
+    }
+  }, [])
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration, {

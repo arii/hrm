@@ -3,7 +3,7 @@
 import { useCallback, useRef, useEffect, useReducer } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 import { CalorieDataPoint } from '../lib/workout-session-storage'
-import { Gender } from '@/types/user'
+import { Gender } from '@/types/core'
 import {
   MAX_CALORIES_PER_WORKOUT,
   MIN_HR_FOR_CALORIE_CALCULATION,
@@ -78,7 +78,7 @@ function calorieReducer(
 export const useCalorieTracker = ({
   age,
   weightKg,
-  gender = 'neutral',
+  gender = 'FEMALE',
   smoothingWindow = 5,
 }: CalorieTrackerProps) => {
   const [state, dispatch] = useReducer(calorieReducer, initialState)
