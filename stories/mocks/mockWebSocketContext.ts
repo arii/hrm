@@ -3,7 +3,6 @@ import { SpotifyData, TimerData } from '@/types/websocket'
 
 export const mockSpotifyData: SpotifyData = {
   devices: [],
-  isMuted: false,
   playback: {
     track: {
       id: 'test-track-id',
@@ -14,6 +13,7 @@ export const mockSpotifyData: SpotifyData = {
         'https://i.scdn.co/image/ab67616d0000b273f8e7a4a8c2d1b7a6f7d1b7a6',
     },
     is_playing: true,
+    isMuted: false,
     volume_percent: 50,
     progress_ms: 0,
   },
@@ -21,7 +21,6 @@ export const mockSpotifyData: SpotifyData = {
 
 export const mockSpotifyDataNoActivePlayback: SpotifyData = {
   devices: [],
-  isMuted: false,
   playback: {
     track: {
       id: null,
@@ -31,6 +30,7 @@ export const mockSpotifyDataNoActivePlayback: SpotifyData = {
       albumArtUrl: '',
     },
     is_playing: false,
+    isMuted: false,
     volume_percent: 70,
     progress_ms: 0,
   },

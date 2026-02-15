@@ -28,7 +28,6 @@ export async function createServices(
       startPolling: () => {},
       getState: () => ({
         devices: [],
-        isMuted: false,
         playback: {
           track: {
             id: '',
@@ -38,6 +37,7 @@ export async function createServices(
             albumArtUrl: '',
           },
           is_playing: false,
+          isMuted: false,
           volume_percent: 0,
           progress_ms: 0,
         },

@@ -28,7 +28,6 @@ describe('SpotifyPlayerManager', () => {
     // Default state for testing
     currentState = {
       devices: [],
-      isMuted: false,
       playback: {
         track: {
           id: null,
@@ -38,6 +37,7 @@ describe('SpotifyPlayerManager', () => {
           albumArtUrl: '',
         },
         is_playing: false,
+        isMuted: false,
         volume_percent: 70,
         progress_ms: 0,
       },
@@ -313,7 +313,7 @@ describe('SpotifyPlayerManager', () => {
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, 'device_id')
       expect(setStateMock).toHaveBeenCalled()
       expect(currentState.playback.volume_percent).toBe(50)
-      expect(currentState.isMuted).toBe(false)
+      expect(currentState.playback.isMuted).toBe(false)
     })
 
     it('should clamp volume correctly', async () => {
@@ -333,7 +333,7 @@ describe('SpotifyPlayerManager', () => {
       })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(0, 'device_id')
       expect(currentState.playback.volume_percent).toBe(0)
-      expect(currentState.isMuted).toBe(true)
+      expect(currentState.playback.isMuted).toBe(true)
     })
 
     it('should handle TRANSFER_PLAYBACK', async () => {

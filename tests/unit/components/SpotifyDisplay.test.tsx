@@ -89,7 +89,6 @@ describe('SpotifyDisplay', () => {
     mockedUseWebSocket.mockReturnValue({
       spotifyData: {
         devices: [],
-        isMuted: false,
         playback: {
           track: {
             id: null,
@@ -99,6 +98,7 @@ describe('SpotifyDisplay', () => {
             albumArtUrl: '',
           },
           is_playing: false,
+          isMuted: false,
           volume_percent: 0,
           progress_ms: 0,
         },
@@ -148,7 +148,6 @@ describe('SpotifyDisplay', () => {
             volume_percent: 50,
           },
         ],
-        isMuted: false,
         playback: {
           track: {
             id: 'mock-track-id',
@@ -158,6 +157,7 @@ describe('SpotifyDisplay', () => {
             albumArtUrl: '',
           },
           is_playing: true,
+          isMuted: false,
           volume_percent: 50,
           progress_ms: 0,
         },

@@ -36,7 +36,6 @@ export const createMockSpotifyData = (
       is_active: false,
     }),
   ],
-  isMuted: false,
   playback: {
     track: {
       id: 'mock-track-id',
@@ -46,6 +45,7 @@ export const createMockSpotifyData = (
       albumArtUrl: 'http://localhost/mock-art.jpg',
     },
     is_playing: true,
+    isMuted: false,
     volume_percent: 50,
     progress_ms: 0,
   },

@@ -30,7 +30,6 @@ export const INITIAL_STATE: WebSocketState = {
   },
   spotifyData: {
     devices: [],
-    isMuted: false,
     playback: {
       track: {
         id: null,
@@ -40,6 +39,7 @@ export const INITIAL_STATE: WebSocketState = {
         albumArtUrl: '',
       },
       is_playing: false,
+      isMuted: false,
       volume_percent: 70,
       progress_ms: 0,
     },

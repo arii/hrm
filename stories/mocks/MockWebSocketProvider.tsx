@@ -40,7 +40,6 @@ const DEFAULT_STATE: MockAppState = {
   },
   spotifyData: {
     devices: [],
-    isMuted: false,
     playback: {
       track: {
         id: null,
@@ -50,6 +49,7 @@ const DEFAULT_STATE: MockAppState = {
         albumArtUrl: '',
       },
       is_playing: false,
+      isMuted: false,
       volume_percent: 70,
       progress_ms: 0,
     },
