@@ -5,6 +5,7 @@ import { TimerMode, TimerPhase } from './core'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 export interface HrTileProps {
   value: number | null
   percentage: number
@@ -22,6 +23,8 @@ export interface HrTileProps {
 =======
 >>>>>>> 64affb28 (refactor: address PR feedback and fix build/lint issues)
 
+=======
+>>>>>>> 5b2d5291 (refactor: address final lint feedback and project cleanup)
 export interface HeartRateZonesProps {
   maxHr: number
 }
