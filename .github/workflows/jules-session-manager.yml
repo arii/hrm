@@ -183,7 +183,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const sessionId = "${{ steps.jules_op_new.outputs.session_id }}";
-            if (sessionId) {
+            if (sessionId && context.issue.number) {
               github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -193,7 +193,7 @@ jobs:
             }
 
       - name: 'Add Reaction to Comment'
-        if: success()
+        if: success() && github.event.comment.id
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -211,20 +211,25 @@ jobs:
 
             const body = `Jules operation failed with the following error:\n\n\`\`\`\n${errorMessage}\n\`\`\``;
 
-            try {
-              github.rest.reactions.createForIssueComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: context.payload.comment.id,
-                content: '-1'
-              }).catch(() => {}); // Ignore if reaction fails
-            } catch (e) {
-              console.log('Could not add reaction:', e);
+            const commentId = context.payload.comment?.id;
+            if (commentId) {
+              try {
+                await github.rest.reactions.createForIssueComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: commentId,
+                  content: '-1'
+                });
+              } catch (e) {
+                console.log('Could not add reaction:', e);
+              }
             }
 
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: body
-            })
+            if (context.issue.number) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
