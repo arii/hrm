@@ -211,7 +211,7 @@ jobs:
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GH_TOKEN }}
-          comment-id: ${{ inputs.comment_id }}
+          comment-id: ${{ github.event.comment.id || inputs.comment_id }}
           reaction: '+1'
       - name: 'Handle Failure'
         if: failure()

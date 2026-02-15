@@ -48,7 +48,7 @@ jobs:
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ inputs.comment_id }}
+          comment-id: ${{ github.event.comment.id || inputs.comment_id }}
           reaction: rocket
 
       - name: Get PR data
