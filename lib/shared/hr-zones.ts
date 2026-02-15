@@ -23,6 +23,7 @@ export type HeartRateZone =
 /**
  * Canonical configuration for heart rate zones.
  * Single source of truth for labels, thresholds, and colors.
+ * Thresholds are stored as decimals (0-1) representing percentage of Max HR.
  */
 export const HR_ZONE_CONFIG: Record<
   HeartRateZone,
@@ -36,42 +37,42 @@ export const HR_ZONE_CONFIG: Record<
 > = {
   ZONE_6: {
     label: 'Max',
-    threshold: 95,
+    threshold: 0.95,
     color: HR_COLORS.ZONE_6_MAX,
     textColor: HR_COLORS.TEXT_LIGHT,
     zoneNumber: 6,
   },
   ZONE_5: {
     label: 'Peak',
-    threshold: 90,
+    threshold: 0.9,
     color: HR_COLORS.ZONE_5_PEAK,
     textColor: HR_COLORS.TEXT_LIGHT,
     zoneNumber: 5,
   },
   ZONE_4: {
     label: 'Cardio',
-    threshold: 80,
+    threshold: 0.8,
     color: HR_COLORS.ZONE_4_CARDIO,
     textColor: HR_COLORS.TEXT_LIGHT,
     zoneNumber: 4,
   },
   ZONE_3: {
     label: 'Fat Burn',
-    threshold: 70,
+    threshold: 0.7,
     color: HR_COLORS.ZONE_3_FATBURN,
     textColor: HR_COLORS.TEXT_LIGHT,
     zoneNumber: 3,
   },
   ZONE_2: {
     label: 'Warm Up',
-    threshold: 60,
+    threshold: 0.6,
     color: HR_COLORS.ZONE_2_WARMUP,
     textColor: HR_COLORS.TEXT_LIGHT,
     zoneNumber: 2,
   },
   ZONE_1: {
     label: 'Recovery',
-    threshold: 50,
+    threshold: 0.5,
     color: HR_COLORS.ZONE_1_RECOVERY,
     textColor: HR_COLORS.TEXT_DARK,
     zoneNumber: 1,
@@ -124,18 +125,16 @@ export const calculateZoneFromMaxHr = (
   currentHr: number,
   maxHr: number
 ): { percentage: number; zone: number } => {
-  const percentage =
-    maxHr > 0 && currentHr > 0
-      ? Math.min(100, Math.round((currentHr / maxHr) * 100))
-      : 0
+  const percentageDecimal = maxHr > 0 && currentHr > 0 ? currentHr / maxHr : 0
+  const percentage = Math.min(100, Math.round(percentageDecimal * 100))
 
   let zone = 0
-  if (percentage >= HR_ZONE_CONFIG.ZONE_6.threshold) zone = 6
-  else if (percentage >= HR_ZONE_CONFIG.ZONE_5.threshold) zone = 5
-  else if (percentage >= HR_ZONE_CONFIG.ZONE_4.threshold) zone = 4
-  else if (percentage >= HR_ZONE_CONFIG.ZONE_3.threshold) zone = 3
-  else if (percentage >= HR_ZONE_CONFIG.ZONE_2.threshold) zone = 2
-  else if (percentage >= HR_ZONE_CONFIG.ZONE_1.threshold) zone = 1
+  if (percentageDecimal >= HR_ZONE_CONFIG.ZONE_6.threshold) zone = 6
+  else if (percentageDecimal >= HR_ZONE_CONFIG.ZONE_5.threshold) zone = 5
+  else if (percentageDecimal >= HR_ZONE_CONFIG.ZONE_4.threshold) zone = 4
+  else if (percentageDecimal >= HR_ZONE_CONFIG.ZONE_3.threshold) zone = 3
+  else if (percentageDecimal >= HR_ZONE_CONFIG.ZONE_2.threshold) zone = 2
+  else if (percentageDecimal >= HR_ZONE_CONFIG.ZONE_1.threshold) zone = 1
 
   return { percentage, zone }
 }
@@ -168,16 +167,6 @@ export const calculateHeartRateZone = (
 }
 
 /**
- * Gets the string label for a numeric zone.
- * @param zone - Numeric zone (0-6).
- * @returns Human-readable label.
- */
-export const getHrZoneLabel = (zone: number): string => {
-  const key = `ZONE_${zone}` as HeartRateZone
-  return HR_ZONE_CONFIG[key]?.label || 'Idle'
-}
-
-/**
  * Interface for HR zone configuration used in UI components.
  */
 export interface HeartRateZoneConfig {
@@ -195,13 +184,15 @@ export const HEART_RATE_ZONES: HeartRateZoneConfig[] = HR_ZONE_ORDER.filter(
   (z) => z !== 'ZONE_0'
 ).map((z) => ({
   name: `Zone ${HR_ZONE_CONFIG[z].zoneNumber}`,
-  minPercent: HR_ZONE_CONFIG[z].threshold,
+  minPercent: Math.round(HR_ZONE_CONFIG[z].threshold * 100),
   maxPercent:
     z === 'ZONE_6'
       ? 100
-      : HR_ZONE_CONFIG[
-          `ZONE_${HR_ZONE_CONFIG[z].zoneNumber + 1}` as HeartRateZone
-        ].threshold,
+      : Math.round(
+          HR_ZONE_CONFIG[
+            `ZONE_${HR_ZONE_CONFIG[z].zoneNumber + 1}` as HeartRateZone
+          ].threshold * 100
+        ),
   color: HR_ZONE_CONFIG[z].color,
 }))
 
@@ -215,14 +206,12 @@ export type UserHrZones = {
 
 export const getUserHrZones = (age: number): UserHrZones => {
   const maxHr = calculateMaxHr(age)
-  const calculateZoneBPM = (percentage: number) =>
-    Math.round(maxHr * (percentage / 100))
 
   return {
-    warmUp: { min: calculateZoneBPM(HR_ZONE_CONFIG.ZONE_2.threshold) },
-    fatBurn: { min: calculateZoneBPM(HR_ZONE_CONFIG.ZONE_3.threshold) },
-    cardio: { min: calculateZoneBPM(HR_ZONE_CONFIG.ZONE_4.threshold) },
-    peak: { min: calculateZoneBPM(HR_ZONE_CONFIG.ZONE_5.threshold) },
-    max: { min: calculateZoneBPM(HR_ZONE_CONFIG.ZONE_6.threshold) },
+    warmUp: { min: Math.round(maxHr * HR_ZONE_CONFIG.ZONE_2.threshold) },
+    fatBurn: { min: Math.round(maxHr * HR_ZONE_CONFIG.ZONE_3.threshold) },
+    cardio: { min: Math.round(maxHr * HR_ZONE_CONFIG.ZONE_4.threshold) },
+    peak: { min: Math.round(maxHr * HR_ZONE_CONFIG.ZONE_5.threshold) },
+    max: { min: Math.round(maxHr * HR_ZONE_CONFIG.ZONE_6.threshold) },
   }
 }
