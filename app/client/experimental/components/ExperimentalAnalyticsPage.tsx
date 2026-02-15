@@ -202,6 +202,14 @@ const ExperimentalAnalyticsPage = () => {
 
   const defaultDate = useMemo(() => new Date(), [])
 
+  // Signal when page is ready for testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__TEST_READY__ = true
+      window.dispatchEvent(new CustomEvent('test-ready'))
+    }
+  }, [])
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
       {view === 'active' && (
