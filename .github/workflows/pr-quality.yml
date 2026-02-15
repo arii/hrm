@@ -68,15 +68,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install Unidiff
-        run: pip install unidiff
-
-      - name: Generate Diff and Check
+      - name: Check Diff
         id: check
         shell: bash
         env:
@@ -84,7 +76,6 @@ jobs:
         run: |
           set -e
           BASE_BRANCH="${{ inputs.branch }}"
-          echo "Checking diff against origin/$BASE_BRANCH..."
 
           # Force meaningful=true for E2E bot tests to ensure checks run and don't confuse the test harness
           if [[ "$HEAD_REF" == e2e-test-* ]]; then
@@ -93,40 +84,25 @@ jobs:
               exit 0
           fi
 
-          # Minimal fetch for the base branch tip
-          git fetch origin "$BASE_BRANCH" --depth=1 || echo "Warning: Fetch failed, might fallback."
+          git fetch origin "$BASE_BRANCH" --depth=1 || echo "Warning: Fetch failed."
 
-          # Generate diff (same logic as ci-check-slop.sh)
-          if git diff origin/"$BASE_BRANCH"...HEAD > changes.diff 2>/dev/null; then
-              echo "Diff generated using merge-base."
-          elif git diff origin/"$BASE_BRANCH" HEAD > changes.diff 2>/dev/null; then
-              echo "Diff generated against tip of base."
+          # Check for changes ignoring whitespace (-w) and excluding specific files
+          # Returns 1 (failure) if differences exist, 0 if no differences.
+          # We use ! to invert it: if git diff finds changes, it returns 1, logic becomes true.
+          # We use generic excludes for the slop check context (locks, images, etc.)
+
+          if ! git diff --quiet -w "origin/$BASE_BRANCH...HEAD" -- . ':!*.lock' ':!pnpm-lock.yaml' ':!package-lock.json' ':!yarn.lock' ':!*.svg' ':!*.png' ':!*.ico' ':!*.map' ':!find_slop.sh'; then
+             echo "meaningful=true" >> $GITHUB_OUTPUT
+             echo "✅ Meaningful changes detected."
           else
-              echo "Warning: Diff generation failed. Assuming meaningful."
-              echo "meaningful=true" >> $GITHUB_OUTPUT
-              exit 0
-          fi
-
-          if [ ! -s changes.diff ]; then
-              echo "Diff is empty."
-              echo "meaningful=false" >> $GITHUB_OUTPUT
-              exit 0
-          fi
-
-          # Run check_diff.py with strict checking (no exclusions by default if --exclude is empty,
-          # but we want to allow skipping purely whitespace changes)
-          # We pass an empty string to --exclude to clear defaults, or just rely on the script
-          # to default to 'strict' if we update it.
-          # The script currently defaults to SLOP exclusions if None.
-          # We updated the script to take '--exclude'. If we pass '--exclude' with no args, it treats it as empty list.
-
-          echo "Running check_diff.py (strict mode)..."
-          if python3 scripts/check_diff.py changes.diff --exclude; then
-              echo "Meaningful changes detected."
-              echo "meaningful=true" >> $GITHUB_OUTPUT
-          else
-              echo "No meaningful changes detected (whitespace only)."
-              echo "meaningful=false" >> $GITHUB_OUTPUT
+             # Fallback check against HEAD directly if merge-base failed (shallow clone issue)
+             if ! git diff --quiet -w "origin/$BASE_BRANCH" HEAD -- . ':!*.lock' ':!pnpm-lock.yaml' ':!package-lock.json' ':!yarn.lock' ':!*.svg' ':!*.png' ':!*.ico' ':!*.map' ':!find_slop.sh'; then
+                echo "meaningful=true" >> $GITHUB_OUTPUT
+                echo "✅ Meaningful changes detected (fallback comparison)."
+             else
+                echo "meaningful=false" >> $GITHUB_OUTPUT
+                echo "💤 No meaningful changes (whitespace/locks only)."
+             fi
           fi
 
   prepare-env:
@@ -491,19 +467,14 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
       - name: Run Slop Check
         id: slop
         shell: bash
         run: |
           set -o pipefail
           mkdir -p logs
-          # Use the script which has stricter exclusions (skips lockfiles) than the global meaningful check
-          ./scripts/ci-check-slop.sh "${{ inputs.branch }}" 2>&1 | tee logs/slop-output.log
+          # Run lint:slop directly. The job is conditioned on meaningful=true from the check job.
+          pnpm run lint:slop 2>&1 | tee logs/slop-output.log
         continue-on-error: true
 
       - name: Report Slop Failure
