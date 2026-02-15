@@ -1,0 +1,44 @@
+name: 'GH PR Create'
+description: 'Creates a Pull Request using GitHub CLI'
+inputs:
+  title:
+    description: 'PR title'
+    required: true
+  body:
+    description: 'PR body text'
+    required: false
+  body_file:
+    description: 'Path to a file containing the PR body'
+    required: false
+  base:
+    description: 'Base branch'
+    required: true
+  head:
+    description: 'Head branch'
+    required: true
+outputs:
+  pr_number:
+    description: 'The number of the created PR'
+    value: ${{ steps.create.outputs.pr_number }}
+  pr_url:
+    description: 'The URL of the created PR'
+    value: ${{ steps.create.outputs.pr_url }}
+runs:
+  using: 'composite'
+  steps:
+    - id: create
+      shell: bash
+      run: |
+        set -e
+        ARGS=("--title" "${{ inputs.title }}" "--base" "${{ inputs.base }}" "--head" "${{ inputs.head }}")
+        if [ -n "${{ inputs.body_file }}" ]; then
+          ARGS+=("--body-file" "${{ inputs.body_file }}")
+        elif [ -n "${{ inputs.body }}" ]; then
+          ARGS+=("--body" "${{ inputs.body }}")
+        else
+          ARGS+=("--body" "")
+        fi
+
+        PR_URL=$(gh pr create "${ARGS[@]}" | tail -n 1)
+        echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+        echo "pr_number=$(echo "$PR_URL" | awk -F'/' '{print $NF}')" >> $GITHUB_OUTPUT
