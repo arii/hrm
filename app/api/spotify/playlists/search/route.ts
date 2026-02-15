@@ -50,8 +50,7 @@ export async function GET(req: NextRequest) {
         token_type: 'Bearer',
         expires_in: 3600, // Nominal; managed by NextAuth.
         refresh_token: session.refreshToken ?? '',
-        scope: session.scope ?? '',
-      }
+      } as any // eslint-disable-line @typescript-eslint/no-explicit-any
     )
 
     // 5. Search for playlists using the SDK

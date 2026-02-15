@@ -1,7 +1,6 @@
 import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
-import { AccessToken } from '@spotify/web-api-ts-sdk'
 
 /**
  * @route POST /api/internal/token-delivery
@@ -16,7 +15,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 export async function POST(req: NextRequest) {
   try {
     // 1. Parse the token from the request body
-    const tokenData = (await req.json()) as any
+    const tokenData = (await req.json()) as Record<string, unknown>
     if (!tokenData || !tokenData.refresh_token) {
       throw new ApiError(400, 'Bad Request: Missing token data.')
     }
@@ -44,12 +43,12 @@ export async function POST(req: NextRequest) {
     // for sub, scope, and expires_in if they are missing.
     await global.spotifyService.handleTokenUpdate({
       provider: 'spotify',
-      sub: tokenData.sub || 'unknown',
-      scope: tokenData.scope || '',
-      expires_in: tokenData.expires_in ?? 3600,
+      sub: (tokenData.sub as string) || 'unknown',
+      scope: (tokenData.scope as string) || '',
+      expires_in: (tokenData.expires_in as number) ?? 3600,
       ...tokenData,
       obtainedAt: Date.now(),
-    })
+    } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
     logger.info('Spotify token delivered and processed successfully.')
 
     return NextResponse.json({

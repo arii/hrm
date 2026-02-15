@@ -30,8 +30,7 @@ export async function getAuthenticatedSpotifyApi(): Promise<SpotifyApi> {
     token_type: 'Bearer',
     expires_in: 3600, // Nominal value; NextAuth manages session/token refresh.
     refresh_token: session.refreshToken ?? '',
-    scope: session.scope ?? '',
-  }
+  } as any // eslint-disable-line @typescript-eslint/no-explicit-any
 
   return SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID, token)
 }
