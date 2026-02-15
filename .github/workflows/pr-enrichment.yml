@@ -72,6 +72,7 @@ jobs:
           echo "PR_TITLE=$(echo "$PR_DATA" | jq -r .title)" >> $GITHUB_ENV
           echo "PR_AUTHOR=$(echo "$PR_DATA" | jq -r .author)" >> $GITHUB_ENV
           echo "BASE_SHA=$(echo "$PR_DATA" | jq -r .base_sha)" >> $GITHUB_ENV
+          echo "BASE_REF_NAME=$(echo "$PR_DATA" | jq -r .base_ref)" >> $GITHUB_ENV
           echo "HEAD_SHA=$(echo "$PR_DATA" | jq -r .head_sha)" >> $GITHUB_ENV
           echo "ADDITIONS_API=$(echo "$PR_DATA" | jq -r '.additions // 0')" >> $GITHUB_ENV
           echo "DELETIONS_API=$(echo "$PR_DATA" | jq -r '.deletions // 0')" >> $GITHUB_ENV
@@ -149,12 +150,19 @@ jobs:
 
           # Get lines changed
           # Using env vars set in Setup PR Context
-          # Fetch base branch tip to ensure it is available for diffing
-          git fetch origin "$BASE_SHA" --depth=1 || true
+          # Fetch the latest tip of the base branch and the head commit
+          # Prefer using the branch name (e.g. origin/leader) to ensure comparison against latest base
+          git fetch origin "$BASE_REF_NAME" --depth=1 || git fetch origin "$BASE_SHA" --depth=1 || true
 
-          # Use triple-dot diff to get changes from the common ancestor
-          ADDITIONS_GIT=$(git diff --numstat "$BASE_SHA...$HEAD_SHA" | awk '{sum+=$1} END {print sum+0}')
-          DELETIONS_GIT=$(git diff --numstat "$BASE_SHA...$HEAD_SHA" | awk '{sum+=$2} END {print sum+0}')
+          # Use triple-dot diff to get changes from the common ancestor of the current base tip and PR head
+          # We fall back to BASE_SHA if origin/$BASE_REF_NAME is unavailable
+          DIFF_BASE="origin/$BASE_REF_NAME"
+          if ! git rev-parse --verify "$DIFF_BASE" >/dev/null 2>&1; then
+            DIFF_BASE="$BASE_SHA"
+          fi
+
+          ADDITIONS_GIT=$(git diff --numstat "$DIFF_BASE...$HEAD_SHA" | awk '{sum+=$1} END {print sum+0}')
+          DELETIONS_GIT=$(git diff --numstat "$DIFF_BASE...$HEAD_SHA" | awk '{sum+=$2} END {print sum+0}')
 
           # Prioritize API-provided metrics, fallback to git diff if API returns zero but git shows changes
           ADDITIONS="${ADDITIONS_API:-0}"
