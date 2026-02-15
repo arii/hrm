@@ -13,4 +13,5 @@ runs:
   steps:
     - shell: bash
       run: |
+        set -e
         timeout ${{ inputs.timeout }} gh pr checks ${{ inputs.pr_number }} --watch

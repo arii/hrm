@@ -15,6 +15,7 @@ runs:
   steps:
     - shell: bash
       run: |
+        set -e
         if [ -n "${{ inputs.body_file }}" ]; then
           gh pr comment ${{ inputs.pr_number }} --body-file "${{ inputs.body_file }}"
         else

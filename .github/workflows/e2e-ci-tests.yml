@@ -42,6 +42,14 @@ jobs:
           base: leader
           head: ${{ env.BRANCH_NAME }}
 
+      - name: Get Initial SHA
+        id: get_sha
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHA=$(gh pr view ${{ steps.create_pr.outputs.pr_number }} --json headRefOid -q '.headRefOid')
+          echo "initial_sha=$SHA" >> $GITHUB_OUTPUT
+
       - name: Trigger PR Squash
         uses: ./.github/actions/gh-pr-comment
         env:
@@ -50,16 +58,25 @@ jobs:
           pr_number: ${{ steps.create_pr.outputs.pr_number }}
           body: '@pr-squash'
 
-      - name: Wait for Squash and Rebase
-        timeout-minutes: 15
+      - name: Wait for PR Update
+        timeout-minutes: 5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INITIAL_SHA: ${{ steps.get_sha.outputs.initial_sha }}
+          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
         run: |
-          echo "Waiting for squash and rebase to complete..."
-          sleep 10
-          # Using the reusable action for PR checks
-          # We call it as a separate step to maintain the timeout logic if preferred,
-          # but here we can just use the action directly.
+          echo "Waiting for PR $PR_NUMBER to be updated by the bot (Initial SHA: $INITIAL_SHA)..."
+          for i in {1..20}; do
+            CURRENT_SHA=$(gh pr view $PR_NUMBER --json headRefOid -q '.headRefOid')
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ PR updated! New SHA: $CURRENT_SHA"
+              exit 0
+            fi
+            echo "Still waiting for update... ($i/20)"
+            sleep 15
+          done
+          echo "❌ Timed out waiting for PR update."
+          exit 1
 
       - name: Wait for Checks
         uses: ./.github/actions/gh-pr-wait-checks
@@ -85,17 +102,6 @@ jobs:
             exit 1
           fi
 
-      - name: Cleanup
-        if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
-        run: |
-          set -e
-          echo "Cleaning up branch..."
-          git push origin --delete $BRANCH_NAME
-
       - name: Close PR
         if: always()
         uses: ./.github/actions/gh-pr-close
@@ -103,6 +109,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           pr_number: ${{ steps.create_pr.outputs.pr_number }}
+
+      - name: Cleanup Branch
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+        run: |
+          set -e
+          echo "Cleaning up branch..."
+          git push origin --delete $BRANCH_NAME
 
   test_conflict_resolver:
     runs-on: ubuntu-latest
@@ -162,6 +178,14 @@ jobs:
           base: ${{ env.BRANCH_A }}
           head: ${{ env.BRANCH_B }}
 
+      - name: Get Initial SHA
+        id: get_sha
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHA=$(gh pr view ${{ steps.create_conflict.outputs.pr_number }} --json headRefOid -q '.headRefOid')
+          echo "initial_sha=$SHA" >> $GITHUB_OUTPUT
+
       - name: Trigger Conflict Resolver
         uses: ./.github/actions/gh-pr-comment
         env:
@@ -170,13 +194,25 @@ jobs:
           pr_number: ${{ steps.create_conflict.outputs.pr_number }}
           body: '@conflict-resolve'
 
-      - name: Wait for Conflict Resolver
-        timeout-minutes: 15
+      - name: Wait for PR Update
+        timeout-minutes: 5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INITIAL_SHA: ${{ steps.get_sha.outputs.initial_sha }}
+          PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
         run: |
-          echo "Waiting for conflict resolver to complete..."
-          sleep 10
+          echo "Waiting for PR $PR_NUMBER to be updated by the bot (Initial SHA: $INITIAL_SHA)..."
+          for i in {1..20}; do
+            CURRENT_SHA=$(gh pr view $PR_NUMBER --json headRefOid -q '.headRefOid')
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ PR updated! New SHA: $CURRENT_SHA"
+              exit 0
+            fi
+            echo "Still waiting for update... ($i/20)"
+            sleep 15
+          done
+          echo "❌ Timed out waiting for PR update."
+          exit 1
 
       - name: Wait for Checks
         uses: ./.github/actions/gh-pr-wait-checks
@@ -201,7 +237,15 @@ jobs:
             exit 1
           fi
 
-      - name: Cleanup
+      - name: Close PR
+        if: always()
+        uses: ./.github/actions/gh-pr-close
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          pr_number: ${{ steps.create_conflict.outputs.pr_number }}
+
+      - name: Cleanup Branches
         if: always()
         env:
           BRANCH_A: ${{ env.BRANCH_A }}
@@ -213,14 +257,6 @@ jobs:
           git push origin --delete $BRANCH_A
           git push origin --delete $BRANCH_B
           git push origin --delete $BASE_BRANCH
-
-      - name: Close PR
-        if: always()
-        uses: ./.github/actions/gh-pr-close
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          pr_number: ${{ steps.create_conflict.outputs.pr_number }}
 
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
@@ -258,6 +294,14 @@ jobs:
           base: leader
           head: ${{ env.BRANCH_NAME }}
 
+      - name: Get Initial SHA
+        id: get_sha
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHA=$(gh pr view ${{ steps.create_pr.outputs.pr_number }} --json headRefOid -q '.headRefOid')
+          echo "initial_sha=$SHA" >> $GITHUB_OUTPUT
+
       - name: Trigger PR Squash and Rebase
         uses: ./.github/actions/gh-pr-comment
         env:
@@ -266,13 +310,25 @@ jobs:
           pr_number: ${{ steps.create_pr.outputs.pr_number }}
           body: '@pr-squash-rebase'
 
-      - name: Wait for Squash and Rebase
-        timeout-minutes: 15
+      - name: Wait for PR Update
+        timeout-minutes: 5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INITIAL_SHA: ${{ steps.get_sha.outputs.initial_sha }}
+          PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
         run: |
-          echo "Waiting for squash and rebase to complete..."
-          sleep 10
+          echo "Waiting for PR $PR_NUMBER to be updated by the bot (Initial SHA: $INITIAL_SHA)..."
+          for i in {1..20}; do
+            CURRENT_SHA=$(gh pr view $PR_NUMBER --json headRefOid -q '.headRefOid')
+            if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ PR updated! New SHA: $CURRENT_SHA"
+              exit 0
+            fi
+            echo "Still waiting for update... ($i/20)"
+            sleep 15
+          done
+          echo "❌ Timed out waiting for PR update."
+          exit 1
 
       - name: Wait for Checks
         uses: ./.github/actions/gh-pr-wait-checks
@@ -305,15 +361,6 @@ jobs:
             exit 1
           fi
 
-      - name: Cleanup
-        if: always()
-        env:
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
-        run: |
-          set -e
-          echo "Cleaning up branch..."
-          git push origin --delete $BRANCH_NAME
-
       - name: Close PR
         if: always()
         uses: ./.github/actions/gh-pr-close
@@ -321,3 +368,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           pr_number: ${{ steps.create_pr.outputs.pr_number }}
+
+      - name: Cleanup Branch
+        if: always()
+        env:
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+        run: |
+          set -e
+          echo "Cleaning up branch..."
+          git push origin --delete $BRANCH_NAME

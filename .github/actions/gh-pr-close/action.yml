@@ -8,4 +8,6 @@ runs:
   using: 'composite'
   steps:
     - shell: bash
-      run: gh pr close ${{ inputs.pr_number }}
+      run: |
+        set -e
+        gh pr close ${{ inputs.pr_number }}
