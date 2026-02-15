@@ -179,6 +179,8 @@ jobs:
       - name: 'Post Session ID Comment'
         if: success() && env.COMMAND == 'new'
         uses: actions/github-script@v7
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -187,7 +189,7 @@ jobs:
               github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: ${{ github.event.issue.number }},
+                issue_number: Number(process.env.ISSUE_NUMBER),
                 body: `<!-- JULES_SESSION_ID=${sessionId} -->`
               });
             }
@@ -202,6 +204,9 @@ jobs:
       - name: 'Handle Failure'
         if: failure()
         uses: actions/github-script@v7
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_ID: ${{ github.event.comment.id }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -215,7 +220,7 @@ jobs:
               github.rest.reactions.createForIssueComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: ${{ github.event.comment.id }},
+                comment_id: Number(process.env.COMMENT_ID),
                 content: '-1'
               }).catch(() => {}); // Ignore if reaction fails
             } catch (e) {
@@ -225,6 +230,6 @@ jobs:
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: ${{ github.event.issue.number }},
+              issue_number: Number(process.env.ISSUE_NUMBER),
               body: body
             })

@@ -54,12 +54,14 @@ jobs:
       - name: Get PR data
         id: pr_data
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
         with:
           script: |
             const response = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: ${{ inputs.pr_number }}
+              pull_number: Number(process.env.PR_NUMBER)
             });
             core.setOutput('head_ref', response.data.head.ref);
             core.setOutput('base_ref', response.data.base.ref);
@@ -142,24 +144,30 @@ jobs:
       - name: Handle Rebase Failure
         if: steps.squash_rebase.outcome == 'failure'
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+          COMMENT_ID: ${{ inputs.comment_id }}
         with:
           script: |
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: ${{ inputs.comment_id }},
+              comment_id: Number(process.env.COMMENT_ID),
               content: 'confused'
             });
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: ${{ inputs.pr_number }},
+              issue_number: Number(process.env.PR_NUMBER),
               body: '❌ Automatic squash and rebase failed. The branch has conflicts with `${{ steps.pr_data.outputs.base_ref }}`. Please resolve the conflicts manually and try again.'
             });
 
       - name: Success
         if: steps.squash_rebase.outcome == 'success'
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+          COMMENT_ID: ${{ inputs.comment_id }}
         with:
           script: |
             const command = '${{ steps.command.outputs.command }}';
@@ -174,13 +182,13 @@ jobs:
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: ${{ inputs.comment_id }},
+              comment_id: Number(process.env.COMMENT_ID),
               content: 'hooray'
             });
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: ${{ inputs.pr_number }},
+              issue_number: Number(process.env.PR_NUMBER),
               body: messageBody
             });
 
