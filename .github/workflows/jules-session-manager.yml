@@ -185,7 +185,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const sessionId = process.env.SESSION_ID;
-            if (sessionId && context.issue.number) {
+            const prNumber = context.issue.number;
+            if (sessionId && prNumber) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -210,6 +211,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const prNumber = context.issue.number;
             const errorMessageNew = process.env.ERROR_NEW || '';
             const errorMessageDelete = process.env.ERROR_DELETE || '';
             const errorMessage = errorMessageNew || errorMessageDelete || 'Unknown error occurred';

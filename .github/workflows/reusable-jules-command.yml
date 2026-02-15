@@ -193,11 +193,12 @@ jobs:
         if: success() && env.COMMAND == 'new'
         uses: actions/github-script@v7
         env:
+          PR_NUMBER: ${{ inputs.issue_number }}
           SESSION_ID: ${{ steps.jules_op_new.outputs.session_id }}
         with:
           github-token: ${{ secrets.GH_TOKEN }}
           script: |
-            const prNumber = Number(context.payload.inputs?.issue_number) || context.issue.number || 0;
+            const prNumber = Number(process.env.PR_NUMBER) || context.issue.number || 0;
 
             const sessionId = process.env.SESSION_ID;
             if (sessionId && prNumber) {
@@ -220,13 +221,15 @@ jobs:
         if: failure()
         uses: actions/github-script@v7
         env:
+          PR_NUMBER: ${{ inputs.issue_number }}
+          COMMENT_ID: ${{ inputs.comment_id }}
           ERROR_NEW: ${{ steps.jules_op_new.outputs.error_message }}
           ERROR_DELETE: ${{ steps.jules_op_delete.outputs.error_message }}
         with:
           github-token: ${{ secrets.GH_TOKEN }}
           script: |
-            const prNumber = Number(context.payload.inputs?.issue_number || context.issue.number || 0);
-            const commentId = Number(context.payload.inputs?.comment_id || context.payload.comment?.id || 0);
+            const prNumber = Number(process.env.PR_NUMBER) || context.issue.number || 0;
+            const commentId = Number(process.env.COMMENT_ID) || context.payload.comment?.id || 0;
 
             const errorMessageNew = process.env.ERROR_NEW || '';
             const errorMessageDelete = process.env.ERROR_DELETE || '';
