@@ -3,7 +3,9 @@ on:
   pull_request_review:
     types: [submitted, dismissed]
 permissions:
+  contents: read
   issues: write
+  pull-requests: write
 jobs:
   label:
     runs-on: ubuntu-latest
@@ -11,6 +13,11 @@ jobs:
       APPROVED_LABEL: 'approved'
       CHANGES_REQUESTED_LABEL: 'changes-requested'
     steps:
+      - uses: actions/checkout@v4
+      - name: Cleanup labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/ci/cleanup-pr-labels.sh ${{ github.event.pull_request.number }}
       - name: Label PR based on review
         uses: actions/github-script@v6
         with:
@@ -19,34 +26,6 @@ jobs:
             const prNumber = context.payload.pull_request.number;
             const approvedLabel = process.env.APPROVED_LABEL;
             const changesRequestedLabel = process.env.CHANGES_REQUESTED_LABEL;
-            const managedLabels = [
-              approvedLabel,
-              changesRequestedLabel,
-              // The following are legacy labels that should be removed.
-              'request-changes',
-              'Changes Requested'
-            ];
-
-            async function removeLabelIfExists(labelName) {
-              try {
-                await github.rest.issues.removeLabel({
-                  owner,
-                  repo,
-                  issue_number: prNumber,
-                  name: labelName,
-                });
-              } catch (error) {
-                if (!error.message.includes("Label does not exist")) {
-                  throw error;
-                }
-              }
-            }
-
-            async function removeAllManagedLabels() {
-              for (const label of managedLabels) {
-                await removeLabelIfExists(label);
-              }
-            }
 
             async function addLabel(labelName) {
               await github.rest.issues.addLabels({
@@ -72,8 +51,6 @@ jobs:
 
             const hasChangesRequested = Object.values(latestReviewsByUser).some(review => review.state === 'CHANGES_REQUESTED');
             const hasApproval = Object.values(latestReviewsByUser).some(review => review.state === 'APPROVED');
-
-            await removeAllManagedLabels();
 
             if (hasChangesRequested) {
               await addLabel(changesRequestedLabel);

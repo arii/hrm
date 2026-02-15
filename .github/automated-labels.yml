@@ -1,0 +1,29 @@
+# .github/automated-labels.yml
+# Centralized configuration for labels managed by automation or considered obsolete.
+
+# Labels related to PR review state (Human and AI)
+review:
+  - approved
+  - changes-requested
+  - ready-for-approval
+  - needs-fixes
+  - ci-failure
+  - review-failed
+
+# Prefix for architectural scope labels
+scope_prefix: "scope:"
+
+# Obsolete or legacy labels that should be removed from PRs
+obsolete:
+  - workflow
+  - workflows
+  - workflow-configuration
+  - workflow-enhancement
+  - workflow-update
+  - workflow-logic
+  - workflow-improvement
+  - workflow-config
+  - workflow-changes
+  - "Workflow Logic"
+  - request-changes
+  - "Changes Requested"

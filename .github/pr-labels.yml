@@ -17,3 +17,19 @@
 - name: review-failed
   description: 'Indicates that the Gemini review process itself failed.'
   color: 'd73a4a' # red
+
+- name: approved
+  description: 'The PR has been approved by a human reviewer.'
+  color: '28a745' # green
+
+- name: changes-requested
+  description: 'Changes have been requested by a human reviewer.'
+  color: 'd73a4a' # red
+
+- name: scope:focused
+  description: 'PR touches a single architectural area.'
+  color: '0075ca' # blue
+
+- name: scope:needs-review
+  description: 'PR touches multiple architectural areas and requires careful review.'
+  color: 'fbca04' # yellow

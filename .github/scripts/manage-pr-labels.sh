@@ -47,23 +47,9 @@ echo "New labels to apply from Gemini review:"
 echo "$NEW_LABELS"
 echo "---"
 
-# Collect labels to remove into a single comma-separated string
-LABELS_TO_REMOVE=""
-for label in $MANAGED_LABELS; do
-  if echo "$CURRENT_LABELS" | grep -q "^$label$"; then
-    if [ -z "$LABELS_TO_REMOVE" ]; then
-      LABELS_TO_REMOVE="$label"
-    else
-      LABELS_TO_REMOVE="$LABELS_TO_REMOVE,$label"
-    fi
-  fi
-done
-
-# Remove all managed labels from the PR in a single call
-if [ -n "$LABELS_TO_REMOVE" ]; then
-  echo "Removing labels: $LABELS_TO_REMOVE"
-  gh pr edit $PR_NUMBER --remove-label "$LABELS_TO_REMOVE"
-fi
+# Call the universal cleanup script to remove all automated and obsolete labels
+echo "Cleaning up automated and obsolete labels..."
+./scripts/ci/cleanup-pr-labels.sh "$PR_NUMBER"
 
 # Add the new labels from the Gemini review
 if [ -n "$NEW_LABELS" ]; then
