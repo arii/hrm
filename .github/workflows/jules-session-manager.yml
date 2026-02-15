@@ -178,7 +178,7 @@ jobs:
 
       - name: 'Post Session ID Comment'
         if: success() && env.COMMAND == 'new'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -194,19 +194,14 @@ jobs:
 
       - name: 'Add Reaction to Comment'
         if: success()
-        uses: actions/github-script@v6
+        uses: peter-evans/create-reaction@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: ${{ github.event.comment.id }},
-              content: '+1'
-            })
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ github.event.comment.id }}
+          reaction: '+1'
       - name: 'Handle Failure'
         if: failure()
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

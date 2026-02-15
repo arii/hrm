@@ -4,7 +4,7 @@ This document outlines the specific, enforceable standards for development in th
 
 ## Commit Message Standards
 
-To ensure a clean, readable, and automated changelog, this project enforces the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+To ensure a clean, readable, and automated changelog, this project enforces the [Conventional Commits](https://www.conventionalcommits.org/) specification. See also the [GitHub Actions Guidelines](./GITHUB_ACTIONS_GUIDELINES.md) for standards on workflow development.
 
 **Guidance vs. Enforcement:**
 
