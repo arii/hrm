@@ -39,11 +39,16 @@ export const estimateCaloriesBurned = ({
   // Karvonen formula - gender-specific coefficients
   let caloriesPerMinute: number
 
+<<<<<<< HEAD
   if (gender === 'MALE') {
+=======
+  const normalizedGender = gender?.toLowerCase()
+  if (normalizedGender === 'male') {
+>>>>>>> 72f4f3ce (Refactor: Consolidate redundant hooks and components)
     caloriesPerMinute =
       (-55.0969 + 0.6309 * heartRate + 0.1988 * weightKg + 0.2017 * age) / 4.184
   } else {
-    // For 'female' and 'neutral', we use the more conservative female formula.
+    // For 'female', 'neutral' or others, we use the more conservative female formula.
     caloriesPerMinute =
       (-20.4022 + 0.4472 * heartRate - 0.1263 * weightKg + 0.074 * age) / 4.184
   }
