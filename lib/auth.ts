@@ -2,6 +2,7 @@
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
+import StravaProvider from 'next-auth/providers/strava'
 import logger from '@/utils/logger'
 import { getAPIURL } from '../utils/urls'
 import { env } from './env'
@@ -13,6 +14,7 @@ declare module 'next-auth' {
     accessToken?: string
     error?: string
     scope?: string
+    provider?: string
   }
 }
 
@@ -25,6 +27,7 @@ declare module 'next-auth/jwt' {
     error?: string
     providerAccountId?: string
     scope?: string
+    provider?: string
   }
 }
 
@@ -32,7 +35,7 @@ declare module 'next-auth/jwt' {
 async function syncTokenWithBackend(token: JWT) {
   try {
     const tokenPayload = {
-      provider: 'spotify',
+      provider: token.provider || 'spotify',
       sub: token.providerAccountId, // providerAccountId is mapped to sub in JWT usually
       access_token: token.accessToken,
       refresh_token: token.refreshToken,
@@ -101,6 +104,11 @@ function getCookieDomain(): string | undefined {
  * Invoked by the NextAuth JWT callback when the access token is expired.
  */
 async function refreshAccessToken(token: JWT) {
+  if (token.provider !== 'spotify') {
+    // For other providers like Strava, we return the token as is for now.
+    // In a production app, you would implement refresh logic for each provider.
+    return token
+  }
   try {
     const refreshedTokens = await refreshSpotifyToken(
       token.refreshToken as string
@@ -159,6 +167,20 @@ if (env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET) {
       authorization: {
         params: {
           scope: SPOTIFY_SCOPES,
+        },
+      },
+    })
+  )
+}
+
+if (env.STRAVA_CLIENT_ID && env.STRAVA_CLIENT_SECRET) {
+  providers.push(
+    StravaProvider({
+      clientId: env.STRAVA_CLIENT_ID,
+      clientSecret: env.STRAVA_CLIENT_SECRET,
+      authorization: {
+        params: {
+          scope: 'activity:write,read',
         },
       },
     })
@@ -240,6 +262,7 @@ export const authOptions: AuthOptions = {
           refreshToken: account.refresh_token,
           providerAccountId: account.providerAccountId, // Store ID for reference
           scope: account.scope,
+          provider: account.provider,
         }
 
         syncTokenWithBackend(initialToken).catch((err) =>
@@ -278,6 +301,9 @@ export const authOptions: AuthOptions = {
       }
       if (typeof token.scope === 'string') {
         session.scope = token.scope
+      }
+      if (typeof token.provider === 'string') {
+        session.provider = token.provider
       }
       logger.debug({ hasAccessToken: !!session.accessToken }, 'Session created')
       return session

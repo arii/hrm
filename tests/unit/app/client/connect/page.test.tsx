@@ -31,12 +31,42 @@ jest.mock('@/hooks/useWorkoutSession', () => ({
   __esModule: true,
   useWorkoutSession: jest.fn(() => ({
     workoutDuration: 0,
+    caloriesBurned: 0,
     resetWorkout: jest.fn(),
     hasStarted: false,
     startWorkout: jest.fn(),
     pauseWorkout: jest.fn(),
     endWorkout: jest.fn(),
     workoutStatus: 'idle',
+  })),
+}))
+
+jest.mock('@/hooks/useWorkoutSessionManager', () => ({
+  useWorkoutSessionManager: jest.fn(() => ({
+    session: null,
+    status: 'idle',
+    isInitialized: true,
+    duration: 0,
+    startWorkout: jest.fn(),
+    resumeWorkout: jest.fn(),
+    endWorkout: jest.fn(),
+    resetWorkout: jest.fn(),
+    addHrData: jest.fn(),
+  })),
+}))
+
+jest.mock('next-auth/react', () => ({
+  useSession: jest.fn(() => ({ data: null, status: 'unauthenticated' })),
+  signIn: jest.fn(),
+  signOut: jest.fn(),
+}))
+
+jest.mock('@/hooks/useAppSnackbar', () => ({
+  useAppSnackbar: jest.fn(() => ({
+    showSuccess: jest.fn(),
+    showError: jest.fn(),
+    showInfo: jest.fn(),
+    showWarning: jest.fn(),
   })),
 }))
 

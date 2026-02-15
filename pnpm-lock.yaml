@@ -32,6 +32,9 @@ importers:
       '@emotion/styled':
         specifier: ^11.14.1
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4))(@types/react@19.2.9)(react@19.2.4)
+      '@garmin/fitsdk':
+        specifier: ^21.194.0
+        version: 21.194.0
       '@google/genai':
         specifier: 1.35.0
         version: 1.35.0
@@ -1573,6 +1576,9 @@ packages:
     peerDependenciesMeta:
       '@exodus/crypto':
         optional: true
+
+  '@garmin/fitsdk@21.194.0':
+    resolution: {integrity: sha512-YDS2bamEqcDhlFN0paM4qhPwiO91A9qDUQa5evE7S/+KEpmIzTsHFuF056epQQgn/i4MMnPr1tz9uaeBy8eJjA==}
 
   '@google/genai@1.35.0':
     resolution: {integrity: sha512-ZC1d0PSM5eS73BpbVIgL3ZsmXeMKLVJurxzww1Z9axy3B2eUB3ioEytbQt4Qu0Od6qPluKrTDew9pSi9kEuPaw==}
@@ -9219,6 +9225,8 @@ snapshots:
       levn: 0.4.1
 
   '@exodus/bytes@1.7.0': {}
+
+  '@garmin/fitsdk@21.194.0': {}
 
   '@google/genai@1.35.0':
     dependencies:

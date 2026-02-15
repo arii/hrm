@@ -73,6 +73,9 @@ interface ConnectViewProps {
   onStartWorkout: () => void
   onPauseWorkout: () => void
   onEndWorkout: () => void
+  onExportWorkout?: () => void
+  isExporting?: boolean
+  sessionId?: string
 }
 
 export default function ConnectView({
@@ -116,6 +119,9 @@ export default function ConnectView({
   onStartWorkout,
   onPauseWorkout,
   onEndWorkout,
+  onExportWorkout,
+  isExporting,
+  sessionId,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -396,7 +402,14 @@ export default function ConnectView({
         />
 
         {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+          <WorkoutSummary
+            duration={duration}
+            caloriesBurned={caloriesBurned}
+            sessionId={sessionId}
+            onExport={onExportWorkout}
+            isExporting={isExporting}
+            showExport={workoutStatus === 'idle' && caloriesBurned > 0}
+          />
         )}
 
         <Typography

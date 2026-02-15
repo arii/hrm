@@ -4,13 +4,26 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import WatchLaterIcon from '@mui/icons-material/WatchLater'
 import WhatshotIcon from '@mui/icons-material/Whatshot'
+import Button from '@mui/material/Button'
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import CircularProgress from '@mui/material/CircularProgress'
 
 interface WorkoutSummaryProps {
   duration: string
   caloriesBurned: number
+  sessionId?: string
+  onExport?: () => void
+  isExporting?: boolean
+  showExport?: boolean
 }
 
-const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
+const WorkoutSummary = ({
+  duration,
+  caloriesBurned,
+  onExport,
+  isExporting,
+  showExport,
+}: WorkoutSummaryProps) => {
   return (
     <Paper
       elevation={3}
@@ -52,6 +65,28 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
             </Typography>
           </Stack>
         </Box>
+        {showExport && onExport && (
+          <Box sx={{ mt: 1, textAlign: 'center' }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={onExport}
+              disabled={isExporting}
+              startIcon={
+                isExporting ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <CloudUploadIcon />
+                )
+              }
+              fullWidth
+              aria-label="Export workout to Strava"
+              sx={{ borderRadius: 1 }}
+            >
+              {isExporting ? 'Exporting to Strava...' : 'Export to Strava'}
+            </Button>
+          </Box>
+        )}
       </Stack>
     </Paper>
   )

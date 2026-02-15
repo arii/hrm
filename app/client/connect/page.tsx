@@ -7,6 +7,8 @@ import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
+import { useSession } from 'next-auth/react'
+import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
@@ -112,6 +114,7 @@ export default function ConnectPage() {
 
   const {
     workoutDuration,
+    caloriesBurned: preservedCalories,
     resetWorkout: resetWorkoutSession,
     hasStarted,
     startWorkout,
@@ -124,11 +127,53 @@ export default function ConnectPage() {
   })
 
   const {
+    session: persistentSession,
+    status: persistentStatus,
     addHrData,
     startWorkout: startPersistentWorkout,
     endWorkout: endPersistentWorkout,
     resetWorkout: resetPersistentWorkout,
   } = useWorkoutSessionManager()
+
+  const { data: authSession } = useSession()
+  const { showSuccess, showError } = useAppSnackbar()
+  const [isExporting, setIsExporting] = useState(false)
+
+  const handleExportWorkout = useCallback(async () => {
+    if (!persistentSession) return
+
+    if (!authSession || authSession.provider !== 'strava') {
+      showError('Please log in with Strava to export your workout.')
+      return
+    }
+
+    setIsExporting(true)
+    try {
+      const response = await fetch(
+        `/api/workout/export/${persistentSession.sessionId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(persistentSession),
+        }
+      )
+
+      const data = await response.json()
+
+      if (response.ok) {
+        showSuccess('Workout successfully exported to Strava!')
+      } else {
+        showError(data.error || 'Failed to export workout to Strava.')
+      }
+    } catch (error) {
+      logger.error({ error }, 'Export to Strava failed')
+      showError('An error occurred while exporting to Strava.')
+    } finally {
+      setIsExporting(false)
+    }
+  }, [persistentSession, authSession, showSuccess, showError])
 
   const handleStartWorkout = useCallback(() => {
     startWorkout()
@@ -242,7 +287,7 @@ export default function ConnectPage() {
         unit: 'seconds',
         format: 'HH:MM:SS',
       })}
-      caloriesBurned={calories}
+      caloriesBurned={preservedCalories}
       userName={userName}
       setUserName={(name) =>
         setUserSettings((prev) => ({ ...prev, userName: name }))
@@ -281,10 +326,13 @@ export default function ConnectPage() {
       zone={zone}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
-      hasStarted={hasStarted}
+      hasStarted={hasStarted || persistentStatus === 'finished'}
       onReset={handleResetWorkout}
-      workoutStatus={workoutStatus}
+      workoutStatus={persistentStatus === 'finished' ? 'idle' : workoutStatus}
       onStartWorkout={handleStartWorkout}
+      onExportWorkout={handleExportWorkout}
+      isExporting={isExporting}
+      sessionId={persistentSession?.sessionId}
       onPauseWorkout={pauseWorkout}
       onEndWorkout={handleEndWorkout}
     />
