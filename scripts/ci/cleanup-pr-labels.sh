@@ -30,7 +30,7 @@ LABELS_TO_REMOVE=()
 # 1. ALWAYS Check Obsolete Labels
 echo "Checking for obsolete labels..."
 while IFS= read -r label; do
-  if [ -n "$label" ] && echo "$CURRENT_LABELS" | grep -qx "$label"; then
+  if [ -n "$label" ] && echo "$CURRENT_LABELS" | grep -Fxq "$label"; then
     LABELS_TO_REMOVE+=("$label")
   fi
 done < <(jq -r '.obsolete[]' "$CONFIG_FILE")
@@ -39,7 +39,7 @@ done < <(jq -r '.obsolete[]' "$CONFIG_FILE")
 if [[ "$CATEGORY" == "all" || "$CATEGORY" == "review" ]]; then
   echo "Checking for review labels..."
   while IFS= read -r label; do
-    if [ -n "$label" ] && echo "$CURRENT_LABELS" | grep -qx "$label"; then
+    if [ -n "$label" ] && echo "$CURRENT_LABELS" | grep -Fxq "$label"; then
       LABELS_TO_REMOVE+=("$label")
     fi
   done < <(jq -r '.review[]' "$CONFIG_FILE")
