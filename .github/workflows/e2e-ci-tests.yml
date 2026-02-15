@@ -35,7 +35,7 @@ jobs:
         id: create_pr
         uses: ./.github/actions/gh-pr-create
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
         with:
           title: 'E2E Test PR'
           body: 'Test PR for E2E testing'
@@ -45,7 +45,7 @@ jobs:
       - name: Get Initial SHA
         id: get_sha
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
         run: |
           SHA=$(gh pr view ${{ steps.create_pr.outputs.pr_number }} --json headRefOid -q '.headRefOid')
           echo "initial_sha=$SHA" >> $GITHUB_OUTPUT
@@ -53,7 +53,7 @@ jobs:
       - name: Trigger PR Squash
         uses: ./.github/actions/gh-pr-comment
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
         with:
           pr_number: ${{ steps.create_pr.outputs.pr_number }}
           body: '@pr-squash'
@@ -171,7 +171,7 @@ jobs:
         id: create_conflict
         uses: ./.github/actions/gh-pr-create
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
         with:
           title: 'E2E Test PR with Conflict'
           body: 'Test PR for conflict resolver'
@@ -181,7 +181,7 @@ jobs:
       - name: Get Initial SHA
         id: get_sha
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
         run: |
           SHA=$(gh pr view ${{ steps.create_conflict.outputs.pr_number }} --json headRefOid -q '.headRefOid')
           echo "initial_sha=$SHA" >> $GITHUB_OUTPUT
@@ -189,7 +189,7 @@ jobs:
       - name: Trigger Conflict Resolver
         uses: ./.github/actions/gh-pr-comment
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
         with:
           pr_number: ${{ steps.create_conflict.outputs.pr_number }}
           body: '@conflict-resolve'
@@ -287,7 +287,7 @@ jobs:
         id: create_pr
         uses: ./.github/actions/gh-pr-create
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
         with:
           title: 'E2E Test PR (rebase)'
           body: 'Test PR for E2E testing (rebase)'
@@ -297,7 +297,7 @@ jobs:
       - name: Get Initial SHA
         id: get_sha
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
         run: |
           SHA=$(gh pr view ${{ steps.create_pr.outputs.pr_number }} --json headRefOid -q '.headRefOid')
           echo "initial_sha=$SHA" >> $GITHUB_OUTPUT
@@ -305,7 +305,7 @@ jobs:
       - name: Trigger PR Squash and Rebase
         uses: ./.github/actions/gh-pr-comment
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
         with:
           pr_number: ${{ steps.create_pr.outputs.pr_number }}
           body: '@pr-squash-rebase'
