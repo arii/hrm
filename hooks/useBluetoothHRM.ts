@@ -10,8 +10,8 @@ import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
-import { BLUETOOTH_MESSAGES } from '../constants/bluetooth-messages'
-import { BLUETOOTH_MAX_RECONNECT_ATTEMPTS } from '../constants/bluetooth-reconnection'
+import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
+import { BLUETOOTH_MAX_RECONNECT_ATTEMPTS } from '@/constants/bluetooth-reconnection'
 import {
   HR_SERVICE_UUID,
   HR_CHARACTERISTIC_UUID,
@@ -20,10 +20,8 @@ import {
   ROLLING_AVG_HISTORY_LENGTH,
   MISSED_PACKET_THRESHOLD_BUFFER_MS,
   MIN_MISSED_PACKET_THRESHOLD_MS,
-  HEARTBEAT_INTERVAL_MS as HEARTBEAT_INTERVAL_MS_VAL,
-} from '../constants/bluetooth-config'
-
-export const HEARTBEAT_INTERVAL_MS = HEARTBEAT_INTERVAL_MS_VAL
+  HEARTBEAT_INTERVAL_MS,
+} from '@/constants/bluetooth-config'
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
