@@ -30,7 +30,6 @@ export class SpotifyPolling implements SpotifyService {
 
   private state: SpotifyData = {
     devices: [],
-    isMuted: false,
     playback: {
       track: {
         id: null,
@@ -40,6 +39,7 @@ export class SpotifyPolling implements SpotifyService {
         albumArtUrl: '',
       },
       is_playing: false,
+      isMuted: false,
       volume_percent: 70,
       progress_ms: 0,
     },

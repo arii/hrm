@@ -30,7 +30,6 @@ describe('TimerControls', () => {
       },
       spotifyData: {
         devices: [],
-        isMuted: false,
         playback: {
           track: {
             id: null,
@@ -40,6 +39,7 @@ describe('TimerControls', () => {
             albumArtUrl: '',
           },
           is_playing: false,
+          isMuted: false,
           volume_percent: 70,
           progress_ms: 0,
         },
@@ -84,7 +84,6 @@ describe('TimerControls', () => {
       },
       spotifyData: {
         devices: [],
-        isMuted: false,
         playback: {
           track: {
             id: null,
@@ -94,6 +93,7 @@ describe('TimerControls', () => {
             albumArtUrl: '',
           },
           is_playing: false,
+          isMuted: false,
           volume_percent: 70,
           progress_ms: 0,
         },

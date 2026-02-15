@@ -99,6 +99,7 @@ export class SpotifyPlayerManager {
           },
           is_playing,
           volume_percent,
+          isMuted: volume_percent === 0,
           progress_ms,
         },
       }))
@@ -228,8 +229,8 @@ export class SpotifyPlayerManager {
             playback: {
               ...prevState.playback,
               volume_percent: clampedVolume,
+              isMuted: clampedVolume === 0,
             },
-            isMuted: clampedVolume === 0,
           }))
           this.broadcastUpdate({
             type: 'SPOTIFY_UPDATE',

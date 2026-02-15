@@ -112,7 +112,7 @@ const SpotifyDisplay = () => {
   // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
     displayVolume: spotifyData.playback.volume_percent ?? 70,
-    isMuted: spotifyData.isMuted ?? false,
+    isMuted: spotifyData.playback.isMuted ?? false,
     isSliding: false,
     lastVolume:
       spotifyData.playback.volume_percent &&
@@ -123,6 +123,10 @@ const SpotifyDisplay = () => {
     deviceMenuAnchor: null,
   })
   const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
+
+  const hasActiveDevice =
+    !!selectedDeviceId ||
+    spotifyData.devices?.some((device) => device.is_active)
 
   // Track the last time volume command was sent to prevent sync race conditions
   const lastVolumeSendTimeRef = useRef<number>(0)
@@ -161,12 +165,12 @@ const SpotifyDisplay = () => {
       type: 'SYNC_WITH_WEBSOCKET',
       payload: {
         volume: spotifyData.playback.volume_percent,
-        isMuted: spotifyData.isMuted,
+        isMuted: spotifyData.playback.isMuted,
       },
     })
   }, [
     spotifyData.playback.volume_percent,
-    spotifyData.isMuted,
+    spotifyData.playback.isMuted,
     state.isSliding,
   ])
 
@@ -425,6 +429,7 @@ const SpotifyDisplay = () => {
             onVolumeChangeCommitted={handleVolumeChangeCommitted}
             onToggleMute={handleToggleMute}
             showValue={true}
+            disabled={!hasActiveDevice}
           />
           <SpotifyDeviceSelector
             availableDevices={spotifyData.devices || []}

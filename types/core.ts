@@ -196,7 +196,6 @@ export interface SpotifyDevice {
  */
 export interface SpotifyPlaybackState {
   devices: SpotifyDevice[]
-  isMuted: boolean
   playback: {
     track: {
       id: string | null
@@ -207,6 +206,7 @@ export interface SpotifyPlaybackState {
     }
     is_playing: boolean
     volume_percent: number
+    isMuted: boolean
     progress_ms: number
   }
 }
