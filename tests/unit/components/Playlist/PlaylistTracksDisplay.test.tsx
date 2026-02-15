@@ -15,7 +15,22 @@ describe('PlaylistTracksDisplay', () => {
   })
 
   const mockContextValue = {
-    spotifyData: { isPlaying: false, trackUri: '' },
+    spotifyData: {
+      devices: [],
+      isMuted: false,
+      playback: {
+        track: {
+          id: null,
+          name: '',
+          artist: '',
+          albumName: '',
+          albumArtUrl: '',
+        },
+        is_playing: false,
+        volume_percent: 70,
+        progress_ms: 0,
+      },
+    },
     sendData: jest.fn(),
     connectionStatus: 'Connected',
     timerData: {},

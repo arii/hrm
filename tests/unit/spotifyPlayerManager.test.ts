@@ -27,17 +27,20 @@ describe('SpotifyPlayerManager', () => {
 
     // Default state for testing
     currentState = {
-      trackId: null,
-      trackName: NOT_PLAYING_MESSAGE,
-      artist: '',
-      albumName: '',
-      albumArtUrl: '',
-      isPlaying: false,
-      is_playing: false,
       devices: [],
-      volume: 70,
-      volume_percent: 70,
       isMuted: false,
+      playback: {
+        track: {
+          id: null,
+          name: NOT_PLAYING_MESSAGE,
+          artist: '',
+          albumName: '',
+          albumArtUrl: '',
+        },
+        is_playing: false,
+        volume_percent: 70,
+        progress_ms: 0,
+      },
     }
 
     broadcastMock = jest.fn()
@@ -89,12 +92,13 @@ describe('SpotifyPlayerManager', () => {
       expect(broadcastMock).toHaveBeenCalledWith({
         type: 'SPOTIFY_UPDATE',
         payload: expect.objectContaining({
-          trackId: 'track1',
-          trackName: 'New Song',
-          artist: 'Artist 1',
-          albumName: 'Album 1',
-          albumArtUrl: 'url1',
-          isPlaying: true,
+          playback: expect.objectContaining({
+            track: expect.objectContaining({
+              id: 'track1',
+              name: 'New Song',
+            }),
+            is_playing: true,
+          }),
         }),
       })
     })
@@ -103,9 +107,15 @@ describe('SpotifyPlayerManager', () => {
       // Arrange: Current state shows playing, SDK returns null
       currentState = {
         ...currentState,
-        trackId: 'track1',
-        trackName: 'Some Song',
-        isPlaying: true,
+        playback: {
+          ...currentState.playback,
+          track: {
+            ...currentState.playback.track,
+            id: 'track1',
+            name: 'Some Song',
+          },
+          is_playing: true,
+        },
       }
       mockPlayer.getPlaybackState.mockResolvedValue(null)
 
@@ -117,9 +127,13 @@ describe('SpotifyPlayerManager', () => {
       expect(broadcastMock).toHaveBeenCalledWith({
         type: 'SPOTIFY_UPDATE',
         payload: expect.objectContaining({
-          trackId: null,
-          trackName: NOT_PLAYING_MESSAGE,
-          isPlaying: false,
+          playback: expect.objectContaining({
+            track: expect.objectContaining({
+              id: null,
+              name: NOT_PLAYING_MESSAGE,
+            }),
+            is_playing: false,
+          }),
         }),
       })
     })
@@ -128,15 +142,6 @@ describe('SpotifyPlayerManager', () => {
       // Arrange: Current state matches SDK response
       currentState = {
         ...currentState,
-        trackId: 'track1',
-        trackName: 'Song 1',
-        artist: 'Artist 1',
-        albumName: 'Album 1',
-        albumArtUrl: 'url1',
-        isPlaying: true,
-        is_playing: true,
-        volume: 70,
-        volume_percent: 70,
         playback: {
           track: {
             id: 'track1',
@@ -176,9 +181,15 @@ describe('SpotifyPlayerManager', () => {
       // Arrange: Current state is stopped, SDK returns null
       currentState = {
         ...currentState,
-        trackId: null,
-        trackName: NOT_PLAYING_MESSAGE,
-        isPlaying: false,
+        playback: {
+          ...currentState.playback,
+          track: {
+            ...currentState.playback.track,
+            id: null,
+            name: NOT_PLAYING_MESSAGE,
+          },
+          is_playing: false,
+        },
       }
       mockPlayer.getPlaybackState.mockResolvedValue(null)
 
@@ -215,12 +226,12 @@ describe('SpotifyPlayerManager', () => {
       expect(broadcastMock).toHaveBeenCalledWith({
         type: 'SPOTIFY_UPDATE',
         payload: expect.objectContaining({
-          trackId: 'episode1',
-          trackName: 'Podcast Episode',
-          artist: 'Podcast Host',
-          albumName: 'Podcast Show',
-          albumArtUrl: 'podcast_url',
-          isPlaying: true,
+          playback: expect.objectContaining({
+            track: expect.objectContaining({
+              id: 'episode1',
+              name: 'Podcast Episode',
+            }),
+          }),
         }),
       })
     })
@@ -235,8 +246,14 @@ describe('SpotifyPlayerManager', () => {
 
       currentState = {
         ...currentState,
-        isPlaying: true,
-        trackName: 'Previous Song',
+        playback: {
+          ...currentState.playback,
+          is_playing: true,
+          track: {
+            ...currentState.playback.track,
+            name: 'Previous Song',
+          },
+        },
       }
 
       // Act
@@ -247,9 +264,13 @@ describe('SpotifyPlayerManager', () => {
       expect(broadcastMock).toHaveBeenCalledWith({
         type: 'SPOTIFY_UPDATE',
         payload: expect.objectContaining({
-          trackId: null,
-          trackName: NOT_PLAYING_MESSAGE,
-          isPlaying: false,
+          playback: expect.objectContaining({
+            track: expect.objectContaining({
+              id: null,
+              name: NOT_PLAYING_MESSAGE,
+            }),
+            is_playing: false,
+          }),
         }),
       })
     })
@@ -291,7 +312,7 @@ describe('SpotifyPlayerManager', () => {
       })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, 'device_id')
       expect(setStateMock).toHaveBeenCalled()
-      expect(currentState.volume).toBe(50)
+      expect(currentState.playback.volume_percent).toBe(50)
       expect(currentState.isMuted).toBe(false)
     })
 
@@ -304,14 +325,14 @@ describe('SpotifyPlayerManager', () => {
         100,
         'device_id'
       )
-      expect(currentState.volume).toBe(100)
+      expect(currentState.playback.volume_percent).toBe(100)
 
       await playerManager.executeSpotifyCommand('SET_VOLUME', {
         deviceId: 'device_id',
         volume: -10,
       })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(0, 'device_id')
-      expect(currentState.volume).toBe(0)
+      expect(currentState.playback.volume_percent).toBe(0)
       expect(currentState.isMuted).toBe(true)
     })
 

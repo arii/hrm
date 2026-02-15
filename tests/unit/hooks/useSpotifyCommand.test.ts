@@ -159,4 +159,10 @@ describe('useSpotifyCommand', () => {
     expect(result.current.isHrmPlayerActive).toBe(true)
     expect(result.current.activeDevice?.id).toBe('d1')
   })
+
+  it('should return playback state', () => {
+    const { result } = renderHook(() => useSpotifyCommand())
+    expect(result.current.playback.track.name).toBe('Song')
+    expect(result.current.playback.is_playing).toBe(true)
+  })
 })

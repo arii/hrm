@@ -29,16 +29,7 @@ export const INITIAL_STATE: WebSocketState = {
     soundEventId: 0,
   },
   spotifyData: {
-    trackId: null,
-    trackName: 'Awaiting Login...',
-    artist: '',
-    albumName: '',
-    albumArtUrl: '',
-    isPlaying: false,
-    is_playing: false,
     devices: [],
-    volume: 70,
-    volume_percent: 70,
     isMuted: false,
     playback: {
       track: {
@@ -50,6 +41,7 @@ export const INITIAL_STATE: WebSocketState = {
       },
       is_playing: false,
       volume_percent: 70,
+      progress_ms: 0,
     },
   },
   activeAlerts: [],

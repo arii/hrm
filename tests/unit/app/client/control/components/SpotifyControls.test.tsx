@@ -49,9 +49,15 @@ describe('components/SpotifyControls', () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
       spotifyData: createMockSpotifyData({
-        trackName: 'Test Track',
-        artist: 'Test Artist',
-        isPlaying: true,
+        playback: {
+          ...createMockSpotifyData().playback,
+          track: {
+            ...createMockSpotifyData().playback.track,
+            name: 'Test Track',
+            artist: 'Test Artist',
+          },
+          is_playing: true,
+        },
         devices: [
           createMockSpotifyDevice({
             id: '1',

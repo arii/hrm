@@ -192,20 +192,12 @@ export interface SpotifyDevice {
 
 /**
  * Represents the current playback state of Spotify.
+ * Consolidates all playback-related information into a single source of truth.
  */
 export interface SpotifyPlaybackState {
-  trackId: string | null
-  trackName: string
-  artist: string
-  albumName: string
-  albumArtUrl: string
-  isPlaying: boolean
-  is_playing: boolean
   devices: SpotifyDevice[]
-  volume: number
-  volume_percent: number
   isMuted: boolean
-  playback?: {
+  playback: {
     track: {
       id: string | null
       name: string
@@ -215,7 +207,7 @@ export interface SpotifyPlaybackState {
     }
     is_playing: boolean
     volume_percent: number
-    progress_ms?: number
+    progress_ms: number
   }
 }
 
