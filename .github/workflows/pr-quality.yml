@@ -99,12 +99,12 @@ jobs:
 
           echo "Checking for meaningful changes against $BASE..."
           # git diff --quiet returns 1 if differences exist, 0 if no differences
-          if ! git diff --quiet -w "$BASE...HEAD" -- . ':!*.lock' ':!package-lock.json' ':!*.svg' ':!*.map'; then
-             echo "meaningful=true" >> $GITHUB_OUTPUT
-             echo "✅ Meaningful changes detected."
-          else
+          if git diff --quiet -w "$BASE...HEAD" -- . ':!*.lock' ':!package-lock.json' ':!*.svg' ':!*.map'; then
              echo "meaningful=false" >> $GITHUB_OUTPUT
              echo "💤 No meaningful changes (whitespace/locks only)."
+          else
+             echo "meaningful=true" >> $GITHUB_OUTPUT
+             echo "✅ Meaningful changes detected."
           fi
 
   prepare-env:
