@@ -29,17 +29,20 @@ export class SpotifyPolling implements SpotifyService {
   private readonly broadcastUpdate: (message: ServerMessage) => void
 
   private state: SpotifyData = {
-    trackId: null,
-    trackName: 'Awaiting Login...',
-    artist: '',
-    albumName: '',
-    albumArtUrl: '',
-    isPlaying: false,
-    is_playing: false,
     devices: [],
-    volume: 70,
-    volume_percent: 70,
     isMuted: false,
+    playback: {
+      track: {
+        id: null,
+        name: 'Awaiting Login...',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
+      },
+      is_playing: false,
+      volume_percent: 70,
+      progress_ms: 0,
+    },
   }
 
   private sdk: SpotifyApi | null = null

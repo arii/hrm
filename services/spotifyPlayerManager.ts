@@ -46,17 +46,22 @@ export class SpotifyPlayerManager {
 
     if (!playbackState) {
       if (
-        currentState.isPlaying ||
-        currentState.trackName !== NOT_PLAYING_MESSAGE
+        currentState.playback.is_playing ||
+        currentState.playback.track.name !== NOT_PLAYING_MESSAGE
       ) {
         this.setState((prev) => ({
           ...prev,
-          trackId: null,
-          trackName: NOT_PLAYING_MESSAGE,
-          artist: '',
-          albumName: '',
-          albumArtUrl: '',
-          isPlaying: false,
+          playback: {
+            ...prev.playback,
+            track: {
+              id: null,
+              name: NOT_PLAYING_MESSAGE,
+              artist: '',
+              albumName: '',
+              albumArtUrl: '',
+            },
+            is_playing: false,
+          },
         }))
         this.broadcastUpdate({
           type: 'SPOTIFY_UPDATE',
@@ -72,28 +77,18 @@ export class SpotifyPlayerManager {
       artist,
       albumName,
       albumArtUrl,
-      isPlaying,
       is_playing,
       volume_percent,
       progress_ms,
     } = playbackState
 
     if (
-      trackId !== currentState.trackId ||
-      isPlaying !== currentState.isPlaying ||
-      volume_percent !== currentState.volume_percent
+      trackId !== currentState.playback.track.id ||
+      is_playing !== currentState.playback.is_playing ||
+      volume_percent !== currentState.playback.volume_percent
     ) {
       this.setState((prev) => ({
         ...prev,
-        trackId,
-        trackName,
-        artist,
-        albumName,
-        albumArtUrl,
-        isPlaying,
-        is_playing,
-        volume_percent,
-        volume: volume_percent,
         playback: {
           track: {
             id: trackId,
@@ -230,8 +225,10 @@ export class SpotifyPlayerManager {
           )
           this.setState((prevState) => ({
             ...prevState,
-            volume: clampedVolume,
-            volume_percent: clampedVolume,
+            playback: {
+              ...prevState.playback,
+              volume_percent: clampedVolume,
+            },
             isMuted: clampedVolume === 0,
           }))
           this.broadcastUpdate({

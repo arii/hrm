@@ -88,11 +88,20 @@ describe('SpotifyDisplay', () => {
     mockedUseSession.mockReturnValue({ data: null, status: 'unauthenticated' })
     mockedUseWebSocket.mockReturnValue({
       spotifyData: {
-        trackName: '',
-        artist: '',
-        albumName: '',
-        albumArtUrl: '',
-        isPlaying: false,
+        devices: [],
+        isMuted: false,
+        playback: {
+          track: {
+            id: null,
+            name: '',
+            artist: '',
+            albumName: '',
+            albumArtUrl: '',
+          },
+          is_playing: false,
+          volume_percent: 0,
+          progress_ms: 0,
+        },
       },
       connectionStatus: 'Connected',
       spotifyServiceInitialized: true,
@@ -128,16 +137,30 @@ describe('SpotifyDisplay', () => {
       jest.useFakeTimers()
       mockSendData = jest.fn()
       initialSpotifyData = {
-        trackName: 'Test Track',
-        artist: 'Test Artist',
-        albumName: 'Test Album',
-        albumArtUrl: '',
-        isPlaying: true,
-        volume: 50,
-        isMuted: false,
         devices: [
-          { id: 'mock-device-1', name: 'Test Device', is_active: true },
+          {
+            id: 'mock-device-1',
+            name: 'Test Device',
+            is_active: true,
+            is_private_session: false,
+            is_restricted: false,
+            type: 'Computer',
+            volume_percent: 50,
+          },
         ],
+        isMuted: false,
+        playback: {
+          track: {
+            id: 'mock-track-id',
+            name: 'Test Track',
+            artist: 'Test Artist',
+            albumName: 'Test Album',
+            albumArtUrl: '',
+          },
+          is_playing: true,
+          volume_percent: 50,
+          progress_ms: 0,
+        },
       }
 
       mockedUseSession.mockReturnValue({
@@ -166,7 +189,10 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('50')
 
       // Simulate external update
-      const updatedSpotifyData = { ...initialSpotifyData, volume: 80 }
+      const updatedSpotifyData = {
+        ...initialSpotifyData,
+        playback: { ...initialSpotifyData.playback, volume_percent: 80 },
+      }
       mockedUseWebSocket.mockReturnValue({
         ...mockedUseWebSocket(),
         spotifyData: updatedSpotifyData,
@@ -185,7 +211,10 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('70')
 
       // Simulate external update while sliding
-      const updatedSpotifyData = { ...initialSpotifyData, volume: 90 }
+      const updatedSpotifyData = {
+        ...initialSpotifyData,
+        playback: { ...initialSpotifyData.playback, volume_percent: 90 },
+      }
       mockedUseWebSocket.mockReturnValue({
         ...mockedUseWebSocket(),
         spotifyData: updatedSpotifyData,
@@ -207,7 +236,10 @@ describe('SpotifyDisplay', () => {
         expect(slider).toHaveValue('75')
 
         // Simulate external update while sliding (should be ignored)
-        let updatedSpotifyData = { ...initialSpotifyData, volume: 100 }
+        let updatedSpotifyData = {
+          ...initialSpotifyData,
+          playback: { ...initialSpotifyData.playback, volume_percent: 100 },
+        }
         mockedUseWebSocket.mockReturnValue({
           ...mockedUseWebSocket(),
           spotifyData: updatedSpotifyData,
@@ -222,7 +254,10 @@ describe('SpotifyDisplay', () => {
         jest.advanceTimersByTime(600)
 
         // Simulate another external update (should now be applied)
-        updatedSpotifyData = { ...initialSpotifyData, volume: 10 } // Ensure new volume to trigger effect
+        updatedSpotifyData = {
+          ...initialSpotifyData,
+          playback: { ...initialSpotifyData.playback, volume_percent: 10 },
+        } // Ensure new volume to trigger effect
         mockedUseWebSocket.mockReturnValue({
           ...mockedUseWebSocket(),
           spotifyData: updatedSpotifyData,

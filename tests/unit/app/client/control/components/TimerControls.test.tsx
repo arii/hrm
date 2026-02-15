@@ -42,9 +42,20 @@ const mockWebSocketContext: WebSocketContextType = {
   disconnect: jest.fn(),
   hrmData: [],
   spotifyData: {
-    track: null,
-    isPlaying: false,
-    volumePercent: 0,
+    devices: [],
+    isMuted: false,
+    playback: {
+      track: {
+        id: null,
+        name: '',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
+      },
+      is_playing: false,
+      volume_percent: 0,
+      progress_ms: 0,
+    },
   },
   activeAlerts: [],
   spotifyServiceInitialized: false,

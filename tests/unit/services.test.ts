@@ -272,8 +272,8 @@ describe('Services Integration', () => {
 
       expect(timerState.mode).toBe('STOPWATCH')
       expect(timerState.isRunning).toBe(true)
-      expect(spotifyState).toHaveProperty('trackName')
-      expect(spotifyState).toHaveProperty('isPlaying')
+      expect(spotifyState.playback.track).toHaveProperty('name')
+      expect(spotifyState.playback).toHaveProperty('is_playing')
     })
 
     it('should allow timer and Spotify commands independently', async () => {

@@ -46,9 +46,9 @@ const SpotifyControls = () => {
   }
 
   const hasSpotifyData =
-    spotifyData.trackName !== 'Awaiting Login...' &&
-    spotifyData.trackName !== '' &&
-    spotifyData.trackName !== 'No Track Playing'
+    spotifyData.playback.track.name !== 'Awaiting Login...' &&
+    spotifyData.playback.track.name !== '' &&
+    spotifyData.playback.track.name !== 'No Track Playing'
 
   // 3. Request devices on mount or connection
   useEffect(() => {
@@ -82,14 +82,15 @@ const SpotifyControls = () => {
     prevActiveIdRef.current = activeId
 
     // Sync Volume (if not dragging and not within grace period after send)
-    if (activeDevice && typeof activeDevice.volume_percent === 'number') {
+    const playbackVolume = spotifyData.playback.volume_percent
+    if (activeDevice && typeof playbackVolume === 'number') {
       const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
       const GRACE_PERIOD_MS = 600 // Match the debounce + buffer
 
       // Only sync if we haven't sent a volume command recently
       if (timeSinceLastVolumeSend > GRACE_PERIOD_MS) {
-        if (activeDevice.volume_percent !== volume) {
-          setVolume(activeDevice.volume_percent)
+        if (playbackVolume !== volume) {
+          setVolume(playbackVolume)
         }
       }
     }
@@ -250,15 +251,15 @@ const SpotifyControls = () => {
           <>
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                {spotifyData.trackName}
+                {spotifyData.playback.track.name}
               </Typography>
               <Typography variant="body2" sx={{ color: 'grey.400' }}>
-                {spotifyData.artist}
+                {spotifyData.playback.track.artist}
               </Typography>
             </Box>
 
             <PlaybackControls
-              isPlaying={spotifyData.isPlaying}
+              isPlaying={spotifyData.playback.is_playing}
               onCommand={handlePlaybackCommand}
               disabled={connectionStatus !== 'Connected'}
             />

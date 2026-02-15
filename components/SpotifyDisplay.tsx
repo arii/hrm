@@ -111,11 +111,14 @@ const SpotifyDisplay = () => {
 
   // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
-    displayVolume: spotifyData.volume ?? 70,
+    displayVolume: spotifyData.playback.volume_percent ?? 70,
     isMuted: spotifyData.isMuted ?? false,
     isSliding: false,
     lastVolume:
-      spotifyData.volume && spotifyData.volume > 0 ? spotifyData.volume : 70,
+      spotifyData.playback.volume_percent &&
+      spotifyData.playback.volume_percent > 0
+        ? spotifyData.playback.volume_percent
+        : 70,
     selectedDeviceId: '',
     deviceMenuAnchor: null,
   })
@@ -156,9 +159,12 @@ const SpotifyDisplay = () => {
 
     dispatch({
       type: 'SYNC_WITH_WEBSOCKET',
-      payload: { volume: spotifyData.volume, isMuted: spotifyData.isMuted },
+      payload: {
+        volume: spotifyData.playback.volume_percent,
+        isMuted: spotifyData.isMuted,
+      },
     })
-  }, [spotifyData.volume, spotifyData.isMuted, state.isSliding])
+  }, [spotifyData.playback.volume_percent, spotifyData.isMuted, state.isSliding])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
@@ -229,7 +235,7 @@ const SpotifyDisplay = () => {
   }, [spotifyData.devices, selectedDeviceId])
 
   const handlePlayPauseToggle = () => {
-    if (spotifyData.isPlaying) {
+    if (spotifyData.playback.is_playing) {
       executeSpotify('PAUSE')
     } else {
       executeSpotify('PLAY')
@@ -269,17 +275,17 @@ const SpotifyDisplay = () => {
   }
 
   if (isLoggedIn) {
-    const isWaiting = spotifyData.trackName === 'Awaiting Login...'
+    const isWaiting = spotifyData.playback.track.name === 'Awaiting Login...'
     const displayTrackName = isWaiting
       ? 'No Active Playback'
-      : spotifyData.trackName
-    const displayArtist = isWaiting ? '' : `— ${spotifyData.artist}`
+      : spotifyData.playback.track.name
+    const displayArtist = isWaiting ? '' : `— ${spotifyData.playback.track.artist}`
 
     return (
       <Box
         data-testid="spotify-display-container"
         aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
-          spotifyData.isPlaying ? 'Playing' : 'Paused'
+          spotifyData.playback.is_playing ? 'Playing' : 'Paused'
         }${isReady ? ', Browser player ready' : ''}`}
         sx={{
           backgroundColor: 'grey.900',
@@ -375,10 +381,10 @@ const SpotifyDisplay = () => {
               backgroundColor: 'grey.700',
               '&:hover': { backgroundColor: 'grey.600' },
             }}
-            aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
+            aria-label={spotifyData.playback.is_playing ? 'Pause' : 'Play'}
             data-testid="spotify-play-pause-button"
           >
-            {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+            {spotifyData.playback.is_playing ? <PauseIcon /> : <PlayArrowIcon />}
           </IconButton>
           <IconButton
             size="small"

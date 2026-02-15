@@ -135,7 +135,8 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
           <TableBody>
             {tracks.map((track, index) => {
               const isPlaying =
-                spotifyData.isPlaying && spotifyData.trackId === track.id
+                spotifyData.playback.is_playing &&
+                spotifyData.playback.track.id === track.id
               const playlistUri = `spotify:playlist:${playlistId}`
               return (
                 <TableRow
