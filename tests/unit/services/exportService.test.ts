@@ -6,7 +6,9 @@ jest.mock('@garmin/fitsdk', () => {
   return {
     Encoder: class {
       writeMesg = jest.fn()
-      close = jest.fn(() => new Uint8Array([14, 0, 0, 0, 0, 0, 0, 0, 0x2e, 0x46, 0x49, 0x54]))
+      close = jest.fn(
+        () => new Uint8Array([14, 0, 0, 0, 0, 0, 0, 0, 0x2e, 0x46, 0x49, 0x54])
+      )
     },
     Profile: {
       MesgNum: {
