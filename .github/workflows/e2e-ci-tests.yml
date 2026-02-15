@@ -5,6 +5,12 @@ on:
     paths:
       - '.github/**'
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: read
+
 jobs:
   test_pr_squash:
     runs-on: ubuntu-latest
