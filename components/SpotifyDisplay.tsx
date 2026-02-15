@@ -5,7 +5,7 @@ import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -19,6 +19,7 @@ import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
+import DeviceRecommendation from './Spotify/DeviceRecommendation'
 
 // 1. State Shape
 interface SpotifyDisplayState {
@@ -105,7 +106,8 @@ const spotifyDisplayReducer = (
 
 const SpotifyDisplay = () => {
   const { isLoggedIn } = useSpotifyAuth()
-  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+  const { spotifyData, connectionStatus } = useWebSocket()
+  const { execute: executeSpotify } = useSpotifyCommand()
 
   // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
@@ -165,24 +167,18 @@ const SpotifyDisplay = () => {
       const targetDeviceId =
         selectedDeviceId ||
         spotifyData.devices?.find((device) => device.is_active)?.id
-      if (!targetDeviceId) {
-        console.warn(
-          '[SpotifyDisplay] No target device for volume command. Aborting.'
-        )
-        return
-      }
+
       const sanitized = clampVolume(volume)
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        deviceId: targetDeviceId,
-      }
+
       lastVolumeSendTimeRef.current = Date.now()
       hasPendingSendRef.current = true
-      sendData(message)
+
+      executeSpotify('SET_VOLUME', {
+        volume: sanitized,
+        deviceId: targetDeviceId,
+      })
     },
-    [connectionStatus, selectedDeviceId, sendData, spotifyData.devices]
+    [connectionStatus, selectedDeviceId, executeSpotify, spotifyData.devices]
   )
 
   // Handler for immediate UI update while sliding
@@ -232,26 +228,14 @@ const SpotifyDisplay = () => {
     }
   }, [spotifyData.devices, selectedDeviceId])
 
-  const sendSpotifyCommand = (
-    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-    targetDeviceId?: string
-  ) => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command,
-      ...(targetDeviceId && { deviceId: targetDeviceId }),
-    }
-    sendData(message)
-  }
-
   const handlePlayPauseToggle = () => {
     const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
-    sendSpotifyCommand(command)
+    executeSpotify(command)
   }
 
   const handleDeviceSelect = (deviceId: string) => {
     dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
-    sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
+    executeSpotify('TRANSFER_PLAYBACK', { deviceId })
   }
 
   if (!isLoggedIn) {
@@ -357,6 +341,7 @@ const SpotifyDisplay = () => {
               🎵 Browser Player Active
             </Typography>
           )}
+          <DeviceRecommendation />
         </Box>
 
         <Box
@@ -369,7 +354,7 @@ const SpotifyDisplay = () => {
         >
           <IconButton
             size="small"
-            onClick={() => sendSpotifyCommand('PREVIOUS')}
+            onClick={() => executeSpotify('PREVIOUS')}
             sx={{
               color: 'common.white',
               '&:hover': { backgroundColor: 'grey.800' },
@@ -394,7 +379,7 @@ const SpotifyDisplay = () => {
           </IconButton>
           <IconButton
             size="small"
-            onClick={() => sendSpotifyCommand('NEXT')}
+            onClick={() => executeSpotify('NEXT')}
             sx={{
               color: 'common.white',
               '&:hover': { backgroundColor: 'grey.800' },

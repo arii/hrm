@@ -10,9 +10,7 @@ import {
   handleSpotifyApiError,
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
-import { SpotifyService } from '../types/interfaces.js'
-import { SpotifyCommand } from '../types/core.js'
-import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
+import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { env } from '../lib/env.js'
 import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
 import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
@@ -42,7 +40,7 @@ export class SpotifyPolling implements SpotifyService {
     isMuted: false,
   }
 
-  private sdk: SafeSpotifyApi | null = null
+  private sdk: SpotifyApi | null = null
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
@@ -85,7 +83,7 @@ export class SpotifyPolling implements SpotifyService {
     process.env.NODE_ENV === 'test'
       ? {
           setState: this.setState,
-          setSdk: (sdk: SafeSpotifyApi | null) => {
+          setSdk: (sdk: SpotifyApi | null) => {
             this.sdk = sdk
           },
           getPollInterval: () => this.pollInterval,
@@ -137,7 +135,7 @@ export class SpotifyPolling implements SpotifyService {
       env.SPOTIFY_CLIENT_ID,
       tokenWithoutRefresh as AccessToken
     )
-    this.sdk = createSafeSpotifyApi(sdk)
+    this.sdk = sdk
     this.playerManager = new SpotifyPlayerManager(
       this.sdk,
       this.broadcastUpdate,

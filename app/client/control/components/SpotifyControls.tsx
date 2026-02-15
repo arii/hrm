@@ -14,7 +14,8 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import { SpotifyCommand } from '@/types/websocket'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
@@ -24,6 +25,7 @@ const SpotifyControls = () => {
   const router = useRouter()
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
     useWebSocket()
+  const { execute: executeSpotify } = useSpotifyCommand()
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
@@ -33,13 +35,10 @@ const SpotifyControls = () => {
 
   const handleTrackSelect = (uri: string) => {
     const targetDeviceId = resolveTargetDeviceId()
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command: 'PLAY',
+    executeSpotify('PLAY', {
       uri: uri,
-      ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-    }
-    sendData(message)
+      deviceId: targetDeviceId,
+    })
   }
 
   const handleBrowseClick = () => {
@@ -131,14 +130,10 @@ const SpotifyControls = () => {
         overriddenDeviceId !== undefined
           ? overriddenDeviceId
           : resolveTargetDeviceId()
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      }
-      sendData(message)
+
+      executeSpotify(command, { deviceId: targetDeviceId })
     },
-    [resolveTargetDeviceId, sendData]
+    [resolveTargetDeviceId, executeSpotify]
   )
 
   const handlePlaybackCommand = useCallback(
@@ -166,17 +161,16 @@ const SpotifyControls = () => {
       const sanitized = clampVolume(value)
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
+
+      executeSpotify('SET_VOLUME', {
         volume: sanitized,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      }
-      sendData(message)
+        deviceId: targetDeviceId,
+      })
+
       lastSentVolumeRef.current = messageKey
       lastVolumeSyncTimeRef.current = Date.now()
     },
-    [connectionStatus, resolveTargetDeviceId, sendData]
+    [connectionStatus, resolveTargetDeviceId, executeSpotify]
   )
 
   const debounceTimeoutRef = useRef<number | null>(null)
