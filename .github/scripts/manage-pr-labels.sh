@@ -49,7 +49,7 @@ echo "---"
 
 # Call the universal cleanup script to remove all automated and obsolete labels
 echo "Cleaning up automated and obsolete labels..."
-./scripts/ci/cleanup-pr-labels.sh "$PR_NUMBER"
+GH_TOKEN="$GH_TOKEN" ./scripts/ci/cleanup-pr-labels.sh "$PR_NUMBER"
 
 # Add the new labels from the Gemini review
 if [ -n "$NEW_LABELS" ]; then
