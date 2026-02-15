@@ -172,15 +172,19 @@ export class SpotifyPlayerManager {
           command,
           () => {
             if (uri) {
-              return sdk.player.startResumePlayback(deviceId, undefined, [uri])
+              return sdk.player.startResumePlayback(
+                deviceId as string,
+                undefined,
+                [uri]
+              )
             }
             if (effectiveContextUri) {
               return sdk.player.startResumePlayback(
-                deviceId,
+                deviceId as string,
                 effectiveContextUri
               )
             }
-            return sdk.player.startResumePlayback(deviceId)
+            return sdk.player.startResumePlayback(deviceId as string)
           },
           { deviceId, contextUri: effectiveContextUri, uri }
         )
@@ -188,21 +192,21 @@ export class SpotifyPlayerManager {
       case 'PAUSE':
         await this.executeSdkCommand(
           command,
-          () => sdk.player.pausePlayback(deviceId),
+          () => sdk.player.pausePlayback(deviceId as string),
           { deviceId }
         )
         break
       case 'NEXT':
         await this.executeSdkCommand(
           command,
-          () => sdk.player.skipToNext(deviceId),
+          () => sdk.player.skipToNext(deviceId as string),
           { deviceId }
         )
         break
       case 'PREVIOUS':
         await this.executeSdkCommand(
           command,
-          () => sdk.player.skipToPrevious(deviceId),
+          () => sdk.player.skipToPrevious(deviceId as string),
           { deviceId }
         )
         break
@@ -210,7 +214,7 @@ export class SpotifyPlayerManager {
         if (deviceId) {
           await this.executeSdkCommand(
             command,
-            () => sdk.player.transferPlayback([deviceId], true),
+            () => sdk.player.transferPlayback([deviceId as string], true),
             { deviceId }
           )
         }
@@ -220,7 +224,8 @@ export class SpotifyPlayerManager {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
           await this.executeSdkCommand(
             command,
-            () => sdk.player.setPlaybackVolume(clampedVolume, deviceId),
+            () =>
+              sdk.player.setPlaybackVolume(clampedVolume, deviceId as string),
             { deviceId, volume: clampedVolume }
           )
           this.setState((prevState) => ({

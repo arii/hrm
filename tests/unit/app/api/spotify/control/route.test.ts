@@ -31,7 +31,16 @@ const createRequest = (body: object | string) => {
 }
 
 describe('API Route: /api/spotify/control', () => {
-  let mockSdk: any
+  let mockSdk: {
+    player: {
+      startResumePlayback: jest.Mock
+      pausePlayback: jest.Mock
+      skipToNext: jest.Mock
+      skipToPrevious: jest.Mock
+      setPlaybackVolume: jest.Mock
+      transferPlayback: jest.Mock
+    }
+  }
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -117,10 +126,7 @@ describe('API Route: /api/spotify/control', () => {
 
     expect(response.status).toBe(200)
     expect(data.success).toBe(true)
-    expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalledWith(
-      50,
-      undefined
-    )
+    expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
   })
 
   it('should handle TRANSFER_PLAYBACK successfully', async () => {
@@ -141,7 +147,7 @@ describe('API Route: /api/spotify/control', () => {
 
   it('should forward Spotify API errors', async () => {
     const spotifyError = new Error('Device not found')
-    ;(spotifyError as any).status = 404
+    Object.assign(spotifyError, { status: 404 })
     mockSdk.player.startResumePlayback.mockRejectedValue(spotifyError)
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)

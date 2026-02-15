@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       case 'PREVIOUS':
         await sdk.player.skipToPrevious(deviceId)
         break
-      case 'SET_VOLUME':
+      case 'SET_VOLUME': {
         if (volume === undefined) {
           return NextResponse.json(
             { error: 'Volume parameter is required for SET_VOLUME' },
@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
         const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
         await sdk.player.setPlaybackVolume(clampedVolume, deviceId)
         break
+      }
       case 'TRANSFER_PLAYBACK':
         if (!deviceId) {
           return NextResponse.json(
@@ -100,9 +101,14 @@ export async function POST(req: NextRequest) {
       success: true,
       message: `Command '${command}' executed successfully.`,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Check for "No active device" or similar common Spotify API errors
-    const errorMessage = error?.message || String(error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const status =
+      error && typeof error === 'object' && 'status' in error
+        ? (error.status as number)
+        : 500
+
     logger.error({ error, command, deviceId }, 'Spotify SDK control failed')
 
     return NextResponse.json(
@@ -110,7 +116,7 @@ export async function POST(req: NextRequest) {
         error: 'Spotify API error',
         details: errorMessage,
       },
-      { status: error?.status || 500 }
+      { status }
     )
   }
 }

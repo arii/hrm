@@ -8,7 +8,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
  * This hook listens for relayed commands from controllers and executes them
  * by routing them through the centralized /api/spotify/control endpoint.
  */
-export const useSpotifyRemoteExecution = (player: any | null): void => {
+export const useSpotifyRemoteExecution = (player: unknown | null): void => {
   const { sendData } = useWebSocket()
 
   useEffect(() => {
@@ -31,10 +31,7 @@ export const useSpotifyRemoteExecution = (player: any | null): void => {
         })
         if (!res.ok) {
           const text = await res.text()
-          console.error(
-            `[Spotify Remote] Command failed: ${res.status}`,
-            text
-          )
+          console.error(`[Spotify Remote] Command failed: ${res.status}`, text)
         }
       } catch (err) {
         console.error('[Spotify Remote] Fetch error:', err)
@@ -43,12 +40,12 @@ export const useSpotifyRemoteExecution = (player: any | null): void => {
 
     window.addEventListener(
       'spotify-remote-command',
-      handleRemoteCommand as EventListener
+      handleRemoteCommand as unknown as EventListener
     )
     return () =>
       window.removeEventListener(
         'spotify-remote-command',
-        handleRemoteCommand as EventListener
+        handleRemoteCommand as unknown as EventListener
       )
   }, [player, sendData])
 }

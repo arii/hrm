@@ -34,6 +34,7 @@ export const createMockSpotifyData = (
   albumName: 'Mock Album',
   albumArtUrl: 'http://localhost/mock-art.jpg',
   isPlaying: true,
+  is_playing: true,
   devices: [
     createMockSpotifyDevice({ id: '1', name: 'Device 1', is_active: true }),
     createMockSpotifyDevice({
@@ -43,6 +44,7 @@ export const createMockSpotifyData = (
     }),
   ],
   volume: 50,
+  volume_percent: 50,
   isMuted: false,
   ...overrides,
 })

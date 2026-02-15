@@ -9,8 +9,10 @@ export const mockSpotifyData: SpotifyData = {
   albumArtUrl:
     'https://i.scdn.co/image/ab67616d0000b273f8e7a4a8c2d1b7a6f7d1b7a6',
   isPlaying: true,
+  is_playing: true,
   devices: [],
   volume: 50,
+  volume_percent: 50,
   isMuted: false,
 }
 
@@ -21,8 +23,10 @@ export const mockSpotifyDataNoActivePlayback: SpotifyData = {
   albumName: '',
   albumArtUrl: '',
   isPlaying: false,
+  is_playing: false,
   devices: [],
   volume: 70,
+  volume_percent: 70,
   isMuted: false,
 }
 
