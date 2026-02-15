@@ -44,6 +44,8 @@ jobs:
       squashed_sha: ${{ steps.squash_rebase.outputs.squashed_sha }}
       base_sha: ${{ steps.squash_rebase.outputs.base_sha }}
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Acknowledge command
         uses: actions/github-script@v6
         with:

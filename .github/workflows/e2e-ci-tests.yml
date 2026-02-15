@@ -15,6 +15,8 @@ jobs:
   test_pr_squash:
     runs-on: ubuntu-latest
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -87,6 +89,8 @@ jobs:
   test_conflict_resolver:
     runs-on: ubuntu-latest
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -183,6 +187,8 @@ jobs:
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout code
         uses: actions/checkout@v4
         with:
