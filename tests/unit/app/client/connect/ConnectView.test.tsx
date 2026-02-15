@@ -42,7 +42,26 @@ describe('ConnectView', () => {
     onReset: jest.fn(),
     workoutStatus: 'idle' as const,
     onStartWorkout: jest.fn(),
+    onPauseWorkout: jest.fn(),
     onEndWorkout: jest.fn(),
+    hrZoneMethod: 'MAX_HR' as const,
+    setHrZoneMethod: jest.fn(),
+    maxHrOverride: '',
+    setMaxHrOverride: jest.fn(),
+    restingHr: '',
+    setRestingHr: jest.fn(),
+    customZoneThresholds: {
+      ZONE_1: 50,
+      ZONE_2: 60,
+      ZONE_3: 70,
+      ZONE_4: 80,
+      ZONE_5: 90,
+      ZONE_6: 95,
+    },
+    setCustomZoneThresholds: jest.fn(),
+    session: null,
+    signalPeriodMs: 1000,
+    zone: 0,
   }
 
   it('renders the reset button when bluetooth is not supported', () => {

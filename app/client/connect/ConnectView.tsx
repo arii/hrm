@@ -19,6 +19,8 @@ import WorkoutControls from './WorkoutControls'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
+import { HrZoneMethod } from '@/context/UserSettingsContext'
+import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { WorkoutStatus } from '../../../types/workout'
 import {
   ToggleButtonGroup,
@@ -73,6 +75,15 @@ interface ConnectViewProps {
   onStartWorkout: () => void
   onPauseWorkout: () => void
   onEndWorkout: () => void
+  hrZoneMethod: HrZoneMethod
+  setHrZoneMethod: (method: HrZoneMethod) => void
+  maxHrOverride: string
+  setMaxHrOverride: (val: string) => void
+  restingHr: string
+  setRestingHr: (val: string) => void
+  customZoneThresholds: Record<string, number>
+  setCustomZoneThresholds: (thresholds: Record<string, number>) => void
+  session: WorkoutSessionData | null
 }
 
 export default function ConnectView({
@@ -116,6 +127,15 @@ export default function ConnectView({
   onStartWorkout,
   onPauseWorkout,
   onEndWorkout,
+  hrZoneMethod,
+  setHrZoneMethod,
+  maxHrOverride,
+  setMaxHrOverride,
+  restingHr,
+  setRestingHr,
+  customZoneThresholds,
+  setCustomZoneThresholds,
+  session,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -236,6 +256,14 @@ export default function ConnectView({
               weightError={weightError}
               unit={unitSystem}
               setUnit={onUnitChange}
+              hrZoneMethod={hrZoneMethod}
+              setHrZoneMethod={setHrZoneMethod}
+              maxHrOverride={maxHrOverride}
+              setMaxHrOverride={setMaxHrOverride}
+              restingHr={restingHr}
+              setRestingHr={setRestingHr}
+              customZoneThresholds={customZoneThresholds}
+              setCustomZoneThresholds={setCustomZoneThresholds}
             />
 
             <FormControl component="fieldset">
@@ -396,7 +424,11 @@ export default function ConnectView({
         />
 
         {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+          <WorkoutSummary
+            duration={duration}
+            caloriesBurned={caloriesBurned}
+            session={session}
+          />
         )}
 
         <Typography

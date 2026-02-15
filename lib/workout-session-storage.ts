@@ -10,6 +10,7 @@ export { HrZoneName }
 export interface HrDataPoint {
   time: number
   hr: number
+  calories?: number
 }
 
 export interface CalorieDataPoint {

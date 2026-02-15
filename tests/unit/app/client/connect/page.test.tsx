@@ -62,6 +62,17 @@ const mockUserSettings: UserPreferences = {
   autoConnect: false,
   gender: 'MALE',
   unitSystem: 'METRIC',
+  hrZoneMethod: 'MAX_HR',
+  maxHrOverride: null,
+  restingHr: null,
+  customZoneThresholds: {
+    ZONE_1: 50,
+    ZONE_2: 60,
+    ZONE_3: 70,
+    ZONE_4: 80,
+    ZONE_5: 90,
+    ZONE_6: 95,
+  },
 }
 
 type SetUserSettings = (

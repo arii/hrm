@@ -5,6 +5,8 @@ import usePersistentStorage from '../hooks/usePersistentStorage'
 import { MeasurementSystem, Gender } from '../types/core'
 
 // Directly define the preferences interface and defaults here
+export type HrZoneMethod = 'MAX_HR' | 'HRR'
+
 export interface UserPreferences {
   theme: 'dark' | 'light'
   volumeLevel: number
@@ -17,6 +19,10 @@ export interface UserPreferences {
   autoConnect: boolean
   gender: Gender
   unitSystem: MeasurementSystem
+  hrZoneMethod: HrZoneMethod
+  maxHrOverride: number | null
+  restingHr: number | null
+  customZoneThresholds: Record<string, number>
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -31,6 +37,17 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   autoConnect: false,
   gender: 'FEMALE',
   unitSystem: 'IMPERIAL',
+  hrZoneMethod: 'MAX_HR',
+  maxHrOverride: null,
+  restingHr: null,
+  customZoneThresholds: {
+    ZONE_1: 50,
+    ZONE_2: 60,
+    ZONE_3: 70,
+    ZONE_4: 80,
+    ZONE_5: 90,
+    ZONE_6: 95,
+  },
 }
 
 type UserSettingsContextType = readonly [

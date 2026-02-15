@@ -2,15 +2,24 @@ import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
+import Button from '@mui/material/Button'
 import WatchLaterIcon from '@mui/icons-material/WatchLater'
 import WhatshotIcon from '@mui/icons-material/Whatshot'
+import DownloadIcon from '@mui/icons-material/Download'
+import { WorkoutSessionData } from '@/lib/workout-session-storage'
+import { exportToCSV, exportToGPX } from '@/utils/export'
 
 interface WorkoutSummaryProps {
   duration: string
   caloriesBurned: number
+  session?: WorkoutSessionData | null
 }
 
-const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
+const WorkoutSummary = ({
+  duration,
+  caloriesBurned,
+  session,
+}: WorkoutSummaryProps) => {
   return (
     <Paper
       elevation={3}
@@ -52,6 +61,32 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
             </Typography>
           </Stack>
         </Box>
+
+        {session && session.hrHistory.length > 0 && (
+          <Stack
+            direction="row"
+            spacing={1}
+            justifyContent="center"
+            sx={{ mt: 1 }}
+          >
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<DownloadIcon />}
+              onClick={() => exportToCSV(session)}
+            >
+              CSV
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<DownloadIcon />}
+              onClick={() => exportToGPX(session)}
+            >
+              GPX
+            </Button>
+          </Stack>
+        )}
       </Stack>
     </Paper>
   )

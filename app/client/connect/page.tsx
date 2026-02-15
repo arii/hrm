@@ -22,9 +22,26 @@ import logger from '@/utils/logger'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
-  const { userName, userAge, userWeight, gender, unitSystem } = userSettings
+  const {
+    userName,
+    userAge,
+    userWeight,
+    gender,
+    unitSystem,
+    hrZoneMethod,
+    maxHrOverride,
+    restingHr,
+    customZoneThresholds,
+  } = userSettings
 
   const [currentHR, setCurrentHR] = useState(0)
+
+  const [localMaxHrOverride, setLocalMaxHrOverride] = useState<string>(
+    maxHrOverride?.toString() || ''
+  )
+  const [localRestingHr, setLocalRestingHr] = useState<string>(
+    restingHr?.toString() || ''
+  )
 
   const [localDisplayWeight, setLocalDisplayWeight] = useState<string | null>(
     null
@@ -110,6 +127,8 @@ export default function ConnectPage() {
     [sendData]
   )
 
+  const [isConnected, setIsConnected] = useState(false)
+
   const {
     workoutDuration,
     resetWorkout: resetWorkoutSession,
@@ -119,11 +138,12 @@ export default function ConnectPage() {
     endWorkout,
     workoutStatus,
   } = useWorkoutSession({
-    isConnected: false, // This will be updated by the useBluetoothHRM hook
+    isConnected: isConnected,
     totalCalories: calories,
   })
 
   const {
+    session,
     addHrData,
     startWorkout: startPersistentWorkout,
     endWorkout: endPersistentWorkout,
@@ -163,10 +183,11 @@ export default function ConnectPage() {
         addHrData({
           time: Date.now(),
           hr: heartRate,
+          calories: calories,
         })
       }
     },
-    [processHeartRate, workoutStatus, setCurrentHR, addHrData]
+    [processHeartRate, workoutStatus, setCurrentHR, addHrData, calories]
   )
   const {
     connectAndStream,
@@ -175,7 +196,7 @@ export default function ConnectPage() {
     forgetDevice,
     deviceStatus,
     batteryLevel,
-    isConnected,
+    isConnected: bluetoothIsConnected,
     isDataStale,
     isSupported,
     signalPeriodMs,
@@ -186,6 +207,10 @@ export default function ConnectPage() {
     onHeartRateUpdate: handleHeartRateUpdate,
     onConnect: handleStartWorkout, // Use the wrapped function
   })
+
+  useEffect(() => {
+    setIsConnected(bluetoothIsConnected)
+  }, [bluetoothIsConnected])
 
   useEffect(() => {
     if (
@@ -211,7 +236,27 @@ export default function ConnectPage() {
     connectionAttempted,
   ])
 
-  const { percentage, zone } = calculateHrZoneInfo(currentHR, userAge)
+  useEffect(() => {
+    const maxHr = localMaxHrOverride ? parseInt(localMaxHrOverride, 10) : null
+    if (maxHr !== maxHrOverride) {
+      setUserSettings((prev) => ({ ...prev, maxHrOverride: maxHr }))
+    }
+  }, [localMaxHrOverride, maxHrOverride, setUserSettings])
+
+  useEffect(() => {
+    const resting = localRestingHr ? parseInt(localRestingHr, 10) : null
+    if (resting !== restingHr) {
+      setUserSettings((prev) => ({ ...prev, restingHr: resting }))
+    }
+  }, [localRestingHr, restingHr, setUserSettings])
+
+  const { percentage, zone } = calculateHrZoneInfo(currentHR, {
+    method: hrZoneMethod,
+    age: userAge,
+    maxHrOverride: maxHrOverride,
+    restingHr: restingHr,
+    thresholds: customZoneThresholds,
+  })
 
   useEffect(() => {
     throttledSend({
@@ -287,6 +332,22 @@ export default function ConnectPage() {
       onStartWorkout={handleStartWorkout}
       onPauseWorkout={pauseWorkout}
       onEndWorkout={handleEndWorkout}
+      hrZoneMethod={hrZoneMethod}
+      setHrZoneMethod={(method) =>
+        setUserSettings((prev) => ({ ...prev, hrZoneMethod: method }))
+      }
+      maxHrOverride={localMaxHrOverride}
+      setMaxHrOverride={setLocalMaxHrOverride}
+      restingHr={localRestingHr}
+      setRestingHr={setLocalRestingHr}
+      customZoneThresholds={customZoneThresholds}
+      setCustomZoneThresholds={(thresholds) =>
+        setUserSettings((prev) => ({
+          ...prev,
+          customZoneThresholds: thresholds,
+        }))
+      }
+      session={session}
     />
   )
 }

@@ -4,6 +4,15 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import Accordion from '@mui/material/Accordion'
+import AccordionSummary from '@mui/material/AccordionSummary'
+import AccordionDetails from '@mui/material/AccordionDetails'
+import Typography from '@mui/material/Typography'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import Box from '@mui/material/Box'
+import Slider from '@mui/material/Slider'
+import { HrZoneMethod } from '@/context/UserSettingsContext'
+import { calculateMaxHr } from '@/lib/shared/hr-zones'
 
 interface UserSettingsProps {
   userName: string
@@ -24,6 +33,14 @@ interface UserSettingsProps {
   weightError: string | null
   unit: 'METRIC' | 'IMPERIAL'
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
+  hrZoneMethod: HrZoneMethod
+  setHrZoneMethod: (method: HrZoneMethod) => void
+  maxHrOverride: string
+  setMaxHrOverride: (val: string) => void
+  restingHr: string
+  setRestingHr: (val: string) => void
+  customZoneThresholds: Record<string, number>
+  setCustomZoneThresholds: (thresholds: Record<string, number>) => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -43,7 +60,24 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   weightError,
   unit,
   setUnit,
+  hrZoneMethod,
+  setHrZoneMethod,
+  maxHrOverride,
+  setMaxHrOverride,
+  restingHr,
+  setRestingHr,
+  customZoneThresholds,
+  setCustomZoneThresholds,
 }) => {
+  const autoMaxHr = calculateMaxHr(userAge)
+
+  const handleThresholdChange = (zone: string, value: number) => {
+    setCustomZoneThresholds({
+      ...customZoneThresholds,
+      [zone]: value,
+    })
+  }
+
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <TextField
@@ -151,6 +185,78 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         error={!!weightError}
         helperText={weightError}
       />
+
+      <Accordion elevation={0} sx={{ border: '1px solid #e0e0e0' }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="subtitle2">Advanced HR Zone Settings</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Stack spacing={3}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                Zone Calculation Method
+              </Typography>
+              <ToggleButtonGroup
+                value={hrZoneMethod}
+                exclusive
+                onChange={(_, newMethod) => {
+                  if (newMethod) setHrZoneMethod(newMethod)
+                }}
+                fullWidth
+                size="small"
+              >
+                <ToggleButton value="MAX_HR">Max HR %</ToggleButton>
+                <ToggleButton value="HRR">Karvonen (HRR)</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+
+            <TextField
+              fullWidth
+              size="small"
+              label={`Max HR (Auto: ${autoMaxHr})`}
+              placeholder="Leave empty for auto"
+              type="number"
+              value={maxHrOverride}
+              onChange={(e) => setMaxHrOverride(e.target.value)}
+              helperText="Overrides age-based calculation if set"
+            />
+
+            {hrZoneMethod === 'HRR' && (
+              <TextField
+                fullWidth
+                size="small"
+                label="Resting Heart Rate"
+                placeholder="e.g., 60"
+                type="number"
+                value={restingHr}
+                onChange={(e) => setRestingHr(e.target.value)}
+                required
+              />
+            )}
+
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Custom Zone Thresholds (%)
+              </Typography>
+              {[1, 2, 3, 4, 5, 6].map((z) => (
+                <Box key={z} sx={{ px: 1 }}>
+                  <Typography variant="caption">Zone {z} Min %</Typography>
+                  <Slider
+                    size="small"
+                    value={customZoneThresholds[`ZONE_${z}`] ?? 0}
+                    onChange={(_, value) =>
+                      handleThresholdChange(`ZONE_${z}`, value as number)
+                    }
+                    valueLabelDisplay="auto"
+                    min={0}
+                    max={100}
+                  />
+                </Box>
+              ))}
+            </Box>
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
     </Stack>
   )
 }
