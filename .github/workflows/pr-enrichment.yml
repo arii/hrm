@@ -66,21 +66,32 @@ jobs:
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
-          # Fetch PR details
-          PR_DATA=$(gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '{title: .title, body: .body, base_ref: .baseRefName, head_ref: .headRefName, base_sha: .baseRefOid, head_sha: .headRefOid, author: .author.login, additions: .additions, deletions: .deletions, file_count: .changedFiles}')
+          # Fetch PR details with retry mechanism
+          PR_DATA=""
+          for i in {1..5}; do
+            PR_DATA=$(gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '{title: .title, body: .body, base_ref: .baseRefName, head_ref: .headRefName, base_sha: .baseRefOid, head_sha: .headRefOid, author: .author.login, additions: .additions, deletions: .deletions, file_count: .changedFiles}' 2>/dev/null || echo "")
+            if [ -n "$PR_DATA" ]; then break; fi
+            echo "Waiting for GitHub API (attempt $i)..."
+            sleep 2
+          done
 
-          echo "PR_TITLE=$(echo "$PR_DATA" | jq -r .title)" >> $GITHUB_ENV
-          echo "PR_AUTHOR=$(echo "$PR_DATA" | jq -r .author)" >> $GITHUB_ENV
-          echo "BASE_SHA=$(echo "$PR_DATA" | jq -r .base_sha)" >> $GITHUB_ENV
-          echo "BASE_REF_NAME=$(echo "$PR_DATA" | jq -r .base_ref)" >> $GITHUB_ENV
-          echo "HEAD_SHA=$(echo "$PR_DATA" | jq -r .head_sha)" >> $GITHUB_ENV
+          if [ -z "$PR_DATA" ]; then
+            echo "::error::Could not retrieve PR details from GitHub API."
+            exit 1
+          fi
+
+          echo "PR_TITLE=$(echo "$PR_DATA" | jq -r '.title // "Untitled PR"')" >> $GITHUB_ENV
+          echo "PR_AUTHOR=$(echo "$PR_DATA" | jq -r '.author // "unknown"')" >> $GITHUB_ENV
+          echo "BASE_SHA=$(echo "$PR_DATA" | jq -r '.base_sha // ""')" >> $GITHUB_ENV
+          echo "BASE_REF_NAME=$(echo "$PR_DATA" | jq -r '.base_ref // ""')" >> $GITHUB_ENV
+          echo "HEAD_SHA=$(echo "$PR_DATA" | jq -r '.head_sha // ""')" >> $GITHUB_ENV
           echo "ADDITIONS_API=$(echo "$PR_DATA" | jq -r '.additions // 0')" >> $GITHUB_ENV
           echo "DELETIONS_API=$(echo "$PR_DATA" | jq -r '.deletions // 0')" >> $GITHUB_ENV
           echo "FILE_COUNT_API=$(echo "$PR_DATA" | jq -r '.file_count // 0')" >> $GITHUB_ENV
 
           # Securely write multiline body to GITHUB_ENV
           echo "PR_BODY<<EOF" >> $GITHUB_ENV
-          echo "$PR_DATA" | jq -r .body >> $GITHUB_ENV
+          echo "$PR_DATA" | jq -r '.body // ""' >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Analyze PR Changes
@@ -91,32 +102,48 @@ jobs:
         run: |
           # Robust retry mechanism to fetch both file list and metrics from GitHub API.
           # This prevents "0 files changed" reports by waiting for the API to index the PR.
+
+          # Initialize from previous step context
           FILES=""
-          ADDITIONS=0
-          DELETIONS=0
-          FILE_COUNT=0
+          ADDITIONS=${ADDITIONS_API:-0}
+          DELETIONS=${DELETIONS_API:-0}
+          FILE_COUNT=${FILE_COUNT_API:-0}
 
-          for i in {1..8}; do
-            FILES=$(gh pr diff "$PR_NUMBER" --name-only 2>/dev/null || echo "")
+          for i in {1..10}; do
+            # Only fetch file list if we don't have it yet
+            if [ -z "$FILES" ]; then
+              FILES=$(gh pr diff "$PR_NUMBER" --name-only 2>/dev/null || echo "")
+            fi
 
-            # Fetch latest metrics directly from the API
-            PR_METRICS=$(gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles 2>/dev/null || echo "{}")
-            ADDITIONS=$(echo "$PR_METRICS" | jq -r '.additions // 0')
-            DELETIONS=$(echo "$PR_METRICS" | jq -r '.deletions // 0')
-            FILE_COUNT=$(echo "$PR_METRICS" | jq -r '.changedFiles // 0')
+            # Fetch latest metrics from API if they are currently 0
+            if [ "$FILE_COUNT" -eq 0 ] || ([ "$ADDITIONS" -eq 0 ] && [ "$DELETIONS" -eq 0 ]); then
+              PR_METRICS=$(gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles 2>/dev/null || echo "{}")
 
-            # If API metrics are zero but we have files, try to get numstat manually for robustness
-            if [ -n "$FILES" ] && [ "$ADDITIONS" -eq 0 ] && [ "$DELETIONS" -eq 0 ]; then
-              NUMSTAT=$(gh pr diff "$PR_NUMBER" --numstat 2>/dev/null || echo "")
-              if [ -n "$NUMSTAT" ]; then
-                ADDITIONS=$(echo "$NUMSTAT" | awk '{sum+=$1} END {print sum+0}')
-                DELETIONS=$(echo "$NUMSTAT" | awk '{sum+=$2} END {print sum+0}')
+              # Capture values and use previous ones if new ones are 0 but previous were > 0
+              API_FILES=$(echo "$PR_METRICS" | jq -r '.changedFiles // 0')
+              API_ADDITIONS=$(echo "$PR_METRICS" | jq -r '.additions // 0')
+              API_DELETIONS=$(echo "$PR_METRICS" | jq -r '.deletions // 0')
+
+              if [ "$API_FILES" -gt 0 ]; then FILE_COUNT=$API_FILES; fi
+              if [ "$API_ADDITIONS" -gt 0 ] || [ "$API_DELETIONS" -gt 0 ]; then
+                ADDITIONS=$API_ADDITIONS
+                DELETIONS=$API_DELETIONS
               fi
             fi
 
-            # If API file count is 0 but we have FILES, count them manually
-            if [ -n "$FILES" ] && [ "$FILE_COUNT" -eq 0 ]; then
-              FILE_COUNT=$(echo "$FILES" | grep -c . || echo "0")
+            # Robust manual fallback within the loop if API remains at zero
+            if [ -n "$FILES" ] && ([ "$FILE_COUNT" -eq 0 ] || ([ "$ADDITIONS" -eq 0 ] && [ "$DELETIONS" -eq 0 ])); then
+               if [ "$FILE_COUNT" -eq 0 ]; then
+                 FILE_COUNT=$(echo "$FILES" | grep -c . || echo "0")
+               fi
+
+               if [ "$ADDITIONS" -eq 0 ] && [ "$DELETIONS" -eq 0 ]; then
+                 NUMSTAT=$(gh pr diff "$PR_NUMBER" --numstat 2>/dev/null || echo "")
+                 if [ -n "$NUMSTAT" ]; then
+                   ADDITIONS=$(echo "$NUMSTAT" | awk '{sum+=$1} END {print sum+0}')
+                   DELETIONS=$(echo "$NUMSTAT" | awk '{sum+=$2} END {print sum+0}')
+                 fi
+               fi
             fi
 
             # We consider the data valid if we have both a file list AND at least one change detected.
