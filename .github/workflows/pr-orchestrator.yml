@@ -105,6 +105,9 @@ jobs:
     outputs:
       is_meaningful: ${{ steps.diff_check.outputs.is_meaningful }}
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Checkout Code
         uses: actions/checkout@v4
         with:

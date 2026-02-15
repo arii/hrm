@@ -276,6 +276,8 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Triage Stale Issues
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

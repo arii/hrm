@@ -34,6 +34,9 @@ jobs:
           ref: refs/pull/${{ inputs.pr_number || github.event.pull_request.number }}/head
           fetch-depth: 0
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Setup Environment
         # This composite action (`/.github/actions/setup-env`) checks out the repo,
         # sets up Node.js, configures pnpm, and installs dependencies from the
