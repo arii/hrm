@@ -2,23 +2,12 @@ import type { KnipConfig } from 'knip'
 
 const config: KnipConfig = {
   entry: [
-    'app/**/*.ts',
-    'app/**/*.tsx',
-    'components/**/*.ts',
-    'components/**/*.tsx',
-    'constants/**/*.ts',
-    'context/**/*.tsx',
-    'hooks/**/*.ts',
-    'lib/**/*.ts',
     'scripts/**/*.ts',
-    'services/**/*.ts',
     'tests/**/*.ts',
-    'types/**/*.ts',
-    'utils/**/*.ts',
     'stories/**/*.ts',
     'stories/**/*.tsx',
-    '.storybook/**/*.ts',
-    '.storybook/**/*.tsx',
+    '.storybook/*.ts',
+    '.storybook/*.tsx',
   ],
   project: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs', '**/*.mjs'],
   ignore: [
@@ -44,26 +33,17 @@ const config: KnipConfig = {
     'playwright.config.ts',
     'eslint.config.mjs',
     'tests/unit/mocks/webBluetooth.ts',
+    'deploy/ecosystem.config.cjs',
+    'deploy/next.config.js',
   ],
   ignoreDependencies: [
-    // types for web bluetooth api
     '@types/web-bluetooth',
-    // Eslint plugin
     'eslint-plugin-storybook',
     'dotenv',
+    'bats',
+    'tsconfig-paths',
   ],
   ignoreBinaries: ['scripts/test-json-with-server.sh', 'python3'],
-  next: {
-    entry: ['server.ts', 'proxy.ts'],
-  },
-  jest: {
-    config: [
-      'jest.config.cjs',
-      'jest.config.components.cjs',
-      'jest.config.integration.cjs',
-    ],
-    entry: ['tests/**/*.ts', 'tests/**/*.tsx'],
-  },
 }
 
 export default config

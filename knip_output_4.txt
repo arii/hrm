@@ -1,0 +1,79 @@
+
+> hrm@0.30.0 knip /app
+> knip
+
+Unused files (64)
+components/animation/variants.ts
+components/DashboardSectionLoadingSkeleton.tsx
+components/ErrorBoundary.tsx
+components/ErrorFallback.tsx
+components/Footer.tsx
+components/GoogleDocViewer.tsx
+components/HrmConnectionPanel.tsx
+components/HrTile.tsx
+components/HrTileWrapper.tsx
+components/LoadingIndicator.tsx
+components/NotificationProvider.tsx
+components/Providers.tsx
+components/RefreshIconButton.tsx
+components/shared/ControlCard.tsx
+components/shared/PlaybackControls.tsx
+components/SpotifyDisplay.tsx
+components/SpotifySearchInput.tsx
+components/TimerDisplay.tsx
+components/TimerSoundProvider.tsx
+components/WorkoutColumns.tsx
+components/WorkoutTableViewer.tsx
+constants/apiEndpoints.ts
+constants/calorie-thresholds.ts
+constants/reconnection.ts
+constants/spotify.ts
+context/AudioContext.tsx
+context/ErrorContext.tsx
+context/LoadingContext.tsx
+context/UserSettingsContext.tsx
+context/WebSocketContext.tsx
+deploy/ecosystem.config.cjs
+deploy/next.config.js
+hooks/useAudio.ts
+hooks/useBluetoothHRM.ts
+hooks/useCalorieCalculator.ts
+hooks/useCalorieTracker.ts
+hooks/useDebounce.ts
+hooks/useHeightInput.ts
+hooks/useNow.ts
+hooks/useSpotifyAuth.ts
+hooks/useSpotifyRemoteExecution.ts
+hooks/useSpotifyWebPlayback.ts
+hooks/useVolumePreference.ts
+hooks/useWorkoutSession.ts
+hooks/useWorkoutSessionManager.ts
+lib/calorie-estimation.ts
+lib/errors.ts
+lib/middleware/errorHandler.ts
+lib/middleware/validation.ts
+lib/notifications.ts
+lib/shared/hr-zones.ts
+lib/spotify/device.ts
+lib/spotify/sdk.ts
+lib/types/index.ts
+lib/validation/schemas.ts
+lib/validation/userMetrics.ts
+services/googleDocParser.ts
+types/index.ts
+types/user.ts
+utils/cookies.ts
+utils/logger.ts
+utils/network.ts
+utils/promise.ts
+utils/redirect.ts
+Unused dependencies (2)
+cheerio         package.json:75:6
+lodash.isequal  package.json:81:6
+Unused devDependencies (3)
+@types/lodash.isequal  package.json:119:6
+bats                   package.json:129:6
+tsconfig-paths         package.json:158:6
+Configuration hints (1)
+. (root)    knip.ts  Add entry and/or refine project files (64 unused files)
+ ELIFECYCLE  Command failed with exit code 1.

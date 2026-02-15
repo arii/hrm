@@ -27,7 +27,7 @@ export enum HrZoneName {
 /**
  * Thresholds for HR zones (percentage of Max HR).
  */
-export const ZONE_THRESHOLDS = {
+const ZONE_THRESHOLDS = {
   ZONE_6: 95,
   ZONE_5: 90,
   ZONE_4: 80,
