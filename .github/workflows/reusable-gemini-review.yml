@@ -421,15 +421,19 @@ jobs:
     steps:
       - name: Create skip check
         uses: actions/github-script@v7
+        env:
+          SKIP_REASON: ${{ needs.analyze-changes.outputs.skip-reason }}
+          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const skipReason = '${{ needs.analyze-changes.outputs.skip-reason }}';
+            const skipReason = process.env.SKIP_REASON;
+            const headSha = process.env.HEAD_SHA;
             await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               name: 'Gemini Code Review',
-              head_sha: '${{ inputs.head_sha || github.event.pull_request.head.sha }}',
+              head_sha: headSha,
               status: 'completed',
               conclusion: 'skipped',
               output: {
