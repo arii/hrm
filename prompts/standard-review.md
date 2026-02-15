@@ -90,15 +90,21 @@ Before reviewing, consult `.github/copilot-instructions.md` (included in `{{cont
     - **No useless wrappers**: Scrutinize functions that just wrap another function with the same signature. Ask if it's truly needed.
     - **Consolidate**: If a new helper function is introduced that duplicates existing logic, recommend consolidating it.
 
-5.  **Be Pragmatic, Not Dogmatic**:
+5.  **Code Conciseness and Redundancy Prevention**:
+    - **Prioritize Net Negative LOC**: Favor solutions that reduce the total lines of code. Always look at `{{totalLoc}}` (lines added versus removed). If a change increases complexity or LOC without clear justification, suggest a more concise approach.
+    - **Eliminate Redundancy**: Identify and remove verbose, obvious, or redundant code segments. This includes unnecessary comments, boilerplate, or over-specified types that TypeScript can infer.
+    - **Reuse Existing Logic**: Actively look for re-implementations of existing functions, hooks, or constants. If something similar exists in the codebase, recommend refactoring it for reuse or using it directly.
+    - **Complexity Reduction**: Flag overly complex functions and suggest refactoring strategies to simplify logic and improve readability.
+
+6.  **Be Pragmatic, Not Dogmatic**:
     - **Adhere to project style**: If the project uses `for` loops, don't suggest `forEach` just based on personal preference.
     - **Balance perfection and progress**: Don't block a PR for minor style nits if it delivers critical value. Use comments for non-blocking suggestions.
 
-6.  **Prioritize Readability**:
+7.  **Prioritize Readability**:
     - **Simpler is better**: Prefer direct boolean returns over complex `if/else` chains.
     - **Descriptive naming is key**: Feedback should encourage variable and function names that clearly describe their purpose.
 
-7.  **Actionable and Specific Feedback**:
+8.  **Actionable and Specific Feedback**:
     - **Provide code examples**: Instead of describing a change, show it.
     - **Reference lines**: Pinpoint the exact location for your suggested change.
 
@@ -124,8 +130,8 @@ Before reviewing, consult `.github/copilot-instructions.md` (included in `{{cont
 
 Review every aspect thoroughly:
 
-1. **Code Quality**: Readability, maintainability, adherence to patterns
-2. **Architecture**: Proper separation of concerns, appropriate abstractions
+1. **Code Quality**: Readability, maintainability, adherence to patterns, **conciseness (added vs. removed lines)**
+2. **Architecture**: Proper separation of concerns, appropriate abstractions, **logic reuse (no re-implementations)**
 3. **Security**: Input validation, auth/auth, data exposure
 4. **Performance**: Inefficiencies, N+1 queries, memory leaks
 5. **Testing**: Coverage of edge cases, test quality
