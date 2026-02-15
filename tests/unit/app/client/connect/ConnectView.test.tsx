@@ -48,8 +48,10 @@ describe('ConnectView', () => {
     setHrZoneMethod: jest.fn(),
     maxHrOverride: '',
     setMaxHrOverride: jest.fn(),
+    maxHrError: null,
     restingHr: '',
     setRestingHr: jest.fn(),
+    restingHrError: null,
     customZoneThresholds: {
       ZONE_1: 50,
       ZONE_2: 60,

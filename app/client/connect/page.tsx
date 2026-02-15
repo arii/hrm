@@ -39,9 +39,12 @@ export default function ConnectPage() {
   const [localMaxHrOverride, setLocalMaxHrOverride] = useState<string>(
     maxHrOverride?.toString() || ''
   )
+  const [maxHrError, setMaxHrError] = useState<string | null>(null)
+
   const [localRestingHr, setLocalRestingHr] = useState<string>(
     restingHr?.toString() || ''
   )
+  const [restingHrError, setRestingHrError] = useState<string | null>(null)
 
   const [localDisplayWeight, setLocalDisplayWeight] = useState<string | null>(
     null
@@ -242,16 +245,46 @@ export default function ConnectPage() {
   ])
 
   useEffect(() => {
-    const maxHr = localMaxHrOverride ? parseInt(localMaxHrOverride, 10) : null
-    if (maxHr !== maxHrOverride) {
-      setUserSettings((prev) => ({ ...prev, maxHrOverride: maxHr }))
+    if (!localMaxHrOverride) {
+      setMaxHrError(null)
+      if (maxHrOverride !== null) {
+        setUserSettings((prev) => ({ ...prev, maxHrOverride: null }))
+      }
+      return
+    }
+
+    const val = parseInt(localMaxHrOverride, 10)
+    if (isNaN(val) || val <= 0) {
+      setMaxHrError('Please enter a valid maximum heart rate')
+    } else if (val > 250) {
+      setMaxHrError('Maximum heart rate seems too high (> 250)')
+    } else {
+      setMaxHrError(null)
+      if (val !== maxHrOverride) {
+        setUserSettings((prev) => ({ ...prev, maxHrOverride: val }))
+      }
     }
   }, [localMaxHrOverride, maxHrOverride, setUserSettings])
 
   useEffect(() => {
-    const resting = localRestingHr ? parseInt(localRestingHr, 10) : null
-    if (resting !== restingHr) {
-      setUserSettings((prev) => ({ ...prev, restingHr: resting }))
+    if (!localRestingHr) {
+      setRestingHrError(null)
+      if (restingHr !== null) {
+        setUserSettings((prev) => ({ ...prev, restingHr: null }))
+      }
+      return
+    }
+
+    const val = parseInt(localRestingHr, 10)
+    if (isNaN(val) || val <= 0) {
+      setRestingHrError('Please enter a valid resting heart rate')
+    } else if (val > 150) {
+      setRestingHrError('Resting heart rate seems too high (> 150)')
+    } else {
+      setRestingHrError(null)
+      if (val !== restingHr) {
+        setUserSettings((prev) => ({ ...prev, restingHr: val }))
+      }
     }
   }, [localRestingHr, restingHr, setUserSettings])
 
@@ -343,8 +376,10 @@ export default function ConnectPage() {
       }
       maxHrOverride={localMaxHrOverride}
       setMaxHrOverride={setLocalMaxHrOverride}
+      maxHrError={maxHrError}
       restingHr={localRestingHr}
       setRestingHr={setLocalRestingHr}
+      restingHrError={restingHrError}
       customZoneThresholds={customZoneThresholds}
       setCustomZoneThresholds={(thresholds) =>
         setUserSettings((prev) => ({

@@ -79,8 +79,10 @@ interface ConnectViewProps {
   setHrZoneMethod: (method: HrZoneMethod) => void
   maxHrOverride: string
   setMaxHrOverride: (val: string) => void
+  maxHrError: string | null
   restingHr: string
   setRestingHr: (val: string) => void
+  restingHrError: string | null
   customZoneThresholds: Record<string, number>
   setCustomZoneThresholds: (thresholds: Record<string, number>) => void
   session: WorkoutSessionData | null
@@ -131,8 +133,10 @@ export default function ConnectView({
   setHrZoneMethod,
   maxHrOverride,
   setMaxHrOverride,
+  maxHrError,
   restingHr,
   setRestingHr,
+  restingHrError,
   customZoneThresholds,
   setCustomZoneThresholds,
   session,
@@ -260,8 +264,10 @@ export default function ConnectView({
               setHrZoneMethod={setHrZoneMethod}
               maxHrOverride={maxHrOverride}
               setMaxHrOverride={setMaxHrOverride}
+              maxHrError={maxHrError}
               restingHr={restingHr}
               setRestingHr={setRestingHr}
+              restingHrError={restingHrError}
               customZoneThresholds={customZoneThresholds}
               setCustomZoneThresholds={setCustomZoneThresholds}
             />

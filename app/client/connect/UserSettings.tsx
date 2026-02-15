@@ -12,7 +12,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import Box from '@mui/material/Box'
 import Slider from '@mui/material/Slider'
 import { HrZoneMethod } from '@/context/UserSettingsContext'
-import { calculateMaxHr } from '@/lib/shared/hr-zones'
+import { calculateMaxHr, ZONE_THRESHOLDS } from '@/lib/shared/hr-zones'
 
 interface UserSettingsProps {
   userName: string
@@ -37,8 +37,10 @@ interface UserSettingsProps {
   setHrZoneMethod: (method: HrZoneMethod) => void
   maxHrOverride: string
   setMaxHrOverride: (val: string) => void
+  maxHrError: string | null
   restingHr: string
   setRestingHr: (val: string) => void
+  restingHrError: string | null
   customZoneThresholds: Record<string, number>
   setCustomZoneThresholds: (thresholds: Record<string, number>) => void
 }
@@ -64,8 +66,10 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   setHrZoneMethod,
   maxHrOverride,
   setMaxHrOverride,
+  maxHrError,
   restingHr,
   setRestingHr,
+  restingHrError,
   customZoneThresholds,
   setCustomZoneThresholds,
 }) => {
@@ -218,7 +222,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
               type="number"
               value={maxHrOverride}
               onChange={(e) => setMaxHrOverride(e.target.value)}
-              helperText="Overrides age-based calculation if set"
+              error={!!maxHrError}
+              helperText={maxHrError || 'Overrides age-based calculation if set'}
             />
 
             {hrZoneMethod === 'HRR' && (
@@ -230,6 +235,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
                 type="number"
                 value={restingHr}
                 onChange={(e) => setRestingHr(e.target.value)}
+                error={!!restingHrError}
+                helperText={restingHrError}
                 required
               />
             )}
@@ -243,7 +250,10 @@ const UserSettings: React.FC<UserSettingsProps> = ({
                   <Typography variant="caption">Zone {z} Min %</Typography>
                   <Slider
                     size="small"
-                    value={customZoneThresholds[`ZONE_${z}`] ?? 0}
+                    value={
+                      customZoneThresholds[`ZONE_${z}`] ??
+                      ZONE_THRESHOLDS[`ZONE_${z}` as keyof typeof ZONE_THRESHOLDS]
+                    }
                     onChange={(_, value) =>
                       handleThresholdChange(`ZONE_${z}`, value as number)
                     }
