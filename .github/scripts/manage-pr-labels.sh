@@ -40,7 +40,7 @@ CURRENT_LABELS=$(gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
 echo "Current labels on PR #$PR_NUMBER:"
 echo "$CURRENT_LABELS"
 echo "---"
-echo "All managed labels (from .github/pr-labels.yml):"
+echo "All managed labels (from .github/pr-labels.json):"
 echo "$MANAGED_LABELS"
 echo "---"
 echo "New labels to apply from Gemini review:"
