@@ -1,5 +1,4 @@
 'use client'
-import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
@@ -10,6 +9,20 @@ import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
+
+export interface HrTileProps {
+  name: string
+  bpm?: number | null
+  value?: number | null
+  percentMax?: number
+  percentage?: number
+  zone?: number
+  calories?: number
+  isConnected?: boolean
+  isDataStale?: boolean
+  isAlerting?: boolean
+  alertMessage?: string
+}
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 
@@ -28,11 +41,111 @@ const OVERLAY_SX = {
   borderRadius: 'inherit',
 } as const
 
+<<<<<<< HEAD
+=======
+const IdentityTier = ({ name }: { name: string }) => (
+  <Box sx={{ pt: 3, textAlign: 'center' }}>
+    <Typography
+      variant="h5"
+      sx={{
+        fontWeight: 900,
+        textTransform: 'uppercase',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        px: 2,
+      }}
+    >
+      {name}
+    </Typography>
+  </Box>
+)
+
+const HeroTier = ({ percentMax }: { percentMax: number }) => (
+  <Box
+    sx={{
+      flexGrow: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}
+  >
+    <Typography
+      data-testid="live-hr-percent"
+      variant="h2"
+      component="div"
+      sx={{
+        fontSize: {
+          xs: 'clamp(5rem, 15vw, 8rem)',
+          sm: 'clamp(8rem, 18vw, 12rem)',
+          md: 'clamp(10rem, 20vw, 15rem)',
+        },
+        fontWeight: 900,
+        lineHeight: 1,
+        fontFamily: HERO_FONT_FAMILY,
+      }}
+    >
+      {percentMax}%
+    </Typography>
+  </Box>
+)
+
+const MetricItem = ({
+  value,
+  label,
+  testId,
+}: {
+  value: React.ReactNode
+  label: string
+  testId?: string
+}) => (
+  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
+    {value}{' '}
+    <Typography
+      component="span"
+      variant="caption"
+      sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+    >
+      {label}
+    </Typography>
+  </Typography>
+)
+
+const DataTier = ({
+  bpm,
+  calories,
+  showName,
+}: {
+  bpm: number | null
+  calories: number
+  showName: boolean
+}) => (
+  <Box
+    sx={{
+      pb: 3,
+      pt: showName ? 0 : 3,
+      display: 'flex',
+      justifyContent: 'center',
+      gap: 4,
+    }}
+  >
+    <MetricItem value={bpm ?? '---'} label="BPM" testId="bpm-value" />
+    <MetricItem value={Math.floor(calories)} label="KCAL" />
+  </Box>
+)
+
+/**
+ * HrTile Component: Displays real-time heart rate data for a single user.
+ * Consolidates the presentation logic for heart rate, zones, and calories.
+ */
+>>>>>>> 82a421b9 (refactor: consolidate redundant hooks and components)
 const HrTile = ({
   name,
   bpm,
+  value,
   percentMax,
-  zone,
+  percentage,
+  zone = 0,
   calories = 0,
   isConnected = true,
   isDataStale = false,
@@ -40,6 +153,10 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
+
+  // Support both property naming conventions (bpm/value and percentMax/percentage)
+  const displayBpm = value !== undefined ? value : (bpm ?? null)
+  const displayPercent = percentage !== undefined ? percentage : (percentMax ?? 0)
 
   const zoneConfig =
     HR_ZONE_VISUAL_CONFIG[(zone ?? 0) as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
@@ -51,7 +168,7 @@ const HrTile = ({
       ? 'Disconnected - Showing last known value'
       : isDataStale
         ? 'Waiting for data...'
-        : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
+        : `Name: ${name}, BPM: ${displayBpm}, Kcal: ${calories}, % Max HR: ${displayPercent}%`
 
   const showName = !isGenericName(name)
 
@@ -61,8 +178,8 @@ const HrTile = ({
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
-          isConnected ? `${bpm} beats per minute` : 'Disconnected'
-        }, ${percentMax}% of maximum, Zone ${zone ?? 0}: ${zoneConfig.label}`}
+          isConnected ? `${displayBpm} beats per minute` : 'Disconnected'
+        }, ${displayPercent}% of maximum, Zone ${zone ?? 0}: ${zoneConfig.label}`}
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
@@ -114,6 +231,7 @@ const HrTile = ({
             p: 2,
           }}
         >
+<<<<<<< HEAD
           {showName && (
             <Box sx={{ pt: 1, textAlign: 'center' }}>
               <Typography
@@ -192,6 +310,11 @@ const HrTile = ({
               </Typography>
             </Typography>
           </Box>
+=======
+          {showName && <IdentityTier name={name} />}
+          <HeroTier percentMax={displayPercent} />
+          <DataTier bpm={displayBpm} calories={calories} showName={showName} />
+>>>>>>> 82a421b9 (refactor: consolidate redundant hooks and components)
         </Box>
 
         <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>

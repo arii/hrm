@@ -1,6 +1,6 @@
 // hooks/useWorkoutSessionManager.ts
 
-import { useReducer, useEffect, useCallback, useState } from 'react'
+import { useReducer, useEffect, useCallback, useState, useMemo } from 'react'
 import {
   workoutSessionStorage,
   WorkoutSessionData,
@@ -30,8 +30,10 @@ type SessionManagerAction =
   | { type: 'START'; payload: { age: number; weight: number; maxHr?: number } }
   | { type: 'RESUME' }
   | { type: 'END' }
+  | { type: 'FINISH' }
   | { type: 'RESET' }
   | { type: 'ADD_HR_DATA'; payload: HrDataPoint }
+  | { type: 'UPDATE_CALORIES'; payload: number }
 
 const initialState: SessionManagerState = {
   session: null,
@@ -101,6 +103,18 @@ function sessionManagerReducer(
         status: nextStatus,
       }
     }
+    case 'FINISH': {
+      if (!state.session) return state
+      return {
+        ...state,
+        session: {
+          ...state.session,
+          status: 'finished',
+          endTime: Date.now(),
+        },
+        status: 'finished',
+      }
+    }
     case 'RESET': {
       return initialState
     }
@@ -140,6 +154,16 @@ function sessionManagerReducer(
         },
       }
     }
+    case 'UPDATE_CALORIES': {
+      if (!state.session) return state
+      return {
+        ...state,
+        session: {
+          ...state.session,
+          totalCaloriesBurned: action.payload,
+        },
+      }
+    }
     default:
       return state
   }
@@ -147,9 +171,16 @@ function sessionManagerReducer(
 
 // --- The Hook ---
 
-export const useWorkoutSessionManager = () => {
+/**
+ * Manages the persistent workout session state, including HR history and calorie tracking.
+ * Consolidates logic from the legacy useWorkoutSession hook.
+ *
+ * @param {number} totalCalories - The current cumulative calories from a calorie tracker.
+ */
+export const useWorkoutSessionManager = (totalCalories: number = 0) => {
   const [state, dispatch] = useReducer(sessionManagerReducer, initialState)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [startCalories, setStartCalories] = useState(0)
   const { showInfo } = useAppSnackbar()
 
   const clearStaleSession = useCallback(
@@ -227,11 +258,20 @@ export const useWorkoutSessionManager = () => {
     }
   }, [state.session, state.session?.status])
 
+  // Sync calories to session
+  useEffect(() => {
+    if (state.status === 'running' || state.status === 'paused') {
+      const currentWorkoutCalories = Math.max(0, totalCalories - startCalories)
+      dispatch({ type: 'UPDATE_CALORIES', payload: currentWorkoutCalories })
+    }
+  }, [totalCalories, startCalories, state.status])
+
   const startWorkout = useCallback(
     (age: number, weight: number, maxHr?: number) => {
+      setStartCalories(totalCalories)
       dispatch({ type: 'START', payload: { age, weight, maxHr } })
     },
-    []
+    [totalCalories]
   )
 
   const resumeWorkout = useCallback(() => {
@@ -242,10 +282,15 @@ export const useWorkoutSessionManager = () => {
     dispatch({ type: 'END' })
   }, [])
 
+  const finishWorkout = useCallback(() => {
+    dispatch({ type: 'FINISH' })
+  }, [])
+
   const resetWorkout = useCallback(async () => {
     if (state.session) {
       await workoutSessionStorage.deleteSession(state.session.sessionId)
     }
+    setStartCalories(0)
     dispatch({ type: 'RESET' })
   }, [state.session])
 
@@ -263,6 +308,8 @@ export const useWorkoutSessionManager = () => {
     const interval = setInterval(() => {
       if (state.session?.startTime) {
         const now = Date.now()
+        // Simple duration calculation. For more accuracy with pauses,
+        // we'd need to track total paused time in the session object.
         setDuration(Math.floor((now - state.session.startTime) / 1000))
       }
     }, 1000)
@@ -270,14 +317,22 @@ export const useWorkoutSessionManager = () => {
     return () => clearInterval(interval)
   }, [state.status, state.session?.startTime])
 
+  const caloriesBurned = useMemo(() => {
+    if (state.status === 'idle') return 0
+    return Math.max(0, Math.round(totalCalories - startCalories))
+  }, [state.status, totalCalories, startCalories])
+
   return {
     session: state.session,
     status: state.status,
     isInitialized,
     duration,
+    caloriesBurned,
+    hasStarted: state.status !== 'idle',
     startWorkout,
     resumeWorkout,
     endWorkout,
+    finishWorkout,
     resetWorkout,
     addHrData,
   }

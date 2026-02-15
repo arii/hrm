@@ -46,11 +46,14 @@ describe('useWorkoutSessionManager', () => {
       const { result } = renderHook(() => useWorkoutSessionManager())
       await waitFor(() => expect(result.current.isInitialized).toBe(true))
 
+      expect(result.current.hasStarted).toBe(false)
+
       // Start
       act(() => {
         result.current.startWorkout(30, 80)
       })
       expect(result.current.status).toBe('running')
+      expect(result.current.hasStarted).toBe(true)
       expect(result.current.session).not.toBeNull()
       expect(result.current.session?.startTime).toBe(1000000)
       expect(result.current.session?.status).toBe('running')
@@ -60,6 +63,7 @@ describe('useWorkoutSessionManager', () => {
         result.current.endWorkout()
       })
       expect(result.current.status).toBe('paused')
+      expect(result.current.hasStarted).toBe(true)
       expect(result.current.session?.status).toBe('paused')
       expect(result.current.session?.endTime).toBeNull()
 
@@ -104,6 +108,7 @@ describe('useWorkoutSessionManager', () => {
 
       expect(result.current.session).toBeNull()
       expect(result.current.status).toBe('idle')
+      expect(result.current.hasStarted).toBe(false)
       expect(mockDeleteSession).toHaveBeenCalledWith(sessionId)
     })
   })
@@ -173,6 +178,53 @@ describe('useWorkoutSessionManager', () => {
     })
   })
 
+  describe('Calorie Tracking', () => {
+    it('should calculate caloriesBurned and update session totalCaloriesBurned', async () => {
+      const { result, rerender } = renderHook(
+        ({ calories }) => useWorkoutSessionManager(calories),
+        {
+          initialProps: { calories: 100 },
+        }
+      )
+      await waitFor(() => expect(result.current.isInitialized).toBe(true))
+
+      // Start workout at 100 calories
+      act(() => {
+        result.current.startWorkout(30, 80)
+      })
+
+      expect(result.current.caloriesBurned).toBe(0)
+      expect(result.current.session?.totalCaloriesBurned).toBe(0)
+
+      // Increase cumulative calories to 150
+      act(() => {
+        rerender({ calories: 150 })
+      })
+      expect(result.current.caloriesBurned).toBe(50)
+      expect(result.current.session?.totalCaloriesBurned).toBe(50)
+
+      // Pause workout
+      act(() => {
+        result.current.endWorkout()
+      })
+      expect(result.current.status).toBe('paused')
+
+      // Further increase cumulative calories should still update workout calories while paused
+      act(() => {
+        rerender({ calories: 160 })
+      })
+      expect(result.current.caloriesBurned).toBe(60)
+      expect(result.current.session?.totalCaloriesBurned).toBe(60)
+
+      // Reset
+      await act(async () => {
+        await result.current.resetWorkout()
+      })
+      expect(result.current.caloriesBurned).toBe(0)
+      expect(result.current.status).toBe('idle')
+    })
+  })
+
   describe('Stale Session Handling', () => {
     it('should clear an incomplete session from a previous day on startup', async () => {
       // Arrange
@@ -216,6 +268,7 @@ describe('useWorkoutSessionManager', () => {
         sessionId: 'today-session-id',
         startTime: 1000000,
         status: 'paused',
+        totalCaloriesBurned: 0,
       }
       mockGetIncompleteSession.mockResolvedValue(todaySession)
       mockIsSameDay.mockReturnValue(true) // Mock as the same day
@@ -230,7 +283,7 @@ describe('useWorkoutSessionManager', () => {
       // Assert
       expect(mockDeleteSession).not.toHaveBeenCalled()
       expect(mockShowInfo).not.toHaveBeenCalled()
-      expect(result.current.session).toEqual(todaySession)
+      expect(result.current.session).toEqual(expect.objectContaining(todaySession))
     })
 
     it('should clear an active session when the day changes on window focus', async () => {
