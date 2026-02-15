@@ -1,0 +1,13 @@
+name: 'GH PR Close'
+description: 'Closes a Pull Request'
+inputs:
+  pr_number:
+    description: 'PR number'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      run: |
+        set -e
+        gh pr close ${{ inputs.pr_number }}
