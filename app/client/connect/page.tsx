@@ -5,7 +5,6 @@ import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
-import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
@@ -94,10 +93,10 @@ export default function ConnectPage() {
   }, [connectionStatus, userName, userAge, sendData])
 
   const {
-    calories,
+    totalCaloriesBurned: calories,
     processHeartRate,
     reset: resetCalculator,
-  } = useCalorieCalculator({
+  } = useCalorieTracker({
     age: userAge || 30,
     weightKg: userWeight || 70,
   })
@@ -115,43 +114,41 @@ export default function ConnectPage() {
   )
 
   const {
-    workoutDuration,
-    resetWorkout: resetWorkoutSession,
-    hasStarted,
-    startWorkout,
-    pauseWorkout,
-    endWorkout,
-    workoutStatus,
-  } = useWorkoutSession({
-    isConnected: false, // This will be updated by the useBluetoothHRM hook
-    totalCalories: calories,
-  })
-
-  const {
-    addHrData,
-    startWorkout: startPersistentWorkout,
-    endWorkout: endPersistentWorkout,
+    duration: workoutDuration,
+    caloriesBurned,
     resetWorkout: resetPersistentWorkout,
-  } = useWorkoutSessionManager()
+    hasStarted,
+    startWorkout: startPersistentWorkout,
+    resumeWorkout: resumePersistentWorkout,
+    endWorkout: endPersistentWorkout,
+    finishWorkout: finishPersistentWorkout,
+    status: workoutStatus,
+    addHrData,
+  } = useWorkoutSessionManager(calories)
 
   const handleStartWorkout = useCallback(() => {
-    startWorkout()
-    if (userAge && userWeight) {
+    if (workoutStatus === 'paused') {
+      resumePersistentWorkout()
+    } else if (userAge && userWeight) {
       startPersistentWorkout(userAge, userWeight)
     }
-  }, [startWorkout, startPersistentWorkout, userAge, userWeight])
+  }, [
+    workoutStatus,
+    resumePersistentWorkout,
+    startPersistentWorkout,
+    userAge,
+    userWeight,
+  ])
 
   const handleEndWorkout = useCallback(() => {
-    endWorkout()
-    endPersistentWorkout()
-    resetCalculator() // Reset calories on workout end
-  }, [endWorkout, endPersistentWorkout, resetCalculator])
+    finishPersistentWorkout()
+    // Note: resetCalculator() is handled by resetWorkout or implicitly on new workout
+  }, [finishPersistentWorkout])
 
   const handleResetWorkout = useCallback(() => {
-    resetWorkoutSession()
-    resetCalculator()
     resetPersistentWorkout()
-  }, [resetWorkoutSession, resetCalculator, resetPersistentWorkout])
+    resetCalculator()
+  }, [resetPersistentWorkout, resetCalculator])
 
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
@@ -291,9 +288,9 @@ export default function ConnectPage() {
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}
       onReset={handleResetWorkout}
-      workoutStatus={workoutStatus}
+      workoutStatus={workoutStatus === 'finished' ? 'idle' : workoutStatus}
       onStartWorkout={handleStartWorkout}
-      onPauseWorkout={pauseWorkout}
+      onPauseWorkout={endPersistentWorkout}
       onEndWorkout={handleEndWorkout}
     />
   )
