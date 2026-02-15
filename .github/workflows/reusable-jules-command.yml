@@ -192,15 +192,14 @@ jobs:
       - name: 'Post Session ID Comment'
         if: success() && env.COMMAND == 'new'
         uses: actions/github-script@v7
+        env:
+          SESSION_ID: ${{ steps.jules_op_new.outputs.session_id }}
         with:
           github-token: ${{ secrets.GH_TOKEN }}
           script: |
-            const prNumber = [
-              context.issue.number,
-              '${{ inputs.issue_number }}'
-            ].map(v => parseInt(v, 10)).find(v => !isNaN(v) && v > 0);
+            const prNumber = Number(context.issue.number || 0);
 
-            const sessionId = "${{ steps.jules_op_new.outputs.session_id }}";
+            const sessionId = process.env.SESSION_ID;
             if (sessionId && prNumber) {
               github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -220,21 +219,17 @@ jobs:
       - name: 'Handle Failure'
         if: failure()
         uses: actions/github-script@v7
+        env:
+          ERROR_NEW: ${{ steps.jules_op_new.outputs.error_message }}
+          ERROR_DELETE: ${{ steps.jules_op_delete.outputs.error_message }}
         with:
           github-token: ${{ secrets.GH_TOKEN }}
           script: |
-            const prNumber = [
-              context.issue.number,
-              '${{ inputs.issue_number }}'
-            ].map(v => parseInt(v, 10)).find(v => !isNaN(v) && v > 0);
+            const prNumber = Number(context.issue.number || 0);
+            const commentId = Number(context.payload.comment?.id || 0);
 
-            const commentId = [
-              context.payload.comment?.id,
-              '${{ inputs.comment_id }}'
-            ].map(v => parseInt(v, 10)).find(v => !isNaN(v) && v > 0);
-
-            const errorMessageNew = `${{ steps.jules_op_new.outputs.error_message || '' }}`;
-            const errorMessageDelete = `${{ steps.jules_op_delete.outputs.error_message || '' }}`;
+            const errorMessageNew = process.env.ERROR_NEW || '';
+            const errorMessageDelete = process.env.ERROR_DELETE || '';
             const errorMessage = errorMessageNew || errorMessageDelete || 'Unknown error occurred';
 
             const body = `Jules operation failed with the following error:\n\n\`\`\`\n${errorMessage}\n\`\`\``;

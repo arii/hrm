@@ -1,0 +1,8 @@
+> Reviewed commit: `8ee2da12d7218303aab1f5c33f9282005be7e067`
+
+The CI/CD pipeline failures (`test_pr_squash_rebase`, `test_conflict_resolver`, `test_pr_squash`) are due to a subtle issue in how workflow inputs are accessed within `actions/github-script@v7`.
+
+**Root Cause:**
+The new logic for determining `prNumber` and `commentId` in `pr-squash.yml` and `reusable-jules-command.yml` uses a string literal `'${{ inputs.pr_number }}'` (and similar for `comment_id`) within the JavaScript script block. While GitHub Actions interpolates this string correctly during a live run, in a testing environment (
+
+> Reviewed at commit: `8ee2da12d7218303aab1f5c33f9282005be7e067`

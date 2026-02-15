@@ -57,11 +57,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const prNumber = [
-              context.payload.inputs?.pr_number,
-              context.issue.number,
-              '${{ inputs.pr_number }}'
-            ].map(v => parseInt(v, 10)).find(v => !isNaN(v) && v > 0);
+            const prNumber = Number(context.payload.inputs?.pr_number || context.issue.number || 0);
 
             if (!prNumber) {
               core.setFailed('Could not determine PR number');
@@ -156,17 +152,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const prNumber = [
-              context.payload.inputs?.pr_number,
-              context.issue.number,
-              '${{ inputs.pr_number }}'
-            ].map(v => parseInt(v, 10)).find(v => !isNaN(v) && v > 0);
-
-            const commentId = [
-              context.payload.inputs?.comment_id,
-              context.payload.comment?.id,
-              '${{ inputs.comment_id }}'
-            ].map(v => parseInt(v, 10)).find(v => !isNaN(v) && v > 0);
+            const prNumber = Number(context.payload.inputs?.pr_number || context.issue.number || 0);
+            const commentId = Number(context.payload.inputs?.comment_id || context.payload.comment?.id || 0);
 
             if (commentId) {
               await github.rest.reactions.createForIssueComment({
@@ -189,21 +176,14 @@ jobs:
       - name: Success
         if: steps.squash_rebase.outcome == 'success'
         uses: actions/github-script@v7
+        env:
+          COMMAND: ${{ steps.command.outputs.command }}
         with:
           script: |
-            const prNumber = [
-              context.payload.inputs?.pr_number,
-              context.issue.number,
-              '${{ inputs.pr_number }}'
-            ].map(v => parseInt(v, 10)).find(v => !isNaN(v) && v > 0);
+            const prNumber = Number(context.payload.inputs?.pr_number || context.issue.number || 0);
+            const commentId = Number(context.payload.inputs?.comment_id || context.payload.comment?.id || 0);
 
-            const commentId = [
-              context.payload.inputs?.comment_id,
-              context.payload.comment?.id,
-              '${{ inputs.comment_id }}'
-            ].map(v => parseInt(v, 10)).find(v => !isNaN(v) && v > 0);
-
-            const command = '${{ steps.command.outputs.command }}';
+            const command = process.env.COMMAND;
             let messageBody;
 
             if (command === 'squash-rebase') {
