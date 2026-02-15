@@ -285,5 +285,5 @@ This project prioritizes a lean and maintainable codebase. AI assistants should 
 | "Add `eslint-disable no-explicit-any`"                  | "Refactor to use proper types"                                                         |
 | "Cast to `any` to access private property"              | "Use `_test_` property pattern for testing"                                            |
 | "Re-implementing `formatDate` helper"                   | "Reuse existing `formatDate` from `utils/date.ts`"                                     |
-| "Adding verbose comments to obvious code"               | "Keep code self-documenting and remove redundant comments"                              |
+| "Adding verbose comments to obvious code"               | "Keep code self-documenting and remove redundant comments"                             |
 | "Increasing LOC for a simple change"                    | "Look for more concise alternatives to reduce total LOC"                               |
