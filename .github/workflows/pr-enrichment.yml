@@ -105,26 +105,33 @@ jobs:
             DELETIONS=$(echo "$PR_METRICS" | jq -r '.deletions // 0')
             FILE_COUNT=$(echo "$PR_METRICS" | jq -r '.changedFiles // 0')
 
-            # We consider the data valid if we have both a file list AND the API reports at least one change.
-            # If the PR is truly empty (unlikely given it triggered), we'll eventually time out.
+            # If API metrics are zero but we have files, try to get numstat manually for robustness
+            if [ -n "$FILES" ] && [ "$ADDITIONS" -eq 0 ] && [ "$DELETIONS" -eq 0 ]; then
+              NUMSTAT=$(gh pr diff "$PR_NUMBER" --numstat 2>/dev/null || echo "")
+              if [ -n "$NUMSTAT" ]; then
+                ADDITIONS=$(echo "$NUMSTAT" | awk '{sum+=$1} END {print sum+0}')
+                DELETIONS=$(echo "$NUMSTAT" | awk '{sum+=$2} END {print sum+0}')
+              fi
+            fi
+
+            # If API file count is 0 but we have FILES, count them manually
+            if [ -n "$FILES" ] && [ "$FILE_COUNT" -eq 0 ]; then
+              FILE_COUNT=$(echo "$FILES" | grep -c . || echo "0")
+            fi
+
+            # We consider the data valid if we have both a file list AND at least one change detected.
             if [ -n "$FILES" ] && [ "$FILE_COUNT" -gt 0 ]; then
-              echo "✅ PR changes successfully indexed by GitHub API."
+              echo "✅ PR changes successfully indexed and retrieved."
               break
             fi
 
-            echo "⏳ Waiting for GitHub API to index PR diff and metrics (attempt $i)..."
+            echo "⏳ Waiting for GitHub API to index PR changes (attempt $i)..."
             sleep 5
           done
 
           if [ -z "$FILES" ] || [ "$FILE_COUNT" -eq 0 ]; then
-             # Final attempt: if API still says 0, but we have FILES from gh pr diff, trust the file list.
-             if [ -n "$FILES" ]; then
-               FILE_COUNT=$(echo "$FILES" | grep -c . || echo "0")
-               echo "::warning::GitHub API metrics remain at 0. Falling back to file list count: $FILE_COUNT"
-             else
-               echo "::error::Could not retrieve PR diff or metrics after multiple attempts."
-               exit 1
-             fi
+             echo "::error::Could not retrieve PR diff or metrics after multiple attempts."
+             exit 1
           fi
 
           echo "FILES<<EOF" >> $GITHUB_ENV
