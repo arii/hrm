@@ -228,6 +228,7 @@ jobs:
 
             gh auth setup-git
             DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+            echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
             git checkout $DEFAULT_BRANCH
             git pull
             git branch -D "$BRANCH" 2>/dev/null || true
@@ -239,15 +240,23 @@ jobs:
             # effectively overwriting any previous partial or failed pushes.
             git push --force -u origin "$BRANCH"
 
-            gh pr create \
-              --base $DEFAULT_BRANCH \
-              --head "$BRANCH" \
-              --title "$TITLE" \
-              --body-file pr_body.md
+            echo "PR_BODY_FILE=pr_body.md" >> $GITHUB_ENV
+            echo "CREATE_PR=true" >> $GITHUB_ENV
           fi
 
-          # Clean up the temporary file
-          rm pr_body.md
+      - name: 'Jules: Create PR'
+        if: env.AGENT_PROVIDER == 'jules' && env.CREATE_PR == 'true'
+        uses: ./.github/actions/gh-pr-create
+        with:
+          title: ${{ env.TITLE }}
+          body_file: pr_body.md
+          base: ${{ env.DEFAULT_BRANCH }}
+          head: ${{ env.BRANCH }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Jules: Cleanup'
+        if: env.AGENT_PROVIDER == 'jules'
+        run: rm -f pr_body.md
 
       - name: 'Gemini: Verify Client Exists'
         if: env.AGENT_PROVIDER == 'gemini'
