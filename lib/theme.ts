@@ -16,6 +16,10 @@ declare module '@mui/material/styles' {
       idle: string
       paused: string
       finished: string
+      prepare: string
+      work: string
+      rest: string
+      cooldown: string
       [key: string]: string
     }
   }
@@ -26,6 +30,10 @@ declare module '@mui/material/styles' {
       idle?: string
       paused?: string
       finished?: string
+      prepare?: string
+      work?: string
+      rest?: string
+      cooldown?: string
       [key: string]: string | undefined
     }
   }

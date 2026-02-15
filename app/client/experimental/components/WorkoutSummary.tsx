@@ -1,12 +1,6 @@
 'use client'
 
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Chip,
-} from '@mui/material'
+import { Card, CardContent, Typography, Box, Chip } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import Grid from '@mui/material/Grid'
 import { formatDuration, formatDate } from '@/lib/utils'
@@ -38,7 +32,7 @@ const WorkoutSummary = ({
   }
 
   const statusColor =
-    (theme.palette as any).custom?.[status] || statusColorMap[status] || '#ccc'
+    theme.palette.custom[status] || statusColorMap[status] || '#ccc'
 
   return (
     <Card elevation={2} data-testid="workout-summary">
@@ -72,7 +66,10 @@ const WorkoutSummary = ({
               Duration
             </Typography>
             <Typography variant="h5" sx={{ fontFamily: 'Monospace' }}>
-              {formatDuration(duration, { unit: 'seconds', format: 'HH:MM:SS' })}
+              {formatDuration(duration, {
+                unit: 'seconds',
+                format: 'HH:MM:SS',
+              })}
             </Typography>
           </Grid>
           <Grid size={{ xs: 6 }}>
