@@ -2,7 +2,6 @@
  * @jest-environment jsdom
  */
 import { getHrZoneProps } from '../../../utils/visualization'
-import { HrZoneName } from '../../../lib/shared/hr-zones'
 import theme from '../../../lib/theme'
 import { HR_ZONE_UI_PROPS_MAP } from '../../../utils/visualization'
 
@@ -11,30 +10,29 @@ describe('getHrZoneProps', () => {
 
   // Test cases for each HR Zone
   const testCases = [
-    { zone: HrZoneName.NoData, hr: 0, expectedColor: '#FFFFFF' },
-    { zone: HrZoneName.Unknown, hr: 0, expectedColor: '#FFFFFF' },
+    { zone: 'ZONE_0', hr: 0, expectedColor: '#FFFFFF' },
     {
-      zone: HrZoneName.Recovery,
+      zone: 'ZONE_1',
       hr: 100,
       expectedColor: theme.palette.getContrastText(
-        HR_ZONE_UI_PROPS_MAP[HrZoneName.Recovery].bgColor
+        HR_ZONE_UI_PROPS_MAP['ZONE_1'].bgColor
       ),
     },
-    { zone: HrZoneName.WarmUp, hr: 120, expectedColor: '#FFFFFF' },
-    { zone: HrZoneName.Aerobic, hr: 140, expectedColor: '#FFFFFF' },
-    { zone: HrZoneName.Cardio, hr: 160, expectedColor: '#FFFFFF' },
+    { zone: 'ZONE_2', hr: 120, expectedColor: '#FFFFFF' },
+    { zone: 'ZONE_3', hr: 140, expectedColor: '#FFFFFF' },
+    { zone: 'ZONE_4', hr: 160, expectedColor: '#FFFFFF' },
     {
-      zone: HrZoneName.Peak,
+      zone: 'ZONE_5',
       hr: 180,
       expectedColor: theme.palette.getContrastText(
-        HR_ZONE_UI_PROPS_MAP[HrZoneName.Peak].bgColor
+        HR_ZONE_UI_PROPS_MAP['ZONE_5'].bgColor
       ),
     },
     {
-      zone: HrZoneName.Max,
+      zone: 'ZONE_6',
       hr: 196,
       expectedColor: theme.palette.getContrastText(
-        HR_ZONE_UI_PROPS_MAP[HrZoneName.Max].bgColor
+        HR_ZONE_UI_PROPS_MAP['ZONE_6'].bgColor
       ),
     },
   ]

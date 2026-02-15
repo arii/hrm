@@ -25,6 +25,19 @@ export enum HrZoneName {
 }
 
 /**
+ * Heart Rate Zone string literal type for consistency and full type safety.
+ * Replaces HrZoneName enum and numeric indices in modern code.
+ */
+export type HeartRateZone =
+  | 'ZONE_0'
+  | 'ZONE_1'
+  | 'ZONE_2'
+  | 'ZONE_3'
+  | 'ZONE_4'
+  | 'ZONE_5'
+  | 'ZONE_6'
+
+/**
  * Thresholds for HR zones (percentage of Max HR).
  */
 export const ZONE_THRESHOLDS = {

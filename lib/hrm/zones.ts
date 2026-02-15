@@ -5,9 +5,9 @@
  */
 
 import {
+  HeartRateZone,
   HrZoneName,
   calculateZoneFromMaxHr,
-  getHrZoneLabel,
 } from '../shared/hr-zones.js'
 
 export { HrZoneName }
@@ -28,7 +28,7 @@ import { HrZone } from '../../types/heart-rate.js'
 export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
   if (!maxHr || !currentHr || currentHr <= 0) {
     return {
-      zoneName: HrZoneName.NoData,
+      zoneName: 'ZONE_0',
       percentage: 0,
       bpm: 0,
     }
@@ -36,8 +36,8 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
 
   const { percentage, zone } = calculateZoneFromMaxHr(currentHr, maxHr)
 
-  // Canonical mapping from shared HR zones
-  const zoneName = getHrZoneLabel(zone) as HrZoneName
+  // Canonical mapping from shared HR zones to string literal IDs
+  const zoneName = `ZONE_${zone}` as HeartRateZone
 
   return {
     zoneName,
