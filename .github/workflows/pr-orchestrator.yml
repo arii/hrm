@@ -172,7 +172,12 @@ jobs:
   pr-quality:
     name: 🛡️ Quality Gates
     needs: [filter, check-diff]
-    if: needs.filter.result == 'success' && !cancelled() && (needs.check-diff.result == 'success' || needs.check-diff.result == 'skipped')
+    # Requisite: Path Filter must have succeeded (even if no src changes).
+    # check-diff must not have failed (success or skipped is fine).
+    if: |
+      needs.filter.result == 'success' &&
+      !cancelled() &&
+      (needs.check-diff.result == 'success' || needs.check-diff.result == 'skipped')
     uses: ./.github/workflows/pr-quality.yml
     with:
       has_changes: ${{ needs.check-diff.outputs.is_meaningful == 'true' }}
