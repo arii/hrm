@@ -10,6 +10,7 @@ import {
   useTheme,
 } from '@mui/material'
 import { HrZoneName, HR_ZONE_COLOR_MAP } from '@/lib/shared/hr-zones'
+import { formatDuration } from '@/lib/utils'
 
 interface ZoneDistributionProps {
   timeInZones: Record<HrZoneName, number>
@@ -35,7 +36,10 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         zone,
         time,
         percentage,
-        formattedTime: `${Math.floor(time / 60)}m ${Math.floor(time % 60)}s`,
+        formattedTime: formatDuration(time, {
+          unit: 'seconds',
+          format: 'MM:SS',
+        }),
         color: HR_ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
       }
     })

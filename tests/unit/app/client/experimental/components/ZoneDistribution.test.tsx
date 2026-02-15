@@ -50,19 +50,19 @@ describe('ZoneDistribution', () => {
     expect(
       screen.getAllByText(HrZoneName.WarmUp).length
     ).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/1m 0s/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/01:00/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/60\.0%/).length).toBeGreaterThanOrEqual(1)
 
     expect(
       screen.getAllByText(HrZoneName.FatBurn).length
     ).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/0m 30s/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/00:30/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/30\.0%/).length).toBeGreaterThanOrEqual(1)
 
     expect(
       screen.getAllByText(HrZoneName.Cardio).length
     ).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/0m 10s/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/00:10/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/10\.0%/).length).toBeGreaterThanOrEqual(1)
   })
 
