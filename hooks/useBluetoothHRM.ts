@@ -11,7 +11,17 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
-import { MAX_RECONNECT_ATTEMPTS } from '@/constants/reconnection'
+import { BLUETOOTH_MAX_RECONNECT_ATTEMPTS } from '@/constants/bluetooth-reconnection'
+import {
+  HR_SERVICE_UUID,
+  HR_CHARACTERISTIC_UUID,
+  BATTERY_SERVICE_UUID,
+  BATTERY_LEVEL_CHARACTERISTIC_UUID,
+  ROLLING_AVG_HISTORY_LENGTH,
+  MISSED_PACKET_THRESHOLD_BUFFER_MS,
+  MIN_MISSED_PACKET_THRESHOLD_MS,
+  HEARTBEAT_INTERVAL_MS,
+} from '@/constants/bluetooth-config'
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
@@ -20,16 +30,6 @@ const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.RECONNECTING]: BLUETOOTH_MESSAGES.reconnecting,
   [BluetoothConnectionStatus.ERROR]: BLUETOOTH_MESSAGES.error,
 }
-
-const HR_SERVICE_UUID = 'heart_rate'
-const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
-const BATTERY_SERVICE_UUID = 'battery_service'
-const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
-
-const ROLLING_AVG_HISTORY_LENGTH = 5
-const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
-const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
-export const HEARTBEAT_INTERVAL_MS = 1000
 
 const parseHeartRate = (value: DataView): number => {
   const flags = value.getUint8(0)
@@ -267,9 +267,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const reconnect = useCallback(
     (device: BluetoothDevice) => {
-      if (reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
+      if (reconnectAttempts.current >= BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
         setCustomStatusMessage(
-          BLUETOOTH_MESSAGES.failedToReconnect(MAX_RECONNECT_ATTEMPTS)
+          BLUETOOTH_MESSAGES.failedToReconnect(BLUETOOTH_MAX_RECONNECT_ATTEMPTS)
         )
         logger.error(
           'Failed to reconnect after max attempts. Forgetting device.'
@@ -286,7 +286,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         BLUETOOTH_MESSAGES.reconnectingAttempt(
           'Connection lost',
           reconnectAttempts.current,
-          MAX_RECONNECT_ATTEMPTS
+          BLUETOOTH_MAX_RECONNECT_ATTEMPTS
         )
       )
 
@@ -569,7 +569,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           )
           setStatus(BluetoothConnectionStatus.ERROR)
           setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeoutReset)
-          reconnectAttempts.current = MAX_RECONNECT_ATTEMPTS
+          reconnectAttempts.current = BLUETOOTH_MAX_RECONNECT_ATTEMPTS
           deviceRef.current = null
 
           if (reconnectTimeoutRef.current)
