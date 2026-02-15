@@ -1,0 +1,8 @@
+> Reviewed commit: `8f07f15d6a5bcfa90955d3d5853a7eb4339fee3f`
+
+The CI/CD pipeline failures (`test_pr_squash_rebase`, `test_conflict_resolver`, `test_pr_squash`) are due to a subtle issue in how workflow inputs are accessed within `actions/github-script@v7`.
+
+**Root Cause:**
+The new logic for determining `prNumber` and `commentId` in `pr-squash.yml` and `reusable-jules-command.yml` correctly parses these values from `context.payload.inputs` or `context.issue.number` within the JavaScript script block. However, in some instances, the `github.rest` API calls *within the same script* are
+
+> Reviewed at commit: `8f07f15d6a5bcfa90955d3d5853a7eb4339fee3f`

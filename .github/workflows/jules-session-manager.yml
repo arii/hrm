@@ -186,7 +186,7 @@ jobs:
           script: |
             const sessionId = process.env.SESSION_ID;
             if (sessionId && context.issue.number) {
-              github.rest.issues.createComment({
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
