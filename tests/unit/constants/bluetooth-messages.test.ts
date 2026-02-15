@@ -151,9 +151,7 @@ describe('Bluetooth Message Constants', () => {
     })
 
     it('should have the correct string for unknownError', () => {
-      expect(BLUETOOTH_MESSAGES.unknownError).toBe(
-        'An unknown error occurred.'
-      )
+      expect(BLUETOOTH_MESSAGES.unknownError).toBe('An unknown error occurred.')
     })
   })
 })
