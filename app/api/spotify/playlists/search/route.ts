@@ -48,8 +48,9 @@ export async function GET(req: NextRequest) {
       {
         access_token: session.accessToken,
         token_type: 'Bearer',
-        expires_in: 3600,
-        refresh_token: '',
+        expires_in: 3600, // Nominal; managed by NextAuth.
+        refresh_token: session.refreshToken ?? '',
+        scope: session.scope ?? '',
       }
     )
 

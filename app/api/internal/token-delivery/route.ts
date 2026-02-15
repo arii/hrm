@@ -16,7 +16,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 export async function POST(req: NextRequest) {
   try {
     // 1. Parse the token from the request body
-    const tokenData = (await req.json()) as AccessToken
+    const tokenData = (await req.json()) as any
     if (!tokenData || !tokenData.refresh_token) {
       throw new ApiError(400, 'Bad Request: Missing token data.')
     }
@@ -40,11 +40,14 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Directly and reliably update the service with the new token
+    // We use the data provided in the request body, falling back to sensible defaults
+    // for sub, scope, and expires_in if they are missing.
     await global.spotifyService.handleTokenUpdate({
-      ...tokenData,
       provider: 'spotify',
-      sub: '',
-      scope: '',
+      sub: tokenData.sub || 'unknown',
+      scope: tokenData.scope || '',
+      expires_in: tokenData.expires_in ?? 3600,
+      ...tokenData,
       obtainedAt: Date.now(),
     })
     logger.info('Spotify token delivered and processed successfully.')

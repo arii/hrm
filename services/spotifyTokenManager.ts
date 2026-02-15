@@ -164,7 +164,8 @@ export class SpotifyTokenManager {
           payload: {
             ...this.currentToken.payload,
             access_token: data.access_token,
-            expires_in: data.expires_in,
+            expires_in: data.expires_in ?? 3600,
+            scope: data.scope ?? this.currentToken.payload.scope,
             refresh_token:
               data.refresh_token ?? this.currentToken.payload.refresh_token,
             obtainedAt: Date.now(),

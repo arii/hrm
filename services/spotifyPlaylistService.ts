@@ -23,7 +23,7 @@ export async function getUserPlaylists(
     const tokenObject: AccessToken = {
       access_token: accessToken,
       token_type: 'Bearer',
-      expires_in: 3600, // Dummy value, as we likely won't refresh inside this short-lived instance
+      expires_in: 3600, // Dummy; refresh not handled in this short-lived instance.
       refresh_token: '',
       expires: Date.now() + 3600 * 1000,
     }

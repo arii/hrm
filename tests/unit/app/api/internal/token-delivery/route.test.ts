@@ -59,6 +59,7 @@ describe('POST /api/internal/token-delivery', () => {
 
   it('should return 200 OK if secret header is correct', async () => {
     mockSpotifyService.isReady.mockReturnValue(true)
+    const tokenData = { refresh_token: 'test', access_token: 'test-access' }
     const req = new NextRequest(
       'http://localhost/api/internal/token-delivery',
       {
@@ -66,17 +67,24 @@ describe('POST /api/internal/token-delivery', () => {
         headers: {
           'x-internal-token-secret': 'test-secret',
         },
-        body: JSON.stringify({ refresh_token: 'test' }),
+        body: JSON.stringify(tokenData),
       }
     )
-
-    // The route handler does NOT read the body anymore, so we don't need to provide one
-    // or worry about stream consumption in this unit test.
 
     const response = await POST(req)
     expect(response.status).toBe(200)
     const body = await response.json()
     expect(body).toEqual({ ok: true, message: 'Token delivered successfully.' })
+    expect(mockSpotifyService.handleTokenUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ...tokenData,
+        provider: 'spotify',
+        sub: 'unknown',
+        scope: '',
+        expires_in: 3600,
+        obtainedAt: expect.any(Number),
+      })
+    )
   })
 
   it('should return 500 if an unexpected error occurs', async () => {
@@ -105,6 +113,9 @@ describe('POST /api/internal/token-delivery', () => {
     const tokenData = {
       refresh_token: 'new-refresh-token',
       access_token: 'new-access-token',
+      sub: 'test-sub',
+      scope: 'test-scope',
+      expires_in: 7200,
     }
     const req = new NextRequest(
       'http://localhost/api/internal/token-delivery',
@@ -123,8 +134,9 @@ describe('POST /api/internal/token-delivery', () => {
       expect.objectContaining({
         ...tokenData,
         provider: 'spotify',
-        sub: '',
-        scope: '',
+        sub: 'test-sub',
+        scope: 'test-scope',
+        expires_in: 7200,
         obtainedAt: expect.any(Number),
       })
     )
