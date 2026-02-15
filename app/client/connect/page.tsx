@@ -147,6 +147,7 @@ export default function ConnectPage() {
   // Use refs to break the circular dependency between useWorkoutSession and useBluetoothHRM
   const workoutStatusRef = useRef<'idle' | 'running' | 'paused'>('idle')
   const startWorkoutRef = useRef<() => void>(() => {})
+  const caloriesBurnedRef = useRef<number>(0)
 
   const {
     session,
@@ -177,11 +178,11 @@ export default function ConnectPage() {
         addHrData({
           time: Date.now(),
           hr: heartRate,
-          calories: calories,
+          calories: caloriesBurnedRef.current,
         })
       }
     },
-    [processHeartRate, setCurrentHR, addHrData, calories]
+    [processHeartRate, setCurrentHR, addHrData]
   )
 
   const {
@@ -211,16 +212,18 @@ export default function ConnectPage() {
     pauseWorkout,
     endWorkout,
     workoutStatus,
+    caloriesBurned,
   } = useWorkoutSession({
     isConnected,
     totalCalories: calories,
   })
 
-  // Update refs when workout status or start function changes
+  // Update refs when workout status, start function, or calories burned change
   useEffect(() => {
     workoutStatusRef.current = workoutStatus
     startWorkoutRef.current = startWorkout
-  }, [workoutStatus, startWorkout])
+    caloriesBurnedRef.current = caloriesBurned
+  }, [workoutStatus, startWorkout, caloriesBurned])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
@@ -327,7 +330,7 @@ export default function ConnectPage() {
         unit: 'seconds',
         format: 'HH:MM:SS',
       })}
-      caloriesBurned={calories}
+      caloriesBurned={caloriesBurned}
       userName={userName}
       setUserName={(name) =>
         setUserSettings((prev) => ({ ...prev, userName: name }))

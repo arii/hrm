@@ -95,7 +95,7 @@ export const useWorkoutSession = ({
   totalCalories = 0,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
-  const [startCalories, setStartCalories] = useState(0)
+  const [startCalories, setStartCalories] = useState<number | null>(null)
 
   const sessionDataRef = useRef({
     startTime: null as number | null,
@@ -105,7 +105,7 @@ export const useWorkoutSession = ({
 
   useEffect(() => {
     // A workout is considered "over" if the status is idle but we have a startCalories value.
-    const isWorkoutOver = state.status === 'idle' && startCalories > 0
+    const isWorkoutOver = state.status === 'idle' && startCalories !== null
     if (isWorkoutOver) {
       return // Don't update calories anymore
     }
@@ -171,7 +171,7 @@ export const useWorkoutSession = ({
     session.startTime = null
     session.pauseTime = null
     session.totalPaused = 0
-    setStartCalories(0)
+    setStartCalories(null)
     prevIsConnected.current = false
     dispatch({ type: 'RESET' })
   }, [])
@@ -192,7 +192,7 @@ export const useWorkoutSession = ({
 
   // Calculate the calories burned *during this session*.
   const caloriesBurned = useMemo(() => {
-    if (startCalories === 0) {
+    if (startCalories === null) {
       return 0
     }
     const burned = Math.round(state.calories - startCalories)
