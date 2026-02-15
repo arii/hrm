@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -127,20 +127,9 @@ export default function ConnectPage() {
     [sendData]
   )
 
-  const [isConnected, setIsConnected] = useState(false)
-
-  const {
-    workoutDuration,
-    resetWorkout: resetWorkoutSession,
-    hasStarted,
-    startWorkout,
-    pauseWorkout,
-    endWorkout,
-    workoutStatus,
-  } = useWorkoutSession({
-    isConnected: isConnected,
-    totalCalories: calories,
-  })
+  // Use refs to break the circular dependency between useWorkoutSession and useBluetoothHRM
+  const workoutStatusRef = useRef<'idle' | 'running' | 'paused'>('idle')
+  const startWorkoutRef = useRef<() => void>(() => {})
 
   const {
     session,
@@ -151,11 +140,70 @@ export default function ConnectPage() {
   } = useWorkoutSessionManager()
 
   const handleStartWorkout = useCallback(() => {
-    startWorkout()
+    startWorkoutRef.current()
     if (userAge && userWeight) {
       startPersistentWorkout(userAge, userWeight)
     }
-  }, [startWorkout, startPersistentWorkout, userAge, userWeight])
+  }, [startPersistentWorkout, userAge, userWeight])
+
+  const handleHeartRateUpdate = useCallback(
+    (heartRate: number) => {
+      logger.debug(
+        { heartRate },
+        'handleHeartRateUpdate called, updating local state'
+      )
+      setCurrentHR(heartRate)
+
+      if (workoutStatusRef.current === 'running') {
+        processHeartRate(heartRate)
+
+        addHrData({
+          time: Date.now(),
+          hr: heartRate,
+          calories: calories,
+        })
+      }
+    },
+    [processHeartRate, setCurrentHR, addHrData, calories]
+  )
+
+  const {
+    connectAndStream,
+    autoConnect,
+    disconnect,
+    forgetDevice,
+    deviceStatus,
+    batteryLevel,
+    isConnected,
+    isDataStale,
+    isSupported,
+    signalPeriodMs,
+    connectionAttempted,
+  } = useBluetoothHRM({
+    userName,
+    userAge: userAge || 0,
+    onHeartRateUpdate: handleHeartRateUpdate,
+    onConnect: handleStartWorkout,
+  })
+
+  const {
+    workoutDuration,
+    resetWorkout: resetWorkoutSession,
+    hasStarted,
+    startWorkout,
+    pauseWorkout,
+    endWorkout,
+    workoutStatus,
+  } = useWorkoutSession({
+    isConnected,
+    totalCalories: calories,
+  })
+
+  // Update refs when workout status or start function changes
+  useEffect(() => {
+    workoutStatusRef.current = workoutStatus
+    startWorkoutRef.current = startWorkout
+  }, [workoutStatus, startWorkout])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
@@ -168,49 +216,6 @@ export default function ConnectPage() {
     resetCalculator()
     resetPersistentWorkout()
   }, [resetWorkoutSession, resetCalculator, resetPersistentWorkout])
-
-  const handleHeartRateUpdate = useCallback(
-    (heartRate: number) => {
-      logger.debug(
-        { heartRate },
-        'handleHeartRateUpdate called, updating local state'
-      )
-      setCurrentHR(heartRate)
-
-      if (workoutStatus === 'running') {
-        processHeartRate(heartRate)
-
-        addHrData({
-          time: Date.now(),
-          hr: heartRate,
-          calories: calories,
-        })
-      }
-    },
-    [processHeartRate, workoutStatus, setCurrentHR, addHrData, calories]
-  )
-  const {
-    connectAndStream,
-    autoConnect,
-    disconnect,
-    forgetDevice,
-    deviceStatus,
-    batteryLevel,
-    isConnected: bluetoothIsConnected,
-    isDataStale,
-    isSupported,
-    signalPeriodMs,
-    connectionAttempted,
-  } = useBluetoothHRM({
-    userName,
-    userAge: userAge || 0,
-    onHeartRateUpdate: handleHeartRateUpdate,
-    onConnect: handleStartWorkout, // Use the wrapped function
-  })
-
-  useEffect(() => {
-    setIsConnected(bluetoothIsConnected)
-  }, [bluetoothIsConnected])
 
   useEffect(() => {
     if (
