@@ -186,9 +186,23 @@ export interface SpotifyPlaybackState {
   albumName: string
   albumArtUrl: string
   isPlaying: boolean
+  is_playing: boolean
   devices: SpotifyDevice[]
   volume: number
+  volume_percent: number
   isMuted: boolean
+  playback?: {
+    track: {
+      id: string | null
+      name: string
+      artist: string
+      albumName: string
+      albumArtUrl: string
+    }
+    is_playing: boolean
+    volume_percent: number
+    progress_ms?: number
+  }
 }
 
 /**

@@ -2,7 +2,7 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -35,7 +35,8 @@ interface PlaylistTracksDisplayProps {
 }
 
 const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
-  const { spotifyData, sendData } = useWebSocket()
+  const { spotifyData } = useWebSocket()
+  const { execute: executeSpotify } = useSpotifyCommand()
   const [tracks, setTracks] = useState<Track[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -73,21 +74,14 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   }, [fetchTracks, offset])
 
   const handlePlayTrack = (playlistUri: string, position: number) => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command: 'PLAY',
+    executeSpotify('PLAY', {
       contextUri: playlistUri,
       offset: { position },
-    }
-    sendData(message)
+    })
   }
 
   const handlePause = () => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command: 'PAUSE',
-    }
-    sendData(message)
+    executeSpotify('PAUSE')
   }
 
   const handleNextPage = () => {

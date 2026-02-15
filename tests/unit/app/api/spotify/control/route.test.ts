@@ -3,17 +3,22 @@
 
 import { POST } from '@/app/api/spotify/control/route'
 import { getServerSession } from 'next-auth/next'
+import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Mock 'next-auth/next' for getServerSession
 jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn(),
 }))
 
-// Mock global fetch
-global.fetch = jest.fn()
+// Mock @spotify/web-api-ts-sdk
+jest.mock('@spotify/web-api-ts-sdk', () => ({
+  SpotifyApi: {
+    withAccessToken: jest.fn(),
+  },
+}))
 
 const mockedGetServerSession = getServerSession as jest.Mock
-const mockedFetch = global.fetch as jest.Mock
+const mockedSpotifyApi = SpotifyApi as jest.Mocked<typeof SpotifyApi>
 
 const createRequest = (body: object | string) => {
   return new Request('http://localhost/api/spotify/control', {
@@ -26,16 +31,25 @@ const createRequest = (body: object | string) => {
 }
 
 describe('API Route: /api/spotify/control', () => {
+  let mockSdk: any
+
   beforeEach(() => {
     jest.clearAllMocks()
     mockedGetServerSession.mockResolvedValue({
       accessToken: 'fake-access-token',
     })
-    mockedFetch.mockResolvedValue({
-      ok: true,
-      status: 204, // Spotify often returns 204 No Content for success
-      text: () => Promise.resolve(''),
-    })
+
+    mockSdk = {
+      player: {
+        startResumePlayback: jest.fn(),
+        pausePlayback: jest.fn(),
+        skipToNext: jest.fn(),
+        skipToPrevious: jest.fn(),
+        setPlaybackVolume: jest.fn(),
+        transferPlayback: jest.fn(),
+      },
+    }
+    mockedSpotifyApi.withAccessToken.mockReturnValue(mockSdk)
   })
 
   it('should return 401 Unauthorized if no session is found', async () => {
@@ -91,9 +105,8 @@ describe('API Route: /api/spotify/control', () => {
 
     expect(response.status).toBe(200)
     expect(data.success).toBe(true)
-    expect(mockedFetch).toHaveBeenCalledWith(
-      'https://api.spotify.com/v1/me/player/play?device_id=test-device',
-      expect.any(Object)
+    expect(mockSdk.player.startResumePlayback).toHaveBeenCalledWith(
+      'test-device'
     )
   })
 
@@ -104,9 +117,9 @@ describe('API Route: /api/spotify/control', () => {
 
     expect(response.status).toBe(200)
     expect(data.success).toBe(true)
-    expect(mockedFetch).toHaveBeenCalledWith(
-      'https://api.spotify.com/v1/me/player/volume?volume_percent=50',
-      expect.any(Object)
+    expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalledWith(
+      50,
+      undefined
     )
   })
 
@@ -120,20 +133,16 @@ describe('API Route: /api/spotify/control', () => {
 
     expect(response.status).toBe(200)
     expect(data.success).toBe(true)
-    const fetchOptions = mockedFetch.mock.calls[0][1]
-    const body = JSON.parse(fetchOptions.body as string)
-    expect(body).toEqual({ device_ids: ['new-device'], play: true })
+    expect(mockSdk.player.transferPlayback).toHaveBeenCalledWith(
+      ['new-device'],
+      true
+    )
   })
 
   it('should forward Spotify API errors', async () => {
-    mockedFetch.mockResolvedValue({
-      ok: false,
-      status: 404,
-      text: () =>
-        Promise.resolve(
-          JSON.stringify({ error: { message: 'Device not found' } })
-        ),
-    })
+    const spotifyError = new Error('Device not found')
+    ;(spotifyError as any).status = 404
+    mockSdk.player.startResumePlayback.mockRejectedValue(spotifyError)
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
     const data = await response.json()
@@ -143,13 +152,13 @@ describe('API Route: /api/spotify/control', () => {
     expect(data.details).toBe('Device not found')
   })
 
-  it('should return 500 if fetch throws an error', async () => {
-    mockedFetch.mockRejectedValue(new Error('Network error'))
+  it('should return 500 if SDK throws an error', async () => {
+    mockSdk.player.startResumePlayback.mockRejectedValue(new Error('SDK error'))
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe('Internal server error processing command.')
+    expect(data.error).toBe('Spotify API error')
   })
 })

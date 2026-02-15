@@ -81,7 +81,6 @@ describe('Services Integration', () => {
       togglePlaybackShuffle: jest.fn(),
     }
 
-    // This object will be mutated by `createSafeSpotifyApi`
     const mockSdk = {
       player: { ...mockPlayerFns },
     } as unknown as SpotifyApi

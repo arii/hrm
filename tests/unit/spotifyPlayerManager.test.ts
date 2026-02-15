@@ -1,8 +1,8 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals'
 import { SpotifyPlayerManager } from '../../services/spotifyPlayerManager'
-import { SafeSpotifyApi } from '../../services/safeSpotifyApi'
 import { ServerMessage, SpotifyData } from '../../types/websocket'
 import { mockPlayer } from './spotify-test-utils'
+import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 const NOT_PLAYING_MESSAGE = 'Nothing is currently playing.'
 
@@ -33,8 +33,10 @@ describe('SpotifyPlayerManager', () => {
       albumName: '',
       albumArtUrl: '',
       isPlaying: false,
+      is_playing: false,
       devices: [],
       volume: 70,
+      volume_percent: 70,
       isMuted: false,
     }
 
@@ -51,7 +53,7 @@ describe('SpotifyPlayerManager', () => {
     // Create a mock SDK using the mockPlayer from utilities
     const mockSdk = {
       player: mockPlayer,
-    } as unknown as SafeSpotifyApi
+    } as unknown as SpotifyApi
 
     playerManager = new SpotifyPlayerManager(
       mockSdk,
@@ -64,7 +66,10 @@ describe('SpotifyPlayerManager', () => {
   describe('refreshPlaybackState', () => {
     it('should update state and broadcast when track changes', async () => {
       // Arrange: SDK returns a new track
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
+      mockPlayer.getPlaybackState.mockResolvedValue({
+        device: { volume_percent: 70 },
+        is_playing: true,
+        progress_ms: 1000,
         item: {
           id: 'track1',
           name: 'New Song',
@@ -72,7 +77,6 @@ describe('SpotifyPlayerManager', () => {
           artists: [{ name: 'Artist 1' }],
           album: { name: 'Album 1', images: [{ url: 'url1' }] },
         },
-        is_playing: true,
       })
 
       // Act
@@ -103,7 +107,7 @@ describe('SpotifyPlayerManager', () => {
         trackName: 'Some Song',
         isPlaying: true,
       }
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(null)
+      mockPlayer.getPlaybackState.mockResolvedValue(null)
 
       // Act
       await playerManager.refreshPlaybackState()
@@ -130,9 +134,27 @@ describe('SpotifyPlayerManager', () => {
         albumName: 'Album 1',
         albumArtUrl: 'url1',
         isPlaying: true,
+        is_playing: true,
+        volume: 70,
+        volume_percent: 70,
+        playback: {
+          track: {
+            id: 'track1',
+            name: 'Song 1',
+            artist: 'Artist 1',
+            albumName: 'Album 1',
+            albumArtUrl: 'url1',
+          },
+          is_playing: true,
+          volume_percent: 70,
+          progress_ms: 1000,
+        },
       }
 
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
+      mockPlayer.getPlaybackState.mockResolvedValue({
+        device: { volume_percent: 70 },
+        is_playing: true,
+        progress_ms: 1000,
         item: {
           id: 'track1',
           name: 'Song 1',
@@ -140,7 +162,6 @@ describe('SpotifyPlayerManager', () => {
           artists: [{ name: 'Artist 1' }],
           album: { name: 'Album 1', images: [{ url: 'url1' }] },
         },
-        is_playing: true,
       })
 
       // Act
@@ -159,7 +180,7 @@ describe('SpotifyPlayerManager', () => {
         trackName: NOT_PLAYING_MESSAGE,
         isPlaying: false,
       }
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(null)
+      mockPlayer.getPlaybackState.mockResolvedValue(null)
 
       // Act
       await playerManager.refreshPlaybackState()
@@ -171,7 +192,10 @@ describe('SpotifyPlayerManager', () => {
 
     it('should handle podcast episodes correctly', async () => {
       // Arrange: SDK returns an episode
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
+      mockPlayer.getPlaybackState.mockResolvedValue({
+        device: { volume_percent: 70 },
+        is_playing: true,
+        progress_ms: 1000,
         item: {
           id: 'episode1',
           name: 'Podcast Episode',
@@ -182,7 +206,6 @@ describe('SpotifyPlayerManager', () => {
             images: [{ url: 'podcast_url' }],
           },
         },
-        is_playing: true,
       })
 
       // Act
@@ -204,7 +227,8 @@ describe('SpotifyPlayerManager', () => {
 
     it('should handle null/missing item safely', async () => {
       // Arrange: SDK returns response with null item
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue({
+      mockPlayer.getPlaybackState.mockResolvedValue({
+        device: { volume_percent: 70 },
         item: null,
         is_playing: false,
       })

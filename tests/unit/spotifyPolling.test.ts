@@ -310,6 +310,7 @@ describe('SpotifyPolling Service', () => {
   describe('Playback State', () => {
     it('should broadcast state when track changes', async () => {
       const mockPlayback = {
+        device: { volume_percent: 70 },
         item: {
           id: 'track123',
           name: 'Test Track',
@@ -321,9 +322,9 @@ describe('SpotifyPolling Service', () => {
           type: 'track',
         },
         is_playing: true,
-        currently_playing_type: 'track',
+        progress_ms: 1000,
       }
-      mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
+      mockPlayer.getPlaybackState.mockImplementation(() =>
         Promise.resolve(mockPlayback)
       )
 
@@ -338,7 +339,7 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should handle 204 No Content response', async () => {
-      mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
+      mockPlayer.getPlaybackState.mockImplementation(() =>
         Promise.resolve(null)
       )
 
@@ -362,7 +363,7 @@ describe('SpotifyPolling Service', () => {
         ...initialState,
       })
 
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(mockResponse)
+      mockPlayer.getPlaybackState.mockResolvedValue(mockResponse)
 
       spotifyService.startPolling()
       jest.advanceTimersByTime(150)
@@ -409,11 +410,15 @@ describe('SpotifyPolling Service', () => {
         albumName: 'Album 1',
         albumArtUrl: 'url1',
         isPlaying: true,
+        is_playing: true,
+        volume: 70,
+        volume_percent: 70,
       }
 
       broadcastedStates.length = 0 // Clear broadcasts
 
       const mockPlayback = {
+        device: { volume_percent: 70 },
         item: {
           id: 'track1',
           name: 'Song 1',
@@ -422,7 +427,7 @@ describe('SpotifyPolling Service', () => {
           type: 'track',
         },
         is_playing: true,
-        currently_playing_type: 'track',
+        progress_ms: 1000,
       }
 
       await runPollingScenario(trackState, mockPlayback)
@@ -478,7 +483,7 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should handle 401 unauthorized responses', async () => {
-      mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
+      mockPlayer.getPlaybackState.mockImplementation(() =>
         Promise.reject({ status: 401 })
       )
       // @ts-expect-error - Testing private method

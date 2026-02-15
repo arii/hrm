@@ -2,8 +2,15 @@
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
+import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import logger from '@/utils/logger'
+import { env } from '@/lib/env'
 
+/**
+ * REST endpoint for Spotify playback control.
+ * This endpoint consolidates all Spotify commands into a single source of truth,
+ * utilizing the Spotify Web API SDK.
+ */
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
 
@@ -22,59 +29,56 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { command, volume, deviceId } = body
+  const { command, volume, deviceId, uri, contextUri } = body
 
-  // Allowed commands
-  const VALID_COMMANDS = [
-    'PLAY',
-    'PAUSE',
-    'NEXT',
-    'PREVIOUS',
-    'SET_VOLUME',
-    'TRANSFER_PLAYBACK',
-  ]
-  if (!VALID_COMMANDS.includes(command)) {
+  if (!env.SPOTIFY_CLIENT_ID) {
+    logger.error('SPOTIFY_CLIENT_ID is not configured in environment')
     return NextResponse.json(
-      { error: `Invalid command: ${command}` },
-      { status: 400 }
+      { error: 'Spotify service misconfigured on server' },
+      { status: 500 }
     )
   }
 
+  // Initialize the SDK with the user's access token from their session.
+  // We use the 'withAccessToken' flow for one-off API calls.
+  const sdk = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, {
+    access_token: session.accessToken,
+    token_type: 'Bearer',
+    expires_in: 3600,
+    refresh_token: '', // Not required for this request context
+  })
+
   try {
-    const SPOTIFY_API_BASE = 'https://api.spotify.com/v1/me/player' // Corrected Base URL
-    let url = ''
-    let method = ''
-
-    // Construct Query Parameters if needed (e.g. device_id)
-    const queryParams = deviceId ? `?device_id=${deviceId}` : ''
-
+    // MANDATORY SIMPLICITY: Use the SDK player methods with consistent deviceId targeting.
     switch (command) {
       case 'PLAY':
-        url = `${SPOTIFY_API_BASE}/play${queryParams}`
-        method = 'PUT'
+        if (uri) {
+          await sdk.player.startResumePlayback(deviceId, undefined, [uri])
+        } else if (contextUri) {
+          await sdk.player.startResumePlayback(deviceId, contextUri)
+        } else {
+          await sdk.player.startResumePlayback(deviceId)
+        }
         break
       case 'PAUSE':
-        url = `${SPOTIFY_API_BASE}/pause${queryParams}`
-        method = 'PUT'
+        await sdk.player.pausePlayback(deviceId)
         break
       case 'NEXT':
-        url = `${SPOTIFY_API_BASE}/next${queryParams}`
-        method = 'POST'
+        await sdk.player.skipToNext(deviceId)
         break
       case 'PREVIOUS':
-        url = `${SPOTIFY_API_BASE}/previous${queryParams}`
-        method = 'POST'
+        await sdk.player.skipToPrevious(deviceId)
         break
       case 'SET_VOLUME':
-        // Volume requires a query param 'volume_percent'
         if (volume === undefined) {
           return NextResponse.json(
             { error: 'Volume parameter is required for SET_VOLUME' },
             { status: 400 }
           )
         }
-        url = `${SPOTIFY_API_BASE}/volume?volume_percent=${volume}${deviceId ? `&device_id=${deviceId}` : ''}`
-        method = 'PUT'
+        // Ensure volume is an integer between 0 and 100
+        const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
+        await sdk.player.setPlaybackVolume(clampedVolume, deviceId)
         break
       case 'TRANSFER_PLAYBACK':
         if (!deviceId) {
@@ -83,68 +87,30 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           )
         }
-        url = `${SPOTIFY_API_BASE}`
-        method = 'PUT'
-        // Transfer requires a specific body structure
+        await sdk.player.transferPlayback([deviceId], true)
         break
-    }
-
-    // Special handling for Transfer Playback body
-    const fetchOptions: RequestInit = {
-      method: method,
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    }
-
-    if (command === 'TRANSFER_PLAYBACK') {
-      fetchOptions.body = JSON.stringify({ device_ids: [deviceId], play: true })
-    }
-
-    const response = await fetch(url, fetchOptions)
-
-    // Handle 204 No Content (Success) explicitly
-    if (response.status === 204) {
-      return NextResponse.json({
-        success: true,
-        message: `Command '${command}' executed.`,
-      })
-    }
-
-    // Handle other statuses
-    // Attempt to parse JSON only if content-type is json or text exists
-    const text = await response.text()
-    if (!response.ok) {
-      let errorDetails = text
-      try {
-        const json = JSON.parse(text)
-        errorDetails = json.error?.message || text
-      } catch {
-        // Text was not JSON
-      }
-      logger.error(
-        { status: response.status, details: errorDetails },
-        'Spotify API Error'
-      )
-      return NextResponse.json(
-        { error: 'Spotify API error', details: errorDetails },
-        { status: response.status }
-      )
+      default:
+        return NextResponse.json(
+          { error: `Invalid command: ${command}` },
+          { status: 400 }
+        )
     }
 
     return NextResponse.json({
       success: true,
-      message: `Command '${command}' executed.`,
+      message: `Command '${command}' executed successfully.`,
     })
-  } catch (error) {
-    logger.error({ error }, 'REST control failed')
+  } catch (error: any) {
+    // Check for "No active device" or similar common Spotify API errors
+    const errorMessage = error?.message || String(error)
+    logger.error({ error, command, deviceId }, 'Spotify SDK control failed')
+
     return NextResponse.json(
       {
-        error: 'Internal server error processing command.',
-        details: error instanceof Error ? error.message : String(error),
+        error: 'Spotify API error',
+        details: errorMessage,
       },
-      { status: 500 }
+      { status: error?.status || 500 }
     )
   }
 }

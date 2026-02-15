@@ -1,9 +1,8 @@
 import { SpotifyCommandParameters } from '../types/core'
 import { ServerMessage, SpotifyCommand, SpotifyData } from '../types/websocket'
-import { SafeSpotifyApi } from './safeSpotifyApi'
 import logger from '../utils/logger.server.js'
 import { isEmptyResponseError } from './spotifyUtils.js'
-import { Track, Episode } from '@spotify/web-api-ts-sdk'
+import { Track, Episode, SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 const NOT_PLAYING_MESSAGE = 'Nothing is currently playing.'
 
@@ -14,10 +13,13 @@ export interface ParsedPlaybackState {
   albumName: string
   albumArtUrl: string
   isPlaying: boolean
+  is_playing: boolean
+  volume_percent: number
+  progress_ms: number
 }
 
 export class SpotifyPlayerManager {
-  private sdk: SafeSpotifyApi
+  private sdk: SpotifyApi
   private broadcastUpdate: (message: ServerMessage) => void
   private getState: () => SpotifyData
   private setState: (
@@ -25,7 +27,7 @@ export class SpotifyPlayerManager {
   ) => void
 
   constructor(
-    sdk: SafeSpotifyApi,
+    sdk: SpotifyApi,
     broadcastUpdate: (message: ServerMessage) => void,
     getState: () => SpotifyData,
     setState: (
@@ -64,12 +66,22 @@ export class SpotifyPlayerManager {
       return
     }
 
-    const { trackId, trackName, artist, albumName, albumArtUrl, isPlaying } =
-      playbackState
+    const {
+      trackId,
+      trackName,
+      artist,
+      albumName,
+      albumArtUrl,
+      isPlaying,
+      is_playing,
+      volume_percent,
+      progress_ms,
+    } = playbackState
 
     if (
       trackId !== currentState.trackId ||
-      isPlaying !== currentState.isPlaying
+      isPlaying !== currentState.isPlaying ||
+      volume_percent !== currentState.volume_percent
     ) {
       this.setState((prev) => ({
         ...prev,
@@ -79,6 +91,21 @@ export class SpotifyPlayerManager {
         albumName,
         albumArtUrl,
         isPlaying,
+        is_playing,
+        volume_percent,
+        volume: volume_percent,
+        playback: {
+          track: {
+            id: trackId,
+            name: trackName,
+            artist,
+            albumName,
+            albumArtUrl,
+          },
+          is_playing,
+          volume_percent,
+          progress_ms,
+        },
       }))
 
       this.broadcastUpdate({
@@ -89,7 +116,7 @@ export class SpotifyPlayerManager {
   }
 
   private async fetchPlaybackState(): Promise<ParsedPlaybackState | null> {
-    const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
+    const playbackState = await this.sdk.player.getPlaybackState()
 
     if (!playbackState || !playbackState.item) {
       return null
@@ -97,6 +124,8 @@ export class SpotifyPlayerManager {
 
     const item = playbackState.item
     const isPlaying = playbackState.is_playing
+    const volume_percent = playbackState.device.volume_percent ?? 0
+    const progress_ms = playbackState.progress_ms
 
     const trackId = item.id
     const trackName = item.name
@@ -123,6 +152,9 @@ export class SpotifyPlayerManager {
       albumName,
       albumArtUrl,
       isPlaying,
+      is_playing: isPlaying,
+      volume_percent,
+      progress_ms,
     }
   }
 
@@ -194,6 +226,7 @@ export class SpotifyPlayerManager {
           this.setState((prevState) => ({
             ...prevState,
             volume: clampedVolume,
+            volume_percent: clampedVolume,
             isMuted: clampedVolume === 0,
           }))
           this.broadcastUpdate({
