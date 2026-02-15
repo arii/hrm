@@ -3,7 +3,6 @@
 
 import { TimerMode, TimerPhase } from './core'
 
-
 export interface HeartRateZonesProps {
   maxHr: number
 }
