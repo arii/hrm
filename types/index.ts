@@ -4,6 +4,7 @@
 import { TimerMode, TimerPhase } from './core'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 
+<<<<<<< HEAD
 export interface HrTileProps {
   value: number | null
   percentage: number
@@ -18,6 +19,8 @@ export interface HrTileProps {
   // NEW: Message to display in the overlay when alerting
   alertMessage?: string
 }
+=======
+>>>>>>> 64affb28 (refactor: address PR feedback and fix build/lint issues)
 
 export interface HeartRateZonesProps {
   maxHr: number

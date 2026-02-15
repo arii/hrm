@@ -115,7 +115,6 @@ export default function ConnectPage() {
 
   const {
     duration: workoutDuration,
-    caloriesBurned,
     resetWorkout: resetPersistentWorkout,
     hasStarted,
     startWorkout: startPersistentWorkout,

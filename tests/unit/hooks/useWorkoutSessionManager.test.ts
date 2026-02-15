@@ -283,7 +283,9 @@ describe('useWorkoutSessionManager', () => {
       // Assert
       expect(mockDeleteSession).not.toHaveBeenCalled()
       expect(mockShowInfo).not.toHaveBeenCalled()
-      expect(result.current.session).toEqual(expect.objectContaining(todaySession))
+      expect(result.current.session).toEqual(
+        expect.objectContaining(todaySession)
+      )
     })
 
     it('should clear an active session when the day changes on window focus', async () => {
