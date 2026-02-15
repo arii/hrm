@@ -164,7 +164,11 @@ const SpotifyDisplay = () => {
         isMuted: spotifyData.isMuted,
       },
     })
-  }, [spotifyData.playback.volume_percent, spotifyData.isMuted, state.isSliding])
+  }, [
+    spotifyData.playback.volume_percent,
+    spotifyData.isMuted,
+    state.isSliding,
+  ])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
@@ -279,7 +283,9 @@ const SpotifyDisplay = () => {
     const displayTrackName = isWaiting
       ? 'No Active Playback'
       : spotifyData.playback.track.name
-    const displayArtist = isWaiting ? '' : `— ${spotifyData.playback.track.artist}`
+    const displayArtist = isWaiting
+      ? ''
+      : `— ${spotifyData.playback.track.artist}`
 
     return (
       <Box
@@ -384,7 +390,11 @@ const SpotifyDisplay = () => {
             aria-label={spotifyData.playback.is_playing ? 'Pause' : 'Play'}
             data-testid="spotify-play-pause-button"
           >
-            {spotifyData.playback.is_playing ? <PauseIcon /> : <PlayArrowIcon />}
+            {spotifyData.playback.is_playing ? (
+              <PauseIcon />
+            ) : (
+              <PlayArrowIcon />
+            )}
           </IconButton>
           <IconButton
             size="small"

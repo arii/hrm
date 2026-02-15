@@ -350,7 +350,9 @@ describe('SpotifyPolling Service', () => {
 
       // Only check the last broadcasted state
       const lastState = broadcastedStates.at(-1)
-      expect(lastState?.playback.track.name).toBe('Nothing is currently playing.')
+      expect(lastState?.playback.track.name).toBe(
+        'Nothing is currently playing.'
+      )
     })
 
     // Helper function to reduce boilerplate
@@ -388,7 +390,9 @@ describe('SpotifyPolling Service', () => {
 
       const lastState = broadcastedStates.at(-1)
       expect(lastState?.playback.is_playing).toBe(false)
-      expect(lastState?.playback.track.name).toBe('Nothing is currently playing.')
+      expect(lastState?.playback.track.name).toBe(
+        'Nothing is currently playing.'
+      )
     })
 
     it('should broadcast update when transitioning from non-default track name to stopped', async () => {
@@ -406,7 +410,9 @@ describe('SpotifyPolling Service', () => {
       )
 
       const lastState = broadcastedStates.at(-1)
-      expect(lastState?.playback.track.name).toBe('Nothing is currently playing.')
+      expect(lastState?.playback.track.name).toBe(
+        'Nothing is currently playing.'
+      )
     })
 
     it('should NOT broadcast if already stopped and API returns null', async () => {
