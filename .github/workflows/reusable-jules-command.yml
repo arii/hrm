@@ -192,17 +192,16 @@ jobs:
       - name: 'Post Session ID Comment'
         if: success() && env.COMMAND == 'new'
         uses: actions/github-script@v7
-        env:
-          ISSUE_NUMBER: ${{ inputs.issue_number }}
         with:
           github-token: ${{ secrets.GH_TOKEN }}
           script: |
+            const issueNumber = context.issue.number || Number('${{ inputs.issue_number }}');
             const sessionId = "${{ steps.jules_op_new.outputs.session_id }}";
             if (sessionId) {
               github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: Number(process.env.ISSUE_NUMBER),
+                issue_number: issueNumber,
                 body: `<!-- JULES_SESSION_ID=${sessionId} -->`
               });
             }
@@ -217,12 +216,11 @@ jobs:
       - name: 'Handle Failure'
         if: failure()
         uses: actions/github-script@v7
-        env:
-          ISSUE_NUMBER: ${{ inputs.issue_number }}
-          COMMENT_ID: ${{ inputs.comment_id }}
         with:
           github-token: ${{ secrets.GH_TOKEN }}
           script: |
+            const issueNumber = context.issue.number || Number('${{ inputs.issue_number }}');
+            const commentId = context.payload.comment?.id || Number('${{ inputs.comment_id }}');
             const errorMessageNew = `${{ steps.jules_op_new.outputs.error_message || '' }}`;
             const errorMessageDelete = `${{ steps.jules_op_delete.outputs.error_message || '' }}`;
             const errorMessage = errorMessageNew || errorMessageDelete || 'Unknown error occurred';
@@ -233,7 +231,7 @@ jobs:
               github.rest.reactions.createForIssueComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: Number(process.env.COMMENT_ID),
+                comment_id: commentId,
                 content: '-1'
               }).catch(() => {}); // Ignore if reaction fails
             } catch (e) {
@@ -243,6 +241,6 @@ jobs:
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: Number(process.env.ISSUE_NUMBER),
+              issue_number: issueNumber,
               body: body
             })
