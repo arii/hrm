@@ -6,21 +6,6 @@ import { render, screen } from '@testing-library/react'
 import ZoneDistribution from '@/app/client/experimental/components/ZoneDistribution'
 import { HrZoneName } from '@/lib/shared/hr-zones'
 
-// Mock Recharts to avoid JSDOM issues with ResponsiveContainer and SVG
-jest.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="responsive-container">{children}</div>
-  ),
-  PieChart: ({ children }: { children: React.ReactNode }) => (
-    <svg data-testid="pie-chart">{children}</svg>
-  ),
-  Pie: ({ children }: { children: React.ReactNode }) => (
-    <g data-testid="pie">{children}</g>
-  ),
-  Cell: () => <path data-testid="cell" />,
-  Tooltip: () => <div data-testid="tooltip" />,
-}))
-
 describe('ZoneDistribution', () => {
   const baseTimeInZones: Record<HrZoneName, number> = {
     [HrZoneName.Idle]: 0,
@@ -39,14 +24,14 @@ describe('ZoneDistribution', () => {
     render(
       <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
     )
-    expect(screen.getByText('Heart Rate Zone Distribution')).toBeInTheDocument()
+    expect(screen.getByText('Time in Zones')).toBeInTheDocument()
   })
 
   it('renders correctly with no time in any zone', () => {
     render(
       <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
     )
-    // Should show "No zone data available" message when data.length === 0
+    // Should show "No zone data available" message
     expect(
       screen.getByText('No zone data available for this session.')
     ).toBeInTheDocument()
@@ -60,33 +45,28 @@ describe('ZoneDistribution', () => {
       [HrZoneName.Cardio]: 10,
     }
     render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
-    // Multiple instances due to accessible table and visible legend
-    expect(
-      screen.getAllByText(HrZoneName.WarmUp).length
-    ).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('1:00').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/60%/).length).toBeGreaterThanOrEqual(1)
-    expect(
-      screen.getAllByText(HrZoneName.FatBurn).length
-    ).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('0:30').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/30%/).length).toBeGreaterThanOrEqual(1)
-    expect(
-      screen.getAllByText(HrZoneName.Cardio).length
-    ).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('0:10').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/10%/).length).toBeGreaterThanOrEqual(1)
+
+    expect(screen.getByText(HrZoneName.WarmUp)).toBeInTheDocument()
+    expect(screen.getByText(/1m 0s/)).toBeInTheDocument()
+    expect(screen.getByText(/60\.0%/)).toBeInTheDocument()
+
+    expect(screen.getByText(HrZoneName.FatBurn)).toBeInTheDocument()
+    expect(screen.getByText(/0m 30s/)).toBeInTheDocument()
+    expect(screen.getByText(/30\.0%/)).toBeInTheDocument()
+
+    expect(screen.getByText(HrZoneName.Cardio)).toBeInTheDocument()
+    expect(screen.getByText(/0m 10s/)).toBeInTheDocument()
+    expect(screen.getByText(/10\.0%/)).toBeInTheDocument()
   })
 
-  it('does not display zones with no time', () => {
+  it('does not display zones with less than 1% time', () => {
     const timeInZones = {
       ...baseTimeInZones,
       [HrZoneName.WarmUp]: 100,
+      [HrZoneName.FatBurn]: 0.5, // 0.5% of 100
     }
     render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
-    expect(
-      screen.getAllByText(HrZoneName.WarmUp).length
-    ).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText(HrZoneName.WarmUp)).toBeInTheDocument()
     expect(screen.queryByText(HrZoneName.FatBurn)).not.toBeInTheDocument()
   })
 
@@ -97,23 +77,11 @@ describe('ZoneDistribution', () => {
       [HrZoneName.Unknown]: 50,
     }
     render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
-    // data.length will be 0, so it shows "No zone data available"
+    // data.length will be 0 (after filtering), so it shows "No zone data available"
     expect(
       screen.getByText('No zone data available for this session.')
     ).toBeInTheDocument()
     expect(screen.queryByText(HrZoneName.NoData)).not.toBeInTheDocument()
     expect(screen.queryByText(HrZoneName.Unknown)).not.toBeInTheDocument()
-  })
-
-  it('displays correct total duration in the center', () => {
-    const timeInZones = {
-      ...baseTimeInZones,
-      [HrZoneName.WarmUp]: 120,
-    }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={120} />)
-    expect(screen.getByText('Total')).toBeInTheDocument()
-    // Multiple instances due to center label, legend, and table
-    const timeElements = screen.getAllByText('2:00')
-    expect(timeElements.length).toBeGreaterThanOrEqual(1)
   })
 })

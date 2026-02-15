@@ -11,9 +11,23 @@ declare module '@mui/material/styles' {
   }
   interface Palette {
     spotify: Palette['primary']
+    custom: {
+      running: string
+      idle: string
+      paused: string
+      finished: string
+      [key: string]: string
+    }
   }
   interface PaletteOptions {
     spotify: PaletteOptions['primary']
+    custom?: {
+      running?: string
+      idle?: string
+      paused?: string
+      finished?: string
+      [key: string]: string | undefined
+    }
   }
   interface TypeBackground {
     overlay: string
@@ -68,6 +82,12 @@ const theme = createTheme({
     },
     info: {
       main: '#2196F3', // Blue
+    },
+    custom: {
+      running: HR_COLORS.ZONE_3_FATBURN, // Green
+      idle: HR_COLORS.ZONE_0_IDLE, // Grey
+      paused: HR_COLORS.ZONE_4_CARDIO, // Amber/Yellow
+      finished: HR_COLORS.ZONE_2_WARMUP, // Blue
     },
     // Background colors
     background: {

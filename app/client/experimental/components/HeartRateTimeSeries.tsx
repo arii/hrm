@@ -1,6 +1,6 @@
-// app/client/experimental/components/HeartRateTimeSeries.tsx
 'use client'
-import { Card, CardContent, Typography, Box } from '@mui/material'
+
+import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
 import { HrDataPoint } from '@/lib/workout-session-storage'
 import {
   LineChart,
@@ -18,28 +18,43 @@ interface HeartRateTimeSeriesProps {
 }
 
 const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
+  const theme = useTheme()
+
   return (
-    <Card>
+    <Card elevation={2}>
       <CardContent>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h6" fontWeight="bold" gutterBottom>
           Heart Rate Over Time
         </Typography>
-        <Box sx={{ height: 300 }} data-testid="hr-time-series-chart">
-          <ResponsiveContainer width="100%" height="100%">
+        <Box
+          sx={{ height: 300, minHeight: 300 }}
+          data-testid="hr-time-series-chart"
+        >
+          <ResponsiveContainer width="100%" height="100%" minHeight={300}>
             <LineChart data={hrHistory} syncId="anyId">
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
               <XAxis
                 dataKey="time"
                 tickFormatter={(time) => new Date(time).toLocaleTimeString()}
+                tick={{ fontSize: 12 }}
               />
-              <YAxis domain={['auto', 'auto']} />
-              <Tooltip />
+              <YAxis domain={['auto', 'auto']} tick={{ fontSize: 12 }} />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: theme.shape.borderRadius,
+                  border: `1px solid ${theme.palette.divider}`,
+                  boxShadow: theme.shadows[2],
+                }}
+              />
               <Legend />
               <Line
                 type="monotone"
                 dataKey="hr"
-                stroke="#8884d8"
-                activeDot={{ r: 8 }}
+                name="Heart Rate"
+                stroke={theme.palette.primary.main}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>

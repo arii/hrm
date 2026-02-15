@@ -11,6 +11,8 @@ declare module '@mui/material/styles' {
       rest: string
       running: string
       idle: string
+      paused: string
+      finished: string
       cooldown: string
     }
   }
@@ -21,6 +23,8 @@ declare module '@mui/material/styles' {
       rest?: string
       running?: string
       idle?: string
+      paused?: string
+      finished?: string
       cooldown?: string
     }
   }
@@ -34,6 +38,8 @@ const theme = createTheme(libTheme, {
       rest: '#22c55e',
       running: '#3b82f6',
       idle: '#6b7280',
+      paused: '#f59e0b',
+      finished: '#3b82f6',
       cooldown: '#6b7280',
     },
   },
