@@ -58,6 +58,8 @@ jobs:
           PR_NUMBER_INPUT: ${{ inputs.pr_number }}
           PR_NUMBER_EVENT: ${{ github.event.pull_request.number }}
         run: |
+          source scripts/ci/github-utils.sh
+
           if [ -n "$PR_NUMBER_INPUT" ]; then
             PR_NUMBER="$PR_NUMBER_INPUT"
           else
@@ -66,14 +68,8 @@ jobs:
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
-          # Fetch PR details with retry mechanism
-          PR_DATA=""
-          for i in {1..5}; do
-            PR_DATA=$(gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '{title: .title, body: .body, base_ref: .baseRefName, head_ref: .headRefName, base_sha: .baseRefOid, head_sha: .headRefOid, author: .author.login, additions: .additions, deletions: .deletions, file_count: .changedFiles}' 2>/dev/null || echo "")
-            if [ -n "$PR_DATA" ]; then break; fi
-            echo "Waiting for GitHub API (attempt $i)..."
-            sleep 2
-          done
+          # Fetch PR details using centralized retry logic
+          PR_DATA=$(retry_command 5 2 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '{title: .title, body: .body, base_ref: .baseRefName, head_ref: .headRefName, base_sha: .baseRefOid, head_sha: .headRefOid, author: .author.login, additions: .additions, deletions: .deletions, file_count: .changedFiles}')
 
           if [ -z "$PR_DATA" ]; then
             echo "::error::Could not retrieve PR details from GitHub API."
@@ -108,7 +104,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Robust retrieval for PR metrics using GitHub API only.
+          source scripts/ci/github-utils.sh
+
+          # Retrieval for PR metrics using GitHub API only.
           # This avoids environment-specific issues with local git history or shallow clones.
 
           FILES=""
@@ -119,37 +117,34 @@ jobs:
           for i in {1..10}; do
             echo "📊 PR Metrics Gathering Attempt $i..."
 
-            # 1. Fetch live metrics from the PR metadata
-            API_DATA=$(gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles 2>/dev/null || echo "{}")
-            API_ADDITIONS=$(echo "$API_DATA" | jq -r '.additions // 0')
-            API_DELETIONS=$(echo "$API_DATA" | jq -r '.deletions // 0')
-            API_COUNT=$(echo "$API_DATA" | jq -r '.changedFiles // 0')
+            # 1. Fetch live file list
+            API_FILES_LIST=$(retry_command 1 0 gh pr diff "$PR_NUMBER" --name-only)
 
-            # 2. Fetch the detailed file list
-            API_FILES_LIST=$(gh pr diff "$PR_NUMBER" --name-only 2>/dev/null || echo "")
+            # 2. Fetch live metrics from the PR metadata
+            API_DATA=$(retry_command 1 0 gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles)
 
-            # 3. If summarized metrics are 0 but files exist, calculate metrics from the diff stream
-            if [ -n "$API_FILES_LIST" ] && [ "$API_ADDITIONS" -eq 0 ] && [ "$API_DELETIONS" -eq 0 ]; then
-               API_NUMSTAT=$(gh pr diff "$PR_NUMBER" --numstat 2>/dev/null || echo "")
+            # 3. If file list exists, we prefer calculating metrics from the diff stream for consistency
+            if [ -n "$API_FILES_LIST" ]; then
+               API_NUMSTAT=$(retry_command 1 0 gh pr diff "$PR_NUMBER" --numstat)
                if [ -n "$API_NUMSTAT" ]; then
                   API_ADDITIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$1} END {print sum+0}')
                   API_DELETIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$2} END {print sum+0}')
+               else
+                  API_ADDITIONS=$(echo "$API_DATA" | jq -r '.additions // 0')
+                  API_DELETIONS=$(echo "$API_DATA" | jq -r '.deletions // 0')
                fi
-            fi
 
-            # 4. Determine file count robustly
-            if [ "$API_COUNT" -eq 0 ] && [ -n "$API_FILES_LIST" ]; then
                API_COUNT=$(echo "$API_FILES_LIST" | grep -c . || echo "0")
-            fi
 
-            # We consider the data valid if we have both a file list AND at least one change detected.
-            if [ -n "$API_FILES_LIST" ] && [ "$API_COUNT" -gt 0 ]; then
-               FILES="$API_FILES_LIST"
-               FILE_COUNT="$API_COUNT"
-               ADDITIONS="$API_ADDITIONS"
-               DELETIONS="$API_DELETIONS"
-               echo "✅ Metrics gathered successfully via GitHub API."
-               break
+               # We consider the data valid if we have at least one file changed
+               if [ "$API_COUNT" -gt 0 ]; then
+                  FILES="$API_FILES_LIST"
+                  FILE_COUNT="$API_COUNT"
+                  ADDITIONS="$API_ADDITIONS"
+                  DELETIONS="$API_DELETIONS"
+                  echo "✅ Metrics gathered successfully via GitHub API."
+                  break
+               fi
             fi
 
             echo "⏳ PR not yet fully indexed by GitHub API. Retrying in 5s..."
