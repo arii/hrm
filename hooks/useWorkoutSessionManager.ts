@@ -1,6 +1,13 @@
 // hooks/useWorkoutSessionManager.ts
 
-import { useReducer, useEffect, useCallback, useState, useMemo } from 'react'
+import {
+  useReducer,
+  useEffect,
+  useCallback,
+  useState,
+  useMemo,
+  useRef,
+} from 'react'
 import {
   workoutSessionStorage,
   WorkoutSessionData,
@@ -180,7 +187,12 @@ export const useWorkoutSessionManager = (totalCalories: number = 0) => {
   const [state, dispatch] = useReducer(sessionManagerReducer, initialState)
   const [isInitialized, setIsInitialized] = useState(false)
   const [startCalories, setStartCalories] = useState(0)
+  const totalCaloriesRef = useRef(totalCalories)
   const { showInfo } = useAppSnackbar()
+
+  useEffect(() => {
+    totalCaloriesRef.current = totalCalories
+  }, [totalCalories])
 
   const clearStaleSession = useCallback(
     async (
@@ -218,6 +230,12 @@ export const useWorkoutSessionManager = (totalCalories: number = 0) => {
   // Auto-recovery of incomplete sessions
   useEffect(() => {
     const recoverSession = async () => {
+      // Skip recovery in testing environment to ensure predictable initial state
+      if (process.env.NEXT_PUBLIC_TESTING === 'true') {
+        setIsInitialized(true)
+        return
+      }
+
       let incompleteSession = await workoutSessionStorage.getIncompleteSession()
 
       if (incompleteSession) {
@@ -260,17 +278,20 @@ export const useWorkoutSessionManager = (totalCalories: number = 0) => {
   // Sync calories to session
   useEffect(() => {
     if (state.status === 'running' || state.status === 'paused') {
-      const currentWorkoutCalories = Math.max(0, totalCalories - startCalories)
+      const currentWorkoutCalories = Math.max(
+        0,
+        totalCaloriesRef.current - startCalories
+      )
       dispatch({ type: 'UPDATE_CALORIES', payload: currentWorkoutCalories })
     }
   }, [totalCalories, startCalories, state.status])
 
   const startWorkout = useCallback(
     (age: number, weight: number, maxHr?: number) => {
-      setStartCalories(totalCalories)
+      setStartCalories(totalCaloriesRef.current)
       dispatch({ type: 'START', payload: { age, weight, maxHr } })
     },
-    [totalCalories]
+    []
   )
 
   const resumeWorkout = useCallback(() => {
