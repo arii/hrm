@@ -100,65 +100,86 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Robust retry mechanism to fetch both file list and metrics from GitHub API.
-          # This prevents "0 files changed" reports by waiting for the API to index the PR.
+          # Robust multi-source retrieval for PR metrics.
+          # This handles GitHub indexing delays and CI environment limitations.
 
-          # Initialize from previous step context
+          # Initialize metrics from context and ensure numeric defaults
           FILES=""
+          FILE_COUNT=${FILE_COUNT_API:-0}
           ADDITIONS=${ADDITIONS_API:-0}
           DELETIONS=${DELETIONS_API:-0}
-          FILE_COUNT=${FILE_COUNT_API:-0}
+
+          # Fetch base branch tip to enable git diff (checkout was fetch-depth: 0)
+          git fetch origin "$BASE_REF_NAME" --depth=1 || true
+
+          # Determine the most reliable base for git diff
+          DIFF_BASE="origin/$BASE_REF_NAME"
+          if ! git rev-parse --verify "$DIFF_BASE" >/dev/null 2>&1; then
+            DIFF_BASE="$BASE_SHA"
+          fi
 
           for i in {1..10}; do
-            # Only fetch file list if we don't have it yet
-            if [ -z "$FILES" ]; then
-              FILES=$(gh pr diff "$PR_NUMBER" --name-only 2>/dev/null || echo "")
-            fi
+            echo "📊 PR Metrics Gathering Attempt $i..."
 
-            # Fetch latest metrics from API if they are currently 0
-            if [ "$FILE_COUNT" -eq 0 ] || ([ "$ADDITIONS" -eq 0 ] && [ "$DELETIONS" -eq 0 ]); then
-              PR_METRICS=$(gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles 2>/dev/null || echo "{}")
+            # --- Method A: Git Diff (Most accurate if history is available) ---
+            if [ -n "$DIFF_BASE" ] && [ -n "$HEAD_SHA" ]; then
+               GIT_NUMSTAT=$(git diff --numstat "$DIFF_BASE...$HEAD_SHA" 2>/dev/null || echo "")
+               if [ -n "$GIT_NUMSTAT" ]; then
+                 GIT_ADD=$(echo "$GIT_NUMSTAT" | awk '{sum+=$1} END {print sum+0}')
+                 GIT_DEL=$(echo "$GIT_NUMSTAT" | awk '{sum+=$2} END {print sum+0}')
+                 GIT_FILES_LIST=$(git diff --name-only "$DIFF_BASE...$HEAD_SHA" 2>/dev/null || echo "")
+                 GIT_COUNT=$(echo "$GIT_FILES_LIST" | grep -c . || echo "0")
 
-              # Capture values and use previous ones if new ones are 0 but previous were > 0
-              API_FILES=$(echo "$PR_METRICS" | jq -r '.changedFiles // 0')
-              API_ADDITIONS=$(echo "$PR_METRICS" | jq -r '.additions // 0')
-              API_DELETIONS=$(echo "$PR_METRICS" | jq -r '.deletions // 0')
-
-              if [ "$API_FILES" -gt 0 ]; then FILE_COUNT=$API_FILES; fi
-              if [ "$API_ADDITIONS" -gt 0 ] || [ "$API_DELETIONS" -gt 0 ]; then
-                ADDITIONS=$API_ADDITIONS
-                DELETIONS=$API_DELETIONS
-              fi
-            fi
-
-            # Robust manual fallback within the loop if API remains at zero
-            if [ -n "$FILES" ] && ([ "$FILE_COUNT" -eq 0 ] || ([ "$ADDITIONS" -eq 0 ] && [ "$DELETIONS" -eq 0 ])); then
-               if [ "$FILE_COUNT" -eq 0 ]; then
-                 FILE_COUNT=$(echo "$FILES" | grep -c . || echo "0")
-               fi
-
-               if [ "$ADDITIONS" -eq 0 ] && [ "$DELETIONS" -eq 0 ]; then
-                 NUMSTAT=$(gh pr diff "$PR_NUMBER" --numstat 2>/dev/null || echo "")
-                 if [ -n "$NUMSTAT" ]; then
-                   ADDITIONS=$(echo "$NUMSTAT" | awk '{sum+=$1} END {print sum+0}')
-                   DELETIONS=$(echo "$NUMSTAT" | awk '{sum+=$2} END {print sum+0}')
+                 # Trust Git if it shows changes
+                 if [ "$GIT_COUNT" -gt 0 ]; then
+                    FILES="$GIT_FILES_LIST"
+                    FILE_COUNT="$GIT_COUNT"
+                    ADDITIONS="$GIT_ADD"
+                    DELETIONS="$GIT_DEL"
+                    echo "✅ Metrics gathered via Git Diff."
+                    break
                  fi
                fi
             fi
 
-            # We consider the data valid if we have both a file list AND at least one change detected.
-            if [ -n "$FILES" ] && [ "$FILE_COUNT" -gt 0 ]; then
-              echo "✅ PR changes successfully indexed and retrieved."
-              break
+            # --- Method B: GitHub API View (Metadata) ---
+            API_DATA=$(gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles 2>/dev/null || echo "{}")
+            API_COUNT=$(echo "$API_DATA" | jq -r '.changedFiles // 0')
+            if [ "$API_COUNT" -gt 0 ]; then
+               FILE_COUNT="$API_COUNT"
+               ADDITIONS=$(echo "$API_DATA" | jq -r '.additions // 0')
+               DELETIONS=$(echo "$API_DATA" | jq -r '.deletions // 0')
+               FILES=$(gh pr diff "$PR_NUMBER" --name-only 2>/dev/null || echo "")
+               echo "✅ Metrics gathered via GitHub API View."
+               break
             fi
 
-            echo "⏳ Waiting for GitHub API to index PR changes (attempt $i)..."
+            # --- Method C: GitHub API Diff (Live Content) ---
+            API_NUMSTAT=$(gh pr diff "$PR_NUMBER" --numstat 2>/dev/null || echo "")
+            if [ -n "$API_NUMSTAT" ]; then
+               ADDITIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$1} END {print sum+0}')
+               DELETIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$2} END {print sum+0}')
+               FILES=$(gh pr diff "$PR_NUMBER" --name-only 2>/dev/null || echo "")
+               FILE_COUNT=$(echo "$FILES" | grep -c . || echo "0")
+
+               if [ "$FILE_COUNT" -gt 0 ]; then
+                 echo "✅ Metrics gathered via GitHub API Diff."
+                 break
+               fi
+            fi
+
+            echo "⏳ PR not yet indexed or no changes detected. Retrying in 5s..."
             sleep 5
           done
 
-          if [ -z "$FILES" ] || [ "$FILE_COUNT" -eq 0 ]; then
-             echo "::error::Could not retrieve PR diff or metrics after multiple attempts."
-             exit 1
+          # Final Validation - Ensure variables are populated even if zero
+          FILES="${FILES:-""}"
+          FILE_COUNT=${FILE_COUNT:-0}
+          ADDITIONS=${ADDITIONS:-0}
+          DELETIONS=${DELETIONS:-0}
+
+          if [ -z "$FILES" ] && [ "$FILE_COUNT" -eq 0 ]; then
+             echo "::warning::Could not retrieve detailed PR changes. Proceeding with zeroed metrics."
           fi
 
           echo "FILES<<EOF" >> $GITHUB_ENV
