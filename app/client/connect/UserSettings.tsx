@@ -223,7 +223,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({
               value={maxHrOverride}
               onChange={(e) => setMaxHrOverride(e.target.value)}
               error={!!maxHrError}
-              helperText={maxHrError || 'Overrides age-based calculation if set'}
+              helperText={
+                maxHrError || 'Overrides age-based calculation if set'
+              }
             />
 
             {hrZoneMethod === 'HRR' && (
@@ -252,7 +254,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({
                     size="small"
                     value={
                       customZoneThresholds[`ZONE_${z}`] ??
-                      ZONE_THRESHOLDS[`ZONE_${z}` as keyof typeof ZONE_THRESHOLDS]
+                      ZONE_THRESHOLDS[
+                        `ZONE_${z}` as keyof typeof ZONE_THRESHOLDS
+                      ]
                     }
                     onChange={(_, value) =>
                       handleThresholdChange(`ZONE_${z}`, value as number)
