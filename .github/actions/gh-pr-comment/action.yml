@@ -1,0 +1,22 @@
+name: 'GH PR Comment'
+description: 'Posts a comment to a Pull Request'
+inputs:
+  pr_number:
+    description: 'PR number'
+    required: true
+  body:
+    description: 'Comment body text'
+    required: false
+  body_file:
+    description: 'Path to a file containing the comment body'
+    required: false
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      run: |
+        if [ -n "${{ inputs.body_file }}" ]; then
+          gh pr comment ${{ inputs.pr_number }} --body-file "${{ inputs.body_file }}"
+        else
+          gh pr comment ${{ inputs.pr_number }} --body "${{ inputs.body }}"
+        fi
