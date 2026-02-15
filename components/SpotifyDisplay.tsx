@@ -229,8 +229,11 @@ const SpotifyDisplay = () => {
   }, [spotifyData.devices, selectedDeviceId])
 
   const handlePlayPauseToggle = () => {
-    const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
-    executeSpotify(command)
+    if (spotifyData.isPlaying) {
+      executeSpotify('PAUSE')
+    } else {
+      executeSpotify('PLAY')
+    }
   }
 
   const handleDeviceSelect = (deviceId: string) => {
