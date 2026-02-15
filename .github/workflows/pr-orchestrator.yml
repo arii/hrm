@@ -105,6 +105,8 @@ jobs:
     with:
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
       branch: ${{ github.event.pull_request.base.ref || inputs.base_ref || 'leader' }}
+      pr_title: ${{ github.event.pull_request.title }}
+      head_ref: ${{ github.head_ref || inputs.head_ref }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
 

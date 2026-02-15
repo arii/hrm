@@ -11,6 +11,14 @@ on:
         description: 'PR number to post comments to (optional)'
         required: false
         type: string
+      pr_title:
+        description: 'PR title (for E2E detection)'
+        required: false
+        type: string
+      head_ref:
+        description: 'Head ref (for E2E detection)'
+        required: false
+        type: string
 
   workflow_call:
     inputs:
@@ -21,6 +29,14 @@ on:
         default: 'leader'
       pr_number:
         description: 'PR number to post comments to (optional)'
+        required: false
+        type: string
+      pr_title:
+        description: 'PR title (for E2E detection)'
+        required: false
+        type: string
+      head_ref:
+        description: 'Head ref (for E2E detection)'
         required: false
         type: string
 
@@ -60,7 +76,17 @@ jobs:
 
       - name: Check Diff
         id: check
+        env:
+          PR_TITLE: ${{ inputs.pr_title }}
+          HEAD_REF: ${{ inputs.head_ref }}
         run: |
+          # Bypass check for E2E tests to ensure they always run the full quality gate
+          if [[ "$PR_TITLE" == *"E2E Test PR"* ]] || [[ "$HEAD_REF" == "e2e-test-"* ]]; then
+            echo "::notice::Detected E2E Test PR (Title: '$PR_TITLE', Branch: '$HEAD_REF'). Forcing meaningful changes."
+            echo "meaningful=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           # Fetch the base branch to ensure we can diff against it
           # inputs.branch defaults to 'leader'
           BASE="origin/${{ inputs.branch }}"
