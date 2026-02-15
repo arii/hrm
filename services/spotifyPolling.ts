@@ -35,8 +35,10 @@ export class SpotifyPolling implements SpotifyService {
     albumName: '',
     albumArtUrl: '',
     isPlaying: false,
+    is_playing: false,
     devices: [],
     volume: 70,
+    volume_percent: 70,
     isMuted: false,
   }
 

@@ -23,7 +23,7 @@ export const useSpotifyCommand = () => {
   )
 
   const execute = useCallback(
-    (command: SpotifyCommand, payload?: any) => {
+    (command: SpotifyCommand, payload?: Record<string, unknown>) => {
       // Logic: Use active device, or fallback to HRM Web Player
       const targetDeviceId = activeDevice?.id || hrmPlayer?.id || null
 
