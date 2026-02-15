@@ -1,10 +1,4 @@
-/**
- * @file bluetooth-messages.test.ts
- * @description Unit tests for the Bluetooth message constants defined in `constants/bluetooth-messages.ts`.
- * These tests ensure that both static and parameterized message constants are correct and prevent
- * regressions in user-facing text.
- * @jest-environment jsdom
- */
+/** @jest-environment jsdom */
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 
 describe('Bluetooth Message Constants', () => {

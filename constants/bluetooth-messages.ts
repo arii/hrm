@@ -1,10 +1,3 @@
-/**
- * @file bluetooth-messages.ts
- * @description This file contains all the Bluetooth status messages used in the application.
- * Using a centralized file for these messages improves maintainability and prepares
- * the application for internationalization (i18n) by providing a single source of
- * truth for all user-facing Bluetooth-related text.
- */
 export const BLUETOOTH_MESSAGES = {
   // Connection Statuses
   disconnected: 'Disconnected',
@@ -29,9 +22,7 @@ export const BLUETOOTH_MESSAGES = {
     'Auto-connect failed. Use Connect button to select device.',
   connectingToSavedDevice: 'Connecting to saved device...',
   deviceBusy: (delay: number, attempt: number, maxRetries: number) =>
-    `Device busy (Zombie). Retrying in ${
-      delay / 1000
-    }s... (${attempt}/${maxRetries})`,
+    `Device busy. Retrying in ${delay / 1000}s... (${attempt}/${maxRetries})`,
 
   // Error Messages
   error: 'Error',

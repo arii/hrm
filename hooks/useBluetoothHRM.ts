@@ -2,8 +2,8 @@ import { useCallback, useState, useRef, useEffect } from 'react'
 import {
   HrmMetadataUpdateMessage,
   HrmMetadataUpdateData,
-} from '../types/websocket'
-import { BluetoothConnectionStatus } from '../types/bluetooth'
+} from '@/types/websocket'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
 import isEqual from 'lodash.isequal'
 import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import logger from '@/utils/logger'
