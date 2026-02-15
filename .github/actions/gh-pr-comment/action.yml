@@ -10,10 +10,15 @@ inputs:
   body_file:
     description: 'Path to a file containing the comment body'
     required: false
+  github_token:
+    description: 'GitHub token for authentication'
+    required: true
 runs:
   using: 'composite'
   steps:
     - shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
       run: |
         set -e
         if [ -n "${{ inputs.body_file }}" ]; then

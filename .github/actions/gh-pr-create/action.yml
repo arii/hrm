@@ -16,6 +16,9 @@ inputs:
   head:
     description: 'Head branch'
     required: true
+  github_token:
+    description: 'GitHub token for authentication'
+    required: true
 outputs:
   pr_number:
     description: 'The number of the created PR'
@@ -28,6 +31,8 @@ runs:
   steps:
     - id: create
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
       run: |
         set -e
         ARGS=("--title" "${{ inputs.title }}" "--base" "${{ inputs.base }}" "--head" "${{ inputs.head }}")

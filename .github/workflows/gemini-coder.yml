@@ -247,13 +247,12 @@ jobs:
       - name: 'Jules: Create PR'
         if: env.AGENT_PROVIDER == 'jules' && env.CREATE_PR == 'true'
         uses: ./.github/actions/gh-pr-create
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           title: ${{ env.TITLE }}
           body_file: pr_body.md
           base: ${{ env.DEFAULT_BRANCH }}
           head: ${{ env.BRANCH }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 'Jules: Cleanup'
         if: env.AGENT_PROVIDER == 'jules'

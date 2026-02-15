@@ -4,10 +4,15 @@ inputs:
   pr_number:
     description: 'PR number'
     required: true
+  github_token:
+    description: 'GitHub token for authentication'
+    required: true
 runs:
   using: 'composite'
   steps:
     - shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
       run: |
         set -e
         gh pr close ${{ inputs.pr_number }}

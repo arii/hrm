@@ -1449,11 +1449,10 @@ jobs:
       - name: Post PR Comment
         if: always() && steps.aggregate-results.outputs.final_result == 'failure' && github.event.pull_request.number != null
         uses: ./.github/actions/gh-pr-comment
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           pr_number: ${{ github.event.pull_request.number }}
           body_file: test-results/pr-comment.md
+          github_token: ${{ secrets.GH_TOKEN }}
 
       - name: Update Step Summary
         if: always()
