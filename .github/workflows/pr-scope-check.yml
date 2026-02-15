@@ -82,7 +82,7 @@ jobs:
       - name: Clean up automated and obsolete labels
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/ci/cleanup-pr-labels.sh ${{ github.event.pull_request.number }}
+        run: ./scripts/ci/cleanup-pr-labels.sh ${{ github.event.pull_request.number }} scope
 
       - name: Add "scope:focused" label
         if: steps.analyze-files.outputs.count <= 1

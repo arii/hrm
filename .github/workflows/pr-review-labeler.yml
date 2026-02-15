@@ -19,7 +19,7 @@ jobs:
       - name: Cleanup labels
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/ci/cleanup-pr-labels.sh ${{ github.event.pull_request.number }}
+        run: ./scripts/ci/cleanup-pr-labels.sh ${{ github.event.pull_request.number }} review
       - name: Label PR based on review
         uses: actions/github-script@v6
         with:
