@@ -6,16 +6,13 @@ on:
       target_branch:
         description: 'The branch to merge into'
         required: true
-        type: string
         default: 'leader'
       source_branch:
         description: 'The branch to merge from'
         required: true
-        type: string
       pr_number:
         description: 'The PR number to comment on (required for feedback)'
         required: true
-        type: string
   workflow_call:
     inputs:
       target_branch:
