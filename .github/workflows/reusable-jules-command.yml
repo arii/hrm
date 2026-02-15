@@ -197,7 +197,7 @@ jobs:
         with:
           github-token: ${{ secrets.GH_TOKEN }}
           script: |
-            const prNumber = Number(context.issue.number || 0);
+            const prNumber = Number(context.payload.inputs?.issue_number) || context.issue.number || 0;
 
             const sessionId = process.env.SESSION_ID;
             if (sessionId && prNumber) {
@@ -225,8 +225,8 @@ jobs:
         with:
           github-token: ${{ secrets.GH_TOKEN }}
           script: |
-            const prNumber = Number(context.issue.number || 0);
-            const commentId = Number(context.payload.comment?.id || 0);
+            const prNumber = Number(context.payload.inputs?.issue_number) || context.issue.number || 0;
+            const commentId = Number(context.payload.inputs?.comment_id) || context.payload.comment?.id || 0;
 
             const errorMessageNew = process.env.ERROR_NEW || '';
             const errorMessageDelete = process.env.ERROR_DELETE || '';
