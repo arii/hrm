@@ -11,10 +11,6 @@ on:
         description: 'PR number to post comments to (optional)'
         required: false
         type: string
-      has_changes:
-        description: 'Whether the PR has file changes'
-        required: true
-        type: string
 
   workflow_call:
     inputs:
@@ -27,10 +23,11 @@ on:
         description: 'PR number to post comments to (optional)'
         required: false
         type: string
-      has_changes:
-        description: 'Whether the PR has file changes'
-        required: true
-        type: string
+
+    outputs:
+      meaningful:
+        description: "Whether meaningful changes were detected"
+        value: ${{ jobs.check-meaningful-changes.outputs.meaningful }}
 
     secrets:
       GH_TOKEN:
@@ -51,9 +48,42 @@ env:
   FORCE_COLOR: 1
 
 jobs:
+  check-meaningful-changes:
+    name: 🔍 Check Meaningful Changes
+    runs-on: ubuntu-latest
+    outputs:
+      meaningful: ${{ steps.check.outputs.meaningful }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check Diff
+        id: check
+        run: |
+          # Fetch the base branch to ensure we can diff against it
+          # inputs.branch defaults to 'leader'
+          BASE="origin/${{ inputs.branch }}"
+          echo "Fetching $BASE..."
+          git fetch origin "${{ inputs.branch }}" --depth=1
+
+          # Check for changes ignoring whitespace (-w) and excluding specific files
+          # Returns 1 (failure) if differences exist, 0 if no differences.
+          # We use ! to invert it: if git diff finds changes, it returns 1, logic becomes true.
+
+          echo "Checking for meaningful changes against $BASE..."
+          if ! git diff --quiet -w "$BASE...HEAD" -- . ':!*.lock' ':!package-lock.json' ':!*.svg' ':!*.map'; then
+             echo "meaningful=true" >> $GITHUB_OUTPUT
+             echo "✅ Meaningful changes detected."
+          else
+             echo "meaningful=false" >> $GITHUB_OUTPUT
+             echo "💤 No meaningful changes (whitespace/locks only)."
+          fi
+
   prepare-env:
     name: 📝 Prepare Environment
-    if: inputs.has_changes == 'true'
+    needs: [check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     outputs:
       session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
@@ -259,8 +289,8 @@ jobs:
 
   script-tests:
     name: 🧪 Script Tests
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -305,8 +335,8 @@ jobs:
 
   knip-check:
     name: 🎒 Knip Check
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -345,8 +375,8 @@ jobs:
 
   lint-check:
     name: 🔍 Lint Check
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -396,8 +426,8 @@ jobs:
 
   slop-check:
     name: 🧹 Slop Check
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -448,8 +478,8 @@ jobs:
 
   build-check:
     name: 🏗️ Build Check
-    needs: [prepare-env]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -595,8 +625,8 @@ jobs:
 
   infra-tests:
     name: 🧪 Infrastructure Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -680,8 +710,8 @@ jobs:
 
   unit-tests:
     name: 🧪 Unit Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -760,8 +790,8 @@ jobs:
 
   component-tests:
     name: 🧪 Component Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -840,8 +870,8 @@ jobs:
 
   perf-tests:
     name: 🧪 Performance Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -935,8 +965,8 @@ jobs:
 
   visual-tests:
     name: 🧪 Visual Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
-    if: inputs.has_changes == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check, check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -1030,7 +1060,8 @@ jobs:
 
   copy-checks:
     name: 📝 Copy checks from parent commit
-    if: inputs.has_changes == 'false'
+    needs: [check-meaningful-changes]
+    if: needs.check-meaningful-changes.outputs.meaningful == 'false'
     runs-on: ubuntu-latest
     permissions:
       checks: write
@@ -1155,10 +1186,11 @@ jobs:
           echo "🎉 All checks copied."
   integration-tests:
     name: 📊 Integration Tests Summary
-    if: always() && inputs.has_changes == 'true'
+    if: always() && needs.check-meaningful-changes.outputs.meaningful == 'true'
     needs:
       [
         prepare-env,
+        check-meaningful-changes,
         script-tests,
         infra-tests,
         unit-tests,
@@ -1201,10 +1233,11 @@ jobs:
 
   quality-report:
     name: 📊 Quality Report
-    if: always() && inputs.has_changes == 'true' && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.slop-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
+    if: always() && needs.check-meaningful-changes.outputs.meaningful == 'true' && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.slop-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
     needs:
       [
         prepare-env,
+        check-meaningful-changes,
         knip-check,
         lint-check,
         slop-check,

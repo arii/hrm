@@ -97,94 +97,26 @@ jobs:
             echo "src=${{ steps.changes-dispatch.outputs.src }}" >> $GITHUB_OUTPUT
           fi
 
-  check-diff:
-    name: 🔍 Check Diff
-    needs: [filter]
-    if: needs.filter.outputs.should_review == 'true'
-    runs-on: ubuntu-latest
-    outputs:
-      is_meaningful: ${{ steps.diff_check.outputs.is_meaningful }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: pip install unidiff
-
-      - name: Generate Diff and Run Script
-        id: diff_check
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          HEAD_REF: ${{ github.head_ref || inputs.head_ref }}
-        run: |
-          # Bypass check for E2E tests to ensure they always run the full quality gate
-          if [[ "$PR_TITLE" == *"E2E Test PR"* ]] || [[ "$HEAD_REF" == "e2e-test-"* ]]; then
-            echo "::notice::Detected E2E Test PR (Title: '$PR_TITLE', Branch: '$HEAD_REF'). Forcing meaningful changes."
-            echo "is_meaningful=0" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          else
-            BASE_SHA="${{ inputs.base_ref || 'origin/leader' }}"
-            HEAD_SHA="${{ inputs.head_ref || 'HEAD' }}"
-
-            if [[ "$BASE_SHA" == "origin/"* ]]; then
-                git fetch origin "${BASE_SHA#origin/}"
-            elif ! git cat-file -e $BASE_SHA^{commit}; then
-                git fetch origin leader
-                BASE_SHA="origin/leader"
-            fi
-          fi
-
-          echo "Generating diff between $BASE_SHA and $HEAD_SHA"
-          git diff "$BASE_SHA...$HEAD_SHA" > pr.diff
-
-          set +e
-          python3 scripts/check_diff.py pr.diff --exclude 'pnpm-lock.yaml' 'package-lock.json' '*.lock' '*.md'
-          RESULT=$?
-          set -e
-
-          if [ "$RESULT" -eq 2 ]; then
-            echo "No meaningful changes detected (exit code 2)."
-            echo "is_meaningful=1" >> "$GITHUB_OUTPUT"
-          elif [ "$RESULT" -eq 0 ]; then
-            echo "Meaningful changes detected (exit code 0)."
-            echo "is_meaningful=0" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::Diff check failed with error code $RESULT. Assuming meaningful changes to be safe."
-            echo "is_meaningful=0" >> "$GITHUB_OUTPUT"
-          fi
-
   pr-quality:
     name: 🛡️ Quality Gates
-    needs: [filter, check-diff]
+    needs: [filter]
     if: needs.filter.outputs.should_review == 'true'
     uses: ./.github/workflows/pr-quality.yml
     with:
-      has_changes: ${{ needs.check-diff.outputs.is_meaningful == '0' }}
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
+      branch: ${{ github.event.pull_request.base.ref || inputs.base_ref || 'leader' }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
 
   pr-review:
     name: 🤖 Gemini AI Review
-    needs: [filter, pr-quality, check-diff]
+    needs: [filter, pr-quality]
     # Requisite: Filter matches AND Quality Gate passed AND Changes are meaningful
     if: |
       always() &&
       needs.filter.outputs.should_review == 'true' &&
       needs.pr-quality.result == 'success' &&
-      needs.check-diff.outputs.is_meaningful == '0'
+      needs.pr-quality.outputs.meaningful == 'true'
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       pr_quality_result: ${{ needs.pr-quality.result }}
