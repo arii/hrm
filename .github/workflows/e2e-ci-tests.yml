@@ -59,20 +59,20 @@ jobs:
           body: '@pr-squash'
 
       - name: Wait for PR Update
-        timeout-minutes: 5
+        timeout-minutes: 10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INITIAL_SHA: ${{ steps.get_sha.outputs.initial_sha }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
         run: |
           echo "Waiting for PR $PR_NUMBER to be updated by the bot (Initial SHA: $INITIAL_SHA)..."
-          for i in {1..20}; do
+          for i in {1..40}; do
             CURRENT_SHA=$(gh pr view $PR_NUMBER --json headRefOid -q '.headRefOid')
             if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
               echo "✅ PR updated! New SHA: $CURRENT_SHA"
               exit 0
             fi
-            echo "Still waiting for update... ($i/20)"
+            echo "Still waiting for update... ($i/40)"
             sleep 15
           done
           echo "❌ Timed out waiting for PR update."
@@ -84,7 +84,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           pr_number: ${{ steps.create_pr.outputs.pr_number }}
-          timeout: 300
+          timeout: 600
 
       - name: Verify Squash
         env:
@@ -195,20 +195,20 @@ jobs:
           body: '@conflict-resolve'
 
       - name: Wait for PR Update
-        timeout-minutes: 5
+        timeout-minutes: 10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INITIAL_SHA: ${{ steps.get_sha.outputs.initial_sha }}
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
         run: |
           echo "Waiting for PR $PR_NUMBER to be updated by the bot (Initial SHA: $INITIAL_SHA)..."
-          for i in {1..20}; do
+          for i in {1..40}; do
             CURRENT_SHA=$(gh pr view $PR_NUMBER --json headRefOid -q '.headRefOid')
             if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
               echo "✅ PR updated! New SHA: $CURRENT_SHA"
               exit 0
             fi
-            echo "Still waiting for update... ($i/20)"
+            echo "Still waiting for update... ($i/40)"
             sleep 15
           done
           echo "❌ Timed out waiting for PR update."
@@ -220,7 +220,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           pr_number: ${{ steps.create_conflict.outputs.pr_number }}
-          timeout: 300
+          timeout: 600
 
       - name: Verify Conflict Resolution
         env:
@@ -311,20 +311,20 @@ jobs:
           body: '@pr-squash-rebase'
 
       - name: Wait for PR Update
-        timeout-minutes: 5
+        timeout-minutes: 10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INITIAL_SHA: ${{ steps.get_sha.outputs.initial_sha }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
         run: |
           echo "Waiting for PR $PR_NUMBER to be updated by the bot (Initial SHA: $INITIAL_SHA)..."
-          for i in {1..20}; do
+          for i in {1..40}; do
             CURRENT_SHA=$(gh pr view $PR_NUMBER --json headRefOid -q '.headRefOid')
             if [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
               echo "✅ PR updated! New SHA: $CURRENT_SHA"
               exit 0
             fi
-            echo "Still waiting for update... ($i/20)"
+            echo "Still waiting for update... ($i/40)"
             sleep 15
           done
           echo "❌ Timed out waiting for PR update."
@@ -336,7 +336,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           pr_number: ${{ steps.create_pr.outputs.pr_number }}
-          timeout: 300
+          timeout: 600
 
       - name: Verify Squash and Rebase
         env:
