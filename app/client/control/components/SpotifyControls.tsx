@@ -126,18 +126,30 @@ const SpotifyControls = () => {
       command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
       overriddenDeviceId?: string
     ) => {
-      const targetDeviceId =
+      const deviceId =
         overriddenDeviceId !== undefined
           ? overriddenDeviceId
           : resolveTargetDeviceId()
 
-      // We use a type cast here because the command is dynamic, and the hook uses overloads
-      // for strict type checking at the point of call for specific commands.
-      const execute = executeSpotify as (
-        command: string,
-        payload: { deviceId?: string }
-      ) => void
-      execute(command, { deviceId: targetDeviceId })
+      switch (command) {
+        case 'PLAY':
+          executeSpotify('PLAY', { deviceId })
+          break
+        case 'PAUSE':
+          executeSpotify('PAUSE', { deviceId })
+          break
+        case 'NEXT':
+          executeSpotify('NEXT', { deviceId })
+          break
+        case 'PREVIOUS':
+          executeSpotify('PREVIOUS', { deviceId })
+          break
+        case 'TRANSFER_PLAYBACK':
+          if (deviceId) {
+            executeSpotify('TRANSFER_PLAYBACK', { deviceId })
+          }
+          break
+      }
     },
     [resolveTargetDeviceId, executeSpotify]
   )
