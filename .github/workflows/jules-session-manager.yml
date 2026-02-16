@@ -205,11 +205,12 @@ jobs:
         uses: actions/github-script@v7
         env:
           SESSION_ID: ${{ steps.jules_op_new.outputs.session_id }}
+          PR_NUMBER_RAW: ${{ env.PR_NUMBER_RAW }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const sessionId = process.env.SESSION_ID;
-            const prNumber = context.issue?.number || 0;
+            const prNumber = Number(process.env.PR_NUMBER_RAW) || context.issue?.number || 0;
             if (sessionId && prNumber && prNumber !== 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -232,10 +233,11 @@ jobs:
         env:
           ERROR_NEW: ${{ steps.jules_op_new.outputs.error_message }}
           ERROR_DELETE: ${{ steps.jules_op_delete.outputs.error_message }}
+          PR_NUMBER_RAW: ${{ env.PR_NUMBER_RAW }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.issue?.number || 0;
+            const prNumber = Number(process.env.PR_NUMBER_RAW) || context.issue?.number || 0;
             const errorMessageNew = process.env.ERROR_NEW || '';
             const errorMessageDelete = process.env.ERROR_DELETE || '';
             const errorMessage = errorMessageNew || errorMessageDelete || 'Unknown error occurred';

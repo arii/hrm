@@ -476,7 +476,7 @@ jobs:
         if: steps.validate.outputs.should_run == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
-          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
+          PR_NUMBER: ${{ env.PR_NUMBER_RAW }}
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
           EVENT_HEAD_SHA: ${{ github.event.pull_request && github.event.pull_request.head.sha }}
         run: |
@@ -521,9 +521,9 @@ jobs:
     needs: [analyze-changes, gemini-review]
     if: |
       always() &&
-      needs.analyze-changes.outputs.needs-review == 'true' &&
-      needs.gemini-review.result == 'success' &&
-      needs.gemini-review.outputs.review_performed == 'true'
+      (needs.analyze-changes.outputs.needs-review == 'true') &&
+      (needs.gemini-review.result == 'success') &&
+      (needs.gemini-review.outputs.review_performed == 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -550,7 +550,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
-        run: ./.github/scripts/manage-pr-labels.sh
+        run: |
+          if [ "$PR_NUMBER" == "0" ]; then
+            echo "::warning::PR_NUMBER is 0. Skipping label management."
+            exit 0
+          fi
+          ./.github/scripts/manage-pr-labels.sh
 
   post-skip-check:
     name: Post Skip Check

@@ -30,7 +30,24 @@ on:
         type: string
 
 jobs:
+  validate:
+    name: 🔍 Validate Input
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - id: check
+        run: |
+          if [ -z "${{ inputs.source_branch }}" ]; then
+            echo "::warning::Source branch is missing. Skipping conflict resolution."
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          fi
+
   merge_and_resolve:
+    needs: [validate]
+    if: needs.validate.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write

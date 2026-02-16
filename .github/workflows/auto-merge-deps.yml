@@ -12,7 +12,18 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
+      - name: Validate Context
+        id: validate
+        run: |
+          if [ "${{ github.event.pull_request.html_url }}" == "" ]; then
+            echo "::warning::Missing PR URL. Skipping auto-merge."
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Check PR Labels
+        if: steps.validate.outputs.should_run == 'true'
         id: check
         uses: actions/github-script@v7
         with:
@@ -22,15 +33,15 @@ jobs:
             return labels.includes('automerge');
 
       - name: Auto-approve
-        if: steps.check.outputs.result == 'true' && github.event.pull_request
+        if: steps.validate.outputs.should_run == 'true' && steps.check.outputs.result == 'true'
         run: gh pr review --approve "$PR_URL"
         env:
-          PR_URL: ${{ (github.event.pull_request && github.event.pull_request.html_url) || '' }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enable Auto-merge
-        if: steps.check.outputs.result == 'true' && github.event.pull_request
+        if: steps.validate.outputs.should_run == 'true' && steps.check.outputs.result == 'true'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
-          PR_URL: ${{ (github.event.pull_request && github.event.pull_request.html_url) || '' }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

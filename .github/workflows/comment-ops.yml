@@ -35,21 +35,21 @@ jobs:
 
   execute-review:
     needs: [router]
-    if: needs.router.outputs.is_review == 'true'
+    if: needs.router.outputs.is_review == 'true' && (github.event.issue && github.event.issue.number && github.event.issue.number != 0)
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       pr_quality_result: 'not_applicable'
       trigger_event: 'comment'
       comment_body: ${{ (github.event.comment && github.event.comment.body) || '' }}
-      pr_number: ${{ (github.event.issue && github.event.issue.number) || 0 }}
+      pr_number: ${{ github.event.issue.number }}
     secrets: inherit
 
   execute-squash:
     needs: [router]
-    if: needs.router.outputs.is_squash == 'true'
+    if: needs.router.outputs.is_squash == 'true' && (github.event.issue && github.event.issue.number && github.event.issue.number != 0)
     uses: ./.github/workflows/pr-squash.yml
     with:
-      pr_number: ${{ (github.event.issue && github.event.issue.number) || 0 }}
+      pr_number: ${{ github.event.issue.number }}
       comment_body: ${{ (github.event.comment && github.event.comment.body) || '' }}
       comment_id: ${{ (github.event.comment && github.event.comment.id) || 0 }}
     secrets: inherit
