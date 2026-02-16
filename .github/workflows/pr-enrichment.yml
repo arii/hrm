@@ -75,9 +75,9 @@ jobs:
           # Success (exit code 0) is considered valid by retry_command, so we manually
           # loop if the resulting JSON object is missing critical data.
           PR_DATA=""
-          for i in {1..10}; do
+          for i in {1..12}; do
             echo "📊 PR Metadata Fetch Attempt $i..."
-            # Using increased attempts and sleep for the individual fetch command as suggested.
+            # Using increased attempts and sleep for the individual fetch command.
             PR_DATA_RAW=$(retry_command 5 2 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '(. // {}) | {title: (.title // ""), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // ""), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}')
 
             # Extract and validate critical fields (title and head SHA).
@@ -91,8 +91,8 @@ jobs:
               break
             fi
 
-            echo "⏳ PR metadata not yet fully available (missing title or head SHA). Retrying in 5s..."
-            sleep 5
+            echo "⏳ PR metadata not yet fully available (missing title or head SHA). Retrying in 10s..."
+            sleep 10
           done
 
           if [ -z "$PR_DATA" ]; then
@@ -130,51 +130,67 @@ jobs:
           # Retrieval for PR metrics using GitHub API only.
           # This avoids environment-specific issues with local git history or shallow clones.
 
+          PR_NUMBER=${{ env.PR_NUMBER }}
           FILES=""
           ADDITIONS=0
           DELETIONS=0
           FILE_COUNT=0
 
-          for i in {1..10}; do
+          # Poll for up to ~3 minutes (18 attempts * 10s sleep) to handle heavy indexing lag.
+          for i in {1..18}; do
             echo "📊 PR Metrics Gathering Attempt $i..."
 
-            # 1. Fetch live file list
-            API_FILES_LIST=$(retry_command 2 1 gh pr diff "$PR_NUMBER" --name-only)
-
-            # 2. Fetch live metrics from the PR metadata
+            # 1. Fetch baseline metrics from PR metadata.
             API_DATA_RAW=$(retry_command 2 1 gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles)
             API_DATA=$(echo "$API_DATA_RAW" | jq -c '(. // {})')
+            METADATA_COUNT=$(echo "$API_DATA" | jq -r '.changedFiles // 0')
+            METADATA_ADD=$(echo "$API_DATA" | jq -r '.additions // 0')
+            METADATA_DEL=$(echo "$API_DATA" | jq -r '.deletions // 0')
 
-            # 3. If file list exists, we prefer calculating metrics from the diff stream for consistency
-            if [ -n "$API_FILES_LIST" ]; then
+            echo "   Metadata: Files=$METADATA_COUNT, Additions=$METADATA_ADD, Deletions=$METADATA_DEL"
+
+            # 2. Fetch live file list from the diff.
+            API_FILES_LIST=$(retry_command 2 1 gh pr diff "$PR_NUMBER" --name-only)
+            API_COUNT=$(echo "$API_FILES_LIST" | grep -c . || echo "0")
+
+            echo "   Diff --name-only: Files=$API_COUNT"
+
+            # 3. Evaluation Logic:
+            # We break early ONLY if the diff confirms at least one changed file.
+            if [ "$API_COUNT" -gt 0 ]; then
                API_NUMSTAT=$(retry_command 2 1 gh pr diff "$PR_NUMBER" --numstat)
                if [ -n "$API_NUMSTAT" ]; then
-                  API_ADDITIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$1} END {print sum+0}')
-                  API_DELETIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$2} END {print sum+0}')
+                  ADDITIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$1} END {print sum+0}')
+                  DELETIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$2} END {print sum+0}')
                else
-                  API_ADDITIONS=$(echo "$API_DATA" | jq -r '.additions // 0')
-                  API_DELETIONS=$(echo "$API_DATA" | jq -r '.deletions // 0')
+                  ADDITIONS="$METADATA_ADD"
+                  DELETIONS="$METADATA_DEL"
                fi
-
-               # Use exact line count from the file list to determine total file count
-               API_COUNT=$(echo "$API_FILES_LIST" | grep -c . || echo "0")
-
-               # We consider the data valid if we have at least one file changed
-               if [ "$API_COUNT" -gt 0 ]; then
-                  FILES="$API_FILES_LIST"
-                  FILE_COUNT="$API_COUNT"
-                  ADDITIONS="$API_ADDITIONS"
-                  DELETIONS="$API_DELETIONS"
-                  echo "✅ Metrics gathered successfully via GitHub API."
-                  break
-               fi
+               FILES="$API_FILES_LIST"
+               FILE_COUNT="$API_COUNT"
+               echo "✅ Metrics successfully gathered via diff."
+               break
+            elif [ "$METADATA_COUNT" -gt 0 ]; then
+               # Metadata says there are changes, but the diff stream is still empty.
+               echo "⏳ Metadata indicates $METADATA_COUNT files, but diff is currently empty. Continuing poll..."
+            elif [ "$i" -gt 8 ] && [ "$METADATA_COUNT" -eq 0 ]; then
+               # If both are zero after substantial polling, it may be an empty PR.
+               echo "❓ Both metadata and diff currently report 0 changes."
             fi
 
-            echo "⏳ PR not yet fully indexed by GitHub API. Retrying in 5s..."
-            sleep 5
+            # On the very last attempt, if we still have 0 from diff, fallback to metadata.
+            if [ "$i" -eq 18 ]; then
+               echo "⚠️ Maximum attempts reached. Falling back to metadata for metrics."
+               FILE_COUNT="$METADATA_COUNT"
+               ADDITIONS="$METADATA_ADD"
+               DELETIONS="$METADATA_DEL"
+            fi
+
+            echo "⏳ Retrying in 10s..."
+            sleep 10
           done
 
-          # Final Validation - Ensure variables are populated even if zero
+          # Final Validation - Ensure variables are populated
           FILES="${FILES:-""}"
           FILE_COUNT=${FILE_COUNT:-0}
           ADDITIONS=${ADDITIONS:-0}
