@@ -24,8 +24,9 @@ jobs:
         if: steps.setup.outcome == 'failure' && github.event.pull_request
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ (github.event.pull_request && github.event.pull_request.number) || 0 }}
         run: |
-          gh pr comment ${{ github.event.pull_request.number }} --body "## 🚨 Auto-Fix Failed
+          gh pr comment "$PR_NUMBER" --body "## 🚨 Auto-Fix Failed
           The \`pnpm install --frozen-lockfile\` command failed. This likely means your \`pnpm-lock.yaml\` file is out of sync with your \`package.json\`.
           **Action Required:** Please run \`pnpm install\` locally on your branch, commit the updated \`pnpm-lock.yaml\` file, and push the changes."
           exit 1

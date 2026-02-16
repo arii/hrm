@@ -17,19 +17,20 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            if (!context.payload.pull_request) return false;
             const labels = context.payload.pull_request.labels.map(l => l.name);
             return labels.includes('automerge');
 
       - name: Auto-approve
-        if: steps.check.outputs.result == 'true'
+        if: steps.check.outputs.result == 'true' && github.event.pull_request
         run: gh pr review --approve "$PR_URL"
         env:
-          PR_URL: ${{ github.event.pull_request && github.event.pull_request.html_url }}
+          PR_URL: ${{ (github.event.pull_request && github.event.pull_request.html_url) || '' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enable Auto-merge
-        if: steps.check.outputs.result == 'true'
+        if: steps.check.outputs.result == 'true' && github.event.pull_request
         run: gh pr merge --auto --squash "$PR_URL"
         env:
-          PR_URL: ${{ github.event.pull_request && github.event.pull_request.html_url }}
+          PR_URL: ${{ (github.event.pull_request && github.event.pull_request.html_url) || '' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
