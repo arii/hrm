@@ -68,10 +68,27 @@ jobs:
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
-          # Fetch PR details using centralized retry logic with high tolerance for API lag.
-          # The jq filter ensures we always capture a valid JSON object with defaults,
-          # preventing empty variable captures even if the PR object is partially populated.
-          PR_DATA=$(retry_command 10 5 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '(. // {}) | {title: (.title // "Untitled PR"), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // "unknown"), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}')
+          # Fetch PR details with polling to handle API indexing delays.
+          # Success (exit code 0) is considered valid by retry_command, so we manually
+          # loop if the resulting JSON object is missing critical data.
+          PR_DATA=""
+          for i in {1..10}; do
+            echo "📊 PR Metadata Fetch Attempt $i..."
+            PR_DATA_RAW=$(retry_command 2 1 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '(. // {}) | {title: (.title // ""), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // ""), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}')
+
+            # We consider the data valid if we have a title and a head SHA
+            PR_TITLE_TMP=$(echo "$PR_DATA_RAW" | jq -r '.title')
+            PR_HEAD_TMP=$(echo "$PR_DATA_RAW" | jq -r '.head_sha')
+
+            if [ -n "$PR_TITLE_TMP" ] && [ -n "$PR_HEAD_TMP" ]; then
+              PR_DATA="$PR_DATA_RAW"
+              echo "✅ PR metadata retrieved successfully."
+              break
+            fi
+
+            echo "⏳ PR metadata not yet fully available. Retrying in 5s..."
+            sleep 5
+          done
 
           if [ -z "$PR_DATA" ]; then
             echo "::error::Could not retrieve PR details from GitHub API after retries."
@@ -80,11 +97,11 @@ jobs:
 
           # Securely write PR metadata to GITHUB_ENV using EOF delimiters to prevent command injection.
           echo "PR_TITLE<<EOF" >> $GITHUB_ENV
-          echo "$PR_DATA" | jq -r '.title' >> $GITHUB_ENV
+          echo "$PR_DATA" | jq -r '.title // "Untitled PR"' >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
           echo "PR_AUTHOR<<EOF" >> $GITHUB_ENV
-          echo "$PR_DATA" | jq -r '.author' >> $GITHUB_ENV
+          echo "$PR_DATA" | jq -r '.author // "unknown"' >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
           echo "BASE_SHA=$(echo "$PR_DATA" | jq -r '.base_sha')" >> $GITHUB_ENV
