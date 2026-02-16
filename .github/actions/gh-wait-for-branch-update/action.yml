@@ -48,7 +48,11 @@ runs:
           local sha=""
           # Attempt to get SHA via GitHub API (most reliable source of truth)
           # We use -H "Cache-Control: no-cache" to ensure we're not getting a cached response
-          sha=$(gh api -H "Cache-Control: no-cache" "repos/$REPO/git/ref/heads/$BRANCH_NAME" --jq '.object.sha' 2>/dev/null || echo "")
+          sha=$(gh api -H "Cache-Control: no-cache" "repos/$REPO/git/ref/heads/$BRANCH_NAME" --jq '.object.sha' 2>api_error.log || echo "")
+
+          if [ -z "$sha" ] && [ -s api_error.log ]; then
+            echo "::warning::gh api failed. Error: $(cat api_error.log)" >&2
+          fi
 
           # Fallback to git ls-remote if API fails or returns empty
           if [ -z "$sha" ]; then
