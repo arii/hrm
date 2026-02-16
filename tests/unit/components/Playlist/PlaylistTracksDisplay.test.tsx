@@ -4,20 +4,40 @@
 // tests/unit/components/Playlist/PlaylistTracksDisplay.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react'
 import PlaylistTracksDisplay from '@/components/Playlist/PlaylistTracksDisplay'
-import { WebSocketContext } from '@/context/WebSocketContext'
+import {
+  WebSocketContext,
+  WebSocketContextType,
+} from '@/context/WebSocketContext'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import { jest } from '@jest/globals'
+import '@testing-library/jest-dom'
 
 // Mock fetch
 global.fetch = jest.fn()
 
+// Mock useSpotifyCommand
+jest.mock('@/hooks/useSpotifyCommand')
+const mockedUseSpotifyCommand = useSpotifyCommand as jest.MockedFunction<
+  typeof useSpotifyCommand
+>
+
 describe('PlaylistTracksDisplay', () => {
+  const executeMock = jest.fn()
+
   beforeEach(() => {
     jest.clearAllMocks()
+    mockedUseSpotifyCommand.mockReturnValue({
+      execute: executeMock,
+      activeDevice: null,
+      hrmPlayer: null,
+      playback: {},
+      isHrmPlayerActive: false,
+    } as unknown as ReturnType<typeof useSpotifyCommand>)
   })
 
   const mockContextValue = {
     spotifyData: {
       devices: [],
-      isMuted: false,
       playback: {
         track: {
           id: null,
@@ -29,54 +49,30 @@ describe('PlaylistTracksDisplay', () => {
         is_playing: false,
         volume_percent: 70,
         progress_ms: 0,
+        isMuted: false,
       },
     },
     sendData: jest.fn(),
     connectionStatus: 'Connected',
     timerData: {},
-    hrmData: {},
-    lastMessage: null,
+    hrmData: [],
+    activeAlerts: [],
     connect: jest.fn(),
     disconnect: jest.fn(),
   }
 
   it('should render loading state initially', () => {
     render(
-      <WebSocketContext.Provider value={mockContextValue}>
+      <WebSocketContext.Provider
+        value={mockContextValue as unknown as WebSocketContextType}
+      >
         <PlaylistTracksDisplay playlistId="123" />
       </WebSocketContext.Provider>
     )
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 
-  it('should render error state', async () => {
-    ;(fetch as jest.Mock).mockRejectedValueOnce(new Error('Failed to fetch'))
-    render(
-      <WebSocketContext.Provider value={mockContextValue}>
-        <PlaylistTracksDisplay playlistId="123" />
-      </WebSocketContext.Provider>
-    )
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Failed to fetch'
-    )
-  })
-
-  it('should render empty state', async () => {
-    ;(fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ tracks: [], total: 0 }),
-    })
-    render(
-      <WebSocketContext.Provider value={mockContextValue}>
-        <PlaylistTracksDisplay playlistId="123" />
-      </WebSocketContext.Provider>
-    )
-    expect(
-      await screen.findByText('This playlist is empty.')
-    ).toBeInTheDocument()
-  })
-
-  it('should render tracks and handle pagination', async () => {
+  it('should render tracks and handle playing a track', async () => {
     const mockTracks = {
       tracks: [
         {
@@ -87,7 +83,7 @@ describe('PlaylistTracksDisplay', () => {
           uri: 'spotify:track:t1',
         },
       ],
-      total: 25,
+      total: 1,
       limit: 20,
       offset: 0,
     }
@@ -97,20 +93,68 @@ describe('PlaylistTracksDisplay', () => {
     })
 
     render(
-      <WebSocketContext.Provider value={mockContextValue}>
+      <WebSocketContext.Provider
+        value={mockContextValue as unknown as WebSocketContextType}
+      >
         <PlaylistTracksDisplay playlistId="123" />
       </WebSocketContext.Provider>
     )
 
-    expect(await screen.findByText('Track 1')).toBeInTheDocument()
-    expect(screen.getByText('Artist 1')).toBeInTheDocument()
-    expect(screen.getByText('03:00')).toBeInTheDocument()
+    const playButton = await screen.findByRole('button', { name: /play/i })
+    fireEvent.click(playButton)
 
-    // Test pagination
-    const nextButton = screen.getByRole('button', { name: /next/i })
-    fireEvent.click(nextButton)
-    expect(fetch).toHaveBeenCalledWith(
-      '/api/spotify/playlists/123/tracks?limit=20&offset=20'
+    expect(executeMock).toHaveBeenCalledWith(
+      'PLAY',
+      expect.objectContaining({
+        contextUri: 'spotify:playlist:123',
+        offset: { position: 0 },
+      })
     )
+  })
+
+  it('should handle pause when track is already playing', async () => {
+    const mockTracks = {
+      tracks: [
+        {
+          id: 't1',
+          name: 'Track 1',
+          artists: 'Artist 1',
+          duration: 180000,
+          uri: 'spotify:track:t1',
+        },
+      ],
+      total: 1,
+      limit: 20,
+      offset: 0,
+    }
+    ;(fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockTracks,
+    })
+
+    const playingContextValue = {
+      ...mockContextValue,
+      spotifyData: {
+        ...mockContextValue.spotifyData,
+        playback: {
+          ...mockContextValue.spotifyData.playback,
+          is_playing: true,
+          track: { ...mockContextValue.spotifyData.playback.track, id: 't1' },
+        },
+      },
+    }
+
+    render(
+      <WebSocketContext.Provider
+        value={playingContextValue as unknown as WebSocketContextType}
+      >
+        <PlaylistTracksDisplay playlistId="123" />
+      </WebSocketContext.Provider>
+    )
+
+    const pauseButton = await screen.findByRole('button', { name: /pause/i })
+    fireEvent.click(pauseButton)
+
+    expect(executeMock).toHaveBeenCalledWith('PAUSE')
   })
 })

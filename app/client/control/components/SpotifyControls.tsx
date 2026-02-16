@@ -82,12 +82,16 @@ const SpotifyControls = () => {
     prevActiveIdRef.current = activeId
 
     // Sync Volume (if not dragging and not within grace period after send)
+    // We rely on the server as the source of truth for volume, but use a grace period
+    // to prevent local sliders from "jumping" while the user is actively adjusting them.
     const playbackVolume = spotifyData.playback.volume_percent
     if (activeDevice && typeof playbackVolume === 'number') {
       const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
       const GRACE_PERIOD_MS = 600 // Match the debounce + buffer
 
-      // Only sync if we haven't sent a volume command recently
+      // Only sync if we haven't sent a volume command recently.
+      // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
+      // confirming the new state to all clients.
       if (timeSinceLastVolumeSend > GRACE_PERIOD_MS) {
         if (playbackVolume !== volume) {
           setVolume(playbackVolume)
