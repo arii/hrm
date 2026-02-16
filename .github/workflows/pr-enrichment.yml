@@ -22,7 +22,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  issues: read
+  issues: write
 
 jobs:
   enrich-pr:
@@ -33,6 +33,12 @@ jobs:
         with:
           ref: refs/pull/${{ inputs.pr_number || github.event.pull_request.number }}/head
           fetch-depth: 0
+
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
 
       - name: Setup Environment
         # This composite action (`/.github/actions/setup-env`) checks out the repo,
@@ -233,13 +239,13 @@ jobs:
 
             try {
               let rawData = fs.readFileSync('pr_description.json', 'utf8');
-              
+
               // Extract JSON from markdown code blocks if present
               const jsonMatch = rawData.match(/```(?:json)?\s*([\s\S]*?)```/);
               if (jsonMatch) {
                 rawData = jsonMatch[1].trim();
               }
-              
+
               // Try to parse as JSON, handling potential control characters
               let result;
               try {
@@ -334,10 +340,10 @@ jobs:
 
           # Only enhance if title doesn't have a conventional commit prefix
           if [[ ! "$CURRENT_TITLE" =~ $CONVENTIONAL_REGEX ]]; then
-            
+
             # Determine prefix based on categories
             CATEGORIES="${{ env.CATEGORIES }}"
-            
+
             if echo "$CATEGORIES" | grep -q "features"; then
               PREFIX="feat"
             elif echo "$CATEGORIES" | grep -q "ci"; then
@@ -351,10 +357,10 @@ jobs:
             else
               PREFIX="chore"
             fi
-            
+
             # Determine scope
             SCOPE="${{ env.SCOPE }}"
-            
+
             # Create enhanced title only if it doesn't already have a generic scope format
             if [[ ! "$CURRENT_TITLE" =~ $GENERIC_SCOPE_REGEX ]]; then
               NEW_TITLE="$PREFIX($SCOPE): $CURRENT_TITLE"
