@@ -94,7 +94,8 @@ jobs:
             exit 1
           fi
 
-          # 4. Wait for checks to appear for the new commit
+          # 4. Wait for checks to appear for the new commit.
+          # We add a mandatory 15s delay to allow GitHub's eventually consistent API to index the new push.
           echo "Waiting 15s for GitHub API to index the new commit..."
           sleep 15
           echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
