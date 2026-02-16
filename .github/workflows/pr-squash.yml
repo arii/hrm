@@ -45,11 +45,11 @@ jobs:
       base_sha: ${{ steps.squash_rebase.outputs.base_sha }}
     steps:
       - name: Acknowledge command
-        if: (github.event.comment && github.event.comment.id) || (inputs.comment_id && inputs.comment_id != '0')
+        if: (github.event.comment && github.event.comment.id) || (inputs.comment_id && inputs.comment_id != '0' && inputs.comment_id != 0)
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ (github.event.comment && github.event.comment.id) || inputs.comment_id }}
+          comment-id: ${{ (github.event.comment && github.event.comment.id) || inputs.comment_id || 0 }}
           reaction: rocket
 
       - name: Get PR data
@@ -266,4 +266,8 @@ jobs:
           HEAD_SHA: ${{ needs.squash-and-rebase.outputs.squashed_sha }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          gh workflow run "Gemini Orchestrator" --ref "$HEAD_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ]; then
+            gh workflow run "Gemini Orchestrator" --ref "$HEAD_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
+          else
+            gh workflow run "Gemini Orchestrator" --ref "$HEAD_BRANCH" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
+          fi

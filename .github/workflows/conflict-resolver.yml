@@ -37,7 +37,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Create or update comment
-        if: inputs.pr_number && inputs.pr_number != '0'
+        if: inputs.pr_number && inputs.pr_number != '0' && inputs.pr_number != 0
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ inputs.pr_number }}
@@ -100,10 +100,14 @@ jobs:
           BASE_SHA: ${{ steps.validate_branches.outputs.base_sha }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ]; then
+            gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
+          else
+            gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
+          fi
 
       - name: Update comment on success
-        if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number && inputs.pr_number != '0'
+        if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number && inputs.pr_number != '0' && inputs.pr_number != 0
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ inputs.pr_number }}
@@ -113,7 +117,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update comment on failure
-        if: (failure() || (success() && steps.resolve.outputs.unresolved-files != '')) && inputs.pr_number && inputs.pr_number != '0'
+        if: (failure() || (success() && steps.resolve.outputs.unresolved-files != '')) && inputs.pr_number && inputs.pr_number != '0' && inputs.pr_number != 0
         uses: peter-evans/create-or-update-comment@v4
         env:
           UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
