@@ -12,12 +12,13 @@ retry_command() {
 
   for i in $(seq 1 "$max_attempts"); do
     if [ "$i" -gt 1 ]; then
-      echo "⏳ Attempt $i of $max_attempts failed. Retrying in ${sleep_seconds}s..."
+      echo "⏳ Attempt $i of $max_attempts failed. Retrying in ${sleep_seconds}s..." >&2
       sleep "$sleep_seconds"
     fi
 
-    # Execute the command and capture output
-    if result=$("${cmd[@]}" 2>/dev/null); then
+    # Execute the command and capture output.
+    # Error messages are now allowed to flow to stderr for better debuggability in CI.
+    if result=$("${cmd[@]}"); then
       if [ -n "$result" ]; then
         echo "$result"
         return 0
