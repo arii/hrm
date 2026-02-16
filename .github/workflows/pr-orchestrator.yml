@@ -56,7 +56,6 @@ jobs:
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'tsconfig.json'
-              - 'test-file*.txt'
               - 'next.config.js'
               - 'tailwind.config.ts'
               - '.env*'
@@ -83,7 +82,6 @@ jobs:
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'tsconfig.json'
-              - 'test-file*.txt'
               - 'next.config.js'
               - 'tailwind.config.ts'
               - '.env*'
@@ -175,7 +173,6 @@ jobs:
     with:
       has_changes: ${{ needs.check-diff.outputs.is_meaningful == '0' }}
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
-      branch: ${{ github.base_ref || inputs.base_branch || inputs.base_ref || 'leader' }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
 
