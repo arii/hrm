@@ -139,6 +139,7 @@ Device management is tightly integrated with WebSockets:
 ### Unified Command Dispatch
 
 All playback commands (Play, Pause, Skip, Volume, etc.) follow a unified path:
+
 1.  The client uses the `useSpotifyCommand` hook to dispatch a `SPOTIFY_COMMAND` message via WebSocket.
 2.  The `socketManager.ts` on the server receives the message and identifies the target `deviceId`.
 3.  The command is executed directly on the server using the `@spotify/web-api-ts-sdk`.
