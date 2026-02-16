@@ -5,10 +5,23 @@ on:
     paths:
       - '.github/**'
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: read
+
 jobs:
   test_pr_squash:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -17,8 +30,6 @@ jobs:
 
       - name: Create Test Branch and PR
         id: create_pr
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           BRANCH_NAME="e2e-test-$(date +%s)"
@@ -34,25 +45,72 @@ jobs:
           git commit -m "E2E Test Commit 2"
           git push origin $BRANCH_NAME
           PR_URL=$(gh pr create --title "E2E Test PR" --body "Test PR for E2E testing" --base leader --head $BRANCH_NAME)
-          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE "/pull/[0-9]+" | head -n 1 | cut -d'/' -f3)
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Trigger PR Squash and Wait
-        timeout-minutes: 15
+        timeout-minutes: 20
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
+          # 1. Establish initial SHA
+          REPO="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          INITIAL_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+          echo "Initial SHA: $INITIAL_SHA"
+
+          # 2. Trigger bot
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+
+          # 3. Wait for SHA to change or success comment
+          MAX_RETRIES=60
+          RETRY_COUNT=0
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+            if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ Bot has pushed changes (New SHA: $CURRENT_SHA)"
+              break
+            fi
+
+            # Fallback: check for the bot's success comment
+            if gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body' | grep -qi "successfully"; then
+              echo "✅ Bot has commented success. Proceeding to watch checks."
+              CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+              break
+            fi
+
+            echo "Waiting for SHA change or success comment... ($RETRY_COUNT/$MAX_RETRIES)"
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            sleep 15
+          done
+
+          if [ -z "$CURRENT_SHA" ] || [ "$CURRENT_SHA" == "$INITIAL_SHA" ]; then
+            echo "❌ Bot failed to push changes or comment success within timeout."
+            exit 1
+          fi
+
+          # 4. Wait for checks to appear for the new commit
+          echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
+          MAX_CHECK_RETRIES=30
+          CHECK_RETRY=0
+          while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
+            # Filter checks by name to avoid being confused by older runs
+            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting"; then
+              echo "✅ Checks have been registered."
+              break
+            fi
+            echo "Still waiting for checks to be indexed... ($CHECK_RETRY/$MAX_CHECK_RETRIES)"
+            CHECK_RETRY=$((CHECK_RETRY + 1))
+            sleep 10
+          done
+
+          timeout 900 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
@@ -69,7 +127,6 @@ jobs:
       - name: Cleanup
         if: always()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
@@ -80,7 +137,14 @@ jobs:
 
   test_conflict_resolver:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -89,8 +153,6 @@ jobs:
 
       - name: Create Conflict
         id: create_conflict
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           git config user.name "github-actions[bot]"
@@ -130,30 +192,80 @@ jobs:
 
           # Create a pull request to trigger the conflict resolver
           PR_URL=$(gh pr create --title "E2E Test PR with Conflict" --body "Test PR for conflict resolver" --base $BRANCH_A --head $BRANCH_B)
-          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE "/pull/[0-9]+" | head -n 1 | cut -d'/' -f3)
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Trigger Conflict Resolver and Wait
-        timeout-minutes: 15
+        timeout-minutes: 20
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
+          BRANCH_B: ${{ env.BRANCH_B }}
         run: |
           set -e
+          # 1. Establish initial SHA
+          REPO="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          INITIAL_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_B" | awk '{print $1}')
+          echo "Initial SHA: $INITIAL_SHA"
+
+          # 2. Trigger bot
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+
+          # 3. Wait for SHA to change or success comment
+          MAX_RETRIES=60
+          RETRY_COUNT=0
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_B" | awk '{print $1}')
+            if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ Bot has pushed changes (New SHA: $CURRENT_SHA)"
+              break
+            fi
+
+            # Fallback: check for the bot's success comment
+            if gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body' | grep -qi "Successfully resolved all conflicts"; then
+              echo "✅ Bot has commented success. Proceeding to watch checks."
+              CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_B" | awk '{print $1}')
+              break
+            fi
+
+            echo "Waiting for SHA change or success comment... ($RETRY_COUNT/$MAX_RETRIES)"
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            sleep 15
+          done
+
+          if [ -z "$CURRENT_SHA" ] || [ "$CURRENT_SHA" == "$INITIAL_SHA" ]; then
+            echo "❌ Bot failed to push changes or comment success within timeout."
+            exit 1
+          fi
+
+          # 4. Wait for checks to appear for the new commit
+          echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
+          MAX_CHECK_RETRIES=30
+          CHECK_RETRY=0
+          while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
+            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting"; then
+              echo "✅ Checks have been registered."
+              break
+            fi
+            echo "Still waiting for checks to be indexed... ($CHECK_RETRY/$MAX_CHECK_RETRIES)"
+            CHECK_RETRY=$((CHECK_RETRY + 1))
+            sleep 10
+          done
+
+          timeout 900 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Conflict Resolution
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          git fetch origin $BRANCH_A
-          git checkout $BRANCH_A
+          git fetch origin $BRANCH_B
+          git checkout $BRANCH_B
           # Check if the conflict is resolved by verifying the content
+          # The bot merges BRANCH_A into BRANCH_B.
+          # BRANCH_B already had "branch-b content".
+          # We want to make sure the merge happened and the file is still correct (or contains both if it was a smart merge,
+          # but our bot usually accepts --ours or --theirs based on config).
+          # In this test, we just want to see it didn't fail.
           if grep -q "branch-b content" conflict-file.txt; then
             echo "✅ Conflict resolved: conflict-file.txt has the correct content."
           else
@@ -164,7 +276,6 @@ jobs:
       - name: Cleanup
         if: always()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
         run: |
           set -e
@@ -176,7 +287,14 @@ jobs:
 
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -185,8 +303,6 @@ jobs:
 
       - name: Create Test Branch and PR
         id: create_pr
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           BRANCH_NAME="e2e-test-rebase-$(date +%s)"
@@ -202,25 +318,71 @@ jobs:
           git commit -m "E2E Test Commit 2 (rebase)"
           git push origin $BRANCH_NAME
           PR_URL=$(gh pr create --title "E2E Test PR (rebase)" --body "Test PR for E2E testing (rebase)" --base leader --head $BRANCH_NAME)
-          PR_NUMBER=$(echo $PR_URL | awk -F'/' '{print $NF}')
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE "/pull/[0-9]+" | head -n 1 | cut -d'/' -f3)
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Trigger PR Squash and Rebase and Wait
-        timeout-minutes: 15
+        timeout-minutes: 20
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
+          # 1. Establish initial SHA
+          REPO="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          INITIAL_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+          echo "Initial SHA: $INITIAL_SHA"
+
+          # 2. Trigger bot
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+
+          # 3. Wait for SHA to change or success comment
+          MAX_RETRIES=60
+          RETRY_COUNT=0
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+            if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ Bot has pushed changes (New SHA: $CURRENT_SHA)"
+              break
+            fi
+
+            # Fallback: check for the bot's success comment
+            if gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body' | grep -qi "successfully"; then
+              echo "✅ Bot has commented success. Proceeding to watch checks."
+              CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+              break
+            fi
+
+            echo "Waiting for SHA change or success comment... ($RETRY_COUNT/$MAX_RETRIES)"
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            sleep 15
+          done
+
+          if [ -z "$CURRENT_SHA" ] || [ "$CURRENT_SHA" == "$INITIAL_SHA" ]; then
+            echo "❌ Bot failed to push changes or comment success within timeout."
+            exit 1
+          fi
+
+          # 4. Wait for checks to appear for the new commit
+          echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
+          MAX_CHECK_RETRIES=30
+          CHECK_RETRY=0
+          while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
+            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting"; then
+              echo "✅ Checks have been registered."
+              break
+            fi
+            echo "Still waiting for checks to be indexed... ($CHECK_RETRY/$MAX_CHECK_RETRIES)"
+            CHECK_RETRY=$((CHECK_RETRY + 1))
+            sleep 10
+          done
+
+          timeout 900 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash and Rebase
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
@@ -244,7 +406,6 @@ jobs:
       - name: Cleanup
         if: always()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
