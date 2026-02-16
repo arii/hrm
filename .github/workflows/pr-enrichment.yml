@@ -68,18 +68,17 @@ jobs:
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
-          # Fetch PR details using centralized retry logic.
-          # The jq filter is wrapped to ensure it always outputs a non-empty JSON object,
-          # even if the initial GitHub PR object is null or missing fields.
-          PR_DATA=$(retry_command 5 2 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '(. // {}) | {title: (.title // "Untitled PR"), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // "unknown"), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}')
+          # Fetch PR details using centralized retry logic with high tolerance for API lag.
+          # The jq filter ensures we always capture a valid JSON object with defaults,
+          # preventing empty variable captures even if the PR object is partially populated.
+          PR_DATA=$(retry_command 10 5 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '(. // {}) | {title: (.title // "Untitled PR"), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // "unknown"), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}')
 
           if [ -z "$PR_DATA" ]; then
-            echo "::error::Could not retrieve PR details from GitHub API."
+            echo "::error::Could not retrieve PR details from GitHub API after retries."
             exit 1
           fi
 
-          # Securely write potentially unsafe PR metadata to GITHUB_ENV using EOF delimiters.
-          # This prevents command injection from PR titles or author names.
+          # Securely write PR metadata to GITHUB_ENV using EOF delimiters to prevent command injection.
           echo "PR_TITLE<<EOF" >> $GITHUB_ENV
           echo "$PR_DATA" | jq -r '.title' >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -137,7 +136,7 @@ jobs:
                   API_DELETIONS=$(echo "$API_DATA" | jq -r '.deletions // 0')
                fi
 
-               # Use exact line count from the file list
+               # Use exact line count from the file list to determine file count
                API_COUNT=$(echo "$API_FILES_LIST" | grep -c . || echo "0")
 
                # We consider the data valid if we have at least one file changed
