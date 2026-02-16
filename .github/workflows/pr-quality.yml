@@ -65,8 +65,6 @@ jobs:
           fi
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Sanitize SESSION_ID
         id: sanitize_id
@@ -273,11 +271,6 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -324,11 +317,6 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -369,11 +357,6 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -425,11 +408,6 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -484,11 +462,6 @@ jobs:
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -637,11 +610,6 @@ jobs:
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
       PORT: 3006
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -724,11 +692,6 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -809,11 +772,6 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -897,11 +855,6 @@ jobs:
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
       PORT: 3007
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -996,11 +949,6 @@ jobs:
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:

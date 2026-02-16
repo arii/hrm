@@ -18,15 +18,11 @@ Specific Change Focus: {change}
 Instructions for Improvement and Style Guide:
 
 Prioritize the User's Focus: The improvement must directly and precisely address the {change} specified by the user.
-Modern Stack Compliance: The code must be type-safe and adhere to modern TypeScript/JavaScript standards.
 
-TypeScript: Enforce strict typing, utilize utility types (e.g., Omit, Partial, conditional types), and use discriminated unions for reliable state and data messaging.
-Modern JavaScript Features: Employ the latest ECMAScript features for conciseness:
-
-Optional Chaining (?.) and Nullish Coalescing (??) for safe property access and default values.
-Array/Object Spread (...) for all array/object manipulations to ensure immutability (the equivalent of C#'s collection expressions).
-Destructuring and Object Method/Property Shorthand.
-Prefer clear, readable conditional structures. For complex flow control, consider using declarative approaches with maps/filters, or well-structured if/else if blocks. Avoid 'switch (true)' if it degrades readability.
+- **Coding Standards**:
+  - Use Optional Chaining (`?.`) and Nullish Coalescing (`??`) for safe property access.
+  - Use Array/Object Spread (`...`) for immutability.
+  - Prefer clear, readable conditional structures over complex `switch (true)` blocks.
 
 Real-time/Stateful Context: All logic must consider the application's core requirement for real-time, stateful data synchronization. Focus on solutions that maintain predictability and performance when reacting to WebSocket events.
 Security and Performance: Ensure the refactored code is performant, especially for data processing, and adheres to secure coding practices.

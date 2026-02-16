@@ -106,12 +106,6 @@ jobs:
     outputs:
       review_performed: ${{ steps.upload_artifact.outcome == 'success' }}
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:

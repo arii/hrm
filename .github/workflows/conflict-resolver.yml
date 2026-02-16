@@ -71,7 +71,7 @@ jobs:
         with:
           ref: ${{ inputs.source_branch }}
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Merge target branch
         run: |
