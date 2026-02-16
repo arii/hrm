@@ -2,6 +2,7 @@ import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
 import { SpotifyTokenPayload } from '@/services/spotifyTokenManager'
+import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 
 /**
  * @route POST /api/internal/token-delivery
@@ -58,7 +59,9 @@ export async function POST(req: NextRequest) {
           ? tokenData.refresh_token
           : '',
       expires_in:
-        typeof tokenData.expires_in === 'number' ? tokenData.expires_in : 3600,
+        typeof tokenData.expires_in === 'number'
+          ? tokenData.expires_in
+          : SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
       scope: typeof tokenData.scope === 'string' ? tokenData.scope : '',
       obtainedAt: Date.now(),
     }

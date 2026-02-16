@@ -7,6 +7,7 @@ import { ApiError } from '@/lib/errors'
 import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
+import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 
 /**
  * API route to search for public Spotify playlists.
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest) {
       {
         access_token: session.accessToken,
         token_type: 'Bearer',
-        expires_in: 3600, // Nominal; managed by NextAuth.
+        expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S, // Nominal; managed by NextAuth.
         refresh_token: session.refreshToken ?? '',
       }
     )

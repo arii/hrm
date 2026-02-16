@@ -3,6 +3,7 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { authOptions } from '@/lib/auth'
 import { getServerSession } from 'next-auth/next'
 import { ApiError } from '@/lib/errors'
+import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 
 /**
  * Creates a Spotify SDK instance for the authenticated user.
@@ -28,7 +29,7 @@ export async function getAuthenticatedSpotifyApi(): Promise<SpotifyApi> {
   const token = {
     access_token: session.accessToken,
     token_type: 'Bearer',
-    expires_in: 3600, // Nominal value; NextAuth manages session/token refresh.
+    expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S, // Nominal value; NextAuth manages session/token refresh.
     refresh_token: session.refreshToken ?? '',
   }
 

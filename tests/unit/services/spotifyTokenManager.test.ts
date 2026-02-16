@@ -6,6 +6,7 @@ import {
 } from '../../../services/spotifyTokenManager'
 import fs from 'fs'
 import path from 'path'
+import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../../../constants/spotify'
 
 jest.mock('fs', () => ({
   existsSync: jest.fn(),
@@ -41,7 +42,7 @@ describe('SpotifyTokenManager', () => {
         sub: 'test_user',
         access_token: 'access_token',
         refresh_token: 'refresh_token',
-        expires_in: 3600,
+        expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
         scope: 'test_scope',
         obtainedAt: Date.now(),
       },
@@ -63,9 +64,9 @@ describe('SpotifyTokenManager', () => {
         sub: 'test_user',
         access_token: 'access_token',
         refresh_token: 'refresh_token',
-        expires_in: 3600,
+        expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
         scope: 'test_scope',
-        obtainedAt: now - 3600 * 1000, // Expired
+        obtainedAt: now - SPOTIFY_DEFAULT_TOKEN_EXPIRY_S * 1000, // Expired
       },
     }
     ;(fs.existsSync as jest.Mock).mockReturnValue(true)
@@ -76,7 +77,7 @@ describe('SpotifyTokenManager', () => {
       json: () =>
         Promise.resolve({
           access_token: 'new_access_token',
-          expires_in: 3600,
+          expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
           refresh_token: 'new_refresh_token',
           scope: 'new_scope',
         }),
@@ -129,7 +130,7 @@ describe('SpotifyTokenManager', () => {
     const writtenData = JSON.parse(
       (fs.writeFileSync as jest.Mock).mock.calls[0][1]
     )
-    expect(writtenData.payload.expires_in).toBe(3600)
+    expect(writtenData.payload.expires_in).toBe(SPOTIFY_DEFAULT_TOKEN_EXPIRY_S)
   })
 
   it('should not refresh the access token if it is still valid', async () => {
@@ -141,7 +142,7 @@ describe('SpotifyTokenManager', () => {
         sub: 'test_user',
         access_token: 'access_token',
         refresh_token: 'refresh_token',
-        expires_in: 3600,
+        expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
         scope: 'test_scope',
         obtainedAt: now, // Not expired
       },
@@ -167,9 +168,9 @@ describe('SpotifyTokenManager', () => {
         sub: 'test_user',
         access_token: 'access_token',
         refresh_token: 'refresh_token',
-        expires_in: 3600,
+        expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
         scope: 'test_scope',
-        obtainedAt: now - 3600 * 1000, // Expired
+        obtainedAt: now - SPOTIFY_DEFAULT_TOKEN_EXPIRY_S * 1000, // Expired
       },
     }
     ;(fs.existsSync as jest.Mock).mockReturnValue(true)
@@ -203,7 +204,7 @@ describe('SpotifyTokenManager', () => {
         sub: 'test_user',
         access_token: 'access_token',
         refresh_token: 'refresh_token',
-        expires_in: 3600,
+        expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
         scope: 'test_scope',
         obtainedAt: Date.now(),
       },
@@ -285,9 +286,9 @@ describe('SpotifyTokenManager', () => {
         sub: 'test_user',
         access_token: 'expired_access_token',
         refresh_token: '', // No refresh token
-        expires_in: 3600,
+        expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
         scope: 'test_scope',
-        obtainedAt: now - 3600 * 1000, // Expired
+        obtainedAt: now - SPOTIFY_DEFAULT_TOKEN_EXPIRY_S * 1000, // Expired
       },
     }
     ;(fs.existsSync as jest.Mock).mockReturnValue(true)

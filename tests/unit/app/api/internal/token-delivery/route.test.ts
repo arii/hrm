@@ -4,6 +4,7 @@
 import { describe, expect, it, jest, beforeAll, afterAll } from '@jest/globals'
 import { POST } from '@/app/api/internal/token-delivery/route'
 import { NextRequest } from 'next/server'
+import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 
 // Mock logger
 jest.mock('@/utils/logger.server', () => ({
@@ -81,7 +82,7 @@ describe('POST /api/internal/token-delivery', () => {
         provider: 'spotify',
         sub: 'unknown',
         scope: '',
-        expires_in: 3600,
+        expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
         obtainedAt: expect.any(Number),
       })
     )
