@@ -20,7 +20,7 @@ For simple, single-purpose tasks that have well-maintained specialized actions, 
   uses: peter-evans/create-reaction@v4
   with:
     token: ${{ secrets.GITHUB_TOKEN }}
-    comment-id: ${{ github.event.comment.id }}
+    comment-id: ${{ (github.event.comment && github.event.comment.id) || inputs.comment_id }}
     reaction: eyes
 ```
 
@@ -71,7 +71,7 @@ For complex logic, multiple API interactions in a single step, or tasks where no
 When working with IDs (PR numbers, Issue numbers, Comment IDs), always assume they might be missing or provided as strings. Use the following patterns for maximum reliability:
 
 - **Inside `github-script`**: Use `Number(process.env.VAR) || fallback || 0` and check for truthiness.
-- **In Expressions**: Be careful with direct property access on potentially null objects. Use `(github.event.pull_request && github.event.pull_request.number)` or pass the ID as an input from the caller.
+- **In Expressions**: Be careful with direct property access on potentially null objects. Always use the `(object && object.property)` guard pattern (e.g., `(github.event.pull_request && github.event.pull_request.number)`) even inside `if:` conditions or shell scripts. Evaluation of these expressions happens before the shell command runs, and accessing a property of a missing object will cause the entire workflow run to fail.
 
 ### 2. Avoid Script Interpolation
 

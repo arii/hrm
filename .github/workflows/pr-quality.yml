@@ -44,7 +44,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: pr-quality-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  group: pr-quality-${{ (github.event.pull_request && github.event.pull_request.number) || github.ref || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -1433,7 +1433,7 @@ jobs:
             SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
           fi
 
-          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${{ github.event.pull_request.head.sha || github.sha }}\`"
+          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${{ (github.event.pull_request && github.event.pull_request.head.sha) || github.sha }}\`"
 
           # Write the final comment to a file
           echo -e "$COMMENT_BODY" > test-results/pr-comment.md

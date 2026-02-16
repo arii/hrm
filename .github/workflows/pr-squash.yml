@@ -45,11 +45,11 @@ jobs:
       base_sha: ${{ steps.squash_rebase.outputs.base_sha }}
     steps:
       - name: Acknowledge command
-        if: github.event.comment.id || (inputs.comment_id && inputs.comment_id != '0')
+        if: (github.event.comment && github.event.comment.id) || (inputs.comment_id && inputs.comment_id != '0')
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ github.event.comment.id || inputs.comment_id }}
+          comment-id: ${{ (github.event.comment && github.event.comment.id) || inputs.comment_id }}
           reaction: rocket
 
       - name: Get PR data

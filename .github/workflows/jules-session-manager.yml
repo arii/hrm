@@ -196,11 +196,11 @@ jobs:
             }
 
       - name: 'Add Reaction to Comment'
-        if: success() && github.event.comment.id
+        if: success() && (github.event.comment && github.event.comment.id)
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ github.event.comment.id }}
+          comment-id: ${{ github.event.comment && github.event.comment.id }}
           reaction: '+1'
       - name: 'Handle Failure'
         if: failure()

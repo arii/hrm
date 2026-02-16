@@ -211,11 +211,11 @@ jobs:
             }
 
       - name: 'Add Reaction to Comment'
-        if: success() && (github.event.comment.id || (inputs.comment_id && inputs.comment_id != '0'))
+        if: success() && ((github.event.comment && github.event.comment.id) || (inputs.comment_id && inputs.comment_id != '0'))
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GH_TOKEN }}
-          comment-id: ${{ github.event.comment.id || inputs.comment_id }}
+          comment-id: ${{ (github.event.comment && github.event.comment.id) || inputs.comment_id }}
           reaction: '+1'
       - name: 'Handle Failure'
         if: failure()

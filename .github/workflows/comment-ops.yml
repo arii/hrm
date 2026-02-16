@@ -67,7 +67,7 @@ jobs:
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ github.event.comment.id }}
+          comment-id: ${{ github.event.comment && github.event.comment.id }}
           reaction: eyes
       - name: Get PR Details
         id: get_branches

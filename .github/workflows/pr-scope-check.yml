@@ -31,8 +31,8 @@ jobs:
           areas[Docs]=".md$|.mdx$|docs/"
 
           # Get the list of changed files between the PR's base and head commits
-          base_sha="${{ github.event.pull_request.base.sha }}"
-          head_sha="${{ github.event.pull_request.head.sha }}"
+          base_sha="${{ github.event.pull_request && github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request && github.event.pull_request.head.sha }}"
 
           echo "Base SHA: $base_sha"
           echo "Head SHA: $head_sha"
