@@ -68,8 +68,10 @@ jobs:
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
-          # Fetch PR details using centralized retry logic
-          PR_DATA=$(retry_command 5 2 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '{title: .title, body: .body, base_ref: .baseRefName, head_ref: .headRefName, base_sha: .baseRefOid, head_sha: .headRefOid, author: .author.login, additions: .additions, deletions: .deletions, file_count: .changedFiles}')
+          # Fetch PR details using centralized retry logic.
+          # The jq filter is wrapped to ensure it always outputs a non-empty JSON object,
+          # even if the initial GitHub PR object is null or missing fields.
+          PR_DATA=$(retry_command 5 2 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '(. // {}) | {title: (.title // "Untitled PR"), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // "unknown"), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}')
 
           if [ -z "$PR_DATA" ]; then
             echo "::error::Could not retrieve PR details from GitHub API."
@@ -79,23 +81,23 @@ jobs:
           # Securely write potentially unsafe PR metadata to GITHUB_ENV using EOF delimiters.
           # This prevents command injection from PR titles or author names.
           echo "PR_TITLE<<EOF" >> $GITHUB_ENV
-          echo "$PR_DATA" | jq -r '.title // "Untitled PR"' >> $GITHUB_ENV
+          echo "$PR_DATA" | jq -r '.title' >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
           echo "PR_AUTHOR<<EOF" >> $GITHUB_ENV
-          echo "$PR_DATA" | jq -r '.author // "unknown"' >> $GITHUB_ENV
+          echo "$PR_DATA" | jq -r '.author' >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-          echo "BASE_SHA=$(echo "$PR_DATA" | jq -r '.base_sha // ""')" >> $GITHUB_ENV
-          echo "BASE_REF_NAME=$(echo "$PR_DATA" | jq -r '.base_ref // ""')" >> $GITHUB_ENV
-          echo "HEAD_SHA=$(echo "$PR_DATA" | jq -r '.head_sha // ""')" >> $GITHUB_ENV
-          echo "ADDITIONS_API=$(echo "$PR_DATA" | jq -r '.additions // 0')" >> $GITHUB_ENV
-          echo "DELETIONS_API=$(echo "$PR_DATA" | jq -r '.deletions // 0')" >> $GITHUB_ENV
-          echo "FILE_COUNT_API=$(echo "$PR_DATA" | jq -r '.file_count // 0')" >> $GITHUB_ENV
+          echo "BASE_SHA=$(echo "$PR_DATA" | jq -r '.base_sha')" >> $GITHUB_ENV
+          echo "BASE_REF_NAME=$(echo "$PR_DATA" | jq -r '.base_ref')" >> $GITHUB_ENV
+          echo "HEAD_SHA=$(echo "$PR_DATA" | jq -r '.head_sha')" >> $GITHUB_ENV
+          echo "ADDITIONS_API=$(echo "$PR_DATA" | jq -r '.additions')" >> $GITHUB_ENV
+          echo "DELETIONS_API=$(echo "$PR_DATA" | jq -r '.deletions')" >> $GITHUB_ENV
+          echo "FILE_COUNT_API=$(echo "$PR_DATA" | jq -r '.file_count')" >> $GITHUB_ENV
 
           # Securely write multiline body to GITHUB_ENV
           echo "PR_BODY<<EOF" >> $GITHUB_ENV
-          echo "$PR_DATA" | jq -r '.body // ""' >> $GITHUB_ENV
+          echo "$PR_DATA" | jq -r '.body' >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Analyze PR Changes
@@ -121,7 +123,8 @@ jobs:
             API_FILES_LIST=$(retry_command 2 1 gh pr diff "$PR_NUMBER" --name-only)
 
             # 2. Fetch live metrics from the PR metadata
-            API_DATA=$(retry_command 2 1 gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles)
+            API_DATA_RAW=$(retry_command 2 1 gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles)
+            API_DATA=$(echo "$API_DATA_RAW" | jq -c '(. // {})')
 
             # 3. If file list exists, we prefer calculating metrics from the diff stream for consistency
             if [ -n "$API_FILES_LIST" ]; then

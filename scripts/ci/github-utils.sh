@@ -19,6 +19,8 @@ retry_command() {
     # Execute the command and capture output.
     # Error messages are now allowed to flow to stderr for better debuggability in CI.
     if result=$("${cmd[@]}"); then
+      # We succeed if we have a non-empty result.
+      # If result is empty, it usually means the data is not yet available or indexed.
       if [ -n "$result" ]; then
         echo "$result"
         return 0
