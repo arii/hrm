@@ -7,7 +7,11 @@ import { TimerData } from '@/types/websocket'
 import { WorkoutData } from '@/types/index'
 import { WorkoutItem } from '@/types/workout'
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
-import { calculateHeartRateZone, HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
+import {
+  calculateHeartRateZone,
+  HR_ZONE_CONFIG,
+  HeartRateZone,
+} from '@/lib/shared/hr-zones'
 
 // Define types for MUI color props
 type MuiColor =
@@ -19,7 +23,7 @@ type MuiColor =
   | 'success'
 
 export interface HrZoneProps {
-  zone: string
+  zone: HeartRateZone
   percentage: number
   color: string // Legacy: Hex color or Tailwind class
   progressColor: string // Hex color for MUI components

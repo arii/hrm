@@ -1,6 +1,6 @@
-import type { HeartRateZone, UserHrZones } from '../lib/shared/hr-zones'
+import type { HeartRateZone, UserHrZones, HrZone } from '../lib/shared/hr-zones'
 
-export type { UserHrZones }
+export type { UserHrZones, HrZone }
 
 export interface HrData {
   bpm: number

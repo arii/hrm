@@ -21,6 +21,16 @@ export type HeartRateZone =
   | 'ZONE_6'
 
 /**
+ * Interface for heart rate zone information.
+ * Updated to use HeartRateZone string literal type for consistency.
+ */
+export interface HrZone {
+  zoneName: HeartRateZone
+  percentage: number
+  bpm: number
+}
+
+/**
  * Canonical configuration for heart rate zones.
  * Single source of truth for labels, thresholds, and colors.
  * Thresholds are stored as decimals (0-1) representing percentage of Max HR.
@@ -148,7 +158,7 @@ export const calculateZoneFromMaxHr = (
 export const calculateHeartRateZone = (
   currentHr: number,
   maxHr: number
-): { zoneName: HeartRateZone; percentage: number; bpm: number } => {
+): HrZone => {
   if (!maxHr || !currentHr || currentHr <= 0) {
     return {
       zoneName: 'ZONE_0',
