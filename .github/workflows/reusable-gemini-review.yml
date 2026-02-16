@@ -98,16 +98,31 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       review_performed: ${{ steps.upload_artifact.outcome == 'success' }}
+    env:
+      PR_NUMBER_RAW: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
     steps:
+      - name: Validate Context
+        id: validate
+        run: |
+          if [ "$PR_NUMBER_RAW" == "0" ] || [ -z "$PR_NUMBER_RAW" ]; then
+            echo "::warning::Missing or invalid PR_NUMBER ($PR_NUMBER_RAW). Skipping job."
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout repository
+        if: steps.validate.outputs.should_run == 'true'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Environment
+        if: steps.validate.outputs.should_run == 'true'
         uses: ./.github/actions/setup-env
 
       - name: Get PR Diff
+        if: steps.validate.outputs.should_run == 'true'
         id: diff
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -158,6 +173,7 @@ jobs:
           echo "✅ Diff generated and saved to pr.diff"
 
       - name: Gather PR Context
+        if: steps.validate.outputs.should_run == 'true'
         id: context
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
@@ -193,6 +209,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Run AI Slop Detector
+        if: steps.validate.outputs.should_run == 'true'
         id: slop-detector
         env:
           PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
@@ -281,6 +298,7 @@ jobs:
           echo "$DELIMITER" >> $GITHUB_ENV
 
       - name: Get PR Checks & Logs
+        if: steps.validate.outputs.should_run == 'true'
         id: checks
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
@@ -433,6 +451,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Run Gemini Review
+        if: steps.validate.outputs.should_run == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
@@ -446,6 +465,7 @@ jobs:
             --output "review_result.json"
 
       - name: Upload review result
+        if: steps.validate.outputs.should_run == 'true'
         id: upload_artifact
         uses: actions/upload-artifact@v4
         with:
@@ -453,6 +473,7 @@ jobs:
           path: review_result.json
 
       - name: Post Review Comment
+        if: steps.validate.outputs.should_run == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
@@ -497,8 +518,12 @@ jobs:
 
   manage-labels:
     name: Manage PR Labels
-    needs: gemini-review
-    if: needs.gemini-review.result != 'skipped'
+    needs: [analyze-changes, gemini-review]
+    if: |
+      always() &&
+      needs.analyze-changes.outputs.needs-review == 'true' &&
+      needs.gemini-review.result != 'skipped' &&
+      needs.gemini-review.result != 'cancelled'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -521,6 +546,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Manage Labels
+        if: (inputs.pr_number && inputs.pr_number != '0') || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number)
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}

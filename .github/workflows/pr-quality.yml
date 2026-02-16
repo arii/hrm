@@ -1440,9 +1440,13 @@ jobs:
 
           # Only post comment to PR if there are genuine failures
           if [ "$FINAL_RESULT" == "failure" ]; then
-            gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
-              echo "::warning::Failed to post PR comment."
-            }
+            if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ] && [ "$PR_NUMBER" != "null" ]; then
+              gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
+                echo "::warning::Failed to post PR comment."
+              }
+            else
+              echo "::warning::PR_NUMBER missing or invalid ($PR_NUMBER). Cannot post comment."
+            fi
           else
             echo "Skipping PR comment because all checks passed or were cancelled."
           fi

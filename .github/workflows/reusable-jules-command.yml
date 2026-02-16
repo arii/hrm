@@ -29,18 +29,33 @@ on:
 jobs:
   jules-command:
     runs-on: self-hosted
+    env:
+      PR_NUMBER_RAW: ${{ inputs.issue_number || 0 }}
     steps:
+      - name: Validate Context
+        id: validate
+        run: |
+          if [ "$PR_NUMBER_RAW" == "0" ] || [ -z "$PR_NUMBER_RAW" ]; then
+            echo "::warning::Missing or invalid PR_NUMBER ($PR_NUMBER_RAW). Skipping job."
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout repository
+        if: steps.validate.outputs.should_run == 'true'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Python
+        if: steps.validate.outputs.should_run == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
       - name: 'Parse Command'
+        if: steps.validate.outputs.should_run == 'true'
         id: parse_command
         env:
           COMMENT_BODY: ${{ inputs.comment_body }}
@@ -53,14 +68,14 @@ jobs:
 
       - name: 'Get PR Context'
         id: pr_context
-        if: env.COMMAND == 'new'
+        if: steps.validate.outputs.should_run == 'true' && env.COMMAND == 'new'
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ inputs.issue_number }}
         run: |
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
-            echo "::error::PR_NUMBER is missing or 0."
-            exit 1
+            echo "::warning::PR_NUMBER is missing or 0. Skipping."
+            exit 0
           fi
 
           # Fetch basic PR data
@@ -106,14 +121,14 @@ jobs:
 
       - name: 'Find Jules Session ID'
         id: find_session_id
-        if: env.COMMAND == 'delete'
+        if: steps.validate.outputs.should_run == 'true' && env.COMMAND == 'delete'
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ inputs.issue_number }}
         run: |
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
-            echo "::error::PR_NUMBER is missing or 0."
-            exit 1
+            echo "::warning::PR_NUMBER is missing or 0. Skipping."
+            exit 0
           fi
           SESSION_ID=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | .[] | .body' | grep -oP '(?<=<!-- JULES_SESSION_ID=)\S+(?= *-->)' | tail -n 1)
           if [ -z "$SESSION_ID" ]; then
@@ -123,6 +138,7 @@ jobs:
           echo "JULES_SESSION_ID=$SESSION_ID" >> $GITHUB_ENV
 
       - name: 'Validate Secrets and Install Dependencies'
+        if: steps.validate.outputs.should_run == 'true'
         env:
           JULES_API_URL: ${{ secrets.JULES_API_URL }}
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -151,7 +167,7 @@ jobs:
           pip install -r .github/scripts/requirements.txt
 
       - name: 'Run Jules Operation: New'
-        if: env.COMMAND == 'new'
+        if: steps.validate.outputs.should_run == 'true' && env.COMMAND == 'new'
         id: jules_op_new
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -180,7 +196,7 @@ jobs:
           echo "session_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: 'Run Jules Operation: Delete'
-        if: env.COMMAND == 'delete'
+        if: steps.validate.outputs.should_run == 'true' && env.COMMAND == 'delete'
         id: jules_op_delete
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -199,7 +215,7 @@ jobs:
           fi
 
       - name: 'Post Session ID Comment'
-        if: success() && env.COMMAND == 'new'
+        if: steps.validate.outputs.should_run == 'true' && success() && env.COMMAND == 'new'
         uses: actions/github-script@v7
         env:
           PR_NUMBER_INPUT: ${{ inputs.issue_number }}
@@ -220,14 +236,14 @@ jobs:
             }
 
       - name: 'Add Reaction to Comment'
-        if: success() && ((github.event.comment && github.event.comment.id) || (inputs.comment_id && inputs.comment_id != '0' && inputs.comment_id != 0))
+        if: steps.validate.outputs.should_run == 'true' && success() && ((github.event.comment && github.event.comment.id) || (inputs.comment_id && inputs.comment_id != '0' && inputs.comment_id != 0))
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GH_TOKEN }}
           comment-id: ${{ (github.event.comment && github.event.comment.id) || inputs.comment_id || 0 }}
           reaction: '+1'
       - name: 'Handle Failure'
-        if: failure()
+        if: steps.validate.outputs.should_run == 'true' && failure()
         uses: actions/github-script@v7
         env:
           PR_NUMBER_INPUT: ${{ inputs.issue_number }}
