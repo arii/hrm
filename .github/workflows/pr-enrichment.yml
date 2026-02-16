@@ -77,12 +77,13 @@ jobs:
           PR_DATA=""
           for i in {1..10}; do
             echo "📊 PR Metadata Fetch Attempt $i..."
-            # The jq filter is carefully constructed to ensure non-empty JSON output with defaults.
-            PR_DATA_RAW=$(retry_command 2 1 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '(. // {}) | {title: (.title // ""), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // ""), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}')
+            # Using increased attempts and sleep for the individual fetch command as suggested.
+            PR_DATA_RAW=$(retry_command 5 2 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '(. // {}) | {title: (.title // ""), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // ""), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}')
 
-            # We consider the data valid if we have a title and a head SHA
-            PR_TITLE_TMP=$(echo "$PR_DATA_RAW" | jq -r '.title')
-            PR_HEAD_TMP=$(echo "$PR_DATA_RAW" | jq -r '.head_sha')
+            # Extract and validate critical fields (title and head SHA).
+            # We explicitly handle the case where jq might return "null" or empty string.
+            PR_TITLE_TMP=$(echo "$PR_DATA_RAW" | jq -r '.title // ""' 2>/dev/null | grep -v "^null$" || echo "")
+            PR_HEAD_TMP=$(echo "$PR_DATA_RAW" | jq -r '.head_sha // ""' 2>/dev/null | grep -v "^null$" || echo "")
 
             if [ -n "$PR_TITLE_TMP" ] && [ -n "$PR_HEAD_TMP" ]; then
               PR_DATA="$PR_DATA_RAW"
@@ -155,7 +156,7 @@ jobs:
                   API_DELETIONS=$(echo "$API_DATA" | jq -r '.deletions // 0')
                fi
 
-               # Use exact line count from the file list to determine file count
+               # Use exact line count from the file list to determine total file count
                API_COUNT=$(echo "$API_FILES_LIST" | grep -c . || echo "0")
 
                # We consider the data valid if we have at least one file changed
