@@ -11,68 +11,38 @@ import Typography from '@mui/material/Typography'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import Box from '@mui/material/Box'
 import Slider from '@mui/material/Slider'
-import { HrZoneMethod } from '@/context/UserSettingsContext'
 import { calculateMaxHr, ZONE_THRESHOLDS } from '@/lib/shared/hr-zones'
+import { useConnectSettingsContext } from './context/ConnectSettingsContext'
 
-interface UserSettingsProps {
-  userName: string
-  setUserName: (name: string) => void
-  userAge: string
-  setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
-  userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (
-    height: Partial<{ cm: string; feet: string; inches: string }>
-  ) => void
-  onHeightBlur: () => void
-  heightError: string | null
-  userWeight: string
-  setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
-  weightError: string | null
-  unit: 'METRIC' | 'IMPERIAL'
-  setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
-  hrZoneMethod: HrZoneMethod
-  setHrZoneMethod: (method: HrZoneMethod) => void
-  maxHrOverride: string
-  setMaxHrOverride: (val: string) => void
-  maxHrError: string | null
-  restingHr: string
-  setRestingHr: (val: string) => void
-  restingHrError: string | null
-  customZoneThresholds: Record<string, number>
-  handleThresholdChange: (zoneKey: string, value: number) => void
-}
-
-const UserSettings: React.FC<UserSettingsProps> = ({
-  userName,
-  setUserName,
-  userAge,
-  setUserAge,
-  onAgeBlur,
-  ageError,
-  userHeight,
-  setUserHeight,
-  onHeightBlur,
-  heightError,
-  userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
-  unit,
-  setUnit,
-  hrZoneMethod,
-  setHrZoneMethod,
-  maxHrOverride,
-  setMaxHrOverride,
-  maxHrError,
-  restingHr,
-  setRestingHr,
-  restingHrError,
-  customZoneThresholds,
-  handleThresholdChange,
-}) => {
+const UserSettings: React.FC = () => {
+  const {
+    userName,
+    setUserName,
+    userAge,
+    setUserAge,
+    onAgeBlur,
+    ageError,
+    displayHeight: userHeight,
+    handleHeightChange: setUserHeight,
+    handleHeightBlur: onHeightBlur,
+    heightError,
+    displayWeight: userWeight,
+    handleWeightChange: setUserWeight,
+    handleWeightBlur: onWeightBlur,
+    weightError,
+    unitSystem: unit,
+    handleUnitChange: setUnit,
+    hrZoneMethod,
+    setHrZoneMethod,
+    localMaxHrOverride: maxHrOverride,
+    setLocalMaxHrOverride: setMaxHrOverride,
+    maxHrError,
+    localRestingHr: restingHr,
+    setLocalRestingHr: setRestingHr,
+    restingHrError,
+    customZoneThresholds,
+    handleThresholdChange,
+  } = useConnectSettingsContext()
   const autoMaxHr = calculateMaxHr(userAge)
 
   return (
@@ -190,10 +160,16 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         <AccordionDetails>
           <Stack spacing={3}>
             <Box>
-              <Typography variant="caption" color="text.secondary" gutterBottom>
+              <Typography
+                id="hr-zone-method-label"
+                variant="caption"
+                color="text.secondary"
+                gutterBottom
+              >
                 Zone Calculation Method
               </Typography>
               <ToggleButtonGroup
+                aria-labelledby="hr-zone-method-label"
                 value={hrZoneMethod}
                 exclusive
                 onChange={(_, newMethod) => {

@@ -11,39 +11,21 @@ import { calculateHrZoneInfo } from '@/lib/shared/hr-zones'
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
-import { useConnectSettings } from './hooks/useConnectSettings'
+import {
+  ConnectSettingsProvider,
+  useConnectSettingsContext,
+} from './context/ConnectSettingsContext'
 
-export default function ConnectPage() {
+function ConnectPageContent() {
   const {
-    setUserSettings,
     userName,
     userAge,
     userWeight,
-    gender,
-    unitSystem,
     hrZoneMethod,
     maxHrOverride,
     restingHr,
     customZoneThresholds,
-    localMaxHrOverride,
-    setLocalMaxHrOverride,
-    maxHrError,
-    localRestingHr,
-    setLocalRestingHr,
-    restingHrError,
-    displayWeight,
-    handleWeightChange,
-    handleWeightBlur,
-    weightError,
-    ageError,
-    handleAgeBlur,
-    displayHeight,
-    handleHeightChange,
-    handleHeightBlur,
-    heightError,
-    handleUnitChange,
-    handleThresholdChange,
-  } = useConnectSettings()
+  } = useConnectSettingsContext()
 
   const [currentHR, setCurrentHR] = useState(0)
 
@@ -228,28 +210,6 @@ export default function ConnectPage() {
         format: 'HH:MM:SS',
       })}
       caloriesBurned={caloriesBurned}
-      userName={userName}
-      setUserName={(name) =>
-        setUserSettings((prev) => ({ ...prev, userName: name }))
-      }
-      userAge={String(userAge || '')}
-      setUserAge={(age) =>
-        setUserSettings((prev) => ({ ...prev, userAge: Number(age) }))
-      }
-      onAgeBlur={handleAgeBlur}
-      ageError={ageError}
-      userHeight={displayHeight}
-      setUserHeight={handleHeightChange}
-      onHeightBlur={handleHeightBlur}
-      heightError={heightError}
-      userWeight={displayWeight || ''}
-      setUserWeight={handleWeightChange}
-      onWeightBlur={handleWeightBlur}
-      weightError={weightError}
-      gender={gender}
-      setGender={(g) => setUserSettings((prev) => ({ ...prev, gender: g }))}
-      unitSystem={unitSystem}
-      onUnitChange={handleUnitChange}
       isConnected={isConnected}
       isDataStale={isDataStale}
       deviceStatus={deviceStatus}
@@ -272,19 +232,15 @@ export default function ConnectPage() {
       onStartWorkout={handleStartWorkout}
       onPauseWorkout={pauseWorkout}
       onEndWorkout={handleEndWorkout}
-      hrZoneMethod={hrZoneMethod}
-      setHrZoneMethod={(method) =>
-        setUserSettings((prev) => ({ ...prev, hrZoneMethod: method }))
-      }
-      maxHrOverride={localMaxHrOverride}
-      setMaxHrOverride={setLocalMaxHrOverride}
-      maxHrError={maxHrError}
-      restingHr={localRestingHr}
-      setRestingHr={setLocalRestingHr}
-      restingHrError={restingHrError}
-      customZoneThresholds={customZoneThresholds}
-      handleThresholdChange={handleThresholdChange}
       session={session}
     />
+  )
+}
+
+export default function ConnectPage() {
+  return (
+    <ConnectSettingsProvider>
+      <ConnectPageContent />
+    </ConnectSettingsProvider>
   )
 }
