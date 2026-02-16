@@ -79,9 +79,9 @@ jobs:
           TRIGGER_EVENT: ${{ inputs.trigger_event }}
           ACTION_TYPE: ${{ github.event.action }}
           COMMENT_BODY: ${{ inputs.comment_body }}
-          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
-          BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || github.event.issue.number }}
+          BASE_SHA: ${{ inputs.base_sha || (github.event.pull_request && github.event.pull_request.base.sha) || '' }}
+          HEAD_SHA: ${{ inputs.head_sha || (github.event.pull_request && github.event.pull_request.head.sha) || github.sha }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
           MAX_COMMENTS: 60
@@ -111,11 +111,32 @@ jobs:
         id: diff
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA_INPUT: ${{ inputs.base_sha }}
+          HEAD_SHA_INPUT: ${{ inputs.head_sha }}
+          LAST_COMMIT_INPUT: ${{ inputs.last_non_empty_commit }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || github.event.issue.number }}
         run: |
           # The PR's base commit SHA, for an accurate diff at the time of branching.
-          BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}
-          # The PR's head commit SHA. If a last_non_empty_commit is provided, use that instead.
-          HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}
+          if [ -n "$BASE_SHA_INPUT" ]; then
+            BASE_SHA="$BASE_SHA_INPUT"
+          elif [ -n "${{ github.event.pull_request && github.event.pull_request.base.sha }}" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            # Fallback to fetching via gh CLI if not available in event
+            BASE_SHA=$(gh pr view "$PR_NUMBER" --json baseRefOid -q '.baseRefOid')
+          fi
+
+          # The PR's head commit SHA.
+          if [ -n "$LAST_COMMIT_INPUT" ]; then
+            HEAD_SHA="$LAST_COMMIT_INPUT"
+          elif [ -n "$HEAD_SHA_INPUT" ]; then
+            HEAD_SHA="$HEAD_SHA_INPUT"
+          elif [ -n "${{ github.event.pull_request && github.event.pull_request.head.sha }}" ]; then
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            # Fallback to fetching via gh CLI if not available in event
+            HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid')
+          fi
 
           echo "🔍 Generating diff between base commit ($BASE_SHA) and head commit ($HEAD_SHA)..."
 
@@ -130,23 +151,25 @@ jobs:
         id: context
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
-          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || github.event.issue.number }}
+          HEAD_SHA_INPUT: ${{ inputs.head_sha }}
         run: |
           # Fetch the LIVE body to ensure we see the results of pr-enrichment
           LATEST_BODY=$(gh pr view "$PR_NUMBER" --json body -q '.body')
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-          # If pr_number is input, we might need to fetch title/author via API if github context is missing
-          # But for now assuming context or defaults.
-          # Actually, if we have PR_NUMBER, we can fetch details.
-          PR_JSON=$(gh pr view "$PR_NUMBER" --json title,author,headRefName)
+          # Fetch PR details
+          PR_JSON=$(gh pr view "$PR_NUMBER" --json title,author,headRefName,headRefOid)
           PR_TITLE=$(echo "$PR_JSON" | jq -r .title)
           PR_AUTHOR=$(echo "$PR_JSON" | jq -r .author.login)
           PR_BRANCH_NAME=$(echo "$PR_JSON" | jq -r .headRefName)
+          PR_HEAD_SHA=$(echo "$PR_JSON" | jq -r .headRefOid)
+
+          COMMIT_HASH="${HEAD_SHA_INPUT:-$PR_HEAD_SHA}"
 
           echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
           echo "PR_AUTHOR=$PR_AUTHOR" >> $GITHUB_ENV
-          echo "COMMIT_HASH=${{ inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
           echo "PR_BRANCH_NAME=$PR_BRANCH_NAME" >> $GITHUB_ENV
 
           echo "PR_DESCRIPTION<<EOF" >> $GITHUB_ENV
@@ -155,6 +178,11 @@ jobs:
 
       - name: Run AI Slop Detector
         id: slop-detector
+        env:
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || github.event.issue.number }}
+          BASE_SHA_INPUT: ${{ inputs.base_sha }}
+          HEAD_SHA_INPUT: ${{ inputs.head_sha }}
+          LAST_COMMIT_INPUT: ${{ inputs.last_non_empty_commit }}
         run: |
           SCRIPT_PATH="./scripts/find_slop.sh"
           SLOP_REPORT=""
@@ -167,8 +195,24 @@ jobs:
           fi
 
           if [ -z "$SLOP_REPORT" ]; then # If no errors so far
-            BASE_SHA=${{ github.event.pull_request.base.sha }}
-            HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
+            # Resolve SHAs
+            if [ -n "$BASE_SHA_INPUT" ]; then
+              BASE_SHA="$BASE_SHA_INPUT"
+            elif [ -n "${{ github.event.pull_request && github.event.pull_request.base.sha }}" ]; then
+              BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            else
+              BASE_SHA=$(gh pr view "$PR_NUMBER" --json baseRefOid -q '.baseRefOid')
+            fi
+
+            if [ -n "$LAST_COMMIT_INPUT" ]; then
+              HEAD_SHA="$LAST_COMMIT_INPUT"
+            elif [ -n "$HEAD_SHA_INPUT" ]; then
+              HEAD_SHA="$HEAD_SHA_INPUT"
+            elif [ -n "${{ github.event.pull_request && github.event.pull_request.head.sha }}" ]; then
+              HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            else
+              HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid')
+            fi
 
             # Create temp files
             FILE_LIST=$(mktemp)
@@ -214,8 +258,18 @@ jobs:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           ARI_PAT: ${{ secrets.ARI_PAT }} # Pass for redaction
           FAILURE_REPORT_JSON: ${{ inputs.failure_report_json }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          HEAD_SHA_INPUT: ${{ inputs.head_sha }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || github.event.issue.number }}
         run: |
+          # Resolve HEAD_SHA
+          if [ -n "$HEAD_SHA_INPUT" ]; then
+            HEAD_SHA="$HEAD_SHA_INPUT"
+          elif [ -n "${{ github.event.pull_request && github.event.pull_request.head.sha }}" ]; then
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid')
+          fi
+
           FINAL_CHECKS_JSON="[]"
           # OPTION 1: Use the pre-compiled failure report from the caller if available and not empty
           if [ -n "$FAILURE_REPORT_JSON" ] && [ "$FAILURE_REPORT_JSON" != "[]" ]; then
@@ -359,9 +413,18 @@ jobs:
       - name: Post Review Comment
         env:
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
-          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || github.event.issue.number }}
+          HEAD_SHA_INPUT: ${{ inputs.head_sha }}
         run: |
+          # Resolve HEAD_SHA
+          if [ -n "$HEAD_SHA_INPUT" ]; then
+            HEAD_SHA="$HEAD_SHA_INPUT"
+          elif [ -n "${{ github.event.pull_request && github.event.pull_request.head.sha }}" ]; then
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid')
+          fi
+
           if [ -f "review_result.json" ]; then
             # Extract the original comment
             REVIEW_COMMENT=$(jq -r '.reviewComment // empty' review_result.json)
@@ -410,7 +473,7 @@ jobs:
       - name: Manage Labels
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
-          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || github.event.issue.number }}
         run: ./.github/scripts/manage-pr-labels.sh
 
   post-skip-check:
@@ -423,12 +486,33 @@ jobs:
         uses: actions/github-script@v7
         env:
           SKIP_REASON: ${{ needs.analyze-changes.outputs.skip-reason }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          HEAD_SHA_INPUT: ${{ inputs.head_sha }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || github.event.issue.number }}
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const skipReason = process.env.SKIP_REASON;
-            const headSha = process.env.HEAD_SHA;
+            let headSha = process.env.HEAD_SHA_INPUT;
+            if (!headSha) {
+              if (context.payload.pull_request) {
+                headSha = context.payload.pull_request.head.sha;
+              } else {
+                // Fetch via CLI
+                const prNumber = process.env.PR_NUMBER;
+                const { execSync } = require('child_process');
+                try {
+                  const prJson = execSync(`gh pr view "${prNumber}" --json headRefOid`, {
+                    env: { ...process.env, GH_TOKEN: process.env.GH_TOKEN }
+                  }).toString();
+                  headSha = JSON.parse(prJson).headRefOid;
+                } catch (e) {
+                  console.error('Failed to fetch head SHA via gh CLI:', e);
+                  headSha = context.sha;
+                }
+              }
+            }
+
             await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,

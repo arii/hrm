@@ -41,6 +41,7 @@ jobs:
       pr_quality_result: 'not_applicable'
       trigger_event: 'comment'
       comment_body: ${{ github.event.comment.body }}
+      pr_number: ${{ github.event.issue.number }}
     secrets: inherit
 
   execute-squash:

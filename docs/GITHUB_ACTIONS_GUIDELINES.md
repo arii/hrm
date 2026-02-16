@@ -34,25 +34,48 @@ For complex logic, multiple API interactions in a single step, or tasks where no
   - Performing multiple API calls (e.g., adding a reaction AND posting a comment).
   - Tasks that require direct access to the `github` octokit client or the `context` object.
 
-**Example:**
+**Example (with robust ID resolution):**
 ```yaml
 - name: Acknowledge and Comment
   uses: actions/github-script@v7
+  env:
+    COMMENT_ID_INPUT: ${{ inputs.comment_id }}
   with:
     script: |
-      await github.rest.reactions.createForIssueComment({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        comment_id: context.payload.comment.id,
-        content: 'rocket'
-      });
-      await github.rest.issues.createComment({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        issue_number: context.issue.number,
-        body: 'Processing your request...'
-      });
+      const commentId = Number(process.env.COMMENT_ID_INPUT) || context.payload.comment?.id || 0;
+      const prNumber = context.issue.number;
+
+      if (commentId) {
+        await github.rest.reactions.createForIssueComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          comment_id: commentId,
+          content: 'rocket'
+        });
+      }
+
+      if (prNumber) {
+        await github.rest.issues.createComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          issue_number: prNumber,
+          body: 'Processing your request...'
+        });
+      }
 ```
+
+## Best Practices
+
+### 1. Robust ID Resolution
+
+When working with IDs (PR numbers, Issue numbers, Comment IDs), always assume they might be missing or provided as strings. Use the following patterns for maximum reliability:
+
+- **Inside `github-script`**: Use `Number(process.env.VAR) || fallback || 0` and check for truthiness.
+- **In Expressions**: Be careful with direct property access on potentially null objects. Use `(github.event.pull_request && github.event.pull_request.number)` or pass the ID as an input from the caller.
+
+### 2. Avoid Script Interpolation
+
+Never use `${{ ... }}` directly inside a `script:` block. Pass dynamic values via the `env` context and access them using `process.env`. This prevents shell injection and ensures compatibility.
 
 ## Standard Versions
 

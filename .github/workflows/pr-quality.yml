@@ -65,7 +65,7 @@ jobs:
         id: sanitize_id
         uses: ./.github/actions/sanitize-string
         with:
-          value: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+          value: ${{ (github.event.pull_request && github.event.pull_request.number) || github.ref_name || github.run_id }}
 
       # Test Composite Actions - Sanitize String validation
       - name: Test Sanitize Action - Special Chars and Truncation
@@ -1348,7 +1348,7 @@ jobs:
         run: |
           set +e
 
-          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_NUMBER="${{ (github.event.pull_request && github.event.pull_request.number) || inputs.pr_number }}"
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
             echo "::warning::No Pull Request found. Skipping PR comment."
             exit 0
