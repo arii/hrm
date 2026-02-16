@@ -8,7 +8,7 @@ import { HeartRateZone } from '@/lib/shared/hr-zones'
 import type {
   HrmStreamData as HrmData,
   TimerData,
-  SpotifyPlaybackState as SpotifyData,
+  SpotifyPlaybackState as SpotifyData, // Single source of truth for playback state
   TimerMode,
   SpotifyCommand,
 } from './core'
