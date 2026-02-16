@@ -182,6 +182,11 @@ const SpotifyDisplay = () => {
         selectedDeviceId ||
         spotifyData.devices?.find((device) => device.is_active)?.id
 
+      // Refinement: Only attempt to send the command if a target device is identified.
+      // The VolumeSlider is already disabled in the UI if !hasActiveDevice, but this
+      // provides an extra layer of robustness.
+      if (!targetDeviceId) return
+
       const sanitized = clampVolume(volume)
 
       lastVolumeSendTimeRef.current = Date.now()
