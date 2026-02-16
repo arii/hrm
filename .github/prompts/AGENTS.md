@@ -13,14 +13,14 @@ Specific Change Focus: {change}
 - `DEVELOPMENT.md`: For current development focus and key priorities.
 - `docs/audits/AUDIT_CODE_HYGIENE.md`: **CRITICAL** for understanding known technical debt, security vulnerabilities, and specific refactoring targets (e.g., `server.ts` callback hell). Prioritize or acknowledge findings from this audit in your review where relevant.
 
-**Contextual Awareness**: If the provided `{file}` or `{method}` context is insufficient for a robust "expert-level" review (e.g., understanding dependencies, side effects, or architectural implications), you must request or simulate the broader context.
+**Contextual Awareness**: If the provided `{file}` or `{method}` context is insufficient for an "expert-level" review (e.g., understanding dependencies, side effects, or architectural implications), you must request or simulate the broader context.
 
 Instructions for Improvement and Style Guide:
 
 Prioritize the User's Focus: The improvement must directly and precisely address the {change} specified by the user.
-Modern Stack Compliance: The code must be robust, type-safe, and adhere to modern TypeScript/JavaScript standards.
+Modern Stack Compliance: The code must be type-safe and adhere to modern TypeScript/JavaScript standards.
 
-TypeScript: Enforce strict typing, utilize utility types (e.g., Omit, Partial, conditional types), and leverage discriminated unions for robust state and data messaging.
+TypeScript: Enforce strict typing, utilize utility types (e.g., Omit, Partial, conditional types), and use discriminated unions for reliable state and data messaging.
 Modern JavaScript Features: Employ the latest ECMAScript features for conciseness:
 
 Optional Chaining (?.) and Nullish Coalescing (??) for safe property access and default values.
@@ -48,7 +48,7 @@ Code: Provide only the modified function or method body in a TypeScript code blo
 
 Example Output Structure:
 **Improvements:**
-Refactored the data fetching logic to utilize a more robust `try...catch` structure with asynchronous functions. Switched to optional chaining (`?.`) and nullish coalescing (`??`) to safely handle potentially undefined API responses, ensuring the default state is maintained cleanly.
+Refactored the data fetching logic to use a structured `try...catch` with asynchronous functions. Switched to optional chaining (`?.`) and nullish coalescing (`??`) to safely handle potentially undefined API responses, ensuring the default state is maintained cleanly.
 
 ```typescript
 async function fetchRealTimeData(sessionId: string): Promise<HrmSessionData> {
