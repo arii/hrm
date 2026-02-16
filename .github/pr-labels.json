@@ -1,0 +1,42 @@
+[
+  {
+    "name": "ready-for-approval",
+    "description": "Indicates that the PR has been reviewed by Gemini and is ready for final approval.",
+    "color": "28a745"
+  },
+  {
+    "name": "needs-fixes",
+    "description": "Indicates that the PR requires changes based on Gemini's review.",
+    "color": "d73a4a"
+  },
+  {
+    "name": "ci-failure",
+    "description": "Indicates that one or more CI checks have failed.",
+    "color": "d73a4a"
+  },
+  {
+    "name": "review-failed",
+    "description": "Indicates that the Gemini review process itself failed.",
+    "color": "d73a4a"
+  },
+  {
+    "name": "approved",
+    "description": "The PR has been approved by a human reviewer.",
+    "color": "28a745"
+  },
+  {
+    "name": "changes-requested",
+    "description": "Changes have been requested by a human reviewer.",
+    "color": "d73a4a"
+  },
+  {
+    "name": "scope:focused",
+    "description": "PR touches a single architectural area.",
+    "color": "0075ca"
+  },
+  {
+    "name": "scope:needs-review",
+    "description": "PR touches multiple architectural areas and requires careful review.",
+    "color": "fbca04"
+  }
+]
