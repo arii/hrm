@@ -28,6 +28,10 @@ jobs:
   enrich-pr:
     name: Enrich PR Title and Description
     runs-on: ubuntu-latest
+    # Explicitly define GH_TOKEN at the job level to ensure it's available for all steps,
+    # as requested in maintainer feedback to avoid any authentication ambiguity.
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -54,7 +58,6 @@ jobs:
       - name: Setup PR Context
         id: pr_context
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER_INPUT: ${{ inputs.pr_number }}
           PR_NUMBER_EVENT: ${{ github.event.pull_request.number }}
         run: |
@@ -74,6 +77,7 @@ jobs:
           PR_DATA=""
           for i in {1..10}; do
             echo "📊 PR Metadata Fetch Attempt $i..."
+            # The jq filter is carefully constructed to ensure non-empty JSON output with defaults.
             PR_DATA_RAW=$(retry_command 2 1 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '(. // {}) | {title: (.title // ""), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // ""), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}')
 
             # We consider the data valid if we have a title and a head SHA
@@ -86,7 +90,7 @@ jobs:
               break
             fi
 
-            echo "⏳ PR metadata not yet fully available. Retrying in 5s..."
+            echo "⏳ PR metadata not yet fully available (missing title or head SHA). Retrying in 5s..."
             sleep 5
           done
 
@@ -119,8 +123,6 @@ jobs:
       - name: Analyze PR Changes
         if: steps.check-disabled.outputs.disabled == 'false'
         id: analyze
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           source scripts/ci/github-utils.sh
 
@@ -398,8 +400,6 @@ jobs:
 
       - name: Enhance PR Title
         if: steps.check-disabled.outputs.disabled == 'false' && env.DISABLE_TITLE_ENHANCEMENT != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           CURRENT_TITLE="$PR_TITLE"
 
