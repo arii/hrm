@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import {
   validateAgeValue,
@@ -7,6 +7,7 @@ import {
 import { toKg, toDisplay } from '@/utils/units'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import { MeasurementSystem } from '@/types/core'
+import { ZONE_THRESHOLDS } from '@/lib/shared/hr-zones'
 
 /**
  * Custom hook to manage user settings and validation in the Connect page.
@@ -138,6 +139,52 @@ export function useConnectSettings() {
     }
   }
 
+  const handleThresholdChange = useCallback(
+    (zoneKey: string, value: number) => {
+      const zoneNum = parseInt(zoneKey.split('_')[1] || '0', 10)
+      if (zoneNum < 1 || zoneNum > 6) return
+
+      setUserSettings((prev) => {
+        const newThresholds: Record<string, number> = {}
+
+        // Initialize with standard thresholds, then override with existing custom ones
+        ;[1, 2, 3, 4, 5, 6].forEach((z) => {
+          const key = `ZONE_${z}`
+          newThresholds[key] =
+            prev.customZoneThresholds[key] ??
+            ZONE_THRESHOLDS[key as keyof typeof ZONE_THRESHOLDS]
+        })
+
+        // Apply the new value
+        newThresholds[zoneKey] = value
+
+        // Enforce ascending order: ZONE 1 <= ZONE 2 <= ... <= ZONE 6
+        // 1. Ensure preceding zones are not greater than the current one
+        for (let i = zoneNum - 1; i >= 1; i--) {
+          const curr = `ZONE_${i}`
+          const next = `ZONE_${i + 1}`
+          newThresholds[curr] = Math.min(
+            newThresholds[curr]!,
+            newThresholds[next]!
+          )
+        }
+
+        // 2. Ensure succeeding zones are not less than the current one
+        for (let i = zoneNum + 1; i <= 6; i++) {
+          const curr = `ZONE_${i}`
+          const prevZone = `ZONE_${i - 1}`
+          newThresholds[curr] = Math.max(
+            newThresholds[curr]!,
+            newThresholds[prevZone]!
+          )
+        }
+
+        return { ...prev, customZoneThresholds: newThresholds }
+      })
+    },
+    [setUserSettings]
+  )
+
   return {
     userSettings,
     setUserSettings,
@@ -167,5 +214,6 @@ export function useConnectSettings() {
     handleHeightBlur,
     heightError,
     handleUnitChange,
+    handleThresholdChange,
   }
 }

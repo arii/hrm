@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
@@ -42,6 +42,7 @@ export default function ConnectPage() {
     handleHeightBlur,
     heightError,
     handleUnitChange,
+    handleThresholdChange,
   } = useConnectSettings()
 
   const [currentHR, setCurrentHR] = useState(0)
@@ -81,22 +82,6 @@ export default function ConnectPage() {
     [sendData]
   )
 
-  /**
-   * Technical Debt / Workaround:
-   * We use refs to store workout state and control functions to break a circular dependency
-   * between `useWorkoutSession` and `useBluetoothHRM`.
-   *
-   * The dependency chain is:
-   * ConnectPage -> useBluetoothHRM -> handleHeartRateUpdate -> processHeartRate -> caloriesBurnedRef
-   * ConnectPage -> useWorkoutSession -> workoutStatus -> handleHeartRateUpdate
-   *
-   * By using refs, we can provide stable callback references to `useBluetoothHRM` that
-   * access the latest workout state without causing infinite re-renders or dependency loops.
-   */
-  const workoutStatusRef = useRef<'idle' | 'running' | 'paused'>('idle')
-  const startWorkoutRef = useRef<() => void>(() => {})
-  const caloriesBurnedRef = useRef<number>(0)
-
   const {
     session,
     addHrData,
@@ -105,12 +90,25 @@ export default function ConnectPage() {
     resetWorkout: resetPersistentWorkout,
   } = useWorkoutSessionManager()
 
+  const {
+    workoutDuration,
+    resetWorkout: resetWorkoutSession,
+    hasStarted,
+    startWorkout,
+    pauseWorkout,
+    endWorkout,
+    workoutStatus,
+    caloriesBurned,
+  } = useWorkoutSession({
+    totalCalories: calories,
+  })
+
   const handleStartWorkout = useCallback(() => {
-    startWorkoutRef.current()
+    startWorkout()
     if (userAge && userWeight) {
       startPersistentWorkout(userAge, userWeight)
     }
-  }, [startPersistentWorkout, userAge, userWeight])
+  }, [startWorkout, startPersistentWorkout, userAge, userWeight])
 
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
@@ -120,17 +118,17 @@ export default function ConnectPage() {
       )
       setCurrentHR(heartRate)
 
-      if (workoutStatusRef.current === 'running') {
+      if (workoutStatus === 'running') {
         processHeartRate(heartRate)
 
         addHrData({
           time: Date.now(),
           hr: heartRate,
-          calories: caloriesBurnedRef.current,
+          calories: caloriesBurned,
         })
       }
     },
-    [processHeartRate, setCurrentHR, addHrData]
+    [processHeartRate, setCurrentHR, addHrData, workoutStatus, caloriesBurned]
   )
 
   const {
@@ -152,26 +150,16 @@ export default function ConnectPage() {
     onConnect: handleStartWorkout,
   })
 
-  const {
-    workoutDuration,
-    resetWorkout: resetWorkoutSession,
-    hasStarted,
-    startWorkout,
-    pauseWorkout,
-    endWorkout,
-    workoutStatus,
-    caloriesBurned,
-  } = useWorkoutSession({
-    isConnected,
-    totalCalories: calories,
-  })
-
-  // Update refs when workout status, start function, or calories burned change
+  // Auto-pause/resume workout based on connection status
   useEffect(() => {
-    workoutStatusRef.current = workoutStatus
-    startWorkoutRef.current = startWorkout
-    caloriesBurnedRef.current = caloriesBurned
-  }, [workoutStatus, startWorkout, caloriesBurned])
+    if (hasStarted) {
+      if (isConnected && workoutStatus === 'paused') {
+        startWorkout()
+      } else if (!isConnected && workoutStatus === 'running') {
+        pauseWorkout()
+      }
+    }
+  }, [isConnected, hasStarted, workoutStatus, startWorkout, pauseWorkout])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
@@ -295,12 +283,7 @@ export default function ConnectPage() {
       setRestingHr={setLocalRestingHr}
       restingHrError={restingHrError}
       customZoneThresholds={customZoneThresholds}
-      setCustomZoneThresholds={(thresholds) =>
-        setUserSettings((prev) => ({
-          ...prev,
-          customZoneThresholds: thresholds,
-        }))
-      }
+      handleThresholdChange={handleThresholdChange}
       session={session}
     />
   )

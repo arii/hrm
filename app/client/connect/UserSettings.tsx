@@ -42,7 +42,7 @@ interface UserSettingsProps {
   setRestingHr: (val: string) => void
   restingHrError: string | null
   customZoneThresholds: Record<string, number>
-  setCustomZoneThresholds: (thresholds: Record<string, number>) => void
+  handleThresholdChange: (zoneKey: string, value: number) => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -71,49 +71,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   setRestingHr,
   restingHrError,
   customZoneThresholds,
-  setCustomZoneThresholds,
+  handleThresholdChange,
 }) => {
   const autoMaxHr = calculateMaxHr(userAge)
-
-  const handleThresholdChange = (zone: string, value: number) => {
-    const zoneNum = parseInt(zone.split('_')[1] || '0', 10)
-    const newThresholds: Record<string, number> = {}
-
-    // Initialize with defaults if not present in customZoneThresholds
-    ;[1, 2, 3, 4, 5, 6].forEach((z) => {
-      const key = `ZONE_${z}`
-      newThresholds[key] =
-        customZoneThresholds[key] ??
-        ZONE_THRESHOLDS[key as keyof typeof ZONE_THRESHOLDS]
-    })
-
-    newThresholds[zone] = value
-
-    // Enforce ascending order: ZONE 1 <= ZONE 2 <= ... <= ZONE 6
-    if (zoneNum > 1) {
-      // If moving a zone down, push previous zones down if they exceed it
-      for (let i = zoneNum - 1; i >= 1; i--) {
-        const currKey = `ZONE_${i}`
-        const nextKey = `ZONE_${i + 1}`
-        if (newThresholds[currKey]! > newThresholds[nextKey]!) {
-          newThresholds[currKey] = newThresholds[nextKey]!
-        }
-      }
-    }
-
-    if (zoneNum < 6) {
-      // If moving a zone up, push subsequent zones up if they are below it
-      for (let i = zoneNum + 1; i <= 6; i++) {
-        const currKey = `ZONE_${i}`
-        const prevKey = `ZONE_${i - 1}`
-        if (newThresholds[currKey]! < newThresholds[prevKey]!) {
-          newThresholds[currKey] = newThresholds[prevKey]!
-        }
-      }
-    }
-
-    setCustomZoneThresholds(newThresholds)
-  }
 
   return (
     <Stack spacing={2} sx={{ mb: 3 }} data-testid="user-settings-form">

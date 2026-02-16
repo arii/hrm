@@ -86,14 +86,12 @@ function sessionReducer(
  * across the application.
  */
 interface WorkoutSessionOptions {
-  isConnected: boolean
   totalCalories?: number
 }
 
 export const useWorkoutSession = ({
-  isConnected,
   totalCalories = 0,
-}: WorkoutSessionOptions) => {
+}: WorkoutSessionOptions = {}) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
   const [startCalories, setStartCalories] = useState<number | null>(null)
 
@@ -111,18 +109,6 @@ export const useWorkoutSession = ({
     }
     dispatch({ type: 'UPDATE_CALORIES', payload: totalCalories })
   }, [totalCalories, state.status, startCalories])
-
-  const prevIsConnected = useRef(isConnected)
-  useEffect(() => {
-    if (prevIsConnected.current !== isConnected) {
-      if (isConnected) {
-        dispatch({ type: 'CONNECT' })
-      } else {
-        dispatch({ type: 'DISCONNECT' })
-      }
-      prevIsConnected.current = isConnected
-    }
-  }, [isConnected])
 
   useEffect(() => {
     const session = sessionDataRef.current
@@ -172,13 +158,13 @@ export const useWorkoutSession = ({
     session.pauseTime = null
     session.totalPaused = 0
     setStartCalories(null)
-    prevIsConnected.current = false
     dispatch({ type: 'RESET' })
   }, [])
 
   const startWorkout = useCallback(() => {
     // Capture the calorie count at the moment the workout starts.
-    setStartCalories(totalCalories)
+    // If we are resuming, we don't want to reset the baseline.
+    setStartCalories((prev) => (prev === null ? totalCalories : prev))
     dispatch({ type: 'START_WORKOUT' })
   }, [totalCalories])
 

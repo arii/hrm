@@ -84,7 +84,7 @@ interface ConnectViewProps {
   setRestingHr: (val: string) => void
   restingHrError: string | null
   customZoneThresholds: Record<string, number>
-  setCustomZoneThresholds: (thresholds: Record<string, number>) => void
+  handleThresholdChange: (zoneKey: string, value: number) => void
   session: WorkoutSessionData | null
 }
 
@@ -138,7 +138,7 @@ export default function ConnectView({
   setRestingHr,
   restingHrError,
   customZoneThresholds,
-  setCustomZoneThresholds,
+  handleThresholdChange,
   session,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
@@ -269,7 +269,7 @@ export default function ConnectView({
               setRestingHr={setRestingHr}
               restingHrError={restingHrError}
               customZoneThresholds={customZoneThresholds}
-              setCustomZoneThresholds={setCustomZoneThresholds}
+              handleThresholdChange={handleThresholdChange}
             />
 
             <FormControl component="fieldset">

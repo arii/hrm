@@ -6,23 +6,20 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 
 describe('useWorkoutSession calorie logic', () => {
   it('should initialize with zero calories burned', () => {
-    const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: false, totalCalories: 0 })
-    )
+    const { result } = renderHook(() => useWorkoutSession({ totalCalories: 0 }))
     expect(result.current.caloriesBurned).toBe(0)
   })
 
   it('should start with zero calories burned even if totalCalories is non-zero', () => {
     const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: false, totalCalories: 100 })
+      useWorkoutSession({ totalCalories: 100 })
     )
     expect(result.current.caloriesBurned).toBe(0)
   })
 
   it('should capture the starting calorie count on startWorkout', () => {
     const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: false, totalCalories }),
+      ({ totalCalories }) => useWorkoutSession({ totalCalories }),
       { initialProps: { totalCalories: 100 } }
     )
 
@@ -36,8 +33,7 @@ describe('useWorkoutSession calorie logic', () => {
 
   it('should calculate calories burned based on the difference from the start', () => {
     const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
+      ({ totalCalories }) => useWorkoutSession({ totalCalories }),
       { initialProps: { totalCalories: 50 } }
     )
 
@@ -54,8 +50,7 @@ describe('useWorkoutSession calorie logic', () => {
 
   it('should not show negative calories if totalCalories decreases', () => {
     const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
+      ({ totalCalories }) => useWorkoutSession({ totalCalories }),
       { initialProps: { totalCalories: 100 } }
     )
 
@@ -69,8 +64,7 @@ describe('useWorkoutSession calorie logic', () => {
 
   it('should preserve the last calculated calories when the workout ends', () => {
     const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
+      ({ totalCalories }) => useWorkoutSession({ totalCalories }),
       { initialProps: { totalCalories: 200 } }
     )
 
@@ -92,8 +86,7 @@ describe('useWorkoutSession calorie logic', () => {
 
   it('should reset caloriesBurned to zero on resetWorkout', () => {
     const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
+      ({ totalCalories }) => useWorkoutSession({ totalCalories }),
       { initialProps: { totalCalories: 300 } }
     )
 
@@ -113,30 +106,33 @@ describe('useWorkoutSession calorie logic', () => {
 
   it('should not be affected by pause and resume', () => {
     const { result, rerender } = renderHook(
-      ({ isConnected, totalCalories }) =>
-        useWorkoutSession({ isConnected, totalCalories }),
-      { initialProps: { isConnected: true, totalCalories: 100 } }
+      ({ totalCalories }) => useWorkoutSession({ totalCalories }),
+      { initialProps: { totalCalories: 100 } }
     )
 
     act(() => {
       result.current.startWorkout()
     })
-    rerender({ isConnected: true, totalCalories: 110 })
+    rerender({ totalCalories: 110 })
     expect(result.current.caloriesBurned).toBe(10)
 
     // Pause
-    rerender({ isConnected: false, totalCalories: 115 })
+    act(() => {
+      result.current.pauseWorkout()
+    })
+    rerender({ totalCalories: 115 })
     expect(result.current.caloriesBurned).toBe(15)
 
     // Resume
-    rerender({ isConnected: true, totalCalories: 125 })
+    act(() => {
+      result.current.startWorkout() // resume
+    })
+    rerender({ totalCalories: 125 })
     expect(result.current.caloriesBurned).toBe(25)
   })
 
   it('should pause the workout when pauseWorkout is called', () => {
-    const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: true })
-    )
+    const { result } = renderHook(() => useWorkoutSession())
 
     act(() => {
       result.current.startWorkout()

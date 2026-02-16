@@ -112,4 +112,43 @@ describe('useConnectSettings', () => {
     const updated = updater(mockUserSettings)
     expect(updated.unitSystem).toBe('IMPERIAL')
   })
+
+  it('handles threshold change and enforces ascending order', () => {
+    const { result } = renderHook(() => useConnectSettings())
+
+    act(() => {
+      // Set Zone 3 to 85% (default ZONE 4 is 80%, ZONE 2 is 60%)
+      result.current.handleThresholdChange('ZONE_3', 85)
+    })
+
+    expect(setUserSettings).toHaveBeenCalled()
+    const updater =
+      setUserSettings.mock.calls[setUserSettings.mock.calls.length - 1][0]
+    const updated = updater(mockUserSettings)
+
+    // Zone 3 should be 85
+    expect(updated.customZoneThresholds.ZONE_3).toBe(85)
+    // Zone 4, 5, 6 should be pushed up to at least 85
+    expect(updated.customZoneThresholds.ZONE_4).toBe(85)
+    expect(updated.customZoneThresholds.ZONE_5).toBe(90) // Remains 90 because 90 > 85
+    expect(updated.customZoneThresholds.ZONE_6).toBe(95) // Remains 95
+  })
+
+  it('pushes down preceding zones if threshold decreases', () => {
+    const { result } = renderHook(() => useConnectSettings())
+
+    act(() => {
+      // Set Zone 4 to 40% (default ZONE 3 is 70%, ZONE 2 is 60%, ZONE 1 is 50%)
+      result.current.handleThresholdChange('ZONE_4', 40)
+    })
+
+    const updater =
+      setUserSettings.mock.calls[setUserSettings.mock.calls.length - 1][0]
+    const updated = updater(mockUserSettings)
+
+    expect(updated.customZoneThresholds.ZONE_4).toBe(40)
+    expect(updated.customZoneThresholds.ZONE_3).toBe(40)
+    expect(updated.customZoneThresholds.ZONE_2).toBe(40)
+    expect(updated.customZoneThresholds.ZONE_1).toBe(40)
+  })
 })
