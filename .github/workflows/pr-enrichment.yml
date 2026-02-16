@@ -72,28 +72,12 @@ jobs:
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
           # Fetch PR details with polling to handle API indexing delays.
-          # Success (exit code 0) is considered valid by retry_command, so we manually
-          # loop if the resulting JSON object is missing critical data.
-          PR_DATA=""
-          for i in {1..12}; do
-            echo "📊 PR Metadata Fetch Attempt $i..."
-            # Using increased attempts and sleep for the individual fetch command.
-            PR_DATA_RAW=$(retry_command 5 2 gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles --jq '(. // {}) | {title: (.title // ""), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // ""), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}')
+          # Validation ensures both title and head SHA are available.
+          FIELDS="title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles"
+          JQ_FILTER='(. // {}) | {title: (.title // ""), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // ""), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}'
+          VALIDATION='.title != "" and .head_sha != ""'
 
-            # Extract and validate critical fields (title and head SHA).
-            # We explicitly handle the case where jq might return "null" or empty string.
-            PR_TITLE_TMP=$(echo "$PR_DATA_RAW" | jq -r '.title // ""' 2>/dev/null | grep -v "^null$" || echo "")
-            PR_HEAD_TMP=$(echo "$PR_DATA_RAW" | jq -r '.head_sha // ""' 2>/dev/null | grep -v "^null$" || echo "")
-
-            if [ -n "$PR_TITLE_TMP" ] && [ -n "$PR_HEAD_TMP" ]; then
-              PR_DATA="$PR_DATA_RAW"
-              echo "✅ PR metadata retrieved successfully."
-              break
-            fi
-
-            echo "⏳ PR metadata not yet fully available (missing title or head SHA). Retrying in 10s..."
-            sleep 10
-          done
+          PR_DATA=$(poll_pr_view "$PR_NUMBER" 12 10 "$FIELDS" "$JQ_FILTER" "$VALIDATION")
 
           if [ -z "$PR_DATA" ]; then
             echo "::error::Could not retrieve PR details from GitHub API after retries."
@@ -127,78 +111,21 @@ jobs:
         run: |
           source scripts/ci/github-utils.sh
 
-          # Retrieval for PR metrics using GitHub API only.
-          # This avoids environment-specific issues with local git history or shallow clones.
-
           PR_NUMBER=${{ env.PR_NUMBER }}
-          FILES=""
-          ADDITIONS=0
-          DELETIONS=0
-          FILE_COUNT=0
 
-          # Poll for up to ~3 minutes (18 attempts * 10s sleep) to handle heavy indexing lag.
-          for i in {1..18}; do
-            echo "📊 PR Metrics Gathering Attempt $i..."
+          # Retrieval for PR metrics using GitHub API only.
+          # poll_pr_metrics encapsulates the logic for cross-referencing metadata and diffs.
+          METRICS_JSON=$(poll_pr_metrics "$PR_NUMBER" 18 10)
 
-            # 1. Fetch baseline metrics from PR metadata.
-            API_DATA_RAW=$(retry_command 2 1 gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles)
-            API_DATA=$(echo "$API_DATA_RAW" | jq -c '(. // {})')
-            METADATA_COUNT=$(echo "$API_DATA" | jq -r '.changedFiles // 0')
-            METADATA_ADD=$(echo "$API_DATA" | jq -r '.additions // 0')
-            METADATA_DEL=$(echo "$API_DATA" | jq -r '.deletions // 0')
-
-            echo "   Metadata: Files=$METADATA_COUNT, Additions=$METADATA_ADD, Deletions=$METADATA_DEL"
-
-            # 2. Fetch live file list from the diff.
-            API_FILES_LIST=$(retry_command 2 1 gh pr diff "$PR_NUMBER" --name-only)
-            API_COUNT=$(echo "$API_FILES_LIST" | grep -c . || echo "0")
-
-            echo "   Diff --name-only: Files=$API_COUNT"
-
-            # 3. Evaluation Logic:
-            # We break early ONLY if the diff confirms at least one changed file.
-            if [ "$API_COUNT" -gt 0 ]; then
-               API_NUMSTAT=$(retry_command 2 1 gh pr diff "$PR_NUMBER" --numstat)
-               if [ -n "$API_NUMSTAT" ]; then
-                  ADDITIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$1} END {print sum+0}')
-                  DELETIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$2} END {print sum+0}')
-               else
-                  ADDITIONS="$METADATA_ADD"
-                  DELETIONS="$METADATA_DEL"
-               fi
-               FILES="$API_FILES_LIST"
-               FILE_COUNT="$API_COUNT"
-               echo "✅ Metrics successfully gathered via diff."
-               break
-            elif [ "$METADATA_COUNT" -gt 0 ]; then
-               # Metadata says there are changes, but the diff stream is still empty.
-               echo "⏳ Metadata indicates $METADATA_COUNT files, but diff is currently empty. Continuing poll..."
-            elif [ "$i" -gt 8 ] && [ "$METADATA_COUNT" -eq 0 ]; then
-               # If both are zero after substantial polling, it may be an empty PR.
-               echo "❓ Both metadata and diff currently report 0 changes."
-            fi
-
-            # On the very last attempt, if we still have 0 from diff, fallback to metadata.
-            if [ "$i" -eq 18 ]; then
-               echo "⚠️ Maximum attempts reached. Falling back to metadata for metrics."
-               FILE_COUNT="$METADATA_COUNT"
-               ADDITIONS="$METADATA_ADD"
-               DELETIONS="$METADATA_DEL"
-            fi
-
-            echo "⏳ Retrying in 10s..."
-            sleep 10
-          done
-
-          # Final Validation - Ensure variables are populated
-          FILES="${FILES:-""}"
-          FILE_COUNT=${FILE_COUNT:-0}
-          ADDITIONS=${ADDITIONS:-0}
-          DELETIONS=${DELETIONS:-0}
-
-          if [ -z "$FILES" ] && [ "$FILE_COUNT" -eq 0 ]; then
-             echo "::warning::Could not retrieve detailed PR changes after retries."
+          if [ -z "$METRICS_JSON" ]; then
+             echo "::error::Could not retrieve PR metrics after retries."
+             exit 1
           fi
+
+          FILES=$(echo "$METRICS_JSON" | jq -r '.files')
+          FILE_COUNT=$(echo "$METRICS_JSON" | jq -r '.file_count')
+          ADDITIONS=$(echo "$METRICS_JSON" | jq -r '.additions')
+          DELETIONS=$(echo "$METRICS_JSON" | jq -r '.deletions')
 
           echo "FILES<<EOF" >> $GITHUB_ENV
           echo "$FILES" >> $GITHUB_ENV
@@ -232,7 +159,6 @@ jobs:
           fi
 
           # Store categories
-          IFS=', ' read -ra CATS <<< "${CATEGORIES[@]}"
           echo "CATEGORIES=${CATEGORIES[*]}" >> $GITHUB_ENV
 
           # Export metrics
@@ -352,12 +278,6 @@ jobs:
 
               if (result.description) {
                 const newBody = result.description;
-                // Need to fetch current body again or use env var, but actions/github-script context has payload
-                // If triggered by workflow_call, context.payload might not be pull_request.
-                // We should use the REST API to get the latest body to be safe, or use process.env.PR_BODY (which is what we fetched earlier)
-                // However, we want to respect any changes made since then?
-                // Let's fetch it to be safe.
-
                 const prNumber = parseInt(process.env.PR_NUMBER);
                 const pr = await github.rest.pulls.get({
                   owner: context.repo.owner,
@@ -421,7 +341,6 @@ jobs:
           CURRENT_TITLE="$PR_TITLE"
 
           # Define Regex Patterns for Conventional Commits
-          # Using readonly variables improves readability and avoids complex escaping in the `if` conditions.
           readonly CONVENTIONAL_REGEX='^(feat|fix|docs|style|refactor|test|chore|ci)\('
           readonly GENERIC_SCOPE_REGEX='^[a-zA-Z]+\('
 
