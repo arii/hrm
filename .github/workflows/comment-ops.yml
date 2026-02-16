@@ -21,17 +21,18 @@ jobs:
     if: github.event.issue.pull_request
     runs-on: ubuntu-latest
     outputs:
-      is_review: ${{ steps.route.outputs.is_review }}
-      is_squash: ${{ steps.route.outputs.is_squash }}
-      is_resolve: ${{ steps.route.outputs.is_resolve }}
+      is_review: ${{ steps.route.outputs.is_review || 'false' }}
+      is_squash: ${{ steps.route.outputs.is_squash || 'false' }}
+      is_resolve: ${{ steps.route.outputs.is_resolve || 'false' }}
     steps:
       - id: route
         env:
           BODY: ${{ github.event.comment.body }}
         run: |
-          if echo "$BODY" | grep -q "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -q "@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -q "@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
+          # Use case-insensitive grep and ensure outputs are always set if matched
+          if echo "$BODY" | grep -qi "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qi "@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qi "@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
 
   execute-review:
     needs: [router]

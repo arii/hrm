@@ -32,6 +32,7 @@ jobs:
         id: create_pr
         run: |
           set -e
+          echo "Token Owner: $(gh api user --jq '.login' || echo 'Unknown (probably GITHUB_TOKEN)')"
           BRANCH_NAME="e2e-test-$(date +%s)"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           git checkout -b $BRANCH_NAME
@@ -62,6 +63,7 @@ jobs:
           echo "Initial SHA: $INITIAL_SHA"
 
           # 2. Trigger bot
+          echo "Triggering bot with @pr-squash comment..."
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
 
@@ -157,6 +159,7 @@ jobs:
         id: create_conflict
         run: |
           set -e
+          echo "Token Owner: $(gh api user --jq '.login' || echo 'Unknown (probably GITHUB_TOKEN)')"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -211,6 +214,7 @@ jobs:
           echo "Initial SHA: $INITIAL_SHA"
 
           # 2. Trigger bot
+          echo "Triggering bot with @conflict-resolve comment..."
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
 
@@ -339,6 +343,7 @@ jobs:
           echo "Initial SHA: $INITIAL_SHA"
 
           # 2. Trigger bot
+          echo "Triggering bot with @pr-squash-rebase comment..."
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
 
