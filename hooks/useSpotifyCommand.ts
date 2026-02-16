@@ -28,7 +28,8 @@ export type SpotifyTransferPayload = {
 
 /**
  * Hook to manage Spotify commands via the unified service bus.
- * Treats 'HRM Web Player' and remote devices as identical targets.
+ * Treats 'HRM Web Player' and remote devices as identical targets, routing
+ * all actions through the server-side single source of truth.
  */
 export const useSpotifyCommand = () => {
   const { spotifyData, sendData } = useWebSocket()
