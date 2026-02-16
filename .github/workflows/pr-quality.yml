@@ -99,6 +99,7 @@ jobs:
 
           echo "Checking for meaningful changes against $BASE..."
           # git diff --quiet returns 1 if differences exist, 0 if no differences
+          # We compare against origin/branch...HEAD (triple dot) to find changes from the common ancestor
           if git diff --quiet -w "$BASE...HEAD" -- . ':!*.lock' ':!package-lock.json' ':!*.svg' ':!*.map' ':!*.md'; then
              echo "meaningful=false" >> $GITHUB_OUTPUT
              echo "💤 No meaningful changes (whitespace/locks only)."
