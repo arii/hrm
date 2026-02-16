@@ -9,6 +9,14 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import Accordion from '@mui/material/Accordion'
+import AccordionSummary from '@mui/material/AccordionSummary'
+import AccordionDetails from '@mui/material/AccordionDetails'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import ToggleButton from '@mui/material/ToggleButton'
+import Slider from '@mui/material/Slider'
+import Stack from '@mui/material/Stack'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -16,7 +24,12 @@ import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
-import { calculateMaxHr, calculateHrZoneInfo } from '@/lib/shared/hr-zones'
+import {
+  calculateMaxHr,
+  calculateHrZoneInfo,
+  ZONE_THRESHOLDS,
+} from '@/lib/shared/hr-zones'
+import { HrZoneMethod } from '@/context/UserSettingsContext'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
@@ -27,6 +40,11 @@ export default function MockPage() {
   const [height, setHeight] = useState(175) // Add height state
   const [gender, setGender] = useState('female') // Add gender state
   const [intervalId, setIntervalId] = useState<number | null>(null)
+
+  const [hrZoneMethod, setHrZoneMethod] = useState<HrZoneMethod>('MAX_HR')
+  const [restingHr, setRestingHr] = useState(60)
+  const [customZoneThresholds, setCustomZoneThresholds] =
+    useState<Record<string, number>>(ZONE_THRESHOLDS)
 
   const isStreaming = intervalId !== null
   const maxHr = calculateMaxHr(age)
@@ -46,8 +64,10 @@ export default function MockPage() {
   const sendHrPacket = useCallback(
     (hr: number) => {
       const { percentage, zone } = calculateHrZoneInfo(hr, {
-        method: 'MAX_HR',
+        method: hrZoneMethod,
         age,
+        restingHr,
+        thresholds: customZoneThresholds,
       })
 
       const message: HrmInputMessage = {
@@ -60,7 +80,7 @@ export default function MockPage() {
       }
       sendData(message)
     },
-    [sendData, age]
+    [sendData, age, hrZoneMethod, restingHr, customZoneThresholds]
   )
 
   const sendMetadataPacket = useCallback(() => {
@@ -112,6 +132,10 @@ export default function MockPage() {
     if (!isStreaming) {
       sendHrPacket(value)
     }
+  }
+
+  const handleThresholdChange = (zone: string, value: number) => {
+    setCustomZoneThresholds((prev) => ({ ...prev, [zone]: value }))
   }
 
   const setHrByZone = (
@@ -203,6 +227,71 @@ export default function MockPage() {
               />
             </Grid>
           </Grid>
+
+          <Accordion elevation={0} sx={{ border: '1px solid #e0e0e0', mb: 3 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle2">
+                HR Zone Simulation Settings
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={3}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    Calculation Method
+                  </Typography>
+                  <ToggleButtonGroup
+                    value={hrZoneMethod}
+                    exclusive
+                    onChange={(_, newMethod) => {
+                      if (newMethod) setHrZoneMethod(newMethod)
+                    }}
+                    fullWidth
+                    size="small"
+                  >
+                    <ToggleButton value="MAX_HR">Max HR %</ToggleButton>
+                    <ToggleButton value="HRR">Karvonen (HRR)</ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
+
+                {hrZoneMethod === 'HRR' && (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Resting Heart Rate"
+                    type="number"
+                    value={restingHr}
+                    onChange={(e) => setRestingHr(parseInt(e.target.value, 10))}
+                  />
+                )}
+
+                <Box>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Custom Thresholds (%)
+                  </Typography>
+                  {[1, 2, 3, 4, 5, 6].map((z) => (
+                    <Box key={z} sx={{ px: 1 }}>
+                      <Typography variant="caption">Zone {z} Min %</Typography>
+                      <Slider
+                        size="small"
+                        value={customZoneThresholds[`ZONE_${z}`]}
+                        onChange={(_, value) =>
+                          handleThresholdChange(`ZONE_${z}`, value as number)
+                        }
+                        valueLabelDisplay="auto"
+                        min={0}
+                        max={100}
+                      />
+                    </Box>
+                  ))}
+                </Box>
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
 
           <TextField
             label="Current BPM"
