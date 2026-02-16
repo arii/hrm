@@ -28,6 +28,7 @@ export interface WorkoutSessionData {
   maxHr: number
   calorieHistory: CalorieDataPoint[]
   totalCaloriesBurned: number
+  totalPausedTime: number // Added for duration recovery
   userSettings: { age: number; weight: number; maxHr: number }
   lastSyncTime: number
   syncStatus: 'pending' | 'synced' | 'failed'
@@ -44,7 +45,7 @@ interface WorkoutDB extends DBSchema {
 // --- Constants ---
 
 const DB_NAME = 'WorkoutSessionDB'
-const DB_VERSION = 1
+const DB_VERSION = 2 // Incremented for new field
 const STORE_NAME = 'sessions'
 
 // --- WorkoutSessionStorage Class ---
@@ -79,11 +80,15 @@ export class WorkoutSessionStorage {
       typeof window !== 'undefined' && !!window.indexedDB
     if (this.isIndexedDBSupported) {
       this.dbPromise = openDB<WorkoutDB>(DB_NAME, DB_VERSION, {
-        upgrade(db) {
-          const store = db.createObjectStore(STORE_NAME, {
-            keyPath: 'sessionId',
-          })
-          store.createIndex('status', 'status')
+        upgrade(db, oldVersion) {
+          if (oldVersion < 1) {
+            const store = db.createObjectStore(STORE_NAME, {
+              keyPath: 'sessionId',
+            })
+            store.createIndex('status', 'status')
+          }
+          // Note: No explicit migration for totalPausedTime here as IDB
+          // stores objects directly. Existing objects will just have it missing.
         },
       }).catch((error) => {
         console.error('Failed to initialize IndexedDB:', error)
