@@ -41,9 +41,14 @@ export async function POST(req: NextRequest) {
 
     // 4. Directly and reliably update the service with the new token
     // We explicitly construct the payload to ensure type safety without 'any'.
+    const sub = typeof tokenData.sub === 'string' ? tokenData.sub : 'unknown'
+    if (sub === 'unknown') {
+      logger.warn('Spotify token delivery: user identity (sub) is unknown.')
+    }
+
     const payload: SpotifyTokenPayload = {
       provider: 'spotify',
-      sub: typeof tokenData.sub === 'string' ? tokenData.sub : 'unknown',
+      sub,
       access_token:
         typeof tokenData.access_token === 'string'
           ? tokenData.access_token
