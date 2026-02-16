@@ -522,8 +522,8 @@ jobs:
     if: |
       always() &&
       needs.analyze-changes.outputs.needs-review == 'true' &&
-      needs.gemini-review.result != 'skipped' &&
-      needs.gemini-review.result != 'cancelled'
+      needs.gemini-review.result == 'success' &&
+      needs.gemini-review.outputs.review_performed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
