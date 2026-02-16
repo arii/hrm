@@ -49,7 +49,7 @@ jobs:
           echo "Waiting for squash and rebase to complete..."
 
           # Poll until at least one check run appears
-          MAX_ATTEMPTS=20
+          MAX_ATTEMPTS=60
           for i in $(seq 1 $MAX_ATTEMPTS); do
             CHECK_COUNT=$(gh pr checks $PR_NUMBER --json name --jq 'length' 2>/dev/null || echo 0)
             if [ "$CHECK_COUNT" -gt 0 ]; then
@@ -157,7 +157,7 @@ jobs:
           echo "Waiting for conflict resolver to complete..."
 
           # Poll until at least one check run appears
-          MAX_ATTEMPTS=20
+          MAX_ATTEMPTS=60
           for i in $(seq 1 $MAX_ATTEMPTS); do
             CHECK_COUNT=$(gh pr checks $PR_NUMBER --json name --jq 'length' 2>/dev/null || echo 0)
             if [ "$CHECK_COUNT" -gt 0 ]; then
@@ -241,7 +241,7 @@ jobs:
           echo "Waiting for squash and rebase to complete..."
 
           # Poll until at least one check run appears
-          MAX_ATTEMPTS=20
+          MAX_ATTEMPTS=60
           for i in $(seq 1 $MAX_ATTEMPTS); do
             CHECK_COUNT=$(gh pr checks $PR_NUMBER --json name --jq 'length' 2>/dev/null || echo 0)
             if [ "$CHECK_COUNT" -gt 0 ]; then
