@@ -21,7 +21,7 @@ jobs:
         continue-on-error: true
 
       - name: Comment on Install Failure
-        if: steps.setup.outcome == 'failure'
+        if: steps.setup.outcome == 'failure' && github.event.pull_request
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |

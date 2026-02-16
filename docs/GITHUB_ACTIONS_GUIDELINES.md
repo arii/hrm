@@ -70,8 +70,9 @@ For complex logic, multiple API interactions in a single step, or tasks where no
 
 When working with IDs (PR numbers, Issue numbers, Comment IDs), always assume they might be missing or provided as strings. Use the following patterns for maximum reliability:
 
-- **Inside `github-script`**: Use `Number(process.env.VAR) || fallback || 0` and check for truthiness.
+- **Inside `github-script`**: Use `Number(process.env.VAR) || fallback || 0` and check for truthiness (e.g., `if (id && id !== 0)`).
 - **In Expressions**: Be careful with direct property access on potentially null objects. Always use the `(object && object.property)` guard pattern (e.g., `(github.event.pull_request && github.event.pull_request.number)`) even inside `if:` conditions or shell scripts. Evaluation of these expressions happens before the shell command runs, and accessing a property of a missing object will cause the entire workflow run to fail.
+- **Numeric Fallbacks**: For numeric IDs, prefer `0` as the standard fallback value instead of `''` (empty string). Downstream actions and scripts should explicitly check for `0` to identify invalid IDs. In shell scripts, use `if [ -n "$ID" ] && [ "$ID" != "0" ]; then ... fi`.
 
 ### 2. Avoid Script Interpolation
 

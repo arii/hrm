@@ -43,7 +43,7 @@ jobs:
         if: env.COMMAND == 'new'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || '' }}
+          PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || 0 }}
         run: |
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
             echo "::error::PR_NUMBER is missing or 0."
@@ -95,7 +95,7 @@ jobs:
         if: env.COMMAND == 'delete'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || '' }}
+          PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || 0 }}
         run: |
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
             echo "::error::PR_NUMBER is missing or 0."

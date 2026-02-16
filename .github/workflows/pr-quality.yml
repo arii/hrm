@@ -1349,7 +1349,7 @@ jobs:
           set +e
 
           PR_NUMBER="${{ (github.event.pull_request && github.event.pull_request.number) || inputs.pr_number }}"
-          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ] || [ "$PR_NUMBER" = "0" ]; then
             echo "::warning::No Pull Request found. Skipping PR comment."
             exit 0
           fi

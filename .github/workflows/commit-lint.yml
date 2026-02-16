@@ -13,7 +13,7 @@ jobs:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v6
       - name: Post Comment on Failure
-        if: failure()
+        if: failure() && github.event.pull_request
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -32,4 +32,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install @commitlint/cli @commitlint/config-conventional
       - name: Lint PR title
+        if: github.event.pull_request
         run: echo "${{ github.event.pull_request.title }}" | pnpm exec commitlint --config commitlint.config.cjs

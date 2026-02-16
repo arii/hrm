@@ -79,7 +79,7 @@ jobs:
           TRIGGER_EVENT: ${{ inputs.trigger_event }}
           ACTION_TYPE: ${{ github.event.action || '' }}
           COMMENT_BODY: ${{ inputs.comment_body }}
-          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || '' }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
           BASE_SHA: ${{ inputs.base_sha || (github.event.pull_request && github.event.pull_request.base.sha) || '' }}
           HEAD_SHA: ${{ inputs.head_sha || (github.event.pull_request && github.event.pull_request.head.sha) || github.sha }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
@@ -114,7 +114,7 @@ jobs:
           BASE_SHA_INPUT: ${{ inputs.base_sha }}
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
           LAST_COMMIT_INPUT: ${{ inputs.last_non_empty_commit }}
-          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || '' }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
           EVENT_BASE_SHA: ${{ github.event.pull_request && github.event.pull_request.base.sha }}
           EVENT_HEAD_SHA: ${{ github.event.pull_request && github.event.pull_request.head.sha }}
         run: |
@@ -161,7 +161,7 @@ jobs:
         id: context
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
-          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || '' }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
           EVENT_HEAD_SHA: ${{ github.event.pull_request && github.event.pull_request.head.sha }}
         run: |
@@ -195,7 +195,7 @@ jobs:
       - name: Run AI Slop Detector
         id: slop-detector
         env:
-          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || '' }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
           BASE_SHA_INPUT: ${{ inputs.base_sha }}
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
           LAST_COMMIT_INPUT: ${{ inputs.last_non_empty_commit }}
@@ -287,7 +287,7 @@ jobs:
           ARI_PAT: ${{ secrets.ARI_PAT }} # Pass for redaction
           FAILURE_REPORT_JSON: ${{ inputs.failure_report_json }}
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
-          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || '' }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
           EVENT_HEAD_SHA: ${{ github.event.pull_request && github.event.pull_request.head.sha }}
         run: |
           # Resolve HEAD_SHA
@@ -455,7 +455,7 @@ jobs:
       - name: Post Review Comment
         env:
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
-          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || '' }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
           EVENT_HEAD_SHA: ${{ github.event.pull_request && github.event.pull_request.head.sha }}
         run: |
@@ -523,7 +523,7 @@ jobs:
       - name: Manage Labels
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
-          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || '' }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
         run: ./.github/scripts/manage-pr-labels.sh
 
   post-skip-check:
@@ -537,7 +537,7 @@ jobs:
         env:
           SKIP_REASON: ${{ needs.analyze-changes.outputs.skip-reason }}
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
-          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || '' }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

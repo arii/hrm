@@ -41,7 +41,7 @@ jobs:
       pr_quality_result: 'not_applicable'
       trigger_event: 'comment'
       comment_body: ${{ (github.event.comment && github.event.comment.body) || '' }}
-      pr_number: ${{ (github.event.issue && github.event.issue.number) || '' }}
+      pr_number: ${{ (github.event.issue && github.event.issue.number) || 0 }}
     secrets: inherit
 
   execute-squash:
@@ -49,9 +49,9 @@ jobs:
     if: needs.router.outputs.is_squash == 'true'
     uses: ./.github/workflows/pr-squash.yml
     with:
-      pr_number: ${{ (github.event.issue && github.event.issue.number) || '' }}
+      pr_number: ${{ (github.event.issue && github.event.issue.number) || 0 }}
       comment_body: ${{ (github.event.comment && github.event.comment.body) || '' }}
-      comment_id: ${{ (github.event.comment && github.event.comment.id) || '' }}
+      comment_id: ${{ (github.event.comment && github.event.comment.id) || 0 }}
     secrets: inherit
 
   # Restoring conflict resolution logic from gemini-orchestrator.yml
@@ -68,7 +68,7 @@ jobs:
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ github.event.comment.id }}
+          comment-id: ${{ (github.event.comment && github.event.comment.id) || 0 }}
           reaction: eyes
       - name: Get PR Details
         id: get_branches
@@ -96,5 +96,5 @@ jobs:
     with:
       target_branch: ${{ needs.prepare-resolve.outputs.target_branch }}
       source_branch: ${{ needs.prepare-resolve.outputs.source_branch }}
-      pr_number: ${{ (github.event.issue && github.event.issue.number) || '' }}
+      pr_number: ${{ (github.event.issue && github.event.issue.number) || 0 }}
     secrets: inherit
