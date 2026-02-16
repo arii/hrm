@@ -160,12 +160,16 @@ export default function ConnectPage() {
         }
       )
 
-      const data = await response.json()
+      const data: unknown = await response.json()
 
       if (response.ok) {
         showSuccess('Workout successfully exported to Strava!')
       } else {
-        showError(data.error || 'Failed to export workout to Strava.')
+        const errorMessage =
+          data && typeof data === 'object' && 'error' in data
+            ? String(data.error)
+            : 'Failed to export workout to Strava.'
+        showError(errorMessage)
       }
     } catch (error) {
       logger.error({ error }, 'Export to Strava failed')

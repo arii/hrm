@@ -84,7 +84,7 @@ export async function POST(
     )
 
     if (!stravaResponse.ok) {
-      const errorData = await stravaResponse.json()
+      const errorData: unknown = await stravaResponse.json()
       logger.error({ errorData, sessionId }, 'Strava upload failed')
       return NextResponse.json(
         { error: 'Failed to upload to Strava', details: errorData },
@@ -92,8 +92,11 @@ export async function POST(
       )
     }
 
-    const result = await stravaResponse.json()
-    logger.info({ sessionId, uploadId: result.id }, 'Strava upload successful')
+    const result: unknown = await stravaResponse.json()
+    const uploadId =
+      result && typeof result === 'object' && 'id' in result ? result.id : null
+
+    logger.info({ sessionId, uploadId }, 'Strava upload successful')
 
     return NextResponse.json({
       success: true,

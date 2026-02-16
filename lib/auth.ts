@@ -7,6 +7,7 @@ import logger from '@/utils/logger'
 import { getAPIURL } from '../utils/urls'
 import { env } from './env'
 import { refreshSpotifyToken } from './spotify'
+import { refreshStravaToken } from './strava'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -100,21 +101,23 @@ function getCookieDomain(): string | undefined {
 }
 
 /**
- * Refreshes an expired Spotify access token using the refresh token.
+ * Refreshes an expired access token using the refresh token.
+ * Supports both Spotify and Strava providers.
  * Invoked by the NextAuth JWT callback when the access token is expired.
  */
 async function refreshAccessToken(token: JWT) {
-  if (token.provider !== 'spotify') {
-    // For other providers like Strava, we return the token as is for now.
-    // In a production app, you would implement refresh logic for each provider.
+  if (token.provider !== 'spotify' && token.provider !== 'strava') {
     return token
   }
   try {
-    const refreshedTokens = await refreshSpotifyToken(
-      token.refreshToken as string
-    )
+    let refreshedTokens
+    if (token.provider === 'spotify') {
+      refreshedTokens = await refreshSpotifyToken(token.refreshToken as string)
+    } else {
+      refreshedTokens = await refreshStravaToken(token.refreshToken as string)
+    }
 
-    // Update the token object with new values from Spotify
+    // Update the token object with new values from the provider
     return {
       ...token,
       accessToken: refreshedTokens.access_token,
