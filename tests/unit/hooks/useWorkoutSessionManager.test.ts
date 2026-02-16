@@ -58,9 +58,9 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.startTime).toBe(1000000)
       expect(result.current.session?.status).toBe('running')
 
-      // Pause
+      // Explicit Pause
       act(() => {
-        result.current.endWorkout()
+        result.current.pauseWorkout()
       })
       expect(result.current.status).toBe('paused')
       expect(result.current.hasStarted).toBe(true)
@@ -76,20 +76,30 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.status).toBe('running')
       expect(result.current.totalPausedTime).toBe(2000)
 
-      // Pause again before finishing
+      // EndWorkout helper logic (Pause -> Finish toggle)
       act(() => {
-        result.current.endWorkout()
+        result.current.endWorkout() // Should pause because it's running
       })
       expect(result.current.status).toBe('paused')
 
-      // Finish
+      // Finish via EndWorkout helper
       mockDateNow.mockReturnValue(1005000) // Advance time
       act(() => {
-        result.current.endWorkout()
+        result.current.endWorkout() // Should finish because it's paused
       })
       expect(result.current.status).toBe('finished')
       expect(result.current.session?.status).toBe('finished')
       expect(result.current.session?.endTime).toBe(1005000)
+
+      // Explicit Finish
+      act(() => {
+        result.current.startWorkout(30, 80)
+      })
+      expect(result.current.status).toBe('running')
+      act(() => {
+        result.current.finishWorkout()
+      })
+      expect(result.current.status).toBe('finished')
     })
 
     it('should reset the workout session and delete it from storage', async () => {
