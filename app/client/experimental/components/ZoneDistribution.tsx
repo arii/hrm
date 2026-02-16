@@ -27,9 +27,6 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 
   // Transform data for Recharts and list display
   const data = useMemo(() => {
-    // Show all zones to provide a complete overview, even if duration is 0
-    if (totalDuration === 0) return []
-
     return HR_ZONE_ORDER.map((zoneKey) => {
       const time = timeInZones[zoneKey] || 0
       const config = HR_ZONE_CONFIG[zoneKey]

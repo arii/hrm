@@ -39,12 +39,19 @@ describe('ZoneDistribution', () => {
     expect(screen.getByText('Heart Rate Zone Distribution')).toBeInTheDocument()
   })
 
-  it('renders correctly with no total duration', () => {
+  it('renders the zone list with all zones even with no total duration', () => {
     render(<ZoneDistribution timeInZones={baseTimeInZones} totalDuration={0} />)
-    // Should show "No zone data available" message when totalDuration === 0
+    // Should NOT show "No zone data available" message
     expect(
-      screen.getByText('No zone data available for this session.')
-    ).toBeInTheDocument()
+      screen.queryByText('No zone data available for this session.')
+    ).not.toBeInTheDocument()
+    // Should show all zones with 0%
+    expect(
+      screen.getAllByText(HR_ZONE_CONFIG.ZONE_0.label).length
+    ).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.getAllByText(HR_ZONE_CONFIG.ZONE_6.label).length
+    ).toBeGreaterThanOrEqual(1)
   })
 
   it('renders the zone list even with no time in any zone if duration exists', () => {
