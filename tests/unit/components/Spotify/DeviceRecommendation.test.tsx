@@ -16,15 +16,37 @@ const mockedUseSpotifyCommand = useSpotifyCommand as jest.MockedFunction<
 describe('DeviceRecommendation', () => {
   const executeMock = jest.fn()
 
+  const mockHookValue = {
+    activeDevice: null,
+    hrmPlayer: {
+      id: 'hrm-1',
+      name: 'HRM Web Player',
+      is_active: false,
+      is_private_session: false,
+      is_restricted: false,
+      type: 'Computer',
+      volume_percent: 50,
+    },
+    execute: executeMock,
+    playback: {
+      track: {
+        id: null,
+        name: '',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
+      },
+      is_playing: false,
+      volume_percent: 0,
+      isMuted: false,
+      progress_ms: 0,
+    },
+    isHrmPlayerActive: false,
+  }
+
   beforeEach(() => {
     jest.clearAllMocks()
-    mockedUseSpotifyCommand.mockReturnValue({
-      activeDevice: null,
-      hrmPlayer: { id: 'hrm-1', name: 'HRM Web Player' },
-      execute: executeMock,
-      playback: {},
-      isHrmPlayerActive: false,
-    } as unknown as ReturnType<typeof useSpotifyCommand>)
+    mockedUseSpotifyCommand.mockReturnValue(mockHookValue)
   })
 
   it('renders recommendation when no active device and HRM player exists', () => {
@@ -42,12 +64,17 @@ describe('DeviceRecommendation', () => {
 
   it('renders nothing when active device exists', () => {
     mockedUseSpotifyCommand.mockReturnValue({
-      activeDevice: { id: 'd1', name: 'Other Device' },
-      hrmPlayer: { id: 'hrm-1', name: 'HRM Web Player' },
-      execute: executeMock,
-      playback: {},
-      isHrmPlayerActive: false,
-    } as unknown as ReturnType<typeof useSpotifyCommand>)
+      ...mockHookValue,
+      activeDevice: {
+        id: 'd1',
+        name: 'Other Device',
+        is_active: true,
+        is_private_session: false,
+        is_restricted: false,
+        type: 'Speaker',
+        volume_percent: 50,
+      },
+    })
 
     const { container } = render(<DeviceRecommendation />)
     expect(container.firstChild).toBeNull()
@@ -55,12 +82,9 @@ describe('DeviceRecommendation', () => {
 
   it('renders nothing when HRM player does not exist', () => {
     mockedUseSpotifyCommand.mockReturnValue({
-      activeDevice: null,
+      ...mockHookValue,
       hrmPlayer: null,
-      execute: executeMock,
-      playback: {},
-      isHrmPlayerActive: false,
-    } as unknown as ReturnType<typeof useSpotifyCommand>)
+    })
 
     const { container } = render(<DeviceRecommendation />)
     expect(container.firstChild).toBeNull()

@@ -3,7 +3,7 @@
  */
 import { render, screen, fireEvent } from '@testing-library/react'
 import SpotifySelectionPage from '@/app/client/spotify-selection/page'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useWebSocket, WebSocketContextType } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { jest } from '@jest/globals'
 import '@testing-library/jest-dom'
@@ -40,28 +40,44 @@ const mockedUseSpotifyCommand = useSpotifyCommand as jest.MockedFunction<
 describe('SpotifySelectionPage', () => {
   const executeMock = jest.fn()
 
+  const mockHookValue = {
+    execute: executeMock,
+    activeDevice: null,
+    hrmPlayer: null,
+    playback: {
+      track: { id: null, name: '', artist: '', albumName: '', albumArtUrl: '' },
+      is_playing: false,
+      volume_percent: 0,
+      isMuted: false,
+      progress_ms: 0,
+    },
+    isHrmPlayerActive: false,
+  }
+
+  const mockContextValue: Partial<WebSocketContextType> = {
+    spotifyData: {
+      devices: [],
+      playback: {
+        track: {
+          id: null,
+          name: 'Awaiting Login...',
+          artist: '',
+          albumName: '',
+          albumArtUrl: '',
+        },
+        is_playing: false,
+        volume_percent: 70,
+        progress_ms: 0,
+        isMuted: false,
+      },
+    },
+    connectionStatus: 'Connected',
+  }
+
   beforeEach(() => {
     jest.clearAllMocks()
-    mockedUseWebSocket.mockReturnValue({
-      spotifyData: {
-        playback: {
-          track: { name: 'Awaiting Login...', artist: '' },
-        },
-      },
-    })
-    mockedUseSpotifyCommand.mockReturnValue({
-      execute: executeMock,
-      activeDevice: null,
-      hrmPlayer: null,
-      playback: {
-        track: { name: '', artist: '' },
-        is_playing: false,
-        volume_percent: 0,
-        isMuted: false,
-        progress_ms: 0,
-      },
-      isHrmPlayerActive: false,
-    } as unknown as ReturnType<typeof useSpotifyCommand>)
+    mockedUseWebSocket.mockReturnValue(mockContextValue)
+    mockedUseSpotifyCommand.mockReturnValue(mockHookValue)
   })
 
   it('renders login prompt when not logged in', () => {
@@ -73,9 +89,18 @@ describe('SpotifySelectionPage', () => {
 
   it('renders now playing when logged in', () => {
     mockedUseWebSocket.mockReturnValue({
+      ...mockContextValue,
       spotifyData: {
+        ...mockContextValue.spotifyData,
         playback: {
-          track: { name: 'Song 1', artist: 'Artist 1' },
+          ...mockContextValue.spotifyData?.playback,
+          track: {
+            id: 't1',
+            name: 'Song 1',
+            artist: 'Artist 1',
+            albumName: '',
+            albumArtUrl: '',
+          },
         },
       },
     })
