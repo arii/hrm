@@ -68,3 +68,4 @@ JOINED_LABELS=$(printf "%s\n" "${LABELS_TO_REMOVE[@]}" | sort -u | paste -sd ","
 
 echo "Removing labels: $JOINED_LABELS"
 gh pr edit "$PR_NUMBER" --remove-label "$JOINED_LABELS"
+# Dummy change to trigger CI
