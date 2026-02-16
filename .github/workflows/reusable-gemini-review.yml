@@ -123,9 +123,12 @@ jobs:
             BASE_SHA="$BASE_SHA_INPUT"
           elif [ -n "$EVENT_BASE_SHA" ]; then
             BASE_SHA="$EVENT_BASE_SHA"
-          else
+          elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ]; then
             # Fallback to fetching via gh CLI if not available in event
             BASE_SHA=$(gh pr view "$PR_NUMBER" --json baseRefOid -q '.baseRefOid')
+          else
+            echo "::error::Could not resolve BASE_SHA. PR_NUMBER is missing."
+            exit 1
           fi
 
           # The PR's head commit SHA.
@@ -135,9 +138,12 @@ jobs:
             HEAD_SHA="$HEAD_SHA_INPUT"
           elif [ -n "$EVENT_HEAD_SHA" ]; then
             HEAD_SHA="$EVENT_HEAD_SHA"
-          else
+          elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ]; then
             # Fallback to fetching via gh CLI if not available in event
             HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid')
+          else
+            echo "::error::Could not resolve HEAD_SHA. PR_NUMBER is missing."
+            exit 1
           fi
 
           echo "🔍 Generating diff between base commit ($BASE_SHA) and head commit ($HEAD_SHA)..."
@@ -157,6 +163,11 @@ jobs:
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
           EVENT_HEAD_SHA: ${{ github.event.pull_request && github.event.pull_request.head.sha }}
         run: |
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
+            echo "::error::PR_NUMBER is missing or 0."
+            exit 1
+          fi
+
           # Fetch the LIVE body to ensure we see the results of pr-enrichment
           LATEST_BODY=$(gh pr view "$PR_NUMBER" --json body -q '.body')
 
@@ -272,8 +283,11 @@ jobs:
             HEAD_SHA="$HEAD_SHA_INPUT"
           elif [ -n "$EVENT_HEAD_SHA" ]; then
             HEAD_SHA="$EVENT_HEAD_SHA"
-          else
+          elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ]; then
             HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid')
+          else
+             echo "::warning::Could not resolve HEAD_SHA for checks. Fallback to empty."
+             HEAD_SHA=""
           fi
 
           FINAL_CHECKS_JSON="[]"
@@ -428,8 +442,11 @@ jobs:
             HEAD_SHA="$HEAD_SHA_INPUT"
           elif [ -n "$EVENT_HEAD_SHA" ]; then
             HEAD_SHA="$EVENT_HEAD_SHA"
-          else
+          elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ]; then
             HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid')
+          else
+             echo "::warning::Could not resolve HEAD_SHA for review comments. Skipping."
+             exit 0
           fi
 
           if [ -f "review_result.json" ]; then
@@ -504,7 +521,7 @@ jobs:
             if (!headSha) {
               if (context.payload.pull_request) {
                 headSha = context.payload.pull_request.head.sha;
-              } else {
+              } else if (process.env.PR_NUMBER && process.env.PR_NUMBER !== '0') {
                 // Fetch via CLI
                 const prNumber = process.env.PR_NUMBER;
                 const { execSync } = require('child_process');

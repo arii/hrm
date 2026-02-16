@@ -75,10 +75,15 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const prNumber = context.issue?.number || 0;
+            if (!prNumber) {
+              core.setFailed('Could not determine PR number');
+              return;
+            }
             const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.issue.number,
+              pull_number: prNumber,
             });
             core.setOutput('target_branch', pr.data.base.ref);
             core.setOutput('source_branch', pr.data.head.ref);

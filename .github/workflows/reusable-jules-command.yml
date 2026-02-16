@@ -58,6 +58,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ inputs.issue_number }}
         run: |
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
+            echo "::error::PR_NUMBER is missing or 0."
+            exit 1
+          fi
+
           # Fetch basic PR data
           PR_DATA=$(gh pr view "$PR_NUMBER" --json headRefName,baseRefName,body,title,comments,reviews)
           BRANCH=$(echo "$PR_DATA" | jq -r .headRefName)
@@ -106,6 +111,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ inputs.issue_number }}
         run: |
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
+            echo "::error::PR_NUMBER is missing or 0."
+            exit 1
+          fi
           SESSION_ID=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | .[] | .body' | grep -oP '(?<=<!-- JULES_SESSION_ID=)\S+(?= *-->)' | tail -n 1)
           if [ -z "$SESSION_ID" ]; then
             echo "::error::Could not find Jules session ID in PR comments. Was a session previously created using '@jules-new' and completed successfully?"
@@ -198,10 +207,10 @@ jobs:
         with:
           github-token: ${{ secrets.GH_TOKEN }}
           script: |
-            const prNumber = Number(process.env.PR_NUMBER_INPUT) || context.issue.number || 0;
+            const prNumber = Number(process.env.PR_NUMBER_INPUT) || (context.payload.pull_request && context.payload.pull_request.number) || context.issue.number || 0;
 
             const sessionId = process.env.SESSION_ID;
-            if (sessionId && prNumber) {
+            if (sessionId && prNumber && prNumber !== 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -228,7 +237,7 @@ jobs:
         with:
           github-token: ${{ secrets.GH_TOKEN }}
           script: |
-            const prNumber = Number(process.env.PR_NUMBER_INPUT) || context.issue.number || 0;
+            const prNumber = Number(process.env.PR_NUMBER_INPUT) || (context.payload.pull_request && context.payload.pull_request.number) || context.issue.number || 0;
             const commentId = Number(process.env.COMMENT_ID_INPUT) || context.payload.comment?.id || 0;
 
             const errorMessageNew = process.env.ERROR_NEW || '';
@@ -237,7 +246,7 @@ jobs:
 
             const body = `Jules operation failed with the following error:\n\n\`\`\`\n${errorMessage}\n\`\`\``;
 
-            if (commentId) {
+            if (commentId && commentId !== 0) {
               try {
                 await github.rest.reactions.createForIssueComment({
                   owner: context.repo.owner,

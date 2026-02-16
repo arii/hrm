@@ -66,6 +66,11 @@ jobs:
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
+            echo "::error::PR_NUMBER is missing or 0."
+            exit 1
+          fi
+
           # Fetch PR details
           PR_DATA=$(gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author --jq '{title: .title, body: .body, base_ref: .baseRefName, head_ref: .headRefName, base_sha: .baseRefOid, head_sha: .headRefOid, author: .author.login}')
 

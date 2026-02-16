@@ -16,7 +16,11 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
-            const prNumber = context.payload.pull_request.number;
+            const prNumber = context.payload.pull_request?.number || context.issue?.number || 0;
+            if (!prNumber) {
+              console.log('No PR number found. Skipping.');
+              return;
+            }
             const approvedLabel = process.env.APPROVED_LABEL;
             const changesRequestedLabel = process.env.CHANGES_REQUESTED_LABEL;
             const managedLabels = [

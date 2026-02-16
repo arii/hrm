@@ -59,9 +59,12 @@ jobs:
           PR_NUMBER_INPUT: ${{ inputs.pr_number }}
         with:
           script: |
-            const prNumber = Number(process.env.PR_NUMBER_INPUT) || context.issue.number || 0;
+            let prNumber = process.env.PR_NUMBER_INPUT ? Number(process.env.PR_NUMBER_INPUT) : 0;
+            if (!prNumber || isNaN(prNumber)) {
+              prNumber = context.payload.pull_request?.number || context.issue?.number || 0;
+            }
 
-            if (!prNumber) {
+            if (!prNumber || prNumber === 0) {
               core.setFailed('Could not determine PR number');
               return;
             }
@@ -158,11 +161,17 @@ jobs:
           BASE_REF: ${{ steps.pr_data.outputs.base_ref }}
         with:
           script: |
-            const prNumber = Number(process.env.PR_NUMBER_INPUT) || context.issue.number || 0;
-            const commentId = Number(process.env.COMMENT_ID_INPUT) || context.payload.comment?.id || 0;
+            let prNumber = process.env.PR_NUMBER_INPUT ? Number(process.env.PR_NUMBER_INPUT) : 0;
+            if (!prNumber || isNaN(prNumber)) {
+              prNumber = context.payload.pull_request?.number || context.issue?.number || 0;
+            }
+            let commentId = process.env.COMMENT_ID_INPUT ? Number(process.env.COMMENT_ID_INPUT) : 0;
+            if (!commentId || isNaN(commentId)) {
+              commentId = context.payload.comment?.id || 0;
+            }
             const baseRef = process.env.BASE_REF;
 
-            if (commentId) {
+            if (commentId && commentId !== 0) {
               await github.rest.reactions.createForIssueComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -189,8 +198,14 @@ jobs:
           COMMAND: ${{ steps.command.outputs.command }}
         with:
           script: |
-            const prNumber = Number(process.env.PR_NUMBER_INPUT) || context.issue.number || 0;
-            const commentId = Number(process.env.COMMENT_ID_INPUT) || context.payload.comment?.id || 0;
+            let prNumber = process.env.PR_NUMBER_INPUT ? Number(process.env.PR_NUMBER_INPUT) : 0;
+            if (!prNumber || isNaN(prNumber)) {
+              prNumber = context.payload.pull_request?.number || context.issue?.number || 0;
+            }
+            let commentId = process.env.COMMENT_ID_INPUT ? Number(process.env.COMMENT_ID_INPUT) : 0;
+            if (!commentId || isNaN(commentId)) {
+              commentId = context.payload.comment?.id || 0;
+            }
 
             const command = process.env.COMMAND;
             let messageBody;
@@ -201,7 +216,7 @@ jobs:
               messageBody = '✅ Commits squashed successfully!';
             }
 
-            if (commentId) {
+            if (commentId && commentId !== 0) {
               await github.rest.reactions.createForIssueComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,

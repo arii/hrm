@@ -97,6 +97,12 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
+            const prNumber = context.payload.issue?.number || context.issue?.number || 0;
+            if (!prNumber) {
+              console.log('No issue number found. Skipping.');
+              return;
+            }
+
             try {
               const filePath = path.resolve(process.cwd(), 'triage_result.json');
               if (!fs.existsSync(filePath)) {
@@ -155,7 +161,7 @@ jobs:
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
+                  issue_number: prNumber,
                   body: validationComment.trim(),
                 });
                 core.setFailed('The AI response failed schema validation.');
@@ -182,7 +188,7 @@ jobs:
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
+                  issue_number: prNumber,
                   body: errorComment.trim(),
                 });
                 core.setFailed(`Triage failed: ${result.error.message}`);
@@ -196,7 +202,7 @@ jobs:
                 await github.rest.issues.addLabels({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
+                  issue_number: prNumber,
                   labels: result.labels,
                 });
               }
@@ -218,16 +224,16 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: prNumber,
                 body: commentBody.trim(),
               });
 
               if (result.suggested_title || result.suggested_body) {
-                const newTitle = result.suggested_title || context.payload.issue.title;
-                let newBody = context.payload.issue.body;
+                const newTitle = result.suggested_title || context.payload.issue?.title;
+                let newBody = context.payload.issue?.body || '';
 
                 if (result.suggested_body) {
-                  const originalBody = context.payload.issue.body;
+                  const originalBody = context.payload.issue?.body || '';
                   let suggestedBody = result.suggested_body;
                   if (suggestedBody.length > 60000) {
                     suggestedBody = suggestedBody.substring(0, 60000) + '\n... (truncated)';
@@ -238,7 +244,7 @@ jobs:
                 await github.rest.issues.update({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
+                  issue_number: prNumber,
                   title: newTitle,
                   body: newBody,
                 });
@@ -262,7 +268,7 @@ jobs:
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
+                  issue_number: prNumber,
                   body: fatalErrorComment.trim(),
                 });
               } catch (commentError) {

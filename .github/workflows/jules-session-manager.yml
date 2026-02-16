@@ -13,9 +13,9 @@ permissions:
 jobs:
   jules-command:
     if: |
-      github.event.issue.pull_request &&
-      contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) &&
-      (startsWith(github.event.comment.body, '@jules-delete') || startsWith(github.event.comment.body, '@jules-new'))
+      (github.event.issue && github.event.issue.pull_request) &&
+      (github.event.comment && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)) &&
+      (github.event.comment && (startsWith(github.event.comment.body, '@jules-delete') || startsWith(github.event.comment.body, '@jules-new')))
     runs-on: self-hosted
     steps:
       - name: Checkout repository
@@ -31,7 +31,7 @@ jobs:
       - name: 'Parse Command'
         id: parse_command
         run: |
-          COMMENT_BODY="${{ github.event.comment.body }}"
+          COMMENT_BODY="${{ github.event.comment && github.event.comment.body }}"
           if [[ "$COMMENT_BODY" == "@jules-delete"* ]]; then
             echo "COMMAND=delete" >> $GITHUB_ENV
           elif [[ "$COMMENT_BODY" == "@jules-new"* ]]; then
@@ -43,8 +43,12 @@ jobs:
         if: env.COMMAND == 'new'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || 0 }}
         run: |
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
+            echo "::error::PR_NUMBER is missing or 0."
+            exit 1
+          fi
           # Fetch basic PR data
           PR_DATA=$(gh pr view "$PR_NUMBER" --json headRefName,baseRefName,body,title,comments,reviews)
           BRANCH=$(echo "$PR_DATA" | jq -r .headRefName)
@@ -91,8 +95,12 @@ jobs:
         if: env.COMMAND == 'delete'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || 0 }}
         run: |
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
+            echo "::error::PR_NUMBER is missing or 0."
+            exit 1
+          fi
           SESSION_ID=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | .[] | .body' | grep -oP '(?<=<!-- JULES_SESSION_ID=)\S+(?= *-->)' | tail -n 1)
           if [ -z "$SESSION_ID" ]; then
             echo "::error::Could not find Jules session ID in PR comments. Was a session previously created using '@jules-new' and completed successfully?"
@@ -185,12 +193,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const sessionId = process.env.SESSION_ID;
-            const prNumber = context.issue.number;
-            if (sessionId && prNumber) {
+            const prNumber = context.issue?.number || 0;
+            if (sessionId && prNumber && prNumber !== 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: prNumber,
                 body: `<!-- JULES_SESSION_ID=${sessionId} -->`
               });
             }
@@ -200,7 +208,7 @@ jobs:
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ github.event.comment && github.event.comment.id }}
+          comment-id: ${{ github.event.comment.id }}
           reaction: '+1'
       - name: 'Handle Failure'
         if: failure()
@@ -211,15 +219,15 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.issue.number;
+            const prNumber = context.issue?.number || 0;
             const errorMessageNew = process.env.ERROR_NEW || '';
             const errorMessageDelete = process.env.ERROR_DELETE || '';
             const errorMessage = errorMessageNew || errorMessageDelete || 'Unknown error occurred';
 
             const body = `Jules operation failed with the following error:\n\n\`\`\`\n${errorMessage}\n\`\`\``;
 
-            const commentId = context.payload.comment?.id;
-            if (commentId) {
+            const commentId = context.payload.comment?.id || 0;
+            if (commentId && commentId !== 0) {
               try {
                 await github.rest.reactions.createForIssueComment({
                   owner: context.repo.owner,
