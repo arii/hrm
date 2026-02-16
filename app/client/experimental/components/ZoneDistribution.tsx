@@ -27,12 +27,16 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 }) => {
   const theme = useTheme()
 
+  const allRelevantEntries = useMemo(() => {
+    return Object.entries(timeInZones).filter(
+      ([zone]) => zone !== HrZoneName.NoData && zone !== HrZoneName.Unknown
+    )
+  }, [timeInZones])
+
   const filteredEntries = useMemo(() => {
-    return Object.entries(timeInZones)
+    return allRelevantEntries
       .filter(
-        ([zone, time]) =>
-          zone !== HrZoneName.NoData &&
-          zone !== HrZoneName.Unknown &&
+        ([, time]) =>
           // Hide negligible data (< 1%) to maintain visual density and professional polish
           (totalDuration > 0 ? (time / totalDuration) * 100 : 0) >= 1
       )
@@ -52,7 +56,11 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
       .sort((a, b) => {
         return HR_ZONE_ORDER.indexOf(a.zone) - HR_ZONE_ORDER.indexOf(b.zone)
       })
-  }, [timeInZones, totalDuration, theme.palette.grey])
+  }, [allRelevantEntries, totalDuration, theme.palette.grey])
+
+  const hasNegligibleData =
+    allRelevantEntries.length > filteredEntries.length &&
+    filteredEntries.length > 0
 
   if (filteredEntries.length === 0) {
     return (
@@ -136,6 +144,15 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             </Box>
           )
         })}
+        {hasNegligibleData && (
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            sx={{ display: 'block', mt: 1, fontStyle: 'italic' }}
+          >
+            Zones with less than 1% duration are hidden for clarity.
+          </Typography>
+        )}
       </CardContent>
     </Card>
   )
