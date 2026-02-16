@@ -285,6 +285,13 @@ export default function ConnectPage() {
     connectAndStream(userName, userAge || 0)
   }
 
+  // Derive specialized status for ConnectView to simplify its conditional rendering logic.
+  // When a persistent session exists but is finished, we treat it as 'idle' for control
+  // purposes while still allowing summary display.
+  const displayWorkoutControlsStatus =
+    persistentStatus === 'finished' ? 'idle' : workoutStatus
+  const isWorkoutSessionActive = hasStarted || persistentStatus === 'finished'
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration, {
@@ -330,9 +337,9 @@ export default function ConnectPage() {
       zone={zone}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
-      hasStarted={hasStarted || persistentStatus === 'finished'}
+      hasStarted={isWorkoutSessionActive}
       onReset={handleResetWorkout}
-      workoutStatus={persistentStatus === 'finished' ? 'idle' : workoutStatus}
+      workoutStatus={displayWorkoutControlsStatus}
       onStartWorkout={handleStartWorkout}
       onExportWorkout={handleExportWorkout}
       isExporting={isExporting}

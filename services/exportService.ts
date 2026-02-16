@@ -5,6 +5,8 @@ import { Encoder, Profile } from '@garmin/fitsdk'
 /**
  * Generates a GPX XML string from a workout session.
  * Following Strava's stationary GPX format for heart rate data.
+ * NOTE: This function is currently unused but reserved for future extension
+ * (e.g., for platforms that don't support the .fit format).
  */
 export const generateGPX = (session: WorkoutSessionData): string => {
   const startTime = new Date(session.startTime).toISOString()
