@@ -68,6 +68,21 @@ describe('HrTile', () => {
     expect(card).toHaveStyle(`color: ${HR_ZONE_VISUAL_CONFIG[1].textColor}`)
   })
 
+  it('renders the correct background and text color using standardized value and percentage props', () => {
+    render(<HrTile name="Test" value={160} percentage={85} zone={4} />)
+    const card = screen.getByTestId('hr-tile-card')
+    expect(card).toHaveStyle({ backgroundColor: HR_ZONE_VISUAL_CONFIG[4].color })
+    expect(card).toHaveStyle({ color: HR_ZONE_VISUAL_CONFIG[4].textColor })
+    expect(screen.getByText('160')).toBeInTheDocument()
+    expect(screen.getByText('85%')).toBeInTheDocument()
+  })
+
+  it('prioritizes standardized props over legacy props', () => {
+    render(<HrTile name="Test" value={150} bpm={120} percentage={80} percentMax={60} />)
+    expect(screen.getByText('150')).toBeInTheDocument()
+    expect(screen.getByText('80%')).toBeInTheDocument()
+  })
+
   it('renders "---" for BPM when the value is null', () => {
     render(<HrTile name="Test" bpm={null} percentMax={0} />)
     const bpmValue = screen.getByTestId('bpm-value')

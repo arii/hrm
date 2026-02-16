@@ -67,15 +67,12 @@ const ExperimentalAnalyticsPage = () => {
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
 
-  // Sync view with active session on initial load
-  const hasSyncedActiveView = useRef(false)
-  useEffect(() => {
-    if (isInitialized && activeSession && !hasSyncedActiveView.current) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setView('active')
-      hasSyncedActiveView.current = true
-    }
-  }, [isInitialized, activeSession])
+  // Sync view with active session on initial load using render-phase state adjustment
+  const [hasSyncedActiveView, setHasSyncedActiveView] = useState(false)
+  if (isInitialized && activeSession && !hasSyncedActiveView) {
+    setHasSyncedActiveView(true)
+    setView('active')
+  }
 
   // Load all sessions
   useEffect(() => {

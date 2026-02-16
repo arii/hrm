@@ -12,10 +12,14 @@ import ControlCard from '@/components/shared/ControlCard'
 
 export interface HrTileProps {
   name?: string
-  bpm?: number | null
+  /** Heart rate in beats per minute. Standardized name. */
   value?: number | null
-  percentMax?: number
+  /** Heart rate in beats per minute. Legacy name. */
+  bpm?: number | null
+  /** Percentage of maximum heart rate. Standardized name. */
   percentage?: number
+  /** Percentage of maximum heart rate. Legacy name. */
+  percentMax?: number
   zone?: number
   calories?: number
   isConnected?: boolean
@@ -61,7 +65,7 @@ const IdentityTier = ({ name }: { name: string }) => (
   </Box>
 )
 
-const HeroTier = ({ percentMax }: { percentMax: number }) => (
+const HeroTier = ({ percentage }: { percentage: number }) => (
   <Box
     sx={{
       flexGrow: 1,
@@ -85,7 +89,7 @@ const HeroTier = ({ percentMax }: { percentMax: number }) => (
         fontFamily: HERO_FONT_FAMILY,
       }}
     >
-      {percentMax}%
+      {percentage}%
     </Typography>
   </Box>
 )
@@ -112,11 +116,11 @@ const MetricItem = ({
 )
 
 const DataTier = ({
-  bpm,
+  value,
   calories,
   showName,
 }: {
-  bpm: number | null
+  value: number | null
   calories: number
   showName: boolean
 }) => (
@@ -129,7 +133,7 @@ const DataTier = ({
       gap: 4,
     }}
   >
-    <MetricItem value={bpm ?? '---'} label="BPM" testId="bpm-value" />
+    <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
     <MetricItem value={Math.floor(calories)} label="KCAL" />
   </Box>
 )
@@ -141,10 +145,10 @@ const DataTier = ({
 >>>>>>> 82a421b9 (refactor: consolidate redundant hooks and components)
 const HrTile = ({
   name = 'User',
-  bpm,
   value,
-  percentMax,
+  bpm,
   percentage,
+  percentMax,
   zone = 0,
   calories = 0,
   isConnected = true,
@@ -154,9 +158,9 @@ const HrTile = ({
 }: HrTileProps) => {
   const theme = useTheme()
 
-  // Support both property naming conventions (bpm/value and percentMax/percentage)
-  const displayBpm = value !== undefined ? value : (bpm ?? null)
-  const displayPercent =
+  // Standardize on value and percentage, while supporting legacy bpm and percentMax
+  const displayValue = value !== undefined ? value : (bpm ?? null)
+  const displayPercentage =
     percentage !== undefined ? percentage : (percentMax ?? 0)
 
   const zoneConfig =
@@ -169,7 +173,7 @@ const HrTile = ({
       ? 'Disconnected - Showing last known value'
       : isDataStale
         ? 'Waiting for data...'
-        : `Name: ${name}, BPM: ${displayBpm}, Kcal: ${calories}, % Max HR: ${displayPercent}%`
+        : `Name: ${name}, BPM: ${displayValue}, Kcal: ${calories}, % Max HR: ${displayPercentage}%`
 
   const showName = !isGenericName(name)
 
@@ -179,8 +183,8 @@ const HrTile = ({
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
-          isConnected ? `${displayBpm} beats per minute` : 'Disconnected'
-        }, ${displayPercent}% of maximum, Zone ${zone ?? 0}: ${zoneConfig.label}`}
+          isConnected ? `${displayValue} beats per minute` : 'Disconnected'
+        }, ${displayPercentage}% of maximum, Zone ${zone ?? 0}: ${zoneConfig.label}`}
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
@@ -313,9 +317,14 @@ const HrTile = ({
           </Box>
 =======
           {showName && <IdentityTier name={name} />}
+<<<<<<< HEAD
           <HeroTier percentMax={displayPercent} />
           <DataTier bpm={displayBpm} calories={calories} showName={showName} />
 >>>>>>> 82a421b9 (refactor: consolidate redundant hooks and components)
+=======
+          <HeroTier percentage={displayPercentage} />
+          <DataTier value={displayValue} calories={calories} showName={showName} />
+>>>>>>> 06dd2e11 (refactor: consolidate redundant hooks and components (final fixes and tests))
         </Box>
 
         <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
