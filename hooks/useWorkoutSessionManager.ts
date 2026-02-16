@@ -6,6 +6,7 @@ import {
   useState,
   useCallback,
   useMemo,
+  useRef,
 } from 'react'
 import { WorkoutStatus } from '@/types/workout'
 import {
@@ -20,10 +21,7 @@ import {
 >>>>>>> 49c2b7c1 (refactor: consolidate redundant hooks and components)
   HrZoneName,
 } from '@/lib/workout-session-storage'
-import {
-  calculateZoneFromMaxHr,
-  getHrZoneLabel,
-} from '@/lib/shared/hr-zones'
+import { calculateZoneFromMaxHr, getHrZoneLabel } from '@/lib/shared/hr-zones'
 import { isSessionStale } from '@/lib/workout-session'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import logger from '@/utils/logger'
@@ -42,7 +40,11 @@ interface WorkoutSessionState {
   totalPausedTime: number
   isInitialized: boolean
   session: WorkoutSessionData | null
+<<<<<<< HEAD
 >>>>>>> 49c2b7c1 (refactor: consolidate redundant hooks and components)
+=======
+  savedTotalCalories: number // Calories frozen when workout ends
+>>>>>>> 3fce102f (refactor: consolidate redundant hooks and components (v2))
 }
 
 type WorkoutAction =
@@ -51,9 +53,10 @@ type WorkoutAction =
   | { type: 'START_WORKOUT'; age: number; weight: number; maxHr: number }
   | { type: 'PAUSE_WORKOUT' }
   | { type: 'RESUME_WORKOUT' }
-  | { type: 'FINISH_WORKOUT' }
+  | { type: 'FINISH_WORKOUT'; finalCalories: number }
   | { type: 'RESET_WORKOUT' }
   | { type: 'ADD_HR_DATA'; data: HrDataPoint }
+  | { type: 'UPDATE_CALORIES'; calories: number }
 
 const initialState: WorkoutSessionState = {
   status: 'idle',
@@ -62,6 +65,7 @@ const initialState: WorkoutSessionState = {
   totalPausedTime: 0,
   isInitialized: false,
   session: null,
+  savedTotalCalories: 0,
 }
 
 function workoutReducer(
@@ -77,13 +81,13 @@ function workoutReducer(
         ...state,
         status: action.session.status,
         startTime: action.session.startTime,
-        totalPausedTime: 0,
+        totalPausedTime: action.session.totalPausedTime || 0,
         pauseStartTime: action.session.status === 'paused' ? Date.now() : null,
         session: action.session,
         isInitialized: true,
       }
 
-    case 'START_WORKOUT':
+    case 'START_WORKOUT': {
       const now = Date.now()
       return {
         ...state,
@@ -91,6 +95,7 @@ function workoutReducer(
         startTime: now,
         pauseStartTime: null,
         totalPausedTime: 0,
+        savedTotalCalories: 0,
         session: {
           sessionId: crypto.randomUUID(),
           startTime: now,
@@ -109,6 +114,7 @@ function workoutReducer(
           maxHr: 0,
           calorieHistory: [],
           totalCaloriesBurned: 0,
+          totalPausedTime: 0,
           userSettings: {
             age: action.age,
             weight: action.weight,
@@ -118,6 +124,7 @@ function workoutReducer(
           syncStatus: 'pending',
         },
       }
+    }
 
     case 'PAUSE_WORKOUT':
       if (state.status !== 'running') return state
@@ -125,21 +132,24 @@ function workoutReducer(
         ...state,
         status: 'paused',
         pauseStartTime: Date.now(),
-        session: state.session
-          ? { ...state.session, status: 'paused' }
-          : null,
+        session: state.session ? { ...state.session, status: 'paused' } : null,
       }
 
     case 'RESUME_WORKOUT':
       if (state.status !== 'paused' || !state.pauseStartTime) return state
+      const pauseDuration = Date.now() - state.pauseStartTime
+      const newTotalPausedTime = state.totalPausedTime + pauseDuration
       return {
         ...state,
         status: 'running',
-        totalPausedTime:
-          state.totalPausedTime + (Date.now() - state.pauseStartTime),
+        totalPausedTime: newTotalPausedTime,
         pauseStartTime: null,
         session: state.session
-          ? { ...state.session, status: 'running' }
+          ? {
+              ...state.session,
+              status: 'running',
+              totalPausedTime: newTotalPausedTime,
+            }
           : null,
       }
 
@@ -149,17 +159,19 @@ function workoutReducer(
         ...state,
         status: 'finished',
         pauseStartTime: null,
+        savedTotalCalories: action.finalCalories,
         session: {
           ...state.session,
           status: 'finished',
           endTime: Date.now(),
+          totalCaloriesBurned: action.finalCalories,
         },
       }
 
     case 'RESET_WORKOUT':
       return { ...initialState, isInitialized: true }
 
-    case 'ADD_HR_DATA':
+    case 'ADD_HR_DATA': {
       if (!state.session || state.status !== 'running') return state
 
       const newHrHistory = [...state.session.hrHistory, action.data]
@@ -167,16 +179,23 @@ function workoutReducer(
       const newAverageHr =
         newHrHistory.reduce((sum, p) => sum + p.hr, 0) / newHrHistory.length
 
-      const { zone: zoneIndex } = calculateZoneFromMaxHr(action.data.hr, state.session.userSettings.maxHr)
+      const { zone: zoneIndex } = calculateZoneFromMaxHr(
+        action.data.hr,
+        state.session.userSettings.maxHr
+      )
       const zoneLabel = getHrZoneLabel(zoneIndex) as HrZoneName
 
-      // Calculate time delta since last point or session start
-      const lastPoint = state.session.hrHistory[state.session.hrHistory.length - 1]
+      const lastPoint =
+        state.session.hrHistory[state.session.hrHistory.length - 1]
       const startTime = lastPoint ? lastPoint.time : state.session.startTime
-      const timeDeltaSeconds = Math.max(0, Math.floor((action.data.time - (startTime || 0)) / 1000))
+      const timeDeltaSeconds = Math.max(
+        0,
+        Math.floor((action.data.time - (startTime || 0)) / 1000)
+      )
 
       const newTimeInZones = { ...state.session.timeInZones }
-      newTimeInZones[zoneLabel] = (newTimeInZones[zoneLabel] || 0) + timeDeltaSeconds
+      newTimeInZones[zoneLabel] =
+        (newTimeInZones[zoneLabel] || 0) + timeDeltaSeconds
 
       return {
         ...state,
@@ -186,6 +205,21 @@ function workoutReducer(
           maxHr: newMaxHr,
           averageHr: newAverageHr,
           timeInZones: newTimeInZones,
+        },
+      }
+    }
+
+    case 'UPDATE_CALORIES':
+      if (
+        !state.session ||
+        state.session.totalCaloriesBurned === action.calories
+      )
+        return state
+      return {
+        ...state,
+        session: {
+          ...state.session,
+          totalCaloriesBurned: action.calories,
         },
       }
 
@@ -199,11 +233,20 @@ export function useWorkoutSessionManager(currentTotalCalories: number = 0) {
   const [duration, setDuration] = useState(0)
   const [initialCalories, setInitialCalories] = useState(0)
   const { showInfo } = useAppSnackbar()
+  const hasInitializedRef = useRef(false)
 
+  // Use state.savedTotalCalories if workout is finished, otherwise live delta
   const caloriesBurned = useMemo(() => {
     if (!state.startTime) return 0
+    if (state.status === 'finished') return state.savedTotalCalories
     return Math.max(0, currentTotalCalories - initialCalories)
-  }, [currentTotalCalories, initialCalories, state.startTime])
+  }, [
+    currentTotalCalories,
+    initialCalories,
+    state.startTime,
+    state.status,
+    state.savedTotalCalories,
+  ])
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -224,14 +267,21 @@ export function useWorkoutSessionManager(currentTotalCalories: number = 0) {
   }, [state.status, state.startTime, state.totalPausedTime])
 
   useEffect(() => {
-    if (state.session && (state.status === 'running' || state.status === 'paused')) {
-      state.session.totalCaloriesBurned = caloriesBurned
+    if (
+      state.session &&
+      (state.status === 'running' || state.status === 'paused')
+    ) {
+      dispatch({ type: 'UPDATE_CALORIES', calories: caloriesBurned })
     }
-  }, [caloriesBurned, state.session, state.status])
+  }, [caloriesBurned, state.status, state.session?.sessionId])
 
   useEffect(() => {
     const persist = async () => {
-      if (state.session && state.status !== 'idle' && state.status !== 'finished') {
+      if (
+        state.session &&
+        state.status !== 'idle' &&
+        state.status !== 'finished'
+      ) {
         await workoutSessionStorage.saveSession(state.session)
       }
       if (state.status === 'finished' && state.session) {
@@ -242,6 +292,9 @@ export function useWorkoutSessionManager(currentTotalCalories: number = 0) {
   }, [state.session, state.status])
 
   useEffect(() => {
+    if (hasInitializedRef.current) return
+    hasInitializedRef.current = true
+
     const initialize = async () => {
       if (process.env.NEXT_PUBLIC_TESTING === 'true') {
         dispatch({ type: 'SET_INITIALIZED', initialized: true })
@@ -257,18 +310,22 @@ export function useWorkoutSessionManager(currentTotalCalories: number = 0) {
             dispatch({ type: 'SET_INITIALIZED', initialized: true })
           } else {
             dispatch({ type: 'RECOVER_SESSION', session: saved })
+            // Pin initialCalories to capture the delta correctly
             setInitialCalories(currentTotalCalories - saved.totalCaloriesBurned)
           }
         } else {
           dispatch({ type: 'SET_INITIALIZED', initialized: true })
         }
       } catch (err) {
-        logger.error(err as Error, 'Failed to initialize workout session manager')
+        logger.error(
+          err as Error,
+          'Failed to initialize workout session manager'
+        )
         dispatch({ type: 'SET_INITIALIZED', initialized: true })
       }
     }
     initialize()
-  }, [])
+  }, []) // Removed currentTotalCalories from deps
 
   useEffect(() => {
     const handleFocus = async () => {
@@ -306,16 +363,16 @@ export function useWorkoutSessionManager(currentTotalCalories: number = 0) {
   }, [])
 
   const finishWorkout = useCallback(() => {
-    dispatch({ type: 'FINISH_WORKOUT' })
-  }, [])
+    dispatch({ type: 'FINISH_WORKOUT', finalCalories: caloriesBurned })
+  }, [caloriesBurned])
 
   const endWorkout = useCallback(() => {
     if (state.status === 'running') {
-      dispatch({ type: 'PAUSE_WORKOUT' })
+      pauseWorkout()
     } else if (state.status === 'paused') {
-      dispatch({ type: 'FINISH_WORKOUT' })
+      finishWorkout()
     }
-  }, [state.status])
+  }, [state.status, pauseWorkout, finishWorkout])
 
   const resetWorkout = useCallback(async () => {
     if (state.session) {
