@@ -66,7 +66,7 @@ jobs:
           echo "Waiting for squash and rebase to complete..."
 
           # 3. Wait for SHA to change or success comment
-          MAX_RETRIES=40
+          MAX_RETRIES=60
           RETRY_COUNT=0
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
@@ -213,7 +213,7 @@ jobs:
           echo "Waiting for conflict resolver to complete..."
 
           # 3. Wait for SHA to change or success comment
-          MAX_RETRIES=40
+          MAX_RETRIES=60
           RETRY_COUNT=0
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_B" | awk '{print $1}')
@@ -339,7 +339,7 @@ jobs:
           echo "Waiting for squash and rebase to complete..."
 
           # 3. Wait for SHA to change or success comment
-          MAX_RETRIES=40
+          MAX_RETRIES=60
           RETRY_COUNT=0
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
