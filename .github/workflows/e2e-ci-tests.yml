@@ -50,12 +50,10 @@ jobs:
         id: get_sha
         env:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
-          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || github.token }}
-          REPO: ${{ github.repository }}
         run: |
           set -e
-          # Use gh api for the most reliable source of truth
-          SHA=$(gh api -H "Cache-Control: no-cache" "repos/$REPO/git/ref/heads/$BRANCH_NAME" --jq '.object.sha')
+          # git ls-remote origin queries the server directly and is the most reliable method in this context
+          SHA=$(git ls-remote origin "refs/heads/$BRANCH_NAME" | awk '{print $1}')
           if [ -z "$SHA" ]; then
             echo "❌ Error: Could not get initial SHA for $BRANCH_NAME"
             exit 1
@@ -144,25 +142,27 @@ jobs:
           echo "BASE_BRANCH=$BASE_BRANCH" >> $GITHUB_ENV
 
           # Create a base commit with a file
+          # We use a filename matching *.generated.ts to ensure it's handled by the conflict resolver bot
+          FILENAME="conflict-file.generated.ts"
           git checkout -b $BASE_BRANCH
-          echo "initial content" > conflict-file.txt
-          git add conflict-file.txt
-          git commit -m "Create conflict-file.txt"
+          echo "initial content" > $FILENAME
+          git add $FILENAME
+          git commit -m "Create $FILENAME"
           git push origin $BASE_BRANCH
 
           # Create branch A with a modification
           git checkout -b $BRANCH_A
-          echo "branch-a content" > conflict-file.txt
-          git add conflict-file.txt
-          git commit -m "Modify conflict-file.txt in branch-a"
+          echo "branch-a content" > $FILENAME
+          git add $FILENAME
+          git commit -m "Modify $FILENAME in branch-a"
           git push origin $BRANCH_A
 
           # Create branch B from the base, with a conflicting modification
           git checkout $BASE_BRANCH
           git checkout -b $BRANCH_B
-          echo "branch-b content" > conflict-file.txt
-          git add conflict-file.txt
-          git commit -m "Modify conflict-file.txt in branch-b"
+          echo "branch-b content" > $FILENAME
+          git add $FILENAME
+          git commit -m "Modify $FILENAME in branch-b"
           git push origin $BRANCH_B
 
       - name: Create PR
@@ -179,11 +179,9 @@ jobs:
         id: get_sha
         env:
           BRANCH_B: ${{ env.BRANCH_B }}
-          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || github.token }}
-          REPO: ${{ github.repository }}
         run: |
           set -e
-          SHA=$(gh api -H "Cache-Control: no-cache" "repos/$REPO/git/ref/heads/$BRANCH_B" --jq '.object.sha')
+          SHA=$(git ls-remote origin "refs/heads/$BRANCH_B" | awk '{print $1}')
           if [ -z "$SHA" ]; then
             echo "❌ Error: Could not get initial SHA for $BRANCH_B"
             exit 1
@@ -221,10 +219,11 @@ jobs:
           # Use FETCH_HEAD for guaranteed freshness
           git checkout -B $BRANCH_B FETCH_HEAD
           # Check if the conflict is resolved by verifying the content
-          if grep -q "branch-b content" conflict-file.txt; then
-            echo "✅ Conflict resolved: conflict-file.txt has the correct content."
+          FILENAME="conflict-file.generated.ts"
+          if grep -q "branch-b content" "$FILENAME"; then
+            echo "✅ Conflict resolved: $FILENAME has the correct content."
           else
-            echo "❌ Conflict resolution failed: conflict-file.txt has incorrect content."
+            echo "❌ Conflict resolution failed: $FILENAME has incorrect content."
             exit 1
           fi
 
@@ -287,11 +286,9 @@ jobs:
         id: get_sha
         env:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
-          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.CI_BOT_PAT || github.token }}
-          REPO: ${{ github.repository }}
         run: |
           set -e
-          SHA=$(gh api -H "Cache-Control: no-cache" "repos/$REPO/git/ref/heads/$BRANCH_NAME" --jq '.object.sha')
+          SHA=$(git ls-remote origin "refs/heads/$BRANCH_NAME" | awk '{print $1}')
           if [ -z "$SHA" ]; then
             echo "❌ Error: Could not get initial SHA for $BRANCH_NAME"
             exit 1
