@@ -1,7 +1,7 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
-import { SpotifyTokenResponse } from '../types/spotify'
+import { SpotifyTokenResponse } from '../types/core'
 
 /**
  * Helper for atomic writes to prevent file corruption.

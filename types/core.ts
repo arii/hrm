@@ -205,12 +205,15 @@ export interface SpotifyPlaybackState {
 }
 
 /**
- * Represents a single item in a Spotify playlist.
+ * Represents a single item (track) in a Spotify playlist.
  */
 export interface SpotifyPlaylistItem {
   id: string
   name: string
   uri: string
+  artists?: { name: string }[] | string
+  album?: { name: string }
+  imageUrl?: string | null
 }
 
 /**
@@ -228,6 +231,25 @@ export interface SpotifyCommandParameters {
  * Represents a Spotify playlist.
  */
 export interface SpotifyPlaylist {
+  id?: string
   name: string
   uri: string
+  description?: string | null
+  imageUrl?: string | null
+  trackCount?: number
+  owner?: string
+  public?: boolean
+  isPreset?: boolean
+  isSearchResult?: boolean
+}
+
+/**
+ * Represents the response from the Spotify token endpoint.
+ */
+export interface SpotifyTokenResponse {
+  access_token: string
+  token_type: string
+  scope: string
+  expires_in: number
+  refresh_token?: string
 }
