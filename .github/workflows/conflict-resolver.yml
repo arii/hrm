@@ -36,6 +36,11 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Create or update comment
         if: inputs.pr_number
         uses: peter-evans/create-or-update-comment@v4
@@ -66,7 +71,7 @@ jobs:
         with:
           ref: ${{ inputs.source_branch }}
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Merge target branch
         run: |
