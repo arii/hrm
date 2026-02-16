@@ -144,7 +144,7 @@ This section clarifies when and why `package.json` and `pnpm-lock.yaml` should b
 
 ### Type-Safe API Wrappers
 
-When integrating with third-party libraries that may have incorrect or incomplete TypeScript definitions, we use a type-safe wrapper pattern to ensure our application remains robust. A prime example of this is the `safeSpotifyApi.ts` module.
+When integrating with third-party libraries that may have incorrect or incomplete TypeScript definitions, we use a type-safe wrapper pattern to ensure our application remains reliable. A prime example of this is the `safeSpotifyApi.ts` module.
 
 **Problem**: The `@spotify/web-api-ts-sdk` library does not correctly type the `deviceId` parameter as optional for several of its player methods. This can lead to runtime errors and requires unsafe type assertions in the application code.
 
