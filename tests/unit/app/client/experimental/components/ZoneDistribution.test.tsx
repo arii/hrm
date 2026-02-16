@@ -64,6 +64,13 @@ describe('ZoneDistribution', () => {
     ).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/00:10/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/10\.0%/).length).toBeGreaterThanOrEqual(1)
+
+    // Verify progress bars are rendered with correct values (sorted by intensity: Cardio, FatBurn, WarmUp)
+    const progressBars = screen.getAllByRole('progressbar')
+    expect(progressBars).toHaveLength(3)
+    expect(progressBars[0]).toHaveAttribute('aria-valuenow', '10')
+    expect(progressBars[1]).toHaveAttribute('aria-valuenow', '30')
+    expect(progressBars[2]).toHaveAttribute('aria-valuenow', '60')
   })
 
   it('does not display zones with less than 1% time', () => {
