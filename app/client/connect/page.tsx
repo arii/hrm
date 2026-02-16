@@ -93,7 +93,7 @@ export default function ConnectPage() {
   }, [connectionStatus, userName, userAge, sendData])
 
   const {
-    totalCaloriesBurned: calories,
+    totalCaloriesBurned: totalCalories,
     processHeartRate,
     reset: resetCalculator,
   } = useCalorieTracker({
@@ -115,6 +115,7 @@ export default function ConnectPage() {
 
   const {
     duration: workoutDuration,
+    caloriesBurned: sessionCalories,
     resetWorkout: resetPersistentWorkout,
     hasStarted,
     startWorkout: startPersistentWorkout,
@@ -123,7 +124,7 @@ export default function ConnectPage() {
     finishWorkout: finishPersistentWorkout,
     status: workoutStatus,
     addHrData,
-  } = useWorkoutSessionManager(calories)
+  } = useWorkoutSessionManager(totalCalories)
 
   const handleStartWorkout = useCallback(() => {
     if (workoutStatus === 'paused') {
@@ -141,11 +142,10 @@ export default function ConnectPage() {
 
   const handleEndWorkout = useCallback(() => {
     finishPersistentWorkout()
-    // Note: resetCalculator() is handled by resetWorkout or implicitly on new workout
   }, [finishPersistentWorkout])
 
-  const handleResetWorkout = useCallback(() => {
-    resetPersistentWorkout()
+  const handleResetWorkout = useCallback(async () => {
+    await resetPersistentWorkout()
     resetCalculator()
   }, [resetPersistentWorkout, resetCalculator])
 
@@ -184,7 +184,7 @@ export default function ConnectPage() {
     userName,
     userAge: userAge || 0,
     onHeartRateUpdate: handleHeartRateUpdate,
-    onConnect: handleStartWorkout, // Use the wrapped function
+    onConnect: handleStartWorkout,
   })
 
   useEffect(() => {
@@ -222,7 +222,7 @@ export default function ConnectPage() {
       type: 'HRM_INPUT',
       data: {
         value: currentHR,
-        calories: calories,
+        calories: totalCalories,
         percentage,
         zone: heartRateZone,
       },
@@ -254,7 +254,7 @@ export default function ConnectPage() {
         unit: 'seconds',
         format: 'HH:MM:SS',
       })}
-      caloriesBurned={calories}
+      caloriesBurned={sessionCalories}
       userName={userName}
       setUserName={(name) =>
         setUserSettings((prev) => ({ ...prev, userName: name }))

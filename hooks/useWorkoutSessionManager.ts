@@ -1,17 +1,18 @@
-// hooks/useWorkoutSessionManager.ts
+'use client'
 
 import {
   useReducer,
   useEffect,
-  useCallback,
   useState,
+  useCallback,
   useMemo,
-  useRef,
 } from 'react'
+import { WorkoutStatus } from '@/types/workout'
 import {
   workoutSessionStorage,
   WorkoutSessionData,
   HrDataPoint,
+<<<<<<< HEAD
 } from '../lib/workout-session-storage'
 import { WorkoutStatus } from '@/types/workout'
 import {
@@ -25,32 +26,46 @@ import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useAppSnackbar } from './useAppSnackbar'
 import { isSessionStale } from '../lib/workout-session'
 
+<<<<<<< HEAD
 // --- State, Actions, and Reducer ---
 
 interface SessionManagerState {
   session: WorkoutSessionData | null
   status: WorkoutStatus
+=======
+interface WorkoutSessionState {
+  status: WorkoutStatus
+  startTime: number | null
+  pauseStartTime: number | null
+  totalPausedTime: number
+  isInitialized: boolean
+  session: WorkoutSessionData | null
+>>>>>>> 49c2b7c1 (refactor: consolidate redundant hooks and components)
 }
 
-type SessionManagerAction =
-  | { type: 'SET_SESSION'; payload: WorkoutSessionData }
-  | { type: 'START'; payload: { age: number; weight: number; maxHr?: number } }
-  | { type: 'RESUME' }
-  | { type: 'END' }
-  | { type: 'FINISH' }
-  | { type: 'RESET' }
-  | { type: 'ADD_HR_DATA'; payload: HrDataPoint }
-  | { type: 'UPDATE_CALORIES'; payload: number }
+type WorkoutAction =
+  | { type: 'SET_INITIALIZED'; initialized: boolean }
+  | { type: 'RECOVER_SESSION'; session: WorkoutSessionData }
+  | { type: 'START_WORKOUT'; age: number; weight: number; maxHr: number }
+  | { type: 'PAUSE_WORKOUT' }
+  | { type: 'RESUME_WORKOUT' }
+  | { type: 'FINISH_WORKOUT' }
+  | { type: 'RESET_WORKOUT' }
+  | { type: 'ADD_HR_DATA'; data: HrDataPoint }
 
-const initialState: SessionManagerState = {
-  session: null,
+const initialState: WorkoutSessionState = {
   status: 'idle',
+  startTime: null,
+  pauseStartTime: null,
+  totalPausedTime: 0,
+  isInitialized: false,
+  session: null,
 }
 
-function sessionManagerReducer(
-  state: SessionManagerState,
-  action: SessionManagerAction
-): SessionManagerState {
+function workoutReducer(
+  state: WorkoutSessionState,
+  action: WorkoutAction
+): WorkoutSessionState {
   switch (action.type) {
     case 'SET_SESSION': {
       return {
@@ -66,66 +81,94 @@ function sessionManagerReducer(
         HR_ZONE_ORDER.map((zone) => [zone, 0])
       ) as Record<HeartRateZone, number>
 
-      const newSession: WorkoutSessionData = {
-        sessionId: uuidv4(),
-        startTime: Date.now(),
-        endTime: null,
-        status: 'running',
-        hrHistory: [],
-        timeInZones: initialTimeInZones,
-        averageHr: 0,
-        maxHr: 0,
-        calorieHistory: [],
-        totalCaloriesBurned: 0,
-        userSettings: { age, weight, maxHr },
-        lastSyncTime: Date.now(),
-        syncStatus: 'pending',
-      }
+    case 'RECOVER_SESSION':
       return {
         ...state,
-        session: newSession,
-        status: 'running',
+        status: action.session.status,
+        startTime: action.session.startTime,
+        totalPausedTime: 0,
+        pauseStartTime: action.session.status === 'paused' ? Date.now() : null,
+        session: action.session,
+        isInitialized: true,
       }
-    }
-    case 'RESUME': {
-      if (!state.session) return state
+
+    case 'START_WORKOUT':
+      const now = Date.now()
       return {
         ...state,
-        session: { ...state.session, status: 'running' },
         status: 'running',
-      }
-    }
-    case 'END': {
-      if (!state.session) return state
-      // If running, transition to 'paused'. If paused, transition to 'finished'.
-      const nextStatus = state.status === 'running' ? 'paused' : 'finished'
-      return {
-        ...state,
+        startTime: now,
+        pauseStartTime: null,
+        totalPausedTime: 0,
         session: {
-          ...state.session,
-          status: nextStatus,
-          // Only set endTime when the session is truly finished
-          endTime: nextStatus === 'finished' ? Date.now() : null,
+          sessionId: crypto.randomUUID(),
+          startTime: now,
+          endTime: null,
+          status: 'running',
+          hrHistory: [],
+          timeInZones: {
+            [HrZoneName.Recovery]: 0,
+            [HrZoneName.WarmUp]: 0,
+            [HrZoneName.FatBurn]: 0,
+            [HrZoneName.Cardio]: 0,
+            [HrZoneName.Peak]: 0,
+            [HrZoneName.Max]: 0,
+          } as Record<HrZoneName, number>,
+          averageHr: 0,
+          maxHr: 0,
+          calorieHistory: [],
+          totalCaloriesBurned: 0,
+          userSettings: {
+            age: action.age,
+            weight: action.weight,
+            maxHr: action.maxHr,
+          },
+          lastSyncTime: now,
+          syncStatus: 'pending',
         },
-        status: nextStatus,
       }
-    }
-    case 'FINISH': {
+
+    case 'PAUSE_WORKOUT':
+      if (state.status !== 'running') return state
+      return {
+        ...state,
+        status: 'paused',
+        pauseStartTime: Date.now(),
+        session: state.session
+          ? { ...state.session, status: 'paused' }
+          : null,
+      }
+
+    case 'RESUME_WORKOUT':
+      if (state.status !== 'paused' || !state.pauseStartTime) return state
+      return {
+        ...state,
+        status: 'running',
+        totalPausedTime:
+          state.totalPausedTime + (Date.now() - state.pauseStartTime),
+        pauseStartTime: null,
+        session: state.session
+          ? { ...state.session, status: 'running' }
+          : null,
+      }
+
+    case 'FINISH_WORKOUT':
       if (!state.session) return state
       return {
         ...state,
+        status: 'finished',
+        pauseStartTime: null,
         session: {
           ...state.session,
           status: 'finished',
           endTime: Date.now(),
         },
-        status: 'finished',
       }
-    }
-    case 'RESET': {
-      return initialState
-    }
-    case 'ADD_HR_DATA': {
+
+    case 'RESET_WORKOUT':
+      return { ...initialState, isInitialized: true }
+
+    case 'ADD_HR_DATA':
       if (!state.session || state.status !== 'running') return state
 
       const lastDataPoint =
@@ -149,7 +192,19 @@ function sessionManagerReducer(
       const oldAverage = state.session.averageHr
       const oldLength = state.session.hrHistory.length
       const newAverageHr =
-        (oldAverage * oldLength + action.payload.hr) / (oldLength + 1)
+        newHrHistory.reduce((sum, p) => sum + p.hr, 0) / newHrHistory.length
+
+      const { zone: zoneIndex } = calculateZoneFromMaxHr(action.data.hr, state.session.userSettings.maxHr)
+      const zoneLabel = getHrZoneLabel(zoneIndex) as HrZoneName
+
+      // Calculate time delta since last point or session start
+      const lastPoint = state.session.hrHistory[state.session.hrHistory.length - 1]
+      const startTime = lastPoint ? lastPoint.time : state.session.startTime
+      const timeDeltaSeconds = Math.max(0, Math.floor((action.data.time - (startTime || 0)) / 1000))
+
+      const newTimeInZones = { ...state.session.timeInZones }
+      newTimeInZones[zoneLabel] = (newTimeInZones[zoneLabel] || 0) + timeDeltaSeconds
+
       return {
         ...state,
         session: {
@@ -160,200 +215,158 @@ function sessionManagerReducer(
           timeInZones: newTimeInZones,
         },
       }
-    }
-    case 'UPDATE_CALORIES': {
-      if (!state.session) return state
-      return {
-        ...state,
-        session: {
-          ...state.session,
-          totalCaloriesBurned: action.payload,
-        },
-      }
-    }
+
     default:
       return state
   }
 }
 
-// --- The Hook ---
-
-/**
- * Manages the persistent workout session state, including HR history and calorie tracking.
- * Consolidates logic from the legacy useWorkoutSession hook.
- *
- * @param {number} totalCalories - The current cumulative calories from a calorie tracker.
- */
-export const useWorkoutSessionManager = (totalCalories: number = 0) => {
-  const [state, dispatch] = useReducer(sessionManagerReducer, initialState)
-  const [isInitialized, setIsInitialized] = useState(false)
-  const [startCalories, setStartCalories] = useState(0)
-  const totalCaloriesRef = useRef(totalCalories)
+export function useWorkoutSessionManager(currentTotalCalories: number = 0) {
+  const [state, dispatch] = useReducer(workoutReducer, initialState)
+  const [duration, setDuration] = useState(0)
+  const [initialCalories, setInitialCalories] = useState(0)
   const { showInfo } = useAppSnackbar()
 
-  useEffect(() => {
-    totalCaloriesRef.current = totalCalories
-  }, [totalCalories])
+  const caloriesBurned = useMemo(() => {
+    if (!state.startTime) return 0
+    return Math.max(0, currentTotalCalories - initialCalories)
+  }, [currentTotalCalories, initialCalories, state.startTime])
 
-  const clearStaleSession = useCallback(
-    async (
-      session: WorkoutSessionData,
-      message: string,
-      onStale: (message: string) => void
-    ) => {
-      if (isSessionStale(session)) {
-        const sessionDate = new Date(session.startTime)
-        console.info(
-          `[SessionManager] Stale session from ${sessionDate.toDateString()} detected. Clearing for new day ${new Date().toDateString()}.`
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (state.status === 'running' && state.startTime) {
+      const updateDuration = () => {
+        const now = Date.now()
+        const totalElapsedMs = now - state.startTime!
+        const netDurationSeconds = Math.floor(
+          (totalElapsedMs - state.totalPausedTime) / 1000
         )
-        await workoutSessionStorage.deleteSession(session.sessionId)
-        onStale(message)
-        return true // Indicates session was stale and cleared
+        setDuration(Math.max(0, netDurationSeconds))
       }
-      return false // Indicates session was not stale
-    },
-    []
-  )
 
-  const checkAndRotateSession = useCallback(async () => {
-    if (state.session) {
-      await clearStaleSession(
-        state.session,
-        'New day detected. A fresh workout session has started.',
-        (message) => {
-          dispatch({ type: 'RESET' })
-          showInfo(message)
-        }
-      )
+      updateDuration()
+      interval = setInterval(updateDuration, 1000)
     }
-  }, [state.session, showInfo, clearStaleSession])
+    return () => clearInterval(interval)
+  }, [state.status, state.startTime, state.totalPausedTime])
 
-  // Auto-recovery of incomplete sessions
   useEffect(() => {
-    const recoverSession = async () => {
-      // Skip recovery in testing environment to ensure predictable initial state
+    if (state.session && (state.status === 'running' || state.status === 'paused')) {
+      state.session.totalCaloriesBurned = caloriesBurned
+    }
+  }, [caloriesBurned, state.session, state.status])
+
+  useEffect(() => {
+    const persist = async () => {
+      if (state.session && state.status !== 'idle' && state.status !== 'finished') {
+        await workoutSessionStorage.saveSession(state.session)
+      }
+      if (state.status === 'finished' && state.session) {
+        await workoutSessionStorage.saveSession(state.session)
+      }
+    }
+    persist()
+  }, [state.session, state.status])
+
+  useEffect(() => {
+    const initialize = async () => {
       if (process.env.NEXT_PUBLIC_TESTING === 'true') {
-        setIsInitialized(true)
+        dispatch({ type: 'SET_INITIALIZED', initialized: true })
         return
       }
 
-      let incompleteSession = await workoutSessionStorage.getIncompleteSession()
-
-      if (incompleteSession) {
-        const wasStale = await clearStaleSession(
-          incompleteSession,
-          'New day detected. Your previous session was cleared.',
-          showInfo
-        )
-        if (wasStale) {
-          incompleteSession = null
+      try {
+        const saved = await workoutSessionStorage.getIncompleteSession()
+        if (saved) {
+          if (isSessionStale(saved)) {
+            await workoutSessionStorage.deleteSession(saved.sessionId)
+            showInfo('New day detected. Your previous session was cleared.')
+            dispatch({ type: 'SET_INITIALIZED', initialized: true })
+          } else {
+            dispatch({ type: 'RECOVER_SESSION', session: saved })
+            setInitialCalories(currentTotalCalories - saved.totalCaloriesBurned)
+          }
+        } else {
+          dispatch({ type: 'SET_INITIALIZED', initialized: true })
         }
+      } catch (err) {
+        logger.error(err as Error, 'Failed to initialize workout session manager')
+        dispatch({ type: 'SET_INITIALIZED', initialized: true })
       }
+    }
+    initialize()
+  }, [])
 
-      if (incompleteSession) {
-        dispatch({ type: 'SET_SESSION', payload: incompleteSession })
+  useEffect(() => {
+    const handleFocus = async () => {
+      if (state.session && isSessionStale(state.session)) {
+        const sessionId = state.session.sessionId
+        dispatch({ type: 'RESET_WORKOUT' })
+        await workoutSessionStorage.deleteSession(sessionId)
+        showInfo('New day detected. A fresh workout session has started.')
       }
-      setIsInitialized(true)
     }
-
-    if (!isInitialized) {
-      recoverSession()
-    }
-  }, [isInitialized, showInfo, clearStaleSession])
-
-  // Validate session on window focus
-  useEffect(() => {
-    window.addEventListener('focus', checkAndRotateSession)
-    return () => {
-      window.removeEventListener('focus', checkAndRotateSession)
-    }
-  }, [checkAndRotateSession])
-
-  // Persist session changes to IndexedDB
-  useEffect(() => {
-    if (state.session) {
-      workoutSessionStorage.saveSession(state.session)
-    }
-  }, [state.session, state.session?.status])
-
-  // Sync calories to session
-  useEffect(() => {
-    if (state.status === 'running' || state.status === 'paused') {
-      const currentWorkoutCalories = Math.max(
-        0,
-        totalCaloriesRef.current - startCalories
-      )
-      dispatch({ type: 'UPDATE_CALORIES', payload: currentWorkoutCalories })
-    }
-  }, [totalCalories, startCalories, state.status])
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [state.session, showInfo])
 
   const startWorkout = useCallback(
     (age: number, weight: number, maxHr?: number) => {
-      setStartCalories(totalCaloriesRef.current)
-      dispatch({ type: 'START', payload: { age, weight, maxHr } })
+      setInitialCalories(currentTotalCalories)
+      setDuration(0)
+      dispatch({
+        type: 'START_WORKOUT',
+        age,
+        weight,
+        maxHr: maxHr || 220 - age,
+      })
     },
-    []
+    [currentTotalCalories]
   )
 
-  const resumeWorkout = useCallback(() => {
-    dispatch({ type: 'RESUME' })
+  const pauseWorkout = useCallback(() => {
+    dispatch({ type: 'PAUSE_WORKOUT' })
   }, [])
 
-  const endWorkout = useCallback(() => {
-    dispatch({ type: 'END' })
+  const resumeWorkout = useCallback(() => {
+    dispatch({ type: 'RESUME_WORKOUT' })
   }, [])
 
   const finishWorkout = useCallback(() => {
-    dispatch({ type: 'FINISH' })
+    dispatch({ type: 'FINISH_WORKOUT' })
   }, [])
+
+  const endWorkout = useCallback(() => {
+    if (state.status === 'running') {
+      dispatch({ type: 'PAUSE_WORKOUT' })
+    } else if (state.status === 'paused') {
+      dispatch({ type: 'FINISH_WORKOUT' })
+    }
+  }, [state.status])
 
   const resetWorkout = useCallback(async () => {
     if (state.session) {
       await workoutSessionStorage.deleteSession(state.session.sessionId)
     }
-    setStartCalories(0)
-    dispatch({ type: 'RESET' })
+    setInitialCalories(0)
+    setDuration(0)
+    dispatch({ type: 'RESET_WORKOUT' })
   }, [state.session])
 
-  const addHrData = useCallback((hrDataPoint: HrDataPoint) => {
-    dispatch({ type: 'ADD_HR_DATA', payload: hrDataPoint })
+  const addHrData = useCallback((data: HrDataPoint) => {
+    dispatch({ type: 'ADD_HR_DATA', data })
   }, [])
 
-  const [duration, setDuration] = useState(0)
-
-  useEffect(() => {
-    if (state.status !== 'running') {
-      return
-    }
-
-    const interval = setInterval(() => {
-      if (state.session?.startTime) {
-        const now = Date.now()
-        // Simple duration calculation. For more accuracy with pauses,
-        // we'd need to track total paused time in the session object.
-        setDuration(Math.floor((now - state.session.startTime) / 1000))
-      }
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [state.status, state.session?.startTime])
-
-  const caloriesBurned = useMemo(() => {
-    if (state.status === 'idle') return 0
-    return Math.max(0, Math.round(totalCalories - startCalories))
-  }, [state.status, totalCalories, startCalories])
-
   return {
-    session: state.session,
-    status: state.status,
-    isInitialized,
+    ...state,
     duration,
     caloriesBurned,
     hasStarted: state.status !== 'idle',
     startWorkout,
+    pauseWorkout,
     resumeWorkout,
-    endWorkout,
     finishWorkout,
+    endWorkout,
     resetWorkout,
     addHrData,
   }
