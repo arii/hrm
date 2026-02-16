@@ -175,7 +175,7 @@ describe('components/SpotifyControls', () => {
     render(<SpotifyControls />)
 
     await waitFor(() => {
-      // Check the displayed text in the select component, which is more robust
+      // Check the displayed text in the select component
       // for MUI components than checking the underlying value attribute.
       const deviceSelect = screen.getByRole('combobox')
       expect(deviceSelect).toHaveTextContent(HRM_WEB_PLAYER_NAME)
