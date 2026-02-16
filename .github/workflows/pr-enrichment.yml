@@ -118,14 +118,14 @@ jobs:
             echo "📊 PR Metrics Gathering Attempt $i..."
 
             # 1. Fetch live file list
-            API_FILES_LIST=$(retry_command 1 0 gh pr diff "$PR_NUMBER" --name-only)
+            API_FILES_LIST=$(retry_command 2 1 gh pr diff "$PR_NUMBER" --name-only)
 
             # 2. Fetch live metrics from the PR metadata
-            API_DATA=$(retry_command 1 0 gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles)
+            API_DATA=$(retry_command 2 1 gh pr view "$PR_NUMBER" --json additions,deletions,changedFiles)
 
             # 3. If file list exists, we prefer calculating metrics from the diff stream for consistency
             if [ -n "$API_FILES_LIST" ]; then
-               API_NUMSTAT=$(retry_command 1 0 gh pr diff "$PR_NUMBER" --numstat)
+               API_NUMSTAT=$(retry_command 2 1 gh pr diff "$PR_NUMBER" --numstat)
                if [ -n "$API_NUMSTAT" ]; then
                   API_ADDITIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$1} END {print sum+0}')
                   API_DELETIONS=$(echo "$API_NUMSTAT" | awk '{sum+=$2} END {print sum+0}')
@@ -134,6 +134,7 @@ jobs:
                   API_DELETIONS=$(echo "$API_DATA" | jq -r '.deletions // 0')
                fi
 
+               # Use exact line count from the file list
                API_COUNT=$(echo "$API_FILES_LIST" | grep -c . || echo "0")
 
                # We consider the data valid if we have at least one file changed
