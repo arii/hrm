@@ -76,6 +76,12 @@ jobs:
           REVIEW_THROTTLE_MINUTES: 30
           BOT_USERNAME: 'gemini-bot'
         run: |
+          # Ensure the specific PR head commit is available locally before analysis.
+          # This prevents "fatal: bad object" errors if fetch-depth: 0 missed the unmerged PR ref.
+          if [ -n "$PR_NUMBER" ] && [ -n "$HEAD_SHA" ]; then
+            git fetch origin "refs/pull/$PR_NUMBER/head" || echo "::warning::Failed to fetch PR head ref"
+          fi
+
           chmod +x ./scripts/decide-review-strategy.sh
           ./scripts/decide-review-strategy.sh
 
