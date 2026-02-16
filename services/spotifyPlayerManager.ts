@@ -49,7 +49,7 @@ export class SpotifyPlayerManager {
         currentState.playback.is_playing ||
         currentState.playback.track.name !== NOT_PLAYING_MESSAGE
       ) {
-        this.setState((prev) => ({
+        this.setState((prev: SpotifyData) => ({
           ...prev,
           playback: {
             ...prev.playback,
@@ -87,7 +87,7 @@ export class SpotifyPlayerManager {
       is_playing !== currentState.playback.is_playing ||
       volume_percent !== currentState.playback.volume_percent
     ) {
-      this.setState((prev) => ({
+      this.setState((prev: SpotifyData) => ({
         ...prev,
         playback: {
           track: {
@@ -224,7 +224,7 @@ export class SpotifyPlayerManager {
               sdk.player.setPlaybackVolume(clampedVolume, deviceId as string),
             { deviceId, volume: clampedVolume }
           )
-          this.setState((prevState) => ({
+          this.setState((prevState: SpotifyData) => ({
             ...prevState,
             playback: {
               ...prevState.playback,
