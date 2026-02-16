@@ -15,7 +15,6 @@ import { useConnectSettings } from './hooks/useConnectSettings'
 
 export default function ConnectPage() {
   const {
-    userSettings,
     setUserSettings,
     userName,
     userAge,

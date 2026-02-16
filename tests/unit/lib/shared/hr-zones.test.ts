@@ -54,7 +54,10 @@ describe('lib/shared/hr-zones', () => {
     it('should calculate zone info using default max HR when age is undefined', () => {
       // Default Max HR = 185
       // 185 bpm / 185 max = 100% -> Zone 6 (since 100% >= 95%)
-      const result = calculateHrZoneInfo(185, { method: 'MAX_HR', age: undefined })
+      const result = calculateHrZoneInfo(185, {
+        method: 'MAX_HR',
+        age: undefined,
+      })
       expect(result.percentage).toBe(100)
       expect(result.zone).toBe(6)
     })
