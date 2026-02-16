@@ -14,8 +14,10 @@ jobs:
     steps:
       - name: Validate Context
         id: validate
+        env:
+          PR_URL: ${{ (github.event.pull_request && github.event.pull_request.html_url) || '' }}
         run: |
-          if [ "${{ github.event.pull_request.html_url }}" == "" ]; then
+          if [ -z "$PR_URL" ]; then
             echo "::warning::Missing PR URL. Skipping auto-merge."
             echo "should_run=false" >> $GITHUB_OUTPUT
           else
@@ -37,12 +39,12 @@ jobs:
         if: steps.validate.outputs.should_run == 'true' && steps.check.outputs.result == 'true'
         run: gh pr review --approve "$PR_URL"
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_URL: ${{ (github.event.pull_request && github.event.pull_request.html_url) || '' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enable Auto-merge
         if: steps.validate.outputs.should_run == 'true' && steps.check.outputs.result == 'true'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_URL: ${{ (github.event.pull_request && github.event.pull_request.html_url) || '' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

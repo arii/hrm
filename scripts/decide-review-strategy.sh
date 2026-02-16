@@ -29,6 +29,29 @@ set -e
 NEEDS_REVIEW="false"
 SKIP_REASON="no criteria met"
 
+# --- Regex to filter trivial files (assets, locks, configs) ---
+IGNORE_PATTERN='\.(md|png|svg|ico|jpg|jpeg|gif|webp)$|(package-lock\.json|pnpm-lock\.yaml|\.gitignore|\.editorconfig)$'
+
+# --- Helper Functions ---
+
+# Determines if the diff between two commits contains substantive code changes.
+# Updates NEEDS_REVIEW and SKIP_REASON global variables.
+check_substantive() {
+  local target_base="$1"
+  local target_head="$2"
+  local reason_suffix="$3"
+
+  # Use git diff with the ignore pattern to filter out non-substantive changes.
+  # The grep -vE command excludes files matching the IGNORE_PATTERN.
+  if [ -z "$(git diff --name-only "$target_base" "$target_head" | grep -vE "$IGNORE_PATTERN" || true)" ]; then
+    NEEDS_REVIEW="false"
+    SKIP_REASON="no significant code changes $reason_suffix (filtered by anti-slop rules)"
+  else
+    NEEDS_REVIEW="true"
+    SKIP_REASON=""
+  fi
+}
+
 # --- Guard Check ---
 if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "0" || "$PR_NUMBER" == "null" ]]; then
   echo "::warning::PR_NUMBER is missing or invalid ($PR_NUMBER). Cannot perform review analysis."
@@ -82,13 +105,6 @@ echo "::info::Passed initial checks (manual override, comment limit, throttling)
 # The first priority is to review PRs that have failed CI checks.
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
   # Use the dedicated QUALITY_GATE_BOT_USERNAMES to find the correct report.
-  # This query is broken down for readability:
-  #   1. `--arg bot_users "$QUALITY_GATE_BOT_USERNAMES"`: Pass the usernames as a variable.
-  #   2. `($bot_users | split(" ")) as $bot_list`: Split the string into an array of bot names.
-  #   3. `map(select(...))`: Filter the comments array.
-  #   4. `(.author.login? as $author | $bot_list | index($author))`: Check if the comment author is in our bot list.
-  #   5. `((.body // "") | contains("Quality Gate Results"))`: Check if the comment body contains the quality gate string.
-  #   6. `| .[-1].body // ""`: Get the body of the last matching comment, or an empty string if none matched.
   QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments | jq -r \
     --arg bot_users "$QUALITY_GATE_BOT_USERNAMES" \
     '($bot_users | split(" ")) as $bot_list | .comments | map(select(.author.login? as $author | ($bot_list | index($author)) and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""'
@@ -99,7 +115,6 @@ if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
     SKIP_REASON="quality failure with no detailed report (likely static analysis)"
   else
     # Check for specific types of test failures that warrant an AI review.
-    # The `grep | head` combination ensures we only get a single number.
     HAS_INFRA_FAILURE=$( (echo "$QUALITY_REPORT" | grep -c "Infra Tests.*❌" 2>/dev/null || echo 0) | head -n 1)
     HAS_UNIT_FAILURE=$( (echo "$QUALITY_REPORT" | grep -c "Unit Tests.*❌" 2>/dev/null || echo 0) | head -n 1)
     HAS_PERF_FAILURE=$( (echo "$QUALITY_REPORT" | grep -c "Perf Tests.*❌" 2>/dev/null || echo 0) | head -n 1)
@@ -131,7 +146,6 @@ else
     SKIP_REASON=""
   else
     # Extract the commit SHA from the last review comment to see if it's outdated.
-    # Updated regex to handle "Reviewed commit: `sha`", "Reviewed at commit: `sha`", etc.
     LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oP '(?<=> Failed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=commit: `)[a-f0-9]{7,40}(?=`)|(?<=`)[a-f0-9]{7,40}(?=` commit)' | head -n 1)
     
     if [ -z "$LAST_REVIEWED_SHA" ]; then
@@ -148,27 +162,10 @@ else
         else
             # Check for substantial code changes since the last review.
             if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
-                CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
-                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
-
-                if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                    SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
-                    NEEDS_REVIEW="false"
-                else
-                    NEEDS_REVIEW="true"
-                    SKIP_REASON=""
-                fi
+                check_substantive "$LAST_REVIEWED_SHA" "$HEAD_SHA" "since last review at $LAST_REVIEWED_SHA"
             else
                 # Fallback if the last reviewed SHA is not in the history (e.g., after a force-push).
-                CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
-                if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                    SKIP_REASON="no significant code changes from base"
-                    NEEDS_REVIEW="false"
-                else
-                    NEEDS_REVIEW="true"
-                    SKIP_REASON=""
-                fi
+                check_substantive "$BASE_SHA" "$HEAD_SHA" "from base"
             fi
         fi
     fi

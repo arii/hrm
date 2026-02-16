@@ -25,8 +25,8 @@ jobs:
       - name: 📋 Display Configuration
         run: |
           echo "🎯 Release Configuration:"
-          echo "  Deploy Directory: ${{ github.event.inputs.deploy_dir }}"
-          echo "  Skip Verification: ${{ github.event.inputs.skip_verification }}"
+          echo "  Deploy Directory: ${{ (github.event.inputs && github.event.inputs.deploy_dir) || '~/hrm-release' }}"
+          echo "  Skip Verification: ${{ (github.event.inputs && github.event.inputs.skip_verification) || 'false' }}"
 
       - uses: actions/checkout@v4
 
@@ -56,8 +56,10 @@ jobs:
           ./scripts/package.sh
 
       - name: 📂 Prepare Local Deployment Directory
+        env:
+          DEPLOY_DIR_INPUT: ${{ (github.event.inputs && github.event.inputs.deploy_dir) || '~/hrm-release' }}
         run: |
-          DEPLOY_DIR="${{ github.event.inputs.deploy_dir }}"
+          DEPLOY_DIR="$DEPLOY_DIR_INPUT"
           DEPLOY_DIR="${DEPLOY_DIR/#\~/$HOME}"
 
           echo "Creating deployment directory: $DEPLOY_DIR"
@@ -80,8 +82,9 @@ jobs:
 
       - name: 📦 Install Production Dependencies
         env:
-          DEPLOY_DIR: ${{ github.event.inputs.deploy_dir }}
+          DEPLOY_DIR_INPUT: ${{ (github.event.inputs && github.event.inputs.deploy_dir) || '~/hrm-release' }}
         run: |
+          DEPLOY_DIR="$DEPLOY_DIR_INPUT"
           DEPLOY_DIR="${DEPLOY_DIR/#\~/$HOME}"
           cd "$DEPLOY_DIR"
 
@@ -90,8 +93,9 @@ jobs:
 
       - name: 🔄 Start/Reload Application (PM2)
         env:
-          DEPLOY_DIR: ${{ github.event.inputs.deploy_dir }}
+          DEPLOY_DIR_INPUT: ${{ (github.event.inputs && github.event.inputs.deploy_dir) || '~/hrm-release' }}
         run: |
+          DEPLOY_DIR="$DEPLOY_DIR_INPUT"
           DEPLOY_DIR="${DEPLOY_DIR/#\~/$HOME}"
           cd "$DEPLOY_DIR"
 
@@ -103,10 +107,11 @@ jobs:
           fi
 
       - name: 🕵️ Verify Deployment
-        if: ${{ !github.event.inputs.skip_verification }}
+        if: ${{ !(github.event.inputs && github.event.inputs.skip_verification) }}
         env:
-          DEPLOY_DIR: ${{ github.event.inputs.deploy_dir }}
+          DEPLOY_DIR_INPUT: ${{ (github.event.inputs && github.event.inputs.deploy_dir) || '~/hrm-release' }}
         run: |
+          DEPLOY_DIR="$DEPLOY_DIR_INPUT"
           DEPLOY_DIR="${DEPLOY_DIR/#\~/$HOME}"
           cd "$DEPLOY_DIR"
 
@@ -121,8 +126,9 @@ jobs:
       - name: ✅ Deployment Summary
         if: success()
         env:
-          DEPLOY_DIR: ${{ github.event.inputs.deploy_dir }}
+          DEPLOY_DIR_INPUT: ${{ (github.event.inputs && github.event.inputs.deploy_dir) || '~/hrm-release' }}
         run: |
+          DEPLOY_DIR="$DEPLOY_DIR_INPUT"
           DEPLOY_DIR="${DEPLOY_DIR/#\~/$HOME}"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "✅ RELEASE DEPLOYMENT SUCCESSFUL"
@@ -142,8 +148,9 @@ jobs:
       - name: ❌ Deployment Failed
         if: failure()
         env:
-          DEPLOY_DIR: ${{ github.event.inputs.deploy_dir }}
+          DEPLOY_DIR_INPUT: ${{ (github.event.inputs && github.event.inputs.deploy_dir) || '~/hrm-release' }}
         run: |
+          DEPLOY_DIR="$DEPLOY_DIR_INPUT"
           DEPLOY_DIR="${DEPLOY_DIR/#\~/$HOME}"
           echo "❌ Deployment failed!"
           echo ""

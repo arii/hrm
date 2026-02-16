@@ -19,7 +19,7 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ (github.event.pull_request && github.event.pull_request.number) || (inputs.pr_number && inputs.pr_number != '0' && inputs.pr_number) || github.ref }}
+  group: ${{ github.workflow }}-${{ (github.event.pull_request && github.event.pull_request.number) || (inputs.pr_number && inputs.pr_number != '0' && inputs.pr_number) || github.run_id }}
   cancel-in-progress: true
 
 permissions:
@@ -160,10 +160,10 @@ jobs:
         id: diff_check
         env:
           IS_E2E: ${{ needs.filter.outputs.is_e2e }}
-          PR_TITLE: ${{ github.event.pull_request && github.event.pull_request.title }}
-          HEAD_REF: ${{ github.head_ref || inputs.head_ref }}
-          EVENT_BASE_SHA: ${{ github.event.pull_request && github.event.pull_request.base.sha }}
-          EVENT_HEAD_SHA: ${{ github.event.pull_request && github.event.pull_request.head.sha }}
+          PR_TITLE: ${{ (github.event.pull_request && github.event.pull_request.title) || '' }}
+          HEAD_REF: ${{ github.head_ref || inputs.head_ref || '' }}
+          EVENT_BASE_SHA: ${{ (github.event.pull_request && github.event.pull_request.base.sha) || '' }}
+          EVENT_HEAD_SHA: ${{ (github.event.pull_request && github.event.pull_request.head.sha) || '' }}
         run: |
           # Bypass check for E2E tests to ensure they always run the full quality gate
           if [[ "$IS_E2E" == "true" ]] || [[ "$PR_TITLE" == *"E2E Test PR"* ]] || [[ "$HEAD_REF" == "e2e-test-"* ]]; then

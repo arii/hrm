@@ -24,43 +24,46 @@ jobs:
       is_review: ${{ steps.route.outputs.is_review }}
       is_squash: ${{ steps.route.outputs.is_squash }}
       is_resolve: ${{ steps.route.outputs.is_resolve }}
+      pr_number: ${{ steps.route.outputs.pr_number }}
+      comment_id: ${{ steps.route.outputs.comment_id }}
     steps:
       - id: route
         env:
           BODY: ${{ (github.event.comment && github.event.comment.body) || '' }}
+          PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || 0 }}
+          COMMENT_ID: ${{ (github.event.comment && github.event.comment.id) || 0 }}
         run: |
           if echo "$BODY" | grep -q "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -q "@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -q "@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "comment_id=$COMMENT_ID" >> $GITHUB_OUTPUT
 
   execute-review:
     needs: [router]
-    if: needs.router.outputs.is_review == 'true' && (github.event.issue && github.event.issue.number && github.event.issue.number != 0)
+    if: needs.router.outputs.is_review == 'true' && needs.router.outputs.pr_number != '0'
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       pr_quality_result: 'not_applicable'
       trigger_event: 'comment'
       comment_body: ${{ (github.event.comment && github.event.comment.body) || '' }}
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ needs.router.outputs.pr_number }}
     secrets: inherit
 
   execute-squash:
     needs: [router]
-    if: needs.router.outputs.is_squash == 'true' && (github.event.issue && github.event.issue.number && github.event.issue.number != 0)
+    if: needs.router.outputs.is_squash == 'true' && needs.router.outputs.pr_number != '0'
     uses: ./.github/workflows/pr-squash.yml
     with:
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ needs.router.outputs.pr_number }}
       comment_body: ${{ (github.event.comment && github.event.comment.body) || '' }}
-      comment_id: ${{ (github.event.comment && github.event.comment.id) || 0 }}
+      comment_id: ${{ needs.router.outputs.comment_id }}
     secrets: inherit
 
-  # Restoring conflict resolution logic from gemini-orchestrator.yml
   prepare-resolve:
     needs: [router]
-    if: needs.router.outputs.is_resolve == 'true'
+    if: needs.router.outputs.is_resolve == 'true' && needs.router.outputs.pr_number != '0'
     runs-on: ubuntu-latest
-    env:
-      PR_NUMBER_RAW: ${{ (github.event.issue && github.event.issue.number) || 0 }}
     outputs:
       target_branch: ${{ steps.get_branches.outputs.target_branch }}
       source_branch: ${{ steps.get_branches.outputs.source_branch }}
@@ -69,30 +72,32 @@ jobs:
       - name: Validate Context
         id: validate
         run: |
-          if [ "$PR_NUMBER_RAW" == "0" ] || [ -z "$PR_NUMBER_RAW" ]; then
-            echo "::warning::Missing or invalid PR_NUMBER ($PR_NUMBER_RAW). Skipping job."
+          PR_NUMBER=${{ needs.router.outputs.pr_number }}
+          if [ "$PR_NUMBER" == "0" ] || [ -z "$PR_NUMBER" ]; then
+            echo "::warning::Missing or invalid PR_NUMBER ($PR_NUMBER). Skipping job."
             echo "should_run=false" >> $GITHUB_OUTPUT
           else
             echo "should_run=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Add reaction to comment
-        if: steps.validate.outputs.should_run == 'true' && (github.event.comment && github.event.comment.id && github.event.comment.id != 0)
+        if: steps.validate.outputs.should_run == 'true' && needs.router.outputs.comment_id != '0'
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ github.event.comment.id }}
+          comment-id: ${{ needs.router.outputs.comment_id }}
           reaction: eyes
+
       - name: Get PR Details
         if: steps.validate.outputs.should_run == 'true'
         id: get_branches
         uses: actions/github-script@v7
         env:
-          PR_NUMBER_RAW: ${{ env.PR_NUMBER_RAW }}
+          PR_NUMBER: ${{ needs.router.outputs.pr_number }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = Number(process.env.PR_NUMBER_RAW) || (context.payload.pull_request && context.payload.pull_request.number) || (context.payload.issue && context.payload.issue.number) || context.issue?.number || 0;
+            const prNumber = parseInt(process.env.PR_NUMBER) || 0;
             if (!prNumber) {
               console.log('Could not determine PR number. Skipping.');
               return;
@@ -112,5 +117,5 @@ jobs:
     with:
       target_branch: ${{ needs.prepare-resolve.outputs.target_branch }}
       source_branch: ${{ needs.prepare-resolve.outputs.source_branch }}
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ needs.router.outputs.pr_number }}
     secrets: inherit

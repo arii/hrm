@@ -46,7 +46,7 @@ jobs:
         if: steps.validate.outputs.should_run == 'true'
         id: parse_command
         run: |
-          COMMENT_BODY="${{ github.event.comment && github.event.comment.body }}"
+          COMMENT_BODY="${{ (github.event.comment && github.event.comment.body) || '' }}"
           if [[ "$COMMENT_BODY" == "@jules-delete"* ]]; then
             echo "COMMAND=delete" >> $GITHUB_ENV
           elif [[ "$COMMENT_BODY" == "@jules-new"* ]]; then
@@ -225,8 +225,9 @@ jobs:
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ github.event.comment.id }}
+          comment-id: ${{ (github.event.comment && github.event.comment.id) || 0 }}
           reaction: '+1'
+
       - name: 'Handle Failure'
         if: steps.validate.outputs.should_run == 'true' && failure()
         uses: actions/github-script@v7
@@ -234,6 +235,7 @@ jobs:
           ERROR_NEW: ${{ steps.jules_op_new.outputs.error_message }}
           ERROR_DELETE: ${{ steps.jules_op_delete.outputs.error_message }}
           PR_NUMBER_RAW: ${{ env.PR_NUMBER_RAW }}
+          COMMENT_ID: ${{ (github.event.comment && github.event.comment.id) || 0 }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -244,7 +246,7 @@ jobs:
 
             const body = `Jules operation failed with the following error:\n\n\`\`\`\n${errorMessage}\n\`\`\``;
 
-            const commentId = context.payload.comment?.id || 0;
+            const commentId = Number(process.env.COMMENT_ID) || 0;
             if (commentId && commentId !== 0) {
               try {
                 await github.rest.reactions.createForIssueComment({
