@@ -103,7 +103,7 @@ jobs:
           CHECK_RETRY=0
           while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
             # Filter checks by name to avoid being confused by older runs
-            if gh pr checks "$PR_NUMBER" --json name,status | jq -e '.[] | select(.status != "no checks reported")' > /dev/null 2>&1; then
+            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting|success|failure"; then
               echo "✅ Checks have been registered."
               break
             fi
@@ -253,7 +253,7 @@ jobs:
           MAX_CHECK_RETRIES=60
           CHECK_RETRY=0
           while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
-            if gh pr checks "$PR_NUMBER" --json name,status | jq -e '.[] | select(.status != "no checks reported")' > /dev/null 2>&1; then
+            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting|success|failure"; then
               echo "✅ Checks have been registered."
               break
             fi
@@ -382,7 +382,7 @@ jobs:
           MAX_CHECK_RETRIES=60
           CHECK_RETRY=0
           while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
-            if gh pr checks "$PR_NUMBER" --json name,status | jq -e '.[] | select(.status != "no checks reported")' > /dev/null 2>&1; then
+            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting|success|failure"; then
               echo "✅ Checks have been registered."
               break
             fi

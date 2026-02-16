@@ -1,5 +1,6 @@
 #!/bin/bash
 # scripts/ci/cleanup-pr-labels.sh
+# This script is used by automated PR workflows to ensure label consistency.
 # Universal script to remove automated and obsolete labels from a PR.
 # Usage: ./cleanup-pr-labels.sh <pr-number> [category]
 # category: all (default), review, scope
