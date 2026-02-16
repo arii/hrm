@@ -152,6 +152,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                           ? handlePause()
                           : handlePlayTrack(playlistUri, index)
                       }
+                      aria-label={isPlaying ? 'Pause' : 'Play'}
                     >
                       {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
                     </IconButton>

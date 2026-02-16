@@ -142,13 +142,16 @@ const SpotifyDisplay = () => {
   // Enable remote Spotify control from controllers
   useSpotifyRemoteExecution(player)
 
-  // Synchronize with WebSocket data whenever it changes
-  // Grace period prevents race conditions when volume commands are in flight
+  // Synchronize with WebSocket data whenever it changes.
+  // We rely on the server as the source of truth for volume, but use a grace period
+  // to prevent local sliders from "jumping" while the user is actively adjusting them.
   useEffect(() => {
     const timeSinceLastSend = Date.now() - lastVolumeSendTimeRef.current
-    const GRACE_PERIOD_MS = 500 // Wait 500ms after sending before syncing from server
+    const GRACE_PERIOD_MS = 600 // Debounce window plus network buffer
 
-    // Only apply grace period if a send is pending and within the window
+    // Only apply grace period if a send is pending and within the window.
+    // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
+    // confirming the new state to all clients.
     const shouldRespectGracePeriod =
       hasPendingSendRef.current && timeSinceLastSend < GRACE_PERIOD_MS
 
