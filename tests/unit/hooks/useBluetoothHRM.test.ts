@@ -519,7 +519,11 @@ describe('useBluetoothHRM', () => {
       )
 
       // --- Reconnection attempts ---
-      for (let i = 1; i <= env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS; i++) {
+      for (
+        let i = 1;
+        i <= env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS;
+        i++
+      ) {
         const delay = Math.pow(2, i) * 1000
         await act(async () => {
           jest.advanceTimersByTime(delay)
