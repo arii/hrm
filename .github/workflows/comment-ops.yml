@@ -59,18 +59,32 @@ jobs:
     needs: [router]
     if: needs.router.outputs.is_resolve == 'true'
     runs-on: ubuntu-latest
+    env:
+      PR_NUMBER_RAW: ${{ (github.event.issue && github.event.issue.number) || 0 }}
     outputs:
       target_branch: ${{ steps.get_branches.outputs.target_branch }}
       source_branch: ${{ steps.get_branches.outputs.source_branch }}
+      should_run: ${{ steps.validate.outputs.should_run }}
     steps:
+      - name: Validate Context
+        id: validate
+        run: |
+          if [ "$PR_NUMBER_RAW" == "0" ] || [ -z "$PR_NUMBER_RAW" ]; then
+            echo "::warning::Missing or invalid PR_NUMBER ($PR_NUMBER_RAW). Skipping job."
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Add reaction to comment
-        if: (github.event.comment && github.event.comment.id)
+        if: steps.validate.outputs.should_run == 'true' && (github.event.comment && github.event.comment.id)
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           comment-id: ${{ (github.event.comment && github.event.comment.id) || 0 }}
           reaction: eyes
       - name: Get PR Details
+        if: steps.validate.outputs.should_run == 'true'
         id: get_branches
         uses: actions/github-script@v7
         with:
@@ -78,7 +92,7 @@ jobs:
           script: |
             const prNumber = context.issue?.number || 0;
             if (!prNumber) {
-              core.setFailed('Could not determine PR number');
+              console.log('Could not determine PR number. Skipping.');
               return;
             }
             const pr = await github.rest.pulls.get({
@@ -91,7 +105,7 @@ jobs:
 
   execute-resolve:
     needs: [router, prepare-resolve]
-    if: needs.router.outputs.is_resolve == 'true'
+    if: needs.router.outputs.is_resolve == 'true' && needs.prepare-resolve.outputs.should_run == 'true'
     uses: ./.github/workflows/conflict-resolver.yml
     with:
       target_branch: ${{ needs.prepare-resolve.outputs.target_branch }}
