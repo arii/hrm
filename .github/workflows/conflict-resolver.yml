@@ -25,8 +25,8 @@ on:
         required: true
         type: string
       pr_number:
-        description: 'The PR number to comment on (optional)'
-        required: false
+        description: 'The PR number to comment on (required for feedback)'
+        required: true
         type: string
 
 jobs:
