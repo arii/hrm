@@ -147,7 +147,7 @@ function workoutReducer(
         session: state.session ? { ...state.session, status: 'paused' } : null,
       }
 
-    case 'RESUME_WORKOUT':
+    case 'RESUME_WORKOUT': {
       if (state.status !== 'paused' || !state.pauseStartTime) return state
       const pauseDuration = Date.now() - state.pauseStartTime
       const newTotalPausedTime = state.totalPausedTime + pauseDuration
@@ -164,6 +164,7 @@ function workoutReducer(
             }
           : null,
       }
+    }
 
     case 'FINISH_WORKOUT':
       if (!state.session) return state
@@ -303,7 +304,7 @@ export function useWorkoutSessionManager(currentTotalCalories: number = 0) {
     ) {
       dispatch({ type: 'UPDATE_CALORIES', calories: caloriesBurned })
     }
-  }, [caloriesBurned, state.status, state.session?.sessionId])
+  }, [caloriesBurned, state.status, state.session])
 
   useEffect(() => {
     const persist = async () => {
@@ -355,7 +356,7 @@ export function useWorkoutSessionManager(currentTotalCalories: number = 0) {
       }
     }
     initialize()
-  }, []) // Removed currentTotalCalories from deps
+  }, [currentTotalCalories, showInfo])
 
   useEffect(() => {
     const handleFocus = async () => {
