@@ -11,7 +11,7 @@ on:
         description: 'The branch to merge from'
         required: true
       pr_number:
-        description: 'The PR number to comment on (required for feedback)'
+        description: 'The Pull Request number for feedback and status updates'
         required: true
   workflow_call:
     inputs:
