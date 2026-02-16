@@ -39,7 +39,7 @@ Security and Performance: Ensure the refactored code is performant, especially f
 
 Output Format:
 
-Explanation: Start with a section titled Improvements: containing a concise, technical explanation of what was improved and why, with specific references to the modern features used (e.g., "Improved data transformation using array spread for guaranteed immutability and leveraged optional chaining for safe access to the nested session.data object.").
+Explanation: Start with a section titled Improvements: containing a concise, technical explanation of what was improved and why, with specific references to the modern features used (e.g., "Improved data transformation using array spread for guaranteed immutability and used optional chaining for safe access to the nested session.data object.").
 Code: Provide only the modified function or method body in a TypeScript code block. Do not include surrounding class, interface, or import statements.
 
 Example Output Structure:

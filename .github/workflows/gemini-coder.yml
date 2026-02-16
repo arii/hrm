@@ -3,7 +3,7 @@
 # AI-Powered Automated Code Generation and Patching
 #
 # Purpose:
-#   Leverages the Gemini API to automatically generate code changes based on task descriptions.
+#   Uses the Gemini API to automatically generate code changes based on task descriptions.
 #   Creates pull requests with AI-generated patches, validates them, and provides detailed
 #   error reports for debugging patch application failures.
 #
@@ -13,7 +13,7 @@
 #
 # Key Features:
 #   - Intelligent patch extraction from LLM markdown code blocks
-#   - Robust patch validation with 3-way merge fallback
+#   - Thorough patch validation with 3-way merge fallback
 #   - Secret scrubbing to prevent credential leakage in artifacts
 #   - Comprehensive error diagnostics with artifact uploads
 #   - Commitlint-compliant commit message generation
