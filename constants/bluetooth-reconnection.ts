@@ -9,8 +9,8 @@
 // We use process.env directly which is handled by Next.js at build time.
 export const BLUETOOTH_MAX_RECONNECT_ATTEMPTS =
   typeof process !== 'undefined' &&
-  process.env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS
-    ? parseInt(process.env.BLUETOOTH_MAX_RECONNECTION_ATTEMPTS, 10)
+  process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
+    ? parseInt(process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS, 10)
     : 5
 
 // Reconnection Delay Parameters
