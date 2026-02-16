@@ -11,7 +11,7 @@ on:
         description: 'The branch to merge from'
         required: true
       pr_number:
-        description: 'The Pull Request number for feedback (optional)'
+        description: 'The PR number to comment on (optional)'
         required: false
   workflow_call:
     inputs:
@@ -37,7 +37,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Create or update comment
-        if: inputs.pr_number
+        if: ${{ inputs.pr_number != '' }}
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ inputs.pr_number }}
@@ -91,7 +91,7 @@ jobs:
         id: commit_push
 
       - name: Trigger Gemini Orchestrator
-        if: steps.resolve.outputs.unresolved-files == '' && inputs.pr_number
+        if: steps.resolve.outputs.unresolved-files == '' && inputs.pr_number != ''
         env:
           # Use CI_BOT_PAT if available to ensure workflow is triggered (GITHUB_TOKEN prevents recursion)
           GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
@@ -103,7 +103,7 @@ jobs:
           gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
 
       - name: Update comment on success
-        if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number
+        if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number != ''
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ inputs.pr_number }}
@@ -113,7 +113,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update comment on failure
-        if: inputs.pr_number && (failure() || (success() && steps.resolve.outputs.unresolved-files != ''))
+        if: inputs.pr_number != '' && (failure() || (success() && steps.resolve.outputs.unresolved-files != ''))
         uses: peter-evans/create-or-update-comment@v4
         env:
           UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
