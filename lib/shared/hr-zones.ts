@@ -187,24 +187,32 @@ export interface HeartRateZoneConfig {
 }
 
 /**
+ * Derives the canonical list of heart rate zones for UI components.
+ * @returns An array of HeartRateZoneConfig objects.
+ */
+const deriveHeartRateZones = (): HeartRateZoneConfig[] => {
+  return HR_ZONE_ORDER.filter((z) => z !== 'ZONE_0').map((z) => {
+    const zoneConfig = HR_ZONE_CONFIG[z]
+    const nextZoneNumber = zoneConfig.zoneNumber + 1
+    const nextZoneKey = `ZONE_${nextZoneNumber}` as HeartRateZone
+
+    return {
+      name: `Zone ${zoneConfig.zoneNumber}`,
+      minPercent: Math.round(zoneConfig.threshold * 100),
+      maxPercent:
+        z === 'ZONE_6'
+          ? 100
+          : Math.round(HR_ZONE_CONFIG[nextZoneKey].threshold * 100),
+      color: zoneConfig.color,
+    }
+  })
+}
+
+/**
  * Canonical list of heart rate zones for UI components.
  * Derived from HR_ZONE_CONFIG to ensure single source of truth.
  */
-export const HEART_RATE_ZONES: HeartRateZoneConfig[] = HR_ZONE_ORDER.filter(
-  (z) => z !== 'ZONE_0'
-).map((z) => ({
-  name: `Zone ${HR_ZONE_CONFIG[z].zoneNumber}`,
-  minPercent: Math.round(HR_ZONE_CONFIG[z].threshold * 100),
-  maxPercent:
-    z === 'ZONE_6'
-      ? 100
-      : Math.round(
-          HR_ZONE_CONFIG[
-            `ZONE_${HR_ZONE_CONFIG[z].zoneNumber + 1}` as HeartRateZone
-          ].threshold * 100
-        ),
-  color: HR_ZONE_CONFIG[z].color,
-}))
+export const HEART_RATE_ZONES: HeartRateZoneConfig[] = deriveHeartRateZones()
 
 export type UserHrZones = {
   warmUp: { min: number }
