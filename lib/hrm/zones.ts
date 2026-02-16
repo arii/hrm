@@ -12,7 +12,7 @@ import {
 
 export { HrZoneName }
 
-import { HrZone } from '../../types/heart-rate.js'
+import { HrZone } from '../shared/hr-zones.js'
 
 /**
  * Calculates the current heart rate zone, and percentage of max HR.

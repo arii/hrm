@@ -377,8 +377,8 @@ export default function ConnectView({
           <Box sx={{ mt: 2 }}>
             <HrTile
               name={userName}
-              bpm={currentHR}
-              percentMax={hrZoneProps.percentage}
+              value={currentHR}
+              percentage={hrZoneProps.percentage}
               zone={zone}
               calories={caloriesBurned}
               isDataStale={isDataStale}

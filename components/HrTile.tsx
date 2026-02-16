@@ -47,7 +47,7 @@ const IdentityTier = ({ name }: { name: string }) => (
   </Box>
 )
 
-const HeroTier = ({ percentMax }: { percentMax: number }) => (
+const HeroTier = ({ percentage }: { percentage: number }) => (
   <Box
     sx={{
       flexGrow: 1,
@@ -71,7 +71,7 @@ const HeroTier = ({ percentMax }: { percentMax: number }) => (
         fontFamily: HERO_FONT_FAMILY,
       }}
     >
-      {percentMax}%
+      {percentage}%
     </Typography>
   </Box>
 )
@@ -98,11 +98,11 @@ const MetricItem = ({
 )
 
 const DataTier = ({
-  bpm,
+  value,
   calories,
   showName,
 }: {
-  bpm: number | null
+  value: number | null
   calories: number
   showName: boolean
 }) => (
@@ -115,15 +115,15 @@ const DataTier = ({
       gap: 4,
     }}
   >
-    <MetricItem value={bpm ?? '---'} label="BPM" testId="bpm-value" />
+    <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
     <MetricItem value={Math.floor(calories)} label="KCAL" />
   </Box>
 )
 
 const HrTile = ({
   name,
-  bpm,
-  percentMax,
+  value,
+  percentage,
   zone,
   calories = 0,
   isConnected = true,
@@ -143,7 +143,7 @@ const HrTile = ({
       ? 'Disconnected - Showing last known value'
       : isDataStale
         ? 'Waiting for data...'
-        : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
+        : `Name: ${name}, BPM: ${value}, Kcal: ${calories}, % Max HR: ${percentage}%`
 
   const showName = !isGenericName(name)
 
@@ -153,8 +153,8 @@ const HrTile = ({
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
-          isConnected ? `${bpm} beats per minute` : 'Disconnected'
-        }, ${percentMax}% of maximum, Zone ${zone ?? 0}: ${zoneConfig.label}`}
+          isConnected ? `${value} beats per minute` : 'Disconnected'
+        }, ${percentage}% of maximum, Zone ${zone ?? 0}: ${zoneConfig.label}`}
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
@@ -205,8 +205,8 @@ const HrTile = ({
           }}
         >
           {showName && <IdentityTier name={name} />}
-          <HeroTier percentMax={percentMax} />
-          <DataTier bpm={bpm} calories={calories} showName={showName} />
+          <HeroTier percentage={percentage} />
+          <DataTier value={value} calories={calories} showName={showName} />
         </Box>
 
         <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>

@@ -9,7 +9,7 @@
 // =================================================================================================
 
 export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
-export type Gender = 'MALE' | 'FEMALE'
+export type Gender = 'MALE' | 'FEMALE' | 'NEUTRAL'
 
 /**
  * Represents a user's identity and authentication profile.
@@ -47,6 +47,19 @@ export interface UserPhysicalProfile {
 // =================================================================================================
 // Workout and Fitness
 // =================================================================================================
+
+/**
+ * Defines the set of valid commands that can be sent to the Spotify service.
+ */
+export type SpotifyCommand =
+  | 'PLAY'
+  | 'PAUSE'
+  | 'NEXT'
+  | 'PREVIOUS'
+  | 'SET_VOLUME'
+  | 'TRANSFER_PLAYBACK'
+  | 'GET_DEVICES'
+  | 'LOGIN'
 
 /**
  * Represents a single workout session.

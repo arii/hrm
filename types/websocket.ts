@@ -9,6 +9,7 @@ import type {
   TimerData,
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
+  SpotifyCommand,
 } from './core'
 
 // --- WebSocket Connection & Augmentation ---
@@ -46,15 +47,6 @@ export interface ClientHrmData extends ConnectedHrmData {
   isAlerting: boolean
   alertMessage?: string
 }
-
-export type SpotifyCommand =
-  | 'PLAY'
-  | 'PAUSE'
-  | 'NEXT'
-  | 'PREVIOUS'
-  | 'TRANSFER_PLAYBACK'
-  | 'SET_VOLUME'
-  | 'GET_DEVICES'
 
 /**
  * The payload for the INITIAL_STATE message, representing the full application state.

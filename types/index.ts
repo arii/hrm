@@ -2,9 +2,11 @@
 // All other types should be defined in their respective files.
 
 import { TimerMode, TimerPhase } from './core'
-import { HrData } from './heart-rate'
 
-export interface HrTileProps extends HrData {
+export interface HrTileProps {
+  value: number
+  percentage: number
+  zone?: number
   name: string
   calories?: number
   isConnected?: boolean

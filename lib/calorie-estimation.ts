@@ -1,5 +1,5 @@
 // lib/calorie-estimation.ts
-import { Gender } from '@/types/user'
+import { Gender } from '@/types/core'
 
 export interface CalorieEstimationParams {
   heartRate: number
@@ -30,7 +30,7 @@ export const estimateCaloriesBurned = ({
   age,
   weightKg,
   durationMinutes,
-  gender = 'neutral',
+  gender = 'NEUTRAL',
 }: CalorieEstimationParams): number => {
   if (durationMinutes <= 0 || heartRate < 30) {
     return 0
@@ -39,7 +39,7 @@ export const estimateCaloriesBurned = ({
   // Karvonen formula - gender-specific coefficients
   let caloriesPerMinute: number
 
-  if (gender === 'male') {
+  if (gender === 'MALE') {
     caloriesPerMinute =
       (-55.0969 + 0.6309 * heartRate + 0.1988 * weightKg + 0.2017 * age) / 4.184
   } else {
