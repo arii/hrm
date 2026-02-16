@@ -42,13 +42,26 @@ jobs:
 
       - name: Check if PR Enrichment is Disabled
         id: check-disabled
+        env:
+          PR_TITLE_EVENT: ${{ github.event.pull_request.title }}
+          HEAD_REF_EVENT: ${{ github.event.pull_request.head.ref || github.head_ref }}
         run: |
+          # 1. Check for manual disable toggle
           if [ "${DISABLE_PR_ENRICHMENT:-false}" == "true" ]; then
             echo "disabled=true" >> $GITHUB_OUTPUT
             echo "::notice::PR enrichment is disabled (DISABLE_PR_ENRICHMENT=true)"
-          else
-            echo "disabled=false" >> $GITHUB_OUTPUT
+            exit 0
           fi
+
+          # 2. Automatically disable for E2E tests to prevent interfering with test expectations
+          # Consistent with pr-orchestrator.yml bypass logic.
+          if [[ "$PR_TITLE_EVENT" == *"E2E Test PR"* ]] || [[ "$HEAD_REF_EVENT" == "e2e-test-"* ]]; then
+            echo "disabled=true" >> $GITHUB_OUTPUT
+            echo "::notice::PR enrichment is disabled for E2E Test PR (Title: '$PR_TITLE_EVENT', Branch: '$HEAD_REF_EVENT')"
+            exit 0
+          fi
+
+          echo "disabled=false" >> $GITHUB_OUTPUT
 
       - name: Setup PR Context
         id: pr_context
@@ -282,16 +295,17 @@ jobs:
                 const julesTaskLine = julesTaskMatch ? julesTaskMatch[0] : '';
 
                 // 2. Determine the "true" original body content for the details block.
+                // Using a more flexible regex to handle variations in whitespace or line endings.
                 let trueOriginalBody = '';
-                const detailsRegex = /<details>\n<summary>Original PR Body<\/summary>\n\n([\s\S]*?)\n<\/details>/;
+                const detailsRegex = /<details>\s*<summary>\s*Original PR Body\s*<\/summary>([\s\S]*?)<\/details>/i;
                 const detailsMatch = currentBody.match(detailsRegex);
 
                 if (detailsMatch) {
                   // On a re-run, the true original body is inside the existing details block.
-                  trueOriginalBody = detailsMatch[1];
+                  trueOriginalBody = detailsMatch[1].trim();
                 } else {
                   // On the first run, the entire body is the original body.
-                  trueOriginalBody = currentBody;
+                  trueOriginalBody = currentBody.trim();
                 }
 
                 // 3. Clean the original body by removing the Jules task line from it.
