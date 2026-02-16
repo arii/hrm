@@ -13,9 +13,11 @@ jobs:
       APPROVED_LABEL: 'approved'
       CHANGES_REQUESTED_LABEL: 'changes-requested'
     steps:
-      - uses: actions/checkout@v4
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Cleanup labels
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

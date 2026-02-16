@@ -198,11 +198,13 @@ jobs:
     outputs:
       has_changes: ${{ steps.check_changes.outputs.has_changes }}
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.squash-and-rebase.outputs.head_ref }}
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Check for file changes
         id: check_changes
         uses: ./.github/actions/check-for-changes
@@ -214,6 +216,8 @@ jobs:
     if: needs.squash-and-rebase.outputs.outcome == 'success'
     runs-on: ubuntu-latest
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Trigger Gemini Orchestrator
         env:
           # Use CI_BOT_PAT if available to ensure workflow is triggered (GITHUB_TOKEN prevents recursion)

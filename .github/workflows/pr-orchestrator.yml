@@ -36,7 +36,11 @@ jobs:
     outputs:
       should_review: ${{ steps.changes.outputs.src }}
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: dorny/paths-filter@v3
         if: github.event_name == 'pull_request'

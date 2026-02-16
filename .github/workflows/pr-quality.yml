@@ -58,8 +58,12 @@ jobs:
     outputs:
       session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Sanitize SESSION_ID
         id: sanitize_id
@@ -266,10 +270,12 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -312,10 +318,12 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -352,10 +360,12 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -403,10 +413,12 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -457,10 +469,12 @@ jobs:
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -605,10 +619,12 @@ jobs:
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
       PORT: 3006
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -687,10 +703,12 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -767,10 +785,12 @@ jobs:
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -850,10 +870,12 @@ jobs:
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
       PORT: 3007
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -944,10 +966,12 @@ jobs:
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -1035,12 +1059,12 @@ jobs:
     permissions:
       checks: write
     steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+          fetch-depth: 0
       - name: Copy checks from parent commit
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -1218,9 +1242,11 @@ jobs:
     outputs:
       failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
     steps:
-      - uses: actions/checkout@v4
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
