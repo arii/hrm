@@ -24,18 +24,32 @@ const mockedUseSpotifyCommand = useSpotifyCommand as jest.MockedFunction<
 describe('PlaylistTracksDisplay', () => {
   const executeMock = jest.fn()
 
+  const mockHookValue = {
+    execute: executeMock,
+    activeDevice: null,
+    hrmPlayer: null,
+    playback: {
+      track: {
+        id: null,
+        name: '',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
+      },
+      is_playing: false,
+      volume_percent: 0,
+      isMuted: false,
+      progress_ms: 0,
+    },
+    isHrmPlayerActive: false,
+  }
+
   beforeEach(() => {
     jest.clearAllMocks()
-    mockedUseSpotifyCommand.mockReturnValue({
-      execute: executeMock,
-      activeDevice: null,
-      hrmPlayer: null,
-      playback: {},
-      isHrmPlayerActive: false,
-    } as unknown as ReturnType<typeof useSpotifyCommand>)
+    mockedUseSpotifyCommand.mockReturnValue(mockHookValue)
   })
 
-  const mockContextValue = {
+  const mockContextValue: WebSocketContextType = {
     spotifyData: {
       devices: [],
       playback: {
@@ -54,18 +68,27 @@ describe('PlaylistTracksDisplay', () => {
     },
     sendData: jest.fn(),
     connectionStatus: 'Connected',
-    timerData: {},
+    timerData: {
+      isRunning: false,
+      currentPhase: 'IDLE',
+      timeRemaining: 0,
+      timeElapsed: 0,
+      caloriesBurned: 0,
+      mode: 'TABATA',
+      workDuration: 30,
+      restDuration: 10,
+      soundEventId: 0,
+    },
     hrmData: [],
     activeAlerts: [],
     connect: jest.fn(),
     disconnect: jest.fn(),
+    spotifyServiceInitialized: true,
   }
 
   it('should render loading state initially', () => {
     render(
-      <WebSocketContext.Provider
-        value={mockContextValue as unknown as WebSocketContextType}
-      >
+      <WebSocketContext.Provider value={mockContextValue}>
         <PlaylistTracksDisplay playlistId="123" />
       </WebSocketContext.Provider>
     )
@@ -81,6 +104,7 @@ describe('PlaylistTracksDisplay', () => {
           artists: 'Artist 1',
           duration: 180000,
           uri: 'spotify:track:t1',
+          albumArt: null,
         },
       ],
       total: 1,
@@ -93,9 +117,7 @@ describe('PlaylistTracksDisplay', () => {
     })
 
     render(
-      <WebSocketContext.Provider
-        value={mockContextValue as unknown as WebSocketContextType}
-      >
+      <WebSocketContext.Provider value={mockContextValue}>
         <PlaylistTracksDisplay playlistId="123" />
       </WebSocketContext.Provider>
     )
@@ -121,6 +143,7 @@ describe('PlaylistTracksDisplay', () => {
           artists: 'Artist 1',
           duration: 180000,
           uri: 'spotify:track:t1',
+          albumArt: null,
         },
       ],
       total: 1,
@@ -132,7 +155,7 @@ describe('PlaylistTracksDisplay', () => {
       json: async () => mockTracks,
     })
 
-    const playingContextValue = {
+    const playingContextValue: WebSocketContextType = {
       ...mockContextValue,
       spotifyData: {
         ...mockContextValue.spotifyData,
@@ -145,9 +168,7 @@ describe('PlaylistTracksDisplay', () => {
     }
 
     render(
-      <WebSocketContext.Provider
-        value={playingContextValue as unknown as WebSocketContextType}
-      >
+      <WebSocketContext.Provider value={playingContextValue}>
         <PlaylistTracksDisplay playlistId="123" />
       </WebSocketContext.Provider>
     )

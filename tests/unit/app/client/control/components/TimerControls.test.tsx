@@ -29,17 +29,17 @@ const mockedUseSpotifyCommand = useSpotifyCommand as jest.MockedFunction<
 
 const mockTimerData: TimerData = {
   isRunning: false,
-  isPaused: false,
-  mode: 'TABATA',
   currentPhase: 'IDLE',
   timeRemaining: 0,
+  timeElapsed: 0,
+  caloriesBurned: 0,
+  mode: 'TABATA',
   workDuration: 20,
   restDuration: 10,
-  totalRounds: 8,
-  currentRound: 0,
+  soundEventId: 0,
 }
 
-const mockWebSocketContext: Partial<WebSocketContextType> = {
+const mockWebSocketContext: WebSocketContextType = {
   timerData: mockTimerData,
   sendData: jest.fn(),
   connectionStatus: 'Connected',
@@ -63,22 +63,30 @@ const mockWebSocketContext: Partial<WebSocketContextType> = {
     },
   },
   activeAlerts: [],
-  spotifyServiceInitialized: false,
+  spotifyServiceInitialized: true,
 }
 
 describe('TimerControls', () => {
   const executeSpotifyMock = jest.fn()
 
+  const mockHookValue = {
+    execute: executeSpotifyMock,
+    activeDevice: null,
+    hrmPlayer: null,
+    playback: {
+      track: { id: null, name: '', artist: '', albumName: '', albumArtUrl: '' },
+      is_playing: false,
+      volume_percent: 0,
+      isMuted: false,
+      progress_ms: 0,
+    },
+    isHrmPlayerActive: false,
+  }
+
   beforeEach(() => {
     jest.useFakeTimers()
     jest.clearAllMocks()
-    mockedUseSpotifyCommand.mockReturnValue({
-      execute: executeSpotifyMock,
-      activeDevice: null,
-      hrmPlayer: null,
-      playback: {},
-      isHrmPlayerActive: false,
-    } as unknown as ReturnType<typeof useSpotifyCommand>)
+    mockedUseSpotifyCommand.mockReturnValue(mockHookValue)
   })
 
   afterEach(() => {
@@ -88,9 +96,7 @@ describe('TimerControls', () => {
   it('optimistically updates UI to "running" when start is clicked and dispatches Spotify NEXT', async () => {
     const sendDataSpy = jest.spyOn(mockWebSocketContext, 'sendData')
     render(
-      <WebSocketContext.Provider
-        value={mockWebSocketContext as WebSocketContextType}
-      >
+      <WebSocketContext.Provider value={mockWebSocketContext}>
         <TimerControls />
       </WebSocketContext.Provider>
     )
@@ -118,7 +124,7 @@ describe('TimerControls', () => {
     }
     const sendDataSpy = jest.spyOn(runningContext, 'sendData')
     render(
-      <WebSocketContext.Provider value={runningContext as WebSocketContextType}>
+      <WebSocketContext.Provider value={runningContext}>
         <TimerControls />
       </WebSocketContext.Provider>
     )
@@ -140,16 +146,14 @@ describe('TimerControls', () => {
   })
 
   it('reverts optimistic UI and does not send command if websocket is not connected', async () => {
-    const disconnectedContext = {
+    const disconnectedContext: WebSocketContextType = {
       ...mockWebSocketContext,
-      connectionStatus: 'Disconnected' as const,
+      connectionStatus: 'Disconnected',
     }
     const sendDataSpy = jest.spyOn(disconnectedContext, 'sendData')
 
     render(
-      <WebSocketContext.Provider
-        value={disconnectedContext as WebSocketContextType}
-      >
+      <WebSocketContext.Provider value={disconnectedContext}>
         <TimerControls />
       </WebSocketContext.Provider>
     )
@@ -173,9 +177,7 @@ describe('TimerControls', () => {
   it('sends TIMER_CONFIG when Work/Rest duration is updated via stepper', async () => {
     const sendDataSpy = jest.spyOn(mockWebSocketContext, 'sendData')
     render(
-      <WebSocketContext.Provider
-        value={mockWebSocketContext as WebSocketContextType}
-      >
+      <WebSocketContext.Provider value={mockWebSocketContext}>
         <TimerControls />
       </WebSocketContext.Provider>
     )
