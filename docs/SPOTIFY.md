@@ -110,7 +110,7 @@ These errors are caught and displayed to the user using the global error handlin
 
 The `SpotifyPolling` service (`services/spotifyPolling.ts`) on the backend periodically fetches a list of the user's available Spotify devices using `sdk.player.getAvailableDevices()`. This list is then broadcast to the frontend via WebSockets and updated in the application's state.
 
-When a user selects a device from the UI, a `TRANSFER_PLAYBACK` command is sent to the backend via WebSocket. The backend then instructs the Spotify API to transfer playback to the selected device ID.
+When a user selects a device from the UI, a `TRANSFER_PLAYBACK` command is sent to the backend via WebSocket using the `SPOTIFY_COMMAND` message type. The backend service (`socketManager.ts`) handles this message and calls the Spotify service directly to transfer playback to the selected device ID.
 
 ### SpotifyDevice Type Documentation
 
@@ -132,9 +132,17 @@ The Web Playback SDK registers the browser as a `Computer` device.
 
 Device management is tightly integrated with WebSockets:
 
-- The backend's `SpotifyPolling` service fetches the device list every `SPOTIFY_DEVICE_POLLING_INTERVAL_MS` milliseconds. This value is part of the environment variable schema defined in `lib/env.ts` (using Zod). It can be overridden via an environment variable but defaults to 10,000ms if not set.
+- The backend's `SpotifyPolling` service fetches the device list every `SPOTIFY_DEVICE_POLLING_INTERVAL_MS` milliseconds (defaults to 10,000ms).
 - Any changes to the device list are broadcast in a `SPOTIFY_UPDATE` message to all connected clients.
-- The frontend receives this message, updates its state, and re-renders the device selector UI to show the most current list of devices.
+- The frontend receives this message, updates its state, and re-renders the device selector UI.
+
+### Unified Command Dispatch
+
+All playback commands (Play, Pause, Skip, Volume, etc.) follow a unified path:
+1.  The client uses the `useSpotifyCommand` hook to dispatch a `SPOTIFY_COMMAND` message via WebSocket.
+2.  The `socketManager.ts` on the server receives the message and identifies the target `deviceId`.
+3.  The command is executed directly on the server using the `@spotify/web-api-ts-sdk`.
+4.  This establishes the server-side service as the single source of truth for all Spotify interactions, ensuring perfect synchronization across different client types (Dashboard, Controller).
 
 This architecture ensures that if a user starts or stops playing music on another device (like their phone), it will be reflected in the web dashboard automatically.
 

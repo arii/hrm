@@ -149,3 +149,7 @@ We prefer using official SDKs directly whenever possible. For the Spotify integr
 **Handling 204 No Content**: Some Spotify API endpoints return a `204 No Content` status on success, which can sometimes cause JSON parsing errors in certain environments or older SDK versions. We handle this using the `isEmptyResponseError` utility.
 
 **Consistent Targeting**: All playback commands should explicitly include a `deviceId` when possible to ensure commands are executed on the intended device and to maintain state synchronization across multiple Spotify Connect instances.
+
+### Unified Service Bus (Spotify)
+
+The Spotify integration uses a "Unified Service Bus" architecture. All playback commands (Play/Pause/Skip/Volume) are dispatched from the client via WebSockets as `SPOTIFY_COMMAND` messages. The server handles these messages directly using the official SDK, establishing the server as the single source of truth for both playback execution and state broadcasting. This eliminates complex branching logic between local (browser) and remote (Spotify Connect) devices.
