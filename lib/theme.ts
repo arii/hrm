@@ -96,6 +96,10 @@ const theme = createTheme({
       idle: HR_COLORS.ZONE_0_IDLE, // Grey
       paused: HR_COLORS.ZONE_4_CARDIO, // Amber/Yellow
       finished: HR_COLORS.ZONE_2_WARMUP, // Blue
+      prepare: '#f59e0b', // Amber
+      work: '#ef4444', // Red
+      rest: '#22c55e', // Green
+      cooldown: '#6b7280', // Grey
     },
     // Background colors
     background: {
