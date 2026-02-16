@@ -84,6 +84,10 @@ describe('ZoneDistribution', () => {
       screen.getAllByText(HrZoneName.WarmUp).length
     ).toBeGreaterThanOrEqual(1)
     expect(screen.queryByText(HrZoneName.FatBurn)).not.toBeInTheDocument()
+    // Should show the note about hidden zones
+    expect(
+      screen.getByText('Zones with less than 1% duration are hidden for clarity.')
+    ).toBeInTheDocument()
   })
 
   it('filters out NoData and Unknown zones', () => {
