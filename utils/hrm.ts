@@ -48,7 +48,10 @@ export const getActiveHrmData = (
       const isDataStale = now - referenceTime > HRM_WARNING_THRESHOLD_MS
 
       // Pre-calculate HR zone info if not already present
-      const { percentage, zone } = calculateHrZoneInfo(user.value, user.age)
+      const { percentage, zone } = calculateHrZoneInfo(user.value, {
+        method: 'MAX_HR',
+        age: user.age,
+      })
 
       return {
         ...user,

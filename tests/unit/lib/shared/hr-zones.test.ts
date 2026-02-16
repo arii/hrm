@@ -38,7 +38,7 @@ describe('lib/shared/hr-zones', () => {
     it('should calculate zone info using provided numeric age', () => {
       const age = 20 // Max HR = 200
       // 150 bpm / 200 max = 75% -> Zone 3
-      const result = calculateHrZoneInfo(150, age)
+      const result = calculateHrZoneInfo(150, { method: 'MAX_HR', age })
       expect(result.percentage).toBe(75)
       expect(result.zone).toBe(3)
     })
@@ -46,7 +46,7 @@ describe('lib/shared/hr-zones', () => {
     it('should calculate zone info using provided string age', () => {
       const age = '20' // Max HR = 200
       // 100 bpm / 200 max = 50% -> Zone 1
-      const result = calculateHrZoneInfo(100, age)
+      const result = calculateHrZoneInfo(100, { method: 'MAX_HR', age })
       expect(result.percentage).toBe(50)
       expect(result.zone).toBe(1)
     })
@@ -54,7 +54,7 @@ describe('lib/shared/hr-zones', () => {
     it('should calculate zone info using default max HR when age is undefined', () => {
       // Default Max HR = 185
       // 185 bpm / 185 max = 100% -> Zone 6 (since 100% >= 95%)
-      const result = calculateHrZoneInfo(185, undefined)
+      const result = calculateHrZoneInfo(185, { method: 'MAX_HR', age: undefined })
       expect(result.percentage).toBe(100)
       expect(result.zone).toBe(6)
     })
@@ -63,12 +63,12 @@ describe('lib/shared/hr-zones', () => {
       // Default Max HR = 185
       // 92.5 bpm / 185 max = 50% -> Zone 1 (exact boundary)
       // Rounding check: 92.5 is 50%
-      const result = calculateHrZoneInfo(93, null) // ~50.2%
+      const result = calculateHrZoneInfo(93, { method: 'MAX_HR', age: null }) // ~50.2%
       expect(result.zone).toBe(1)
     })
 
     it('should handle zero heart rate', () => {
-      const result = calculateHrZoneInfo(0, 30)
+      const result = calculateHrZoneInfo(0, { method: 'MAX_HR', age: 30 })
       expect(result.percentage).toBe(0)
       expect(result.zone).toBe(0)
     })
@@ -76,12 +76,12 @@ describe('lib/shared/hr-zones', () => {
     it('should correctly identify Zone 6 (Max) for heart rate >= 95% of max', () => {
       const age = 20 // Max HR = 200
       // 190 bpm / 200 max = 95% -> Zone 6
-      const result95 = calculateHrZoneInfo(190, age)
+      const result95 = calculateHrZoneInfo(190, { method: 'MAX_HR', age })
       expect(result95.percentage).toBe(95)
       expect(result95.zone).toBe(6)
 
       // 196 bpm / 200 max = 98% -> Zone 6
-      const result98 = calculateHrZoneInfo(196, age)
+      const result98 = calculateHrZoneInfo(196, { method: 'MAX_HR', age })
       expect(result98.percentage).toBe(98)
       expect(result98.zone).toBe(6)
     })

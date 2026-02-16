@@ -213,25 +213,13 @@ export interface HrZoneCalculationConfig {
 /**
  * Calculates the percentage and zone based on the provided configuration.
  * @param currentHr - Current heart rate in BPM.
- * @param config - Configuration for calculation. Can be an HrZoneCalculationConfig object or a legacy age (number/string).
+ * @param config - Configuration for calculation.
  * @returns An object containing the calculated percentage and zone.
- * @deprecated Passing age as the second parameter is deprecated. Use the config object instead.
  */
 export const calculateHrZoneInfo = (
   currentHr: number,
-  config?: number | string | null | HrZoneCalculationConfig
+  config: HrZoneCalculationConfig
 ): { percentage: number; zone: number } => {
-  // Handle legacy signature (currentHr, age)
-  if (
-    config === undefined ||
-    config === null ||
-    typeof config === 'number' ||
-    typeof config === 'string'
-  ) {
-    const maxHr = calculateMaxHr(config)
-    return calculateZoneFromMaxHr(currentHr, maxHr)
-  }
-
   const {
     method,
     age,

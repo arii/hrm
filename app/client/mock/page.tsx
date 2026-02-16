@@ -45,7 +45,10 @@ export default function MockPage() {
 
   const sendHrPacket = useCallback(
     (hr: number) => {
-      const { percentage, zone } = calculateHrZoneInfo(hr, age)
+      const { percentage, zone } = calculateHrZoneInfo(hr, {
+        method: 'MAX_HR',
+        age,
+      })
 
       const message: HrmInputMessage = {
         type: 'HRM_INPUT',
