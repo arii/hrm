@@ -1,0 +1,104 @@
+name: 'Wait for Branch Update'
+description: 'Waits for a remote branch SHA to change from an initial value.'
+
+inputs:
+  branch:
+    description: 'The branch to monitor.'
+    required: true
+  initial_sha:
+    description: 'The initial SHA to compare against.'
+    required: true
+  max_attempts:
+    description: 'Maximum number of polling attempts.'
+    required: false
+    default: '40'
+  sleep_seconds:
+    description: 'Seconds to wait between attempts.'
+    required: false
+    default: '15'
+  stability_delay:
+    description: 'Seconds to wait after a change is detected to ensure no further updates are happening (settle period).'
+    required: false
+    default: '30'
+  github_token:
+    description: 'GitHub token for authentication.'
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Poll for Branch Update
+      shell: bash
+      env:
+        BRANCH_NAME: ${{ inputs.branch }}
+        INITIAL_SHA: ${{ inputs.initial_sha }}
+        MAX_ATTEMPTS: ${{ inputs.max_attempts }}
+        SLEEP_SECONDS: ${{ inputs.sleep_seconds }}
+        GH_TOKEN: ${{ inputs.github_token }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -e
+        if [ -z "$INITIAL_SHA" ]; then
+          echo "❌ Error: initial_sha input is empty."
+          exit 1
+        fi
+
+        get_current_sha() {
+          local sha=""
+          # Attempt to get SHA via GitHub API (most reliable source of truth)
+          # We use -H "Cache-Control: no-cache" to ensure we're not getting a cached response
+          sha=$(gh api -H "Cache-Control: no-cache" "repos/$REPO/git/ref/heads/$BRANCH_NAME" --jq '.object.sha' 2>/dev/null || echo "")
+
+          # Fallback to git ls-remote if API fails or returns empty
+          if [ -z "$sha" ]; then
+            if git remote | grep -q "^origin$"; then
+              sha=$(git ls-remote origin "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+            else
+              sha=$(git ls-remote https://x-access-token:$GH_TOKEN@github.com/$REPO.git "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+            fi
+          fi
+          echo "$sha"
+        }
+
+        echo "Waiting for branch $BRANCH_NAME to be updated (Initial SHA: $INITIAL_SHA)..."
+        echo "Polling every $SLEEP_SECONDS seconds (Max attempts: $MAX_ATTEMPTS)..."
+
+        FOUND_SHA=""
+        for i in $(seq 1 $MAX_ATTEMPTS); do
+          CURRENT_SHA=$(get_current_sha)
+
+          if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+            echo "✅ Branch change detected! New SHA: $CURRENT_SHA (Attempt: $i)"
+            FOUND_SHA="$CURRENT_SHA"
+            break
+          fi
+
+          if [ -z "$CURRENT_SHA" ]; then
+            echo "⚠️ Could not retrieve CURRENT_SHA on attempt $i."
+          else
+            echo "Still waiting for update... ($i/$MAX_ATTEMPTS) [Current SHA: $CURRENT_SHA]"
+          fi
+
+          sleep $SLEEP_SECONDS
+        done
+
+        if [ -z "$FOUND_SHA" ]; then
+          echo "❌ Timed out waiting for initial branch update."
+          exit 1
+        fi
+
+        STABILITY_DELAY=${{ inputs.stability_delay }}
+        if [ "$STABILITY_DELAY" -gt 0 ]; then
+          echo "⏳ Entering settle period ($STABILITY_DELAY seconds) to ensure branch state is stable..."
+          while true; do
+            sleep $STABILITY_DELAY
+            NEW_SHA=$(get_current_sha)
+            if [ "$NEW_SHA" == "$FOUND_SHA" ]; then
+              echo "✅ Branch is stable at SHA: $NEW_SHA"
+              break
+            fi
+            echo "🔄 Branch still changing (New: $NEW_SHA). Resetting settle period..."
+            FOUND_SHA="$NEW_SHA"
+          done
+        fi
