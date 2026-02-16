@@ -4,7 +4,7 @@
 import { TimerMode, TimerPhase } from './core'
 
 export interface HrTileProps {
-  value: number
+  value: number | null
   percentage: number
   zone?: number
   name: string
