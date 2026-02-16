@@ -93,12 +93,14 @@ jobs:
           fi
 
           # 4. Wait for checks to appear for the new commit
+          echo "Waiting 15s for GitHub API to index the new commit..."
+          sleep 15
           echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
-          MAX_CHECK_RETRIES=30
+          MAX_CHECK_RETRIES=60
           CHECK_RETRY=0
           while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
             # Filter checks by name to avoid being confused by older runs
-            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting"; then
+            if gh pr checks "$PR_NUMBER" --json name,status | jq -e '.[] | select(.status != "no checks reported")' > /dev/null 2>&1; then
               echo "✅ Checks have been registered."
               break
             fi
@@ -240,11 +242,13 @@ jobs:
           fi
 
           # 4. Wait for checks to appear for the new commit
+          echo "Waiting 15s for GitHub API to index the new commit..."
+          sleep 15
           echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
-          MAX_CHECK_RETRIES=30
+          MAX_CHECK_RETRIES=60
           CHECK_RETRY=0
           while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
-            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting"; then
+            if gh pr checks "$PR_NUMBER" --json name,status | jq -e '.[] | select(.status != "no checks reported")' > /dev/null 2>&1; then
               echo "✅ Checks have been registered."
               break
             fi
@@ -366,11 +370,13 @@ jobs:
           fi
 
           # 4. Wait for checks to appear for the new commit
+          echo "Waiting 15s for GitHub API to index the new commit..."
+          sleep 15
           echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
-          MAX_CHECK_RETRIES=30
+          MAX_CHECK_RETRIES=60
           CHECK_RETRY=0
           while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
-            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting"; then
+            if gh pr checks "$PR_NUMBER" --json name,status | jq -e '.[] | select(.status != "no checks reported")' > /dev/null 2>&1; then
               echo "✅ Checks have been registered."
               break
             fi
