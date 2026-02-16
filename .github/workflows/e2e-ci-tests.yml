@@ -24,13 +24,14 @@ jobs:
           BRANCH_NAME="e2e-test-$(date +%s)"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           git checkout -b $BRANCH_NAME
-          echo "test content" > test-file.txt
-          git add test-file.txt
+          mkdir -p app
+          echo "test content" > app/test-file.txt
+          git add app/test-file.txt
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -m "E2E Test Commit 1"
-          echo "another line" >> test-file.txt
-          git add test-file.txt
+          echo "another line" >> app/test-file.txt
+          git add app/test-file.txt
           git commit -m "E2E Test Commit 2"
           git push origin $BRANCH_NAME
           PR_URL=$(gh pr create --title "E2E Test PR" --body "Test PR for E2E testing" --base leader --head $BRANCH_NAME)
@@ -192,13 +193,14 @@ jobs:
           BRANCH_NAME="e2e-test-rebase-$(date +%s)"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           git checkout -b $BRANCH_NAME
-          echo "test content" > test-file-rebase.txt
-          git add test-file-rebase.txt
+          mkdir -p app
+          echo "test content" > app/test-file-rebase.txt
+          git add app/test-file-rebase.txt
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -m "E2E Test Commit 1 (rebase)"
-          echo "another line" >> test-file-rebase.txt
-          git add test-file-rebase.txt
+          echo "another line" >> app/test-file-rebase.txt
+          git add app/test-file-rebase.txt
           git commit -m "E2E Test Commit 2 (rebase)"
           git push origin $BRANCH_NAME
           PR_URL=$(gh pr create --title "E2E Test PR (rebase)" --body "Test PR for E2E testing (rebase)" --base leader --head $BRANCH_NAME)

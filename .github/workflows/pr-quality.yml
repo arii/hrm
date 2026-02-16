@@ -1068,8 +1068,10 @@ jobs:
           git fetch origin "$PARENT_SHA" --depth=1 || (echo "::error::Could not fetch commit ${PARENT_SHA}." && exit 1)
 
           # --- Dynamically determine the list of jobs to copy ---
-          echo "🔎 Determining required checks for branch '${{ github.base_ref }}'..."
-          REQUIRED_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/branches/${{ github.base_ref }}/protection/required_status_checks" --jq '.contexts' || echo "[]")
+          # Use environment variables to prevent script injection
+          TARGET_BRANCH="${{ github.base_ref || inputs.branch }}"
+          echo "🔎 Determining required checks for branch '$TARGET_BRANCH'..."
+          REQUIRED_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/branches/$TARGET_BRANCH/protection/required_status_checks" --jq '.contexts' || echo "[]")
 
           if [ "$(echo "$REQUIRED_CHECKS_JSON" | jq 'length')" -gt 0 ]; then
             echo "Found protected branch rules. Required checks:"
@@ -1104,8 +1106,13 @@ jobs:
             # Fetch check runs for the parent commit
             PARENT_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/commits/${PARENT_SHA}/check-runs" --jq '.check_runs')
 
-            # Filter for the specific jobs we care about
-            RELEVANT_CHECKS_JSON=$(echo "$PARENT_CHECKS_JSON" | jq -c --argjson jobs_to_copy "$(printf '%s\n' "${JOBS_TO_COPY[@]}" | jq -R . | jq -s .)" '[.[] | select(.name as $name | $jobs_to_copy | index($name))]')
+            # Filter for the specific jobs we care about (handling potential workflow name prefixes)
+            RELEVANT_CHECKS_JSON=$(echo "$PARENT_CHECKS_JSON" | jq -c --argjson jobs_to_copy "$(printf '%s\n' "${JOBS_TO_COPY[@]}" | jq -R . | jq -s .)" '
+              [.[] | select(.name as $name |
+                ($jobs_to_copy | index($name)) or
+                ($jobs_to_copy | any(. == ($name | split(" / ") | last)))
+              )]
+            ')
 
             # Count how many of the relevant checks are NOT completed
             IN_PROGRESS_COUNT=$(echo "$RELEVANT_CHECKS_JSON" | jq '[.[] | select(.status != "completed")] | length')
