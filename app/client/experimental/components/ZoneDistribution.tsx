@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -27,30 +27,32 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 }) => {
   const theme = useTheme()
 
-  const filteredEntries = Object.entries(timeInZones)
-    .filter(
-      ([zone, time]) =>
-        zone !== HrZoneName.NoData &&
-        zone !== HrZoneName.Unknown &&
-        // Hide negligible data (< 1%) to maintain visual density and professional polish
-        (totalDuration > 0 ? (time / totalDuration) * 100 : 0) >= 1
-    )
-    .map(([zone, time]) => {
-      const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
-      return {
-        zone,
-        time,
-        percentage,
-        formattedTime: formatDuration(time, {
-          unit: 'seconds',
-          format: 'MM:SS',
-        }),
-        color: HR_ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
-      }
-    })
-    .sort((a, b) => {
-      return HR_ZONE_ORDER.indexOf(a.zone) - HR_ZONE_ORDER.indexOf(b.zone)
-    })
+  const filteredEntries = useMemo(() => {
+    return Object.entries(timeInZones)
+      .filter(
+        ([zone, time]) =>
+          zone !== HrZoneName.NoData &&
+          zone !== HrZoneName.Unknown &&
+          // Hide negligible data (< 1%) to maintain visual density and professional polish
+          (totalDuration > 0 ? (time / totalDuration) * 100 : 0) >= 1
+      )
+      .map(([zone, time]) => {
+        const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
+        return {
+          zone,
+          time,
+          percentage,
+          formattedTime: formatDuration(time, {
+            unit: 'seconds',
+            format: 'MM:SS',
+          }),
+          color: HR_ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
+        }
+      })
+      .sort((a, b) => {
+        return HR_ZONE_ORDER.indexOf(a.zone) - HR_ZONE_ORDER.indexOf(b.zone)
+      })
+  }, [timeInZones, totalDuration, theme.palette.grey])
 
   if (filteredEntries.length === 0) {
     return (
