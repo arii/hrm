@@ -28,8 +28,7 @@ jobs:
   enrich-pr:
     name: Enrich PR Title and Description
     runs-on: ubuntu-latest
-    # Explicitly define GH_TOKEN at the job level to ensure it's available for all steps,
-    # as requested in maintainer feedback to avoid any authentication ambiguity.
+    # Explicitly define GH_TOKEN at the job level to ensure it's available for all steps.
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -39,10 +38,6 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Environment
-        # This composite action (`/.github/actions/setup-env`) checks out the repo,
-        # sets up Node.js, configures pnpm, and installs dependencies from the
-        # frozen lockfile (`pnpm install --frozen-lockfile`). It ensures a
-        # consistent and reproducible environment for subsequent steps.
         uses: ./.github/actions/setup-env
 
       - name: Check if PR Enrichment is Disabled
@@ -73,8 +68,9 @@ jobs:
 
           # Fetch PR details with polling to handle API indexing delays.
           # Validation ensures both title and head SHA are available.
-          FIELDS="title,body,baseRefName,headRefName,baseRefOid,headRefOid,author,additions,deletions,changedFiles"
-          JQ_FILTER='(. // {}) | {title: (.title // ""), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // ""), additions: (.additions // 0), deletions: (.deletions // 0), file_count: (.changedFiles // 0)}'
+          # REDUCED REDUNDANCY: Metrics (additions, deletions, files) are handled in the Analyze step.
+          FIELDS="title,body,baseRefName,headRefName,baseRefOid,headRefOid,author"
+          JQ_FILTER='(. // {}) | {title: (.title // ""), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // "")}'
           VALIDATION='.title != "" and .head_sha != ""'
 
           PR_DATA=$(poll_pr_view "$PR_NUMBER" 12 10 "$FIELDS" "$JQ_FILTER" "$VALIDATION")
@@ -96,9 +92,6 @@ jobs:
           echo "BASE_SHA=$(echo "$PR_DATA" | jq -r '.base_sha')" >> $GITHUB_ENV
           echo "BASE_REF_NAME=$(echo "$PR_DATA" | jq -r '.base_ref')" >> $GITHUB_ENV
           echo "HEAD_SHA=$(echo "$PR_DATA" | jq -r '.head_sha')" >> $GITHUB_ENV
-          echo "ADDITIONS_API=$(echo "$PR_DATA" | jq -r '.additions')" >> $GITHUB_ENV
-          echo "DELETIONS_API=$(echo "$PR_DATA" | jq -r '.deletions')" >> $GITHUB_ENV
-          echo "FILE_COUNT_API=$(echo "$PR_DATA" | jq -r '.file_count')" >> $GITHUB_ENV
 
           # Securely write multiline body to GITHUB_ENV
           echo "PR_BODY<<EOF" >> $GITHUB_ENV
@@ -187,7 +180,6 @@ jobs:
           SCRIPT_FILE=$(mktemp)
 
           # Use a here-document to write the Node.js script to a temporary file.
-          # This prevents shell injection issues with special characters in env vars.
           cat <<'EOF' > "$SCRIPT_FILE"
           const fs = require("fs");
 
@@ -233,7 +225,6 @@ jobs:
             "description": "The full, populated pull request description as a markdown string."
           }
           `;
-          // The first argument to the script is the output file path.
           fs.writeFileSync(process.argv[2], prompt);
           EOF
 
@@ -267,7 +258,6 @@ jobs:
                 result = JSON.parse(rawData);
               } catch (parseError) {
                 // If parsing fails, try to extract the description field manually
-                // Look for "description": "..." and extract the content
                 const descMatch = rawData.match(/"description"\s*:\s*"([\s\S]*?)(?<!\\)"/);
                 if (descMatch) {
                   result = { description: descMatch[1].replace(/\\n/g, '\n').replace(/\\\//g, '/') };
@@ -304,15 +294,15 @@ jobs:
                   trueOriginalBody = currentBody;
                 }
 
-                // 3. Clean the original body by removing the Jules task line from it, so it's not duplicated in the details block.
+                // 3. Clean the original body by removing the Jules task line from it.
                 const cleanedOriginalBody = trueOriginalBody.replace(julesTaskRegex, '').trim();
 
                 // 4. Build the final body.
                 let finalBody = '';
                 if (julesTaskLine) {
-                  finalBody += julesTaskLine + '\n\n'; // Ensure the task line is at the top.
+                  finalBody += julesTaskLine + '\n\n';
                 }
-                finalBody += newBody; // Add the new AI-generated content.
+                finalBody += newBody;
                 finalBody += '\n\n<details>\n<summary>Original PR Body</summary>\n\n' + cleanedOriginalBody + '\n</details>';
 
                 await github.rest.pulls.update({

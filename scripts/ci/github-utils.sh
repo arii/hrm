@@ -67,6 +67,7 @@ poll_pr_view() {
 }
 
 # Polls for PR metrics (files, additions, deletions) until diff is available or timeout.
+# Optimized to use 'gh pr diff --numstat' as primary source of truth.
 # Usage: poll_pr_metrics <pr_number> <max_attempts> <sleep_seconds>
 poll_pr_metrics() {
   local pr_number=$1
@@ -78,8 +79,8 @@ poll_pr_metrics() {
   for i in $(seq 1 "$max_attempts"); do
     echo "📊 Gathering PR metrics for $pr_number (Attempt $i/$max_attempts)..." >&2
 
-    # 1. Fetch metadata baseline
-    metadata=$(retry_command 2 1 gh pr view "$pr_number" --json additions,deletions,changedFiles)
+    # 1. Fetch metadata baseline (including files for fallback)
+    metadata=$(retry_command 2 1 gh pr view "$pr_number" --json additions,deletions,changedFiles,files)
 
     if [ -n "$metadata" ]; then
       local meta_count=$(echo "$metadata" | jq -r '.changedFiles // 0')
@@ -88,30 +89,38 @@ poll_pr_metrics() {
 
       echo "   Current Metadata: Files=$meta_count, Additions=$meta_add, Deletions=$meta_del" >&2
 
-      # 2. Fetch live file list from diff
-      local files
-      files=$(retry_command 2 1 gh pr diff "$pr_number" --name-only)
-      local count=$(echo "$files" | grep -c . || echo "0")
+      # 2. Fetch live metrics from diff numstat
+      # This provides paths and counts in a single efficient call.
+      local numstat
+      numstat=$(retry_command 2 1 gh pr diff "$pr_number" --numstat)
 
-      echo "   Current Diff: Files=$count" >&2
+      if [ -n "$numstat" ]; then
+         # Use awk for efficient sum of columns 1 and 2
+         local add=$(echo "$numstat" | awk '{sum+=$1} END {print sum+0}')
+         local del=$(echo "$numstat" | awk '{sum+=$2} END {print sum+0}')
 
-      if [ "$count" -gt 0 ]; then
-        # 3. Fetch numstat for precise counts if diff is available
-        local numstat
-        numstat=$(retry_command 2 1 gh pr diff "$pr_number" --numstat)
-        local add=$meta_add
-        local del=$meta_del
-        if [ -n "$numstat" ]; then
-          # Use awk for efficient sum of columns
-          add=$(echo "$numstat" | awk '{sum+=$1} END {print sum+0}')
-          del=$(echo "$numstat" | awk '{sum+=$2} END {print sum+0}')
-        fi
+         # Use cut to extract the filename starting from the third column (handles spaces).
+         # Numstat output is typically tab-separated: additions\tdeletions\tpath
+         local files=$(echo "$numstat" | cut -f3-)
 
-        # Return as JSON for easy consumption
-        jq -n --arg count "$count" --arg add "$add" --arg del "$del" --arg files "$files" \
-          '{file_count: ($count|tonumber), additions: ($add|tonumber), deletions: ($del|tonumber), files: $files, source: "diff"}'
-        return 0
-      elif [ "$meta_count" -gt 0 ]; then
+         # Fallback: if cut didn't work (e.g. space-separated), try awk-based extraction for path
+         if [ -z "$files" ] || [ "$(echo "$files" | grep -c .)" -eq 0 ]; then
+            files=$(echo "$numstat" | awk '{ $1=""; $2=""; print $0 }' | sed 's/^[[:space:]]*//')
+         fi
+
+         local count=$(echo "$files" | grep -c . || echo "0")
+
+         echo "   Current Diff: Files=$count, Additions=$add, Deletions=$del" >&2
+
+         if [ "$count" -gt 0 ]; then
+            # Return as JSON for easy consumption
+            jq -n --arg count "$count" --arg add "$add" --arg del "$del" --arg files "$files" \
+              '{file_count: ($count|tonumber), additions: ($add|tonumber), deletions: ($del|tonumber), files: $files, source: "diff"}'
+            return 0
+         fi
+      fi
+
+      if [ "$meta_count" -gt 0 ]; then
         echo "⏳ Metadata indicates changes, but diff is empty. Waiting for indexing..." >&2
       else
         echo "❓ Both metadata and diff report 0 changes." >&2
@@ -129,7 +138,9 @@ poll_pr_metrics() {
      local meta_count=$(echo "$metadata" | jq -r '.changedFiles // 0')
      local meta_add=$(echo "$metadata" | jq -r '.additions // 0')
      local meta_del=$(echo "$metadata" | jq -r '.deletions // 0')
-     jq -n --arg count "$meta_count" --arg add "$meta_add" --arg del "$meta_del" --arg files "" \
+     local meta_files=$(echo "$metadata" | jq -r '.files | map(.path) | join("\n")' 2>/dev/null || echo "")
+
+     jq -n --arg count "$meta_count" --arg add "$meta_add" --arg del "$meta_del" --arg files "$meta_files" \
        '{file_count: ($count|tonumber), additions: ($add|tonumber), deletions: ($del|tonumber), files: $files, source: "metadata", fallback: true}'
      return 0
   fi
