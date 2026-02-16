@@ -53,12 +53,40 @@ jobs:
         timeout-minutes: 15
         env:
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
+          # 1. Establish initial SHA
+          INITIAL_SHA=$(git ls-remote origin "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+          echo "Initial SHA: $INITIAL_SHA"
+
+          # 2. Trigger bot
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+
+          # 3. Wait for SHA to change
+          MAX_RETRIES=30
+          RETRY_COUNT=0
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            CURRENT_SHA=$(git ls-remote origin "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+            if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ Bot has pushed changes (New SHA: $CURRENT_SHA)"
+              break
+            fi
+            echo "Waiting for SHA change... ($RETRY_COUNT/$MAX_RETRIES)"
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            sleep 10
+          done
+
+          if [ "$CURRENT_SHA" == "$INITIAL_SHA" ]; then
+            echo "❌ Bot failed to push changes within timeout."
+            exit 1
+          fi
+
+          # 4. Wait for checks on the new SHA
+          echo "Waiting for checks to appear..."
+          sleep 15 # Give GitHub time to register the new commit's checks
+          timeout 600 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash
         env:
@@ -151,12 +179,40 @@ jobs:
         timeout-minutes: 15
         env:
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
+          BRANCH_B: ${{ env.BRANCH_B }}
         run: |
           set -e
+          # 1. Establish initial SHA
+          INITIAL_SHA=$(git ls-remote origin "refs/heads/$BRANCH_B" | awk '{print $1}')
+          echo "Initial SHA: $INITIAL_SHA"
+
+          # 2. Trigger bot
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+
+          # 3. Wait for SHA to change
+          MAX_RETRIES=30
+          RETRY_COUNT=0
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            CURRENT_SHA=$(git ls-remote origin "refs/heads/$BRANCH_B" | awk '{print $1}')
+            if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ Bot has pushed changes (New SHA: $CURRENT_SHA)"
+              break
+            fi
+            echo "Waiting for SHA change... ($RETRY_COUNT/$MAX_RETRIES)"
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            sleep 10
+          done
+
+          if [ "$CURRENT_SHA" == "$INITIAL_SHA" ]; then
+            echo "❌ Bot failed to push changes within timeout."
+            exit 1
+          fi
+
+          # 4. Wait for checks on the new SHA
+          echo "Waiting for checks to appear..."
+          sleep 15 # Give GitHub time to register the new commit's checks
+          timeout 600 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Conflict Resolution
         run: |
@@ -224,12 +280,40 @@ jobs:
         timeout-minutes: 15
         env:
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
+          # 1. Establish initial SHA
+          INITIAL_SHA=$(git ls-remote origin "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+          echo "Initial SHA: $INITIAL_SHA"
+
+          # 2. Trigger bot
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
-          sleep 10
-          timeout 300 gh pr checks $PR_NUMBER --watch
+
+          # 3. Wait for SHA to change
+          MAX_RETRIES=30
+          RETRY_COUNT=0
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            CURRENT_SHA=$(git ls-remote origin "refs/heads/$BRANCH_NAME" | awk '{print $1}')
+            if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+              echo "✅ Bot has pushed changes (New SHA: $CURRENT_SHA)"
+              break
+            fi
+            echo "Waiting for SHA change... ($RETRY_COUNT/$MAX_RETRIES)"
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            sleep 10
+          done
+
+          if [ "$CURRENT_SHA" == "$INITIAL_SHA" ]; then
+            echo "❌ Bot failed to push changes within timeout."
+            exit 1
+          fi
+
+          # 4. Wait for checks on the new SHA
+          echo "Waiting for checks to appear..."
+          sleep 15 # Give GitHub time to register the new commit's checks
+          timeout 600 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash and Rebase
         env:
