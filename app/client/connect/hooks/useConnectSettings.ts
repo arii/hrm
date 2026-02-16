@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { useUserSettings } from '@/context/UserSettingsContext'
+import { useUserSettings, HrZoneMethod } from '@/context/UserSettingsContext'
 import {
   validateAgeValue,
   validateWeightValue,
@@ -132,6 +132,28 @@ export function useConnectSettings() {
     }
   }, [localRestingHr, restingHr, setUserSettings])
 
+  const setUserName = useCallback(
+    (name: string) => setUserSettings((prev) => ({ ...prev, userName: name })),
+    [setUserSettings]
+  )
+
+  const setUserAge = useCallback(
+    (age: string) => {
+      const ageNum = parseInt(age, 10)
+      setUserSettings((prev) => ({
+        ...prev,
+        userAge: isNaN(ageNum) ? 0 : ageNum,
+      }))
+    },
+    [setUserSettings]
+  )
+
+  const setHrZoneMethod = useCallback(
+    (method: HrZoneMethod) =>
+      setUserSettings((prev) => ({ ...prev, hrZoneMethod: method })),
+    [setUserSettings]
+  )
+
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
       setUserSettings((prev) => ({ ...prev, unitSystem: newUnit }))
@@ -189,7 +211,10 @@ export function useConnectSettings() {
     userSettings,
     setUserSettings,
     userName,
+    setUserName,
     userAge,
+    setUserAge,
+    setHrZoneMethod,
     userWeight,
     gender,
     unitSystem,
@@ -208,7 +233,7 @@ export function useConnectSettings() {
     handleWeightBlur,
     weightError,
     ageError,
-    handleAgeBlur,
+    onAgeBlur: handleAgeBlur,
     displayHeight,
     handleHeightChange,
     handleHeightBlur,

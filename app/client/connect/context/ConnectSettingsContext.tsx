@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, ReactNode } from 'react'
+import { createContext, useContext, ReactNode } from 'react'
 import { useConnectSettings } from '../hooks/useConnectSettings'
 
 type ConnectSettingsContextType = ReturnType<typeof useConnectSettings>
