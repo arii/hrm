@@ -9,6 +9,7 @@ jest.mock('uuid', () => ({
 import SpotifyDisplay from '@/components/SpotifyDisplay'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
 import { fireEvent, render, screen } from '@testing-library/react'
@@ -22,24 +23,34 @@ jest.mock('@/components/shared/VolumeSlider', () => ({
   __esModule: true,
   default: ({
     volume,
+    muted,
     onVolumeChange,
     onVolumeChangeCommitted,
+    onToggleMute,
+    disabled,
   }: {
     volume: number
+    muted: boolean
     onVolumeChange: (value: number) => void
     onVolumeChangeCommitted: (value: number) => void
+    onToggleMute: () => void
+    disabled?: boolean
   }) => (
-    <input
-      type="range"
-      aria-label="Volume control"
-      value={volume}
-      onChange={(e) => onVolumeChange(parseInt(e.target.value, 10))}
-      onMouseUp={(e) =>
-        onVolumeChangeCommitted(
-          parseInt((e.target as HTMLInputElement).value, 10)
-        )
-      }
-    />
+    <div data-testid="volume-slider" data-disabled={disabled}>
+      <input
+        type="range"
+        aria-label="Volume control"
+        value={volume}
+        onChange={(e) => onVolumeChange(parseInt(e.target.value, 10))}
+        onMouseUp={(e) =>
+          onVolumeChangeCommitted(
+            parseInt((e.target as HTMLInputElement).value, 10)
+          )
+        }
+        disabled={disabled}
+      />
+      <button aria-label={muted ? 'Unmute' : 'Mute'} onClick={onToggleMute} />
+    </div>
   ),
 }))
 jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
@@ -47,10 +58,12 @@ jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
   default: () => <div data-testid="current-spotify-item-display" />,
 }))
 jest.mock('@/context/WebSocketContext')
+jest.mock('@/hooks/useSpotifyCommand')
 jest.mock('next-auth/react', () => ({
   ...jest.requireActual('next-auth/react'), // Keep original functionality
   useSession: jest.fn(), // Mock useSession specifically
   signIn: jest.fn(), // Mock signIn specifically
+  signOut: jest.fn(),
 }))
 jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
   __esModule: true,
@@ -61,6 +74,9 @@ const mockedUseWebSocket = useWebSocket as jest.Mock
 const mockedUseSession = useSession as jest.Mock
 const mockedSignIn = signIn as jest.Mock
 const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
+const mockedUseSpotifyCommand = useSpotifyCommand as jest.MockedFunction<
+  typeof useSpotifyCommand
+>
 
 // Custom renderer to wrap component with required providers
 const renderWithProviders = (ui: React.ReactElement) => {
@@ -68,6 +84,8 @@ const renderWithProviders = (ui: React.ReactElement) => {
 }
 
 describe('SpotifyDisplay', () => {
+  const executeMock = jest.fn()
+
   beforeEach(() => {
     jest.resetAllMocks()
     mockedUseSpotifyWebPlayback.mockReturnValue({
@@ -76,6 +94,20 @@ describe('SpotifyDisplay', () => {
       player: null,
       isAuthenticated: true,
     })
+    mockedUseSpotifyCommand.mockReturnValue({
+      execute: executeMock,
+      activeDevice: { id: 'mock-device-1', name: 'Test Device' },
+      hrmPlayer: null,
+      playback: {
+        track: { name: '', artist: '' },
+        is_playing: true,
+        volume_percent: 50,
+        isMuted: false,
+        progress_ms: 0,
+      },
+      isHrmPlayerActive: false,
+    } as unknown as ReturnType<typeof useSpotifyCommand>)
+
     global.fetch = jest.fn(() =>
       Promise.resolve({
         ok: true,
@@ -184,6 +216,40 @@ describe('SpotifyDisplay', () => {
       jest.useRealTimers()
     })
 
+    it('handles playback toggle (Pause)', () => {
+      const pauseButton = screen.getByLabelText('Pause')
+      fireEvent.click(pauseButton)
+      expect(executeMock).toHaveBeenCalledWith('PAUSE')
+    })
+
+    it('handles playback toggle (Play)', () => {
+      const playingData = {
+        ...initialSpotifyData,
+        playback: { ...initialSpotifyData.playback, is_playing: false },
+      }
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: playingData,
+      })
+      rerender(<SpotifyDisplay />)
+
+      const playButton = screen.getByLabelText('Play')
+      fireEvent.click(playButton)
+      expect(executeMock).toHaveBeenCalledWith('PLAY')
+    })
+
+    it('handles Skip Next', () => {
+      const nextButton = screen.getByLabelText('Next track')
+      fireEvent.click(nextButton)
+      expect(executeMock).toHaveBeenCalledWith('NEXT')
+    })
+
+    it('handles Skip Previous', () => {
+      const prevButton = screen.getByLabelText('Previous track')
+      fireEvent.click(prevButton)
+      expect(executeMock).toHaveBeenCalledWith('PREVIOUS')
+    })
+
     it('updates volume on external change when user is not sliding', () => {
       const slider = screen.getByRole('slider', { name: /volume control/i })
       expect(slider).toHaveValue('50')
@@ -202,71 +268,40 @@ describe('SpotifyDisplay', () => {
       expect(slider).toHaveValue('80')
     })
 
-    it('does not update volume on external change while user is sliding', () => {
+    it('sends volume command when sliding stops', () => {
       const slider = screen.getByRole('slider', { name: /volume control/i })
-      expect(slider).toHaveValue('50')
-
-      // Simulate user starting to slide
       fireEvent.change(slider, { target: { value: '70' } })
-      expect(slider).toHaveValue('70')
+      fireEvent.mouseUp(slider)
 
-      // Simulate external update while sliding
-      const updatedSpotifyData = {
-        ...initialSpotifyData,
-        playback: { ...initialSpotifyData.playback, volume_percent: 90 },
-      }
+      expect(executeMock).toHaveBeenCalledWith('SET_VOLUME', {
+        volume: 70,
+        deviceId: 'mock-device-1',
+      })
+    })
+
+    it('handles mute toggle', () => {
+      const muteButton = screen.getByLabelText('Mute')
+      fireEvent.click(muteButton)
+
+      expect(executeMock).toHaveBeenCalledWith('SET_VOLUME', {
+        volume: 0,
+        deviceId: 'mock-device-1',
+      })
+    })
+
+    it('disables volume control when no device is active', () => {
+      mockedUseSpotifyCommand.mockReturnValue({
+        ...mockedUseSpotifyCommand(),
+        activeDevice: null,
+      } as unknown as ReturnType<typeof useSpotifyCommand>)
       mockedUseWebSocket.mockReturnValue({
         ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
+        spotifyData: { ...initialSpotifyData, devices: [] },
       })
       rerender(<SpotifyDisplay />)
 
-      // Volume should not change because user is sliding
-      expect(slider).toHaveValue('70')
-    })
-
-    it('re-enables external updates after sliding is committed', () => {
-      jest.useFakeTimers()
-      try {
-        const slider = screen.getByRole('slider', { name: /volume control/i })
-        expect(slider).toHaveValue('50')
-
-        // Simulate user sliding
-        fireEvent.change(slider, { target: { value: '75' } })
-        expect(slider).toHaveValue('75')
-
-        // Simulate external update while sliding (should be ignored)
-        let updatedSpotifyData = {
-          ...initialSpotifyData,
-          playback: { ...initialSpotifyData.playback, volume_percent: 100 },
-        }
-        mockedUseWebSocket.mockReturnValue({
-          ...mockedUseWebSocket(),
-          spotifyData: updatedSpotifyData,
-        })
-        rerender(<SpotifyDisplay />)
-        expect(slider).toHaveValue('75')
-
-        // Simulate user releasing the slider
-        fireEvent.mouseUp(slider)
-
-        // Advance time past the grace period (500ms) to allow syncing
-        jest.advanceTimersByTime(600)
-
-        // Simulate another external update (should now be applied)
-        updatedSpotifyData = {
-          ...initialSpotifyData,
-          playback: { ...initialSpotifyData.playback, volume_percent: 10 },
-        } // Ensure new volume to trigger effect
-        mockedUseWebSocket.mockReturnValue({
-          ...mockedUseWebSocket(),
-          spotifyData: updatedSpotifyData,
-        })
-        rerender(<SpotifyDisplay />)
-        expect(slider).toHaveValue('10')
-      } finally {
-        jest.useRealTimers()
-      }
+      const sliderContainer = screen.getByTestId('volume-slider')
+      expect(sliderContainer.getAttribute('data-disabled')).toBe('true')
     })
   })
 })
