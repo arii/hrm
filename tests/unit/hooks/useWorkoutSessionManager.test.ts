@@ -68,11 +68,13 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.endTime).toBeNull()
 
       // Resume
+      mockDateNow.mockReturnValue(1002000) // 2 seconds later
       act(() => {
         result.current.resumeWorkout()
       })
       expect(result.current.status).toBe('running')
       expect(result.current.session?.status).toBe('running')
+      expect(result.current.totalPausedTime).toBe(2000)
 
       // Pause again before finishing
       act(() => {
@@ -216,6 +218,19 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.caloriesBurned).toBe(60)
       expect(result.current.session?.totalCaloriesBurned).toBe(60)
 
+      // Finish workout - calories should freeze
+      act(() => {
+        result.current.finishWorkout()
+      })
+      expect(result.current.status).toBe('finished')
+      expect(result.current.caloriesBurned).toBe(60)
+
+      // Cumulative calories increase further
+      act(() => {
+        rerender({ calories: 200 })
+      })
+      expect(result.current.caloriesBurned).toBe(60) // Still 60!
+
       // Reset
       await act(async () => {
         await result.current.resetWorkout()
@@ -238,6 +253,7 @@ describe('useWorkoutSessionManager', () => {
         maxHr: 0,
         calorieHistory: [],
         totalCaloriesBurned: 0,
+        totalPausedTime: 0,
         userSettings: { age: 30, weight: 80, maxHr: 190 },
         lastSyncTime: 900000,
         syncStatus: 'pending',
@@ -269,6 +285,7 @@ describe('useWorkoutSessionManager', () => {
         startTime: 1000000,
         status: 'paused',
         totalCaloriesBurned: 0,
+        totalPausedTime: 0,
       }
       mockGetIncompleteSession.mockResolvedValue(todaySession)
       mockIsSameDay.mockReturnValue(true) // Mock as the same day
@@ -321,6 +338,32 @@ describe('useWorkoutSessionManager', () => {
       expect(mockShowInfo).toHaveBeenCalledWith(
         'New day detected. A fresh workout session has started.'
       )
+    })
+  })
+
+  describe('Duration Recovery', () => {
+    it('should recover totalPausedTime from saved session', async () => {
+      // Arrange
+      const savedSession: Partial<WorkoutSessionData> = {
+        sessionId: 'saved-session-id',
+        startTime: 500000,
+        status: 'running',
+        totalPausedTime: 30000, // 30 seconds paused
+        totalCaloriesBurned: 50,
+      }
+      mockGetIncompleteSession.mockResolvedValue(savedSession)
+      mockIsSameDay.mockReturnValue(true)
+      mockDateNow.mockReturnValue(1000000)
+
+      // Act
+      const { result } = renderHook(() => useWorkoutSessionManager(100))
+      await waitFor(() => expect(result.current.isInitialized).toBe(true))
+
+      // Assert
+      expect(result.current.totalPausedTime).toBe(30000)
+      // Duration = (now - startTime - totalPausedTime) / 1000
+      // Duration = (1000000 - 500000 - 30000) / 1000 = 470
+      expect(result.current.duration).toBe(470)
     })
   })
 })
