@@ -70,15 +70,8 @@ jobs:
         id: pr_context
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER_INPUT: ${{ inputs.pr_number }}
-          PR_NUMBER_EVENT: ${{ github.event.pull_request && github.event.pull_request.number }}
+          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || 0 }}
         run: |
-          if [ -n "$PR_NUMBER_INPUT" ]; then
-            PR_NUMBER="$PR_NUMBER_INPUT"
-          else
-            PR_NUMBER="$PR_NUMBER_EVENT"
-          fi
-
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
@@ -381,13 +374,17 @@ jobs:
               echo "Updating title from: $CURRENT_TITLE"
               echo "Updating title to: $NEW_TITLE"
 
-              REPO_URL="https://api.github.com/repos/${{ github.repository }}"
-              PR_API_URL="$REPO_URL/pulls/$PR_NUMBER"
+              if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ]; then
+                REPO_URL="https://api.github.com/repos/${{ github.repository }}"
+                PR_API_URL="$REPO_URL/pulls/$PR_NUMBER"
 
-              curl -X PATCH -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                   -H "Content-Type: application/json" \
-                   -d "{\"title\": \"$NEW_TITLE\"}" \
-                   "$PR_API_URL" || (echo "::error::Could not update PR title" && exit 1)
+                curl -X PATCH -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                     -H "Content-Type: application/json" \
+                     -d "{\"title\": \"$NEW_TITLE\"}" \
+                     "$PR_API_URL" || (echo "::warning::Could not update PR title" && exit 0)
+              else
+                echo "::warning::PR_NUMBER is missing or 0. Skipping title enhancement."
+              fi
             fi
           fi
 

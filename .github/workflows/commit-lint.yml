@@ -13,10 +13,10 @@ jobs:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v6
       - name: Post Comment on Failure
-        if: failure() && github.event.pull_request
+        if: failure() && (github.event.pull_request && github.event.pull_request.number && github.event.pull_request.number != 0)
         uses: peter-evans/create-or-update-comment@v4
         with:
-          issue-number: ${{ (github.event.pull_request && github.event.pull_request.number) || 0 }}
+          issue-number: ${{ github.event.pull_request.number }}
           body: |
             :no_entry: **Commit Message Linting Failed**
 

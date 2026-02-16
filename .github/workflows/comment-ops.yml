@@ -77,11 +77,11 @@ jobs:
           fi
 
       - name: Add reaction to comment
-        if: steps.validate.outputs.should_run == 'true' && (github.event.comment && github.event.comment.id)
+        if: steps.validate.outputs.should_run == 'true' && (github.event.comment && github.event.comment.id && github.event.comment.id != 0)
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ (github.event.comment && github.event.comment.id) || 0 }}
+          comment-id: ${{ github.event.comment.id }}
           reaction: eyes
       - name: Get PR Details
         if: steps.validate.outputs.should_run == 'true'
@@ -92,7 +92,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = Number(process.env.PR_NUMBER_RAW) || context.issue?.number || 0;
+            const prNumber = Number(process.env.PR_NUMBER_RAW) || (context.payload.pull_request && context.payload.pull_request.number) || (context.payload.issue && context.payload.issue.number) || context.issue?.number || 0;
             if (!prNumber) {
               console.log('Could not determine PR number. Skipping.');
               return;

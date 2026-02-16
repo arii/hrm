@@ -35,8 +35,20 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should_review: ${{ steps.changes.outputs.src }}
+      is_e2e: ${{ steps.changes.outputs.is_e2e }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Fetch PR Metadata
+        id: metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.pr_number && inputs.pr_number != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          PR_JSON=$(gh pr view "$PR_NUMBER" --json title,headRefName 2>/dev/null || echo "{}")
+          echo "title=$(echo "$PR_JSON" | jq -r '.title // ""')" >> $GITHUB_OUTPUT
+          echo "head_ref=$(echo "$PR_JSON" | jq -r '.headRefName // ""')" >> $GITHUB_OUTPUT
 
       - uses: dorny/paths-filter@v3
         if: github.event_name == 'pull_request'
@@ -96,11 +108,22 @@ jobs:
 
       - name: Consolidate Changes
         id: changes
+        env:
+          PR_TITLE: ${{ steps.metadata.outputs.title || (github.event.pull_request && github.event.pull_request.title) || '' }}
+          HEAD_REF_NAME: ${{ steps.metadata.outputs.head_ref || (github.event.pull_request && github.event.pull_request.head.ref) || '' }}
+          HEAD_REF_INPUT: ${{ github.head_ref || inputs.head_ref || '' }}
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "src=${{ steps.changes-pr.outputs.src }}" >> $GITHUB_OUTPUT
+          if [[ "$PR_TITLE" == *"E2E Test PR"* ]] || [[ "$HEAD_REF_NAME" == "e2e-test-"* ]] || [[ "$HEAD_REF_INPUT" == "e2e-test-"* ]]; then
+            echo "::notice::E2E test detected in filter. Forcing should_review=true."
+            echo "src=true" >> $GITHUB_OUTPUT
+            echo "is_e2e=true" >> $GITHUB_OUTPUT
           else
-            echo "src=${{ steps.changes-dispatch.outputs.src }}" >> $GITHUB_OUTPUT
+            echo "is_e2e=false" >> $GITHUB_OUTPUT
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              echo "src=${{ steps.changes-pr.outputs.src || 'false' }}" >> $GITHUB_OUTPUT
+            else
+              echo "src=${{ steps.changes-dispatch.outputs.src || 'false' }}" >> $GITHUB_OUTPUT
+            fi
           fi
 
   check-diff:
@@ -127,13 +150,14 @@ jobs:
       - name: Generate Diff and Run Script
         id: diff_check
         env:
+          IS_E2E: ${{ needs.filter.outputs.is_e2e }}
           PR_TITLE: ${{ github.event.pull_request && github.event.pull_request.title }}
           HEAD_REF: ${{ github.head_ref || inputs.head_ref }}
           EVENT_BASE_SHA: ${{ github.event.pull_request && github.event.pull_request.base.sha }}
           EVENT_HEAD_SHA: ${{ github.event.pull_request && github.event.pull_request.head.sha }}
         run: |
           # Bypass check for E2E tests to ensure they always run the full quality gate
-          if [[ "$PR_TITLE" == *"E2E Test PR"* ]] || [[ "$HEAD_REF" == "e2e-test-"* ]]; then
+          if [[ "$IS_E2E" == "true" ]] || [[ "$PR_TITLE" == *"E2E Test PR"* ]] || [[ "$HEAD_REF" == "e2e-test-"* ]]; then
             echo "::notice::Detected E2E Test PR (Title: '$PR_TITLE', Branch: '$HEAD_REF'). Forcing meaningful changes."
             echo "is_meaningful=0" >> "$GITHUB_OUTPUT"
             exit 0
