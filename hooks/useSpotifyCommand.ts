@@ -82,3 +82,4 @@ export const useSpotifyCommand = () => {
     isHrmPlayerActive: activeDevice?.name === 'HRM Web Player',
   }
 }
+// Final verification
