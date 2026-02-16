@@ -39,14 +39,27 @@ describe('ZoneDistribution', () => {
     expect(screen.getByText('Heart Rate Zone Distribution')).toBeInTheDocument()
   })
 
-  it('renders correctly with no time in any zone', () => {
+  it('renders correctly with no total duration', () => {
     render(
-      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
+      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={0} />
     )
-    // Should show "No zone data available" message when data.length === 0
+    // Should show "No zone data available" message when totalDuration === 0
     expect(
       screen.getByText('No zone data available for this session.')
     ).toBeInTheDocument()
+  })
+
+  it('renders the zone list even with no time in any zone if duration exists', () => {
+    render(
+      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
+    )
+    // Should show the distribution overview even if all zones are at 0%
+    expect(
+      screen.queryByText('No zone data available for this session.')
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getAllByText(HR_ZONE_CONFIG.ZONE_0.label).length
+    ).toBeGreaterThanOrEqual(1)
   })
 
   it('calculates and displays the time and percentage for each zone', () => {
@@ -75,33 +88,24 @@ describe('ZoneDistribution', () => {
     expect(screen.getAllByText(/10%/).length).toBeGreaterThanOrEqual(1)
   })
 
-  it('does not display zones with no time', () => {
+  it('displays all zones to provide a complete overview even with no time', () => {
     const timeInZones = {
       ...baseTimeInZones,
       ZONE_2: 100,
     }
     render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
+    // Zone 2 has time
     expect(
       screen.getAllByText(HR_ZONE_CONFIG.ZONE_2.label).length
     ).toBeGreaterThanOrEqual(1)
+    // Zone 3 has no time but is still displayed for overview
     expect(
-      screen.queryByText(HR_ZONE_CONFIG.ZONE_3.label)
-    ).not.toBeInTheDocument()
-  })
-
-  it('filters out Idle zone (ZONE_0)', () => {
-    const timeInZones = {
-      ...baseTimeInZones,
-      ZONE_0: 50,
-    }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
-    // data.length will be 0, so it shows "No zone data available"
+      screen.getAllByText(HR_ZONE_CONFIG.ZONE_3.label).length
+    ).toBeGreaterThanOrEqual(1)
+    // Idle zone (ZONE_0) is also displayed
     expect(
-      screen.getByText('No zone data available for this session.')
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByText(HR_ZONE_CONFIG.ZONE_0.label)
-    ).not.toBeInTheDocument()
+      screen.getAllByText(HR_ZONE_CONFIG.ZONE_0.label).length
+    ).toBeGreaterThanOrEqual(1)
   })
 
   it('displays correct total duration in the center', () => {
