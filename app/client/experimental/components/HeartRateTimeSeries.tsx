@@ -30,7 +30,7 @@ const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
           sx={{ height: 300, minHeight: 300 }}
           data-testid="hr-time-series-chart"
         >
-          <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+          <ResponsiveContainer width="100%" height="100%">
             <LineChart data={hrHistory} syncId="anyId">
               <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
               <XAxis
