@@ -145,7 +145,7 @@ jobs:
           TITLE: ${{ env.TITLE }}
           PROMPT: ${{ env.PROMPT }}
           REPO_OWNER: ${{ github.repository_owner }}
-          REPO_NAME: ${{ github.event.repository.name }}
+          REPO_NAME: ${{ (github.event.repository && github.event.repository.name) || '' }}
         run: |
           set +e
           OUTPUT=$(python3 .github/scripts/jules_ops.py \
@@ -208,7 +208,7 @@ jobs:
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          comment-id: ${{ github.event.comment.id }}
+          comment-id: ${{ (github.event.comment && github.event.comment.id) || 0 }}
           reaction: '+1'
       - name: 'Handle Failure'
         if: failure()

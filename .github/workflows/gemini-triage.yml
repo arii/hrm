@@ -47,8 +47,8 @@ jobs:
 
       - name: Construct Analysis Prompt
         env:
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_TITLE: ${{ (github.event.issue && github.event.issue.title) || '' }}
+          ISSUE_BODY: ${{ (github.event.issue && github.event.issue.body) || '' }}
         run: |
           # Create a structured prompt demanding JSON output
           cat <<EOF > task_input.txt
