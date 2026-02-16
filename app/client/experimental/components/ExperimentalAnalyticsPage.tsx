@@ -1,3 +1,4 @@
+// app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Container, Box, Button } from '@mui/material'
