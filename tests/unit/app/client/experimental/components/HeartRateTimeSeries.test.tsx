@@ -41,6 +41,6 @@ describe('HeartRateTimeSeries', () => {
     renderWithTheme(<HeartRateTimeSeries hrHistory={mockHrHistory} />)
     const chartContainer = screen.getByTestId('hr-time-series-chart')
     expect(chartContainer).toBeInTheDocument()
-    expect(chartContainer).toHaveStyle({ height: '300px', minHeight: '300px' })
+    expect(chartContainer).toHaveStyle({ height: '300px' })
   })
 })

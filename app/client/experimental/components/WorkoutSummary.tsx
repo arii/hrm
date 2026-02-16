@@ -52,7 +52,7 @@ const WorkoutSummary = ({
           />
         </Box>
         <Grid container spacing={2}>
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <Typography variant="caption" color="textSecondary">
               Duration
             </Typography>
@@ -63,7 +63,7 @@ const WorkoutSummary = ({
               })}
             </Typography>
           </Grid>
-          <Grid item xs={6}>
+          <Grid size={{ xs: 6 }}>
             <Typography variant="caption" color="textSecondary">
               Calories
             </Typography>
