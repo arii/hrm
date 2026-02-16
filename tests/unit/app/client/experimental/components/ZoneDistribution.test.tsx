@@ -40,9 +40,7 @@ describe('ZoneDistribution', () => {
   })
 
   it('renders correctly with no total duration', () => {
-    render(
-      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={0} />
-    )
+    render(<ZoneDistribution timeInZones={baseTimeInZones} totalDuration={0} />)
     // Should show "No zone data available" message when totalDuration === 0
     expect(
       screen.getByText('No zone data available for this session.')
