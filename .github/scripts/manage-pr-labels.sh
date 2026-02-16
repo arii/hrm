@@ -13,7 +13,7 @@ fi
 # Ensure all managed labels exist in the repository
 # =================================================================
 echo "Ensuring all managed labels exist..."
-yq -r '.[] | .name + "|" + .description + "|" + .color' .github/pr-labels.yml | while IFS='|' read -r name description color; do
+jq -r '.[] | .name + "|" + .description + "|" + .color' .github/pr-labels.json | while IFS='|' read -r name description color; do
   # The `gh label create` command will fail if the label already exists.
   # We append `|| true` to the command to ignore the error and continue the script.
   gh label create "$name" --description "$description" --color "$color" || true
@@ -31,8 +31,8 @@ else
   exit 0
 fi
 
-# Get the list of managed labels from the pr-labels.yml file
-MANAGED_LABELS=$(yq -r '.[].name' .github/pr-labels.yml)
+# Get the list of managed labels from the pr-labels.json file
+MANAGED_LABELS=$(jq -r '.[].name' .github/pr-labels.json)
 
 # Get current labels on the PR
 CURRENT_LABELS=$(gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
@@ -40,30 +40,16 @@ CURRENT_LABELS=$(gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
 echo "Current labels on PR #$PR_NUMBER:"
 echo "$CURRENT_LABELS"
 echo "---"
-echo "All managed labels (from .github/pr-labels.yml):"
+echo "All managed labels (from .github/pr-labels.json):"
 echo "$MANAGED_LABELS"
 echo "---"
 echo "New labels to apply from Gemini review:"
 echo "$NEW_LABELS"
 echo "---"
 
-# Collect labels to remove into a single comma-separated string
-LABELS_TO_REMOVE=""
-for label in $MANAGED_LABELS; do
-  if echo "$CURRENT_LABELS" | grep -q "^$label$"; then
-    if [ -z "$LABELS_TO_REMOVE" ]; then
-      LABELS_TO_REMOVE="$label"
-    else
-      LABELS_TO_REMOVE="$LABELS_TO_REMOVE,$label"
-    fi
-  fi
-done
-
-# Remove all managed labels from the PR in a single call
-if [ -n "$LABELS_TO_REMOVE" ]; then
-  echo "Removing labels: $LABELS_TO_REMOVE"
-  gh pr edit $PR_NUMBER --remove-label "$LABELS_TO_REMOVE"
-fi
+# Call the universal cleanup script to remove automated review and obsolete labels
+echo "Cleaning up automated review and obsolete labels..."
+GH_TOKEN="$GH_TOKEN" ./scripts/ci/cleanup-pr-labels.sh "$PR_NUMBER" review
 
 # Add the new labels from the Gemini review
 if [ -n "$NEW_LABELS" ]; then
