@@ -81,7 +81,18 @@ export default function ConnectPage() {
     [sendData]
   )
 
-  // Use refs to break the circular dependency between useWorkoutSession and useBluetoothHRM
+  /**
+   * Technical Debt / Workaround:
+   * We use refs to store workout state and control functions to break a circular dependency
+   * between `useWorkoutSession` and `useBluetoothHRM`.
+   *
+   * The dependency chain is:
+   * ConnectPage -> useBluetoothHRM -> handleHeartRateUpdate -> processHeartRate -> caloriesBurnedRef
+   * ConnectPage -> useWorkoutSession -> workoutStatus -> handleHeartRateUpdate
+   *
+   * By using refs, we can provide stable callback references to `useBluetoothHRM` that
+   * access the latest workout state without causing infinite re-renders or dependency loops.
+   */
   const workoutStatusRef = useRef<'idle' | 'running' | 'paused'>('idle')
   const startWorkoutRef = useRef<() => void>(() => {})
   const caloriesBurnedRef = useRef<number>(0)
