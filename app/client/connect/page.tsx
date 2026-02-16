@@ -116,7 +116,7 @@ export default function ConnectPage() {
     hasStarted,
     startWorkout: startPersistentWorkout,
     resumeWorkout: resumePersistentWorkout,
-    endWorkout: endPersistentWorkout,
+    pauseWorkout: pausePersistentWorkout,
     finishWorkout: finishPersistentWorkout,
     status: workoutStatus,
     addHrData,
@@ -135,6 +135,10 @@ export default function ConnectPage() {
     userAge,
     userWeight,
   ])
+
+  const handlePauseWorkout = useCallback(() => {
+    pausePersistentWorkout()
+  }, [pausePersistentWorkout])
 
   const handleEndWorkout = useCallback(() => {
     finishPersistentWorkout()
@@ -289,7 +293,7 @@ export default function ConnectPage() {
       onReset={handleResetWorkout}
       workoutStatus={workoutStatus === 'finished' ? 'idle' : workoutStatus}
       onStartWorkout={handleStartWorkout}
-      onPauseWorkout={endPersistentWorkout}
+      onPauseWorkout={handlePauseWorkout}
       onEndWorkout={handleEndWorkout}
     />
   )
