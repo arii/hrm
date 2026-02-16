@@ -45,6 +45,8 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
     })
   }, [timeInZones, totalDuration])
 
+  const chartData = useMemo(() => data.filter((d) => d.value > 0), [data])
+
   if (data.length === 0) {
     return (
       <Card elevation={3}>
@@ -126,7 +128,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={data}
+                  data={chartData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -135,7 +137,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   dataKey="value"
                   stroke="none"
                 >
-                  {data.map((entry) => (
+                  {chartData.map((entry) => (
                     <Cell key={`cell-${entry.name}`} fill={entry.color} />
                   ))}
                 </Pie>
