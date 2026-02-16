@@ -43,7 +43,7 @@ jobs:
         if: env.COMMAND == 'new'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || 0 }}
+          PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || '' }}
         run: |
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
             echo "::error::PR_NUMBER is missing or 0."
@@ -95,7 +95,7 @@ jobs:
         if: env.COMMAND == 'delete'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || 0 }}
+          PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || '' }}
         run: |
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
             echo "::error::PR_NUMBER is missing or 0."
@@ -240,11 +240,11 @@ jobs:
               }
             }
 
-            if (context.issue.number) {
+            if (prNumber && prNumber !== 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: prNumber,
                 body: body
               });
             }

@@ -259,7 +259,7 @@ jobs:
               }
             }
 
-            if (prNumber) {
+            if (prNumber && prNumber !== 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,

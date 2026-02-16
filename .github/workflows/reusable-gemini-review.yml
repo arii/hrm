@@ -123,12 +123,13 @@ jobs:
             BASE_SHA="$BASE_SHA_INPUT"
           elif [ -n "$EVENT_BASE_SHA" ]; then
             BASE_SHA="$EVENT_BASE_SHA"
-          elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ]; then
+          elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ] && [ "$PR_NUMBER" != "null" ]; then
             # Fallback to fetching via gh CLI if not available in event
             BASE_SHA=$(gh pr view "$PR_NUMBER" --json baseRefOid -q '.baseRefOid')
           else
-            echo "::error::Could not resolve BASE_SHA. PR_NUMBER is missing."
-            exit 1
+            echo "::warning::Could not resolve BASE_SHA. PR_NUMBER is missing or 0."
+            echo "BASE_SHA=HEAD~1" >> $GITHUB_ENV # Extreme fallback
+            exit 0
           fi
 
           # The PR's head commit SHA.
@@ -138,12 +139,13 @@ jobs:
             HEAD_SHA="$HEAD_SHA_INPUT"
           elif [ -n "$EVENT_HEAD_SHA" ]; then
             HEAD_SHA="$EVENT_HEAD_SHA"
-          elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ]; then
+          elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ] && [ "$PR_NUMBER" != "null" ]; then
             # Fallback to fetching via gh CLI if not available in event
             HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid')
           else
-            echo "::error::Could not resolve HEAD_SHA. PR_NUMBER is missing."
-            exit 1
+            echo "::warning::Could not resolve HEAD_SHA. PR_NUMBER is missing or 0."
+            echo "HEAD_SHA=HEAD" >> $GITHUB_ENV # Extreme fallback
+            exit 0
           fi
 
           echo "🔍 Generating diff between base commit ($BASE_SHA) and head commit ($HEAD_SHA)..."
@@ -164,8 +166,8 @@ jobs:
           EVENT_HEAD_SHA: ${{ github.event.pull_request && github.event.pull_request.head.sha }}
         run: |
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "0" ]; then
-            echo "::error::PR_NUMBER is missing or 0."
-            exit 1
+            echo "::warning::PR_NUMBER is missing or 0. Skipping context gathering."
+            exit 0
           fi
 
           # Fetch the LIVE body to ensure we see the results of pr-enrichment
@@ -216,8 +218,10 @@ jobs:
               BASE_SHA="$BASE_SHA_INPUT"
             elif [ -n "$EVENT_BASE_SHA" ]; then
               BASE_SHA="$EVENT_BASE_SHA"
-            else
+            elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ] && [ "$PR_NUMBER" != "null" ]; then
               BASE_SHA=$(gh pr view "$PR_NUMBER" --json baseRefOid -q '.baseRefOid')
+            else
+              BASE_SHA=""
             fi
 
             if [ -n "$LAST_COMMIT_INPUT" ]; then
@@ -226,8 +230,16 @@ jobs:
               HEAD_SHA="$HEAD_SHA_INPUT"
             elif [ -n "$EVENT_HEAD_SHA" ]; then
               HEAD_SHA="$EVENT_HEAD_SHA"
-            else
+            elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ] && [ "$PR_NUMBER" != "null" ]; then
               HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid')
+            else
+              HEAD_SHA=""
+            fi
+
+            if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
+              echo "::warning::Could not resolve SHAs for slop detection. Skipping."
+              echo "SLOP_ANALYSIS=Skipped due to missing SHAs" >> $GITHUB_ENV
+              exit 0
             fi
 
             # Create temp files
@@ -301,6 +313,12 @@ jobs:
           else
             echo "::notice::No pre-compiled report found. Fetching live PR checks."
 
+            if [ -z "$HEAD_SHA" ]; then
+              echo "::warning::HEAD_SHA is empty. Cannot fetch checks."
+              echo "FAILED_CHECKS_JSON=[]" >> $GITHUB_ENV
+              exit 0
+            fi
+
             # Retry logic for fetching checks
             MAX_RETRIES=3
             RETRY_DELAY=5
@@ -359,7 +377,11 @@ jobs:
 
               # Retry logic for fetching job logs
               for ((j=1; j<=MAX_RETRIES; j++)); do
-                gh job view "$job_id" --log > "$raw_log_file" 2>&1
+                if [ -n "$job_id" ]; then
+                  gh job view "$job_id" --log > "$raw_log_file" 2>&1
+                else
+                  false
+                fi
                 if [ $? -eq 0 ]; then
                   echo "::notice::Successfully fetched logs for job ${job_id} on attempt $j."
                   break
@@ -465,7 +487,11 @@ jobs:
               echo -e "$FINAL_COMMENT" > review_comment.txt
 
               # Post the combined comment
-              gh pr comment "$PR_NUMBER" --body-file review_comment.txt
+              if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "0" ]; then
+                gh pr comment "$PR_NUMBER" --body-file review_comment.txt
+              else
+                echo "::warning::PR_NUMBER missing or 0. Cannot post comment."
+              fi
             fi
           fi
 
@@ -521,7 +547,7 @@ jobs:
             if (!headSha) {
               if (context.payload.pull_request) {
                 headSha = context.payload.pull_request.head.sha;
-              } else if (process.env.PR_NUMBER && process.env.PR_NUMBER !== '0') {
+              } else if (process.env.PR_NUMBER && process.env.PR_NUMBER !== '0' && process.env.PR_NUMBER !== 'null') {
                 // Fetch via CLI
                 const prNumber = process.env.PR_NUMBER;
                 const { execSync } = require('child_process');

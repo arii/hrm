@@ -65,7 +65,7 @@ jobs:
             }
 
             if (!prNumber || prNumber === 0) {
-              core.setFailed('Could not determine PR number');
+              console.log('Could not determine PR number. Skipping.');
               return;
             }
 
@@ -180,7 +180,7 @@ jobs:
               });
             }
 
-            if (prNumber) {
+            if (prNumber && prNumber !== 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -225,7 +225,7 @@ jobs:
               });
             }
 
-            if (prNumber) {
+            if (prNumber && prNumber !== 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,

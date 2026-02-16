@@ -29,6 +29,14 @@ set -e
 NEEDS_REVIEW="false"
 SKIP_REASON="no criteria met"
 
+# --- Guard Check ---
+if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "0" || "$PR_NUMBER" == "null" ]]; then
+  echo "::warning::PR_NUMBER is missing or invalid ($PR_NUMBER). Cannot perform review analysis."
+  echo "needs-review=false" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=Missing or invalid PR number" >> "$GITHUB_OUTPUT"
+  exit 0
+fi
+
 # --- Main Logic ---
 
 # Check 1: Manual Override
