@@ -11,8 +11,8 @@ on:
         description: 'The branch to merge from'
         required: true
       pr_number:
-        description: 'The Pull Request number for feedback and status updates'
-        required: true
+        description: 'The Pull Request number for feedback (optional)'
+        required: false
   workflow_call:
     inputs:
       target_branch:
@@ -113,7 +113,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update comment on failure
-        if: failure() || (success() && steps.resolve.outputs.unresolved-files != '')
+        if: inputs.pr_number && (failure() || (success() && steps.resolve.outputs.unresolved-files != ''))
         uses: peter-evans/create-or-update-comment@v4
         env:
           UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
