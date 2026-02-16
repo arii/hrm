@@ -27,7 +27,7 @@ export interface ExtWebSocket extends WebSocket {
 
 // --- Server Broadcast State Interfaces ---
 
-export type { HrmData, TimerData, SpotifyData, TimerMode }
+export type { HrmData, TimerData, SpotifyData, TimerMode, SpotifyCommand }
 
 /**
  * Represents HRM data stored in the client application state (e.g., Redux/Context).
