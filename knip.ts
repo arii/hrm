@@ -41,7 +41,6 @@ const config: KnipConfig = {
     'eslint-plugin-storybook',
     'dotenv',
     'bats',
-    'tsconfig-paths',
   ],
   ignoreBinaries: ['scripts/test-json-with-server.sh', 'python3'],
 }
