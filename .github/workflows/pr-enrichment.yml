@@ -29,7 +29,7 @@ jobs:
     name: Enrich PR Title and Description
     runs-on: ubuntu-latest
     env:
-      PR_NUMBER_RAW: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || 0 }}
+      PR_NUMBER_RAW: ${{ (inputs.pr_number && inputs.pr_number != '0' && inputs.pr_number) || (github.event.pull_request && github.event.pull_request.number) || 0 }}
     steps:
       - name: Validate Context
         id: validate
@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v4
         if: steps.validate.outputs.should_run == 'true'
         with:
-          ref: refs/pull/${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) }}/head
+          ref: refs/pull/${{ (inputs.pr_number && inputs.pr_number != '0' && inputs.pr_number) || (github.event.pull_request && github.event.pull_request.number) }}/head
           fetch-depth: 0
 
       - name: Setup Environment
@@ -70,7 +70,7 @@ jobs:
         id: pr_context
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || 0 }}
+          PR_NUMBER: ${{ (inputs.pr_number && inputs.pr_number != '0' && inputs.pr_number) || (github.event.pull_request && github.event.pull_request.number) || 0 }}
         run: |
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 

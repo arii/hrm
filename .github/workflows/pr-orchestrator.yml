@@ -120,8 +120,9 @@ jobs:
           PR_TITLE: ${{ steps.metadata.outputs.title || (github.event.pull_request && github.event.pull_request.title) || '' }}
           HEAD_REF_NAME: ${{ steps.metadata.outputs.head_ref || (github.event.pull_request && github.event.pull_request.head.ref) || '' }}
           HEAD_REF_INPUT: ${{ github.head_ref || inputs.head_ref || '' }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          if [[ "$PR_TITLE" == *"E2E Test PR"* ]] || [[ "$HEAD_REF_NAME" == "e2e-test-"* ]] || [[ "$HEAD_REF_INPUT" == "e2e-test-"* ]]; then
+          if [[ "$PR_TITLE" == *"E2E Test PR"* ]] || [[ "$HEAD_REF_NAME" == "e2e-test-"* ]] || [[ "$HEAD_REF_INPUT" == "e2e-test-"* ]] || [[ "$REF_NAME" == "e2e-test-"* ]]; then
             echo "::notice::E2E test detected in filter. Forcing should_review=true."
             echo "src=true" >> $GITHUB_OUTPUT
             echo "is_e2e=true" >> $GITHUB_OUTPUT

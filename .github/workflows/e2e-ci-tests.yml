@@ -47,7 +47,19 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Waiting for squash and rebase to complete..."
-          sleep 10
+
+          # Poll until at least one check run appears
+          MAX_ATTEMPTS=20
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            CHECK_COUNT=$(gh pr checks $PR_NUMBER --json name --jq 'length' 2>/dev/null || echo 0)
+            if [ "$CHECK_COUNT" -gt 0 ]; then
+              echo "Checks detected. Starting watch..."
+              break
+            fi
+            echo "Attempt $i/$MAX_ATTEMPTS: No checks yet. Waiting..."
+            sleep 5
+          done
+
           timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash
@@ -98,9 +110,9 @@ jobs:
 
           # Use a unique identifier for branch names to avoid concurrency issues
           UNIQUE_ID=${{ github.run_id }}
-          BRANCH_A="branch-a-$UNIQUE_ID"
-          BRANCH_B="branch-b-$UNIQUE_ID"
-          BASE_BRANCH="base-branch-$UNIQUE_ID"
+          BRANCH_A="e2e-test-branch-a-$UNIQUE_ID"
+          BRANCH_B="e2e-test-branch-b-$UNIQUE_ID"
+          BASE_BRANCH="e2e-test-base-$UNIQUE_ID"
 
           echo "BRANCH_A=$BRANCH_A" >> $GITHUB_ENV
           echo "BRANCH_B=$BRANCH_B" >> $GITHUB_ENV
@@ -143,7 +155,19 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Waiting for conflict resolver to complete..."
-          sleep 10
+
+          # Poll until at least one check run appears
+          MAX_ATTEMPTS=20
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            CHECK_COUNT=$(gh pr checks $PR_NUMBER --json name --jq 'length' 2>/dev/null || echo 0)
+            if [ "$CHECK_COUNT" -gt 0 ]; then
+              echo "Checks detected. Starting watch..."
+              break
+            fi
+            echo "Attempt $i/$MAX_ATTEMPTS: No checks yet. Waiting..."
+            sleep 5
+          done
+
           timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Conflict Resolution
@@ -215,7 +239,19 @@ jobs:
           set -e
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Waiting for squash and rebase to complete..."
-          sleep 10
+
+          # Poll until at least one check run appears
+          MAX_ATTEMPTS=20
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            CHECK_COUNT=$(gh pr checks $PR_NUMBER --json name --jq 'length' 2>/dev/null || echo 0)
+            if [ "$CHECK_COUNT" -gt 0 ]; then
+              echo "Checks detected. Starting watch..."
+              break
+            fi
+            echo "Attempt $i/$MAX_ATTEMPTS: No checks yet. Waiting..."
+            sleep 5
+          done
+
           timeout 300 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash and Rebase

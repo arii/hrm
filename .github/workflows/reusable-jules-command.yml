@@ -30,7 +30,7 @@ jobs:
   jules-command:
     runs-on: self-hosted
     env:
-      PR_NUMBER_RAW: ${{ inputs.issue_number || 0 }}
+      PR_NUMBER_RAW: ${{ (inputs.issue_number && inputs.issue_number != '0' && inputs.issue_number) || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
     steps:
       - name: Validate Context
         id: validate
@@ -218,7 +218,7 @@ jobs:
         if: steps.validate.outputs.should_run == 'true' && success() && env.COMMAND == 'new'
         uses: actions/github-script@v7
         env:
-          PR_NUMBER_INPUT: ${{ inputs.issue_number }}
+          PR_NUMBER_INPUT: ${{ (inputs.issue_number && inputs.issue_number != '0' && inputs.issue_number) || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
           SESSION_ID: ${{ steps.jules_op_new.outputs.session_id }}
         with:
           github-token: ${{ secrets.GH_TOKEN }}
@@ -246,7 +246,7 @@ jobs:
         if: steps.validate.outputs.should_run == 'true' && failure()
         uses: actions/github-script@v7
         env:
-          PR_NUMBER_INPUT: ${{ inputs.issue_number }}
+          PR_NUMBER_INPUT: ${{ (inputs.issue_number && inputs.issue_number != '0' && inputs.issue_number) || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
           COMMENT_ID_INPUT: ${{ inputs.comment_id }}
           ERROR_NEW: ${{ steps.jules_op_new.outputs.error_message }}
           ERROR_DELETE: ${{ steps.jules_op_delete.outputs.error_message }}

@@ -112,5 +112,5 @@ jobs:
     with:
       target_branch: ${{ needs.prepare-resolve.outputs.target_branch }}
       source_branch: ${{ needs.prepare-resolve.outputs.source_branch }}
-      pr_number: ${{ (github.event.issue && github.event.issue.number) || 0 }}
+      pr_number: ${{ github.event.issue.number }}
     secrets: inherit

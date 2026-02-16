@@ -48,7 +48,7 @@ jobs:
       - name: Validate Context
         id: validate
         env:
-          PR_NUMBER_RAW: ${{ inputs.pr_number || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
+          PR_NUMBER_RAW: ${{ (inputs.pr_number && inputs.pr_number != '0' && inputs.pr_number) || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number) || 0 }}
         run: |
           if [ "$PR_NUMBER_RAW" == "0" ] || [ -z "$PR_NUMBER_RAW" ]; then
             echo "::warning::Could not determine PR number. Skipping job."
