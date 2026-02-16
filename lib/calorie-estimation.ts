@@ -30,7 +30,7 @@ export const estimateCaloriesBurned = ({
   age,
   weightKg,
   durationMinutes,
-  gender = 'neutral',
+  gender = 'FEMALE',
 }: CalorieEstimationParams): number => {
   if (durationMinutes <= 0 || heartRate < 30) {
     return 0
