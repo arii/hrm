@@ -44,7 +44,7 @@ export type HeartRateZone = keyof typeof ZONE_THRESHOLDS
 export interface HrZone {
   zoneName: HrZoneName
   percentage: number
-  bpm: number
+  value: number
 }
 
 /**
