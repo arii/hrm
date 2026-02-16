@@ -9,7 +9,11 @@ import {
   LinearProgress,
   useTheme,
 } from '@mui/material'
-import { HrZoneName, HR_ZONE_COLOR_MAP } from '@/lib/shared/hr-zones'
+import {
+  HrZoneName,
+  HR_ZONE_COLOR_MAP,
+  HR_ZONE_ORDER,
+} from '@/lib/shared/hr-zones'
 import { formatDuration } from '@/lib/utils'
 
 interface ZoneDistributionProps {
@@ -43,6 +47,9 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         }),
         color: HR_ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
       }
+    })
+    .sort((a, b) => {
+      return HR_ZONE_ORDER.indexOf(a.zone) - HR_ZONE_ORDER.indexOf(b.zone)
     })
 
   if (filteredEntries.length === 0) {
