@@ -86,7 +86,9 @@ describe('ZoneDistribution', () => {
     expect(screen.queryByText(HrZoneName.FatBurn)).not.toBeInTheDocument()
     // Should show the note about hidden zones
     expect(
-      screen.getByText('Zones with less than 1% duration are hidden for clarity.')
+      screen.getByText(
+        'Zones with less than 1% duration are hidden for clarity.'
+      )
     ).toBeInTheDocument()
   })
 
