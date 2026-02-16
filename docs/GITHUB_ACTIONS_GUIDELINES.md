@@ -86,3 +86,20 @@ To ensure consistency across the repository, we standardize on the following ver
 - `peter-evans/create-reaction@v4`
 - `actions/checkout@v4`
 - `actions/setup-node@v4`
+
+## Workflow Triggers and Path Filters
+
+### 1. E2E Test Compatibility
+
+When implementing path filters (`dorny/paths-filter`), ensure that E2E tests (which often touch root files like `test-file.txt` or `conflict-file.txt`) still trigger the necessary quality gates.
+
+- **Standard Practice**: Add common E2E test filenames to the `src` filter if they should trigger the orchestrator.
+- **Alternative**: Use an explicit bypass in the `if:` condition of the job based on the branch name (e.g., `startsWith(github.head_ref, 'e2e-test-')`) or PR title.
+
+### 2. Validate Context Pattern
+
+For workflows that can be triggered by multiple events (e.g., `pull_request`, `issue_comment`, `workflow_dispatch`), use a "Validate Context" job at the start to determine if the required metadata is present.
+
+- Set a `should_run` output based on the presence of `PR_NUMBER` or other critical inputs.
+- Guard all subsequent jobs and steps with `if: needs.validate.outputs.should_run == 'true'`.
+- Use `::warning::` or `::notice::` to inform users why a workflow was skipped instead of failing the run with `exit 1`.

@@ -61,6 +61,9 @@ jobs:
               - '.env*'
               - '.github/**'
               - 'scripts/**'
+              - 'test-file.txt'
+              - 'conflict-file.txt'
+              - 'test-file-rebase.txt'
 
       - uses: dorny/paths-filter@v3
         if: github.event_name == 'workflow_dispatch'
@@ -87,6 +90,9 @@ jobs:
               - '.env*'
               - '.github/**'
               - 'scripts/**'
+              - 'test-file.txt'
+              - 'conflict-file.txt'
+              - 'test-file-rebase.txt'
 
       - name: Consolidate Changes
         id: changes

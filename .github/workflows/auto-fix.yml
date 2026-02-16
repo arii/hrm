@@ -26,6 +26,10 @@ jobs:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ (github.event.pull_request && github.event.pull_request.number) || 0 }}
         run: |
+          if [ "$PR_NUMBER" == "0" ]; then
+            echo "::warning::Could not determine PR number. Skipping comment."
+            exit 1
+          fi
           gh pr comment "$PR_NUMBER" --body "## 🚨 Auto-Fix Failed
           The \`pnpm install --frozen-lockfile\` command failed. This likely means your \`pnpm-lock.yaml\` file is out of sync with your \`package.json\`.
           **Action Required:** Please run \`pnpm install\` locally on your branch, commit the updated \`pnpm-lock.yaml\` file, and push the changes."
