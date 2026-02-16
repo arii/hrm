@@ -71,7 +71,10 @@ jobs:
       skip-reason: ${{ steps.decision.outputs.skip-reason }}
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
 
       - uses: actions/checkout@v4
         with:
@@ -104,7 +107,10 @@ jobs:
       review_performed: ${{ steps.upload_artifact.outcome == 'success' }}
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -400,7 +406,10 @@ jobs:
       issues: write
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
 
       - name: Checkout repository
         uses: actions/checkout@v4

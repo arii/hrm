@@ -59,7 +59,10 @@ jobs:
       session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -271,7 +274,10 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -319,7 +325,10 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -361,7 +370,10 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -414,7 +426,10 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -470,7 +485,10 @@ jobs:
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -620,7 +638,10 @@ jobs:
       PORT: 3006
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -704,7 +725,10 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -786,7 +810,10 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -871,7 +898,10 @@ jobs:
       PORT: 3007
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -967,7 +997,10 @@ jobs:
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -1056,18 +1089,21 @@ jobs:
     name: 📝 Copy checks from parent commit
     if: inputs.has_changes == 'false'
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     permissions:
       checks: write
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Copy checks from parent commit
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           CURRENT_SHA=$(git rev-parse HEAD)
@@ -1239,11 +1275,16 @@ jobs:
         integration-tests,
       ]
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     outputs:
       failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
     steps:
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -1374,7 +1415,6 @@ jobs:
           PERF_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.perf-tests-outcome }}
           VISUAL_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.visual-tests-outcome }}
           FINAL_RESULT: ${{ steps.aggregate-results.outputs.final_result }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           set +e
 
