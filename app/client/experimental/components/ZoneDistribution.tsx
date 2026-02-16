@@ -28,6 +28,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
       ([zone, time]) =>
         zone !== HrZoneName.NoData &&
         zone !== HrZoneName.Unknown &&
+        // Hide negligible data (< 1%) to maintain visual density and professional polish
         (totalDuration > 0 ? (time / totalDuration) * 100 : 0) >= 1
     )
     .map(([zone, time]) => {
