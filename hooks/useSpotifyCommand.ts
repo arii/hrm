@@ -74,7 +74,7 @@ export const useSpotifyCommand = () => {
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,
-        ...(payload as any),
+        ...(payload as Partial<SpotifyCommandMessage>),
         deviceId: resolvedDeviceId,
       }
 
