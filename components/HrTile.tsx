@@ -18,8 +18,6 @@ export interface HrTileProps {
   bpm?: number | null
   /** Percentage of maximum heart rate. Standardized name. */
   percentage?: number
-  /** Percentage of maximum heart rate. Legacy name. */
-  percentMax?: number
   zone?: number
   calories?: number
   isConnected?: boolean
@@ -127,7 +125,6 @@ const HrTile = ({
   value,
   bpm,
   percentage,
-  percentMax,
   zone = 0,
   calories = 0,
   isConnected = true,
@@ -137,10 +134,10 @@ const HrTile = ({
 }: HrTileProps) => {
   const theme = useTheme()
 
-  // Standardize on value and percentage, while supporting legacy bpm and percentMax
+  // Standardize on value and percentage, while supporting legacy bpm
   const displayValue = value !== undefined ? value : (bpm ?? null)
-  const displayPercentage =
-    percentage !== undefined ? percentage : (percentMax ?? 0)
+  // Default percentage to 0 if undefined
+  const displayPercentage = percentage ?? 0
 
   const zoneConfig =
     HR_ZONE_VISUAL_CONFIG[(zone ?? 0) as keyof typeof HR_ZONE_VISUAL_CONFIG] ||
