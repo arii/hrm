@@ -7,7 +7,7 @@ import {
   MIN_HR_FOR_CALORIE_CALCULATION,
 } from '@/constants/calorie-thresholds'
 
-import { Gender } from '@/types/user'
+import { Gender } from '@/types/core'
 
 interface CalorieCalculatorProps {
   age: number
@@ -27,7 +27,7 @@ interface CalorieCalculatorProps {
 export const useCalorieCalculator = ({
   age,
   weightKg,
-  gender = 'neutral',
+  gender = 'NEUTRAL',
   smoothingWindow = 5, // Default to a 5-sample window for SMA
 }: CalorieCalculatorProps) => {
   const [calories, setCalories] = useState(0)
