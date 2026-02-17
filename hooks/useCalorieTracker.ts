@@ -3,20 +3,12 @@
 import { useCallback, useRef, useEffect, useReducer } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 import { CalorieDataPoint } from '../lib/workout-session-storage'
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { Gender } from '@/types/core'
-=======
-import { Gender } from '@/types/user'
-=======
-import { Gender } from '@/types/core'
->>>>>>> 72f4f3ce (Refactor: Consolidate redundant hooks and components)
 import {
   MAX_CALORIES_PER_WORKOUT,
   MIN_HR_FOR_CALORIE_CALCULATION,
   TIME_GAP_THRESHOLD_SECONDS,
 } from '@/constants/calorie-thresholds'
->>>>>>> be5484dc (refactor: consolidate redundant hooks and components)
 
 interface CalorieTrackerProps {
   age: number
@@ -86,16 +78,8 @@ function calorieReducer(
 export const useCalorieTracker = ({
   age,
   weightKg,
-<<<<<<< HEAD
-<<<<<<< HEAD
-  gender = 'NEUTRAL',
-=======
-  gender = 'neutral',
-=======
   gender = 'FEMALE',
->>>>>>> 72f4f3ce (Refactor: Consolidate redundant hooks and components)
   smoothingWindow = 5,
->>>>>>> be5484dc (refactor: consolidate redundant hooks and components)
 }: CalorieTrackerProps) => {
   const [state, dispatch] = useReducer(calorieReducer, initialState)
   const lastTimestampRef = useRef<number | null>(null)
