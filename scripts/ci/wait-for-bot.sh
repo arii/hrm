@@ -8,10 +8,16 @@
 
 set -e
 
-# Validate arguments using parameter expansion
-PR_NUMBER="${1:?Usage: $0 <PR_NUMBER> <BRANCH_NAME> <INITIAL_SHA>}"
-BRANCH_NAME="${2:?Usage: $0 <PR_NUMBER> <BRANCH_NAME> <INITIAL_SHA>}"
-INITIAL_SHA="${3:?Usage: $0 <PR_NUMBER> <BRANCH_NAME> <INITIAL_SHA>}"
+# Ensure GH_TOKEN is set
+if [ -z "$GH_TOKEN" ] && [ -z "$GITHUB_TOKEN" ]; then
+  echo "Error: GH_TOKEN or GITHUB_TOKEN environment variable must be set."
+  exit 1
+fi
+
+USAGE="Usage: $0 <PR_NUMBER> <BRANCH_NAME> <INITIAL_SHA>"
+PR_NUMBER="${1:?$USAGE}"
+BRANCH_NAME="${2:?$USAGE}"
+INITIAL_SHA="${3:?$USAGE}"
 
 REPO="origin" # Default remote
 
@@ -32,7 +38,8 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
 
   # Fallback: check for the bot's success comment
   COMMENTS=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body' 2>/dev/null || echo "")
-  if echo "$COMMENTS" | grep -qiE "successfully|success"; then
+  # Use word boundaries to avoid matching 'unsuccessful'
+  if echo "$COMMENTS" | grep -qiE "\bsuccess(fully)?\b"; then
     # Re-fetch SHA to confirm the update propagated
     CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
     if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
