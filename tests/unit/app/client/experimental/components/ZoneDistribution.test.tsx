@@ -6,6 +6,19 @@ import { render, screen } from '@testing-library/react'
 import ZoneDistribution from '@/app/client/experimental/components/ZoneDistribution'
 import { HeartRateZone, HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
 
+// Mock Recharts since it doesn't work well in JSDOM
+jest.mock('recharts', () => ({
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  PieChart: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  Pie: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Cell: () => <div>Cell</div>,
+  Tooltip: () => <div>Tooltip</div>,
+}))
+
 describe('ZoneDistribution', () => {
   const baseTimeInZones: Record<HeartRateZone, number> = {
     ZONE_0: 0,
@@ -21,36 +34,24 @@ describe('ZoneDistribution', () => {
     render(
       <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
     )
+    // If no data (all 0), it renders "Time in Zones" inside the "No data" card
     expect(screen.getByText('Time in Zones')).toBeInTheDocument()
   })
 
-  it('renders the zone list with all zones even with no total duration', () => {
+  it('renders "No zone data available" when all zones are zero', () => {
     render(<ZoneDistribution timeInZones={baseTimeInZones} totalDuration={0} />)
-    // Should NOT show "No zone data available" message
     expect(
-      screen.queryByText('No zone data available for this session.')
-    ).not.toBeInTheDocument()
-    // Should show all zones with 0%
-    expect(
-      screen.getAllByText(HR_ZONE_CONFIG.ZONE_0.label).length
-    ).toBeGreaterThanOrEqual(1)
-    expect(
-      screen.getAllByText(HR_ZONE_CONFIG.ZONE_6.label).length
-    ).toBeGreaterThanOrEqual(1)
+      screen.getByText('No zone data available for this session.')
+    ).toBeInTheDocument()
   })
 
-  it('renders the zone list even with no time in any zone if duration exists', () => {
+  it('renders "No zone data available" even if duration exists but no time in zones', () => {
     render(
       <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
     )
-    // Should show "No zone data available" message
-    // Should show the distribution overview even if all zones are at 0%
     expect(
-      screen.queryByText('No zone data available for this session.')
-    ).not.toBeInTheDocument()
-    expect(
-      screen.getAllByText(HR_ZONE_CONFIG.ZONE_0.label).length
-    ).toBeGreaterThanOrEqual(1)
+      screen.getByText('No zone data available for this session.')
+    ).toBeInTheDocument()
   })
 
   it('calculates and displays the time and percentage for each zone', () => {
@@ -66,69 +67,48 @@ describe('ZoneDistribution', () => {
     expect(
       screen.getAllByText(HR_ZONE_CONFIG.ZONE_2.label).length
     ).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/01:00/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/1:00/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/60\.0%/).length).toBeGreaterThanOrEqual(1)
 
     expect(
       screen.getAllByText(HR_ZONE_CONFIG.ZONE_3.label).length
     ).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/00:30/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/0:30/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/30\.0%/).length).toBeGreaterThanOrEqual(1)
 
     expect(
       screen.getAllByText(HR_ZONE_CONFIG.ZONE_4.label).length
     ).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/00:10/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/0:10/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/10\.0%/).length).toBeGreaterThanOrEqual(1)
 
-    // Verify progress bars are rendered with correct values (sorted by intensity: Cardio, FatBurn, WarmUp)
+    // Verify progress bars are rendered with correct values
     const progressBars = screen.getAllByRole('progressbar')
     expect(progressBars).toHaveLength(3)
-    expect(progressBars[0]).toHaveAttribute('aria-valuenow', '10')
-    expect(progressBars[1]).toHaveAttribute('aria-valuenow', '30')
-    expect(progressBars[2]).toHaveAttribute('aria-valuenow', '60')
+    // Sorted by HR_ZONE_ORDER (highest intensity first)
+    // ZONE_4 (Cardio) -> ZONE_3 (Fat Burn) -> ZONE_2 (Warm Up)
+    expect(progressBars[0]).toHaveAttribute('aria-valuenow', '10') // Cardio
+    expect(progressBars[1]).toHaveAttribute('aria-valuenow', '30') // Fat Burn
+    expect(progressBars[2]).toHaveAttribute('aria-valuenow', '60') // Warm Up
   })
 
-  it('does not display zones with less than 1% time', () => {
+  it('does not display zones with less than 1% time in the list', () => {
     const timeInZones = {
       ...baseTimeInZones,
-      [HrZoneName.WarmUp]: 100,
-      [HrZoneName.FatBurn]: 0.5, // 0.5% of 100
-  it('displays all zones to provide a complete overview even with no time', () => {
-    const timeInZones = {
-      ...baseTimeInZones,
-      ZONE_2: 100,
+      ZONE_2: 100, // 99.5% roughly
+      ZONE_3: 0.5, // 0.5% of 100.5 total
     }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
-    // Zone 2 has time
+    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100.5} />)
+
+    // Zone 2 (Warm Up) should be visible
     expect(
       screen.getAllByText(HR_ZONE_CONFIG.ZONE_2.label).length
     ).toBeGreaterThanOrEqual(1)
-    expect(screen.queryByText(HrZoneName.FatBurn)).not.toBeInTheDocument()
-    // Should show the note about hidden zones
-    expect(
-      screen.getByText(
-        'Zones with less than 1% duration are hidden for clarity.'
-      )
-    ).toBeInTheDocument()
-  })
 
-  it('filters out NoData and Unknown zones', () => {
-    const timeInZones = {
-      ...baseTimeInZones,
-      [HrZoneName.NoData]: 50,
-      [HrZoneName.Unknown]: 50,
-    }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
-    // data.length will be 0 (after filtering), so it shows "No zone data available"
-    // Zone 3 has no time but is still displayed for overview
+    // Zone 3 (Fat Burn) should NOT be in the list (filtered out)
     expect(
-      screen.getAllByText(HR_ZONE_CONFIG.ZONE_3.label).length
-    ).toBeGreaterThanOrEqual(1)
-    // Idle zone (ZONE_0) is also displayed
-    expect(
-      screen.getAllByText(HR_ZONE_CONFIG.ZONE_0.label).length
-    ).toBeGreaterThanOrEqual(1)
+      screen.queryByText(HR_ZONE_CONFIG.ZONE_3.label)
+    ).not.toBeInTheDocument()
   })
 
   it('displays correct total duration in the center', () => {

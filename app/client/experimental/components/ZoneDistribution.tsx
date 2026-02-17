@@ -15,6 +15,7 @@ import {
   HR_ZONE_ORDER,
 } from '@/lib/shared/hr-zones'
 import { formatDuration } from '@/lib/utils'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface ZoneDistributionProps {
   timeInZones: Record<HeartRateZone, number>
@@ -28,61 +29,44 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
   const theme = useTheme()
 
   const allRelevantEntries = useMemo(() => {
-    return Object.entries(timeInZones).filter(
-      ([zone]) => zone !== HrZoneName.NoData && zone !== HrZoneName.Unknown
-    )
-  }, [timeInZones])
-
-  const filteredEntries = useMemo(() => {
-    return allRelevantEntries
-      .filter(
-        ([, time]) =>
-          // Hide negligible data (< 1%) to maintain visual density and professional polish
-          (totalDuration > 0 ? (time / totalDuration) * 100 : 0) >= 1
-      )
-      .map(([zone, time]) => {
-        const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
-        return {
-          zone,
-          time,
-          percentage,
-          formattedTime: formatDuration(time, {
-            unit: 'seconds',
-            format: 'MM:SS',
-          }),
-          color: HR_ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
-        }
-      })
-      .sort((a, b) => {
-        return HR_ZONE_ORDER.indexOf(a.zone) - HR_ZONE_ORDER.indexOf(b.zone)
-      })
-  }, [allRelevantEntries, totalDuration, theme.palette.grey])
-  const data = useMemo(() => {
-    return HR_ZONE_ORDER.map((zoneKey) => {
-      const time = timeInZones[zoneKey] || 0
-      const config = HR_ZONE_CONFIG[zoneKey]
+    // Sort by intensity (highest to lowest) for the list
+    return HR_ZONE_ORDER.map((zone) => {
+      const time = timeInZones[zone] || 0
       const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
       return {
-        name: config.label,
-        value: time,
-        percentage: parseFloat(percentage.toFixed(1)),
+        zone,
+        time,
+        percentage,
         formattedTime: formatDuration(time, {
           unit: 'seconds',
           format: 'MM:SS',
           noPadMinutes: true,
         }),
-        color: config.color,
+        color: HR_ZONE_CONFIG[zone].color,
+        label: HR_ZONE_CONFIG[zone].label,
       }
-    })
+    }).filter((item) => item.time > 0) // Basic filter for non-zero time
   }, [timeInZones, totalDuration])
 
-  const chartData = useMemo(() => data.filter((d) => d.value > 0), [data])
+  const filteredEntries = useMemo(() => {
+    return allRelevantEntries.filter((item) => item.percentage >= 1)
+  }, [allRelevantEntries])
+
+  const chartData = useMemo(() => {
+    return allRelevantEntries.map((item) => ({
+      name: item.label,
+      value: item.time,
+      percentage: parseFloat(item.percentage.toFixed(1)),
+      formattedTime: item.formattedTime,
+      color: item.color,
+    }))
+  }, [allRelevantEntries])
 
   const hasNegligibleData =
     allRelevantEntries.length > filteredEntries.length &&
     filteredEntries.length > 0
 
-  if (filteredEntries.length === 0) {
+  if (allRelevantEntries.length === 0) {
     return (
       <Card elevation={2}>
         <CardContent>
@@ -125,7 +109,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         <tbody>
           {filteredEntries.map((item) => (
             <tr key={`sr-row-${item.zone}`}>
-              <td>{item.zone}</td>
+              <td>{item.label}</td>
               <td>{item.formattedTime}</td>
               <td>{item.percentage.toFixed(1)}%</td>
             </tr>
@@ -137,47 +121,68 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         <Typography variant="h6" fontWeight="bold" gutterBottom>
           Time in Zones
         </Typography>
-        {filteredEntries.map((item) => {
-          return (
-            <Box key={item.zone} mb={2}>
-              <Box display="flex" justifyContent="space-between" mb={0.5}>
-                <Typography variant="body2" fontWeight="medium">
-                  {item.zone}
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {item.formattedTime} ({item.percentage.toFixed(1)}%)
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={item.percentage}
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: theme.palette.grey[200],
-                  '& .MuiLinearProgress-bar': {
-                    backgroundColor: item.color,
-                    borderRadius: 4,
-                  },
-                }}
-              />
 
         <Box
           display="flex"
           flexDirection={{ xs: 'column', sm: 'row' }}
-          gap={2}
-          alignItems="center"
+          gap={4}
+          alignItems="flex-start"
         >
+          {/* List Section */}
+          <Box flex={1} width="100%">
+            {filteredEntries.map((item) => (
+              <Box key={item.zone} mb={2}>
+                <Box display="flex" justifyContent="space-between" mb={0.5}>
+                  <Typography variant="body2" fontWeight="medium">
+                    {item.label}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {item.formattedTime} ({item.percentage.toFixed(1)}%)
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={item.percentage}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: theme.palette.grey[200],
+                    '& .MuiLinearProgress-bar': {
+                      backgroundColor: item.color,
+                      borderRadius: 4,
+                    },
+                  }}
+                  aria-label={`${item.label} zone progress`}
+                  aria-valuenow={Math.round(item.percentage)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                />
+              </Box>
+            ))}
+            {hasNegligibleData && (
+              <Typography
+                variant="caption"
+                color="textSecondary"
+                sx={{ display: 'block', mt: 1, fontStyle: 'italic' }}
+              >
+                Zones with less than 1% duration are hidden for clarity.
+              </Typography>
+            )}
+          </Box>
+
           {/* Chart Section */}
           <Box
-            width={{ xs: '100%', sm: '50%' }}
-            height={200}
+            width={{ xs: '100%', sm: '40%' }}
+            height={250}
             position="relative"
             role="img"
             aria-label={`Donut chart showing heart rate zone distribution. Total duration: ${formatDuration(
               totalDuration,
               { unit: 'seconds', format: 'MM:SS', noPadMinutes: true }
             )}.`}
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
           >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -240,17 +245,8 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                 })}
               </Typography>
             </Box>
-          )
-        })}
-        {hasNegligibleData && (
-          <Typography
-            variant="caption"
-            color="textSecondary"
-            sx={{ display: 'block', mt: 1, fontStyle: 'italic' }}
-          >
-            Zones with less than 1% duration are hidden for clarity.
-          </Typography>
-        )}
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   )
