@@ -90,6 +90,14 @@ jobs:
               - 'test-file.txt'
               - 'conflict-file.txt'
               - 'test-file-rebase.txt'
+              - 'tests/**'
+              - 'stories/**'
+              - '.storybook/**'
+              - 'verification/**'
+              - '*.config.*'
+              - '*.ts'
+              - 'ecosystem.config.cjs'
+              - 'verify_empty_dashboard.py'
 
       - uses: dorny/paths-filter@v3
         if: github.event_name == 'workflow_dispatch'
@@ -119,6 +127,14 @@ jobs:
               - 'test-file.txt'
               - 'conflict-file.txt'
               - 'test-file-rebase.txt'
+              - 'tests/**'
+              - 'stories/**'
+              - '.storybook/**'
+              - 'verification/**'
+              - '*.config.*'
+              - '*.ts'
+              - 'ecosystem.config.cjs'
+              - 'verify_empty_dashboard.py'
 
       - name: Consolidate Changes
         id: changes
@@ -227,6 +243,7 @@ jobs:
       pr_number: ${{ (github.event.pull_request && github.event.pull_request.number) || (inputs.pr_number && inputs.pr_number != '0' && inputs.pr_number) || 0 }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
   pr-review:
     name: 🤖 Gemini AI Review
