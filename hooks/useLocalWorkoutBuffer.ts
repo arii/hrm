@@ -5,6 +5,7 @@ import {
   HeartRateZone,
   HR_ZONE_ORDER,
   calculateZoneFromMaxHr,
+  toHeartRateZone,
 } from '../lib/shared/hr-zones'
 import { HrDataPoint } from '../lib/workout-session-storage'
 
@@ -65,7 +66,7 @@ function workoutBufferReducer(
       if (!previousHrDataPoint) return state
 
       const { zone } = calculateZoneFromMaxHr(previousHrDataPoint.hr, maxHr)
-      const zoneName = `ZONE_${zone}` as HeartRateZone
+      const zoneName = toHeartRateZone(zone)
 
       const newTimeInZones = {
         ...state.timeInZones,

@@ -11,6 +11,7 @@ import {
   HeartRateZone,
   HR_ZONE_ORDER,
   calculateZoneFromMaxHr,
+  toHeartRateZone,
 } from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
 import { calculateMaxHr } from '@/lib/shared/hr-zones'
@@ -116,7 +117,7 @@ function sessionManagerReducer(
         action.payload.hr,
         state.session.userSettings.maxHr
       )
-      const zoneName = `ZONE_${zone}` as HeartRateZone
+      const zoneName = toHeartRateZone(zone)
       const newTimeInZones = {
         ...state.session.timeInZones,
         [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,

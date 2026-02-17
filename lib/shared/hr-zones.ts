@@ -1,4 +1,3 @@
-// File: lib/shared/hr-zones.ts
 /**
  * Shared constants and types for Heart Rate (HR) zones to ensure consistency
  * across different modules (domain logic, UI, etc.).
@@ -22,7 +21,6 @@ export type HeartRateZone =
 
 /**
  * Interface for heart rate zone information.
- * Updated to use HeartRateZone string literal type for consistency.
  */
 export interface HrZone {
   zoneName: HeartRateZone
@@ -97,17 +95,6 @@ export const HR_ZONE_CONFIG: Record<
 }
 
 /**
- * Union type for heart rate zone keys.
- */
-export type HeartRateZone = keyof typeof ZONE_THRESHOLDS
-
-export interface HrZone {
-  zoneName: HrZoneName
-  percentage: number
-  value: number
-}
-
-/**
  * Estimates a user's maximum heart rate using the Haskell & Fox formula (220 - age).
  *
  * NOTE: While the Tanaka formula (208 - 0.7 * age) is often more accurate for older adults,
@@ -132,9 +119,15 @@ export const calculateMaxHr = (age?: number | string | null): number => {
 /**
  * Pre-calculated order of zone labels for sorting purposes (highest intensity first).
  */
-export const HR_ZONE_ORDER = (
-  Object.keys(HR_ZONE_CONFIG) as HeartRateZone[]
-).sort((a, b) => HR_ZONE_CONFIG[b].zoneNumber - HR_ZONE_CONFIG[a].zoneNumber)
+export const HR_ZONE_ORDER: HeartRateZone[] = [
+  'ZONE_6',
+  'ZONE_5',
+  'ZONE_4',
+  'ZONE_3',
+  'ZONE_2',
+  'ZONE_1',
+  'ZONE_0',
+]
 
 /**
  * Calculates the percentage of max HR and the corresponding zone (0-6) based on Max HR.
@@ -146,8 +139,13 @@ export const calculateZoneFromMaxHr = (
   currentHr: number,
   maxHr: number
 ): { percentage: number; zone: number } => {
-  const percentageDecimal = maxHr > 0 && currentHr > 0 ? currentHr / maxHr : 0
-  const percentage = Math.min(100, Math.round(percentageDecimal * 100))
+  const percentage =
+    maxHr > 0 && currentHr > 0
+      ? Math.min(100, Math.round((currentHr / maxHr) * 100))
+      : 0
+
+  // Use the rounded percentage for threshold comparison to match UI display
+  const percentageDecimal = percentage / 100
 
   let zone = 0
   if (percentageDecimal >= HR_ZONE_CONFIG.ZONE_6.threshold) zone = 6
@@ -161,30 +159,11 @@ export const calculateZoneFromMaxHr = (
 }
 
 /**
- * Calculates the heart rate zone information.
- * @param currentHr - Current heart rate in BPM.
- * @param maxHr - Max Heart Rate.
- * @returns An object containing the zone name, percentage, and BPM.
+ * Helper to safely cast a numeric zone to a HeartRateZone key.
  */
-export const calculateHeartRateZone = (
-  currentHr: number,
-  maxHr: number
-): HrZone => {
-  if (!maxHr || !currentHr || currentHr <= 0) {
-    return {
-      zoneName: 'ZONE_0',
-      percentage: 0,
-      bpm: 0,
-    }
-  }
-
-  const { percentage, zone } = calculateZoneFromMaxHr(currentHr, maxHr)
-
-  return {
-    zoneName: `ZONE_${zone}` as HeartRateZone,
-    percentage,
-    bpm: currentHr,
-  }
+export const toHeartRateZone = (zoneNum: number): HeartRateZone => {
+  const key = `ZONE_${zoneNum}` as HeartRateZone
+  return key in HR_ZONE_CONFIG ? key : 'ZONE_0'
 }
 
 /**
@@ -204,6 +183,8 @@ export interface HeartRateZoneConfig {
 const deriveHeartRateZones = (): HeartRateZoneConfig[] => {
   return HR_ZONE_ORDER.filter((z) => z !== 'ZONE_0').map((z) => {
     const zoneConfig = HR_ZONE_CONFIG[z]
+    // Use the next zone's threshold as the max percent for current zone
+    // except for ZONE_6 which goes to 100
     const nextZoneNumber = zoneConfig.zoneNumber + 1
     const nextZoneKey = `ZONE_${nextZoneNumber}` as HeartRateZone
 
