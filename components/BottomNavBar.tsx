@@ -9,22 +9,51 @@ import BottomNavigation from '@mui/material/BottomNavigation'
 import BottomNavigationAction from '@mui/material/BottomNavigationAction'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useMemo } from 'react'
+
+const NAV_ITEMS = [
+  {
+    label: 'Dashboard',
+    href: '/',
+    icon: <DashboardIcon />,
+    ariaLabel: 'Navigate to Dashboard page',
+  },
+  {
+    label: 'Controls',
+    href: '/client/control',
+    icon: <SettingsIcon />,
+    ariaLabel: 'Navigate to Phone Controls page',
+  },
+  {
+    label: 'Stream',
+    href: '/client/connect',
+    icon: <FavoriteIcon />,
+    ariaLabel: 'Navigate to Stream Heart Rate page',
+  },
+  {
+    label: 'Spotify',
+    href: '/client/spotify-selection',
+    icon: <MusicNoteIcon />,
+    ariaLabel: 'Navigate to Spotify Selection page',
+  },
+  {
+    label: 'Analytics',
+    href: '/client/experimental',
+    icon: <ScienceIcon />,
+    ariaLabel: 'Navigate to Experimental Analytics page',
+  },
+]
 
 export default function BottomNavBar() {
   const pathname = usePathname()
 
-  const value = useMemo(() => {
-    if (pathname?.startsWith('/client/control')) return 1
-    if (pathname?.startsWith('/client/connect')) return 2
-    if (pathname?.startsWith('/client/spotify-selection')) return 3
-    if (pathname?.startsWith('/client/experimental')) return 4
-    return 0
-  }, [pathname])
+  const value = NAV_ITEMS.findIndex((item) =>
+    item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href)
+  )
+  const activeValue = value === -1 ? 0 : value
 
   return (
     <BottomNavigation
-      value={value}
+      value={activeValue}
       showLabels
       sx={{
         width: '100%',
@@ -36,71 +65,22 @@ export default function BottomNavBar() {
         boxShadow: '0px -2px 4px rgba(0, 0, 0, 0.1)',
       }}
     >
-      <BottomNavigationAction
-        label="Dashboard"
-        aria-label="Navigate to Dashboard page"
-        icon={<DashboardIcon />}
-        component={Link}
-        href="/"
-        sx={{
-          color: value === 0 ? 'primary.main' : 'text.secondary',
-          '&:hover, &.Mui-focusVisible': {
-            backgroundColor: 'action.hover',
-          },
-        }}
-      />
-      <BottomNavigationAction
-        label="Controls"
-        aria-label="Navigate to Phone Controls page"
-        icon={<SettingsIcon />}
-        component={Link}
-        href="/client/control"
-        sx={{
-          color: value === 1 ? 'primary.main' : 'text.secondary',
-          '&:hover, &.Mui-focusVisible': {
-            backgroundColor: 'action.hover',
-          },
-        }}
-      />
-      <BottomNavigationAction
-        label="Stream"
-        aria-label="Navigate to Stream Heart Rate page"
-        icon={<FavoriteIcon />}
-        component={Link}
-        href="/client/connect"
-        sx={{
-          color: value === 2 ? 'primary.main' : 'text.secondary',
-          '&:hover, &.Mui-focusVisible': {
-            backgroundColor: 'action.hover',
-          },
-        }}
-      />
-      <BottomNavigationAction
-        label="Spotify"
-        aria-label="Navigate to Spotify Selection page"
-        icon={<MusicNoteIcon />}
-        component={Link}
-        href="/client/spotify-selection"
-        sx={{
-          color: value === 3 ? 'primary.main' : 'text.secondary',
-          '&:hover, &.Mui-focusVisible': {
-            backgroundColor: 'action.hover',
-          },
-        }}
-      />
-      <BottomNavigationAction
-        label="Analytics"
-        aria-label="Navigate to Experimental Analytics page"
-        icon={<ScienceIcon />}
-        component={Link}
-        href="/client/experimental"
-        sx={{
-          color: value === 4 ? 'primary.main' : 'text.secondary',
-          '&:hover, &.Mui-focusVisible': {
-            backgroundColor: 'action.hover',
-          },
-        }}
-      />
+      {NAV_ITEMS.map((item, index) => (
+        <BottomNavigationAction
+          key={item.href}
+          label={item.label}
+          aria-label={item.ariaLabel}
+          icon={item.icon}
+          component={Link}
+          href={item.href}
+          sx={{
+            color: activeValue === index ? 'primary.main' : 'text.secondary',
+            '&:hover, &.Mui-focusVisible': {
+              backgroundColor: 'action.hover',
+            },
+          }}
+        />
+      ))}
     </BottomNavigation>
   )
 }
