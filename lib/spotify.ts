@@ -1,5 +1,5 @@
 import { env } from './env'
-import logger from '@/utils/logger'
+import { refreshOAuthToken } from './oauth-utils'
 
 export const SPOTIFY_CONSTANTS = {
   TOKEN_URL: 'https://accounts.spotify.com/api/token',
@@ -22,44 +22,11 @@ export function getSpotifyBasicAuth() {
  * Shared fetch wrapper for refreshing tokens
  */
 export async function refreshSpotifyToken(refreshToken: string) {
-  const response = await fetch(SPOTIFY_CONSTANTS.TOKEN_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: getSpotifyBasicAuth(),
-    },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-    }),
+  return refreshOAuthToken({
+    url: SPOTIFY_CONSTANTS.TOKEN_URL,
+    clientId: env.SPOTIFY_CLIENT_ID!,
+    clientSecret: env.SPOTIFY_CLIENT_SECRET!,
+    refreshToken,
+    authMethod: 'basic',
   })
-
-  if (!response.ok) {
-    const errorBody = await response.text()
-    logger.error(
-      {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorBody,
-      },
-      'Failed to refresh Spotify token'
-    )
-
-    // Attempt to parse the error body as JSON, but fall back to a generic error
-    try {
-      const errorJson = JSON.parse(errorBody)
-      throw new Error(
-        errorJson.error_description ||
-          errorJson.error ||
-          'Spotify token refresh failed'
-      )
-    } catch {
-      // If parsing fails, throw a more generic error with the raw text
-      throw new Error(
-        `Spotify token refresh failed: ${response.status} ${response.statusText} - ${errorBody}`
-      )
-    }
-  }
-
-  return response.json()
 }
