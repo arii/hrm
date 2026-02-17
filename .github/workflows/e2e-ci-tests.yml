@@ -91,12 +91,8 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           echo "Cleaning up PR and branch..."
-          if [ -n "$PR_NUMBER" ]; then
-            gh pr close "$PR_NUMBER" || true
-          fi
-          if [ -n "$BRANCH_NAME" ]; then
-            git push origin --delete "$BRANCH_NAME" || true
-          fi
+          [ -n "$PR_NUMBER" ] && gh pr close "$PR_NUMBER" || true
+          [ -n "$BRANCH_NAME" ] && git push origin --delete "$BRANCH_NAME" || true
 
   test_conflict_resolver:
     runs-on: ubuntu-latest
@@ -199,18 +195,10 @@ jobs:
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
         run: |
           echo "Cleaning up PR and branches..."
-          if [ -n "$PR_NUMBER" ]; then
-            gh pr close "$PR_NUMBER" || true
-          fi
-          if [ -n "$BRANCH_A" ]; then
-            git push origin --delete "$BRANCH_A" || true
-          fi
-          if [ -n "$BRANCH_B" ]; then
-            git push origin --delete "$BRANCH_B" || true
-          fi
-          if [ -n "$BASE_BRANCH" ]; then
-            git push origin --delete "$BASE_BRANCH" || true
-          fi
+          [ -n "$PR_NUMBER" ] && gh pr close "$PR_NUMBER" || true
+          [ -n "$BRANCH_A" ] && git push origin --delete "$BRANCH_A" || true
+          [ -n "$BRANCH_B" ] && git push origin --delete "$BRANCH_B" || true
+          [ -n "$BASE_BRANCH" ] && git push origin --delete "$BASE_BRANCH" || true
 
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
@@ -293,9 +281,5 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           echo "Cleaning up PR and branch..."
-          if [ -n "$PR_NUMBER" ]; then
-            gh pr close "$PR_NUMBER" || true
-          fi
-          if [ -n "$BRANCH_NAME" ]; then
-            git push origin --delete "$BRANCH_NAME" || true
-          fi
+          [ -n "$PR_NUMBER" ] && gh pr close "$PR_NUMBER" || true
+          [ -n "$BRANCH_NAME" ] && git push origin --delete "$BRANCH_NAME" || true
