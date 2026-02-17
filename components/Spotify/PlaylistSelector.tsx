@@ -16,7 +16,7 @@ import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
-import { Playlist } from '../../types/spotify'
+import { SpotifyPlaylist as Playlist } from '../../types/core'
 
 interface PlaylistSelectorProps {
   onPlaylistSelected: (uri: string) => void

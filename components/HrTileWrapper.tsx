@@ -9,15 +9,10 @@ type HrTileWrapperProps = Omit<ClientHrmData, 'updatedAt' | 'lastUpdated'>
 const HrTileWrapper = (props: HrTileWrapperProps) => {
   return (
     <HrTile
+      {...props}
       name={props.name || ''}
-      bpm={props.value}
-      percentMax={props.percentage ?? 0}
+      percentage={props.percentage ?? 0}
       zone={props.zone ?? 0}
-      calories={props.calories}
-      isConnected={props.isConnected}
-      isDataStale={props.isDataStale}
-      isAlerting={props.isAlerting}
-      {...(props.alertMessage && { alertMessage: props.alertMessage })}
     />
   )
 }

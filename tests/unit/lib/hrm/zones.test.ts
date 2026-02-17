@@ -10,17 +10,17 @@ describe('lib/hrm/zones', () => {
       expect(calculateHrZone(0, maxHr)).toEqual({
         zoneName: HrZoneName.NoData,
         percentage: 0,
-        bpm: 0,
+        value: 0,
       })
       expect(calculateHrZone(100, 0)).toEqual({
         zoneName: HrZoneName.NoData,
         percentage: 0,
-        bpm: 0,
+        value: 0,
       })
       expect(calculateHrZone(-1, maxHr)).toEqual({
         zoneName: HrZoneName.NoData,
         percentage: 0,
-        bpm: 0,
+        value: 0,
       })
     })
 
@@ -29,7 +29,7 @@ describe('lib/hrm/zones', () => {
       const result = calculateHrZone(110, maxHr)
       expect(result.zoneName).toBe(HrZoneName.Recovery)
       expect(result.percentage).toBe(55)
-      expect(result.bpm).toBe(110)
+      expect(result.value).toBe(110)
     })
 
     it('should correctly calculate the "Warm Up" zone', () => {
@@ -72,7 +72,7 @@ describe('lib/hrm/zones', () => {
       expect(result.zoneName).toBe(HrZoneName.Max)
       // Percentage should be capped at 100
       expect(result.percentage).toBe(100)
-      expect(result.bpm).toBe(220)
+      expect(result.value).toBe(220)
     })
   })
 })
