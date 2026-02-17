@@ -20,30 +20,20 @@ jobs:
     env:
       PR_NUMBER_RAW: ${{ (github.event.issue && github.event.issue.number) || 0 }}
     steps:
-      - name: Validate Context
-        id: validate
-        run: |
-          if [ "$PR_NUMBER_RAW" == "0" ] || [ -z "$PR_NUMBER_RAW" ]; then
-            echo "::warning::Missing or invalid PR_NUMBER ($PR_NUMBER_RAW). Skipping job."
-            echo "should_run=false" >> $GITHUB_OUTPUT
-          else
-            echo "should_run=true" >> $GITHUB_OUTPUT
-          fi
-
       - name: Checkout repository
-        if: steps.validate.outputs.should_run == 'true'
+        if: env.PR_NUMBER_RAW != '0'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        if: steps.validate.outputs.should_run == 'true'
+        if: env.PR_NUMBER_RAW != '0'
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
       - name: 'Parse Command'
-        if: steps.validate.outputs.should_run == 'true'
+        if: env.PR_NUMBER_RAW != '0'
         id: parse_command
         run: |
           COMMENT_BODY="${{ (github.event.comment && github.event.comment.body) || '' }}"
@@ -55,7 +45,7 @@ jobs:
 
       - name: 'Get PR Context'
         id: pr_context
-        if: steps.validate.outputs.should_run == 'true' && env.COMMAND == 'new'
+        if: env.PR_NUMBER_RAW != '0' && env.COMMAND == 'new'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || 0 }}
@@ -107,7 +97,7 @@ jobs:
 
       - name: 'Find Jules Session ID'
         id: find_session_id
-        if: steps.validate.outputs.should_run == 'true' && env.COMMAND == 'delete'
+        if: env.PR_NUMBER_RAW != '0' && env.COMMAND == 'delete'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || 0 }}
@@ -124,7 +114,7 @@ jobs:
           echo "JULES_SESSION_ID=$SESSION_ID" >> $GITHUB_ENV
 
       - name: 'Validate Secrets and Install Dependencies'
-        if: steps.validate.outputs.should_run == 'true'
+        if: env.PR_NUMBER_RAW != '0'
         env:
           JULES_API_URL: ${{ secrets.JULES_API_URL }}
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -153,7 +143,7 @@ jobs:
           pip install -r .github/scripts/requirements.txt
 
       - name: 'Run Jules Operation: New'
-        if: steps.validate.outputs.should_run == 'true' && env.COMMAND == 'new'
+        if: env.PR_NUMBER_RAW != '0' && env.COMMAND == 'new'
         id: jules_op_new
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -182,7 +172,7 @@ jobs:
           echo "session_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: 'Run Jules Operation: Delete'
-        if: steps.validate.outputs.should_run == 'true' && env.COMMAND == 'delete'
+        if: env.PR_NUMBER_RAW != '0' && env.COMMAND == 'delete'
         id: jules_op_delete
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
@@ -201,7 +191,7 @@ jobs:
           fi
 
       - name: 'Post Session ID Comment'
-        if: steps.validate.outputs.should_run == 'true' && success() && env.COMMAND == 'new'
+        if: env.PR_NUMBER_RAW != '0' && success() && env.COMMAND == 'new'
         uses: actions/github-script@v7
         env:
           SESSION_ID: ${{ steps.jules_op_new.outputs.session_id }}
@@ -221,7 +211,7 @@ jobs:
             }
 
       - name: 'Add Reaction to Comment'
-        if: steps.validate.outputs.should_run == 'true' && success() && (github.event.comment && github.event.comment.id && github.event.comment.id != 0)
+        if: env.PR_NUMBER_RAW != '0' && success() && (github.event.comment && github.event.comment.id && github.event.comment.id != 0)
         uses: peter-evans/create-reaction@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -229,7 +219,7 @@ jobs:
           reaction: '+1'
 
       - name: 'Handle Failure'
-        if: steps.validate.outputs.should_run == 'true' && failure()
+        if: env.PR_NUMBER_RAW != '0' && failure()
         uses: actions/github-script@v7
         env:
           ERROR_NEW: ${{ steps.jules_op_new.outputs.error_message }}
