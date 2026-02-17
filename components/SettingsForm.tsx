@@ -101,7 +101,7 @@ const SettingsForm: React.FC<SettingsFormProps> = memo(
     const autoMaxHr = calculateMaxHr(userAge)
 
     return (
-      <Stack spacing={2} sx={{ mb: 3 }} data-testid="settings-form">
+      <Stack spacing={2} sx={{ mb: 3 }} data-testid="user-settings-form">
         <TextField
           fullWidth
           label="Your Name"

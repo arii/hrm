@@ -194,10 +194,11 @@ export default function MockPage() {
             Simulate heart rate data for testing.
           </Typography>
 
-          <SettingsForm
-            userName={name}
-            setUserName={setName}
-            userAge={age}
+          <Box data-testid="mock-client-form">
+            <SettingsForm
+              userName={name}
+              setUserName={setName}
+              userAge={age}
             setUserAge={setAge}
             unitSystem="METRIC"
             hideUnitToggle={true}
@@ -215,8 +216,9 @@ export default function MockPage() {
             restingHr={restingHr}
             setRestingHr={setRestingHr}
             customZoneThresholds={customZoneThresholds}
-            handleThresholdChange={handleThresholdChange}
-          />
+              handleThresholdChange={handleThresholdChange}
+            />
+          </Box>
 
           <TextField
             label="Current BPM"
