@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useUserSettings, HrZoneMethod } from '@/context/UserSettingsContext'
 import {
   validateAgeValue,
@@ -100,37 +100,51 @@ export function useConnectSettings() {
     setLocalDisplayWeight(null)
   }
 
-  useEffect(() => {
-    if (!localMaxHrOverride) {
-      if (maxHrOverride !== null) {
-        setUserSettings((prev) => ({ ...prev, maxHrOverride: null }))
+  const handleNumericBlur = useCallback(
+    (
+      localVal: string,
+      currentVal: number | null,
+      setLocalVal: (v: string) => void,
+      field: 'maxHrOverride' | 'restingHr',
+      maxLimit: number
+    ) => {
+      if (!localVal) {
+        if (currentVal !== null) {
+          setUserSettings((prev) => ({ ...prev, [field]: null }))
+        }
+        return
       }
-      return
-    }
 
-    const val = parseInt(localMaxHrOverride, 10)
-    if (!isNaN(val) && val > 0 && val <= 250) {
-      if (val !== maxHrOverride) {
-        setUserSettings((prev) => ({ ...prev, maxHrOverride: val }))
+      const val = parseInt(localVal, 10)
+      if (!isNaN(val) && val > 0 && val <= maxLimit) {
+        if (val !== currentVal) {
+          setUserSettings((prev) => ({ ...prev, [field]: val }))
+        }
+      } else {
+        // Revert to canonical value on invalid input
+        setLocalVal(currentVal?.toString() || '')
       }
-    }
-  }, [localMaxHrOverride, maxHrOverride, setUserSettings])
+    },
+    [setUserSettings]
+  )
 
-  useEffect(() => {
-    if (!localRestingHr) {
-      if (restingHr !== null) {
-        setUserSettings((prev) => ({ ...prev, restingHr: null }))
-      }
-      return
-    }
+  const handleMaxHrBlur = () =>
+    handleNumericBlur(
+      localMaxHrOverride,
+      maxHrOverride,
+      setLocalMaxHrOverride,
+      'maxHrOverride',
+      250
+    )
 
-    const val = parseInt(localRestingHr, 10)
-    if (!isNaN(val) && val > 0 && val <= 150) {
-      if (val !== restingHr) {
-        setUserSettings((prev) => ({ ...prev, restingHr: val }))
-      }
-    }
-  }, [localRestingHr, restingHr, setUserSettings])
+  const handleRestingHrBlur = () =>
+    handleNumericBlur(
+      localRestingHr,
+      restingHr,
+      setLocalRestingHr,
+      'restingHr',
+      150
+    )
 
   const setUserName = useCallback(
     (name: string) => setUserSettings((prev) => ({ ...prev, userName: name })),
@@ -224,9 +238,11 @@ export function useConnectSettings() {
     customZoneThresholds,
     localMaxHrOverride,
     setLocalMaxHrOverride,
+    handleMaxHrBlur,
     maxHrError,
     localRestingHr,
     setLocalRestingHr,
+    handleRestingHrBlur,
     restingHrError,
     displayWeight,
     handleWeightChange,

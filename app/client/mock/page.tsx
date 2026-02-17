@@ -9,14 +9,6 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import Accordion from '@mui/material/Accordion'
-import AccordionSummary from '@mui/material/AccordionSummary'
-import AccordionDetails from '@mui/material/AccordionDetails'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import ToggleButton from '@mui/material/ToggleButton'
-import Slider from '@mui/material/Slider'
-import Stack from '@mui/material/Stack'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -30,24 +22,41 @@ import {
   ZONE_THRESHOLDS,
 } from '@/lib/shared/hr-zones'
 import { HrZoneMethod } from '@/context/UserSettingsContext'
+import SettingsForm from '@/components/SettingsForm'
+import { useHeightInput } from '@/hooks/useHeightInput'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
   const [hrValue, setHrValue] = useState(100)
-  const [name, setName] = useState('Mock User')
-  const [age, setAge] = useState(30)
-  const [weight, setWeight] = useState(70) // Add weight state
-  const [height, setHeight] = useState(175) // Add height state
-  const [gender, setGender] = useState('female') // Add gender state
-  const [intervalId, setIntervalId] = useState<number | null>(null)
 
+  // Settings Form State
+  const [name, setName] = useState('Mock User')
+  const [age, setAge] = useState<string>('30')
+  const [gender, setGender] = useState('female')
+
+  // Height using hook (fixed to Metric for Mock)
+  const { displayHeight, updateHeight, commitHeight } = useHeightInput(
+    '175',
+    'METRIC'
+  )
+
+  // Weight
+  const [weight, setWeight] = useState<string>('70')
+
+  // HR Zones
   const [hrZoneMethod, setHrZoneMethod] = useState<HrZoneMethod>('MAX_HR')
-  const [restingHr, setRestingHr] = useState(60)
+  const [restingHr, setRestingHr] = useState<string>('60')
+  const [maxHrOverride, setMaxHrOverride] = useState<string>('')
   const [customZoneThresholds, setCustomZoneThresholds] =
     useState<Record<string, number>>(ZONE_THRESHOLDS)
 
+  const [intervalId, setIntervalId] = useState<number | null>(null)
   const isStreaming = intervalId !== null
-  const maxHr = calculateMaxHr(age)
+
+  // Derived values for logic
+  const ageNum = parseInt(age, 10) || 30
+  const maxHrOverrideNum = maxHrOverride ? parseInt(maxHrOverride, 10) : null
+  const maxHr = maxHrOverrideNum || calculateMaxHr(ageNum)
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -63,10 +72,13 @@ export default function MockPage() {
 
   const sendHrPacket = useCallback(
     (hr: number) => {
+      const restingHrNum = parseInt(restingHr, 10) || 60
+
       const { percentage, zone } = calculateHrZoneInfo(hr, {
         method: hrZoneMethod,
-        age,
-        restingHr,
+        age: ageNum,
+        maxHrOverride: maxHrOverrideNum,
+        restingHr: restingHrNum,
         thresholds: customZoneThresholds,
       })
 
@@ -80,23 +92,33 @@ export default function MockPage() {
       }
       sendData(message)
     },
-    [sendData, age, hrZoneMethod, restingHr, customZoneThresholds]
+    [
+      sendData,
+      ageNum,
+      maxHrOverrideNum,
+      hrZoneMethod,
+      restingHr,
+      customZoneThresholds,
+    ]
   )
 
   const sendMetadataPacket = useCallback(() => {
+    const heightCm = parseFloat(displayHeight.cm) || 175
+    const weightNum = parseFloat(weight) || 70
+
     const message: HrmMetadataUpdateMessage = {
       type: 'HRM_METADATA_UPDATE',
       data: {
         maxHr: maxHr,
         name: name,
-        age: age,
-        weight: weight,
-        height: height,
+        age: ageNum,
+        weight: weightNum,
+        height: heightCm,
         gender: gender,
       },
     }
     sendData(message)
-  }, [sendData, name, age, maxHr, weight, height, gender])
+  }, [sendData, name, ageNum, maxHr, weight, displayHeight, gender])
 
   // NOTE: In a real client, metadata would likely be sent once upon connection
   // or when the user explicitly saves settings. For this mock, we send it
@@ -172,126 +194,31 @@ export default function MockPage() {
             Simulate heart rate data for testing.
           </Typography>
 
-          <Grid
-            container
-            spacing={2}
-            sx={{ mb: 3 }}
-            data-testid="mock-client-form"
-          >
-            <Grid size={{ xs: 8 }}>
-              <TextField
-                label="User Name"
-                placeholder="e.g., Mock User"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 4 }}>
-              <TextField
-                label="Age"
-                placeholder="e.g., 30"
-                type="number"
-                value={age}
-                onChange={(e) => setAge(parseInt(e.target.value, 10))}
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 4 }}>
-              <TextField
-                label="Weight (kg)"
-                placeholder="e.g., 70"
-                type="number"
-                value={weight}
-                onChange={(e) => setWeight(parseInt(e.target.value, 10))}
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 4 }}>
-              <TextField
-                label="Height (cm)"
-                placeholder="e.g., 175"
-                type="number"
-                value={height}
-                onChange={(e) => setHeight(parseInt(e.target.value, 10))}
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 4 }}>
-              <TextField
-                label="Gender"
-                placeholder="e.g., male"
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                fullWidth
-              />
-            </Grid>
-          </Grid>
-
-          <Accordion elevation={0} sx={{ border: '1px solid #e0e0e0', mb: 3 }}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle2">
-                HR Zone Simulation Settings
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={3}>
-                <Box>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Calculation Method
-                  </Typography>
-                  <ToggleButtonGroup
-                    value={hrZoneMethod}
-                    exclusive
-                    onChange={(_, newMethod) => {
-                      if (newMethod) setHrZoneMethod(newMethod)
-                    }}
-                    fullWidth
-                    size="small"
-                  >
-                    <ToggleButton value="MAX_HR">Max HR %</ToggleButton>
-                    <ToggleButton value="HRR">Karvonen (HRR)</ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
-
-                {hrZoneMethod === 'HRR' && (
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Resting Heart Rate"
-                    type="number"
-                    value={restingHr}
-                    onChange={(e) => setRestingHr(parseInt(e.target.value, 10))}
-                  />
-                )}
-
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Custom Thresholds (%)
-                  </Typography>
-                  {[1, 2, 3, 4, 5, 6].map((z) => (
-                    <Box key={z} sx={{ px: 1 }}>
-                      <Typography variant="caption">Zone {z} Min %</Typography>
-                      <Slider
-                        size="small"
-                        value={customZoneThresholds[`ZONE_${z}`]}
-                        onChange={(_, value) =>
-                          handleThresholdChange(`ZONE_${z}`, value as number)
-                        }
-                        valueLabelDisplay="auto"
-                        min={0}
-                        max={100}
-                      />
-                    </Box>
-                  ))}
-                </Box>
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
+          <Box data-testid="mock-client-form">
+            <SettingsForm
+              userName={name}
+              setUserName={setName}
+              userAge={age}
+              setUserAge={setAge}
+              unitSystem="METRIC"
+              hideUnitToggle={true}
+              userHeight={displayHeight}
+              setUserHeight={updateHeight}
+              onHeightBlur={commitHeight}
+              userWeight={weight}
+              setUserWeight={setWeight}
+              gender={gender}
+              setGender={setGender}
+              hrZoneMethod={hrZoneMethod}
+              setHrZoneMethod={setHrZoneMethod}
+              maxHrOverride={maxHrOverride}
+              setMaxHrOverride={setMaxHrOverride}
+              restingHr={restingHr}
+              setRestingHr={setRestingHr}
+              customZoneThresholds={customZoneThresholds}
+              handleThresholdChange={handleThresholdChange}
+            />
+          </Box>
 
           <TextField
             label="Current BPM"

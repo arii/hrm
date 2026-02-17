@@ -134,24 +134,6 @@ export const HR_ZONE_COLOR_MAP: Record<string, string> = Object.values(
 } as Record<string, string>)
 
 /**
- * Calculates the heart rate for a given intensity percentage using the Karvonen method.
- * Target HR = ((Max HR - Resting HR) * Intensity%) + Resting HR
- *
- * @param intensityPercent - Intensity percentage (0-100).
- * @param maxHr - Maximum heart rate.
- * @param restingHr - Resting heart rate.
- * @returns The calculated heart rate.
- */
-export const calculateKarvonenHr = (
-  intensityPercent: number,
-  maxHr: number,
-  restingHr: number
-): number => {
-  const hrReserve = maxHr - restingHr
-  return Math.round((hrReserve * intensityPercent) / 100 + restingHr)
-}
-
-/**
  * Calculates the percentage of max HR and the corresponding zone (0-5) based on Max HR.
  * @param currentHr - Current heart rate in BPM.
  * @param maxHr - Max Heart Rate.
