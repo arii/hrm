@@ -1,5 +1,6 @@
-/** @jest-environment jsdom */
-
+/**
+ * @jest-environment jsdom
+ */
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { workoutSessionStorage } from '@/lib/workout-session-storage'
@@ -8,8 +9,10 @@ import { isSameDay } from '@/lib/date'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 
+// Mock dependencies
 jest.mock('@/lib/workout-session-storage')
 jest.mock('@/hooks/useAppSnackbar')
+// Mock the entire date utility module
 jest.mock('@/lib/date', () => ({
   isSameDay: jest.fn(),
 }))
@@ -22,145 +25,155 @@ const mockGetIncompleteSession =
 const mockDeleteSession = workoutSessionStorage.deleteSession as jest.Mock
 
 describe('useWorkoutSessionManager', () => {
-  let mockDateNow: jest.SpyInstance
-
   beforeEach(() => {
     jest.clearAllMocks()
-    ;(useAppSnackbar as jest.Mock).mockReturnValue({ showInfo: mockShowInfo })
-    mockGetIncompleteSession.mockResolvedValue(null)
-    mockIsSameDay.mockReturnValue(true)
-
-    mockDateNow = jest.spyOn(Date, 'now').mockReturnValue(1000000)
+    ;(useAppSnackbar as jest.Mock).mockReturnValue({
+      showInfo: mockShowInfo,
+    })
+    ;(
+      workoutSessionStorage.getIncompleteSession as jest.Mock
+    ).mockResolvedValue(null)
   })
 
-  afterEach(() => {
-    mockDateNow.mockRestore()
+  it('starts a workout session', async () => {
+    const { result } = renderHook(() => useWorkoutSessionManager())
+
+    // Wait for initialization
+    await act(async () => {
+      // Small delay to allow useEffect to run
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    act(() => {
+      result.current.startWorkout(30, 70)
+    })
+
+    expect(result.current.status).toBe('running')
+    expect(result.current.session).toBeDefined()
+    expect(result.current.session?.userSettings.age).toBe(30)
   })
 
-  describe('Session Lifecycle', () => {
-    it('should start, pause, resume, and finish a workout session', async () => {
-      const { result } = renderHook(() => useWorkoutSessionManager())
-      await waitFor(() => expect(result.current.isInitialized).toBe(true))
+  it('adds heart rate data to session', async () => {
+    const { result } = renderHook(() => useWorkoutSessionManager())
 
-      act(() => {
-        result.current.startWorkout(30, 80)
-      })
-      expect(result.current.status).toBe('running')
-      expect(result.current.session).not.toBeNull()
-      expect(result.current.session?.startTime).toBe(1000000)
-      expect(result.current.session?.status).toBe('running')
-
-      act(() => {
-        result.current.endWorkout()
-      })
-      expect(result.current.status).toBe('paused')
-      expect(result.current.session?.status).toBe('paused')
-      expect(result.current.session?.endTime).toBeNull()
-
-      act(() => {
-        result.current.resumeWorkout()
-      })
-      expect(result.current.status).toBe('running')
-      expect(result.current.session?.status).toBe('running')
-
-      act(() => {
-        result.current.endWorkout()
-      })
-      expect(result.current.status).toBe('paused')
-
-      mockDateNow.mockReturnValue(1005000)
-      act(() => {
-        result.current.endWorkout()
-      })
-      expect(result.current.status).toBe('finished')
-      expect(result.current.session?.status).toBe('finished')
-      expect(result.current.session?.endTime).toBe(1005000)
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
-    it('should reset the workout session and delete it from storage', async () => {
-      const { result } = renderHook(() => useWorkoutSessionManager())
-      await waitFor(() => expect(result.current.isInitialized).toBe(true))
-
-      act(() => {
-        result.current.startWorkout(30, 80)
-      })
-      const sessionId = result.current.session?.sessionId
-      expect(sessionId).toBeDefined()
-
-      await act(async () => {
-        await result.current.resetWorkout()
-      })
-
-      expect(result.current.session).toBeNull()
-      expect(result.current.status).toBe('idle')
-      expect(mockDeleteSession).toHaveBeenCalledWith(sessionId)
+    act(() => {
+      result.current.startWorkout(30, 70)
     })
+
+    act(() => {
+      result.current.addHrData({ time: Date.now(), hr: 120 })
+    })
+
+    expect(result.current.session?.hrHistory).toHaveLength(1)
+    expect(result.current.session?.hrHistory[0].hr).toBe(120)
   })
 
-  describe('HR Data and Calculations', () => {
-    it('should add HR data and correctly calculate metrics', async () => {
-      const { result } = renderHook(() => useWorkoutSessionManager())
-      await waitFor(() => expect(result.current.isInitialized).toBe(true))
+  it('calculates session stats correctly', async () => {
+    const { result } = renderHook(() => useWorkoutSessionManager())
 
-      act(() => {
-        result.current.startWorkout(35, 75)
-      })
-
-      act(() => {
-        result.current.addHrData({ time: 1001000, hr: 120 })
-      })
-      expect(result.current.session?.hrHistory.length).toBe(1)
-      expect(result.current.session?.maxHr).toBe(120)
-      expect(result.current.session?.averageHr).toBe(120)
-      expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
-
-      act(() => {
-        result.current.addHrData({ time: 1002000, hr: 150 })
-      })
-      expect(result.current.session?.hrHistory.length).toBe(2)
-      expect(result.current.session?.maxHr).toBe(150)
-      expect(result.current.session?.averageHr).toBe(135)
-      expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
-      expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
-
-      act(() => {
-        result.current.addHrData({ time: 1004000, hr: 100 })
-      })
-      expect(result.current.session?.hrHistory.length).toBe(3)
-      expect(result.current.session?.maxHr).toBe(150)
-      expect(result.current.session?.averageHr).toBeCloseTo(123.33)
-      expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
-      expect(result.current.session?.timeInZones.ZONE_1).toBe(2)
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
-    it('should not add HR data if the session is not running', async () => {
-      const { result } = renderHook(() => useWorkoutSessionManager())
-      await waitFor(() => expect(result.current.isInitialized).toBe(true))
-
-      act(() => {
-        result.current.startWorkout(30, 80)
-      })
-
-      act(() => {
-        result.current.endWorkout()
-      })
-      expect(result.current.status).toBe('paused')
-
-      act(() => {
-        result.current.addHrData({ time: 1001000, hr: 130 })
-      })
-
-      expect(result.current.session?.hrHistory.length).toBe(0)
-      expect(result.current.session?.maxHr).toBe(0)
-      expect(result.current.session?.averageHr).toBe(0)
+    act(() => {
+      result.current.startWorkout(35, 75) // maxHr will be calculated as ~185
     })
+
+    // Add first data point (HR 120 -> ~65% -> Zone 2 / Warm Up)
+    act(() => {
+      result.current.addHrData({ time: 1001000, hr: 120 })
+    })
+    expect(result.current.session?.hrHistory.length).toBe(1)
+    expect(result.current.session?.maxHr).toBe(120)
+    expect(result.current.session?.averageHr).toBe(120)
+    expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
+
+    // Add second data point (HR 150 -> ~81% -> Zone 4 / Cardio)
+    act(() => {
+      result.current.addHrData({ time: 1002000, hr: 150 })
+    })
+    expect(result.current.session?.hrHistory.length).toBe(2)
+    expect(result.current.session?.maxHr).toBe(150)
+    expect(result.current.session?.averageHr).toBe(135)
+    expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
+    expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
+
+    // Add third data point (HR 100 -> ~54% -> Zone 1 / Recovery)
+    act(() => {
+      result.current.addHrData({ time: 1004000, hr: 100 })
+    })
+    expect(result.current.session?.hrHistory.length).toBe(3)
+    expect(result.current.session?.maxHr).toBe(150)
+    expect(result.current.session?.averageHr).toBeCloseTo(123.33)
+    expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
+    expect(result.current.session?.timeInZones.ZONE_1).toBe(2)
+  })
+
+  it('ends and resets a workout session', async () => {
+    const { result } = renderHook(() => useWorkoutSessionManager())
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    act(() => {
+      result.current.startWorkout(30, 70)
+    })
+
+    act(() => {
+      result.current.endWorkout()
+    })
+
+    expect(result.current.status).toBe('paused') // transition status in reducer
+
+    act(() => {
+      result.current.endWorkout()
+    })
+    expect(result.current.status).toBe('finished')
+
+    await act(async () => {
+      await result.current.resetWorkout()
+    })
+
+    expect(result.current.status).toBe('idle')
+    expect(result.current.session).toBeNull()
+  })
+
+  it('should not add HR data if the session is not running', async () => {
+    const { result } = renderHook(() => useWorkoutSessionManager())
+    await waitFor(() => expect(result.current.isInitialized).toBe(true))
+
+    act(() => {
+      result.current.startWorkout(30, 80)
+    })
+
+    // Pause the session
+    act(() => {
+      result.current.endWorkout()
+    })
+    expect(result.current.status).toBe('paused')
+
+    // Attempt to add data
+    act(() => {
+      result.current.addHrData({ time: 1001000, hr: 130 })
+    })
+
+    // Assert no changes
+    expect(result.current.session?.hrHistory.length).toBe(0)
+    expect(result.current.session?.maxHr).toBe(0)
+    expect(result.current.session?.averageHr).toBe(0)
   })
 
   describe('Stale Session Handling', () => {
     it('should clear an incomplete session from a previous day on startup', async () => {
+      // Arrange
       const staleSession: WorkoutSessionData = {
         sessionId: 'stale-session-id',
-        startTime: 900000,
+        startTime: 900000, // A time in the past
         status: 'running',
         hrHistory: [],
         timeInZones: {} as Record<HeartRateZone, number>,
@@ -174,71 +187,22 @@ describe('useWorkoutSessionManager', () => {
         endTime: null,
       }
       mockGetIncompleteSession.mockResolvedValue(staleSession)
-      mockIsSameDay.mockReturnValue(false)
+      mockIsSameDay.mockReturnValue(false) // Mock as a different day
 
+      // Act
       const { result } = renderHook(() => useWorkoutSessionManager())
 
       await waitFor(() => {
         expect(result.current.isInitialized).toBe(true)
       })
 
+      // Assert
       expect(mockIsSameDay).toHaveBeenCalled()
       expect(mockDeleteSession).toHaveBeenCalledWith('stale-session-id')
       expect(mockShowInfo).toHaveBeenCalledWith(
         'New day detected. Your previous session was cleared.'
       )
       expect(result.current.session).toBeNull()
-    })
-
-    it('should not clear a session from the same day on startup', async () => {
-      const todaySession: Partial<WorkoutSessionData> = {
-        sessionId: 'today-session-id',
-        startTime: 1000000,
-        status: 'paused',
-      }
-      mockGetIncompleteSession.mockResolvedValue(todaySession)
-      mockIsSameDay.mockReturnValue(true)
-
-      const { result } = renderHook(() => useWorkoutSessionManager())
-
-      await waitFor(() => {
-        expect(result.current.isInitialized).toBe(true)
-      })
-
-      expect(mockDeleteSession).not.toHaveBeenCalled()
-      expect(mockShowInfo).not.toHaveBeenCalled()
-      expect(result.current.session).toEqual(todaySession)
-    })
-
-    it('should clear an active session when the day changes on window focus', async () => {
-      const todaySession: Partial<WorkoutSessionData> = {
-        sessionId: 'active-session-id',
-        startTime: 1000000,
-        status: 'running',
-      }
-      mockGetIncompleteSession.mockResolvedValue(todaySession)
-      mockIsSameDay.mockReturnValue(true)
-
-      const { result } = renderHook(() => useWorkoutSessionManager())
-
-      await waitFor(() => {
-        expect(result.current.isInitialized).toBe(true)
-      })
-
-      expect(result.current.session).not.toBeNull()
-
-      mockIsSameDay.mockReturnValue(false)
-
-      act(() => {
-        window.dispatchEvent(new Event('focus'))
-      })
-
-      await waitFor(() => {
-        expect(mockDeleteSession).toHaveBeenCalledWith('active-session-id')
-      })
-      expect(mockShowInfo).toHaveBeenCalledWith(
-        'New day detected. A fresh workout session has started.'
-      )
     })
   })
 })

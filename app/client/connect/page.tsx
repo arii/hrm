@@ -8,8 +8,8 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
 import {
-  calculateMaxHr,
   calculateZoneFromMaxHr,
+  calculateMaxHr,
   toHeartRateZone,
 } from '@/lib/shared/hr-zones'
 import throttle from 'lodash.throttle'

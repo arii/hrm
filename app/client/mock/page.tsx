@@ -9,7 +9,7 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
@@ -17,8 +17,8 @@ import {
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
 import {
-  calculateMaxHr,
   calculateZoneFromMaxHr,
+  calculateMaxHr,
   toHeartRateZone,
 } from '@/lib/shared/hr-zones'
 import SettingsForm from '@/components/SettingsForm'
@@ -47,7 +47,7 @@ export default function MockPage() {
 
   // Derived values for logic
   const ageNum = parseInt(age, 10) || 30
-  const maxHr = useMemo(() => calculateMaxHr(ageNum), [ageNum])
+  const maxHr = calculateMaxHr(ageNum)
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -63,6 +63,7 @@ export default function MockPage() {
 
   const sendHrPacket = useCallback(
     (hr: number) => {
+      const maxHr = calculateMaxHr(ageNum)
       const { percentage, zone } = calculateZoneFromMaxHr(hr, maxHr)
       const heartRateZone = toHeartRateZone(zone)
 
@@ -76,7 +77,7 @@ export default function MockPage() {
       }
       sendData(message)
     },
-    [sendData, maxHr]
+    [sendData, ageNum]
   )
 
   const sendMetadataPacket = useCallback(() => {
