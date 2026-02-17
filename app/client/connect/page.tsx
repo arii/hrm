@@ -7,7 +7,7 @@ import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-import { calculateHrZoneInfo } from '@/lib/shared/hr-zones'
+import { calculateMaxHr, calculateZoneFromMaxHr } from '@/lib/shared/hr-zones'
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
@@ -17,15 +17,7 @@ import {
 } from './context/ConnectSettingsContext'
 
 function ConnectPageContent() {
-  const {
-    userName,
-    userAge,
-    userWeight,
-    hrZoneMethod,
-    maxHrOverride,
-    restingHr,
-    customZoneThresholds,
-  } = useConnectSettingsContext()
+  const { userName, userAge, userWeight } = useConnectSettingsContext()
 
   const [currentHR, setCurrentHR] = useState(0)
 
@@ -129,7 +121,6 @@ function ConnectPageContent() {
     userName,
     userAge: userAge || 0,
     onHeartRateUpdate: handleHeartRateUpdate,
-    onConnect: handleStartWorkout,
   })
 
   // Auto-pause/resume workout based on connection status
@@ -179,13 +170,8 @@ function ConnectPageContent() {
     connectionAttempted,
   ])
 
-  const { percentage, zone } = calculateHrZoneInfo(currentHR, {
-    method: hrZoneMethod,
-    age: userAge,
-    maxHrOverride: maxHrOverride,
-    restingHr: restingHr,
-    thresholds: customZoneThresholds,
-  })
+  const maxHr = calculateMaxHr(userAge)
+  const { percentage, zone } = calculateZoneFromMaxHr(currentHR, maxHr)
 
   useEffect(() => {
     throttledSend({

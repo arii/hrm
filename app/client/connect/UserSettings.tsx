@@ -20,18 +20,6 @@ const UserSettings: React.FC = () => {
     weightError,
     unitSystem: unit,
     handleUnitChange: setUnit,
-    hrZoneMethod,
-    setHrZoneMethod,
-    localMaxHrOverride: maxHrOverride,
-    setLocalMaxHrOverride: setMaxHrOverride,
-    handleMaxHrBlur: onMaxHrBlur,
-    maxHrError,
-    localRestingHr: restingHr,
-    setLocalRestingHr: setRestingHr,
-    handleRestingHrBlur: onRestingHrBlur,
-    restingHrError,
-    customZoneThresholds,
-    handleThresholdChange,
   } = useConnectSettingsContext()
 
   return (
@@ -52,18 +40,6 @@ const UserSettings: React.FC = () => {
       setUserWeight={setUserWeight}
       onWeightBlur={onWeightBlur}
       weightError={weightError}
-      hrZoneMethod={hrZoneMethod}
-      setHrZoneMethod={setHrZoneMethod}
-      maxHrOverride={maxHrOverride}
-      setMaxHrOverride={setMaxHrOverride}
-      maxHrError={maxHrError}
-      onMaxHrBlur={onMaxHrBlur}
-      restingHr={restingHr}
-      setRestingHr={setRestingHr}
-      restingHrError={restingHrError}
-      onRestingHrBlur={onRestingHrBlur}
-      customZoneThresholds={customZoneThresholds}
-      handleThresholdChange={handleThresholdChange}
     />
   )
 }
