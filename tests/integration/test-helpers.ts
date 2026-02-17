@@ -7,7 +7,10 @@ export interface ServerProcess {
   kill: () => Promise<void>
 }
 
-export function startServer(port: number): Promise<ServerProcess> {
+export function startServer(
+  port: number,
+  envOverrides: Record<string, string> = {}
+): Promise<ServerProcess> {
   return new Promise((resolve, reject) => {
     // Note: The server should be built by the test script `pnpm run build` before this is called.
     const serverProcess = spawn('node', ['dist/server.js'], {
@@ -15,10 +18,12 @@ export function startServer(port: number): Promise<ServerProcess> {
         ...process.env,
         PORT: `${port}`,
         NODE_ENV: 'production',
-        NEXTAUTH_SECRET: 'a-valid-nextauth-secret-for-testing-purposes',
-        WS_MAX_CONNECTIONS: '10',
+        NEXTAUTH_SECRET:
+          'a-valid-nextauth-secret-for-testing-purposes-long-enough',
+        WS_MAX_CONNECTIONS: '100',
         RATE_LIMIT_WINDOW_MS: '60000',
         GENERAL_API_MAX_REQUESTS: '1000',
+        ...envOverrides,
       },
       detached: true, // Run in a new process group
     })

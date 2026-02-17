@@ -11,7 +11,7 @@ import {
 } from '@jest/globals'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
-import { ConnectionMonitor } from '../../utils/websocketUtils'
+import { ConnectionMonitor } from '@/utils/websocketUtils'
 import logger from '@/utils/logger.server'
 import { ExtWebSocket } from '@/types/websocket'
 
