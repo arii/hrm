@@ -45,6 +45,7 @@ jobs:
       base_sha: ${{ steps.squash_rebase.outputs.base_sha }}
       should_run: ${{ steps.validate.outputs.should_run }}
     steps:
+<<<<<<< HEAD
       - name: Validate Context
         id: validate
         env:
@@ -57,6 +58,13 @@ jobs:
             echo "should_run=true" >> $GITHUB_OUTPUT
           fi
 
+=======
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+>>>>>>> origin/leader
       - name: Acknowledge command
         if: steps.validate.outputs.should_run == 'true' && ((github.event.comment && github.event.comment.id && github.event.comment.id != 0) || (inputs.comment_id && inputs.comment_id != '0' && inputs.comment_id != 0))
         uses: peter-evans/create-reaction@v4
@@ -113,9 +121,7 @@ jobs:
         if: steps.validate.outputs.should_run == 'true'
         uses: actions/checkout@v4
         with:
-          # Using the default GITHUB_TOKEN. For this to work on protected branches,
-          # the repository settings may need to be adjusted to allow the github-actions bot to push.
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           ref: ${{ steps.pr_data.outputs.head_ref }}
           fetch-depth: 0
 
@@ -244,11 +250,17 @@ jobs:
     outputs:
       has_changes: ${{ steps.check_changes.outputs.has_changes }}
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
+          token: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           ref: ${{ needs.squash-and-rebase.outputs.head_ref }}
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Check for file changes
         id: check_changes
         uses: ./.github/actions/check-for-changes
@@ -260,6 +272,11 @@ jobs:
     if: needs.squash-and-rebase.outputs.should_run == 'true' && needs.squash-and-rebase.outputs.outcome == 'success'
     runs-on: ubuntu-latest
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Trigger Gemini Orchestrator
         env:
           # Use CI_BOT_PAT if available to ensure workflow is triggered (GITHUB_TOKEN prevents recursion)

@@ -42,6 +42,8 @@ jobs:
       is_e2e: ${{ steps.changes.outputs.is_e2e }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Fetch PR Metadata
         id: metadata

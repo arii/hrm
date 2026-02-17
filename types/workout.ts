@@ -1,4 +1,4 @@
-export type WorkoutStatus = 'idle' | 'running' | 'paused'
+export type WorkoutStatus = 'idle' | 'running' | 'paused' | 'finished'
 
 /**
  * Data Transfer Object for workout table data retrieved from a Google Doc.

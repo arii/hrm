@@ -10,10 +10,14 @@ jobs:
       pull-requests: write
       issues: write
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetch all history for accurate diff
-
       - name: Analyze Changed Files
         id: analyze-files
         run: |
@@ -77,6 +81,7 @@ jobs:
           echo "count=$area_count" >> $GITHUB_OUTPUT
           echo "areas=$unique_areas" >> $GITHUB_OUTPUT
 
+<<<<<<< HEAD
       - name: Clean up old scope labels
         uses: actions/github-script@v7
         with:
@@ -100,6 +105,12 @@ jobs:
                 }
               }
             }
+=======
+      - name: Clean up automated and obsolete labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/ci/cleanup-pr-labels.sh ${{ github.event.pull_request.number }} scope
+>>>>>>> origin/leader
 
       - name: Add "scope:focused" label
         if: steps.analyze-files.outputs.count <= 1

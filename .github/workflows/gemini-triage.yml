@@ -19,6 +19,7 @@ on:
 permissions:
   contents: read
   issues: write
+  pull-requests: write
 
 jobs:
   triage:
@@ -110,8 +111,13 @@ jobs:
                 return;
               }
               const rawData = fs.readFileSync(filePath, 'utf8');
+<<<<<<< HEAD
               // Strip markdown block and parse JSON.
               // Handles cases where the model returns JSON wrapped in blocks.
+=======
+              // The model may return a JSON object wrapped in markdown.
+              // Strip markdown markers and parse the JSON.
+>>>>>>> origin/leader
               const cleanedData = rawData.trim().replace(/^```json|```$/g, '').trim();
               const result = JSON.parse(cleanedData);
 
@@ -282,6 +288,11 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Triage Stale Issues
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -58,6 +58,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  issues: write
   checks: write
   actions: read
 
@@ -69,6 +70,12 @@ jobs:
       needs-review: ${{ steps.decision.outputs.needs-review }}
       skip-reason: ${{ steps.decision.outputs.skip-reason }}
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -530,20 +537,22 @@ jobs:
       pull-requests: write
       issues: write
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download review result
         uses: actions/download-artifact@v4
         with:
           name: review-result
           path: .
-
-      - name: Install yq
-        uses: mikefarah/yq@v4
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Manage Labels
         if: (inputs.pr_number && inputs.pr_number != '0') || (github.event.pull_request && github.event.pull_request.number) || (github.event.issue && github.event.issue.number)
