@@ -83,16 +83,9 @@ describe('lib/spotify', () => {
       })
 
       await expect(refreshSpotifyToken(refreshToken)).rejects.toThrow(
-        'Invalid refresh token'
+        JSON.stringify(errorResponse)
       )
-      expect(logger.error).toHaveBeenCalledWith(
-        {
-          status: 400,
-          statusText: 'Bad Request',
-          body: JSON.stringify(errorResponse),
-        },
-        'Failed to refresh Spotify token'
-      )
+      expect(logger.error).not.toHaveBeenCalled()
     })
 
     it('should throw an error with a non-JSON error response', async () => {
@@ -105,16 +98,9 @@ describe('lib/spotify', () => {
       })
 
       await expect(refreshSpotifyToken(refreshToken)).rejects.toThrow(
-        `Spotify token refresh failed: 500 Internal Server Error - ${errorResponse}`
+        errorResponse
       )
-      expect(logger.error).toHaveBeenCalledWith(
-        {
-          status: 500,
-          statusText: 'Internal Server Error',
-          body: errorResponse,
-        },
-        'Failed to refresh Spotify token'
-      )
+      expect(logger.error).not.toHaveBeenCalled()
     })
 
     it('should throw an error with a malformed JSON error response', async () => {
@@ -127,16 +113,9 @@ describe('lib/spotify', () => {
       })
 
       await expect(refreshSpotifyToken(refreshToken)).rejects.toThrow(
-        `Spotify token refresh failed: 400 Bad Request - ${errorResponse}`
+        errorResponse
       )
-      expect(logger.error).toHaveBeenCalledWith(
-        {
-          status: 400,
-          statusText: 'Bad Request',
-          body: errorResponse,
-        },
-        'Failed to refresh Spotify token'
-      )
+      expect(logger.error).not.toHaveBeenCalled()
     })
   })
 })
