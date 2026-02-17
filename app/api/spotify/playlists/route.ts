@@ -5,7 +5,7 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
-import { PresetPlaylistDto, UserPlaylistDto } from '@/types/spotify'
+import { SpotifyPlaylist } from '@/types/core'
 
 /**
  * API route to fetch preset and user Spotify playlists.
@@ -25,14 +25,14 @@ async function getPlaylists(_req: NextRequest) {
   const playlistsResponse = await spotify.currentUser.playlists.playlists(50)
 
   // 5. Preset playlists for the standalone page
-  const presetPlaylists: PresetPlaylistDto[] = [
+  const presetPlaylists: SpotifyPlaylist[] = [
     { name: 'HIIT', uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5' },
     { name: 'Rock', uri: 'spotify:playlist:37i9dQZF1DX1spT6G94GFC' },
     { name: 'Pop', uri: 'spotify:playlist:37i9dQZF1DXcBWfL3ps8cR' },
   ]
 
   // 6. Map user playlists to include full data (images, descriptions, track counts, etc.)
-  const userPlaylists: UserPlaylistDto[] = playlistsResponse.items.map(
+  const userPlaylists: SpotifyPlaylist[] = playlistsResponse.items.map(
     (playlist) => ({
       id: playlist.id,
       name: playlist.name,
