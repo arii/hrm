@@ -9,7 +9,7 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
@@ -47,7 +47,7 @@ export default function MockPage() {
 
   // Derived values for logic
   const ageNum = parseInt(age, 10) || 30
-  const maxHr = calculateMaxHr(ageNum)
+  const maxHr = useMemo(() => calculateMaxHr(ageNum), [ageNum])
 
   // Signal when page is ready for testing
   useEffect(() => {
