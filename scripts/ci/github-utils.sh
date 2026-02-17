@@ -121,7 +121,9 @@ poll_pr_metrics() {
          else
              # name-only mode: output is just filenames
              files="$numstat"
-             # Use metadata for counts as fallback since name-only doesn't provide them
+             # Use metadata for counts as fallback since name-only doesn't provide them.
+             # Note: Metadata (gh pr view) comes from the GitHub API and may slightly lag behind
+             # the raw git diff, but it is the best available fallback when --numstat is unsupported.
              add="$meta_add"
              del="$meta_del"
          fi
