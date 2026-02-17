@@ -21,6 +21,7 @@ import {
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
+import { downloadBlob } from '@/utils/download'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -143,8 +144,8 @@ export default function ConnectPage() {
   const handleExportWorkout = useCallback(async () => {
     if (!persistentSession) return
 
-    if (!authSession || authSession.provider !== 'strava') {
-      showError('Please log in with Strava to export your workout.')
+    if (!authSession) {
+      showError('Please log in to export your workout.')
       return
     }
 
@@ -161,20 +162,21 @@ export default function ConnectPage() {
         }
       )
 
-      const data: unknown = await response.json()
-
       if (response.ok) {
-        showSuccess('Workout successfully exported to Strava!')
+        const blob = await response.blob()
+        downloadBlob(blob, `workout_${persistentSession.sessionId}.fit`)
+        showSuccess('Workout successfully exported to FIT file!')
       } else {
+        const data: unknown = await response.json()
         const errorMessage =
           data && typeof data === 'object' && 'error' in data
             ? String(data.error)
-            : 'Failed to export workout to Strava.'
+            : 'Failed to export workout.'
         showError(errorMessage)
       }
     } catch (error) {
-      logger.error({ error }, 'Export to Strava failed')
-      showError('An error occurred while exporting to Strava.')
+      logger.error({ error }, 'Export failed')
+      showError('An error occurred while exporting.')
     } finally {
       setIsExporting(false)
     }

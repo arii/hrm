@@ -3,18 +3,12 @@
  */
 import { authOptions } from '@/lib/auth'
 import * as spotify from '@/lib/spotify'
-import * as strava from '@/lib/strava'
 import { Account } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 
 // Mock the spotify module
 jest.mock('@/lib/spotify', () => ({
   refreshSpotifyToken: jest.fn(),
-}))
-
-// Mock the strava module
-jest.mock('@/lib/strava', () => ({
-  refreshStravaToken: jest.fn(),
 }))
 
 // Mock the logger
@@ -177,30 +171,6 @@ describe('authOptions.callbacks.jwt', () => {
         body: expect.stringContaining('"scope":"new-scope"'),
       })
     )
-  })
-
-  it('should refresh Strava token correctly', async () => {
-    const token: JWT = {
-      ...baseToken,
-      accessToken: 'expired-strava-token',
-      refreshToken: 'strava-refresh-token',
-      accessTokenExpires: Date.now() - 1000,
-      provider: 'strava',
-    }
-    const refreshedTokens = {
-      access_token: 'new-strava-token',
-      expires_in: 3600,
-      refresh_token: 'new-strava-refresh-token',
-    }
-
-    ;(strava.refreshStravaToken as jest.Mock).mockResolvedValue(refreshedTokens)
-    ;(fetch as jest.Mock).mockResolvedValueOnce({ ok: true })
-
-    const result = await jwtCallback({ token, account: null })
-
-    expect(strava.refreshStravaToken).toHaveBeenCalledWith(token.refreshToken)
-    expect(result.accessToken).toBe(refreshedTokens.access_token)
-    expect(result.refreshToken).toBe(refreshedTokens.refresh_token)
   })
 })
 

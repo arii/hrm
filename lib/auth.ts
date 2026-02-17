@@ -2,13 +2,12 @@
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import StravaProvider from 'next-auth/providers/strava'
 import logger from '@/utils/logger'
 import { getAPIURL } from '../utils/urls'
 import { env } from './env'
 import { refreshSpotifyToken } from './spotify'
-import { refreshStravaToken } from './strava'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
+
 import { SpotifyTokenResponse } from '@/types/core'
 
 // Extend the Session type to include accessToken and error
@@ -108,12 +107,10 @@ const REFRESH_STRATEGIES: Record<
   (token: string) => Promise<SpotifyTokenResponse>
 > = {
   spotify: refreshSpotifyToken,
-  strava: refreshStravaToken,
 }
 
 /**
  * Refreshes an expired access token using the refresh token.
- * Supports both Spotify and Strava providers.
  * Invoked by the NextAuth JWT callback when the access token is expired.
  */
 async function refreshAccessToken(token: JWT) {
@@ -179,20 +176,6 @@ if (env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET) {
       authorization: {
         params: {
           scope: SPOTIFY_SCOPES,
-        },
-      },
-    })
-  )
-}
-
-if (env.STRAVA_CLIENT_ID && env.STRAVA_CLIENT_SECRET) {
-  providers.push(
-    StravaProvider({
-      clientId: env.STRAVA_CLIENT_ID,
-      clientSecret: env.STRAVA_CLIENT_SECRET,
-      authorization: {
-        params: {
-          scope: 'activity:write,read',
         },
       },
     })

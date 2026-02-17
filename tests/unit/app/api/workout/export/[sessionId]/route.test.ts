@@ -35,7 +35,6 @@ global.fetch = jest.fn()
 
 const mockedGetServerSession = getServerSession as jest.Mock
 const mockedGenerateFIT = generateFIT as jest.Mock
-const mockedFetch = global.fetch as jest.Mock
 
 describe('API Route: /api/workout/export/[sessionId]', () => {
   const sessionId = 'test-session-123'
@@ -63,29 +62,10 @@ describe('API Route: /api/workout/export/[sessionId]', () => {
     expect(data.error).toContain('logged in')
   })
 
-  it('should return 400 if logged in but not with Strava', async () => {
-    mockedGetServerSession.mockResolvedValue({
-      accessToken: 'some-token',
-      provider: 'spotify',
-    })
-    const request = new NextRequest(
-      'http://localhost/api/workout/export/test',
-      {
-        method: 'POST',
-      }
-    )
-
-    const response = await POST(request, context)
-    const data = await response.json()
-
-    expect(response.status).toBe(400)
-    expect(data.error).toContain('log in with Strava')
-  })
-
   it('should return 400 if no heart rate data is provided', async () => {
     mockedGetServerSession.mockResolvedValue({
-      accessToken: 'strava-token',
-      provider: 'strava',
+      accessToken: 'token',
+      provider: 'spotify',
     })
     const request = new NextRequest(
       'http://localhost/api/workout/export/test',
@@ -102,10 +82,10 @@ describe('API Route: /api/workout/export/[sessionId]', () => {
     expect(data.error).toContain('Invalid workout data')
   })
 
-  it('should successfully upload to Strava', async () => {
+  it('should successfully generate and download FIT file', async () => {
     const mockSession = {
-      accessToken: 'valid-strava-token',
-      provider: 'strava',
+      accessToken: 'valid-token',
+      provider: 'spotify',
     }
     const mockWorkoutData = {
       hrHistory: [{ time: 1000, hr: 80 }],
@@ -115,17 +95,9 @@ describe('API Route: /api/workout/export/[sessionId]', () => {
       totalCaloriesBurned: 50,
     }
     const mockFitBuffer = Buffer.from('mock-fit-data')
-    const mockStravaResponse = {
-      id: 12345,
-      status: 'Your activity is being processed',
-    }
 
     mockedGetServerSession.mockResolvedValue(mockSession)
     mockedGenerateFIT.mockReturnValue(mockFitBuffer)
-    mockedFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockStravaResponse),
-    } as Response)
 
     const request = new NextRequest(
       'http://localhost/api/workout/export/test',
@@ -136,60 +108,17 @@ describe('API Route: /api/workout/export/[sessionId]', () => {
     )
 
     const response = await POST(request, context)
-    const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-    expect(data.stravaResult).toEqual(mockStravaResponse)
+    expect(response.headers.get('Content-Type')).toBe('application/vnd.ant.fit')
+    expect(response.headers.get('Content-Disposition')).toContain(
+      `attachment; filename="workout_${sessionId}.fit"`
+    )
+
+    const buffer = await response.arrayBuffer()
+    expect(Buffer.from(buffer).toString()).toBe('mock-fit-data')
+
     expect(mockedGenerateFIT).toHaveBeenCalledWith(mockWorkoutData)
-    expect(mockedFetch).toHaveBeenCalledWith(
-      'https://www.strava.com/api/v3/uploads',
-      expect.objectContaining({
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${mockSession.accessToken}`,
-        },
-      })
-    )
-  })
-
-  it('should return error status if Strava upload fails', async () => {
-    const mockSession = {
-      accessToken: 'valid-strava-token',
-      provider: 'strava',
-    }
-    const mockWorkoutData = {
-      hrHistory: [{ time: 1000, hr: 80 }],
-      averageHr: 80,
-      startTime: 1000,
-      maxHr: 120,
-      totalCaloriesBurned: 50,
-    }
-    const mockFitBuffer = Buffer.from('mock-fit-data')
-    const mockStravaError = { message: 'Invalid token' }
-
-    mockedGetServerSession.mockResolvedValue(mockSession)
-    mockedGenerateFIT.mockReturnValue(mockFitBuffer)
-    mockedFetch.mockResolvedValue({
-      ok: false,
-      status: 401,
-      json: () => Promise.resolve(mockStravaError),
-    } as Response)
-
-    const request = new NextRequest(
-      'http://localhost/api/workout/export/test',
-      {
-        method: 'POST',
-        body: JSON.stringify(mockWorkoutData),
-      }
-    )
-
-    const response = await POST(request, context)
-    const data = await response.json()
-
-    expect(response.status).toBe(401)
-    expect(data.error).toBe('Failed to upload to Strava')
-    expect(data.details).toEqual(mockStravaError)
   })
 
   it('should return 500 if an exception occurs', async () => {
