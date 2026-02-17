@@ -40,10 +40,6 @@ runs:
       run: |
         set -e
 
-        # Diagnostic checks
-        if ! command -v git &> /dev/null; then echo "❌ Error: git not found" >&2; exit 1; fi
-        if ! command -v gh &> /dev/null; then echo "::warning::gh cli not found, API fallbacks will fail" >&2; fi
-
         if [ -z "$INITIAL_SHA" ]; then
           echo "❌ Error: initial_sha input is empty."
           exit 1
@@ -52,22 +48,20 @@ runs:
         get_current_sha() {
           local sha=""
 
-          # Primary method: git ls-remote origin (highly reliable and uses checkout auth)
-          if git remote | grep -q "^origin$"; then
+          # Primary method: GitHub API
+          # Use Cache-Control to ensure we get fresh data
+          if ! sha=$(gh api -H "Cache-Control: no-cache" "repos/$REPO/git/ref/heads/$BRANCH_NAME" --jq '.object.sha' 2>api_error.log); then
+             # Only log if it's not a 404 (branch not found might be temporary or expected)
+             if ! grep -q "Not Found" api_error.log; then
+               echo "::debug::GitHub API failed: $(cat api_error.log)"
+             fi
+             sha=""
+          fi
+          rm -f api_error.log
+
+          # Fallback: git ls-remote origin (if origin exists and api failed)
+          if [ -z "$sha" ] && git remote | grep -q "^origin$"; then
             sha=$(git ls-remote origin "refs/heads/$BRANCH_NAME" | awk '{print $1}')
-          fi
-
-          # Fallback 1: Authenticated git ls-remote URL
-          if [ -z "$sha" ]; then
-            sha=$(git ls-remote https://x-access-token:$GH_TOKEN@github.com/$REPO.git "refs/heads/$BRANCH_NAME" | awk '{print $1}' 2>/dev/null || echo "")
-          fi
-
-          # Fallback 2: GitHub API (source of truth, but more prone to rate limits/transient API issues)
-          if [ -z "$sha" ]; then
-            sha=$(gh api -H "Cache-Control: no-cache" "repos/$REPO/git/ref/heads/$BRANCH_NAME" --jq '.object.sha' 2>api_error.log || echo "")
-            if [ -z "$sha" ] && [ -s api_error.log ]; then
-              echo "::warning::gh api fallback failed. Error: $(cat api_error.log)" >&2
-            fi
           fi
 
           echo "$sha"

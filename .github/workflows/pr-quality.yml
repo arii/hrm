@@ -1490,7 +1490,6 @@ jobs:
         env:
           FINAL_RESULT: ${{ steps.aggregate-results.outputs.final_result }}
         run: |
-          # Check if all passed
           if [ "$FINAL_RESULT" = "success" ]; then
             echo "✅ **All quality checks passed!**" >> $GITHUB_STEP_SUMMARY
           else
