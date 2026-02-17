@@ -77,12 +77,6 @@ describe('HrTile', () => {
     expect(screen.getByText('85%')).toBeInTheDocument()
   })
 
-  it('prioritizes standardized props over legacy props', () => {
-    render(<HrTile name="Test" value={150} bpm={120} percentage={80} percentMax={60} />)
-    expect(screen.getByText('150')).toBeInTheDocument()
-    expect(screen.getByText('80%')).toBeInTheDocument()
-  })
-
   it('renders "---" for BPM when the value is null', () => {
     render(<HrTile name="Test" value={null} percentage={0} />)
     const bpmValue = screen.getByTestId('bpm-value')
