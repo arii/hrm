@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test'
+import { waitForPageReady } from './lib/waits'
 
 test.describe('Dashboard Load Performance', () => {
-  test('should load the dashboard and become ready within 5 seconds', async ({ page }) => {
+  test('should load the dashboard and become ready within 5 seconds', async ({
+    page,
+  }) => {
     const start = Date.now()
 
     // Navigate to the dashboard
@@ -9,9 +12,7 @@ test.describe('Dashboard Load Performance', () => {
 
     // Wait for the application to signal it's ready
     // The app sets window.__TEST_READY__ = true in various components
-    await page.waitForFunction(() => (window as any).__TEST_READY__ === true, {
-      timeout: 10000
-    })
+    await waitForPageReady(page, { timeout: 10000 })
 
     const loadTime = Date.now() - start
     console.log(`Dashboard Load Time: ${loadTime}ms`)
