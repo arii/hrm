@@ -7,12 +7,12 @@ import {
   useState,
 } from 'react'
 
+import { WorkoutStatus } from '@/types/workout'
+
 // --- State, Actions, and Reducer for managing session state ---
 
-type SessionStatus = 'idle' | 'running' | 'paused'
-
 interface SessionState {
-  status: SessionStatus
+  status: WorkoutStatus
   duration: number
   calories: number
 }
