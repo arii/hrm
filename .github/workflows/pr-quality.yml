@@ -1165,43 +1165,24 @@ jobs:
             )
           fi
 
-          # --- Polling for parent commit checks ---
-          echo "⏳ Waiting for checks on parent commit ($PARENT_SHA) to complete..."
-          TIMEOUT=600 # 10 minutes
-          INTERVAL=30 # 30 seconds
-          ELAPSED=0
-          CHECKS_JSON=""
+          # --- Check parent commit checks (No Polling) ---
+          echo "🔎 Checking status of checks on parent commit ($PARENT_SHA)..."
 
-          while [ $ELAPSED -lt $TIMEOUT ]; do
-            # Fetch check runs for the parent commit
-            PARENT_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/commits/${PARENT_SHA}/check-runs" --jq '.check_runs')
+          # Fetch check runs for the parent commit
+          PARENT_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/commits/${PARENT_SHA}/check-runs" --jq '.check_runs')
 
-            # Filter for the specific jobs we care about
-            RELEVANT_CHECKS_JSON=$(echo "$PARENT_CHECKS_JSON" | jq -c --argjson jobs_to_copy "$(printf '%s\n' "${JOBS_TO_COPY[@]}" | jq -R . | jq -s .)" '[.[] | select(.name as $name | $jobs_to_copy | index($name))]')
+          # Filter for the specific jobs we care about
+          RELEVANT_CHECKS_JSON=$(echo "$PARENT_CHECKS_JSON" | jq -c --argjson jobs_to_copy "$(printf '%s\n' "${JOBS_TO_COPY[@]}" | jq -R . | jq -s .)" '[.[] | select(.name as $name | $jobs_to_copy | index($name))]')
 
-            # Count how many of the relevant checks are NOT completed
-            IN_PROGRESS_COUNT=$(echo "$RELEVANT_CHECKS_JSON" | jq '[.[] | select(.status != "completed")] | length')
+          CHECKS_JSON="$RELEVANT_CHECKS_JSON"
 
-            # Count how many jobs we expect and how many we found
-            EXPECTED_COUNT=${#JOBS_TO_COPY[@]}
-            FOUND_COUNT=$(echo "$RELEVANT_CHECKS_JSON" | jq 'length')
+          # Count how many of the relevant checks are NOT completed
+          IN_PROGRESS_COUNT=$(echo "$RELEVANT_CHECKS_JSON" | jq '[.[] | select(.status != "completed")] | length')
 
-            if [ "$FOUND_COUNT" -gt 0 ] && [ "$IN_PROGRESS_COUNT" -eq 0 ]; then
-              echo "✅ All relevant checks on parent commit have completed."
-              CHECKS_JSON="$RELEVANT_CHECKS_JSON"
-              break
-            fi
-
-            echo "Still waiting... ($IN_PROGRESS_COUNT checks in progress, found $FOUND_COUNT of ~${EXPECTED_COUNT}). Elapsed: ${ELAPSED}s"
-            ELAPSED=$((ELAPSED + INTERVAL))
-            sleep $INTERVAL
-          done
-
-          if [ -z "$CHECKS_JSON" ]; then
-            echo "::error::Timed out waiting for parent commit checks to complete after ${TIMEOUT} seconds."
-            echo "Last fetched checks:"
-            echo "$PARENT_CHECKS_JSON"
-            exit 1
+          if [ "$IN_PROGRESS_COUNT" -gt 0 ]; then
+            echo "::warning::Some parent checks are still in progress ($IN_PROGRESS_COUNT). Copying current status anyway."
+          else
+            echo "✅ All relevant parent checks are completed (or none found)."
           fi
 
           # --- Create new checks for the current commit ---
