@@ -1,7 +1,7 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { Container, Box, Button } from '@mui/material'
+import { Container, Box, Button, Skeleton } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
@@ -35,6 +35,16 @@ import SessionDetail from './SessionDetail'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
+  loading: () => (
+    <Box sx={{ height: 300 }}>
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height="100%"
+        animation="wave"
+      />
+    </Box>
+  ),
 })
 
 type View = 'active' | 'list' | 'detail'

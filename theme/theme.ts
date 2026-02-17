@@ -2,19 +2,19 @@
 
 import { createTheme } from '@mui/material/styles'
 import libTheme from '@/lib/theme'
-
+import { HR_COLORS } from '@/lib/shared/colors'
 
 const theme = createTheme(libTheme, {
   palette: {
     custom: {
-      prepare: '#f59e0b',
-      work: '#ef4444',
-      rest: '#22c55e',
-      running: '#3b82f6',
-      idle: '#6b7280',
-      paused: '#f59e0b',
-      finished: '#3b82f6',
-      cooldown: '#6b7280',
+      running: HR_COLORS.ZONE_3_FATBURN, // Green
+      idle: HR_COLORS.ZONE_0_IDLE, // Grey
+      paused: HR_COLORS.ZONE_4_CARDIO, // Amber/Yellow
+      finished: HR_COLORS.ZONE_2_WARMUP, // Blue
+      prepare: '#f59e0b', // Amber
+      work: '#ef4444', // Red
+      rest: '#22c55e', // Green
+      cooldown: '#6b7280', // Grey
     },
   },
 })
