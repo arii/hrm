@@ -4,8 +4,10 @@ import {
   HrmStreamData,
   RawHrmStreamData,
   HeartRateDataPoint,
+  HrmInternalStats,
 } from '../../types/core.js'
 import { env } from '../env.js'
+import { HrmStatsCalculator } from '../../services/HrmStatsCalculator.js'
 
 type HrmDataPoint = Pick<HeartRateDataPoint, 'heartRate' | 'timestamp'>
 
@@ -17,12 +19,7 @@ type HrmDataPoint = Pick<HeartRateDataPoint, 'heartRate' | 'timestamp'>
 interface ClientSession {
   latestData: RawHrmStreamData
   liveWindow: RingBuffer<HrmDataPoint>
-  stats: {
-    count: number
-    sumHr: number
-    peakHr: number
-    minHr: number
-  }
+  stats: HrmInternalStats
   /**
    * Caches the augmented HrmStreamData (latest data + session stats).
    * This prevents repeated object allocations during high-frequency reads.
@@ -39,6 +36,7 @@ const LIVE_WINDOW_SIZE = env.HRM_LIVE_WINDOW_SIZE // 10 minutes at 1Hz (default)
  */
 export class HrmSessionManager {
   private sessions = new Map<string, ClientSession>()
+  private statsCalculator = new HrmStatsCalculator()
 
   /**
    * Finds a client's data by their ID, including aggregated session stats.
@@ -73,7 +71,7 @@ export class HrmSessionManager {
       session = {
         latestData: data,
         liveWindow: new RingBuffer<HrmDataPoint>(LIVE_WINDOW_SIZE),
-        stats: this.createInitialStats(),
+        stats: this.statsCalculator.createInitialStats(),
       }
       this.sessions.set(data.clientId, session)
     }
@@ -88,7 +86,7 @@ export class HrmSessionManager {
         timestamp: data.updatedAt || Date.now(),
       }
       session.liveWindow.push(point)
-      this.updateStats(session, point.heartRate)
+      this.statsCalculator.updateStats(session.stats, point.heartRate)
     }
   }
 
@@ -116,7 +114,7 @@ export class HrmSessionManager {
     const session = this.sessions.get(clientId)
     if (!session) return null
 
-    const derived = this.getDerivedStats(session.stats)
+    const derived = this.statsCalculator.getDerivedStats(session.stats)
     return {
       recentHistory: session.liveWindow.toArray(),
       summary: {
@@ -134,7 +132,7 @@ export class HrmSessionManager {
     const session = this.sessions.get(clientId)
     if (session) {
       session.liveWindow = new RingBuffer<HrmDataPoint>(LIVE_WINDOW_SIZE)
-      session.stats = this.createInitialStats()
+      session.stats = this.statsCalculator.createInitialStats()
       // Reset the current HR value to 0 to prevent UI "ghosting"
       session.latestData = {
         ...session.latestData,
@@ -145,42 +143,15 @@ export class HrmSessionManager {
     }
   }
 
-  private createInitialStats() {
-    return {
-      count: 0,
-      sumHr: 0,
-      peakHr: 0,
-      minHr: Infinity,
-    }
-  }
-
-  private updateStats(session: ClientSession, heartRate: number): void {
-    const { stats } = session
-    stats.count++
-    stats.sumHr += heartRate
-    stats.peakHr = Math.max(stats.peakHr, heartRate)
-    stats.minHr = Math.min(stats.minHr, heartRate)
-  }
-
-  private getDerivedStats(stats: ClientSession['stats']) {
-    const hasData = stats.count > 0
-    return {
-      avgHr: hasData ? Math.round(stats.sumHr / stats.count) : 0,
-      peakHr: stats.peakHr,
-      minHr: hasData ? stats.minHr : 0,
-    }
-  }
-
   private mergeStats(session: ClientSession): HrmStreamData {
     if (session.cachedAugmentedData) {
       return session.cachedAugmentedData
     }
 
-    const { latestData, stats } = session
-    const augmented: HrmStreamData = {
-      ...latestData,
-      sessionStats: this.getDerivedStats(stats),
-    }
+    const augmented = this.statsCalculator.mergeStats(
+      session.latestData,
+      session.stats
+    )
 
     session.cachedAugmentedData = augmented
     return augmented

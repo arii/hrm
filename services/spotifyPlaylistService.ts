@@ -1,6 +1,7 @@
 // Handles playlist-related operations for the standalone Spotify page.
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
 import { SpotifyPlaylistItem, SpotifyPlaylist } from '../types/core'
+import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../constants/spotify'
 
 // Re-export types for backward compatibility
 export type { SpotifyPlaylistItem, SpotifyPlaylist }
@@ -23,9 +24,9 @@ export async function getUserPlaylists(
     const tokenObject: AccessToken = {
       access_token: accessToken,
       token_type: 'Bearer',
-      expires_in: 3600, // Dummy value, as we likely won't refresh inside this short-lived instance
+      expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S, // Dummy; refresh not handled in this short-lived instance.
       refresh_token: '',
-      expires: Date.now() + 3600 * 1000,
+      expires: Date.now() + SPOTIFY_DEFAULT_TOKEN_EXPIRY_S * 1000,
     }
 
     const sdk = SpotifyApi.withAccessToken(

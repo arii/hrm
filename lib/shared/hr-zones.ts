@@ -106,6 +106,23 @@ export const HR_ZONE_VISUAL_CONFIG = {
 } as const
 
 /**
+ * Pre-calculated order of zone labels for sorting purposes (highest intensity first).
+ */
+export const HR_ZONE_ORDER = Object.values(HR_ZONE_VISUAL_CONFIG)
+  .map((config) => config.label as string)
+  .reverse()
+
+/**
+ * Pre-calculated map of zone labels to their corresponding hex colors.
+ */
+export const HR_ZONE_COLOR_MAP: Record<string, string> = Object.values(
+  HR_ZONE_VISUAL_CONFIG
+).reduce((acc, config) => ({ ...acc, [config.label]: config.color }), {
+  [HrZoneName.NoData]: '#e0e0e0',
+  [HrZoneName.Unknown]: '#9e9e9e',
+} as Record<string, string>)
+
+/**
  * Calculates the percentage of max HR and the corresponding zone (0-5) based on Max HR.
  * @param currentHr - Current heart rate in BPM.
  * @param maxHr - Max Heart Rate.
