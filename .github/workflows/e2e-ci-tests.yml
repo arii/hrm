@@ -94,25 +94,6 @@ jobs:
             exit 1
           fi
 
-          # 4. Wait for checks to appear for the new commit.
-          # We add a mandatory 15s delay to allow GitHub's eventually consistent API to index the new push.
-          echo "Waiting 15s for GitHub API to index the new commit..."
-          sleep 15
-          echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
-          MAX_CHECK_RETRIES=60
-          CHECK_RETRY=0
-          while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
-            # Filter checks by name to avoid being confused by older runs
-            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting|success|failure"; then
-              echo "✅ Checks have been registered."
-              break
-            fi
-            echo "Still waiting for checks to be indexed... ($CHECK_RETRY/$MAX_CHECK_RETRIES)"
-            CHECK_RETRY=$((CHECK_RETRY + 1))
-            sleep 10
-          done
-
-          timeout 900 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash
         env:
@@ -246,23 +227,6 @@ jobs:
             exit 1
           fi
 
-          # 4. Wait for checks to appear for the new commit
-          echo "Waiting 15s for GitHub API to index the new commit..."
-          sleep 15
-          echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
-          MAX_CHECK_RETRIES=60
-          CHECK_RETRY=0
-          while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
-            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting|success|failure"; then
-              echo "✅ Checks have been registered."
-              break
-            fi
-            echo "Still waiting for checks to be indexed... ($CHECK_RETRY/$MAX_CHECK_RETRIES)"
-            CHECK_RETRY=$((CHECK_RETRY + 1))
-            sleep 10
-          done
-
-          timeout 900 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Conflict Resolution
         run: |
@@ -375,23 +339,6 @@ jobs:
             exit 1
           fi
 
-          # 4. Wait for checks to appear for the new commit
-          echo "Waiting 15s for GitHub API to index the new commit..."
-          sleep 15
-          echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
-          MAX_CHECK_RETRIES=60
-          CHECK_RETRY=0
-          while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
-            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting|success|failure"; then
-              echo "✅ Checks have been registered."
-              break
-            fi
-            echo "Still waiting for checks to be indexed... ($CHECK_RETRY/$MAX_CHECK_RETRIES)"
-            CHECK_RETRY=$((CHECK_RETRY + 1))
-            sleep 10
-          done
-
-          timeout 900 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash and Rebase
         env:
