@@ -14,15 +14,13 @@ touch "$SLOP_OUTPUT_LOG"
 BASE_BRANCH="${GITHUB_BASE_REF:-leader}"
 echo "Running Slop Check against base branch: $BASE_BRANCH"
 
-# Fetch Base Branch if needed
+# Fallback fetch logic if the base branch is missing locally (common in shallow clones)
 if ! git rev-parse --verify "origin/$BASE_BRANCH" >/dev/null 2>&1; then
   echo "Fetching base branch origin/$BASE_BRANCH..."
   git fetch origin "$BASE_BRANCH" --depth=1 || echo "Warning: Could not fetch base branch."
 fi
 
 echo "Running automated slop detection..."
-# Run lint:slop, capturing exit code without failing the script immediately
-# The '|| true' ensures the command pipeline doesn't exit, but we capture the status
 pnpm run lint:slop > "$SLOP_RAW_LOG" 2>&1 || SLOP_EXIT_CODE=$?
 SLOP_EXIT_CODE=${SLOP_EXIT_CODE:-0}
 
@@ -35,9 +33,17 @@ fi
 echo "Calculating LOC stats..."
 LOC_STATS=""
 DIFF_ERROR=""
+DIFF_TARGET=""
 
-# Try to get stats. Capture stderr if it fails.
-if ! LOC_STATS=$(git diff --stat "origin/$BASE_BRANCH...HEAD" 2>&1); then
+# Robust Diff Strategy: Try merge-base first (...), fallback to direct (..)
+if git diff --stat "origin/$BASE_BRANCH...HEAD" >/dev/null 2>&1; then
+    DIFF_TARGET="origin/$BASE_BRANCH...HEAD"
+else
+    echo "⚠️ Merge-base diff failed (likely shallow history). Falling back to direct comparison."
+    DIFF_TARGET="origin/$BASE_BRANCH..HEAD"
+fi
+
+if ! LOC_STATS=$(git diff --stat "$DIFF_TARGET" 2>&1); then
     DIFF_ERROR="$LOC_STATS"
     LOC_STATS="Unable to calculate stats. Error: $DIFF_ERROR"
 fi
@@ -47,7 +53,7 @@ echo "Requesting Gemini feedback..."
 
 # Generate Diff (limit size to 100KB to be safe)
 if [ -z "$DIFF_ERROR" ]; then
-    if ! git diff "origin/$BASE_BRANCH...HEAD" | head -c 100000 > "$DIFF_FILE"; then
+    if ! git diff "$DIFF_TARGET" | head -c 100000 > "$DIFF_FILE"; then
          echo "Diff generation failed." > "$DIFF_FILE"
     fi
 else
@@ -96,24 +102,11 @@ fi
 echo "Generating final report..."
 {
   echo "### 🧹 AI Slop Detection Report"
-
-  echo "#### Automated Detection Results"
-  echo "\`\`\`"
+  echo -e "#### Automated Detection Results\n\`\`\`"
   cat "$SLOP_RAW_LOG"
-  echo "\`\`\`"
-
-  echo "#### Gemini Analysis"
-  if [ -f "$GEMINI_SLOP_LOG" ]; then
-    cat "$GEMINI_SLOP_LOG"
-  else
-    echo "No Gemini analysis available."
-  fi
-
-  echo ""
-  echo "#### LOC Stats"
-  echo "\`\`\`"
-  echo "$LOC_STATS"
-  echo "\`\`\`"
+  echo -e "\`\`\`\n\n#### Gemini Analysis"
+  [ -f "$GEMINI_SLOP_LOG" ] && cat "$GEMINI_SLOP_LOG" || echo "No Gemini analysis available."
+  echo -e "\n#### LOC Stats\n\`\`\`\n$LOC_STATS\n\`\`\`"
 } > "$SLOP_OUTPUT_LOG"
 
 echo "Report generated at $SLOP_OUTPUT_LOG"
