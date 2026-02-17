@@ -2,30 +2,29 @@
 
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import FavoriteIcon from '@mui/icons-material/Favorite'
+import MusicNoteIcon from '@mui/icons-material/MusicNote'
+import ScienceIcon from '@mui/icons-material/Science'
 import SettingsIcon from '@mui/icons-material/Settings'
 import BottomNavigation from '@mui/material/BottomNavigation'
 import BottomNavigationAction from '@mui/material/BottomNavigationAction'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useMemo } from 'react'
 
 export default function BottomNavBar() {
   const pathname = usePathname()
-  const [value, setValue] = useState(() => {
-    if (pathname === '/client/control') {
-      return 1
-    } else if (pathname === '/client/connect') {
-      return 2
-    }
-    return 0 // Default to Dashboard
-  })
+
+  const value = useMemo(() => {
+    if (pathname?.startsWith('/client/control')) return 1
+    if (pathname?.startsWith('/client/connect')) return 2
+    if (pathname?.startsWith('/client/spotify-selection')) return 3
+    if (pathname?.startsWith('/client/experimental')) return 4
+    return 0
+  }, [pathname])
 
   return (
     <BottomNavigation
       value={value}
-      onChange={(_event, newValue) => {
-        setValue(newValue)
-      }}
       showLabels
       sx={{
         width: '100%',
@@ -51,7 +50,7 @@ export default function BottomNavBar() {
         }}
       />
       <BottomNavigationAction
-        label="Phone Controls"
+        label="Controls"
         aria-label="Navigate to Phone Controls page"
         icon={<SettingsIcon />}
         component={Link}
@@ -64,13 +63,39 @@ export default function BottomNavBar() {
         }}
       />
       <BottomNavigationAction
-        label="Stream HR"
+        label="Stream"
         aria-label="Navigate to Stream Heart Rate page"
         icon={<FavoriteIcon />}
         component={Link}
         href="/client/connect"
         sx={{
           color: value === 2 ? 'primary.main' : 'text.secondary',
+          '&:hover, &.Mui-focusVisible': {
+            backgroundColor: 'action.hover',
+          },
+        }}
+      />
+      <BottomNavigationAction
+        label="Spotify"
+        aria-label="Navigate to Spotify Selection page"
+        icon={<MusicNoteIcon />}
+        component={Link}
+        href="/client/spotify-selection"
+        sx={{
+          color: value === 3 ? 'primary.main' : 'text.secondary',
+          '&:hover, &.Mui-focusVisible': {
+            backgroundColor: 'action.hover',
+          },
+        }}
+      />
+      <BottomNavigationAction
+        label="Analytics"
+        aria-label="Navigate to Experimental Analytics page"
+        icon={<ScienceIcon />}
+        component={Link}
+        href="/client/experimental"
+        sx={{
+          color: value === 4 ? 'primary.main' : 'text.secondary',
           '&:hover, &.Mui-focusVisible': {
             backgroundColor: 'action.hover',
           },
