@@ -8,6 +8,7 @@ t* estable, and easier to refactor.
 
 import { SpotifyTokenPayload } from '../services/spotifyTokenManager'
 import { SpotifyData } from './websocket'
+import { SpotifyCommand } from './core'
 
 /**
  * Represents a service that provides a snapshot of its current state.
@@ -72,19 +73,6 @@ export interface SpotifyTokenHandler {
 }
 
 // --- Domain-Specific Types ---
-
-/**
- * Defines the set of valid commands that can be sent to the Spotify service.
- */
-export type SpotifyCommand =
-  | 'PLAY'
-  | 'PAUSE'
-  | 'NEXT'
-  | 'PREVIOUS'
-  | 'SET_VOLUME'
-  | 'TRANSFER_PLAYBACK'
-  | 'GET_DEVICES'
-  | 'LOGIN' // Kept for legacy or future use
 
 // --- Composite Service Interfaces ---
 

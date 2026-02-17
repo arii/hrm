@@ -1,5 +1,5 @@
-import { SpotifyCommandParameters } from '../types/core'
-import { ServerMessage, SpotifyCommand, SpotifyData } from '../types/websocket'
+import { SpotifyCommandParameters, SpotifyCommand } from '../types/core'
+import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SafeSpotifyApi } from './safeSpotifyApi'
 import logger from '../utils/logger.server.js'
 import { isEmptyResponseError } from './spotifyUtils.js'
