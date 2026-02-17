@@ -171,8 +171,8 @@ describe('buildReviewPrompt', () => {
       mockContext,
       'test context'
     )
-    expect(prompt).toContain('# Code Review Task: Initial Review')
-    expect(prompt).not.toContain('IMMEDIATE ACTION REQUIRED')
+    expect(prompt).toContain('# Code Review: Initial Review')
+    expect(prompt).not.toContain('CI Failure Analysis')
   })
 
   it('should generate a standard review prompt with a linked issue', async () => {
@@ -186,8 +186,8 @@ describe('buildReviewPrompt', () => {
       contextWithIssue,
       'test context'
     )
-    expect(prompt).toContain('## Issue Description')
-    expect(prompt).toContain('Linked Issue #456')
+    expect(prompt).toContain('## Description')
+    expect(prompt).toContain('**Linked Issue**: #456')
   })
 
   it('should generate a fix mode prompt when there are failed checks', async () => {
@@ -204,8 +204,8 @@ describe('buildReviewPrompt', () => {
       contextWithFailures,
       'test context'
     )
-    expect(prompt).toContain('IMMEDIATE ACTION REQUIRED')
-    expect(prompt).toContain('You are now in **DEBUG MODE**')
+    expect(prompt).toContain('CI Failure Analysis')
+    expect(prompt).toContain('Task: Fix the Build')
     expect(prompt).toContain('- **test-check** (failure)')
   })
 

@@ -131,6 +131,7 @@ jobs:
       head_ref: ${{ github.head_ref || inputs.head_ref }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
   pr-review:
     name: 🤖 Gemini AI Review

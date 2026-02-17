@@ -9,7 +9,10 @@ describe('Server Integration Test', () => {
   const wsUrl = `ws://127.0.0.1:${PORT}/ws`
 
   beforeAll(async () => {
-    server = await startServer(PORT)
+    server = await startServer(PORT, {
+      GENERAL_API_MAX_REQUESTS: '6', // 1 for health check, 5 for test
+      WS_MAX_CONNECTIONS: '2',
+    })
   })
 
   afterAll(async () => {
