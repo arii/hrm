@@ -442,6 +442,51 @@ jobs:
           retention-days: 2
           if-no-files-found: ignore
 
+  type-check:
+    name: ⌨️ Type Check
+    needs: [prepare-env]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+        with:
+          use-build-cache: true
+
+      - name: Run Type Check
+        id: type-check
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          pnpm run type-check 2>&1 | tee logs/type-check-output.log
+        continue-on-error: true
+
+      - name: Upload Type Check Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: type-check-report
+          path: logs/type-check-output.log
+          retention-days: 2
+          if-no-files-found: ignore
+
+      - name: Check Type Check Result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.type-check.outcome }}" = 'failure' ]; then
+            echo "::error::Type check failed"
+            exit 1
+          fi
+
   build-check:
     name: 🏗️ Build Check
     needs: [prepare-env]
@@ -459,11 +504,15 @@ jobs:
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
+        with:
+          use-build-cache: true
 
       - name: Verify Build
         id: build
         env:
           NODE_ENV: production
+          SKIP_CLEAN: true
+          IGNORE_BUILD_ERRORS: true
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
         shell: bash
@@ -590,7 +639,7 @@ jobs:
 
   infra-tests:
     name: 🧪 Infrastructure Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -674,7 +723,7 @@ jobs:
 
   unit-tests:
     name: 🧪 Unit Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -753,7 +802,7 @@ jobs:
 
   component-tests:
     name: 🧪 Component Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -832,7 +881,7 @@ jobs:
 
   perf-tests:
     name: 🧪 Performance Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -926,7 +975,7 @@ jobs:
 
   visual-tests:
     name: 🧪 Visual Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -1066,13 +1115,14 @@ jobs:
 
   quality-report:
     name: 📊 Quality Report
-    if: always() && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.slop-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
+    if: always() && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.slop-check.result != 'cancelled' && needs.type-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
     needs:
       [
         prepare-env,
         knip-check,
         lint-check,
         slop-check,
+        type-check,
         build-check,
         script-tests,
         integration-tests,
@@ -1166,7 +1216,7 @@ jobs:
           }
 
           # Check standalone jobs
-          for job in "knip-check" "lint-check" "slop-check" "build-check"; do
+          for job in "knip-check" "lint-check" "slop-check" "type-check" "build-check"; do
             # Safely get job result, default to "skipped" if not found
             result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result // "skipped"')
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
@@ -1175,6 +1225,7 @@ jobs:
                 "knip-check") log_file="artifacts/knip-report/knip-output.txt" ;;
                 "lint-check") log_file="artifacts/lint-report/lint-output.log" ;;
                 "slop-check") log_file="artifacts/slop-report/slop-output.log" ;;
+                "type-check") log_file="artifacts/type-check-report/type-check-output.log" ;;
                 "build-check") log_file="artifacts/build-report/build-output.log" ;;
               esac
               add_failure "$job" "$result" "$log_file"
@@ -1256,6 +1307,7 @@ jobs:
           COMMENT_BODY+="| Knip | $([ "$KNIP_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$KNIP_RESULT) |\n"
           COMMENT_BODY+="| Lint | $([ "$LINT_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$LINT_RESULT) |\n"
           COMMENT_BODY+="| Slop | $([ "${{ needs.slop-check.result }}" = "success" ] && echo '✅ success' || echo '❌ '${{ needs.slop-check.result }}) |\n"
+          COMMENT_BODY+="| Type Check | $([ "${{ needs.type-check.result }}" = "success" ] && echo '✅ success' || echo '❌ '${{ needs.type-check.result }}) |\n"
           COMMENT_BODY+="| Build | $([ "$BUILD_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$BUILD_RESULT) |\n"
           COMMENT_BODY+="| Infra Tests | $([ "$INFRA_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_TESTS_OUTCOME) |\n"
           COMMENT_BODY+="| Unit Tests | $([ "$UNIT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$UNIT_TESTS_OUTCOME) |\n"
@@ -1273,6 +1325,9 @@ jobs:
           fi
           if [ "${{ needs.slop-check.result }}" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Slop Failure Details" "artifacts/slop-report/slop-output.log" 50)
+          fi
+          if [ "${{ needs.type-check.result }}" != "success" ]; then
+            LOG_DETAILS+=$(add_log_details "Type Check Failure Details" "artifacts/type-check-report/type-check-output.log" 50)
           fi
           if [ "$BUILD_RESULT" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Build Failure Details" "artifacts/build-report/build-output.log" 50)

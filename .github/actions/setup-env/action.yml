@@ -2,6 +2,11 @@
 name: 'Setup Environment'
 description: 'Sets up Node.js and pnpm, installs dependencies and Playwright.'
 
+inputs:
+  use-build-cache:
+    description: 'Whether to use build cache (.next/cache, dist)'
+    default: 'false'
+
 runs:
   using: 'composite'
   steps:
@@ -23,6 +28,20 @@ runs:
       with:
         node-version: '20'
         cache: 'pnpm'
+
+    - name: Cache Build Artifacts
+      if: inputs.use-build-cache == 'true'
+      uses: actions/cache@v4
+      with:
+        path: |
+          # Next.js build cache. We use .next_prod because that is the distDir
+          # configured in next.config.js for production builds.
+          .next_prod/cache
+          dist
+        key: build-cache-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.ref_name }}
+        restore-keys: |
+          build-cache-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+          build-cache-${{ runner.os }}-
 
     - name: Install GitHub CLI
       shell: bash
@@ -73,6 +92,8 @@ runs:
 
     - name: 'Run Setup Script'
       shell: bash
+      env:
+        SKIP_INSTALL: 'true'
       run: |
         chmod +x ./scripts/setup.sh
         ./scripts/setup.sh

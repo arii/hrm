@@ -21,6 +21,11 @@ if [[ " $@ " =~ " --global " ]]; then
   CLEAN_GLOBAL_CACHES=true
 fi
 
+if [ "$SKIP_CLEAN" = "true" ]; then
+  echo "⏩ SKIP_CLEAN is set, skipping infrastructure purge."
+  exit 0
+fi
+
 echo "--- 🚀 INITIATING HRM INFRASTRUCTURE PURGE ---"
 echo "--- 📍 SCOPE: $APP_DIR"
 
