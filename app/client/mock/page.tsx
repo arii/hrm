@@ -35,11 +35,10 @@ export default function MockPage() {
   const [gender, setGender] = useState('female')
 
   // Height using hook (fixed to Metric for Mock)
-  const {
-    displayHeight,
-    updateHeight,
-    commitHeight
-  } = useHeightInput('175', 'METRIC')
+  const { displayHeight, updateHeight, commitHeight } = useHeightInput(
+    '175',
+    'METRIC'
+  )
 
   // Weight
   const [weight, setWeight] = useState<string>('70')
@@ -93,7 +92,14 @@ export default function MockPage() {
       }
       sendData(message)
     },
-    [sendData, ageNum, maxHrOverrideNum, hrZoneMethod, restingHr, customZoneThresholds]
+    [
+      sendData,
+      ageNum,
+      maxHrOverrideNum,
+      hrZoneMethod,
+      restingHr,
+      customZoneThresholds,
+    ]
   )
 
   const sendMetadataPacket = useCallback(() => {
