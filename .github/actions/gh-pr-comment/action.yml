@@ -19,10 +19,13 @@ runs:
     - shell: bash
       env:
         GH_TOKEN: ${{ inputs.github_token }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+        BODY: ${{ inputs.body }}
+        BODY_FILE: ${{ inputs.body_file }}
       run: |
         set -e
-        if [ -n "${{ inputs.body_file }}" ]; then
-          gh pr comment ${{ inputs.pr_number }} --body-file "${{ inputs.body_file }}"
+        if [ -n "$BODY_FILE" ]; then
+          gh pr comment "$PR_NUMBER" --body-file "$BODY_FILE"
         else
-          gh pr comment ${{ inputs.pr_number }} --body "${{ inputs.body }}"
+          gh pr comment "$PR_NUMBER" --body "$BODY"
         fi
