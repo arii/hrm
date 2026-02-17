@@ -67,6 +67,14 @@ jobs:
               - '.env*'
               - '.github/**'
               - 'scripts/**'
+              - 'tests/**'
+              - 'stories/**'
+              - '.storybook/**'
+              - 'verification/**'
+              - '*.config.*'
+              - '*.ts'
+              - 'ecosystem.config.cjs'
+              - 'verify_empty_dashboard.py'
 
       - uses: dorny/paths-filter@v3
         if: github.event_name == 'workflow_dispatch'
@@ -93,6 +101,14 @@ jobs:
               - '.env*'
               - '.github/**'
               - 'scripts/**'
+              - 'tests/**'
+              - 'stories/**'
+              - '.storybook/**'
+              - 'verification/**'
+              - '*.config.*'
+              - '*.ts'
+              - 'ecosystem.config.cjs'
+              - 'verify_empty_dashboard.py'
 
       - name: Consolidate Changes
         id: changes
