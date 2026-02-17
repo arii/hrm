@@ -17,7 +17,8 @@ echo "Running Slop Check against base branch: $BASE_BRANCH"
 # Fallback fetch logic if the base branch is missing locally (common in shallow clones)
 if ! git rev-parse --verify "origin/$BASE_BRANCH" >/dev/null 2>&1; then
   echo "Fetching base branch origin/$BASE_BRANCH..."
-  git fetch origin "$BASE_BRANCH" --depth=1 || echo "Warning: Could not fetch base branch."
+  # Use a deeper fetch depth (50) to ensure the merge-base is available for diff calculation
+  git fetch origin "$BASE_BRANCH" --depth=50 || echo "Warning: Could not fetch base branch."
 fi
 
 echo "Running automated slop detection..."
@@ -33,18 +34,12 @@ fi
 echo "Calculating LOC stats..."
 LOC_STATS=""
 DIFF_ERROR=""
-DIFF_TARGET=""
+DIFF_TARGET="origin/$BASE_BRANCH...HEAD"
 
-# Diff Strategy: Try merge-base first (...), fallback to direct (..)
-if LOC_STATS=$(git diff --stat "origin/$BASE_BRANCH...HEAD" 2>&1); then
-    DIFF_TARGET="origin/$BASE_BRANCH...HEAD"
-else
-    echo "⚠️ Merge-base diff failed (likely shallow history). Falling back to direct comparison."
-    DIFF_TARGET="origin/$BASE_BRANCH..HEAD"
-    if ! LOC_STATS=$(git diff --stat "$DIFF_TARGET" 2>&1); then
-        DIFF_ERROR="$LOC_STATS"
-        LOC_STATS="Unable to calculate stats. Error: $DIFF_ERROR"
-    fi
+# Try to get stats using merge-base diff (...)
+if ! LOC_STATS=$(git diff --stat "$DIFF_TARGET" 2>&1); then
+    DIFF_ERROR="$LOC_STATS"
+    LOC_STATS="Unable to calculate stats. Error: $DIFF_ERROR"
 fi
 echo "$LOC_STATS"
 
