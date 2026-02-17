@@ -13,11 +13,7 @@
 #
 # Key Features:
 #   - Intelligent patch extraction from LLM markdown code blocks
-<<<<<<< HEAD
-#   - Patch validation with 3-way merge fallback for resilience
-=======
-#   - Thorough patch validation with 3-way merge fallback
->>>>>>> origin/leader
+#   - Thorough patch validation with 3-way merge fallback for resilience
 #   - Secret scrubbing to prevent credential leakage in artifacts
 #   - Comprehensive error diagnostics with artifact uploads
 #   - Commitlint-compliant commit message generation

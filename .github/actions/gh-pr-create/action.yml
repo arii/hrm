@@ -33,17 +33,30 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github_token }}
+        TITLE: ${{ inputs.title }}
+        BASE: ${{ inputs.base }}
+        HEAD: ${{ inputs.head }}
+        BODY: ${{ inputs.body }}
+        BODY_FILE: ${{ inputs.body_file }}
       run: |
         set -e
-        ARGS=("--title" "${{ inputs.title }}" "--base" "${{ inputs.base }}" "--head" "${{ inputs.head }}")
-        if [ -n "${{ inputs.body_file }}" ]; then
-          ARGS+=("--body-file" "${{ inputs.body_file }}")
-        elif [ -n "${{ inputs.body }}" ]; then
-          ARGS+=("--body" "${{ inputs.body }}")
+        # Construct arguments array safely
+        ARGS=("--title" "$TITLE" "--base" "$BASE" "--head" "$HEAD" "--json" "url,number")
+
+        if [ -n "$BODY_FILE" ]; then
+          ARGS+=("--body-file" "$BODY_FILE")
+        elif [ -n "$BODY" ]; then
+          ARGS+=("--body" "$BODY")
         else
           ARGS+=("--body" "")
         fi
 
-        PR_URL=$(gh pr create "${ARGS[@]}" | tail -n 1)
+        # Execute gh pr create and capture JSON output
+        JSON_OUTPUT=$(gh pr create "${ARGS[@]}")
+
+        # Parse JSON output using jq (standard on GitHub runners)
+        PR_URL=$(echo "$JSON_OUTPUT" | jq -r '.url')
+        PR_NUMBER=$(echo "$JSON_OUTPUT" | jq -r '.number')
+
         echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
-        echo "pr_number=$(echo "$PR_URL" | awk -F'/' '{print $NF}')" >> $GITHUB_OUTPUT
+        echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
