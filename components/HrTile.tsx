@@ -45,8 +45,6 @@ const OVERLAY_SX = {
   borderRadius: 'inherit',
 } as const
 
-<<<<<<< HEAD
-=======
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 3, textAlign: 'center' }}>
     <Typography
@@ -142,7 +140,6 @@ const DataTier = ({
  * HrTile Component: Displays real-time heart rate data for a single user.
  * Consolidates the presentation logic for heart rate, zones, and calories.
  */
->>>>>>> 82a421b9 (refactor: consolidate redundant hooks and components)
 const HrTile = ({
   name = 'User',
   value,
@@ -236,95 +233,13 @@ const HrTile = ({
             p: 2,
           }}
         >
-<<<<<<< HEAD
-          {showName && (
-            <Box sx={{ pt: 1, textAlign: 'center' }}>
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  px: 2,
-                }}
-              >
-                {name}
-              </Typography>
-            </Box>
-          )}
-
-          <Box
-            sx={{
-              flexGrow: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Typography
-              data-testid="live-hr-percent"
-              variant="h2"
-              component="div"
-              sx={{
-                fontSize: {
-                  xs: 'clamp(5rem, 15vw, 8rem)',
-                  sm: 'clamp(8rem, 18vw, 12rem)',
-                  md: 'clamp(10rem, 20vw, 15rem)',
-                },
-                fontWeight: 900,
-                lineHeight: 1,
-                fontFamily: HERO_FONT_FAMILY,
-              }}
-            >
-              {percentMax}%
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{
-              pb: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 4,
-            }}
-          >
-            <Typography
-              data-testid="bpm-value"
-              variant="h4"
-              sx={{ fontWeight: 800 }}
-            >
-              {bpm ?? '---'}{' '}
-              <Typography
-                component="span"
-                variant="caption"
-                sx={{ fontSize: '1.2rem', opacity: 0.8 }}
-              >
-                BPM
-              </Typography>
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800 }}>
-              {Math.floor(calories)}{' '}
-              <Typography
-                component="span"
-                variant="caption"
-                sx={{ fontSize: '1.2rem', opacity: 0.8 }}
-              >
-                KCAL
-              </Typography>
-            </Typography>
-          </Box>
-=======
           {showName && <IdentityTier name={name} />}
-<<<<<<< HEAD
-          <HeroTier percentMax={displayPercent} />
-          <DataTier bpm={displayBpm} calories={calories} showName={showName} />
->>>>>>> 82a421b9 (refactor: consolidate redundant hooks and components)
-=======
           <HeroTier percentage={displayPercentage} />
-          <DataTier value={displayValue} calories={calories} showName={showName} />
->>>>>>> 06dd2e11 (refactor: consolidate redundant hooks and components (final fixes and tests))
+          <DataTier
+            value={displayValue}
+            calories={calories}
+            showName={showName}
+          />
         </Box>
 
         <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
