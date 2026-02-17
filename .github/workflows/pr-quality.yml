@@ -116,6 +116,11 @@ jobs:
     outputs:
       session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -327,7 +332,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -373,7 +378,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -413,7 +418,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -464,7 +469,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -518,7 +523,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -666,7 +671,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -748,7 +753,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -828,7 +833,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -911,7 +916,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -1005,7 +1010,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -1091,13 +1096,20 @@ jobs:
     needs: [check-meaningful-changes]
     if: needs.check-meaningful-changes.outputs.meaningful == 'false'
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     permissions:
       checks: write
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Copy checks from parent commit
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -1275,10 +1287,19 @@ jobs:
         integration-tests,
       ]
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     outputs:
       failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
@@ -1406,7 +1427,6 @@ jobs:
           PERF_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.perf-tests-outcome }}
           VISUAL_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.visual-tests-outcome }}
           FINAL_RESULT: ${{ steps.aggregate-results.outputs.final_result }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           set +e
 

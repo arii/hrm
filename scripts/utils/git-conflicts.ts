@@ -22,7 +22,7 @@ export interface ConflictBlock {
  * 4. Incoming Content
  * 5. Incoming Label (e.g., branch-name)
  *
- * @note This regex is designed to be robust for common cases but may have limitations
+ * @note This regex is designed to handle common cases but may have limitations
  * with highly unusual or malformed conflict markers. It is an area to monitor for
  * potential edge-case failures in real-world usage.
  */
