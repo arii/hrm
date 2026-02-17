@@ -328,7 +328,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -429,80 +429,8 @@ jobs:
         shell: bash
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          set -o pipefail
-          mkdir -p logs
-
-          echo "🔎 Running Slop Check..."
-
-          # Run lint:slop and capture output.
-          # We use || true to prevent immediate exit on failure,
-          # but we capture exit code.
-          set +e
-          pnpm run lint:slop > logs/slop-output.log 2>&1
-          SLOP_EXIT_CODE=$?
-          set -e
-
-          if [ $SLOP_EXIT_CODE -eq 0 ]; then
-            echo "✅ No AI slop detected."
-            exit 0
-          else
-            echo "::error::AI Slop detected (Exit Code: $SLOP_EXIT_CODE)"
-
-            # Generate diff for context
-            echo "generating diff..."
-            git diff origin/${{ github.base_ref || 'leader' }}...HEAD > logs/changes.diff
-
-            # Prepare task for Gemini
-            echo "Preparing Gemini task..."
-
-            # Create task file
-            cat <<EOF > gemini_slop_task.txt
-Analysis Task: AI Slop Detection
-Context: A CI check has detected "slop" words (low-value filler content) in the codebase.
-Instructions:
-1. Review the detected slop matches below.
-2. Review the git diff to understand the context.
-3. For each match, explain why it is problematic or if it is a false positive.
-4. Suggest a higher-quality alternative.
-
---- Slop Matches ---
-EOF
-            # Strip colors from slop output and append
-            sed 's/\x1b\[[0-9;]*m//g' logs/slop-output.log >> gemini_slop_task.txt
-
-            cat <<EOF >> gemini_slop_task.txt
-
---- Git Diff ---
-EOF
-            cat logs/changes.diff >> gemini_slop_task.txt
-
-            # Run Gemini Client
-            echo "🤖 Invoking Gemini AI..."
-
-            # Use npx tsx to run the script
-            # We use --output to write to a markdown file
-            npx tsx scripts/gemini-client.ts --task-file gemini_slop_task.txt --output logs/gemini_slop_response.md
-
-            # Append to Step Summary
-            echo "### 🧹 AI Slop Detection Report" >> $GITHUB_STEP_SUMMARY
-
-            if [ -f logs/gemini_slop_response.md ]; then
-              cat logs/gemini_slop_response.md >> $GITHUB_STEP_SUMMARY
-            else
-              echo "⚠️ Gemini analysis failed or produced no output." >> $GITHUB_STEP_SUMMARY
-            fi
-
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "<details><summary>Raw Slop Report</summary>" >> $GITHUB_STEP_SUMMARY
-            echo '```text' >> $GITHUB_STEP_SUMMARY
-            cat logs/slop-output.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "</details>" >> $GITHUB_STEP_SUMMARY
-
-            # Fail the job
-            exit 1
-          fi
+          BASE_REF: ${{ github.base_ref || 'leader' }}
+        run: ./scripts/ci/check-slop.sh
         continue-on-error: true
 
       - name: Check Slop Result
