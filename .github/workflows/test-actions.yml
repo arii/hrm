@@ -3,11 +3,11 @@ name: Test GitHub Actions
 on:
   push:
     paths:
-      - '.github/actions/**'
+      - '.github/actions/sanitize-string/**'
       - '.github/workflows/test-actions.yml'
   pull_request:
     paths:
-      - '.github/actions/**'
+      - '.github/actions/sanitize-string/**'
       - '.github/workflows/test-actions.yml'
 
 jobs:
@@ -17,173 +17,109 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Test Sanitize Action - Special Chars and Truncation
+      - name: Test - Special Chars and Truncation
         id: test_special_chars
         uses: ./.github/actions/sanitize-string
         with:
           value: 'feature/test-branch/with_special-chars!@#$%^&*()'
           max-length: '30'
 
-      - name: Verify - Special Chars and Truncation
-        run: |
-          actual="${{ steps.test_special_chars.outputs.sanitized-value }}"
-          expected="feature-test-branch-with_speci"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Special Chars and Truncation"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Special Chars and Truncation"
-
-      - name: Test Sanitize Action - Empty String
+      - name: Test - Empty String
         id: test_empty
         uses: ./.github/actions/sanitize-string
         with:
           value: ''
           max-length: '64'
 
-      - name: Verify - Empty String
-        run: |
-          actual="${{ steps.test_empty.outputs.sanitized-value }}"
-          expected=""
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Empty String"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Empty String"
-
-      - name: Test Sanitize Action - Already Sanitized
+      - name: Test - Already Sanitized
         id: test_clean
         uses: ./.github/actions/sanitize-string
         with:
           value: 'clean-string-123'
           max-length: '64'
 
-      - name: Verify - Already Sanitized
-        run: |
-          actual="${{ steps.test_clean.outputs.sanitized-value }}"
-          expected="clean-string-123"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Already Sanitized"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Already Sanitized"
-
-      - name: Test Sanitize Action - Shorter than Max Length
+      - name: Test - Shorter than Max Length
         id: test_short
         uses: ./.github/actions/sanitize-string
         with:
           value: 'short/string'
           max-length: '64'
 
-      - name: Verify - Shorter than Max Length
-        run: |
-          actual="${{ steps.test_short.outputs.sanitized-value }}"
-          expected="short-string"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Shorter than Max Length"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Shorter than Max Length"
-
-      - name: Test Sanitize Action - Duplicate Hyphens
+      - name: Test - Duplicate Hyphens
         id: test_dupes
         uses: ./.github/actions/sanitize-string
         with:
           value: 'feature//branch'
           max-length: '64'
 
-      - name: Verify - Duplicate Hyphens
-        run: |
-          actual="${{ steps.test_dupes.outputs.sanitized-value }}"
-          expected="feature-branch"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Duplicate Hyphens"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Duplicate Hyphens"
-
-      - name: Test Sanitize Action - Trailing Hyphen
+      - name: Test - Trailing Hyphen
         id: test_trailing
         uses: ./.github/actions/sanitize-string
         with:
           value: 'feature/branch-'
           max-length: '64'
 
-      - name: Verify - Trailing Hyphen
-        run: |
-          actual="${{ steps.test_trailing.outputs.sanitized-value }}"
-          expected="feature-branch"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Trailing Hyphen"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Trailing Hyphen"
-
-      - name: Test Sanitize Action - At Max Length
+      - name: Test - At Max Length
         id: test_max
         uses: ./.github/actions/sanitize-string
         with:
           value: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
           max-length: '64'
 
-      - name: Verify - At Max Length
-        run: |
-          actual="${{ steps.test_max.outputs.sanitized-value }}"
-          expected="a-very-long-string-that-is-exactly-64-characters-long-and-valid"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: At Max Length"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: At Max Length"
-
-      - name: Test Sanitize Action - Only Invalid Chars
+      - name: Test - Only Invalid Chars
         id: test_invalid
         uses: ./.github/actions/sanitize-string
         with:
           value: '!@#$%^&*()'
           max-length: '64'
 
-      - name: Verify - Only Invalid Chars
-        run: |
-          actual="${{ steps.test_invalid.outputs.sanitized-value }}"
-          expected=""
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Only Invalid Chars"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Only Invalid Chars"
-
-      - name: Test Sanitize Action - Leading/Trailing Invalid Chars
+      - name: Test - Leading/Trailing Invalid Chars
         id: test_leading_trailing
         uses: ./.github/actions/sanitize-string
         with:
           value: '!!test-branch!!'
           max-length: '64'
 
-      - name: Verify - Leading/Trailing Invalid Chars
+      - name: Verify All Results
+        env:
+          RES_SPECIAL: ${{ steps.test_special_chars.outputs.sanitized-value }}
+          RES_EMPTY: ${{ steps.test_empty.outputs.sanitized-value }}
+          RES_CLEAN: ${{ steps.test_clean.outputs.sanitized-value }}
+          RES_SHORT: ${{ steps.test_short.outputs.sanitized-value }}
+          RES_DUPES: ${{ steps.test_dupes.outputs.sanitized-value }}
+          RES_TRAILING: ${{ steps.test_trailing.outputs.sanitized-value }}
+          RES_MAX: ${{ steps.test_max.outputs.sanitized-value }}
+          RES_INVALID: ${{ steps.test_invalid.outputs.sanitized-value }}
+          RES_LEADING_TRAILING: ${{ steps.test_leading_trailing.outputs.sanitized-value }}
         run: |
-          actual="${{ steps.test_leading_trailing.outputs.sanitized-value }}"
-          expected="test-branch"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Leading/Trailing Invalid Chars"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
+          errors=0
+
+          check_result() {
+            local name=$1
+            local actual=$2
+            local expected=$3
+            if [ "$actual" != "$expected" ]; then
+              echo "❌ Test Failed: $name"
+              echo "   Expected: '$expected'"
+              echo "   Actual:   '$actual'"
+              errors=$((errors + 1))
+            else
+              echo "✅ Test Passed: $name"
+            fi
+          }
+
+          check_result "Special Chars and Truncation" "$RES_SPECIAL" "feature-test-branch-with_speci"
+          check_result "Empty String" "$RES_EMPTY" ""
+          check_result "Already Sanitized" "$RES_CLEAN" "clean-string-123"
+          check_result "Shorter than Max Length" "$RES_SHORT" "short-string"
+          check_result "Duplicate Hyphens" "$RES_DUPES" "feature-branch"
+          check_result "Trailing Hyphen" "$RES_TRAILING" "feature-branch"
+          check_result "At Max Length" "$RES_MAX" "a-very-long-string-that-is-exactly-64-characters-long-and-valid"
+          check_result "Only Invalid Chars" "$RES_INVALID" ""
+          check_result "Leading/Trailing Invalid Chars" "$RES_LEADING_TRAILING" "test-branch"
+
+          if [ $errors -ne 0 ]; then
+            echo "---"
+            echo "❌ Total Failures: $errors"
             exit 1
           fi
-          echo "✅ Test Passed: Leading/Trailing Invalid Chars"
