@@ -2,11 +2,11 @@
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
+import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/lib/spotify/constants'
+import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/constants/spotify'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -141,7 +141,7 @@ const SpotifyDisplay = () => {
   const { player, isReady, deviceId } = useSpotifyWebPlayback()
 
   // Enable remote Spotify control from controllers
-  useSpotifyRemoteExecution(player)
+  useDashboardRegistration(player)
 
   // Synchronize with WebSocket data whenever it changes.
   // We rely on the server as the source of truth for volume, but use a grace period

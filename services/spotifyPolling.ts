@@ -1,6 +1,6 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
-import { SpotifyCommandParameters } from '../types/core'
+import { SpotifyCommandParameters, SpotifyCommand } from '../types/core'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
@@ -10,7 +10,7 @@ import {
   handleSpotifyApiError,
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
-import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
+import { SpotifyService } from '../types/interfaces.js'
 import { env } from '../lib/env.js'
 import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
 import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
