@@ -39,7 +39,8 @@ export const estimateCaloriesBurned = ({
   // Karvonen formula - gender-specific coefficients
   let caloriesPerMinute: number
 
-  if (gender === 'MALE') {
+  // Safe case-insensitive check to handle potentially un-normalized data
+  if (gender.toUpperCase() === 'MALE') {
     caloriesPerMinute =
       (-55.0969 + 0.6309 * heartRate + 0.1988 * weightKg + 0.2017 * age) / 4.184
   } else {

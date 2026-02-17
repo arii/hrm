@@ -45,24 +45,6 @@ const OVERLAY_SX = {
   borderRadius: 'inherit',
 } as const
 
-const IdentityTier = ({ name }: { name: string }) => (
-  <Box sx={{ pt: 3, textAlign: 'center' }}>
-    <Typography
-      variant="h5"
-      sx={{
-        fontWeight: 900,
-        textTransform: 'uppercase',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        px: 2,
-      }}
-    >
-      {name}
-    </Typography>
-  </Box>
-)
-
 const HeroTier = ({ percentage }: { percentage: number }) => (
   <Box
     sx={{
@@ -233,7 +215,23 @@ const HrTile = ({
             p: 2,
           }}
         >
-          {showName && <IdentityTier name={name} />}
+          {showName && (
+            <Box sx={{ pt: 3, textAlign: 'center' }}>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  px: 2,
+                }}
+              >
+                {name}
+              </Typography>
+            </Box>
+          )}
           <HeroTier percentage={displayPercentage} />
           <DataTier
             value={displayValue}
