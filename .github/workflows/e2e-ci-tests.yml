@@ -62,8 +62,8 @@ jobs:
           gh pr comment $PR_NUMBER --body "@pr-squash"
           echo "Triggered bot. Proceeding immediately to watch checks."
 
-          # Efficiently wait for checks to complete
-          timeout 900 gh pr checks $PR_NUMBER --watch
+          # Efficiently wait for bot action
+          ./scripts/ci/wait-for-bot.sh "$PR_NUMBER" "commit_count" "1"
 
       - name: Verify Squash
         env:
@@ -165,8 +165,8 @@ jobs:
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
           echo "Triggered bot. Proceeding immediately to watch checks."
 
-          # Efficiently wait for checks to complete
-          timeout 900 gh pr checks $PR_NUMBER --watch
+          # Efficiently wait for bot action
+          ./scripts/ci/wait-for-bot.sh "$PR_NUMBER" "comment" "Successfully resolved"
 
       - name: Verify Conflict Resolution
         run: |
@@ -247,8 +247,8 @@ jobs:
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
           echo "Triggered bot. Proceeding immediately to watch checks."
 
-          # Efficiently wait for checks to complete
-          timeout 900 gh pr checks $PR_NUMBER --watch
+          # Efficiently wait for bot action
+          ./scripts/ci/wait-for-bot.sh "$PR_NUMBER" "commit_count" "1"
 
       - name: Verify Squash and Rebase
         env:
