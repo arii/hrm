@@ -29,6 +29,7 @@ import { HrmSessionManager } from '../lib/hrm/HrmSessionManager.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
 import { roundTo, objectFromEntries } from '../lib/utils.js'
+import { isGenericName } from './hrm.js'
 
 let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
@@ -194,8 +195,6 @@ const initSocketManager = (
       // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
       // NOTE: In a high-traffic production environment, this could lead to
       // memory pressure if many clients disconnect and don't reconnect.
-      // A more robust solution might involve a separate cleanup process
-      // or a maximum number of inactive sessions.
       const timer = setTimeout(() => {
         // Only cleanup if the client has not reconnected.
         // We verify this by checking if the socket associated with the clientId is the one that just closed.
@@ -293,14 +292,9 @@ const handleIncomingMessage = (
             Object.entries(message.data)
           )
 
-          // Prevent overwriting a real name with a default "Unknown" name
           if (
-            existingData.name &&
-            !/^(user|new user|unknown|bluetooth hrm)/i.test(
-              existingData.name
-            ) &&
-            updateData.name &&
-            /^(user|new user|unknown|bluetooth hrm)/i.test(updateData.name)
+            !isGenericName(existingData.name) &&
+            isGenericName(updateData.name)
           ) {
             delete updateData.name
           }

@@ -7,8 +7,6 @@ import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 
-// We no longer need to mock getHrZoneProps as HrTile uses shared config directly.
-
 describe('HrTile', () => {
   it('renders the correct background and text color for the Max zone', () => {
     // 95% -> Zone 6
@@ -100,7 +98,7 @@ describe('HrTile', () => {
 
   it('displays the correct zone information when zone prop is provided', () => {
     render(<HrTile name="Test" bpm={190} percentMax={95} zone={6} />)
-    expect(screen.getByText(/ZONE 6: MAX/i)).toBeInTheDocument()
+    expect(screen.getByText('MAX')).toBeInTheDocument()
     const card = screen.getByTestId('hr-tile-card')
     expect(card).toHaveStyle(
       `background-color: ${HR_ZONE_VISUAL_CONFIG[6].color}`
@@ -109,7 +107,7 @@ describe('HrTile', () => {
 
   it('displays "IDLE" for zone 0', () => {
     render(<HrTile name="Test" bpm={60} percentMax={30} zone={0} />)
-    expect(screen.getByText(/ZONE 0: IDLE/i)).toBeInTheDocument()
+    expect(screen.getByText('IDLE')).toBeInTheDocument()
   })
 
   it('updates aria-label to include zone information', () => {
@@ -119,5 +117,18 @@ describe('HrTile', () => {
       'aria-label',
       'Heart rate monitor for Test: 150 beats per minute, 80% of maximum, Zone 4: Cardio'
     )
+  })
+
+  it('suppresses generic names', () => {
+    const { rerender } = render(
+      <HrTile name="user" bpm={100} percentMax={50} zone={1} />
+    )
+    expect(screen.queryByText(/user/i)).not.toBeInTheDocument()
+
+    rerender(<HrTile name="New User" bpm={100} percentMax={50} zone={1} />)
+    expect(screen.queryByText(/new user/i)).not.toBeInTheDocument()
+
+    rerender(<HrTile name="Jules" bpm={100} percentMax={50} zone={1} />)
+    expect(screen.getByText('Jules')).toBeInTheDocument()
   })
 })

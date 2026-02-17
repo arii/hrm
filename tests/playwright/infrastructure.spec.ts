@@ -7,7 +7,6 @@ import waitOn from 'wait-on'
 
 /**
  * Enhanced waitForPort using the `wait-on` package.
- * It's more robust and specifically designed for this purpose.
  */
 const waitForPort = async (
   port: number,
@@ -20,7 +19,7 @@ const waitForPort = async (
       verbose: false, // Set to true for debugging flaky tests
     })
   } catch (error) {
-    // Re-throw a more informative error, including the stack trace
+    // Re-throw with port context and stack trace
     const err = error as Error
     throw new Error(
       `Timeout waiting for port ${port}. Error: ${err.message}\nStack: ${err.stack}`
@@ -58,9 +57,10 @@ test.describe('Infrastructure & Scripts', () => {
   })
 
   // 3. DEV SERVER TEST
-  // Spawns the real dev server on a unique port to ensure it boots.
+  // Spawns the real dev server on a unique port to verify it boots.
   test('pnpm run dev should start and listen', async () => {
-    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
+    // Wait for dev server to be ready
+    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2)
 
     // Clean up .next/ directory to prevent "lock file" errors from previous runs
     const nextDir = path.join(process.cwd(), '.next')
@@ -92,7 +92,7 @@ test.describe('Infrastructure & Scripts', () => {
       throw error // Re-throw the original error to fail the test
     } finally {
       // Cleanup: Kill the entire process group.
-      // The `-` before devServer.pid is crucial; it kills the group, not just the parent process.
+      // The `-` before devServer.pid kills the group, not just the parent process.
       try {
         if (devServer.pid) process.kill(-devServer.pid)
       } catch {
@@ -102,8 +102,9 @@ test.describe('Infrastructure & Scripts', () => {
   })
 
   // 4. PRODUCTION SCRIPT TEST
-  // Runs the exact shell script used in production (start-production.sh).
+  // Verifies the production shell script (start-production.sh).
   test('start-production.sh should start successfully', async () => {
+    // Wait for production script to be ready
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2)
 
     const PORT = 3006

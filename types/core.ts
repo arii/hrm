@@ -94,6 +94,16 @@ export interface HrmSessionStats {
 }
 
 /**
+ * Internal counters used for incremental statistics calculation.
+ */
+export interface HrmInternalStats {
+  count: number
+  sumHr: number
+  peakHr: number
+  minHr: number
+}
+
+/**
  * Represents raw heart rate data streamed from a client.
  */
 export interface RawHrmStreamData {

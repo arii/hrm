@@ -20,7 +20,7 @@ export const getActiveHrmData = (
   return hrmData
     .filter((user) => {
       const isZero = user.value === 0
-      const isPlaceholderName = !!user.name && /new user/i.test(user.name)
+      const isPlaceholderName = isGenericName(user.name)
       const hasNoIdentity = user.name == null
       // Use the sensor's timestamp if available, otherwise fall back to receipt time
       const referenceTime = user.updatedAt || user.lastUpdated || now
@@ -59,4 +59,16 @@ export const getActiveHrmData = (
         zone: user.zone ?? zone,
       }
     })
+}
+
+const GENERIC_NAME_REGEX = /^(user|unknown|new user|bluetooth hrm)(\s+\d+)?$/i
+
+/**
+ * Checks if a user name is generic (e.g., "User", "New User").
+ * @param name - The name to check.
+ * @returns True if the name is generic.
+ */
+export const isGenericName = (name?: string | null): boolean => {
+  if (!name) return true
+  return GENERIC_NAME_REGEX.test(name.trim())
 }
