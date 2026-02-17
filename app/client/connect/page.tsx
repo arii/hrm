@@ -1,15 +1,15 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
+import { MeasurementSystem } from '../../../types/core'
+import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-<<<<<<< HEAD
-import { calculateMaxHr, calculateZoneFromMaxHr } from '@/lib/shared/hr-zones'
-=======
 import {
   calculateZoneFromMaxHr,
   calculateMaxHr,
@@ -20,19 +20,65 @@ import {
   validateAgeValue,
   validateWeightValue,
 } from '@/lib/validation/userMetrics'
->>>>>>> origin/leader
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
-import {
-  ConnectSettingsProvider,
-  useConnectSettingsContext,
-} from './context/ConnectSettingsContext'
 
-function ConnectPageContent() {
-  const { userName, userAge, userWeight } = useConnectSettingsContext()
+export default function ConnectPage() {
+  const [userSettings, setUserSettings] = useUserSettings()
+  const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
   const [currentHR, setCurrentHR] = useState(0)
+  const [proxyIsConnected, setProxyIsConnected] = useState(false)
+
+  const [localDisplayWeight, setLocalDisplayWeight] = useState<string | null>(
+    null
+  )
+
+  const displayWeight = useMemo(() => {
+    if (localDisplayWeight !== null) {
+      return localDisplayWeight
+    }
+    if (userWeight) {
+      return toDisplay(userWeight, unitSystem).toString()
+    }
+    return ''
+  }, [localDisplayWeight, userWeight, unitSystem])
+
+  const [ageError, setAgeError] = useState<string | null>(null)
+  const [weightError, setWeightError] = useState<string | null>(null)
+
+  const {
+    displayHeight,
+    updateHeight: handleHeightChange,
+    commitHeight: handleHeightBlur,
+    error: heightError,
+  } = useHeightInput('175', unitSystem)
+
+  const handleAgeBlur = () => {
+    const error = validateAgeValue(String(userAge || ''))
+    setAgeError(error)
+  }
+
+  const handleWeightChange = (newDisplayValue: string) => {
+    setLocalDisplayWeight(newDisplayValue)
+  }
+
+  const handleWeightBlur = () => {
+    const valueToValidate = localDisplayWeight ?? displayWeight
+    const error = validateWeightValue(valueToValidate, unitSystem)
+    setWeightError(error)
+
+    if (!error) {
+      const numericValue = parseFloat(valueToValidate)
+      if (!isNaN(numericValue) && numericValue > 0) {
+        const newKgValue = toKg(numericValue, unitSystem)
+        setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
+      }
+    }
+    // Reset local state to show the canonical value from context
+    setLocalDisplayWeight(null)
+  }
 
   const { connectionStatus, sendData } = useWebSocket()
 
@@ -70,14 +116,6 @@ function ConnectPageContent() {
   )
 
   const {
-    session,
-    addHrData,
-    startWorkout: startPersistentWorkout,
-    endWorkout: endPersistentWorkout,
-    resetWorkout: resetPersistentWorkout,
-  } = useWorkoutSessionManager()
-
-  const {
     workoutDuration,
     resetWorkout: resetWorkoutSession,
     hasStarted,
@@ -85,10 +123,18 @@ function ConnectPageContent() {
     pauseWorkout,
     endWorkout,
     workoutStatus,
-    caloriesBurned,
   } = useWorkoutSession({
+    isConnected: proxyIsConnected,
     totalCalories: calories,
   })
+
+  const {
+    session,
+    addHrData,
+    startWorkout: startPersistentWorkout,
+    endWorkout: endPersistentWorkout,
+    resetWorkout: resetPersistentWorkout,
+  } = useWorkoutSessionManager()
 
   const handleStartWorkout = useCallback(() => {
     startWorkout()
@@ -96,6 +142,18 @@ function ConnectPageContent() {
       startPersistentWorkout(userAge, userWeight)
     }
   }, [startWorkout, startPersistentWorkout, userAge, userWeight])
+
+  const handleEndWorkout = useCallback(() => {
+    endWorkout()
+    endPersistentWorkout()
+    resetCalculator() // Reset calories on workout end
+  }, [endWorkout, endPersistentWorkout, resetCalculator])
+
+  const handleResetWorkout = useCallback(() => {
+    resetWorkoutSession()
+    resetCalculator()
+    resetPersistentWorkout()
+  }, [resetWorkoutSession, resetCalculator, resetPersistentWorkout])
 
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
@@ -111,13 +169,11 @@ function ConnectPageContent() {
         addHrData({
           time: Date.now(),
           hr: heartRate,
-          calories: caloriesBurned,
         })
       }
     },
-    [processHeartRate, setCurrentHR, addHrData, workoutStatus, caloriesBurned]
+    [processHeartRate, workoutStatus, setCurrentHR, addHrData]
   )
-
   const {
     connectAndStream,
     autoConnect,
@@ -134,30 +190,12 @@ function ConnectPageContent() {
     userName,
     userAge: userAge || 0,
     onHeartRateUpdate: handleHeartRateUpdate,
+    onConnect: handleStartWorkout, // Use the wrapped function
   })
 
-  // Auto-pause/resume workout based on connection status
   useEffect(() => {
-    if (hasStarted) {
-      if (isConnected && workoutStatus === 'paused') {
-        startWorkout()
-      } else if (!isConnected && workoutStatus === 'running') {
-        pauseWorkout()
-      }
-    }
-  }, [isConnected, hasStarted, workoutStatus, startWorkout, pauseWorkout])
-
-  const handleEndWorkout = useCallback(() => {
-    endWorkout()
-    endPersistentWorkout()
-    resetCalculator() // Reset calories on workout end
-  }, [endWorkout, endPersistentWorkout, resetCalculator])
-
-  const handleResetWorkout = useCallback(() => {
-    resetWorkoutSession()
-    resetCalculator()
-    resetPersistentWorkout()
-  }, [resetWorkoutSession, resetCalculator, resetPersistentWorkout])
+    setProxyIsConnected(isConnected)
+  }, [isConnected])
 
   useEffect(() => {
     if (
@@ -183,16 +221,11 @@ function ConnectPageContent() {
     connectionAttempted,
   ])
 
-<<<<<<< HEAD
-  const maxHr = calculateMaxHr(userAge)
-  const { percentage, zone } = calculateZoneFromMaxHr(currentHR, maxHr)
-=======
   const { zone, percentage } = calculateZoneFromMaxHr(
     currentHR,
     calculateMaxHr(userAge)
   )
   const heartRateZone = toHeartRateZone(zone)
->>>>>>> origin/leader
 
   useEffect(() => {
     throttledSend({
@@ -206,21 +239,16 @@ function ConnectPageContent() {
     })
   }, [currentHR, calories, percentage, heartRateZone, throttledSend])
 
+  const handleUnitChange = (newUnit: MeasurementSystem) => {
+    if (newUnit && newUnit !== unitSystem) {
+      setUserSettings((prev) => ({ ...prev, unitSystem: newUnit }))
+      setLocalDisplayWeight(null)
+    }
+  }
+
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
-
-  // Signal when page is ready for testing
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const timer = window.setTimeout(() => {
-        window.__TEST_READY__ = true
-        window.dispatchEvent(new CustomEvent('test-ready'))
-      }, 500)
-      return () => window.clearTimeout(timer)
-    }
-    return undefined
-  }, [])
 
   return (
     <ConnectView
@@ -228,7 +256,29 @@ function ConnectPageContent() {
         unit: 'seconds',
         format: 'HH:MM:SS',
       })}
-      caloriesBurned={caloriesBurned}
+      caloriesBurned={calories}
+      userName={userName}
+      setUserName={(name) =>
+        setUserSettings((prev) => ({ ...prev, userName: name }))
+      }
+      userAge={String(userAge || '')}
+      setUserAge={(age) =>
+        setUserSettings((prev) => ({ ...prev, userAge: Number(age) }))
+      }
+      onAgeBlur={handleAgeBlur}
+      ageError={ageError}
+      userHeight={displayHeight}
+      setUserHeight={handleHeightChange}
+      onHeightBlur={handleHeightBlur}
+      heightError={heightError}
+      userWeight={displayWeight || ''}
+      setUserWeight={handleWeightChange}
+      onWeightBlur={handleWeightBlur}
+      weightError={weightError}
+      gender={gender}
+      setGender={(g) => setUserSettings((prev) => ({ ...prev, gender: g }))}
+      unitSystem={unitSystem}
+      onUnitChange={handleUnitChange}
       isConnected={isConnected}
       isDataStale={isDataStale}
       deviceStatus={deviceStatus}
@@ -253,13 +303,5 @@ function ConnectPageContent() {
       onEndWorkout={handleEndWorkout}
       session={session}
     />
-  )
-}
-
-export default function ConnectPage() {
-  return (
-    <ConnectSettingsProvider>
-      <ConnectPageContent />
-    </ConnectSettingsProvider>
   )
 }

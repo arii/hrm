@@ -3,39 +3,30 @@
  */
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ConnectView from '@/app/client/connect/ConnectView'
-import { ConnectSettingsProvider } from '@/app/client/connect/context/ConnectSettingsContext'
-import { UserSettingsContext } from '@/context/UserSettingsContext'
 import '@testing-library/jest-dom'
-
-const mockUserSettings = {
-  theme: 'dark' as const,
-  volumeLevel: 70,
-  defaultWorkDuration: 20,
-  defaultRestDuration: 10,
-  favoritePlaylist: '',
-  userName: 'Test User',
-  userAge: 30,
-  userWeight: 70,
-  autoConnect: false,
-  gender: 'MALE' as const,
-  unitSystem: 'METRIC' as const,
-  hrZoneMethod: 'MAX_HR' as const,
-  maxHrOverride: null,
-  restingHr: null,
-  customZoneThresholds: {
-    ZONE_1: 50,
-    ZONE_2: 60,
-    ZONE_3: 70,
-    ZONE_4: 80,
-    ZONE_5: 90,
-    ZONE_6: 95,
-  },
-}
 
 describe('ConnectView', () => {
   const mockProps = {
     duration: '00:00',
     caloriesBurned: 0,
+    userName: 'Test User',
+    setUserName: jest.fn(),
+    userAge: '30',
+    setUserAge: jest.fn(),
+    onAgeBlur: jest.fn(),
+    ageError: null,
+    userHeight: { cm: '175', feet: '5', inches: '9' },
+    setUserHeight: jest.fn(),
+    onHeightBlur: jest.fn(),
+    heightError: null,
+    userWeight: '70',
+    setUserWeight: jest.fn(),
+    onWeightBlur: jest.fn(),
+    weightError: null,
+    gender: 'MALE' as const,
+    setGender: jest.fn(),
+    unitSystem: 'METRIC' as const,
+    onUnitChange: jest.fn(),
     isConnected: false,
     deviceStatus: 'Disconnected',
     batteryLevel: null,
@@ -44,30 +35,18 @@ describe('ConnectView', () => {
     onForgetDevice: jest.fn().mockResolvedValue(undefined),
     isSupported: true,
     currentHR: 0,
-    hrZoneProps: { percentage: 0 },
+    hrZoneProps: { percentage: 0, progressColor: 'grey' },
     connectionStatus: 'Connected',
     bluetoothConnected: false,
     hasStarted: false,
     onReset: jest.fn(),
     workoutStatus: 'idle' as const,
     onStartWorkout: jest.fn(),
-    onPauseWorkout: jest.fn(),
     onEndWorkout: jest.fn(),
-    session: null,
-    signalPeriodMs: 1000,
-    zone: 0,
-  }
-
-  const renderWithProvider = (ui: React.ReactElement) => {
-    return render(
-      <UserSettingsContext.Provider value={[mockUserSettings, jest.fn()]}>
-        <ConnectSettingsProvider>{ui}</ConnectSettingsProvider>
-      </UserSettingsContext.Provider>
-    )
   }
 
   it('renders the reset button when bluetooth is not supported', () => {
-    renderWithProvider(<ConnectView {...mockProps} isSupported={false} />)
+    render(<ConnectView {...mockProps} isSupported={false} />)
     const resetButton = screen.getByRole('button', {
       name: /Reset Permissions & Settings/i,
     })
@@ -75,7 +54,7 @@ describe('ConnectView', () => {
   })
 
   it('renders the reset button as enabled by default', () => {
-    renderWithProvider(<ConnectView {...mockProps} />)
+    render(<ConnectView {...mockProps} />)
     const resetButton = screen.getByRole('button', {
       name: /Reset Permissions & Settings/i,
     })
@@ -83,7 +62,7 @@ describe('ConnectView', () => {
   })
 
   it('calls onForgetDevice and onReset when the reset button is clicked', async () => {
-    renderWithProvider(<ConnectView {...mockProps} />)
+    render(<ConnectView {...mockProps} />)
     const resetButton = screen.getByRole('button', {
       name: /Reset Permissions & Settings/i,
     })

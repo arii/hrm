@@ -8,7 +8,6 @@ import { HeartRateZone } from '@/lib/shared/hr-zones'
 export interface HrDataPoint {
   time: number
   hr: number
-  calories?: number
 }
 
 export interface CalorieDataPoint {

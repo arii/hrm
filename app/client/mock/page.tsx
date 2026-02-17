@@ -16,42 +16,24 @@ import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
-<<<<<<< HEAD
-import { calculateMaxHr, calculateZoneFromMaxHr } from '@/lib/shared/hr-zones'
-import SettingsForm from '@/components/SettingsForm'
-import { useHeightInput } from '@/hooks/useHeightInput'
-=======
 import {
   calculateZoneFromMaxHr,
   calculateMaxHr,
   toHeartRateZone,
 } from '@/lib/shared/hr-zones'
->>>>>>> origin/leader
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
   const [hrValue, setHrValue] = useState(100)
-
-  // Settings Form State
   const [name, setName] = useState('Mock User')
-  const [age, setAge] = useState<string>('30')
-  const [gender, setGender] = useState('female')
-
-  // Height using hook (fixed to Metric for Mock)
-  const { displayHeight, updateHeight, commitHeight } = useHeightInput(
-    '175',
-    'METRIC'
-  )
-
-  // Weight
-  const [weight, setWeight] = useState<string>('70')
-
+  const [age, setAge] = useState(30)
+  const [weight, setWeight] = useState(70) // Add weight state
+  const [height, setHeight] = useState(175) // Add height state
+  const [gender, setGender] = useState('female') // Add gender state
   const [intervalId, setIntervalId] = useState<number | null>(null)
-  const isStreaming = intervalId !== null
 
-  // Derived values for logic
-  const ageNum = parseInt(age, 10) || 30
-  const maxHr = calculateMaxHr(ageNum)
+  const isStreaming = intervalId !== null
+  const maxHr = calculateMaxHr(age)
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -67,16 +49,11 @@ export default function MockPage() {
 
   const sendHrPacket = useCallback(
     (hr: number) => {
-<<<<<<< HEAD
-      const maxHr = calculateMaxHr(ageNum)
-      const { percentage, zone } = calculateZoneFromMaxHr(hr, maxHr)
-=======
       const { zone, percentage } = calculateZoneFromMaxHr(
         hr,
         calculateMaxHr(age)
       )
       const heartRateZone = toHeartRateZone(zone)
->>>>>>> origin/leader
 
       const message: HrmInputMessage = {
         type: 'HRM_INPUT',
@@ -88,26 +65,23 @@ export default function MockPage() {
       }
       sendData(message)
     },
-    [sendData, ageNum]
+    [sendData, age]
   )
 
   const sendMetadataPacket = useCallback(() => {
-    const heightCm = parseFloat(displayHeight.cm) || 175
-    const weightNum = parseFloat(weight) || 70
-
     const message: HrmMetadataUpdateMessage = {
       type: 'HRM_METADATA_UPDATE',
       data: {
         maxHr: maxHr,
         name: name,
-        age: ageNum,
-        weight: weightNum,
-        height: heightCm,
+        age: age,
+        weight: weight,
+        height: height,
         gender: gender,
       },
     }
     sendData(message)
-  }, [sendData, name, ageNum, maxHr, weight, displayHeight, gender])
+  }, [sendData, name, age, maxHr, weight, height, gender])
 
   // NOTE: In a real client, metadata would likely be sent once upon connection
   // or when the user explicitly saves settings. For this mock, we send it
@@ -179,23 +153,61 @@ export default function MockPage() {
             Simulate heart rate data for testing.
           </Typography>
 
-          <Box data-testid="mock-client-form">
-            <SettingsForm
-              userName={name}
-              setUserName={setName}
-              userAge={age}
-              setUserAge={setAge}
-              unitSystem="METRIC"
-              hideUnitToggle={true}
-              userHeight={displayHeight}
-              setUserHeight={updateHeight}
-              onHeightBlur={commitHeight}
-              userWeight={weight}
-              setUserWeight={setWeight}
-              gender={gender}
-              setGender={setGender}
-            />
-          </Box>
+          <Grid
+            container
+            spacing={2}
+            sx={{ mb: 3 }}
+            data-testid="mock-client-form"
+          >
+            <Grid size={{ xs: 8 }}>
+              <TextField
+                label="User Name"
+                placeholder="e.g., Mock User"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <TextField
+                label="Age"
+                placeholder="e.g., 30"
+                type="number"
+                value={age}
+                onChange={(e) => setAge(parseInt(e.target.value, 10))}
+                fullWidth
+              />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <TextField
+                label="Weight (kg)"
+                placeholder="e.g., 70"
+                type="number"
+                value={weight}
+                onChange={(e) => setWeight(parseInt(e.target.value, 10))}
+                fullWidth
+              />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <TextField
+                label="Height (cm)"
+                placeholder="e.g., 175"
+                type="number"
+                value={height}
+                onChange={(e) => setHeight(parseInt(e.target.value, 10))}
+                fullWidth
+              />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <TextField
+                label="Gender"
+                placeholder="e.g., male"
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
 
           <TextField
             label="Current BPM"

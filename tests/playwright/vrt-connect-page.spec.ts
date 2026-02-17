@@ -10,6 +10,9 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     // Fill the form once for all tests
     await connectPage.getByLabel('Your Name').fill('VRT Runner')
     await connectPage.getByLabel('Your Age').fill('30')
+    // We need to fill weight to ensure session starts
+    await connectPage.getByLabel(/Your Weight/).fill('150')
+    await connectPage.getByLabel(/Your Weight/).blur()
 
     // Wait for the test controls to be initialized
     await connectPage.waitForFunction(() => window.TEST_CONTROLS?.setHrmStatus)

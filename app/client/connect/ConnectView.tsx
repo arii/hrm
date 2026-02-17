@@ -18,10 +18,10 @@ import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
-import { Gender } from '../../../types/core'
-import { WorkoutSessionData } from '@/lib/workout-session-storage'
+import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
 import { HeartRateZone } from '../../../lib/shared/hr-zones'
+import { WorkoutSessionData } from '../../../lib/workout-session-storage'
 import {
   ToggleButtonGroup,
   ToggleButton,
@@ -31,11 +31,30 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material'
-import { useConnectSettingsContext } from './context/ConnectSettingsContext'
 
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
+  userName: string
+  setUserName: (name: string) => void
+  userAge: string
+  setUserAge: (age: string) => void
+  onAgeBlur: () => void
+  ageError: string | null
+  userHeight: { cm: string; feet: string; inches: string }
+  setUserHeight: (
+    height: Partial<{ cm: string; feet: string; inches: string }>
+  ) => void
+  onHeightBlur: () => void
+  heightError: string | null
+  userWeight: string
+  setUserWeight: (weight: string) => void
+  onWeightBlur: () => void
+  weightError: string | null
+  gender: Gender
+  setGender: (gender: Gender) => void
+  unitSystem: MeasurementSystem
+  onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
   isDataStale?: boolean
   deviceStatus: string
@@ -56,12 +75,30 @@ interface ConnectViewProps {
   onStartWorkout: () => void
   onPauseWorkout: () => void
   onEndWorkout: () => void
-  session: WorkoutSessionData | null
+  session?: WorkoutSessionData | null
 }
 
 export default function ConnectView({
   duration,
   caloriesBurned,
+  userName,
+  setUserName,
+  userAge,
+  setUserAge,
+  onAgeBlur,
+  ageError,
+  userHeight,
+  setUserHeight,
+  onHeightBlur,
+  heightError,
+  userWeight,
+  setUserWeight,
+  onWeightBlur,
+  weightError,
+  gender,
+  setGender,
+  unitSystem,
+  onUnitChange,
   isConnected,
   isDataStale = false,
   deviceStatus,
@@ -84,17 +121,6 @@ export default function ConnectView({
   onEndWorkout,
   session,
 }: ConnectViewProps) {
-  const {
-    userName,
-    userAge,
-    gender,
-    unitSystem,
-    handleUnitChange,
-    setUserSettings,
-  } = useConnectSettingsContext()
-
-  const setGender = (g: Gender) =>
-    setUserSettings((prev) => ({ ...prev, gender: g }))
   const [isResetting, setIsResetting] = useState(false)
 
   useEffect(() => {
@@ -182,21 +208,11 @@ export default function ConnectView({
 
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
-            <Typography
-              id="unit-system-label"
-              variant="caption"
-              color="text.secondary"
-              sx={{ mb: -1, display: 'block' }}
-            >
-              Measurement System
-            </Typography>
             <ToggleButtonGroup
               value={unitSystem}
               exclusive
-              onChange={(_e, newUnit) =>
-                newUnit && handleUnitChange(newUnit as 'METRIC' | 'IMPERIAL')
-              }
-              aria-labelledby="unit-system-label"
+              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
+              aria-label="measurement system"
               fullWidth
             >
               <ToggleButton value="IMPERIAL" aria-label="imperial">
@@ -207,7 +223,24 @@ export default function ConnectView({
               </ToggleButton>
             </ToggleButtonGroup>
 
-            <UserSettings />
+            <UserSettings
+              userName={userName}
+              setUserName={setUserName}
+              userAge={userAge}
+              setUserAge={setUserAge}
+              onAgeBlur={onAgeBlur}
+              ageError={ageError}
+              userHeight={userHeight}
+              setUserHeight={setUserHeight}
+              onHeightBlur={onHeightBlur}
+              heightError={heightError}
+              userWeight={userWeight}
+              setUserWeight={setUserWeight}
+              onWeightBlur={onWeightBlur}
+              weightError={weightError}
+              unit={unitSystem}
+              setUnit={onUnitChange}
+            />
 
             <FormControl component="fieldset">
               <FormLabel component="legend">Gender</FormLabel>
@@ -249,7 +282,7 @@ export default function ConnectView({
               {userName}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Age: {userAge || ''}
+              Age: {userAge}
             </Typography>
           </Box>
         )}
@@ -274,7 +307,7 @@ export default function ConnectView({
               onClick={onConnect}
               disabled={
                 !userName.trim() ||
-                !String(userAge || '').trim() ||
+                !userAge.trim() ||
                 deviceStatus.includes('Connecting')
               }
             >

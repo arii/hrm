@@ -1,6 +1,11 @@
 // tests/unit/jest.setup.js
 /* eslint-disable @typescript-eslint/no-var-requires */
 require('@testing-library/jest-dom')
+const { TextEncoder, TextDecoder } = require('util')
+
+// Polyfill TextEncoder/TextDecoder for Jest/JSDOM environment
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
 
 // Set up environment variables for tests
 process.env.NEXTAUTH_URL = 'http://localhost:3000'

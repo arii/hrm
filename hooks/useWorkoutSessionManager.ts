@@ -31,7 +31,7 @@ type SessionManagerAction =
   | { type: 'RESUME' }
   | { type: 'END' }
   | { type: 'RESET' }
-  | { type: 'ADD_HR_DATA'; payload: HrDataPoint & { calories?: number } }
+  | { type: 'ADD_HR_DATA'; payload: HrDataPoint }
 
 const initialState: SessionManagerState = {
   session: null,
@@ -137,8 +137,6 @@ function sessionManagerReducer(
           maxHr: newMaxHr,
           averageHr: newAverageHr,
           timeInZones: newTimeInZones,
-          totalCaloriesBurned:
-            action.payload.calories ?? state.session.totalCaloriesBurned,
         },
       }
     }
@@ -251,12 +249,9 @@ export const useWorkoutSessionManager = () => {
     dispatch({ type: 'RESET' })
   }, [state.session])
 
-  const addHrData = useCallback(
-    (hrDataPoint: HrDataPoint & { calories?: number }) => {
-      dispatch({ type: 'ADD_HR_DATA', payload: hrDataPoint })
-    },
-    []
-  )
+  const addHrData = useCallback((hrDataPoint: HrDataPoint) => {
+    dispatch({ type: 'ADD_HR_DATA', payload: hrDataPoint })
+  }, [])
 
   const [duration, setDuration] = useState(0)
 

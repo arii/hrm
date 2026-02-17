@@ -7,7 +7,7 @@ import WatchLaterIcon from '@mui/icons-material/WatchLater'
 import WhatshotIcon from '@mui/icons-material/Whatshot'
 import DownloadIcon from '@mui/icons-material/Download'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
-import { exportToCSV, exportToGPX } from '@/utils/export'
+import { exportToCSV, exportToGPX, exportToFIT } from '@/services/exportService'
 
 interface WorkoutSummaryProps {
   duration: string
@@ -84,6 +84,14 @@ const WorkoutSummary = ({
               onClick={() => exportToGPX(session)}
             >
               GPX
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<DownloadIcon />}
+              onClick={() => exportToFIT(session)}
+            >
+              FIT
             </Button>
           </Stack>
         )}

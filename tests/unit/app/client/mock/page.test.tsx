@@ -29,8 +29,8 @@ describe('app/client/mock/page', () => {
   it('renders the mock streamer page with default values', () => {
     render(<MockPage />)
     expect(screen.getByText('HRM Mock Streamer')).toBeInTheDocument()
-    expect(screen.getByLabelText('Your Name')).toHaveValue('Mock User')
-    expect(screen.getByLabelText('Your Age')).toHaveValue(30)
+    expect(screen.getByLabelText('User Name')).toHaveValue('Mock User')
+    expect(screen.getByLabelText('Age')).toHaveValue(30)
     expect(screen.getByLabelText('Current BPM')).toHaveValue(100)
     expect(screen.getByTestId('streaming-start-button')).toBeInTheDocument()
   })

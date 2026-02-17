@@ -27,23 +27,24 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
-    '^.+\\.(ts|tsx)$': [
+    '^.+\\.(ts|tsx|js|jsx|mjs)$': [
       'ts-jest',
       {
         useESM: true,
+        isolatedModules: true,
         tsconfig: {
           module: 'ES2022',
-          moduleResolution: 'bundler', // bundler is a better choice for modern apps
+          moduleResolution: 'bundler',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
+          allowJs: true,
         },
       },
     ],
   },
   transformIgnorePatterns: [
     // recharts is mocked, so it doesn't need to be explicitly transformed or ignored from transformation.
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
+    '/node_modules/(?!.pnpm|uuid|@asteasolutions/zod-to-openapi|@garmin/fitsdk)',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
