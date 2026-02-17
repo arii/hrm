@@ -6,7 +6,7 @@ import { workoutSessionStorage } from '../../../lib/workout-session-storage'
 import { useAppSnackbar } from '../../../hooks/useAppSnackbar'
 import { isSameDay } from '../../../lib/date'
 import { WorkoutSessionData } from '../../../lib/workout-session-storage'
-import { HrZoneName } from '../../../lib/shared/hr-zones'
+import { HeartRateZone } from '../../../lib/shared/hr-zones'
 
 // Mock dependencies
 jest.mock('../../../lib/workout-session-storage')
@@ -124,7 +124,7 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.hrHistory.length).toBe(1)
       expect(result.current.session?.maxHr).toBe(120)
       expect(result.current.session?.averageHr).toBe(120)
-      expect(result.current.session?.timeInZones[HrZoneName.WarmUp]).toBe(1)
+      expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
 
       // Add second data point (HR 150 -> ~81% -> Zone 4 / Cardio)
       act(() => {
@@ -133,8 +133,8 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.hrHistory.length).toBe(2)
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBe(135)
-      expect(result.current.session?.timeInZones[HrZoneName.WarmUp]).toBe(1)
-      expect(result.current.session?.timeInZones[HrZoneName.Cardio]).toBe(1)
+      expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
+      expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
 
       // Add third data point (HR 100 -> ~54% -> Zone 1 / Recovery)
       act(() => {
@@ -143,8 +143,8 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.hrHistory.length).toBe(3)
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBeCloseTo(123.33)
-      expect(result.current.session?.timeInZones[HrZoneName.Cardio]).toBe(1)
-      expect(result.current.session?.timeInZones[HrZoneName.Recovery]).toBe(2)
+      expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
+      expect(result.current.session?.timeInZones.ZONE_1).toBe(2)
     })
 
     it('should not add HR data if the session is not running', async () => {
@@ -181,7 +181,7 @@ describe('useWorkoutSessionManager', () => {
         startTime: 900000, // A time in the past
         status: 'running',
         hrHistory: [],
-        timeInZones: {} as Record<HrZoneName, number>,
+        timeInZones: {} as Record<HeartRateZone, number>,
         averageHr: 0,
         maxHr: 0,
         calorieHistory: [],

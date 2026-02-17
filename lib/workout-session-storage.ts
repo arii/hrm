@@ -1,11 +1,9 @@
 // lib/workout-session-storage.ts
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
-import { HrZoneName } from '@/lib/shared/hr-zones'
+import { HeartRateZone } from '@/lib/shared/hr-zones'
 
 // --- TypeScript Interfaces ---
-
-export { HrZoneName }
 
 export interface HrDataPoint {
   time: number
@@ -25,7 +23,7 @@ export interface WorkoutSessionData {
   endTime: number | null
   status: 'idle' | 'running' | 'paused' | 'finished'
   hrHistory: HrDataPoint[]
-  timeInZones: Record<HrZoneName, number>
+  timeInZones: Record<HeartRateZone, number>
   averageHr: number
   maxHr: number
   calorieHistory: CalorieDataPoint[]
