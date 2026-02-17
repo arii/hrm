@@ -48,8 +48,10 @@ const ExperimentalAnalyticsPage = () => {
     duration,
     startWorkout,
     resumeWorkout,
+    pauseWorkout,
     endWorkout,
     addHrData,
+    updateCalories,
   } = useWorkoutSessionManager()
 
   const { processHeartRate, totalCaloriesBurned, calorieHistory, reset } =
@@ -104,6 +106,11 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [connectionStatus, userSettings, sendData])
 
+  // Sync calories to session manager
+  useEffect(() => {
+    updateCalories(totalCaloriesBurned)
+  }, [totalCaloriesBurned, updateCalories])
+
   /**
    * FIX: Use ref to avoid interval reset on HR updates (addresses audit issue #1)
    * This prevents the interval from being recreated on every hrmData change
@@ -149,6 +156,10 @@ const ExperimentalAnalyticsPage = () => {
   const handleResumeWorkout = useCallback(() => {
     resumeWorkout()
   }, [resumeWorkout])
+
+  const handlePauseWorkout = useCallback(() => {
+    pauseWorkout()
+  }, [pauseWorkout])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
@@ -210,7 +221,7 @@ const ExperimentalAnalyticsPage = () => {
               </Button>
             )}
             {status === 'running' && (
-              <Button variant="outlined" onClick={handleEndWorkout}>
+              <Button variant="outlined" onClick={handlePauseWorkout}>
                 Pause
               </Button>
             )}

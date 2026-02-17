@@ -12,8 +12,9 @@ import { WebSocketProvider } from '@/context/WebSocketContext'
 import { toDisplay } from '@/utils/units'
 
 // Correctly mock the hooks
-jest.mock('@/hooks/useBluetoothHRM', () =>
-  jest.fn(() => ({
+jest.mock('@/hooks/useBluetoothHRM', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
     connectAndStream: jest.fn(),
     autoConnect: jest.fn(),
     disconnect: jest.fn(),
@@ -24,19 +25,29 @@ jest.mock('@/hooks/useBluetoothHRM', () =>
     isDataStale: false,
     isSupported: true,
     disconnectionReason: null,
-  }))
-)
+  })),
+}))
 
-jest.mock('@/hooks/useWorkoutSession', () => ({
-  __esModule: true,
-  useWorkoutSession: jest.fn(() => ({
-    workoutDuration: 0,
-    resetWorkout: jest.fn(),
-    hasStarted: false,
+jest.mock('@/hooks/useWorkoutSessionManager', () => ({
+  useWorkoutSessionManager: jest.fn(() => ({
+    session: null,
+    status: 'idle',
+    duration: 0,
     startWorkout: jest.fn(),
     pauseWorkout: jest.fn(),
+    resumeWorkout: jest.fn(),
     endWorkout: jest.fn(),
-    workoutStatus: 'idle',
+    resetWorkout: jest.fn(),
+    addHrData: jest.fn(),
+    updateCalories: jest.fn(),
+  })),
+}))
+
+jest.mock('@/hooks/useCalorieTracker', () => ({
+  useCalorieTracker: jest.fn(() => ({
+    totalCaloriesBurned: 0,
+    processHeartRate: jest.fn(),
+    reset: jest.fn(),
   })),
 }))
 
@@ -110,7 +121,7 @@ describe('ConnectPage', () => {
 
   it('displays the initial weight correctly based on the unit system', () => {
     renderWithProviders(<ConnectPage />, { providerProps })
-    const weightInput = screen.getByLabelText(/Your Weight/)
+    const weightInput = screen.getByLabelText(/Your Weight/i) // relaxed regex
     expect(weightInput).toHaveValue(
       toDisplay(mockUserSettings.userWeight!, mockUserSettings.unitSystem)
     )
@@ -118,7 +129,7 @@ describe('ConnectPage', () => {
 
   it('updates the userWeight in context on blur', () => {
     renderWithProviders(<ConnectPage />, { providerProps })
-    const weightInput = screen.getByLabelText(/Your Weight/)
+    const weightInput = screen.getByLabelText(/Your Weight/i)
 
     fireEvent.change(weightInput, { target: { value: '75' } })
     fireEvent.blur(weightInput)
@@ -133,11 +144,11 @@ describe('ConnectPage', () => {
   it('converts and displays the weight correctly when the unit system changes', () => {
     const { rerender } = renderWithProviders(<ConnectPage />, { providerProps })
 
-    let weightInput = screen.getByLabelText(/Your Weight/)
+    let weightInput = screen.getByLabelText(/Your Weight/i)
     expect(weightInput).toHaveValue(70)
 
     // Simulate user clicking the imperial button
-    const imperialButton = screen.getByRole('button', { name: 'imperial' })
+    const imperialButton = screen.getByRole('button', { name: /imperial/i })
     fireEvent.click(imperialButton)
 
     // Check that setUserSettings was called to update the unit system
@@ -162,7 +173,7 @@ describe('ConnectPage', () => {
       </WebSocketProvider>
     )
 
-    weightInput = screen.getByLabelText(/Your Weight/)
+    weightInput = screen.getByLabelText(/Your Weight/i)
     const weightInLbs = toDisplay(mockUserSettings.userWeight!, 'IMPERIAL')
     expect(weightInput).toHaveValue(weightInLbs)
   })

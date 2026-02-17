@@ -1,6 +1,4 @@
-// hooks/useCalorieTracker.ts
-
-import { useCallback, useRef, useEffect, useReducer } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 import { CalorieDataPoint } from '../lib/workout-session-storage'
 import { Gender } from '@/types/core'
@@ -9,64 +7,21 @@ interface CalorieTrackerProps {
   age: number
   weightKg: number
   gender?: Gender
-}
-
-interface CalorieState {
-  totalCaloriesBurned: number
-  calorieHistory: CalorieDataPoint[]
-}
-
-type CalorieAction =
-  | {
-      type: 'PROCESS_HR'
-      payload: {
-        hr: number
-        caloriesBurnedThisInterval: number
-        now: number
-        caloriesPerSecond: number
-      }
-    }
-  | { type: 'RESET' }
-
-const initialState: CalorieState = {
-  totalCaloriesBurned: 0,
-  calorieHistory: [],
-}
-
-function calorieReducer(
-  state: CalorieState,
-  action: CalorieAction
-): CalorieState {
-  switch (action.type) {
-    case 'PROCESS_HR': {
-      const { hr, caloriesBurnedThisInterval, now, caloriesPerSecond } =
-        action.payload
-      const newTotal = state.totalCaloriesBurned + caloriesBurnedThisInterval
-      const newDataPoint: CalorieDataPoint = {
-        time: now,
-        hr,
-        caloriesPerSecond,
-        totalToThisPoint: newTotal,
-      }
-      return {
-        totalCaloriesBurned: newTotal,
-        calorieHistory: [...state.calorieHistory, newDataPoint],
-      }
-    }
-    case 'RESET':
-      return initialState
-    default:
-      return state
-  }
+  smoothingWindow?: number
 }
 
 export const useCalorieTracker = ({
   age,
   weightKg,
   gender = 'NEUTRAL',
+  smoothingWindow = 5,
 }: CalorieTrackerProps) => {
-  const [state, dispatch] = useReducer(calorieReducer, initialState)
+  const [totalCaloriesBurned, setTotalCaloriesBurned] = useState(0)
+  const [calorieHistory, setCalorieHistory] = useState<CalorieDataPoint[]>([])
+
   const lastTimestampRef = useRef<number | null>(null)
+  const hrHistoryRef = useRef<number[]>([])
+  const totalCaloriesRef = useRef(0)
 
   const ageRef = useRef(age)
   const weightKgRef = useRef(weightKg)
@@ -78,70 +33,75 @@ export const useCalorieTracker = ({
     genderRef.current = gender
   }, [age, weightKg, gender])
 
-  const processHeartRate = useCallback((hr: number) => {
-    const now = Date.now()
-    // On the first call, lastTimestampRef.current is null.
-    // Record a data point with zero calories to avoid gaps at the start.
-    if (!lastTimestampRef.current) {
-      dispatch({
-        type: 'PROCESS_HR',
-        payload: {
-          hr,
-          caloriesBurnedThisInterval: 0,
-          now,
-          caloriesPerSecond: 0,
-        },
-      })
-      lastTimestampRef.current = now
-      return
-    }
+  const processHeartRate = useCallback(
+    (heartRate: number) => {
+      const now = Date.now()
 
-    const dtSeconds = (now - lastTimestampRef.current) / 1000
-    /**
-     * Time gap validation: Only process heart rate data if the gap is between 0 and 10 seconds.
-     *
-     * Rationale:
-     * - Gaps > 10 seconds likely indicate paused tracking, device disconnection, or other interruptions
-     * - Calculating calories over large gaps would produce inaccurate results
-     * - This threshold balances tolerance for normal variation while filtering out invalid data
-     *
-     * Configuration: If you need to adjust this threshold (e.g., for different update intervals),
-     * consider making it a configurable parameter.
-     */
-    if (dtSeconds > 0 && dtSeconds < 10) {
-      const dtMinutes = dtSeconds / 60
-      const caloriesPerSecond =
-        estimateCaloriesBurned({
-          heartRate: hr,
+      // SMA Smoothing
+      hrHistoryRef.current.push(heartRate)
+      if (hrHistoryRef.current.length > smoothingWindow) {
+        hrHistoryRef.current.shift()
+      }
+      const sum = hrHistoryRef.current.reduce((a, b) => a + b, 0)
+      const smoothedHr = sum / hrHistoryRef.current.length
+
+      if (!lastTimestampRef.current) {
+        lastTimestampRef.current = now
+        // Record initial data point with zero calories to avoid gaps at the start.
+        const initialPoint: CalorieDataPoint = {
+          time: now,
+          hr: heartRate,
+          caloriesPerSecond: 0,
+          totalToThisPoint: 0,
+        }
+        setCalorieHistory((prev) => [...prev, initialPoint])
+        return
+      }
+
+      const dtSeconds = (now - lastTimestampRef.current) / 1000
+
+      // Time gap validation (0 to 10 seconds)
+      if (dtSeconds > 0 && dtSeconds < 10) {
+        const dtMinutes = dtSeconds / 60
+        const caloriesBurnedThisInterval = estimateCaloriesBurned({
+          heartRate: smoothedHr,
           age: ageRef.current,
           weightKg: weightKgRef.current,
           gender: genderRef.current,
           durationMinutes: dtMinutes,
-        }) / dtSeconds
+        })
 
-      const caloriesBurnedThisInterval = caloriesPerSecond * dtSeconds
+        const caloriesPerSecond = caloriesBurnedThisInterval / dtSeconds
 
-      dispatch({
-        type: 'PROCESS_HR',
-        payload: {
-          hr,
-          caloriesBurnedThisInterval,
-          now,
+        totalCaloriesRef.current += caloriesBurnedThisInterval
+
+        const newDataPoint: CalorieDataPoint = {
+          time: now,
+          hr: heartRate,
           caloriesPerSecond,
-        },
-      })
-    }
-    lastTimestampRef.current = now
-  }, [])
+          totalToThisPoint: totalCaloriesRef.current,
+        }
+
+        setTotalCaloriesBurned(totalCaloriesRef.current)
+        setCalorieHistory((prev) => [...prev, newDataPoint])
+      }
+
+      lastTimestampRef.current = now
+    },
+    [smoothingWindow]
+  )
 
   const reset = useCallback(() => {
-    dispatch({ type: 'RESET' })
+    setTotalCaloriesBurned(0)
+    setCalorieHistory([])
     lastTimestampRef.current = null
+    hrHistoryRef.current = []
+    totalCaloriesRef.current = 0
   }, [])
 
   return {
-    totalCaloriesBurned: state.totalCaloriesBurned,
-    calorieHistory: state.calorieHistory,
+    totalCaloriesBurned,
+    calorieHistory,
     processHeartRate,
     reset,
   }

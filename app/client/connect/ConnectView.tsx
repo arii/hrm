@@ -11,7 +11,6 @@ import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
-import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
@@ -22,8 +21,6 @@ import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
 import { HeartRateZone } from '../../../lib/shared/hr-zones'
 import {
-  ToggleButtonGroup,
-  ToggleButton,
   FormControl,
   FormLabel,
   RadioGroup,
@@ -189,7 +186,6 @@ export default function ConnectView({
           Edge, or Bluefy (on iOS).
         </Alert>
         <ResetSection />
-        <BottomNavBar />
       </Container>
     )
   }
@@ -205,21 +201,6 @@ export default function ConnectView({
 
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
-            <ToggleButtonGroup
-              value={unitSystem}
-              exclusive
-              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
-              aria-label="measurement system"
-              fullWidth
-            >
-              <ToggleButton value="IMPERIAL" aria-label="imperial">
-                Imperial (lbs)
-              </ToggleButton>
-              <ToggleButton value="METRIC" aria-label="metric">
-                Metric (kg)
-              </ToggleButton>
-            </ToggleButtonGroup>
-
             <UserSettings
               userName={userName}
               setUserName={setUserName}
@@ -411,7 +392,6 @@ export default function ConnectView({
 
         <ResetSection />
       </Container>
-      <BottomNavBar />
     </>
   )
 }
