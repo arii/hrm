@@ -35,17 +35,16 @@ LOC_STATS=""
 DIFF_ERROR=""
 DIFF_TARGET=""
 
-# Robust Diff Strategy: Try merge-base first (...), fallback to direct (..)
-if git diff --stat "origin/$BASE_BRANCH...HEAD" >/dev/null 2>&1; then
+# Diff Strategy: Try merge-base first (...), fallback to direct (..)
+if LOC_STATS=$(git diff --stat "origin/$BASE_BRANCH...HEAD" 2>&1); then
     DIFF_TARGET="origin/$BASE_BRANCH...HEAD"
 else
     echo "⚠️ Merge-base diff failed (likely shallow history). Falling back to direct comparison."
     DIFF_TARGET="origin/$BASE_BRANCH..HEAD"
-fi
-
-if ! LOC_STATS=$(git diff --stat "$DIFF_TARGET" 2>&1); then
-    DIFF_ERROR="$LOC_STATS"
-    LOC_STATS="Unable to calculate stats. Error: $DIFF_ERROR"
+    if ! LOC_STATS=$(git diff --stat "$DIFF_TARGET" 2>&1); then
+        DIFF_ERROR="$LOC_STATS"
+        LOC_STATS="Unable to calculate stats. Error: $DIFF_ERROR"
+    fi
 fi
 echo "$LOC_STATS"
 
@@ -102,11 +101,11 @@ fi
 echo "Generating final report..."
 {
   echo "### 🧹 AI Slop Detection Report"
-  echo -e "#### Automated Detection Results\n\`\`\`"
+  printf "#### Automated Detection Results\n\`\`\`\n"
   cat "$SLOP_RAW_LOG"
-  echo -e "\`\`\`\n\n#### Gemini Analysis"
+  printf "\`\`\`\n\n#### Gemini Analysis\n"
   [ -f "$GEMINI_SLOP_LOG" ] && cat "$GEMINI_SLOP_LOG" || echo "No Gemini analysis available."
-  echo -e "\n#### LOC Stats\n\`\`\`\n$LOC_STATS\n\`\`\`"
+  printf "\n#### LOC Stats\n\`\`\`\n$LOC_STATS\n\`\`\`\n"
 } > "$SLOP_OUTPUT_LOG"
 
 echo "Report generated at $SLOP_OUTPUT_LOG"
