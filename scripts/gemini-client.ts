@@ -651,22 +651,12 @@ export async function buildReviewPrompt(
   }
 
   promptTemplate += `\n## 🛠️ Issue Generation Instructions
-You are empowered to identify discrete tasks that should be addressed separately from this PR.
-If you spot Technical Debt, Refactoring opportunities, or Frontend Improvements (per the plan):
-1. **Do not** just complain about them in the review comment.
-2. **Create a 'suggestedIssue'** in the JSON output.
-3. **Criteria**:
-   - MUST be specific and actionable.
-   - MUST NOT be a trivial nitpick.
-   - **Type**: Must be one of \`technical-debt\`, \`frontend-improvement\`, \`security\`, or \`bug\`.
-   - **Priority**: Must be one of \`high\`, \`medium\`, or \`low\`.
-   - Examples: "Extract WebSocket reconnection logic to custom hook", "Implement error boundary for Spotify player".
-
-## 📏 Style Constraint
-Keep the 'reviewComment' under 1000 words.
-Use bullet points for strengths and weaknesses.
-Focus on high-density technical feedback.
-Ensure the JSON is structurally complete.
+If you identify Technical Debt, Refactoring opportunities, or Frontend Improvements:
+1. **Create a 'suggestedIssue'** in the JSON output.
+2. **Criteria**:
+   - MUST be specific, actionable, and non-trivial.
+   - **Type**: \`technical-debt\`, \`frontend-improvement\`, \`security\`, \`bug\`.
+   - **Priority**: \`high\`, \`medium\`, \`low\`.
 `
 
   return promptTemplate
