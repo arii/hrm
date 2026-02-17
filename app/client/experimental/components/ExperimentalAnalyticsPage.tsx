@@ -112,7 +112,8 @@ const ExperimentalAnalyticsPage = () => {
     // This effect runs after the component has mounted and committed to the DOM,
     // ensuring that any initial data fetching or layout calculations are complete
     // before the test proceeds.
-    setIsReady(true)
+    const timer = setTimeout(() => setIsReady(true), 0)
+    return () => clearTimeout(timer)
   }, [])
 
   /**
