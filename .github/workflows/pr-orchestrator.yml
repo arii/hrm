@@ -203,6 +203,7 @@ jobs:
       branch: ${{ github.base_ref || inputs.base_branch || inputs.base_ref || 'leader' }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
   pr-review:
     name: 🤖 Gemini AI Review
