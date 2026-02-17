@@ -1,14 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  useTheme,
-  Skeleton,
-} from '@mui/material'
+/**
+ * NOTE: This component requires dynamic import with { ssr: false } due to Recharts
+ * dependencies (ResponsiveContainer) which rely on window/DOM availability.
+ * Direct usage in a server-rendered component will cause hydration mismatches.
+ */
+
+import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
 import { HrDataPoint } from '@/lib/workout-session-storage'
 import {
   LineChart,
@@ -27,12 +25,6 @@ interface HeartRateTimeSeriesProps {
 
 const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
   const theme = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true)
-  }, [])
 
   return (
     <Card elevation={2}>
@@ -41,43 +33,34 @@ const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
           Heart Rate Over Time
         </Typography>
         <Box sx={{ height: 300 }} data-testid="hr-time-series-chart">
-          {mounted ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={hrHistory} syncId="anyId">
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis
-                  dataKey="time"
-                  tickFormatter={(time) => new Date(time).toLocaleTimeString()}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis domain={['auto', 'auto']} tick={{ fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: theme.shape.borderRadius,
-                    border: `1px solid ${theme.palette.divider}`,
-                    boxShadow: theme.shadows[2],
-                  }}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="hr"
-                  name="Heart Rate"
-                  stroke={theme.palette.primary.main}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <Skeleton
-              variant="rectangular"
-              width="100%"
-              height="100%"
-              animation="wave"
-            />
-          )}
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={hrHistory} syncId="anyId">
+              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+              <XAxis
+                dataKey="time"
+                tickFormatter={(time) => new Date(time).toLocaleTimeString()}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis domain={['auto', 'auto']} tick={{ fontSize: 12 }} />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: theme.shape.borderRadius,
+                  border: `1px solid ${theme.palette.divider}`,
+                  boxShadow: theme.shadows[2],
+                }}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="hr"
+                name="Heart Rate"
+                stroke={theme.palette.primary.main}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </Box>
       </CardContent>
     </Card>

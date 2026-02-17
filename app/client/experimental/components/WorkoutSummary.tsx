@@ -22,7 +22,7 @@ const WorkoutSummary = ({
 }: WorkoutSummaryProps) => {
   const theme = useTheme()
 
-  const statusColor = theme.palette.custom[status] || '#ccc'
+  const statusColor = theme.palette.custom[status]
 
   return (
     <Card elevation={2} data-testid="workout-summary">
