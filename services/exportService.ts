@@ -2,7 +2,6 @@ import { WorkoutSessionData } from '../lib/workout-session-storage'
 import { Encoder, Profile } from '@garmin/fitsdk'
 
 // Constants matching Garmin FIT SDK spec (v21.194.0)
-// The SDK exports these as value -> string maps, so we need to define the constants manually.
 const FileType = {
   ACTIVITY: 4,
 }

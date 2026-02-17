@@ -12,8 +12,8 @@ declare module '@garmin/fitsdk' {
       RECORD = 20,
     }
 
-    // The SDK exports value->string maps at runtime, preventing enum-like usage.
-    // We declare the specific maps available on the Profile object.
+    // The SDK exports value->string maps at runtime.
+    // We declare the specific maps available on the Profile object to support type-safe access.
     export const types: {
       file: Record<number, string>
       manufacturer: Record<number, string>
