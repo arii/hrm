@@ -1,15 +1,17 @@
-// File: utils/visualization.ts (MUI Visualization Utilities - Final Fix)
+// File: utils/visualization.ts
 /**
  * Utility functions to map numerical and state data to MUI aesthetic properties.
  * This ensures clean separation of business logic from React component rendering.
  */
 import { TimerData } from '@/types/websocket'
-import { WorkoutData } from '@/types/index'
+import { WorkoutData, WorkoutColumnsProps } from '@/types/index'
 import { WorkoutItem } from '@/types/workout'
-import { WorkoutColumnsProps } from '@/types'
-import theme from '@/lib/theme'
-import { calculateHrZone } from '@/lib/hrm/zones'
-import { HrZoneName } from '@/lib/shared/hr-zones'
+import {
+  calculateZoneFromMaxHr,
+  toHeartRateZone,
+  HR_ZONE_CONFIG,
+  HeartRateZone,
+} from '@/lib/shared/hr-zones'
 
 // Define types for MUI color props
 type MuiColor =
@@ -20,76 +22,10 @@ type MuiColor =
   | 'info'
   | 'success'
 
-// --- Constants ---
-// UI properties for each heart rate zone, mapped for efficient O(1) lookup.
-type HrZoneUi = {
-  color: string
-  progressColor: string
-  bgColor: string
-}
-
-/**
- * @deprecated Use HR_ZONE_VISUAL_CONFIG from lib/shared/hr-zones instead.
- * This map contains legacy Tailwind color classes and hex values.
- */
-export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
-  [HrZoneName.Idle]: {
-    color: 'text-gray-400',
-    progressColor: '#cccccc',
-    bgColor: '#cccccc',
-  },
-  [HrZoneName.Recovery]: {
-    color: 'text-cyan-400',
-    progressColor: '#00ffff',
-    bgColor: '#00ffff',
-  },
-  [HrZoneName.WarmUp]: {
-    color: 'text-blue-400',
-    progressColor: theme.palette.secondary.main,
-    bgColor: theme.palette.secondary.main,
-  },
-  [HrZoneName.FatBurn]: {
-    color: 'text-green-500',
-    progressColor: theme.palette.success.main,
-    bgColor: theme.palette.success.main,
-  },
-  [HrZoneName.Aerobic]: {
-    // Aerobic is an alias for Fat Burn (Zone 3)
-    color: 'text-green-500',
-    progressColor: theme.palette.success.main,
-    bgColor: theme.palette.success.main,
-  },
-  [HrZoneName.Cardio]: {
-    color: 'text-yellow-500',
-    progressColor: theme.palette.warning.dark,
-    bgColor: theme.palette.warning.dark,
-  },
-  [HrZoneName.Peak]: {
-    color: 'text-red-500',
-    progressColor: theme.palette.primary.main,
-    bgColor: theme.palette.primary.main,
-  },
-  [HrZoneName.Max]: {
-    color: 'text-purple-600',
-    progressColor: '#9333ea',
-    bgColor: '#9C27B0',
-  },
-  [HrZoneName.NoData]: {
-    color: 'text-gray-400',
-    progressColor: '#9ca3af',
-    bgColor: '#B0BEC5',
-  },
-  [HrZoneName.Unknown]: {
-    color: 'text-gray-400',
-    progressColor: '#9ca3af',
-    bgColor: '#9ca3af',
-  },
-}
-
 export interface HrZoneProps {
-  zone: string
+  zone: HeartRateZone
   percentage: number
-  color: string // Tailwind text color class
+  color: string // Legacy: Hex color or Tailwind class
   progressColor: string // Hex color for MUI components
   backgroundColor: string // Hex color for background
   textColor: string
@@ -98,43 +34,28 @@ export interface HrZoneProps {
 
 /**
  * Calculates the current zone, percentage of max HR, and returns MUI-ready props.
- * This function now composes the core business logic from `lib/hrm` with
- * presentation-specific properties defined in this file.
- *
- * @deprecated Use HR_ZONE_VISUAL_CONFIG and manual zone calculation instead.
+ * Leveraging the centralized HR_ZONE_CONFIG for consistency.
  */
 export const getHrZoneProps = (
   currentHr: number,
   maxHr: number
 ): HrZoneProps => {
-  // 1. Get the core HR data from the domain module
-  const { zoneName, percentage, value } = calculateHrZone(currentHr, maxHr)
+  // 1. Get the core HR data
+  const { zone, percentage } = calculateZoneFromMaxHr(currentHr, maxHr)
+  const zoneName = toHeartRateZone(zone)
 
-  // 2. Look up the UI properties from the map
-  const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
+  // 2. Look up the UI properties from the centralized config
+  const zoneConfig = HR_ZONE_CONFIG[zoneName]
 
-  // 3. Determine text color - force white for specific zones for better contrast
-  let textColor = theme.palette.getContrastText(zoneUiProps.bgColor)
-  if (
-    zoneName === HrZoneName.NoData ||
-    zoneName === HrZoneName.Unknown ||
-    zoneName === HrZoneName.FatBurn ||
-    zoneName === HrZoneName.WarmUp ||
-    zoneName === HrZoneName.Aerobic ||
-    zoneName === HrZoneName.Cardio
-  ) {
-    textColor = '#FFFFFF' // Force white text for better visibility on colored backgrounds
-  }
-
-  // 4. Combine domain data with UI properties
+  // 3. Combine domain data with UI properties
   return {
-    zone: zoneName, // The enum member is a string at runtime
+    zone: zoneName,
     percentage: percentage,
-    color: zoneUiProps.color,
-    progressColor: zoneUiProps.progressColor,
-    backgroundColor: zoneUiProps.bgColor,
-    textColor: textColor,
-    value: value,
+    color: zoneConfig.color,
+    progressColor: zoneConfig.color,
+    backgroundColor: zoneConfig.color,
+    textColor: zoneConfig.textColor,
+    value: currentHr,
   }
 }
 

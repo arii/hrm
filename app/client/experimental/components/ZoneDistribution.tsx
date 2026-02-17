@@ -10,14 +10,14 @@ import {
   useTheme,
 } from '@mui/material'
 import {
-  HrZoneName,
-  HR_ZONE_COLOR_MAP,
+  HeartRateZone,
+  HR_ZONE_CONFIG,
   HR_ZONE_ORDER,
 } from '@/lib/shared/hr-zones'
 import { formatDuration } from '@/lib/utils'
 
 interface ZoneDistributionProps {
-  timeInZones: Record<HrZoneName, number>
+  timeInZones: Record<HeartRateZone, number>
   totalDuration: number
 }
 
@@ -57,6 +57,26 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         return HR_ZONE_ORDER.indexOf(a.zone) - HR_ZONE_ORDER.indexOf(b.zone)
       })
   }, [allRelevantEntries, totalDuration, theme.palette.grey])
+  const data = useMemo(() => {
+    return HR_ZONE_ORDER.map((zoneKey) => {
+      const time = timeInZones[zoneKey] || 0
+      const config = HR_ZONE_CONFIG[zoneKey]
+      const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
+      return {
+        name: config.label,
+        value: time,
+        percentage: parseFloat(percentage.toFixed(1)),
+        formattedTime: formatDuration(time, {
+          unit: 'seconds',
+          format: 'MM:SS',
+          noPadMinutes: true,
+        }),
+        color: config.color,
+      }
+    })
+  }, [timeInZones, totalDuration])
+
+  const chartData = useMemo(() => data.filter((d) => d.value > 0), [data])
 
   const hasNegligibleData =
     allRelevantEntries.length > filteredEntries.length &&
@@ -141,6 +161,84 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   },
                 }}
               />
+
+        <Box
+          display="flex"
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          gap={2}
+          alignItems="center"
+        >
+          {/* Chart Section */}
+          <Box
+            width={{ xs: '100%', sm: '50%' }}
+            height={200}
+            position="relative"
+            role="img"
+            aria-label={`Donut chart showing heart rate zone distribution. Total duration: ${formatDuration(
+              totalDuration,
+              { unit: 'seconds', format: 'MM:SS', noPadMinutes: true }
+            )}.`}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {chartData.map((entry) => (
+                    <Cell key={`cell-${entry.name}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: number | undefined) =>
+                    [
+                      formatDuration(value || 0, {
+                        unit: 'seconds',
+                        format: 'MM:SS',
+                        noPadMinutes: true,
+                      }),
+                      'Duration',
+                    ] as [string, string]
+                  }
+                  contentStyle={{
+                    borderRadius: theme.shape.borderRadius,
+                    border: `1px solid ${theme.palette.divider}`,
+                    backgroundColor: theme.palette.background.paper,
+                    boxShadow: theme.shadows[3],
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+
+            {/* Center Label */}
+            <Box
+              position="absolute"
+              top={0}
+              left={0}
+              bottom={0}
+              right={0}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              flexDirection="column"
+              sx={{ pointerEvents: 'none' }}
+            >
+              <Typography variant="caption" color="textSecondary">
+                Total
+              </Typography>
+              <Typography variant="h6" fontWeight="bold">
+                {formatDuration(totalDuration, {
+                  unit: 'seconds',
+                  format: 'MM:SS',
+                  noPadMinutes: true,
+                })}
+              </Typography>
             </Box>
           )
         })}

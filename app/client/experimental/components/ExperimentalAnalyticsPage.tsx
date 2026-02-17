@@ -11,19 +11,16 @@ import {
   workoutSessionStorage,
   WorkoutSessionData,
 } from '@/lib/workout-session-storage'
-import { HrZoneName, calculateMaxHr } from '@/lib/shared/hr-zones'
+import { HeartRateZone, calculateMaxHr } from '@/lib/shared/hr-zones'
 
-const defaultTimeInZones: Record<HrZoneName, number> = {
-  [HrZoneName.Idle]: 0,
-  [HrZoneName.Recovery]: 0,
-  [HrZoneName.WarmUp]: 0,
-  [HrZoneName.Aerobic]: 0,
-  [HrZoneName.Cardio]: 0,
-  [HrZoneName.Peak]: 0,
-  [HrZoneName.FatBurn]: 0,
-  [HrZoneName.Max]: 0,
-  [HrZoneName.NoData]: 0,
-  [HrZoneName.Unknown]: 0,
+const defaultTimeInZones: Record<HeartRateZone, number> = {
+  ZONE_0: 0,
+  ZONE_1: 0,
+  ZONE_2: 0,
+  ZONE_3: 0,
+  ZONE_4: 0,
+  ZONE_5: 0,
+  ZONE_6: 0,
 }
 
 // Components
@@ -256,9 +253,7 @@ const ExperimentalAnalyticsPage = () => {
             <CalorieTracker calorieHistory={calorieHistory} />
 
             <ZoneDistribution
-              timeInZones={
-                summaryData.timeInZones as Record<HrZoneName, number>
-              }
+              timeInZones={summaryData.timeInZones}
               totalDuration={duration}
             />
 
