@@ -18,20 +18,22 @@ import { formatDuration } from '@/lib/utils'
 
 interface ZoneDistributionProps {
   timeInZones: Record<HeartRateZone, number>
-  totalDuration: number
 }
 
-const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
-  timeInZones,
-  totalDuration,
-}) => {
+const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
   const theme = useTheme()
+
+  // Calculate total duration from timeInZones to avoid prop drilling discrepancy
+  const calculatedTotalDuration = useMemo(() => {
+    return Object.values(timeInZones).reduce((sum, time) => sum + time, 0)
+  }, [timeInZones])
 
   const allRelevantEntries = useMemo(() => {
     // Sort by intensity (highest to lowest) for the list
     return HR_ZONE_ORDER.map((zone) => {
       const time = timeInZones[zone] || 0
-      const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
+      const percentage =
+        calculatedTotalDuration > 0 ? (time / calculatedTotalDuration) * 100 : 0
       return {
         zone,
         time,
@@ -45,7 +47,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         label: HR_ZONE_CONFIG[zone].label,
       }
     }).filter((item) => item.time > 0) // Basic filter for non-zero time
-  }, [timeInZones, totalDuration])
+  }, [timeInZones, calculatedTotalDuration])
 
   const filteredEntries = useMemo(() => {
     return allRelevantEntries.filter((item) => item.percentage >= 1)
