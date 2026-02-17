@@ -46,14 +46,14 @@ const NAV_ITEMS = [
 export default function BottomNavBar() {
   const pathname = usePathname()
 
-  const value = NAV_ITEMS.findIndex((item) =>
-    item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href)
-  )
-  const activeValue = value === -1 ? 0 : value
+  const activeValue = NAV_ITEMS.findIndex((item) => {
+    if (item.href === '/') return pathname === '/'
+    return pathname === item.href || pathname?.startsWith(`${item.href}/`)
+  })
 
   return (
     <BottomNavigation
-      value={activeValue}
+      value={activeValue === -1 ? false : activeValue}
       showLabels
       sx={{
         width: '100%',

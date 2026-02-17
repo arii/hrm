@@ -19,13 +19,11 @@ jest.mock('next/link', () => {
   }: {
     children: React.ReactNode
     href: string
-  } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
-    return (
-      <a href={href} {...rest}>
-        {children}
-      </a>
-    )
-  }
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  )
   MockLink.displayName = 'MockLink'
   return MockLink
 })
@@ -93,11 +91,13 @@ describe('BottomNavBar', () => {
     expect(analyticsAction).toHaveStyle(`color: ${theme.palette.primary.main}`)
   })
 
-  it('defaults to Dashboard (index 0) when path does not match any items', () => {
+  it('does not highlight any item when path does not match any items', () => {
     ;(usePathname as jest.Mock).mockReturnValue('/unknown-path')
     renderWithTheme(<BottomNavBar />)
 
     const dashboardAction = screen.getByLabelText('Navigate to Dashboard page')
-    expect(dashboardAction).toHaveStyle(`color: ${theme.palette.primary.main}`)
+    expect(dashboardAction).not.toHaveStyle(
+      `color: ${theme.palette.primary.main}`
+    )
   })
 })
