@@ -101,22 +101,26 @@ function getCookieDomain(): string | undefined {
   }
 }
 
+// Define strategies map
+const REFRESH_STRATEGIES: Record<string, (token: string) => Promise<any>> = {
+  spotify: refreshSpotifyToken,
+  strava: refreshStravaToken,
+}
+
 /**
  * Refreshes an expired access token using the refresh token.
  * Supports both Spotify and Strava providers.
  * Invoked by the NextAuth JWT callback when the access token is expired.
  */
 async function refreshAccessToken(token: JWT) {
-  if (token.provider !== 'spotify' && token.provider !== 'strava') {
+  const refresher = REFRESH_STRATEGIES[token.provider as string]
+
+  if (!refresher) {
     return token
   }
+
   try {
-    let refreshedTokens
-    if (token.provider === 'spotify') {
-      refreshedTokens = await refreshSpotifyToken(token.refreshToken as string)
-    } else {
-      refreshedTokens = await refreshStravaToken(token.refreshToken as string)
-    }
+    const refreshedTokens = await refresher(token.refreshToken as string)
 
     // Update the token object with new values from the provider
     return {

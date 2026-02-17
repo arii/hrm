@@ -1,16 +1,31 @@
-// app/api/workout/export/[sessionId]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { generateFIT } from '@/services/exportService'
 import { RouteContext } from '@/lib/types/index'
 import logger from '@/utils/logger'
+import { z } from 'zod'
+import { WorkoutSessionData } from '@/lib/workout-session-storage'
 
 /**
  * API route to export workout session data to Strava.
  * It receives the session data from the client, generates a .fit file,
  * and uploads it to the Strava API.
  */
+
+const ExportPayloadSchema = z.object({
+  hrHistory: z.array(z.object({
+    time: z.number(),
+    hr: z.number()
+  })).min(1),
+  sessionId: z.string().optional(),
+  startTime: z.number(),
+  endTime: z.number().nullable().optional(),
+  averageHr: z.number(),
+  maxHr: z.number(),
+  totalCaloriesBurned: z.number(),
+})
+
 export async function POST(
   req: NextRequest,
   context: RouteContext<{ sessionId: string }>
@@ -37,24 +52,20 @@ export async function POST(
       )
     }
 
-    const workoutData = await req.json()
+    const body = await req.json()
+    const validation = ExportPayloadSchema.safeParse(body)
 
-    // Validate workout data
-    if (
-      !workoutData ||
-      !workoutData.hrHistory ||
-      workoutData.hrHistory.length === 0
-    ) {
-      return NextResponse.json(
-        { error: 'No heart rate data found for this session.' },
-        { status: 400 }
-      )
+    if (!validation.success) {
+      logger.warn({ error: validation.error }, 'Invalid workout data')
+      return NextResponse.json({ error: 'Invalid workout data' }, { status: 400 })
     }
 
-    logger.info({ sessionId }, 'Generating FIT file for export')
+    const workoutData = validation.data
 
-    // Generate FIT file binary
-    const fitBuffer = generateFIT(workoutData)
+    // Consolidated logging and FIT generation
+    logger.info({ sessionId }, 'Generating FIT and uploading to Strava')
+
+    const fitBuffer = generateFIT(workoutData as unknown as WorkoutSessionData)
 
     // Prepare Strava upload
     const formData = new FormData()
@@ -69,8 +80,6 @@ export async function POST(
       'description',
       `Exported from HRM App - Session ${sessionId}`
     )
-
-    logger.info({ sessionId }, 'Uploading workout to Strava')
 
     const stravaResponse = await fetch(
       'https://www.strava.com/api/v3/uploads',

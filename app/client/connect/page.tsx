@@ -127,7 +127,6 @@ export default function ConnectPage() {
     workoutDuration,
     caloriesBurned: preservedCalories,
     resetWorkout: resetWorkoutSession,
-    hasStarted,
     startWorkout,
     pauseWorkout,
     endWorkout,

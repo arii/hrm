@@ -11,6 +11,7 @@ jest.mock('@/utils/logger', () => ({
   default: {
     info: jest.fn(),
     error: jest.fn(),
+    warn: jest.fn(),
   },
 }))
 
@@ -98,7 +99,7 @@ describe('API Route: /api/workout/export/[sessionId]', () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toContain('No heart rate data')
+    expect(data.error).toContain('Invalid workout data')
   })
 
   it('should successfully upload to Strava', async () => {
@@ -109,6 +110,9 @@ describe('API Route: /api/workout/export/[sessionId]', () => {
     const mockWorkoutData = {
       hrHistory: [{ time: 1000, hr: 80 }],
       averageHr: 80,
+      startTime: 1000,
+      maxHr: 120,
+      totalCaloriesBurned: 50,
     }
     const mockFitBuffer = Buffer.from('mock-fit-data')
     const mockStravaResponse = {
@@ -156,6 +160,10 @@ describe('API Route: /api/workout/export/[sessionId]', () => {
     }
     const mockWorkoutData = {
       hrHistory: [{ time: 1000, hr: 80 }],
+      averageHr: 80,
+      startTime: 1000,
+      maxHr: 120,
+      totalCaloriesBurned: 50,
     }
     const mockFitBuffer = Buffer.from('mock-fit-data')
     const mockStravaError = { message: 'Invalid token' }
