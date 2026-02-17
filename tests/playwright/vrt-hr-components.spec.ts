@@ -48,6 +48,7 @@ test.describe('Visual Regression Tests', () => {
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
         ],
+        checkA11y: true,
       })
     })
   })

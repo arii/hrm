@@ -32,6 +32,7 @@ test.describe('WorkoutSummary Component VRT', () => {
     // Mask the duration, since it's dynamic
     await takeScreenshot(workoutSummary, 'workout-summary-active.png', {
       mask: [dashboardPage.getByText(/\d{2}:\d{2}:\d{2}/)],
+      checkA11y: true,
     })
   })
 })

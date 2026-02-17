@@ -35,7 +35,9 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByLabel('Height (cm)').fill('180')
       await mockPage.getByLabel('Gender').fill('female')
       const mockClientForm = mockPage.getByTestId('mock-client-form')
-      await takeScreenshot(mockClientForm, 'mock-hrm-client-form.png')
+      await takeScreenshot(mockClientForm, 'mock-hrm-client-form.png', {
+        checkA11y: true,
+      })
     })
   })
 })

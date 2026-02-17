@@ -66,6 +66,9 @@ const ExperimentalAnalyticsPage = () => {
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
 
+  // State for test readiness
+  const [isReady, setIsReady] = useState(false)
+
   // Load all sessions
   useEffect(() => {
     const loadSessions = async () => {
@@ -106,9 +109,10 @@ const ExperimentalAnalyticsPage = () => {
 
   // Signal when page is ready for testing
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__TEST_READY__ = true
-    }
+    // This effect runs after the component has mounted and committed to the DOM,
+    // ensuring that any initial data fetching or layout calculations are complete
+    // before the test proceeds.
+    setIsReady(true)
   }, [])
 
   /**
@@ -207,7 +211,12 @@ const ExperimentalAnalyticsPage = () => {
   const defaultDate = useMemo(() => new Date(), [])
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
+    <Container
+      maxWidth="lg"
+      sx={{ mt: 4, mb: 4 }}
+      data-testid="dashboard"
+      data-ready={isReady ? 'true' : undefined}
+    >
       {view === 'active' && (
         <>
           <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
