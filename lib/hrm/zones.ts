@@ -12,7 +12,7 @@ import {
 
 export { HrZoneName }
 
-import { HrZone } from '../../types/heart-rate.js'
+import { HrZone } from '../shared/hr-zones.js'
 
 /**
  * Calculates the current heart rate zone, and percentage of max HR.
@@ -30,7 +30,7 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
     return {
       zoneName: HrZoneName.NoData,
       percentage: 0,
-      bpm: 0,
+      value: 0,
     }
   }
 
@@ -42,6 +42,6 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
   return {
     zoneName,
     percentage: percentage,
-    bpm: currentHr,
+    value: currentHr,
   }
 }

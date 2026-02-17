@@ -7,10 +7,10 @@ import { ClientHrmData } from '@/types/websocket'
 
 jest.mock('@/components/HrTile', () => {
   // eslint-disable-next-line react/display-name
-  return (props: { name: string; bpm: number; isDataStale: boolean }) => (
+  return (props: { name: string; value: number; isDataStale: boolean }) => (
     <div data-testid="mock-hr-tile">
       <span data-testid="tile-name">{props.name}</span>
-      <span data-testid="tile-bpm">{props.bpm}</span>
+      <span data-testid="tile-value">{props.value}</span>
       <span data-testid="tile-stale">{String(props.isDataStale)}</span>
     </div>
   )
@@ -48,6 +48,6 @@ describe('HrTileWrapper', () => {
     render(<HrTileWrapper {...mockUser} />)
 
     expect(screen.getByTestId('tile-name')).toHaveTextContent('Test User')
-    expect(screen.getByTestId('tile-bpm')).toHaveTextContent('120')
+    expect(screen.getByTestId('tile-value')).toHaveTextContent('120')
   })
 })
