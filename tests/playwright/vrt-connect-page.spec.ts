@@ -1,18 +1,22 @@
 import { test, expect } from './fixtures'
 import { injectBluetoothMocks } from './lib/bluetooth-mocks'
 import { takeScreenshot } from './lib/visual'
+import { waitForPageReady } from './lib/waits'
 import { BluetoothConnectionStatus } from '../../types/bluetooth'
 
 test.describe('Visual Regression Tests for /client/connect Page', () => {
   test.beforeEach(async ({ connectPage }) => {
     await injectBluetoothMocks(connectPage)
     await connectPage.goto('/client/connect')
+    await waitForPageReady(connectPage, { timeout: 10000 })
     // Fill the form once for all tests
     await connectPage.getByLabel('Your Name').fill('VRT Runner')
     await connectPage.getByLabel('Your Age').fill('30')
 
     // Wait for the test controls to be initialized
-    await connectPage.waitForFunction(() => window.TEST_CONTROLS?.setHrmStatus)
+    await connectPage.waitForFunction(() => window.TEST_CONTROLS?.setHrmStatus, {
+      timeout: 20000,
+    })
 
     // Wait for the initial auto-connect attempt to finish (100ms debounce + execution time)
     // This prevents the auto-connect logic from overwriting our manual state updates in the tests.

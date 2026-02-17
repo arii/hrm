@@ -283,13 +283,16 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'next.config.js'
               - 'playwright.config.ts'
+              - 'tests/**'
+              - 'scripts/**'
             perf:
               - 'tests/playwright/perf-*.spec.ts'
               - 'scripts/ci/run-perf-tests.sh'
 
   script-tests:
     name: 🧪 Script Tests
-    needs: [prepare-env]
+    needs: [prepare-env, changes]
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -621,7 +624,8 @@ jobs:
 
   infra-tests:
     name: 🧪 Infrastructure Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, build-check, changes]
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -705,7 +709,8 @@ jobs:
 
   unit-tests:
     name: 🧪 Unit Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, build-check, changes]
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -784,7 +789,8 @@ jobs:
 
   component-tests:
     name: 🧪 Component Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, build-check, changes]
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -959,7 +965,8 @@ jobs:
 
   visual-tests:
     name: 🧪 Visual Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, build-check, changes]
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
