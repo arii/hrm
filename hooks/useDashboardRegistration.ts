@@ -13,7 +13,6 @@ export const useDashboardRegistration = (player: unknown | null): void => {
   useEffect(() => {
     if (!player) return
 
-    // Register this client as the "Dashboard".
     sendData({ type: 'REGISTER_CLIENT', role: 'dashboard' })
   }, [player, sendData])
 }
