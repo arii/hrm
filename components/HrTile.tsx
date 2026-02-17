@@ -1,8 +1,6 @@
-// File: components/HrTile.tsx
 'use client'
 import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
@@ -11,6 +9,7 @@ import { memo } from 'react'
 import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
+import ControlCard from '@/components/shared/ControlCard'
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 
@@ -28,97 +27,6 @@ const OVERLAY_SX = {
   zIndex: 10,
   borderRadius: 'inherit',
 } as const
-
-const IdentityTier = ({ name }: { name: string }) => (
-  <Box sx={{ pt: 3, textAlign: 'center' }}>
-    <Typography
-      variant="h5"
-      sx={{
-        fontWeight: 900,
-        textTransform: 'uppercase',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        px: 2,
-      }}
-    >
-      {name}
-    </Typography>
-  </Box>
-)
-
-const HeroTier = ({ percentMax }: { percentMax: number }) => (
-  <Box
-    sx={{
-      flexGrow: 1,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}
-  >
-    <Typography
-      data-testid="live-hr-percent"
-      variant="h2"
-      component="div"
-      sx={{
-        fontSize: {
-          xs: 'clamp(5rem, 15vw, 8rem)',
-          sm: 'clamp(8rem, 18vw, 12rem)',
-          md: 'clamp(10rem, 20vw, 15rem)',
-        },
-        fontWeight: 900,
-        lineHeight: 1,
-        fontFamily: HERO_FONT_FAMILY,
-      }}
-    >
-      {percentMax}%
-    </Typography>
-  </Box>
-)
-
-const MetricItem = ({
-  value,
-  label,
-  testId,
-}: {
-  value: React.ReactNode
-  label: string
-  testId?: string
-}) => (
-  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
-    {value}{' '}
-    <Typography
-      component="span"
-      variant="caption"
-      sx={{ fontSize: '1.2rem', opacity: 0.8 }}
-    >
-      {label}
-    </Typography>
-  </Typography>
-)
-
-const DataTier = ({
-  bpm,
-  calories,
-  showName,
-}: {
-  bpm: number | null
-  calories: number
-  showName: boolean
-}) => (
-  <Box
-    sx={{
-      pb: 3,
-      pt: showName ? 0 : 3,
-      display: 'flex',
-      justifyContent: 'center',
-      gap: 4,
-    }}
-  >
-    <MetricItem value={bpm ?? '---'} label="BPM" testId="bpm-value" />
-    <MetricItem value={Math.floor(calories)} label="KCAL" />
-  </Box>
-)
 
 const HrTile = ({
   name,
@@ -149,7 +57,7 @@ const HrTile = ({
 
   return (
     <Tooltip title={tooltipTitle} arrow>
-      <Card
+      <ControlCard
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
@@ -163,6 +71,7 @@ const HrTile = ({
           flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
+          padding: 0,
           opacity: isConnected && !isDataStale ? 1 : 0.6,
           transition: theme.transitions.create('opacity', {
             duration: theme.transitions.duration.short,
@@ -202,11 +111,87 @@ const HrTile = ({
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
+            p: 2,
           }}
         >
-          {showName && <IdentityTier name={name} />}
-          <HeroTier percentMax={percentMax} />
-          <DataTier bpm={bpm} calories={calories} showName={showName} />
+          {showName && (
+            <Box sx={{ pt: 1, textAlign: 'center' }}>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  px: 2,
+                }}
+              >
+                {name}
+              </Typography>
+            </Box>
+          )}
+
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Typography
+              data-testid="live-hr-percent"
+              variant="h2"
+              component="div"
+              sx={{
+                fontSize: {
+                  xs: 'clamp(5rem, 15vw, 8rem)',
+                  sm: 'clamp(8rem, 18vw, 12rem)',
+                  md: 'clamp(10rem, 20vw, 15rem)',
+                },
+                fontWeight: 900,
+                lineHeight: 1,
+                fontFamily: HERO_FONT_FAMILY,
+              }}
+            >
+              {percentMax}%
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              pb: 1,
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 4,
+            }}
+          >
+            <Typography
+              data-testid="bpm-value"
+              variant="h4"
+              sx={{ fontWeight: 800 }}
+            >
+              {bpm ?? '---'}{' '}
+              <Typography
+                component="span"
+                variant="caption"
+                sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+              >
+                BPM
+              </Typography>
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 800 }}>
+              {Math.floor(calories)}{' '}
+              <Typography
+                component="span"
+                variant="caption"
+                sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+              >
+                KCAL
+              </Typography>
+            </Typography>
+          </Box>
         </Box>
 
         <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
@@ -217,7 +202,7 @@ const HrTile = ({
             {zoneConfig.label.toUpperCase()}
           </Typography>
         </Box>
-      </Card>
+      </ControlCard>
     </Tooltip>
   )
 }
