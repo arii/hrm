@@ -156,6 +156,15 @@ jobs:
           echo "COMMIT_HASH=${{ inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
           echo "PR_BRANCH_NAME=$PR_BRANCH_NAME" >> $GITHUB_ENV
 
+          # Define SHAs for Gemini Client (Metric Calculation moved to TS)
+          echo "BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+          echo "HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+
+          # Get REVIEW_COUNT using gh cli
+          # If this fails (e.g. no PR context), default to 0
+          REVIEW_COUNT=$(gh pr view "$PR_NUMBER" --json reviews --jq '.reviews | length' 2>/dev/null || echo 0)
+          echo "REVIEW_COUNT=$REVIEW_COUNT" >> $GITHUB_ENV
+
           echo "PR_DESCRIPTION<<EOF" >> $GITHUB_ENV
           echo "$LATEST_BODY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV

@@ -16,7 +16,11 @@ import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
-import { calculateMaxHr, calculateHrZoneInfo } from '@/lib/shared/hr-zones'
+import {
+  calculateZoneFromMaxHr,
+  calculateMaxHr,
+  toHeartRateZone,
+} from '@/lib/shared/hr-zones'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
@@ -45,14 +49,18 @@ export default function MockPage() {
 
   const sendHrPacket = useCallback(
     (hr: number) => {
-      const { percentage, zone } = calculateHrZoneInfo(hr, age)
+      const { zone, percentage } = calculateZoneFromMaxHr(
+        hr,
+        calculateMaxHr(age)
+      )
+      const heartRateZone = toHeartRateZone(zone)
 
       const message: HrmInputMessage = {
         type: 'HRM_INPUT',
         data: {
           value: hr,
           percentage,
-          zone,
+          zone: heartRateZone,
         },
       }
       sendData(message)
