@@ -11,6 +11,13 @@ import {
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import { toDisplay } from '@/utils/units'
 
+// Mock exportService to avoid importing @garmin/fitsdk which causes issues in Jest environment
+jest.mock('@/services/exportService', () => ({
+  generateFIT: jest.fn(
+    () => new Blob(['test-fit-data'], { type: 'application/octet-stream' })
+  ),
+}))
+
 // Correctly mock the hooks
 jest.mock('@/hooks/useBluetoothHRM', () =>
   jest.fn(() => ({
