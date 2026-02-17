@@ -75,7 +75,7 @@ Your task is to resolve the following merge conflicts intelligently for the file
 ### Instructions:
 1. **Analyze Semantics**: Understand what "HEAD" (Current) and the "Incoming" branch were trying to achieve.
 2. **Preserve Both**: If both sides added valid, non-conflicting code (e.g., different imports, different map keys), KEEP BOTH.
-3. **Select Best**: If logic directly contradicts, choose the more robust/modern implementation (usually Incoming if it's a refactor).
+3. **Select Best**: If logic directly contradicts, choose the more modern implementation (usually Incoming if it's a refactor).
 4. **Output Format**: Return a JSON array where each object contains the \`id\` of the conflict and the \`resolution\` string (the code to replace the conflict block with).
 
 ### Conflicts to Resolve:
