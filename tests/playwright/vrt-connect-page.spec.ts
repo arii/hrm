@@ -78,6 +78,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
       maxDiffPixelRatio: 0.05,
+      disableA11yCheck: true,
     })
   })
 
@@ -94,6 +95,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-no-devices-found.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
+      disableA11yCheck: true,
     })
   })
 
@@ -110,6 +112,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
       maxDiffPixelRatio: 0.05,
+      disableA11yCheck: true,
     })
   })
 })

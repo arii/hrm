@@ -50,7 +50,9 @@ test.describe('Visual Regression Tests', () => {
         name: 'Select Music',
       })
       await selectMusicButton.hover()
-      await takeScreenshot(selectMusicButton, 'select-music-button-hover.png')
+      await takeScreenshot(selectMusicButton, 'select-music-button-hover.png', {
+        disableA11yCheck: true,
+      })
     })
   })
 })
