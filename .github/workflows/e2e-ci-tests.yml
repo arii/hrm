@@ -57,61 +57,12 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          # 1. Establish initial SHA
-          REPO="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          INITIAL_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
-          echo "Initial SHA: $INITIAL_SHA"
-
-          # 2. Trigger bot
+          # Trigger bot
           echo "Triggering bot with @pr-squash comment..."
           gh pr comment $PR_NUMBER --body "@pr-squash"
-          echo "Waiting for squash and rebase to complete..."
+          echo "Triggered bot. Proceeding immediately to watch checks."
 
-          # 3. Wait for SHA to change or success comment
-          MAX_RETRIES=60
-          RETRY_COUNT=0
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
-            if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
-              echo "✅ Bot has pushed changes (New SHA: $CURRENT_SHA)"
-              break
-            fi
-
-            # Fallback: check for the bot's success comment
-            if gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body' | grep -qi "successfully"; then
-              echo "✅ Bot has commented success. Proceeding to watch checks."
-              CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
-              break
-            fi
-
-            echo "Waiting for SHA change or success comment... ($RETRY_COUNT/$MAX_RETRIES)"
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            sleep 15
-          done
-
-          if [ -z "$CURRENT_SHA" ] || [ "$CURRENT_SHA" == "$INITIAL_SHA" ]; then
-            echo "❌ Bot failed to push changes or comment success within timeout."
-            exit 1
-          fi
-
-          # 4. Wait for checks to appear for the new commit.
-          # We add a mandatory 15s delay to allow GitHub's eventually consistent API to index the new push.
-          echo "Waiting 15s for GitHub API to index the new commit..."
-          sleep 15
-          echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
-          MAX_CHECK_RETRIES=60
-          CHECK_RETRY=0
-          while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
-            # Filter checks by name to avoid being confused by older runs
-            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting|success|failure"; then
-              echo "✅ Checks have been registered."
-              break
-            fi
-            echo "Still waiting for checks to be indexed... ($CHECK_RETRY/$MAX_CHECK_RETRIES)"
-            CHECK_RETRY=$((CHECK_RETRY + 1))
-            sleep 10
-          done
-
+          # Efficiently wait for checks to complete
           timeout 900 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash
@@ -209,59 +160,12 @@ jobs:
           BRANCH_B: ${{ env.BRANCH_B }}
         run: |
           set -e
-          # 1. Establish initial SHA
-          REPO="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          INITIAL_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_B" | awk '{print $1}')
-          echo "Initial SHA: $INITIAL_SHA"
-
-          # 2. Trigger bot
+          # Trigger bot
           echo "Triggering bot with @conflict-resolve comment..."
           gh pr comment $PR_NUMBER --body "@conflict-resolve"
-          echo "Waiting for conflict resolver to complete..."
+          echo "Triggered bot. Proceeding immediately to watch checks."
 
-          # 3. Wait for SHA to change or success comment
-          MAX_RETRIES=60
-          RETRY_COUNT=0
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_B" | awk '{print $1}')
-            if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
-              echo "✅ Bot has pushed changes (New SHA: $CURRENT_SHA)"
-              break
-            fi
-
-            # Fallback: check for the bot's success comment
-            if gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body' | grep -qi "Successfully resolved all conflicts"; then
-              echo "✅ Bot has commented success. Proceeding to watch checks."
-              CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_B" | awk '{print $1}')
-              break
-            fi
-
-            echo "Waiting for SHA change or success comment... ($RETRY_COUNT/$MAX_RETRIES)"
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            sleep 15
-          done
-
-          if [ -z "$CURRENT_SHA" ] || [ "$CURRENT_SHA" == "$INITIAL_SHA" ]; then
-            echo "❌ Bot failed to push changes or comment success within timeout."
-            exit 1
-          fi
-
-          # 4. Wait for checks to appear for the new commit
-          echo "Waiting 15s for GitHub API to index the new commit..."
-          sleep 15
-          echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
-          MAX_CHECK_RETRIES=60
-          CHECK_RETRY=0
-          while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
-            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting|success|failure"; then
-              echo "✅ Checks have been registered."
-              break
-            fi
-            echo "Still waiting for checks to be indexed... ($CHECK_RETRY/$MAX_CHECK_RETRIES)"
-            CHECK_RETRY=$((CHECK_RETRY + 1))
-            sleep 10
-          done
-
+          # Efficiently wait for checks to complete
           timeout 900 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Conflict Resolution
@@ -338,59 +242,12 @@ jobs:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
           set -e
-          # 1. Establish initial SHA
-          REPO="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          INITIAL_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
-          echo "Initial SHA: $INITIAL_SHA"
-
-          # 2. Trigger bot
+          # Trigger bot
           echo "Triggering bot with @pr-squash-rebase comment..."
           gh pr comment $PR_NUMBER --body "@pr-squash-rebase"
-          echo "Waiting for squash and rebase to complete..."
+          echo "Triggered bot. Proceeding immediately to watch checks."
 
-          # 3. Wait for SHA to change or success comment
-          MAX_RETRIES=60
-          RETRY_COUNT=0
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
-            if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
-              echo "✅ Bot has pushed changes (New SHA: $CURRENT_SHA)"
-              break
-            fi
-
-            # Fallback: check for the bot's success comment
-            if gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body' | grep -qi "successfully"; then
-              echo "✅ Bot has commented success. Proceeding to watch checks."
-              CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
-              break
-            fi
-
-            echo "Waiting for SHA change or success comment... ($RETRY_COUNT/$MAX_RETRIES)"
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            sleep 15
-          done
-
-          if [ -z "$CURRENT_SHA" ] || [ "$CURRENT_SHA" == "$INITIAL_SHA" ]; then
-            echo "❌ Bot failed to push changes or comment success within timeout."
-            exit 1
-          fi
-
-          # 4. Wait for checks to appear for the new commit
-          echo "Waiting 15s for GitHub API to index the new commit..."
-          sleep 15
-          echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
-          MAX_CHECK_RETRIES=60
-          CHECK_RETRY=0
-          while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
-            if gh pr checks "$PR_NUMBER" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting|success|failure"; then
-              echo "✅ Checks have been registered."
-              break
-            fi
-            echo "Still waiting for checks to be indexed... ($CHECK_RETRY/$MAX_CHECK_RETRIES)"
-            CHECK_RETRY=$((CHECK_RETRY + 1))
-            sleep 10
-          done
-
+          # Efficiently wait for checks to complete
           timeout 900 gh pr checks $PR_NUMBER --watch
 
       - name: Verify Squash and Rebase
