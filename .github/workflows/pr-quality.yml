@@ -59,10 +59,12 @@ jobs:
         shell: bash
         run: |
           PR_NUMBER="${{ inputs.pr_number || github.event.pull_request.number || '' }}"
+          # Sanitize PR_NUMBER to include only digits
+          SAFE_PR_NUMBER=$(echo "$PR_NUMBER" | tr -cd '0-9')
           SHA="${{ github.event.pull_request.head.sha || github.sha }}"
-          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "pr_number=$SAFE_PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-          echo "Determined Context: PR=$PR_NUMBER, SHA=$SHA"
+          echo "Determined Context: PR=$SAFE_PR_NUMBER, SHA=$SHA"
 
       - name: Install jq
         run: |
@@ -1219,7 +1221,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Post Quality Summary with Details
-        if: always() && needs.prepare-env.outputs.pr_number != '' && needs.prepare-env.outputs.pr_number != 'null'
+        if: always() && needs.prepare-env.outputs.pr_number != ''
         env:
           KNIP_RESULT: ${{ needs.knip-check.result }}
           LINT_RESULT: ${{ needs.lint-check.result }}
@@ -1234,10 +1236,6 @@ jobs:
           set +e
 
           PR_NUMBER="${{ needs.prepare-env.outputs.pr_number }}"
-          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
-            echo "::warning::No Pull Request found. Skipping PR comment."
-            exit 0
-          fi
 
           # Function to add log details to the comment body
           add_log_details() {
