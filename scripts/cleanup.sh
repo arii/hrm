@@ -44,7 +44,7 @@ rm -rf "$APP_DIR/dist"
 rm -rf "$APP_DIR/coverage"
 rm -rf "$APP_DIR/test-results"
 rm -rf "$APP_DIR/playwright-report"
-find "$APP_DIR" -name "*.log" -type f -delete
+find "$APP_DIR" -type f -name "*.log" -not -path "*/logs/*" -delete
 find "$APP_DIR" -name "*.backup" -type f -delete
 rm -f "$APP_DIR/nohup.out"
 rm -f "$APP_DIR/diff.txt"
