@@ -1130,13 +1130,6 @@ jobs:
               break
             fi
 
-            # If no relevant checks found on parent, abort waiting immediately
-            if [ "$FOUND_COUNT" -eq 0 ]; then
-               echo "::warning::No relevant checks found on parent commit ($PARENT_SHA). Proceeding to create skipped checks."
-               CHECKS_JSON="[]"
-               break
-            fi
-
             echo "Still waiting... ($IN_PROGRESS_COUNT checks in progress, found $FOUND_COUNT of ~${EXPECTED_COUNT}). Elapsed: ${ELAPSED}s"
             ELAPSED=$((ELAPSED + INTERVAL))
             sleep $INTERVAL
