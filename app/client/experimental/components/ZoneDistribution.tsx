@@ -25,7 +25,6 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 }) => {
   const theme = useTheme()
 
-  // Transform data for Recharts and list display
   const data = useMemo(() => {
     return HR_ZONE_ORDER.map((zoneKey) => {
       const time = timeInZones[zoneKey] || 0

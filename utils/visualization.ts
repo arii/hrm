@@ -4,11 +4,11 @@
  * This ensures clean separation of business logic from React component rendering.
  */
 import { TimerData } from '@/types/websocket'
-import { WorkoutData } from '@/types/index'
+import { WorkoutData, WorkoutColumnsProps } from '@/types/index'
 import { WorkoutItem } from '@/types/workout'
-import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 import {
-  calculateHeartRateZone,
+  calculateZoneFromMaxHr,
+  toHeartRateZone,
   HR_ZONE_CONFIG,
   HeartRateZone,
 } from '@/lib/shared/hr-zones'
@@ -40,13 +40,9 @@ export const getHrZoneProps = (
   currentHr: number,
   maxHr: number
 ): HrZoneProps => {
-<<<<<<< HEAD
-  // 1. Get the core HR data from the shared module
-  const { zoneName, percentage, bpm } = calculateHeartRateZone(currentHr, maxHr)
-=======
-  // 1. Get the core HR data from the domain module
-  const { zoneName, percentage, value } = calculateHrZone(currentHr, maxHr)
->>>>>>> origin/leader
+  // 1. Get the core HR data
+  const { zone, percentage } = calculateZoneFromMaxHr(currentHr, maxHr)
+  const zoneName = toHeartRateZone(zone)
 
   // 2. Look up the UI properties from the centralized config
   const zoneConfig = HR_ZONE_CONFIG[zoneName]
@@ -55,19 +51,11 @@ export const getHrZoneProps = (
   return {
     zone: zoneName,
     percentage: percentage,
-<<<<<<< HEAD
     color: zoneConfig.color,
     progressColor: zoneConfig.color,
     backgroundColor: zoneConfig.color,
     textColor: zoneConfig.textColor,
-    bpm: bpm,
-=======
-    color: zoneUiProps.color,
-    progressColor: zoneUiProps.progressColor,
-    backgroundColor: zoneUiProps.bgColor,
-    textColor: textColor,
-    value: value,
->>>>>>> origin/leader
+    value: currentHr,
   }
 }
 

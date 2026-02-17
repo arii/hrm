@@ -10,7 +10,11 @@ import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-import { calculateHeartRateZone, calculateMaxHr } from '@/lib/shared/hr-zones'
+import {
+  calculateZoneFromMaxHr,
+  calculateMaxHr,
+  toHeartRateZone,
+} from '@/lib/shared/hr-zones'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -211,10 +215,11 @@ export default function ConnectPage() {
     connectionAttempted,
   ])
 
-  const { zoneName: heartRateZone, percentage } = calculateHeartRateZone(
+  const { zone, percentage } = calculateZoneFromMaxHr(
     currentHR,
     calculateMaxHr(userAge)
   )
+  const heartRateZone = toHeartRateZone(zone)
 
   useEffect(() => {
     throttledSend({

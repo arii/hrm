@@ -11,19 +11,14 @@ const HrTileWrapper = (props: HrTileWrapperProps) => {
     <HrTile
       {...props}
       name={props.name || ''}
-<<<<<<< HEAD
-      bpm={props.value}
-      percentMax={props.percentage ?? 0}
+      value={props.value}
+      percentage={props.percentage ?? 0}
       zone={props.zone ?? 'ZONE_0'}
       calories={props.calories}
       isConnected={props.isConnected}
       isDataStale={props.isDataStale}
       isAlerting={props.isAlerting}
       {...(props.alertMessage && { alertMessage: props.alertMessage })}
-=======
-      percentage={props.percentage ?? 0}
-      zone={props.zone ?? 0}
->>>>>>> origin/leader
     />
   )
 }
