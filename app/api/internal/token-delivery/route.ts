@@ -1,7 +1,8 @@
 import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
-import { AccessToken } from '@spotify/web-api-ts-sdk'
+import { SpotifyTokenPayload } from '@/services/spotifyTokenManager'
+import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 
 /**
  * @route POST /api/internal/token-delivery
@@ -16,7 +17,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 export async function POST(req: NextRequest) {
   try {
     // 1. Parse the token from the request body
-    const tokenData = (await req.json()) as AccessToken
+    const tokenData = (await req.json()) as Record<string, unknown>
     if (!tokenData || !tokenData.refresh_token) {
       throw new ApiError(400, 'Bad Request: Missing token data.')
     }
@@ -40,13 +41,32 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Directly and reliably update the service with the new token
-    await global.spotifyService.handleTokenUpdate({
-      ...tokenData,
+    // We explicitly construct the payload to ensure type safety without 'any'.
+    const sub = typeof tokenData.sub === 'string' ? tokenData.sub : 'unknown'
+    if (sub === 'unknown') {
+      logger.warn('Spotify token delivery: user identity (sub) is unknown.')
+    }
+
+    const payload: SpotifyTokenPayload = {
       provider: 'spotify',
-      sub: '',
-      scope: '',
+      sub,
+      access_token:
+        typeof tokenData.access_token === 'string'
+          ? tokenData.access_token
+          : '',
+      refresh_token:
+        typeof tokenData.refresh_token === 'string'
+          ? tokenData.refresh_token
+          : '',
+      expires_in:
+        typeof tokenData.expires_in === 'number'
+          ? tokenData.expires_in
+          : SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
+      scope: typeof tokenData.scope === 'string' ? tokenData.scope : '',
       obtainedAt: Date.now(),
-    })
+    }
+
+    await global.spotifyService.handleTokenUpdate(payload)
     logger.info('Spotify token delivered and processed successfully.')
 
     return NextResponse.json({

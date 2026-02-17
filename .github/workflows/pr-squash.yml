@@ -231,8 +231,9 @@ jobs:
           # Use CI_BOT_PAT if available to ensure workflow is triggered (GITHUB_TOKEN prevents recursion)
           GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           HEAD_BRANCH: ${{ needs.squash-and-rebase.outputs.head_ref }}
+          BASE_BRANCH: ${{ needs.squash-and-rebase.outputs.base_ref }}
           BASE_SHA: ${{ needs.squash-and-rebase.outputs.base_sha }}
           HEAD_SHA: ${{ needs.squash-and-rebase.outputs.squashed_sha }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          gh workflow run "Gemini Orchestrator" --ref "$HEAD_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
+          gh workflow run "Gemini Orchestrator" --ref "$HEAD_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA" -f base_branch="$BASE_BRANCH"
