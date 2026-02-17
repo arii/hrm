@@ -161,22 +161,16 @@ jobs:
           HEAD_SHA="${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}"
 
           echo "Calculating Diff Stats..."
-          # Calculate DIFF_STATS using git diff --shortstat
-          DIFF_STATS=$(git diff --shortstat ${BASE_SHA}...${HEAD_SHA})
-          # Extract insertions and deletions
-          # Handle singular/plural and absence of insertions/deletions
-          INSERTIONS=$(echo "$DIFF_STATS" | grep -oE '[0-9]+ insertion' | awk '{print $1}' || echo 0)
-          DELETIONS=$(echo "$DIFF_STATS" | grep -oE '[0-9]+ deletion' | awk '{print $1}' || echo 0)
-          TOTAL_LOC=$((INSERTIONS + DELETIONS))
-          echo "TOTAL_LOC=$TOTAL_LOC" >> $GITHUB_ENV
+
+          # Calculate TOTAL_LOC using numstat for robustness
+          git diff --numstat ${BASE_SHA}...${HEAD_SHA} | awk '{s+=$1+$2} END {print "TOTAL_LOC=" (s=="" ? 0 : s)}' >> $GITHUB_ENV
 
           # Calculate FILES_CHANGED
-          FILES_CHANGED=$(git diff --name-only ${BASE_SHA}...${HEAD_SHA} | wc -l)
-          echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
+          git diff --name-only ${BASE_SHA}...${HEAD_SHA} | wc -l | awk '{print "FILES_CHANGED=" $1}' >> $GITHUB_ENV
 
           # Calculate CHANGED_AREAS (top-level directories)
-          CHANGED_AREAS=$(git diff --name-only ${BASE_SHA}...${HEAD_SHA} | cut -d/ -f1 | sort | uniq | paste -sd ", " -)
-          echo "CHANGED_AREAS=$CHANGED_AREAS" >> $GITHUB_ENV
+          # Uses awk to robustly handle paths: prints directory name or "." for root files
+          git diff --name-only ${BASE_SHA}...${HEAD_SHA} | awk -F/ '{print (NF>1 ? $1 : ".")}' | sort -u | paste -sd "," - | awk '{print "CHANGED_AREAS=" $0}' >> $GITHUB_ENV
 
           # Get REVIEW_COUNT using gh cli
           # If this fails (e.g. no PR context), default to 0
