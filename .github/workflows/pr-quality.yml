@@ -1114,6 +1114,7 @@ EOF
       - name: Copy checks from parent commit
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_BRANCH: ${{ inputs.branch }}
         run: |
           set -e
           CURRENT_SHA=$(git rev-parse HEAD)
@@ -1140,8 +1141,8 @@ EOF
           git fetch origin "$PARENT_SHA" --depth=1 || (echo "::error::Could not fetch commit ${PARENT_SHA}." && exit 1)
 
           # --- Dynamically determine the list of jobs to copy ---
-          echo "🔎 Determining required checks for branch '${{ github.base_ref }}'..."
-          REQUIRED_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/branches/${{ github.base_ref }}/protection/required_status_checks" --jq '.contexts' || echo "[]")
+          echo "🔎 Determining required checks for branch '$TARGET_BRANCH'..."
+          REQUIRED_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/branches/$TARGET_BRANCH/protection/required_status_checks" --jq '.contexts' || echo "[]")
 
           if [ "$(echo "$REQUIRED_CHECKS_JSON" | jq 'length')" -gt 0 ]; then
             echo "Found protected branch rules. Required checks:"
