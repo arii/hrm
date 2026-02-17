@@ -256,43 +256,9 @@ jobs:
           echo "✅ Test Passed: Leading/Trailing Invalid Chars"
         continue-on-error: true
 
-  changes:
-    name: 🔍 Detect Changes
-    runs-on: ubuntu-latest
-    outputs:
-      app: ${{ steps.filter.outputs.app }}
-      perf: ${{ steps.filter.outputs.perf }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            app:
-              - 'app/**'
-              - 'components/**'
-              - 'constants/**'
-              - 'context/**'
-              - 'hooks/**'
-              - 'lib/**'
-              - 'services/**'
-              - 'utils/**'
-              - 'server.ts'
-              - 'proxy.ts'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'next.config.js'
-              - 'playwright.config.ts'
-              - 'tests/**'
-              - 'scripts/**'
-            perf:
-              - 'tests/playwright/perf-*.spec.ts'
-              - 'scripts/ci/run-perf-tests.sh'
-
   script-tests:
     name: 🧪 Script Tests
-    needs: [prepare-env, changes]
-    if: needs.changes.outputs.app == 'true'
+    needs: [prepare-env]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -500,7 +466,6 @@ jobs:
           NODE_ENV: production
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-          NEXT_PUBLIC_TESTING: 'true'
         shell: bash
         run: |
           set -o pipefail
@@ -625,8 +590,7 @@ jobs:
 
   infra-tests:
     name: 🧪 Infrastructure Tests
-    needs: [prepare-env, knip-check, lint-check, build-check, changes]
-    if: needs.changes.outputs.app == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -710,8 +674,7 @@ jobs:
 
   unit-tests:
     name: 🧪 Unit Tests
-    needs: [prepare-env, knip-check, lint-check, build-check, changes]
-    if: needs.changes.outputs.app == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -790,8 +753,7 @@ jobs:
 
   component-tests:
     name: 🧪 Component Tests
-    needs: [prepare-env, knip-check, lint-check, build-check, changes]
-    if: needs.changes.outputs.app == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -870,13 +832,11 @@ jobs:
 
   perf-tests:
     name: 🧪 Performance Tests
-    needs: [prepare-env, knip-check, lint-check, build-check, changes]
-    if: needs.changes.outputs.app == 'true' || needs.changes.outputs.perf == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-      SKIP_BUILD: true
       NEXTAUTH_URL: http://localhost:3007
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
       PORT: 3007
@@ -966,15 +926,13 @@ jobs:
 
   visual-tests:
     name: 🧪 Visual Tests
-    needs: [prepare-env, knip-check, lint-check, build-check, changes]
-    if: needs.changes.outputs.app == 'true'
+    needs: [prepare-env, knip-check, lint-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-      SKIP_BUILD: true
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
