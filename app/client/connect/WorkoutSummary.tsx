@@ -26,6 +26,7 @@ const WorkoutSummary = ({
 }: WorkoutSummaryProps) => {
   return (
     <Paper
+      data-testid="workout-summary"
       elevation={3}
       sx={{
         p: 2,

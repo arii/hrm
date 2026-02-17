@@ -113,6 +113,17 @@ export default function ConnectPage() {
   )
 
   const {
+    session: persistentSession,
+    status: persistentStatus,
+    addHrData,
+    startWorkout: startPersistentWorkout,
+    endWorkout: endPersistentWorkout,
+    resetWorkout: resetPersistentWorkout,
+  } = useWorkoutSessionManager()
+
+  const [isHrmConnected, setIsHrmConnected] = useState(false)
+
+  const {
     workoutDuration,
     caloriesBurned: preservedCalories,
     resetWorkout: resetWorkoutSession,
@@ -122,18 +133,9 @@ export default function ConnectPage() {
     endWorkout,
     workoutStatus,
   } = useWorkoutSession({
-    isConnected: false, // This will be updated by the useBluetoothHRM hook
+    isConnected: isHrmConnected,
     totalCalories: calories,
   })
-
-  const {
-    session: persistentSession,
-    status: persistentStatus,
-    addHrData,
-    startWorkout: startPersistentWorkout,
-    endWorkout: endPersistentWorkout,
-    resetWorkout: resetPersistentWorkout,
-  } = useWorkoutSessionManager()
 
   const { data: authSession } = useSession()
   const { showSuccess, showError } = useAppSnackbar()
@@ -233,8 +235,16 @@ export default function ConnectPage() {
     userName,
     userAge: userAge || 0,
     onHeartRateUpdate: handleHeartRateUpdate,
-    onConnect: handleStartWorkout, // Use the wrapped function
+    onConnect: () => {
+      setIsHrmConnected(true)
+      handleStartWorkout()
+    },
   })
+
+  // Synchronize HrmConnected state when it changes in the hook (e.g. on disconnect)
+  useEffect(() => {
+    setIsHrmConnected(isConnected)
+  }, [isConnected])
 
   useEffect(() => {
     if (
@@ -290,7 +300,8 @@ export default function ConnectPage() {
   // purposes while still allowing summary display.
   const displayWorkoutControlsStatus =
     persistentStatus === 'finished' ? 'idle' : workoutStatus
-  const isWorkoutSessionActive = hasStarted || persistentStatus === 'finished'
+  const isWorkoutSessionActive =
+    !!persistentSession || persistentStatus === 'finished'
 
   return (
     <ConnectView

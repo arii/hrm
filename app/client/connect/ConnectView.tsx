@@ -380,7 +380,7 @@ export default function ConnectView({
         )}
 
         {isConnected && (
-          <Box sx={{ mt: 2 }}>
+          <Box data-testid="hr-tile" sx={{ mt: 2 }}>
             <HrTile
               name={userName}
               bpm={currentHR}

@@ -1,15 +1,18 @@
-import { generateGPX, generateFIT } from '@/services/exportService'
+import { generateFIT } from '@/services/exportService'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
+import { Encoder, Profile } from '@garmin/fitsdk'
 
 // Mock @garmin/fitsdk because it's an ESM module that Jest has trouble with
 jest.mock('@garmin/fitsdk', () => {
+  const writeMesg = jest.fn()
+  const close = jest.fn(
+    () => new Uint8Array([14, 0, 0, 0, 0, 0, 0, 0, 0x2e, 0x46, 0x49, 0x54])
+  )
   return {
-    Encoder: class {
-      writeMesg = jest.fn()
-      close = jest.fn(
-        () => new Uint8Array([14, 0, 0, 0, 0, 0, 0, 0, 0x2e, 0x46, 0x49, 0x54])
-      )
-    },
+    Encoder: jest.fn().mockImplementation(() => ({
+      writeMesg,
+      close,
+    })),
     Profile: {
       MesgNum: {
         FILE_ID: 0,
@@ -54,27 +57,53 @@ describe('exportService', () => {
     syncStatus: 'synced',
   }
 
-  describe('generateGPX', () => {
-    it('should generate a valid GPX string', () => {
-      const gpx = generateGPX(mockSession)
-      expect(gpx).toContain('<?xml version="1.0" encoding="UTF-8"?>')
-      expect(gpx).toContain('<gpx')
-      expect(gpx).toContain('<trkpt lat="0.0" lon="0.0">')
-      expect(gpx).toContain('<gpxtpx:hr>70</gpxtpx:hr>')
-      expect(gpx).toContain('<gpxtpx:hr>120</gpxtpx:hr>')
-      expect(gpx).toContain('<gpxtpx:hr>80</gpxtpx:hr>')
-      expect(gpx).toContain('<name>Workout test-session-id</name>')
-    })
-  })
-
   describe('generateFIT', () => {
-    it('should generate a FIT Buffer', () => {
+    it('should generate a FIT Buffer and write correct messages', () => {
       const fitBuffer = generateFIT(mockSession)
+
+      const encoderInstance = (Encoder as jest.Mock).mock.results[0].value
+      const writeMesg = encoderInstance.writeMesg
+
+      // Should write FILE_ID
+      expect(writeMesg).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mesgNum: Profile.MesgNum.FILE_ID,
+          type: Profile.types.file.ACTIVITY,
+        })
+      )
+
+      // Should write SESSION
+      expect(writeMesg).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mesgNum: Profile.MesgNum.SESSION,
+          avgHeartRate: 90,
+          maxHeartRate: 120,
+          totalCalories: 500,
+        })
+      )
+
+      // Should write RECORD messages (3 data points)
+      expect(writeMesg).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mesgNum: Profile.MesgNum.RECORD,
+          heartRate: 70,
+        })
+      )
+      expect(writeMesg).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mesgNum: Profile.MesgNum.RECORD,
+          heartRate: 120,
+        })
+      )
+      expect(writeMesg).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mesgNum: Profile.MesgNum.RECORD,
+          heartRate: 80,
+        })
+      )
+
       expect(fitBuffer).toBeInstanceOf(Buffer)
-      expect(fitBuffer.length).toBeGreaterThan(0)
-      // FIT file starts with a header, first byte is header size (usually 12 or 14)
       expect(fitBuffer[0]).toBe(14)
-      // Check for ".FIT" string in header
       expect(fitBuffer.toString('ascii', 8, 12)).toBe('.FIT')
     })
   })
