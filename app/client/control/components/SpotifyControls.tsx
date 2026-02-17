@@ -17,6 +17,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SpotifyCommand } from '@/types/websocket'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
+import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/lib/spotify/constants'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
@@ -87,12 +88,11 @@ const SpotifyControls = () => {
     const playbackVolume = spotifyData.playback.volume_percent
     if (activeDevice && typeof playbackVolume === 'number') {
       const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
-      const GRACE_PERIOD_MS = 600 // Match the debounce + buffer
 
       // Only sync if we haven't sent a volume command recently.
       // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
       // confirming the new state to all clients.
-      if (timeSinceLastVolumeSend > GRACE_PERIOD_MS) {
+      if (timeSinceLastVolumeSend > VOLUME_SYNC_GRACE_PERIOD_MS) {
         if (playbackVolume !== volume) {
           setVolume(playbackVolume)
         }
