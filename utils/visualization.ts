@@ -93,7 +93,7 @@ export interface HrZoneProps {
   progressColor: string // Hex color for MUI components
   backgroundColor: string // Hex color for background
   textColor: string
-  bpm: number
+  value: number
 }
 
 /**
@@ -108,7 +108,7 @@ export const getHrZoneProps = (
   maxHr: number
 ): HrZoneProps => {
   // 1. Get the core HR data from the domain module
-  const { zoneName, percentage, bpm } = calculateHrZone(currentHr, maxHr)
+  const { zoneName, percentage, value } = calculateHrZone(currentHr, maxHr)
 
   // 2. Look up the UI properties from the map
   const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
@@ -134,7 +134,7 @@ export const getHrZoneProps = (
     progressColor: zoneUiProps.progressColor,
     backgroundColor: zoneUiProps.bgColor,
     textColor: textColor,
-    bpm: bpm,
+    value: value,
   }
 }
 

@@ -21,17 +21,20 @@ jobs:
     if: github.event.issue.pull_request
     runs-on: ubuntu-latest
     outputs:
-      is_review: ${{ steps.route.outputs.is_review }}
-      is_squash: ${{ steps.route.outputs.is_squash }}
-      is_resolve: ${{ steps.route.outputs.is_resolve }}
+      is_review: ${{ steps.route.outputs.is_review || 'false' }}
+      is_squash: ${{ steps.route.outputs.is_squash || 'false' }}
+      is_resolve: ${{ steps.route.outputs.is_resolve || 'false' }}
     steps:
       - id: route
         env:
           BODY: ${{ github.event.comment.body }}
         run: |
-          if echo "$BODY" | grep -q "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -q "@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -q "@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
+          # Use case-insensitive grep and ensure outputs are always set if matched.
+          # We check for commands starting at the beginning of a line to avoid accidental triggers
+          # from quotes or descriptive text mentioning the bots.
+          if echo "$BODY" | grep -qiE "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qiE "(^|\r?\n)@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qiE "(^|\r?\n)@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
 
   execute-review:
     needs: [router]
@@ -71,8 +74,7 @@ jobs:
               repo: context.repo.repo,
               comment_id: context.payload.comment.id,
               content: 'eyes'
-            })
-
+            });
       - name: Get PR Details
         id: get_branches
         uses: actions/github-script@v7
