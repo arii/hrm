@@ -12,114 +12,69 @@ on:
 
 jobs:
   test-sanitize-action:
-    name: Test Sanitize String Action
+    name: Test Sanitize (${{ matrix.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Special Chars and Truncation
+            value: 'feature/test-branch/with_special-chars!@#$%^&*()'
+            max_length: '30'
+            expected: 'feature-test-branch-with_speci'
+          - name: Empty String
+            value: ''
+            max_length: '64'
+            expected: ''
+          - name: Already Sanitized
+            value: 'clean-string-123'
+            max_length: '64'
+            expected: 'clean-string-123'
+          - name: Shorter than Max Length
+            value: 'short/string'
+            max_length: '64'
+            expected: 'short-string'
+          - name: Duplicate Hyphens
+            value: 'feature//branch'
+            max_length: '64'
+            expected: 'feature-branch'
+          - name: Trailing Hyphen
+            value: 'feature/branch-'
+            max_length: '64'
+            expected: 'feature-branch'
+          - name: At Max Length
+            value: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
+            max_length: '64'
+            expected: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
+          - name: Only Invalid Chars
+            value: '!@#$%^&*()'
+            max_length: '64'
+            expected: ''
+          - name: Leading/Trailing Invalid Chars
+            value: '!!test-branch!!'
+            max_length: '64'
+            expected: 'test-branch'
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Test - Special Chars and Truncation
-        id: test_special_chars
+      - name: Run Sanitize Action
+        id: sanitize
         uses: ./.github/actions/sanitize-string
         with:
-          value: 'feature/test-branch/with_special-chars!@#$%^&*()'
-          max-length: '30'
+          value: ${{ matrix.value }}
+          max-length: ${{ matrix.max_length }}
 
-      - name: Test - Empty String
-        id: test_empty
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: ''
-          max-length: '64'
-
-      - name: Test - Already Sanitized
-        id: test_clean
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'clean-string-123'
-          max-length: '64'
-
-      - name: Test - Shorter than Max Length
-        id: test_short
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'short/string'
-          max-length: '64'
-
-      - name: Test - Duplicate Hyphens
-        id: test_dupes
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'feature//branch'
-          max-length: '64'
-
-      - name: Test - Trailing Hyphen
-        id: test_trailing
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'feature/branch-'
-          max-length: '64'
-
-      - name: Test - At Max Length
-        id: test_max
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
-          max-length: '64'
-
-      - name: Test - Only Invalid Chars
-        id: test_invalid
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: '!@#$%^&*()'
-          max-length: '64'
-
-      - name: Test - Leading/Trailing Invalid Chars
-        id: test_leading_trailing
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: '!!test-branch!!'
-          max-length: '64'
-
-      - name: Verify All Results
+      - name: Verify Result
         env:
-          RES_SPECIAL: ${{ steps.test_special_chars.outputs.sanitized-value }}
-          RES_EMPTY: ${{ steps.test_empty.outputs.sanitized-value }}
-          RES_CLEAN: ${{ steps.test_clean.outputs.sanitized-value }}
-          RES_SHORT: ${{ steps.test_short.outputs.sanitized-value }}
-          RES_DUPES: ${{ steps.test_dupes.outputs.sanitized-value }}
-          RES_TRAILING: ${{ steps.test_trailing.outputs.sanitized-value }}
-          RES_MAX: ${{ steps.test_max.outputs.sanitized-value }}
-          RES_INVALID: ${{ steps.test_invalid.outputs.sanitized-value }}
-          RES_LEADING_TRAILING: ${{ steps.test_leading_trailing.outputs.sanitized-value }}
+          ACTUAL: ${{ steps.sanitize.outputs.sanitized-value }}
+          EXPECTED: ${{ matrix.expected }}
+          TEST_NAME: ${{ matrix.name }}
         run: |
-          errors=0
-
-          check_result() {
-            local name=$1
-            local actual=$2
-            local expected=$3
-            if [ "$actual" != "$expected" ]; then
-              echo "❌ Test Failed: $name"
-              echo "   Expected: '$expected'"
-              echo "   Actual:   '$actual'"
-              errors=$((errors + 1))
-            else
-              echo "✅ Test Passed: $name"
-            fi
-          }
-
-          check_result "Special Chars and Truncation" "$RES_SPECIAL" "feature-test-branch-with_speci"
-          check_result "Empty String" "$RES_EMPTY" ""
-          check_result "Already Sanitized" "$RES_CLEAN" "clean-string-123"
-          check_result "Shorter than Max Length" "$RES_SHORT" "short-string"
-          check_result "Duplicate Hyphens" "$RES_DUPES" "feature-branch"
-          check_result "Trailing Hyphen" "$RES_TRAILING" "feature-branch"
-          check_result "At Max Length" "$RES_MAX" "a-very-long-string-that-is-exactly-64-characters-long-and-valid"
-          check_result "Only Invalid Chars" "$RES_INVALID" ""
-          check_result "Leading/Trailing Invalid Chars" "$RES_LEADING_TRAILING" "test-branch"
-
-          if [ $errors -ne 0 ]; then
-            echo "---"
-            echo "❌ Total Failures: $errors"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "❌ Test Failed: $TEST_NAME"
+            echo "   Expected: '$EXPECTED'"
+            echo "   Actual:   '$ACTUAL'"
             exit 1
           fi
+          echo "✅ Test Passed: $TEST_NAME"
