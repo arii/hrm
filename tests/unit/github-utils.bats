@@ -113,7 +113,7 @@ export -f gh
   # It should return 0 because it falls back to metadata eventually
   [ "$status" -eq 0 ]
   [[ "$output" == *"Both metadata and diff report 0 changes"* ]]
-  [[ "$output" == *"Metrics polling timed out. Falling back to API metadata."* ]]
+  [[ "$output" == *"Metrics diff empty. Falling back to API metadata."* ]]
   [[ "$output" == *"\"source\": \"metadata\""* ]]
   [[ "$output" == *"\"file_count\": 0"* ]]
 }
