@@ -26,6 +26,12 @@ export type SpotifyTransferPayload = {
   deviceId: string
 }
 
+export type CommandPayload =
+  | SpotifyPlayPayload
+  | SpotifyVolumePayload
+  | SpotifyTransferPayload
+  | SpotifyBasePayload
+
 /**
  * Hook to manage Spotify commands via the unified service bus.
  * Treats 'HRM Web Player' and remote devices as identical targets, routing
@@ -47,32 +53,26 @@ export const useSpotifyCommand = () => {
 
   /**
    * Dispatches a Spotify command via WebSocket.
-   * Overloaded to provide strict type checking for each command's payload.
+   * uses a union type for the payload to avoid `unknown`
    */
   const execute = useCallback(
-    (command: SpotifyCommand, payload?: unknown) => {
-      // Logic: Use active device, or fallback to HRM Web Player
-      const targetDeviceId = activeDevice?.id || hrmPlayer?.id || null
+    <T extends CommandPayload>(command: SpotifyCommand, payload?: T) => {
+      // Explicitly handle deviceId priority: Payload override > Active Device > HRM Player
+      const payloadDeviceId = (payload as SpotifyBasePayload)?.deviceId
+      const resolvedDeviceId =
+        payloadDeviceId || activeDevice?.id || hrmPlayer?.id || undefined
 
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
-        command: command,
-        deviceId: targetDeviceId || undefined,
-        ...(payload as Record<string, unknown>),
+        command,
+        ...payload,
+        deviceId: resolvedDeviceId,
       }
 
       sendData(message)
     },
     [sendData, activeDevice, hrmPlayer]
-  ) as {
-    (command: 'PLAY', payload?: SpotifyPlayPayload): void
-    (command: 'SET_VOLUME', payload: SpotifyVolumePayload): void
-    (command: 'TRANSFER_PLAYBACK', payload: SpotifyTransferPayload): void
-    (
-      command: 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'GET_DEVICES',
-      payload?: SpotifyBasePayload
-    ): void
-  }
+  )
 
   return {
     execute,
@@ -82,5 +82,3 @@ export const useSpotifyCommand = () => {
     isHrmPlayerActive: activeDevice?.name === 'HRM Web Player',
   }
 }
-// Final verification
-// Unified Service Bus Implementation - v2
