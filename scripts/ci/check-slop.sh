@@ -56,18 +56,20 @@ EOF
 
   echo "🤖 Invoking Gemini AI..."
 
-  npx tsx scripts/gemini-client.ts --task-file "$TASK_FILE" --output "$OUTPUT_FILE"
+  pnpm exec tsx scripts/gemini-client.ts --task-file "$TASK_FILE" --output "$OUTPUT_FILE"
 
   if [ -n "$GITHUB_STEP_SUMMARY" ]; then
-      echo "### 🧹 AI Slop Detection Report" >> "$GITHUB_STEP_SUMMARY"
-      cat "$OUTPUT_FILE" >> "$GITHUB_STEP_SUMMARY"
+    cat <<EOF >> "$GITHUB_STEP_SUMMARY"
+### 🧹 AI Slop Detection Report
+$(cat "$OUTPUT_FILE" 2>/dev/null || echo "⚠️ Gemini analysis failed or produced no output.")
 
-      echo "" >> "$GITHUB_STEP_SUMMARY"
-      echo "<details><summary>Raw Slop Report</summary>" >> "$GITHUB_STEP_SUMMARY"
-      echo '```text' >> "$GITHUB_STEP_SUMMARY"
-      cat logs/slop-output.log >> "$GITHUB_STEP_SUMMARY"
-      echo '```' >> "$GITHUB_STEP_SUMMARY"
-      echo "</details>" >> "$GITHUB_STEP_SUMMARY"
+<details><summary>Raw Slop Report</summary>
+
+\`\`\`text
+$(cat logs/slop-output.log)
+\`\`\`
+</details>
+EOF
   fi
 
   exit 1
