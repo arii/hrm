@@ -12,10 +12,8 @@ declare module '@garmin/fitsdk' {
       RECORD = 20,
     }
 
-    // SDK exports these as maps (value -> string), but we need the constants (string -> value).
-    // Since SDK doesn't export them, we can't augment the namespace with values.
-    // However, we can declare that they exist if we were to use them, but we can't because they don't exist at runtime as enums.
-    // So we only declare what exists.
+    // The SDK exports value->string maps at runtime, preventing enum-like usage.
+    // We declare the specific maps available on the Profile object.
     export const types: {
       file: Record<number, string>
       manufacturer: Record<number, string>
