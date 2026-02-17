@@ -105,7 +105,7 @@ describe('HrTile', () => {
     )
   })
 
-  it('suppresses generic names in the Identity Tier', () => {
+  it('suppresses generic names', () => {
     const { rerender } = render(
       <HrTile name="user" bpm={100} percentMax={50} zone="ZONE_1" />
     )
