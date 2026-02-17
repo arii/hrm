@@ -26,6 +26,10 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { downloadBlob } from '@/utils/download'
+import { generateFIT } from '@/services/exportService'
+
+const DEFAULT_USER_AGE = 30
+const DEFAULT_USER_WEIGHT_KG = 70
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -90,7 +94,7 @@ export default function ConnectPage() {
         type: 'HRM_METADATA_UPDATE',
         data: {
           name: userName || 'User',
-          age: userAge || 30,
+          age: userAge || DEFAULT_USER_AGE,
         },
       })
     }
@@ -101,8 +105,8 @@ export default function ConnectPage() {
     processHeartRate,
     reset: resetCalculator,
   } = useCalorieCalculator({
-    age: userAge || 30,
-    weightKg: userWeight || 70,
+    age: userAge || DEFAULT_USER_AGE,
+    weightKg: userWeight || DEFAULT_USER_WEIGHT_KG,
   })
 
   const throttledSend = useMemo(
@@ -155,29 +159,9 @@ export default function ConnectPage() {
 
     setIsExporting(true)
     try {
-      const response = await fetch(
-        `/api/workout/export/${persistentSession.sessionId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(persistentSession),
-        }
-      )
-
-      if (response.ok) {
-        const blob = await response.blob()
-        downloadBlob(blob, `workout_${persistentSession.sessionId}.fit`)
-        showSuccess('Workout successfully exported to FIT file!')
-      } else {
-        const data: unknown = await response.json()
-        const errorMessage =
-          data && typeof data === 'object' && 'error' in data
-            ? String(data.error)
-            : 'Failed to export workout.'
-        showError(errorMessage)
-      }
+      const blob = generateFIT(persistentSession)
+      downloadBlob(blob, `workout_${persistentSession.sessionId}.fit`)
+      showSuccess('Workout successfully exported to FIT file!')
     } catch (error) {
       logger.error({ error }, 'Export failed')
       showError('An error occurred while exporting.')
@@ -190,7 +174,10 @@ export default function ConnectPage() {
     startWorkout()
     // Default to 30 age and 70kg weight if missing to ensure session starts
     // This matches useCalorieCalculator defaults and prevents silent failure
-    startPersistentWorkout(userAge || 30, userWeight || 70)
+    startPersistentWorkout(
+      userAge || DEFAULT_USER_AGE,
+      userWeight || DEFAULT_USER_WEIGHT_KG
+    )
   }, [startWorkout, startPersistentWorkout, userAge, userWeight])
 
   const handleEndWorkout = useCallback(() => {
@@ -305,10 +292,12 @@ export default function ConnectPage() {
   }
 
   // Derive specialized status for ConnectView to simplify its conditional rendering logic.
-  // When a persistent session exists but is finished, we treat it as 'idle' for control
-  // purposes while still allowing summary display.
-  const displayWorkoutControlsStatus =
-    persistentStatus === 'finished' ? 'idle' : workoutStatus
+  const displayWorkoutControlsStatus = (() => {
+    if (persistentStatus === 'finished') return 'idle'
+    if (persistentStatus !== 'idle') return persistentStatus
+    return workoutStatus
+  })()
+
   const isWorkoutSessionActive =
     !!persistentSession || persistentStatus === 'finished'
 
@@ -318,7 +307,11 @@ export default function ConnectPage() {
         unit: 'seconds',
         format: 'HH:MM:SS',
       })}
-      caloriesBurned={preservedCalories}
+      caloriesBurned={
+        persistentSession
+          ? persistentSession.totalCaloriesBurned
+          : preservedCalories
+      }
       userName={userName}
       setUserName={(name) =>
         setUserSettings((prev) => ({ ...prev, userName: name }))
