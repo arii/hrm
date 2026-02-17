@@ -198,7 +198,6 @@ jobs:
       (needs.check-diff.result == 'success' || needs.check-diff.result == 'skipped')
     uses: ./.github/workflows/pr-quality.yml
     with:
-      has_changes: ${{ needs.check-diff.outputs.is_meaningful == 'true' }}
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
       branch: ${{ github.base_ref || inputs.base_branch || inputs.base_ref || 'leader' }}
     secrets:
