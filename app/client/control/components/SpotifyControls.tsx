@@ -16,7 +16,10 @@ import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SpotifyCommand } from '@/types/websocket'
-import { HRM_WEB_PLAYER_NAME, VOLUME_SYNC_GRACE_PERIOD_MS } from '@/constants/spotify'
+import {
+  HRM_WEB_PLAYER_NAME,
+  VOLUME_SYNC_GRACE_PERIOD_MS,
+} from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
