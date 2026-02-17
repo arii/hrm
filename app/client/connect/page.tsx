@@ -182,9 +182,9 @@ export default function ConnectPage() {
 
   const handleStartWorkout = useCallback(() => {
     startWorkout()
-    if (userAge && userWeight) {
-      startPersistentWorkout(userAge, userWeight)
-    }
+    // Default to 30 age and 70kg weight if missing to ensure session starts
+    // This matches useCalorieCalculator defaults and prevents silent failure
+    startPersistentWorkout(userAge || 30, userWeight || 70)
   }, [startWorkout, startPersistentWorkout, userAge, userWeight])
 
   const handleEndWorkout = useCallback(() => {
