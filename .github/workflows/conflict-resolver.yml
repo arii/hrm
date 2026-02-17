@@ -11,8 +11,9 @@ on:
         description: 'The branch to merge from'
         required: true
       pr_number:
-        description: 'The PR number to comment on (required for feedback)'
-        required: true
+        description: 'The PR number to comment on (optional)'
+        required: false
+        default: '0'
   workflow_call:
     inputs:
       target_branch:
@@ -37,7 +38,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Create or update comment
-        if: inputs.pr_number
+        if: inputs.pr_number && inputs.pr_number != '0'
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ inputs.pr_number }}
@@ -91,7 +92,7 @@ jobs:
         id: commit_push
 
       - name: Trigger Gemini Orchestrator
-        if: steps.resolve.outputs.unresolved-files == ''
+        if: steps.resolve.outputs.unresolved-files == '' && inputs.pr_number && inputs.pr_number != '0'
         env:
           # Use CI_BOT_PAT if available to ensure workflow is triggered (GITHUB_TOKEN prevents recursion)
           GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
@@ -100,10 +101,10 @@ jobs:
           BASE_SHA: ${{ steps.validate_branches.outputs.base_sha }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
+          gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA" -f base_branch="$TARGET_BRANCH"
 
       - name: Update comment on success
-        if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number
+        if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number && inputs.pr_number != '0'
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ inputs.pr_number }}
@@ -113,7 +114,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update comment on failure
-        if: failure() || (success() && steps.resolve.outputs.unresolved-files != '')
+        if: (failure() || (success() && steps.resolve.outputs.unresolved-files != '')) && inputs.pr_number && inputs.pr_number != '0'
         uses: peter-evans/create-or-update-comment@v4
         env:
           UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
