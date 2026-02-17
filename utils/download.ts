@@ -1,7 +1,6 @@
-export const downloadBlob = (blob: Blob, filename: string): void => {
+export const downloadBlob = (blob: Blob, filename: string): boolean => {
   if (typeof window === 'undefined') {
-    console.error('downloadBlob called in a non-browser environment')
-    return
+    return false
   }
 
   const url = window.URL.createObjectURL(blob)
@@ -12,8 +11,12 @@ export const downloadBlob = (blob: Blob, filename: string): void => {
   document.body.appendChild(a)
   a.click()
 
+  // Small delay ensures the browser has time to hand off the file before revocation
+  // This is a known workaround for compatibility with older Firefox/Safari versions
   setTimeout(() => {
     window.URL.revokeObjectURL(url)
     document.body.removeChild(a)
-  }, 0)
+  }, 100)
+
+  return true
 }
