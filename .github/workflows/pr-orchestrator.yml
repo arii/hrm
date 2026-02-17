@@ -67,6 +67,14 @@ jobs:
               - '.env*'
               - '.github/**'
               - 'scripts/**'
+              - 'tests/**'
+              - 'stories/**'
+              - '.storybook/**'
+              - 'verification/**'
+              - '*.config.*'
+              - '*.ts'
+              - 'ecosystem.config.cjs'
+              - 'verify_empty_dashboard.py'
 
       - uses: dorny/paths-filter@v3
         if: github.event_name == 'workflow_dispatch'
@@ -93,6 +101,14 @@ jobs:
               - '.env*'
               - '.github/**'
               - 'scripts/**'
+              - 'tests/**'
+              - 'stories/**'
+              - '.storybook/**'
+              - 'verification/**'
+              - '*.config.*'
+              - '*.ts'
+              - 'ecosystem.config.cjs'
+              - 'verify_empty_dashboard.py'
 
       - name: Consolidate Changes
         id: changes
@@ -182,7 +198,6 @@ jobs:
       (needs.check-diff.result == 'success' || needs.check-diff.result == 'skipped')
     uses: ./.github/workflows/pr-quality.yml
     with:
-      has_changes: ${{ needs.check-diff.outputs.is_meaningful == 'true' }}
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
       branch: ${{ github.base_ref || inputs.base_branch || inputs.base_ref || 'leader' }}
     secrets:

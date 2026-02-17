@@ -1,32 +1,31 @@
-You are an expert at identifying technical debt in code. Analyze the following code diff and identify any **existing technical debt in the codebase** that is revealed or highlighted by these changes.
+# Technical Debt Analysis
 
-**Important:** Focus ONLY on existing issues, not on problems introduced in this PR itself. This review is designed to surface pre-existing technical debt that the current changes touch or expose.
+## Task
+Identify **pre-existing** technical debt revealed by the changes in this PR.
 
-**Guidance for Analysis:**
+## Rules
+1.  **Ignore New Issues**: Do not critique the changes in the PR. Focus only on the code that was *already there* but is touched or exposed by this PR.
+2.  **Look For**:
+    - Deprecated patterns.
+    - Architectural violations.
+    - Spaghetti code.
+    - Lack of type safety (e.g., `any`).
 
-- Identify deprecated patterns, outdated approaches, or problematic code structures that existed BEFORE this PR
-- Look for code smells, maintainability issues, or architectural problems in the files being modified
-- Note anti-patterns or suboptimal implementations that this PR interacts with
-- Suggest improvements to existing code, not critiques of the new changes
-- Ignore any issues that are direct results of code changes in this PR
-
-**Output Format (JSON only):**
-Respond with a JSON object containing a list of technical debt issues. Each issue should have the following structure:
-
+## Output Format
+Return a JSON object:
 ```json
 {
   "issues": [
     {
-      "title": "Technical Debt: [A concise, descriptive title of the pre-existing debt]",
-      "description": "[A detailed explanation of the existing technical debt, including why it's a problem and potential solutions. Use Markdown for formatting. Reference the affected code location.]",
-      "fingerprint": "[A unique, stable identifier for this specific piece of technical debt. This could be a combination of the file path and a key part of the code, like a function name or a specific line.]"
+      "title": "Short Title",
+      "description": "Explanation of the debt and potential fix.",
+      "fingerprint": "Unique ID (e.g. filename:function_name)"
     }
   ]
 }
 ```
 
-**Code Diff to Analyze:**
-
+## Diff
 ```diff
 {{diff}}
 ```
