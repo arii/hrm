@@ -6,6 +6,7 @@ import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/lib/spotify/constants'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -147,20 +148,23 @@ const SpotifyDisplay = () => {
   // to prevent local sliders from "jumping" while the user is actively adjusting them.
   useEffect(() => {
     const timeSinceLastSend = Date.now() - lastVolumeSendTimeRef.current
-    const GRACE_PERIOD_MS = 600 // Debounce window plus network buffer
 
     // Only apply grace period if a send is pending and within the window.
     // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
     // confirming the new state to all clients.
     const shouldRespectGracePeriod =
-      hasPendingSendRef.current && timeSinceLastSend < GRACE_PERIOD_MS
+      hasPendingSendRef.current &&
+      timeSinceLastSend < VOLUME_SYNC_GRACE_PERIOD_MS
 
     if (state.isSliding || shouldRespectGracePeriod) {
       return
     }
 
     // Once grace period has elapsed, clear the pending send flag
-    if (hasPendingSendRef.current && timeSinceLastSend >= GRACE_PERIOD_MS) {
+    if (
+      hasPendingSendRef.current &&
+      timeSinceLastSend >= VOLUME_SYNC_GRACE_PERIOD_MS
+    ) {
       hasPendingSendRef.current = false
     }
 
