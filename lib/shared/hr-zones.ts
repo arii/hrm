@@ -97,6 +97,17 @@ export const HR_ZONE_CONFIG: Record<
 }
 
 /**
+ * Union type for heart rate zone keys.
+ */
+export type HeartRateZone = keyof typeof ZONE_THRESHOLDS
+
+export interface HrZone {
+  zoneName: HrZoneName
+  percentage: number
+  value: number
+}
+
+/**
  * Estimates a user's maximum heart rate using the Haskell & Fox formula (220 - age).
  *
  * NOTE: While the Tanaka formula (208 - 0.7 * age) is often more accurate for older adults,

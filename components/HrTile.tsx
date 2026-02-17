@@ -28,10 +28,101 @@ const OVERLAY_SX = {
   borderRadius: 'inherit',
 } as const
 
+const IdentityTier = ({ name }: { name: string }) => (
+  <Box sx={{ pt: 3, textAlign: 'center' }}>
+    <Typography
+      variant="h5"
+      sx={{
+        fontWeight: 900,
+        textTransform: 'uppercase',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        px: 2,
+      }}
+    >
+      {name}
+    </Typography>
+  </Box>
+)
+
+const HeroTier = ({ percentage }: { percentage: number }) => (
+  <Box
+    sx={{
+      flexGrow: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}
+  >
+    <Typography
+      data-testid="live-hr-percent"
+      variant="h2"
+      component="div"
+      sx={{
+        fontSize: {
+          xs: 'clamp(5rem, 15vw, 8rem)',
+          sm: 'clamp(8rem, 18vw, 12rem)',
+          md: 'clamp(10rem, 20vw, 15rem)',
+        },
+        fontWeight: 900,
+        lineHeight: 1,
+        fontFamily: HERO_FONT_FAMILY,
+      }}
+    >
+      {percentage}%
+    </Typography>
+  </Box>
+)
+
+const MetricItem = ({
+  value,
+  label,
+  testId,
+}: {
+  value: React.ReactNode
+  label: string
+  testId?: string
+}) => (
+  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
+    {value}{' '}
+    <Typography
+      component="span"
+      variant="caption"
+      sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+    >
+      {label}
+    </Typography>
+  </Typography>
+)
+
+const DataTier = ({
+  value,
+  calories,
+  showName,
+}: {
+  value: number | null
+  calories: number
+  showName: boolean
+}) => (
+  <Box
+    sx={{
+      pb: 3,
+      pt: showName ? 0 : 3,
+      display: 'flex',
+      justifyContent: 'center',
+      gap: 4,
+    }}
+  >
+    <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
+    <MetricItem value={Math.floor(calories)} label="KCAL" />
+  </Box>
+)
+
 const HrTile = ({
   name,
-  bpm,
-  percentMax,
+  value,
+  percentage,
   zone,
   calories = 0,
   isConnected = true,
@@ -50,7 +141,7 @@ const HrTile = ({
       ? 'Disconnected - Showing last known value'
       : isDataStale
         ? 'Waiting for data...'
-        : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
+        : `Name: ${name}, BPM: ${value}, Kcal: ${calories}, % Max HR: ${percentage}%`
 
   const showName = !isGenericName(name)
 
@@ -60,8 +151,13 @@ const HrTile = ({
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${
+<<<<<<< HEAD
           isConnected ? `${bpm} beats per minute` : 'Disconnected'
         }, ${percentMax}% of maximum, Zone ${zoneConfig.zoneNumber}: ${zoneConfig.label}`}
+=======
+          isConnected ? `${value} beats per minute` : 'Disconnected'
+        }, ${percentage}% of maximum, Zone ${zone ?? 0}: ${zoneConfig.label}`}
+>>>>>>> origin/leader
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
@@ -113,84 +209,9 @@ const HrTile = ({
             p: 2,
           }}
         >
-          {showName && (
-            <Box sx={{ pt: 1, textAlign: 'center' }}>
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  px: 2,
-                }}
-              >
-                {name}
-              </Typography>
-            </Box>
-          )}
-
-          <Box
-            sx={{
-              flexGrow: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Typography
-              data-testid="live-hr-percent"
-              variant="h2"
-              component="div"
-              sx={{
-                fontSize: {
-                  xs: 'clamp(5rem, 15vw, 8rem)',
-                  sm: 'clamp(8rem, 18vw, 12rem)',
-                  md: 'clamp(10rem, 20vw, 15rem)',
-                },
-                fontWeight: 900,
-                lineHeight: 1,
-                fontFamily: HERO_FONT_FAMILY,
-              }}
-            >
-              {percentMax}%
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{
-              pb: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 4,
-            }}
-          >
-            <Typography
-              data-testid="bpm-value"
-              variant="h4"
-              sx={{ fontWeight: 800 }}
-            >
-              {bpm ?? '---'}{' '}
-              <Typography
-                component="span"
-                variant="caption"
-                sx={{ fontSize: '1.2rem', opacity: 0.8 }}
-              >
-                BPM
-              </Typography>
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800 }}>
-              {Math.floor(calories)}{' '}
-              <Typography
-                component="span"
-                variant="caption"
-                sx={{ fontSize: '1.2rem', opacity: 0.8 }}
-              >
-                KCAL
-              </Typography>
-            </Typography>
-          </Box>
+          {showName && <IdentityTier name={name} />}
+          <HeroTier percentage={percentage} />
+          <DataTier value={value} calories={calories} showName={showName} />
         </Box>
 
         <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>

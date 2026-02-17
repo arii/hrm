@@ -29,7 +29,7 @@ export interface HrZoneProps {
   progressColor: string // Hex color for MUI components
   backgroundColor: string // Hex color for background
   textColor: string
-  bpm: number
+  value: number
 }
 
 /**
@@ -40,8 +40,13 @@ export const getHrZoneProps = (
   currentHr: number,
   maxHr: number
 ): HrZoneProps => {
+<<<<<<< HEAD
   // 1. Get the core HR data from the shared module
   const { zoneName, percentage, bpm } = calculateHeartRateZone(currentHr, maxHr)
+=======
+  // 1. Get the core HR data from the domain module
+  const { zoneName, percentage, value } = calculateHrZone(currentHr, maxHr)
+>>>>>>> origin/leader
 
   // 2. Look up the UI properties from the centralized config
   const zoneConfig = HR_ZONE_CONFIG[zoneName]
@@ -50,11 +55,19 @@ export const getHrZoneProps = (
   return {
     zone: zoneName,
     percentage: percentage,
+<<<<<<< HEAD
     color: zoneConfig.color,
     progressColor: zoneConfig.color,
     backgroundColor: zoneConfig.color,
     textColor: zoneConfig.textColor,
     bpm: bpm,
+=======
+    color: zoneUiProps.color,
+    progressColor: zoneUiProps.progressColor,
+    backgroundColor: zoneUiProps.bgColor,
+    textColor: textColor,
+    value: value,
+>>>>>>> origin/leader
   }
 }
 

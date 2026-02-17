@@ -6,6 +6,7 @@ import {
   WorkoutSessionData,
   HrDataPoint,
 } from '../lib/workout-session-storage'
+import { WorkoutStatus } from '@/types/workout'
 import {
   HeartRateZone,
   HR_ZONE_ORDER,
@@ -18,11 +19,9 @@ import { isSessionStale } from '../lib/workout-session'
 
 // --- State, Actions, and Reducer ---
 
-type SessionStatus = 'idle' | 'running' | 'paused' | 'finished'
-
 interface SessionManagerState {
   session: WorkoutSessionData | null
-  status: SessionStatus
+  status: WorkoutStatus
 }
 
 type SessionManagerAction =
