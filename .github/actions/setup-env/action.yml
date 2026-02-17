@@ -5,6 +5,16 @@ description: 'Sets up Node.js and pnpm, installs dependencies and Playwright.'
 runs:
   using: 'composite'
   steps:
+    - name: Install jq
+      shell: bash
+      run: |
+        if ! command -v jq &> /dev/null; then
+          echo "jq not found, installing..."
+          sudo apt-get update && sudo apt-get install -y jq
+        else
+          echo "jq already installed: $(jq --version)"
+        fi
+
     - name: 'Setup pnpm'
       uses: pnpm/action-setup@v4
 

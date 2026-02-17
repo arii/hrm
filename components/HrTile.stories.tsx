@@ -6,8 +6,8 @@ const meta = {
   component: HrTile,
   tags: ['autodocs'],
   argTypes: {
-    percentMax: { control: { type: 'range', min: 0, max: 100 } },
-    bpm: { control: { type: 'number', min: 0, max: 220 } },
+    percentage: { control: { type: 'range', min: 0, max: 100 } },
+    value: { control: { type: 'number', min: 0, max: 220 } },
   },
 } satisfies Meta<typeof HrTile>
 
@@ -17,23 +17,23 @@ type Story = StoryObj<typeof meta>
 export const Resting: Story = {
   args: {
     name: 'User 1',
-    bpm: 65,
-    percentMax: 35,
+    value: 65,
+    percentage: 35,
   },
 }
 
 export const HighIntensity: Story = {
   args: {
     name: 'Athlete A',
-    bpm: 185,
-    percentMax: 95,
+    value: 185,
+    percentage: 95,
   },
 }
 
 export const LongNameTruncation: Story = {
   args: {
     name: 'Christopher "The Machine" Richardson',
-    bpm: 120,
-    percentMax: 60,
+    value: 120,
+    percentage: 60,
   },
 }

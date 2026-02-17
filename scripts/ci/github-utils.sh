@@ -91,21 +91,41 @@ poll_pr_metrics() {
 
       # 2. Fetch live metrics from diff numstat
       # This provides paths and counts in a single efficient call.
+      # We check for --numstat support to avoid errors on older gh versions.
       local numstat
-      numstat=$(retry_command 2 1 gh pr diff "$pr_number" --numstat)
+      local use_numstat=false
+      local diff_cmd=("gh" "pr" "diff" "$pr_number" "--name-only")
+
+      if gh pr diff --help 2>&1 | grep -q -- --numstat; then
+         use_numstat=true
+         diff_cmd=("gh" "pr" "diff" "$pr_number" "--numstat")
+      fi
+
+      numstat=$(retry_command 2 1 "${diff_cmd[@]}")
 
       if [ -n "$numstat" ]; then
-         # Use awk for efficient sum of columns 1 and 2
-         local add=$(echo "$numstat" | awk '{sum+=$1} END {print sum+0}')
-         local del=$(echo "$numstat" | awk '{sum+=$2} END {print sum+0}')
+         local add=0
+         local del=0
+         local files=""
 
-         # Use cut to extract the filename starting from the third column (handles spaces).
-         # Numstat output is typically tab-separated: additions\tdeletions\tpath
-         local files=$(echo "$numstat" | cut -f3-)
+         if [ "$use_numstat" = true ]; then
+             # Numstat output is typically tab-separated: additions\tdeletions\tpath
+             add=$(echo "$numstat" | awk '{sum+=$1} END {print sum+0}')
+             del=$(echo "$numstat" | awk '{sum+=$2} END {print sum+0}')
+             files=$(echo "$numstat" | cut -f3-)
 
-         # Fallback: if cut didn't work (e.g. space-separated), try awk-based extraction for path
-         if [ -z "$files" ] || [ "$(echo "$files" | grep -c .)" -eq 0 ]; then
-            files=$(echo "$numstat" | awk '{ $1=""; $2=""; print $0 }' | sed 's/^[[:space:]]*//')
+             # Fallback: if cut didn't work (e.g. space-separated), try awk-based extraction for path
+             if [ -z "$files" ] || [ "$(echo "$files" | grep -c .)" -eq 0 ]; then
+                files=$(echo "$numstat" | awk '{ $1=""; $2=""; print $0 }' | sed 's/^[[:space:]]*//')
+             fi
+         else
+             # name-only mode: output is just filenames
+             files="$numstat"
+             # Use metadata for counts as fallback since name-only doesn't provide them.
+             # Note: Metadata (gh pr view) comes from the GitHub API and may slightly lag behind
+             # the raw git diff, but it is the best available fallback when --numstat is unsupported.
+             add="$meta_add"
+             del="$meta_del"
          fi
 
          local count=$(echo "$files" | grep -c . || echo "0")
