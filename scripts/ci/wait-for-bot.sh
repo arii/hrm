@@ -8,14 +8,10 @@
 
 set -e
 
-PR_NUMBER="$1"
-BRANCH_NAME="$2"
-INITIAL_SHA="$3"
-
-if [ -z "$PR_NUMBER" ] || [ -z "$BRANCH_NAME" ] || [ -z "$INITIAL_SHA" ]; then
-  echo "Usage: $0 <PR_NUMBER> <BRANCH_NAME> <INITIAL_SHA>"
-  exit 1
-fi
+# Validate arguments using parameter expansion
+PR_NUMBER="${1:?Usage: $0 <PR_NUMBER> <BRANCH_NAME> <INITIAL_SHA>}"
+BRANCH_NAME="${2:?Usage: $0 <PR_NUMBER> <BRANCH_NAME> <INITIAL_SHA>}"
+INITIAL_SHA="${3:?Usage: $0 <PR_NUMBER> <BRANCH_NAME> <INITIAL_SHA>}"
 
 REPO="origin" # Default remote
 
@@ -35,16 +31,17 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   fi
 
   # Fallback: check for the bot's success comment
-  # Using jq -r to handle potentially complex JSON output
   COMMENTS=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body' 2>/dev/null || echo "")
   if echo "$COMMENTS" | grep -qiE "successfully|success"; then
-    echo "✅ Bot has commented success. Proceeding to watch checks."
-    # Re-fetch SHA just in case it updated while we were checking comments
+    # Re-fetch SHA to confirm the update propagated
     CURRENT_SHA=$(git ls-remote "$REPO" "refs/heads/$BRANCH_NAME" | awk '{print $1}')
-    break
+    if [ -n "$CURRENT_SHA" ] && [ "$CURRENT_SHA" != "$INITIAL_SHA" ]; then
+      echo "✅ Bot has commented success and SHA updated."
+      break
+    fi
+    # If SHA hasn't updated yet, we continue looping
   fi
 
-  echo "Waiting for SHA change or success comment... ($RETRY_COUNT/$MAX_RETRIES)"
   RETRY_COUNT=$((RETRY_COUNT + 1))
   sleep 15
 done
@@ -54,17 +51,12 @@ if [ -z "$CURRENT_SHA" ] || [ "$CURRENT_SHA" == "$INITIAL_SHA" ]; then
   exit 1
 fi
 
-# 4. Wait for checks to appear for the new commit.
-# We add a mandatory 15s delay to allow GitHub's eventually consistent API to index the new push.
-echo "Waiting 15s for GitHub API to index the new commit..."
-sleep 15
 echo "Waiting for checks to appear for SHA $CURRENT_SHA..."
 
 MAX_CHECK_RETRIES=60
 CHECK_RETRY=0
 while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
   # Filter checks by name to avoid being confused by older runs
-  # We look for ANY status that indicates a check is present (pending, pass, fail, etc.)
   CHECKS_OUTPUT=$(gh pr checks "$PR_NUMBER" 2>/dev/null || echo "no checks reported")
 
   if echo "$CHECKS_OUTPUT" | grep -v "no checks reported" | grep -qiE "pending|pass|fail|progressing|waiting|success|failure"; then
@@ -72,7 +64,6 @@ while [ $CHECK_RETRY -lt $MAX_CHECK_RETRIES ]; do
     break
   fi
 
-  echo "Still waiting for checks to be indexed... ($CHECK_RETRY/$MAX_CHECK_RETRIES)"
   CHECK_RETRY=$((CHECK_RETRY + 1))
   sleep 10
 done
