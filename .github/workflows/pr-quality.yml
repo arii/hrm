@@ -1053,6 +1053,7 @@ jobs:
           fetch-depth: 0
       - name: Copy checks from parent commit
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TARGET_BRANCH: ${{ inputs.branch }}
         run: |
