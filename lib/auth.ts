@@ -6,6 +6,7 @@ import logger from '@/utils/logger'
 import { getAPIURL } from '../utils/urls'
 import { env } from './env'
 import { refreshSpotifyToken } from './spotify'
+import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -236,7 +237,9 @@ export const authOptions: AuthOptions = {
           ...token,
           accessToken: account.access_token,
           accessTokenExpires:
-            Date.now() + (Number(account.expires_in) || 3600) * 1000,
+            Date.now() +
+            (Number(account.expires_in) || SPOTIFY_DEFAULT_TOKEN_EXPIRY_S) *
+              1000,
           refreshToken: account.refresh_token,
           providerAccountId: account.providerAccountId, // Store ID for reference
           scope: account.scope,
