@@ -255,6 +255,23 @@ Violates **Single Source of Truth Principle** (section: Critical Architectural C
 - `hooks/useWebSocket.ts:23` - WebSocket hook initialization
 ```
 
+### 7. Code Conciseness & Redundancy Prevention
+
+This project prioritizes a lean and maintainable codebase. AI assistants should actively suggest ways to reduce total lines of code (LOC).
+
+**NEVER suggest:**
+
+- Re-implementing functions, hooks, or constants that already exist in the codebase.
+- Adding verbose, obvious, or redundant code/comments.
+- Overly complex logic for simple requirements.
+
+**ALWAYS suggest:**
+
+- Refactoring to reuse existing logic.
+- Solutions that reduce the net LOC (added vs. removed).
+- Simplifying complex functions into smaller, more manageable units.
+- Removing boilerplate or over-specified types that can be inferred.
+
 ## Quick Reference: Anti-Patterns to Avoid
 
 | ❌ AI Slop                                              | ✅ Correct Approach                                                                    |
@@ -267,3 +284,6 @@ Violates **Single Source of Truth Principle** (section: Critical Architectural C
 | "Import with `../../../components/`"                    | "Import with `@/components/`"                                                          |
 | "Add `eslint-disable no-explicit-any`"                  | "Refactor to use proper types"                                                         |
 | "Cast to `any` to access private property"              | "Use `_test_` property pattern for testing"                                            |
+| "Re-implementing `formatDate` helper"                   | "Reuse existing `formatDate` from `lib/utils.ts`"                                      |
+| "Adding verbose comments to obvious code"               | "Keep code self-documenting and remove redundant comments"                             |
+| "Increasing LOC for a simple change"                    | "Look for more concise alternatives to reduce total LOC"                               |
