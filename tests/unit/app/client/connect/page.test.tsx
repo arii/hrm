@@ -195,6 +195,10 @@ describe('ConnectPage', () => {
       data: null,
       status: 'unauthenticated',
     })
+
+    // Mock URL.createObjectURL and revokeObjectURL
+    global.URL.createObjectURL = jest.fn(() => 'blob:test-url')
+    global.URL.revokeObjectURL = jest.fn()
   })
 
   afterEach(() => {
@@ -260,7 +264,7 @@ describe('ConnectPage', () => {
     expect(weightInput).toHaveValue(weightInLbs)
   })
 
-  it('calls the export API when the export button is clicked', async () => {
+  it('calls the export API and downloads when the export button is clicked', async () => {
     const mockSession = {
       sessionId: 'test-session-id',
       hrHistory: [{ time: 1000, hr: 100 }],
@@ -289,18 +293,18 @@ describe('ConnectPage', () => {
     })
 
     mockUseSession.mockReturnValue({
-      data: { provider: 'strava', accessToken: 'test-token' },
+      data: { provider: 'spotify', accessToken: 'test-token' },
       status: 'authenticated',
     })
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
-      json: async () => ({ success: true }),
+      blob: async () => new Blob(['fit data'], { type: 'application/octet-stream' }),
     })
 
     renderWithProviders(<ConnectPage />, { providerProps })
 
     const exportButton = screen.getByRole('button', {
-      name: /Export workout to Strava/i,
+      name: /Download FIT File/i,
     })
     fireEvent.click(exportButton)
 
@@ -316,7 +320,7 @@ describe('ConnectPage', () => {
 
     await waitFor(() => {
       expect(mockShowSuccess).toHaveBeenCalledWith(
-        'Workout successfully exported to Strava!'
+        'Workout successfully exported to FIT file!'
       )
     })
   })
@@ -350,18 +354,18 @@ describe('ConnectPage', () => {
     })
 
     mockUseSession.mockReturnValue({
-      data: { provider: 'strava', accessToken: 'test-token' },
+      data: { provider: 'spotify', accessToken: 'test-token' },
       status: 'authenticated',
     })
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
-      json: async () => ({ error: 'Strava API limit exceeded' }),
+      json: async () => ({ error: 'Export failed' }),
     })
 
     renderWithProviders(<ConnectPage />, { providerProps })
 
     const exportButton = screen.getByRole('button', {
-      name: /Export workout to Strava/i,
+      name: /Download FIT File/i,
     })
     fireEvent.click(exportButton)
 
@@ -370,7 +374,7 @@ describe('ConnectPage', () => {
     })
 
     await waitFor(() => {
-      expect(mockShowError).toHaveBeenCalledWith('Strava API limit exceeded')
+      expect(mockShowError).toHaveBeenCalledWith('Export failed')
     })
   })
 })

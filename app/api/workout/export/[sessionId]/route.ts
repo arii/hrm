@@ -8,9 +8,9 @@ import { z } from 'zod'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 
 /**
- * API route to export workout session data to Strava.
+ * API route to generate and download a FIT file for a workout session.
  * It receives the session data from the client, generates a .fit file,
- * and uploads it to the Strava API.
+ * and returns it as a download.
  */
 
 const ExportPayloadSchema = z.object({
@@ -38,21 +38,11 @@ export async function POST(
     const { sessionId } = await context.params
     const session = await getServerSession(authOptions)
 
-    // Check if user is authenticated and has a Strava token
-    if (!session || !session.accessToken) {
+    // Check if user is authenticated
+    if (!session) {
       return NextResponse.json(
         { error: 'You must be logged in to export workouts.' },
         { status: 401 }
-      )
-    }
-
-    if (session.provider !== 'strava') {
-      return NextResponse.json(
-        {
-          error:
-            'Please log in with Strava to export workouts to your Strava account.',
-        },
-        { status: 400 }
       )
     }
 
@@ -69,55 +59,15 @@ export async function POST(
 
     const workoutData = validation.data
 
-    // Consolidated logging and FIT generation
-    logger.info({ sessionId }, 'Generating FIT and uploading to Strava')
+    logger.info({ sessionId }, 'Generating FIT file for download')
 
     const fitBuffer = generateFIT(workoutData as unknown as WorkoutSessionData)
 
-    // Prepare Strava upload
-    const formData = new FormData()
-    // Strava expects a File/Blob for the 'file' parameter
-    const blob = new Blob([new Uint8Array(fitBuffer)], {
-      type: 'application/octet-stream',
-    })
-    formData.append('file', blob, `workout_${sessionId}.fit`)
-    formData.append('data_type', 'fit')
-    formData.append('activity_type', 'workout')
-    formData.append(
-      'description',
-      `Exported from HRM App - Session ${sessionId}`
-    )
-
-    const stravaResponse = await fetch(
-      'https://www.strava.com/api/v3/uploads',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-        body: formData,
-      }
-    )
-
-    if (!stravaResponse.ok) {
-      const errorData: unknown = await stravaResponse.json()
-      logger.error({ errorData, sessionId }, 'Strava upload failed')
-      return NextResponse.json(
-        { error: 'Failed to upload to Strava', details: errorData },
-        { status: stravaResponse.status }
-      )
-    }
-
-    const result: unknown = await stravaResponse.json()
-    const uploadId =
-      result && typeof result === 'object' && 'id' in result ? result.id : null
-
-    logger.info({ sessionId, uploadId }, 'Strava upload successful')
-
-    return NextResponse.json({
-      success: true,
-      message: 'Workout successfully queued for upload to Strava.',
-      stravaResult: result,
+    return new NextResponse(new Blob([new Uint8Array(fitBuffer)]), {
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="workout_${sessionId}.fit"`,
+      },
     })
   } catch (error) {
     logger.error({ error }, 'Workout export error')

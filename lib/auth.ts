@@ -2,14 +2,11 @@
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import StravaProvider from 'next-auth/providers/strava'
 import logger from '@/utils/logger'
 import { getAPIURL } from '../utils/urls'
 import { env } from './env'
 import { refreshSpotifyToken } from './spotify'
-import { refreshStravaToken } from './strava'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
-import { SpotifyTokenResponse } from '@/types/core'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -102,29 +99,21 @@ function getCookieDomain(): string | undefined {
   }
 }
 
-// Define strategies map
-const REFRESH_STRATEGIES: Record<
-  string,
-  (token: string) => Promise<SpotifyTokenResponse>
-> = {
-  spotify: refreshSpotifyToken,
-  strava: refreshStravaToken,
-}
-
 /**
  * Refreshes an expired access token using the refresh token.
- * Supports both Spotify and Strava providers.
+ * Supports Spotify provider.
  * Invoked by the NextAuth JWT callback when the access token is expired.
  */
 async function refreshAccessToken(token: JWT) {
-  const refresher = REFRESH_STRATEGIES[token.provider as string]
-
-  if (!refresher) {
+  // Only refresh Spotify tokens for now
+  if (token.provider !== 'spotify') {
     return token
   }
 
   try {
-    const refreshedTokens = await refresher(token.refreshToken as string)
+    const refreshedTokens = await refreshSpotifyToken(
+      token.refreshToken as string
+    )
 
     // Update the token object with new values from the provider
     return {
@@ -185,19 +174,6 @@ if (env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET) {
   )
 }
 
-if (env.STRAVA_CLIENT_ID && env.STRAVA_CLIENT_SECRET) {
-  providers.push(
-    StravaProvider({
-      clientId: env.STRAVA_CLIENT_ID,
-      clientSecret: env.STRAVA_CLIENT_SECRET,
-      authorization: {
-        params: {
-          scope: 'activity:write,read',
-        },
-      },
-    })
-  )
-}
 
 export const authOptions: AuthOptions = {
   providers,

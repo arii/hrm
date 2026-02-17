@@ -13,8 +13,6 @@ const envSchema = z
     SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
     SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
     SPOTIFY_CALLBACK_URL: z.string().url().optional(),
-    STRAVA_CLIENT_ID: z.string().min(1).optional(),
-    STRAVA_CLIENT_SECRET: z.string().min(1).optional(),
     INTERNAL_TOKEN_DELIVERY_SECRET: z.string().optional(),
     SPOTIFY_DEBUG: z.string().optional(),
     CI: z.string().optional(),
@@ -70,24 +68,6 @@ const envSchema = z
             'SPOTIFY_CALLBACK_URL is required when SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are set, but it could not be derived from NEXTAUTH_URL.',
         })
       }
-    }
-
-    // Paired validation for Strava credentials
-    if (data.STRAVA_CLIENT_ID && !data.STRAVA_CLIENT_SECRET) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['STRAVA_CLIENT_SECRET'],
-        message:
-          'STRAVA_CLIENT_SECRET is required when STRAVA_CLIENT_ID is set.',
-      })
-    }
-    if (!data.STRAVA_CLIENT_ID && data.STRAVA_CLIENT_SECRET) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['STRAVA_CLIENT_ID'],
-        message:
-          'STRAVA_CLIENT_ID is required when STRAVA_CLIENT_SECRET is set.',
-      })
     }
 
     // Production-ready NEXTAUTH_SECRET validation

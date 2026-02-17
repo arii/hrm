@@ -5,7 +5,7 @@ import Stack from '@mui/material/Stack'
 import WatchLaterIcon from '@mui/icons-material/WatchLater'
 import WhatshotIcon from '@mui/icons-material/Whatshot'
 import Button from '@mui/material/Button'
-import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import DownloadIcon from '@mui/icons-material/Download'
 import CircularProgress from '@mui/material/CircularProgress'
 
 interface WorkoutSummaryProps {
@@ -77,14 +77,14 @@ const WorkoutSummary = ({
                 isExporting ? (
                   <CircularProgress size={20} color="inherit" />
                 ) : (
-                  <CloudUploadIcon />
+                  <DownloadIcon />
                 )
               }
               fullWidth
-              aria-label="Export workout to Strava"
+              aria-label="Download FIT File"
               sx={{ borderRadius: 1 }}
             >
-              {isExporting ? 'Exporting to Strava...' : 'Export to Strava'}
+              {isExporting ? 'Generating FIT...' : 'Download FIT File'}
             </Button>
           </Box>
         )}
