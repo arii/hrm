@@ -65,7 +65,7 @@ export default function MockPage() {
     (hr: number) => {
       const { zone, percentage } = calculateZoneFromMaxHr(
         hr,
-        calculateMaxHr(age)
+        calculateMaxHr(ageNum)
       )
       const heartRateZone = toHeartRateZone(zone)
 
@@ -79,7 +79,7 @@ export default function MockPage() {
       }
       sendData(message)
     },
-    [sendData, age]
+    [sendData, ageNum]
   )
 
   const sendMetadataPacket = useCallback(() => {
