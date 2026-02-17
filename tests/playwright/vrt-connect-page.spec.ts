@@ -14,9 +14,12 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await connectPage.getByLabel('Your Age').fill('30')
 
     // Wait for the test controls to be initialized
-    await connectPage.waitForFunction(() => window.TEST_CONTROLS?.setHrmStatus, {
-      timeout: 20000,
-    })
+    await connectPage.waitForFunction(
+      () => window.TEST_CONTROLS?.setHrmStatus,
+      {
+        timeout: 20000,
+      }
+    )
 
     // Wait for the initial auto-connect attempt to finish (100ms debounce + execution time)
     // This prevents the auto-connect logic from overwriting our manual state updates in the tests.
