@@ -13,12 +13,6 @@ import {
   workoutSessionStorage,
   WorkoutSessionData,
   HrDataPoint,
-<<<<<<< HEAD
-} from '../lib/workout-session-storage'
-import { WorkoutStatus } from '@/types/workout'
-import {
-=======
->>>>>>> 49c2b7c1 (refactor: consolidate redundant hooks and components)
   HrZoneName,
 } from '@/lib/workout-session-storage'
 import { calculateZoneFromMaxHr, getHrZoneLabel } from '@/lib/shared/hr-zones'
@@ -26,13 +20,6 @@ import { isSessionStale } from '@/lib/workout-session'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import logger from '@/utils/logger'
 
-<<<<<<< HEAD
-// --- State, Actions, and Reducer ---
-
-interface SessionManagerState {
-  session: WorkoutSessionData | null
-  status: WorkoutStatus
-=======
 interface WorkoutSessionState {
   status: WorkoutStatus
   startTime: number | null
@@ -40,11 +27,7 @@ interface WorkoutSessionState {
   totalPausedTime: number
   isInitialized: boolean
   session: WorkoutSessionData | null
-<<<<<<< HEAD
->>>>>>> 49c2b7c1 (refactor: consolidate redundant hooks and components)
-=======
   savedTotalCalories: number // Calories frozen when workout ends
->>>>>>> 3fce102f (refactor: consolidate redundant hooks and components (v2))
 }
 
 type WorkoutAction =

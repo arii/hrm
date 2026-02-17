@@ -3,27 +3,6 @@
 
 import { TimerMode, TimerPhase } from './core'
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-export interface HrTileProps {
-  value: number | null
-  percentage: number
-  zone?: number
-  name: string
-  calories?: number
-  isConnected?: boolean
-  isDataStale?: boolean
-
-  // NEW: Flag to trigger the visual diagnostic state
-  isAlerting?: boolean
-  // NEW: Message to display in the overlay when alerting
-  alertMessage?: string
-}
-=======
->>>>>>> 64affb28 (refactor: address PR feedback and fix build/lint issues)
-
-=======
->>>>>>> 5b2d5291 (refactor: address final lint feedback and project cleanup)
 export interface HeartRateZonesProps {
   maxHr: number
 }
