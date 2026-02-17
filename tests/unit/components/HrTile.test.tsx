@@ -111,7 +111,9 @@ describe('HrTile', () => {
     )
     expect(screen.queryByText(/user/i)).not.toBeInTheDocument()
 
-    rerender(<HrTile name="New User" value={100} percentage={50} zone="ZONE_1" />)
+    rerender(
+      <HrTile name="New User" value={100} percentage={50} zone="ZONE_1" />
+    )
     expect(screen.queryByText(/new user/i)).not.toBeInTheDocument()
 
     rerender(<HrTile name="Jules" value={100} percentage={50} zone="ZONE_1" />)
