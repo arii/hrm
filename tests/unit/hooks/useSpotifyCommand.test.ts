@@ -51,8 +51,18 @@ describe('useSpotifyCommand', () => {
       mockedUseWebSocket.mockReturnValue({
         spotifyData: {
           devices: [
-            { id: 'active-device', name: 'Active Speaker', is_active: true, volume_percent: 50 },
-            { id: 'hrm-device', name: HRM_WEB_PLAYER_NAME, is_active: false, volume_percent: 50 },
+            {
+              id: 'active-device',
+              name: 'Active Speaker',
+              is_active: true,
+              volume_percent: 50,
+            },
+            {
+              id: 'hrm-device',
+              name: HRM_WEB_PLAYER_NAME,
+              is_active: false,
+              volume_percent: 50,
+            },
           ],
         },
         sendData: sendDataMock,
@@ -65,18 +75,30 @@ describe('useSpotifyCommand', () => {
         result.current.execute('PLAY', { deviceId: 'target-device' })
       })
 
-      expect(sendDataMock).toHaveBeenCalledWith(expect.objectContaining({
-        command: 'PLAY',
-        deviceId: 'target-device',
-      }))
+      expect(sendDataMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'PLAY',
+          deviceId: 'target-device',
+        })
+      )
     })
 
     it('Priority 2: Active Device is used if no payload deviceId', () => {
       mockedUseWebSocket.mockReturnValue({
         spotifyData: {
           devices: [
-            { id: 'active-device', name: 'Active Speaker', is_active: true, volume_percent: 50 },
-            { id: 'hrm-device', name: HRM_WEB_PLAYER_NAME, is_active: false, volume_percent: 50 },
+            {
+              id: 'active-device',
+              name: 'Active Speaker',
+              is_active: true,
+              volume_percent: 50,
+            },
+            {
+              id: 'hrm-device',
+              name: HRM_WEB_PLAYER_NAME,
+              is_active: false,
+              volume_percent: 50,
+            },
           ],
         },
         sendData: sendDataMock,
@@ -89,18 +111,30 @@ describe('useSpotifyCommand', () => {
         result.current.execute('PAUSE')
       })
 
-      expect(sendDataMock).toHaveBeenCalledWith(expect.objectContaining({
-        command: 'PAUSE',
-        deviceId: 'active-device',
-      }))
+      expect(sendDataMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'PAUSE',
+          deviceId: 'active-device',
+        })
+      )
     })
 
     it('Priority 3: HRM Web Player is used if no payload deviceId and no active device', () => {
       mockedUseWebSocket.mockReturnValue({
         spotifyData: {
           devices: [
-            { id: 'inactive-speaker', name: 'Inactive Speaker', is_active: false, volume_percent: 50 },
-            { id: 'hrm-device', name: HRM_WEB_PLAYER_NAME, is_active: false, volume_percent: 50 },
+            {
+              id: 'inactive-speaker',
+              name: 'Inactive Speaker',
+              is_active: false,
+              volume_percent: 50,
+            },
+            {
+              id: 'hrm-device',
+              name: HRM_WEB_PLAYER_NAME,
+              is_active: false,
+              volume_percent: 50,
+            },
           ],
         },
         sendData: sendDataMock,
@@ -113,10 +147,12 @@ describe('useSpotifyCommand', () => {
         result.current.execute('NEXT')
       })
 
-      expect(sendDataMock).toHaveBeenCalledWith(expect.objectContaining({
-        command: 'NEXT',
-        deviceId: 'hrm-device',
-      }))
+      expect(sendDataMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'NEXT',
+          deviceId: 'hrm-device',
+        })
+      )
     })
 
     it('Priority 4: Returns undefined if no devices available', () => {
@@ -133,29 +169,33 @@ describe('useSpotifyCommand', () => {
         result.current.execute('PREVIOUS')
       })
 
-      expect(sendDataMock).toHaveBeenCalledWith(expect.objectContaining({
-        command: 'PREVIOUS',
-        deviceId: undefined,
-      }))
+      expect(sendDataMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'PREVIOUS',
+          deviceId: undefined,
+        })
+      )
     })
   })
 
   describe('Payload Handling', () => {
     it('Merges payload properties with command', () => {
-       const { result } = renderHook(() => useSpotifyCommand())
+      const { result } = renderHook(() => useSpotifyCommand())
 
-       act(() => {
-         result.current.execute('PLAY', {
-           contextUri: 'spotify:album:123',
-           offset: { position: 5 }
-         })
-       })
+      act(() => {
+        result.current.execute('PLAY', {
+          contextUri: 'spotify:album:123',
+          offset: { position: 5 },
+        })
+      })
 
-       expect(sendDataMock).toHaveBeenCalledWith(expect.objectContaining({
-         command: 'PLAY',
-         contextUri: 'spotify:album:123',
-         offset: { position: 5 }
-       }))
+      expect(sendDataMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'PLAY',
+          contextUri: 'spotify:album:123',
+          offset: { position: 5 },
+        })
+      )
     })
 
     it('Ensures deviceId property exists in message even if resolved to undefined', () => {
@@ -171,10 +211,12 @@ describe('useSpotifyCommand', () => {
       })
 
       // The resolvedDeviceId will be undefined, but the property should be present
-      expect(sendDataMock).toHaveBeenCalledWith(expect.objectContaining({
-        command: 'PLAY',
-        deviceId: undefined
-      }))
+      expect(sendDataMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'PLAY',
+          deviceId: undefined,
+        })
+      )
     })
   })
 
