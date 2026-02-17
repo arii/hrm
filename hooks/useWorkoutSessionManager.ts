@@ -27,13 +27,6 @@ import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useAppSnackbar } from './useAppSnackbar'
 import { isSessionStale } from '../lib/workout-session'
 
-<<<<<<< HEAD
-// --- State, Actions, and Reducer ---
-
-interface SessionManagerState {
-  session: WorkoutSessionData | null
-  status: WorkoutStatus
-=======
 interface WorkoutSessionState {
   status: WorkoutStatus
   startTime: number | null
@@ -41,11 +34,7 @@ interface WorkoutSessionState {
   totalPausedTime: number
   isInitialized: boolean
   session: WorkoutSessionData | null
-<<<<<<< HEAD
->>>>>>> 49c2b7c1 (refactor: consolidate redundant hooks and components)
-=======
   savedTotalCalories: number // Calories frozen when workout ends
->>>>>>> 3fce102f (refactor: consolidate redundant hooks and components (v2))
 }
 
 type WorkoutAction =

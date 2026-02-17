@@ -30,11 +30,7 @@ export const estimateCaloriesBurned = ({
   age,
   weightKg,
   durationMinutes,
-<<<<<<< HEAD
   gender = 'NEUTRAL',
-=======
-  gender = 'FEMALE',
->>>>>>> 6df5cbe0 (Refactor: Consolidate redundant hooks and components)
 }: CalorieEstimationParams): number => {
   if (durationMinutes <= 0 || heartRate < 30) {
     return 0
@@ -43,12 +39,7 @@ export const estimateCaloriesBurned = ({
   // Karvonen formula - gender-specific coefficients
   let caloriesPerMinute: number
 
-<<<<<<< HEAD
   if (gender === 'MALE') {
-=======
-  const normalizedGender = gender?.toLowerCase()
-  if (normalizedGender === 'male') {
->>>>>>> 72f4f3ce (Refactor: Consolidate redundant hooks and components)
     caloriesPerMinute =
       (-55.0969 + 0.6309 * heartRate + 0.1988 * weightKg + 0.2017 * age) / 4.184
   } else {

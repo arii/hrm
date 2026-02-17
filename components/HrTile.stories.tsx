@@ -19,6 +19,7 @@ export const Resting: Story = {
     name: 'User 1',
     value: 65,
     percentage: 35,
+    zone: 1,
   },
 }
 
@@ -27,10 +28,7 @@ export const HighIntensity: Story = {
     name: 'Athlete A',
     value: 185,
     percentage: 95,
-<<<<<<< HEAD
-=======
     zone: 5,
->>>>>>> be5484dc (refactor: consolidate redundant hooks and components)
   },
 }
 
@@ -39,9 +37,6 @@ export const LongNameTruncation: Story = {
     name: 'Christopher "The Machine" Richardson',
     value: 120,
     percentage: 60,
-<<<<<<< HEAD
-=======
     zone: 3,
->>>>>>> be5484dc (refactor: consolidate redundant hooks and components)
   },
 }

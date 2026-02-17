@@ -3,20 +3,12 @@
 import { useCallback, useRef, useEffect, useReducer } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 import { CalorieDataPoint } from '../lib/workout-session-storage'
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { Gender } from '@/types/core'
-=======
-import { Gender } from '@/types/user'
-=======
-import { Gender } from '@/types/core'
->>>>>>> 72f4f3ce (Refactor: Consolidate redundant hooks and components)
 import {
   MAX_CALORIES_PER_WORKOUT,
   MIN_HR_FOR_CALORIE_CALCULATION,
   TIME_GAP_THRESHOLD_SECONDS,
 } from '@/constants/calorie-thresholds'
->>>>>>> be5484dc (refactor: consolidate redundant hooks and components)
 
 interface CalorieTrackerProps {
   age: number
@@ -86,16 +78,8 @@ function calorieReducer(
 export const useCalorieTracker = ({
   age,
   weightKg,
-<<<<<<< HEAD
-<<<<<<< HEAD
   gender = 'NEUTRAL',
-=======
-  gender = 'neutral',
-=======
-  gender = 'FEMALE',
->>>>>>> 72f4f3ce (Refactor: Consolidate redundant hooks and components)
   smoothingWindow = 5,
->>>>>>> be5484dc (refactor: consolidate redundant hooks and components)
 }: CalorieTrackerProps) => {
   const [state, dispatch] = useReducer(calorieReducer, initialState)
   const lastTimestampRef = useRef<number | null>(null)
@@ -141,11 +125,6 @@ export const useCalorieTracker = ({
 
       const dtSeconds = (now - lastTimestampRef.current) / 1000
 
-      /**
-       * Time gap validation and HR thresholding:
-       * - Only process heart rate data if the gap is within TIME_GAP_THRESHOLD_SECONDS.
-       * - Only process if smoothed HR is above MIN_HR_FOR_CALORIE_CALCULATION.
-       */
       if (
         dtSeconds > 0 &&
         dtSeconds < TIME_GAP_THRESHOLD_SECONDS &&
