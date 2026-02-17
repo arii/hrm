@@ -42,6 +42,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       'connect-page-checking-saved-devices.png',
       {
         mask: [connectPage.getByTestId('user-settings-form')],
+        checkA11y: true,
       }
     )
   })
@@ -61,6 +62,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     // Mask the dynamic HR tile to prevent flakes
     await takeScreenshot(connectPage, 'connect-page-connected.png', {
       mask: [connectPage.getByTestId('hr-tile')],
+      checkA11y: true,
     })
   })
 
@@ -78,8 +80,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
       maxDiffPixelRatio: 0.05,
-      // Performance: Skip repeated a11y checks for error states as the core UI is already validated
-      disableA11yCheck: true,
     })
   })
 
@@ -96,8 +96,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-no-devices-found.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
-      // Performance: Skip redundant a11y checks for similar disconnected states
-      disableA11yCheck: true,
     })
   })
 
@@ -114,8 +112,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
       maxDiffPixelRatio: 0.05,
-      // Performance: Skip a11y check for this specific error variant; primary state is covered
-      disableA11yCheck: true,
     })
   })
 })

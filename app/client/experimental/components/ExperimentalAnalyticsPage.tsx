@@ -104,13 +104,6 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [connectionStatus, userSettings, sendData])
 
-  // Signal when page is ready for testing
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__TEST_READY__ = true
-    }
-  }, [])
-
   /**
    * FIX: Use ref to avoid interval reset on HR updates (addresses audit issue #1)
    * This prevents the interval from being recreated on every hrmData change
@@ -207,7 +200,12 @@ const ExperimentalAnalyticsPage = () => {
   const defaultDate = useMemo(() => new Date(), [])
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
+    <Container
+      maxWidth="lg"
+      sx={{ mt: 4, mb: 4 }}
+      data-testid="dashboard"
+      data-ready="true"
+    >
       {view === 'active' && (
         <>
           <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
