@@ -5,6 +5,7 @@ import {
   GenerateContentRequest,
 } from '@google/generative-ai'
 import { readFile, writeFile } from 'fs/promises'
+import { execSync } from 'child_process'
 import path from 'path'
 import { runConflictResolution } from './conflict-resolver'
 
@@ -451,6 +452,56 @@ function parseFailedChecks(jsonStr: string | undefined): FailedCheck[] {
 
 type ReviewDepth = 'detailed' | 'standard' | 'focused'
 
+function getContextMetrics(baseSha: string, headSha: string) {
+  try {
+    // 1. Calculate Total LOC
+    // git diff --numstat returns lines like: "added deleted filename"
+    const diffStat = execSync(
+      `git diff --numstat ${baseSha}...${headSha}`
+    ).toString()
+    const totalLoc = diffStat
+      .split('\n')
+      .filter((line) => line.trim() !== '')
+      .reduce((acc, line) => {
+        const parts = line.split('\t')
+        // numstat can return '-' for binary files, treat as 0
+        const added = parts[0] === '-' ? 0 : parseInt(parts[0] || '0')
+        const deleted = parts[1] === '-' ? 0 : parseInt(parts[1] || '0')
+        return acc + added + deleted
+      }, 0)
+
+    // 2. Calculate Files Changed
+    const filesChanged = diffStat
+      .split('\n')
+      .filter((line) => line.trim() !== '').length
+
+    // 3. Calculate Changed Areas (top-level directories)
+    // git diff --name-only returns filenames
+    const fileNames = execSync(
+      `git diff --name-only ${baseSha}...${headSha}`
+    ).toString()
+
+    const areasSet = new Set<string>()
+    fileNames
+      .split('\n')
+      .filter((line) => line.trim() !== '')
+      .forEach((file) => {
+        const parts = file.split('/')
+        if (parts.length > 1) {
+          areasSet.add(parts[0])
+        } else {
+          areasSet.add('.')
+        }
+      })
+    const changedAreas = Array.from(areasSet).sort().join(', ')
+
+    return { totalLoc, filesChanged, changedAreas }
+  } catch (e) {
+    console.warn('Warning: Failed to calculate git metrics:', e)
+    return { totalLoc: 0, filesChanged: 0, changedAreas: '' }
+  }
+}
+
 function getReviewContextFromEnv(): ReviewContext {
   const failedChecks = parseFailedChecks(process.env.FAILED_CHECKS_JSON)
   const reviewDepth = process.env.REVIEW_DEPTH
@@ -460,6 +511,11 @@ function getReviewContextFromEnv(): ReviewContext {
     return ['detailed', 'standard', 'focused'].includes(depth || '')
   }
 
+  // Calculate metrics using git directly instead of relying on fragile shell scripts in YAML
+  const baseSha = process.env.BASE_SHA || 'HEAD^'
+  const headSha = process.env.HEAD_SHA || 'HEAD'
+  const metrics = getContextMetrics(baseSha, headSha)
+
   return {
     prNumber: process.env.PR_NUMBER || '',
     prTitle: process.env.PR_TITLE || '',
@@ -467,10 +523,10 @@ function getReviewContextFromEnv(): ReviewContext {
     prDescription: process.env.PR_DESCRIPTION || '',
     prLabels: process.env.PR_LABELS || '',
     prBranchName: process.env.PR_BRANCH_NAME || '',
-    filesChanged: parseInt(process.env.FILES_CHANGED || '0'),
-    totalLoc: parseInt(process.env.TOTAL_LOC || '0'),
+    filesChanged: metrics.filesChanged,
+    totalLoc: metrics.totalLoc,
     reviewDepth: isValidReviewDepth(reviewDepth) ? reviewDepth : 'standard',
-    changedAreas: process.env.CHANGED_AREAS || '',
+    changedAreas: metrics.changedAreas,
     reviewCount: parseInt(process.env.REVIEW_COUNT || '0'),
     resolvedCount: parseInt(process.env.RESOLVED_COUNT || '0'),
     changesRequested: parseInt(process.env.CHANGES_REQUESTED || '0'),

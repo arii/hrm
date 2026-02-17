@@ -156,21 +156,9 @@ jobs:
           echo "COMMIT_HASH=${{ inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
           echo "PR_BRANCH_NAME=$PR_BRANCH_NAME" >> $GITHUB_ENV
 
-          # Added by repair-pr logic: Calculate metrics for Gemini
-          BASE_SHA="${{ inputs.base_sha || github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}"
-
-          echo "Calculating Diff Stats..."
-
-          # Calculate TOTAL_LOC using numstat for robustness
-          git diff --numstat ${BASE_SHA}...${HEAD_SHA} | awk '{s+=$1+$2} END {print "TOTAL_LOC=" (s=="" ? 0 : s)}' >> $GITHUB_ENV
-
-          # Calculate FILES_CHANGED
-          git diff --name-only ${BASE_SHA}...${HEAD_SHA} | wc -l | awk '{print "FILES_CHANGED=" $1}' >> $GITHUB_ENV
-
-          # Calculate CHANGED_AREAS (top-level directories)
-          # Uses awk to robustly handle paths: prints directory name or "." for root files
-          git diff --name-only ${BASE_SHA}...${HEAD_SHA} | awk -F/ '{print (NF>1 ? $1 : ".")}' | sort -u | paste -sd "," - | awk '{print "CHANGED_AREAS=" $0}' >> $GITHUB_ENV
+          # Define SHAs for Gemini Client (Metric Calculation moved to TS)
+          echo "BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+          echo "HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
 
           # Get REVIEW_COUNT using gh cli
           # If this fails (e.g. no PR context), default to 0
