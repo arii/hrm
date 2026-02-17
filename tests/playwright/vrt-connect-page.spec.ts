@@ -9,11 +9,9 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await injectBluetoothMocks(connectPage)
     await connectPage.goto('/client/connect')
     await waitForPageReady(connectPage, { timeout: 10000 })
-    // Fill the form once for all tests
     await connectPage.getByLabel('Your Name').fill('VRT Runner')
     await connectPage.getByLabel('Your Age').fill('30')
 
-    // Wait for the test controls to be initialized
     await connectPage.waitForFunction(
       () => window.TEST_CONTROLS?.setHrmStatus,
       {
@@ -21,8 +19,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       }
     )
 
-    // Wait for the initial auto-connect attempt to finish (100ms debounce + execution time)
-    // This prevents the auto-connect logic from overwriting our manual state updates in the tests.
     await connectPage.waitForTimeout(500)
     await expect(
       connectPage.getByRole('button', { name: 'Connect Bluetooth HRM' })
@@ -30,7 +26,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   })
 
   test('scanning state', async ({ connectPage }) => {
-    // Simulate the app entering the "Connecting..." state
     await connectPage.evaluate((status) => {
       window.TEST_CONTROLS.setHrmStatus(status)
       window.TEST_CONTROLS.setCustomHrmStatusMessage(
@@ -38,8 +33,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       )
     }, BluetoothConnectionStatus.CONNECTING)
 
-    // The UI state has changed, and this alert does not appear immediately.
-    // We must wait for it to be visible.
     await connectPage.waitForSelector('[data-testid="connection-status-alert"]')
     await expect(
       connectPage.getByTestId('connection-status-alert')
@@ -57,7 +50,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await connectPage
       .getByRole('button', { name: 'Connect Bluetooth HRM' })
       .click()
-    // Let the mock connection succeed
     await connectPage.evaluate(() =>
       window.bluetoothTestHelpers.simulateHeartRate(78)
     )
@@ -65,7 +57,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await expect(
       connectPage.getByText('Connected! Heart rate data is being streamed')
     ).toBeVisible()
-    // Mask the dynamic HR tile to prevent flakes
     await takeScreenshot(connectPage, 'connect-page-connected.png', {
       mask: [connectPage.getByTestId('hr-tile')],
     })
@@ -89,8 +80,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   })
 
   test('no devices found state', async ({ connectPage }) => {
-    // This state is managed internally by the hook and is harder to mock.
-    // We'll simulate a more generic "Disconnected" state which is visually similar.
     await connectPage.evaluate(
       (status) => window.TEST_CONTROLS.setHrmStatus(status),
       BluetoothConnectionStatus.DISCONNECTED
@@ -105,7 +94,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   })
 
   test('auto-connect failed state', async ({ connectPage }) => {
-    // This state is set by the autoConnect logic in the hook.
     await connectPage.evaluate((status) => {
       window.TEST_CONTROLS.setHrmStatus(status)
       window.TEST_CONTROLS.setCustomHrmStatusMessage(
