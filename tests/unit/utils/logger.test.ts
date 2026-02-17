@@ -4,17 +4,16 @@
 import { jest } from '@jest/globals'
 
 describe('Client Logger (logger.ts)', () => {
-  let originalConsoleInfo: any
-
   beforeEach(() => {
     jest.resetModules()
     // @ts-expect-error - mock window object
     global.window = {}
-    originalConsoleInfo = console.info
   })
 
   afterEach(() => {
-    console.info = originalConsoleInfo
+    jest.restoreAllMocks()
+    // @ts-expect-error - restore window object if needed, but here we just reset modules.
+    delete global.window
   })
 
   it('should use console methods on the client-side', async () => {
@@ -26,7 +25,6 @@ describe('Client Logger (logger.ts)', () => {
 
     logger.info('test message')
     expect(consoleInfoSpy).toHaveBeenCalledWith('test message')
-    consoleInfoSpy.mockRestore()
   })
 
   it('should return a no-op httpLogger on the client-side', async () => {

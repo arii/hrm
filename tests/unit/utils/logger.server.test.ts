@@ -7,29 +7,25 @@ import { jest } from '@jest/globals'
 const pinoMock = jest.fn()
 const pinoHttpMock = jest.fn()
 
-// Provide a default mock return value for the pino instance to avoid undefined errors.
-const mockPinoLogger = Object.assign(jest.fn(), {
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-  fatal: jest.fn(),
-  trace: jest.fn(),
-  silent: jest.fn(),
+// Simplified mock: tests only verify initialization and transport configuration,
+// not the logger methods themselves.
+const mockPinoLogger = {
   child: jest.fn().mockReturnThis(),
   level: 'info',
-  isLevelEnabled: jest.fn(),
-  version: 'test',
-})
+}
 pinoMock.mockReturnValue(mockPinoLogger)
 
 describe('Server Logger (logger.server.ts)', () => {
   let originalNodeEnv: string | undefined
+  let originalWindow: any
 
   beforeEach(() => {
     originalNodeEnv = process.env.NODE_ENV
+    originalWindow = global.window
+
     jest.clearAllMocks()
     jest.resetModules()
+
     // Mock pino and pino-http for server-side tests
     jest.doMock('pino', () => ({ __esModule: true, default: pinoMock }))
     jest.doMock('pino-http', () => ({
@@ -37,13 +33,17 @@ describe('Server Logger (logger.server.ts)', () => {
       default: pinoHttpMock,
     }))
 
-    // Ensure window is deleted for server tests
+    // Ensure window is deleted for server tests to simulate non-browser environment
     // @ts-expect-error - allow window to be deleted
     delete global.window
   })
 
   afterEach(() => {
     process.env.NODE_ENV = originalNodeEnv
+    if (originalWindow) {
+      // @ts-expect-error - restore window object
+      global.window = originalWindow
+    }
   })
 
   it('should create logger with pino-pretty transport in development', async () => {
