@@ -11,6 +11,8 @@ import {
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import { toDisplay } from '@/utils/units'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { generateFIT } from '@/services/exportService'
+import { downloadBlob } from '@/utils/download'
 
 // Define mocks at the top level
 const mockConnectAndStream = jest.fn()
@@ -46,6 +48,16 @@ const mockUseWorkoutSessionManager = jest.fn(() => ({
 const mockUseSession = jest.fn(() => ({
   data: null,
   status: 'unauthenticated',
+}))
+
+// Mock exportService to avoid ESM issues and test logic
+jest.mock('@/services/exportService', () => ({
+  generateFIT: jest.fn(),
+}))
+
+// Mock download utility
+jest.mock('@/utils/download', () => ({
+  downloadBlob: jest.fn(),
 }))
 
 // Initialize global fetch mock
@@ -264,11 +276,12 @@ describe('ConnectPage', () => {
     expect(weightInput).toHaveValue(weightInLbs)
   })
 
-  it('calls the export API and downloads when the export button is clicked', async () => {
+  it('calls generateFIT and downloads when the export button is clicked', async () => {
     const mockSession = {
       sessionId: 'test-session-id',
       hrHistory: [{ time: 1000, hr: 100 }],
     }
+    const mockBlob = new Blob(['fit data'], { type: 'application/octet-stream' })
 
     mockUseWorkoutSessionManager.mockReturnValue({
       session: mockSession,
@@ -296,11 +309,8 @@ describe('ConnectPage', () => {
       data: { provider: 'spotify', accessToken: 'test-token' },
       status: 'authenticated',
     })
-    ;(global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      blob: async () =>
-        new Blob(['fit data'], { type: 'application/octet-stream' }),
-    })
+
+    ;(generateFIT as jest.Mock).mockReturnValue(mockBlob)
 
     renderWithProviders(<ConnectPage />, { providerProps })
 
@@ -310,16 +320,8 @@ describe('ConnectPage', () => {
     fireEvent.click(exportButton)
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        `/api/workout/export/${mockSession.sessionId}`,
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify(mockSession),
-        })
-      )
-    })
-
-    await waitFor(() => {
+      expect(generateFIT).toHaveBeenCalledWith(mockSession)
+      expect(downloadBlob).toHaveBeenCalledWith(mockBlob, `workout_${mockSession.sessionId}.fit`)
       expect(mockShowSuccess).toHaveBeenCalledWith(
         'Workout successfully exported to FIT file!'
       )
@@ -358,9 +360,9 @@ describe('ConnectPage', () => {
       data: { provider: 'spotify', accessToken: 'test-token' },
       status: 'authenticated',
     })
-    ;(global.fetch as jest.Mock).mockResolvedValue({
-      ok: false,
-      json: async () => ({ error: 'Export failed' }),
+
+    ;(generateFIT as jest.Mock).mockImplementation(() => {
+        throw new Error('Export failed')
     })
 
     renderWithProviders(<ConnectPage />, { providerProps })
@@ -371,11 +373,8 @@ describe('ConnectPage', () => {
     fireEvent.click(exportButton)
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalled()
-    })
-
-    await waitFor(() => {
-      expect(mockShowError).toHaveBeenCalledWith('Export failed')
+      expect(generateFIT).toHaveBeenCalled()
+      expect(mockShowError).toHaveBeenCalledWith('An error occurred while exporting.')
     })
   })
 })

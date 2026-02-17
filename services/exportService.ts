@@ -2,10 +2,10 @@ import { WorkoutSessionData } from '../lib/workout-session-storage'
 import { Encoder, Profile } from '@garmin/fitsdk'
 
 /**
- * Generates a FIT binary buffer from a workout session.
+ * Generates a FIT binary blob from a workout session.
  * Uses @garmin/fitsdk to encode heart rate and calorie data.
  */
-export const generateFIT = (session: WorkoutSessionData): Buffer => {
+export const generateFIT = (session: WorkoutSessionData): Blob => {
   const encoder = new Encoder()
 
   // File ID message
@@ -43,44 +43,8 @@ export const generateFIT = (session: WorkoutSessionData): Buffer => {
     })
   })
 
-  return Buffer.from(encoder.close())
-}
-
-/**
- * Generates a GPX string from a workout session.
- * Uses Garmin TrackPointExtension to include heart rate data.
- */
-export const generateGPX = (session: WorkoutSessionData): string => {
-  const timeCreated = new Date(session.startTime).toISOString()
-
-  let gpx = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="HRM App" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpt="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd">
-  <metadata>
-    <time>${timeCreated}</time>
-  </metadata>
-  <trk>
-    <name>Workout Session ${session.sessionId}</name>
-    <trkseg>
-`
-
-  session.hrHistory.forEach((point) => {
-    const time = new Date(point.time).toISOString()
-    const hr = Math.round(point.hr)
-
-    gpx += `      <trkpt lat="0.0" lon="0.0">
-        <time>${time}</time>
-        <extensions>
-          <gpt:TrackPointExtension>
-            <gpt:hr>${hr}</gpt:hr>
-          </gpt:TrackPointExtension>
-        </extensions>
-      </trkpt>
-`
+  const bytes = encoder.close()
+  return new Blob([new Uint8Array(bytes)], {
+    type: 'application/vnd.ant.fit',
   })
-
-  gpx += `    </trkseg>
-  </trk>
-</gpx>`
-
-  return gpx
 }
