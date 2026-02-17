@@ -1070,7 +1070,16 @@ jobs:
 
           # --- Dynamically determine the list of jobs to copy ---
           echo "🔎 Determining required checks for branch '$TARGET_BRANCH'..."
-          REQUIRED_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/branches/$TARGET_BRANCH/protection/required_status_checks" --jq '.contexts' || echo "[]")
+          # Capture output and exit code
+          if REQUIRED_CHECKS_JSON=$(gh api "repos/${{ github.repository }}/branches/$TARGET_BRANCH/protection/required_status_checks" --jq '.contexts' 2>/dev/null); then
+            echo "Successfully fetched required checks."
+          else
+            echo "::warning::Failed to fetch required checks (likely 403 or branch not protected). using fallback."
+            REQUIRED_CHECKS_JSON="[]"
+          fi
+
+          # Ensure it's valid JSON array
+          if [ -z "$REQUIRED_CHECKS_JSON" ]; then REQUIRED_CHECKS_JSON="[]"; fi
 
           if [ "$(echo "$REQUIRED_CHECKS_JSON" | jq 'length')" -gt 0 ]; then
             echo "Found protected branch rules. Required checks:"
@@ -1119,6 +1128,13 @@ jobs:
               echo "✅ All relevant checks on parent commit have completed."
               CHECKS_JSON="$RELEVANT_CHECKS_JSON"
               break
+            fi
+
+            # If no relevant checks found on parent, abort waiting immediately
+            if [ "$FOUND_COUNT" -eq 0 ]; then
+               echo "::warning::No relevant checks found on parent commit ($PARENT_SHA). Proceeding to create skipped checks."
+               CHECKS_JSON="[]"
+               break
             fi
 
             echo "Still waiting... ($IN_PROGRESS_COUNT checks in progress, found $FOUND_COUNT of ~${EXPECTED_COUNT}). Elapsed: ${ELAPSED}s"
