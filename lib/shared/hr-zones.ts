@@ -159,23 +159,11 @@ export const calculateZoneFromMaxHr = (
 }
 
 /**
-<<<<<<< HEAD
- * Gets the string label for a numeric zone.
- * @param zone - Numeric zone (0-5).
- * @returns Human-readable label.
- */
-export const getHrZoneLabel = (zone: number): string => {
-  return (
-    HR_ZONE_VISUAL_CONFIG[zone as keyof typeof HR_ZONE_VISUAL_CONFIG]?.label ||
-    'Idle'
-  )
-=======
  * Helper to safely cast a numeric zone to a HeartRateZone key.
  */
 export const toHeartRateZone = (zoneNum: number): HeartRateZone => {
   const key = `ZONE_${zoneNum}` as HeartRateZone
   return key in HR_ZONE_CONFIG ? key : 'ZONE_0'
->>>>>>> origin/leader
 }
 
 /**
