@@ -9,6 +9,12 @@ inputs:
   cache-type:
     description: 'Type of cache (e.g., build, type-check)'
     default: 'build'
+  cache-paths:
+    description: 'Paths to cache'
+    default: |
+      .next_prod/cache
+      dist
+      .cache
 
 runs:
   using: 'composite'
@@ -36,12 +42,7 @@ runs:
       if: inputs.use-build-cache == 'true'
       uses: actions/cache@v4
       with:
-        path: |
-          # Next.js build cache. We use .next_prod because that is the distDir
-          # configured in next.config.js for production builds.
-          .next_prod/cache
-          dist
-          .cache
+        path: ${{ inputs.cache-paths }}
         # Use github.sha in the key to ensure we save a new cache on every commit
         # while using restore-keys to fall back to previous commits.
         key: cache-${{ inputs.cache-type }}-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.ref_name }}-${{ github.sha }}
@@ -101,6 +102,8 @@ runs:
 
     - name: 'Run Setup Script'
       shell: bash
+      env:
+        SKIP_INSTALL: 'true'
       run: |
         chmod +x ./scripts/setup.sh
         ./scripts/setup.sh
