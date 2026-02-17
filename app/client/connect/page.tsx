@@ -23,6 +23,7 @@ import {
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
+import { generateFIT } from '@/services/exportService'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -247,27 +248,12 @@ export default function ConnectPage() {
     connectAndStream(userName, userAge || 0)
   }
 
-  const handleExportFit = useCallback(async () => {
+  const handleExportFit = useCallback(() => {
     if (!currentSession) return
 
     setIsExporting(true)
     try {
-      const response = await fetch(
-        `/api/workout/export/${currentSession.sessionId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(currentSession),
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error('Failed to export workout')
-      }
-
-      const blob = await response.blob()
+      const blob = generateFIT(currentSession)
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

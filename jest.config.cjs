@@ -43,7 +43,7 @@ const config = {
   },
   transformIgnorePatterns: [
     // recharts is mocked, so it doesn't need to be explicitly transformed or ignored from transformation.
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
+    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi|@garmin/fitsdk)',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {

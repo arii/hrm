@@ -1,18 +1,31 @@
 import { WorkoutSessionData } from '../lib/workout-session-storage'
 import { Encoder, Profile } from '@garmin/fitsdk'
 
+// Constants matching Garmin FIT SDK spec (v21.194.0)
+const FileType = {
+  ACTIVITY: 4,
+}
+
+const Manufacturer = {
+  DEVELOPMENT: 255,
+}
+
+const Sport = {
+  GENERIC: 0,
+}
+
 /**
- * Generates a FIT binary buffer from a workout session.
+ * Generates a FIT binary blob from a workout session.
  * Uses @garmin/fitsdk to encode heart rate and calorie data.
  */
-export const generateFIT = (session: WorkoutSessionData): Buffer => {
+export const generateFIT = (session: WorkoutSessionData): Blob => {
   const encoder = new Encoder()
 
   // File ID message
   encoder.writeMesg({
     mesgNum: Profile.MesgNum.FILE_ID,
-    type: Profile.types.file.ACTIVITY,
-    manufacturer: Profile.types.manufacturer.DEVELOPMENT,
+    type: FileType.ACTIVITY,
+    manufacturer: Manufacturer.DEVELOPMENT,
     product: 0,
     serialNumber: 0,
     timeCreated: new Date(session.startTime),
@@ -31,7 +44,7 @@ export const generateFIT = (session: WorkoutSessionData): Buffer => {
     avgHeartRate: Math.round(session.averageHr),
     maxHeartRate: Math.round(session.maxHr),
     totalCalories: Math.round(session.totalCaloriesBurned),
-    sport: Profile.types.sport.GENERIC,
+    sport: Sport.GENERIC,
   })
 
   // Record messages
@@ -43,5 +56,6 @@ export const generateFIT = (session: WorkoutSessionData): Buffer => {
     })
   })
 
-  return Buffer.from(encoder.close())
+  const result = encoder.close()
+  return new Blob([result as BlobPart], { type: 'application/octet-stream' })
 }
