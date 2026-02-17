@@ -227,11 +227,7 @@ const HrTile = ({
         >
           {showName && <IdentityTier name={name} />}
           <HeroTier percentage={displayPercentage} />
-          <DataTier
-            value={displayValue}
-            calories={calories}
-            showName={showName}
-          />
+          <DataTier value={displayValue} calories={calories} showName={showName} />
         </Box>
 
         <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
