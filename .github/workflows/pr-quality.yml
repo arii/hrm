@@ -57,14 +57,15 @@ jobs:
       - name: Determine Context
         id: determine-context
         shell: bash
+        env:
+          RAW_PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || '' }}
+          RAW_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          PR_NUMBER="${{ inputs.pr_number || github.event.pull_request.number || '' }}"
           # Sanitize PR_NUMBER to include only digits
-          SAFE_PR_NUMBER=$(echo "$PR_NUMBER" | tr -cd '0-9')
-          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          SAFE_PR_NUMBER=$(echo "$RAW_PR_NUMBER" | tr -cd '0-9')
           echo "pr_number=$SAFE_PR_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-          echo "Determined Context: PR=$SAFE_PR_NUMBER, SHA=$SHA"
+          echo "sha=$RAW_SHA" >> "$GITHUB_OUTPUT"
+          echo "Determined Context: PR=$SAFE_PR_NUMBER, SHA=$RAW_SHA"
 
       - name: Install jq
         run: |
@@ -1232,10 +1233,10 @@ jobs:
           PERF_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.perf-tests-outcome }}
           VISUAL_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.visual-tests-outcome }}
           FINAL_RESULT: ${{ steps.aggregate-results.outputs.final_result }}
+          PR_NUMBER: ${{ needs.prepare-env.outputs.pr_number }}
+          SHA: ${{ needs.prepare-env.outputs.sha }}
         run: |
           set +e
-
-          PR_NUMBER="${{ needs.prepare-env.outputs.pr_number }}"
 
           # Function to add log details to the comment body
           add_log_details() {
@@ -1316,7 +1317,7 @@ jobs:
             SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
           fi
 
-          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${{ needs.prepare-env.outputs.sha }}\`"
+          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${SHA}\`"
 
           # Write the final comment to a file
           echo -e "$COMMENT_BODY" > test-results/pr-comment.md
