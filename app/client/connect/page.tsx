@@ -21,6 +21,7 @@ import {
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
+import { downloadBlob } from '@/utils/download'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -163,14 +164,7 @@ export default function ConnectPage() {
 
       if (response.ok) {
         const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `workout_${persistentSession.sessionId}.fit`
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
-        window.URL.revokeObjectURL(url)
+        downloadBlob(blob, `workout_${persistentSession.sessionId}.fit`)
         showSuccess('Workout successfully exported to FIT file!')
       } else {
         const data: unknown = await response.json()

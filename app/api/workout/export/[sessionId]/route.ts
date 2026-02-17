@@ -65,7 +65,7 @@ export async function POST(
 
     return new NextResponse(new Blob([new Uint8Array(fitBuffer)]), {
       headers: {
-        'Content-Type': 'application/octet-stream',
+        'Content-Type': 'application/vnd.ant.fit',
         'Content-Disposition': `attachment; filename="workout_${sessionId}.fit"`,
       },
     })
