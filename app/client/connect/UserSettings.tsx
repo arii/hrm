@@ -1,10 +1,6 @@
 import React from 'react'
 import { useConnectSettingsContext } from './context/ConnectSettingsContext'
-import SettingsForm, {
-  SettingsConfig,
-  SettingsHandlers,
-  SettingsErrors,
-} from '@/components/SettingsForm'
+import SettingsForm from '@/components/SettingsForm'
 
 const UserSettings: React.FC = () => {
   const {
@@ -22,36 +18,30 @@ const UserSettings: React.FC = () => {
     handleWeightChange: setUserWeight,
     handleWeightBlur: onWeightBlur,
     weightError,
-    unitSystem,
+    unitSystem: unit,
     handleUnitChange: setUnit,
   } = useConnectSettingsContext()
 
-  const config: SettingsConfig = {
-    userName,
-    userAge: userAge || '',
-    unitSystem,
-    userHeight,
-    userWeight,
-  }
-
-  const handlers: SettingsHandlers = {
-    setUserName,
-    setUserAge,
-    setUnit,
-    setUserHeight,
-    setUserWeight,
-    onAgeBlur,
-    onHeightBlur,
-    onWeightBlur,
-  }
-
-  const errors: SettingsErrors = {
-    age: ageError,
-    height: heightError,
-    weight: weightError,
-  }
-
-  return <SettingsForm config={config} handlers={handlers} errors={errors} />
+  return (
+    <SettingsForm
+      userName={userName}
+      setUserName={setUserName}
+      userAge={userAge || ''}
+      setUserAge={setUserAge}
+      onAgeBlur={onAgeBlur}
+      ageError={ageError}
+      unitSystem={unit}
+      setUnit={setUnit}
+      userHeight={userHeight}
+      setUserHeight={setUserHeight}
+      onHeightBlur={onHeightBlur}
+      heightError={heightError}
+      userWeight={userWeight}
+      setUserWeight={setUserWeight}
+      onWeightBlur={onWeightBlur}
+      weightError={weightError}
+    />
+  )
 }
 
 export default UserSettings

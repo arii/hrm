@@ -17,8 +17,8 @@ import {
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
 import {
-  calculateMaxHr,
   calculateZoneFromMaxHr,
+  calculateMaxHr,
   toHeartRateZone,
 } from '@/lib/shared/hr-zones'
 import SettingsForm from '@/components/SettingsForm'
@@ -63,6 +63,7 @@ export default function MockPage() {
 
   const sendHrPacket = useCallback(
     (hr: number) => {
+      const maxHr = calculateMaxHr(ageNum)
       const { percentage, zone } = calculateZoneFromMaxHr(hr, maxHr)
       const heartRateZone = toHeartRateZone(zone)
 
@@ -76,7 +77,7 @@ export default function MockPage() {
       }
       sendData(message)
     },
-    [sendData, maxHr]
+    [sendData, ageNum]
   )
 
   const sendMetadataPacket = useCallback(() => {
@@ -169,23 +170,19 @@ export default function MockPage() {
 
           <Box data-testid="mock-client-form">
             <SettingsForm
-              config={{
-                userName: name,
-                userAge: age,
-                unitSystem: 'METRIC',
-                userHeight: displayHeight,
-                userWeight: weight,
-                gender: gender,
-              }}
-              handlers={{
-                setUserName: setName,
-                setUserAge: setAge,
-                setUserHeight: updateHeight,
-                setUserWeight: setWeight,
-                setGender: setGender,
-                onHeightBlur: commitHeight,
-              }}
+              userName={name}
+              setUserName={setName}
+              userAge={age}
+              setUserAge={setAge}
+              unitSystem="METRIC"
               hideUnitToggle={true}
+              userHeight={displayHeight}
+              setUserHeight={updateHeight}
+              onHeightBlur={commitHeight}
+              userWeight={weight}
+              setUserWeight={setWeight}
+              gender={gender}
+              setGender={setGender}
             />
           </Box>
 
