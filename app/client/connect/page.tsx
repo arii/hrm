@@ -198,6 +198,7 @@ function ConnectPageContent() {
       }, 500)
       return () => window.clearTimeout(timer)
     }
+    return undefined
   }, [])
 
   return (
