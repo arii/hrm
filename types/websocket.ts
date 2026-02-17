@@ -4,6 +4,7 @@
  * and the client hooks via the WebSocket connection.
  */
 import { WebSocket } from 'ws'
+import { HeartRateZone } from '@/lib/shared/hr-zones'
 import type {
   HrmStreamData as HrmData,
   TimerData,
@@ -111,7 +112,7 @@ export interface IncomingHrmData {
   age?: number
   calories?: number
   percentage?: number
-  zone?: number
+  zone?: HeartRateZone
 }
 
 export interface HrmInputMessage {
@@ -205,7 +206,7 @@ export const IncomingHrmDataSchema = z.object({
   age: z.number().optional(),
   calories: z.number().optional(),
   percentage: z.number().optional(),
-  zone: z.number().optional(),
+  zone: z.string().optional(),
 })
 
 export const HrmMetadataUpdateDataSchema = z.object({

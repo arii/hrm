@@ -1,7 +1,7 @@
 // tests/unit/lib/workout-session.test.ts
 import { isSessionStale } from '../../../lib/workout-session'
 import { WorkoutSessionData } from '../../../lib/workout-session-storage'
-import { HrZoneName } from '../../../lib/shared/hr-zones'
+import { HeartRateZone } from '../../../lib/shared/hr-zones'
 
 describe('isSessionStale', () => {
   it('should return true for a session from a previous day', () => {
@@ -13,7 +13,7 @@ describe('isSessionStale', () => {
       startTime: yesterday.getTime(),
       status: 'running',
       hrHistory: [],
-      timeInZones: {} as Record<HrZoneName, number>,
+      timeInZones: {} as Record<HeartRateZone, number>,
       averageHr: 0,
       maxHr: 0,
       calorieHistory: [],
@@ -33,7 +33,7 @@ describe('isSessionStale', () => {
       startTime: new Date().getTime(),
       status: 'paused',
       hrHistory: [],
-      timeInZones: {} as Record<HrZoneName, number>,
+      timeInZones: {} as Record<HeartRateZone, number>,
       averageHr: 0,
       maxHr: 0,
       calorieHistory: [],
