@@ -49,14 +49,9 @@ export async function waitForPageReady(
 
   try {
     // Wait for custom test readiness signal from the application
-    // Supports both the legacy window property and the new data attribute
     await page.waitForFunction(
       () => {
-        return (
-          // @deprecated: window.__TEST_READY__ is deprecated in favor of data-ready attribute
-          window.__TEST_READY__ === true ||
-          document.querySelector('[data-ready="true"]') !== null
-        )
+        return document.querySelector('[data-ready="true"]') !== null
       },
       { timeout }
     )

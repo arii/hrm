@@ -36,7 +36,6 @@ test.describe('Visual Regression Tests', () => {
     test('initial, empty state', async () => {
       await takeScreenshot(dashboardPage, 'dashboard-empty.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        checkA11y: true,
       })
     })
   })

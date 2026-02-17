@@ -43,11 +43,11 @@ export const SCREENSHOT_OPTIONS = {
 export async function takeScreenshot(
   target: Page | Locator,
   snapshotName: string,
-  options: ScreenshotOptions & { checkA11y?: boolean } = {}
+  options: ScreenshotOptions & { skipA11y?: boolean } = {}
 ) {
-  const { checkA11y = false, ...screenshotOptions } = options
+  const { skipA11y = false, ...screenshotOptions } = options
 
-  if (checkA11y) {
+  if (!skipA11y) {
     await checkAccessibility(target)
   }
 
@@ -67,7 +67,7 @@ export async function takeScreenshot(
 export async function takeDashboardScreenshot(
   page: Page,
   snapshotName: string,
-  options: ScreenshotOptions & { checkA11y?: boolean } = {}
+  options: ScreenshotOptions & { skipA11y?: boolean } = {}
 ) {
   const mainContentLocator = page.getByTestId('main-content-layout')
   const timerDisplayLocator = page.getByTestId('timer-display-container')

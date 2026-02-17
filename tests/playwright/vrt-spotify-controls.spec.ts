@@ -42,9 +42,7 @@ test.describe('Visual Regression Tests', () => {
       const spotifyControls = controlPage.getByTestId('spotify-controls')
       // Ensure element is visible before screenshot
       await spotifyControls.waitFor({ state: 'visible' })
-      await takeScreenshot(spotifyControls, 'spotify-controls-logged-out.png', {
-        checkA11y: true,
-      })
+      await takeScreenshot(spotifyControls, 'spotify-controls-logged-out.png')
     })
 
     test('select music button hover state', async () => {
@@ -52,7 +50,9 @@ test.describe('Visual Regression Tests', () => {
         name: 'Select Music',
       })
       await selectMusicButton.hover()
-      await takeScreenshot(selectMusicButton, 'select-music-button-hover.png')
+      await takeScreenshot(selectMusicButton, 'select-music-button-hover.png', {
+        skipA11y: true,
+      })
     })
   })
 })

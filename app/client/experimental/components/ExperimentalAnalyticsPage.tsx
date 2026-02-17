@@ -109,11 +109,8 @@ const ExperimentalAnalyticsPage = () => {
 
   // Signal when page is ready for testing
   useEffect(() => {
-    // This effect runs after the component has mounted and committed to the DOM,
-    // ensuring that any initial data fetching or layout calculations are complete
-    // before the test proceeds.
-    const timer = setTimeout(() => setIsReady(true), 0)
-    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsReady(true)
   }, [])
 
   /**
