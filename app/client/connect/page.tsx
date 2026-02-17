@@ -24,6 +24,7 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { generateFIT } from '@/services/exportService'
+import { downloadBlob } from '@/utils/download'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -254,14 +255,7 @@ export default function ConnectPage() {
     setIsExporting(true)
     try {
       const blob = generateFIT(currentSession)
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `workout-${currentSession.sessionId}.fit`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+      downloadBlob(blob, `workout-${currentSession.sessionId}.fit`)
     } catch (error) {
       logger.error('Error exporting workout', error)
       alert('Failed to export workout. Please try again.')
