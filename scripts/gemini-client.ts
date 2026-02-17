@@ -488,7 +488,7 @@ function getContextMetrics(baseSha: string, headSha: string) {
       .forEach((file) => {
         const parts = file.split('/')
         if (parts.length > 1) {
-          areasSet.add(parts[0])
+          areasSet.add(parts[0] as string)
         } else {
           areasSet.add('.')
         }
@@ -512,8 +512,9 @@ function getReviewContextFromEnv(): ReviewContext {
   }
 
   // Calculate metrics using git directly instead of relying on fragile shell scripts in YAML
-  const baseSha = (process.env.BASE_SHA || 'HEAD^') as string
-  const headSha = (process.env.HEAD_SHA || 'HEAD') as string
+  // Ensure process.env values are treated as strings to satisfy TypeScript
+  const baseSha = (process.env.BASE_SHA ?? 'HEAD^') as string
+  const headSha = (process.env.HEAD_SHA ?? 'HEAD') as string
   const metrics = getContextMetrics(baseSha, headSha)
 
   return {
