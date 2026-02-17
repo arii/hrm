@@ -4,15 +4,29 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import WatchLaterIcon from '@mui/icons-material/WatchLater'
 import WhatshotIcon from '@mui/icons-material/Whatshot'
+import Button from '@mui/material/Button'
+import DownloadIcon from '@mui/icons-material/Download'
+import CircularProgress from '@mui/material/CircularProgress'
 
 interface WorkoutSummaryProps {
   duration: string
   caloriesBurned: number
+  sessionId?: string
+  onExportFit?: () => void
+  isExporting?: boolean
+  showExport?: boolean
 }
 
-const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
+const WorkoutSummary = ({
+  duration,
+  caloriesBurned,
+  onExportFit,
+  isExporting,
+  showExport,
+}: WorkoutSummaryProps) => {
   return (
     <Paper
+      data-testid="workout-summary"
       elevation={3}
       sx={{
         p: 2,
@@ -52,6 +66,28 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
             </Typography>
           </Stack>
         </Box>
+        {showExport && onExportFit && (
+          <Box sx={{ mt: 1, textAlign: 'center' }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={onExportFit}
+              disabled={isExporting}
+              startIcon={
+                isExporting ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <DownloadIcon />
+                )
+              }
+              fullWidth
+              aria-label="Download workout as FIT file"
+              sx={{ borderRadius: 1 }}
+            >
+              {isExporting ? 'Generating...' : 'Download FIT File'}
+            </Button>
+          </Box>
+        )}
       </Stack>
     </Paper>
   )

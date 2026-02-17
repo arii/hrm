@@ -128,11 +128,14 @@ export default function ConnectPage() {
   })
 
   const {
+    session: currentSession,
     addHrData,
     startWorkout: startPersistentWorkout,
     endWorkout: endPersistentWorkout,
     resetWorkout: resetPersistentWorkout,
   } = useWorkoutSessionManager()
+
+  const [isExporting, setIsExporting] = useState(false)
 
   const handleStartWorkout = useCallback(() => {
     startWorkout()
@@ -244,6 +247,43 @@ export default function ConnectPage() {
     connectAndStream(userName, userAge || 0)
   }
 
+  const handleExportFit = useCallback(async () => {
+    if (!currentSession) return
+
+    setIsExporting(true)
+    try {
+      const response = await fetch(
+        `/api/workout/export/${currentSession.sessionId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(currentSession),
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to export workout')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `workout-${currentSession.sessionId}.fit`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      logger.error('Error exporting workout', error)
+      alert('Failed to export workout. Please try again.')
+    } finally {
+      setIsExporting(false)
+    }
+  }, [currentSession])
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration, {
@@ -295,6 +335,9 @@ export default function ConnectPage() {
       onStartWorkout={handleStartWorkout}
       onPauseWorkout={pauseWorkout}
       onEndWorkout={handleEndWorkout}
+      sessionId={currentSession?.sessionId}
+      onExportFit={handleExportFit}
+      isExporting={isExporting}
     />
   )
 }
