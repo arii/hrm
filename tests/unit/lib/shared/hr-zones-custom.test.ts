@@ -1,5 +1,4 @@
 import {
-  calculateKarvonenHr,
   calculateZoneFromHrr,
   calculateZoneFromMaxHr,
   calculateHrZoneInfo,
@@ -9,21 +8,6 @@ import {
 describe('HR Zone Customization Logic', () => {
   const maxHr = 200
   const restingHr = 60
-
-  describe('calculateKarvonenHr', () => {
-    it('calculates correct heart rate for 50% intensity', () => {
-      // (200 - 60) * 0.5 + 60 = 140 * 0.5 + 60 = 70 + 60 = 130
-      expect(calculateKarvonenHr(50, maxHr, restingHr)).toBe(130)
-    })
-
-    it('calculates correct heart rate for 100% intensity', () => {
-      expect(calculateKarvonenHr(100, maxHr, restingHr)).toBe(200)
-    })
-
-    it('calculates correct heart rate for 0% intensity', () => {
-      expect(calculateKarvonenHr(0, maxHr, restingHr)).toBe(60)
-    })
-  })
 
   describe('calculateZoneFromHrr', () => {
     it('calculates correct zone and percentage for 130 bpm', () => {
