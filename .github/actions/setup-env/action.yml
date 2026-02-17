@@ -6,6 +6,9 @@ inputs:
   use-build-cache:
     description: 'Whether to use build cache (.next/cache, dist)'
     default: 'false'
+  cache-type:
+    description: 'Type of cache (e.g., build, type-check)'
+    default: 'build'
 
 runs:
   using: 'composite'
@@ -38,10 +41,13 @@ runs:
           # configured in next.config.js for production builds.
           .next_prod/cache
           dist
-        key: build-cache-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.ref_name }}
+          .cache
+        # Use github.sha in the key to ensure we save a new cache on every commit
+        # while using restore-keys to fall back to previous commits.
+        key: cache-${{ inputs.cache-type }}-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.ref_name }}-${{ github.sha }}
         restore-keys: |
-          build-cache-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
-          build-cache-${{ runner.os }}-
+          cache-${{ inputs.cache-type }}-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.ref_name }}-
+          cache-${{ inputs.cache-type }}-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
 
     - name: Install GitHub CLI
       shell: bash
@@ -70,7 +76,10 @@ runs:
 
     - name: 'Install Dependencies'
       shell: bash
-      run: pnpm install --frozen-lockfile
+      run: |
+        # If we have a cached .cache directory, ensure it exists
+        mkdir -p .cache
+        pnpm install --frozen-lockfile
 
     - name: Cache Playwright
       uses: actions/cache@v4
@@ -92,8 +101,6 @@ runs:
 
     - name: 'Run Setup Script'
       shell: bash
-      env:
-        SKIP_INSTALL: 'true'
       run: |
         chmod +x ./scripts/setup.sh
         ./scripts/setup.sh

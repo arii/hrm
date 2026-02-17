@@ -57,8 +57,18 @@ rm -f "$APP_DIR/diff.txt"
 # 2. Next.js & TypeScript Build Artifacts
 # Purges the .next build folder and TS build info files
 if [ -d "$APP_DIR/.next" ]; then
-    echo "🧹 Purging Next.js build cache..."
+    echo "🧹 Purging Next.js build cache (.next)..."
     rm -rf "$APP_DIR/.next"
+fi
+
+if [ -d "$APP_DIR/.next_prod" ]; then
+    echo "🧹 Purging Next.js build cache (.next_prod)..."
+    rm -rf "$APP_DIR/.next_prod"
+fi
+
+if [ -d "$APP_DIR/.cache" ]; then
+    echo "🧹 Purging TypeScript incremental cache (.cache)..."
+    rm -rf "$APP_DIR/.cache"
 fi
 
 find "$APP_DIR" -name "*.tsbuildinfo" -type f -delete

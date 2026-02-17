@@ -459,6 +459,7 @@ jobs:
         uses: ./.github/actions/setup-env
         with:
           use-build-cache: true
+          cache-type: type-check
 
       - name: Run Type Check
         id: type-check
@@ -467,7 +468,6 @@ jobs:
           set -o pipefail
           mkdir -p logs
           pnpm run type-check 2>&1 | tee logs/type-check-output.log
-        continue-on-error: true
 
       - name: Upload Type Check Report
         if: always()
@@ -477,15 +477,6 @@ jobs:
           path: logs/type-check-output.log
           retention-days: 2
           if-no-files-found: ignore
-
-      - name: Check Type Check Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.type-check.outcome }}" = 'failure' ]; then
-            echo "::error::Type check failed"
-            exit 1
-          fi
 
   build-check:
     name: 🏗️ Build Check
@@ -506,6 +497,7 @@ jobs:
         uses: ./.github/actions/setup-env
         with:
           use-build-cache: true
+          cache-type: next-build
 
       - name: Verify Build
         id: build
