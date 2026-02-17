@@ -156,6 +156,33 @@ jobs:
           echo "COMMIT_HASH=${{ inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
           echo "PR_BRANCH_NAME=$PR_BRANCH_NAME" >> $GITHUB_ENV
 
+          # Added by repair-pr logic: Calculate metrics for Gemini
+          BASE_SHA="${{ inputs.base_sha || github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}"
+
+          echo "Calculating Diff Stats..."
+          # Calculate DIFF_STATS using git diff --shortstat
+          DIFF_STATS=$(git diff --shortstat ${BASE_SHA}...${HEAD_SHA})
+          # Extract insertions and deletions
+          # Handle singular/plural and absence of insertions/deletions
+          INSERTIONS=$(echo "$DIFF_STATS" | grep -oE '[0-9]+ insertion' | awk '{print $1}' || echo 0)
+          DELETIONS=$(echo "$DIFF_STATS" | grep -oE '[0-9]+ deletion' | awk '{print $1}' || echo 0)
+          TOTAL_LOC=$((INSERTIONS + DELETIONS))
+          echo "TOTAL_LOC=$TOTAL_LOC" >> $GITHUB_ENV
+
+          # Calculate FILES_CHANGED
+          FILES_CHANGED=$(git diff --name-only ${BASE_SHA}...${HEAD_SHA} | wc -l)
+          echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
+
+          # Calculate CHANGED_AREAS (top-level directories)
+          CHANGED_AREAS=$(git diff --name-only ${BASE_SHA}...${HEAD_SHA} | cut -d/ -f1 | sort | uniq | paste -sd ", " -)
+          echo "CHANGED_AREAS=$CHANGED_AREAS" >> $GITHUB_ENV
+
+          # Get REVIEW_COUNT using gh cli
+          # If this fails (e.g. no PR context), default to 0
+          REVIEW_COUNT=$(gh pr view "$PR_NUMBER" --json reviews --jq '.reviews | length' 2>/dev/null || echo 0)
+          echo "REVIEW_COUNT=$REVIEW_COUNT" >> $GITHUB_ENV
+
           echo "PR_DESCRIPTION<<EOF" >> $GITHUB_ENV
           echo "$LATEST_BODY" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
