@@ -2,11 +2,12 @@
 // All other types should be defined in their respective files.
 
 import { TimerMode, TimerPhase } from './core'
+import { HeartRateZone } from '@/lib/shared/hr-zones'
 
 export interface HrTileProps {
   value: number | null
   percentage: number
-  zone?: number
+  zone?: HeartRateZone
   name: string
   calories?: number
   isConnected?: boolean

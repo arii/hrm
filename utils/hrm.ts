@@ -3,7 +3,15 @@ import {
   HRM_STALE_THRESHOLD_MS,
   HRM_WARNING_THRESHOLD_MS,
 } from '@/utils/constants'
+<<<<<<< HEAD
 import { calculateMaxHr, calculateZoneFromMaxHr } from '@/lib/shared/hr-zones'
+=======
+import {
+  calculateZoneFromMaxHr,
+  calculateMaxHr,
+  toHeartRateZone,
+} from '@/lib/shared/hr-zones'
+>>>>>>> origin/leader
 
 interface GetActiveHrmDataOptions {
   includeZeroValues?: boolean
@@ -48,8 +56,16 @@ export const getActiveHrmData = (
       const isDataStale = now - referenceTime > HRM_WARNING_THRESHOLD_MS
 
       // Pre-calculate HR zone info if not already present
+<<<<<<< HEAD
       const maxHr = calculateMaxHr(user.age)
       const { percentage, zone } = calculateZoneFromMaxHr(user.value, maxHr)
+=======
+      const { zone, percentage } = calculateZoneFromMaxHr(
+        user.value,
+        calculateMaxHr(user.age)
+      )
+      const heartRateZone = toHeartRateZone(zone)
+>>>>>>> origin/leader
 
       return {
         ...user,
@@ -57,7 +73,7 @@ export const getActiveHrmData = (
         alertMessage: matchingAlert?.message,
         isDataStale,
         percentage: user.percentage ?? percentage,
-        zone: user.zone ?? zone,
+        zone: user.zone ?? heartRateZone,
       }
     })
 }

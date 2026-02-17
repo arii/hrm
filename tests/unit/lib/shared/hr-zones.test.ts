@@ -2,6 +2,7 @@ import {
   calculateZoneFromMaxHr,
   calculateMaxHr,
   MAX_HR_DEFAULT,
+  toHeartRateZone,
 } from '../../../../lib/shared/hr-zones'
 
 describe('lib/shared/hr-zones', () => {
@@ -36,6 +37,7 @@ describe('lib/shared/hr-zones', () => {
 
   describe('calculateZoneFromMaxHr', () => {
     it('should calculate zone info using provided numeric age', () => {
+<<<<<<< HEAD
       const age = 20 // Max HR = 200
       const maxHr = calculateMaxHr(age)
       // 150 bpm / 200 max = 75% -> Zone 3
@@ -68,9 +70,59 @@ describe('lib/shared/hr-zones', () => {
       expect(result95.zone).toBe(6)
 
       // 196 bpm / 200 max = 98% -> Zone 6
+=======
+      const age = 20
+      const maxHr = calculateMaxHr(age) // 200
+      // 150 bpm / 200 max = 75% -> ZONE_3
+      const { percentage, zone } = calculateZoneFromMaxHr(150, maxHr)
+      expect(percentage).toBe(75)
+      expect(toHeartRateZone(zone)).toBe('ZONE_3')
+    })
+
+    it('should calculate zone info using provided string age', () => {
+      const age = '20'
+      const maxHr = calculateMaxHr(age) // 200
+      // 100 bpm / 200 max = 50% -> ZONE_1
+      const { percentage, zone } = calculateZoneFromMaxHr(100, maxHr)
+      expect(percentage).toBe(50)
+      expect(toHeartRateZone(zone)).toBe('ZONE_1')
+    })
+
+    it('should calculate zone info using default max HR when age is undefined', () => {
+      const maxHr = calculateMaxHr(undefined) // 185
+      // 185 bpm / 185 max = 100% -> ZONE_6
+      const { percentage, zone } = calculateZoneFromMaxHr(185, maxHr)
+      expect(percentage).toBe(100)
+      expect(toHeartRateZone(zone)).toBe('ZONE_6')
+    })
+
+    it('should calculate zone info using default max HR when age is null', () => {
+      const maxHr = calculateMaxHr(null) // 185
+      // 93 bpm / 185 max = 50.2% -> ZONE_1
+      const { zone } = calculateZoneFromMaxHr(93, maxHr)
+      expect(toHeartRateZone(zone)).toBe('ZONE_1')
+    })
+
+    it('should handle zero heart rate', () => {
+      const maxHr = calculateMaxHr(30)
+      const { percentage, zone } = calculateZoneFromMaxHr(0, maxHr)
+      expect(percentage).toBe(0)
+      expect(toHeartRateZone(zone)).toBe('ZONE_0')
+    })
+
+    it('should correctly identify Zone 6 (Max) for heart rate >= 95% of max', () => {
+      const age = 20
+      const maxHr = calculateMaxHr(age) // 200
+      // 190 bpm / 200 max = 95% -> ZONE_6
+      const { percentage, zone } = calculateZoneFromMaxHr(190, maxHr)
+      expect(percentage).toBe(95)
+      expect(toHeartRateZone(zone)).toBe('ZONE_6')
+
+      // 196 bpm / 200 max = 98% -> ZONE_6
+>>>>>>> origin/leader
       const result98 = calculateZoneFromMaxHr(196, maxHr)
       expect(result98.percentage).toBe(98)
-      expect(result98.zone).toBe(6)
+      expect(toHeartRateZone(result98.zone)).toBe('ZONE_6')
     })
   })
 })

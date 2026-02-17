@@ -5,15 +5,15 @@ import React, { useMemo } from 'react'
 import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import {
-  HrZoneName,
-  HR_ZONE_COLOR_MAP,
+  HeartRateZone,
+  HR_ZONE_CONFIG,
   HR_ZONE_ORDER,
 } from '@/lib/shared/hr-zones'
 import { formatDuration } from '@/lib/utils'
 
 // --- Types ---
 interface ZoneDistributionProps {
-  timeInZones: Record<HrZoneName, number>
+  timeInZones: Record<HeartRateZone, number>
   totalDuration: number
 }
 
@@ -25,37 +25,26 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
 }) => {
   const theme = useTheme()
 
-  // Transform data for Recharts and list display
   const data = useMemo(() => {
-    return (
-      Object.entries(timeInZones)
-        .filter(
-          ([zone]) => zone !== HrZoneName.NoData && zone !== HrZoneName.Unknown
-        )
-        .map(([zone, time]) => {
-          const percentage =
-            totalDuration > 0 ? (time / totalDuration) * 100 : 0
-          return {
-            name: zone,
-            value: time,
-            percentage: parseFloat(percentage.toFixed(1)),
-            formattedTime: formatDuration(time, {
-              unit: 'seconds',
-              format: 'MM:SS',
-              noPadMinutes: true,
-            }),
-            color: HR_ZONE_COLOR_MAP[zone] || theme.palette.grey[500],
-          }
-        })
-        // Filter out zero values to keep the chart clean
-        .filter((item) => item.value > 0)
-        // Sort by intensity (Max to Idle/Recovery)
-        .sort(
-          (a, b) =>
-            HR_ZONE_ORDER.indexOf(a.name) - HR_ZONE_ORDER.indexOf(b.name)
-        )
-    )
-  }, [timeInZones, totalDuration, theme.palette.grey])
+    return HR_ZONE_ORDER.map((zoneKey) => {
+      const time = timeInZones[zoneKey] || 0
+      const config = HR_ZONE_CONFIG[zoneKey]
+      const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
+      return {
+        name: config.label,
+        value: time,
+        percentage: parseFloat(percentage.toFixed(1)),
+        formattedTime: formatDuration(time, {
+          unit: 'seconds',
+          format: 'MM:SS',
+          noPadMinutes: true,
+        }),
+        color: config.color,
+      }
+    })
+  }, [timeInZones, totalDuration])
+
+  const chartData = useMemo(() => data.filter((d) => d.value > 0), [data])
 
   if (data.length === 0) {
     return (
@@ -138,7 +127,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={data}
+                  data={chartData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -147,7 +136,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   dataKey="value"
                   stroke="none"
                 >
-                  {data.map((entry) => (
+                  {chartData.map((entry) => (
                     <Cell key={`cell-${entry.name}`} fill={entry.color} />
                   ))}
                 </Pie>

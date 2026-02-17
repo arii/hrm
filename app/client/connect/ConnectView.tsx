@@ -21,6 +21,7 @@ import logger from '@/utils/logger'
 import { Gender } from '../../../types/core'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { WorkoutStatus } from '../../../types/workout'
+import { HeartRateZone } from '../../../lib/shared/hr-zones'
 import {
   ToggleButtonGroup,
   ToggleButton,
@@ -46,7 +47,7 @@ interface ConnectViewProps {
   signalPeriodMs: number
   currentHR: number
   hrZoneProps: { percentage: number }
-  zone: number
+  zone: HeartRateZone
   connectionStatus: string
   bluetoothConnected: boolean
   hasStarted: boolean

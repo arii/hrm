@@ -7,7 +7,20 @@ import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
+<<<<<<< HEAD
 import { calculateMaxHr, calculateZoneFromMaxHr } from '@/lib/shared/hr-zones'
+=======
+import {
+  calculateZoneFromMaxHr,
+  calculateMaxHr,
+  toHeartRateZone,
+} from '@/lib/shared/hr-zones'
+import { useHeightInput } from '@/hooks/useHeightInput'
+import {
+  validateAgeValue,
+  validateWeightValue,
+} from '@/lib/validation/userMetrics'
+>>>>>>> origin/leader
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
@@ -170,8 +183,16 @@ function ConnectPageContent() {
     connectionAttempted,
   ])
 
+<<<<<<< HEAD
   const maxHr = calculateMaxHr(userAge)
   const { percentage, zone } = calculateZoneFromMaxHr(currentHR, maxHr)
+=======
+  const { zone, percentage } = calculateZoneFromMaxHr(
+    currentHR,
+    calculateMaxHr(userAge)
+  )
+  const heartRateZone = toHeartRateZone(zone)
+>>>>>>> origin/leader
 
   useEffect(() => {
     throttledSend({
@@ -180,10 +201,10 @@ function ConnectPageContent() {
         value: currentHR,
         calories: calories,
         percentage,
-        zone,
+        zone: heartRateZone,
       },
     })
-  }, [currentHR, calories, percentage, zone, throttledSend])
+  }, [currentHR, calories, percentage, heartRateZone, throttledSend])
 
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
@@ -221,7 +242,7 @@ function ConnectPageContent() {
       hrZoneProps={{
         percentage,
       }}
-      zone={zone}
+      zone={heartRateZone}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}

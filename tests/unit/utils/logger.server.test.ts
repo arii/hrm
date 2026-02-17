@@ -1,68 +1,54 @@
-// tests/unit/utils/logger.server.test.ts
 /**
  * @jest-environment node
  */
-import type { PinoLogger } from '../../../utils/logger.server'
+import { jest } from '@jest/globals'
 
 // Define mock implementations outside of jest.mock to have a reference.
-const pinoMock = jest.fn<
-  PinoLogger,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [any, any?]
->()
+const pinoMock = jest.fn()
 const pinoHttpMock = jest.fn()
 
-// Provide a default mock return value for the pino instance to avoid undefined errors.
-const mockPinoLogger = Object.assign(jest.fn(), {
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  debug: jest.fn(),
-  fatal: jest.fn(),
-  trace: jest.fn(),
-  silent: jest.fn(),
-  child: jest.fn(),
-  level: 'info',
-  isLevelEnabled: jest.fn(),
-  levels: {
-    labels: {
-      10: 'trace',
-      20: 'debug',
-      30: 'info',
-      40: 'warn',
-      50: 'error',
-      60: 'fatal',
-    },
-    values: { trace: 10, debug: 20, info: 30, warn: 40, error: 50, fatal: 60 },
-  },
-  version: 'test',
-})
+// Simplified mock: tests only verify initialization and transport configuration,
+// not the logger methods themselves.
+const mockPinoLogger = {}
 pinoMock.mockReturnValue(mockPinoLogger)
 
-describe('Server Logger', () => {
+describe('Server Logger (logger.server.ts)', () => {
   let originalNodeEnv: string | undefined
+  let originalWindow: unknown
 
   beforeEach(() => {
     originalNodeEnv = process.env.NODE_ENV
+    originalWindow = global.window
+
     jest.clearAllMocks()
-    jest.resetModules() // Crucial for re-evaluating the module in each test.
-  })
+    jest.resetModules()
 
-  afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv
-  })
-
-  it('should create logger with pino-pretty transport in development', async () => {
-    process.env.NODE_ENV = 'development'
-
-    // Use jest.doMock to ensure mocks are applied for this specific dynamic import.
+    // Mock pino and pino-http for server-side tests
     jest.doMock('pino', () => ({ __esModule: true, default: pinoMock }))
     jest.doMock('pino-http', () => ({
       __esModule: true,
       default: pinoHttpMock,
     }))
 
-    await import('../../../utils/logger.server')
+    // Ensure window is deleted for server tests to simulate non-browser environment
+    // @ts-expect-error - allow window to be deleted
+    delete global.window
+  })
+
+  afterEach(() => {
+    process.env.NODE_ENV = originalNodeEnv
+    if (originalWindow === undefined) {
+      // @ts-expect-error - allow window to be deleted
+      delete global.window
+    } else {
+      // @ts-expect-error - restore window object
+      global.window = originalWindow
+    }
+  })
+
+  it('should create logger with pino-pretty transport in development', async () => {
+    process.env.NODE_ENV = 'development'
+    await import('@/utils/logger.server')
 
     expect(pinoMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -76,14 +62,7 @@ describe('Server Logger', () => {
 
   it('should create a standard logger in production', async () => {
     process.env.NODE_ENV = 'production'
-
-    jest.doMock('pino', () => ({ __esModule: true, default: pinoMock }))
-    jest.doMock('pino-http', () => ({
-      __esModule: true,
-      default: pinoHttpMock,
-    }))
-
-    await import('../../../utils/logger.server')
+    await import('@/utils/logger.server')
 
     const pinoOptions = pinoMock.mock.calls[0][0]
     expect(pinoOptions).not.toHaveProperty('transport')
@@ -91,14 +70,7 @@ describe('Server Logger', () => {
 
   it('should create a silent logger in test environment', async () => {
     process.env.NODE_ENV = 'test'
-
-    jest.doMock('pino', () => ({ __esModule: true, default: pinoMock }))
-    jest.doMock('pino-http', () => ({
-      __esModule: true,
-      default: pinoHttpMock,
-    }))
-
-    await import('../../../utils/logger.server')
+    await import('@/utils/logger.server')
 
     expect(pinoMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -108,13 +80,7 @@ describe('Server Logger', () => {
   })
 
   it('should configure and export httpLogger correctly', async () => {
-    jest.doMock('pino', () => ({ __esModule: true, default: pinoMock }))
-    jest.doMock('pino-http', () => ({
-      __esModule: true,
-      default: pinoHttpMock,
-    }))
-
-    await import('../../../utils/logger.server')
+    await import('@/utils/logger.server')
 
     expect(pinoHttpMock).toHaveBeenCalledWith(
       expect.objectContaining({
