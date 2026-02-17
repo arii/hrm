@@ -20,7 +20,7 @@ class TimeoutError extends Error {
 }
 
 /**
- * A robust wrapper around the native fetch API with retry logic.
+ * A wrapper around the native fetch API with retry logic and error handling.
  *
  * @param url The URL to fetch.
  * @param options The fetch options, including an AbortSignal from the caller.
