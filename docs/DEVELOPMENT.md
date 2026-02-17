@@ -144,7 +144,11 @@ This section clarifies when and why `package.json` and `pnpm-lock.yaml` should b
 
 ### Direct Third-Party SDK Usage
 
+<<<<<<< HEAD
 We prefer using official SDKs directly whenever possible. For the Spotify integration, we use `@spotify/web-api-ts-sdk`.
+=======
+When integrating with third-party libraries that may have incorrect or incomplete TypeScript definitions, we use a type-safe wrapper pattern to ensure our application remains reliable. A prime example of this is the `safeSpotifyApi.ts` module.
+>>>>>>> origin/leader
 
 **Handling 204 No Content**: Some Spotify API endpoints return a `204 No Content` status on success, which can sometimes cause JSON parsing errors in certain environments or older SDK versions. We handle this using the `isEmptyResponseError` utility.
 

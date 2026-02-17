@@ -9,7 +9,7 @@
 // =================================================================================================
 
 export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
-export type Gender = 'MALE' | 'FEMALE'
+export type Gender = 'MALE' | 'FEMALE' | 'NEUTRAL'
 
 /**
  * Represents a user's identity and authentication profile.
@@ -47,6 +47,19 @@ export interface UserPhysicalProfile {
 // =================================================================================================
 // Workout and Fitness
 // =================================================================================================
+
+/**
+ * Defines the set of valid commands that can be sent to the Spotify service.
+ */
+export type SpotifyCommand =
+  | 'PLAY'
+  | 'PAUSE'
+  | 'NEXT'
+  | 'PREVIOUS'
+  | 'SET_VOLUME'
+  | 'TRANSFER_PLAYBACK'
+  | 'GET_DEVICES'
+  | 'LOGIN'
 
 /**
  * Represents a single workout session.
@@ -198,12 +211,15 @@ export interface SpotifyPlaybackState {
 }
 
 /**
- * Represents a single item in a Spotify playlist.
+ * Represents a single item (track) in a Spotify playlist.
  */
 export interface SpotifyPlaylistItem {
   id: string
   name: string
   uri: string
+  artists?: { name: string }[] | string
+  album?: { name: string }
+  imageUrl?: string | null
 }
 
 /**
@@ -221,6 +237,25 @@ export interface SpotifyCommandParameters {
  * Represents a Spotify playlist.
  */
 export interface SpotifyPlaylist {
+  id?: string
   name: string
   uri: string
+  description?: string | null
+  imageUrl?: string | null
+  trackCount?: number
+  owner?: string
+  public?: boolean
+  isPreset?: boolean
+  isSearchResult?: boolean
+}
+
+/**
+ * Represents the response from the Spotify token endpoint.
+ */
+export interface SpotifyTokenResponse {
+  access_token: string
+  token_type: string
+  scope: string
+  expires_in: number
+  refresh_token?: string
 }

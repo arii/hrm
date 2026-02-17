@@ -11,7 +11,7 @@ name: PR Enrichment
 
 on:
   pull_request:
-    types: [opened, reopened]
+    types: [opened, reopened, synchronize]
   workflow_call:
     inputs:
       pr_number:
@@ -22,12 +22,15 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  issues: read
+  issues: write
 
 jobs:
   enrich-pr:
     name: Enrich PR Title and Description
     runs-on: ubuntu-latest
+    # Explicitly define GH_TOKEN at the job level to ensure it's available for all steps.
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,29 +38,39 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Environment
-        # This composite action (`/.github/actions/setup-env`) checks out the repo,
-        # sets up Node.js, configures pnpm, and installs dependencies from the
-        # frozen lockfile (`pnpm install --frozen-lockfile`). It ensures a
-        # consistent and reproducible environment for subsequent steps.
         uses: ./.github/actions/setup-env
 
       - name: Check if PR Enrichment is Disabled
         id: check-disabled
+        env:
+          PR_TITLE_EVENT: ${{ github.event.pull_request.title }}
+          HEAD_REF_EVENT: ${{ github.event.pull_request.head.ref || github.head_ref }}
         run: |
+          # 1. Check for manual disable toggle
           if [ "${DISABLE_PR_ENRICHMENT:-false}" == "true" ]; then
             echo "disabled=true" >> $GITHUB_OUTPUT
             echo "::notice::PR enrichment is disabled (DISABLE_PR_ENRICHMENT=true)"
-          else
-            echo "disabled=false" >> $GITHUB_OUTPUT
+            exit 0
           fi
+
+          # 2. Automatically disable for E2E tests to prevent interfering with test expectations
+          # Consistent with pr-orchestrator.yml bypass logic.
+          if [[ "$PR_TITLE_EVENT" == *"E2E Test PR"* ]] || [[ "$HEAD_REF_EVENT" == "e2e-test-"* ]]; then
+            echo "disabled=true" >> $GITHUB_OUTPUT
+            echo "::notice::PR enrichment is disabled for E2E Test PR (Title: '$PR_TITLE_EVENT', Branch: '$HEAD_REF_EVENT')"
+            exit 0
+          fi
+
+          echo "disabled=false" >> $GITHUB_OUTPUT
 
       - name: Setup PR Context
         id: pr_context
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER_INPUT: ${{ inputs.pr_number }}
           PR_NUMBER_EVENT: ${{ github.event.pull_request.number }}
         run: |
+          source scripts/ci/github-utils.sh
+
           if [ -n "$PR_NUMBER_INPUT" ]; then
             PR_NUMBER="$PR_NUMBER_INPUT"
           else
@@ -66,38 +79,59 @@ jobs:
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
-          # Fetch PR details
-          PR_DATA=$(gh pr view "$PR_NUMBER" --json title,body,baseRefName,headRefName,baseRefOid,headRefOid,author --jq '{title: .title, body: .body, base_ref: .baseRefName, head_ref: .headRefName, base_sha: .baseRefOid, head_sha: .headRefOid, author: .author.login}')
+          # Fetch PR details with polling to handle API indexing delays.
+          # Validation ensures both title and head SHA are available.
+          # REDUCED REDUNDANCY: Metrics (additions, deletions, files) are handled in the Analyze step.
+          FIELDS="title,body,baseRefName,headRefName,baseRefOid,headRefOid,author"
+          JQ_FILTER='(. // {}) | {title: (.title // ""), body: (.body // ""), base_ref: (.baseRefName // ""), head_ref: (.headRefName // ""), base_sha: (.baseRefOid // ""), head_sha: (.headRefOid // ""), author: (.author.login // "")}'
+          VALIDATION='.title != "" and .head_sha != ""'
 
-          echo "PR_TITLE=$(echo "$PR_DATA" | jq -r .title)" >> $GITHUB_ENV
-          echo "PR_AUTHOR=$(echo "$PR_DATA" | jq -r .author)" >> $GITHUB_ENV
-          echo "BASE_SHA=$(echo "$PR_DATA" | jq -r .base_sha)" >> $GITHUB_ENV
-          echo "HEAD_SHA=$(echo "$PR_DATA" | jq -r .head_sha)" >> $GITHUB_ENV
+          PR_DATA=$(poll_pr_view "$PR_NUMBER" 12 10 "$FIELDS" "$JQ_FILTER" "$VALIDATION")
+
+          if [ -z "$PR_DATA" ]; then
+            echo "::error::Could not retrieve PR details from GitHub API after retries."
+            exit 1
+          fi
+
+          # Securely write PR metadata to GITHUB_ENV using EOF delimiters to prevent command injection.
+          echo "PR_TITLE<<EOF" >> $GITHUB_ENV
+          echo "$PR_DATA" | jq -r '.title // "Untitled PR"' >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          echo "PR_AUTHOR<<EOF" >> $GITHUB_ENV
+          echo "$PR_DATA" | jq -r '.author // "unknown"' >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          echo "BASE_SHA=$(echo "$PR_DATA" | jq -r '.base_sha')" >> $GITHUB_ENV
+          echo "BASE_REF_NAME=$(echo "$PR_DATA" | jq -r '.base_ref')" >> $GITHUB_ENV
+          echo "HEAD_SHA=$(echo "$PR_DATA" | jq -r '.head_sha')" >> $GITHUB_ENV
 
           # Securely write multiline body to GITHUB_ENV
           echo "PR_BODY<<EOF" >> $GITHUB_ENV
-          echo "$PR_DATA" | jq -r .body >> $GITHUB_ENV
+          echo "$PR_DATA" | jq -r '.body' >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Analyze PR Changes
         if: steps.check-disabled.outputs.disabled == 'false'
         id: analyze
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Add a retry mechanism for the diff to prevent "0 files changed" reports
-          FILES=""
-          for i in {1..5}; do
-            FILES=$(gh pr diff "$PR_NUMBER" --name-only 2>/dev/null || echo "")
-            if [ -n "$FILES" ]; then break; fi
-            echo "Waiting for GitHub API to index PR diff..."
-            sleep 2
-          done
+          source scripts/ci/github-utils.sh
 
-          if [ -z "$FILES" ]; then
-            echo "::error::Could not retrieve PR diff. Indexing delay or empty PR."
-            exit 1
+          PR_NUMBER=${{ env.PR_NUMBER }}
+
+          # Retrieval for PR metrics using GitHub API only.
+          # poll_pr_metrics encapsulates the logic for cross-referencing metadata and diffs.
+          METRICS_JSON=$(poll_pr_metrics "$PR_NUMBER" 18 10)
+
+          if [ -z "$METRICS_JSON" ]; then
+             echo "::error::Could not retrieve PR metrics after retries."
+             exit 1
           fi
+
+          FILES=$(echo "$METRICS_JSON" | jq -r '.files')
+          FILE_COUNT=$(echo "$METRICS_JSON" | jq -r '.file_count')
+          ADDITIONS=$(echo "$METRICS_JSON" | jq -r '.additions')
+          DELETIONS=$(echo "$METRICS_JSON" | jq -r '.deletions')
 
           echo "FILES<<EOF" >> $GITHUB_ENV
           echo "$FILES" >> $GITHUB_ENV
@@ -131,19 +165,12 @@ jobs:
           fi
 
           # Store categories
-          IFS=', ' read -ra CATS <<< "${CATEGORIES[@]}"
           echo "CATEGORIES=${CATEGORIES[*]}" >> $GITHUB_ENV
 
-          # Count file changes
-          FILE_COUNT=$(echo "$FILES" | wc -l)
+          # Export metrics
           echo "FILE_COUNT=$FILE_COUNT" >> $GITHUB_ENV
-
-          # Get lines changed
-          # Using env vars set in Setup PR Context
-          ADDITIONS=$(git diff --numstat "$BASE_SHA" "$HEAD_SHA" | awk '{sum+=$1} END {print sum}')
-          DELETIONS=$(git diff --numstat "$BASE_SHA" "$HEAD_SHA" | awk '{sum+=$2} END {print sum}')
-          echo "ADDITIONS=${ADDITIONS:-0}" >> $GITHUB_ENV
-          echo "DELETIONS=${DELETIONS:-0}" >> $GITHUB_ENV
+          echo "ADDITIONS=$ADDITIONS" >> $GITHUB_ENV
+          echo "DELETIONS=$DELETIONS" >> $GITHUB_ENV
 
           # Determine change scope
           if [ "$FILE_COUNT" -le 3 ] && [ "${ADDITIONS:-0}" -le 100 ]; then
@@ -166,7 +193,6 @@ jobs:
           SCRIPT_FILE=$(mktemp)
 
           # Use a here-document to write the Node.js script to a temporary file.
-          # This prevents shell injection issues with special characters in env vars.
           cat <<'EOF' > "$SCRIPT_FILE"
           const fs = require("fs");
 
@@ -212,7 +238,6 @@ jobs:
             "description": "The full, populated pull request description as a markdown string."
           }
           `;
-          // The first argument to the script is the output file path.
           fs.writeFileSync(process.argv[2], prompt);
           EOF
 
@@ -233,20 +258,19 @@ jobs:
 
             try {
               let rawData = fs.readFileSync('pr_description.json', 'utf8');
-              
+
               // Extract JSON from markdown code blocks if present
               const jsonMatch = rawData.match(/```(?:json)?\s*([\s\S]*?)```/);
               if (jsonMatch) {
                 rawData = jsonMatch[1].trim();
               }
-              
+
               // Try to parse as JSON, handling potential control characters
               let result;
               try {
                 result = JSON.parse(rawData);
               } catch (parseError) {
                 // If parsing fails, try to extract the description field manually
-                // Look for "description": "..." and extract the content
                 const descMatch = rawData.match(/"description"\s*:\s*"([\s\S]*?)(?<!\\)"/);
                 if (descMatch) {
                   result = { description: descMatch[1].replace(/\\n/g, '\n').replace(/\\\//g, '/') };
@@ -257,12 +281,6 @@ jobs:
 
               if (result.description) {
                 const newBody = result.description;
-                // Need to fetch current body again or use env var, but actions/github-script context has payload
-                // If triggered by workflow_call, context.payload might not be pull_request.
-                // We should use the REST API to get the latest body to be safe, or use process.env.PR_BODY (which is what we fetched earlier)
-                // However, we want to respect any changes made since then?
-                // Let's fetch it to be safe.
-
                 const prNumber = parseInt(process.env.PR_NUMBER);
                 const pr = await github.rest.pulls.get({
                   owner: context.repo.owner,
@@ -277,27 +295,28 @@ jobs:
                 const julesTaskLine = julesTaskMatch ? julesTaskMatch[0] : '';
 
                 // 2. Determine the "true" original body content for the details block.
+                // Using a more flexible regex to handle variations in whitespace or line endings.
                 let trueOriginalBody = '';
-                const detailsRegex = /<details>\n<summary>Original PR Body<\/summary>\n\n([\s\S]*?)\n<\/details>/;
+                const detailsRegex = /<details>\s*<summary>\s*Original PR Body\s*<\/summary>([\s\S]*?)<\/details>/i;
                 const detailsMatch = currentBody.match(detailsRegex);
 
                 if (detailsMatch) {
                   // On a re-run, the true original body is inside the existing details block.
-                  trueOriginalBody = detailsMatch[1];
+                  trueOriginalBody = detailsMatch[1].trim();
                 } else {
                   // On the first run, the entire body is the original body.
-                  trueOriginalBody = currentBody;
+                  trueOriginalBody = currentBody.trim();
                 }
 
-                // 3. Clean the original body by removing the Jules task line from it, so it's not duplicated in the details block.
+                // 3. Clean the original body by removing the Jules task line from it.
                 const cleanedOriginalBody = trueOriginalBody.replace(julesTaskRegex, '').trim();
 
                 // 4. Build the final body.
                 let finalBody = '';
                 if (julesTaskLine) {
-                  finalBody += julesTaskLine + '\n\n'; // Ensure the task line is at the top.
+                  finalBody += julesTaskLine + '\n\n';
                 }
-                finalBody += newBody; // Add the new AI-generated content.
+                finalBody += newBody;
                 finalBody += '\n\n<details>\n<summary>Original PR Body</summary>\n\n' + cleanedOriginalBody + '\n</details>';
 
                 await github.rest.pulls.update({
@@ -322,22 +341,19 @@ jobs:
 
       - name: Enhance PR Title
         if: steps.check-disabled.outputs.disabled == 'false' && env.DISABLE_TITLE_ENHANCEMENT != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           CURRENT_TITLE="$PR_TITLE"
 
           # Define Regex Patterns for Conventional Commits
-          # Using readonly variables improves readability and avoids complex escaping in the `if` conditions.
           readonly CONVENTIONAL_REGEX='^(feat|fix|docs|style|refactor|test|chore|ci)\('
           readonly GENERIC_SCOPE_REGEX='^[a-zA-Z]+\('
 
           # Only enhance if title doesn't have a conventional commit prefix
           if [[ ! "$CURRENT_TITLE" =~ $CONVENTIONAL_REGEX ]]; then
-            
+
             # Determine prefix based on categories
             CATEGORIES="${{ env.CATEGORIES }}"
-            
+
             if echo "$CATEGORIES" | grep -q "features"; then
               PREFIX="feat"
             elif echo "$CATEGORIES" | grep -q "ci"; then
@@ -351,10 +367,10 @@ jobs:
             else
               PREFIX="chore"
             fi
-            
+
             # Determine scope
             SCOPE="${{ env.SCOPE }}"
-            
+
             # Create enhanced title only if it doesn't already have a generic scope format
             if [[ ! "$CURRENT_TITLE" =~ $GENERIC_SCOPE_REGEX ]]; then
               NEW_TITLE="$PREFIX($SCOPE): $CURRENT_TITLE"

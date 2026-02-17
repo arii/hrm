@@ -37,6 +37,11 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
       - name: Create or update comment
         if: inputs.pr_number && inputs.pr_number != '0'
         uses: peter-evans/create-or-update-comment@v4
@@ -67,7 +72,7 @@ jobs:
         with:
           ref: ${{ inputs.source_branch }}
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Merge target branch
         run: |
@@ -101,7 +106,7 @@ jobs:
           BASE_SHA: ${{ steps.validate_branches.outputs.base_sha }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA"
+          gh workflow run "Gemini Orchestrator" --ref "$SOURCE_BRANCH" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA" -f base_branch="$TARGET_BRANCH"
 
       - name: Update comment on success
         if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number && inputs.pr_number != '0'
