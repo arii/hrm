@@ -512,8 +512,8 @@ function getReviewContextFromEnv(): ReviewContext {
   }
 
   // Calculate metrics using git directly instead of relying on fragile shell scripts in YAML
-  const baseSha = process.env.BASE_SHA || 'HEAD^'
-  const headSha = process.env.HEAD_SHA || 'HEAD'
+  const baseSha = (process.env.BASE_SHA || 'HEAD^') as string
+  const headSha = (process.env.HEAD_SHA || 'HEAD') as string
   const metrics = getContextMetrics(baseSha, headSha)
 
   return {
