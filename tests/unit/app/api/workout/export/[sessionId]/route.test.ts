@@ -110,8 +110,12 @@ describe('API Route: /api/workout/export/[sessionId]', () => {
     const response = await POST(request, context)
 
     expect(response.status).toBe(200)
-    expect(response.headers.get('Content-Type')).toBe('application/octet-stream')
-    expect(response.headers.get('Content-Disposition')).toContain(`attachment; filename="workout_${sessionId}.fit"`)
+    expect(response.headers.get('Content-Type')).toBe(
+      'application/octet-stream'
+    )
+    expect(response.headers.get('Content-Disposition')).toContain(
+      `attachment; filename="workout_${sessionId}.fit"`
+    )
 
     const buffer = await response.arrayBuffer()
     expect(Buffer.from(buffer).toString()).toBe('mock-fit-data')

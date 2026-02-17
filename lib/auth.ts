@@ -174,7 +174,6 @@ if (env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET) {
   )
 }
 
-
 export const authOptions: AuthOptions = {
   providers,
   // In NextAuth v4, URL is automatically detected from NEXTAUTH_URL env var

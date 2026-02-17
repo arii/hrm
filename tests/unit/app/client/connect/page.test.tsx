@@ -298,7 +298,8 @@ describe('ConnectPage', () => {
     })
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
-      blob: async () => new Blob(['fit data'], { type: 'application/octet-stream' }),
+      blob: async () =>
+        new Blob(['fit data'], { type: 'application/octet-stream' }),
     })
 
     renderWithProviders(<ConnectPage />, { providerProps })

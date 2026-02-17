@@ -172,7 +172,6 @@ describe('authOptions.callbacks.jwt', () => {
       })
     )
   })
-
 })
 
 describe('authOptions.callbacks.session', () => {
