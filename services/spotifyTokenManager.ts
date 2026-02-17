@@ -1,7 +1,8 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
-import { SpotifyTokenResponse } from '../types/core'
+import { SpotifyTokenResponse } from '../types/spotify'
+import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../constants/spotify'
 
 /**
  * Helper for atomic writes to prevent file corruption.
@@ -59,7 +60,7 @@ export class SpotifyTokenManager {
           sub: 'manual',
           access_token: token,
           refresh_token: '',
-          expires_in: 3600,
+          expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
           scope: '',
           obtainedAt: Date.now(),
         },
@@ -164,7 +165,8 @@ export class SpotifyTokenManager {
           payload: {
             ...this.currentToken.payload,
             access_token: data.access_token,
-            expires_in: data.expires_in,
+            expires_in: data.expires_in ?? SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
+            scope: data.scope ?? this.currentToken.payload.scope,
             refresh_token:
               data.refresh_token ?? this.currentToken.payload.refresh_token,
             obtainedAt: Date.now(),

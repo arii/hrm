@@ -6,7 +6,7 @@
 import { TimerData } from '@/types/websocket'
 import { WorkoutData } from '@/types/index'
 import { WorkoutItem } from '@/types/workout'
-import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
+import { WorkoutColumnsProps } from '@/types'
 import theme from '@/lib/theme'
 import { calculateHrZone } from '@/lib/hrm/zones'
 import { HrZoneName } from '@/lib/shared/hr-zones'

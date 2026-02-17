@@ -7,8 +7,6 @@ import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { HR_ZONE_VISUAL_CONFIG } from '@/lib/shared/hr-zones'
 
-// We no longer need to mock getHrZoneProps as HrTile uses shared config directly.
-
 describe('HrTile', () => {
   it('renders the correct background and text color for the Max zone', () => {
     // 95% -> Zone 6
@@ -121,7 +119,7 @@ describe('HrTile', () => {
     )
   })
 
-  it('suppresses generic names in the Identity Tier', () => {
+  it('suppresses generic names', () => {
     const { rerender } = render(
       <HrTile name="user" value={100} percentage={50} zone={1} />
     )
