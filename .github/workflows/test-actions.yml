@@ -1,6 +1,7 @@
 name: Test GitHub Actions
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - '.github/actions/sanitize-string/**'
