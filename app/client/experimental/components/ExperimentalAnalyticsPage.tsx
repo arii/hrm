@@ -104,6 +104,13 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [connectionStatus, userSettings, sendData])
 
+  // Signal when page is ready for testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__TEST_READY__ = true
+    }
+  }, [])
+
   /**
    * FIX: Use ref to avoid interval reset on HR updates (addresses audit issue #1)
    * This prevents the interval from being recreated on every hrmData change

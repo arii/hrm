@@ -43,15 +43,19 @@ export const SCREENSHOT_OPTIONS = {
 export async function takeScreenshot(
   target: Page | Locator,
   snapshotName: string,
-  options: object = {}
+  options: ScreenshotOptions & { checkA11y?: boolean } = {}
 ) {
-  // Always perform an accessibility check before taking a screenshot.
-  // This ensures that our accessibility standards are maintained with every visual change.
-  await checkAccessibility(target)
+  const { checkA11y = false, ...screenshotOptions } = options
+
+  if (checkA11y) {
+    // Always perform an accessibility check before taking a screenshot.
+    // This ensures that our accessibility standards are maintained with every visual change.
+    await checkAccessibility(target)
+  }
 
   await expect(target).toHaveScreenshot(snapshotName, {
     ...SCREENSHOT_OPTIONS,
-    ...options,
+    ...screenshotOptions,
   })
 }
 
