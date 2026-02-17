@@ -14,10 +14,14 @@ import { WorkoutSessionData } from '@/lib/workout-session-storage'
  */
 
 const ExportPayloadSchema = z.object({
-  hrHistory: z.array(z.object({
-    time: z.number(),
-    hr: z.number()
-  })).min(1),
+  hrHistory: z
+    .array(
+      z.object({
+        time: z.number(),
+        hr: z.number(),
+      })
+    )
+    .min(1),
   sessionId: z.string().optional(),
   startTime: z.number(),
   endTime: z.number().nullable().optional(),
@@ -57,7 +61,10 @@ export async function POST(
 
     if (!validation.success) {
       logger.warn({ error: validation.error }, 'Invalid workout data')
-      return NextResponse.json({ error: 'Invalid workout data' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Invalid workout data' },
+        { status: 400 }
+      )
     }
 
     const workoutData = validation.data

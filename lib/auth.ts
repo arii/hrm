@@ -9,6 +9,7 @@ import { env } from './env'
 import { refreshSpotifyToken } from './spotify'
 import { refreshStravaToken } from './strava'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
+import { SpotifyTokenResponse } from '@/types/core'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -102,7 +103,10 @@ function getCookieDomain(): string | undefined {
 }
 
 // Define strategies map
-const REFRESH_STRATEGIES: Record<string, (token: string) => Promise<any>> = {
+const REFRESH_STRATEGIES: Record<
+  string,
+  (token: string) => Promise<SpotifyTokenResponse>
+> = {
   spotify: refreshSpotifyToken,
   strava: refreshStravaToken,
 }

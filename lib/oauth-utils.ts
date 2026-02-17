@@ -1,3 +1,5 @@
+import { SpotifyTokenResponse } from '@/types/core'
+
 interface RefreshTokenConfig {
   url: string
   clientId: string
@@ -20,7 +22,7 @@ export async function refreshOAuthToken({
   clientSecret,
   refreshToken,
   authMethod,
-}: RefreshTokenConfig) {
+}: RefreshTokenConfig): Promise<SpotifyTokenResponse> {
   const headers: HeadersInit = {
     'Content-Type': 'application/x-www-form-urlencoded',
   }
