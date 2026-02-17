@@ -1,6 +1,6 @@
 ## Import Path Conventions
 
-To maintain consistency and leverage the centralized barrel exports, please follow these import patterns:
+To maintain consistency and use the centralized barrel exports, please follow these import patterns:
 
 ### 1. From Barrel Exports (Recommended for common components, hooks, utils):
 
