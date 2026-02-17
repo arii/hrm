@@ -12,13 +12,22 @@ jest.mock('next/navigation', () => ({
 }))
 
 jest.mock('next/link', () => {
-  return ({ children, href, ...rest }: any) => {
+  const MockLink = ({
+    children,
+    href,
+    ...rest
+  }: {
+    children: React.ReactNode
+    href: string
+  } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
     return (
       <a href={href} {...rest}>
         {children}
       </a>
     )
   }
+  MockLink.displayName = 'MockLink'
+  return MockLink
 })
 
 const theme = createTheme()
@@ -56,7 +65,9 @@ describe('BottomNavBar', () => {
     ;(usePathname as jest.Mock).mockReturnValue('/client/spotify-selection')
     renderWithTheme(<BottomNavBar />)
 
-    const spotifyAction = screen.getByLabelText('Navigate to Spotify Selection page')
+    const spotifyAction = screen.getByLabelText(
+      'Navigate to Spotify Selection page'
+    )
     expect(spotifyAction).toHaveStyle(`color: ${theme.palette.primary.main}`)
   })
 
@@ -64,15 +75,21 @@ describe('BottomNavBar', () => {
     ;(usePathname as jest.Mock).mockReturnValue('/client/experimental')
     renderWithTheme(<BottomNavBar />)
 
-    const analyticsAction = screen.getByLabelText('Navigate to Experimental Analytics page')
+    const analyticsAction = screen.getByLabelText(
+      'Navigate to Experimental Analytics page'
+    )
     expect(analyticsAction).toHaveStyle(`color: ${theme.palette.primary.main}`)
   })
 
   it('highlights Analytics when on a subpath of /client/experimental', () => {
-    ;(usePathname as jest.Mock).mockReturnValue('/client/experimental/deep-dive')
+    ;(usePathname as jest.Mock).mockReturnValue(
+      '/client/experimental/deep-dive'
+    )
     renderWithTheme(<BottomNavBar />)
 
-    const analyticsAction = screen.getByLabelText('Navigate to Experimental Analytics page')
+    const analyticsAction = screen.getByLabelText(
+      'Navigate to Experimental Analytics page'
+    )
     expect(analyticsAction).toHaveStyle(`color: ${theme.palette.primary.main}`)
   })
 
