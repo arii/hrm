@@ -13,6 +13,10 @@ on:
         description: 'Base branch for path filtering'
         required: false
         type: string
+      base_branch:
+        description: 'Base branch for protection rules lookup'
+        required: false
+        type: string
       head_ref:
         description: 'Head branch for path filtering'
         required: false
@@ -127,7 +131,7 @@ jobs:
           # Bypass check for E2E tests to ensure they always run the full quality gate
           if [[ "$PR_TITLE" == *"E2E Test PR"* ]] || [[ "$HEAD_REF" == "e2e-test-"* ]]; then
             echo "::notice::Detected E2E Test PR (Title: '$PR_TITLE', Branch: '$HEAD_REF'). Forcing meaningful changes."
-            echo "is_meaningful=0" >> "$GITHUB_OUTPUT"
+            echo "is_meaningful=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -156,23 +160,29 @@ jobs:
 
           if [ "$RESULT" -eq 2 ]; then
             echo "No meaningful changes detected (exit code 2)."
-            echo "is_meaningful=1" >> "$GITHUB_OUTPUT"
+            echo "is_meaningful=false" >> "$GITHUB_OUTPUT"
           elif [ "$RESULT" -eq 0 ]; then
             echo "Meaningful changes detected (exit code 0)."
-            echo "is_meaningful=0" >> "$GITHUB_OUTPUT"
+            echo "is_meaningful=true" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::Diff check failed with error code $RESULT. Assuming meaningful changes to be safe."
-            echo "is_meaningful=0" >> "$GITHUB_OUTPUT"
+            echo "is_meaningful=true" >> "$GITHUB_OUTPUT"
           fi
 
   pr-quality:
     name: 🛡️ Quality Gates
     needs: [filter, check-diff]
-    if: needs.filter.outputs.should_review == 'true'
+    # Requisite: Path Filter must have succeeded (even if no src changes).
+    # check-diff must not have failed (success or skipped is fine).
+    if: |
+      needs.filter.result == 'success' &&
+      !cancelled() &&
+      (needs.check-diff.result == 'success' || needs.check-diff.result == 'skipped')
     uses: ./.github/workflows/pr-quality.yml
     with:
-      has_changes: ${{ needs.check-diff.outputs.is_meaningful == '0' }}
+      has_changes: ${{ needs.check-diff.outputs.is_meaningful == 'true' }}
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
+      branch: ${{ github.base_ref || inputs.base_branch || inputs.base_ref || 'leader' }}
     secrets:
       GH_TOKEN: ${{ secrets.ARI_PAT }}
 
@@ -184,7 +194,7 @@ jobs:
       always() &&
       needs.filter.outputs.should_review == 'true' &&
       needs.pr-quality.result == 'success' &&
-      needs.check-diff.outputs.is_meaningful == '0'
+      needs.check-diff.outputs.is_meaningful == 'true'
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       pr_quality_result: ${{ needs.pr-quality.result }}
