@@ -100,7 +100,7 @@ export function useConnectSettings() {
     setLocalDisplayWeight(null)
   }
 
-  useEffect(() => {
+  const handleMaxHrBlur = () => {
     if (!localMaxHrOverride) {
       if (maxHrOverride !== null) {
         setUserSettings((prev) => ({ ...prev, maxHrOverride: null }))
@@ -113,10 +113,13 @@ export function useConnectSettings() {
       if (val !== maxHrOverride) {
         setUserSettings((prev) => ({ ...prev, maxHrOverride: val }))
       }
+    } else {
+      // Revert to canonical value on invalid input
+      setLocalMaxHrOverride(maxHrOverride?.toString() || '')
     }
-  }, [localMaxHrOverride, maxHrOverride, setUserSettings])
+  }
 
-  useEffect(() => {
+  const handleRestingHrBlur = () => {
     if (!localRestingHr) {
       if (restingHr !== null) {
         setUserSettings((prev) => ({ ...prev, restingHr: null }))
@@ -129,8 +132,11 @@ export function useConnectSettings() {
       if (val !== restingHr) {
         setUserSettings((prev) => ({ ...prev, restingHr: val }))
       }
+    } else {
+      // Revert to canonical value on invalid input
+      setLocalRestingHr(restingHr?.toString() || '')
     }
-  }, [localRestingHr, restingHr, setUserSettings])
+  }
 
   const setUserName = useCallback(
     (name: string) => setUserSettings((prev) => ({ ...prev, userName: name })),
@@ -224,9 +230,11 @@ export function useConnectSettings() {
     customZoneThresholds,
     localMaxHrOverride,
     setLocalMaxHrOverride,
+    handleMaxHrBlur,
     maxHrError,
     localRestingHr,
     setLocalRestingHr,
+    handleRestingHrBlur,
     restingHrError,
     displayWeight,
     handleWeightChange,
