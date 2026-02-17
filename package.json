@@ -156,7 +156,7 @@
     "tsc-alias": "^1.8.16",
     "tsx": "4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.0",
+    "typescript-eslint": "^8.56.0",
     "uuid": "^9.0.1",
     "wait-on": "^9.0.3"
   },
