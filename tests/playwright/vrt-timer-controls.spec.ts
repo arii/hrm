@@ -60,6 +60,7 @@ test.describe('Visual Regression Tests', () => {
 
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-configured.png', {
+        // Performance: Skip a11y check as configuration inputs are covered in other tests
         disableA11yCheck: true,
       })
     })
@@ -81,6 +82,7 @@ test.describe('Visual Regression Tests', () => {
       const startButton = controlPage.getByTestId('start-timer-button')
       await startButton.hover()
       await takeScreenshot(startButton, 'start-button-hover.png', {
+        // Performance: Skip a11y check for hover state
         disableA11yCheck: true,
       })
     })
@@ -89,6 +91,7 @@ test.describe('Visual Regression Tests', () => {
       await controlPage.getByTestId('stopwatch-mode-button').click()
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png', {
+        // Performance: Skip a11y check for alternate mode; main mode is fully covered
         disableA11yCheck: true,
       })
       // Switch back to Tabata for subsequent tests
