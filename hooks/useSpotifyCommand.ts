@@ -72,9 +72,9 @@ export const useSpotifyCommand = () => {
         payloadDeviceId || activeDevice?.id || hrmPlayer?.id || undefined
 
       const message: SpotifyCommandMessage = {
+        ...(payload || {}),
         type: 'SPOTIFY_COMMAND',
         command,
-        ...(payload || {}),
         deviceId: resolvedDeviceId,
       }
 

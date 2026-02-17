@@ -23,12 +23,17 @@ describe('useSpotifyCommand', () => {
     },
   }
 
-  beforeEach(() => {
-    jest.clearAllMocks()
+  // Helper to setup mock state
+  const mockSpotifyState = (devices: unknown[] = []) => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
-      spotifyData: defaultSpotifyData,
+      spotifyData: { ...defaultSpotifyData, devices },
       sendData: mockSendData,
     })
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockSpotifyState()
   })
 
   it('sends PLAY command with deviceId from payload (highest priority)', () => {
@@ -50,17 +55,10 @@ describe('useSpotifyCommand', () => {
   })
 
   it('sends PLAY command using active device if no payload deviceId', () => {
-    const activeDeviceData = {
-      ...defaultSpotifyData,
-      devices: [
-        { id: 'active-device', name: 'Speaker', is_active: true },
-        { id: 'other-device', name: 'Phone', is_active: false },
-      ],
-    }
-    ;(useWebSocket as jest.Mock).mockReturnValue({
-      spotifyData: activeDeviceData,
-      sendData: mockSendData,
-    })
+    mockSpotifyState([
+      { id: 'active-device', name: 'Speaker', is_active: true },
+      { id: 'other-device', name: 'Phone', is_active: false },
+    ])
 
     const { result } = renderHook(() => useSpotifyCommand())
 
@@ -77,17 +75,10 @@ describe('useSpotifyCommand', () => {
   })
 
   it('sends PLAY command using HRM Web Player if no active device', () => {
-    const hrmDeviceData = {
-      ...defaultSpotifyData,
-      devices: [
-        { id: 'hrm-device', name: HRM_WEB_PLAYER_NAME, is_active: false },
-        { id: 'other-device', name: 'Phone', is_active: false },
-      ],
-    }
-    ;(useWebSocket as jest.Mock).mockReturnValue({
-      spotifyData: hrmDeviceData,
-      sendData: mockSendData,
-    })
+    mockSpotifyState([
+      { id: 'hrm-device', name: HRM_WEB_PLAYER_NAME, is_active: false },
+      { id: 'other-device', name: 'Phone', is_active: false },
+    ])
 
     const { result } = renderHook(() => useSpotifyCommand())
 
