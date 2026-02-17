@@ -97,7 +97,7 @@ jobs:
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
-          # Fetch PR details with polling to handle API indexing delays.
+          # Fetch PR details immediately (polling removed).
           # Validation ensures both title and head SHA are available.
           # REDUCED REDUNDANCY: Metrics (additions, deletions, files) are handled in the Analyze step.
           FIELDS="title,body,baseRefName,headRefName,baseRefOid,headRefOid,author"
@@ -138,7 +138,7 @@ jobs:
           PR_NUMBER=${{ env.PR_NUMBER }}
 
           # Retrieval for PR metrics using GitHub API only.
-          # poll_pr_metrics encapsulates the logic for cross-referencing metadata and diffs.
+          # poll_pr_metrics encapsulates the logic for cross-referencing metadata and diffs (polling removed).
           METRICS_JSON=$(poll_pr_metrics "$PR_NUMBER" 18 10)
 
           if [ -z "$METRICS_JSON" ]; then
