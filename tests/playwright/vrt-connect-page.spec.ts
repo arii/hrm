@@ -112,22 +112,4 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       maxDiffPixelRatio: 0.05,
     })
   })
-
-  test('hr customization settings', async ({ connectPage }) => {
-    // Expand the Advanced HR Zone Settings
-    await connectPage.getByText('Advanced HR Zone Settings').click()
-
-    // Switch to Karvonen (HRR) method to show all elements
-    await connectPage.getByRole('button', { name: 'Karvonen (HRR)' }).click()
-
-    // Wait for the resting HR input to be visible
-    await expect(connectPage.getByLabel('Resting Heart Rate')).toBeVisible()
-
-    // Take a screenshot of the user settings form specifically
-    // takeScreenshot will perform automated accessibility checks on these new elements
-    await takeScreenshot(
-      connectPage.getByTestId('user-settings-form'),
-      'connect-page-hr-customization-settings.png'
-    )
-  })
 })

@@ -189,6 +189,17 @@ function ConnectPageContent() {
     connectAndStream(userName, userAge || 0)
   }
 
+  // Signal when page is ready for testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const timer = window.setTimeout(() => {
+        window.__TEST_READY__ = true
+        window.dispatchEvent(new CustomEvent('test-ready'))
+      }, 500)
+      return () => window.clearTimeout(timer)
+    }
+  }, [])
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration, {
