@@ -22,7 +22,6 @@ const WorkoutSummary = ({
 }: WorkoutSummaryProps) => {
   const theme = useTheme()
 
-  // Map status to theme colors defined in theme.ts
   const statusColor = theme.palette.custom[status] || '#ccc'
 
   return (

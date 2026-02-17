@@ -1,9 +1,30 @@
 // app/client/experimental/components/SessionDetail.tsx
-import { Card, CardContent, Typography, Button, Box } from '@mui/material'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Box,
+  Skeleton,
+} from '@mui/material'
+import dynamic from 'next/dynamic'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatDate } from '@/lib/utils'
 import ZoneDistribution from './ZoneDistribution'
-import HeartRateTimeSeries from './HeartRateTimeSeries'
+
+const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
+  ssr: false,
+  loading: () => (
+    <Box sx={{ height: 300 }}>
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height="100%"
+        animation="wave"
+      />
+    </Box>
+  ),
+})
 
 interface SessionDetailProps {
   session: WorkoutSessionData
