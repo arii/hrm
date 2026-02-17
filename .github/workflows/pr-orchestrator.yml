@@ -13,6 +13,10 @@ on:
         description: 'Base branch for path filtering'
         required: false
         type: string
+      base_branch:
+        description: 'Base branch for protection rules lookup'
+        required: false
+        type: string
       head_ref:
         description: 'Head branch for path filtering'
         required: false
