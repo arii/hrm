@@ -20,7 +20,6 @@ else
   BASE_REF="${BASE_REF:-leader}"
 
   echo "Fetching base branch: origin/$BASE_REF (depth=1)..."
-  # Fetch with depth 1 to minimize data transfer
   git fetch origin "$BASE_REF" --depth=1
 
   git diff FETCH_HEAD HEAD > logs/changes.diff
@@ -50,18 +49,18 @@ EOF
   # Truncate diff to avoid token limits
   head -n 1000 logs/changes.diff >> "$TASK_FILE"
 
+  # Add marker if truncated
+  if [ "$(wc -l < logs/changes.diff)" -gt 1000 ]; then
+    echo "... (Diff truncated) ..." >> "$TASK_FILE"
+  fi
+
   echo "🤖 Invoking Gemini AI..."
 
   npx tsx scripts/gemini-client.ts --task-file "$TASK_FILE" --output "$OUTPUT_FILE"
 
   if [ -n "$GITHUB_STEP_SUMMARY" ]; then
       echo "### 🧹 AI Slop Detection Report" >> "$GITHUB_STEP_SUMMARY"
-
-      if [ -f "$OUTPUT_FILE" ]; then
-        cat "$OUTPUT_FILE" >> "$GITHUB_STEP_SUMMARY"
-      else
-        echo "⚠️ Gemini analysis failed or produced no output." >> "$GITHUB_STEP_SUMMARY"
-      fi
+      cat "$OUTPUT_FILE" >> "$GITHUB_STEP_SUMMARY"
 
       echo "" >> "$GITHUB_STEP_SUMMARY"
       echo "<details><summary>Raw Slop Report</summary>" >> "$GITHUB_STEP_SUMMARY"
