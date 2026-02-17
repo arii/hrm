@@ -9,15 +9,12 @@ const pinoHttpMock = jest.fn()
 
 // Simplified mock: tests only verify initialization and transport configuration,
 // not the logger methods themselves.
-const mockPinoLogger = {
-  child: jest.fn().mockReturnThis(),
-  level: 'info',
-}
+const mockPinoLogger = {}
 pinoMock.mockReturnValue(mockPinoLogger)
 
 describe('Server Logger (logger.server.ts)', () => {
   let originalNodeEnv: string | undefined
-  let originalWindow: any
+  let originalWindow: unknown
 
   beforeEach(() => {
     originalNodeEnv = process.env.NODE_ENV
@@ -40,7 +37,10 @@ describe('Server Logger (logger.server.ts)', () => {
 
   afterEach(() => {
     process.env.NODE_ENV = originalNodeEnv
-    if (originalWindow) {
+    if (originalWindow === undefined) {
+      // @ts-expect-error - allow window to be deleted
+      delete global.window
+    } else {
       // @ts-expect-error - restore window object
       global.window = originalWindow
     }
