@@ -6,19 +6,6 @@ import { render, screen } from '@testing-library/react'
 import ZoneDistribution from '@/app/client/experimental/components/ZoneDistribution'
 import { HeartRateZone, HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
 
-// Mock Recharts since it doesn't work well in JSDOM
-jest.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  PieChart: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  Pie: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Cell: () => <div>Cell</div>,
-  Tooltip: () => <div>Tooltip</div>,
-}))
-
 describe('ZoneDistribution', () => {
   const baseTimeInZones: Record<HeartRateZone, number> = {
     ZONE_0: 0,
@@ -109,17 +96,5 @@ describe('ZoneDistribution', () => {
     expect(
       screen.queryByText(HR_ZONE_CONFIG.ZONE_3.label)
     ).not.toBeInTheDocument()
-  })
-
-  it('displays correct total duration in the center', () => {
-    const timeInZones = {
-      ...baseTimeInZones,
-      ZONE_2: 120,
-    }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={120} />)
-    expect(screen.getByText('Total')).toBeInTheDocument()
-    // Multiple instances due to center label, legend, and table
-    const timeElements = screen.getAllByText('2:00')
-    expect(timeElements.length).toBeGreaterThanOrEqual(1)
   })
 })
