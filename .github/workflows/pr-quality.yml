@@ -39,7 +39,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: pr-quality-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  group: pr-quality-${{ inputs.pr_number || github.event.pull_request.number || github.ref || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -51,7 +51,19 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
+      pr_number: ${{ steps.determine-context.outputs.pr_number }}
+      sha: ${{ steps.determine-context.outputs.sha }}
     steps:
+      - name: Determine Context
+        id: determine-context
+        shell: bash
+        run: |
+          PR_NUMBER="${{ inputs.pr_number || github.event.pull_request.number || '' }}"
+          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Determined Context: PR=$PR_NUMBER, SHA=$SHA"
+
       - name: Install jq
         run: |
           if ! command -v jq &> /dev/null; then
@@ -64,7 +76,7 @@ jobs:
         id: sanitize_id
         uses: ./.github/actions/sanitize-string
         with:
-          value: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+          value: ${{ steps.determine-context.outputs.pr_number || github.ref_name || github.run_id }}
 
       # Test Composite Actions - Sanitize String validation
       - name: Test Sanitize Action - Special Chars and Truncation
@@ -1207,7 +1219,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Post Quality Summary with Details
-        if: always()
+        if: always() && needs.prepare-env.outputs.pr_number != '' && needs.prepare-env.outputs.pr_number != 'null'
         env:
           KNIP_RESULT: ${{ needs.knip-check.result }}
           LINT_RESULT: ${{ needs.lint-check.result }}
@@ -1221,7 +1233,7 @@ jobs:
         run: |
           set +e
 
-          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_NUMBER="${{ needs.prepare-env.outputs.pr_number }}"
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
             echo "::warning::No Pull Request found. Skipping PR comment."
             exit 0
@@ -1306,7 +1318,7 @@ jobs:
             SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
           fi
 
-          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${{ github.event.pull_request.head.sha || github.sha }}\`"
+          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${{ needs.prepare-env.outputs.sha }}\`"
 
           # Write the final comment to a file
           echo -e "$COMMENT_BODY" > test-results/pr-comment.md
