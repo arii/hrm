@@ -2,15 +2,16 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "incremental": true,
-    "tsBuildInfoFile": ".cache/tsconfig.type-check.tsbuildinfo"
+    "tsBuildInfoFile": ".cache/.tsbuildinfo-typecheck",
+    "noEmit": true
   },
   "exclude": [
     "node_modules",
-    "tests",
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
     "**/*.spec.tsx",
+    "tests/**/*",
     "playwright.config.ts"
   ]
 }

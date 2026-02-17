@@ -79,7 +79,7 @@ runs:
       shell: bash
       run: |
         # If we have a cached .cache directory, ensure it exists
-        mkdir -p .cache
+        node -e "fs.mkdirSync('.cache', { recursive: true })"
         pnpm install --frozen-lockfile
 
     - name: Cache Playwright
