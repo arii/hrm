@@ -3,16 +3,8 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import Accordion from '@mui/material/Accordion'
-import AccordionSummary from '@mui/material/AccordionSummary'
-import AccordionDetails from '@mui/material/AccordionDetails'
-import Typography from '@mui/material/Typography'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import Box from '@mui/material/Box'
-import Slider from '@mui/material/Slider'
-import { calculateMaxHr, ZONE_THRESHOLDS } from '@/lib/shared/hr-zones'
 import { MeasurementSystem, Gender } from '@/types/core'
-import { HrZoneMethod } from '@/context/UserSettingsContext'
 
 export interface SettingsFormProps {
   userName: string
@@ -46,22 +38,6 @@ export interface SettingsFormProps {
   // Gender (Optional, mostly for mock page)
   gender?: Gender | string
   setGender?: (gender: string) => void
-
-  // HR Zones
-  hrZoneMethod: HrZoneMethod
-  setHrZoneMethod: (method: HrZoneMethod) => void
-  maxHrOverride: number | string
-  setMaxHrOverride: (val: string) => void
-  maxHrError?: string | null
-  onMaxHrBlur?: () => void
-
-  restingHr: number | string
-  setRestingHr: (val: string) => void
-  restingHrError?: string | null
-  onRestingHrBlur?: () => void
-
-  customZoneThresholds: Record<string, number>
-  handleThresholdChange: (zone: string, val: number) => void
 }
 
 const SettingsForm: React.FC<SettingsFormProps> = memo(
@@ -85,21 +61,7 @@ const SettingsForm: React.FC<SettingsFormProps> = memo(
     weightError,
     gender,
     setGender,
-    hrZoneMethod,
-    setHrZoneMethod,
-    maxHrOverride,
-    setMaxHrOverride,
-    maxHrError,
-    onMaxHrBlur,
-    restingHr,
-    setRestingHr,
-    restingHrError,
-    onRestingHrBlur,
-    customZoneThresholds,
-    handleThresholdChange,
   }) => {
-    const autoMaxHr = calculateMaxHr(userAge)
-
     return (
       <Stack spacing={2} sx={{ mb: 3 }} data-testid="user-settings-form">
         <TextField
@@ -235,99 +197,6 @@ const SettingsForm: React.FC<SettingsFormProps> = memo(
           error={!!weightError}
           helperText={weightError}
         />
-
-        <Accordion elevation={0} sx={{ border: '1px solid #e0e0e0' }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle2">
-              Advanced HR Zone Settings
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Stack spacing={3}>
-              <Box>
-                <Typography
-                  id="hr-zone-method-label"
-                  variant="caption"
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  Zone Calculation Method
-                </Typography>
-                <ToggleButtonGroup
-                  aria-labelledby="hr-zone-method-label"
-                  value={hrZoneMethod}
-                  exclusive
-                  onChange={(_, newMethod) => {
-                    if (newMethod) setHrZoneMethod(newMethod)
-                  }}
-                  fullWidth
-                  size="small"
-                >
-                  <ToggleButton value="MAX_HR">Max HR %</ToggleButton>
-                  <ToggleButton value="HRR">Karvonen (HRR)</ToggleButton>
-                </ToggleButtonGroup>
-              </Box>
-
-              <TextField
-                fullWidth
-                size="small"
-                label={`Max HR (Auto: ${autoMaxHr})`}
-                placeholder="Leave empty for auto"
-                type="number"
-                value={maxHrOverride}
-                onChange={(e) => setMaxHrOverride(e.target.value)}
-                onBlur={onMaxHrBlur}
-                error={!!maxHrError}
-                helperText={
-                  maxHrError || 'Overrides age-based calculation if set'
-                }
-              />
-
-              {hrZoneMethod === 'HRR' && (
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Resting Heart Rate"
-                  placeholder="e.g., 60"
-                  type="number"
-                  value={restingHr}
-                  onChange={(e) => setRestingHr(e.target.value)}
-                  onBlur={onRestingHrBlur}
-                  error={!!restingHrError}
-                  helperText={restingHrError}
-                  required
-                />
-              )}
-
-              <Box>
-                <Typography variant="subtitle2" gutterBottom>
-                  Custom Zone Thresholds (%)
-                </Typography>
-                {[1, 2, 3, 4, 5, 6].map((z) => (
-                  <Box key={z} sx={{ px: 1 }}>
-                    <Typography variant="caption">Zone {z} Min %</Typography>
-                    <Slider
-                      size="small"
-                      value={
-                        customZoneThresholds[`ZONE_${z}`] ??
-                        ZONE_THRESHOLDS[
-                          `ZONE_${z}` as keyof typeof ZONE_THRESHOLDS
-                        ]
-                      }
-                      onChange={(_, value) =>
-                        handleThresholdChange(`ZONE_${z}`, value as number)
-                      }
-                      valueLabelDisplay="auto"
-                      min={0}
-                      max={100}
-                      aria-label={`Zone ${z} minimum percentage`}
-                    />
-                  </Box>
-                ))}
-              </Box>
-            </Stack>
-          </AccordionDetails>
-        </Accordion>
       </Stack>
     )
   }

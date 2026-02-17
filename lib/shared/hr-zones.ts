@@ -137,13 +137,11 @@ export const HR_ZONE_COLOR_MAP: Record<string, string> = Object.values(
  * Calculates the percentage of max HR and the corresponding zone (0-5) based on Max HR.
  * @param currentHr - Current heart rate in BPM.
  * @param maxHr - Max Heart Rate.
- * @param thresholds - Optional custom thresholds for zones.
  * @returns An object containing the calculated percentage and zone.
  */
 export const calculateZoneFromMaxHr = (
   currentHr: number,
-  maxHr: number,
-  thresholds: Record<string, number> = ZONE_THRESHOLDS
+  maxHr: number
 ): { percentage: number; zone: number } => {
   const percentage =
     maxHr > 0 && currentHr > 0
@@ -151,82 +149,14 @@ export const calculateZoneFromMaxHr = (
       : 0
 
   let zone = 0
-  if (percentage >= (thresholds.ZONE_6 ?? ZONE_THRESHOLDS.ZONE_6)) zone = 6
-  else if (percentage >= (thresholds.ZONE_5 ?? ZONE_THRESHOLDS.ZONE_5)) zone = 5
-  else if (percentage >= (thresholds.ZONE_4 ?? ZONE_THRESHOLDS.ZONE_4)) zone = 4
-  else if (percentage >= (thresholds.ZONE_3 ?? ZONE_THRESHOLDS.ZONE_3)) zone = 3
-  else if (percentage >= (thresholds.ZONE_2 ?? ZONE_THRESHOLDS.ZONE_2)) zone = 2
-  else if (percentage >= (thresholds.ZONE_1 ?? ZONE_THRESHOLDS.ZONE_1)) zone = 1
+  if (percentage >= ZONE_THRESHOLDS.ZONE_6) zone = 6
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_5) zone = 5
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_4) zone = 4
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_3) zone = 3
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_2) zone = 2
+  else if (percentage >= ZONE_THRESHOLDS.ZONE_1) zone = 1
 
   return { percentage, zone }
-}
-
-/**
- * Calculates the intensity percentage and corresponding zone (0-5) based on Heart Rate Reserve (Karvonen).
- * @param currentHr - Current heart rate in BPM.
- * @param maxHr - Max Heart Rate.
- * @param restingHr - Resting Heart Rate.
- * @param thresholds - Optional custom thresholds for zones.
- * @returns An object containing the calculated intensity percentage and zone.
- */
-export const calculateZoneFromHrr = (
-  currentHr: number,
-  maxHr: number,
-  restingHr: number,
-  thresholds: Record<string, number> = ZONE_THRESHOLDS
-): { percentage: number; zone: number } => {
-  const hrReserve = maxHr - restingHr
-  const percentage =
-    hrReserve > 0 && currentHr >= restingHr
-      ? Math.min(100, Math.round(((currentHr - restingHr) / hrReserve) * 100))
-      : 0
-
-  let zone = 0
-  if (percentage >= (thresholds.ZONE_6 ?? ZONE_THRESHOLDS.ZONE_6)) zone = 6
-  else if (percentage >= (thresholds.ZONE_5 ?? ZONE_THRESHOLDS.ZONE_5)) zone = 5
-  else if (percentage >= (thresholds.ZONE_4 ?? ZONE_THRESHOLDS.ZONE_4)) zone = 4
-  else if (percentage >= (thresholds.ZONE_3 ?? ZONE_THRESHOLDS.ZONE_3)) zone = 3
-  else if (percentage >= (thresholds.ZONE_2 ?? ZONE_THRESHOLDS.ZONE_2)) zone = 2
-  else if (percentage >= (thresholds.ZONE_1 ?? ZONE_THRESHOLDS.ZONE_1)) zone = 1
-
-  return { percentage, zone }
-}
-
-/**
- * Configuration for HR zone calculation.
- */
-export interface HrZoneCalculationConfig {
-  method: 'MAX_HR' | 'HRR'
-  age?: number | string | null
-  maxHrOverride?: number | null
-  restingHr?: number | null
-  thresholds?: Record<string, number>
-}
-
-/**
- * Calculates the percentage and zone based on the provided configuration.
- * @param currentHr - Current heart rate in BPM.
- * @param config - Configuration for calculation.
- * @returns An object containing the calculated percentage and zone.
- */
-export const calculateHrZoneInfo = (
-  currentHr: number,
-  config: HrZoneCalculationConfig
-): { percentage: number; zone: number } => {
-  const {
-    method,
-    age,
-    maxHrOverride,
-    restingHr,
-    thresholds = ZONE_THRESHOLDS,
-  } = config
-  const maxHr = maxHrOverride || calculateMaxHr(age)
-
-  if (method === 'HRR' && restingHr !== null && restingHr !== undefined) {
-    return calculateZoneFromHrr(currentHr, maxHr, restingHr, thresholds)
-  }
-
-  return calculateZoneFromMaxHr(currentHr, maxHr, thresholds)
 }
 
 /**

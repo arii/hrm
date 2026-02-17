@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { useUserSettings, HrZoneMethod } from '@/context/UserSettingsContext'
+import { useUserSettings } from '@/context/UserSettingsContext'
 import {
   validateAgeValue,
   validateWeightValue,
@@ -7,7 +7,6 @@ import {
 import { toKg, toDisplay } from '@/utils/units'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import { MeasurementSystem } from '@/types/core'
-import { ZONE_THRESHOLDS } from '@/lib/shared/hr-zones'
 
 /**
  * Custom hook to manage user settings and validation in the Connect page.
@@ -15,41 +14,7 @@ import { ZONE_THRESHOLDS } from '@/lib/shared/hr-zones'
  */
 export function useConnectSettings() {
   const [userSettings, setUserSettings] = useUserSettings()
-  const {
-    userName,
-    userAge,
-    userWeight,
-    gender,
-    unitSystem,
-    hrZoneMethod,
-    maxHrOverride,
-    restingHr,
-    customZoneThresholds,
-  } = userSettings
-
-  const [localMaxHrOverride, setLocalMaxHrOverride] = useState<string>(
-    maxHrOverride?.toString() || ''
-  )
-
-  const maxHrError = useMemo(() => {
-    if (!localMaxHrOverride) return null
-    const val = parseInt(localMaxHrOverride, 10)
-    if (isNaN(val) || val <= 0) return 'Please enter a valid maximum heart rate'
-    if (val > 250) return 'Maximum heart rate seems too high (> 250)'
-    return null
-  }, [localMaxHrOverride])
-
-  const [localRestingHr, setLocalRestingHr] = useState<string>(
-    restingHr?.toString() || ''
-  )
-
-  const restingHrError = useMemo(() => {
-    if (!localRestingHr) return null
-    const val = parseInt(localRestingHr, 10)
-    if (isNaN(val) || val <= 0) return 'Please enter a valid resting heart rate'
-    if (val > 150) return 'Resting heart rate seems too high (> 150)'
-    return null
-  }, [localRestingHr])
+  const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
   const [localDisplayWeight, setLocalDisplayWeight] = useState<string | null>(
     null
@@ -100,52 +65,6 @@ export function useConnectSettings() {
     setLocalDisplayWeight(null)
   }
 
-  const handleNumericBlur = useCallback(
-    (
-      localVal: string,
-      currentVal: number | null,
-      setLocalVal: (v: string) => void,
-      field: 'maxHrOverride' | 'restingHr',
-      maxLimit: number
-    ) => {
-      if (!localVal) {
-        if (currentVal !== null) {
-          setUserSettings((prev) => ({ ...prev, [field]: null }))
-        }
-        return
-      }
-
-      const val = parseInt(localVal, 10)
-      if (!isNaN(val) && val > 0 && val <= maxLimit) {
-        if (val !== currentVal) {
-          setUserSettings((prev) => ({ ...prev, [field]: val }))
-        }
-      } else {
-        // Revert to canonical value on invalid input
-        setLocalVal(currentVal?.toString() || '')
-      }
-    },
-    [setUserSettings]
-  )
-
-  const handleMaxHrBlur = () =>
-    handleNumericBlur(
-      localMaxHrOverride,
-      maxHrOverride,
-      setLocalMaxHrOverride,
-      'maxHrOverride',
-      250
-    )
-
-  const handleRestingHrBlur = () =>
-    handleNumericBlur(
-      localRestingHr,
-      restingHr,
-      setLocalRestingHr,
-      'restingHr',
-      150
-    )
-
   const setUserName = useCallback(
     (name: string) => setUserSettings((prev) => ({ ...prev, userName: name })),
     [setUserSettings]
@@ -162,64 +81,12 @@ export function useConnectSettings() {
     [setUserSettings]
   )
 
-  const setHrZoneMethod = useCallback(
-    (method: HrZoneMethod) =>
-      setUserSettings((prev) => ({ ...prev, hrZoneMethod: method })),
-    [setUserSettings]
-  )
-
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
       setUserSettings((prev) => ({ ...prev, unitSystem: newUnit }))
       setLocalDisplayWeight(null)
     }
   }
-
-  const handleThresholdChange = useCallback(
-    (zoneKey: string, value: number) => {
-      const zoneNum = parseInt(zoneKey.split('_')[1] || '0', 10)
-      if (zoneNum < 1 || zoneNum > 6) return
-
-      setUserSettings((prev) => {
-        const newThresholds: Record<string, number> = {}
-
-        // Initialize with standard thresholds, then override with existing custom ones
-        ;[1, 2, 3, 4, 5, 6].forEach((z) => {
-          const key = `ZONE_${z}`
-          newThresholds[key] =
-            prev.customZoneThresholds[key] ??
-            ZONE_THRESHOLDS[key as keyof typeof ZONE_THRESHOLDS]
-        })
-
-        // Apply the new value
-        newThresholds[zoneKey] = value
-
-        // Enforce ascending order: ZONE 1 <= ZONE 2 <= ... <= ZONE 6
-        // 1. Ensure preceding zones are not greater than the current one
-        for (let i = zoneNum - 1; i >= 1; i--) {
-          const curr = `ZONE_${i}`
-          const next = `ZONE_${i + 1}`
-          newThresholds[curr] = Math.min(
-            newThresholds[curr]!,
-            newThresholds[next]!
-          )
-        }
-
-        // 2. Ensure succeeding zones are not less than the current one
-        for (let i = zoneNum + 1; i <= 6; i++) {
-          const curr = `ZONE_${i}`
-          const prevZone = `ZONE_${i - 1}`
-          newThresholds[curr] = Math.max(
-            newThresholds[curr]!,
-            newThresholds[prevZone]!
-          )
-        }
-
-        return { ...prev, customZoneThresholds: newThresholds }
-      })
-    },
-    [setUserSettings]
-  )
 
   return {
     userSettings,
@@ -228,22 +95,9 @@ export function useConnectSettings() {
     setUserName,
     userAge,
     setUserAge,
-    setHrZoneMethod,
     userWeight,
     gender,
     unitSystem,
-    hrZoneMethod,
-    maxHrOverride,
-    restingHr,
-    customZoneThresholds,
-    localMaxHrOverride,
-    setLocalMaxHrOverride,
-    handleMaxHrBlur,
-    maxHrError,
-    localRestingHr,
-    setLocalRestingHr,
-    handleRestingHrBlur,
-    restingHrError,
     displayWeight,
     handleWeightChange,
     handleWeightBlur,
@@ -255,6 +109,5 @@ export function useConnectSettings() {
     handleHeightBlur,
     heightError,
     handleUnitChange,
-    handleThresholdChange,
   }
 }

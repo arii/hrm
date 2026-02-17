@@ -16,12 +16,7 @@ import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
-import {
-  calculateMaxHr,
-  calculateHrZoneInfo,
-  ZONE_THRESHOLDS,
-} from '@/lib/shared/hr-zones'
-import { HrZoneMethod } from '@/context/UserSettingsContext'
+import { calculateMaxHr, calculateZoneFromMaxHr } from '@/lib/shared/hr-zones'
 import SettingsForm from '@/components/SettingsForm'
 import { useHeightInput } from '@/hooks/useHeightInput'
 
@@ -43,20 +38,12 @@ export default function MockPage() {
   // Weight
   const [weight, setWeight] = useState<string>('70')
 
-  // HR Zones
-  const [hrZoneMethod, setHrZoneMethod] = useState<HrZoneMethod>('MAX_HR')
-  const [restingHr, setRestingHr] = useState<string>('60')
-  const [maxHrOverride, setMaxHrOverride] = useState<string>('')
-  const [customZoneThresholds, setCustomZoneThresholds] =
-    useState<Record<string, number>>(ZONE_THRESHOLDS)
-
   const [intervalId, setIntervalId] = useState<number | null>(null)
   const isStreaming = intervalId !== null
 
   // Derived values for logic
   const ageNum = parseInt(age, 10) || 30
-  const maxHrOverrideNum = maxHrOverride ? parseInt(maxHrOverride, 10) : null
-  const maxHr = maxHrOverrideNum || calculateMaxHr(ageNum)
+  const maxHr = calculateMaxHr(ageNum)
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -72,15 +59,8 @@ export default function MockPage() {
 
   const sendHrPacket = useCallback(
     (hr: number) => {
-      const restingHrNum = parseInt(restingHr, 10) || 60
-
-      const { percentage, zone } = calculateHrZoneInfo(hr, {
-        method: hrZoneMethod,
-        age: ageNum,
-        maxHrOverride: maxHrOverrideNum,
-        restingHr: restingHrNum,
-        thresholds: customZoneThresholds,
-      })
+      const maxHr = calculateMaxHr(ageNum)
+      const { percentage, zone } = calculateZoneFromMaxHr(hr, maxHr)
 
       const message: HrmInputMessage = {
         type: 'HRM_INPUT',
@@ -92,14 +72,7 @@ export default function MockPage() {
       }
       sendData(message)
     },
-    [
-      sendData,
-      ageNum,
-      maxHrOverrideNum,
-      hrZoneMethod,
-      restingHr,
-      customZoneThresholds,
-    ]
+    [sendData, ageNum]
   )
 
   const sendMetadataPacket = useCallback(() => {
@@ -156,10 +129,6 @@ export default function MockPage() {
     }
   }
 
-  const handleThresholdChange = (zone: string, value: number) => {
-    setCustomZoneThresholds((prev) => ({ ...prev, [zone]: value }))
-  }
-
   const setHrByZone = (
     zone: 'grey' | 'blue' | 'green' | 'yellow' | 'red' | 'purple'
   ) => {
@@ -209,14 +178,6 @@ export default function MockPage() {
               setUserWeight={setWeight}
               gender={gender}
               setGender={setGender}
-              hrZoneMethod={hrZoneMethod}
-              setHrZoneMethod={setHrZoneMethod}
-              maxHrOverride={maxHrOverride}
-              setMaxHrOverride={setMaxHrOverride}
-              restingHr={restingHr}
-              setRestingHr={setRestingHr}
-              customZoneThresholds={customZoneThresholds}
-              handleThresholdChange={handleThresholdChange}
             />
           </Box>
 
