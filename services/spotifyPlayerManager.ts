@@ -1,11 +1,5 @@
-<<<<<<< HEAD
 import { SpotifyCommandParameters } from '../types/core'
 import { ServerMessage, SpotifyCommand, SpotifyData } from '../types/websocket'
-=======
-import { SpotifyCommandParameters, SpotifyCommand } from '../types/core'
-import { ServerMessage, SpotifyData } from '../types/websocket'
-import { SafeSpotifyApi } from './safeSpotifyApi'
->>>>>>> origin/leader
 import logger from '../utils/logger.server.js'
 import { isEmptyResponseError } from './spotifyUtils.js'
 import { Track, Episode, SpotifyApi } from '@spotify/web-api-ts-sdk'

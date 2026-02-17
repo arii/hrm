@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage, SpotifyCommand } from '@/types/websocket'
+import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 
 /**
  * Specific payload types for each Spotify command to ensure type safety.
@@ -33,6 +34,20 @@ export type CommandPayload =
   | SpotifyBasePayload
 
 /**
+ * Interface for the execute function with overloads for stricter type safety.
+ */
+interface ExecuteSpotify {
+  (command: 'PLAY', payload?: SpotifyPlayPayload): void
+  (command: 'SET_VOLUME', payload: SpotifyVolumePayload): void
+  (command: 'TRANSFER_PLAYBACK', payload: SpotifyTransferPayload): void
+  (command: 'PAUSE', payload?: SpotifyBasePayload): void
+  (command: 'NEXT', payload?: SpotifyBasePayload): void
+  (command: 'PREVIOUS', payload?: SpotifyBasePayload): void
+  (command: 'GET_DEVICES', payload?: SpotifyBasePayload): void
+  (command: SpotifyCommand, payload?: CommandPayload): void
+}
+
+/**
  * Hook to manage Spotify commands via the unified service bus.
  * Treats 'HRM Web Player' and remote devices as identical targets, routing
  * all actions through the server-side single source of truth.
@@ -41,22 +56,16 @@ export const useSpotifyCommand = () => {
   const { spotifyData, sendData } = useWebSocket()
 
   // Simplified state selectors from the unified bus
-  const activeDevice = useMemo(
-    () => spotifyData.devices?.find((d) => d.is_active) || null,
-    [spotifyData.devices]
-  )
+  const activeDevice = spotifyData.devices?.find((d) => d.is_active) || null
 
-  const hrmPlayer = useMemo(
-    () => spotifyData.devices?.find((d) => d.name === 'HRM Web Player') || null,
-    [spotifyData.devices]
-  )
+  const hrmPlayer =
+    spotifyData.devices?.find((d) => d.name === HRM_WEB_PLAYER_NAME) || null
 
   /**
    * Dispatches a Spotify command via WebSocket.
-   * uses a union type for the payload to avoid `unknown`
    */
-  const execute = useCallback(
-    <T extends CommandPayload>(command: SpotifyCommand, payload?: T) => {
+  const execute = useCallback<ExecuteSpotify>(
+    (command, payload) => {
       // Explicitly handle deviceId priority: Payload override > Active Device > HRM Player
       const payloadDeviceId = (payload as SpotifyBasePayload)?.deviceId
       const resolvedDeviceId =
@@ -65,7 +74,7 @@ export const useSpotifyCommand = () => {
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,
-        ...payload,
+        ...(payload as any),
         deviceId: resolvedDeviceId,
       }
 
@@ -79,6 +88,6 @@ export const useSpotifyCommand = () => {
     activeDevice,
     hrmPlayer,
     playback: spotifyData.playback, // Track, progress, volume
-    isHrmPlayerActive: activeDevice?.name === 'HRM Web Player',
+    isHrmPlayerActive: activeDevice?.name === HRM_WEB_PLAYER_NAME,
   }
 }

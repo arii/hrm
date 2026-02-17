@@ -10,13 +10,8 @@ import {
   handleSpotifyApiError,
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
-<<<<<<< HEAD
-import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
-=======
 import { SpotifyService } from '../types/interfaces.js'
 import { SpotifyCommand } from '../types/core.js'
-import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
->>>>>>> origin/leader
 import { env } from '../lib/env.js'
 import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
 import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
