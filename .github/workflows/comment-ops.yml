@@ -21,17 +21,11 @@ jobs:
     if: github.event.issue && github.event.issue.pull_request
     runs-on: ubuntu-latest
     outputs:
-<<<<<<< HEAD
-      is_review: ${{ steps.route.outputs.is_review }}
-      is_squash: ${{ steps.route.outputs.is_squash }}
-      is_resolve: ${{ steps.route.outputs.is_resolve }}
-      pr_number: ${{ steps.route.outputs.pr_number }}
-      comment_id: ${{ steps.route.outputs.comment_id }}
-=======
       is_review: ${{ steps.route.outputs.is_review || 'false' }}
       is_squash: ${{ steps.route.outputs.is_squash || 'false' }}
       is_resolve: ${{ steps.route.outputs.is_resolve || 'false' }}
->>>>>>> origin/leader
+      pr_number: ${{ steps.route.outputs.pr_number }}
+      comment_id: ${{ steps.route.outputs.comment_id }}
     steps:
       - id: route
         env:
@@ -39,20 +33,14 @@ jobs:
           PR_NUMBER: ${{ (github.event.issue && github.event.issue.number) || 0 }}
           COMMENT_ID: ${{ (github.event.comment && github.event.comment.id) || 0 }}
         run: |
-<<<<<<< HEAD
-          if echo "$BODY" | grep -q "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -q "@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -q "@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          echo "comment_id=$COMMENT_ID" >> $GITHUB_OUTPUT
-=======
           # Use case-insensitive grep and ensure outputs are always set if matched.
           # We check for commands starting at the beginning of a line to avoid accidental triggers
           # from quotes or descriptive text mentioning the bots.
           if echo "$BODY" | grep -qiE "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "(^|\r?\n)@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "(^|\r?\n)@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
->>>>>>> origin/leader
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "comment_id=$COMMENT_ID" >> $GITHUB_OUTPUT
 
   execute-review:
     needs: [router]
@@ -99,20 +87,10 @@ jobs:
         if: steps.validate.outputs.should_run == 'true' && needs.router.outputs.comment_id != '0'
         uses: peter-evans/create-reaction@v4
         with:
-<<<<<<< HEAD
           token: ${{ secrets.GITHUB_TOKEN }}
           comment-id: ${{ needs.router.outputs.comment_id }}
           reaction: eyes
 
-=======
-          script: |
-            github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: context.payload.comment.id,
-              content: 'eyes'
-            });
->>>>>>> origin/leader
       - name: Get PR Details
         if: steps.validate.outputs.should_run == 'true'
         id: get_branches

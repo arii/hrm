@@ -111,13 +111,8 @@ jobs:
                 return;
               }
               const rawData = fs.readFileSync(filePath, 'utf8');
-<<<<<<< HEAD
-              // Strip markdown block and parse JSON.
-              // Handles cases where the model returns JSON wrapped in blocks.
-=======
               // The model may return a JSON object wrapped in markdown.
               // Strip markdown markers and parse the JSON.
->>>>>>> origin/leader
               const cleanedData = rawData.trim().replace(/^```json|```$/g, '').trim();
               const result = JSON.parse(cleanedData);
 

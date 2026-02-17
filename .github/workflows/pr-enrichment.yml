@@ -33,24 +33,14 @@ jobs:
       # Explicitly define GH_TOKEN at the job level to ensure it's available for all steps.
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Validate Context
-        id: validate
-        run: |
-          if [ "$PR_NUMBER_RAW" == "0" ] || [ -z "$PR_NUMBER_RAW" ]; then
-            echo "::warning::Missing or invalid PR_NUMBER ($PR_NUMBER_RAW). Skipping job."
-            echo "should_run=false" >> $GITHUB_OUTPUT
-          else
-            echo "should_run=true" >> $GITHUB_OUTPUT
-          fi
-
       - uses: actions/checkout@v4
-        if: steps.validate.outputs.should_run == 'true'
+        if: env.PR_NUMBER_RAW != '0'
         with:
           ref: refs/pull/${{ (inputs.pr_number && inputs.pr_number != '0' && inputs.pr_number) || (github.event.pull_request && github.event.pull_request.number) }}/head
           fetch-depth: 0
 
       - name: Setup Environment
-        if: steps.validate.outputs.should_run == 'true'
+        if: env.PR_NUMBER_RAW != '0'
         # This composite action (`/.github/actions/setup-env`) checks out the repo,
         # sets up Node.js, configures pnpm, and installs dependencies from the
         # frozen lockfile (`pnpm install --frozen-lockfile`). It ensures a
@@ -58,6 +48,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Check if PR Enrichment is Disabled
+        if: env.PR_NUMBER_RAW != '0'
         id: check-disabled
         env:
           PR_TITLE_EVENT: ${{ github.event.pull_request.title }}
@@ -81,7 +72,7 @@ jobs:
           echo "disabled=false" >> $GITHUB_OUTPUT
 
       - name: Setup PR Context
-        if: steps.validate.outputs.should_run == 'true'
+        if: env.PR_NUMBER_RAW != '0'
         id: pr_context
         env:
           PR_NUMBER_INPUT: ${{ inputs.pr_number }}
@@ -130,7 +121,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Analyze PR Changes
-        if: steps.validate.outputs.should_run == 'true' && steps.check-disabled.outputs.disabled == 'false'
+        if: env.PR_NUMBER_RAW != '0' && steps.check-disabled.outputs.disabled == 'false'
         id: analyze
         run: |
           source scripts/ci/github-utils.sh
@@ -202,7 +193,7 @@ jobs:
 
       - name: Generate PR Description
         id: generate-description
-        if: steps.validate.outputs.should_run == 'true' && steps.check-disabled.outputs.disabled == 'false'
+        if: env.PR_NUMBER_RAW != '0' && steps.check-disabled.outputs.disabled == 'false'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PR_TEMPLATE_PATH: .github/PULL_REQUEST_TEMPLATE.md
@@ -265,7 +256,7 @@ jobs:
           npx tsx scripts/gemini-client.ts --task-file "$PROMPT_FILE" --output "pr_description.json"
 
       - name: Update PR Description
-        if: steps.validate.outputs.should_run == 'true' && steps.check-disabled.outputs.disabled == 'false'
+        if: env.PR_NUMBER_RAW != '0' && steps.check-disabled.outputs.disabled == 'false'
         uses: actions/github-script@v7
         env:
           PR_NUMBER: ${{ env.PR_NUMBER }}
@@ -358,7 +349,7 @@ jobs:
         run: rm -f pr_description.json
 
       - name: Enhance PR Title
-        if: steps.validate.outputs.should_run == 'true' && steps.check-disabled.outputs.disabled == 'false' && env.DISABLE_TITLE_ENHANCEMENT != 'true'
+        if: env.PR_NUMBER_RAW != '0' && steps.check-disabled.outputs.disabled == 'false' && env.DISABLE_TITLE_ENHANCEMENT != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -412,7 +403,7 @@ jobs:
           fi
 
       - name: Log PR Enrichment
-        if: steps.validate.outputs.should_run == 'true'
+        if: env.PR_NUMBER_RAW != '0'
         run: |
           echo "## PR Enrichment Summary"
           echo ""
