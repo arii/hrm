@@ -42,9 +42,5 @@
     ".next_prod/dev/types/**/*.ts",
     "types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "playwright.config.ts",
-    "knip.ts"
-  ]
+  "exclude": ["node_modules", "playwright.config.ts", "knip.ts"]
 }

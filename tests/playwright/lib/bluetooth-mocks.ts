@@ -1,19 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // File: tests/playwright/lib/bluetooth-mocks.ts
 import { Page } from '@playwright/test'
 
 export const injectBluetoothMocks = async (page: Page) => {
   await page.addInitScript(() => {
     // 2. Internal State for the Mock
-    const _pairedDevices: MockBluetoothDevice[] = []
-    let _connectedDevice: MockBluetoothDevice | null = null
+    const _pairedDevices: any[] = []
+    let _connectedDevice: any | null = null
 
     // 1. Mock Classes
-    class MockBluetoothRemoteGATTCharacteristic implements MockBluetoothRemoteGATTCharacteristic {
-      service: MockBluetoothRemoteGATTService
+    class MockBluetoothRemoteGATTCharacteristic {
+      service: any
       value: DataView | null = null
-      listeners: { [key: string]: MockEventListener[] } = {}
+      listeners: { [key: string]: any[] } = {}
 
-      constructor(service: MockBluetoothRemoteGATTService) {
+      constructor(service: any) {
         this.service = service
       }
 
@@ -25,7 +26,7 @@ export const injectBluetoothMocks = async (page: Page) => {
         return this
       }
 
-      addEventListener(type: string, listener: MockEventListener) {
+      addEventListener(type: string, listener: any) {
         if (!this.listeners[type]) this.listeners[type] = []
         this.listeners[type].push(listener)
       }
@@ -45,12 +46,12 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothRemoteGATTService implements MockBluetoothRemoteGATTService {
-      device: MockBluetoothDevice
+    class MockBluetoothRemoteGATTService {
+      device: any
       uuid: string
       characteristic: MockBluetoothRemoteGATTCharacteristic
 
-      constructor(device: MockBluetoothDevice, _uuid: string) {
+      constructor(device: any, _uuid: string) {
         this.device = device
         this.uuid = _uuid
         this.characteristic = new MockBluetoothRemoteGATTCharacteristic(this)
@@ -61,17 +62,20 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothRemoteGATTServer implements MockBluetoothRemoteGATTServer {
-      device: MockBluetoothDevice
+    class MockBluetoothRemoteGATTServer {
+      device: any
       connected = false
 
-      constructor(device: MockBluetoothDevice) {
+      constructor(device: any) {
         this.device = device
       }
 
       async connect() {
         if (this.device._shouldFailConnection) {
-          throw new DOMException('Connection failed for test', 'NetworkError')
+          throw new (window as any).DOMException(
+            'Connection failed for test',
+            'NetworkError'
+          )
         }
         // Simulate a slight delay
         await new Promise((r) => setTimeout(r, 100))
@@ -85,7 +89,7 @@ export const injectBluetoothMocks = async (page: Page) => {
         _connectedDevice = null
         // Trigger disconnection listener on device
         if (this.device.listeners['gattserverdisconnected']) {
-          this.device.listeners['gattserverdisconnected'].forEach((l) =>
+          this.device.listeners['gattserverdisconnected'].forEach((l: any) =>
             l({ target: this.device } as unknown as Event)
           )
         }
@@ -97,11 +101,11 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothDevice implements MockBluetoothDevice {
+    class MockBluetoothDevice {
       id: string
       name: string
       gatt: MockBluetoothRemoteGATTServer
-      listeners: { [key: string]: ((event: Event) => void)[] } = {}
+      listeners: { [key: string]: ((event: any) => void)[] } = {}
       _shouldFailConnection = false
 
       constructor(id: string, name: string) {
@@ -110,7 +114,7 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.gatt = new MockBluetoothRemoteGATTServer(this)
       }
 
-      addEventListener(type: string, listener: (event: Event) => void) {
+      addEventListener(type: string, listener: (event: any) => void) {
         if (!this.listeners[type]) this.listeners[type] = []
         this.listeners[type].push(listener)
       }
@@ -124,7 +128,7 @@ export const injectBluetoothMocks = async (page: Page) => {
     }
 
     // 3. Mock Navigator.Bluetooth
-    const mockBluetooth: Navigator['bluetooth'] = {
+    const mockBluetooth: any = {
       getAvailability: async () => true,
 
       getDevices: async () => {
@@ -145,9 +149,9 @@ export const injectBluetoothMocks = async (page: Page) => {
     }
 
     // Inject
-    navigator.bluetooth = mockBluetooth
-    window.MockBluetoothDevice = MockBluetoothDevice
-    window.bluetoothTestHelpers = {
+    ;(navigator as any).bluetooth = mockBluetooth
+    ;(window as any).MockBluetoothDevice = MockBluetoothDevice
+    ;(window as any).bluetoothTestHelpers = {
       simulateHeartRate: async (bpm: number) => {
         if (_connectedDevice && _connectedDevice.gatt.connected) {
           // Simulate the app's actual retrieval path
