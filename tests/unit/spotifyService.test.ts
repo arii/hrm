@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
-import { SpotifyPolling } from '../../services/spotifyPolling'
+import { SpotifyService } from '../../services/spotifyService'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'
-import { setupSpotifyPollingService, mockPlayer } from './spotify-test-utils'
+import { setupSpotifyService, mockPlayer } from './spotify-test-utils'
 import logger from '../../utils/logger.server'
 import { ServerMessage } from '../../types/websocket'
 
@@ -66,14 +66,15 @@ const flushPromises = async () => {
   await Promise.resolve()
 }
 
-describe('SpotifyPolling Service', () => {
-  let spotifyService: SpotifyPolling
+describe('Spotify Service', () => {
+  let spotifyService: SpotifyService
   let broadcastMock: jest.Mock<(message: ServerMessage) => void>
   const broadcastedStates: SpotifyData[] = []
 
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
+    broadcastedStates.length = 0
 
     // Ensure the SpotifyTokenManager is reset to a functional state for each test
     ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
@@ -87,7 +88,7 @@ describe('SpotifyPolling Service', () => {
     }))
 
     mockPlayer.getAvailableDevices.mockResolvedValue({ devices: [] })
-    ;[spotifyService, broadcastMock] = await setupSpotifyPollingService()
+    ;[spotifyService, broadcastMock] = await setupSpotifyService()
     // Custom mock implementation for broadcast to capture states
     broadcastMock.mockImplementation((message: ServerMessage) => {
       if (message.type === 'SPOTIFY_UPDATE') {
@@ -118,7 +119,6 @@ describe('SpotifyPolling Service', () => {
     describe('SDK Initialization', () => {
       it('should not start polling if SDK initialization fails', async () => {
         // Arrange: Mock the token manager to simulate a failure in getting the SDK access token.
-        // This is a more direct way to test this scenario.
         ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
           getValidAccessToken: jest.fn().mockResolvedValue('mock_access_token'),
           getSdkAccessToken: jest.fn().mockReturnValue(null), // Simulate failure
@@ -126,7 +126,7 @@ describe('SpotifyPolling Service', () => {
         }))
 
         // Act
-        const service = await SpotifyPolling.create(broadcastMock)
+        const service = await SpotifyService.create(broadcastMock)
 
         // Assert
         expect(service.isReady()).toBe(false)
@@ -300,7 +300,7 @@ describe('SpotifyPolling Service', () => {
         getSdkAccessToken: jest.fn().mockReturnValue(null),
       }))
 
-      const newService = await SpotifyPolling.create(broadcastMock)
+      const newService = await SpotifyService.create(broadcastMock)
       await newService.handleCommand('PLAY', {})
       // Should not make API call without token
       expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
@@ -336,6 +336,56 @@ describe('SpotifyPolling Service', () => {
       // Only check the last broadcasted state
       const lastState = broadcastedStates.at(-1)
       expect(lastState?.playback.track.name).toBe('Test Track')
+    })
+
+    it('should handle podcast episodes correctly', async () => {
+      // Arrange: SDK returns an episode
+      mockPlayer.getPlaybackState.mockImplementation(() =>
+        Promise.resolve({
+          device: { volume_percent: 70 },
+          is_playing: true,
+          progress_ms: 1000,
+          item: {
+            id: 'episode1',
+            name: 'Podcast Episode',
+            type: 'episode',
+            show: {
+              publisher: 'Podcast Host',
+              name: 'Podcast Show',
+              images: [{ url: 'podcast_url' }],
+            },
+          },
+        })
+      )
+
+      spotifyService.startPolling()
+      jest.advanceTimersByTime(150)
+      await flushPromises()
+      spotifyService.stopPolling()
+
+      const lastState = broadcastedStates.at(-1)
+      expect(lastState?.playback.track.name).toBe('Podcast Episode')
+    })
+
+    it('should handle null/missing item safely', async () => {
+      // Arrange: SDK returns response with null item
+      mockPlayer.getPlaybackState.mockImplementation(() =>
+        Promise.resolve({
+          device: { volume_percent: 70 },
+          item: null,
+          is_playing: false,
+        })
+      )
+
+      spotifyService.startPolling()
+      jest.advanceTimersByTime(150)
+      await flushPromises()
+      spotifyService.stopPolling()
+
+      const lastState = broadcastedStates.at(-1)
+      expect(lastState?.playback.track.name).toBe(
+        'Nothing is currently playing.'
+      )
     })
 
     it('should handle 204 No Content response', async () => {
@@ -470,6 +520,66 @@ describe('SpotifyPolling Service', () => {
       await runPollingScenario(trackState, mockPlayback)
 
       expect(broadcastedStates.length).toBe(0)
+    })
+  })
+
+  describe('Device Management', () => {
+    it('should fetch and broadcast available devices on GET_DEVICES command', async () => {
+      const mockDevices = {
+        devices: [
+          {
+            id: 'device1',
+            name: 'Speaker',
+            type: 'Speaker',
+            is_active: true,
+            volume_percent: 50,
+          },
+          {
+            id: 'device2',
+            name: 'Laptop',
+            type: 'Computer',
+            is_active: false,
+            volume_percent: 70,
+          },
+        ],
+      }
+      mockPlayer.getAvailableDevices.mockResolvedValue(mockDevices)
+
+      await spotifyService.handleCommand('GET_DEVICES', {})
+
+      expect(mockPlayer.getAvailableDevices).toHaveBeenCalledTimes(1)
+
+      const lastState = broadcastedStates.at(-1)
+      expect(lastState?.devices).toHaveLength(2)
+      expect(lastState?.devices[0].id).toBe('device1')
+    })
+
+    it('should filter out devices with null IDs', async () => {
+      const mockDevices = {
+        devices: [
+          { id: 'device1', name: 'Valid Device' },
+          { id: null, name: 'Invalid Device' },
+        ],
+      }
+      mockPlayer.getAvailableDevices.mockResolvedValue(mockDevices)
+
+      await spotifyService.handleCommand('GET_DEVICES', {})
+
+      const lastState = broadcastedStates.at(-1)
+      expect(lastState?.devices).toHaveLength(1)
+      expect(lastState?.devices[0].id).toBe('device1')
+    })
+
+    it('should handle errors during device fetch', async () => {
+      const error = new Error('Failed to fetch devices')
+      mockPlayer.getAvailableDevices.mockRejectedValue(error)
+
+      await spotifyService.handleCommand('GET_DEVICES', {})
+
+      expect(logger.error).toHaveBeenCalledWith(
+        { err: error },
+        'Error fetching Spotify devices'
+      )
     })
   })
 
