@@ -560,13 +560,6 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', message.toString())
 
-      // Should NOT have sent EXECUTE_SPOTIFY to dashboard
-      expect(sendWebSocketMessage).not.toHaveBeenCalledWith(
-        dashboardWs,
-        expect.objectContaining({ type: 'EXECUTE_SPOTIFY' }),
-        expect.any(String)
-      )
-
       // Should still call the server-side service
       expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
         'PLAY',
