@@ -148,33 +148,6 @@ export default function ConnectView({
     }
   }
 
-  const ResetSection = () => (
-    <Box
-      sx={{
-        textAlign: 'center',
-        mt: 4,
-        pt: 4,
-        borderTop: '1px solid #eee',
-      }}
-    >
-      <Button
-        variant="contained"
-        color="error"
-        onClick={handleFullReset}
-        disabled={isResetting}
-      >
-        {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
-      </Button>
-      <Typography
-        variant="caption"
-        display="block"
-        sx={{ mt: 1, color: 'text.secondary' }}
-      >
-        Resets server state AND forgets Bluetooth device connection.
-      </Typography>
-    </Box>
-  )
-
   if (!isSupported) {
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
@@ -188,7 +161,7 @@ export default function ConnectView({
           Your browser does not support Web Bluetooth. Please use Google Chrome,
           Edge, or Bluefy (on iOS).
         </Alert>
-        <ResetSection />
+        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
         <BottomNavBar />
       </Container>
     )
@@ -409,9 +382,42 @@ export default function ConnectView({
           WebSocket: {connectionStatus}
         </Typography>
 
-        <ResetSection />
+        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
       </Container>
       <BottomNavBar />
     </>
   )
 }
+
+const ResetSection = ({
+  onReset,
+  isResetting,
+}: {
+  onReset: () => void
+  isResetting: boolean
+}) => (
+  <Box
+    sx={{
+      textAlign: 'center',
+      mt: 4,
+      pt: 4,
+      borderTop: '1px solid #eee',
+    }}
+  >
+    <Button
+      variant="contained"
+      color="error"
+      onClick={onReset}
+      disabled={isResetting}
+    >
+      {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
+    </Button>
+    <Typography
+      variant="caption"
+      display="block"
+      sx={{ mt: 1, color: 'text.secondary' }}
+    >
+      Resets server state AND forgets Bluetooth device connection.
+    </Typography>
+  </Box>
+)
