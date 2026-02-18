@@ -215,6 +215,45 @@ describe('TabataTimer (Refactored)', () => {
     )
   })
 
+  // --- Robustness Tests ---
+  describe('Robustness', () => {
+    it('should increment soundEventId on every sound queue', () => {
+      timer.setConfig({ workDuration: 10, restDuration: 10 })
+      timer.handleCommand('START')
+
+      // PREPARE -> WORK transition
+      jest.advanceTimersByTime(5000)
+      let state = timer.getState()
+      const id1 = state.soundEventId
+      expect(state.soundToPlay).toBe('WORK')
+      expect(id1).toBeGreaterThan(0)
+
+      // WORK -> REST transition
+      jest.advanceTimersByTime(10000)
+      state = timer.getState()
+      const id2 = state.soundEventId
+      expect(state.soundToPlay).toBe('REST')
+      expect(id2).toBeGreaterThan(id1)
+    })
+
+    it('should handle setConfig during active run without interrupting current phase', () => {
+      timer.setMode('TABATA')
+      timer.setConfig({ workDuration: 10, restDuration: 10 })
+      timer.handleCommand('START')
+
+      jest.advanceTimersByTime(2000)
+      expect(timer.getState().currentPhase).toBe('PREPARE')
+      expect(timer.getState().timeRemaining).toBe(3)
+
+      timer.setConfig({ workDuration: 30, restDuration: 30 })
+      expect(timer.getState().timeRemaining).toBe(3)
+
+      jest.advanceTimersByTime(3000)
+      expect(timer.getState().currentPhase).toBe('WORK')
+      expect(timer.getState().timeRemaining).toBe(30)
+    })
+  })
+
   // Test dispose method
   it('should clear the interval on dispose', () => {
     timer.handleCommand('START')
