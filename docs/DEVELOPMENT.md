@@ -101,6 +101,8 @@ pnpm run clean
 This is the safest and most common cleanup task you will need. It removes:
 
 - `.next/`, `dist/`, `coverage/`, `playwright-report/` directories
+- Root-level TypeScript build info files (`*.tsbuildinfo`)
+- The `.cache/` directory (now deprecated for TypeScript build info)
 - Log files and local test results
 
 ### Global Cache Cleanup (Use when needed)
