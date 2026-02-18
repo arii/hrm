@@ -215,8 +215,8 @@ describe('TabataTimer (Refactored)', () => {
     )
   })
 
-  // --- Robustness Tests ---
-  describe('Robustness', () => {
+  // --- Extended State Verification ---
+  describe('Extended State Verification', () => {
     it('should increment soundEventId on every sound queue', () => {
       timer.setConfig({ workDuration: 10, restDuration: 10 })
       timer.handleCommand('START')
