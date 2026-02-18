@@ -278,6 +278,7 @@ export class GitHubClient implements IGitHubClient {
 
 // --- Deduplication ---
 
+// Helper function for fuzzy matching
 /**
  * Calculates the Jaccard similarity between two strings.
  * Normalizes strings by lowercasing and removing punctuation, then compares word sets.
