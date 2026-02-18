@@ -118,8 +118,8 @@ describe('create-review-issues logic', () => {
     it('should reject "AI slop" via pattern', () => {
       const slopPattern = /delve|seamless/i
       const issue: SuggestedIssue = {
-        title: 'A seamless improvement',
-        description: 'Let us delve into the complexities of this code.',
+        title: 'Issue title with "seamless" keyword',
+        description: 'Issue description containing the word "delve".',
         type: 'technical-debt',
         priority: 'low',
       }
