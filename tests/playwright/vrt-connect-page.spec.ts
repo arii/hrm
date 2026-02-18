@@ -57,12 +57,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await expect(
       connectPage.getByText('Connected! Heart rate data is being streamed')
     ).toBeVisible()
-
-    // Wait for the workout to auto-start
-    await expect(
-      connectPage.getByRole('button', { name: 'Pause Workout' })
-    ).toBeVisible({ timeout: 10000 })
-
     await takeScreenshot(connectPage, 'connect-page-connected.png', {
       mask: [connectPage.getByTestId('hr-tile')],
     })

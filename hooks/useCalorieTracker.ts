@@ -15,6 +15,7 @@ interface CalorieTrackerProps {
   weightKg: number
   gender?: Gender
   smoothingWindow?: number
+  initialCalories?: number
 }
 
 interface CalorieState {
@@ -33,6 +34,7 @@ type CalorieAction =
       }
     }
   | { type: 'RESET' }
+  | { type: 'SET_CALORIES'; payload: number }
 
 const initialState: CalorieState = {
   totalCaloriesBurned: 0,
@@ -44,6 +46,11 @@ function calorieReducer(
   action: CalorieAction
 ): CalorieState {
   switch (action.type) {
+    case 'SET_CALORIES':
+      return {
+        ...state,
+        totalCaloriesBurned: action.payload,
+      }
     case 'PROCESS_HR': {
       const { hr, caloriesBurnedThisInterval, now, caloriesPerSecond } =
         action.payload
@@ -78,8 +85,12 @@ export const useCalorieTracker = ({
   weightKg,
   gender = 'NEUTRAL',
   smoothingWindow = 5,
+  initialCalories = 0,
 }: CalorieTrackerProps) => {
-  const [state, dispatch] = useReducer(calorieReducer, initialState)
+  const [state, dispatch] = useReducer(calorieReducer, {
+    ...initialState,
+    totalCaloriesBurned: initialCalories,
+  })
   const lastTimestampRef = useRef<number | null>(null)
   const hrHistoryRef = useRef<number[]>([])
 
@@ -170,10 +181,15 @@ export const useCalorieTracker = ({
     hrHistoryRef.current = []
   }, [])
 
+  const setCalories = useCallback((calories: number) => {
+    dispatch({ type: 'SET_CALORIES', payload: calories })
+  }, [])
+
   return {
     totalCaloriesBurned: state.totalCaloriesBurned,
     calorieHistory: state.calorieHistory,
     processHeartRate,
     reset,
+    setCalories,
   }
 }

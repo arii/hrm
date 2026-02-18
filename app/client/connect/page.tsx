@@ -96,6 +96,7 @@ export default function ConnectPage() {
     totalCaloriesBurned: calories,
     processHeartRate,
     reset: resetCalculator,
+    setCalories: setTrackerCalories,
   } = useCalorieTracker({
     age: userAge || 30,
     weightKg: userWeight || 70,
@@ -114,12 +115,15 @@ export default function ConnectPage() {
   )
 
   const {
+    session,
     workoutDuration,
     workoutStatus,
+    isInitialized,
     hasStarted,
     caloriesBurned,
     startWorkout,
     pauseWorkout,
+    resumeWorkout,
     endWorkout,
     resetWorkout,
     addHrData,
@@ -127,12 +131,32 @@ export default function ConnectPage() {
   } = useWorkoutSessionManager()
 
   const handleStartWorkout = useCallback(() => {
-    startWorkout(userAge || 30, userWeight || 70)
-  }, [startWorkout, userAge, userWeight])
+    if (workoutStatus === 'idle') {
+      startWorkout(userAge || 30, userWeight || 70)
+    } else if (workoutStatus === 'paused') {
+      resumeWorkout()
+    }
+  }, [startWorkout, resumeWorkout, workoutStatus, userAge, userWeight])
 
   useEffect(() => {
-    updateCalories(calories)
-  }, [calories, updateCalories])
+    if (isInitialized) {
+      updateCalories(calories)
+    }
+  }, [calories, updateCalories, isInitialized])
+
+  // Sync recovered calories to tracker on initialization
+  useEffect(() => {
+    if (
+      isInitialized &&
+      hasStarted &&
+      workoutStatus !== 'finished' &&
+      session?.totalCaloriesBurned
+    ) {
+      setTrackerCalories(session.totalCaloriesBurned)
+    }
+    // Only run once when initialized to avoid feedback loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
@@ -179,15 +203,27 @@ export default function ConnectPage() {
     userName,
     userAge: userAge || 0,
     onHeartRateUpdate: handleHeartRateUpdate,
+    onConnect: handleStartWorkout,
   })
 
-  // Automatically start workout when connected
+  // Automatically start workout or resume when connected to maintain previous behavior
   useEffect(() => {
-    if (isConnected && workoutStatus === 'idle') {
-      logger.info('Auto-starting workout on connection')
-      handleStartWorkout()
+    if (isInitialized && isConnected) {
+      if (workoutStatus === 'idle') {
+        startWorkout(userAge || 30, userWeight || 70)
+      } else if (workoutStatus === 'paused') {
+        resumeWorkout()
+      }
     }
-  }, [isConnected, workoutStatus, handleStartWorkout])
+  }, [
+    isInitialized,
+    isConnected,
+    workoutStatus,
+    startWorkout,
+    resumeWorkout,
+    userAge,
+    userWeight,
+  ])
 
   useEffect(() => {
     if (

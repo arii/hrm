@@ -39,6 +39,8 @@ jest.mock('@/hooks/useWorkoutSessionManager', () => ({
     workoutStatus: 'idle',
     addHrData: jest.fn(),
     caloriesBurned: 0,
+    updateCalories: jest.fn(),
+    isInitialized: true,
   })),
 }))
 

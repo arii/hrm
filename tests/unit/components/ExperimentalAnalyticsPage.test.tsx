@@ -54,6 +54,7 @@ describe('ExperimentalAnalyticsPage', () => {
       endWorkout: jest.fn(),
       resetWorkout: jest.fn(),
       addHrData: jest.fn(),
+      updateCalories: jest.fn(),
     })
     mockGetAllSessions.mockResolvedValue([])
   })

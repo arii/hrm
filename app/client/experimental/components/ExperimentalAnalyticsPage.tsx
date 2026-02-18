@@ -59,6 +59,7 @@ const ExperimentalAnalyticsPage = () => {
     totalCaloriesBurned,
     calorieHistory,
     reset: resetCalories,
+    setCalories: setTrackerCalories,
   } = useCalorieTracker({
     age: userSettings.userAge || 30,
     weightKg: userSettings.userWeight || 70,
@@ -115,7 +116,6 @@ const ExperimentalAnalyticsPage = () => {
 
   // Signal when page is ready for testing
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsReady(true)
   }, [])
 
@@ -153,18 +153,28 @@ const ExperimentalAnalyticsPage = () => {
 
   // Sync calories to session manager
   useEffect(() => {
-    updateCalories(totalCaloriesBurned)
-  }, [totalCaloriesBurned, updateCalories])
+    if (isInitialized) {
+      updateCalories(totalCaloriesBurned)
+    }
+  }, [totalCaloriesBurned, updateCalories, isInitialized])
+
+  // Restore tracker state from recovered session
+  useEffect(() => {
+    if (isInitialized && activeSession?.totalCaloriesBurned) {
+      setTrackerCalories(activeSession.totalCaloriesBurned)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized])
 
   // Handlers
   const handleStartWorkout = useCallback(() => {
     const age = userSettings.userAge || 30
     const weight = userSettings.userWeight || 70
     const maxHr = calculateMaxHr(age)
-    startWorkout(age, weight, { maxHr, startCalories: totalCaloriesBurned })
     resetCalories()
+    startWorkout(age, weight, { maxHr, startCalories: 0 })
     setView('active')
-  }, [startWorkout, resetCalories, userSettings, totalCaloriesBurned])
+  }, [startWorkout, resetCalories, userSettings])
 
   const handlePauseWorkout = useCallback(() => {
     pauseWorkout()

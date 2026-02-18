@@ -27,6 +27,7 @@ export interface WorkoutSessionData {
   averageHr: number
   maxHr: number
   totalPaused: number
+  pauseTime: number | null // Timestamp when paused
   calorieHistory: CalorieDataPoint[]
   totalCaloriesBurned: number
   userSettings: { age: number; weight: number; maxHr: number }
