@@ -2,7 +2,7 @@
 
 This document outlines the development philosophy for using specialized AI agents to automate and scale engineering tasks within this repository. The core concept is to separate the **execution** of a task from the **actioning** of its results.
 
-This workflow is designed to leverage the analytical power of AI agents to produce high-quality, version-controlled artifacts, which are then used to inform a separate, human-driven implementation phase.
+This workflow is designed to use the analytical power of AI agents to produce high-quality, version-controlled artifacts, which are then used to inform a separate, human-driven implementation phase.
 
 ## The Two-Phase Process
 
