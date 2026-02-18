@@ -6,14 +6,5 @@ import { CssBaseline, ThemeProvider } from '@mui/material'
 import theme from '@/theme/theme'
 
 export default function ExperimentalPage() {
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <UserSettingsProvider>
-        <WebSocketProvider>
-          <ExperimentalAnalyticsPage />
-        </WebSocketProvider>
-      </UserSettingsProvider>
-    </ThemeProvider>
-  )
+  return <ExperimentalAnalyticsPage />
 }
