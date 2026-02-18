@@ -12,6 +12,7 @@
     "**/*.spec.ts",
     "**/*.spec.tsx",
     "tests/**/*",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "knip.ts"
   ]
 }

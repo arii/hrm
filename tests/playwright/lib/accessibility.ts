@@ -10,14 +10,19 @@ import { v4 as uuidv4 } from 'uuid'
  * @throws An error if any accessibility violations are found.
  */
 export async function checkAccessibility(target: Page | Locator) {
-  const page = 'page' in target ? target.page() : (target as Page)
+  const isLocator = 'page' in target && typeof (target as any).page === 'function'
+  const page = isLocator ? (target as Locator).page() : (target as Page)
   const uniqueId = `axe-${uuidv4()}`
   let selector: string | undefined = undefined
 
   // If the target is a Locator, we need to add a temporary unique attribute
   // to it so we can scope the accessibility scan to that element.
-  if ('page' in target) {
-    await target.evaluate((node, id) => node.setAttribute(id, ''), uniqueId)
+  if (isLocator) {
+    const locator = target as Locator
+    await locator.evaluate(
+      (node, id) => (node as HTMLElement).setAttribute(id, ''),
+      uniqueId
+    )
     selector = `[${uniqueId}]`
   }
 
@@ -35,8 +40,12 @@ export async function checkAccessibility(target: Page | Locator) {
   const accessibilityScanResults = await axeBuilder.analyze()
 
   // Clean up the temporary attribute after the scan.
-  if (selector) {
-    await target.evaluate((node, id) => node.removeAttribute(id), uniqueId)
+  if (isLocator && selector) {
+    const locator = target as Locator
+    await locator.evaluate(
+      (node, id) => (node as HTMLElement).removeAttribute(id),
+      uniqueId
+    )
   }
 
   if (accessibilityScanResults.violations.length > 0) {
