@@ -31,7 +31,7 @@ const OVERLAY_SX = {
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 3, textAlign: 'center' }}>
     <Typography
-      variant="h5"
+      variant="h4"
       sx={{
         fontWeight: 900,
         textTransform: 'uppercase',
@@ -49,7 +49,6 @@ const IdentityTier = ({ name }: { name: string }) => (
 const HeroTier = ({ percentage }: { percentage: number }) => (
   <Box
     sx={{
-      flexGrow: 1,
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
@@ -61,9 +60,9 @@ const HeroTier = ({ percentage }: { percentage: number }) => (
       component="div"
       sx={{
         fontSize: {
-          xs: 'clamp(5rem, 15vw, 8rem)',
-          sm: 'clamp(8rem, 18vw, 12rem)',
-          md: 'clamp(10rem, 20vw, 15rem)',
+          xs: 'clamp(3rem, 10vw, 4rem)',
+          sm: 'clamp(4rem, 12vw, 5rem)',
+          md: 'clamp(5rem, 15vw, 6rem)',
         },
         fontWeight: 900,
         lineHeight: 1,
@@ -156,9 +155,11 @@ const HrTile = ({
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
+          minHeight: 180,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
+          justifyContent: 'center',
           position: 'relative',
           overflow: 'hidden',
           padding: 0,
