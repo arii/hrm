@@ -13,6 +13,7 @@ Additionally, the previous implementation relied on simple `setInterval` increme
 ## Decision
 
 We have consolidated all timer logic into a single `TabataTimer` class within `services/tabataTimer.ts`. This service now handles:
+
 - Both TABATA and STOPWATCH modes.
 - Phase transitions and state management.
 - Sound cue logic.
