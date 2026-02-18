@@ -38,5 +38,135 @@
     "name": "scope:needs-review",
     "description": "PR touches multiple architectural areas and requires careful review.",
     "color": "fbca04"
+  },
+  {
+    "name": "bug",
+    "description": "Something isn't working.",
+    "color": "d73a4a"
+  },
+  {
+    "name": "documentation",
+    "description": "Improvements or additions to documentation.",
+    "color": "0075ca"
+  },
+  {
+    "name": "enhancement",
+    "description": "New feature, request, or improvement to existing functionality.",
+    "color": "a2eeef"
+  },
+  {
+    "name": "chore",
+    "description": "Internal maintenance, dependency updates, or minor changes.",
+    "color": "eeeeee"
+  },
+  {
+    "name": "refactor",
+    "description": "Restructuring code without changing behavior.",
+    "color": "bfdadc"
+  },
+  {
+    "name": "ci",
+    "description": "Continuous Integration configuration and scripts.",
+    "color": "5319e7"
+  },
+  {
+    "name": "testing",
+    "description": "Related to automated tests.",
+    "color": "c5def5"
+  },
+  {
+    "name": "styling",
+    "description": "Changes to styles, CSS, or UI presentation.",
+    "color": "f9d0c4"
+  },
+  {
+    "name": "build-config",
+    "description": "Changes to build configurations or dependencies.",
+    "color": "e99695"
+  },
+  {
+    "name": "automerge",
+    "description": "Indicates that the PR should be automatically merged when all checks pass.",
+    "color": "0e8a16"
+  },
+  {
+    "name": "auto-code",
+    "description": "Triggers automated coding agents (e.g., Gemini Coder).",
+    "color": "fbca04"
+  },
+  {
+    "name": "needs-info",
+    "description": "More information is needed from the author.",
+    "color": "e99695"
+  },
+  {
+    "name": "invalid",
+    "description": "The issue or PR is invalid or doesn't follow guidelines.",
+    "color": "e6e6e6"
+  },
+  {
+    "name": "wontfix",
+    "description": "This will not be worked on.",
+    "color": "ffffff"
+  },
+  {
+    "name": "duplicate",
+    "description": "This is a duplicate of another issue or PR.",
+    "color": "cfd3d7"
+  },
+  {
+    "name": "stale",
+    "description": "No activity has been detected for a long time.",
+    "color": "ffffff"
+  },
+  {
+    "name": "tech-debt",
+    "description": "Issues related to technical debt or code quality improvements.",
+    "color": "fbca04"
+  },
+  {
+    "name": "bot-generated",
+    "description": "Issue generated automatically by a bot.",
+    "color": "cfd3d7"
+  },
+  {
+    "name": "triage-needed",
+    "description": "This issue needs to be reviewed and prioritized.",
+    "color": "fef2c0"
+  },
+  {
+    "name": "type-technical-debt",
+    "description": "Technical debt that needs to be addressed.",
+    "color": "a2eeef"
+  },
+  {
+    "name": "type-frontend-improvement",
+    "description": "Improvement to the user interface or user experience.",
+    "color": "d4c5f9"
+  },
+  {
+    "name": "type-security",
+    "description": "Security vulnerability or concern.",
+    "color": "d73a4a"
+  },
+  {
+    "name": "type-bug",
+    "description": "A bug or unexpected behavior.",
+    "color": "d73a4a"
+  },
+  {
+    "name": "priority-high",
+    "description": "High priority issue.",
+    "color": "d73a4a"
+  },
+  {
+    "name": "priority-medium",
+    "description": "Medium priority issue.",
+    "color": "fbca04"
+  },
+  {
+    "name": "priority-low",
+    "description": "Low priority issue.",
+    "color": "0e8a16"
   }
 ]

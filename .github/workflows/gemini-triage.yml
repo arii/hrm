@@ -71,7 +71,7 @@ jobs:
           ### Output Format
           You MUST return a valid JSON object. Do not include markdown formatting like \`\`\`json.
           {
-            "labels": ["bug", "enhancement", "documentation", "needs-info", "invalid"],
+            "labels": ["bug", "documentation", "enhancement", "chore", "refactor", "ci", "testing", "styling", "build-config", "tech-debt", "needs-info", "invalid"],
             "priority": "High" | "Medium" | "Low",
             "summary": "A 1-sentence summary of the issue",
             "analysis": "A brief analysis of what is needed to fix this.",

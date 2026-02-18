@@ -19,12 +19,17 @@ When a new issue is opened, you will:
 
 3.  **Categorize**: Assign labels from the following **Canonical List**. Do not invent new labels.
     - `bug`: Something is not working.
-    - `feature`: A new feature request.
     - `documentation`: Improvements or additions to documentation.
-    - `enhancement`: Improvement to an existing feature.
+    - `enhancement`: New feature, request, or improvement to existing functionality.
     - `chore`: Internal maintenance, dependency updates, or build process changes.
     - `refactor`: Restructuring code without changing external behavior.
-    - `question`: Further information is requested.
+    - `ci`: Continuous Integration configuration and scripts.
+    - `testing`: Related to automated tests.
+    - `styling`: Changes to styles, CSS, or UI presentation.
+    - `build-config`: Changes to build configurations or dependencies.
+    - `tech-debt`: Issues related to technical debt or code quality improvements.
+    - `needs-info`: Further information is requested from the author.
+    - `invalid`: The issue or PR is invalid or doesn't follow guidelines.
     - `wontfix`: The issue will not be worked on.
     - `duplicate`: This issue is a duplicate of another.
 

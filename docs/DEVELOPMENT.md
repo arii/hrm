@@ -47,6 +47,20 @@ To ensure a smooth and efficient review process, every PR must be tightly scoped
 
 Refer to the PR template for a detailed scope validation checklist.
 
+### Labeling Conventions
+
+To ensure consistency across the project, we use a standardized set of GitHub labels. These labels are used for issue triage, PR categorization, and automated workflows.
+
+All managed labels are defined in [`.github/pr-labels.json`](../.github/pr-labels.json). Automated workflows ensure these labels exist in the repository.
+
+**Key Label Categories:**
+- **Review Status**: `ready-for-approval`, `needs-fixes`, `approved`, `changes-requested`
+- **Change Type**: `bug`, `enhancement`, `refactor`, `chore`, `ci`, `testing`, `styling`, `build-config`, `tech-debt`
+- **Scope**: `scope:focused`, `scope:needs-review`
+- **Operational**: `needs-info`, `invalid`, `automerge`, `auto-code`, `stale`, `bot-generated`, `triage-needed`
+
+Obsolete or redundant labels (e.g., variations like `CI` or `workflow`) are automatically removed by the `cleanup-pr-labels.sh` script, as configured in [`.github/automated-labels.json`](../.github/automated-labels.json).
+
 ### Security & Quality Review
 
 The security and quality review process is a critical step in our development lifecycle. It helps us catch potential issues before they make it into production.
