@@ -1,6 +1,14 @@
 'use client'
 
-import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
+import { useState, useEffect } from 'react'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  useTheme,
+  Skeleton,
+} from '@mui/material'
 import { HrDataPoint } from '@/lib/workout-session-storage'
 import {
   LineChart,
@@ -19,6 +27,27 @@ interface HeartRateTimeSeriesProps {
 
 const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
   const theme = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <Card elevation={2}>
+        <CardContent>
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
+            Heart Rate Over Time
+          </Typography>
+          <Box sx={{ height: 300 }}>
+            <Skeleton variant="rectangular" width="100%" height="100%" />
+          </Box>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card elevation={2}>
