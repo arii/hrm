@@ -10,16 +10,15 @@ import { v4 as uuidv4 } from 'uuid'
  * @throws An error if any accessibility violations are found.
  */
 export async function checkAccessibility(target: Page | Locator) {
-  const isLocator = 'page' in target && typeof (target as any).page === 'function'
-  const page = isLocator ? (target as Locator).page() : (target as Page)
+  const isLocator = (t: Page | Locator): t is Locator => 'page' in t
+  const page = isLocator(target) ? target.page() : target
   const uniqueId = `axe-${uuidv4()}`
   let selector: string | undefined = undefined
 
   // If the target is a Locator, we need to add a temporary unique attribute
   // to it so we can scope the accessibility scan to that element.
-  if (isLocator) {
-    const locator = target as Locator
-    await locator.evaluate(
+  if (isLocator(target)) {
+    await target.evaluate(
       (node, id) => (node as HTMLElement).setAttribute(id, ''),
       uniqueId
     )
@@ -40,9 +39,8 @@ export async function checkAccessibility(target: Page | Locator) {
   const accessibilityScanResults = await axeBuilder.analyze()
 
   // Clean up the temporary attribute after the scan.
-  if (isLocator && selector) {
-    const locator = target as Locator
-    await locator.evaluate(
+  if (isLocator(target) && selector) {
+    await target.evaluate(
       (node, id) => (node as HTMLElement).removeAttribute(id),
       uniqueId
     )
@@ -59,7 +57,8 @@ export async function checkAccessibility(target: Page | Locator) {
   Nodes:
   ${violation.nodes
     .map(
-      (node) => `    - HTML: ${node.html}\n      Target: ${node.target.join(', ')}\n      Summary: ${node.failureSummary}`
+      (node) =>
+        `    - HTML: ${node.html}\n      Target: ${node.target.join(', ')}\n      Summary: ${node.failureSummary}`
     )
     .join('\n')}
       `)
