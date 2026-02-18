@@ -271,6 +271,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   /**
    * Initiates reconnection using linear backoff (RECONNECT_BASE_DELAY_MS * attempt).
    * Max attempts: BLUETOOTH_MAX_RECONNECT_ATTEMPTS.
+   * Rationale: Centralizing retries here avoids nested complexity in connectToGatt
+   * and provides a more patient window (~72s total) than the previous exponential strategy.
    */
   const reconnect = useCallback(
     (device: BluetoothDevice) => {
@@ -384,8 +386,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [])
 
   /**
-   * Low-level GATT connection handler.
-   * Performs a single connection attempt and service discovery.
+   * Performs a single GATT connection attempt and service discovery.
+   * Resilience for transient "busy" states is handled by the caller (e.g., reconnect)
+   * to maintain a clean, single-responsibility connection flow.
    */
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
