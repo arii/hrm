@@ -62,4 +62,3 @@ export function getHrMasks(page: Page): Locator[] {
 export function getTimerMasks(page: Page): Locator[] {
   return [page.locator(VRT_MASK_SELECTORS.timerCountdown)]
 }
-// Refined VRT masking strategy implementation
