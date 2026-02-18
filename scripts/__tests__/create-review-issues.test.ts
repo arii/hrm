@@ -25,9 +25,7 @@ describe('create-review-issues logic', () => {
     })
 
     it('should normalize strings (case and punctuation)', () => {
-      expect(
-        calculateJaccardSimilarity('Hello, World!', 'hello world')
-      ).toBe(1)
+      expect(calculateJaccardSimilarity('Hello, World!', 'hello world')).toBe(1)
     })
 
     it('should ignore short words', () => {
@@ -108,7 +106,8 @@ describe('create-review-issues logic', () => {
     it('should reject generic titles', () => {
       const issue: SuggestedIssue = {
         title: 'Refactor code',
-        description: 'This is a long enough description that should be valid otherwise.',
+        description:
+          'This is a long enough description that should be valid otherwise.',
         type: 'technical-debt',
         priority: 'low',
       }
@@ -133,7 +132,8 @@ describe('create-review-issues logic', () => {
     it('should accept high quality issues', () => {
       const issue: SuggestedIssue = {
         title: 'Fix Race Condition in Auth Flow',
-        description: 'The validateToken function has a race condition when multiple requests arrive simultaneously.',
+        description:
+          'The validateToken function has a race condition when multiple requests arrive simultaneously.',
         type: 'bug',
         priority: 'high',
       }

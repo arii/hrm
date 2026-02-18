@@ -334,7 +334,10 @@ export function isLowQualityIssue(
   }
 
   // 2. Check for generic titles
-  const normalizedTitle = issue.title.toLowerCase().trim().replace(/[^\w\s]/g, '')
+  const normalizedTitle = issue.title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s]/g, '')
   if (GENERIC_TITLES.includes(normalizedTitle)) {
     return true
   }
