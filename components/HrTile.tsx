@@ -29,7 +29,7 @@ const OVERLAY_SX = {
 } as const
 
 const IdentityTier = ({ name }: { name: string }) => (
-  <Box sx={{ pt: 3, textAlign: 'center' }}>
+  <Box sx={{ pt: 1, textAlign: 'center' }}>
     <Typography
       variant="h5"
       sx={{
@@ -56,21 +56,20 @@ const HeroTier = ({ percentage }: { percentage: number }) => (
     }}
   >
     <Typography
-      data-testid="live-hr-percent"
       variant="h2"
       component="div"
       sx={{
         fontSize: {
-          xs: 'clamp(5rem, 15vw, 8rem)',
-          sm: 'clamp(8rem, 18vw, 12rem)',
-          md: 'clamp(10rem, 20vw, 15rem)',
+          xs: '4rem',
+          sm: '4.5rem',
+          md: '5rem',
         },
         fontWeight: 900,
         lineHeight: 1,
         fontFamily: HERO_FONT_FAMILY,
       }}
     >
-      {percentage}%
+      <span data-testid="live-hr-percent">{percentage}</span>%
     </Typography>
   </Box>
 )
@@ -84,8 +83,8 @@ const MetricItem = ({
   label: string
   testId?: string
 }) => (
-  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
-    {value}{' '}
+  <Typography variant="h4" sx={{ fontWeight: 800 }}>
+    <span data-testid={testId}>{value}</span>{' '}
     <Typography
       component="span"
       variant="caption"
@@ -107,15 +106,19 @@ const DataTier = ({
 }) => (
   <Box
     sx={{
-      pb: 3,
-      pt: showName ? 0 : 3,
+      pb: 1,
+      pt: showName ? 0 : 1,
       display: 'flex',
       justifyContent: 'center',
-      gap: 4,
+      gap: 2,
     }}
   >
     <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
-    <MetricItem value={Math.floor(calories)} label="KCAL" />
+    <MetricItem
+      value={Math.floor(calories)}
+      label="KCAL"
+      testId="calorie-value"
+    />
   </Box>
 )
 
@@ -156,7 +159,7 @@ const HrTile = ({
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
-          height: '100%',
+          minHeight: 180,
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
@@ -201,7 +204,7 @@ const HrTile = ({
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            p: 2,
+            p: 1,
           }}
         >
           {showName && <IdentityTier name={name} />}
@@ -209,10 +212,10 @@ const HrTile = ({
           <DataTier value={value} calories={calories} showName={showName} />
         </Box>
 
-        <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
+        <Box sx={{ bgcolor: 'common.black', py: 1, textAlign: 'center' }}>
           <Typography
             variant="h6"
-            sx={{ color: '#FFF', fontWeight: 900, letterSpacing: '0.3em' }}
+            sx={{ color: '#FFF', fontWeight: 800, letterSpacing: '0.2em' }}
           >
             {zoneConfig.label.toUpperCase()}
           </Typography>

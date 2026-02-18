@@ -2,6 +2,7 @@ import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
+  getHrMasks,
   setupVisualRegressionTest,
 } from './test-helpers'
 import { takeScreenshot } from './lib/visual'
@@ -35,7 +36,10 @@ test.describe('Visual Regression Tests', () => {
   test.describe('Dashboard Component', () => {
     test('initial, empty state', async () => {
       await takeScreenshot(dashboardPage, 'dashboard-empty.png', {
-        mask: getDynamicContentMasks(dashboardPage),
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          ...getHrMasks(dashboardPage),
+        ],
       })
     })
   })

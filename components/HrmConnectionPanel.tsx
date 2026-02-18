@@ -30,6 +30,7 @@ const HrmConnectionPanel = () => {
         flexWrap: 'wrap',
         gap: 2,
         height: '100%',
+        alignItems: 'flex-start',
       }}
     >
       {isLoading || tileData.length === 0 ? (

@@ -267,10 +267,18 @@ import { waitForPageReady, BASE_URL } from './test-helpers'
 import { waitForPageReady, getBaseURL } from './lib'
 ```
 
+## VRT Masking Philosophy
+
+To prevent layout regressions while avoiding flaky tests, follow these masking principles:
+
+- **Granular Value Masking**: Mask only the specific numeric values or text that changes dynamically (e.g., heart rate numbers, calorie counts, timer digits).
+- **Preserve Structure**: Do NOT mask entire components or grid items. Masking the container hides critical layout information like dimensions, font sizes, and positioning.
+- **Structural Assertions**: Supplement VRT with explicit structural assertions (e.g., checking `boundingBox` height) to catch regressions that might be subtle in visual diffs.
+
 ## Best Practices
 
 1. **Use the new library** - Import from `./lib` for new tests
-2. **Mask dynamic content** - Use `getDynamicContentMasks()`, `getHrMasks()`, or `getTimerMasks()` for VRT
+2. **Mask dynamic content** - Use granular masks via `getDynamicContentMasks()`, `getHrMasks()`, or `getTimerMasks()` to hide values while preserving layout.
 3. **Wait for stability** - Use `waitForPageReady()` before assertions
 4. **Wait for WebSocket** - Use `waitForWebSocketConnection()` for real-time tests
 5. **Use standard timeouts** - Reference `WAIT_TIMEOUTS` for consistent timeout values

@@ -67,16 +67,20 @@ const Dashboard = () => {
   }
 
   // Signal when page is ready for testing
+  const [isReady, setIsReady] = useState(false)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.__TEST_READY__ = true
       window.dispatchEvent(new CustomEvent('test-ready'))
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsReady(true)
     }
   }, [])
 
   return (
     <Container
       data-testid="dashboard"
+      data-ready={isReady ? 'true' : undefined}
       maxWidth="xl"
       onClick={handleInteraction}
       sx={{

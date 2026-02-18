@@ -85,7 +85,6 @@ const TimerDisplay = () => {
       sx={{
         backgroundColor: '#000000', // Pure black for high energy
         color: phaseColor, // Dynamic color based on phase
-        height: '100%',
         display: 'flex',
         borderRadius: 2,
         border: '2px solid #1a1a1a', // Subtle border for definition

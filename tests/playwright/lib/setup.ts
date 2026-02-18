@@ -18,8 +18,7 @@ import { waitForFontsLoaded, waitForPageReady } from './waits'
  */
 export const HRM_ROUTES = {
   /** Main dashboard/viewer page */
-  // The experimental dashboard is the primary target for VRTs.
-  DASHBOARD: '/client/experimental',
+  DASHBOARD: '/',
   /** Control panel for timer and music */
   CONTROL: '/client/control',
   /** Mock HRM client for testing */

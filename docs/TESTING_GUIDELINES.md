@@ -8,6 +8,12 @@ This document outlines the standards for testing infrastructure, artifact manage
 - **Clarity**: Tests should be easy to understand. The name of the test and its structure should clearly communicate its intent.
 - **Isolation**: Tests should be isolated from one another. The failure of one test should not impact the outcome of another.
 
+## Visual Regression Testing (VRT) Best Practices
+
+- **Avoid Broad Masking**: Never mask entire components (e.g., `hr-tile-grid-item`). This creates blind spots for layout regressions such as height shifts or font size changes.
+- **Granular Selectors**: Use specific `data-testid` attributes to mask only dynamic values (numbers, timers) while keeping the component structure visible.
+- **Verify Dimensions**: Use Playwright's `.boundingBox()` to assert critical dimensions (e.g., component height) before taking screenshots.
+
 ## Test Artifact Management
 
 Test artifacts are any files generated during a test run. This includes, but is not limited to:

@@ -1,4 +1,4 @@
-import { type BrowserContext, type Page } from '@playwright/test'
+import { expect, type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
@@ -41,6 +41,15 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
       const dashboard = dashboardPage.getByTestId('dashboard')
+
+      // NEW: Verify HR tile has fixed height before screenshot
+      const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
+      await hrTile.waitFor({ state: 'visible', timeout: 5000 })
+      const boundingBox = await hrTile.boundingBox()
+
+      // Assert tile height is within expected range (allow some variance)
+      expect(boundingBox?.height).toBeGreaterThanOrEqual(180)
+      expect(boundingBox?.height).toBeLessThanOrEqual(250)
 
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
         maxDiffPixelRatio: 0.04,
