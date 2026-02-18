@@ -1,6 +1,6 @@
 // File: tests/unit/services/spotifyPlaylistService.test.ts
 import { jest } from '@jest/globals'
-import { getUserPlaylists } from '../../../services/spotifyPlaylistService'
+import { getUserPlaylists } from '@/services/spotifyPlaylistService'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 jest.mock('@spotify/web-api-ts-sdk')

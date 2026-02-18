@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react'
-import { SpotifyService } from './interfaces'
-import { BluetoothConnectionStatus } from './bluetooth'
-import { ServerMessage } from './websocket'
+import { SpotifyService } from '@/types/interfaces'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
+import { ServerMessage } from '@/types/websocket'
 
 // Define a comprehensive interface for the global test controls
 // This allows various parts of the application to attach test-specific

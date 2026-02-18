@@ -1,6 +1,6 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { createSafeSpotifyApi } from '../../services/safeSpotifyApi'
+import { createSafeSpotifyApi } from '@/services/safeSpotifyApi'
 
 // Mock the SpotifyApi player methods
 const mockPlayer: jest.Mocked<SpotifyApi['player']> = {

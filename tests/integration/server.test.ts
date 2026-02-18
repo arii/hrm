@@ -1,5 +1,5 @@
 import WebSocket from 'ws'
-import { startServer, ServerProcess } from './test-helpers'
+import { startServer, ServerProcess } from '@/tests/integration/test-helpers'
 
 jest.setTimeout(60000)
 

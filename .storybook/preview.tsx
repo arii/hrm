@@ -4,8 +4,8 @@ import { CssBaseline } from '@mui/material'
 import { SessionProvider } from 'next-auth/react'
 import { initialize, mswLoader } from 'msw-storybook-addon'
 import React from 'react'
-import { handlers } from '../stories/mocks/handlers'
-import theme from '../lib/theme'
+import { handlers } from '@/stories/mocks/handlers'
+import theme from '@/lib/theme'
 import { RouterContext } from 'next/dist/shared/lib/router-context.shared-runtime' // next 13
 import * as NextRouter from 'next/router'
 

@@ -1,21 +1,21 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { ServerMessage, SpotifyData } from '../types/websocket'
-import { SpotifyCommandParameters } from '../types/core'
+import { ServerMessage, SpotifyData } from '@/types/websocket'
+import { SpotifyCommandParameters } from '@/types/core'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
-} from './spotifyTokenManager.js'
-import logger from '../utils/logger.server.js'
+} from '@/services/spotifyTokenManager'
+import logger from '@/utils/logger.server'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyApiErrorHandling.js'
-import { SpotifyService } from '../types/interfaces.js'
-import { SpotifyCommand } from '../types/core.js'
-import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
-import { env } from '../lib/env.js'
-import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
-import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
+} from '@/services/spotifyApiErrorHandling'
+import { SpotifyService } from '@/types/interfaces'
+import { SpotifyCommand } from '@/types/core'
+import { SafeSpotifyApi, createSafeSpotifyApi } from '@/services/safeSpotifyApi'
+import { env } from '@/lib/env'
+import { SpotifyPlayerManager } from '@/services/spotifyPlayerManager'
+import { SpotifyDeviceManager } from '@/services/spotifyDeviceManager'
 
 export class SpotifyPolling implements SpotifyService {
   public forcePollAndBroadcast() {

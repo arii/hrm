@@ -6,8 +6,8 @@ import {
   HR_ZONE_ORDER,
   calculateZoneFromMaxHr,
   toHeartRateZone,
-} from '../lib/shared/hr-zones'
-import { HrDataPoint } from '../lib/workout-session-storage'
+} from '@/lib/shared/hr-zones'
+import { HrDataPoint } from '@/lib/workout-session-storage'
 
 // --- State, Actions, and Reducer ---
 

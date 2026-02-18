@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import Dashboard from '@/app/page' // Adjust based on your actual export
-import { MockWebSocketProvider } from '../mocks/MockWebSocketProvider'
+import { MockWebSocketProvider } from '@/stories/mocks/MockWebSocketProvider'
 import { ServerMessage } from '@/types/websocket'
 
 const RACE_SCENARIO: ServerMessage[] = [

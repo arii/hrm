@@ -15,7 +15,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
-import LiveDuration from './LiveDuration'
+import LiveDuration from '@/app/client/experimental/components/LiveDuration'
 import { useState } from 'react'
 import { formatDate } from '@/lib/utils'
 

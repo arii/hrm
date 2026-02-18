@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import { render, screen, fireEvent } from '@testing-library/react'
-import ConnectView from './ConnectView'
-import { WorkoutStatus } from '../../../types/workout'
+import ConnectView from '@/app/client/connect/ConnectView'
+import { WorkoutStatus } from '@/types/workout'
 
 describe('ConnectView', () => {
   const defaultProps = {

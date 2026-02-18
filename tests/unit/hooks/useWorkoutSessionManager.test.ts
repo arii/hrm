@@ -1,12 +1,12 @@
 /** @jest-environment jsdom */
 
 import { renderHook, act, waitFor } from '@testing-library/react'
-import { useWorkoutSessionManager } from '../../../hooks/useWorkoutSessionManager'
-import { workoutSessionStorage } from '../../../lib/workout-session-storage'
-import { useAppSnackbar } from '../../../hooks/useAppSnackbar'
-import { isSameDay } from '../../../lib/date'
-import { WorkoutSessionData } from '../../../lib/workout-session-storage'
-import { HeartRateZone } from '../../../lib/shared/hr-zones'
+import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
+import { workoutSessionStorage } from '@/lib/workout-session-storage'
+import { useAppSnackbar } from '@/hooks/useAppSnackbar'
+import { isSameDay } from '@/lib/date'
+import { WorkoutSessionData } from '@/lib/workout-session-storage'
+import { HeartRateZone } from '@/lib/shared/hr-zones'
 
 // Mock dependencies
 jest.mock('../../../lib/workout-session-storage')

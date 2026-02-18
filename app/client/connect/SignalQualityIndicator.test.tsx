@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import { SignalQualityIndicator } from './SignalQualityIndicator'
+import { SignalQualityIndicator } from '@/app/client/connect/SignalQualityIndicator'
 import '@testing-library/jest-dom'
 
 // Mock MUI icons

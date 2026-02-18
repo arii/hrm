@@ -7,9 +7,9 @@ import {
   checkSpotifyAPI,
   checkWebSocketService,
   checkTimerService,
-} from '../../../lib/healthCheck'
+} from '@/lib/healthCheck'
 import { WebSocket } from 'ws'
-import TabataTimer from '../../../services/tabataTimer'
+import TabataTimer from '@/services/tabataTimer'
 
 // Mock the 'ws' module
 jest.mock('ws')

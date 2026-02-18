@@ -4,7 +4,7 @@
  * Runs only OAuth-related tests with specific environment setup
  */
 import { defineConfig, devices } from '@playwright/test'
-import { getBaseURL } from './utils/urls'
+import { getBaseURL } from '@/utils/urls'
 
 export default defineConfig({
   testDir: './tests/playwright/oauth',

@@ -1,7 +1,7 @@
 // This file is for component-specific prop types.
 // All other types should be defined in their respective files.
 
-import { TimerMode, TimerPhase } from './core'
+import { TimerMode, TimerPhase } from '@/types/core'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 
 export interface HrTileProps {
@@ -45,7 +45,7 @@ export interface WorkoutColumnsProps {
 }
 
 // Correct WorkoutItem for the parser and WebSocket
-import { WorkoutItem } from './workout'
+import { WorkoutItem } from '@/types/workout'
 
 export type WorkoutData = WorkoutItem[]
 

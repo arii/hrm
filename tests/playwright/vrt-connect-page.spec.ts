@@ -1,8 +1,8 @@
-import { test, expect } from './fixtures'
-import { injectBluetoothMocks } from './lib/bluetooth-mocks'
-import { takeScreenshot } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
-import { BluetoothConnectionStatus } from '../../types/bluetooth'
+import { test, expect } from '@/tests/playwright/fixtures'
+import { injectBluetoothMocks } from '@/tests/playwright/lib/bluetooth-mocks'
+import { takeScreenshot } from '@/tests/playwright/lib/visual'
+import { waitForPageReady } from '@/tests/playwright/lib/waits'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
 
 test.describe('Visual Regression Tests for /client/connect Page', () => {
   test.beforeEach(async ({ connectPage }) => {

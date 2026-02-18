@@ -1,8 +1,8 @@
 'use client'
 
 import { createTheme } from '@mui/material/styles'
-import { reducedMotionStyles } from './theme/animations'
-import { HR_COLORS } from './shared/colors'
+import { reducedMotionStyles } from '@/lib/theme/animations'
+import { HR_COLORS } from '@/lib/shared/colors'
 
 // Extend the MUI theme types to include custom properties
 declare module '@mui/material/styles' {

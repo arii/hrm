@@ -1,5 +1,5 @@
 // Implements a generic, reusable timer and stopwatch service.
-import { GenericTimerState, TimerMode } from '../types/genericTimer'
+import { GenericTimerState, TimerMode } from '@/types/genericTimer'
 
 type TimerUpdateCallback = (state: Readonly<GenericTimerState>) => void
 

@@ -1,8 +1,8 @@
 // hooks/useCalorieTracker.ts
 
 import { useCallback, useRef, useEffect, useReducer } from 'react'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation'
-import { CalorieDataPoint } from '../lib/workout-session-storage'
+import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
+import { CalorieDataPoint } from '@/lib/workout-session-storage'
 import { Gender } from '@/types/core'
 
 interface CalorieTrackerProps {

@@ -1,8 +1,8 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals'
-import { SpotifyPlayerManager } from '../../services/spotifyPlayerManager'
-import { SafeSpotifyApi } from '../../services/safeSpotifyApi'
-import { ServerMessage, SpotifyData } from '../../types/websocket'
-import { mockPlayer } from './spotify-test-utils'
+import { SpotifyPlayerManager } from '@/services/spotifyPlayerManager'
+import { SafeSpotifyApi } from '@/services/safeSpotifyApi'
+import { ServerMessage, SpotifyData } from '@/types/websocket'
+import { mockPlayer } from '@/tests/unit/spotify-test-utils'
 
 const NOT_PLAYING_MESSAGE = 'Nothing is currently playing.'
 

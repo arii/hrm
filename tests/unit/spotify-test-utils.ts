@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals'
-import { SpotifyPolling } from '../../services/spotifyPolling'
+import { SpotifyPolling } from '@/services/spotifyPolling'
 
-export { mockPlayer, mockSpotifyApi, mockLogger } from './spotify-mocks'
+export { mockPlayer, mockSpotifyApi, mockLogger } from '@/tests/unit/spotify-mocks'
 
 /**
  * Test setup helper for SpotifyPolling service.

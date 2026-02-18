@@ -1,12 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { readFile } from 'fs/promises'
 import path from 'path'
-import { parseConflicts } from './utils/git-conflicts'
+import { parseConflicts } from '@/scripts/utils/git-conflicts'
 import {
   generateContentWithFallback,
   JsonProcessor,
   writeOutput,
-} from './gemini-client'
+} from '@/scripts/gemini-client'
 
 interface Resolution {
   id: string

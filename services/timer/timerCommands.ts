@@ -3,15 +3,15 @@
  * Encapsulates all state-mutating operations (commands) for the timer.
  * This class directly modifies the state object and triggers broadcasts.
  */
-import { ServerMessage } from '../../types/websocket'
-import { TimerMode } from '../../types/core'
+import { ServerMessage } from '@/types/websocket'
+import { TimerMode } from '@/types/core'
 import {
   START_COUNTDOWN_DURATION,
   TIMER_INTERVAL,
-} from '../../utils/constants.js'
-import { DualModeTimerState } from './timerState.js'
-import { ConfigurationError } from '../../types/errors.js'
-import { TimerQueries } from './timerQueries.js'
+} from '@/utils/constants'
+import { DualModeTimerState } from '@/services/timer/timerState'
+import { ConfigurationError } from '@/types/errors'
+import { TimerQueries } from '@/services/timer/timerQueries'
 
 export class TimerCommands {
   private readonly state: DualModeTimerState

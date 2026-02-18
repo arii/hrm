@@ -10,7 +10,7 @@ import {
 import { fetchWithRetry, AppError } from '@/utils/network'
 import { signOut } from 'next-auth/react'
 import { redirectTo } from '@/utils/redirect'
-import { useSpotifyAuth } from './useSpotifyAuth'
+import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 
 interface SpotifyDeviceEvent {
   device_id: string

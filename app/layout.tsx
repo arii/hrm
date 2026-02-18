@@ -3,8 +3,8 @@ import { Inter, Roboto_Mono } from 'next/font/google'
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter'
 import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
-import theme from '../theme/theme'
-import Main from './main'
+import theme from '@/theme/theme'
+import Main from '@/app/main'
 import './globals.css'
 const inter = Inter({
   subsets: ['latin'],

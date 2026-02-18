@@ -1,6 +1,6 @@
 // hooks/usePersistentStorage.ts
-import useLocalStorage from './useLocalStorage'
-import useCookie from './useCookie'
+import useLocalStorage from '@/hooks/useLocalStorage'
+import useCookie from '@/hooks/useCookie'
 
 const checkLocalStorage = () => {
   if (typeof window === 'undefined') {

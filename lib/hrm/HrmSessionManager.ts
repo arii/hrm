@@ -1,13 +1,13 @@
 // lib/hrm/HrmSessionManager.ts
-import { RingBuffer } from '../structures/RingBuffer.js'
+import { RingBuffer } from '@/lib/structures/RingBuffer'
 import {
   HrmStreamData,
   RawHrmStreamData,
   HeartRateDataPoint,
   HrmInternalStats,
-} from '../../types/core.js'
-import { env } from '../env.js'
-import { HrmStatsCalculator } from '../../services/HrmStatsCalculator.js'
+} from '@/types/core'
+import { env } from '@/lib/env'
+import { HrmStatsCalculator } from '@/services/HrmStatsCalculator'
 
 type HrmDataPoint = Pick<HeartRateDataPoint, 'heartRate' | 'timestamp'>
 

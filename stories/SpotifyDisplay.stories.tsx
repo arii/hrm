@@ -5,9 +5,9 @@ import { WebSocketContext } from '@/context/WebSocketContext'
 import {
   mockWebSocketContext,
   mockSpotifyDataNoActivePlayback,
-} from './mocks/mockWebSocketContext'
-import { mockSession } from './mocks/mockSession'
-import { handlers } from './mocks/handlers'
+} from '@/stories/mocks/mockWebSocketContext'
+import { mockSession } from '@/stories/mocks/mockSession'
+import { handlers } from '@/stories/mocks/handlers'
 
 const meta: Meta<typeof SpotifyDisplay> = {
   title: 'Components/SpotifyDisplay',

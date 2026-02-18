@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import ControlPanel from './ControlPanel'
+import ControlPanel from '@/app/client/control/ControlPanel'
 
 export const metadata: Metadata = {
   title: 'HRM Control Panel',

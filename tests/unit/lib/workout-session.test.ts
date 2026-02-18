@@ -1,7 +1,7 @@
 // tests/unit/lib/workout-session.test.ts
-import { isSessionStale } from '../../../lib/workout-session'
-import { WorkoutSessionData } from '../../../lib/workout-session-storage'
-import { HeartRateZone } from '../../../lib/shared/hr-zones'
+import { isSessionStale } from '@/lib/workout-session'
+import { WorkoutSessionData } from '@/lib/workout-session-storage'
+import { HeartRateZone } from '@/lib/shared/hr-zones'
 
 describe('isSessionStale', () => {
   it('should return true for a session from a previous day', () => {

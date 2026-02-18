@@ -2,11 +2,11 @@
  * @jest-environment jsdom
  */
 import { render, screen } from '@testing-library/react'
-import { mockUseWebSocket } from '../../mocks/contexts'
-import '../../mocks/components.tsx'
+import { mockUseWebSocket } from '@/tests/mocks/contexts'
+import '@/tests/mocks/components'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
-import { mockHrmData } from '../../fixtures/hrm'
+import { mockHrmData } from '@/tests/fixtures/hrm'
 
 describe('HrmConnectionPanel', () => {
   beforeEach(() => {

@@ -18,7 +18,7 @@ describe('Environment Variables', () => {
     process.env.NEXTAUTH_SECRET = 'secret'
     process.env.SPOTIFY_CLIENT_ID = 'id'
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
-    const { env } = await import('../../../lib/env')
+    const { env } = await import('@/lib/env')
     expect(env.RATE_LIMIT_WINDOW_MS).toBe(60000)
     expect(env.SPOTIFY_API_MAX_REQUESTS).toBe(30)
     expect(env.INTERNAL_API_MAX_REQUESTS).toBe(100)
@@ -37,7 +37,7 @@ describe('Environment Variables', () => {
     process.env.INTERNAL_API_MAX_REQUESTS = '200'
     process.env.GENERAL_API_MAX_REQUESTS = '400'
     process.env.WS_MAX_CONNECTIONS = '10'
-    const { env } = await import('../../../lib/env')
+    const { env } = await import('@/lib/env')
     expect(env.RATE_LIMIT_WINDOW_MS).toBe(120000)
     expect(env.SPOTIFY_API_MAX_REQUESTS).toBe(60)
     expect(env.INTERNAL_API_MAX_REQUESTS).toBe(200)
@@ -51,7 +51,7 @@ describe('Environment Variables', () => {
     process.env.NEXTAUTH_SECRET = 'secret'
     process.env.SPOTIFY_CLIENT_ID = 'id'
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
-    await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
+    await expect(import('@/lib/env')).rejects.toThrow(z.ZodError)
   })
 
   it('should derive SPOTIFY_CALLBACK_URL from NEXTAUTH_URL if not provided', async () => {
@@ -60,7 +60,7 @@ describe('Environment Variables', () => {
     process.env.NEXTAUTH_SECRET = 'secret'
     process.env.SPOTIFY_CLIENT_ID = 'id'
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
-    const { env } = await import('../../../lib/env')
+    const { env } = await import('@/lib/env')
     expect(env.SPOTIFY_CALLBACK_URL).toBe(
       'http://localhost:3000/api/auth/callback/spotify'
     )
@@ -72,6 +72,6 @@ describe('Environment Variables', () => {
     process.env.SPOTIFY_CLIENT_ID = 'id'
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
     delete process.env.NEXTAUTH_URL
-    await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
+    await expect(import('@/lib/env')).rejects.toThrow(z.ZodError)
   })
 })

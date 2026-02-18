@@ -1,8 +1,8 @@
 // context/UserSettingsContext.tsx
 'use client'
 import React, { createContext, useContext } from 'react'
-import usePersistentStorage from '../hooks/usePersistentStorage'
-import { MeasurementSystem, Gender } from '../types/core'
+import usePersistentStorage from '@/hooks/usePersistentStorage'
+import { MeasurementSystem, Gender } from '@/types/core'
 
 // Directly define the preferences interface and defaults here
 export interface UserPreferences {

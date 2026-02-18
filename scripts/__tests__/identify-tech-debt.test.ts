@@ -1,9 +1,9 @@
 /**
  * @jest-environment node
  */
-import { main, isTechDebtResponse } from '../identify-tech-debt'
+import { main, isTechDebtResponse } from '@/scripts/identify-tech-debt'
 import { readFile, writeFile } from 'fs/promises'
-import * as geminiClient from '../gemini-client'
+import * as geminiClient from '@/scripts/gemini-client'
 
 // Mock the external dependencies
 jest.mock('fs/promises', () => ({

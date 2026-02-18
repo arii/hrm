@@ -5,8 +5,8 @@
  */
 
 import { jest } from '@jest/globals'
-import GenericTimer from '../../../services/genericTimer'
-import { GenericTimerState } from '../../../types/genericTimer'
+import GenericTimer from '@/services/genericTimer'
+import { GenericTimerState } from '@/types/genericTimer'
 
 // Use fake timers to control time-based operations like setTimeout
 jest.useFakeTimers()

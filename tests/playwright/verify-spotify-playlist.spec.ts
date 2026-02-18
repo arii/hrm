@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { getBaseURL } from '../../utils/urls'
-import { waitForAuthRedirect } from './lib/auth'
+import { getBaseURL } from '@/utils/urls'
+import { waitForAuthRedirect } from '@/tests/playwright/lib/auth'
 
 const BASE = getBaseURL()
 

@@ -1,7 +1,7 @@
 // hooks/useSpotifyControls.test.ts
 import { renderHook } from '@testing-library/react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useSpotifyControls } from './useSpotifyControls'
+import { useSpotifyControls } from '@/hooks/useSpotifyControls'
 import { resolveSpotifyDeviceId } from '@/lib/spotify/device'
 
 jest.mock('@/context/WebSocketContext', () => ({

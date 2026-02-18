@@ -1,5 +1,5 @@
-import { HrmStatsCalculator } from '../../../services/HrmStatsCalculator'
-import { HrmInternalStats } from '../../../types/core'
+import { HrmStatsCalculator } from '@/services/HrmStatsCalculator'
+import { HrmInternalStats } from '@/types/core'
 
 describe('HrmStatsCalculator', () => {
   let calculator: HrmStatsCalculator

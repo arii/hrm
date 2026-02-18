@@ -2,8 +2,8 @@
 import { Card, CardContent, Typography, Button, Box } from '@mui/material'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatDate } from '@/lib/utils'
-import ZoneDistribution from './ZoneDistribution'
-import HeartRateTimeSeries from './HeartRateTimeSeries'
+import ZoneDistribution from '@/app/client/experimental/components/ZoneDistribution'
+import HeartRateTimeSeries from '@/app/client/experimental/components/HeartRateTimeSeries'
 
 interface SessionDetailProps {
   session: WorkoutSessionData

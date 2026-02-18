@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import { render, screen } from '@testing-library/react'
-import GoogleDocViewer from '../../../components/GoogleDocViewer'
+import GoogleDocViewer from '@/components/GoogleDocViewer'
 
 describe('GoogleDocViewer', () => {
   it('receives a new key when refreshKey changes', () => {

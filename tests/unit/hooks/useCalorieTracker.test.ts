@@ -4,8 +4,8 @@
 // tests/unit/hooks/useCalorieTracker.test.ts
 
 import { renderHook, act } from '@testing-library/react'
-import { useCalorieTracker } from '../../../hooks/useCalorieTracker'
-import * as calorieEstimation from '../../../lib/calorie-estimation'
+import { useCalorieTracker } from '@/hooks/useCalorieTracker'
+import * as calorieEstimation from '@/lib/calorie-estimation'
 
 // Mock the calorie estimation library
 jest.mock('../../../lib/calorie-estimation', () => ({

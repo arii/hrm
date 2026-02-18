@@ -3,7 +3,7 @@
  */
 import React from 'react'
 import { render } from '@testing-library/react'
-import DashboardSectionLoadingSkeleton from '../../../components/DashboardSectionLoadingSkeleton'
+import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
 
 describe('DashboardSectionLoadingSkeleton', () => {
   it('renders with default props and matches snapshot', () => {

@@ -25,7 +25,7 @@
  *
  *   // Setup utilities
  *   setupMinimalVisualRegressionTest,
- * } from './lib'
+ * } from '@/tests/playwright/lib/lib'
  * ```
  */
 
@@ -43,7 +43,7 @@ export {
   waitForNetworkIdle,
   waitForApiResponse,
   waitForAllConditions,
-} from './waits'
+} from '@/tests/playwright/lib/waits'
 
 // ============================================================================
 // Custom Assertions
@@ -60,7 +60,7 @@ export {
   // API assertions
   assertApiStatus,
   assertApiResponse,
-} from './assertions'
+} from '@/tests/playwright/lib/assertions'
 
 // ============================================================================
 // Masking Utilities
@@ -72,7 +72,7 @@ export {
   getDynamicContentMasks,
   getHrMasks,
   getTimerMasks,
-} from './masks'
+} from '@/tests/playwright/lib/masks'
 
 // ============================================================================
 // Authentication Utilities
@@ -91,7 +91,7 @@ export {
   isLoggedIn,
   // Context management
   createAuthenticatedContext,
-} from './auth'
+} from '@/tests/playwright/lib/auth'
 
 // ============================================================================
 // Setup and Teardown Utilities
@@ -116,7 +116,7 @@ export {
   // Mock utilities
   setupMockHrStreaming,
   startMockHrStreaming,
-} from './setup'
+} from '@/tests/playwright/lib/setup'
 
 // ============================================================================
 // Visual Testing Utilities
@@ -128,7 +128,7 @@ export {
   takeScreenshot,
   takeDashboardScreenshot,
   prepareForVisualRegression,
-} from './visual'
+} from '@/tests/playwright/lib/visual'
 
 // ============================================================================
 // Re-export Playwright test utilities for convenience
@@ -139,8 +139,8 @@ export type { Page, BrowserContext, Locator } from '@playwright/test'
 // ============================================================================
 // Re-export URL utilities
 // ============================================================================
-export { getBaseURL, getWebSocketURL, getAPIURL } from '../../../utils/urls'
+export { getBaseURL, getWebSocketURL, getAPIURL } from '@/utils/urls'
 
 // Export BASE_URL for backward compatibility
-import { getBaseURL } from '../../../utils/urls'
+import { getBaseURL } from '@/utils/urls'
 export const BASE_URL = getBaseURL()

@@ -1,12 +1,12 @@
 import { type BrowserContext, type Page } from '@playwright/test'
-import { test } from './fixtures'
+import { test } from '@/tests/playwright/fixtures'
 import {
   getDynamicContentMasks,
   getHrMasks,
   setupVisualRegressionTest,
-} from './test-helpers'
-import { takeScreenshot } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
+} from '@/tests/playwright/test-helpers'
+import { takeScreenshot } from '@/tests/playwright/lib/visual'
+import { waitForPageReady } from '@/tests/playwright/lib/waits'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })

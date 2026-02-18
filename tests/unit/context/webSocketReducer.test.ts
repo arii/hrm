@@ -6,9 +6,9 @@ import {
   INITIAL_STATE,
   WebSocketState,
   HrmData,
-} from '../../../context/webSocketReducer'
-import { ServerMessage } from '../../../types/websocket'
-import { HrmStreamData } from '../../../types/core'
+} from '@/context/webSocketReducer'
+import { ServerMessage } from '@/types/websocket'
+import { HrmStreamData } from '@/types/core'
 
 describe('webSocketReducer', () => {
   const baseUser: HrmData = {

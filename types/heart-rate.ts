@@ -1,4 +1,4 @@
-import type { HeartRateZone, UserHrZones, HrZone } from '../lib/shared/hr-zones'
+import type { HeartRateZone, UserHrZones, HrZone } from '@/lib/shared/hr-zones'
 
 export type { UserHrZones, HrZone }
 

@@ -5,7 +5,7 @@ import { AudioProvider } from '@/context/AudioContext'
 import {
   mockWebSocketContext,
   mockTimerData,
-} from './mocks/mockWebSocketContext'
+} from '@/stories/mocks/mockWebSocketContext'
 import { TimerData } from '@/types/websocket'
 import { userEvent, within } from '@storybook/testing-library'
 

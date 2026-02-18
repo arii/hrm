@@ -4,8 +4,8 @@ import {
   ServerMessage,
   ActiveAlert,
   ConnectedHrmData,
-} from '../types/websocket'
-import { HrmStreamData as ServerHrmData } from '../types/core'
+} from '@/types/websocket'
+import { HrmStreamData as ServerHrmData } from '@/types/core'
 
 export interface WebSocketState {
   hrmData: ConnectedHrmData[]

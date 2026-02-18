@@ -5,7 +5,7 @@ import {
   generateContentWithFallback,
   JsonProcessor,
   cleanJsonOutput,
-} from './gemini-client'
+} from '@/scripts/gemini-client'
 
 // Define a maximum length for the diff to avoid exceeding API token limits.
 // This is a generous limit that can be tuned in the future.

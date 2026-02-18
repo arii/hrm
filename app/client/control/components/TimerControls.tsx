@@ -25,8 +25,8 @@ import { motion } from 'framer-motion'
 import {
   DISCONNECTED_UI_REVERT_DELAY,
   OPTIMISTIC_ACTION_TIMEOUT,
-} from '../constants'
-import DurationStepper from './DurationStepper'
+} from '@/app/client/control/constants'
+import DurationStepper from '@/app/client/control/components/DurationStepper'
 
 import { useTheme, alpha, Theme } from '@mui/material/styles'
 

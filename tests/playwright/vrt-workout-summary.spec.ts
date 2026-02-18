@@ -1,7 +1,7 @@
 import { type BrowserContext, type Page } from '@playwright/test'
-import { test } from './fixtures'
-import { setupVisualRegressionTest } from './test-helpers'
-import { takeScreenshot } from './lib/visual'
+import { test } from '@/tests/playwright/fixtures'
+import { setupVisualRegressionTest } from '@/tests/playwright/test-helpers'
+import { takeScreenshot } from '@/tests/playwright/lib/visual'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })

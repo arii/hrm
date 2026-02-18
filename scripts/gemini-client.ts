@@ -7,7 +7,7 @@ import {
 import { readFile, writeFile } from 'fs/promises'
 import { execSync } from 'child_process'
 import path from 'path'
-import { runConflictResolution } from './conflict-resolver'
+import { runConflictResolution } from '@/scripts/conflict-resolver'
 
 // Simple arg parsing
 const args = process.argv.slice(2)

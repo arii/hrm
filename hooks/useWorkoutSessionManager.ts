@@ -5,18 +5,18 @@ import {
   workoutSessionStorage,
   WorkoutSessionData,
   HrDataPoint,
-} from '../lib/workout-session-storage'
+} from '@/lib/workout-session-storage'
 import { WorkoutStatus } from '@/types/workout'
 import {
   HeartRateZone,
   HR_ZONE_ORDER,
   calculateZoneFromMaxHr,
   toHeartRateZone,
-} from '../lib/shared/hr-zones'
+} from '@/lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
 import { calculateMaxHr } from '@/lib/shared/hr-zones'
-import { useAppSnackbar } from './useAppSnackbar'
-import { isSessionStale } from '../lib/workout-session'
+import { useAppSnackbar } from '@/hooks/useAppSnackbar'
+import { isSessionStale } from '@/lib/workout-session'
 
 // --- State, Actions, and Reducer ---
 

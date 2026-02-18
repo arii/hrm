@@ -1,8 +1,8 @@
 /** @jest-environment jsdom */
 import '@testing-library/jest-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import PlaylistDetails from '../../../../components/Spotify/PlaylistDetails'
-import { Track } from '../../../../types/spotify'
+import PlaylistDetails from '@/components/Spotify/PlaylistDetails'
+import { Track } from '@/types/spotify'
 
 // Mock the fetch API
 const mockFetch = jest.fn()

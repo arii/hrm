@@ -1,5 +1,5 @@
 // tests/lib/utils.test.ts
-import { formatDuration } from '../../lib/utils'
+import { formatDuration } from '@/lib/utils'
 
 describe('formatDuration', () => {
   // Test cases for HH:MM:SS format

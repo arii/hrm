@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { execSync, spawn } from 'child_process'
 import { promises as fs } from 'fs'
 import path from 'path'
-import { WAIT_TIMEOUTS } from './lib/waits'
+import { WAIT_TIMEOUTS } from '@/tests/playwright/lib/waits'
 import waitOn from 'wait-on'
 
 /**

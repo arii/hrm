@@ -10,7 +10,7 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
-import { SpotifyPlaylistItem as Track } from '../../types/core'
+import { SpotifyPlaylistItem as Track } from '@/types/core'
 
 interface PlaylistDetailsProps {
   playlistId: string

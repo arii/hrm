@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react'
-import useLocalStorage from '../../../hooks/useLocalStorage'
-import { UserPreferences } from '../../../context/UserSettingsContext'
+import useLocalStorage from '@/hooks/useLocalStorage'
+import { UserPreferences } from '@/context/UserSettingsContext'
 
 // Mocking localStorage
 const localStorageMock = (() => {

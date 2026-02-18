@@ -24,13 +24,13 @@ const defaultTimeInZones: Record<HeartRateZone, number> = {
 }
 
 // Components
-import WorkoutSummary from './WorkoutSummary'
-import ZoneDistribution from './ZoneDistribution'
-import CalorieTracker from './CalorieTracker'
-import SessionList from './SessionList'
-import SessionDetail from './SessionDetail'
+import WorkoutSummary from '@/app/client/experimental/components/WorkoutSummary'
+import ZoneDistribution from '@/app/client/experimental/components/ZoneDistribution'
+import CalorieTracker from '@/app/client/experimental/components/CalorieTracker'
+import SessionList from '@/app/client/experimental/components/SessionList'
+import SessionDetail from '@/app/client/experimental/components/SessionDetail'
 
-const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
+const HeartRateTimeSeries = dynamic(() => import('@/app/client/experimental/components/HeartRateTimeSeries'), {
   ssr: false,
 })
 

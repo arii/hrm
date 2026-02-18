@@ -43,10 +43,10 @@ describe('usePersistentStorage', () => {
 
     // Dynamically import the mocks and the hook under test
     const { default: useLocalStorage } =
-      await import('../../../hooks/useLocalStorage')
-    const { default: useCookie } = await import('../../../hooks/useCookie')
+      await import('@/hooks/useLocalStorage')
+    const { default: useCookie } = await import('@/hooks/useCookie')
     const { default: usePersistentStorage } =
-      await import('../../../hooks/usePersistentStorage')
+      await import('@/hooks/usePersistentStorage')
 
     renderHook(() => usePersistentStorage('test', ''))
 
@@ -69,10 +69,10 @@ describe('usePersistentStorage', () => {
 
     // Dynamically import the mocks and the hook under test
     const { default: useLocalStorage } =
-      await import('../../../hooks/useLocalStorage')
-    const { default: useCookie } = await import('../../../hooks/useCookie')
+      await import('@/hooks/useLocalStorage')
+    const { default: useCookie } = await import('@/hooks/useCookie')
     const { default: usePersistentStorage } =
-      await import('../../../hooks/usePersistentStorage')
+      await import('@/hooks/usePersistentStorage')
 
     renderHook(() => usePersistentStorage('test', ''))
 

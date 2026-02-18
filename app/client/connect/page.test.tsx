@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { render } from '@testing-library/react'
-import ConnectPage from './page'
+import ConnectPage from '@/app/client/connect/page'
 import * as BluetoothHRMHook from '@/hooks/useBluetoothHRM'
 import * as WebSocketContext from '@/context/WebSocketContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'

@@ -1,6 +1,6 @@
 // tests/unit/lib/hrm/HrmSessionManager.test.ts
-import { HrmSessionManager } from '../../../../lib/hrm/HrmSessionManager'
-import { RawHrmStreamData } from '../../../../types/core'
+import { HrmSessionManager } from '@/lib/hrm/HrmSessionManager'
+import { RawHrmStreamData } from '@/types/core'
 
 describe('HrmSessionManager', () => {
   let manager: HrmSessionManager

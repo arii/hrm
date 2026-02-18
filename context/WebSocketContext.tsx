@@ -12,8 +12,8 @@ import {
   useReducer,
   useMemo,
 } from 'react'
-import { ClientCommandMessage, ServerMessage } from '../types/websocket'
-import { getWebSocketURL } from '../utils/urls'
+import { ClientCommandMessage, ServerMessage } from '@/types/websocket'
+import { getWebSocketURL } from '@/utils/urls'
 
 // Define a type for the test controls to avoid using 'any'
 interface TestControls {
@@ -21,8 +21,8 @@ interface TestControls {
   disconnect: () => void
   connect: () => void
 }
-import { INITIAL_STATE, WebSocketState, reducer } from './webSocketReducer'
-import { ConnectedHrmData as HrmData } from '../types/websocket'
+import { INITIAL_STATE, WebSocketState, reducer } from '@/context/webSocketReducer'
+import { ConnectedHrmData as HrmData } from '@/types/websocket'
 
 export type { HrmData }
 

@@ -9,7 +9,7 @@ import {
   SuggestedIssue,
   GitHubClient,
   isLowQualityIssue,
-} from '../../../scripts/create-review-issues'
+} from '@/scripts/create-review-issues'
 import { spawnSync } from 'child_process'
 
 // Mock the GitHubClient

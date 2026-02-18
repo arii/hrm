@@ -12,24 +12,24 @@ import {
   StateSnapshot,
   ExtWebSocket,
   HrmInputMessage,
-} from '../types/websocket.js'
-import { HrmStreamData } from '../types/core.js'
+} from '@/types/websocket'
+import { HrmStreamData } from '@/types/core'
 import {
   MAX_CALORIE_JUMP_PER_UPDATE,
   MAX_INITIAL_CALORIES,
   HRM_STALE_THRESHOLD_MS,
-} from './constants.js'
+} from '@/utils/constants'
 import {
   broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
-} from './websocketUtils.js'
-import logger from './logger.server.js'
-import { HrmSessionManager } from '../lib/hrm/HrmSessionManager.js'
-import { AppServices } from '../lib/services.js'
-import { env } from '../lib/env.js'
-import { roundTo, objectFromEntries } from '../lib/utils.js'
-import { isGenericName } from './hrm.js'
+} from '@/utils/websocketUtils'
+import logger from '@/utils/logger.server'
+import { HrmSessionManager } from '@/lib/hrm/HrmSessionManager'
+import { AppServices } from '@/lib/services'
+import { env } from '@/lib/env'
+import { roundTo, objectFromEntries } from '@/lib/utils'
+import { isGenericName } from '@/utils/hrm'
 
 let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer

@@ -3,9 +3,9 @@ import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '@/utils/logger'
-import { getAPIURL } from '../utils/urls'
-import { env } from './env'
-import { refreshSpotifyToken } from './spotify'
+import { getAPIURL } from '@/utils/urls'
+import { env } from '@/lib/env'
+import { refreshSpotifyToken } from '@/lib/spotify'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 
 // Extend the Session type to include accessToken and error

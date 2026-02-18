@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { ServerMessage } from '../../types/websocket'
+import { ServerMessage } from '@/types/websocket'
 
 test('should remove tile immediately when missing from HRM_UPDATE', async ({
   page,

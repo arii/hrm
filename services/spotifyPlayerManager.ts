@@ -1,8 +1,8 @@
-import { SpotifyCommandParameters, SpotifyCommand } from '../types/core'
-import { ServerMessage, SpotifyData } from '../types/websocket'
-import { SafeSpotifyApi } from './safeSpotifyApi'
-import logger from '../utils/logger.server.js'
-import { isEmptyResponseError } from './spotifyUtils.js'
+import { SpotifyCommandParameters, SpotifyCommand } from '@/types/core'
+import { ServerMessage, SpotifyData } from '@/types/websocket'
+import { SafeSpotifyApi } from '@/services/safeSpotifyApi'
+import logger from '@/utils/logger.server'
+import { isEmptyResponseError } from '@/services/spotifyUtils'
 import { Track, Episode } from '@spotify/web-api-ts-sdk'
 
 const NOT_PLAYING_MESSAGE = 'Nothing is currently playing.'

@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import { render, screen, waitFor } from '@testing-library/react'
-import WorkoutTableViewer from '../../../components/WorkoutTableViewer'
+import WorkoutTableViewer from '@/components/WorkoutTableViewer'
 
 global.fetch = jest.fn()
 

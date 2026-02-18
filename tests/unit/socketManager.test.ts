@@ -14,23 +14,23 @@ import {
 import {
   initSocketManager,
   resetSocketManager,
-} from '../../utils/socketManager'
+} from '@/utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import { TLSSocket } from 'tls'
-import TabataTimer from '../../services/tabataTimer'
-import { SpotifyPolling } from '../../services/spotifyPolling'
+import TabataTimer from '@/services/tabataTimer'
+import { SpotifyPolling } from '@/services/spotifyPolling'
 import {
   HrmData,
   StateSnapshot,
   ClientCommandMessageSchema,
   ExtWebSocket,
-} from '../../types/websocket'
+} from '@/types/websocket'
 import {
   broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
-} from '../../utils/websocketUtils.js'
+} from '@/utils/websocketUtils'
 import logger from '@/utils/logger.server'
 import { createMockRequest } from '@/tests/test-utils'
 
@@ -261,7 +261,7 @@ describe('WebSocket Manager', () => {
         // Re-import the module to get the version with the updated process.env
         await jest.isolateModulesAsync(async () => {
           const { initSocketManager: initSocketManagerProd } =
-            await import('../../utils/socketManager')
+            await import('@/utils/socketManager')
 
           // Use the re-imported init function
           initSocketManagerProd(mockWss, getSnapshot, mockServices)

@@ -5,8 +5,8 @@ import { openDB } from 'idb'
 import {
   WorkoutSessionStorage,
   WorkoutSessionData,
-} from '../../../lib/workout-session-storage'
-import { HeartRateZone, HR_ZONE_ORDER } from '../../../lib/shared/hr-zones'
+} from '@/lib/workout-session-storage'
+import { HeartRateZone, HR_ZONE_ORDER } from '@/lib/shared/hr-zones'
 
 jest.mock('idb', () => ({
   openDB: jest.fn(() => ({

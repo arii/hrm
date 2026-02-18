@@ -1,5 +1,5 @@
 // tests/unit/lib/structures/RingBuffer.test.ts
-import { RingBuffer } from '../../../../lib/structures/RingBuffer'
+import { RingBuffer } from '@/lib/structures/RingBuffer'
 
 describe('RingBuffer', () => {
   it('should initialize with given capacity', () => {

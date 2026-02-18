@@ -1,7 +1,7 @@
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 
-import { WorkoutStatus } from '../../../types/workout'
+import { WorkoutStatus } from '@/types/workout'
 
 interface WorkoutControlsProps {
   workoutStatus: WorkoutStatus

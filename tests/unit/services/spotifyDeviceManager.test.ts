@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
-import { SpotifyDeviceManager } from '../../../services/spotifyDeviceManager'
-import { mockPlayer } from '../spotify-test-utils'
-import { SafeSpotifyApi } from '../../../services/safeSpotifyApi'
-import { createSafeSpotifyApi } from '../../../services/safeSpotifyApi'
+import { SpotifyDeviceManager } from '@/services/spotifyDeviceManager'
+import { mockPlayer } from '@/tests/unit/spotify-test-utils'
+import { SafeSpotifyApi } from '@/services/safeSpotifyApi'
+import { createSafeSpotifyApi } from '@/services/safeSpotifyApi'
 import { Devices, SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Mock the logger to prevent logs from appearing in test output

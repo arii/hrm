@@ -3,10 +3,10 @@ import { jest } from '@jest/globals'
 import {
   SpotifyTokenManager,
   TokenRecord,
-} from '../../../services/spotifyTokenManager'
+} from '@/services/spotifyTokenManager'
 import fs from 'fs'
 import path from 'path'
-import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../../../constants/spotify'
+import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 
 jest.mock('fs', () => ({
   existsSync: jest.fn(),

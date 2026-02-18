@@ -13,7 +13,7 @@ import {
   type Locator,
   type ScreenshotOptions,
 } from '@playwright/test'
-import { checkAccessibility } from './accessibility'
+import { checkAccessibility } from '@/tests/playwright/lib/accessibility'
 import { getHrMasks, getTimerMasks, waitForFontsLoaded } from '.'
 
 /**

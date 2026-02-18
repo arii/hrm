@@ -27,7 +27,7 @@ describe('Environment Schema Validation', () => {
 
     try {
       // Dynamically import the module to re-evaluate it with the new process.env
-      const { envSchema } = await import('../lib/env')
+      const { envSchema } = await import('@/lib/env')
       parsedEnv = envSchema?.safeParse(process.env)
     } catch (e) {
       error = e

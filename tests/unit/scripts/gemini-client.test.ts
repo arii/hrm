@@ -4,7 +4,7 @@ import {
   ReviewContext,
   FailedCheck,
   JsonProcessor,
-} from '../../../scripts/gemini-client'
+} from '@/scripts/gemini-client'
 
 describe('JsonProcessor', () => {
   let processor: JsonProcessor

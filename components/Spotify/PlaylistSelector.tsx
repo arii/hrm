@@ -14,9 +14,9 @@ import ListItemText from '@mui/material/ListItemText'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
-import { useDebounce } from '../../hooks/useDebounce'
-import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
-import { SpotifyPlaylist as Playlist } from '../../types/core'
+import { useDebounce } from '@/hooks/useDebounce'
+import { API_SPOTIFY_PLAYLISTS } from '@/constants/apiEndpoints'
+import { SpotifyPlaylist as Playlist } from '@/types/core'
 
 interface PlaylistSelectorProps {
   onPlaylistSelected: (uri: string) => void

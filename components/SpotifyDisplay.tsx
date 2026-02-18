@@ -16,9 +16,9 @@ import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { signOut } from 'next-auth/react'
-import AuthButton from './AuthButton'
-import VolumeSlider from './shared/VolumeSlider'
-import SpotifyDeviceSelector from './SpotifyDeviceSelector'
+import AuthButton from '@/components/AuthButton'
+import VolumeSlider from '@/components/shared/VolumeSlider'
+import SpotifyDeviceSelector from '@/components/SpotifyDeviceSelector'
 
 // 1. State Shape
 interface SpotifyDisplayState {

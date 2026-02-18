@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import HrTile from './HrTile'
+import HrTile from '@/components/HrTile'
 
 const meta = {
   title: 'Components/HrTile',

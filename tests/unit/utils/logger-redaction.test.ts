@@ -4,7 +4,7 @@
  */
 import { Writable } from 'stream'
 import pino from 'pino'
-import { pinoOptions } from '../../../utils/logger.server'
+import { pinoOptions } from '@/utils/logger.server'
 
 describe('Server Logger Redaction using pinoOptions', () => {
   let stream: Writable

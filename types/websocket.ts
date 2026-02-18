@@ -11,7 +11,7 @@ import type {
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
   SpotifyCommand,
-} from './core'
+} from '@/types/core'
 
 // --- WebSocket Connection & Augmentation ---
 

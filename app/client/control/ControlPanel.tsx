@@ -14,7 +14,7 @@ import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
 
-const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
+const SpotifyControls = dynamic(() => import('@/app/client/control/components/SpotifyControls'), {
   loading: () => (
     <Skeleton
       variant="rectangular"
@@ -23,7 +23,7 @@ const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
     />
   ),
 })
-import TimerControls from './components/TimerControls'
+import TimerControls from '@/app/client/control/components/TimerControls'
 
 const ControlPanel = () => {
   const { connectionStatus, connect, sendData } = useWebSocket()

@@ -12,7 +12,7 @@ import { useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const PlaylistSelector = dynamic(
-  () => import('../../../components/Spotify/PlaylistSelector'),
+  () => import('@/components/Spotify/PlaylistSelector'),
   {
     ssr: false,
     loading: () => <Skeleton variant="rectangular" height={200} />,
@@ -20,7 +20,7 @@ const PlaylistSelector = dynamic(
 )
 
 const PlaylistDetails = dynamic(
-  () => import('../../../components/Spotify/PlaylistDetails'),
+  () => import('@/components/Spotify/PlaylistDetails'),
   {
     ssr: false,
     loading: () => (

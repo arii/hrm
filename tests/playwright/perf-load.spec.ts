@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { waitForPageReady } from './lib/waits'
+import { waitForPageReady } from '@/tests/playwright/lib/waits'
 
 test.describe('Dashboard Load Performance', () => {
   test('should load within acceptable threshold', async ({ page }) => {
