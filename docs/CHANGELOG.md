@@ -1,5 +1,53 @@
 # Changelog
 
+## [0.30.0](https://github.com/arii/hrm/compare/hrm-v0.29.0...hrm-v0.30.0) (2026-02-18)
+
+
+### Features
+
+* **large:** [REFACTOR] Centralize Redundant Heart Rate and Workout Type Definitions ([#5677](https://github.com/arii/hrm/issues/5677)) ([aeeacd8](https://github.com/arii/hrm/commit/aeeacd81617cb497b009afd476039d768794ec80))
+* **large:** Consolidate redundant TypeScript types ([#8615](https://github.com/arii/hrm/issues/8615)) ([f5b4160](https://github.com/arii/hrm/commit/f5b4160fc6b9bcc6e81929161af8c0d8e376e621))
+* **large:** Inconsistent HR Zone Calculation (Client vs. Dashboard) - Implement Zone-Aware Streaming ([#6747](https://github.com/arii/hrm/issues/6747)) ([d057be4](https://github.com/arii/hrm/commit/d057be4f325e8aedc4c9a4ba948f35b6fb0a81f3))
+* **large:** Refactor HR zone info pre-calculation ([#7791](https://github.com/arii/hrm/issues/7791)) ([b009581](https://github.com/arii/hrm/commit/b0095810570e1d377e3cf066405faf0d693a313c))
+* **large:** Refactor: Implement Unified Spotify Service Bus ([#6044](https://github.com/arii/hrm/issues/6044)) ([afc28cf](https://github.com/arii/hrm/commit/afc28cf7d2477d2bde83858012fd0e07cd523b8d))
+* **large:** Refactor: Reduce Knip max-issues threshold and resolve code quality issues ([#8386](https://github.com/arii/hrm/issues/8386)) ([293e3a8](https://github.com/arii/hrm/commit/293e3a857178aad346399e16ada67b34ff099f1f))
+* **large:** Refactor: Split vrt.spec.ts into Component-Specific Files ([#5476](https://github.com/arii/hrm/issues/5476)) ([c8e826c](https://github.com/arii/hrm/commit/c8e826c17c9bf60dfde3d46e480d7fedfdf6e7e2))
+* **medium:** [REFACTOR] Standardize Duration Formatting Utilities ([#5676](https://github.com/arii/hrm/issues/5676)) ([f7de43a](https://github.com/arii/hrm/commit/f7de43a6b34ced4f13b02fcc776ba6203d86af19))
+* **medium:** Enhance and Stabilize Unit Test Coverage for Core HRM Logic ([#5458](https://github.com/arii/hrm/issues/5458)) ([ce3bce4](https://github.com/arii/hrm/commit/ce3bce40335ebf49e98446c48bc0c4359ecd4ce5))
+* **medium:** Enhance HR Zone Distribution Component with Donut Chart and Improved UX ([#8335](https://github.com/arii/hrm/issues/8335)) ([37e428f](https://github.com/arii/hrm/commit/37e428fbc083dc0b9a59f25d5669c304415927e0))
+* **medium:** Extract HRM Stats Calculation Logic from HrmSessionManager ([#8334](https://github.com/arii/hrm/issues/8334)) ([3777732](https://github.com/arii/hrm/commit/3777732a5d08e97b6844db2efb7feb4c92665e1e))
+* **medium:** Fix Authentication Thrashing with Circuit Breaker ([#6068](https://github.com/arii/hrm/issues/6068)) ([2d06a36](https://github.com/arii/hrm/commit/2d06a3694faa041f1de74bb0bc3a21546675386b))
+* **medium:** Fix Critical State Management and Data Recording Issues ([#5417](https://github.com/arii/hrm/issues/5417)) ([a1a84b1](https://github.com/arii/hrm/commit/a1a84b1d0a4a31656e3f2455a874cb8ed4094f41))
+* **medium:** Fix Spotify Playlist Track Selection ([#6076](https://github.com/arii/hrm/issues/6076)) ([4a8db60](https://github.com/arii/hrm/commit/4a8db604bc587e706fca872a8d354a9277432ea9))
+* **medium:** Fix Stale HR Tile Persistence and Align TTL ([#6657](https://github.com/arii/hrm/issues/6657)) ([888897a](https://github.com/arii/hrm/commit/888897a40b5a5f66b8208ac895bc043f0c41546a))
+* **medium:** Gender-Inclusive Calorie Estimation ([#5433](https://github.com/arii/hrm/issues/5433)) ([fb52bf0](https://github.com/arii/hrm/commit/fb52bf0ea1e7e91a7a0c7c78d702a88445f7e550))
+* **medium:** Refactor and Test useWorkoutSessionManager ([#6094](https://github.com/arii/hrm/issues/6094)) ([c041273](https://github.com/arii/hrm/commit/c041273af57a987366ba20203c6fcb1e5a51c03c))
+* **medium:** Refactor and Validate Calorie Calculation Logic ([#6104](https://github.com/arii/hrm/issues/6104)) ([d1d431f](https://github.com/arii/hrm/commit/d1d431f3d0df935d3d92b6f765423802da75eeb5))
+* **medium:** Refactor HrmDataStore for Memory Efficiency and Stats Tracking ([#7814](https://github.com/arii/hrm/issues/7814)) ([5860a8c](https://github.com/arii/hrm/commit/5860a8cd13e275246f14b9a1e11d37f342314124))
+* **medium:** Refactor HrTile & Stabilize CI Tests ([#8370](https://github.com/arii/hrm/issues/8370)) ([c7e2630](https://github.com/arii/hrm/commit/c7e263021fd091527c86fd1ec68328bfbd837196))
+* **medium:** Refactor WorkoutSummary Component ([#6226](https://github.com/arii/hrm/issues/6226)) ([5d1589c](https://github.com/arii/hrm/commit/5d1589c74ba58f96676e9766aad2b5c82132bd92))
+* **medium:** Refactor: Harmonize HrZone interface with HeartRateZone type ([#8401](https://github.com/arii/hrm/issues/8401)) ([2f88e50](https://github.com/arii/hrm/commit/2f88e507d7057fded1fbbfdc68c8949c40ab7b29))
+* **medium:** Resolve Hardcoded Spotify Token Fields and Improve Refresh Logic ([#8396](https://github.com/arii/hrm/issues/8396)) ([90d25e1](https://github.com/arii/hrm/commit/90d25e1dfef35b21a13bcc5b54653538e8b7dc5f))
+* **medium:** Restore improved HR tile colors and Zone 6 display ([#7651](https://github.com/arii/hrm/issues/7651)) ([3d6de7a](https://github.com/arii/hrm/commit/3d6de7aa1264cbeadcfa0a4c14d714732bd63041))
+* **small:** Enable Automatic Workout Data Persistence on /client/connect Page ([#5659](https://github.com/arii/hrm/issues/5659)) ([a7644c9](https://github.com/arii/hrm/commit/a7644c9ce803baf8784859b407ebe69b301a3748))
+* **small:** Fix Bluetooth Auto-Connect Infinite Loop ([#6042](https://github.com/arii/hrm/issues/6042)) ([de7e903](https://github.com/arii/hrm/commit/de7e9032a02425b27bf20bb73d0b671354db747d))
+* **small:** Fix Spotify Playlist Track Crash ([#5413](https://github.com/arii/hrm/issues/5413)) ([d716cbf](https://github.com/arii/hrm/commit/d716cbf26b0ce2acae1de49cdf85ca15555e6856))
+* **small:** Improve Page Management and Navigation ([#8851](https://github.com/arii/hrm/issues/8851)) ([ec45772](https://github.com/arii/hrm/commit/ec45772428fbbccc62438be0c24efcc61ab942ac))
+* **small:** Move Refresh Button to Improve Vertical Spacing ([#6238](https://github.com/arii/hrm/issues/6238)) ([ec67c69](https://github.com/arii/hrm/commit/ec67c6933576e542cf9da99be7d2e4f885ddfb3a))
+* **small:** Optimize HR Tile for High-Visibility Dashboards ([#7798](https://github.com/arii/hrm/issues/7798)) ([0c80e85](https://github.com/arii/hrm/commit/0c80e85e6418acaf7c58868a7a07637e075a4f59))
+* **small:** Optimize Visual Regression Test Suite Performance ([#8833](https://github.com/arii/hrm/issues/8833)) ([bae702b](https://github.com/arii/hrm/commit/bae702b2bced333030eb0a2ba5a33a39c6ca50f8))
+* **small:** Refactor Spotify Token Delivery to Event-Driven Singleton Pattern ([#7808](https://github.com/arii/hrm/issues/7808)) ([b22964b](https://github.com/arii/hrm/commit/b22964b897c80cc22141fc58fca24d6823ac0f49))
+* **small:** Security: Remove/Disable `app/api/debug/*` Routes in Production Build ([#7813](https://github.com/arii/hrm/issues/7813)) ([722d97b](https://github.com/arii/hrm/commit/722d97bf96fbe438927c222364132d55d0d2f529))
+* **testing:** add unit tests for core utility functions ([#5435](https://github.com/arii/hrm/issues/5435)) ([d68649f](https://github.com/arii/hrm/commit/d68649f8512bd1d9217a6ff1100299887c718c56))
+
+
+### Bug Fixes
+
+* **bluetooth:** Prevent race condition in GATT connection ([#6075](https://github.com/arii/hrm/issues/6075)) ([8442db7](https://github.com/arii/hrm/commit/8442db7aba6c89ae74cafeb85afe0442c82d28fd))
+* **ci:** ensure tests and config changes trigger CI pipeline ([#8801](https://github.com/arii/hrm/issues/8801)) ([0666e9b](https://github.com/arii/hrm/commit/0666e9b0e153e25507b704d8aaabb2c6e09d2a92))
+* **ci:** handle missing --numstat flag in gh pr diff ([#8780](https://github.com/arii/hrm/issues/8780)) ([ee40107](https://github.com/arii/hrm/commit/ee401079ebe97cdc47afdea2a6b7d90aaca5f99a))
+* **critical:** Ensure verdict field always present in Gemini review results ([#5837](https://github.com/arii/hrm/issues/5837)) ([c2d9302](https://github.com/arii/hrm/commit/c2d93020f070596e62ff151bda57e02726039ac0))
+
 ## [0.29.0](https://github.com/arii/hrm/compare/hrm-v0.28.0...hrm-v0.29.0) (2026-01-30)
 
 
