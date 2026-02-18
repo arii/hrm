@@ -53,6 +53,11 @@ runs:
     - name: Install GitHub CLI
       shell: bash
       run: |
+        if command -v gh &> /dev/null; then
+          echo "gh is already installed: $(gh --version)"
+          exit 0
+        fi
+
         mkdir -p $HOME/.local/bin
         # Detect OS and Architecture
         OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
