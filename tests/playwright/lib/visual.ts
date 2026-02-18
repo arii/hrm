@@ -12,7 +12,6 @@ import {
   type Page,
   type Locator,
   type PageScreenshotOptions,
-  type LocatorScreenshotOptions,
 } from '@playwright/test'
 import { checkAccessibility } from '@/tests/playwright/lib/accessibility'
 import {
@@ -48,7 +47,7 @@ export const SCREENSHOT_OPTIONS = {
 export async function takeScreenshot(
   target: Page | Locator,
   snapshotName: string,
-  options: (PageScreenshotOptions | LocatorScreenshotOptions) & {
+  options: any & {
     skipA11y?: boolean
   } = {}
 ) {
