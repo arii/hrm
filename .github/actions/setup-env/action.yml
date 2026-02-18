@@ -2,6 +2,20 @@
 name: 'Setup Environment'
 description: 'Sets up Node.js and pnpm, installs dependencies and Playwright.'
 
+inputs:
+  use-build-cache:
+    description: 'Whether to use build cache (.next/cache, dist)'
+    default: 'false'
+  cache-type:
+    description: 'Type of cache (e.g., build, type-check)'
+    default: 'build'
+  cache-paths:
+    description: 'Paths to cache'
+    default: |
+      .next_prod/cache
+      dist
+      .cache
+
 runs:
   using: 'composite'
   steps:
@@ -23,6 +37,18 @@ runs:
       with:
         node-version: '20'
         cache: 'pnpm'
+
+    - name: Cache Build Artifacts
+      if: inputs.use-build-cache == 'true'
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.cache-paths }}
+        # Use github.sha in the key to ensure we save a new cache on every commit
+        # while using restore-keys to fall back to previous commits.
+        key: cache-${{ inputs.cache-type }}-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.ref_name }}-${{ github.sha }}
+        restore-keys: |
+          cache-${{ inputs.cache-type }}-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.ref_name }}-
+          cache-${{ inputs.cache-type }}-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
 
     - name: Install GitHub CLI
       shell: bash
@@ -51,7 +77,10 @@ runs:
 
     - name: 'Install Dependencies'
       shell: bash
-      run: pnpm install --frozen-lockfile
+      run: |
+        # If we have a cached .cache directory, ensure it exists
+        node -e "fs.mkdirSync('.cache', { recursive: true })"
+        pnpm install --frozen-lockfile
 
     - name: Cache Playwright
       uses: actions/cache@v4
@@ -73,6 +102,8 @@ runs:
 
     - name: 'Run Setup Script'
       shell: bash
+      env:
+        SKIP_INSTALL: 'true'
       run: |
         chmod +x ./scripts/setup.sh
         ./scripts/setup.sh
