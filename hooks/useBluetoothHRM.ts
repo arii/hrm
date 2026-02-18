@@ -269,13 +269,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [])
 
   /**
-   * Initiates reconnection using linear backoff (RECONNECT_BASE_DELAY_MS * attempt).
-   * Max attempts: BLUETOOTH_MAX_RECONNECT_ATTEMPTS.
-   * Rationale: Centralizing retries here avoids nested complexity in connectToGatt
-   * and provides a more patient window (~72s total) than the previous exponential strategy.
+   * Reconnects using linear backoff (RECONNECT_BASE_DELAY_MS * attempt).
+   * Rationale: Centralized retry logic avoids cyclomatic complexity and
+   * provides a predictable ~72s window for device recovery.
    */
   const reconnect = useCallback(
     (device: BluetoothDevice) => {
+      if (isManualDisconnect.current) return
+
       if (reconnectAttempts.current >= BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
         setCustomStatusMessage(
           BLUETOOTH_MESSAGES.failedToReconnect(BLUETOOTH_MAX_RECONNECT_ATTEMPTS)
@@ -300,10 +301,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       )
 
       reconnectTimeoutRef.current = setTimeout(() => {
-        if (statusRef.current !== BluetoothConnectionStatus.CONNECTED) {
-          connectToGattRef.current?.(device, true).catch(() => {
-            logger.warn('Reconnect attempt failed')
-            reconnect(device) // Recursive call to try again
+        if (
+          statusRef.current !== BluetoothConnectionStatus.CONNECTED &&
+          !isManualDisconnect.current
+        ) {
+          connectToGattRef.current?.(device, true).catch((error) => {
+            const isAbort =
+              error instanceof DOMException && error.name === 'AbortError'
+            if (!isAbort && !isManualDisconnect.current) {
+              logger.warn({ error }, 'Reconnect attempt failed, retrying')
+              reconnect(device)
+            }
           })
         }
       }, delay)
