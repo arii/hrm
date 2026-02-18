@@ -5,6 +5,10 @@ on:
     paths:
       - '.github/**'
 
+concurrency:
+  group: e2e-tests-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
   pull-requests: write
@@ -33,7 +37,7 @@ jobs:
         run: |
           set -e
           echo "Token Owner: $(gh api user --jq '.login' || echo 'Unknown (probably GITHUB_TOKEN)')"
-          BRANCH_NAME="e2e-test-$(date +%s)"
+          BRANCH_NAME="e2e-test-${{ github.run_id }}-${{ github.run_attempt }}"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           git checkout -b $BRANCH_NAME
           echo "test content" > test-file.txt
@@ -86,10 +90,9 @@ jobs:
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
-          set -e
           echo "Cleaning up PR and branch..."
-          gh pr close $PR_NUMBER
-          git push origin --delete $BRANCH_NAME
+          [ -n "$PR_NUMBER" ] && gh pr close "$PR_NUMBER" || true
+          [ -n "$BRANCH_NAME" ] && git push origin --delete "$BRANCH_NAME" || true
 
   test_conflict_resolver:
     runs-on: ubuntu-latest
@@ -116,7 +119,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Use a unique identifier for branch names to avoid concurrency issues
-          UNIQUE_ID=${{ github.run_id }}
+          UNIQUE_ID="${{ github.run_id }}-${{ github.run_attempt }}"
           BRANCH_A="branch-a-$UNIQUE_ID"
           BRANCH_B="branch-b-$UNIQUE_ID"
           BASE_BRANCH="base-branch-$UNIQUE_ID"
@@ -191,12 +194,11 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.create_conflict.outputs.pr_number }}
         run: |
-          set -e
           echo "Cleaning up PR and branches..."
-          gh pr close $PR_NUMBER
-          git push origin --delete $BRANCH_A
-          git push origin --delete $BRANCH_B
-          git push origin --delete $BASE_BRANCH
+          [ -n "$PR_NUMBER" ] && gh pr close "$PR_NUMBER" || true
+          [ -n "$BRANCH_A" ] && git push origin --delete "$BRANCH_A" || true
+          [ -n "$BRANCH_B" ] && git push origin --delete "$BRANCH_B" || true
+          [ -n "$BASE_BRANCH" ] && git push origin --delete "$BASE_BRANCH" || true
 
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
@@ -218,7 +220,7 @@ jobs:
         id: create_pr
         run: |
           set -e
-          BRANCH_NAME="e2e-test-rebase-$(date +%s)"
+          BRANCH_NAME="e2e-test-rebase-${{ github.run_id }}-${{ github.run_attempt }}"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           git checkout -b $BRANCH_NAME
           echo "test content" > test-file-rebase.txt
@@ -278,7 +280,6 @@ jobs:
           PR_NUMBER: ${{ steps.create_pr.outputs.pr_number }}
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         run: |
-          set -e
           echo "Cleaning up PR and branch..."
-          gh pr close $PR_NUMBER
-          git push origin --delete $BRANCH_NAME
+          [ -n "$PR_NUMBER" ] && gh pr close "$PR_NUMBER" || true
+          [ -n "$BRANCH_NAME" ] && git push origin --delete "$BRANCH_NAME" || true
