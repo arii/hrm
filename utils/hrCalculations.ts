@@ -25,4 +25,3 @@ export const calculateMaxHr = (age?: number | string | null): number => {
 
   return 220 - ageNum
 }
-// Finalized refactor
