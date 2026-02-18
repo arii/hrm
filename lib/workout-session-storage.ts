@@ -26,6 +26,7 @@ export interface WorkoutSessionData {
   timeInZones: Record<HeartRateZone, number>
   averageHr: number
   maxHr: number
+  totalPaused: number
   calorieHistory: CalorieDataPoint[]
   totalCaloriesBurned: number
   userSettings: { age: number; weight: number; maxHr: number }

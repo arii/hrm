@@ -47,16 +47,22 @@ const ExperimentalAnalyticsPage = () => {
     isInitialized,
     duration,
     startWorkout,
+    pauseWorkout,
     resumeWorkout,
     endWorkout,
     addHrData,
+    updateCalories,
   } = useWorkoutSessionManager()
 
-  const { processHeartRate, totalCaloriesBurned, calorieHistory, reset } =
-    useCalorieTracker({
-      age: userSettings.userAge || 30,
-      weightKg: userSettings.userWeight || 70,
-    })
+  const {
+    processHeartRate,
+    totalCaloriesBurned,
+    calorieHistory,
+    reset: resetCalories,
+  } = useCalorieTracker({
+    age: userSettings.userAge || 30,
+    weightKg: userSettings.userWeight || 70,
+  })
 
   // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
@@ -145,15 +151,24 @@ const ExperimentalAnalyticsPage = () => {
     return () => clearInterval(intervalId)
   }, [status, processHeartRate, addHrData])
 
+  // Sync calories to session manager
+  useEffect(() => {
+    updateCalories(totalCaloriesBurned)
+  }, [totalCaloriesBurned, updateCalories])
+
   // Handlers
   const handleStartWorkout = useCallback(() => {
     const age = userSettings.userAge || 30
     const weight = userSettings.userWeight || 70
     const maxHr = calculateMaxHr(age)
-    startWorkout(age, weight, maxHr)
-    reset()
+    startWorkout(age, weight, { maxHr, startCalories: totalCaloriesBurned })
+    resetCalories()
     setView('active')
-  }, [startWorkout, reset, userSettings])
+  }, [startWorkout, resetCalories, userSettings, totalCaloriesBurned])
+
+  const handlePauseWorkout = useCallback(() => {
+    pauseWorkout()
+  }, [pauseWorkout])
 
   const handleResumeWorkout = useCallback(() => {
     resumeWorkout()
@@ -224,7 +239,7 @@ const ExperimentalAnalyticsPage = () => {
               </Button>
             )}
             {status === 'running' && (
-              <Button variant="outlined" onClick={handleEndWorkout}>
+              <Button variant="outlined" onClick={handlePauseWorkout}>
                 Pause
               </Button>
             )}

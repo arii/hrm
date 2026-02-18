@@ -4,11 +4,17 @@ import { useCallback, useRef, useEffect, useReducer } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 import { CalorieDataPoint } from '../lib/workout-session-storage'
 import { Gender } from '@/types/core'
+import {
+  MAX_CALORIES_PER_WORKOUT,
+  TIME_GAP_THRESHOLD_SECONDS,
+  MIN_HR_FOR_CALORIE_CALCULATION,
+} from '@/constants/calorie-thresholds'
 
 interface CalorieTrackerProps {
   age: number
   weightKg: number
   gender?: Gender
+  smoothingWindow?: number
 }
 
 interface CalorieState {
@@ -41,7 +47,10 @@ function calorieReducer(
     case 'PROCESS_HR': {
       const { hr, caloriesBurnedThisInterval, now, caloriesPerSecond } =
         action.payload
-      const newTotal = state.totalCaloriesBurned + caloriesBurnedThisInterval
+      const newTotal = Math.min(
+        state.totalCaloriesBurned + caloriesBurnedThisInterval,
+        MAX_CALORIES_PER_WORKOUT
+      )
       const newDataPoint: CalorieDataPoint = {
         time: now,
         hr,
@@ -60,83 +69,105 @@ function calorieReducer(
   }
 }
 
+/**
+ * A hook for tracking and calculating calories burned during a workout.
+ * Features SMA smoothing, history tracking, and safety thresholds.
+ */
 export const useCalorieTracker = ({
   age,
   weightKg,
   gender = 'NEUTRAL',
+  smoothingWindow = 5,
 }: CalorieTrackerProps) => {
   const [state, dispatch] = useReducer(calorieReducer, initialState)
   const lastTimestampRef = useRef<number | null>(null)
+  const hrHistoryRef = useRef<number[]>([])
 
   const ageRef = useRef(age)
   const weightKgRef = useRef(weightKg)
   const genderRef = useRef(gender)
 
+  // Keep refs updated to avoid stale closures in callbacks
   useEffect(() => {
     ageRef.current = age
     weightKgRef.current = weightKg
     genderRef.current = gender
   }, [age, weightKg, gender])
 
-  const processHeartRate = useCallback((hr: number) => {
-    const now = Date.now()
-    // On the first call, lastTimestampRef.current is null.
-    // Record a data point with zero calories to avoid gaps at the start.
-    if (!lastTimestampRef.current) {
-      dispatch({
-        type: 'PROCESS_HR',
-        payload: {
-          hr,
-          caloriesBurnedThisInterval: 0,
-          now,
-          caloriesPerSecond: 0,
-        },
-      })
-      lastTimestampRef.current = now
-      return
-    }
+  /**
+   * Processes a new heart rate measurement.
+   * - Smooths the HR value using a Simple Moving Average.
+   * - Calculates the time delta since the last measurement.
+   * - Estimates calories burned for the delta time and accumulates it.
+   */
+  const processHeartRate = useCallback(
+    (heartRate: number) => {
+      const now = Date.now()
 
-    const dtSeconds = (now - lastTimestampRef.current) / 1000
-    /**
-     * Time gap validation: Only process heart rate data if the gap is between 0 and 10 seconds.
-     *
-     * Rationale:
-     * - Gaps > 10 seconds likely indicate paused tracking, device disconnection, or other interruptions
-     * - Calculating calories over large gaps would produce inaccurate results
-     * - This threshold balances tolerance for normal variation while filtering out invalid data
-     *
-     * Configuration: If you need to adjust this threshold (e.g., for different update intervals),
-     * consider making it a configurable parameter.
-     */
-    if (dtSeconds > 0 && dtSeconds < 10) {
-      const dtMinutes = dtSeconds / 60
-      const caloriesPerSecond =
-        estimateCaloriesBurned({
-          heartRate: hr,
+      // 1. Simple Moving Average (SMA) for smoothing
+      hrHistoryRef.current.push(heartRate)
+      if (hrHistoryRef.current.length > smoothingWindow) {
+        hrHistoryRef.current.shift()
+      }
+      const sum = hrHistoryRef.current.reduce((a, b) => a + b, 0)
+      const smoothedHr = sum / hrHistoryRef.current.length
+
+      // On the first call, lastTimestampRef.current is null.
+      if (!lastTimestampRef.current) {
+        dispatch({
+          type: 'PROCESS_HR',
+          payload: {
+            hr: smoothedHr,
+            caloriesBurnedThisInterval: 0,
+            now,
+            caloriesPerSecond: 0,
+          },
+        })
+        lastTimestampRef.current = now
+        return
+      }
+
+      const dtSeconds = (now - lastTimestampRef.current) / 1000
+
+      // Validate time gap and minimum heart rate
+      if (
+        dtSeconds > 0 &&
+        dtSeconds < TIME_GAP_THRESHOLD_SECONDS &&
+        smoothedHr > MIN_HR_FOR_CALORIE_CALCULATION
+      ) {
+        const dtMinutes = dtSeconds / 60
+        const totalCaloriesForInterval = estimateCaloriesBurned({
+          heartRate: smoothedHr,
           age: ageRef.current,
           weightKg: weightKgRef.current,
           gender: genderRef.current,
           durationMinutes: dtMinutes,
-        }) / dtSeconds
+        })
 
-      const caloriesBurnedThisInterval = caloriesPerSecond * dtSeconds
+        const caloriesPerSecond = totalCaloriesForInterval / dtSeconds
 
-      dispatch({
-        type: 'PROCESS_HR',
-        payload: {
-          hr,
-          caloriesBurnedThisInterval,
-          now,
-          caloriesPerSecond,
-        },
-      })
-    }
-    lastTimestampRef.current = now
-  }, [])
+        dispatch({
+          type: 'PROCESS_HR',
+          payload: {
+            hr: smoothedHr,
+            caloriesBurnedThisInterval: totalCaloriesForInterval,
+            now,
+            caloriesPerSecond,
+          },
+        })
+      }
+      lastTimestampRef.current = now
+    },
+    [smoothingWindow]
+  )
 
+  /**
+   * Resets the tracker to initial state.
+   */
   const reset = useCallback(() => {
     dispatch({ type: 'RESET' })
     lastTimestampRef.current = null
+    hrHistoryRef.current = []
   }, [])
 
   return {

@@ -1,5 +1,4 @@
 'use client'
-import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
@@ -10,6 +9,7 @@ import { HR_ZONE_CONFIG, HeartRateZone } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
+import { HrTileProps } from '@/types'
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 
@@ -119,11 +119,16 @@ const DataTier = ({
   </Box>
 )
 
+/**
+ * Heart Rate Tile Component
+ * Displays real-time heart rate, percentage of max HR, and calories burned.
+ * Adapts its visual state based on connection status and data staleness.
+ */
 const HrTile = ({
-  name,
-  value,
-  percentage,
-  zone,
+  name = '',
+  value = null,
+  percentage = 0,
+  zone = 'ZONE_0',
   calories = 0,
   isConnected = true,
   isDataStale = false,
@@ -133,7 +138,7 @@ const HrTile = ({
   const theme = useTheme()
 
   const zoneConfig =
-    HR_ZONE_CONFIG[(zone ?? 'ZONE_0') as HeartRateZone] || HR_ZONE_CONFIG.ZONE_0
+    HR_ZONE_CONFIG[zone as HeartRateZone] || HR_ZONE_CONFIG.ZONE_0
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -141,7 +146,7 @@ const HrTile = ({
       ? 'Disconnected - Showing last known value'
       : isDataStale
         ? 'Waiting for data...'
-        : `Name: ${name}, BPM: ${value}, Kcal: ${calories}, % Max HR: ${percentage}%`
+        : `Name: ${name}, BPM: ${value ?? '---'}, Kcal: ${calories}, % Max HR: ${percentage}%`
 
   const showName = !isGenericName(name)
 
@@ -150,8 +155,8 @@ const HrTile = ({
       <ControlCard
         data-testid="hr-tile-card"
         role="region"
-        aria-label={`Heart rate monitor for ${name}: ${
-          isConnected ? `${value} beats per minute` : 'Disconnected'
+        aria-label={`Heart rate monitor for ${name || 'User'}: ${
+          isConnected ? `${value ?? '---'} beats per minute` : 'Disconnected'
         }, ${percentage}% of maximum, Zone ${zoneConfig.zoneNumber}: ${zoneConfig.label}`}
         sx={{
           bgcolor: zoneConfig.color,

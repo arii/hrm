@@ -5,17 +5,14 @@ import { TimerMode, TimerPhase } from './core'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 
 export interface HrTileProps {
-  value: number | null
-  percentage: number
+  value?: number | null
+  percentage?: number
   zone?: HeartRateZone
-  name: string
+  name?: string
   calories?: number
   isConnected?: boolean
   isDataStale?: boolean
-
-  // NEW: Flag to trigger the visual diagnostic state
   isAlerting?: boolean
-  // NEW: Message to display in the overlay when alerting
   alertMessage?: string
 }
 
