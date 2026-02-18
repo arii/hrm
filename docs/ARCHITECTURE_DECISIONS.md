@@ -27,7 +27,7 @@ This document records significant architectural decisions made during the develo
 
 - **Complexity Reduction:** The previous strategy was over-engineered for a point-to-point local device connection. Moving to a linear backoff reduced cyclomatic complexity and code verbosity.
 - **Improved Maintainability:** Centralizing retry logic in the primary reconnection loop (rather than having nested retries in the GATT adapter layer) ensures a cleaner state machine and better separation of concerns.
-- **Robustness:** By increasing the maximum attempts to 8 and the base delay to 2s, the system provides a robust 72-second window for device recovery, maintaining stability while improving predictability.
+- **Stability:** By increasing the maximum attempts to 8 and the base delay to 2s, the system provides an extended 72-second window for device recovery, maintaining connection stability while improving predictability.
 
 **Implementation:**
 

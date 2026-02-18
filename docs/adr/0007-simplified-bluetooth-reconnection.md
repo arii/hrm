@@ -12,7 +12,7 @@ The previous Bluetooth HRM reconnection logic was overly complex, utilizing rand
 ## Decision Drivers
 
 - Reduce cyclomatic complexity and improve code maintainability.
-- Provide a predictable and robust reconnection window for heart rate monitors.
+- Provide a predictable and reliable reconnection window for heart rate monitors.
 - Adhere to "Production Readiness" and "Code Conciseness" guidelines.
 - Support a clean, single-responsibility connection flow.
 
@@ -20,7 +20,7 @@ The previous Bluetooth HRM reconnection logic was overly complex, utilizing rand
 
 Chosen option: "Simplified Linear Backoff with Centralized Retry Logic".
 
-We replaced the randomized exponential math with a clean linear backoff (`RECONNECT_BASE_DELAY_MS * attempt`). To ensure robustness and maintain a similar patience window to the previous implementation, we increased the default maximum attempts to 8 and the base delay to 2000ms, providing a total 72-second retry window.
+We replaced the randomized exponential math with a clean linear backoff (`RECONNECT_BASE_DELAY_MS * attempt`). To ensure connection stability and maintain a similar patience window to the previous implementation, we increased the default maximum attempts to 8 and the base delay to 2000ms, providing a total 72-second retry window.
 
 Additionally, we removed the internal retry loops from the low-level `connectToGatt` function. Resilience for transient errors (e.g., device busy, NetworkError) is now delegated to the primary reconnection loop, ensuring a consistent state machine.
 
@@ -41,7 +41,7 @@ Additionally, we removed the internal retry loops from the low-level `connectToG
 
 - Pro: Easy to understand and maintain.
 - Pro: Predictable behavior.
-- Pro: Robust 72-second window is sufficient for most HRM recovery scenarios.
+- Pro: Predictable 72-second window is sufficient for most HRM recovery scenarios.
 - Con: Less "aggressive" than exponential backoff for the first few seconds.
 
 ### Randomized Exponential Backoff (Legacy)
