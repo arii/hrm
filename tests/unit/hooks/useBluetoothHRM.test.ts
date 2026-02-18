@@ -690,7 +690,7 @@ describe('useBluetoothHRM', () => {
     it('should use the default max reconnection attempts when the environment variable is not set', async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { env } = require('@/lib/env')
-      expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(5)
+      expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(8)
     })
 
     it('should use the custom max reconnection attempts from the environment variable', async () => {
