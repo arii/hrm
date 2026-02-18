@@ -18,24 +18,13 @@ describe('ZoneDistribution', () => {
   }
 
   it('renders the title', () => {
-    render(
-      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
-    )
+    render(<ZoneDistribution timeInZones={baseTimeInZones} />)
     // If no data (all 0), it renders "Time in Zones" inside the "No data" card
     expect(screen.getByText('Time in Zones')).toBeInTheDocument()
   })
 
   it('renders "No zone data available" when all zones are zero', () => {
-    render(<ZoneDistribution timeInZones={baseTimeInZones} totalDuration={0} />)
-    expect(
-      screen.getByText('No zone data available for this session.')
-    ).toBeInTheDocument()
-  })
-
-  it('renders "No zone data available" even if duration exists but no time in zones', () => {
-    render(
-      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
-    )
+    render(<ZoneDistribution timeInZones={baseTimeInZones} />)
     expect(
       screen.getByText('No zone data available for this session.')
     ).toBeInTheDocument()
@@ -48,7 +37,7 @@ describe('ZoneDistribution', () => {
       ZONE_3: 30,
       ZONE_4: 10,
     }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
+    render(<ZoneDistribution timeInZones={timeInZones} />)
 
     // Check for zone names (multiple instances due to hidden table)
     expect(
@@ -85,7 +74,7 @@ describe('ZoneDistribution', () => {
       ZONE_2: 100, // 99.5% roughly
       ZONE_3: 0.5, // 0.5% of 100.5 total
     }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100.5} />)
+    render(<ZoneDistribution timeInZones={timeInZones} />)
 
     // Zone 2 (Warm Up) should be visible
     expect(

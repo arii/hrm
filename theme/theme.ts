@@ -12,8 +12,8 @@ const theme = createTheme(libTheme, {
       finished: '#2196F3', // Blue
       prepare: '#f59e0b', // Amber
       work: '#ef4444', // Red
-      rest: '#22c55e', // Green
-      cooldown: '#6b7280', // Grey
+      rest: '#22c55e', // Bright Green
+      cooldown: '#6b7280', // Dark Grey
     },
   },
 })
