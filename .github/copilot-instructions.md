@@ -31,7 +31,7 @@ This project uses a **custom Express server** (`server.ts`) as the entry point, 
 
 ### The Single Source of Truth Principle
 
-The server is the **primary single source of truth** for all shared application state. While the server remains the authoritative source for state distribution and persistence, specific real-time metrics (e.g., calorie calculation) may be computed on the client for responsiveness before being synchronized back to the server.
+The server is the **authoritative source of truth** for all shared application state. While the server remains the final authority for state distribution and persistence, specific real-time metrics (e.g., calorie calculation) may be computed on the client for responsiveness before being synchronized back to the server.
 
 **NEVER suggest:**
 
