@@ -28,97 +28,6 @@ const OVERLAY_SX = {
   borderRadius: 'inherit',
 } as const
 
-const IdentityTier = ({ name }: { name: string }) => (
-  <Box sx={{ pt: 3, textAlign: 'center' }}>
-    <Typography
-      variant="h5"
-      sx={{
-        fontWeight: 900,
-        textTransform: 'uppercase',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        px: 2,
-      }}
-    >
-      {name}
-    </Typography>
-  </Box>
-)
-
-const HeroTier = ({ percentage }: { percentage: number }) => (
-  <Box
-    sx={{
-      flexGrow: 1,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}
-  >
-    <Typography
-      data-testid="live-hr-percent"
-      variant="h2"
-      component="div"
-      sx={{
-        fontSize: {
-          xs: 'clamp(5rem, 15vw, 8rem)',
-          sm: 'clamp(8rem, 18vw, 12rem)',
-          md: 'clamp(10rem, 20vw, 15rem)',
-        },
-        fontWeight: 900,
-        lineHeight: 1,
-        fontFamily: HERO_FONT_FAMILY,
-      }}
-    >
-      {percentage}%
-    </Typography>
-  </Box>
-)
-
-const MetricItem = ({
-  value,
-  label,
-  testId,
-}: {
-  value: React.ReactNode
-  label: string
-  testId?: string
-}) => (
-  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
-    {value}{' '}
-    <Typography
-      component="span"
-      variant="caption"
-      sx={{ fontSize: '1.2rem', opacity: 0.8 }}
-    >
-      {label}
-    </Typography>
-  </Typography>
-)
-
-const DataTier = ({
-  value,
-  calories,
-  showName,
-}: {
-  value: number | null
-  calories: number
-  showName: boolean
-}) => (
-  <Box
-    sx={{
-      pb: 3,
-      pt: showName ? 0 : 3,
-      display: 'flex',
-      justifyContent: 'center',
-      gap: 4,
-    }}
-  >
-    <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
-    <MetricItem value={Math.floor(calories)} label="KCAL" />
-  </Box>
-)
-
 const HrTile = ({
   name,
   value,
@@ -131,6 +40,7 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
+  const showName = !isGenericName(name)
 
   const zoneConfig =
     HR_ZONE_CONFIG[(zone ?? 'ZONE_0') as HeartRateZone] || HR_ZONE_CONFIG.ZONE_0
@@ -143,8 +53,6 @@ const HrTile = ({
         ? 'Waiting for data...'
         : `Name: ${name}, BPM: ${value}, Kcal: ${calories}, % Max HR: ${percentage}%`
 
-  const showName = !isGenericName(name)
-
   return (
     <Tooltip title={tooltipTitle} arrow>
       <ControlCard
@@ -156,6 +64,7 @@ const HrTile = ({
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
+          minHeight: { xs: 110, md: 130 },
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -200,19 +109,103 @@ const HrTile = ({
             flexGrow: 1,
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
-            p: 2,
+            justifyContent: 'space-between',
+            p: 1.5,
           }}
         >
-          {showName && <IdentityTier name={name} />}
-          <HeroTier percentage={percentage} />
-          <DataTier value={value} calories={calories} showName={showName} />
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: showName ? 'space-between' : 'center',
+              alignItems: 'baseline',
+            }}
+          >
+            {showName && (
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '60%',
+                }}
+              >
+                {name}
+              </Typography>
+            )}
+            <Typography
+              data-testid="live-hr-percent"
+              variant="h4"
+              sx={{
+                fontWeight: 900,
+                fontFamily: HERO_FONT_FAMILY,
+                textAlign: showName ? 'right' : 'center',
+                flexGrow: showName ? 0 : 1,
+              }}
+            >
+              {percentage}%
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              bgcolor: 'rgba(255,255,255,0.1)',
+              borderRadius: 1,
+              py: 0.5,
+            }}
+          >
+            <Box textAlign="center">
+              <Typography
+                data-testid="bpm-value"
+                variant="body1"
+                sx={{ fontWeight: 800 }}
+              >
+                {value ?? '---'}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  opacity: 0.7,
+                  fontSize: '0.6rem',
+                  display: 'block',
+                  mt: -0.5,
+                }}
+              >
+                BPM
+              </Typography>
+            </Box>
+            <Box textAlign="center">
+              <Typography variant="body1" sx={{ fontWeight: 800 }}>
+                {Math.floor(calories)}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  opacity: 0.7,
+                  fontSize: '0.6rem',
+                  display: 'block',
+                  mt: -0.5,
+                }}
+              >
+                KCAL
+              </Typography>
+            </Box>
+          </Box>
         </Box>
 
-        <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
+        <Box sx={{ bgcolor: 'common.black', py: 0.5, textAlign: 'center' }}>
           <Typography
-            variant="h6"
-            sx={{ color: '#FFF', fontWeight: 900, letterSpacing: '0.3em' }}
+            variant="caption"
+            sx={{
+              color: '#FFF',
+              fontWeight: 900,
+              letterSpacing: '0.2em',
+              display: 'block',
+            }}
           >
             {zoneConfig.label.toUpperCase()}
           </Typography>

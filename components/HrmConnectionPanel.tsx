@@ -26,9 +26,12 @@ const HrmConnectionPanel = () => {
     <Box
       data-testid="hrm-connection-panel"
       sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 2,
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: '1fr 1fr',
+          sm: 'repeat(auto-fit, minmax(150px, 1fr))',
+        },
+        gap: 1.5,
         height: '100%',
       }}
     >
@@ -40,7 +43,7 @@ const HrmConnectionPanel = () => {
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              width: { xs: '100%', sm: 'calc(50% - 8px)' },
+              gridColumn: { xs: 'span 2', sm: 'span 1' },
               height: '100%', // Ensure the container fills the grid cell
               gap: 2,
               p: 2,
@@ -61,12 +64,11 @@ const HrmConnectionPanel = () => {
             data-testid="hr-tile-grid-item"
             sx={{
               display: { xs: 'none', md: 'block' },
-              width: { sm: 'calc(50% - 12px)' },
             }}
           >
             <Skeleton
               variant="rectangular"
-              height={220}
+              height={130}
               sx={{ borderRadius: 3 }}
             />
           </Box>
@@ -80,16 +82,7 @@ const HrmConnectionPanel = () => {
             ...tileProps
           } = user
           return (
-            <Box
-              key={user.clientId}
-              data-testid="hr-tile-grid-item"
-              sx={{
-                width: {
-                  xs: '100%',
-                  sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-                },
-              }}
-            >
+            <Box key={user.clientId} data-testid="hr-tile-grid-item">
               <HrTileWrapper {...tileProps} />
             </Box>
           )

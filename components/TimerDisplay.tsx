@@ -9,17 +9,89 @@ import { memo } from 'react'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import VolumeDown from '@mui/icons-material/VolumeDown'
-import VolumeUp from '@mui/icons-material/VolumeUp'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 import SideLabel from './SideLabel'
 import { useAudioContext } from '@/context/AudioContext'
 import { formatDuration } from '@/lib/utils'
+import { useTheme, useMediaQuery } from '@mui/material'
 
 // Define a constant for the side column width to avoid magic numbers
 const SIDE_COLUMN_WIDTH = '40px'
 
+const ProgressRing = ({
+  percentage,
+  phaseColor,
+}: {
+  percentage: number
+  phaseColor: string
+}) => {
+  const radius = 40
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (percentage / 100) * circumference
+
+  return (
+    <svg width="100" height="100" viewBox="0 0 100 100">
+      <circle
+        stroke="rgba(255,255,255,0.1)"
+        strokeWidth="4"
+        fill="transparent"
+        r={radius}
+        cx="50"
+        cy="50"
+      />
+      <circle
+        stroke={phaseColor}
+        strokeWidth="6"
+        strokeDasharray={circumference}
+        style={{
+          strokeDashoffset: offset,
+          transition: 'stroke-dashoffset 0.5s ease',
+        }}
+        strokeLinecap="round"
+        fill="transparent"
+        r={radius}
+        cx="50"
+        cy="50"
+        transform="rotate(-90 50 50)"
+      />
+    </svg>
+  )
+}
+
+const AnimatedCounter = ({
+  displayTime,
+  phaseColor,
+  sx,
+}: {
+  displayTime: string
+  phaseColor: string
+  sx?: object
+}) => {
+  return (
+    <Typography
+      data-testid="timer-countdown"
+      component="div"
+      role="timer"
+      aria-live="polite"
+      aria-atomic="true"
+      sx={{
+        fontFamily: 'var(--font-roboto-mono), monospace',
+        fontWeight: 800,
+        lineHeight: 1,
+        color: phaseColor,
+        textShadow: `0 0 20px ${phaseColor}80`,
+        ...sx,
+      }}
+    >
+      {displayTime}
+    </Typography>
+  )
+}
+
 const TimerDisplay = () => {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
   const {
@@ -35,47 +107,50 @@ const TimerDisplay = () => {
   let displayTime: string
   let phaseColor: string
   let phaseLabel: string
+  let progressPercentage = 0
 
   if (currentPhase === 'PREPARE') {
-    // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B' // Yellow/Warning
+    phaseColor = '#F59E0B'
     phaseLabel = 'GET READY'
+    progressPercentage = (timeRemaining / 10) * 100
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
-    // STOPWATCH: Show elapsed time MM:SS
     displayTime = formatDuration(timeElapsed, {
       unit: 'seconds',
       format: 'MM:SS',
     })
-    phaseColor = '#2563EB' // Blue/Primary
+    phaseColor = '#2563EB'
     phaseLabel = 'RUNNING'
+    progressPercentage = 100
   } else if (
     mode === 'TABATA' &&
     (currentPhase === 'WORK' ||
       currentPhase === 'REST' ||
       currentPhase === 'COOLDOWN')
   ) {
-    // TABATA: Show remaining time MM:SS
     displayTime = formatDuration(timeRemaining, {
       unit: 'seconds',
       format: 'MM:SS',
     })
 
     if (currentPhase === 'WORK') {
-      phaseColor = '#EF4444' // Red
+      phaseColor = '#EF4444'
       phaseLabel = 'WORK'
+      progressPercentage = (timeRemaining / workDuration) * 100
     } else if (currentPhase === 'REST') {
-      phaseColor = '#22C55E' // Green
+      phaseColor = '#22C55E'
       phaseLabel = 'REST'
+      progressPercentage = (timeRemaining / restDuration) * 100
     } else {
-      phaseColor = '#3B82F6' // Blue
+      phaseColor = '#3B82F6'
       phaseLabel = 'COOLDOWN'
+      progressPercentage = 100
     }
   } else {
-    // IDLE or default
     displayTime = formatDuration(0, { unit: 'seconds', format: 'MM:SS' })
-    phaseColor = '#6B7280' // Gray
+    phaseColor = '#6B7280'
     phaseLabel = 'READY'
+    progressPercentage = 0
   }
 
   return (
@@ -83,12 +158,12 @@ const TimerDisplay = () => {
       elevation={6}
       data-testid="timer-display-container"
       sx={{
-        backgroundColor: '#000000', // Pure black for high energy
-        color: phaseColor, // Dynamic color based on phase
+        backgroundColor: '#000000',
+        color: phaseColor,
         height: '100%',
         display: 'flex',
         borderRadius: 2,
-        border: '2px solid #1a1a1a', // Subtle border for definition
+        border: '2px solid #1a1a1a',
         position: 'relative',
         animation:
           currentPhase === 'WORK' || currentPhase === 'REST'
@@ -96,12 +171,11 @@ const TimerDisplay = () => {
             : 'none',
       }}
     >
-      {/* Status Indicator */}
       <Box
         sx={{
           position: 'absolute',
-          top: 16,
-          right: 16,
+          top: 12,
+          right: 12,
           display: 'flex',
           alignItems: 'center',
           gap: 1,
@@ -110,15 +184,15 @@ const TimerDisplay = () => {
       >
         <Typography
           variant="caption"
-          sx={{ color: '#fff' }}
+          sx={{ color: '#fff', fontSize: '0.7rem' }}
           data-testid="ws-status-indicator"
         >
           {connectionStatus}
         </Typography>
         <Box
           sx={{
-            width: 12,
-            height: 12,
+            width: 8,
+            height: 8,
             borderRadius: '50%',
             backgroundColor:
               connectionStatus === 'Connected'
@@ -126,18 +200,16 @@ const TimerDisplay = () => {
                 : connectionStatus === 'Reconnecting...'
                   ? '#F59E0B'
                   : '#EF4444',
-            animation:
-              connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
           }}
         />
       </Box>
-      {/* Left Column: Mode Indicator */}
+
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          flex: `0 0 ${SIDE_COLUMN_WIDTH}`,
+          flex: `0 0 ${isMobile ? '30px' : SIDE_COLUMN_WIDTH}`,
         }}
       >
         {currentPhase !== 'IDLE' && (
@@ -148,96 +220,92 @@ const TimerDisplay = () => {
           />
         )}
       </Box>
+
       <CardContent
         sx={{
-          py: { xs: 2, md: 3 },
+          p: 1.5,
+          '&:last-child': { pb: 1.5 },
           textAlign: 'center',
-          flex: 1, // Main content takes up the remaining space
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minWidth: 0, // Prevent content from overflowing
+          minHeight: { xs: 130, md: 150 },
+          minWidth: 0,
         }}
       >
-        {/* Phase Label - only show for Tabata phases, not RUNNING */}
+        <Box sx={{ transform: 'scale(0.85)', mb: -1.5 }}>
+          <ProgressRing
+            percentage={progressPercentage}
+            phaseColor={phaseColor}
+          />
+        </Box>
+
         {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
           <Typography
+            variant="overline"
             data-testid="timer-phase"
-            variant="h6"
-            aria-live="polite"
             sx={{
-              mb: 1,
               color: phaseColor,
+              lineHeight: 1,
               fontWeight: 700,
-              letterSpacing: 2,
+              letterSpacing: 1.5,
+              mb: 0.5,
             }}
           >
             {phaseLabel}
           </Typography>
         )}
 
-        {/* Giant Timer Display */}
-        <Typography
-          data-testid="timer-countdown"
-          component="div"
-          role="timer"
-          aria-live="polite"
-          aria-atomic="true"
+        <AnimatedCounter
+          displayTime={displayTime}
+          phaseColor={phaseColor}
           sx={{
-            fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
-            fontWeight: 800,
-            letterSpacing: '0.12rem',
-            lineHeight: 1,
-            color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
+            fontSize: { xs: '3.5rem', sm: '4.5rem', md: '5.5rem' },
+            my: 0.5,
           }}
-        >
-          {displayTime}
-        </Typography>
+        />
 
-        {/* Volume Control */}
         <Stack
-          spacing={{ xs: 1, sm: 2 }}
           direction="row"
-          sx={{
-            mt: 2,
-            mb: 1,
-            width: { xs: '90%', md: '80%' },
-            maxWidth: 300,
-          }}
+          spacing={1}
           alignItems="center"
+          sx={{ width: '80%', maxWidth: 200, mt: 0.5 }}
         >
           <IconButton
+            size="small"
             onClick={toggleMute}
             sx={{ color: 'white' }}
             data-testid="timer-volume-mute-button"
           >
-            {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
+            {muted || volume === 0 ? (
+              <VolumeOff fontSize="small" />
+            ) : (
+              <VolumeDown fontSize="small" />
+            )}
           </IconButton>
           <Slider
-            aria-label="Volume"
+            size="small"
             value={muted ? 0 : volume}
-            onChange={(_, newValue) => setVolume(newValue as number)}
+            onChange={(_, v) => setVolume(v as number)}
             data-testid="timer-volume-slider"
             sx={{
+              py: 0,
               color: 'white',
               '& .MuiSlider-thumb': {
                 color: phaseColor,
               },
             }}
           />
-          <VolumeUp sx={{ color: 'white' }} />
         </Stack>
       </CardContent>
-      {/* Right Column: Tabata Durations */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          flex: `0 0 ${SIDE_COLUMN_WIDTH}`,
+          flex: `0 0 ${isMobile ? '30px' : SIDE_COLUMN_WIDTH}`,
         }}
       >
         {mode === 'TABATA' && (
