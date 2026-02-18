@@ -264,7 +264,8 @@ export const useWorkoutSessionManager = () => {
   useEffect(() => {
     const recoverSession = async () => {
       try {
-        let incompleteSession = await workoutSessionStorage.getIncompleteSession()
+        let incompleteSession =
+          await workoutSessionStorage.getIncompleteSession()
 
         if (incompleteSession) {
           const wasStale = await clearStaleSession(
