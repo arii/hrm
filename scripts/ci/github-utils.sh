@@ -13,13 +13,25 @@ retry_command() {
 
   for i in $(seq 1 "$max_attempts"); do
     # Execute the command and capture output.
-    # Success (exit code 0) returns immediately.
-    if result=$("${cmd[@]}"); then
+    # We avoid 'local result=$(...)' directly in 'if' to ensure correct exit code handling.
+    local result
+    result=$("${cmd[@]}")
+    local exit_code=$?
+
+    if [ "$exit_code" -eq 0 ]; then
       echo "$result"
       return 0
     fi
 
-    local exit_code=$?
+    # Diagnostic output for authentication failures
+    if [ "$exit_code" -eq 4 ] || [ "$exit_code" -eq 1 ]; then
+       # Check if it was a 401 via stderr (which we can't easily see here, but we can check auth status)
+       if [[ "${cmd[0]}" == "gh" ]]; then
+         echo "🔍 Diagnostics: Checking GitHub CLI authentication status..." >&2
+         gh auth status >&2 || true
+       fi
+    fi
+
     if [ "$i" -lt "$max_attempts" ]; then
       echo "⏳ Attempt $i of $max_attempts failed with exit code $exit_code. Retrying in ${sleep_seconds}s..." >&2
       sleep "$sleep_seconds"
