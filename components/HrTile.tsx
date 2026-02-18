@@ -13,7 +13,6 @@ import ControlCard from '@/components/shared/ControlCard'
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 
-
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 3, textAlign: 'center' }}>
     <Typography
