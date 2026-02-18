@@ -11,83 +11,13 @@ import Stack from '@mui/material/Stack'
 import VolumeDown from '@mui/icons-material/VolumeDown'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
+import CircularProgress from '@mui/material/CircularProgress'
 import SideLabel from './SideLabel'
 import { useAudioContext } from '@/context/AudioContext'
 import { formatDuration } from '@/lib/utils'
-import { useTheme, useMediaQuery } from '@mui/material'
+import { useTheme, useMediaQuery, alpha } from '@mui/material'
 
-// Define a constant for the side column width to avoid magic numbers
 const SIDE_COLUMN_WIDTH = '40px'
-
-const ProgressRing = ({
-  percentage,
-  phaseColor,
-}: {
-  percentage: number
-  phaseColor: string
-}) => {
-  const radius = 40
-  const circumference = 2 * Math.PI * radius
-  const offset = circumference - (percentage / 100) * circumference
-
-  return (
-    <svg width="100" height="100" viewBox="0 0 100 100">
-      <circle
-        stroke="rgba(255,255,255,0.1)"
-        strokeWidth="4"
-        fill="transparent"
-        r={radius}
-        cx="50"
-        cy="50"
-      />
-      <circle
-        stroke={phaseColor}
-        strokeWidth="6"
-        strokeDasharray={circumference}
-        style={{
-          strokeDashoffset: offset,
-          transition: 'stroke-dashoffset 0.5s ease',
-        }}
-        strokeLinecap="round"
-        fill="transparent"
-        r={radius}
-        cx="50"
-        cy="50"
-        transform="rotate(-90 50 50)"
-      />
-    </svg>
-  )
-}
-
-const AnimatedCounter = ({
-  displayTime,
-  phaseColor,
-  sx,
-}: {
-  displayTime: string
-  phaseColor: string
-  sx?: object
-}) => {
-  return (
-    <Typography
-      data-testid="timer-countdown"
-      component="div"
-      role="timer"
-      aria-live="polite"
-      aria-atomic="true"
-      sx={{
-        fontFamily: 'var(--font-roboto-mono), monospace',
-        fontWeight: 800,
-        lineHeight: 1,
-        color: phaseColor,
-        textShadow: `0 0 20px ${phaseColor}80`,
-        ...sx,
-      }}
-    >
-      {displayTime}
-    </Typography>
-  )
-}
 
 const TimerDisplay = () => {
   const theme = useTheme()
@@ -103,7 +33,6 @@ const TimerDisplay = () => {
     restDuration = 10,
   } = timerData
 
-  // Determine what to display based on mode and phase
   let displayTime: string
   let phaseColor: string
   let phaseLabel: string
@@ -231,14 +160,37 @@ const TimerDisplay = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: { xs: 130, md: 150 },
+          minHeight: {
+            xs: theme.spacing(16.25),
+            md: theme.spacing(18.75),
+          },
           minWidth: 0,
         }}
       >
-        <Box sx={{ transform: 'scale(0.85)', mb: -1.5 }}>
-          <ProgressRing
-            percentage={progressPercentage}
-            phaseColor={phaseColor}
+        <Box sx={{ position: 'relative', display: 'inline-flex', mb: 1 }}>
+          <CircularProgress
+            variant="determinate"
+            value={progressPercentage}
+            size={80}
+            thickness={4}
+            sx={{
+              color: phaseColor,
+              '& .MuiCircularProgress-circle': {
+                strokeLinecap: 'round',
+                transition: 'stroke-dashoffset 0.5s ease',
+              },
+            }}
+          />
+          <CircularProgress
+            variant="determinate"
+            value={100}
+            size={80}
+            thickness={4}
+            sx={{
+              color: alpha('#fff', 0.1),
+              position: 'absolute',
+              left: 0,
+            }}
           />
         </Box>
 
@@ -258,14 +210,23 @@ const TimerDisplay = () => {
           </Typography>
         )}
 
-        <AnimatedCounter
-          displayTime={displayTime}
-          phaseColor={phaseColor}
+        <Typography
+          data-testid="timer-countdown"
+          component="div"
+          role="timer"
+          aria-live="polite"
+          aria-atomic="true"
           sx={{
+            fontFamily: 'var(--font-roboto-mono), monospace',
+            fontWeight: 800,
+            lineHeight: 1,
+            color: phaseColor,
             fontSize: { xs: '3.5rem', sm: '4.5rem', md: '5.5rem' },
             my: 0.5,
           }}
-        />
+        >
+          {displayTime}
+        </Typography>
 
         <Stack
           direction="row"

@@ -7,7 +7,7 @@ import WifiOffIcon from '@mui/icons-material/WifiOff'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { HR_ZONE_CONFIG, HeartRateZone } from '@/lib/shared/hr-zones'
-import { useTheme } from '@mui/material/styles'
+import { useTheme, alpha } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
 
@@ -64,7 +64,7 @@ const HrTile = ({
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
-          minHeight: { xs: 110, md: 130 },
+          minHeight: { xs: theme.spacing(13.75), md: theme.spacing(16.25) },
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -153,7 +153,7 @@ const HrTile = ({
             sx={{
               display: 'flex',
               justifyContent: 'space-around',
-              bgcolor: 'rgba(255,255,255,0.1)',
+              bgcolor: alpha(theme.palette.common.white, 0.1),
               borderRadius: 1,
               py: 0.5,
             }}

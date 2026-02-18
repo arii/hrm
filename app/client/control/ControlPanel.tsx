@@ -18,7 +18,7 @@ const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   loading: () => (
     <Skeleton
       variant="rectangular"
-      height={280}
+      height={160}
       sx={{ borderRadius: 1, mb: 2 }}
     />
   ),
