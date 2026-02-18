@@ -11,17 +11,27 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
-import { BLUETOOTH_MAX_RECONNECT_ATTEMPTS } from '@/constants/bluetooth-reconnection'
-import {
-  HR_SERVICE_UUID,
-  HR_CHARACTERISTIC_UUID,
-  BATTERY_SERVICE_UUID,
-  BATTERY_LEVEL_CHARACTERISTIC_UUID,
-  ROLLING_AVG_HISTORY_LENGTH,
-  MISSED_PACKET_THRESHOLD_BUFFER_MS,
-  MIN_MISSED_PACKET_THRESHOLD_MS,
-  HEARTBEAT_INTERVAL_MS,
-} from '@/constants/bluetooth-config'
+
+// --- Bluetooth HRM Constants ---
+export const HR_SERVICE_UUID = 'heart_rate'
+export const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
+export const BATTERY_SERVICE_UUID = 'battery_service'
+export const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
+
+export const ROLLING_AVG_HISTORY_LENGTH = 5
+export const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
+export const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
+
+export const BLUETOOTH_MAX_RECONNECT_ATTEMPTS =
+  Number(process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS) || 8
+export const RECONNECT_BASE_DELAY_MS = 2000
+
+export const HEARTBEAT_INTERVAL_MS_test = 500
+export const HEARTBEAT_INTERVAL_MS_prod = 1000
+export const HEARTBEAT_INTERVAL_MS =
+  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
+    ? HEARTBEAT_INTERVAL_MS_test
+    : HEARTBEAT_INTERVAL_MS_prod
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
@@ -606,141 +616,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
     },
     [onDisconnected, updateSignalPeriod]
-  )
-
-  useEffect(() => {
-    connectToGattRef.current = connectToGatt
-  }, [connectToGatt])
-
-  /**
-   * Scans for a Bluetooth device, connects to it, and starts streaming heart rate data.
-   * Will attempt to reconnect to a previously saved device if one exists.
-   * @param userNameFromArgs The user's name for display purposes.
-   * @param userAgeFromArgs The user's age, used to calculate max HR.
-   * @throws If the connection fails (e.g., user cancellation, WebSocket disconnect).
-   */
-  const connectAndStream = useCallback(
-    async (
-      userNameFromArgs?: string,
-      userAgeFromArgs?: number,
-      options: { silent?: boolean } = {}
-    ): Promise<boolean> => {
-      const { silent = false } = options
-
-      userDetailsRef.current = {
-        name: userNameFromArgs || userName || '',
-        age: userAgeFromArgs || userAge || 0,
-      }
-
-      if (statusRef.current === BluetoothConnectionStatus.CONNECTED) return true
-      if (connectionStatus !== 'Connected') {
-        const err = new Error('WebSocket not connected')
-        if (!silent) handleConnectionError(err)
-        throw err
-      }
-
-      try {
-        logger.info(
-          { connectionStatus, savedDevice },
-          'connectAndStream called'
-        )
-        setStatus(BluetoothConnectionStatus.CONNECTING)
-        let device = savedDevice
-
-        if (!device) {
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
-          const savedDeviceId = getCookie('hrm_device_id')
-
-          // Abort silent connection if no device ID is found, to prevent looping.
-          if (silent && !savedDeviceId) {
-            logger.warn(
-              { savedDeviceId },
-              'Aborting silent connect: No saved device ID.'
-            )
-            throw new Error('No saved device ID for silent connection.')
-          }
-
-          logger.info(
-            { savedDeviceId, hasGetDevices: !!navigator.bluetooth?.getDevices },
-            'Looking for saved device'
-          )
-          if (savedDeviceId && navigator.bluetooth?.getDevices) {
-            const devices = await navigator.bluetooth.getDevices()
-            logger.info(
-              { count: devices.length, savedDeviceId },
-              'Available devices'
-            )
-            const foundDevice = devices.find((d) => d.id === savedDeviceId)
-
-            if (foundDevice) {
-              logger.info(
-                { device: foundDevice.name },
-                'Found saved device, connecting'
-              )
-              await connectToGatt(foundDevice)
-              return true
-            } else {
-              logger.info(
-                { savedDeviceId },
-                'Saved device not found in available devices'
-              )
-            }
-          } else {
-            logger.info(
-              {
-                savedDeviceId,
-                hasGetDevices: !!navigator.bluetooth?.getDevices,
-              },
-              'Cannot get saved device'
-            )
-          }
-        }
-
-        if (!device && !silent) {
-          setStatus(BluetoothConnectionStatus.CONNECTING)
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.scanningForDevices)
-          device = await navigator.bluetooth.requestDevice({
-            filters: [{ services: [HR_SERVICE_UUID] }],
-            optionalServices: [BATTERY_SERVICE_UUID],
-          })
-        }
-
-        if (device) {
-          logger.info({ device: device.name }, 'Connecting to device')
-          await connectToGatt(device)
-          return true
-        } else if (!silent) {
-          logger.info('No device to connect')
-          throw new Error('No device found or selected for connection.')
-        }
-        return false // Silent mode: no device available
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error)
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          throw error
-        }
-        if (!silent) {
-          handleConnectionError(error)
-        } else {
-          logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
-          // Reset the status to allow for a manual connection attempt.
-          setStatus(BluetoothConnectionStatus.DISCONNECTED)
-          throw error
-        }
-        if (!silent) {
-          throw error
-        }
-        return false
-      }
-    },
-    [
-      connectionStatus,
-      savedDevice,
-      connectToGatt,
-      handleConnectionError,
-      userName,
-      userAge,
-    ]
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
