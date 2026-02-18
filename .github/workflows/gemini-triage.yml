@@ -71,8 +71,8 @@ jobs:
           ### Output Format
           You MUST return a valid JSON object. Do not include markdown formatting like \`\`\`json.
           {
-            "labels": ["bug", "documentation", "enhancement", "chore", "refactor", "ci", "testing", "styling", "build-config", "tech-debt", "needs-info", "invalid"],
-            "priority": "High" | "Medium" | "Low",
+            "labels": ["bug", "enhancement", "refactor", "chore", "documentation", "scope:focused", "scope:needs-review", "priority:high", "priority:medium", "priority:low", "needs-info", "invalid"],
+            "priority": "priority:high" | "priority:medium" | "priority:low",
             "summary": "A 1-sentence summary of the issue",
             "analysis": "A brief analysis of what is needed to fix this.",
             "suggested_title": "A clearer title (if original is poor)",
@@ -114,7 +114,7 @@ jobs:
               const requiredKeys = ['summary', 'priority', 'analysis', 'labels'];
               const expectedSchema = {
                 labels: (val) => Array.isArray(val) && val.every(item => typeof item === 'string'),
-                priority: (val) => typeof val === 'string' && ['High', 'Medium', 'Low'].includes(val),
+                priority: (val) => typeof val === 'string' && ['priority:high', 'priority:medium', 'priority:low'].includes(val),
                 summary: (val) => typeof val === 'string' && val.length > 0,
                 analysis: (val) => typeof val === 'string',
                 suggested_title: (val) => typeof val === 'string',

@@ -53,11 +53,13 @@ To ensure consistency across the project, we use a standardized set of GitHub la
 
 All managed labels are defined in [`.github/pr-labels.json`](../.github/pr-labels.json). Automated workflows ensure these labels exist in the repository.
 
-**Key Label Categories:**
-- **Review Status**: `ready-for-approval`, `needs-fixes`, `approved`, `changes-requested`
-- **Change Type**: `bug`, `enhancement`, `refactor`, `chore`, `ci`, `testing`, `styling`, `build-config`, `tech-debt`
+**Key Label Categories (Strictly Limited to 5 per Category):**
+- **Review Status**: `ai-reviewed`, `approved`, `changes-requested`
+- **Change Type**: `bug`, `enhancement`, `refactor`, `chore`, `documentation`
 - **Scope**: `scope:focused`, `scope:needs-review`
-- **Operational**: `needs-info`, `invalid`, `automerge`, `auto-code`, `stale`, `bot-generated`, `triage-needed`
+- **Priority**: `priority:high`, `priority:medium`, `priority:low`
+- **Status**: `needs-info`, `invalid`, `stale`, `duplicate`, `wontfix`
+- **Automation**: `automerge`, `auto-code`, `bot-generated`, `triage-needed`
 
 Obsolete or redundant labels (e.g., variations like `CI` or `workflow`) are automatically removed by the `cleanup-pr-labels.sh` script, as configured in [`.github/automated-labels.json`](../.github/automated-labels.json).
 
