@@ -43,13 +43,11 @@ export const SCREENSHOT_OPTIONS = {
 export async function takeScreenshot(
   target: Page | Locator,
   snapshotName: string,
-  options: ScreenshotOptions & { disableA11yCheck?: boolean } = {}
+  options: ScreenshotOptions & { skipA11y?: boolean } = {}
 ) {
-  const { disableA11yCheck = false, ...screenshotOptions } = options
+  const { skipA11y = false, ...screenshotOptions } = options
 
-  if (!disableA11yCheck) {
-    // Always perform an accessibility check before taking a screenshot.
-    // This ensures that our accessibility standards are maintained with every visual change.
+  if (!skipA11y) {
     await checkAccessibility(target)
   }
 
@@ -69,7 +67,7 @@ export async function takeScreenshot(
 export async function takeDashboardScreenshot(
   page: Page,
   snapshotName: string,
-  options: ScreenshotOptions = {}
+  options: ScreenshotOptions & { skipA11y?: boolean } = {}
 ) {
   const mainContentLocator = page.getByTestId('main-content-layout')
   const timerDisplayLocator = page.getByTestId('timer-display-container')

@@ -51,8 +51,7 @@ test.describe('Visual Regression Tests', () => {
       })
       await selectMusicButton.hover()
       await takeScreenshot(selectMusicButton, 'select-music-button-hover.png', {
-        // Performance: Skip a11y check for hover state as primary state is already checked
-        disableA11yCheck: true,
+        skipA11y: true,
       })
     })
   })
