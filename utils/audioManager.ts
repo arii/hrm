@@ -1,9 +1,11 @@
 /**
  * Audio Manager for Tabata Timer Sounds
  * Handles beep sounds for countdown and phase transitions
+ *
+ * @public
  */
 
-class AudioManager {
+export class AudioManager {
   private shortBeep: HTMLAudioElement | null = null
   private longBeep: HTMLAudioElement | null = null
   private isMuted = false
