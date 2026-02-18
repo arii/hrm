@@ -28,7 +28,7 @@ const HrmConnectionPanel = () => {
       sx={{
         display: 'grid',
         gridTemplateColumns: {
-          xs: '1fr 1fr',
+          xs: 'repeat(auto-fit, minmax(140px, 1fr))',
           sm: 'repeat(auto-fit, minmax(150px, 1fr))',
         },
         gap: 1.5,
@@ -43,7 +43,7 @@ const HrmConnectionPanel = () => {
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              gridColumn: { xs: 'span 2', sm: 'span 1' },
+              gridColumn: '1 / -1',
               height: '100%', // Ensure the container fills the grid cell
               gap: 2,
               p: 2,
