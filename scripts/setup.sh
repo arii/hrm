@@ -20,11 +20,15 @@ else
 fi
 
 # Verify pnpm-lock.yaml integrity and install dependencies
-echo "Installing dependencies with pnpm..."
-if [ -f pnpm-lock.yaml ]; then
-  pnpm install --frozen-lockfile
+if [ "$SKIP_INSTALL" = "true" ]; then
+  echo "Skipping pnpm install as SKIP_INSTALL is set."
 else
-  pnpm install
+  echo "Installing dependencies with pnpm..."
+  if [ -f pnpm-lock.yaml ]; then
+    pnpm install --frozen-lockfile
+  else
+    pnpm install
+  fi
 fi
 
 # 5. Verify Git Hooks (Husky)

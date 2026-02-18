@@ -135,7 +135,9 @@ export default defineConfig({
     ? undefined
     : {
         command:
-          'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
+          process.env.SKIP_BUILD === 'true'
+            ? 'NODE_ENV=production bash scripts/start-production.sh'
+            : 'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
         url: `${baseURL}/api/health/simple`,
         timeout: 120 * 1000, // 2 minutes
         reuseExistingServer: !process.env.CI,

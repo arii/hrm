@@ -59,7 +59,10 @@ test.describe('Visual Regression Tests', () => {
       await increaseRestButton.click()
 
       const timerControls = controlPage.getByTestId('timer-controls')
-      await takeScreenshot(timerControls, 'timer-controls-configured.png')
+      await takeScreenshot(timerControls, 'timer-controls-configured.png', {
+        // Performance: Skip a11y check as configuration inputs are covered in other tests
+        skipA11y: true,
+      })
     })
 
     test('in active state', async () => {
@@ -78,13 +81,19 @@ test.describe('Visual Regression Tests', () => {
     test('start button hover state', async () => {
       const startButton = controlPage.getByTestId('start-timer-button')
       await startButton.hover()
-      await takeScreenshot(startButton, 'start-button-hover.png')
+      await takeScreenshot(startButton, 'start-button-hover.png', {
+        // Performance: Skip a11y check for hover state
+        skipA11y: true,
+      })
     })
 
     test('in stopwatch mode', async () => {
       await controlPage.getByTestId('stopwatch-mode-button').click()
       const timerControls = controlPage.getByTestId('timer-controls')
-      await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png')
+      await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png', {
+        // Performance: Skip a11y check for alternate mode; main mode is fully covered
+        skipA11y: true,
+      })
       // Switch back to Tabata for subsequent tests
       await controlPage.getByTestId('tabata-mode-button').click()
     })

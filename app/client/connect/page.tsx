@@ -271,6 +271,13 @@ export default function ConnectPage() {
       setIsExporting(false)
     }
   }, [currentSession])
+  // Signal when page is ready for testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__TEST_READY__ = true
+      window.dispatchEvent(new CustomEvent('test-ready'))
+    }
+  }, [])
 
   return (
     <ConnectView
