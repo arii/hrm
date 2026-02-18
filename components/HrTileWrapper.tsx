@@ -9,7 +9,7 @@ type HrTileWrapperProps = Omit<ClientHrmData, 'updatedAt' | 'lastUpdated'>
 
 const HrTileWrapper = (props: HrTileWrapperProps) => {
   return (
-    <Box sx={{ height: '100%', minHeight: 180 }}>
+    <Box sx={{ height: '100%' }}>
       <HrTile
         {...props}
         name={props.name || ''}
