@@ -173,7 +173,10 @@ class TabataTimer {
    * Configures the durations for the TABATA mode.
    * @param {object} config The new configuration.
    */
-  public setConfig(config: { workDuration: number; restDuration: number }): void {
+  public setConfig(config: {
+    workDuration: number
+    restDuration: number
+  }): void {
     if (config.workDuration < 1 || config.restDuration < 0) {
       throw new ConfigurationError(
         `Invalid timer configuration: workDuration must be positive, and restDuration must be non-negative. Received workDuration: ${config.workDuration}, restDuration: ${config.restDuration}`
@@ -204,7 +207,10 @@ class TabataTimer {
     if (this.mode === 'STOPWATCH' && this.currentPhase === 'RUNNING') {
       this.timeElapsed = this.pausedTimeElapsed + elapsedSinceLastStart
     } else if (this.mode === 'TABATA' || this.currentPhase === 'PREPARE') {
-      const nextRemaining = Math.max(0, this.pausedTimeRemaining - elapsedSinceLastStart)
+      const nextRemaining = Math.max(
+        0,
+        this.pausedTimeRemaining - elapsedSinceLastStart
+      )
       this.timeRemaining = nextRemaining
 
       if (nextRemaining <= 0) {
@@ -258,7 +264,7 @@ class TabataTimer {
 
     // For TABATA phases, we always sync pausedTimeRemaining after transition
     if (this.currentPhase === 'WORK' || this.currentPhase === 'REST') {
-       this.pausedTimeRemaining = this.timeRemaining
+      this.pausedTimeRemaining = this.timeRemaining
     }
   }
 
