@@ -9,7 +9,11 @@
     "skipLibCheck": true,
     "strict": true,
     "outDir": "../../dist/playwright",
-    "types": ["node", "@playwright/test"]
+    "types": ["node", "@playwright/test"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../../*"]
+    }
   },
   "include": [
     "./**/*.ts",
