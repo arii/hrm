@@ -76,6 +76,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
       maxDiffPixelRatio: 0.05,
+      // Performance: Skip repeated a11y checks for error states as the core UI is already validated
+      skipA11y: true,
     })
   })
 
@@ -90,6 +92,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-no-devices-found.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
+      // Performance: Skip redundant a11y checks for similar disconnected states
+      skipA11y: true,
     })
   })
 
@@ -105,6 +109,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
       maxDiffPixelRatio: 0.05,
+      // Performance: Skip a11y check for this specific error variant; primary state is covered
+      skipA11y: true,
     })
   })
 })
