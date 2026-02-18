@@ -10,6 +10,7 @@
  */
 import type { Locator, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
+import { SCREENSHOT_OPTIONS } from '@/tests/playwright/lib/visual'
 
 /**
  * Assert that a page matches its expected screenshot with standard masking.
@@ -31,7 +32,7 @@ export async function assertPageSnapshot(
   const { mask = [], threshold, maxDiffPixelRatio } = options
 
   await expect(page).toHaveScreenshot(snapshotName, {
-    ...DEFAULT_SCREENSHOT_OPTIONS,
+    ...SCREENSHOT_OPTIONS,
     mask,
     ...(threshold !== undefined && { threshold }),
     ...(maxDiffPixelRatio !== undefined && { maxDiffPixelRatio }),
@@ -57,11 +58,10 @@ export async function assertElementSnapshot(
   const { mask = [], threshold, maxDiffPixelRatio } = options
 
   await expect(locator).toHaveScreenshot(snapshotName, {
-    animations: 'disabled',
-    caret: 'hide',
-    threshold: threshold ?? DEFAULT_SCREENSHOT_OPTIONS.threshold,
+    ...SCREENSHOT_OPTIONS,
+    threshold: threshold ?? SCREENSHOT_OPTIONS.threshold,
     maxDiffPixelRatio:
-      maxDiffPixelRatio ?? DEFAULT_SCREENSHOT_OPTIONS.maxDiffPixelRatio,
+      maxDiffPixelRatio ?? SCREENSHOT_OPTIONS.maxDiffPixelRatio,
     mask,
   })
 }
