@@ -23,13 +23,14 @@ import {
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
   const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
   const [currentHR, setCurrentHR] = useState(0)
-  const [isReady, setIsReady] = useState(false)
+  const isReady = useTestPageReady()
 
   const [localDisplayWeight, setLocalDisplayWeight] = useState<string | null>(
     null
@@ -244,16 +245,6 @@ export default function ConnectPage() {
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
-
-  // Signal when page is ready for testing
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__TEST_READY__ = true
-      window.dispatchEvent(new CustomEvent('test-ready'))
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsReady(true)
-    }
-  }, [])
 
   return (
     <ConnectView

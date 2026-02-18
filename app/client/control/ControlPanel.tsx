@@ -10,9 +10,10 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import Head from 'next/head'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   loading: () => (
@@ -27,7 +28,7 @@ import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
   const { connectionStatus, connect, sendData } = useWebSocket()
-  const [isReady, setIsReady] = useState(false)
+  const isReady = useTestPageReady()
 
   // Register this client as a controller
   useEffect(() => {
@@ -55,16 +56,6 @@ const ControlPanel = () => {
     return () =>
       document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [connectionStatus, connect])
-
-  // Signal when page is ready for testing
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__TEST_READY__ = true
-      window.dispatchEvent(new CustomEvent('test-ready'))
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsReady(true)
-    }
-  }, [])
 
   return (
     <>

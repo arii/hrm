@@ -8,6 +8,7 @@ import { Session } from 'next-auth'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import { API_DEBUG_SPOTIFY_TOKEN } from '@/constants/apiEndpoints'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 interface ServerTokenStatus {
   status: string
@@ -24,7 +25,7 @@ interface ServerTokenStatus {
 export default function SpotifyDebugPage() {
   const { data: session } = useSession() as { data: Session | null }
   const [serverToken, setServerToken] = useState<ServerTokenStatus | null>(null)
-  const [isReady, setIsReady] = useState(false)
+  const isReady = useTestPageReady()
 
   const fetchServerToken = async () => {
     const res = await fetch(API_DEBUG_SPOTIFY_TOKEN)
@@ -35,16 +36,8 @@ export default function SpotifyDebugPage() {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchServerToken()
-    }, 0)
-    if (typeof window !== 'undefined') {
-      const testWindow = window as typeof window & { __TEST_READY__?: boolean }
-      testWindow.__TEST_READY__ = true
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsReady(true)
-    }
-    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchServerToken()
   }, [])
 
   return (

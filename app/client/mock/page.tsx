@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
@@ -30,24 +31,11 @@ export default function MockPage() {
   const [weight, setWeight] = useState(70) // Add weight state
   const [height, setHeight] = useState(175) // Add height state
   const [gender, setGender] = useState('female') // Add gender state
-  const [isReady, setIsReady] = useState(false)
+  const isReady = useTestPageReady()
   const [intervalId, setIntervalId] = useState<number | null>(null)
 
   const isStreaming = intervalId !== null
   const maxHr = calculateMaxHr(age)
-
-  // Signal when page is ready for testing
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        window.__TEST_READY__ = true
-        window.dispatchEvent(new CustomEvent('test-ready'))
-        setIsReady(true)
-      }
-    }, 1000)
-
-    return () => window.clearTimeout(timer)
-  }, [])
 
   const sendHrPacket = useCallback(
     (hr: number) => {
