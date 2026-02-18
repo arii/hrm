@@ -8,7 +8,7 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const PlaylistSelector = dynamic(
@@ -34,6 +34,17 @@ const SpotifySelectionPage = () => {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
     null
   )
+  const [isReady, setIsReady] = useState(false)
+
+  // Signal when page is ready for testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__TEST_READY__ = true
+      window.dispatchEvent(new CustomEvent('test-ready'))
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsReady(true)
+    }
+  }, [])
 
   const handlePlaylistSelected = (uri: string) => {
     const playlistId = uri.split(':').pop()
@@ -59,7 +70,11 @@ const SpotifySelectionPage = () => {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 3 }}>
+    <Container
+      maxWidth="sm"
+      sx={{ py: 3 }}
+      data-ready={isReady ? 'true' : 'false'}
+    >
       <Typography variant="h4" component="h1" gutterBottom align="center">
         Spotify Playlist Selector
       </Typography>

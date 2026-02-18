@@ -52,6 +52,7 @@ const mainGridStyles: SxProps = {
 const Dashboard = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
+  const [isReady, setIsReady] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
 
@@ -71,12 +72,15 @@ const Dashboard = () => {
     if (typeof window !== 'undefined') {
       window.__TEST_READY__ = true
       window.dispatchEvent(new CustomEvent('test-ready'))
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsReady(true)
     }
   }, [])
 
   return (
     <Container
       data-testid="dashboard"
+      data-ready={isReady ? 'true' : 'false'}
       maxWidth="xl"
       onClick={handleInteraction}
       sx={{

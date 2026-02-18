@@ -83,7 +83,7 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // NEW: HR device in different zones
-    const zones = [0, 1, 2, 3, 4, 5]
+    const zones = [0, 1, 2, 3, 4, 5, 6]
     for (const zone of zones) {
       test(`dashboard with HR in Zone ${zone}`, async () => {
         await mockPage.getByLabel('Current BPM').fill(String(60 + zone * 20))

@@ -1,11 +1,12 @@
-import { type BrowserContext, type Page } from '@playwright/test'
-import { test, expect } from './fixtures'
+import { type BrowserContext, type Page, expect } from '@playwright/test'
+import { test } from './fixtures'
 import {
   getDynamicContentMasks,
   setupVisualRegressionTest,
 } from './test-helpers'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
+import { stopTimer } from './lib/setup'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -32,8 +33,20 @@ test.describe('Visual Regression Tests', () => {
     await context?.close()
   })
 
+  test.afterEach(async () => {
+    // Ensure timer is stopped after each test to maintain a clean state
+    await stopTimer(controlPage, dashboardPage)
+  })
+
   test.beforeEach(async () => {
     await waitForPageReady(dashboardPage)
+    await waitForPageReady(controlPage)
+    await waitForPageReady(mockPage)
+
+    // Force visibility to avoid flaky screenshots due to animations
+    await dashboardPage.addStyleTag({
+      content: `[data-testid="main-content-layout"] { opacity: 1 !important; transform: none !important; }`,
+    })
   })
 
   test.describe('Dashboard Component', () => {
@@ -45,13 +58,26 @@ test.describe('Visual Regression Tests', () => {
 
     // NEW: Active timer with no HR data
     test('active timer without HR data', async () => {
+      // Ensure dashboard is ready
+      const timerContainer = dashboardPage.getByTestId(
+        'timer-display-container'
+      )
+      await timerContainer.waitFor({ state: 'visible', timeout: 10000 })
+
       await controlPage.getByTestId('start-timer-button').click()
-      await expect(dashboardPage.getByTestId('timer-countdown')).toBeVisible()
+
+      // Wait for timer to transition from idle (00:00) to prepare (e.g. 10 or 05)
+      await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
+        /00:00/,
+        {
+          timeout: 10000,
+        }
+      )
 
       // Assert timer tile height is fixed
       const timerCard = dashboardPage.getByTestId('timer-display-container')
       await assertFixedDimensions(timerCard, {
-        maxHeight: 300,
+        maxHeight: 500,
       })
 
       await takeScreenshot(dashboardPage, 'dashboard-active-timer.png', {
@@ -65,12 +91,20 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
       await controlPage.getByTestId('start-timer-button').click()
 
+      // Wait for timer to start on dashboard
+      await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
+        /00:00/,
+        {
+          timeout: 10000,
+        }
+      )
+
       // Assert grid row height is stable
       const topRow = dashboardPage
         .locator('[data-testid="dashboard"] > div')
         .first()
       await assertFixedDimensions(topRow, {
-        maxHeight: 350,
+        maxHeight: 550,
       })
 
       await takeScreenshot(

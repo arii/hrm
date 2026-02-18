@@ -29,6 +29,7 @@ export default function ConnectPage() {
   const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
   const [currentHR, setCurrentHR] = useState(0)
+  const [isReady, setIsReady] = useState(false)
 
   const [localDisplayWeight, setLocalDisplayWeight] = useState<string | null>(
     null
@@ -249,11 +250,14 @@ export default function ConnectPage() {
     if (typeof window !== 'undefined') {
       window.__TEST_READY__ = true
       window.dispatchEvent(new CustomEvent('test-ready'))
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsReady(true)
     }
   }, [])
 
   return (
     <ConnectView
+      isReady={isReady}
       duration={formatDuration(workoutDuration, {
         unit: 'seconds',
         format: 'HH:MM:SS',

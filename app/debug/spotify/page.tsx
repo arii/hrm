@@ -24,6 +24,7 @@ interface ServerTokenStatus {
 export default function SpotifyDebugPage() {
   const { data: session } = useSession() as { data: Session | null }
   const [serverToken, setServerToken] = useState<ServerTokenStatus | null>(null)
+  const [isReady, setIsReady] = useState(false)
 
   const fetchServerToken = async () => {
     const res = await fetch(API_DEBUG_SPOTIFY_TOKEN)
@@ -40,12 +41,14 @@ export default function SpotifyDebugPage() {
     if (typeof window !== 'undefined') {
       const testWindow = window as typeof window & { __TEST_READY__?: boolean }
       testWindow.__TEST_READY__ = true
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsReady(true)
     }
     return () => clearTimeout(timer)
   }, [])
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 2 }} data-ready={isReady ? 'true' : 'false'}>
       <Typography variant="h4" gutterBottom>
         Spotify Debug
       </Typography>
