@@ -67,6 +67,3 @@ export const getSpotifyCallbackURL = (): string => {
   )
 }
 
-export const getGoogleDocWorkoutUrl = (): string | undefined => {
-  return process.env.GOOGLE_DOC_WORKOUT_URL
-}
