@@ -25,8 +25,10 @@ test.describe('WorkoutSummary Component VRT', () => {
   })
 
   test('active state', async () => {
-    // The dashboard starts in a "list" view. Click "New Workout" to show the summary.
-    await dashboardPage.getByRole('button', { name: 'New Workout' }).click()
+    // The dashboard starts in a "list" view. Click "New Workout" (or "Back to Active Workout") to show the summary.
+    await dashboardPage
+      .getByRole('button', { name: /New Workout|Back to Active Workout/i })
+      .click()
     const workoutSummary = dashboardPage.getByTestId('workout-summary')
 
     // Mask the duration, since it's dynamic
