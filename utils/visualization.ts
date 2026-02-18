@@ -10,7 +10,7 @@ import {
   HeartRateZone,
 } from '@/lib/shared/hr-zones'
 
-export interface HrZoneProps {
+interface HrZoneProps {
   zone: HeartRateZone
   percentage: number
   color: string // Legacy: Hex color or Tailwind class

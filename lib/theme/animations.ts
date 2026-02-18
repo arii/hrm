@@ -1,5 +1,3 @@
-import { keyframes } from '@mui/material/styles'
-
 export const reducedMotionStyles = {
   '@media (prefers-reduced-motion: reduce)': {
     '*': {

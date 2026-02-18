@@ -20,15 +20,6 @@ export type HeartRateZone =
   | 'ZONE_6'
 
 /**
- * Interface for heart rate zone information.
- */
-export interface HrZone {
-  zoneName: HeartRateZone
-  percentage: number
-  bpm: number
-}
-
-/**
  * Canonical configuration for heart rate zones.
  * Single source of truth for labels, thresholds, and colors.
  * Thresholds are stored as decimals (0-1) representing percentage of Max HR.
@@ -166,47 +157,7 @@ export const toHeartRateZone = (zoneNum: number): HeartRateZone => {
   return key in HR_ZONE_CONFIG ? key : 'ZONE_0'
 }
 
-/**
- * Interface for HR zone configuration used in UI components.
- */
-export interface HeartRateZoneConfig {
-  name: string
-  minPercent: number
-  maxPercent: number
-  color: string
-}
-
-/**
- * Derives the canonical list of heart rate zones for UI components.
- * @returns An array of HeartRateZoneConfig objects.
- */
-const deriveHeartRateZones = (): HeartRateZoneConfig[] => {
-  return HR_ZONE_ORDER.filter((z) => z !== 'ZONE_0').map((z) => {
-    const zoneConfig = HR_ZONE_CONFIG[z]
-    // Use the next zone's threshold as the max percent for current zone
-    // except for ZONE_6 which goes to 100
-    const nextZoneNumber = zoneConfig.zoneNumber + 1
-    const nextZoneKey = `ZONE_${nextZoneNumber}` as HeartRateZone
-
-    return {
-      name: `Zone ${zoneConfig.zoneNumber}`,
-      minPercent: Math.round(zoneConfig.threshold * 100),
-      maxPercent:
-        z === 'ZONE_6'
-          ? 100
-          : Math.round(HR_ZONE_CONFIG[nextZoneKey].threshold * 100),
-      color: zoneConfig.color,
-    }
-  })
-}
-
-/**
- * Canonical list of heart rate zones for UI components.
- * Derived from HR_ZONE_CONFIG to ensure single source of truth.
- */
-export const HEART_RATE_ZONES: HeartRateZoneConfig[] = deriveHeartRateZones()
-
-export type UserHrZones = {
+type UserHrZones = {
   warmUp: { min: number }
   fatBurn: { min: number }
   cardio: { min: number }
