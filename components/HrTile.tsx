@@ -29,7 +29,7 @@ const OVERLAY_SX = {
 } as const
 
 const IdentityTier = ({ name }: { name: string }) => (
-  <Box sx={{ pt: 3, textAlign: 'center' }}>
+  <Box sx={{ pt: 1, textAlign: 'center' }}>
     <Typography
       variant="h5"
       sx={{
@@ -108,8 +108,8 @@ const DataTier = ({
 }) => (
   <Box
     sx={{
-      pb: 3,
-      pt: showName ? 0 : 3,
+      pb: 1,
+      pt: showName ? 0 : 1,
       display: 'flex',
       justifyContent: 'center',
       gap: 4,

@@ -48,7 +48,7 @@ describe('ConnectView', () => {
   it('renders the reset button when bluetooth is not supported', () => {
     render(<ConnectView {...mockProps} isSupported={false} />)
     const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
+       name: /Reset System & Device/i,
     })
     expect(resetButton).toBeInTheDocument()
   })
@@ -56,7 +56,7 @@ describe('ConnectView', () => {
   it('renders the reset button as enabled by default', () => {
     render(<ConnectView {...mockProps} />)
     const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
+       name: /Reset System & Device/i,
     })
     expect(resetButton).toBeEnabled()
   })
@@ -64,7 +64,7 @@ describe('ConnectView', () => {
   it('calls onForgetDevice and onReset when the reset button is clicked', async () => {
     render(<ConnectView {...mockProps} />)
     const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
+       name: /Reset System & Device/i,
     })
     fireEvent.click(resetButton)
 
