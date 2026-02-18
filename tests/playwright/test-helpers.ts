@@ -33,6 +33,10 @@ export {
   setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
   setupCoreTest,
+  // Mock utilities
+  mockGoogleDocIframe,
+  mockMultipleHrDevices,
+  mockSpotifyPlaybackState,
 } from './lib'
 
 // Export BASE_URL for backward compatibility

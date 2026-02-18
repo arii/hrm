@@ -6,6 +6,10 @@
  * dependencies to create stable and predictable test environments.
  */
 import type { Page, BrowserContext } from '@playwright/test'
+import type {
+  HrmData,
+  SpotifyData as SpotifyPlaybackState,
+} from '../../../types/websocket'
 
 const STABLE_WORKOUT_HTML = `
   <!DOCTYPE html>
@@ -47,5 +51,58 @@ export async function mockGoogleDocIframe(
         body: STABLE_WORKOUT_HTML,
       })
     }
+  )
+}
+
+/**
+ * Simulates multiple HR devices by dispatching a WebSocket message.
+ *
+ * @param page - The Playwright Page object.
+ * @param devices - Array of HR device data.
+ */
+export async function mockMultipleHrDevices(
+  page: Page,
+  devices: HrmData[]
+): Promise<void> {
+  await page.evaluate((payload) => {
+    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+    window.__TEST_CONTROLS__?.dispatch({
+      type: 'HRM_UPDATE',
+      payload,
+    })
+  }, devices)
+}
+
+/**
+ * Simulates Spotify playback state by dispatching a WebSocket message.
+ *
+ * @param page - The Playwright Page object.
+ * @param state - Partial Spotify playback state.
+ */
+export async function mockSpotifyPlaybackState(
+  page: Page,
+  state: Partial<SpotifyPlaybackState>
+): Promise<void> {
+  const defaultState: SpotifyPlaybackState = {
+    trackId: 'track-1',
+    trackName: 'Mock Track',
+    artist: 'Mock Artist',
+    albumName: 'Mock Album',
+    albumArtUrl: 'https://via.placeholder.com/150',
+    isPlaying: true,
+    devices: [],
+    volume: 50,
+    isMuted: false,
+  }
+
+  await page.evaluate(
+    (payload) => {
+      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+      window.__TEST_CONTROLS__?.dispatch({
+        type: 'SPOTIFY_UPDATE',
+        payload,
+      })
+    },
+    { ...defaultState, ...state }
   )
 }
