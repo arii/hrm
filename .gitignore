@@ -29,6 +29,7 @@ test_output.txt
 /dist
 /build
 *.tsbuildinfo
+.cache/
 next-env.d.ts
 
 # Production & Logs
