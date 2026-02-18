@@ -57,7 +57,11 @@ export async function checkAccessibility(target: Page | Locator) {
   Impact: ${violation.impact}
   Help: ${violation.help} (${violation.helpUrl})
   Nodes:
-  ${violation.nodes.map((node) => `    - HTML: ${node.html}\n      Target: ${node.target.join(', ')}\n      Summary: ${node.failureSummary}`).join('\n')}
+  ${violation.nodes
+    .map(
+      (node) => `    - HTML: ${node.html}\n      Target: ${node.target.join(', ')}\n      Summary: ${node.failureSummary}`
+    )
+    .join('\n')}
       `)
     })
     throw new Error('WCAG 2.1 AA accessibility violations were detected.')

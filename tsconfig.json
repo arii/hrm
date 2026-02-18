@@ -44,7 +44,11 @@
   ],
   "exclude": [
     "node_modules",
-    "tests/playwright",
+    "tests",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
     "playwright.config.ts",
     "knip.ts"
   ]
