@@ -66,6 +66,9 @@ const ExperimentalAnalyticsPage = () => {
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
 
+  // State for test readiness
+  const [isReady, setIsReady] = useState(false)
+
   // Load all sessions
   useEffect(() => {
     const loadSessions = async () => {
@@ -103,6 +106,12 @@ const ExperimentalAnalyticsPage = () => {
       })
     }
   }, [connectionStatus, userSettings, sendData])
+
+  // Signal when page is ready for testing
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsReady(true)
+  }, [])
 
   /**
    * FIX: Use ref to avoid interval reset on HR updates (addresses audit issue #1)
@@ -200,7 +209,12 @@ const ExperimentalAnalyticsPage = () => {
   const defaultDate = useMemo(() => new Date(), [])
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
+    <Container
+      maxWidth="lg"
+      sx={{ mt: 4, mb: 4 }}
+      data-testid="dashboard"
+      data-ready={isReady ? 'true' : undefined}
+    >
       {view === 'active' && (
         <>
           <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>

@@ -1,0 +1,81 @@
+name: Test GitHub Actions
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/actions/sanitize-string/**'
+      - '.github/workflows/test-actions.yml'
+  pull_request:
+    paths:
+      - '.github/actions/sanitize-string/**'
+      - '.github/workflows/test-actions.yml'
+
+jobs:
+  test-sanitize-action:
+    name: Test Sanitize (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Special Chars and Truncation
+            value: 'feature/test-branch/with_special-chars!@#$%^&*()'
+            max_length: '30'
+            expected: 'feature-test-branch-with_speci'
+          - name: Empty String
+            value: ''
+            max_length: '64'
+            expected: ''
+          - name: Already Sanitized
+            value: 'clean-string-123'
+            max_length: '64'
+            expected: 'clean-string-123'
+          - name: Shorter than Max Length
+            value: 'short/string'
+            max_length: '64'
+            expected: 'short-string'
+          - name: Duplicate Hyphens
+            value: 'feature//branch'
+            max_length: '64'
+            expected: 'feature-branch'
+          - name: Trailing Hyphen
+            value: 'feature/branch-'
+            max_length: '64'
+            expected: 'feature-branch'
+          - name: At Max Length
+            value: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
+            max_length: '64'
+            expected: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
+          - name: Only Invalid Chars
+            value: '!@#$%^&*()'
+            max_length: '64'
+            expected: ''
+          - name: Leading/Trailing Invalid Chars
+            value: '!!test-branch!!'
+            max_length: '64'
+            expected: 'test-branch'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Sanitize Action
+        id: sanitize
+        uses: ./.github/actions/sanitize-string
+        with:
+          value: ${{ matrix.value }}
+          max-length: ${{ matrix.max_length }}
+
+      - name: Verify Result
+        env:
+          ACTUAL: ${{ steps.sanitize.outputs.sanitized-value }}
+          EXPECTED: ${{ matrix.expected }}
+          TEST_NAME: ${{ matrix.name }}
+        run: |
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "❌ Test Failed: $TEST_NAME"
+            echo "   Expected: '$EXPECTED'"
+            echo "   Actual:   '$ACTUAL'"
+            exit 1
+          fi
+          echo "✅ Test Passed: $TEST_NAME"
