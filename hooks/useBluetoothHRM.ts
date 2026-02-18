@@ -12,16 +12,25 @@ import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import { BLUETOOTH_MAX_RECONNECT_ATTEMPTS } from '@/constants/bluetooth-reconnection'
-import {
-  HR_SERVICE_UUID,
-  HR_CHARACTERISTIC_UUID,
-  BATTERY_SERVICE_UUID,
-  BATTERY_LEVEL_CHARACTERISTIC_UUID,
-  ROLLING_AVG_HISTORY_LENGTH,
-  MISSED_PACKET_THRESHOLD_BUFFER_MS,
-  MIN_MISSED_PACKET_THRESHOLD_MS,
-  HEARTBEAT_INTERVAL_MS,
-} from '@/constants/bluetooth-config'
+
+// Bluetooth Service and Characteristic UUIDs
+export const HR_SERVICE_UUID = 'heart_rate'
+export const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
+export const BATTERY_SERVICE_UUID = 'battery_service'
+export const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
+
+// Internal HRM Parameters
+export const ROLLING_AVG_HISTORY_LENGTH = 5
+export const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
+export const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
+
+// Heartbeat Interval Pattern
+export const HEARTBEAT_INTERVAL_MS_test = 500
+export const HEARTBEAT_INTERVAL_MS_prod = 1000
+export const HEARTBEAT_INTERVAL_MS =
+  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
+    ? HEARTBEAT_INTERVAL_MS_test
+    : HEARTBEAT_INTERVAL_MS_prod
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
