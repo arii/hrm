@@ -7,26 +7,12 @@ import WifiOffIcon from '@mui/icons-material/WifiOff'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { HR_ZONE_CONFIG, HeartRateZone } from '@/lib/shared/hr-zones'
-import { useTheme } from '@mui/material/styles'
+import { useTheme, alpha } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 
-const OVERLAY_SX = {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 10,
-  borderRadius: 'inherit',
-} as const
 
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 3, textAlign: 'center' }}>
@@ -155,7 +141,7 @@ const HrTile = ({
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
-          minHeight: 180,
+          minHeight: theme.spacing(22.5),
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -183,7 +169,23 @@ const HrTile = ({
         )}
 
         {isAlerting && (
-          <Box data-testid="hr-tile-alert-overlay" sx={OVERLAY_SX}>
+          <Box
+            data-testid="hr-tile-alert-overlay"
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: alpha(theme.palette.common.black, 0.7),
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 10,
+              borderRadius: 'inherit',
+            }}
+          >
             <CircularProgress size={30} sx={{ color: 'white' }} />
             <Typography
               variant="caption"
