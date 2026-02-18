@@ -18,3 +18,17 @@ This document records significant architectural decisions made during the develo
 - The `ConnectPage` component (`app/client/connect/page.tsx`) uses this hook to process the raw heart rate data from the `useBluetoothHRM` hook and sends the calculated calories to the server via a throttled WebSocket message.
 - The server-side `socketManager` has been updated to accept the client-calculated calorie value. It also retains a fallback to the old server-side calculation method to ensure backward compatibility with older clients.
 - The `HrmConnectionPanel` component on the main dashboard now simply renders the calorie data it receives from the server, without performing any calculations of its own.
+
+## Simplified Bluetooth HRM Reconnection Strategy
+
+**Decision:** The Bluetooth HRM reconnection logic has been simplified from a randomized exponential backoff with nested retry loops to a predictable linear backoff strategy with centralized resilience.
+
+**Reasoning:**
+
+- **Complexity Reduction:** The previous strategy was over-engineered for a point-to-point local device connection. Moving to a linear backoff reduced cyclomatic complexity and code verbosity.
+- **Improved Maintainability:** Centralizing retry logic in the primary reconnection loop (rather than having nested retries in the GATT adapter layer) ensures a cleaner state machine and better separation of concerns.
+- **Robustness:** By increasing the maximum attempts to 8 and the base delay to 2s, the system provides a robust 72-second window for device recovery, maintaining stability while improving predictability.
+
+**Implementation:**
+
+- See [ADR-0007: Simplified Bluetooth HRM Reconnection Strategy](./adr/0007-simplified-bluetooth-reconnection.md) for full technical details and trade-offs.
