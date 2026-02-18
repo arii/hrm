@@ -66,6 +66,9 @@ const ExperimentalAnalyticsPage = () => {
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
 
+  // State for test readiness
+  const [isReady, setIsReady] = useState(false)
+
   // Load all sessions
   useEffect(() => {
     const loadSessions = async () => {
