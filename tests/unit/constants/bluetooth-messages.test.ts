@@ -83,7 +83,6 @@ describe('Bluetooth Message Constants', () => {
         'Connecting to saved device...'
       )
     })
-
   })
 
   describe('Error Messages', () => {
