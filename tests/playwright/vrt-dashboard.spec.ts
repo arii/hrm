@@ -4,6 +4,7 @@ import {
   getDynamicContentMasks,
   getHrMasks,
   setupVisualRegressionTest,
+  HRM_ROUTES,
 } from './test-helpers'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
@@ -30,6 +31,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.beforeEach(async () => {
+    await dashboardPage.goto(HRM_ROUTES.VIEWER)
     await waitForPageReady(dashboardPage)
   })
 

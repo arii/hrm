@@ -31,6 +31,7 @@ export {
   // Setup utilities
   setupVisualRegressionTest,
   setupMinimalVisualRegressionTest,
+  HRM_ROUTES,
   setupComprehensiveTest,
   setupCoreTest,
 } from './lib'
