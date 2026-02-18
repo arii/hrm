@@ -47,7 +47,7 @@ export const SCREENSHOT_OPTIONS = {
 export async function takeScreenshot(
   target: Page | Locator,
   snapshotName: string,
-  options: any & {
+  options: /* eslint-disable-line @typescript-eslint/no-explicit-any */ any & {
     skipA11y?: boolean
   } = {}
 ) {
