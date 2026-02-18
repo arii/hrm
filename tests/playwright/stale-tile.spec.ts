@@ -9,10 +9,9 @@ test('should remove tile immediately when missing from HRM_UPDATE', async ({
 
   // Helper to dispatch messages to the reducer
   const dispatch = async (message: ServerMessage | { type: 'RESET_STATE' }) => {
-    await page.waitForFunction(
-      () => (window as any).__TEST_CONTROLS__?.dispatch,
-      { timeout: 10000 }
-    )
+    await page.waitForFunction(() => window.__TEST_CONTROLS__?.dispatch, {
+      timeout: 10000,
+    })
     await page.evaluate((msg) => {
       const win = window as unknown as {
         __TEST_CONTROLS__: {

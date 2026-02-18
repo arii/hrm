@@ -6,7 +6,7 @@ import {
   setupVisualRegressionTest,
   mockMultipleHrDevices,
 } from './test-helpers'
-import { takeScreenshot } from './lib/visual'
+import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
 // Test suite configuration
@@ -41,6 +41,13 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
+      // Assert HR tile height is within limits
+      const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
+      await assertFixedDimensions(hrTile, {
+        minHeight: 180,
+        maxHeight: 250,
+      })
+
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
@@ -72,6 +79,16 @@ test.describe('Visual Regression Tests', () => {
           zone: 'Zone 4',
         },
       ])
+
+      // Assert all HR tiles maintain dimensions
+      const hrTiles = dashboardPage.getByTestId('hr-tile-card')
+      const count = await hrTiles.count()
+      for (let i = 0; i < count; i++) {
+        await assertFixedDimensions(hrTiles.nth(i), {
+          minHeight: 180,
+          maxHeight: 250,
+        })
+      }
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-with-2-hr-devices.png', {

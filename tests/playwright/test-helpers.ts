@@ -37,6 +37,7 @@ export {
   mockGoogleDocIframe,
   mockMultipleHrDevices,
   mockSpotifyPlaybackState,
+  mockLoggedInSession,
 } from './lib'
 
 // Export BASE_URL for backward compatibility

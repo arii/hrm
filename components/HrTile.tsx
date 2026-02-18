@@ -53,6 +53,7 @@ const HeroTier = ({ percentage }: { percentage: number }) => (
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
+      minHeight: 0,
     }}
   >
     <Typography
@@ -61,9 +62,9 @@ const HeroTier = ({ percentage }: { percentage: number }) => (
       component="div"
       sx={{
         fontSize: {
-          xs: 'clamp(5rem, 15vw, 8rem)',
-          sm: 'clamp(8rem, 18vw, 12rem)',
-          md: 'clamp(10rem, 20vw, 15rem)',
+          xs: 'clamp(3rem, 10vw, 4rem)',
+          sm: 'clamp(4rem, 12vw, 5rem)',
+          md: 'clamp(5rem, 15vw, 6rem)',
         },
         fontWeight: 900,
         lineHeight: 1,
@@ -157,6 +158,8 @@ const HrTile = ({
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
           height: '100%',
+          minHeight: 180,
+          maxHeight: 250,
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',

@@ -113,7 +113,8 @@ export const WebSocketProvider = ({
       if (
         process.env.NODE_ENV !== 'production' ||
         process.env.NEXT_PUBLIC_TESTING === 'true' ||
-        (typeof window !== 'undefined' && window.location.search.includes('testing=true'))
+        (typeof window !== 'undefined' &&
+          window.location.search.includes('testing=true'))
       ) {
         ;(
           window as Window & { __TEST_CONTROLS__?: TestControls }

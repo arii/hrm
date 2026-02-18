@@ -125,6 +125,7 @@ export {
   mockGoogleDocIframe,
   mockMultipleHrDevices,
   mockSpotifyPlaybackState,
+  mockLoggedInSession,
 } from './mocks'
 
 // ============================================================================

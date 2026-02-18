@@ -1,6 +1,10 @@
 import { expect } from '@playwright/test'
 import { test } from './fixtures'
-import { setupMinimalVisualRegressionTest } from './test-helpers'
+import {
+  setupMinimalVisualRegressionTest,
+  mockSpotifyPlaybackState,
+  mockLoggedInSession,
+} from './test-helpers'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
@@ -50,42 +54,28 @@ test.describe('Component-Specific VRT', () => {
     // Skipping for now as it requires complex environment setup.
   })
 
-  test('SpotifyDeviceSelector menu', async ({ dashboardPage }) => {
-    // Inject SpotifyDisplay HTML to bypass login check for component VRT
-    await dashboardPage.evaluate(() => {
-      const root = document.querySelector('[data-testid="main-content-layout"]')
-      if (root) {
-        root.innerHTML = `
-          <div data-testid="spotify-display-container" style="padding: 20px; background: #121212; color: white;">
-            <button data-testid="spotify-device-selector-button" aria-label="Select playback device">
-              Speaker Icon
-            </button>
-          </div>
-        `
-      }
+  test('SpotifyDeviceSelector menu', async ({ dashboardPage, context }) => {
+    // Mock session to appear logged in
+    await mockLoggedInSession(context)
+    await dashboardPage.reload()
+    await waitForPageReady(dashboardPage)
+
+    // Mock Spotify state with devices to show the component naturally
+    await mockSpotifyPlaybackState(dashboardPage, {
+      isPlaying: true,
+      trackName: 'VRT Test Track',
+      artist: 'VRT Artist',
+      devices: [
+        { id: 'dev-1', name: 'Speaker 1', isActive: true, type: 'Speaker' },
+        { id: 'dev-2', name: 'Phone', isActive: false, type: 'Smartphone' },
+      ],
     })
 
-    // We still need to mock the devices so when the menu opens (if it were real) it would have them.
-    // But since we are just testing the menu visibility/rendering, and we injected the button,
-    // the real menu won't actually open with real items unless we have the real component.
-    // So let's instead just inject the menu itself!
-
-    await dashboardPage.evaluate(() => {
-      const menu = document.createElement('div')
-      menu.setAttribute('data-testid', 'spotify-device-selector-menu')
-      menu.style.position = 'absolute'
-      menu.style.top = '100px'
-      menu.style.left = '100px'
-      menu.style.background = 'white'
-      menu.style.color = 'black'
-      menu.style.padding = '10px'
-      menu.style.border = '1px solid black'
-      menu.innerHTML = `
-        <div data-testid="spotify-device-selector-item-dev-1">Speaker 1 ✓</div>
-        <div data-testid="spotify-device-selector-item-dev-2">Phone</div>
-      `
-      document.body.appendChild(menu)
-    })
+    const selectorButton = dashboardPage.getByTestId(
+      'spotify-device-selector-button'
+    )
+    await expect(selectorButton).toBeVisible({ timeout: 15000 })
+    await selectorButton.click()
 
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
     await expect(menu).toBeVisible()
@@ -102,20 +92,11 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('ErrorFallback UI', async ({ dashboardPage }) => {
-    // Force ErrorFallback to be visible by injecting it or triggering an error.
-    // In this case, we'll just inject it into the DOM for visual verification.
-    await dashboardPage.evaluate(() => {
-      const root = document.querySelector('[data-testid="main-content-layout"]')
-      if (root) {
-        root.innerHTML = `
-                <div data-testid="error-fallback" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; padding: 16px; background: white;">
-                    <h6 class="MuiTypography-root MuiTypography-h6" style="margin-bottom: 8px;">Something went wrong.</h6>
-                    <button class="MuiButton-root MuiButton-contained MuiButton-containedPrimary">Reload Page</button>
-                </div>
-             `
-      }
-    })
+    // Navigate to dashboard with test-error=true to trigger the real ErrorBoundary and ErrorFallback component
+    await dashboardPage.goto('/?test-error=true&testing=true')
+
     const errorFallback = dashboardPage.getByTestId('error-fallback')
+    await expect(errorFallback).toBeVisible()
     await takeScreenshot(errorFallback, 'error-fallback.png')
   })
 })

@@ -3,7 +3,7 @@ import type { ServerMessage } from '@/types/websocket'
 
 // Helper function to dispatch a WebSocket message from the client-side
 const dispatchServerMessage = async (page: Page, message: ServerMessage) => {
-  await page.waitForFunction(() => (window as any).__TEST_CONTROLS__?.dispatch)
+  await page.waitForFunction(() => window.__TEST_CONTROLS__?.dispatch)
   return page.evaluate((msg: ServerMessage) => {
     const dispatch = (
       window as Window & {
@@ -21,7 +21,7 @@ const dispatchServerMessage = async (page: Page, message: ServerMessage) => {
 
 // Helper function to disconnect the WebSocket from the client-side
 const disconnectWebSocket = async (page: Page) => {
-  await page.waitForFunction(() => (window as any).__TEST_CONTROLS__?.disconnect)
+  await page.waitForFunction(() => window.__TEST_CONTROLS__?.disconnect)
   return page.evaluate(() => {
     const disconnect = (
       window as Window & { __TEST_CONTROLS__?: { disconnect: () => void } }
@@ -37,7 +37,7 @@ const disconnectWebSocket = async (page: Page) => {
 
 test.describe('Timer UI Synchronization', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/client/control')
+    await page.goto('/client/control?testing=true')
     await expect(page.locator('text=Server: Connected')).toBeVisible({
       timeout: 15000,
     })

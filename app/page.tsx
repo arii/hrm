@@ -50,6 +50,14 @@ const mainGridStyles: SxProps = {
 }
 
 const Dashboard = () => {
+  // Force error for VRT testing if requested
+  if (
+    typeof window !== 'undefined' &&
+    window.location.search.includes('test-error=true')
+  ) {
+    throw new Error('VRT Test Error')
+  }
+
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [isReady, setIsReady] = useState(false)

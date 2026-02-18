@@ -106,3 +106,28 @@ export async function mockSpotifyPlaybackState(
     { ...defaultState, ...state }
   )
 }
+
+/**
+ * Mocks the NextAuth session to simulate a logged-in user.
+ *
+ * @param context - The Playwright BrowserContext object.
+ */
+export async function mockLoggedInSession(
+  context: BrowserContext
+): Promise<void> {
+  await context.route('**/api/auth/session', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        user: {
+          name: 'Test User',
+          email: 'test@example.com',
+          image: 'https://via.placeholder.com/150',
+        },
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        accessToken: 'mock-access-token',
+      }),
+    })
+  })
+}
