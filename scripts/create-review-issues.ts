@@ -51,6 +51,7 @@ const SuggestedIssueSchema = z.object({
   description: z.string(),
   type: z.enum(['technical-debt', 'frontend-improvement', 'security', 'bug']),
   priority: z.enum(['high', 'medium', 'low']),
+  fingerprint: z.string().optional(),
 })
 
 const PRContextSchema = z.object({
@@ -189,7 +190,10 @@ export class GitHubClient implements IGitHubClient {
 - **Branch:** ${branchInfo}
 - **Commit:** ${commitLink}`
 
-    const body = `${issue.description}${footer}`
+    const fingerprintMarker = issue.fingerprint
+      ? `\n<!-- fingerprint: ${issue.fingerprint} -->`
+      : ''
+    const body = `${issue.description}${footer}${fingerprintMarker}`
     const title = issue.title
 
     console.log(`🚀 Creating issue: "${title}"...`)
@@ -274,20 +278,69 @@ export class GitHubClient implements IGitHubClient {
 
 // --- Deduplication ---
 
+/**
+ * Calculates the Jaccard similarity between two strings.
+ * Normalizes strings by lowercasing and removing punctuation, then compares word sets.
+ */
+export function calculateJaccardSimilarity(s1: string, s2: string): number {
+  const words1 = new Set(
+    s1
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .split(/\s+/)
+      .filter((w) => w.length > 2)
+  )
+  const words2 = new Set(
+    s2
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .split(/\s+/)
+      .filter((w) => w.length > 2)
+  )
+
+  if (words1.size === 0 && words2.size === 0) return 1
+  if (words1.size === 0 || words2.size === 0) return 0
+
+  const intersection = new Set([...words1].filter((x) => words2.has(x)))
+  const union = new Set([...words1, ...words2])
+
+  return intersection.size / union.size
+}
+
 function getIssueSignature(title: string, description: string): string {
   const content = `${title.trim()}${description.trim()}`
   return crypto.createHash('sha256').update(content).digest('hex')
 }
 
+const GENERIC_TITLES = [
+  'refactor code',
+  'improve code quality',
+  'fix technical debt',
+  'technical debt identified',
+  'clean up code',
+  'optimize performance',
+  'add documentation',
+  'improve test coverage',
+  'enhance readability',
+]
+
 export function isLowQualityIssue(
   issue: SuggestedIssue,
   slopPattern: RegExp | null
 ): boolean {
+  // 1. Check description length
   if (issue.description.trim().length < MIN_DESCRIPTION_LENGTH) {
     return true
   }
-  if (!slopPattern) return false
 
+  // 2. Check for generic titles
+  const normalizedTitle = issue.title.toLowerCase().trim().replace(/[^\w\s]/g, '')
+  if (GENERIC_TITLES.includes(normalizedTitle)) {
+    return true
+  }
+
+  // 3. Check for "AI slop" patterns
+  if (!slopPattern) return false
   const combinedText = `${issue.title} ${issue.description}`
   return slopPattern.test(combinedText)
 }
@@ -297,14 +350,36 @@ export function isDuplicate(
   existingIssues: ExistingIssue[]
 ): boolean {
   const newSignature = getIssueSignature(newIssue.title, newIssue.description)
+
   for (const existing of existingIssues) {
-    // Strip the footer from the existing issue body before generating the signature
+    // 1. Check for exact content match (legacy)
     const existingDescription = existing.body.split('\n\n---')[0] || ''
     const existingSignature = getIssueSignature(
       existing.title,
       existingDescription
     )
     if (newSignature === existingSignature) {
+      return true
+    }
+
+    // 2. Check for fingerprint match
+    const existingFingerprint = existing.body.match(
+      /<!-- fingerprint: (.*) -->/
+    )?.[1]
+    if (
+      newIssue.fingerprint &&
+      existingFingerprint &&
+      newIssue.fingerprint === existingFingerprint
+    ) {
+      return true
+    }
+
+    // 3. Check for fuzzy title match
+    const titleSimilarity = calculateJaccardSimilarity(
+      newIssue.title,
+      existing.title
+    )
+    if (titleSimilarity >= 0.85) {
       return true
     }
   }

@@ -654,9 +654,10 @@ export async function buildReviewPrompt(
 If you identify Technical Debt, Refactoring opportunities, or Frontend Improvements:
 1. **Create a 'suggestedIssue'** in the JSON output.
 2. **Criteria**:
-   - MUST be specific, actionable, and non-trivial.
+   - MUST be specific, actionable, and non-trivial. Avoid generic suggestions like "Refactor code" or "Improve quality".
    - **Type**: \`technical-debt\`, \`frontend-improvement\`, \`security\`, \`bug\`.
    - **Priority**: \`high\`, \`medium\`, \`low\`.
+   - **Fingerprint**: Provide a stable, unique identifier for the issue. Format: \`file_path:entity_name\` (e.g., \`lib/auth.ts:validateToken\`). This is used for deduplication.
 `
 
   return promptTemplate
@@ -749,6 +750,11 @@ async function runReviewPreset(
                     type: SchemaType.STRING,
                     enum: ['high', 'medium', 'low'],
                     format: 'enum',
+                  },
+                  fingerprint: {
+                    type: SchemaType.STRING,
+                    description:
+                      'A stable, unique identifier for the issue (e.g., file_path:entity_name).',
                   },
                 },
                 required: ['title', 'description', 'type', 'priority'],
