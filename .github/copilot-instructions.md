@@ -31,13 +31,13 @@ This project uses a **custom Express server** (`server.ts`) as the entry point, 
 
 ### The Single Source of Truth Principle
 
-The server is the **single source of truth** for all shared application state (HRM data, timer state, Spotify playback).
+The server is the **primary single source of truth** for all shared application state. While the server remains the authoritative source for state distribution and persistence, specific real-time metrics (e.g., calorie calculation) may be computed on the client for responsiveness before being synchronized back to the server.
 
 **NEVER suggest:**
 
 - Client-side fetching patterns for state that should be pushed (e.g., `useEffect` with `fetch` for timer state)
 - Redundant HTTP endpoints for data already available via WebSocket
-- Client-side state synchronization logic (the server handles this)
+- Client-side state synchronization logic that bypasses the server (all shared state must be relayed through the server to maintain consistency across clients).
 
 **ALWAYS suggest:**
 
