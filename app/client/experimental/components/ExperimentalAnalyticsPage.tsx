@@ -252,10 +252,7 @@ const ExperimentalAnalyticsPage = () => {
 
             <CalorieTracker calorieHistory={calorieHistory} />
 
-            <ZoneDistribution
-              timeInZones={summaryData.timeInZones}
-              totalDuration={duration}
-            />
+            <ZoneDistribution timeInZones={summaryData.timeInZones} />
 
             {activeSession && activeSession.hrHistory.length > 0 && (
               <HeartRateTimeSeries hrHistory={activeSession.hrHistory} />

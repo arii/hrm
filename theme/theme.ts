@@ -2,19 +2,22 @@
 
 import { createTheme } from '@mui/material/styles'
 import libTheme from '@/lib/theme'
-import { HR_COLORS } from '@/lib/shared/colors'
+
+// Define UI-specific colors for workout statuses
+// Uses existing MUI palette tokens where possible, with fallbacks for specific needs
+// These are decoupled from HR Zone colors (Domain Logic)
 
 const theme = createTheme(libTheme, {
   palette: {
     custom: {
-      running: HR_COLORS.ZONE_3_FATBURN, // Green
-      idle: HR_COLORS.ZONE_0_IDLE, // Grey
-      paused: HR_COLORS.ZONE_4_CARDIO, // Amber/Yellow
-      finished: HR_COLORS.ZONE_2_WARMUP, // Blue
+      running: libTheme.palette.success.main, // #4CAF50 (Green 500)
+      idle: libTheme.palette.action.disabled, // standard disabled color
+      paused: libTheme.palette.warning.main, // #FFEB3B (Yellow)
+      finished: libTheme.palette.info.main, // #2196F3 (Blue)
       prepare: '#f59e0b', // Amber
       work: '#ef4444', // Red
-      rest: '#22c55e', // Green
-      cooldown: '#6b7280', // Grey
+      rest: '#22c55e', // Bright Green
+      cooldown: '#6b7280', // Dark Grey
     },
   },
 })

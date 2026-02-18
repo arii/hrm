@@ -6,19 +6,6 @@ import { render, screen } from '@testing-library/react'
 import ZoneDistribution from '@/app/client/experimental/components/ZoneDistribution'
 import { HeartRateZone, HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
 
-// Mock Recharts since it doesn't work well in JSDOM
-jest.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  PieChart: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  Pie: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Cell: () => <div>Cell</div>,
-  Tooltip: () => <div>Tooltip</div>,
-}))
-
 describe('ZoneDistribution', () => {
   const baseTimeInZones: Record<HeartRateZone, number> = {
     ZONE_0: 0,
@@ -31,24 +18,13 @@ describe('ZoneDistribution', () => {
   }
 
   it('renders the title', () => {
-    render(
-      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
-    )
+    render(<ZoneDistribution timeInZones={baseTimeInZones} />)
     // If no data (all 0), it renders "Time in Zones" inside the "No data" card
     expect(screen.getByText('Time in Zones')).toBeInTheDocument()
   })
 
   it('renders "No zone data available" when all zones are zero', () => {
-    render(<ZoneDistribution timeInZones={baseTimeInZones} totalDuration={0} />)
-    expect(
-      screen.getByText('No zone data available for this session.')
-    ).toBeInTheDocument()
-  })
-
-  it('renders "No zone data available" even if duration exists but no time in zones', () => {
-    render(
-      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
-    )
+    render(<ZoneDistribution timeInZones={baseTimeInZones} />)
     expect(
       screen.getByText('No zone data available for this session.')
     ).toBeInTheDocument()
@@ -61,7 +37,7 @@ describe('ZoneDistribution', () => {
       ZONE_3: 30,
       ZONE_4: 10,
     }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
+    render(<ZoneDistribution timeInZones={timeInZones} />)
 
     // Check for zone names (multiple instances due to hidden table)
     expect(
@@ -98,7 +74,7 @@ describe('ZoneDistribution', () => {
       ZONE_2: 100, // 99.5% roughly
       ZONE_3: 0.5, // 0.5% of 100.5 total
     }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100.5} />)
+    render(<ZoneDistribution timeInZones={timeInZones} />)
 
     // Zone 2 (Warm Up) should be visible
     expect(
@@ -109,17 +85,5 @@ describe('ZoneDistribution', () => {
     expect(
       screen.queryByText(HR_ZONE_CONFIG.ZONE_3.label)
     ).not.toBeInTheDocument()
-  })
-
-  it('displays correct total duration in the center', () => {
-    const timeInZones = {
-      ...baseTimeInZones,
-      ZONE_2: 120,
-    }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={120} />)
-    expect(screen.getByText('Total')).toBeInTheDocument()
-    // Multiple instances due to center label, legend, and table
-    const timeElements = screen.getAllByText('2:00')
-    expect(timeElements.length).toBeGreaterThanOrEqual(1)
   })
 })

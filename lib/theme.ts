@@ -20,7 +20,6 @@ declare module '@mui/material/styles' {
       work: string
       rest: string
       cooldown: string
-      [key: string]: string
     }
   }
   interface PaletteOptions {
@@ -34,7 +33,6 @@ declare module '@mui/material/styles' {
       work?: string
       rest?: string
       cooldown?: string
-      [key: string]: string | undefined
     }
   }
   interface TypeBackground {
