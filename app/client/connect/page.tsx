@@ -10,11 +10,8 @@ import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-import {
-  calculateZoneFromMaxHr,
-  calculateMaxHr,
-  toHeartRateZone,
-} from '@/lib/shared/hr-zones'
+import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
+import { calculateMaxHr } from '@/utils/hrCalculations'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,

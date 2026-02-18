@@ -16,11 +16,8 @@ import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
-import {
-  calculateZoneFromMaxHr,
-  calculateMaxHr,
-  toHeartRateZone,
-} from '@/lib/shared/hr-zones'
+import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
+import { calculateMaxHr } from '@/utils/hrCalculations'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()

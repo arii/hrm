@@ -11,7 +11,8 @@ import {
   workoutSessionStorage,
   WorkoutSessionData,
 } from '@/lib/workout-session-storage'
-import { HeartRateZone, calculateMaxHr } from '@/lib/shared/hr-zones'
+import { HeartRateZone } from '@/lib/shared/hr-zones'
+import { calculateMaxHr } from '@/utils/hrCalculations'
 
 const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_0: 0,
