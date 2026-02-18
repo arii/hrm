@@ -63,8 +63,10 @@ export default function MockPage() {
 
   const sendHrPacket = useCallback(
     (hr: number) => {
-      const maxHr = calculateMaxHr(ageNum)
-      const { percentage, zone } = calculateZoneFromMaxHr(hr, maxHr)
+      const { zone, percentage } = calculateZoneFromMaxHr(
+        hr,
+        calculateMaxHr(ageNum)
+      )
       const heartRateZone = toHeartRateZone(zone)
 
       const message: HrmInputMessage = {

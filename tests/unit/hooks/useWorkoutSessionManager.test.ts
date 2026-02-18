@@ -72,7 +72,7 @@ describe('useWorkoutSessionManager', () => {
     expect(result.current.session?.hrHistory[0].hr).toBe(120)
   })
 
-  it('calculates session stats correctly', async () => {
+  it('correctly calculates session statistics and zone distribution', async () => {
     const { result } = renderHook(() => useWorkoutSessionManager())
 
     await act(async () => {
@@ -113,36 +113,6 @@ describe('useWorkoutSessionManager', () => {
     expect(result.current.session?.timeInZones.ZONE_1).toBe(2)
   })
 
-  it('ends and resets a workout session', async () => {
-    const { result } = renderHook(() => useWorkoutSessionManager())
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0))
-    })
-
-    act(() => {
-      result.current.startWorkout(30, 70)
-    })
-
-    act(() => {
-      result.current.endWorkout()
-    })
-
-    expect(result.current.status).toBe('paused') // transition status in reducer
-
-    act(() => {
-      result.current.endWorkout()
-    })
-    expect(result.current.status).toBe('finished')
-
-    await act(async () => {
-      await result.current.resetWorkout()
-    })
-
-    expect(result.current.status).toBe('idle')
-    expect(result.current.session).toBeNull()
-  })
-
   it('should not add HR data if the session is not running', async () => {
     const { result } = renderHook(() => useWorkoutSessionManager())
     await waitFor(() => expect(result.current.isInitialized).toBe(true))
@@ -166,6 +136,38 @@ describe('useWorkoutSessionManager', () => {
     expect(result.current.session?.hrHistory.length).toBe(0)
     expect(result.current.session?.maxHr).toBe(0)
     expect(result.current.session?.averageHr).toBe(0)
+  })
+
+  it('ends and resets a workout session (manual control)', async () => {
+    const { result } = renderHook(() => useWorkoutSessionManager())
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    act(() => {
+      result.current.startWorkout(30, 70)
+    })
+
+    expect(result.current.status).toBe('running')
+
+    act(() => {
+      result.current.endWorkout()
+    })
+
+    expect(result.current.status).toBe('paused') // transition status in reducer
+
+    act(() => {
+      result.current.endWorkout()
+    })
+    expect(result.current.status).toBe('finished')
+
+    await act(async () => {
+      await result.current.resetWorkout()
+    })
+
+    expect(result.current.status).toBe('idle')
+    expect(result.current.session).toBeNull()
   })
 
   describe('Stale Session Handling', () => {
