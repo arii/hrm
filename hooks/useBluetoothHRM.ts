@@ -13,21 +13,19 @@ import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import { BLUETOOTH_MAX_RECONNECT_ATTEMPTS } from '@/constants/bluetooth-reconnection'
 
-export const HR_SERVICE_UUID = 'heart_rate'
-export const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
-export const BATTERY_SERVICE_UUID = 'battery_service'
-export const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
+const HR_SERVICE_UUID = 'heart_rate'
+const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
+const BATTERY_SERVICE_UUID = 'battery_service'
+const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 
-export const ROLLING_AVG_HISTORY_LENGTH = 5
-export const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
-export const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
+const ROLLING_AVG_HISTORY_LENGTH = 5
+const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
+const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 
-const HEARTBEAT_INTERVAL_MS_TEST = 500
-const HEARTBEAT_INTERVAL_MS_PROD = 1000
 export const HEARTBEAT_INTERVAL_MS =
   typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
-    ? HEARTBEAT_INTERVAL_MS_TEST
-    : HEARTBEAT_INTERVAL_MS_PROD
+    ? 500
+    : 1000
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
