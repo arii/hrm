@@ -15,5 +15,3 @@ export const BLUETOOTH_MAX_RECONNECT_ATTEMPTS =
 
 // Reconnection Delay Parameters
 export const RECONNECT_BASE_DELAY_MS = 1000
-export const RECONNECT_DELAY_INCREMENT_MS = 500
-export const RECONNECT_RANDOM_DELAY_MS = 1000
