@@ -30,9 +30,12 @@ import CalorieTracker from '@/app/client/experimental/components/CalorieTracker'
 import SessionList from '@/app/client/experimental/components/SessionList'
 import SessionDetail from '@/app/client/experimental/components/SessionDetail'
 
-const HeartRateTimeSeries = dynamic(() => import('@/app/client/experimental/components/HeartRateTimeSeries'), {
-  ssr: false,
-})
+const HeartRateTimeSeries = dynamic(
+  () => import('@/app/client/experimental/components/HeartRateTimeSeries'),
+  {
+    ssr: false,
+  }
+)
 
 type View = 'active' | 'list' | 'detail'
 

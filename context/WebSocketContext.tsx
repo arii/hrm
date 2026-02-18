@@ -21,7 +21,11 @@ interface TestControls {
   disconnect: () => void
   connect: () => void
 }
-import { INITIAL_STATE, WebSocketState, reducer } from '@/context/webSocketReducer'
+import {
+  INITIAL_STATE,
+  WebSocketState,
+  reducer,
+} from '@/context/webSocketReducer'
 import { ConnectedHrmData as HrmData } from '@/types/websocket'
 
 export type { HrmData }

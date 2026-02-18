@@ -11,7 +11,10 @@ import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '@/utils/urls'
 import { mockGoogleDocIframe } from '@/tests/playwright/lib/mocks'
-import { waitForFontsLoaded, waitForPageReady } from '@/tests/playwright/lib/waits'
+import {
+  waitForFontsLoaded,
+  waitForPageReady,
+} from '@/tests/playwright/lib/waits'
 
 /**
  * Common routes used in HRM testing

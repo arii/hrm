@@ -42,8 +42,7 @@ describe('usePersistentStorage', () => {
     })
 
     // Dynamically import the mocks and the hook under test
-    const { default: useLocalStorage } =
-      await import('@/hooks/useLocalStorage')
+    const { default: useLocalStorage } = await import('@/hooks/useLocalStorage')
     const { default: useCookie } = await import('@/hooks/useCookie')
     const { default: usePersistentStorage } =
       await import('@/hooks/usePersistentStorage')
@@ -68,8 +67,7 @@ describe('usePersistentStorage', () => {
     })
 
     // Dynamically import the mocks and the hook under test
-    const { default: useLocalStorage } =
-      await import('@/hooks/useLocalStorage')
+    const { default: useLocalStorage } = await import('@/hooks/useLocalStorage')
     const { default: useCookie } = await import('@/hooks/useCookie')
     const { default: usePersistentStorage } =
       await import('@/hooks/usePersistentStorage')

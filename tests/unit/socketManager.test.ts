@@ -11,10 +11,7 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import {
-  initSocketManager,
-  resetSocketManager,
-} from '@/utils/socketManager'
+import { initSocketManager, resetSocketManager } from '@/utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import { TLSSocket } from 'tls'

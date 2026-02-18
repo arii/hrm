@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '@/services/spotifyPolling'
 import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
 import { SpotifyData } from '@/types/websocket'
-import { setupSpotifyPollingService, mockPlayer } from '@/tests/unit/spotify-test-utils'
+import {
+  setupSpotifyPollingService,
+  mockPlayer,
+} from '@/tests/unit/spotify-test-utils'
 import logger from '@/utils/logger.server'
 import { ServerMessage } from '@/types/websocket'
 

@@ -5,7 +5,11 @@ import {
   TimerCommandMessage,
   HrmInputMessage,
 } from '@/types/websocket'
-import { startServer, ServerProcess, waitForMessage } from '@/tests/integration/test-helpers'
+import {
+  startServer,
+  ServerProcess,
+  waitForMessage,
+} from '@/tests/integration/test-helpers'
 
 jest.setTimeout(20000) // 20s timeout for server start and tests
 
