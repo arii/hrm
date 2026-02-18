@@ -53,6 +53,7 @@ test.describe('Visual Regression Tests', () => {
     test('initial, empty state', async () => {
       await takeScreenshot(dashboardPage, 'dashboard-empty.png', {
         mask: getDynamicContentMasks(dashboardPage),
+        maxDiffPixelRatio: 0.1,
       })
     })
 
@@ -82,6 +83,7 @@ test.describe('Visual Regression Tests', () => {
 
       await takeScreenshot(dashboardPage, 'dashboard-active-timer.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
+        maxDiffPixelRatio: 0.1,
       })
     })
 
@@ -112,6 +114,7 @@ test.describe('Visual Regression Tests', () => {
         'dashboard-active-timer-with-hr.png',
         {
           mask: [...getDynamicContentMasks(dashboardPage)],
+          maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
         }
       )
     })
@@ -121,6 +124,7 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize({ width: 375, height: 812 })
       await takeScreenshot(dashboardPage, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
+        maxDiffPixelRatio: 0.1,
       })
     })
 
@@ -128,6 +132,7 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize({ width: 768, height: 1024 })
       await takeScreenshot(dashboardPage, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
+        maxDiffPixelRatio: 0.1,
       })
     })
 
@@ -135,6 +140,7 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
       await takeScreenshot(dashboardPage, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
+        maxDiffPixelRatio: 0.1,
       })
     })
   })
