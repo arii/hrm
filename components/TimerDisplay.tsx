@@ -12,7 +12,7 @@ import VolumeDown from '@mui/icons-material/VolumeDown'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 import CircularProgress from '@mui/material/CircularProgress'
-import SideLabel from './SideLabel'
+import SideLabel from '@/components/SideLabel'
 import { useAudioContext } from '@/context/AudioContext'
 import { formatDuration } from '@/lib/utils'
 import { useTheme, useMediaQuery, alpha } from '@mui/material'
@@ -187,7 +187,7 @@ const TimerDisplay = () => {
             size={80}
             thickness={4}
             sx={{
-              color: alpha('#fff', 0.1),
+              color: alpha(theme.palette.common.white, 0.1),
               position: 'absolute',
               left: 0,
             }}
