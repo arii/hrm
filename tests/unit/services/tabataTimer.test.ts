@@ -66,6 +66,14 @@ describe('TabataTimer (Refactored)', () => {
     }).toThrow(
       'Invalid timer configuration: workDuration must be positive, and restDuration must be non-negative. Received workDuration: -10, restDuration: 15'
     )
+
+    // Additional boundary tests
+    expect(() => {
+      timer.setConfig({ workDuration: 0, restDuration: 15 })
+    }).toThrow(ConfigurationError)
+    expect(() => {
+      timer.setConfig({ workDuration: 30, restDuration: -1 })
+    }).toThrow(ConfigurationError)
   })
 
   // --- STOPWATCH MODE TESTS ---
