@@ -11,7 +11,8 @@ import {
   expect,
   type Page,
   type Locator,
-  type ScreenshotOptions,
+  type PageScreenshotOptions,
+  type LocatorScreenshotOptions,
 } from '@playwright/test'
 import { checkAccessibility } from '@/tests/playwright/lib/accessibility'
 import {
@@ -47,7 +48,9 @@ export const SCREENSHOT_OPTIONS = {
 export async function takeScreenshot(
   target: Page | Locator,
   snapshotName: string,
-  options: ScreenshotOptions & { skipA11y?: boolean } = {}
+  options: (PageScreenshotOptions | LocatorScreenshotOptions) & {
+    skipA11y?: boolean
+  } = {}
 ) {
   const { skipA11y = false, ...screenshotOptions } = options
 
@@ -71,7 +74,7 @@ export async function takeScreenshot(
 export async function takeDashboardScreenshot(
   page: Page,
   snapshotName: string,
-  options: ScreenshotOptions & { skipA11y?: boolean } = {}
+  options: PageScreenshotOptions & { skipA11y?: boolean } = {}
 ) {
   const mainContentLocator = page.getByTestId('main-content-layout')
   const timerDisplayLocator = page.getByTestId('timer-display-container')
@@ -97,7 +100,7 @@ export async function takeDashboardScreenshot(
   }
 
   const clippingRegion = await mainContentLocator.boundingBox()
-  let clipOption: ScreenshotOptions['clip'] = options.clip // Preserve existing clip option if any
+  let clipOption: PageScreenshotOptions['clip'] = options.clip // Preserve existing clip option if any
 
   if (clippingRegion) {
     clipOption = clippingRegion
