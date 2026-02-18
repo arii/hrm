@@ -64,7 +64,7 @@ const HrTile = ({
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
-          minHeight: { xs: theme.spacing(13.75), md: theme.spacing(16.25) },
+          minHeight: { xs: theme.spacing(14), md: theme.spacing(16) },
           height: '100%',
           display: 'flex',
           flexDirection: 'column',

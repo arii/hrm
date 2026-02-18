@@ -120,8 +120,8 @@ const TimerDisplay = () => {
         </Typography>
         <Box
           sx={{
-            width: 8,
-            height: 8,
+            width: 12,
+            height: 12,
             borderRadius: '50%',
             backgroundColor:
               connectionStatus === 'Connected'
@@ -129,6 +129,8 @@ const TimerDisplay = () => {
                 : connectionStatus === 'Reconnecting...'
                   ? '#F59E0B'
                   : '#EF4444',
+            animation:
+              connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
           }}
         />
       </Box>
@@ -161,8 +163,8 @@ const TimerDisplay = () => {
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: {
-            xs: theme.spacing(16.25),
-            md: theme.spacing(18.75),
+            xs: theme.spacing(16),
+            md: theme.spacing(19),
           },
           minWidth: 0,
         }}
