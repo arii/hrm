@@ -10,11 +10,8 @@ import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
-<<<<<<< HEAD
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-=======
 import { useTestPageReady } from '@/hooks/useTestPageReady'
->>>>>>> origin/leader
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
