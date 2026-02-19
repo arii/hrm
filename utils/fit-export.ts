@@ -71,7 +71,7 @@ export function generateFitFile(
 
   const uint8Array = encoder.close()
 
-  return new Blob([uint8Array], {
+  return new Blob([uint8Array as unknown as BlobPart], {
     type: 'application/fit',
   })
 }

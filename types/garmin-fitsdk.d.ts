@@ -35,6 +35,6 @@ declare module '@garmin/fitsdk' {
   export class Encoder {
     constructor(options?: unknown)
     writeMesg(mesg: FitMessage): void
-    close(): Uint8Array<ArrayBuffer>
+    close(): Uint8Array
   }
 }
