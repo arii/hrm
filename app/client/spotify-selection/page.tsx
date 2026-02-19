@@ -10,7 +10,6 @@ import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -35,7 +34,6 @@ const SpotifySelectionPage = () => {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
     null
   )
-  const isReady = useTestPageReady()
 
   const handlePlaylistSelected = (uri: string) => {
     const playlistId = uri.split(':').pop()
@@ -64,7 +62,6 @@ const SpotifySelectionPage = () => {
     <Container
       maxWidth="sm"
       sx={{ py: 3 }}
-      data-ready={isReady ? 'true' : 'false'}
     >
       <Typography variant="h4" component="h1" gutterBottom align="center">
         Spotify Playlist Selector

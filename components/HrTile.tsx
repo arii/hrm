@@ -13,7 +13,6 @@ import ControlCard from '@/components/shared/ControlCard'
 import { HR_TILE_MIN_HEIGHT, HR_TILE_MAX_HEIGHT } from '@/constants/layout'
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
-const HR_TILE_MIN_HEIGHT = 180
 
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 1, textAlign: 'center' }}>
@@ -162,13 +161,8 @@ const HrTile = ({
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
           minHeight: HR_TILE_MIN_HEIGHT,
-          height: '100%',
-<<<<<<< HEAD
-          minHeight: HR_TILE_MIN_HEIGHT,
           maxHeight: HR_TILE_MAX_HEIGHT,
-=======
-          maxHeight: 250,
->>>>>>> origin/leader
+          height: '100%',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
