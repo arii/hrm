@@ -71,8 +71,9 @@ export function generateFitFile(
 
   const uint8Array = encoder.close()
 
-  // Uint8Array is natively compatible with BlobPart
-  return new Blob([uint8Array], {
+  // Convert Uint8Array to standard ArrayBuffer to avoid type mismatches
+  // with certain environment definitions of BlobPart
+  return new Blob([uint8Array.buffer as ArrayBuffer], {
     type: 'application/fit',
   })
 }
