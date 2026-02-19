@@ -21,6 +21,7 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { useTestPageReady } from '@/hooks/useTestPageReady'
+import { generateFIT } from '@/services/exportService'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -251,30 +252,21 @@ export default function ConnectPage() {
 
     setIsExporting(true)
     try {
-      const response = await fetch(
-        `/api/workout/export/${currentSession.sessionId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(currentSession),
-        }
-      )
+      // Direct client-side generation
+      const blob = generateFIT(currentSession)
 
-      if (!response.ok) {
-        throw new Error('Failed to export workout')
-      }
-
-      const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       a.download = `workout-${currentSession.sessionId}.fit`
       document.body.appendChild(a)
       a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+
+      // Delay revocation to ensure download starts
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+      }, 100)
     } catch (error) {
       logger.error('Error exporting workout', error)
       alert('Failed to export workout. Please try again.')

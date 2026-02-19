@@ -1,6 +1,6 @@
 declare module '@garmin/fitsdk' {
   export class Encoder {
-    constructor()
+    constructor(options?: { fieldDescriptions?: Record<string, unknown> })
     writeMesg(message: Record<string, unknown>): void
     close(): Uint8Array
   }

@@ -2,10 +2,10 @@ import { WorkoutSessionData } from '../lib/workout-session-storage'
 import { Encoder, Profile } from '@garmin/fitsdk'
 
 /**
- * Generates a FIT binary buffer from a workout session.
+ * Generates a FIT binary Blob from a workout session.
  * Uses @garmin/fitsdk to encode heart rate and calorie data.
  */
-export const generateFIT = (session: WorkoutSessionData): Buffer => {
+export const generateFIT = (session: WorkoutSessionData): Blob => {
   const encoder = new Encoder()
 
   // File ID message
@@ -43,5 +43,7 @@ export const generateFIT = (session: WorkoutSessionData): Buffer => {
     })
   })
 
-  return Buffer.from(encoder.close())
+  return new Blob([encoder.close() as BlobPart], {
+    type: 'application/octet-stream',
+  })
 }
