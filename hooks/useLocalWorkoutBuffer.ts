@@ -11,7 +11,7 @@ import { HrDataPoint } from '@/lib/workout-session-storage'
 
 // --- State, Actions, and Reducer ---
 
-export interface WorkoutBufferState {
+interface WorkoutBufferState {
   hrHistory: HrDataPoint[]
   timeInZones: Record<HeartRateZone, number>
   lastDataPointTime: number | null

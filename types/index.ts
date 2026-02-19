@@ -1,7 +1,10 @@
 // This file is for component-specific prop types.
 // All other types should be defined in their respective files.
 
+<<<<<<< HEAD
 import { TimerMode, TimerPhase } from '@/types/core'
+=======
+>>>>>>> origin/leader
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 
 export interface HrTileProps {
@@ -19,6 +22,7 @@ export interface HrTileProps {
   alertMessage?: string
 }
 
+<<<<<<< HEAD
 export interface HeartRateZonesProps {
   maxHr: number
 }
@@ -49,6 +53,8 @@ import { WorkoutItem } from '@/types/workout'
 
 export type WorkoutData = WorkoutItem[]
 
+=======
+>>>>>>> origin/leader
 export interface DashboardSectionLoadingSkeletonProps {
   width?: string
   height?: string

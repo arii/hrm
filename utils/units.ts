@@ -2,7 +2,7 @@
 
 import { MeasurementSystem } from '@/types/core'
 
-export const KG_TO_LBS = 2.20462
+const KG_TO_LBS = 2.20462
 
 export const toKg = (value: number, system: MeasurementSystem): number => {
   if (system === 'IMPERIAL') {
@@ -19,8 +19,8 @@ export const toDisplay = (
   return parseFloat(displayValue.toFixed(1))
 }
 
-export const INCH_TO_CM = 2.54
-export const FEET_TO_INCHES = 12
+const INCH_TO_CM = 2.54
+const FEET_TO_INCHES = 12
 
 export const feetAndInchesToCm = (feet: number, inches: number): number => {
   const totalInches = feet * FEET_TO_INCHES + inches

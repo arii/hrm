@@ -14,7 +14,7 @@ import { SpotifyCommand } from '@/types/core'
  * Represents a service that provides a snapshot of its current state.
  * @template T The type of the state object.
  */
-export interface StateProvider<T> {
+interface StateProvider<T> {
   /**
    * Returns the current state.
    * @returns {T} The state object.
@@ -27,7 +27,7 @@ export interface StateProvider<T> {
  * @template C The type representing the command identifier (e.g., a string union).
  * @template P The type representing the command payload or parameters.
  */
-export interface CommandHandler<C, P> {
+interface CommandHandler<C, P> {
   /**
    * Handles a command.
    * @param {C} command - The command to handle.
@@ -40,7 +40,7 @@ export interface CommandHandler<C, P> {
  * Defines the basic lifecycle methods for a service, such as starting,
  * stopping, and cleaning up resources.
  */
-export interface Lifecycle {
+interface Lifecycle {
   /**
    * Starts the service's polling mechanism, if applicable.
    */
@@ -63,7 +63,7 @@ export interface Lifecycle {
 /**
  * Interface for services that handle Spotify token updates.
  */
-export interface SpotifyTokenHandler {
+interface SpotifyTokenHandler {
   /**
    * Handles the reception of new Spotify authentication tokens.
    * @param {SpotifyTokenPayload} tokens - The new token payload.
