@@ -1,3 +1,4 @@
+// app/client/mock/page.tsx
 'use client'
 
 import HeartBroken from '@mui/icons-material/HeartBroken'
@@ -12,22 +13,13 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '@/components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
-<<<<<<< HEAD
+import { useTestPageReady } from '@/hooks/useTestPageReady'
 import { HrmInputMessage, HrmMetadataUpdateMessage } from '@/types/websocket'
 import {
   calculateZoneFromMaxHr,
   calculateMaxHr,
   toHeartRateZone,
 } from '@/lib/shared/hr-zones'
-=======
-import { useTestPageReady } from '@/hooks/useTestPageReady'
-import {
-  HrmInputMessage,
-  HrmMetadataUpdateMessage,
-} from '../../../types/websocket'
-import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
-import { calculateMaxHr } from '@/utils/hrCalculations'
->>>>>>> origin/leader
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()

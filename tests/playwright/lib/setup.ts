@@ -9,22 +9,13 @@
  */
 import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-<<<<<<< HEAD
 import { getBaseURL } from '@/utils/urls'
 import { mockGoogleDocIframe } from '@/tests/playwright/lib/mocks'
 import {
   waitForFontsLoaded,
   waitForPageReady,
-} from '@/tests/playwright/lib/waits'
-=======
-import { getBaseURL } from '../../../utils/urls'
-import { mockGoogleDocIframe } from './mocks'
-import {
-  waitForFontsLoaded,
-  waitForPageReady,
   waitForWebSocketConnection,
-} from './waits'
->>>>>>> origin/leader
+} from '@/tests/playwright/lib/waits'
 
 /**
  * Common routes used in HRM testing

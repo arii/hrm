@@ -33,16 +33,12 @@ export {
   setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
   setupCoreTest,
-<<<<<<< HEAD
-} from '@/tests/playwright/lib'
-=======
   // Mock utilities
   mockGoogleDocIframe,
   mockMultipleHrDevices,
   mockSpotifyPlaybackState,
   mockLoggedInSession,
-} from './lib'
->>>>>>> origin/leader
+} from '@/tests/playwright/lib'
 
 // Export BASE_URL for backward compatibility
 export const BASE_URL = getBaseURL()

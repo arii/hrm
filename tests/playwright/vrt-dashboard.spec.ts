@@ -1,23 +1,15 @@
-<<<<<<< HEAD
-import { type BrowserContext, type Page } from '@playwright/test'
+import { type BrowserContext, type Page, expect } from '@playwright/test'
 import { test } from '@/tests/playwright/fixtures'
 import {
   getDynamicContentMasks,
   setupVisualRegressionTest,
 } from '@/tests/playwright/test-helpers'
-import { takeScreenshot } from '@/tests/playwright/lib/visual'
-import { waitForPageReady } from '@/tests/playwright/lib/waits'
-=======
-import { type BrowserContext, type Page, expect } from '@playwright/test'
-import { test } from './fixtures'
 import {
-  getDynamicContentMasks,
-  setupVisualRegressionTest,
-} from './test-helpers'
-import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
-import { stopTimer } from './lib/setup'
->>>>>>> origin/leader
+  takeScreenshot,
+  assertFixedDimensions,
+} from '@/tests/playwright/lib/visual'
+import { waitForPageReady } from '@/tests/playwright/lib/waits'
+import { stopTimer } from '@/tests/playwright/lib/setup'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })

@@ -15,12 +15,6 @@ import {
 import { ClientCommandMessage, ServerMessage } from '@/types/websocket'
 import { getWebSocketURL } from '@/utils/urls'
 
-// Define a type for the test controls to avoid using 'any'
-interface TestControls {
-  dispatch: (message: ServerMessage) => void
-  disconnect: () => void
-  connect: () => void
-}
 import {
   INITIAL_STATE,
   WebSocketState,
@@ -120,9 +114,7 @@ export const WebSocketProvider = ({
         (typeof window !== 'undefined' &&
           window.location.search.includes('testing=true'))
       ) {
-        ;(
-          window as Window & { __TEST_CONTROLS__?: TestControls }
-        ).__TEST_CONTROLS__ = {
+        ;(window as any).__TEST_CONTROLS__ = {
           dispatch,
           disconnect: () => {},
           connect: () => {},
@@ -337,9 +329,7 @@ export const WebSocketProvider = ({
         process.env.NEXT_PUBLIC_TESTING === 'true' ||
         window.location.search.includes('testing=true'))
     ) {
-      const testControls = (
-        window as Window & { __TEST_CONTROLS__?: TestControls }
-      ).__TEST_CONTROLS__
+      const testControls = (window as any).__TEST_CONTROLS__
       if (testControls) {
         testControls.disconnect = disconnect
         testControls.connect = connect
