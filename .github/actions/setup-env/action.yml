@@ -14,7 +14,7 @@ inputs:
     default: |
       .next_prod/cache
       dist
-      .cache
+      *.tsbuildinfo
 
 runs:
   using: 'composite'
@@ -53,8 +53,6 @@ runs:
     - name: 'Install Dependencies'
       shell: bash
       run: |
-        # If we have a cached .cache directory, ensure it exists
-        node -e "fs.mkdirSync('.cache', { recursive: true })"
         pnpm install --frozen-lockfile
 
     - name: Cache Playwright
