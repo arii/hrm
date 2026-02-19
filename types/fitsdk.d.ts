@@ -4,6 +4,7 @@ declare module '@garmin/fitsdk' {
       constructor()
       // Use any to avoid "Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BlobPart'"
       // due to mismatching ArrayBuffer definitions in strict CI environments.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       bytes: any
     }
   }
