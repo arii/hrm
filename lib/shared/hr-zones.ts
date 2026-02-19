@@ -136,7 +136,7 @@ export const toHeartRateZone = (zoneNum: number): HeartRateZone => {
   return key in HR_ZONE_CONFIG ? key : 'ZONE_0'
 }
 
-type UserHrZones = {
+export type UserHrZones = {
   warmUp: { min: number }
   fatBurn: { min: number }
   cardio: { min: number }
