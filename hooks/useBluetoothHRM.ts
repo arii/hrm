@@ -22,6 +22,7 @@ const ROLLING_AVG_HISTORY_LENGTH = 5
 const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
 const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 
+// Exported for testing purposes to verify timing logic without waiting for the full production interval.
 export const HEARTBEAT_INTERVAL_MS =
   typeof process !== 'undefined' && process.env.NODE_ENV === 'test' ? 500 : 1000
 
