@@ -15,7 +15,7 @@ const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 const HR_TILE_MIN_HEIGHT = 180
 
 const IdentityTier = ({ name }: { name: string }) => (
-  <Box sx={{ pt: 3, textAlign: 'center' }}>
+  <Box sx={{ pt: 1, textAlign: 'center' }}>
     <Typography
       variant="h4"
       sx={{
@@ -38,6 +38,7 @@ const HeroTier = ({ percentage }: { percentage: number }) => (
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
+      minHeight: 0,
     }}
   >
     <Typography
@@ -92,8 +93,8 @@ const DataTier = ({
 }) => (
   <Box
     sx={{
-      pb: 3,
-      pt: showName ? 0 : 3,
+      pb: 1,
+      pt: showName ? 0 : 1,
       display: 'flex',
       justifyContent: 'center',
       gap: 4,
@@ -143,6 +144,8 @@ const HrTile = ({
           color: zoneConfig.textColor,
           minHeight: HR_TILE_MIN_HEIGHT,
           height: '100%',
+          minHeight: 180,
+          maxHeight: 250,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',

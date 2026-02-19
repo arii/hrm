@@ -3,7 +3,7 @@
   "compilerOptions": {
     "noEmit": false,
     "incremental": true,
-    "tsBuildInfoFile": ".cache/tsconfig.build.tsbuildinfo",
+    "tsBuildInfoFile": "tsconfig.build.tsbuildinfo",
     "outDir": "./dist",
     "module": "esnext",
     "moduleResolution": "node",

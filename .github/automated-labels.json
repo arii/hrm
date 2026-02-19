@@ -2,13 +2,14 @@
   "review": [
     "approved",
     "changes-requested",
-    "ready-for-approval",
-    "needs-fixes",
-    "ci-failure",
-    "review-failed"
+    "ai-reviewed",
+    "ci-failure"
   ],
   "scope_prefix": "scope:",
   "obsolete": [
+    "ready-for-approval",
+    "review-failed",
+    "needs-fixes",
     "workflow",
     "workflows",
     "workflow-configuration",
@@ -20,6 +21,15 @@
     "workflow-changes",
     "Workflow Logic",
     "request-changes",
-    "Changes Requested"
+    "Changes Requested",
+    "feature",
+    "needs-test-update",
+    "needs-docs",
+    "type-bug",
+    "type-technical-debt",
+    "type-enhancement",
+    "priority-high",
+    "priority-medium",
+    "priority-low"
   ]
 }
