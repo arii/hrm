@@ -72,8 +72,8 @@ const Dashboard = () => {
     if (typeof window !== 'undefined') {
       window.__TEST_READY__ = true
       window.dispatchEvent(new CustomEvent('test-ready'))
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsReady(true)
+      const timer = setTimeout(() => setIsReady(true), 0)
+      return () => clearTimeout(timer)
     }
   }, [])
 
