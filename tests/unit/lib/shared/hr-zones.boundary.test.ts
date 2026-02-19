@@ -1,8 +1,8 @@
 import {
   calculateZoneFromMaxHr,
-  calculateMaxHr,
   toHeartRateZone,
 } from '../../../../lib/shared/hr-zones'
+import { calculateMaxHr } from '@/utils/hrCalculations'
 
 describe('lib/shared/hr-zones boundary conditions', () => {
   const age = 20

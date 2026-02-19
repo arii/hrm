@@ -28,8 +28,14 @@ test_output.txt
 /out/
 /dist
 /build
+# TypeScript Build Cache
 *.tsbuildinfo
 .cache/
+<<<<<<< HEAD
+=======
+.tsbuildinfo*
+**/.tsbuildinfo*
+>>>>>>> origin/leader
 next-env.d.ts
 
 # Production & Logs
@@ -83,3 +89,4 @@ verification/screenshots/
 .next_prod/
 release.tar.gz
 knip_report.txt
+/.cache/

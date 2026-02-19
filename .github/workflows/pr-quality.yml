@@ -754,6 +754,9 @@ jobs:
             exit 1
           fi
 
+      - name: Check for Orphaned Snapshots
+        run: pnpm run test:vrt:check-orphans
+
       - name: Run Visual Tests (Playwright)
         id: visual-tests
         shell: bash
