@@ -189,10 +189,7 @@ function sessionManagerReducer(
           maxHr: newMaxHr,
           averageHr: newAverageHr,
           timeInZones: newTimeInZones,
-          calorieHistory: [
-            ...state.session.calorieHistory,
-            newCaloriePoint,
-          ],
+          calorieHistory: [...state.session.calorieHistory, newCaloriePoint],
           totalCaloriesBurned: newTotalCalories,
         },
       }

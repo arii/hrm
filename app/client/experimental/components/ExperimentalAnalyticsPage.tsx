@@ -249,7 +249,9 @@ const ExperimentalAnalyticsPage = () => {
               }
             />
 
-            <CalorieTracker calorieHistory={activeSession?.calorieHistory || []} />
+            <CalorieTracker
+              calorieHistory={activeSession?.calorieHistory || []}
+            />
 
             <ZoneDistribution timeInZones={summaryData.timeInZones} />
 
