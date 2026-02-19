@@ -20,28 +20,32 @@ const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
       color: 'fef2c0',
       description: 'This issue needs to be reviewed and prioritized.',
     },
-    'type-technical-debt': {
+    refactor: {
+      color: 'bfdadc',
+      description: 'Restructuring code without changing behavior.',
+    },
+    enhancement: {
       color: 'a2eeef',
-      description: 'Technical debt that needs to be addressed.',
+      description: 'New feature, request, or improvement to existing functionality.',
     },
-    'type-frontend-improvement': {
-      color: 'd4c5f9',
-      description: 'Improvement to the user interface or user experience.',
-    },
-    'type-security': {
+    bug: {
       color: 'd73a4a',
-      description: 'Security vulnerability or concern.',
+      description: 'Something isn\'t working.',
     },
-    'type-bug': {
-      color: 'd73a4a',
-      description: 'A bug or unexpected behavior.',
+    chore: {
+      color: 'eeeeee',
+      description: 'Internal maintenance, dependency updates, or build process changes.',
     },
-    'priority-high': { color: 'd73a4a', description: 'High priority issue.' },
-    'priority-medium': {
+    documentation: {
+      color: '0075ca',
+      description: 'Improvements or additions to documentation.',
+    },
+    'priority:high': { color: 'd73a4a', description: 'High priority issue.' },
+    'priority:medium': {
       color: 'fbca04',
       description: 'Medium priority issue.',
     },
-    'priority-low': { color: '0e8a16', description: 'Low priority issue.' },
+    'priority:low': { color: '0e8a16', description: 'Low priority issue.' },
   }
 
 // --- Zod Schemas for Validation ---
@@ -49,7 +53,7 @@ const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
 const SuggestedIssueSchema = z.object({
   title: z.string(),
   description: z.string(),
-  type: z.enum(['technical-debt', 'frontend-improvement', 'security', 'bug']),
+  type: z.enum(['bug', 'enhancement', 'refactor', 'chore', 'documentation']),
   priority: z.enum(['high', 'medium', 'low']),
 })
 
@@ -160,8 +164,8 @@ export class GitHubClient implements IGitHubClient {
     const requiredLabels = [
       'bot-generated',
       'triage-needed',
-      `type-${issue.type}`,
-      `priority-${issue.priority}`,
+      issue.type,
+      `priority:${issue.priority}`,
     ]
     this.ensureLabelsExist(requiredLabels)
     const labels = requiredLabels.join(',')
