@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
@@ -30,22 +31,11 @@ export default function MockPage() {
   const [weight, setWeight] = useState(70) // Add weight state
   const [height, setHeight] = useState(175) // Add height state
   const [gender, setGender] = useState('female') // Add gender state
+  const isReady = useTestPageReady()
   const [intervalId, setIntervalId] = useState<number | null>(null)
 
   const isStreaming = intervalId !== null
   const maxHr = calculateMaxHr(age)
-
-  // Signal when page is ready for testing
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        window.__TEST_READY__ = true
-        window.dispatchEvent(new CustomEvent('test-ready'))
-      }
-    }, 1000)
-
-    return () => window.clearTimeout(timer)
-  }, [])
 
   const sendHrPacket = useCallback(
     (hr: number) => {
@@ -120,9 +110,10 @@ export default function MockPage() {
   }
 
   const setHrByZone = (
-    zone: 'grey' | 'blue' | 'green' | 'yellow' | 'red' | 'purple'
+    zone: 'idle' | 'grey' | 'blue' | 'green' | 'yellow' | 'red' | 'purple'
   ) => {
     const zones = {
+      idle: 65,
       grey: 95,
       blue: 115,
       green: 135,
@@ -139,7 +130,11 @@ export default function MockPage() {
 
   return (
     <>
-      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
+      <Container
+        maxWidth="sm"
+        sx={{ py: 3, pb: 10 }}
+        data-ready={isReady ? 'true' : 'false'}
+      >
         <Card sx={{ p: 3, textAlign: 'center' }}>
           <Science color="primary" sx={{ fontSize: 60, mb: 2 }} />
           <Typography
@@ -232,6 +227,17 @@ export default function MockPage() {
             Select a zone to set HR:
           </Typography>
           <Grid container spacing={1} sx={{ mb: 3 }}>
+            <Grid size={{ xs: 'auto' }}>
+              <Button
+                fullWidth
+                variant="contained"
+                sx={{ backgroundColor: '#616161' }}
+                onClick={() => setHrByZone('idle')}
+                data-testid="zone-0-button"
+              >
+                Zone 0
+              </Button>
+            </Grid>
             <Grid size={{ xs: 'auto' }}>
               <Button
                 fullWidth
