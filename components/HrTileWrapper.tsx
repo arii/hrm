@@ -13,14 +13,7 @@ const HrTileWrapper = (props: HrTileWrapperProps) => {
       <HrTile
         {...props}
         name={props.name || ''}
-        value={props.value}
         percentage={props.percentage ?? 0}
-        zone={props.zone ?? 'ZONE_0'}
-        calories={props.calories}
-        isConnected={props.isConnected}
-        isDataStale={props.isDataStale}
-        isAlerting={props.isAlerting}
-        {...(props.alertMessage && { alertMessage: props.alertMessage })}
       />
     </Box>
   )
