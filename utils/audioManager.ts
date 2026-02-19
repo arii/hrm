@@ -1,6 +1,8 @@
 /**
  * Audio Manager for Tabata Timer Sounds
  * Handles beep sounds for countdown and phase transitions
+ *
+ * @public
  */
 
 export class AudioManager {
