@@ -1,14 +1,13 @@
 import { WorkoutSessionData } from '../lib/workout-session-storage'
-import { Encoder, Profile } from '@garmin/fitsdk'
+import { Encoder, Profile, Stream } from '@garmin/fitsdk'
 
 /**
  * Generates a FIT binary Blob from a workout session.
- * Uses @garmin/fitsdk to encode heart rate and calorie data.
  */
 export const generateFIT = (session: WorkoutSessionData): Blob => {
-  const encoder = new Encoder()
+  const stream = new Stream.MemoryStream()
+  const encoder = new Encoder(stream)
 
-  // File ID message
   encoder.writeMesg({
     mesgNum: Profile.MesgNum.FILE_ID,
     type: Profile.types.file.ACTIVITY,
@@ -18,7 +17,6 @@ export const generateFIT = (session: WorkoutSessionData): Blob => {
     timeCreated: new Date(session.startTime),
   })
 
-  // Session message
   // Use Date.now() if endTime is missing to avoid 0 duration or negative values
   const endTime = session.endTime || Date.now()
   const totalElapsedTime = (endTime - session.startTime) / 1000
@@ -34,7 +32,6 @@ export const generateFIT = (session: WorkoutSessionData): Blob => {
     sport: Profile.types.sport.GENERIC,
   })
 
-  // Record messages
   session.hrHistory.forEach((point) => {
     encoder.writeMesg({
       mesgNum: Profile.MesgNum.RECORD,
@@ -43,7 +40,10 @@ export const generateFIT = (session: WorkoutSessionData): Blob => {
     })
   })
 
-  return new Blob([encoder.close() as BlobPart], {
+  // Ensure we return the buffer correctly based on standard usage
+  // Casting to any to avoid "Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BlobPart'"
+  // in strict CI environments where ArrayBufferLike definitions might mismatch.
+  return new Blob([stream.bytes as unknown as BlobPart], {
     type: 'application/octet-stream',
   })
 }

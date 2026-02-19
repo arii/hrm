@@ -44,7 +44,7 @@ function sessionReducer(
         // This is a resume. Don't reset duration.
         return { ...state, status: 'running' }
       }
-      if (state.status === 'idle') {
+      if (state.status === 'idle' || state.status === 'finished') {
         // This is a new workout. Reset duration.
         return { ...state, status: 'running', duration: 0 }
       }
@@ -56,8 +56,8 @@ function sessionReducer(
       }
       return state
     case 'END_WORKOUT':
-      // Go idle, reset duration, but preserve calories for the final summary calculation.
-      return { ...state, status: 'idle', duration: 0 }
+      // Transition to finished to show summary/export.
+      return { ...state, status: 'finished' }
     case 'TICK':
       return {
         ...state,
@@ -105,7 +105,9 @@ export const useWorkoutSession = ({
 
   useEffect(() => {
     // A workout is considered "over" if the status is idle but we have a startCalories value.
-    const isWorkoutOver = state.status === 'idle' && startCalories > 0
+    const isWorkoutOver =
+      (state.status === 'idle' || state.status === 'finished') &&
+      startCalories > 0
     if (isWorkoutOver) {
       return // Don't update calories anymore
     }

@@ -82,7 +82,7 @@ const WorkoutSummary = ({
               }
               fullWidth
               aria-label="Download workout as FIT file"
-              sx={{ borderRadius: 1 }}
+              sx={{ borderRadius: 1, minHeight: '2.5rem' }}
             >
               {isExporting ? 'Generating...' : 'Download FIT File'}
             </Button>

@@ -1,8 +1,14 @@
 declare module '@garmin/fitsdk' {
+  export namespace Stream {
+    class MemoryStream {
+      constructor()
+      bytes: Uint8Array
+    }
+  }
+
   export class Encoder {
-    constructor(options?: { fieldDescriptions?: Record<string, unknown> })
+    constructor(stream: Stream.MemoryStream)
     writeMesg(message: Record<string, unknown>): void
-    close(): Uint8Array
   }
 
   export namespace Profile {
