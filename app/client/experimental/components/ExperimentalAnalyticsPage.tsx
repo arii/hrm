@@ -206,7 +206,7 @@ const ExperimentalAnalyticsPage = () => {
       maxWidth="lg"
       sx={{ mt: 4, mb: 4 }}
       data-testid="dashboard"
-      data-ready={isReady ? 'true' : undefined}
+      data-ready={isReady ? 'true' : 'false'}
     >
       {view === 'active' && (
         <>
