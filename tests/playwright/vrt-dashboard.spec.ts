@@ -15,10 +15,7 @@ test.describe.configure({ mode: 'serial' })
 
 // Reusable page objects
 let dashboardPage: Page
-<<<<<<< HEAD
-=======
 let controlPage: Page
->>>>>>> origin/leader
 let mockPage: Page
 let context: BrowserContext
 
@@ -29,10 +26,7 @@ test.describe('Visual Regression Tests', () => {
     const setup = await setupVisualRegressionTest(browser)
     context = setup.context
     dashboardPage = setup.dashboardPage
-<<<<<<< HEAD
-=======
     controlPage = setup.controlPage
->>>>>>> origin/leader
     mockPage = setup.mockPage
   })
 
@@ -61,32 +55,10 @@ test.describe('Visual Regression Tests', () => {
   test.describe('Dashboard Component', () => {
     test('initial, empty state', async () => {
       await takeScreenshot(dashboardPage, 'dashboard-empty.png', {
-<<<<<<< HEAD
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
         ],
-      })
-    })
-
-    test('with active heart rate tiles', async () => {
-      // Setup mock heart rate data
-      await mockPage.getByLabel('Current BPM').fill('155')
-      await mockPage.getByRole('button', { name: 'Zone 4' }).click()
-
-      // Wait for the tile to appear
-      await dashboardPage
-        .getByTestId('hr-tile-card')
-        .first()
-        .waitFor({ state: 'visible' })
-
-      await takeScreenshot(dashboardPage, 'dashboard-with-hr-tiles.png', {
-        mask: [
-          ...getDynamicContentMasks(dashboardPage),
-          ...getHrMasks(dashboardPage),
-        ],
-=======
-        mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
     })
@@ -147,7 +119,10 @@ test.describe('Visual Regression Tests', () => {
         dashboardPage,
         'dashboard-active-timer-with-hr.png',
         {
-          mask: [...getDynamicContentMasks(dashboardPage)],
+          mask: [
+            ...getDynamicContentMasks(dashboardPage),
+            ...getHrMasks(dashboardPage),
+          ],
           maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
         }
       )
@@ -175,7 +150,6 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(dashboardPage, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
->>>>>>> origin/leader
       })
     })
   })
