@@ -10,6 +10,16 @@ jest.mock('@/utils/fit-export', () => ({
   generateFitFile: jest.fn(),
 }))
 
+const mockShowSuccess = jest.fn()
+const mockShowError = jest.fn()
+
+jest.mock('@/hooks/useAppSnackbar', () => ({
+  useAppSnackbar: () => ({
+    showSuccess: mockShowSuccess,
+    showError: mockShowError,
+  }),
+}))
+
 global.URL.createObjectURL = jest.fn(() => 'mock-url')
 global.URL.revokeObjectURL = jest.fn()
 
@@ -30,7 +40,11 @@ describe('SessionDetail', () => {
     syncStatus: 'synced',
   }
 
-  it('renders correctly and handles FIT export', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('renders correctly and handles FIT export success', () => {
     const onBack = jest.fn()
     render(<SessionDetail session={mockSession} onBack={onBack} />)
 
@@ -47,5 +61,21 @@ describe('SessionDetail', () => {
     expect(generateFitFile).toHaveBeenCalledWith(mockSession)
     expect(global.URL.createObjectURL).toHaveBeenCalledWith(mockBlob)
     expect(createElementSpy).toHaveBeenCalledWith('a')
+    expect(mockShowSuccess).toHaveBeenCalledWith('FIT file exported successfully')
+  })
+
+  it('handles FIT export failure', () => {
+    const onBack = jest.fn()
+    render(<SessionDetail session={mockSession} onBack={onBack} />)
+
+    const exportButton = screen.getByText(/Export FIT/i)
+    ;(generateFitFile as jest.Mock).mockImplementation(() => {
+      throw new Error('Export failed')
+    })
+
+    fireEvent.click(exportButton)
+
+    expect(generateFitFile).toHaveBeenCalledWith(mockSession)
+    expect(mockShowError).toHaveBeenCalledWith('Failed to export FIT file')
   })
 })

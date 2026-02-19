@@ -5,6 +5,7 @@ import { formatDate } from '@/lib/utils'
 import ZoneDistribution from './ZoneDistribution'
 import HeartRateTimeSeries from './HeartRateTimeSeries'
 import { generateFitFile } from '@/utils/fit-export'
+import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 
 interface SessionDetailProps {
   session: WorkoutSessionData
@@ -12,6 +13,8 @@ interface SessionDetailProps {
 }
 
 const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
+  const { showError, showSuccess } = useAppSnackbar()
+
   const totalCalories =
     session.calorieHistory.length > 0
       ? (session.calorieHistory[session.calorieHistory.length - 1]
@@ -35,8 +38,10 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
+      showSuccess('FIT file exported successfully')
     } catch (error) {
       console.error('Failed to export FIT file:', error)
+      showError('Failed to export FIT file')
     }
   }
 
