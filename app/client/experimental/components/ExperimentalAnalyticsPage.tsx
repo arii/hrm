@@ -5,7 +5,6 @@ import { Container, Box, Button, Skeleton } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
-import { useCalorieTracker } from '@/hooks/useCalorieTracker'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import {
   workoutSessionStorage,
@@ -63,13 +62,8 @@ const ExperimentalAnalyticsPage = () => {
     resumeWorkout,
     endWorkout,
     addHrData,
+    totalCaloriesBurned,
   } = useWorkoutSessionManager()
-
-  const { processHeartRate, totalCaloriesBurned, calorieHistory, reset } =
-    useCalorieTracker({
-      age: userSettings.userAge || 30,
-      weightKg: userSettings.userWeight || 70,
-    })
 
   // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
@@ -134,10 +128,7 @@ const ExperimentalAnalyticsPage = () => {
     const intervalId = setInterval(() => {
       const currentHr = latestHrRef.current
 
-      // Process calories (uses time-gap validation internally)
-      processHeartRate(currentHr)
-
-      // Add HR data point with zone calculation
+      // Add HR data point with zone calculation (calories processed internally by hook)
       const dataPoint = {
         time: Date.now(),
         hr: currentHr,
@@ -147,17 +138,17 @@ const ExperimentalAnalyticsPage = () => {
     }, 1000)
 
     return () => clearInterval(intervalId)
-  }, [status, processHeartRate, addHrData])
+  }, [status, addHrData])
 
   // Handlers
   const handleStartWorkout = useCallback(() => {
     const age = userSettings.userAge || 30
     const weight = userSettings.userWeight || 70
+    const gender = userSettings.gender
     const maxHr = calculateMaxHr(age)
-    startWorkout(age, weight, maxHr)
-    reset()
+    startWorkout(age, weight, gender, maxHr)
     setView('active')
-  }, [startWorkout, reset, userSettings])
+  }, [startWorkout, userSettings])
 
   const handleResumeWorkout = useCallback(() => {
     resumeWorkout()
@@ -258,7 +249,9 @@ const ExperimentalAnalyticsPage = () => {
               }
             />
 
-            <CalorieTracker calorieHistory={calorieHistory} />
+            <CalorieTracker
+              calorieHistory={activeSession?.calorieHistory || []}
+            />
 
             <ZoneDistribution timeInZones={summaryData.timeInZones} />
 
