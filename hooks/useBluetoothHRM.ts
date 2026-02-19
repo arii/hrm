@@ -345,7 +345,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       process.env.NEXT_PUBLIC_TESTING === 'true'
     ) {
       window.__TEST_CONTROLS__ = {
-        ...window.__TEST_CONTROLS__,
+        ...(window.__TEST_CONTROLS__ || {}),
         setHrmStatus: setStatus,
         setCustomHrmStatusMessage: setCustomStatusMessage,
       }
