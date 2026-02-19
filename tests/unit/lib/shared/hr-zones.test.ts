@@ -1,9 +1,8 @@
 import {
   calculateZoneFromMaxHr,
-  calculateMaxHr,
-  MAX_HR_DEFAULT,
   toHeartRateZone,
 } from '../../../../lib/shared/hr-zones'
+import { calculateMaxHr, MAX_HR_DEFAULT } from '@/utils/hrCalculations'
 
 describe('lib/shared/hr-zones', () => {
   describe('calculateMaxHr', () => {
