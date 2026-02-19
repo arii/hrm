@@ -7,6 +7,7 @@ import { z } from 'zod'
 
 // --- Constants ---
 const MIN_DESCRIPTION_LENGTH = 50
+export const FINGERPRINT_REGEX = /<!-- fingerprint: (.*) -->/
 
 // --- Label Configuration ---
 
@@ -40,6 +41,18 @@ const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
       color: '0075ca',
       description: 'Improvements or additions to documentation.',
     },
+    'technical-debt': {
+      color: '5319e7',
+      description: 'Code that needs refactoring or improvement.',
+    },
+    'frontend-improvement': {
+      color: 'a2eeef',
+      description: 'Improvements to the user interface.',
+    },
+    security: {
+      color: 'd73a4a',
+      description: 'Security vulnerability or improvement.',
+    },
     'priority:high': { color: 'd73a4a', description: 'High priority issue.' },
     'priority:medium': {
       color: 'fbca04',
@@ -53,7 +66,16 @@ const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
 const SuggestedIssueSchema = z.object({
   title: z.string(),
   description: z.string(),
-  type: z.enum(['bug', 'enhancement', 'refactor', 'chore', 'documentation']),
+  type: z.enum([
+    'bug',
+    'enhancement',
+    'refactor',
+    'chore',
+    'documentation',
+    'technical-debt',
+    'frontend-improvement',
+    'security',
+  ]),
   priority: z.enum(['high', 'medium', 'low']),
   fingerprint: z.string().optional(),
 })
@@ -87,6 +109,10 @@ const ExistingIssuesSchema = z.array(ExistingIssueSchema)
 export type SuggestedIssue = z.infer<typeof SuggestedIssueSchema>
 export type ReviewResult = z.infer<typeof ReviewResultSchema>
 export type ExistingIssue = z.infer<typeof ExistingIssueSchema>
+
+export interface PreparedExistingIssue extends ExistingIssue {
+  titleTokens: Set<string>
+}
 
 // --- GitHub Client Abstraction ---
 
@@ -283,26 +309,23 @@ export class GitHubClient implements IGitHubClient {
 // --- Deduplication ---
 
 // Helper function for fuzzy matching
-/**
- * Calculates the Jaccard similarity between two strings.
- * Normalizes strings by lowercasing and removing punctuation, then compares word sets.
- */
-export function calculateJaccardSimilarity(s1: string, s2: string): number {
-  const words1 = new Set(
-    s1
+export function tokenize(text: string): Set<string> {
+  return new Set(
+    text
       .toLowerCase()
       .replace(/[^\w\s]/g, '')
       .split(/\s+/)
       .filter((w) => w.length > 2)
   )
-  const words2 = new Set(
-    s2
-      .toLowerCase()
-      .replace(/[^\w\s]/g, '')
-      .split(/\s+/)
-      .filter((w) => w.length > 2)
-  )
+}
 
+/**
+ * Calculates the Jaccard similarity between two sets of tokens.
+ */
+export function calculateJaccardSimilarity(
+  words1: Set<string>,
+  words2: Set<string>
+): number {
   if (words1.size === 0 && words2.size === 0) return 1
   if (words1.size === 0 || words2.size === 0) return 0
 
@@ -355,9 +378,10 @@ export function isLowQualityIssue(
 
 export function isDuplicate(
   newIssue: SuggestedIssue,
-  existingIssues: ExistingIssue[]
+  existingIssues: PreparedExistingIssue[]
 ): boolean {
   const newSignature = getIssueSignature(newIssue.title, newIssue.description)
+  const newIssueTokens = tokenize(newIssue.title)
 
   for (const existing of existingIssues) {
     // 1. Check for exact content match (legacy)
@@ -371,9 +395,7 @@ export function isDuplicate(
     }
 
     // 2. Check for fingerprint match
-    const existingFingerprint = existing.body.match(
-      /<!-- fingerprint: (.*) -->/
-    )?.[1]
+    const existingFingerprint = existing.body.match(FINGERPRINT_REGEX)?.[1]
     if (
       newIssue.fingerprint &&
       existingFingerprint &&
@@ -384,8 +406,8 @@ export function isDuplicate(
 
     // 3. Check for fuzzy title match
     const titleSimilarity = calculateJaccardSimilarity(
-      newIssue.title,
-      existing.title
+      newIssueTokens,
+      existing.titleTokens
     )
     if (titleSimilarity >= 0.85) {
       return true
@@ -432,6 +454,14 @@ export async function run(
 
   const existingIssues = client.getRecentIssues('bot-generated')
 
+  // Optimize: Pre-calculate tokens for existing issues to avoid re-tokenizing in the loop.
+  const preparedExistingIssues: PreparedExistingIssue[] = existingIssues.map(
+    (issue) => ({
+      ...issue,
+      titleTokens: tokenize(issue.title),
+    })
+  )
+
   // Read and compile the slop words from the file.
   let slopPattern: RegExp | null = null
   try {
@@ -458,7 +488,7 @@ export async function run(
   let skippedLowQuality = 0
 
   for (const issue of result.suggestedIssues) {
-    if (isDuplicate(issue, existingIssues)) {
+    if (isDuplicate(issue, preparedExistingIssues)) {
       console.log(`⏭️  Skipping duplicate: "${issue.title}"`)
       skippedDuplicates++
       continue
