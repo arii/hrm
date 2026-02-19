@@ -69,12 +69,12 @@ const Dashboard = () => {
   // Signal when page is ready for testing
   const [isReady, setIsReady] = useState(false)
   useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    window.__TEST_READY__ = true
-    window.dispatchEvent(new CustomEvent('test-ready'))
-    const timer = setTimeout(() => setIsReady(true), 0)
-    return () => clearTimeout(timer)
+    if (typeof window !== 'undefined') {
+      window.__TEST_READY__ = true
+      window.dispatchEvent(new CustomEvent('test-ready'))
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsReady(true)
+    }
   }, [])
 
   return (

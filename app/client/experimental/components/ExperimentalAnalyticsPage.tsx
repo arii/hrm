@@ -109,8 +109,8 @@ const ExperimentalAnalyticsPage = () => {
 
   // Signal when page is ready for testing
   useEffect(() => {
-    const timer = setTimeout(() => setIsReady(true), 0)
-    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsReady(true)
   }, [])
 
   /**
