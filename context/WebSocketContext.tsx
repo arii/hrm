@@ -116,7 +116,9 @@ export const WebSocketProvider = ({
 
       if (
         process.env.NODE_ENV !== 'production' ||
-        process.env.NEXT_PUBLIC_TESTING === 'true'
+        process.env.NEXT_PUBLIC_TESTING === 'true' ||
+        (typeof window !== 'undefined' &&
+          window.location.search.includes('testing=true'))
       ) {
         ;(
           window as Window & { __TEST_CONTROLS__?: TestControls }
@@ -331,7 +333,9 @@ export const WebSocketProvider = ({
 
     if (
       typeof window !== 'undefined' &&
-      process.env.NODE_ENV !== 'production'
+      (process.env.NODE_ENV !== 'production' ||
+        process.env.NEXT_PUBLIC_TESTING === 'true' ||
+        window.location.search.includes('testing=true'))
     ) {
       const testControls = (
         window as Window & { __TEST_CONTROLS__?: TestControls }

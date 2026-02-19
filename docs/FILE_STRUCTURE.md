@@ -47,3 +47,12 @@ The project is organized into the following primary directories:
 - **`playwright.config.ts`**: The configuration file for the Playwright test runner.
 
 - **`jest.config.cjs`**: The configuration file for the Jest test runner.
+
+## Build Artifacts & Caching
+
+To optimize build performance while maintaining repository cleanliness, the following strategy is used:
+
+- **TypeScript Build Info (`*.tsbuildinfo`)**: These files (e.g., `tsconfig.build.tsbuildinfo`, `tsconfig.type-check.tsbuildinfo`) are generated at the root level to support incremental compilation. They are explicitly ignored in `.gitignore` and should never be committed.
+- **`.next/`**: Next.js build output and cache, ignored by version control.
+- **`dist/`**: Compiled server-side code, ignored by version control.
+- **`.cache/`**: (Deprecated) Previously used for TypeScript caches; now consolidated into root-level `.tsbuildinfo` files.

@@ -119,6 +119,16 @@ export {
 } from '@/tests/playwright/lib/setup'
 
 // ============================================================================
+// Mocking Utilities
+// ============================================================================
+export {
+  mockGoogleDocIframe,
+  mockMultipleHrDevices,
+  mockSpotifyPlaybackState,
+  mockLoggedInSession,
+} from './mocks'
+
+// ============================================================================
 // Visual Testing Utilities
 // ============================================================================
 export {
@@ -128,7 +138,12 @@ export {
   takeScreenshot,
   takeDashboardScreenshot,
   prepareForVisualRegression,
+<<<<<<< HEAD
 } from '@/tests/playwright/lib/visual'
+=======
+  assertFixedDimensions,
+} from './visual'
+>>>>>>> origin/leader
 
 // ============================================================================
 // Re-export Playwright test utilities for convenience

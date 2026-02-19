@@ -1,7 +1,14 @@
 import { type BrowserContext, type Page } from '@playwright/test'
+<<<<<<< HEAD
 import { test } from '@/tests/playwright/fixtures'
 import { setupVisualRegressionTest } from '@/tests/playwright/test-helpers'
 import { takeScreenshot } from '@/tests/playwright/lib/visual'
+=======
+import { test } from './fixtures'
+import { setupVisualRegressionTest } from './test-helpers'
+import { takeScreenshot } from './lib/visual'
+import { HRM_ROUTES } from './lib/setup'
+>>>>>>> origin/leader
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -25,6 +32,8 @@ test.describe('WorkoutSummary Component VRT', () => {
   })
 
   test('active state', async () => {
+    // Navigate to experimental dashboard
+    await dashboardPage.goto(HRM_ROUTES.EXPERIMENTAL)
     // The dashboard starts in a "list" view. Click "New Workout" to show the summary.
     await dashboardPage.getByRole('button', { name: 'New Workout' }).click()
     const workoutSummary = dashboardPage.getByTestId('workout-summary')

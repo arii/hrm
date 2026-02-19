@@ -64,6 +64,39 @@ export async function takeScreenshot(
 }
 
 /**
+ * Assert that a component maintains fixed dimensions within a tolerance range.
+ * Use this to prevent layout regressions where components grow unexpectedly.
+ */
+export async function assertFixedDimensions(
+  locator: Locator,
+  constraints: {
+    minHeight?: number
+    maxHeight?: number
+    minWidth?: number
+    maxWidth?: number
+  }
+) {
+  const bbox = await locator.boundingBox()
+
+  if (!bbox) {
+    throw new Error(`Element not found or not visible: ${locator}`)
+  }
+
+  if (constraints.minHeight !== undefined) {
+    expect(bbox.height).toBeGreaterThanOrEqual(constraints.minHeight)
+  }
+  if (constraints.maxHeight !== undefined) {
+    expect(bbox.height).toBeLessThanOrEqual(constraints.maxHeight)
+  }
+  if (constraints.minWidth !== undefined) {
+    expect(bbox.width).toBeGreaterThanOrEqual(constraints.minWidth)
+  }
+  if (constraints.maxWidth !== undefined) {
+    expect(bbox.width).toBeLessThanOrEqual(constraints.maxWidth)
+  }
+}
+
+/**
  * Takes a screenshot of the dashboard with common dynamic elements masked.
  *
  * @param page - The dashboard Page object.
