@@ -30,6 +30,7 @@ import ZoneDistribution from './ZoneDistribution'
 import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
@@ -40,6 +41,7 @@ type View = 'active' | 'list' | 'detail'
 const ExperimentalAnalyticsPage = () => {
   const { hrmData, sendData, connectionStatus } = useWebSocket()
   const [userSettings] = useUserSettings()
+  const isReady = useTestPageReady()
 
   // Use #5110's hooks
   const {
@@ -66,9 +68,6 @@ const ExperimentalAnalyticsPage = () => {
   )
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
-
-  // State for test readiness
-  const [isReady, setIsReady] = useState(false)
 
   // Load all sessions
   useEffect(() => {
@@ -107,12 +106,6 @@ const ExperimentalAnalyticsPage = () => {
       })
     }
   }, [connectionStatus, userSettings, sendData])
-
-  // Signal when page is ready for testing
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsReady(true)
-  }, [])
 
   /**
    * FIX: Use ref to avoid interval reset on HR updates (addresses audit issue #1)
@@ -214,7 +207,7 @@ const ExperimentalAnalyticsPage = () => {
       maxWidth="lg"
       sx={{ mt: 4, mb: 4 }}
       data-testid="dashboard"
-      data-ready={isReady ? 'true' : undefined}
+      data-ready={isReady ? 'true' : 'false'}
     >
       {view === 'active' && (
         <>
