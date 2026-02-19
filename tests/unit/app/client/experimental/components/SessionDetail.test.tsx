@@ -61,7 +61,9 @@ describe('SessionDetail', () => {
     expect(generateFitFile).toHaveBeenCalledWith(mockSession)
     expect(global.URL.createObjectURL).toHaveBeenCalledWith(mockBlob)
     expect(createElementSpy).toHaveBeenCalledWith('a')
-    expect(mockShowSuccess).toHaveBeenCalledWith('FIT file exported successfully')
+    expect(mockShowSuccess).toHaveBeenCalledWith(
+      'FIT file exported successfully'
+    )
   })
 
   it('handles FIT export failure', () => {
