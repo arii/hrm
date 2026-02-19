@@ -11,15 +11,20 @@ import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
 import { mockGoogleDocIframe } from './mocks'
-import { waitForFontsLoaded, waitForPageReady } from './waits'
+import {
+  waitForFontsLoaded,
+  waitForPageReady,
+  waitForWebSocketConnection,
+} from './waits'
 
 /**
  * Common routes used in HRM testing
  */
 export const HRM_ROUTES = {
   /** Main dashboard/viewer page */
-  // The experimental dashboard is the primary target for VRTs.
-  DASHBOARD: '/client/experimental',
+  DASHBOARD: '/',
+  /** Experimental analytics page */
+  EXPERIMENTAL: '/client/experimental',
   /** Control panel for timer and music */
   CONTROL: '/client/control',
   /** Mock HRM client for testing */
@@ -160,6 +165,13 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     waitForPageReady(mockPage),
   ])
 
+  // Wait for WebSocket connections to be established
+  await Promise.all([
+    waitForWebSocketConnection(dashboardPage),
+    waitForWebSocketConnection(controlPage),
+    waitForWebSocketConnection(mockPage),
+  ])
+
   // Ensure all custom fonts are loaded to prevent visual shifts
   await Promise.all([
     waitForFontsLoaded(dashboardPage),
@@ -281,9 +293,12 @@ export async function stopTimer(
 
       // Wait for dashboard to clear timer display if provided
       if (dashboardPage) {
-        await expect(dashboardPage.locator('text=00:00')).toBeVisible({
-          timeout: 5000,
-        })
+        await expect(dashboardPage.getByTestId('timer-countdown')).toHaveText(
+          /00:00/,
+          {
+            timeout: 5000,
+          }
+        )
       }
     }
   } catch (error) {

@@ -119,6 +119,16 @@ export {
 } from './setup'
 
 // ============================================================================
+// Mocking Utilities
+// ============================================================================
+export {
+  mockGoogleDocIframe,
+  mockMultipleHrDevices,
+  mockSpotifyPlaybackState,
+  mockLoggedInSession,
+} from './mocks'
+
+// ============================================================================
 // Visual Testing Utilities
 // ============================================================================
 export {
@@ -128,6 +138,7 @@ export {
   takeScreenshot,
   takeDashboardScreenshot,
   prepareForVisualRegression,
+  assertFixedDimensions,
 } from './visual'
 
 // ============================================================================
