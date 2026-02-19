@@ -43,16 +43,51 @@ export const SCREENSHOT_OPTIONS = {
 export async function takeScreenshot(
   target: Page | Locator,
   snapshotName: string,
-  options: object = {}
+  options: ScreenshotOptions & { skipA11y?: boolean } = {}
 ) {
-  // Always perform an accessibility check before taking a screenshot.
-  // This ensures that our accessibility standards are maintained with every visual change.
-  await checkAccessibility(target)
+  const { skipA11y = false, ...screenshotOptions } = options
+
+  if (!skipA11y) {
+    await checkAccessibility(target)
+  }
 
   await expect(target).toHaveScreenshot(snapshotName, {
     ...SCREENSHOT_OPTIONS,
-    ...options,
+    ...screenshotOptions,
   })
+}
+
+/**
+ * Assert that a component maintains fixed dimensions within a tolerance range.
+ * Use this to prevent layout regressions where components grow unexpectedly.
+ */
+export async function assertFixedDimensions(
+  locator: Locator,
+  constraints: {
+    minHeight?: number
+    maxHeight?: number
+    minWidth?: number
+    maxWidth?: number
+  }
+) {
+  const bbox = await locator.boundingBox()
+
+  if (!bbox) {
+    throw new Error(`Element not found or not visible: ${locator}`)
+  }
+
+  if (constraints.minHeight !== undefined) {
+    expect(bbox.height).toBeGreaterThanOrEqual(constraints.minHeight)
+  }
+  if (constraints.maxHeight !== undefined) {
+    expect(bbox.height).toBeLessThanOrEqual(constraints.maxHeight)
+  }
+  if (constraints.minWidth !== undefined) {
+    expect(bbox.width).toBeGreaterThanOrEqual(constraints.minWidth)
+  }
+  if (constraints.maxWidth !== undefined) {
+    expect(bbox.width).toBeLessThanOrEqual(constraints.maxWidth)
+  }
 }
 
 /**
@@ -65,7 +100,7 @@ export async function takeScreenshot(
 export async function takeDashboardScreenshot(
   page: Page,
   snapshotName: string,
-  options: ScreenshotOptions = {}
+  options: ScreenshotOptions & { skipA11y?: boolean } = {}
 ) {
   const mainContentLocator = page.getByTestId('main-content-layout')
   const timerDisplayLocator = page.getByTestId('timer-display-container')

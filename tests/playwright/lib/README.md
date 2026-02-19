@@ -267,6 +267,52 @@ import { waitForPageReady, BASE_URL } from './test-helpers'
 import { waitForPageReady, getBaseURL } from './lib'
 ```
 
+## Visual Regression Testing Best Practices
+
+### When to Add VRT
+
+- Any component with fixed dimensions
+- Components using responsive breakpoints
+- Layout components (grids, flexbox containers)
+- Components with multiple visual states
+
+### What to Test
+
+✅ Structural layout (dimensions, positioning, spacing)
+✅ Color/theme application (zone colors, phase colors)
+✅ Responsive behavior at defined breakpoints
+✅ Error states and edge cases
+
+❌ Dynamic numeric values (mask these)
+❌ Timestamps or dates (mask these)
+❌ Real-time data streams (mask these)
+
+### Dimension Assertions
+
+Always add dimension assertions for components with fixed height/width:
+
+```typescript
+const tile = page.getByTestId('hr-tile-card')
+const bbox = await tile.boundingBox()
+expect(bbox?.height).toBeGreaterThanOrEqual(180)
+expect(bbox?.height).toBeLessThanOrEqual(250)
+```
+
+Alternatively, use the `assertFixedDimensions` helper:
+
+```typescript
+await assertFixedDimensions(page.getByTestId('hr-tile-card'), {
+  minHeight: 180,
+  maxHeight: 250,
+})
+```
+
+### Masking Philosophy
+
+- Mask **content**, not **structure**
+- Mask the number "155", not the entire tile
+- See `lib/masks.ts` for granular masking helpers
+
 ## Best Practices
 
 1. **Use the new library** - Import from `./lib` for new tests

@@ -67,6 +67,14 @@ const nextConfig = {
     ]
   },
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
+  typescript: {
+    // !! WARN !!
+    // Dangerously allow production builds to successfully complete even if
+    // your project has type errors.
+    // We delegate type checking to a separate parallel CI job for better performance.
+    // !! WARN !!
+    ignoreBuildErrors: process.env.IGNORE_BUILD_ERRORS === 'true',
+  },
 }
 
 export default withBundleAnalyzer(nextConfig)

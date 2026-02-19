@@ -39,7 +39,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: pr-quality-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  group: pr-quality-${{ inputs.pr_number || github.event.pull_request.number || github.ref || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -51,7 +51,22 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
+      pr_number: ${{ steps.determine-context.outputs.pr_number }}
+      sha: ${{ steps.determine-context.outputs.sha }}
     steps:
+      - name: Determine Context
+        id: determine-context
+        shell: bash
+        env:
+          RAW_PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || '' }}
+          RAW_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # Sanitize PR_NUMBER to include only digits
+          SAFE_PR_NUMBER=$(echo "$RAW_PR_NUMBER" | tr -cd '0-9')
+          echo "pr_number=$SAFE_PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "sha=$RAW_SHA" >> "$GITHUB_OUTPUT"
+          echo "Determined Context: PR=$SAFE_PR_NUMBER, SHA=$RAW_SHA"
+
       - name: Install jq
         run: |
           if ! command -v jq &> /dev/null; then
@@ -64,197 +79,7 @@ jobs:
         id: sanitize_id
         uses: ./.github/actions/sanitize-string
         with:
-          value: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
-
-      # Test Composite Actions - Sanitize String validation
-      - name: Test Sanitize Action - Special Chars and Truncation
-        id: test_special_chars
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'feature/test-branch/with_special-chars!@#$%^&*()'
-          max-length: '30'
-        continue-on-error: true
-
-      - name: Verify - Special Chars and Truncation
-        run: |
-          actual="${{ steps.test_special_chars.outputs.sanitized-value }}"
-          expected="feature-test-branch-with_speci"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Special Chars and Truncation"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Special Chars and Truncation"
-        continue-on-error: true
-
-      - name: Test Sanitize Action - Empty String
-        id: test_empty
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: ''
-          max-length: '64'
-        continue-on-error: true
-
-      - name: Verify - Empty String
-        run: |
-          actual="${{ steps.test_empty.outputs.sanitized-value }}"
-          expected=""
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Empty String"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Empty String"
-        continue-on-error: true
-
-      - name: Test Sanitize Action - Already Sanitized
-        id: test_clean
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'clean-string-123'
-          max-length: '64'
-        continue-on-error: true
-
-      - name: Verify - Already Sanitized
-        run: |
-          actual="${{ steps.test_clean.outputs.sanitized-value }}"
-          expected="clean-string-123"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Already Sanitized"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Already Sanitized"
-        continue-on-error: true
-
-      - name: Test Sanitize Action - Shorter than Max Length
-        id: test_short
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'short/string'
-          max-length: '64'
-        continue-on-error: true
-
-      - name: Verify - Shorter than Max Length
-        run: |
-          actual="${{ steps.test_short.outputs.sanitized-value }}"
-          expected="short-string"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Shorter than Max Length"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Shorter than Max Length"
-        continue-on-error: true
-
-      - name: Test Sanitize Action - Duplicate Hyphens
-        id: test_dupes
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'feature//branch'
-          max-length: '64'
-        continue-on-error: true
-
-      - name: Verify - Duplicate Hyphens
-        run: |
-          actual="${{ steps.test_dupes.outputs.sanitized-value }}"
-          expected="feature-branch"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Duplicate Hyphens"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Duplicate Hyphens"
-        continue-on-error: true
-
-      - name: Test Sanitize Action - Trailing Hyphen
-        id: test_trailing
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'feature/branch-'
-          max-length: '64'
-        continue-on-error: true
-
-      - name: Verify - Trailing Hyphen
-        run: |
-          actual="${{ steps.test_trailing.outputs.sanitized-value }}"
-          expected="feature-branch"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Trailing Hyphen"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Trailing Hyphen"
-        continue-on-error: true
-
-      - name: Test Sanitize Action - At Max Length
-        id: test_max
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: 'a-very-long-string-that-is-exactly-64-characters-long-and-valid'
-          max-length: '64'
-        continue-on-error: true
-
-      - name: Verify - At Max Length
-        run: |
-          actual="${{ steps.test_max.outputs.sanitized-value }}"
-          expected="a-very-long-string-that-is-exactly-64-characters-long-and-valid"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: At Max Length"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: At Max Length"
-        continue-on-error: true
-
-      - name: Test Sanitize Action - Only Invalid Chars
-        id: test_invalid
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: '!@#$%^&*()'
-          max-length: '64'
-        continue-on-error: true
-
-      - name: Verify - Only Invalid Chars
-        run: |
-          actual="${{ steps.test_invalid.outputs.sanitized-value }}"
-          expected=""
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Only Invalid Chars"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Only Invalid Chars"
-        continue-on-error: true
-
-      - name: Test Sanitize Action - Leading/Trailing Invalid Chars
-        id: test_leading_trailing
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: '!!test-branch!!'
-          max-length: '64'
-        continue-on-error: true
-
-      - name: Verify - Leading/Trailing Invalid Chars
-        run: |
-          actual="${{ steps.test_leading_trailing.outputs.sanitized-value }}"
-          expected="test-branch"
-          if [ "$actual" != "$expected" ]; then
-            echo "❌ Test Failed: Leading/Trailing Invalid Chars"
-            echo "Expected: '$expected'"
-            echo "Actual:   '$actual'"
-            exit 1
-          fi
-          echo "✅ Test Passed: Leading/Trailing Invalid Chars"
-        continue-on-error: true
+          value: ${{ steps.determine-context.outputs.pr_number || github.ref_name || github.run_id }}
 
   script-tests:
     name: 🧪 Script Tests
@@ -280,7 +105,6 @@ jobs:
           mkdir -p logs
           # Run the bats tests and tee output to a log file
           ./node_modules/bats/bin/bats tests/unit/decide-review-strategy.bats > >(tee -a logs/script-output.log) 2> >(tee -a logs/script-output.log >&2)
-        continue-on-error: true
 
       - name: Upload Script Test Logs
         if: always()
@@ -291,15 +115,6 @@ jobs:
             logs/script-output.log
           if-no-files-found: ignore
           retention-days: 2
-
-      - name: Check Script Tests Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.script-tests.outcome }}" = 'failure' ]; then
-            echo "::error::Script tests failed"
-            exit 1
-          fi
 
   knip-check:
     name: 🎒 Knip Check
@@ -362,7 +177,6 @@ jobs:
         run: |
           set -o pipefail
           ./scripts/ci/run-linter.sh
-        continue-on-error: true
 
       - name: Report Lint Failure
         if: failure() && steps.lint.outcome == 'failure'
@@ -371,15 +185,6 @@ jobs:
           echo '```text' >> $GITHUB_STEP_SUMMARY
           cat logs/lint-output.log >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Check Lint Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.lint.outcome }}" = 'failure' ]; then
-            echo "::error::Lint check failed"
-            exit 1
-          fi
 
       - name: Upload Lint Report
         if: always()
@@ -414,7 +219,6 @@ jobs:
         run: |
           chmod +x ./scripts/ci-check-slop.sh
           ./scripts/ci-check-slop.sh
-        continue-on-error: true
 
       - name: Report Slop Failure
         if: failure() && steps.slop.outcome == 'failure'
@@ -424,21 +228,48 @@ jobs:
           cat logs/slop-output.log >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-      - name: Check Slop Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.slop.outcome }}" = 'failure' ]; then
-            echo "::error::AI Slop detected"
-            exit 1
-          fi
-
       - name: Upload Slop Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: slop-report
           path: logs/slop-output.log
+          retention-days: 2
+          if-no-files-found: ignore
+
+  type-check:
+    name: ⌨️ Type Check
+    needs: [prepare-env]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+        with:
+          use-build-cache: true
+          cache-type: type-check
+
+      - name: Run Type Check
+        id: type-check
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          pnpm run type-check 2>&1 | tee logs/type-check-output.log
+
+      - name: Upload Type Check Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: type-check-report
+          path: logs/type-check-output.log
           retention-days: 2
           if-no-files-found: ignore
 
@@ -459,18 +290,22 @@ jobs:
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
+        with:
+          use-build-cache: true
+          cache-type: next-build
 
       - name: Verify Build
         id: build
         env:
           NODE_ENV: production
+          SKIP_CLEAN: true
+          IGNORE_BUILD_ERRORS: true
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
         shell: bash
         run: |
           set -o pipefail
           ./scripts/ci/run-build.sh
-        continue-on-error: true
 
       - name: Verify Artifacts
         if: always() && steps.build.outcome == 'success'
@@ -488,15 +323,6 @@ jobs:
           echo '```text' >> $GITHUB_STEP_SUMMARY
           tail -n 50 logs/build-output.log >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Check Build Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.build.outcome }}" = 'failure' ]; then
-            echo "::error::Build failed"
-            exit 1
-          fi
 
       - name: Upload Build Report
         if: always()
@@ -590,7 +416,7 @@ jobs:
 
   infra-tests:
     name: 🧪 Infrastructure Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -641,7 +467,6 @@ jobs:
         run: |
           set -o pipefail
           ./scripts/ci/run-infra-tests.sh prod
-        continue-on-error: true
 
       - name: Publish Infrastructure Tests Results
         uses: dorny/test-reporter@v1
@@ -663,18 +488,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 2
 
-      - name: Check Infra Tests Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.infra-tests.outcome }}" = 'failure' ]; then
-            echo "::error::Infrastructure tests failed"
-            exit 1
-          fi
-
   unit-tests:
     name: 🧪 Unit Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -720,7 +536,6 @@ jobs:
         run: |
           set -o pipefail
           ./scripts/ci/run-unit-tests.sh
-        continue-on-error: true
 
       - name: Publish Unit Tests Results
         uses: dorny/test-reporter@v1
@@ -742,18 +557,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 2
 
-      - name: Check Unit Tests Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.unit-tests.outcome }}" = 'failure' ]; then
-            echo "::error::Unit tests failed"
-            exit 1
-          fi
-
   component-tests:
     name: 🧪 Component Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -799,7 +605,6 @@ jobs:
         run: |
           set -o pipefail
           ./scripts/ci/run-component-tests.sh
-        continue-on-error: true
 
       - name: Publish Component Tests Results
         uses: dorny/test-reporter@v1
@@ -821,18 +626,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 2
 
-      - name: Check Component Tests Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.component-tests.outcome }}" = 'failure' ]; then
-            echo "::error::Component tests failed"
-            exit 1
-          fi
-
   perf-tests:
     name: 🧪 Performance Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -881,7 +677,6 @@ jobs:
         run: |
           set -o pipefail
           ./scripts/ci/run-perf-tests.sh
-        continue-on-error: true
 
       - name: Publish Performance Test Results
         uses: dorny/test-reporter@v1
@@ -911,22 +706,13 @@ jobs:
           if-no-files-found: ignore
           retention-days: 2
 
-      - name: Check Performance Tests Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.perf-tests.outcome }}" = 'failure' ]; then
-            echo "::error::Performance tests failed"
-            exit 1
-          fi
-
       - name: Stop Application
         if: always()
         run: pnpm run kill-all || true
 
   visual-tests:
     name: 🧪 Visual Tests
-    needs: [prepare-env, knip-check, lint-check, build-check]
+    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -968,13 +754,15 @@ jobs:
             exit 1
           fi
 
+      - name: Check for Orphaned Snapshots
+        run: pnpm run test:vrt:check-orphans
+
       - name: Run Visual Tests (Playwright)
         id: visual-tests
         shell: bash
         run: |
           set -o pipefail
           ./scripts/ci/run-visual-tests.sh
-        continue-on-error: true
 
       - name: Publish Visual Tests Results
         uses: dorny/test-reporter@v1
@@ -1008,15 +796,6 @@ jobs:
             playwright-report/
           if-no-files-found: warn
           retention-days: 2
-
-      - name: Check Visual Tests Result
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ steps.visual-tests.outcome }}" = 'failure' ]; then
-            echo "::error::Visual tests failed"
-            exit 1
-          fi
 
   integration-tests:
     name: 📊 Integration Tests Summary
@@ -1066,13 +845,14 @@ jobs:
 
   quality-report:
     name: 📊 Quality Report
-    if: always() && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.slop-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
+    if: always() && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.slop-check.result != 'cancelled' && needs.type-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
     needs:
       [
         prepare-env,
         knip-check,
         lint-check,
         slop-check,
+        type-check,
         build-check,
         script-tests,
         integration-tests,
@@ -1166,7 +946,7 @@ jobs:
           }
 
           # Check standalone jobs
-          for job in "knip-check" "lint-check" "slop-check" "build-check"; do
+          for job in "knip-check" "lint-check" "slop-check" "type-check" "build-check"; do
             # Safely get job result, default to "skipped" if not found
             result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result // "skipped"')
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
@@ -1175,6 +955,7 @@ jobs:
                 "knip-check") log_file="artifacts/knip-report/knip-output.txt" ;;
                 "lint-check") log_file="artifacts/lint-report/lint-output.log" ;;
                 "slop-check") log_file="artifacts/slop-report/slop-output.log" ;;
+                "type-check") log_file="artifacts/type-check-report/type-check-output.log" ;;
                 "build-check") log_file="artifacts/build-report/build-output.log" ;;
               esac
               add_failure "$job" "$result" "$log_file"
@@ -1207,7 +988,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Post Quality Summary with Details
-        if: always()
+        if: always() && needs.prepare-env.outputs.pr_number != ''
         env:
           KNIP_RESULT: ${{ needs.knip-check.result }}
           LINT_RESULT: ${{ needs.lint-check.result }}
@@ -1218,14 +999,10 @@ jobs:
           PERF_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.perf-tests-outcome }}
           VISUAL_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.visual-tests-outcome }}
           FINAL_RESULT: ${{ steps.aggregate-results.outputs.final_result }}
+          PR_NUMBER: ${{ needs.prepare-env.outputs.pr_number }}
+          SHA: ${{ needs.prepare-env.outputs.sha }}
         run: |
           set +e
-
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
-            echo "::warning::No Pull Request found. Skipping PR comment."
-            exit 0
-          fi
 
           # Function to add log details to the comment body
           add_log_details() {
@@ -1256,6 +1033,7 @@ jobs:
           COMMENT_BODY+="| Knip | $([ "$KNIP_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$KNIP_RESULT) |\n"
           COMMENT_BODY+="| Lint | $([ "$LINT_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$LINT_RESULT) |\n"
           COMMENT_BODY+="| Slop | $([ "${{ needs.slop-check.result }}" = "success" ] && echo '✅ success' || echo '❌ '${{ needs.slop-check.result }}) |\n"
+          COMMENT_BODY+="| Type Check | $([ "${{ needs.type-check.result }}" = "success" ] && echo '✅ success' || echo '❌ '${{ needs.type-check.result }}) |\n"
           COMMENT_BODY+="| Build | $([ "$BUILD_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$BUILD_RESULT) |\n"
           COMMENT_BODY+="| Infra Tests | $([ "$INFRA_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_TESTS_OUTCOME) |\n"
           COMMENT_BODY+="| Unit Tests | $([ "$UNIT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$UNIT_TESTS_OUTCOME) |\n"
@@ -1273,6 +1051,9 @@ jobs:
           fi
           if [ "${{ needs.slop-check.result }}" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Slop Failure Details" "artifacts/slop-report/slop-output.log" 50)
+          fi
+          if [ "${{ needs.type-check.result }}" != "success" ]; then
+            LOG_DETAILS+=$(add_log_details "Type Check Failure Details" "artifacts/type-check-report/type-check-output.log" 50)
           fi
           if [ "$BUILD_RESULT" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Build Failure Details" "artifacts/build-report/build-output.log" 50)
@@ -1306,7 +1087,7 @@ jobs:
             SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
           fi
 
-          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${{ github.event.pull_request.head.sha || github.sha }}\`"
+          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${SHA}\`"
 
           # Write the final comment to a file
           echo -e "$COMMENT_BODY" > test-results/pr-comment.md

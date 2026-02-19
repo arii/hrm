@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 const ErrorFallback = () => {
   return (
     <Box
+      data-testid="error-fallback"
       sx={{
         display: 'flex',
         flexDirection: 'column',

@@ -51,7 +51,7 @@ export async function waitForPageReady(
     // Wait for custom test readiness signal from the application
     await page.waitForFunction(
       () => {
-        return window.__TEST_READY__ === true
+        return document.querySelector('[data-ready="true"]') !== null
       },
       { timeout }
     )
