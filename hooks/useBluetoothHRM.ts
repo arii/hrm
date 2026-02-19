@@ -22,9 +22,6 @@ const ROLLING_AVG_HISTORY_LENGTH = 5
 const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
 const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 
-export const HEARTBEAT_INTERVAL_MS =
-  typeof process !== 'undefined' && process.env.NODE_ENV === 'test' ? 500 : 1000
-
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
   [BluetoothConnectionStatus.CONNECTING]: BLUETOOTH_MESSAGES.connecting,
@@ -46,6 +43,7 @@ interface UseBluetoothHRMProps {
   userAge?: number | null
   onHeartRateUpdate?: (heartRate: number) => void
   onConnect?: () => void
+  heartbeatInterval?: number
 }
 
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
@@ -55,6 +53,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     userAge,
     onHeartRateUpdate,
     onConnect,
+    heartbeatInterval = 1000,
   } = props
   const { sendData, connectionStatus } = useWebSocket()
   const [status, setStatus] = useState<BluetoothConnectionStatus>(
@@ -200,10 +199,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           }
         }
       }
-    }, HEARTBEAT_INTERVAL_MS)
+    }, heartbeatInterval)
 
     return () => clearInterval(interval)
-  }, [dataLivenessTimeoutMs, isDataStale, updateSignalPeriod])
+  }, [
+    dataLivenessTimeoutMs,
+    isDataStale,
+    updateSignalPeriod,
+    heartbeatInterval,
+  ])
 
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true

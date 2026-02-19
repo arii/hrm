@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { renderHook, act, waitFor } from '@testing-library/react'
-import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import * as WebSocketContext from '@/context/WebSocketContext'
 import * as cookieUtils from '@/utils/cookies'
 import { env } from '@/lib/env'
@@ -36,6 +36,8 @@ describe('useBluetoothHRM', () => {
     requestDevice: jest.Mock<Promise<MockDevice>>
     getDevices: jest.Mock<Promise<MockDevice[]>>
   }
+
+  const HEARTBEAT_INTERVAL_MS = 500
 
   beforeEach(() => {
     // Reset mocks before each test
@@ -111,7 +113,9 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should not attempt to auto-connect if no device is saved', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
+    const { result } = renderHook(() =>
+      useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+    )
 
     await act(async () => {
       await result.current.autoConnect()
@@ -125,7 +129,9 @@ describe('useBluetoothHRM', () => {
   it('should auto-connect to a saved device', async () => {
     jest.spyOn(cookieUtils, 'getCookie').mockReturnValue('test-device-id')
     mockBluetooth.getDevices.mockResolvedValue([mockDevice])
-    const { result } = renderHook(() => useBluetoothHRM())
+    const { result } = renderHook(() =>
+      useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+    )
 
     await act(async () => {
       await result.current.autoConnect()
@@ -143,7 +149,9 @@ describe('useBluetoothHRM', () => {
     jest.spyOn(cookieUtils, 'getCookie').mockReturnValue('test-device-id')
     mockBluetooth.getDevices.mockResolvedValue([mockDevice])
     mockGatt.connect.mockRejectedValue(new Error('Connection failed'))
-    const { result } = renderHook(() => useBluetoothHRM())
+    const { result } = renderHook(() =>
+      useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+    )
 
     await act(async () => {
       await result.current.autoConnect()
@@ -158,7 +166,9 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should not show device picker in silent mode', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
+    const { result } = renderHook(() =>
+      useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+    )
 
     await act(async () => {
       await result.current.autoConnect()
@@ -168,7 +178,9 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should show device picker in non-silent mode', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
+    const { result } = renderHook(() =>
+      useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+    )
 
     await act(async () => {
       try {
@@ -203,7 +215,9 @@ describe('useBluetoothHRM', () => {
       )
       mockGatt.connect.mockReturnValue(connectPromise)
 
-      const { result } = renderHook(() => useBluetoothHRM())
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+      )
 
       let firstPromise: Promise<void> | undefined
       act(() => {
@@ -235,7 +249,9 @@ describe('useBluetoothHRM', () => {
 
   describe('Signal Quality Calculation', () => {
     it('should calculate the rolling average of signal period', async () => {
-      const { result } = renderHook(() => useBluetoothHRM())
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+      )
       let characteristicValueChangedCallback: (event: {
         target: { value: DataView }
       }) => void = () => {}
@@ -330,7 +346,9 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should proactively increase signal period on missed heartbeats', async () => {
-      const { result } = renderHook(() => useBluetoothHRM())
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+      )
       let characteristicValueChangedCallback: (event: {
         target: { value: DataView }
       }) => void = () => {}
@@ -437,7 +455,10 @@ describe('useBluetoothHRM', () => {
     it('should detect data staleness and attempt to reconnect', async () => {
       const dataLivenessTimeoutMs = 5000
       const { result } = renderHook(() =>
-        useBluetoothHRM({ dataLivenessTimeoutMs })
+        useBluetoothHRM({
+          dataLivenessTimeoutMs,
+          heartbeatInterval: HEARTBEAT_INTERVAL_MS,
+        })
       )
       let characteristicValueChangedCallback: (event: {
         target: { value: DataView }
@@ -491,7 +512,9 @@ describe('useBluetoothHRM', () => {
     })
 
     it(`should attempt to reconnect on disconnection and give up after ${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`, async () => {
-      const { result } = renderHook(() => useBluetoothHRM())
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+      )
 
       // First connection is successful
       await act(async () => {
@@ -569,7 +592,9 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should successfully reconnect after a disconnection', async () => {
-      const { result } = renderHook(() => useBluetoothHRM())
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+      )
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -608,7 +633,9 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should not attempt to reconnect after a manual disconnect', async () => {
-      const { result } = renderHook(() => useBluetoothHRM())
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+      )
 
       await act(async () => {
         await result.current.connectAndStream()
@@ -640,7 +667,9 @@ describe('useBluetoothHRM', () => {
     })
 
     it('should attempt to reconnect after an unexpected disconnection and succeed', async () => {
-      const { result } = renderHook(() => useBluetoothHRM())
+      const { result } = renderHook(() =>
+        useBluetoothHRM({ heartbeatInterval: HEARTBEAT_INTERVAL_MS })
+      )
 
       // First connection is successful
       await act(async () => {
