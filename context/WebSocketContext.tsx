@@ -24,13 +24,6 @@ import { ConnectedHrmData as HrmData } from '@/types/websocket'
 
 export type { HrmData }
 
-// Define a type for the test controls
-interface TestControls {
-  dispatch: (message: unknown) => void
-  disconnect: () => void
-  connect: () => void
-}
-
 export interface WebSocketContextType extends WebSocketState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
@@ -121,11 +114,7 @@ export const WebSocketProvider = ({
         (typeof window !== 'undefined' &&
           window.location.search.includes('testing=true'))
       ) {
-        // Use type assertion to extend Window interface locally without using 'any'
-        const win = window as unknown as Window & {
-          __TEST_CONTROLS__: TestControls
-        }
-        win.__TEST_CONTROLS__ = {
+        window.__TEST_CONTROLS__ = {
           dispatch: (msg: unknown) => dispatch(msg as ServerMessage),
           disconnect: () => {},
           connect: () => {},
@@ -340,13 +329,9 @@ export const WebSocketProvider = ({
         process.env.NEXT_PUBLIC_TESTING === 'true' ||
         window.location.search.includes('testing=true'))
     ) {
-      // Use type assertion to extend Window interface locally without using 'any'
-      const win = window as unknown as Window & {
-        __TEST_CONTROLS__?: TestControls
-      }
-      if (win.__TEST_CONTROLS__) {
-        win.__TEST_CONTROLS__.disconnect = disconnect
-        win.__TEST_CONTROLS__.connect = connect
+      if (window.__TEST_CONTROLS__) {
+        window.__TEST_CONTROLS__.disconnect = disconnect
+        window.__TEST_CONTROLS__.connect = connect
       }
     }
 
