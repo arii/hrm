@@ -15,13 +15,28 @@ import IconButton from '@mui/material/IconButton'
 import SideLabel from './SideLabel'
 import { useAudioContext } from '@/context/AudioContext'
 import { formatDuration } from '@/lib/utils'
+import { useTheme, alpha } from '@mui/material/styles'
 
 // Define a constant for the side column width to avoid magic numbers
 const SIDE_COLUMN_WIDTH = '40px'
 
+const DEFAULT_PHASE_CONFIG = { color: 'text.secondary', label: 'READY' }
+
+// Map timer phases to MUI theme palette colors
+const TIMER_PHASE_CONFIG: Record<string, { color: string; label: string }> = {
+  PREPARE: { color: 'warning.main', label: 'GET READY' },
+  RUNNING: { color: 'primary.main', label: 'RUNNING' },
+  WORK: { color: 'error.main', label: 'WORK' },
+  REST: { color: 'success.main', label: 'REST' },
+  COOLDOWN: { color: 'info.main', label: 'COOLDOWN' },
+  IDLE: DEFAULT_PHASE_CONFIG,
+}
+
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
+  const theme = useTheme()
+
   const {
     currentPhase,
     timeRemaining,
@@ -33,22 +48,19 @@ const TimerDisplay = () => {
 
   // Determine what to display based on mode and phase
   let displayTime: string
-  let phaseColor: string
-  let phaseLabel: string
+  let configKey = 'IDLE'
 
   if (currentPhase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B' // Yellow/Warning
-    phaseLabel = 'GET READY'
+    configKey = 'PREPARE'
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
     displayTime = formatDuration(timeElapsed, {
       unit: 'seconds',
       format: 'MM:SS',
     })
-    phaseColor = '#2563EB' // Blue/Primary
-    phaseLabel = 'RUNNING'
+    configKey = 'RUNNING'
   } else if (
     mode === 'TABATA' &&
     (currentPhase === 'WORK' ||
@@ -62,21 +74,28 @@ const TimerDisplay = () => {
     })
 
     if (currentPhase === 'WORK') {
-      phaseColor = '#EF4444' // Red
-      phaseLabel = 'WORK'
+      configKey = 'WORK'
     } else if (currentPhase === 'REST') {
-      phaseColor = '#22C55E' // Green
-      phaseLabel = 'REST'
+      configKey = 'REST'
     } else {
-      phaseColor = '#3B82F6' // Blue
-      phaseLabel = 'COOLDOWN'
+      configKey = 'COOLDOWN'
     }
   } else {
     // IDLE or default
     displayTime = formatDuration(0, { unit: 'seconds', format: 'MM:SS' })
-    phaseColor = '#6B7280' // Gray
-    phaseLabel = 'READY'
+    configKey = 'IDLE'
   }
+
+  const { color: phaseColor, label: phaseLabel } = TIMER_PHASE_CONFIG[configKey] ?? DEFAULT_PHASE_CONFIG
+
+  // Helper to resolve color from theme for textShadow
+  const getResolvedColor = (colorPath: string) => {
+    const parts = colorPath.split('.')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (parts.reduce((acc: any, curr) => acc?.[curr], theme.palette) as string) || theme.palette.text.secondary
+  }
+
+  const resolvedColor = getResolvedColor(phaseColor)
 
   return (
     <Card
@@ -163,19 +182,20 @@ const TimerDisplay = () => {
       >
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
         {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
-          <Typography
-            data-testid="timer-phase"
-            variant="h6"
-            aria-live="polite"
-            sx={{
-              mb: 1,
-              color: phaseColor,
-              fontWeight: 700,
-              letterSpacing: 2,
-            }}
-          >
-            {phaseLabel}
-          </Typography>
+          <Box aria-live="polite">
+            <Typography
+              data-testid="timer-phase"
+              variant="h6"
+              sx={{
+                mb: 1,
+                color: phaseColor,
+                fontWeight: 700,
+                letterSpacing: 2,
+              }}
+            >
+              {phaseLabel}
+            </Typography>
+          </Box>
         )}
 
         {/* Giant Timer Display */}
@@ -192,7 +212,7 @@ const TimerDisplay = () => {
             letterSpacing: '0.12rem',
             lineHeight: 1,
             color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
+            textShadow: `0 0 20px ${alpha(resolvedColor, 0.5)}`,
           }}
         >
           {displayTime}

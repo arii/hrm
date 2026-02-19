@@ -204,7 +204,7 @@ function sessionManagerReducer(
 export const useWorkoutSessionManager = () => {
   const [state, dispatch] = useReducer(sessionManagerReducer, initialState)
   const [isInitialized, setIsInitialized] = useState(false)
-  const { showInfo } = useAppSnackbar()
+  const { showInfo, showSuccess, showError } = useAppSnackbar()
 
   const clearStaleSession = useCallback(
     async (
@@ -307,6 +307,29 @@ export const useWorkoutSessionManager = () => {
     dispatch({ type: 'RESET' })
   }, [state.session])
 
+  const exportWorkout = useCallback(async () => {
+    if (!state.session) return
+
+    try {
+      const { generateFitFile } = await import('@/services/exportService')
+      const blob = await generateFitFile(state.session)
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `workout-${new Date(state.session.startTime).toISOString()}.fit`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      showSuccess('Workout exported successfully')
+    } catch (error) {
+      console.error('Export failed:', error)
+      showError('Failed to export workout')
+    }
+  }, [state.session, showSuccess, showError])
+
   const addHrData = useCallback((hrDataPoint: HrDataPoint) => {
     dispatch({ type: 'ADD_HR_DATA', payload: hrDataPoint })
   }, [])
@@ -339,6 +362,7 @@ export const useWorkoutSessionManager = () => {
     resumeWorkout,
     endWorkout,
     resetWorkout,
+    exportWorkout,
     addHrData,
   }
 }
