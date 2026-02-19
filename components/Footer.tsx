@@ -9,6 +9,7 @@ export default function Footer() {
   return (
     <Box
       component="footer"
+      data-testid="footer"
       sx={{
         mt: 'auto',
         py: 2,

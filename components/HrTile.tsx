@@ -28,6 +28,101 @@ const OVERLAY_SX = {
   borderRadius: 'inherit',
 } as const
 
+<<<<<<< HEAD
+=======
+const IdentityTier = ({ name }: { name: string }) => (
+  <Box sx={{ pt: 1, textAlign: 'center' }}>
+    <Typography
+      variant="h5"
+      sx={{
+        fontWeight: 900,
+        textTransform: 'uppercase',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        px: 2,
+      }}
+    >
+      {name}
+    </Typography>
+  </Box>
+)
+
+const HeroTier = ({ percentage }: { percentage: number }) => (
+  <Box
+    sx={{
+      flexGrow: 1,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: 0,
+    }}
+  >
+    <Typography
+      data-testid="live-hr-percent"
+      variant="h2"
+      component="div"
+      sx={{
+        fontSize: {
+          xs: 'clamp(3rem, 10vw, 4rem)',
+          sm: 'clamp(4rem, 12vw, 5rem)',
+          md: 'clamp(5rem, 15vw, 6rem)',
+        },
+        fontWeight: 900,
+        lineHeight: 1,
+        fontFamily: HERO_FONT_FAMILY,
+      }}
+    >
+      {percentage}%
+    </Typography>
+  </Box>
+)
+
+const MetricItem = ({
+  value,
+  label,
+  testId,
+}: {
+  value: React.ReactNode
+  label: string
+  testId?: string
+}) => (
+  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
+    {value}{' '}
+    <Typography
+      component="span"
+      variant="caption"
+      sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+    >
+      {label}
+    </Typography>
+  </Typography>
+)
+
+const DataTier = ({
+  value,
+  calories,
+  showName,
+}: {
+  value: number | null
+  calories: number
+  showName: boolean
+}) => (
+  <Box
+    sx={{
+      pb: 1,
+      pt: showName ? 0 : 1,
+      display: 'flex',
+      justifyContent: 'center',
+      gap: 4,
+    }}
+  >
+    <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
+    <MetricItem value={Math.floor(calories)} label="KCAL" />
+  </Box>
+)
+
+>>>>>>> origin/leader
 const HrTile = ({
   name,
   value,
@@ -66,6 +161,8 @@ const HrTile = ({
           color: zoneConfig.textColor,
           minHeight: { xs: theme.spacing(14), md: theme.spacing(16) },
           height: '100%',
+          minHeight: 180,
+          maxHeight: 250,
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',

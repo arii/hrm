@@ -13,6 +13,7 @@ import Head from 'next/head'
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   loading: () => (
@@ -27,6 +28,7 @@ import TimerControls from '@/app/client/control/components/TimerControls'
 
 const ControlPanel = () => {
   const { connectionStatus, connect, sendData } = useWebSocket()
+  const isReady = useTestPageReady()
 
   // Register this client as a controller
   useEffect(() => {
@@ -55,18 +57,6 @@ const ControlPanel = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [connectionStatus, connect])
 
-  // Signal when page is ready for testing
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        window.__TEST_READY__ = true
-        window.dispatchEvent(new CustomEvent('test-ready'))
-      }
-    }, 1500)
-
-    return () => clearTimeout(timer)
-  }, [])
-
   return (
     <>
       <Head>
@@ -78,6 +68,7 @@ const ControlPanel = () => {
       </Head>
       <Container
         data-testid="control-panel"
+        data-ready={isReady ? 'true' : 'false'}
         maxWidth="xs"
         sx={{
           py: 1,

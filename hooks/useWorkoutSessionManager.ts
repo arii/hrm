@@ -14,7 +14,7 @@ import {
   toHeartRateZone,
 } from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
-import { calculateMaxHr } from '@/lib/shared/hr-zones'
+import { calculateMaxHr } from '@/utils/hrCalculations'
 import { useAppSnackbar } from './useAppSnackbar'
 import { isSessionStale } from '../lib/workout-session'
 

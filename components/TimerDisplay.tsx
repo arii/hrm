@@ -90,6 +90,7 @@ const TimerDisplay = () => {
         backgroundColor: '#000000',
         color: phaseColor,
         height: '100%',
+        maxHeight: 300,
         display: 'flex',
         borderRadius: 2,
         border: '2px solid #1a1a1a',
@@ -220,6 +221,10 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
+<<<<<<< HEAD
+=======
+            fontSize: { xs: '3rem', sm: '4rem', md: '5rem' },
+>>>>>>> origin/leader
             fontWeight: 800,
             lineHeight: 1,
             color: phaseColor,

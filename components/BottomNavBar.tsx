@@ -53,6 +53,7 @@ export default function BottomNavBar() {
 
   return (
     <BottomNavigation
+      data-testid="bottom-nav-bar"
       value={activeValue === -1 ? false : activeValue}
       showLabels
       sx={{
