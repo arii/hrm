@@ -270,7 +270,7 @@ export default function ConnectPage() {
       logger.error('Error exporting workout', error)
       alert('Failed to export workout. Please try again.')
     } finally {
-      // Robust cleanup
+      // Ensure cleanup
       if (a && document.body.contains(a)) {
         document.body.removeChild(a)
       }
