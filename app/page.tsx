@@ -51,7 +51,9 @@ const mainGridStyles: SxProps = {
 }
 
 const Dashboard = () => {
-  // Force error for VRT testing if requested
+  // Force error for VRT testing if requested.
+  // This is a testing-only utility to verify ErrorFallback UI states via VRT
+  // and is triggered by the ?test-error=true query parameter.
   if (
     typeof window !== 'undefined' &&
     window.location.search.includes('test-error=true')
