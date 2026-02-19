@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { useCalorieTracker } from '@/hooks/useCalorieTracker'
+import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import {
   workoutSessionStorage,
@@ -13,6 +14,14 @@ import {
 } from '@/lib/workout-session-storage'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 import { calculateMaxHr } from '@/utils/hrCalculations'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
+
+// Components
+import WorkoutSummary from './WorkoutSummary'
+import ZoneDistribution from './ZoneDistribution'
+import CalorieTracker from './CalorieTracker'
+import SessionList from './SessionList'
+import SessionDetail from './SessionDetail'
 
 const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_0: 0,
@@ -23,14 +32,6 @@ const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_5: 0,
   ZONE_6: 0,
 }
-
-// Components
-import WorkoutSummary from './WorkoutSummary'
-import ZoneDistribution from './ZoneDistribution'
-import CalorieTracker from './CalorieTracker'
-import SessionList from './SessionList'
-import SessionDetail from './SessionDetail'
-import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
@@ -48,7 +49,6 @@ const ExperimentalAnalyticsPage = () => {
     session: activeSession,
     status,
     isInitialized,
-    duration,
     startWorkout,
     pauseWorkout,
     resumeWorkout,
@@ -56,6 +56,14 @@ const ExperimentalAnalyticsPage = () => {
     addHrData,
     updateCalories,
   } = useWorkoutSessionManager()
+
+  const duration = useWorkoutTimer(
+    status,
+    activeSession?.startTime,
+    activeSession?.totalPaused,
+    activeSession?.pauseTime,
+    activeSession?.endTime
+  )
 
   const {
     processHeartRate,
@@ -114,14 +122,6 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [connectionStatus, userSettings, sendData])
 
-<<<<<<< HEAD
-  // Signal when page is ready for testing
-  useEffect(() => {
-    setIsReady(true)
-  }, [])
-
-=======
->>>>>>> origin/leader
   /**
    * FIX: Use ref to avoid interval reset on HR updates (addresses audit issue #1)
    * This prevents the interval from being recreated on every hrmData change

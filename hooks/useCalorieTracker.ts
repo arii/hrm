@@ -105,17 +105,10 @@ export const useCalorieTracker = ({
     genderRef.current = gender
   }, [age, weightKg, gender])
 
-  /**
-   * Processes a new heart rate measurement.
-   * - Smooths the HR value using a Simple Moving Average.
-   * - Calculates the time delta since the last measurement.
-   * - Estimates calories burned for the delta time and accumulates it.
-   */
   const processHeartRate = useCallback(
     (heartRate: number) => {
       const now = Date.now()
 
-      // 1. Simple Moving Average (SMA) for smoothing
       hrHistoryRef.current.push(heartRate)
       if (hrHistoryRef.current.length > smoothingWindow) {
         hrHistoryRef.current.shift()
@@ -123,7 +116,6 @@ export const useCalorieTracker = ({
       const sum = hrHistoryRef.current.reduce((a, b) => a + b, 0)
       const smoothedHr = sum / hrHistoryRef.current.length
 
-      // On the first call, lastTimestampRef.current is null.
       if (!lastTimestampRef.current) {
         dispatch({
           type: 'PROCESS_HR',
@@ -140,7 +132,6 @@ export const useCalorieTracker = ({
 
       const dtSeconds = (now - lastTimestampRef.current) / 1000
 
-      // Validate time gap and minimum heart rate
       if (
         dtSeconds > 0 &&
         dtSeconds < TIME_GAP_THRESHOLD_SECONDS &&
