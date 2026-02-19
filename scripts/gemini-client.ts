@@ -651,11 +651,11 @@ export async function buildReviewPrompt(
   }
 
   promptTemplate += `\n## 🛠️ Issue Generation Instructions
-If you identify Technical Debt, Refactoring opportunities, or Frontend Improvements:
+If you identify Technical Debt, Refactoring opportunities, or Improvements:
 1. **Create a 'suggestedIssue'** in the JSON output.
 2. **Criteria**:
    - MUST be specific, actionable, and non-trivial.
-   - **Type**: \`technical-debt\`, \`frontend-improvement\`, \`security\`, \`bug\`.
+   - **Type**: \`bug\`, \`enhancement\`, \`refactor\`, \`chore\`, \`documentation\`.
    - **Priority**: \`high\`, \`medium\`, \`low\`.
 `
 
@@ -670,11 +670,11 @@ async function runReviewPreset(
 ) {
   // Skip logic
   if (
-    context.prLabels.includes('ready-for-approval') ||
+    context.prLabels.includes('ai-reviewed') ||
     context.prLabels.includes('abandon')
   ) {
     console.log(
-      'PR is marked as "ready-for-approval" or "abandon". Skipping review.'
+      'PR is marked as "ai-reviewed" or "abandon". Skipping review.'
     )
     await writeOutput(
       JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
@@ -738,10 +738,11 @@ async function runReviewPreset(
                   type: {
                     type: SchemaType.STRING,
                     enum: [
-                      'technical-debt',
-                      'frontend-improvement',
-                      'security',
                       'bug',
+                      'enhancement',
+                      'refactor',
+                      'chore',
+                      'documentation',
                     ],
                     format: 'enum',
                   },
@@ -790,7 +791,7 @@ async function runReviewPreset(
       )
       const fallback = {
         reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.${commitComment}`,
-        labels: ['ready-for-approval'],
+        labels: ['ai-reviewed'],
         verdict: 'approve',
       }
       await writeOutput(JSON.stringify(fallback, null, 2), outputFile)
@@ -821,7 +822,7 @@ async function runReviewPreset(
       reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.${commitComment}\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${
         (result.data as { rawResponse: string }).rawResponse || ''
       }\n\`\`\`\n\n</details>`,
-      labels: ['review-failed'],
+      labels: ['ci-failure'],
       verdict: 'comment',
     }
     await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
@@ -887,7 +888,7 @@ export async function handleError(
     },
     // Provide a valid structure for the review result to avoid breaking the calling workflow
     reviewComment: `### ❌ Review Failed: ${category}\n\n**Details**: ${userMessage}${commitComment}\n\n<details><summary>Technical Info</summary>\n\n\`\`\`\n${technicalDetails}\n\`\`\`\n\n</details>`,
-    labels: ['review-failed'],
+    labels: ['ci-failure'],
     verdict: 'comment',
   }
 

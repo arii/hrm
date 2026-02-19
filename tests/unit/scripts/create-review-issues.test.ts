@@ -72,14 +72,14 @@ describe('create-review-issues script', () => {
           title: 'Refactor the authentication service',
           description:
             'The auth service is too complex and should be refactored to improve maintainability.',
-          type: 'technical-debt',
+          type: 'refactor',
           priority: 'high',
         },
         {
           title: 'Fix the button alignment',
           description:
             'The button is not aligned correctly on the main page, which affects the user experience.',
-          type: 'frontend-improvement',
+          type: 'enhancement',
           priority: 'low',
         },
       ],
@@ -118,14 +118,14 @@ describe('create-review-issues script', () => {
           title: 'Refactor the authentication service',
           description:
             'The auth service is too complex and should be refactored to improve maintainability.',
-          type: 'technical-debt',
+          type: 'refactor',
           priority: 'high',
         },
         {
           title: 'Fix the button alignment',
           description:
             'The button is not aligned correctly on the main page, which affects the user experience.',
-          type: 'frontend-improvement',
+          type: 'enhancement',
           priority: 'low',
         },
       ],
@@ -208,7 +208,7 @@ describe('create-review-issues script', () => {
         'gh',
         expect.arrayContaining([
           '--label',
-          'bot-generated,triage-needed,type-bug,priority-medium',
+          'bot-generated,triage-needed,bug,priority:medium',
         ]),
         expect.any(Object)
       )
@@ -219,7 +219,7 @@ describe('create-review-issues script', () => {
         title: "Fix: `rm -rf /` shouldn't run",
         description:
           'A very serious bug that needs to be fixed right away because it is a security vulnerability.',
-        type: 'security',
+        type: 'bug',
         priority: 'high',
       }
       const context = { repo: 'test/repo', prNumber: '789' }
@@ -246,7 +246,7 @@ describe('isLowQualityIssue', () => {
       title: 'This is a robust solution',
       description:
         'We need to delve into this issue and leverage our resources to fix this problem.',
-      type: 'technical-debt',
+      type: 'refactor',
       priority: 'medium',
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
@@ -256,7 +256,7 @@ describe('isLowQualityIssue', () => {
     const issue = {
       title: 'This is a trivial issue',
       description: 'This is a short description.',
-      type: 'technical-debt',
+      type: 'refactor',
       priority: 'medium',
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
@@ -267,7 +267,7 @@ describe('isLowQualityIssue', () => {
       title: 'This is a high-quality issue',
       description:
         'This is a long and detailed description of the issue. It does not contain any "slop" words.',
-      type: 'technical-debt',
+      type: 'refactor',
       priority: 'medium',
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
@@ -278,7 +278,7 @@ describe('isLowQualityIssue', () => {
       title: 'This is a high-quality issue',
       description:
         'This is a long and detailed description of the issue. It does not contain any "slop" words.',
-      type: 'technical-debt',
+      type: 'refactor',
       priority: 'medium',
     }
     expect(isLowQualityIssue(issue, null)).toBe(false)
