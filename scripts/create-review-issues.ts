@@ -7,6 +7,7 @@ import { z } from 'zod'
 
 // --- Constants ---
 const MIN_DESCRIPTION_LENGTH = 50
+export const FINGERPRINT_REGEX = /<!-- fingerprint: (.*) -->/
 
 // --- Label Configuration ---
 
@@ -40,6 +41,18 @@ const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
       color: '0075ca',
       description: 'Improvements or additions to documentation.',
     },
+    'technical-debt': {
+      color: '5319e7',
+      description: 'Code that needs refactoring or improvement.',
+    },
+    'frontend-improvement': {
+      color: 'a2eeef',
+      description: 'Improvements to the user interface.',
+    },
+    security: {
+      color: 'd73a4a',
+      description: 'Security vulnerability or improvement.',
+    },
     'priority:high': { color: 'd73a4a', description: 'High priority issue.' },
     'priority:medium': {
       color: 'fbca04',
@@ -53,8 +66,18 @@ const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
 const SuggestedIssueSchema = z.object({
   title: z.string(),
   description: z.string(),
-  type: z.enum(['bug', 'enhancement', 'refactor', 'chore', 'documentation']),
+  type: z.enum([
+    'bug',
+    'enhancement',
+    'refactor',
+    'chore',
+    'documentation',
+    'technical-debt',
+    'frontend-improvement',
+    'security',
+  ]),
   priority: z.enum(['high', 'medium', 'low']),
+  fingerprint: z.string().optional(),
 })
 
 const PRContextSchema = z.object({
@@ -86,6 +109,10 @@ const ExistingIssuesSchema = z.array(ExistingIssueSchema)
 export type SuggestedIssue = z.infer<typeof SuggestedIssueSchema>
 export type ReviewResult = z.infer<typeof ReviewResultSchema>
 export type ExistingIssue = z.infer<typeof ExistingIssueSchema>
+
+export interface PreparedExistingIssue extends ExistingIssue {
+  titleTokens: Set<string>
+}
 
 // --- GitHub Client Abstraction ---
 
@@ -193,7 +220,10 @@ export class GitHubClient implements IGitHubClient {
 - **Branch:** ${branchInfo}
 - **Commit:** ${commitLink}`
 
-    const body = `${issue.description}${footer}`
+    const fingerprintMarker = issue.fingerprint
+      ? `\n<!-- fingerprint: ${issue.fingerprint} -->`
+      : ''
+    const body = `${issue.description}${footer}${fingerprintMarker}`
     const title = issue.title
 
     console.log(`🚀 Creating issue: "${title}"...`)
@@ -278,37 +308,109 @@ export class GitHubClient implements IGitHubClient {
 
 // --- Deduplication ---
 
+// Helper function for fuzzy matching
+export function tokenize(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .split(/\s+/)
+      .filter((w) => w.length > 2)
+  )
+}
+
+/**
+ * Calculates the Jaccard similarity between two sets of tokens.
+ * A value of 1 indicates identical sets, while 0 indicates no overlap.
+ */
+export function calculateJaccardSimilarity(
+  words1: Set<string>,
+  words2: Set<string>
+): number {
+  if (words1.size === 0 && words2.size === 0) return 1
+  if (words1.size === 0 || words2.size === 0) return 0
+
+  const intersection = new Set([...words1].filter((x) => words2.has(x)))
+  const union = new Set([...words1, ...words2])
+
+  return intersection.size / union.size
+}
+
 function getIssueSignature(title: string, description: string): string {
   const content = `${title.trim()}${description.trim()}`
   return crypto.createHash('sha256').update(content).digest('hex')
 }
 
+const GENERIC_TITLES = [
+  'refactor code',
+  'improve code quality',
+  'fix technical debt',
+  'technical debt identified',
+  'clean up code',
+  'optimize performance',
+  'add documentation',
+  'improve test coverage',
+  'enhance readability',
+]
+
 export function isLowQualityIssue(
   issue: SuggestedIssue,
   slopPattern: RegExp | null
 ): boolean {
+  // 1. Check description length
   if (issue.description.trim().length < MIN_DESCRIPTION_LENGTH) {
     return true
   }
-  if (!slopPattern) return false
 
+  // 2. Check for generic titles
+  const normalizedTitle = issue.title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s]/g, '')
+  if (GENERIC_TITLES.includes(normalizedTitle)) {
+    return true
+  }
+
+  // 3. Check for "AI slop" patterns
+  if (!slopPattern) return false
   const combinedText = `${issue.title} ${issue.description}`
   return slopPattern.test(combinedText)
 }
 
 export function isDuplicate(
   newIssue: SuggestedIssue,
-  existingIssues: ExistingIssue[]
+  existingIssues: PreparedExistingIssue[]
 ): boolean {
   const newSignature = getIssueSignature(newIssue.title, newIssue.description)
+  const newIssueTokens = tokenize(newIssue.title)
+
   for (const existing of existingIssues) {
-    // Strip the footer from the existing issue body before generating the signature
+    // 1. Check for exact content match (legacy)
     const existingDescription = existing.body.split('\n\n---')[0] || ''
     const existingSignature = getIssueSignature(
       existing.title,
       existingDescription
     )
     if (newSignature === existingSignature) {
+      return true
+    }
+
+    // 2. Check for fingerprint match
+    const existingFingerprint = existing.body.match(FINGERPRINT_REGEX)?.[1]
+    if (
+      newIssue.fingerprint &&
+      existingFingerprint &&
+      newIssue.fingerprint === existingFingerprint
+    ) {
+      return true
+    }
+
+    // 3. Check for fuzzy title match
+    const titleSimilarity = calculateJaccardSimilarity(
+      newIssueTokens,
+      existing.titleTokens
+    )
+    if (titleSimilarity >= 0.85) {
       return true
     }
   }
@@ -353,6 +455,14 @@ export async function run(
 
   const existingIssues = client.getRecentIssues('bot-generated')
 
+  // Optimize: Pre-calculate tokens for existing issues to avoid re-tokenizing in the loop.
+  const preparedExistingIssues: PreparedExistingIssue[] = existingIssues.map(
+    (issue) => ({
+      ...issue,
+      titleTokens: tokenize(issue.title),
+    })
+  )
+
   // Read and compile the slop words from the file.
   let slopPattern: RegExp | null = null
   try {
@@ -379,7 +489,7 @@ export async function run(
   let skippedLowQuality = 0
 
   for (const issue of result.suggestedIssues) {
-    if (isDuplicate(issue, existingIssues)) {
+    if (isDuplicate(issue, preparedExistingIssues)) {
       console.log(`⏭️  Skipping duplicate: "${issue.title}"`)
       skippedDuplicates++
       continue
