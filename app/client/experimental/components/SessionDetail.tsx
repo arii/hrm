@@ -4,6 +4,7 @@ import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatDate } from '@/lib/utils'
 import ZoneDistribution from './ZoneDistribution'
 import HeartRateTimeSeries from './HeartRateTimeSeries'
+import { generateFitFile } from '@/utils/fit-export'
 
 interface SessionDetailProps {
   session: WorkoutSessionData
@@ -23,15 +24,30 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
     session.hrHistory.reduce((sum, dp) => sum + dp.hr, 0) /
       session.hrHistory.length || 0
 
+  const handleExportFit = () => {
+    const blob = generateFitFile(session)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `hrm_session_${session.sessionId}.fit`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <Card>
       <CardContent>
         <Typography variant="h5" gutterBottom>
           Workout Details
         </Typography>
-        <Button onClick={onBack} sx={{ mb: 2 }}>
-          &larr; Back to List
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <Button onClick={onBack}>&larr; Back to List</Button>
+          <Button onClick={handleExportFit} variant="outlined">
+            Export FIT
+          </Button>
+        </Box>
 
         <Box
           sx={{
