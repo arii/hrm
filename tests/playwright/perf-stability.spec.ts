@@ -1,8 +1,5 @@
 import { test, expect } from '@playwright/test'
-
-interface WindowWithTestFlags extends Window {
-  __TEST_WEBSOCKET_READY__?: boolean
-}
+import { waitForWebSocketConnection } from './lib/waits'
 
 test.describe('WebSocket Stability', () => {
   test('should maintain a stable WebSocket connection', async ({ page }) => {
@@ -10,13 +7,7 @@ test.describe('WebSocket Stability', () => {
     await page.goto('/')
 
     // Wait for the WebSocket connection to be established
-    await page.waitForFunction(
-      () => (window as WindowWithTestFlags).__TEST_WEBSOCKET_READY__ === true,
-      null,
-      {
-        timeout: 10000,
-      }
-    )
+    await waitForWebSocketConnection(page, { timeout: 10000 })
 
     // Check that the connection status indicator is not visible
     const connectionStatus = page.locator('[data-testid="connection-status"]')
