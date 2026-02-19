@@ -379,7 +379,7 @@ const handleIncomingMessage = (
             break
           default:
             logger.warn(
-              { clientId, command: message.command },
+              { clientId, command: (message as any).command },
               'Unknown timer command received'
             )
         }
