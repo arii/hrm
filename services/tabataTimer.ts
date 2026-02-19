@@ -163,7 +163,11 @@ class TabataTimer {
     this.restDuration = Math.floor(config.restDuration)
 
     // Only reset time if we are truly at the start (IDLE)
-    if (!this.isRunning && this.currentPhase === 'IDLE' && this.mode === 'TABATA') {
+    if (
+      !this.isRunning &&
+      this.currentPhase === 'IDLE' &&
+      this.mode === 'TABATA'
+    ) {
       this.timeRemaining = this.workDuration
       this.pausedTimeRemaining = this.workDuration
     }
