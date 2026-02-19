@@ -8,7 +8,6 @@ import ConnectView from './ConnectView'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
-import { useCalorieTracker } from '@/hooks/useCalorieTracker'
 import {
   calculateZoneFromMaxHr,
   calculateMaxHr,
@@ -95,16 +94,6 @@ export default function ConnectPage() {
     }
   }, [connectionStatus, userName, userAge, sendData])
 
-  const {
-    totalCaloriesBurned: calories,
-    processHeartRate,
-    reset: resetCalculator,
-    setCalories: setTrackerCalories,
-  } = useCalorieTracker({
-    age: userAge || 30,
-    weightKg: userWeight || 70,
-  })
-
   const throttledSend = useMemo(
     () =>
       throttle((message: HrmInputMessage) => {
@@ -129,7 +118,6 @@ export default function ConnectPage() {
     endWorkout,
     resetWorkout,
     addHrData,
-    updateCalories,
   } = useWorkoutSessionManager()
 
   const workoutDuration = useWorkoutTimer(
@@ -142,41 +130,19 @@ export default function ConnectPage() {
 
   const handleStartWorkout = useCallback(() => {
     if (workoutStatus === 'idle') {
-      startWorkout(userAge || 30, userWeight || 70)
+      startWorkout(userAge || 30, userWeight || 70, { gender })
     } else if (workoutStatus === 'paused') {
       resumeWorkout()
     }
-  }, [startWorkout, resumeWorkout, workoutStatus, userAge, userWeight])
-
-  const [isTrackerSynced, setIsTrackerSynced] = useState(false)
-
-  // Sync FROM session TO tracker
-  useEffect(() => {
-    if (isInitialized && !isTrackerSynced) {
-      if (session?.totalCaloriesBurned) {
-        setTrackerCalories(session.totalCaloriesBurned)
-      }
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsTrackerSynced(true)
-    }
-  }, [isInitialized, isTrackerSynced, session, setTrackerCalories])
-
-  // Sync FROM tracker TO session
-  useEffect(() => {
-    if (isInitialized && isTrackerSynced) {
-      updateCalories(calories)
-    }
-  }, [calories, updateCalories, isInitialized, isTrackerSynced])
+  }, [startWorkout, resumeWorkout, workoutStatus, userAge, userWeight, gender])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
-    resetCalculator() // Reset calories on workout end
-  }, [endWorkout, resetCalculator])
+  }, [endWorkout])
 
   const handleResetWorkout = useCallback(() => {
     resetWorkout()
-    resetCalculator()
-  }, [resetWorkout, resetCalculator])
+  }, [resetWorkout])
 
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
@@ -187,16 +153,12 @@ export default function ConnectPage() {
       setCurrentHR(heartRate)
 
       if (workoutStatus === 'running') {
-        processHeartRate(heartRate)
-
-        addHrData({
-          time: Date.now(),
-          hr: heartRate,
-        })
+        addHrData(heartRate)
       }
     },
-    [processHeartRate, workoutStatus, setCurrentHR, addHrData]
+    [workoutStatus, setCurrentHR, addHrData]
   )
+
   const {
     connectAndStream,
     autoConnect,
@@ -220,7 +182,7 @@ export default function ConnectPage() {
   useEffect(() => {
     if (isInitialized && isConnected) {
       if (workoutStatus === 'idle') {
-        startWorkout(userAge || 30, userWeight || 70)
+        startWorkout(userAge || 30, userWeight || 70, { gender })
       } else if (workoutStatus === 'paused') {
         resumeWorkout()
       }
@@ -233,6 +195,7 @@ export default function ConnectPage() {
     resumeWorkout,
     userAge,
     userWeight,
+    gender,
   ])
 
   useEffect(() => {
@@ -270,12 +233,12 @@ export default function ConnectPage() {
       type: 'HRM_INPUT',
       data: {
         value: currentHR,
-        calories: calories,
+        calories: caloriesBurned,
         percentage,
         zone: heartRateZone,
       },
     })
-  }, [currentHR, calories, percentage, heartRateZone, throttledSend])
+  }, [currentHR, caloriesBurned, percentage, heartRateZone, throttledSend])
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
@@ -295,7 +258,7 @@ export default function ConnectPage() {
         unit: 'seconds',
         format: 'HH:MM:SS',
       })}
-      caloriesBurned={caloriesBurned || calories}
+      caloriesBurned={caloriesBurned}
       userName={userName}
       setUserName={(name) =>
         setUserSettings((prev) => ({ ...prev, userName: name }))

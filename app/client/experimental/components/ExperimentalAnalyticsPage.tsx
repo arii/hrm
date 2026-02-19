@@ -5,7 +5,6 @@ import { Container, Box, Button } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
-import { useCalorieTracker } from '@/hooks/useCalorieTracker'
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import {
@@ -54,7 +53,7 @@ const ExperimentalAnalyticsPage = () => {
     resumeWorkout,
     endWorkout,
     addHrData,
-    updateCalories,
+    caloriesBurned,
   } = useWorkoutSessionManager()
 
   const duration = useWorkoutTimer(
@@ -64,17 +63,6 @@ const ExperimentalAnalyticsPage = () => {
     activeSession?.pauseTime,
     activeSession?.endTime
   )
-
-  const {
-    processHeartRate,
-    totalCaloriesBurned,
-    calorieHistory,
-    reset: resetCalories,
-    setCalories: setTrackerCalories,
-  } = useCalorieTracker({
-    age: userSettings.userAge || 30,
-    weightKg: userSettings.userWeight || 70,
-  })
 
   // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
@@ -138,46 +126,22 @@ const ExperimentalAnalyticsPage = () => {
 
     const intervalId = setInterval(() => {
       const currentHr = latestHrRef.current
-
-      // Process calories (uses time-gap validation internally)
-      processHeartRate(currentHr)
-
-      // Add HR data point with zone calculation
-      const dataPoint = {
-        time: Date.now(),
-        hr: currentHr,
-      }
-
-      addHrData(dataPoint)
+      // Add HR data point (handles calorie calc internally)
+      addHrData(currentHr)
     }, 1000)
 
     return () => clearInterval(intervalId)
-  }, [status, processHeartRate, addHrData])
-
-  // Sync calories to session manager
-  useEffect(() => {
-    if (isInitialized) {
-      updateCalories(totalCaloriesBurned)
-    }
-  }, [totalCaloriesBurned, updateCalories, isInitialized])
-
-  // Restore tracker state from recovered session
-  useEffect(() => {
-    if (isInitialized && activeSession?.totalCaloriesBurned) {
-      setTrackerCalories(activeSession.totalCaloriesBurned)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitialized])
+  }, [status, addHrData])
 
   // Handlers
   const handleStartWorkout = useCallback(() => {
     const age = userSettings.userAge || 30
     const weight = userSettings.userWeight || 70
     const maxHr = calculateMaxHr(age)
-    resetCalories()
-    startWorkout(age, weight, { maxHr, startCalories: 0 })
+
+    startWorkout(age, weight, { maxHr })
     setView('active')
-  }, [startWorkout, resetCalories, userSettings])
+  }, [startWorkout, userSettings])
 
   const handlePauseWorkout = useCallback(() => {
     pauseWorkout()
@@ -230,9 +194,9 @@ const ExperimentalAnalyticsPage = () => {
       avgHr,
       maxHr,
       timeInZones: activeSession.timeInZones,
-      totalCalories: totalCaloriesBurned,
+      totalCalories: caloriesBurned,
     }
-  }, [activeSession, totalCaloriesBurned])
+  }, [activeSession, caloriesBurned])
 
   const defaultDate = useMemo(() => new Date(), [])
 
@@ -282,7 +246,9 @@ const ExperimentalAnalyticsPage = () => {
               }
             />
 
-            <CalorieTracker calorieHistory={calorieHistory} />
+            <CalorieTracker
+              calorieHistory={activeSession?.calorieHistory || []}
+            />
 
             <ZoneDistribution timeInZones={summaryData.timeInZones} />
 

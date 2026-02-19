@@ -112,33 +112,48 @@ describe('useWorkoutSessionManager', () => {
       })
 
       // Add first data point (HR 120 -> ~65% -> Zone 2 / Warm Up)
+      // Must advance time for subsequent points to calculate zones/calories relative to something?
+      // First point initializes the smoothing but no previous timestamp -> no calories delta yet
+      mockDateNow.mockReturnValue(1001000)
       act(() => {
-        result.current.addHrData({ time: 1001000, hr: 120 })
+        result.current.addHrData(120)
       })
       expect(result.current.session?.hrHistory.length).toBe(1)
       expect(result.current.session?.maxHr).toBe(120)
       expect(result.current.session?.averageHr).toBe(120)
+      // Only 1 point, so no time duration yet for zone calculation in reducer
+      // Reducer: timeDelta = lastDataPoint ? (time - last.time) : 1
+      // First point: no lastDataPoint, timeDelta = 1.
       expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
+      expect(result.current.session?.totalCaloriesBurned).toBe(0) // No previous point to calc delta
 
       // Add second data point (HR 150 -> ~81% -> Zone 4 / Cardio)
+      mockDateNow.mockReturnValue(1002000) // +1 second
       act(() => {
-        result.current.addHrData({ time: 1002000, hr: 150 })
+        result.current.addHrData(150)
       })
       expect(result.current.session?.hrHistory.length).toBe(2)
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBe(135)
       expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
-      expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
+      expect(result.current.session?.timeInZones.ZONE_4).toBe(1) // 1 second elapsed since last point
+
+      // Calories should have increased
+      expect(result.current.session?.totalCaloriesBurned).toBeGreaterThan(0)
 
       // Add third data point (HR 100 -> ~54% -> Zone 1 / Recovery)
+      mockDateNow.mockReturnValue(1004000) // +2 seconds
       act(() => {
-        result.current.addHrData({ time: 1004000, hr: 100 })
+        result.current.addHrData(100)
       })
       expect(result.current.session?.hrHistory.length).toBe(3)
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBeCloseTo(123.33)
       expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
+      // Zone 1 gets +2 seconds
       expect(result.current.session?.timeInZones.ZONE_1).toBe(2)
+
+      expect(result.current.session?.totalCaloriesBurned).toBeGreaterThan(0)
     })
 
     it('should not add HR data if the session is not running', async () => {
@@ -156,8 +171,9 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.status).toBe('paused')
 
       // Attempt to add data
+      mockDateNow.mockReturnValue(1001000)
       act(() => {
-        result.current.addHrData({ time: 1001000, hr: 130 })
+        result.current.addHrData(130)
       })
 
       // Assert no changes
@@ -212,6 +228,7 @@ describe('useWorkoutSessionManager', () => {
         startTime: 1000000,
         status: 'paused',
         totalCaloriesBurned: 0,
+        userSettings: { age: 30, weight: 80, maxHr: 190 },
       }
       mockGetIncompleteSession.mockResolvedValue(todaySession)
       mockIsSameDay.mockReturnValue(true) // Mock as the same day
@@ -237,6 +254,7 @@ describe('useWorkoutSessionManager', () => {
         sessionId: 'active-session-id',
         startTime: 1000000,
         status: 'running',
+        userSettings: { age: 30, weight: 80, maxHr: 190 },
       }
       mockGetIncompleteSession.mockResolvedValue(todaySession)
       mockIsSameDay.mockReturnValue(true) // Initially, it's the same day
