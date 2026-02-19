@@ -53,10 +53,7 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
           </Box>
 
           <Box sx={{ flex: 1 }}>
-            <ZoneDistribution
-              timeInZones={session.timeInZones}
-              totalDuration={durationInSeconds}
-            />
+            <ZoneDistribution timeInZones={session.timeInZones} />
           </Box>
         </Box>
         <HeartRateTimeSeries hrHistory={session.hrHistory} />

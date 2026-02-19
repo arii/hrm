@@ -1,6 +1,6 @@
 import { MeasurementSystem } from '../../types/core'
 
-export const WEIGHT_VALIDATION = {
+const WEIGHT_VALIDATION = {
   IMPERIAL: { min: 66, max: 440 }, // lbs
   METRIC: { min: 30, max: 200 }, // kg
 }

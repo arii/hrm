@@ -33,14 +33,12 @@ describe('ZoneDistribution', () => {
   }
 
   it('renders the title', () => {
-    render(
-      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
-    )
+    render(<ZoneDistribution timeInZones={baseTimeInZones} />)
     expect(screen.getByText('Heart Rate Zone Distribution')).toBeInTheDocument()
   })
 
   it('renders the zone list with all zones even with no total duration', () => {
-    render(<ZoneDistribution timeInZones={baseTimeInZones} totalDuration={0} />)
+    render(<ZoneDistribution timeInZones={baseTimeInZones} />)
     // Should NOT show "No zone data available" message
     expect(
       screen.queryByText('No zone data available for this session.')
@@ -55,9 +53,7 @@ describe('ZoneDistribution', () => {
   })
 
   it('renders the zone list even with no time in any zone if duration exists', () => {
-    render(
-      <ZoneDistribution timeInZones={baseTimeInZones} totalDuration={100} />
-    )
+    render(<ZoneDistribution timeInZones={baseTimeInZones} />)
     // Should show the distribution overview even if all zones are at 0%
     expect(
       screen.queryByText('No zone data available for this session.')
@@ -74,7 +70,7 @@ describe('ZoneDistribution', () => {
       ZONE_3: 30,
       ZONE_4: 10,
     }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
+    render(<ZoneDistribution timeInZones={timeInZones} />)
     // Multiple instances due to accessible table and visible legend
     expect(
       screen.getAllByText(HR_ZONE_CONFIG.ZONE_2.label).length
@@ -98,7 +94,7 @@ describe('ZoneDistribution', () => {
       ...baseTimeInZones,
       ZONE_2: 100,
     }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={100} />)
+    render(<ZoneDistribution timeInZones={timeInZones} />)
     // Zone 2 has time
     expect(
       screen.getAllByText(HR_ZONE_CONFIG.ZONE_2.label).length
@@ -118,7 +114,7 @@ describe('ZoneDistribution', () => {
       ...baseTimeInZones,
       ZONE_2: 120,
     }
-    render(<ZoneDistribution timeInZones={timeInZones} totalDuration={120} />)
+    render(<ZoneDistribution timeInZones={timeInZones} />)
     expect(screen.getByText('Total')).toBeInTheDocument()
     // Multiple instances due to center label, legend, and table
     const timeElements = screen.getAllByText('2:00')

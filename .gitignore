@@ -31,8 +31,6 @@ test_output.txt
 # TypeScript Build Cache
 *.tsbuildinfo
 .cache/
-.tsbuildinfo*
-**/.tsbuildinfo*
 next-env.d.ts
 
 # Production & Logs
