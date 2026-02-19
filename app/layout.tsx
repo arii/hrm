@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
+import localFont from 'next/font/local'
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter'
 import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
@@ -15,6 +16,12 @@ const inter = Inter({
 const roboto_mono = Roboto_Mono({
   subsets: ['latin'],
   variable: '--font-roboto-mono',
+  display: 'swap',
+})
+
+const digital7 = localFont({
+  src: '../public/assets/digital-7-mono.ttf',
+  variable: '--font-digital-7',
   display: 'swap',
 })
 
@@ -54,7 +61,9 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} ${roboto_mono.variable}`}>
+      <body
+        className={`${inter.variable} ${roboto_mono.variable} ${digital7.variable}`}
+      >
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline />
