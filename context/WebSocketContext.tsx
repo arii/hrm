@@ -115,6 +115,7 @@ export const WebSocketProvider = ({
           window.location.search.includes('testing=true'))
       ) {
         window.__TEST_CONTROLS__ = {
+          ...(window.__TEST_CONTROLS__ || {}),
           dispatch: (msg: unknown) => dispatch(msg as ServerMessage),
           disconnect: () => {},
           connect: () => {},

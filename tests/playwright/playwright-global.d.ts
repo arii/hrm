@@ -46,17 +46,11 @@ interface MockBluetoothDevice {
 
 declare global {
   interface Window {
-    // This is defined in types/global.d.ts but we need to ensure Playwright sees it compatible
-    // or we can remove it if we can share the types. For now, let's keep it compatible
-    // by allowing additional properties (index signature or just optional props)
-    // Actually, let's remove the conflicting strict definition and rely on the app's types if possible,
-    // but Playwright runs in a separate context.
-    // The safest fix for the conflict is to match the TestControls interface structure or use 'any'.
     __TEST_CONTROLS__?: {
       dispatch?: (message: unknown) => void
       disconnect?: () => void
       connect?: () => void
-      [key: string]: unknown // Allow other properties like setHrmStatus
+      [key: string]: unknown
     }
     bluetoothTestHelpers?: {
       simulateHeartRate: (bpm: number) => Promise<void>
