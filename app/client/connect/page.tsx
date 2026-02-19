@@ -250,35 +250,36 @@ export default function ConnectPage() {
     if (!currentSession) return
 
     setIsExporting(true)
+    let url: string | null = null
+    let a: HTMLAnchorElement | null = null
+
     try {
-      const response = await fetch(
-        `/api/workout/export/${currentSession.sessionId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(currentSession),
-        }
-      )
+      // Dynamically load the service only when needed
+      const { generateFIT } = await import('@/services/exportService')
 
-      if (!response.ok) {
-        throw new Error('Failed to export workout')
-      }
+      // Direct client-side generation
+      const blob = generateFIT(currentSession)
 
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
+      url = window.URL.createObjectURL(blob)
+      a = document.createElement('a')
       a.href = url
       a.download = `workout-${currentSession.sessionId}.fit`
       document.body.appendChild(a)
       a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
     } catch (error) {
       logger.error('Error exporting workout', error)
       alert('Failed to export workout. Please try again.')
     } finally {
+      // Ensure cleanup
+      if (a && document.body.contains(a)) {
+        document.body.removeChild(a)
+      }
+      if (url) {
+        // Short delay to ensure download starts before revocation
+        setTimeout(() => {
+          if (url) window.URL.revokeObjectURL(url)
+        }, 100)
+      }
       setIsExporting(false)
     }
   }, [currentSession])
