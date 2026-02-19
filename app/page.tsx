@@ -9,10 +9,11 @@ import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -50,8 +51,19 @@ const mainGridStyles: SxProps = {
 }
 
 const Dashboard = () => {
+  // Force error for VRT testing if requested.
+  // This is a testing-only utility to verify ErrorFallback UI states via VRT
+  // and is triggered by the ?test-error=true query parameter.
+  if (
+    typeof window !== 'undefined' &&
+    window.location.search.includes('test-error=true')
+  ) {
+    throw new Error('VRT Test Error')
+  }
+
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
+  const isReady = useTestPageReady()
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
 
@@ -66,6 +78,7 @@ const Dashboard = () => {
     }
   }
 
+<<<<<<< HEAD
   // Signal when page is ready for testing
   const [isReady, setIsReady] = useState(false)
   useEffect(() => {
@@ -81,6 +94,12 @@ const Dashboard = () => {
     <Container
       data-testid="dashboard"
       data-ready={isReady ? 'true' : undefined}
+=======
+  return (
+    <Container
+      data-testid="dashboard"
+      data-ready={isReady ? 'true' : 'false'}
+>>>>>>> origin/leader
       maxWidth="xl"
       onClick={handleInteraction}
       sx={{

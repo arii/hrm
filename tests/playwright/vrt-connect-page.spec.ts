@@ -59,7 +59,12 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       connectPage.getByText('Connected! Heart rate data is being streamed')
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-connected.png', {
+<<<<<<< HEAD
       mask: getHrMasks(connectPage),
+=======
+      mask: [connectPage.getByTestId('hr-tile')],
+      maxDiffPixelRatio: 0.1,
+>>>>>>> origin/leader
     })
   })
 

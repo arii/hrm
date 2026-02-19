@@ -2,6 +2,7 @@ import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
 import { setupVisualRegressionTest } from './test-helpers'
 import { takeScreenshot } from './lib/visual'
+import { HRM_ROUTES } from './lib/setup'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -25,10 +26,17 @@ test.describe('WorkoutSummary Component VRT', () => {
   })
 
   test('active state', async () => {
+<<<<<<< HEAD
     // The dashboard starts in a "list" view. Click "New Workout" (or "Back to Active Workout") to show the summary.
     await dashboardPage
       .getByRole('button', { name: /New Workout|Back to Active Workout/i })
       .click()
+=======
+    // Navigate to experimental dashboard
+    await dashboardPage.goto(HRM_ROUTES.EXPERIMENTAL)
+    // The dashboard starts in a "list" view. Click "New Workout" to show the summary.
+    await dashboardPage.getByRole('button', { name: 'New Workout' }).click()
+>>>>>>> origin/leader
     const workoutSummary = dashboardPage.getByTestId('workout-summary')
 
     // Mask the duration, since it's dynamic

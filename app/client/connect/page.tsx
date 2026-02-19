@@ -10,11 +10,8 @@ import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-import {
-  calculateZoneFromMaxHr,
-  calculateMaxHr,
-  toHeartRateZone,
-} from '@/lib/shared/hr-zones'
+import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
+import { calculateMaxHr } from '@/utils/hrCalculations'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -23,12 +20,14 @@ import {
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
   const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
   const [currentHR, setCurrentHR] = useState(0)
+  const isReady = useTestPageReady()
 
   const [localDisplayWeight, setLocalDisplayWeight] = useState<string | null>(
     null
@@ -244,16 +243,9 @@ export default function ConnectPage() {
     connectAndStream(userName, userAge || 0)
   }
 
-  // Signal when page is ready for testing
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__TEST_READY__ = true
-      window.dispatchEvent(new CustomEvent('test-ready'))
-    }
-  }, [])
-
   return (
     <ConnectView
+      isReady={isReady}
       duration={formatDuration(workoutDuration, {
         unit: 'seconds',
         format: 'HH:MM:SS',

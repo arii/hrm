@@ -4,10 +4,14 @@ import { ServerMessage } from '../../types/websocket'
 test('should remove tile immediately when missing from HRM_UPDATE', async ({
   page,
 }) => {
-  await page.goto('/')
+  await page.goto('/?testing=true')
+  await page.waitForSelector('[data-ready="true"]', { timeout: 15000 })
 
   // Helper to dispatch messages to the reducer
   const dispatch = async (message: ServerMessage | { type: 'RESET_STATE' }) => {
+    await page.waitForFunction(() => window.__TEST_CONTROLS__?.dispatch, {
+      timeout: 10000,
+    })
     await page.evaluate((msg) => {
       const win = window as unknown as {
         __TEST_CONTROLS__: {

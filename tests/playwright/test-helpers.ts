@@ -34,6 +34,11 @@ export {
   HRM_ROUTES,
   setupComprehensiveTest,
   setupCoreTest,
+  // Mock utilities
+  mockGoogleDocIframe,
+  mockMultipleHrDevices,
+  mockSpotifyPlaybackState,
+  mockLoggedInSession,
 } from './lib'
 
 // Export BASE_URL for backward compatibility
