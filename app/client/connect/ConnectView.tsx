@@ -32,7 +32,6 @@ import {
 } from '@mui/material'
 
 interface ConnectViewProps {
-  isReady: boolean
   duration: string
   caloriesBurned: number
   userName: string
@@ -110,7 +109,6 @@ const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
 )
 
 export default function ConnectView({
-  isReady,
   duration,
   caloriesBurned,
   userName,
@@ -206,7 +204,7 @@ export default function ConnectView({
   return (
     <>
       <Container
-        data-ready={isReady ? 'true' : 'false'}
+        data-testid="connect-view"
         maxWidth="sm"
         sx={{ py: 3, pb: 10 }}
       >
