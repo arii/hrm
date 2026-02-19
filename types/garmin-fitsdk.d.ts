@@ -1,7 +1,13 @@
 declare module '@garmin/fitsdk' {
+  export interface FitMessage {
+    mesgNum: number
+    timestamp?: number
+    [key: string]: unknown
+  }
+
   export class Encoder {
-    constructor(options?: any);
-    writeMesg(mesg: any): void;
-    close(): Uint8Array;
+    constructor(options?: unknown)
+    writeMesg(mesg: FitMessage): void
+    close(): Uint8Array
   }
 }

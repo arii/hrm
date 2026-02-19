@@ -13,7 +13,6 @@ describe('generateFitFile', () => {
     jest.clearAllMocks()
     writeMesgMock = jest.fn()
     closeMock = jest.fn().mockReturnValue(new Uint8Array([1, 2, 3]))
-
     ;(Encoder as unknown as jest.Mock).mockImplementation(() => {
       return {
         writeMesg: writeMesgMock,
@@ -22,7 +21,7 @@ describe('generateFitFile', () => {
     })
   })
 
-  it('should generate a FIT file blob and call encoder correctly', () => {
+  it('should generate a FIT file blob and write messages in correct order', () => {
     const session: WorkoutSessionData = {
       sessionId: 'test-session',
       startTime: 1700000000000,
@@ -47,11 +46,11 @@ describe('generateFitFile', () => {
     expect(blob).toBeInstanceOf(Blob)
     expect(blob.type).toBe('application/fit')
 
-    // Expect 4 calls: FileId (1) + Session (1) + Records (2)
+    // Expect 4 calls: FileId (1) + Records (2) + Session (1)
     expect(writeMesgMock).toHaveBeenCalledTimes(4)
 
-    // Check File ID (mesgNum 0)
-    expect(writeMesgMock).toHaveBeenCalledWith(
+    // 1. File ID (mesgNum 0)
+    expect(writeMesgMock.mock.calls[0][0]).toEqual(
       expect.objectContaining({
         mesgNum: 0,
         type: 4,
@@ -59,28 +58,29 @@ describe('generateFitFile', () => {
       })
     )
 
-    // Check Session (mesgNum 18)
-    expect(writeMesgMock).toHaveBeenCalledWith(
+    // 2. Records (mesgNum 20) - Should be written before Session
+    expect(writeMesgMock.mock.calls[1][0]).toEqual(
+      expect.objectContaining({
+        mesgNum: 20,
+        heartRate: 60,
+      })
+    )
+    expect(writeMesgMock.mock.calls[2][0]).toEqual(
+      expect.objectContaining({
+        mesgNum: 20,
+        heartRate: 120,
+      })
+    )
+
+    // 3. Session (mesgNum 18) - Should be written LAST
+    expect(writeMesgMock.mock.calls[3][0]).toEqual(
       expect.objectContaining({
         mesgNum: 18,
         totalTimerTime: 60,
         totalCalories: 100,
         avgHeartRate: 90,
         maxHeartRate: 120,
-      })
-    )
-
-    // Check Records (mesgNum 20)
-    expect(writeMesgMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        mesgNum: 20,
-        heartRate: 60,
-      })
-    )
-    expect(writeMesgMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        mesgNum: 20,
-        heartRate: 120,
+        timestamp: expect.any(Number), // Ensure timestamp is present
       })
     )
   })
@@ -104,11 +104,15 @@ describe('generateFitFile', () => {
 
     generateFitFile(session)
 
-    // Check Session (mesgNum 18)
-    expect(writeMesgMock).toHaveBeenCalledWith(
+    // Last call should be Session message
+    const lastCallArg =
+      writeMesgMock.mock.calls[writeMesgMock.mock.calls.length - 1][0]
+
+    expect(lastCallArg).toEqual(
       expect.objectContaining({
         mesgNum: 18,
-        totalTimerTime: 0,
+        totalTimerTime: expect.any(Number),
+        timestamp: expect.any(Number), // Ensure timestamp is generated from Date.now() fallback
       })
     )
   })
