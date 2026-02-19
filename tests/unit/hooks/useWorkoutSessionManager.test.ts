@@ -180,9 +180,11 @@ describe('useWorkoutSessionManager', () => {
         result.current.addHrData(110)
       })
 
-      expect(mockEstimateCaloriesBurned).toHaveBeenLastCalledWith(expect.objectContaining({
-        heartRate: 105 // Expect smoothed value
-      }))
+      expect(mockEstimateCaloriesBurned).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          heartRate: 105, // Expect smoothed value
+        })
+      )
 
       // 3. HR 120 (Smoothed: (100+110+120)/3 = 110)
       mockDateNow.mockReturnValue(1003000)
@@ -190,9 +192,11 @@ describe('useWorkoutSessionManager', () => {
         result.current.addHrData(120)
       })
 
-      expect(mockEstimateCaloriesBurned).toHaveBeenLastCalledWith(expect.objectContaining({
-        heartRate: 110 // Expect smoothed value
-      }))
+      expect(mockEstimateCaloriesBurned).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          heartRate: 110, // Expect smoothed value
+        })
+      )
     })
 
     it('should respect gender in calorie calculation', async () => {
@@ -213,9 +217,11 @@ describe('useWorkoutSessionManager', () => {
         result.current.addHrData(140)
       })
 
-      expect(mockEstimateCaloriesBurned).toHaveBeenCalledWith(expect.objectContaining({
-        gender: 'MALE'
-      }))
+      expect(mockEstimateCaloriesBurned).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gender: 'MALE',
+        })
+      )
     })
 
     it('should not add HR data if the session is not running', async () => {
@@ -290,7 +296,7 @@ describe('useWorkoutSessionManager', () => {
         startTime: 1000000,
         status: 'paused',
         totalCaloriesBurned: 0,
-        userSettings: { age: 30, weight: 80, maxHr: 190 }
+        userSettings: { age: 30, weight: 80, maxHr: 190 },
       }
       mockGetIncompleteSession.mockResolvedValue(todaySession)
       mockIsSameDay.mockReturnValue(true) // Mock as the same day
@@ -316,7 +322,7 @@ describe('useWorkoutSessionManager', () => {
         sessionId: 'active-session-id',
         startTime: 1000000,
         status: 'running',
-        userSettings: { age: 30, weight: 80, maxHr: 190 }
+        userSettings: { age: 30, weight: 80, maxHr: 190 },
       }
       mockGetIncompleteSession.mockResolvedValue(todaySession)
       mockIsSameDay.mockReturnValue(true) // Initially, it's the same day
