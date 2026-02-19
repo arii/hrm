@@ -82,7 +82,8 @@ const WorkoutSummary = ({
               }
               fullWidth
               aria-label="Download workout as FIT file"
-              sx={{ borderRadius: 1, minHeight: '2.5rem' }}
+              // Ensure minimum touch target size of 48px for accessibility
+              sx={{ borderRadius: 1, minHeight: '48px' }}
             >
               {isExporting ? 'Generating...' : 'Download FIT File'}
             </Button>
