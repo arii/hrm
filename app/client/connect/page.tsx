@@ -21,7 +21,6 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { useTestPageReady } from '@/hooks/useTestPageReady'
-import { generateFIT } from '@/services/exportService'
 
 export default function ConnectPage() {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -251,26 +250,36 @@ export default function ConnectPage() {
     if (!currentSession) return
 
     setIsExporting(true)
+    let url: string | null = null
+    let a: HTMLAnchorElement | null = null
+
     try {
+      // Dynamically load the service only when needed
+      const { generateFIT } = await import('@/services/exportService')
+
       // Direct client-side generation
       const blob = generateFIT(currentSession)
 
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
+      url = window.URL.createObjectURL(blob)
+      a = document.createElement('a')
       a.href = url
       a.download = `workout-${currentSession.sessionId}.fit`
       document.body.appendChild(a)
       a.click()
-
-      // Delay revocation to ensure download starts
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-      }, 100)
     } catch (error) {
       logger.error('Error exporting workout', error)
       alert('Failed to export workout. Please try again.')
     } finally {
+      // Robust cleanup
+      if (a && document.body.contains(a)) {
+        document.body.removeChild(a)
+      }
+      if (url) {
+        // Short delay to ensure download starts before revocation
+        setTimeout(() => {
+          if (url) window.URL.revokeObjectURL(url)
+        }, 100)
+      }
       setIsExporting(false)
     }
   }, [currentSession])
