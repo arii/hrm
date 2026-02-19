@@ -378,10 +378,7 @@ const handleIncomingMessage = (
             services.tabataService.stop()
             break
           default:
-            logger.warn(
-              { clientId, command: (message as any).command },
-              'Unknown timer command received'
-            )
+            logger.warn({ clientId, message }, 'Unknown timer command received')
         }
         break
 
