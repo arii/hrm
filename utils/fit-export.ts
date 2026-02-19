@@ -10,7 +10,7 @@ const FIT_MESG_NUM = {
   FILE_ID: 0,
   SESSION: 18,
   RECORD: 20,
-}
+} as const
 
 // FIT Field Values
 const FIT_CONSTANTS = {
@@ -27,10 +27,12 @@ function toGarminTime(timestamp: number): number {
   return Math.floor((timestamp - GARMIN_EPOCH_MS) / 1000)
 }
 
-export function generateFitFile(session: WorkoutSessionData): Blob {
+export function generateFitFile(
+  session: WorkoutSessionData,
+  generationTimestamp: number = Date.now()
+): Blob {
   const encoder = new Encoder()
 
-  // 1. File ID Message
   encoder.writeMesg({
     mesgNum: FIT_MESG_NUM.FILE_ID,
     type: FIT_CONSTANTS.FILE_TYPE_ACTIVITY,
@@ -40,7 +42,6 @@ export function generateFitFile(session: WorkoutSessionData): Blob {
     timeCreated: toGarminTime(session.startTime),
   })
 
-  // 2. Record Messages (HR Data) - Written BEFORE Session Summary
   session.hrHistory.forEach((point) => {
     encoder.writeMesg({
       mesgNum: FIT_MESG_NUM.RECORD,
@@ -49,8 +50,7 @@ export function generateFitFile(session: WorkoutSessionData): Blob {
     })
   })
 
-  // 3. Session Message (Summary) - Written LAST
-  const endTime = session.endTime || Date.now()
+  const endTime = session.endTime || generationTimestamp
   const duration = (endTime - session.startTime) / 1000
 
   encoder.writeMesg({
@@ -69,7 +69,6 @@ export function generateFitFile(session: WorkoutSessionData): Blob {
     trigger: FIT_CONSTANTS.TRIGGER_MANUAL,
   })
 
-  // Close encoder and get Uint8Array
   const uint8Array = encoder.close()
 
   return new Blob([uint8Array as unknown as BlobPart], {
