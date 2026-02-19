@@ -15,20 +15,28 @@ import IconButton from '@mui/material/IconButton'
 import SideLabel from './SideLabel'
 import { useAudioContext } from '@/context/AudioContext'
 import { formatDuration } from '@/lib/utils'
-import { useTheme, alpha } from '@mui/material/styles'
+import { useTheme, alpha, Theme } from '@mui/material/styles'
 
 // Define a constant for the side column width to avoid magic numbers
 const SIDE_COLUMN_WIDTH = '40px'
 
-const DEFAULT_PHASE_CONFIG = { color: 'text.secondary', label: 'READY' }
+interface PhaseConfig {
+  color: (theme: Theme) => string
+  label: string
+}
 
-// Map timer phases to MUI theme palette colors
-const TIMER_PHASE_CONFIG: Record<string, { color: string; label: string }> = {
-  PREPARE: { color: 'warning.main', label: 'GET READY' },
-  RUNNING: { color: 'primary.main', label: 'RUNNING' },
-  WORK: { color: 'error.main', label: 'WORK' },
-  REST: { color: 'success.main', label: 'REST' },
-  COOLDOWN: { color: 'info.main', label: 'COOLDOWN' },
+const DEFAULT_PHASE_CONFIG: PhaseConfig = {
+  color: (theme) => theme.palette.text.secondary,
+  label: 'READY',
+}
+
+// Map timer phases to MUI theme palette colors using accessor functions for type safety
+const TIMER_PHASE_CONFIG: Record<string, PhaseConfig> = {
+  PREPARE: { color: (theme) => theme.palette.warning.main, label: 'GET READY' },
+  RUNNING: { color: (theme) => theme.palette.primary.main, label: 'RUNNING' },
+  WORK: { color: (theme) => theme.palette.error.main, label: 'WORK' },
+  REST: { color: (theme) => theme.palette.success.main, label: 'REST' },
+  COOLDOWN: { color: (theme) => theme.palette.info.main, label: 'COOLDOWN' },
   IDLE: DEFAULT_PHASE_CONFIG,
 }
 
@@ -86,22 +94,9 @@ const TimerDisplay = () => {
     configKey = 'IDLE'
   }
 
-  const { color: phaseColor, label: phaseLabel } =
-    TIMER_PHASE_CONFIG[configKey] ?? DEFAULT_PHASE_CONFIG
-
-  // Helper to resolve color from theme for textShadow
-  const getResolvedColor = (colorPath: string) => {
-    const parts = colorPath.split('.')
-    return (
-      (parts.reduce(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (acc: any, curr) => acc?.[curr],
-        theme.palette
-      ) as string) || theme.palette.text.secondary
-    )
-  }
-
-  const resolvedColor = getResolvedColor(phaseColor)
+  const config = TIMER_PHASE_CONFIG[configKey] ?? DEFAULT_PHASE_CONFIG
+  const phaseLabel = config.label
+  const phaseColor = config.color(theme)
 
   return (
     <Card
@@ -217,7 +212,7 @@ const TimerDisplay = () => {
             letterSpacing: '0.12rem',
             lineHeight: 1,
             color: phaseColor,
-            textShadow: `0 0 20px ${alpha(resolvedColor, 0.5)}`,
+            textShadow: `0 0 20px ${alpha(phaseColor, 0.5)}`,
           }}
         >
           {displayTime}
