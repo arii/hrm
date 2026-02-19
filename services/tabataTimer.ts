@@ -15,10 +15,7 @@ import {
 } from '../utils/constants.js'
 import { ConfigurationError } from '../types/errors.js'
 
-type TimerCommand = 'START' | 'PAUSE' | 'STOP'
-
 class TabataTimer {
-  // Publicly exposed state (managed internally)
   private mode: TimerMode = 'TABATA'
   private isRunning: boolean = false
   private currentPhase: TimerPhase = 'IDLE'
@@ -29,7 +26,6 @@ class TabataTimer {
   private soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   private soundEventId: number = 0
 
-  // Internal state for timer logic
   private startTime: number | null = null
   private timerInterval: NodeJS.Timeout | null = null
   private pausedTimeRemaining: number = DEFAULT_WORK_DURATION
@@ -55,7 +51,7 @@ class TabataTimer {
       currentPhase: this.currentPhase,
       timeRemaining: this.timeRemaining,
       timeElapsed: this.timeElapsed,
-      caloriesBurned: 0, // Placeholder
+      caloriesBurned: 0,
       mode: this.mode,
       workDuration: this.workDuration,
       restDuration: this.restDuration,
@@ -66,32 +62,7 @@ class TabataTimer {
     }
   }
 
-  /**
-   * Handles incoming commands from clients.
-   * @param {TimerCommand} command The command to execute.
-   */
-  public handleCommand(command: TimerCommand): void {
-    switch (command) {
-      case 'START':
-        this.start()
-        break
-      case 'PAUSE':
-        this.pause()
-        break
-      case 'STOP':
-        this.stop()
-        break
-      default:
-        console.warn(`Unknown timer command: ${command}`)
-    }
-  }
-
-  // --- Command Logic ---
-
-  /**
-   * Starts or resumes the timer.
-   */
-  private start(): void {
+  public start(): void {
     if (this.isRunning) return
 
     this.isRunning = true
@@ -103,18 +74,18 @@ class TabataTimer {
       this.pausedTimeRemaining = START_COUNTDOWN_DURATION
       this.timeElapsed = 0
       this.pausedTimeElapsed = 0
-      this.resetCountdownMarker()
+      this.countdownMarker = null
     }
 
     this.startTime = now
     this.timerInterval = setInterval(this.updateTimer, TIMER_INTERVAL)
-    this.broadcast()
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.getState(),
+    })
   }
 
-  /**
-   * Pauses the currently running timer.
-   */
-  private pause(): void {
+  public pause(): void {
     if (!this.isRunning || !this.startTime) return
 
     this.updateTimer() // Final sync before pausing
@@ -127,13 +98,13 @@ class TabataTimer {
     this.pausedTimeElapsed = this.timeElapsed
     this.startTime = null
 
-    this.broadcast()
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.getState(),
+    })
   }
 
-  /**
-   * Stops the timer and resets it to its initial state.
-   */
-  private stop(): void {
+  public stop(): void {
     if (this.timerInterval) clearInterval(this.timerInterval)
 
     this.isRunning = false
@@ -141,14 +112,17 @@ class TabataTimer {
     this.timeElapsed = 0
     this.timeRemaining = this.mode === 'TABATA' ? this.workDuration : 0
 
-    this.resetCountdownMarker()
+    this.countdownMarker = null
     this.pausedTimeRemaining = this.timeRemaining
     this.pausedTimeElapsed = 0
     this.startTime = null
     this.timerInterval = null
     this.soundToPlay = undefined
 
-    this.broadcast()
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.getState(),
+    })
   }
 
   /**
@@ -165,8 +139,11 @@ class TabataTimer {
     this.timeElapsed = 0
     this.pausedTimeElapsed = 0
     this.soundToPlay = undefined
-    this.resetCountdownMarker()
-    this.broadcast()
+    this.countdownMarker = null
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.getState(),
+    })
   }
 
   /**
@@ -185,12 +162,16 @@ class TabataTimer {
     this.workDuration = Math.floor(config.workDuration)
     this.restDuration = Math.floor(config.restDuration)
 
-    if (!this.isRunning && this.mode === 'TABATA') {
+    // Only reset time if we are truly at the start (IDLE)
+    if (!this.isRunning && this.currentPhase === 'IDLE' && this.mode === 'TABATA') {
       this.timeRemaining = this.workDuration
       this.pausedTimeRemaining = this.workDuration
     }
 
-    this.broadcast()
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.getState(),
+    })
   }
 
   // --- Internal Timer Logic ---
@@ -220,7 +201,10 @@ class TabataTimer {
       }
     }
 
-    this.broadcast()
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.getState(),
+    })
   }
 
   /**
@@ -228,7 +212,7 @@ class TabataTimer {
    * @param {number} now The current timestamp to use as the new start time.
    */
   private transitionPhase(now: number): void {
-    this.resetCountdownMarker()
+    this.countdownMarker = null
     this.startTime = now
     this.pausedTimeElapsed = 0
 
@@ -274,14 +258,10 @@ class TabataTimer {
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN'): void {
     this.soundToPlay = sound
     this.soundEventId += 1
-    this.broadcast()
-  }
-
-  /**
-   * Resets the countdown sound marker.
-   */
-  private resetCountdownMarker(): void {
-    this.countdownMarker = null
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.getState(),
+    })
   }
 
   /**
@@ -304,16 +284,6 @@ class TabataTimer {
       this.queueSound('COUNTDOWN')
       this.countdownMarker = marker
     }
-  }
-
-  /**
-   * Helper to broadcast the current state.
-   */
-  private broadcast(): void {
-    this.broadcastUpdate({
-      type: 'TIMER_UPDATE',
-      payload: this.getState(),
-    })
   }
 
   /**

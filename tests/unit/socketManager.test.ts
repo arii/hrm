@@ -125,7 +125,9 @@ describe('WebSocket Manager', () => {
 
     // Create fully typed mocks for the services.
     const mockTabataTimer: jest.Mocked<TabataTimer> = {
-      handleCommand: jest.fn(),
+      start: jest.fn(),
+      pause: jest.fn(),
+      stop: jest.fn(),
       setMode: jest.fn(),
       setConfig: jest.fn(),
       getState: jest.fn(),
@@ -494,6 +496,15 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', message.toString())
       expect((mockWs as ExtWebSocket).clientType).toBe('dashboard')
+    })
+
+    it('should handle TIMER_COMMAND message', () => {
+      const message = JSON.stringify({
+        type: 'TIMER_COMMAND',
+        command: 'START',
+      })
+      mockWs.emit('message', message.toString())
+      expect(mockServices.tabataService.start).toHaveBeenCalled()
     })
 
     it('should send initial state on GET_STATE message', () => {
