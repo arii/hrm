@@ -71,7 +71,7 @@ function sessionManagerReducer(
         session: action.payload,
         status: action.payload.status,
         pauseTime: action.payload.pauseTime,
-        startCalories: action.payload.totalCaloriesBurned, // Fallback
+        startCalories: 0,
       }
     }
     case 'START': {
@@ -355,26 +355,6 @@ export const useWorkoutSessionManager = () => {
     dispatch({ type: 'UPDATE_CALORIES', payload: calories })
   }, [])
 
-  const [duration, setDuration] = useState(0)
-
-  useEffect(() => {
-    if (state.status !== 'running') {
-      return
-    }
-
-    const interval = setInterval(() => {
-      if (state.session?.startTime) {
-        const now = Date.now()
-        const totalPaused = state.session.totalPaused || 0
-        setDuration(
-          Math.floor((now - state.session.startTime - totalPaused) / 1000)
-        )
-      }
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [state.status, state.session?.startTime, state.session?.totalPaused])
-
   // Map status for compatibility
   const hasStarted = state.status !== 'idle'
 
@@ -397,8 +377,6 @@ export const useWorkoutSessionManager = () => {
     status: state.status,
     workoutStatus: state.status,
     isInitialized,
-    duration,
-    workoutDuration: duration,
     hasStarted,
     caloriesBurned,
     startWorkout,

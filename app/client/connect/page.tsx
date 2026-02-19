@@ -8,18 +8,13 @@ import ConnectView from './ConnectView'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
-<<<<<<< HEAD
 import { useCalorieTracker } from '@/hooks/useCalorieTracker'
 import {
   calculateZoneFromMaxHr,
   calculateMaxHr,
   toHeartRateZone,
 } from '@/lib/shared/hr-zones'
-=======
-import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
-import { calculateMaxHr } from '@/utils/hrCalculations'
->>>>>>> origin/leader
+import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -124,7 +119,6 @@ export default function ConnectPage() {
 
   const {
     session,
-    workoutDuration,
     workoutStatus,
     isInitialized,
     hasStarted,
@@ -138,6 +132,14 @@ export default function ConnectPage() {
     updateCalories,
   } = useWorkoutSessionManager()
 
+  const workoutDuration = useWorkoutTimer(
+    workoutStatus,
+    session?.startTime,
+    session?.totalPaused,
+    session?.pauseTime,
+    session?.endTime
+  )
+
   const handleStartWorkout = useCallback(() => {
     if (workoutStatus === 'idle') {
       startWorkout(userAge || 30, userWeight || 70)
@@ -146,25 +148,25 @@ export default function ConnectPage() {
     }
   }, [startWorkout, resumeWorkout, workoutStatus, userAge, userWeight])
 
+  const [isTrackerSynced, setIsTrackerSynced] = useState(false)
+
+  // Sync FROM session TO tracker
   useEffect(() => {
-    if (isInitialized) {
+    if (isInitialized && !isTrackerSynced) {
+      if (session?.totalCaloriesBurned) {
+        setTrackerCalories(session.totalCaloriesBurned)
+      }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsTrackerSynced(true)
+    }
+  }, [isInitialized, isTrackerSynced, session, setTrackerCalories])
+
+  // Sync FROM tracker TO session
+  useEffect(() => {
+    if (isInitialized && isTrackerSynced) {
       updateCalories(calories)
     }
-  }, [calories, updateCalories, isInitialized])
-
-  // Sync recovered calories to tracker on initialization
-  useEffect(() => {
-    if (
-      isInitialized &&
-      hasStarted &&
-      workoutStatus !== 'finished' &&
-      session?.totalCaloriesBurned
-    ) {
-      setTrackerCalories(session.totalCaloriesBurned)
-    }
-    // Only run once when initialized to avoid feedback loops
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitialized])
+  }, [calories, updateCalories, isInitialized, isTrackerSynced])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
