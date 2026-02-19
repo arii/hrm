@@ -4,7 +4,6 @@ import {
   isDuplicate,
   isLowQualityIssue,
   SuggestedIssue,
-  ExistingIssue,
   PreparedExistingIssue,
 } from '../create-review-issues'
 
