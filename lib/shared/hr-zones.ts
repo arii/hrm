@@ -3,8 +3,9 @@
  * across different modules (domain logic, UI, etc.).
  */
 import { HR_COLORS } from '@/lib/shared/colors'
+import { MAX_HR_DEFAULT, calculateMaxHr } from '@/utils/hrCalculations'
 
-export const MAX_HR_DEFAULT = 185
+export { MAX_HR_DEFAULT, calculateMaxHr }
 
 /**
  * Heart Rate Zone string literal type for consistency and full type safety.
@@ -83,28 +84,6 @@ export const HR_ZONE_CONFIG: Record<
     textColor: HR_COLORS.TEXT_DARK,
     zoneNumber: 0,
   },
-}
-
-/**
- * Estimates a user's maximum heart rate using the Haskell & Fox formula (220 - age).
- *
- * NOTE: While the Tanaka formula (208 - 0.7 * age) is often more accurate for older adults,
- * we are using the Haskell & Fox formula here to ensure parity with existing dashboard
- * calculation logic and requested test cases (e.g. 120-year-old athlete).
- *
- * @param age - The user's age in years.
- * @returns The estimated maximum heart rate.
- */
-export const calculateMaxHr = (age?: number | string | null): number => {
-  if (!age) return MAX_HR_DEFAULT
-
-  const ageNum = typeof age === 'string' ? parseInt(age, 10) : age
-
-  if (isNaN(ageNum) || ageNum <= 0) {
-    return MAX_HR_DEFAULT
-  }
-
-  return 220 - ageNum
 }
 
 /**
