@@ -10,7 +10,7 @@ This document records significant architectural decisions made during the develo
 
 - **Improved Responsiveness:** Calculating calories on the client provides immediate feedback to the user who is actively working out. This avoids the latency of a server round-trip and ensures the user's display is always up-to-date.
 - **Reduced Server Load:** Offloading the computational load to the client reduces the server's processing overhead, allowing it to focus on its primary responsibilities of data aggregation and broadcasting.
-- **Data Synchronization:** The client sends the calculated calorie count to the server along with the heart rate data. The server then broadcasts this information to all other clients, ensuring that the main dashboard and other displays are synchronized with the user's device.
+- **Data Synchronization:** The client sends the calculated calorie count to the server along with the heart rate data. The server then broadcasts this information to all other clients, ensuring that the main dashboard and other displays are synchronized with the user's device. While the client is the source of the calorie computation, the server remains the Single Source of Truth for the distribution and authoritative state of these metrics to all connected clients.
 
 **Implementation:**
 
