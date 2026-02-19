@@ -14,16 +14,16 @@ import { formatDuration } from '@/lib/utils'
 // --- Types ---
 interface ZoneDistributionProps {
   timeInZones: Record<HeartRateZone, number>
-  totalDuration: number
 }
 
 // --- Constants & Helpers ---
 
-const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
-  timeInZones,
-  totalDuration,
-}) => {
+const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
   const theme = useTheme()
+
+  const totalDuration = useMemo(() => {
+    return Object.values(timeInZones).reduce((acc, curr) => acc + curr, 0)
+  }, [timeInZones])
 
   const data = useMemo(() => {
     return HR_ZONE_ORDER.map((zoneKey) => {
