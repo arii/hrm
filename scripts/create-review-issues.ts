@@ -321,6 +321,7 @@ export function tokenize(text: string): Set<string> {
 
 /**
  * Calculates the Jaccard similarity between two sets of tokens.
+ * A value of 1 indicates identical sets, while 0 indicates no overlap.
  */
 export function calculateJaccardSimilarity(
   words1: Set<string>,
