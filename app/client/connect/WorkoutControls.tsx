@@ -86,6 +86,17 @@ const WorkoutControls = ({
           </Button>
         </>
       )}
+      {workoutStatus === 'finished' && (
+        <Button
+          variant="contained"
+          onClick={onStart}
+          size="large"
+          sx={{ minWidth: '200px' }}
+          aria-label="Start new workout session"
+        >
+          Start New Workout
+        </Button>
+      )}
     </Stack>
   )
 }
