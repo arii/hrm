@@ -25,15 +25,19 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
       session.hrHistory.length || 0
 
   const handleExportFit = () => {
-    const blob = generateFitFile(session)
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `hrm_session_${session.sessionId}.fit`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    try {
+      const blob = generateFitFile(session)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `hrm_session_${session.sessionId}.fit`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to export FIT file:', error)
+    }
   }
 
   return (
