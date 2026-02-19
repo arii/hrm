@@ -2,10 +2,9 @@ declare module '@garmin/fitsdk' {
   export namespace Stream {
     class MemoryStream {
       constructor()
-      // Use any to avoid "Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BlobPart'"
-      // due to mismatching ArrayBuffer definitions in strict CI environments.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      bytes: any
+      // Use BlobPart to avoid "Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BlobPart'"
+      // due to mismatching ArrayBuffer definitions in strict CI environments, while avoiding 'any'.
+      bytes: BlobPart
     }
   }
 
