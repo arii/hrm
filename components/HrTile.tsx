@@ -7,32 +7,18 @@ import WifiOffIcon from '@mui/icons-material/WifiOff'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { HR_ZONE_CONFIG, HeartRateZone } from '@/lib/shared/hr-zones'
-import { useTheme } from '@mui/material/styles'
+import { useTheme, alpha } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
 import { HR_TILE_MIN_HEIGHT, HR_TILE_MAX_HEIGHT } from '@/constants/layout'
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
-
-const OVERLAY_SX = {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 10,
-  borderRadius: 'inherit',
-} as const
+const HR_TILE_MIN_HEIGHT = 180
 
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 1, textAlign: 'center' }}>
     <Typography
-      variant="h5"
+      variant="h4"
       sx={{
         fontWeight: 900,
         textTransform: 'uppercase',
@@ -50,7 +36,6 @@ const IdentityTier = ({ name }: { name: string }) => (
 const HeroTier = ({ percentage }: { percentage: number }) => (
   <Box
     sx={{
-      flexGrow: 1,
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
@@ -150,6 +135,21 @@ const HrTile = ({
 
   const showName = !isGenericName(name)
 
+  const overlaySx = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: alpha(theme.palette.common.black, 0.7),
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    borderRadius: 'inherit',
+  }
+
   return (
     <Tooltip title={tooltipTitle} arrow>
       <ControlCard
@@ -161,11 +161,17 @@ const HrTile = ({
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
+          minHeight: HR_TILE_MIN_HEIGHT,
           height: '100%',
+<<<<<<< HEAD
           minHeight: HR_TILE_MIN_HEIGHT,
           maxHeight: HR_TILE_MAX_HEIGHT,
+=======
+          maxHeight: 250,
+>>>>>>> origin/leader
           display: 'flex',
           flexDirection: 'column',
+          justifyContent: 'center',
           position: 'relative',
           overflow: 'hidden',
           padding: 0,
@@ -189,7 +195,7 @@ const HrTile = ({
         )}
 
         {isAlerting && (
-          <Box data-testid="hr-tile-alert-overlay" sx={OVERLAY_SX}>
+          <Box data-testid="hr-tile-alert-overlay" sx={overlaySx}>
             <CircularProgress size={30} sx={{ color: 'white' }} />
             <Typography
               variant="caption"
