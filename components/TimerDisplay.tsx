@@ -86,7 +86,7 @@ const TimerDisplay = () => {
       sx={{
         backgroundColor: '#000000', // Pure black for high energy
         color: phaseColor, // Dynamic color based on phase
-        height: 250,
+        height: { xs: 200, sm: 250, md: 300 },
         display: 'flex',
         borderRadius: 2,
         border: '2px solid #1a1a1a', // Subtle border for definition
@@ -196,7 +196,7 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-digital-7), monospace',
-            fontSize: { xs: '4rem', sm: '6rem', md: '8rem', lg: '10rem' },
+            fontSize: { xs: '7rem', sm: '10rem', md: '14rem' },
             fontWeight: 900,
             lineHeight: 1,
             textAlign: 'center',
