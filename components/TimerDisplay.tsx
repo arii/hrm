@@ -92,9 +92,9 @@ const TimerDisplay = () => {
   // Helper to resolve color from theme for textShadow
   const getResolvedColor = (colorPath: string) => {
     const parts = colorPath.split('.')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (
       (parts.reduce(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (acc: any, curr) => acc?.[curr],
         theme.palette
       ) as string) || theme.palette.text.secondary
