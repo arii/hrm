@@ -6,14 +6,12 @@ declare module '@garmin/fitsdk' {
     product: number
     serialNumber: number
     timeCreated: number
-    [key: string]: unknown
   }
 
   export interface RecordMessage {
     mesgNum: 20
     timestamp: number
     heartRate: number
-    [key: string]: unknown
   }
 
   export interface SessionMessage {
@@ -30,7 +28,6 @@ declare module '@garmin/fitsdk' {
     sport: number
     subSport: number
     trigger: number
-    [key: string]: unknown
   }
 
   export type FitMessage = FileIdMessage | RecordMessage | SessionMessage
@@ -38,6 +35,6 @@ declare module '@garmin/fitsdk' {
   export class Encoder {
     constructor(options?: unknown)
     writeMesg(mesg: FitMessage): void
-    close(): Uint8Array
+    close(): Uint8Array<ArrayBuffer>
   }
 }
