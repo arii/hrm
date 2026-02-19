@@ -40,6 +40,10 @@ describe('generateFitFile', () => {
       syncStatus: 'synced',
     }
 
+    // Garmin Epoch: 631065600000
+    // 1700000000000 - 631065600000 = 1068934400000 -> 1068934400
+    // 1700000060000 - 631065600000 = 1068934460000 -> 1068934460
+
     const mockTimestamp = 1700000060000
     const blob = generateFitFile(session, mockTimestamp)
 
@@ -53,6 +57,7 @@ describe('generateFitFile', () => {
         mesgNum: 0,
         type: 4,
         manufacturer: 255,
+        timeCreated: 1068934400,
       })
     )
 
@@ -60,12 +65,14 @@ describe('generateFitFile', () => {
       expect.objectContaining({
         mesgNum: 20,
         heartRate: 60,
+        timestamp: 1068934400,
       })
     )
     expect(writeMesgMock.mock.calls[2][0]).toEqual(
       expect.objectContaining({
         mesgNum: 20,
         heartRate: 120,
+        timestamp: 1068934430,
       })
     )
 
@@ -76,7 +83,8 @@ describe('generateFitFile', () => {
         totalCalories: 100,
         avgHeartRate: 90,
         maxHeartRate: 120,
-        timestamp: expect.any(Number),
+        timestamp: 1068934460,
+        startTime: 1068934400,
       })
     )
   })
@@ -98,6 +106,7 @@ describe('generateFitFile', () => {
       syncStatus: 'synced',
     }
 
+    // 1700000010000 - 631065600000 = 1068934410000 -> 1068934410
     const mockTimestamp = 1700000010000
     generateFitFile(session, mockTimestamp)
 
@@ -107,8 +116,9 @@ describe('generateFitFile', () => {
     expect(lastCallArg).toEqual(
       expect.objectContaining({
         mesgNum: 18,
-        totalTimerTime: expect.any(Number),
-        timestamp: expect.any(Number),
+        totalTimerTime: 10,
+        timestamp: 1068934410,
+        startTime: 1068934400,
       })
     )
   })
