@@ -4,14 +4,12 @@ import {
   getDynamicContentMasks,
   getHrMasks,
   setupVisualRegressionTest,
-<<<<<<< HEAD
   HRM_ROUTES,
-=======
   mockMultipleHrDevices,
->>>>>>> origin/leader
 } from './test-helpers'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
+import { HR_TILE_MIN_HEIGHT, HR_TILE_MAX_HEIGHT } from '../../constants/layout'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -49,20 +47,19 @@ test.describe('Visual Regression Tests', () => {
       // Assert HR tile height is within limits
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
       await assertFixedDimensions(hrTile, {
-        minHeight: 180,
-        maxHeight: 250,
+        minHeight: HR_TILE_MIN_HEIGHT,
+        maxHeight: HR_TILE_MAX_HEIGHT,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       // NEW: Verify HR tile has fixed height before screenshot
-      const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
       await hrTile.waitFor({ state: 'visible', timeout: 5000 })
       const boundingBox = await hrTile.boundingBox()
 
       // Assert tile height is within expected range (allow some variance)
-      expect(boundingBox?.height).toBeGreaterThanOrEqual(180)
-      expect(boundingBox?.height).toBeLessThanOrEqual(250)
+      expect(boundingBox?.height).toBeGreaterThanOrEqual(HR_TILE_MIN_HEIGHT)
+      expect(boundingBox?.height).toBeLessThanOrEqual(HR_TILE_MAX_HEIGHT)
 
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
         maxDiffPixelRatio: 0.1,
@@ -99,8 +96,8 @@ test.describe('Visual Regression Tests', () => {
       const count = await hrTiles.count()
       for (let i = 0; i < count; i++) {
         await assertFixedDimensions(hrTiles.nth(i), {
-          minHeight: 180,
-          maxHeight: 250,
+          minHeight: HR_TILE_MIN_HEIGHT,
+          maxHeight: HR_TILE_MAX_HEIGHT,
         })
       }
 
