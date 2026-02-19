@@ -20,6 +20,7 @@ describe('TabataTimer (Refactored)', () => {
     // Clear any previous mocks and timers
     broadcastUpdate.mockClear()
     jest.clearAllTimers()
+    jest.setSystemTime(1000000) // Set a fixed start time
     timer = new TabataTimer(broadcastUpdate)
   })
 

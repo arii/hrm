@@ -2,6 +2,7 @@
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
+import { Gender } from '@/types/core'
 
 // --- TypeScript Interfaces ---
 
@@ -28,7 +29,7 @@ export interface WorkoutSessionData {
   maxHr: number
   calorieHistory: CalorieDataPoint[]
   totalCaloriesBurned: number
-  userSettings: { age: number; weight: number; maxHr: number }
+  userSettings: { age: number; weight: number; maxHr: number; gender: Gender }
   lastSyncTime: number
   syncStatus: 'pending' | 'synced' | 'failed'
 }
