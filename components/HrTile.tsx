@@ -10,6 +10,7 @@ import { HR_ZONE_CONFIG, HeartRateZone } from '@/lib/shared/hr-zones'
 import { useTheme } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
+import { HR_TILE_MIN_HEIGHT, HR_TILE_MAX_HEIGHT } from '@/constants/layout'
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 
@@ -61,15 +62,9 @@ const HeroTier = ({ percentage }: { percentage: number }) => (
       component="div"
       sx={{
         fontSize: {
-<<<<<<< HEAD
-          xs: '4rem',
-          sm: '4.5rem',
-          md: '5rem',
-=======
           xs: 'clamp(3rem, 10vw, 4rem)',
           sm: 'clamp(4rem, 12vw, 5rem)',
           md: 'clamp(5rem, 15vw, 6rem)',
->>>>>>> origin/leader
         },
         fontWeight: 900,
         lineHeight: 1,
@@ -166,13 +161,9 @@ const HrTile = ({
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
-<<<<<<< HEAD
-          minHeight: 180,
-=======
           height: '100%',
-          minHeight: 180,
-          maxHeight: 250,
->>>>>>> origin/leader
+          minHeight: HR_TILE_MIN_HEIGHT,
+          maxHeight: HR_TILE_MAX_HEIGHT,
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',

@@ -267,15 +267,6 @@ import { waitForPageReady, BASE_URL } from './test-helpers'
 import { waitForPageReady, getBaseURL } from './lib'
 ```
 
-<<<<<<< HEAD
-## VRT Masking Philosophy
-
-To prevent layout regressions while avoiding flaky tests, follow these masking principles:
-
-- **Granular Value Masking**: Mask only the specific numeric values or text that changes dynamically (e.g., heart rate numbers, calorie counts, timer digits).
-- **Preserve Structure**: Do NOT mask entire components or grid items. Masking the container hides critical layout information like dimensions, font sizes, and positioning.
-- **Structural Assertions**: Supplement VRT with explicit structural assertions (e.g., checking `boundingBox` height) to catch regressions that might be subtle in visual diffs.
-=======
 ## Visual Regression Testing Best Practices
 
 ### When to Add VRT
@@ -321,7 +312,6 @@ await assertFixedDimensions(page.getByTestId('hr-tile-card'), {
 - Mask **content**, not **structure**
 - Mask the number "155", not the entire tile
 - See `lib/masks.ts` for granular masking helpers
->>>>>>> origin/leader
 
 ## Best Practices
 
