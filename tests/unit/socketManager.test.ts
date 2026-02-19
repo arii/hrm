@@ -498,13 +498,31 @@ describe('WebSocket Manager', () => {
       expect((mockWs as ExtWebSocket).clientType).toBe('dashboard')
     })
 
-    it('should handle TIMER_COMMAND message', () => {
+    it('should handle TIMER_COMMAND START message', () => {
       const message = JSON.stringify({
         type: 'TIMER_COMMAND',
         command: 'START',
       })
       mockWs.emit('message', message.toString())
       expect(mockServices.tabataService.start).toHaveBeenCalled()
+    })
+
+    it('should handle TIMER_COMMAND PAUSE message', () => {
+      const message = JSON.stringify({
+        type: 'TIMER_COMMAND',
+        command: 'PAUSE',
+      })
+      mockWs.emit('message', message.toString())
+      expect(mockServices.tabataService.pause).toHaveBeenCalled()
+    })
+
+    it('should handle TIMER_COMMAND STOP message', () => {
+      const message = JSON.stringify({
+        type: 'TIMER_COMMAND',
+        command: 'STOP',
+      })
+      mockWs.emit('message', message.toString())
+      expect(mockServices.tabataService.stop).toHaveBeenCalled()
     })
 
     it('should send initial state on GET_STATE message', () => {
