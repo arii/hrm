@@ -460,4 +460,4 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager, getRequestParams }
+export { initSocketManager }
