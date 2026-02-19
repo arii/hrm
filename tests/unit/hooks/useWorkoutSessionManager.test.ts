@@ -57,7 +57,7 @@ describe('useWorkoutSessionManager', () => {
 
       // Pause
       act(() => {
-        result.current.endWorkout()
+        result.current.pauseWorkout()
       })
       expect(result.current.status).toBe('paused')
       expect(result.current.session?.status).toBe('paused')
@@ -72,7 +72,7 @@ describe('useWorkoutSessionManager', () => {
 
       // Pause again before finishing
       act(() => {
-        result.current.endWorkout()
+        result.current.pauseWorkout()
       })
       expect(result.current.status).toBe('paused')
 
@@ -157,7 +157,7 @@ describe('useWorkoutSessionManager', () => {
 
       // Pause the session
       act(() => {
-        result.current.endWorkout()
+        result.current.pauseWorkout()
       })
       expect(result.current.status).toBe('paused')
 
@@ -186,7 +186,7 @@ describe('useWorkoutSessionManager', () => {
         maxHr: 0,
         calorieHistory: [],
         totalCaloriesBurned: 0,
-        userSettings: { age: 30, weight: 80, maxHr: 190 },
+        userSettings: { age: 30, weight: 80, maxHr: 190, gender: 'MALE' },
         lastSyncTime: 900000,
         syncStatus: 'pending',
         endTime: null,
