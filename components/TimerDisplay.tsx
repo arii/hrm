@@ -19,6 +19,15 @@ import { useTheme, useMediaQuery, alpha } from '@mui/material'
 
 const SIDE_COLUMN_WIDTH = '40px'
 
+const TIMER_PHASE_CONFIG = {
+  PREPARE: { color: 'warning.main', label: 'GET READY' },
+  WORK: { color: 'error.main', label: 'WORK' },
+  REST: { color: 'success.main', label: 'REST' },
+  COOLDOWN: { color: 'info.main', label: 'COOLDOWN' },
+  RUNNING: { color: 'primary.main', label: 'RUNNING' },
+  IDLE: { color: 'text.secondary', label: 'READY' },
+} as const
+
 const TimerDisplay = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -33,54 +42,72 @@ const TimerDisplay = () => {
     restDuration = 10,
   } = timerData
 
-  let displayTime: string
-  let phaseColor: string
-  let phaseLabel: string
-  let progressPercentage = 0
-
-  if (currentPhase === 'PREPARE') {
-    displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B'
-    phaseLabel = 'GET READY'
-    progressPercentage = (timeRemaining / 10) * 100
-  } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
-    displayTime = formatDuration(timeElapsed, {
-      unit: 'seconds',
-      format: 'MM:SS',
-    })
-    phaseColor = '#2563EB'
-    phaseLabel = 'RUNNING'
-    progressPercentage = 100
-  } else if (
-    mode === 'TABATA' &&
-    (currentPhase === 'WORK' ||
-      currentPhase === 'REST' ||
-      currentPhase === 'COOLDOWN')
-  ) {
-    displayTime = formatDuration(timeRemaining, {
-      unit: 'seconds',
-      format: 'MM:SS',
-    })
-
-    if (currentPhase === 'WORK') {
-      phaseColor = '#EF4444'
-      phaseLabel = 'WORK'
-      progressPercentage = (timeRemaining / workDuration) * 100
-    } else if (currentPhase === 'REST') {
-      phaseColor = '#22C55E'
-      phaseLabel = 'REST'
-      progressPercentage = (timeRemaining / restDuration) * 100
-    } else {
-      phaseColor = '#3B82F6'
-      phaseLabel = 'COOLDOWN'
-      progressPercentage = 100
+  const getTimerState = () => {
+    if (currentPhase === 'PREPARE') {
+      return {
+        ...TIMER_PHASE_CONFIG.PREPARE,
+        displayTime: String(timeRemaining).padStart(2, '0'),
+        progress: (timeRemaining / 10) * 100,
+      }
     }
-  } else {
-    displayTime = formatDuration(0, { unit: 'seconds', format: 'MM:SS' })
-    phaseColor = '#6B7280'
-    phaseLabel = 'READY'
-    progressPercentage = 0
+
+    if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
+      return {
+        ...TIMER_PHASE_CONFIG.RUNNING,
+        displayTime: formatDuration(timeElapsed, {
+          unit: 'seconds',
+          format: 'MM:SS',
+        }),
+        progress: 100,
+      }
+    }
+
+    if (mode === 'TABATA') {
+      if (currentPhase === 'WORK') {
+        return {
+          ...TIMER_PHASE_CONFIG.WORK,
+          displayTime: formatDuration(timeRemaining, {
+            unit: 'seconds',
+            format: 'MM:SS',
+          }),
+          progress: (timeRemaining / workDuration) * 100,
+        }
+      }
+      if (currentPhase === 'REST') {
+        return {
+          ...TIMER_PHASE_CONFIG.REST,
+          displayTime: formatDuration(timeRemaining, {
+            unit: 'seconds',
+            format: 'MM:SS',
+          }),
+          progress: (timeRemaining / restDuration) * 100,
+        }
+      }
+      if (currentPhase === 'COOLDOWN') {
+        return {
+          ...TIMER_PHASE_CONFIG.COOLDOWN,
+          displayTime: formatDuration(timeRemaining, {
+            unit: 'seconds',
+            format: 'MM:SS',
+          }),
+          progress: 100,
+        }
+      }
+    }
+
+    return {
+      ...TIMER_PHASE_CONFIG.IDLE,
+      displayTime: formatDuration(0, { unit: 'seconds', format: 'MM:SS' }),
+      progress: 0,
+    }
   }
+
+  const {
+    color: phaseColor,
+    label: phaseLabel,
+    displayTime,
+    progress: progressPercentage,
+  } = getTimerState()
 
   return (
     <Card
@@ -126,10 +153,10 @@ const TimerDisplay = () => {
             borderRadius: '50%',
             backgroundColor:
               connectionStatus === 'Connected'
-                ? '#10B981'
+                ? theme.palette.success.main
                 : connectionStatus === 'Reconnecting...'
-                  ? '#F59E0B'
-                  : '#EF4444',
+                  ? theme.palette.warning.main
+                  : theme.palette.error.main,
             animation:
               connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
           }}
@@ -201,6 +228,7 @@ const TimerDisplay = () => {
           <Typography
             variant="overline"
             data-testid="timer-phase"
+            aria-live="polite"
             sx={{
               color: phaseColor,
               lineHeight: 1,
@@ -221,14 +249,10 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-<<<<<<< HEAD
-=======
             fontSize: { xs: '3rem', sm: '4rem', md: '5rem' },
->>>>>>> origin/leader
             fontWeight: 800,
             lineHeight: 1,
             color: phaseColor,
-            fontSize: { xs: '3.5rem', sm: '4.5rem', md: '5.5rem' },
             my: 0.5,
           }}
         >
