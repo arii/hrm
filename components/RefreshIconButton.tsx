@@ -10,6 +10,7 @@ interface RefreshIconButtonProps extends Omit<IconButtonProps, 'size'> {
 const RefreshIconButton = ({ onClick, ...props }: RefreshIconButtonProps) => {
   return (
     <IconButton
+      data-testid="refresh-icon-button"
       onClick={onClick}
       sx={(theme) => ({
         position: 'absolute',

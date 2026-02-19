@@ -44,7 +44,7 @@ jobs:
           echo "## Project Documentation" > context.txt
           if [ -f "README.md" ]; then cat README.md >> context.txt; fi
           if [ -f "CONTRIBUTING.md" ]; then cat CONTRIBUTING.md >> context.txt; fi
-          if [ -f "docs/agents/AGENT_TRIAGE.md" ]; then cat docs/agents/AGENT_TRIAGE.md >> context.txt; fi
+          if [ -f "docs/agents/SPECIALIZED_AGENTS.md" ]; then cat docs/agents/SPECIALIZED_AGENTS.md >> context.txt; fi
 
       - name: Construct Analysis Prompt
         env:

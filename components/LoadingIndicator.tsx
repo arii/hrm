@@ -9,6 +9,7 @@ const LoadingIndicator = () => {
 
   return (
     <Box
+      data-testid="loading-indicator"
       sx={{
         position: 'fixed',
         top: 0,
