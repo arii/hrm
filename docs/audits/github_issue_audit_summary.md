@@ -2,7 +2,7 @@
 
 This document summarizes the actions taken by the **GitHub Issue Analysis Agent**. The agent's purpose is to triage, curate, and maintain the repository's issues to ensure they are relevant, actionable, and up-to-date.
 
-For a full definition of the agent's role and workflow, see [AGENT_GITHUB_ISSUES.md](./AGENT_GITHUB_ISSUES.md).
+For a full definition of the agent's role and workflow, see [SPECIALIZED_AGENTS.md](../agents/SPECIALIZED_AGENTS.md).
 
 ---
 

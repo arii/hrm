@@ -1,9 +1,6 @@
 // tests/lib/shared/hr-zones.test.ts
-import {
-  calculateMaxHr,
-  getUserHrZones,
-  HR_ZONE_CONFIG,
-} from '@/lib/shared/hr-zones'
+import { getUserHrZones, HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
+import { calculateMaxHr } from '@/utils/hrCalculations'
 
 describe('Heart Rate Zone Calculations', () => {
   describe('calculateMaxHr', () => {

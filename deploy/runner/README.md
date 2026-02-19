@@ -32,6 +32,7 @@ cd deploy/runner
 ```
 
 The script will guide you through:
+
 - Setting the repository URL
 - Configuring token generation (GitHub CLI, PAT, or manual)
 - Setting optional resource limits
@@ -58,6 +59,7 @@ Edit `.env.runner` and set:
 The deployment script can automatically generate runner tokens in three ways (in order of preference):
 
 1. **GitHub CLI (Recommended)**: If you have `gh` CLI installed and authenticated
+
    ```bash
    gh auth login
    ```
@@ -82,6 +84,7 @@ cd deploy/runner
 ```
 
 This script will:
+
 1. Build the Docker image
 2. Stop and remove any existing runner container
 3. Start a new container with the configured settings
@@ -101,6 +104,7 @@ docker logs -f hrm-runner
 ```
 
 Verify in GitHub:
+
 1. Go to: **Settings** → **Actions** → **Runners**
 2. You should see your runner listed with status "Idle" or "Active"
 
@@ -117,6 +121,7 @@ sudo ./install-service.sh
 ```
 
 This script will:
+
 1. Detect the repository root path automatically
 2. Update the service file with correct paths
 3. Install the service to `/etc/systemd/system/`
@@ -162,21 +167,25 @@ sudo systemctl start hrm-runner.service
 ### Managing the Service
 
 Check status:
+
 ```bash
 sudo systemctl status hrm-runner.service
 ```
 
 View logs:
+
 ```bash
 sudo journalctl -u hrm-runner.service -f
 ```
 
 Restart the service:
+
 ```bash
 sudo systemctl restart hrm-runner.service
 ```
 
 Stop the service:
+
 ```bash
 sudo systemctl stop hrm-runner.service
 ```
@@ -186,22 +195,26 @@ sudo systemctl stop hrm-runner.service
 If you're not using systemd, you can manage the container directly:
 
 ### Start the container
+
 ```bash
 docker start hrm-runner
 ```
 
 ### Stop the container
+
 ```bash
 docker stop hrm-runner
 ```
 
 ### Remove the container
+
 ```bash
 docker stop hrm-runner
 docker rm hrm-runner
 ```
 
 ### Rebuild and redeploy
+
 ```bash
 ./deploy-runner.sh
 ```
@@ -221,6 +234,7 @@ The runner image includes:
 ### Runner Labels
 
 The runner is configured with the following labels:
+
 - `hrm-backend`
 - `playwright`
 - `docker`
@@ -238,6 +252,7 @@ jobs:
 ### Runner not appearing in GitHub
 
 1. Check the container logs:
+
    ```bash
    docker logs hrm-runner
    ```
@@ -248,11 +263,13 @@ jobs:
 ### Container exits immediately
 
 Check the logs for error messages:
+
 ```bash
 docker logs hrm-runner
 ```
 
 Common issues:
+
 - Missing or invalid `RUNNER_TOKEN`
 - Missing or invalid `REPO_URL`
 - Network connectivity issues
@@ -260,11 +277,13 @@ Common issues:
 ### Runner shows as "Offline" in GitHub
 
 1. Check if the container is running:
+
    ```bash
    docker ps | grep hrm-runner
    ```
 
 2. If not running, check the logs:
+
    ```bash
    docker logs hrm-runner
    ```
@@ -296,6 +315,7 @@ If you have offline runners in GitHub that won't auto-cleanup:
 3. Click the three dots menu → Remove
 
 Or, if you have the runner token, you can deregister manually:
+
 ```bash
 docker exec -it hrm-runner bash
 cd /home/runner/actions-runner
@@ -305,6 +325,7 @@ cd /home/runner/actions-runner
 ### Need to update the runner
 
 1. Stop and remove the current container:
+
    ```bash
    docker stop hrm-runner
    docker rm hrm-runner
@@ -363,16 +384,16 @@ cd /home/runner/actions-runner
 
 ## Files in This Directory
 
-| File                     | Purpose                                           |
-| ------------------------ | ------------------------------------------------- |
-| `Dockerfile.runner`      | Docker image definition for the runner            |
-| `entrypoint.sh`          | Container entrypoint - configures and starts runner |
-| `configure.sh`           | Interactive CLI for creating .env.runner configuration |
-| `deploy-runner.sh`       | Deployment script - builds and runs the container, auto-generates token if needed, applies resource limits |
-| `install-service.sh`     | Automated systemd service installation with path auto-detection |
-| `.env.runner.example`    | Configuration template with REPO_URL, RUNNER_TOKEN, GITHUB_PAT, and resource limits |
-| `hrm-runner.service`     | Systemd service definition (template)             |
-| `README.md`              | This documentation                                |
+| File                  | Purpose                                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `Dockerfile.runner`   | Docker image definition for the runner                                                                     |
+| `entrypoint.sh`       | Container entrypoint - configures and starts runner                                                        |
+| `configure.sh`        | Interactive CLI for creating .env.runner configuration                                                     |
+| `deploy-runner.sh`    | Deployment script - builds and runs the container, auto-generates token if needed, applies resource limits |
+| `install-service.sh`  | Automated systemd service installation with path auto-detection                                            |
+| `.env.runner.example` | Configuration template with REPO_URL, RUNNER_TOKEN, GITHUB_PAT, and resource limits                        |
+| `hrm-runner.service`  | Systemd service definition (template)                                                                      |
+| `README.md`           | This documentation                                                                                         |
 
 ## Related Documentation
 

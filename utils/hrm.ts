@@ -3,11 +3,8 @@ import {
   HRM_STALE_THRESHOLD_MS,
   HRM_WARNING_THRESHOLD_MS,
 } from '@/utils/constants'
-import {
-  calculateZoneFromMaxHr,
-  calculateMaxHr,
-  toHeartRateZone,
-} from '@/lib/shared/hr-zones'
+import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
+import { calculateMaxHr } from '@/utils/hrCalculations'
 
 interface GetActiveHrmDataOptions {
   includeZeroValues?: boolean
