@@ -47,7 +47,9 @@ describe('create-review-issues logic', () => {
 
     it('should handle empty sets (short words only)', () => {
       // 'is', 'it', 'at', 'on' are all <= 2 chars -> empty sets
-      expect(calculateJaccardSimilarity(tokenize('is it'), tokenize('at on'))).toBe(1)
+      expect(
+        calculateJaccardSimilarity(tokenize('is it'), tokenize('at on'))
+      ).toBe(1)
     })
   })
 

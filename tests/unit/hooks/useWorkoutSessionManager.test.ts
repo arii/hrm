@@ -137,7 +137,8 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
       // Verify calories are accumulating (exact value depends on formula, checking > 0 is sufficient for integration)
       expect(result.current.session?.totalCaloriesBurned).toBeGreaterThan(0)
-      const caloriesAfterSecondPoint = result.current.session?.totalCaloriesBurned || 0
+      const caloriesAfterSecondPoint =
+        result.current.session?.totalCaloriesBurned || 0
 
       // Add third data point (HR 100 -> ~54% -> Zone 1 / Recovery)
       act(() => {
