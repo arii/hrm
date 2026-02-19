@@ -188,20 +188,19 @@ const TimerDisplay = () => {
       >
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
         {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
-          <Box aria-live="polite">
-            <Typography
-              data-testid="timer-phase"
-              variant="h6"
-              sx={{
-                mb: 1,
-                color: phaseColor,
-                fontWeight: 700,
-                letterSpacing: 2,
-              }}
-            >
-              {phaseLabel}
-            </Typography>
-          </Box>
+          <Typography
+            data-testid="timer-phase"
+            variant="h6"
+            aria-live="polite"
+            sx={{
+              mb: 1,
+              color: phaseColor,
+              fontWeight: 700,
+              letterSpacing: 2,
+            }}
+          >
+            {phaseLabel}
+          </Typography>
         )}
 
         {/* Giant Timer Display */}
