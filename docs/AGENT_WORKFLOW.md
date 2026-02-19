@@ -2,7 +2,7 @@
 
 This document outlines the development philosophy for using specialized AI agents to automate and scale engineering tasks within this repository. The core concept is to separate the **execution** of a task from the **actioning** of its results.
 
-This workflow is designed to leverage the analytical power of AI agents to produce high-quality, version-controlled artifacts, which are then used to inform a separate, human-driven implementation phase.
+This workflow is designed to use the analytical power of AI agents to produce high-quality, version-controlled artifacts, which are then used to inform a separate, human-driven implementation phase.
 
 ## The Two-Phase Process
 
@@ -12,7 +12,7 @@ Our methodology is divided into two distinct phases:
 
 In this phase, a specialized AI agent is invoked to perform a specific, well-defined task. The agent's primary goal is to produce a comprehensive, raw output, which we refer to as an "artifact."
 
-1.  **Definition**: Each agent is defined in a dedicated markdown file (see `docs/agents/AGENT_TEMPLATE.md`). This includes its role, methodology, and the specific, repeatable workflow it follows.
+1.  **Definition**: Specialized agents are defined in the consolidated `docs/agents/SPECIALIZED_AGENTS.md` file. This includes their roles, methodologies, and the specific, repeatable workflows they follow.
 2.  **Execution**: The agent is run. This may involve analyzing the codebase, interacting with external APIs (like the GitHub CLI), or running tests.
 3.  **Artifact Generation**: The agent's output is captured in a raw, version-controlled format. This is a critical step. The artifact is **not** a plan of action; it is a **log of work performed**.
     - **Examples of Artifacts**:
