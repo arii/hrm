@@ -41,9 +41,7 @@ export const generateFIT = (session: WorkoutSessionData): Blob => {
   })
 
   // Ensure we return the buffer correctly based on standard usage
-  // Casting to any to avoid "Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BlobPart'"
-  // in strict CI environments where ArrayBufferLike definitions might mismatch.
-  return new Blob([stream.bytes as unknown as BlobPart], {
+  return new Blob([stream.bytes], {
     type: 'application/octet-stream',
   })
 }
