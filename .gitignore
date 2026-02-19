@@ -28,7 +28,11 @@ test_output.txt
 /out/
 /dist
 /build
+# TypeScript Build Cache
 *.tsbuildinfo
+.cache/
+.tsbuildinfo*
+**/.tsbuildinfo*
 next-env.d.ts
 
 # Production & Logs
