@@ -135,6 +135,9 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.averageHr).toBe(135)
       expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
       expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
+      // Verify calories are accumulating (exact value depends on formula, checking > 0 is sufficient for integration)
+      expect(result.current.session?.totalCaloriesBurned).toBeGreaterThan(0)
+      const caloriesAfterSecondPoint = result.current.session?.totalCaloriesBurned || 0
 
       // Add third data point (HR 100 -> ~54% -> Zone 1 / Recovery)
       act(() => {
@@ -145,6 +148,10 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.averageHr).toBeCloseTo(123.33)
       expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
       expect(result.current.session?.timeInZones.ZONE_1).toBe(2)
+      // Verify calories continue to accumulate
+      expect(result.current.session?.totalCaloriesBurned).toBeGreaterThan(
+        caloriesAfterSecondPoint
+      )
     })
 
     it('should not add HR data if the session is not running', async () => {
