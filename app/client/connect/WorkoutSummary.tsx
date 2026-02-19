@@ -75,7 +75,7 @@ const WorkoutSummary = ({
               disabled={isExporting}
               startIcon={
                 isExporting ? (
-                  <CircularProgress size={20} color="inherit" />
+                  <CircularProgress size={24} color="inherit" />
                 ) : (
                   <DownloadIcon />
                 )
