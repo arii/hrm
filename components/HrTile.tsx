@@ -131,6 +131,21 @@ const HrTile = ({
 
   const showName = !isGenericName(name)
 
+  const overlaySx = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: alpha(theme.palette.common.black, 0.7),
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    borderRadius: 'inherit',
+  }
+
   return (
     <Tooltip title={tooltipTitle} arrow>
       <ControlCard
@@ -144,7 +159,6 @@ const HrTile = ({
           color: zoneConfig.textColor,
           minHeight: HR_TILE_MIN_HEIGHT,
           height: '100%',
-          minHeight: 180,
           maxHeight: 250,
           display: 'flex',
           flexDirection: 'column',
@@ -172,23 +186,7 @@ const HrTile = ({
         )}
 
         {isAlerting && (
-          <Box
-            data-testid="hr-tile-alert-overlay"
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundColor: alpha(theme.palette.common.black, 0.7),
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 10,
-              borderRadius: 'inherit',
-            }}
-          >
+          <Box data-testid="hr-tile-alert-overlay" sx={overlaySx}>
             <CircularProgress size={30} sx={{ color: 'white' }} />
             <Typography
               variant="caption"
