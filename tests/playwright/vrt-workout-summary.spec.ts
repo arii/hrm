@@ -1,14 +1,8 @@
 import { type BrowserContext, type Page } from '@playwright/test'
-<<<<<<< HEAD
 import { test } from '@/tests/playwright/fixtures'
 import { setupVisualRegressionTest } from '@/tests/playwright/test-helpers'
 import { takeScreenshot } from '@/tests/playwright/lib/visual'
-=======
-import { test } from './fixtures'
-import { setupVisualRegressionTest } from './test-helpers'
-import { takeScreenshot } from './lib/visual'
-import { HRM_ROUTES } from './lib/setup'
->>>>>>> origin/leader
+import { HRM_ROUTES } from '@/tests/playwright/lib/setup'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })

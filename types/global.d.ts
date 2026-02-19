@@ -1,7 +1,6 @@
 import { Dispatch, SetStateAction } from 'react'
 import { SpotifyService } from '@/types/interfaces'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
-import { ServerMessage } from '@/types/websocket'
 
 // Define a comprehensive interface for the global test controls
 // This allows various parts of the application to attach test-specific
@@ -12,8 +11,9 @@ export interface TestControls {
   setCustomHrmStatusMessage?: Dispatch<SetStateAction<string | null>>
 
   // From WebSocketProvider context
-  dispatch?: (message: ServerMessage) => void
+  dispatch?: (message: unknown) => void
   disconnect?: () => void
+  connect?: () => void
 }
 
 declare global {
@@ -22,7 +22,7 @@ declare global {
   interface Window {
     __TEST_READY__?: boolean
     __TEST_WEBSOCKET_READY__?: boolean
-    TEST_CONTROLS?: TestControls
+    __TEST_CONTROLS__?: TestControls
   }
 }
 

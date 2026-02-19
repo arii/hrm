@@ -138,12 +138,8 @@ export {
   takeScreenshot,
   takeDashboardScreenshot,
   prepareForVisualRegression,
-<<<<<<< HEAD
-} from '@/tests/playwright/lib/visual'
-=======
   assertFixedDimensions,
-} from './visual'
->>>>>>> origin/leader
+} from '@/tests/playwright/lib/visual'
 
 // ============================================================================
 // Re-export Playwright test utilities for convenience

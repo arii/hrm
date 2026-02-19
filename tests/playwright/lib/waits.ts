@@ -208,7 +208,6 @@ export async function waitForApiResponse(
  * @param conditions - Array of wait functions to execute in parallel
  */
 export async function waitForAllConditions(
-  page: Page,
   conditions: Array<() => Promise<void>>
 ): Promise<void> {
   await Promise.all(conditions.map((condition) => condition()))

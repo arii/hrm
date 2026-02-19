@@ -3,11 +3,11 @@ import '@/lib/env' // Triggers validation immediately
 import express, { type RequestHandler } from 'express'
 import { createServer } from 'http'
 import next from 'next'
-import { env } from '@/lib/env' // New import
+import { env } from '@/lib/env'
 import { httpLogger } from '@/utils/logger.server'
 import logger from '@/utils/logger.server'
-import { AppServices, createServices } from '@/lib/services' // New import
-import { WebSocketManager } from '@/lib/websocket' // New import
+import { AppServices, createServices } from '@/lib/services'
+import { WebSocketManager } from '@/lib/websocket'
 import { initSocketManager } from '@/utils/socketManager'
 import { StateSnapshot } from '@/types/websocket'
 import { Socket } from 'net'

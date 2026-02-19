@@ -12,17 +12,11 @@ import {
   HR_ZONE_ORDER,
   calculateZoneFromMaxHr,
   toHeartRateZone,
+  calculateMaxHr,
 } from '@/lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
-<<<<<<< HEAD
-import { calculateMaxHr } from '@/lib/shared/hr-zones'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { isSessionStale } from '@/lib/workout-session'
-=======
-import { calculateMaxHr } from '@/utils/hrCalculations'
-import { useAppSnackbar } from './useAppSnackbar'
-import { isSessionStale } from '../lib/workout-session'
->>>>>>> origin/leader
 
 // --- State, Actions, and Reducer ---
 

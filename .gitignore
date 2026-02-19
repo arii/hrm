@@ -86,8 +86,4 @@ verification/screenshots/
 .next_prod/
 release.tar.gz
 knip_report.txt
-<<<<<<< HEAD
-.cache/
-=======
 /.cache/
->>>>>>> origin/leader

@@ -4,16 +4,13 @@ import {
   getDynamicContentMasks,
   getHrMasks,
   setupVisualRegressionTest,
-<<<<<<< HEAD
-} from '@/tests/playwright/test-helpers'
-import { takeScreenshot } from '@/tests/playwright/lib/visual'
-import { waitForPageReady } from '@/tests/playwright/lib/waits'
-=======
   mockMultipleHrDevices,
-} from './test-helpers'
-import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
->>>>>>> origin/leader
+} from '@/tests/playwright/test-helpers'
+import {
+  takeScreenshot,
+  assertFixedDimensions,
+} from '@/tests/playwright/lib/visual'
+import { waitForPageReady } from '@/tests/playwright/lib/waits'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
