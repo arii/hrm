@@ -65,9 +65,6 @@ const useSpotifyWebPlayback = () => {
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [deviceId, setDeviceId] = useState<string | null>(null)
-  const [, setInitStatus] = useState<
-    'idle' | 'initializing' | 'ready' | 'failed'
-  >('idle')
   const { addError } = useError()
   const { status } = useSpotifyAuth()
   const isInitializing = useRef(false)
@@ -94,7 +91,6 @@ const useSpotifyWebPlayback = () => {
                   SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT / 1000
                 }s threshold); aborting sign-out to prevent thrashing.`
               )
-              setInitStatus('failed')
               return
             }
 
@@ -103,7 +99,6 @@ const useSpotifyWebPlayback = () => {
               persist: true,
             })
 
-            setInitStatus('failed')
             await signOut({ redirect: false })
             redirectTo('/?error=SpotifyAuthFailed')
             return
@@ -122,7 +117,6 @@ const useSpotifyWebPlayback = () => {
         console.error(
           `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
         )
-        setInitStatus('failed')
         addError(`Failed to authenticate with Spotify: ${appError.message}`, {
           persist: false,
         })
@@ -143,7 +137,6 @@ const useSpotifyWebPlayback = () => {
 
       console.log('[Spotify Web Playback] Initializing new player instance...')
       isInitializing.current = true
-      setInitStatus('initializing')
 
       const spotifyPlayer = new window.Spotify.Player({
         name: 'HRM Web Player',
@@ -158,7 +151,6 @@ const useSpotifyWebPlayback = () => {
         isInitializing.current = false
         setDeviceId(device_id)
         setIsReady(true)
-        setInitStatus('ready')
       })
 
       spotifyPlayer.addListener('not_ready', ({ device_id }) => {
@@ -174,14 +166,12 @@ const useSpotifyWebPlayback = () => {
         console.error('[Spotify Web Playback] Initialization Error:', message)
         isInitializing.current = false
         addError(`Initialization failed: ${message}`, { persist: true })
-        setInitStatus('failed')
       })
 
       spotifyPlayer.addListener('authentication_error', ({ message }) => {
         console.error('[Spotify Web Playback] Authentication Error:', message)
         isInitializing.current = false
         addError(`Authentication failed: ${message}`, { persist: true })
-        setInitStatus('failed')
       })
 
       spotifyPlayer.addListener('account_error', ({ message }) => {
@@ -190,7 +180,6 @@ const useSpotifyWebPlayback = () => {
         addError(`Account error: ${message}. A Premium account is required.`, {
           persist: true,
         })
-        setInitStatus('failed')
       })
 
       setPlayer(spotifyPlayer)
