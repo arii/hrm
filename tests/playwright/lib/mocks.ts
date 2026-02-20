@@ -100,16 +100,22 @@ export async function mockSpotifyPlaybackState(
     },
   }
 
-  await page.evaluate(
-    (payload) => {
-      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-      window.__TEST_CONTROLS__?.dispatch({
-        type: 'SPOTIFY_UPDATE',
-        payload,
-      })
-    },
-    { ...defaultState, ...state }
-  )
+  // Deep merge state into defaultState to allow overriding nested playback properties
+  const payload = {
+    ...defaultState,
+    ...state,
+    playback: state.playback
+      ? { ...defaultState.playback, ...state.playback }
+      : defaultState.playback,
+  }
+
+  await page.evaluate((payload) => {
+    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+    window.__TEST_CONTROLS__?.dispatch({
+      type: 'SPOTIFY_UPDATE',
+      payload,
+    })
+  }, payload)
 }
 
 /**

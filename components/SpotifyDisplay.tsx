@@ -312,7 +312,7 @@ const SpotifyDisplay = () => {
           backgroundColor: 'grey.900',
           color: 'common.white',
           px: { xs: 2, sm: 3 },
-          py: 1.5,
+          py: 1,
           borderRadius: 2,
           display: 'grid',
           gridTemplateColumns: '1fr auto 1fr',
@@ -324,6 +324,7 @@ const SpotifyDisplay = () => {
           zIndex: 1100,
           boxShadow: 3,
           width: '100%',
+          minHeight: '64px',
         }}
       >
         <Box
@@ -332,6 +333,7 @@ const SpotifyDisplay = () => {
             alignItems: 'center',
             justifySelf: 'start',
             gap: 2,
+            minHeight: '40px',
           }}
         >
           <Typography
@@ -351,6 +353,7 @@ const SpotifyDisplay = () => {
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
+                whiteSpace: 'nowrap',
               }}
             >
               🔄 Connecting Player...
@@ -366,6 +369,7 @@ const SpotifyDisplay = () => {
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
+                whiteSpace: 'nowrap',
               }}
             >
               🎵 Browser Player Active
