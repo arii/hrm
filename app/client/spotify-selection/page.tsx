@@ -47,10 +47,7 @@ const SpotifySelectionPage = () => {
   }
 
   return (
-    <Container
-      maxWidth="sm"
-      sx={{ py: 3 }}
-    >
+    <Container maxWidth="sm" sx={{ py: 3 }}>
       <Typography variant="h4" component="h1" gutterBottom align="center">
         Spotify Playlist Selector
       </Typography>
