@@ -1,4 +1,4 @@
-// components/WorkoutTableViewer.tsx
+// components/WorkoutTableHeader.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -16,17 +16,17 @@ import {
 import RefreshIconButton from '@/components/RefreshIconButton'
 import { WorkoutTableDto } from '@/types/workout'
 
-interface WorkoutTableViewerProps {
+interface WorkoutTableHeaderProps {
   docId: string
   refreshKey?: number
   onRefresh?: () => void
 }
 
-export default function WorkoutTableViewer({
+export default function WorkoutTableHeader({
   docId,
   refreshKey,
   onRefresh,
-}: WorkoutTableViewerProps) {
+}: WorkoutTableHeaderProps) {
   const [data, setData] = useState<WorkoutTableDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -89,7 +89,7 @@ export default function WorkoutTableViewer({
       <TableContainer
         component={Paper}
         elevation={2}
-        data-testid="workout-table-viewer"
+        data-testid="workout-table-header"
       >
         <Table sx={{ minWidth: 650 }} aria-label="workout table">
           <TableHead>
