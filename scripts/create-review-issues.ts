@@ -78,7 +78,7 @@ const SuggestedIssueSchema = z.object({
   ]),
   priority: z.enum(['high', 'medium', 'low']),
   fingerprint: z.string().optional(),
-  isPreExisting: z.boolean().default(true),
+  isPreExisting: z.boolean(),
   filePath: z.string().optional(),
   lineNumber: z.number().optional(),
 })
