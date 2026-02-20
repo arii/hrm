@@ -6,3 +6,6 @@ export const HRM_WEB_PLAYER_NAME = 'HRM Web Player'
  * Used as a fallback when Spotify API doesn't provide an expires_in value.
  */
 export const SPOTIFY_DEFAULT_TOKEN_EXPIRY_S = 3600
+
+// Centralized constants for Spotify integration
+export const VOLUME_SYNC_GRACE_PERIOD_MS = 600

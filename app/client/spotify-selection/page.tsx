@@ -10,6 +10,11 @@ import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
+<<<<<<< HEAD
+=======
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
+>>>>>>> origin/leader
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -30,7 +35,8 @@ const PlaylistDetails = dynamic(
 )
 
 const SpotifySelectionPage = () => {
-  const { spotifyData, sendData } = useWebSocket()
+  const { spotifyData } = useWebSocket()
+  const { execute: executeSpotify } = useSpotifyCommand()
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
     null
   )
@@ -41,21 +47,7 @@ const SpotifySelectionPage = () => {
   }
 
   const handlePlaylistPlay = (uri: string) => {
-    const activeDevice = spotifyData.devices?.find((device) => device.is_active)
-    if (activeDevice) {
-      sendData({
-        type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
-        playlistUri: uri,
-        deviceId: activeDevice.id,
-      })
-    } else {
-      sendData({
-        type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
-        playlistUri: uri,
-      })
-    }
+    executeSpotify('PLAY', { playlistUri: uri })
   }
 
   return (
@@ -66,13 +58,14 @@ const SpotifySelectionPage = () => {
 
       <Card>
         <CardContent>
-          {spotifyData.trackName &&
-          spotifyData.trackName !== 'Awaiting Login...' &&
-          spotifyData.trackName !== 'Requires Login' ? (
+          {spotifyData.playback.track.name &&
+          spotifyData.playback.track.name !== 'Awaiting Login...' &&
+          spotifyData.playback.track.name !== 'Requires Login' ? (
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h6">Now Playing</Typography>
               <Typography>
-                {spotifyData.trackName} - {spotifyData.artist}
+                {spotifyData.playback.track.name} -{' '}
+                {spotifyData.playback.track.artist}
               </Typography>
             </Box>
           ) : (

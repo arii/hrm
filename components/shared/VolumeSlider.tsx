@@ -13,6 +13,7 @@ interface VolumeSliderProps {
   showValue?: boolean
   sliderColor?: string
   size?: 'small' | 'medium'
+  disabled?: boolean
 }
 
 const VolumeSlider: React.FC<VolumeSliderProps> = ({
@@ -24,6 +25,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   showValue = false,
   sliderColor = '#1DB954', // Default to Spotify green
   size = 'small',
+  disabled = false,
 }) => {
   const handleVolumeChange = useCallback(
     (_: Event | React.SyntheticEvent, value: number | number[]) => {
@@ -52,6 +54,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       <IconButton
         size={size}
         onClick={onToggleMute}
+        disabled={disabled}
         sx={{
           color: muted ? 'error.main' : 'grey.400',
           '&:hover': { color: 'white' },
@@ -73,6 +76,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         min={0}
         max={100}
         size={size}
+        disabled={disabled}
         sx={{
           color: sliderColor,
           '& .MuiSlider-thumb': {
