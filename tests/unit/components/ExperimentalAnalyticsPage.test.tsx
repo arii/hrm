@@ -3,13 +3,12 @@
  */
 // tests/unit/components/ExperimentalAnalyticsPage.test.tsx
 import React from 'react'
-import { render } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import ExperimentalAnalyticsPage from '@/app/client/experimental/components/ExperimentalAnalyticsPage'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { workoutSessionStorage } from '@/lib/workout-session-storage'
-import { waitFor } from '@testing-library/react'
 
 // Mock the HeartRateTimeSeries component by mocking the dynamic import
 jest.mock('next/dynamic', () => () => {
@@ -27,6 +26,11 @@ jest.mock('@/lib/workout-session-storage', () => ({
     getAllSessions: jest.fn(),
     deleteSession: jest.fn(),
   },
+}))
+
+// Mock fit-export to avoid ESM import issues with @garmin/fitsdk
+jest.mock('@/utils/fit-export', () => ({
+  generateFitFile: jest.fn(),
 }))
 
 describe('ExperimentalAnalyticsPage', () => {
