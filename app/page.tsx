@@ -13,7 +13,6 @@ import { useState } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
-import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -63,7 +62,6 @@ const Dashboard = () => {
 
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
-  const isReady = useTestPageReady()
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
 
@@ -81,7 +79,6 @@ const Dashboard = () => {
   return (
     <Container
       data-testid="dashboard"
-      data-ready={isReady ? 'true' : 'false'}
       maxWidth="xl"
       onClick={handleInteraction}
       sx={{

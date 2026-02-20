@@ -1,4 +1,3 @@
-// services/googleDocParser.ts
 import * as cheerio from 'cheerio'
 import { WorkoutTableDto } from '@/types/workout'
 
@@ -16,13 +15,10 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
     throw new Error('No table found in the Google Doc')
   }
 
-  // Find the first row in the table
   const firstRow = table.find('tr').first()
   const headers: string[] = []
 
-  // Extract each cell (td or th) from the first row
   firstRow.find('td, th').each((_colIndex, cellElement) => {
-    // Get raw text content, replace newlines with spaces, and trim whitespace
     const text = $(cellElement)
       .text()
       .replace(/\r?\n|\r/g, ' ')
@@ -30,7 +26,5 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
     headers.push(text)
   })
 
-  // Per requirements: assume table has 1 row.
-  // Extracts all columns from the first row and returns them as headers.
   return { headers }
 }
