@@ -5,7 +5,7 @@ import { Container, Box, Button } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
-import { useCalorieTracker } from '@/hooks/useCalorieTracker'
+import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import {
   workoutSessionStorage,
@@ -13,6 +13,14 @@ import {
 } from '@/lib/workout-session-storage'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 import { calculateMaxHr } from '@/utils/hrCalculations'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
+
+// Components
+import WorkoutSummary from './WorkoutSummary'
+import ZoneDistribution from './ZoneDistribution'
+import CalorieTracker from './CalorieTracker'
+import SessionList from './SessionList'
+import SessionDetail from './SessionDetail'
 
 const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_0: 0,
@@ -23,14 +31,6 @@ const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_5: 0,
   ZONE_6: 0,
 }
-
-// Components
-import WorkoutSummary from './WorkoutSummary'
-import ZoneDistribution from './ZoneDistribution'
-import CalorieTracker from './CalorieTracker'
-import SessionList from './SessionList'
-import SessionDetail from './SessionDetail'
-import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
@@ -48,18 +48,21 @@ const ExperimentalAnalyticsPage = () => {
     session: activeSession,
     status,
     isInitialized,
-    duration,
     startWorkout,
+    pauseWorkout,
     resumeWorkout,
     endWorkout,
     addHrData,
+    caloriesBurned,
   } = useWorkoutSessionManager()
 
-  const { processHeartRate, totalCaloriesBurned, calorieHistory, reset } =
-    useCalorieTracker({
-      age: userSettings.userAge || 30,
-      weightKg: userSettings.userWeight || 70,
-    })
+  const duration = useWorkoutTimer(
+    status,
+    activeSession?.startTime,
+    activeSession?.totalPaused,
+    activeSession?.pauseTime,
+    activeSession?.endTime
+  )
 
   // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
@@ -123,31 +126,26 @@ const ExperimentalAnalyticsPage = () => {
 
     const intervalId = setInterval(() => {
       const currentHr = latestHrRef.current
-
-      // Process calories (uses time-gap validation internally)
-      processHeartRate(currentHr)
-
-      // Add HR data point with zone calculation
-      const dataPoint = {
-        time: Date.now(),
-        hr: currentHr,
-      }
-
-      addHrData(dataPoint)
+      // Add HR data point (handles calorie calc internally)
+      addHrData(currentHr)
     }, 1000)
 
     return () => clearInterval(intervalId)
-  }, [status, processHeartRate, addHrData])
+  }, [status, addHrData])
 
   // Handlers
   const handleStartWorkout = useCallback(() => {
     const age = userSettings.userAge || 30
     const weight = userSettings.userWeight || 70
     const maxHr = calculateMaxHr(age)
-    startWorkout(age, weight, maxHr)
-    reset()
+
+    startWorkout(age, weight, { maxHr })
     setView('active')
-  }, [startWorkout, reset, userSettings])
+  }, [startWorkout, userSettings])
+
+  const handlePauseWorkout = useCallback(() => {
+    pauseWorkout()
+  }, [pauseWorkout])
 
   const handleResumeWorkout = useCallback(() => {
     resumeWorkout()
@@ -196,9 +194,9 @@ const ExperimentalAnalyticsPage = () => {
       avgHr,
       maxHr,
       timeInZones: activeSession.timeInZones,
-      totalCalories: totalCaloriesBurned,
+      totalCalories: caloriesBurned,
     }
-  }, [activeSession, totalCaloriesBurned])
+  }, [activeSession, caloriesBurned])
 
   const defaultDate = useMemo(() => new Date(), [])
 
@@ -218,7 +216,7 @@ const ExperimentalAnalyticsPage = () => {
               </Button>
             )}
             {status === 'running' && (
-              <Button variant="outlined" onClick={handleEndWorkout}>
+              <Button variant="outlined" onClick={handlePauseWorkout}>
                 Pause
               </Button>
             )}
@@ -248,7 +246,9 @@ const ExperimentalAnalyticsPage = () => {
               }
             />
 
-            <CalorieTracker calorieHistory={calorieHistory} />
+            <CalorieTracker
+              calorieHistory={activeSession?.calorieHistory || []}
+            />
 
             <ZoneDistribution timeInZones={summaryData.timeInZones} />
 
