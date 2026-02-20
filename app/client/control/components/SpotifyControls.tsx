@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { SpotifyCommand } from '@/types/websocket'
 import {
   HRM_WEB_PLAYER_NAME,
@@ -29,10 +30,12 @@ const SpotifyControls = () => {
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
     useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
+  const { player, isReady } = useSpotifyWebPlayback()
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [isSyncingVolume, setIsSyncingVolume] = useState(false)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
   const lastVolumeSyncTimeRef = useRef<number>(0)
 
@@ -177,7 +180,7 @@ const SpotifyControls = () => {
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
-      if (connectionStatus !== 'Connected') return
+      if (connectionStatus !== 'Connected' || isSyncingVolume) return
       const targetDeviceId = resolveTargetDeviceId()
 
       // Prevent sending volume command if no device is targeted
@@ -187,6 +190,7 @@ const SpotifyControls = () => {
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
 
+      setIsSyncingVolume(true)
       executeSpotify('SET_VOLUME', {
         volume: sanitized,
         deviceId: targetDeviceId,
@@ -194,8 +198,11 @@ const SpotifyControls = () => {
 
       lastSentVolumeRef.current = messageKey
       lastVolumeSyncTimeRef.current = Date.now()
+
+      // Release lock after a short delay to allow state to settle
+      setTimeout(() => setIsSyncingVolume(false), 500)
     },
-    [connectionStatus, resolveTargetDeviceId, executeSpotify]
+    [connectionStatus, resolveTargetDeviceId, executeSpotify, isSyncingVolume]
   )
 
   const debounceTimeoutRef = useRef<number | null>(null)
@@ -255,14 +262,22 @@ const SpotifyControls = () => {
 
         {hasSpotifyData ? (
           <>
-            <Box sx={{ textAlign: 'center', mb: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                {spotifyData.playback.track.name}
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'grey.400' }}>
-                {spotifyData.playback.track.artist}
-              </Typography>
-            </Box>
+            {player && !isReady ? (
+              <Box sx={{ textAlign: 'center', mb: 2 }}>
+                <Typography variant="body2" sx={{ color: 'orange' }}>
+                  Registering HRM Web Player...
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ textAlign: 'center', mb: 2 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                  {spotifyData.playback.track.name}
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'grey.400' }}>
+                  {spotifyData.playback.track.artist}
+                </Typography>
+              </Box>
+            )}
 
             <PlaybackControls
               isPlaying={spotifyData.playback.is_playing}

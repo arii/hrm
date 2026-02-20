@@ -24,6 +24,16 @@ jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
 }))
 
+// Mock the Spotify Web Playback hook
+jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    player: null,
+    isReady: false,
+    deviceId: null,
+  })),
+}))
+
 // Mock the volume preference hook
 jest.mock('@/hooks/useVolumePreference', () => {
   const originalModule = jest.requireActual('@/hooks/useVolumePreference')

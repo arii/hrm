@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useError } from '@/context/ErrorContext'
 import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
 import {
@@ -57,16 +57,20 @@ declare global {
   }
 }
 
+// Define a module-level variable to track script loading status
+let isScriptLoading = false
+
 // Manages the Spotify Web Playback SDK lifecycle.
 const useSpotifyWebPlayback = () => {
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [deviceId, setDeviceId] = useState<string | null>(null)
-  const [initStatus, setInitStatus] = useState<
+  const [, setInitStatus] = useState<
     'idle' | 'initializing' | 'ready' | 'failed'
   >('idle')
   const { addError } = useError()
   const { status } = useSpotifyAuth()
+  const isInitializing = useRef(false)
 
   const getOAuthToken = useCallback(
     async (cb: (token: string) => void) => {
@@ -128,31 +132,19 @@ const useSpotifyWebPlayback = () => {
   )
 
   useEffect(() => {
-    if (status !== 'authenticated' || initStatus !== 'idle') {
+    if (status !== 'authenticated' || player || isInitializing.current) {
       return
     }
 
-    setInitStatus('initializing')
-
-    const initializeSDK = () => {
-      if (!window.Spotify) {
-        console.log('[Spotify Web Playback] Loading Spotify SDK script...')
-        const script = document.createElement('script')
-        script.src = 'https://sdk.scdn.co/spotify-player.js'
-        script.async = true
-        document.body.appendChild(script)
-      } else {
-        console.log('[Spotify Web Playback] Spotify SDK already loaded')
-        initializePlayer()
-      }
-    }
-
     const initializePlayer = () => {
-      if (player) {
+      if (player || isInitializing.current) {
         return
       }
 
       console.log('[Spotify Web Playback] Initializing new player instance...')
+      isInitializing.current = true
+      setInitStatus('initializing')
+
       const spotifyPlayer = new window.Spotify.Player({
         name: 'HRM Web Player',
         getOAuthToken,
@@ -163,6 +155,7 @@ const useSpotifyWebPlayback = () => {
 
       spotifyPlayer.addListener('ready', ({ device_id }) => {
         console.log('[Spotify Web Playback] Ready with Device ID', device_id)
+        isInitializing.current = false
         setDeviceId(device_id)
         setIsReady(true)
         setInitStatus('ready')
@@ -179,18 +172,21 @@ const useSpotifyWebPlayback = () => {
 
       spotifyPlayer.addListener('initialization_error', ({ message }) => {
         console.error('[Spotify Web Playback] Initialization Error:', message)
+        isInitializing.current = false
         addError(`Initialization failed: ${message}`, { persist: true })
         setInitStatus('failed')
       })
 
       spotifyPlayer.addListener('authentication_error', ({ message }) => {
         console.error('[Spotify Web Playback] Authentication Error:', message)
+        isInitializing.current = false
         addError(`Authentication failed: ${message}`, { persist: true })
         setInitStatus('failed')
       })
 
       spotifyPlayer.addListener('account_error', ({ message }) => {
         console.error('[Spotify Web Playback] Account Error:', message)
+        isInitializing.current = false
         addError(`Account error: ${message}. A Premium account is required.`, {
           persist: true,
         })
@@ -212,19 +208,34 @@ const useSpotifyWebPlayback = () => {
       })
     }
 
-    window.onSpotifyWebPlaybackSDKReady = initializePlayer
+    if (window.Spotify) {
+      initializePlayer()
+    } else {
+      window.onSpotifyWebPlaybackSDKReady = () => {
+        isScriptLoading = false
+        initializePlayer()
+      }
 
-    initializeSDK()
+      if (!isScriptLoading) {
+        isScriptLoading = true
+        console.log('[Spotify Web Playback] Loading Spotify SDK script...')
+        const script = document.createElement('script')
+        script.src = 'https://sdk.scdn.co/spotify-player.js'
+        script.async = true
+        document.body.appendChild(script)
+      }
+    }
+  }, [status, getOAuthToken, addError, player])
 
+  // Cleanup player on unmount
+  useEffect(() => {
     return () => {
       if (player) {
         console.log('[Spotify Web Playback] Disconnecting player on cleanup')
         player.disconnect()
-        setPlayer(null)
       }
-      window.onSpotifyWebPlaybackSDKReady = () => {}
     }
-  }, [status, initStatus, getOAuthToken, addError, player])
+  }, [player])
 
   return { player, isReady, deviceId }
 }
