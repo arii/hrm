@@ -92,7 +92,7 @@ export default function WorkoutTableHeader({
           elevation={2}
           data-testid="workout-table-header"
         >
-          <Table sx={{ minWidth: 650 }} aria-label="workout table">
+          <Table sx={{ width: '100%' }} aria-label="workout table">
             <TableHead>
               <TableRow sx={{ backgroundColor: 'action.hover' }}>
                 {data.headers.map((header, index) => (
